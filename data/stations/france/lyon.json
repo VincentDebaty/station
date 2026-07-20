@@ -1,6 +1,8 @@
 {
   "id": "lyon",
   "name": "Lyon Part-Dieu",
+  "tagline": "Lyon Part-Dieu — 5 directions traversantes, TGV pressés, flux dense.",
+  "difficulty": 3,
   "country": "🇫🇷 France",
   "desc": "Le grand carrefour du Sud-Est : cinq directions traversantes, des TGV pressés et un flux qui ne s'arrête jamais — la gare la plus dense que vous ayez vue jusqu'ici.",
   "platforms": [

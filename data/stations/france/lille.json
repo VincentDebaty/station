@@ -1,6 +1,8 @@
 {
   "id": "lille",
   "name": "Lille-Flandres",
+  "tagline": "Lille-Flandres — terminus à heurtoirs : tout le monde rebrousse.",
+  "difficulty": 1,
   "country": "🇫🇷 France",
   "desc": "Premier terminus français : quatre directions, six quais à heurtoir et la gorge unique des gares en cul-de-sac. Tout le monde rebrousse — à vous d'orchestrer le ballet.",
   "platforms": [

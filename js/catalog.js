@@ -1,8 +1,11 @@
 "use strict";
 // ------------------------------------------------------------------
 // Catalogue des gares — un fichier JSON par gare, classé par pays dans
-// data/stations/. L'ordre de data/stations/index.json fait foi : c'est
-// lui qui définit la progression (une étoile débloque la gare suivante).
+// data/stations/. index.json ne fait que RÉUNIR les gares d'un pays ;
+// à l'intérieur d'un pays, l'ordre de jeu est le tri par « difficulty »
+// croissante (rampe d'accès facile en tête, boss en fin). Chaque pays est
+// une échelle indépendante : tous sont ouverts d'emblée, chacun se gravit
+// pour son compte — un joueur commence par SON pays, pas par la Belgique.
 // Chaque fiche décrit entièrement une gare : quais (impasses comprises),
 // portails (côté, sens, couleur), liaisons, paires même-côté autorisées
 // (rebroussements) et paramètres du générateur. Le moteur s'adapte,
@@ -16,32 +19,35 @@ async function loadCatalog() {
     if (!r.ok) throw new Error("index.json : " + r.status);
     return r.json();
   });
-  const files = [];
-  for (const group of index)
-    for (const id of group.stations)
-      files.push(base + group.country + "/" + id + ".json");
-  const cards = await Promise.all(files.map(f => fetch(f).then(r => {
-    if (!r.ok) throw new Error(f + " : " + r.status);
-    return r.json();
-  })));
+  // Un pays = un bloc contigu dans CATALOG. On charge chaque bloc puis on le
+  // trie par difficulté croissante ; l'ordre du fichier ne sert que de
+  // départage à difficulté égale (tri stable via l'index d'origine).
+  const blocks = await Promise.all(index.map(group =>
+    Promise.all(group.stations.map((id, ord) => {
+      const f = base + group.country + "/" + id + ".json";
+      return fetch(f).then(r => {
+        if (!r.ok) throw new Error(f + " : " + r.status);
+        return r.json();
+      }).then(card => ({ card, ord }));
+    }))
+  ));
   CATALOG.length = 0;
-  CATALOG.push(...cards);
+  for (const cards of blocks) {
+    cards.sort((a, b) => (a.card.difficulty || 0) - (b.card.difficulty || 0) || a.ord - b.ord);
+    CATALOG.push(...cards.map(x => x.card));
+  }
 }
 
-// Progression : étoiles par gare ; la gare N+1 se débloque à ≥ 1 étoile
-function getProgress() {
-  try { return JSON.parse(localStorage.getItem("station-progress")) || {}; }
-  catch (e) { return {}; }
-}
-function saveResult(id, stars, delay) {
-  const p = getProgress();
-  const cur = p[id] || { stars: 0, bestDelay: null };
-  p[id] = {
-    stars: Math.max(cur.stars, stars),
-    bestDelay: cur.bestDelay == null ? delay : Math.min(cur.bestDelay, delay)
-  };
-  localStorage.setItem("station-progress", JSON.stringify(p));
+// Progression (étoiles + record par id) : persistance dans js/store.js
+// (getProgress / saveResult). Ici, seule la logique de DÉVERROUILLAGE, qui
+// dépend du catalogue.
+// Déverrouillage PAR PAYS : la première gare d'un pays (la plus facile) est
+// toujours ouverte ; les suivantes se débloquent à ≥ 1 étoile sur la
+// précédente du MÊME pays. Aucun couloir entre pays.
+function sameCountry(i, j) {
+  return CATALOG[i] && CATALOG[j] && CATALOG[i].country === CATALOG[j].country;
 }
 function isUnlocked(i) {
-  return i === 0 || ((getProgress()[CATALOG[i - 1].id] || {}).stars || 0) >= 1;
+  if (i === 0 || !sameCountry(i - 1, i)) return true; // tête de pays : ouverte
+  return ((getProgress()[CATALOG[i - 1].id] || {}).stars || 0) >= 1;
 }

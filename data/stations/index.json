@@ -2,11 +2,11 @@
   {
     "country": "belgique",
     "label": "🇧🇪 Belgique",
-    "stations": ["namur", "charleroi", "liege", "anvers", "bruxelles-midi"]
+    "stations": ["charleroi", "hasselt", "anvers", "louvain", "namur", "gand", "liege", "mons", "bruxelles-midi", "bruxelles-nord"]
   },
   {
     "country": "france",
     "label": "🇫🇷 France",
-    "stations": ["lille", "lyon", "strasbourg", "marseille", "paris-nord"]
+    "stations": ["lille", "creil", "marseille", "nantes", "lyon", "bordeaux", "strasbourg", "metz", "paris-nord", "paris-lyon"]
   }
 ]

@@ -1,0 +1,33 @@
+{
+  "id": "gand",
+  "name": "Gand-Saint-Pierre",
+  "tagline": "Gand — six directions, flux flamand permanent : le grand carrefour du Nord.",
+  "difficulty": 3,
+  "country": "🇧🇪 Belgique",
+  "desc": "Le grand carrefour flamand : six directions, un flux qui ne retombe jamais entre Bruxelles, Anvers, Bruges, Courtrai, Termonde et Eeklo. Ici tout se croise — à vous de démêler.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }, { "id": 6 }
+  ],
+  "portals": {
+    "BRUXELLES": { "side": "L", "color": "#2dd4bf", "abbr": "B" },
+    "ANVERS":    { "side": "L", "color": "#f2588f", "abbr": "AN" },
+    "TERMONDE":  { "side": "L", "color": "#f5b23c", "abbr": "TE" },
+    "BRUGES":    { "side": "R", "color": "#60a5fa", "abbr": "BR" },
+    "COURTRAI":  { "side": "R", "color": "#4ade80", "abbr": "CO" },
+    "EECLO":     { "side": "R", "color": "#a78bfa", "abbr": "EE" }
+  },
+  "links": {
+    "BRUXELLES": [1, 2, 3, 4],
+    "ANVERS": [2, 3, 4, 5],
+    "TERMONDE": [1, 2, 5, 6],
+    "BRUGES": [1, 2, 3, 4],
+    "COURTRAI": [3, 4, 5, 6],
+    "EECLO": [1, 5, 6]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 14, "nMax": 17, "gapMin": 1.8, "gapMax": 3.2,
+    "cars": [1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 7],
+    "freightRate": 0.4, "quietRate": 0.2
+  }
+}

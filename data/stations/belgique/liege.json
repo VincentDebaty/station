@@ -1,6 +1,8 @@
 {
   "id": "liege",
   "name": "Liège-Guillemins",
+  "tagline": "Liège — axe fret vers l'Allemagne : convois lourds, anticipez.",
+  "difficulty": 4,
   "country": "🇧🇪 Belgique",
   "desc": "La porte de l'Allemagne et l'axe marchandises wallon : convois lourds vers Aachen, Maastricht et Luxembourg, frets fréquents — un long train bloque tout, anticipez.",
   "platforms": [

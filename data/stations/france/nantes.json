@@ -1,0 +1,32 @@
+{
+  "id": "nantes",
+  "name": "Nantes",
+  "tagline": "Nantes — terminus de l'Ouest : 6 quais à heurtoir, longues rames vers l'Atlantique.",
+  "difficulty": 2,
+  "country": "🇫🇷 France",
+  "desc": "La porte de l'Atlantique : six quais à heurtoir, cinq directions vers Paris, Rennes, Bordeaux, Le Croisic et La Rochelle. Des rames longues qui rebroussent toutes — orchestrez la manœuvre.",
+  "platforms": [
+    { "id": 1, "deadEnd": true }, { "id": 2, "deadEnd": true }, { "id": 3, "deadEnd": true },
+    { "id": 4, "deadEnd": true }, { "id": 5, "deadEnd": true }, { "id": 6, "deadEnd": true }
+  ],
+  "portals": {
+    "PARIS":      { "side": "L", "color": "#f2588f", "abbr": "P" },
+    "RENNES":     { "side": "L", "color": "#2dd4bf", "abbr": "RE" },
+    "BORDEAUX":   { "side": "L", "color": "#4ade80", "abbr": "BX" },
+    "LECROISIC":  { "side": "L", "color": "#f5b23c", "abbr": "LC", "label": "LE CROISIC" },
+    "LAROCHELLE": { "side": "L", "color": "#60a5fa", "abbr": "LR", "label": "LA ROCHELLE" }
+  },
+  "links": {
+    "PARIS": [1, 2, 3, 5],
+    "RENNES": [2, 3, 4],
+    "BORDEAUX": [1, 2, 6],
+    "LECROISIC": [4, 5, 6],
+    "LAROCHELLE": [3, 4, 5, 6]
+  },
+  "sameSidePairs": "all",
+  "gen": {
+    "nMin": 12, "nMax": 15, "gapMin": 1.9, "gapMax": 3.2,
+    "cars": [3, 3, 4, 4, 5, 5, 6, 7],
+    "freightRate": 0, "quietRate": 0.2
+  }
+}

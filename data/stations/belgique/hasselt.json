@@ -1,0 +1,29 @@
+{
+  "id": "hasselt",
+  "name": "Hasselt",
+  "tagline": "Hasselt — capitale du Limbourg : 4 quais, tempo serré, aucune marge.",
+  "difficulty": 1,
+  "country": "🇧🇪 Belgique",
+  "desc": "La capitale du Limbourg : quatre quais, des rames courtes qui s'échangent vers Bruxelles, Liège, Anvers et Genk. Petit gabarit, cadence nette — l'endroit rêvé pour prendre le poste en main.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }
+  ],
+  "portals": {
+    "BRUXELLES": { "side": "L", "color": "#2dd4bf", "abbr": "B" },
+    "ANVERS":    { "side": "L", "color": "#f5b23c", "abbr": "AN" },
+    "LIEGE":     { "side": "R", "color": "#4ade80", "abbr": "LG", "label": "LIÈGE" },
+    "GENK":      { "side": "R", "color": "#60a5fa", "abbr": "GK" }
+  },
+  "links": {
+    "BRUXELLES": [1, 2, 3],
+    "ANVERS": [2, 3, 4],
+    "LIEGE": [1, 2, 3],
+    "GENK": [2, 3, 4]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 12, "nMax": 15, "gapMin": 1.6, "gapMax": 2.8,
+    "cars": [1, 1, 2, 2, 3, 3, 4],
+    "freightRate": 0.3, "quietRate": 0.25
+  }
+}

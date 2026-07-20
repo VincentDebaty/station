@@ -1,6 +1,8 @@
 {
   "id": "strasbourg",
   "name": "Strasbourg",
+  "tagline": "Strasbourg — porte du Rhin : long corridor fret qui coupe la gare.",
+  "difficulty": 4,
   "country": "🇫🇷 France",
   "desc": "La porte du Rhin : cinq directions dont l'Allemagne, et le grand corridor fret rhénan qui coupe la gare sans prévenir. Les convois y sont longs, très longs.",
   "platforms": [

@@ -1,6 +1,8 @@
 {
   "id": "anvers",
   "name": "Anvers-Central",
+  "tagline": "Anvers — terminus : tout bute sur un heurtoir, tout rebrousse.",
+  "difficulty": 2,
   "country": "🇧🇪 Belgique",
   "desc": "La cathédrale ferroviaire — une gare TERMINUS : tous les quais butent sur un heurtoir, tous les trains rebroussent, et tout le trafic passe par une seule gorge. La vôtre.",
   "platforms": [

@@ -1,6 +1,8 @@
 {
   "id": "bruxelles-midi",
   "name": "Bruxelles-Midi",
+  "tagline": "Bruxelles-Midi — 8 quais, 6 directions dont Paris. Le boss régional.",
+  "difficulty": 5,
   "country": "🇧🇪 Belgique",
   "desc": "La plus grande gare du pays : huit quais, six directions dont Paris, un trafic qui ne pardonne rien. Le boss de la région — bonne chance, aiguilleur.",
   "platforms": [

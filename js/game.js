@@ -5,6 +5,11 @@
 // ------------------------------------------------------------------
 let trains, gameMin, speed, paused, started, ended, totalDelay, selected, activeRoutes, queueSeq;
 
+// Retard plafond : au-delà, le service est interrompu (game over). Réglable
+// par gare via le champ « maxDelay » de sa fiche ; 120 min par défaut.
+const DEFAULT_MAX_DELAY = 120;
+function maxDelay() { return STATION.maxDelay ?? DEFAULT_MAX_DELAY; }
+
 function resetGame() {
   const day = generateSchedule(); // nouvelle journée à chaque partie
   SCHEDULE = day.schedule;
@@ -15,7 +20,7 @@ function resetGame() {
     state: "scheduled", // scheduled | approaching | waiting | movingIn | dwell | movingOut | movingThrough | done
     progress: 0, qs: null,
     platform: null, target: s.freight ? s.plat : null,
-    entryPath: null, exitPath: null, exitTo: null, refoul: false,
+    entryPath: null, exitPath: null, exitTo: null, refoul: false, validated: false,
     pendingEl: null, stopS: null, startS: 0, backS: 0,
     actualArr: null, queuedAt: null, el: null, carEls: null,
     badgeEl: null, badgeText: null, badgeRect: null, headPos: null
@@ -23,7 +28,8 @@ function resetGame() {
   gameMin = 0; speed = 1; paused = false; ended = false;
   totalDelay = 0; selected = null; activeRoutes = {}; queueSeq = 0;
   document.querySelectorAll(".speed").forEach(b => b.classList.toggle("active", b.dataset.s === "1"));
-  document.getElementById("btn-pause").textContent = "⏸";
+  document.getElementById("hud-controls").classList.add("hidden");
+  if (typeof updatePauseIcon === "function") updatePauseIcon(); // paused=false → icône ▶→⏸, clock non-teal
   drawStatic();
   buildTimeline();
   updateDelay();
@@ -107,8 +113,17 @@ function platformReserved(pid) {
     (t.target === pid && (t.state === "waiting" || t.state === "approaching")));
 }
 function platformClosed(pid) {
+  // une fermeture ne bloque que si elle est effectivement révélée (donc posée
+  // sur un quai libre) et pas encore rouverte
   return EVENTS.some(ev => ev.type === "closure" && ev.plat === pid &&
-    gameMin >= ev.start && gameMin < ev.end);
+    ev.revealed && !ev.cleared && gameMin < ev.end);
+}
+// Un quai est occupé tant qu'un train y est physiquement (entrée, arrêt,
+// transit de fret ou refoulement) — on ne ferme jamais un quai occupé.
+function platformOccupied(pid) {
+  return trains.some(t => t.platform === pid &&
+    (t.state === "movingIn" || t.state === "dwell" ||
+     t.state === "movingThrough" || t.state === "movingBack"));
 }
 // ------------------------------------------------------------------
 // Imprévus : révélation en cours de partie (le calibrage les connaît déjà,
@@ -122,14 +137,28 @@ function showClosure(ev) {
     rx: 10, fill: "url(#hatch)", stroke: "var(--red)", "stroke-width": 1.5,
     "pointer-events": "none"
   }, g);
-  // le message s'affiche SUR le quai, avec un fond pour rester lisible
+  // Alerte SUR le quai : icône travaux + heure de réouverture, en grand.
+  // Le fond (pastille) est dimensionné d'après le texte réellement mesuré.
   const mid = (PLAT_X1 + PLAT_X2) / 2;
-  el("rect", {
-    x: mid - 92, y: q.cy - 12, width: 184, height: 24, rx: 7,
-    fill: "rgba(14,20,32,.9)", "pointer-events": "none"
+  const bg = el("rect", {
+    rx: 9 * UIK, fill: "rgba(14,20,32,.94)", stroke: "var(--red)",
+    "stroke-width": 1.3, "pointer-events": "none"
   }, g);
-  el("text", { x: mid, y: q.cy, class: "closure-tag" }, g)
-    .textContent = "⚠ fermé jusqu'à " + fmt(ev.end);
+  const txt = el("text", { x: mid, y: q.cy, class: "closure-tag" }, g);
+  txt.style.fontSize = (16 * UIK) + "px";
+  txt.style.dominantBaseline = "central";
+  txt.textContent = "fermé jusqu'à " + fmt(ev.end);
+  // pastille ajustée au texte (repli sur une taille fixe si getBBox indispo)
+  let b; try { b = txt.getBBox(); } catch (e) { b = null; }
+  const padX = 15 * UIK, padY = 8 * UIK;
+  if (b && b.width) {
+    bg.setAttribute("x", b.x - padX); bg.setAttribute("y", b.y - padY);
+    bg.setAttribute("width", b.width + 2 * padX); bg.setAttribute("height", b.height + 2 * padY);
+  } else {
+    const w = 210 * UIK, h = 30 * UIK;
+    bg.setAttribute("x", mid - w / 2); bg.setAttribute("y", q.cy - h / 2);
+    bg.setAttribute("width", w); bg.setAttribute("height", h);
+  }
   ev.el = g;
 }
 function processEvents() {
@@ -138,7 +167,7 @@ function processEvents() {
       if (ev.type === "late" && gameMin >= ev.revealAt) {
         ev.revealed = true;
         SND.incident();
-        toast(ev.trainId + " annoncé avec +" + ev.delay + " min de retard");
+        toast(ev.trainId + " retardé de +" + ev.delay + " min");
         const tl = document.getElementById("tl-" + ev.trainId);
         if (tl) {
           tl.classList.add("delayed");
@@ -147,11 +176,19 @@ function processEvents() {
           tl.appendChild(x);
         }
       } else if (ev.type === "closure" && gameMin >= ev.start) {
-        ev.revealed = true;
-        SND.incident();
-        toast("Quai " + ev.plat + " fermé jusqu'à " + fmt(ev.end));
-        showClosure(ev);
-        refreshEligible();
+        // On ne ferme jamais un quai occupé : si un train y est présent, la
+        // fermeture est repoussée jusqu'à ce qu'il soit parti (dans la limite
+        // de la fenêtre). Si la fenêtre s'écoule sans quai libre, elle n'a
+        // simplement pas lieu.
+        if (platformOccupied(ev.plat)) {
+          if (gameMin >= ev.end) { ev.revealed = true; ev.cleared = true; }
+        } else {
+          ev.revealed = true;
+          SND.incident();
+          toast("Quai " + ev.plat + " fermé jusqu'à " + fmt(ev.end));
+          showClosure(ev);
+          refreshEligible();
+        }
       }
     }
     if (ev.type === "closure" && ev.revealed && !ev.cleared && gameMin >= ev.end) {
@@ -181,7 +218,7 @@ function onPlatformClick(pid) {
   const q = PLATFORMS.find(x => x.id === pid);
   const center = { x: (PLAT_X1 + PLAT_X2) / 2, y: q.cy };
   if (!LINKS[selected.from].includes(pid)) {
-    flashAt(center, "Aucune voie depuis " + PORTALS[selected.from].label + " vers le quai " + pid);
+    flashAt(center, "Quai " + pid + " : pas de voie depuis " + PORTALS[selected.from].label);
     return;
   }
   if (platformReserved(pid)) {
@@ -189,7 +226,7 @@ function onPlatformClick(pid) {
     return;
   }
   if (platformClosed(pid)) {
-    flashAt(center, "Quai " + pid + " fermé — réouverture à venir");
+    flashAt(center, "Quai " + pid + " fermé");
     return;
   }
   selected.target = pid;
@@ -209,7 +246,7 @@ function onPlatformClick(pid) {
 function onTrainClick(t) {
   if (ended) return;
   if (t.freight) {
-    toast("Convoi de fret — passage automatique, sillon prioritaire");
+    toast("Fret — passage automatique prioritaire");
     return;
   }
   // Sélectionnable dès l'approche : on peut préparer l'itinéraire avant l'arrêt
@@ -227,20 +264,20 @@ function onTrainClick(t) {
     selected = t;
     t.el.classList.add("selected");
     refreshEligible();
-    toast(t.id + " : affectation annulée — choisissez un nouveau quai");
+    toast(t.id + " — choisissez un nouveau quai");
     return;
   }
   if (t.state === "dwell" && paths["out:" + t.to + ":" + t.platform]) {
-    toast(t.id + " à quai " + t.platform + " — départ " + fmt(t.dep) + " vers " + PORTALS[t.to].label);
+    toast(t.id + " quai " + t.platform + " — départ " + fmt(t.dep) + " → " + PORTALS[t.to].label);
     return;
   }
   if (t.state === "movingIn" || t.state === "movingOut" || t.state === "movingBack") {
-    toast(t.id + " est en mouvement");
+    toast(t.id + " en mouvement");
     return;
   }
   // Train sur un mauvais quai : le refoulement est automatique
   if (t.state === "dwell" && !paths["out:" + t.to + ":" + t.platform]) {
-    toast(t.id + " est sur un mauvais quai — refoulement automatique en cours");
+    toast(t.id + " — mauvais quai, refoulement en cours");
   }
 }
 board.addEventListener("click", e => {
@@ -262,10 +299,8 @@ function liveDelay() {
 function updateDelay() {
   const d = document.getElementById("delay");
   const v = liveDelay();
-  d.textContent = "retard +" + Math.round(v) + " min";
+  d.textContent = "+" + Math.round(v);
   d.className = v <= 5 ? "" : v <= 10 ? "warn" : "bad";
-  document.getElementById("progress").textContent =
-    trains.filter(t => t.state === "done").length + "/" + trains.length + " trains";
 }
 
 function tick(dtMin) {
@@ -316,7 +351,7 @@ function tick(dtMin) {
             t.state = "movingThrough";
             t.progress = 0;
             gTrains.appendChild(t.el); // entre en gare : calque découpé au tunnel
-            toast("Convoi de fret en transit — quai " + t.plat + " neutralisé");
+            toast("Fret en transit — quai " + t.plat + " neutralisé");
             refreshEligible();
           }
           break;
@@ -357,14 +392,9 @@ function tick(dtMin) {
           t.state = "dwell";
           t.actualArr = gameMin;
           release(t.entryPath);
-          const chip = document.getElementById("depchip-" + t.platform);
-          if (paths["out:" + t.to + ":" + t.platform]) {
-            chip.textContent = "dep " + fmt(t.dep) + " → " + PORTALS[t.to].label;
-            chip.style.fill = DEST_COLOR[t.to];
-          } else {
-            chip.textContent = "✕ " + PORTALS[t.to].label + " inaccessible — refoulement imminent";
-            chip.style.fill = "var(--red)";
-          }
+          // l'heure de départ est déjà portée par le badge au-dessus du train,
+          // et la destination par la pastille colorée du quai : pas de doublon
+          // sous le quai. Un mauvais quai se résout par refoulement + toast.
           refreshEligible();
         }
         // freinage progressif à l'approche du point d'arrêt, en partant
@@ -404,9 +434,7 @@ function tick(dtMin) {
                 t.state = "movingOut";
                 t.progress = 0;
                 SND.depart();
-                document.getElementById("depchip-" + t.platform).textContent = "";
-                toast(t.id + " refoule vers " + PORTALS[t.from].label + " : le quai " +
-                  t.platform + " ne dessert pas " + PORTALS[t.to].label);
+                toast(t.id + " refoule — quai " + t.platform + " ≠ " + PORTALS[t.to].label);
                 refreshEligible();
               }
             } else {
@@ -417,9 +445,7 @@ function tick(dtMin) {
                 t.exitPath = backPath;
                 t.state = "movingBack";
                 t.progress = 1 - t.stopS / paths[backPath].len;
-                document.getElementById("depchip-" + t.platform).textContent = "";
-                toast(t.id + " refoule : le quai " + t.platform + " ne dessert pas " +
-                  PORTALS[t.to].label);
+                toast(t.id + " refoule — quai " + t.platform + " ≠ " + PORTALS[t.to].label);
                 refreshEligible();
               }
             }
@@ -444,7 +470,6 @@ function tick(dtMin) {
             totalDelay += t.depDelay;
             SND.depart();
             updateDelay();
-            document.getElementById("depchip-" + t.platform).textContent = "";
             refreshEligible();
           }
         }
@@ -481,13 +506,16 @@ function tick(dtMin) {
         const path = paths[t.exitPath];
         t.progress += dtMin / (path.dur * slowness(t));
         const tail = (t.cars - 1) * CAR_SPACING;
-        const endP = 1 + tail / path.len;             // dernier wagon hors du gril
-        const goneP = endP + EXIT_RUN / path.len;     // dernier wagon avalé par le tunnel
+        const goneP = 1 + (tail + EXIT_RUN) / path.len; // dernier wagon avalé par le tunnel
         // démarrage progressif depuis l'arrêt
         const effP = easeRun(t.progress / goneP, 0.16, 0) * goneP;
-        if (effP >= endP && activeRoutes[t.exitPath] === t)
-          release(t.exitPath);
         const headS = (1 - effP) * (path.len + (t.backS || 0));
+        // Itinéraire relâché seulement quand le dernier wagon a dégagé la gorge
+        // du portail (s < -PORTAL_CLEAR), pas au simple bord du gril : sinon un
+        // convoi adverse pourrait s'engager nez-à-nez dans la zone de
+        // convergence approche/départ avant que celui-ci l'ait quittée.
+        if (headS + tail < -PORTAL_CLEAR && activeRoutes[t.exitPath] === t)
+          release(t.exitPath);
         // terminé dès que le dernier wagon a réellement quitté la carte
         const offMap = headS + tail < -(DEPART[t.exitTo ?? t.to].len + 20);
         if (t.progress >= goneP || offMap) {
@@ -497,15 +525,18 @@ function tick(dtMin) {
             if (activeRoutes[t.exitPath] === t) release(t.exitPath);
             t.refoul = false; t.exitTo = null; t.exitPath = null;
             t.platform = null; t.target = null; t.actualArr = null;
+            t.validated = false;
             t.qs = null; t.settled = false; t.progress = 0;
             t.backS = 0; t.startS = 0;
             t.el.remove(); t.el = null;
+            if (t.badgeEl) t.badgeEl.remove(); // badge dans son calque à part
             t.carEls = null; t.badgeEl = null; t.headPos = null;
             t.arrEff = gameMin + 1.5;
             t.state = "scheduled";
           } else {
             t.state = "done";
             t.el.remove();
+            if (t.badgeEl) { t.badgeEl.remove(); t.badgeEl = null; }
             const tl = document.getElementById("tl-" + t.id);
             if (tl) { tl.classList.remove("active"); tl.classList.add("done"); }
           }
@@ -513,6 +544,14 @@ function tick(dtMin) {
           // demi-tour compris : au départ, la loco change de bout (changement
           // de cabine) et mène le convoi, en glissant d'abord le long du quai
           placeExit(t, t.exitPath, headS);
+          // « validé » : quand la loco glisse sous le nom de la destination
+          // (et seulement vers une vraie destination, pas un refoulement)
+          if (!t.refoul && !t.validated && t.headPos) {
+            const u = portalUI[t.exitTo ?? t.to];
+            if (u && (u.side === "L" ? t.headPos.x <= u.nameX : t.headPos.x >= u.nameX)) {
+              t.validated = true; validatePortal(t.exitTo ?? t.to);
+            }
+          }
           // la route brille du dernier wagon jusqu'à la sortie (bord de carte)
           if (activeRoutes[t.exitPath] === t) {
             const tailS = headS + tail;
@@ -537,7 +576,9 @@ function tick(dtMin) {
         const h = s0 + easeRun(t.progress / endU, 0.12, 0) * (endU * totalArc - s0);
         if (h - tail > pin.len && activeRoutes[t.entryPath] === t)
           release(t.entryPath);
-        if (h - tail > totalArc && activeRoutes[t.exitPath] === t) {
+        // sortie relâchée seulement quand le dernier wagon a dégagé la gorge
+        // du portail (au-delà de la fin de l'itinéraire + PORTAL_CLEAR)
+        if (h - tail > totalArc + PORTAL_CLEAR && activeRoutes[t.exitPath] === t) {
           release(t.exitPath);
           t.platform = null; // le quai redevient disponible
           refreshEligible();
@@ -548,6 +589,7 @@ function tick(dtMin) {
           if (activeRoutes[t.exitPath] === t) { release(t.exitPath); t.platform = null; }
           t.state = "done";
           t.el.remove();
+          if (t.badgeEl) { t.badgeEl.remove(); t.badgeEl = null; }
           const tl = document.getElementById("tl-" + t.id);
           if (tl) { tl.classList.remove("active"); tl.classList.add("done"); }
         } else {
@@ -589,18 +631,28 @@ function tick(dtMin) {
   updateTimeline();
   updateDelay();
 
+  // retard plafond dépassé : on arrête tout, service interrompu
+  if (!ended && liveDelay() > maxDelay()) { endGame(true); return; }
   if (!ended && trains.every(t => t.state === "done")) endGame();
 }
 
-function endGame() {
+// failed = true : retard plafond dépassé (game over, 0 étoile, rien à débloquer)
+function endGame(failed) {
   ended = true;
-  const d = Math.round(totalDelay);
-  const stars = d <= 5 ? 3 : d <= 10 ? 2 : d <= 15 ? 1 : 0;
-  saveResult(STATION.id, stars, d);
+  // en échec, on affiche le retard « vivant » (celui qui a crevé le plafond),
+  // sinon le retard cumulé réellement encaissé
+  const d = Math.round(failed ? liveDelay() : totalDelay);
+  const stars = failed ? 0 : (d <= 5 ? 3 : d <= 10 ? 2 : d <= 15 ? 1 : 0);
+  if (!failed) saveResult(STATION.id, stars, d); // un échec ne modifie pas le record
+  document.getElementById("end-title").textContent = failed ? "Service interrompu" : "Fin du service";
   document.getElementById("stars").textContent = "★★★".slice(0, stars) + "☆☆☆".slice(0, 3 - stars);
-  document.getElementById("end-delay").textContent =
-    (d === 0 ? "Service parfait — aucun retard." : "Retard cumulé : " + d + " min") +
-    (stars >= 1 && currentIdx + 1 < CATALOG.length ? " — gare suivante débloquée !" : "");
+  // une étoile ne débloque que la gare suivante DU MÊME pays (les autres
+  // pays sont déjà ouverts) ; en fin de pays, on invite à en choisir un autre
+  const nextInCountry = sameCountry(currentIdx, currentIdx + 1);
+  document.getElementById("end-delay").textContent = failed
+    ? "Retard de +" + d + " min — la limite de " + maxDelay() + " min est dépassée."
+    : (d === 0 ? "Service parfait — aucun retard." : "Retard cumulé : " + d + " min") +
+      (stars >= 1 && nextInCountry ? " — gare suivante débloquée !" : "");
   // bilan de la journée
   const pax = trains.filter(t => !t.freight);
   const onTime = pax.filter(t => (t.depDelay || 0) < 1).length;
@@ -616,8 +668,8 @@ function endGame() {
     "Trains à l'heure : " + onTime + "/" + pax.length +
     (worst ? "<br>Pire retard : " + worst.id + " (+" + Math.round(worst.depDelay) + " min)" : "") +
     (inc.length ? "<br>Incidents gérés : " + inc.join(", ") : "");
-  SND.end();
-  const next = currentIdx + 1 < CATALOG.length && isUnlocked(currentIdx + 1);
+  (failed ? SND.incident : SND.end)();
+  const next = !failed && nextInCountry && isUnlocked(currentIdx + 1);
   document.getElementById("btn-next").classList.toggle("hidden", !next);
   document.getElementById("end").classList.remove("hidden");
 }

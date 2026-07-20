@@ -3,7 +3,15 @@
 // Rendu : plan de voies statique, frise chronologique, convois animés,
 // badges, sons et toasts.
 // ------------------------------------------------------------------
-let gTracks, gRoutes, gPlatforms, gPortals, gQueue, gTrains, gFx, gChips;
+let gTracks, gRoutes, gPlatforms, gPortals, gQueue, gTrains, gFx, gBadges;
+let portalUI = {}; // repères de sortie par portail (nom + géométrie) pour l'effet « validé »
+
+// Sur écran tactile, le plan (viewBox 1400×760) est fortement réduit pour
+// tenir en paysage : textes et convois deviennent minuscules. On grossit donc
+// d'un même facteur les éléments-clés — noms de villes, badges d'heure,
+// abréviations sur les trains et hauteur des wagons — sans toucher à
+// l'espacement horizontal (CAR_SPACING), qui régit la physique du gril.
+const UIK = (window.matchMedia && window.matchMedia("(pointer: coarse)").matches) ? 1.5 : 1;
 
 function el(tag, attrs, parent) {
   const e = document.createElementNS(SVGNS, tag);
@@ -14,6 +22,23 @@ function el(tag, attrs, parent) {
 
 function drawStatic() {
   board.innerHTML = "";
+  // Gare terminus : tous les portails du même côté, le réseau n'occupe qu'un
+  // flanc. On cadre le viewBox au plus près du contenu réel (portails, quais,
+  // voie d'approche) pour agrandir le faisceau et occuper toute la place ;
+  // "meet" recentre dans le cadre. Aucune coordonnée du réseau n'est touchée —
+  // seul le zoom d'affichage change, donc la difficulté reste identique.
+  const sides = new Set(Object.values(PORTALS).map(p => p.side));
+  const only = sides.size === 1 ? [...sides][0] : null;
+  if (only) {
+    const cys = [...PLATFORMS.map(q => q.cy), ...Object.values(PORTALS).map(p => p.cy)];
+    const yTop = Math.min(...cys) - 85;   // marge : badges d'heure (×1.5 sur mobile) + noms
+    const yBot = Math.max(...cys) + 58;   // marge : voie d'approche (cy+36) + wagon
+    const xL = only === "L" ? 8 : PLAT_X1 - 55;
+    const xR = only === "L" ? PLAT_X2 + 55 : 1392;
+    board.setAttribute("viewBox", `${xL} ${yTop} ${xR - xL} ${yBot - yTop}`);
+  } else {
+    board.setAttribute("viewBox", "0 0 1400 760");
+  }
   const defs = el("defs", {}, board);
   const pat = el("pattern", {
     id: "hatch", width: 8, height: 8,
@@ -21,16 +46,26 @@ function drawStatic() {
   }, defs);
   el("rect", { width: 8, height: 8, fill: "rgba(239,68,68,.08)" }, pat);
   el("line", { x1: 0, y1: 0, x2: 0, y2: 8, stroke: "var(--red)", "stroke-width": 2, opacity: 0.5 }, pat);
+  // Fondus de bord : les convois se dissolvent dans la couleur du fond en
+  // entrant/sortant, au lieu d'être tranchés net par le bord du plan.
+  const fadeL = el("linearGradient", { id: "fadeL", x1: 0, y1: 0, x2: 1, y2: 0 }, defs);
+  el("stop", { offset: "0%",   "stop-color": "#0E1420", "stop-opacity": 1 }, fadeL);
+  el("stop", { offset: "100%", "stop-color": "#0E1420", "stop-opacity": 0 }, fadeL);
+  const fadeR = el("linearGradient", { id: "fadeR", x1: 0, y1: 0, x2: 1, y2: 0 }, defs);
+  el("stop", { offset: "0%",   "stop-color": "#0E1420", "stop-opacity": 0 }, fadeR);
+  el("stop", { offset: "100%", "stop-color": "#0E1420", "stop-opacity": 1 }, fadeR);
   // Les trains entrent et sortent par les bords de la carte : le viewBox
   // les découpe naturellement, wagon par wagon
   gTracks    = el("g", {}, board);
   gPlatforms = el("g", {}, board);
   gRoutes    = el("g", {}, board);
-  gChips     = el("g", {}, board);
   gQueue     = el("g", {}, board); // voie d'approche
   gTrains    = el("g", {}, board);
   gPortals   = el("g", {}, board);
   gFx        = el("g", {}, board);
+  // Calque tout en haut : les badges d'heure flottent au-dessus de tout,
+  // libellés de portail compris (ils se positionnent en coordonnées absolues).
+  gBadges    = el("g", {}, board);
 
   // Maillage teinté : chaque voie porte discrètement la couleur de sa ville
   // — on distingue d'un coup d'œil à quel portail appartient chaque courbe
@@ -66,22 +101,37 @@ function drawStatic() {
       else                { dot.setAttribute("cx", PLAT_X2 - 16 - ri * 16); ri++; }
       dot.setAttribute("cy", q.cy - PLAT_H / 2 + 9);
     }
-
-    const chip = el("text", {
-      x: (PLAT_X1 + PLAT_X2) / 2, y: q.cy + PLAT_H / 2 + 14,
-      class: "chip", id: "depchip-" + q.id, "text-anchor": "middle", fill: "var(--muted)"
-    }, gChips);
-    chip.textContent = "";
   }
 
-  // Portails : les voies filent jusqu'au bord de la carte, où les trains
-  // apparaissent et disparaissent wagon par wagon. Seul le nom de la
-  // destination marque l'endroit.
+  // Bandeau de gauche (gare terminus) : masque opaque couleur du fond qui
+  // couvre l'amorce hors-champ des voies. Les convois émergent de derrière
+  // — « depuis la ville » — et les noms s'y posent, seuls, tout à gauche.
+  // PANEL_W = bord intérieur du bandeau (là où les voies redeviennent visibles).
+  // Le rectangle déborde largement vers l'extérieur pour couvrir aussi la bande
+  // de letterbox : le viewBox recadré laisserait sinon voir l'amorce des voies.
+  const PANEL_W = 180;
+  if (only === "L")      el("rect", { x: -1000, y: 0, width: 1000 + PANEL_W, height: 760, fill: "var(--bg)" }, gPortals);
+  else if (only === "R") el("rect", { x: 1400 - PANEL_W, y: 0, width: 1000 + PANEL_W, height: 760, fill: "var(--bg)" }, gPortals);
+
+  // Fondus de bord — posés au-dessus des convois mais sous les noms : les
+  // wagons se dissolvent dans le fond en entrant/sortant, plutôt que d'être
+  // tranchés net. En terminus, un seul fondu adoucit le bord intérieur du
+  // bandeau ; sinon, un fondu à chaque bord ouvert.
+  const FADE = 96;
+  if (only === "L")      el("rect", { x: PANEL_W, y: 0, width: FADE, height: 760, fill: "url(#fadeL)", "pointer-events": "none" }, gPortals);
+  else if (only === "R") el("rect", { x: 1400 - PANEL_W - FADE, y: 0, width: FADE, height: 760, fill: "url(#fadeR)", "pointer-events": "none" }, gPortals);
+  else {
+    el("rect", { x: 0, y: 0, width: FADE, height: 760, fill: "url(#fadeL)", "pointer-events": "none" }, gPortals);
+    el("rect", { x: 1400 - FADE, y: 0, width: FADE, height: 760, fill: "url(#fadeR)", "pointer-events": "none" }, gPortals);
+  }
+
+  // Portails : les voies filent jusqu'au bord de la carte, où les convois se
+  // dissolvent. Le nom de la destination, en trait léger, se pose juste
+  // au-dessus de la voie — le train qui sort glisse dessous (voir validatePortal).
+  portalUI = {};
   for (const [name, p] of Object.entries(PORTALS)) {
     const c = DEST_COLOR[name];
     const edge = p.side === "L" ? -10 : 1410;   // point de fuite des voies
-    // voie principale (départs) et voie d'approche (file d'attente),
-    // teintées à la couleur de la ville comme le reste de son faisceau
     const lnOut = el("line", { x1: edge, y1: p.cy, x2: p.x, y2: p.cy, class: "track" }, gTracks);
     lnOut.style.stroke = c; lnOut.style.opacity = "0.30";
     const lnIn = el("path", { d: pathD(APPROACH[name].pts), class: "track" }, gTracks);
@@ -90,18 +140,25 @@ function drawStatic() {
     const cvg = el("circle", { cx: p.x, cy: p.cy, r: 5, "pointer-events": "none" }, gTracks);
     cvg.style.fill = c; cvg.style.opacity = "0.85";
     const grp = el("g", { style: "cursor:pointer" }, gPortals);
-    // zone de clic généreuse au bord de la carte
+    // terminus : le nom se pose sur le bandeau, à hauteur de sa voie (cy).
+    // Ailleurs : au ras du bord, juste au-dessus de la voie, là où le convoi
+    // se dissout — il glisse dessous en sortant.
+    const term = only === p.side;
+    const tw = (22 + p.label.length * 10) * UIK;
+    const nameY = term ? p.cy : p.cy - 34 * UIK;
+    const nameCx = p.side === "L" ? (term ? 14 : 12) + tw / 2
+                                  : (term ? 1386 : 1388) - tw / 2;
+    // zone de clic généreuse (sélectionne le 1er train en file du portail)
     el("rect", {
-      x: p.side === "L" ? 0 : 1340, y: p.cy - 84, width: 60, height: 154,
+      x: p.side === "L" ? 0 : (term ? 1400 - PANEL_W : 1340),
+      y: nameY - (term ? 26 : 30),
+      width: term ? PANEL_W : 96, height: term ? 52 : 88,
       fill: "transparent"
     }, grp);
-    const tw = 22 + p.label.length * 10;
-    const tx = p.side === "L" ? 8 : 1392 - tw;
-    const tag = el("rect", { x: tx, y: p.cy - 80, width: tw, height: 30, rx: 8 }, grp);
-    tag.style.fill = "#141b2c"; tag.style.stroke = c; tag.style.strokeWidth = "1.5";
-    const tt = el("text", { x: tx + tw / 2, y: p.cy - 65, class: "portal-tag-text" }, grp);
-    tt.textContent = p.label; tt.style.fill = c;
-    // taper le portail = sélectionner le premier train de sa file d'attente
+    const tt = el("text", { x: nameCx, y: nameY, class: "portal-name" }, grp);
+    tt.textContent = p.label;
+    tt.style.fill = c; tt.style.color = c; // color : currentColor du halo de validation
+    tt.style.fontSize = (15 * UIK) + "px";
     grp.addEventListener("click", ev => {
       ev.stopPropagation();
       const here = o => (o.state === "waiting" || o.state === "approaching") &&
@@ -111,7 +168,31 @@ function drawStatic() {
       if (t) onTrainClick(t);
       else toast("Aucun train en attente à " + p.label);
     });
+    // repère de sortie pour l'effet « validé » : nom + géométrie de la voie
+    portalUI[name] = { text: tt, cy: p.cy, side: p.side, px: p.x, edge, nameX: nameCx };
   }
+}
+
+// « Validé » : quand un convoi sort et glisse sous le nom de sa destination,
+// le nom s'allume à pleine couleur et un fin liséré file le long de la voie
+// vers le bord, puis s'estompe.
+function validatePortal(name) {
+  const u = portalUI && portalUI[name];
+  if (!u) return;
+  u.text.classList.add("valid");
+  clearTimeout(u._t); u._t = setTimeout(() => u.text.classList.remove("valid"), 900);
+  const c = DEST_COLOR[name];
+  const seg = 64, dir = u.side === "L" ? -1 : 1;
+  const ln = el("line", {
+    x1: u.px, y1: u.cy, x2: u.px + dir * seg, y2: u.cy, class: "portal-sweep"
+  }, gFx);
+  ln.style.stroke = c; ln.style.strokeWidth = 4; ln.style.strokeLinecap = "round";
+  ln.style.filter = "drop-shadow(0 0 6px " + c + ")";
+  // reflow puis animation : le liséré file vers le bord en s'effaçant
+  ln.getBoundingClientRect();
+  ln.style.transform = "translateX(" + ((u.edge - u.px) + "px") + ")";
+  ln.style.opacity = "0";
+  setTimeout(() => ln.remove(), 650);
 }
 
 // Frise glissante : fenêtre de -4 à +19 minutes autour de l'heure courante.
@@ -119,6 +200,7 @@ function drawStatic() {
 const TL_PAST = 4, TL_SPAN = 23;
 function buildTimeline() {
   const tl = document.getElementById("timeline");
+  if (!tl) return; // frise supprimée du HUD : plus rien à construire
   tl.innerHTML = "";
   const now = document.createElement("div");
   now.className = "tl-now";
@@ -151,7 +233,7 @@ function updateTimeline() {
 // Volume bas — ambiance de poste d'aiguillage, pas de fanfare.
 // ------------------------------------------------------------------
 let audioCtx = null;
-let muted = localStorage.getItem("station-muted") === "1";
+let muted = getMuted(); // hydraté au démarrage depuis store.js (loadStore)
 function ensureAudio() {
   if (audioCtx) { if (audioCtx.state === "suspended") audioCtx.resume(); return; }
   try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
@@ -176,10 +258,13 @@ const SND = {
   end()      { playTone(659, 0, 0.12); playTone(830, 0.13, 0.12); playTone(988, 0.26, 0.3); }
 };
 
-function toast(msg) {
-  const t = document.getElementById("toast");
-  t.textContent = msg; t.classList.add("show");
-  clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove("show"), 2400);
+// Tous les messages passent par la bande d'info réservée en bas (une seule
+// ligne, jamais par-dessus le plan). Le texte apparaît puis s'efface ; la
+// bande, elle, reste toujours là.
+function toast(msg, ms) {
+  const s = document.getElementById("infobar-msg");
+  s.textContent = msg; s.classList.add("show");
+  clearTimeout(s._h); s._h = setTimeout(() => s.classList.remove("show"), ms || 2600);
 }
 function flashAt(pt, msg) {
   const c = el("circle", { cx: pt.x, cy: pt.y, r: 6, class: "conflict-ring" }, gFx);
@@ -200,22 +285,31 @@ function trainNode(t) {
     const car = el("g", {}, g);
     // zone de clic généreuse (invisible) : indispensable au doigt
     el("rect", { x: -CAR_SPACING / 2 - 4, y: -26, width: CAR_SPACING + 8, height: 52, fill: "transparent" }, car);
+    // hauteur (verticale) grossie sur mobile ; la longueur CAR_LEN reste fixe
+    // pour ne pas empiéter sur l'espacement (physique du gril)
+    const bh = (i === 0 ? 20 : 16) * UIK;
     const body = el("rect", {
-      x: -CAR_LEN / 2, y: i === 0 ? -10 : -8,
-      width: CAR_LEN, height: i === 0 ? 20 : 16, rx: i === 0 ? 8 : 5,
+      x: -CAR_LEN / 2, y: -bh / 2,
+      width: CAR_LEN, height: bh, rx: (i === 0 ? 8 : 5) * UIK,
       class: "train-body"
     }, car);
     body.style.fill = c; body.style.color = c;
     if (i > 0) body.style.opacity = "0.72";
-    if (i === 0) el("text", { x: 0, y: 0.5, class: "train-label" }, car)
-      .textContent = t.freight ? "F" : DEST_ABBR[t.to];
+    if (i === 0) {
+      const lbl = el("text", { x: 0, y: 0.5, class: "train-label" }, car);
+      lbl.textContent = t.freight ? "F" : DEST_ABBR[t.to];
+      lbl.style.fontSize = (12 * UIK) + "px";
+    }
     t.carEls.push(car);
   }
-  // Badge au-dessus de la loco : heure de départ, puis retard qui file en rouge
-  const badge = el("g", { class: "badge", visibility: "hidden" }, g);
-  t.badgeRect = el("rect", { x: -36, y: -11, width: 72, height: 20, rx: 6 }, badge);
+  // Badge au-dessus de la loco : heure de départ, puis retard qui file en rouge.
+  // Placé dans le calque du dessus (gBadges) pour toujours passer au-dessus des
+  // libellés de portail ; il suit le train par transform en coordonnées absolues.
+  const badge = el("g", { class: "badge", visibility: "hidden" }, gBadges);
+  t.badgeRect = el("rect", { x: -36 * UIK, y: -11 * UIK, width: 72 * UIK, height: 20 * UIK, rx: 6 * UIK }, badge);
   t.badgeRect.style.fill = "rgba(14,20,32,.88)";
-  t.badgeText = el("text", { y: 0.5 }, badge);
+  t.badgeText = el("text", { y: 0.5 * UIK }, badge);
+  t.badgeText.style.fontSize = (12 * UIK) + "px";
   t.badgeEl = badge;
   g.addEventListener("click", ev => { ev.stopPropagation(); onTrainClick(t); });
   return g;
@@ -299,7 +393,7 @@ function placeQueue(t, dtMin) {
     const occ = occupiedSpan(o, o.entryPath);
     if (occ) sTarget = Math.min(sTarget, ap.len + occ.lo - 44);
   }
-  t.badgeLift = idx % 2 ? 24 : 0; // badges en quinconce dans la file
+  t.badgeLift = idx % 2 ? 24 * UIK : 0; // badges en quinconce dans la file
   if (t.qs == null) {
     t.qs = Math.min(-20, sTarget - 40); // caché hors carte
     t.settled = false;
@@ -365,5 +459,5 @@ function updateBadge(t) {
   t.badgeEl.setAttribute("visibility", "visible");
   t.badgeEl.setAttribute("transform",
     "translate(" + t.headPos.x.toFixed(1) + " " +
-    (t.headPos.y - 30 - (t.badgeLift || 0)).toFixed(1) + ")");
+    (t.headPos.y - 30 * UIK - (t.badgeLift || 0)).toFixed(1) + ")");
 }

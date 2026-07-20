@@ -1,0 +1,34 @@
+{
+  "id": "bruxelles-nord",
+  "name": "Bruxelles-Nord",
+  "tagline": "Bruxelles-Nord — 8 quais sur la Jonction : le débit ne retombe jamais. Second boss.",
+  "difficulty": 5,
+  "country": "🇧🇪 Belgique",
+  "desc": "Le verrou nord de la Jonction : huit quais, tout le trafic du royaume qui s'engouffre entre Anvers, Gand, Malines et le sud wallon. Aussi impitoyable que le Midi — le second boss de la région.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 },
+    { "id": 5 }, { "id": 6 }, { "id": 7 }, { "id": 8 }
+  ],
+  "portals": {
+    "ANVERS":     { "side": "L", "color": "#f2588f", "abbr": "AN" },
+    "MALINES":    { "side": "L", "color": "#f5b23c", "abbr": "MA" },
+    "GAND":       { "side": "L", "color": "#2dd4bf", "abbr": "G" },
+    "LOUVAIN":    { "side": "R", "color": "#a78bfa", "abbr": "LV" },
+    "NAMUR":      { "side": "R", "color": "#60a5fa", "abbr": "N" },
+    "LUXEMBOURG": { "side": "R", "color": "#4ade80", "abbr": "LX" }
+  },
+  "links": {
+    "ANVERS": [1, 2, 4, 5],
+    "MALINES": [3, 4, 5],
+    "GAND": [6, 7, 8],
+    "LOUVAIN": [1, 2, 3, 7, 8],
+    "NAMUR": [4, 5, 6],
+    "LUXEMBOURG": [5, 6, 7, 8]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 18, "nMax": 22, "gapMin": 1.4, "gapMax": 2.4,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6, 7],
+    "freightRate": 0.35, "quietRate": 0.1
+  }
+}

@@ -1,6 +1,8 @@
 {
   "id": "paris-nord",
   "name": "Paris Gare du Nord",
+  "tagline": "Paris-Nord — 8 quais en impasse, Eurostar voies 1-2. Boss final.",
+  "difficulty": 5,
   "country": "🇫🇷 France",
   "desc": "La plus grande gare d'Europe : huit quais en impasse, l'Eurostar pour Londres sur les voies 1-2, et un débit qui ne pardonne aucune hésitation. Le boss final — pour l'instant.",
   "platforms": [

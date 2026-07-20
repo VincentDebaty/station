@@ -1,6 +1,8 @@
 {
   "id": "charleroi",
   "name": "Charleroi-Central",
+  "tagline": "Charleroi — 4 quais nerveux, trains courts, aucune erreur permise.",
+  "difficulty": 1,
   "country": "🇧🇪 Belgique",
   "desc": "La gare nerveuse du Pays Noir : quatre quais seulement, des trains courts qui s'enchaînent vers Bruxelles, Namur, Couvin et Erquelinnes — chaque erreur se paie cash.",
   "platforms": [

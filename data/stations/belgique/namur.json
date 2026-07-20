@@ -1,6 +1,8 @@
 {
   "id": "namur",
   "name": "Namur",
+  "tagline": "Namur — carrefour à 6 directions, quai 6 en impasse pour rebrousser.",
+  "difficulty": 3,
   "country": "🇧🇪 Belgique",
   "desc": "Le carrefour wallon : six directions réelles, et le quai 6 en impasse — réservé au côté ouest, parfait pour les Bruxelles–Dinant qui rebroussent ici comme dans la réalité.",
   "platforms": [

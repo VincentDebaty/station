@@ -16,7 +16,11 @@ function simulateDay(schedule, assign, dt, events) {
   const closures = (events || []).filter(ev => ev.type === "closure");
   const sims = schedule.map((s, i) => ({
     ...s, plat: assign[i], state: "scheduled", elapsed: 0,
-    actualArr: null, stopP: 1, entryPath: null, exitPath: null, depReal: null
+    actualArr: null, stopP: 1, entryPath: null, exitPath: null, depReal: null,
+    // occStart/occEnd : fenêtre où le train occupe physiquement son quai
+    // (de l'engagement jusqu'à la sortie complète) — sert à placer les
+    // fermetures sur un quai réellement libre
+    occStart: null, occEnd: null
   }));
   const active = {};
   const span = (t, pathId) => {
@@ -76,7 +80,7 @@ function simulateDay(schedule, assign, dt, events) {
             if (free(pin) && free(pout)) {
               active[pin] = t; active[pout] = t;
               t.entryPath = pin; t.exitPath = pout;
-              t.state = "movingThrough"; t.elapsed = 0;
+              t.state = "movingThrough"; t.elapsed = 0; t.occStart = now;
             }
             break;
           }
@@ -84,7 +88,7 @@ function simulateDay(schedule, assign, dt, events) {
           if (free(pid)) {
             active[pid] = t; t.entryPath = pid;
             t.stopP = 1; // tous les trains tirent jusqu'en tête de quai
-            t.state = "movingIn"; t.elapsed = 0;
+            t.state = "movingIn"; t.elapsed = 0; t.occStart = now;
           }
           break;
         }
@@ -96,7 +100,7 @@ function simulateDay(schedule, assign, dt, events) {
           const h = totalArc * t.elapsed / durTot;
           const tail = (t.cars - 1) * CAR_SPACING;
           if (h - tail > pin.len && active[t.entryPath] === t) delete active[t.entryPath];
-          if (h - tail > totalArc) { t.state = "done"; delete active[t.exitPath]; }
+          if (h - tail > totalArc) { t.state = "done"; delete active[t.exitPath]; t.occEnd = now; }
           break;
         }
         case "movingIn":
@@ -120,7 +124,7 @@ function simulateDay(schedule, assign, dt, events) {
           const path = paths[t.exitPath];
           const endP = 1 + ((t.cars - 1) * CAR_SPACING) / path.len;
           if (t.elapsed >= path.dur * slowness(t) * endP) {
-            t.state = "done"; delete active[t.exitPath];
+            t.state = "done"; delete active[t.exitPath]; t.occEnd = now;
           }
           break;
         }
@@ -185,6 +189,9 @@ function generateOnce() {
   const events = [];
   const hit = new Set(); // un train ne cumule pas deux événements
   const nEv = Math.random() < (GEN.quietRate ?? 0.2) ? 0 : pick([1, 1, 2]);
+  // Les retards sont posés tout de suite ; les fermetures sont DIFFÉRÉES : on
+  // ne les place qu'après le calibrage, sur un quai réellement libre (voir 4).
+  let wantClosures = 0;
   for (let e = 0; e < nEv; e++) {
     const type = pick(["late", "closure"]);
     if (type === "late") {
@@ -195,12 +202,7 @@ function generateOnce() {
       s.arrEff = s.arr + delay;
       events.push({ type, trainId: s.id, delay, revealAt: s.arr - 1 });
     } else {
-      const free = PLATFORMS.filter(q =>
-        !events.some(ev => ev.type === "closure" && ev.plat === q.id));
-      const plat = pick(free).id;
-      const start = Math.round(rnd(6, Math.max(10, lastArr - 10)));
-      const end = start + Math.round(rnd(4, 7));
-      events.push({ type, plat, start, end });
+      wantClosures++;
     }
   }
   // 2) affectation gloutonne : pour chaque train, le quai qui le fait partir au plus tôt
@@ -236,6 +238,52 @@ function generateOnce() {
   }
   // le quai de calibrage : la solution « zéro retard » connue du générateur
   for (let i = 0; i < draft.length; i++) draft[i].hint = assign[i];
+
+  // 4) fermetures : on ne ferme JAMAIS un quai occupé. On relève l'occupation
+  //    de chaque quai dans la solution de calibrage, puis on place chaque
+  //    fermeture dans une fenêtre où le quai est réellement libre. Comme cette
+  //    fenêtre n'entrave aucun mouvement de la solution, le zéro reste garanti.
+  if (wantClosures > 0) {
+    const horizon = Math.max(...draft.map(s => Math.max(s.arr, s.dep))) + 60;
+    res = simulateDay(draft, assign, 0.01, events);
+    const busy = {}; // quai -> intervalles [début, fin] d'occupation
+    for (const q of PLATFORMS) busy[q.id] = [];
+    const M = 0.5; // marge autour de l'occupation (jitter de simulation)
+    for (const s of res) {
+      if (s.occStart == null) continue;
+      busy[s.plat].push([s.occStart - M, (s.occEnd == null ? horizon : s.occEnd) + M]);
+    }
+    const lo = 6, hi = Math.max(10, lastArr - 10), placed = [];
+    for (let c = 0; c < wantClosures; c++) {
+      const dur = Math.round(rnd(4, 7));
+      // fenêtres libres candidates : trous entre les intervalles occupés
+      // (fermetures déjà posées comprises) assez larges pour dur, et dont le
+      // début autorise un démarrage dans [lo, hi]
+      const cands = [];
+      const addWindow = (q, from, to) => {
+        // début possible ∈ [from, min(hi, to - dur)]
+        const sMax = Math.min(hi, to - dur);
+        if (sMax >= from) cands.push({ plat: q, from, sMax });
+      };
+      for (const q of PLATFORMS) {
+        const iv = busy[q.id].concat(
+          placed.filter(p => p.plat === q.id).map(p => [p.start, p.end]))
+          .slice().sort((a, b) => a[0] - b[0]);
+        let t = lo;
+        for (const [a, b] of iv) {
+          if (a > t) addWindow(q.id, t, a);
+          t = Math.max(t, b);
+          if (t > hi) break;
+        }
+        if (t <= hi) addWindow(q.id, t, hi + dur); // trou final, ouvert à droite
+      }
+      if (!cands.length) break; // aucun quai libre assez longtemps : on renonce
+      const w = pick(cands);
+      const start = Math.round(rnd(w.from, w.sMax));
+      placed.push({ plat: w.plat, start, end: start + dur });
+    }
+    for (const p of placed) events.push({ type: "closure", plat: p.plat, start: p.start, end: p.end });
+  }
   return { schedule: draft, events };
 }
 

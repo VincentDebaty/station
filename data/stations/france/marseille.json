@@ -1,6 +1,8 @@
 {
   "id": "marseille",
   "name": "Marseille Saint-Charles",
+  "tagline": "Marseille — terminus méditerranéen : longues rames, peu de place.",
+  "difficulty": 2,
   "country": "🇫🇷 France",
   "desc": "Le terminus de la Méditerranée : six quais face au grand escalier, cinq directions, et des rames longues qui manœuvrent dans un mouchoir de poche.",
   "platforms": [
