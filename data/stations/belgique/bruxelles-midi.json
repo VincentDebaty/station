@@ -1,0 +1,32 @@
+{
+  "id": "bruxelles-midi",
+  "name": "Bruxelles-Midi",
+  "country": "🇧🇪 Belgique",
+  "desc": "La plus grande gare du pays : huit quais, six directions dont Paris, un trafic qui ne pardonne rien. Le boss de la région — bonne chance, aiguilleur.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 },
+    { "id": 5 }, { "id": 6 }, { "id": 7 }, { "id": 8 }
+  ],
+  "portals": {
+    "GAND":   { "side": "L", "color": "#f5b23c", "abbr": "G" },
+    "MONS":   { "side": "L", "color": "#4ade80", "abbr": "M" },
+    "PARIS":  { "side": "L", "color": "#f2588f", "abbr": "P" },
+    "ANVERS": { "side": "R", "color": "#2dd4bf", "abbr": "AN" },
+    "NAMUR":  { "side": "R", "color": "#60a5fa", "abbr": "N" },
+    "LIEGE":  { "side": "R", "color": "#a78bfa", "abbr": "LG", "label": "LIÈGE" }
+  },
+  "links": {
+    "GAND": [1, 2, 4, 5],
+    "MONS": [3, 4, 5],
+    "PARIS": [6, 7, 8],
+    "ANVERS": [1, 2, 3, 7, 8],
+    "NAMUR": [4, 5, 6],
+    "LIEGE": [5, 6, 7, 8]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 18, "nMax": 22, "gapMin": 1.4, "gapMax": 2.4,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6, 7],
+    "freightRate": 0.35, "quietRate": 0.1
+  }
+}

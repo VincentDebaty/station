@@ -1,0 +1,28 @@
+{
+  "id": "lille",
+  "name": "Lille-Flandres",
+  "country": "🇫🇷 France",
+  "desc": "Premier terminus français : quatre directions, six quais à heurtoir et la gorge unique des gares en cul-de-sac. Tout le monde rebrousse — à vous d'orchestrer le ballet.",
+  "platforms": [
+    { "id": 1, "deadEnd": true }, { "id": 2, "deadEnd": true }, { "id": 3, "deadEnd": true },
+    { "id": 4, "deadEnd": true }, { "id": 5, "deadEnd": true }, { "id": 6, "deadEnd": true }
+  ],
+  "portals": {
+    "PARIS":     { "side": "L", "color": "#f2588f", "abbr": "P" },
+    "BRUXELLES": { "side": "L", "color": "#2dd4bf", "abbr": "B" },
+    "DOUAI":     { "side": "L", "color": "#f5b23c", "abbr": "D" },
+    "DUNKERQUE": { "side": "L", "color": "#60a5fa", "abbr": "DK" }
+  },
+  "links": {
+    "PARIS": [1, 2, 3, 4],
+    "BRUXELLES": [2, 3, 4, 5],
+    "DOUAI": [3, 4, 5, 6],
+    "DUNKERQUE": [1, 2, 5, 6]
+  },
+  "sameSidePairs": "all",
+  "gen": {
+    "nMin": 11, "nMax": 14, "gapMin": 2.0, "gapMax": 3.4,
+    "cars": [2, 2, 3, 3, 4, 4, 5],
+    "freightRate": 0, "quietRate": 0.25
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "id": "strasbourg",
+  "name": "Strasbourg",
+  "country": "🇫🇷 France",
+  "desc": "La porte du Rhin : cinq directions dont l'Allemagne, et le grand corridor fret rhénan qui coupe la gare sans prévenir. Les convois y sont longs, très longs.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
+  ],
+  "portals": {
+    "PARIS":     { "side": "L", "color": "#f2588f", "abbr": "P" },
+    "METZ":      { "side": "L", "color": "#4ade80", "abbr": "MZ" },
+    "OFFENBURG": { "side": "R", "color": "#f5b23c", "abbr": "OF" },
+    "BALE":      { "side": "R", "color": "#60a5fa", "abbr": "BA", "label": "BÂLE" },
+    "COLMAR":    { "side": "R", "color": "#a78bfa", "abbr": "CO" }
+  },
+  "links": {
+    "PARIS": [1, 2, 3, 4],
+    "METZ": [3, 4, 5],
+    "OFFENBURG": [1, 2, 3],
+    "BALE": [2, 3, 4],
+    "COLMAR": [4, 5]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 13, "nMax": 16, "gapMin": 1.8, "gapMax": 3.0,
+    "cars": [2, 3, 3, 4, 4, 5, 6, 7, 7],
+    "freightRate": 0.75, "quietRate": 0.15
+  }
+}

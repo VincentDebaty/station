@@ -1,0 +1,12 @@
+[
+  {
+    "country": "belgique",
+    "label": "🇧🇪 Belgique",
+    "stations": ["namur", "charleroi", "liege", "anvers", "bruxelles-midi"]
+  },
+  {
+    "country": "france",
+    "label": "🇫🇷 France",
+    "stations": ["lille", "lyon", "strasbourg", "marseille", "paris-nord"]
+  }
+]

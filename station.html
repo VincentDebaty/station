@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Station — Le poste d'aiguillage</title>
+<link rel="stylesheet" href="css/station.css">
+</head>
+<body>
+<div id="topbar">
+  <button class="btn" id="btn-map" title="Carte des gares">🗺</button>
+  <div id="clock">07:00</div>
+  <div id="station-name"></div>
+  <div id="progress"></div>
+  <div id="timeline"></div>
+  <button class="btn" id="btn-pause">⏸</button>
+  <button class="btn speed active" data-s="1">1x</button>
+  <button class="btn speed" data-s="2">2x</button>
+  <button class="btn speed" data-s="4">4x</button>
+  <button class="btn" id="btn-reset" title="Recommencer">⟳</button>
+  <button class="btn" id="btn-mute" title="Sons">🔊</button>
+</div>
+<div id="board-wrap">
+  <svg id="board" viewBox="0 0 1400 760" preserveAspectRatio="xMidYMid meet"></svg>
+  <div id="delay">retard +0 min</div>
+  <div id="toast"></div>
+  <div class="overlay hidden" id="intro">
+    <div class="card">
+      <h1 id="intro-title"></h1>
+      <p id="intro-desc" style="color:var(--text)"></p>
+      <p><b>Votre seul geste :</b> touchez un train qui s'annonce, puis le quai où il doit entrer — les pastilles colorées indiquent les liaisons de chaque quai. Le train entre dès que la voie est libre, marque un arrêt d'au moins 2 minutes, puis repart seul à l'heure prévue.</p>
+      <p><b>Les wagons comptent :</b> plus le convoi est long, plus il est lent et plus il bloque les voies longtemps. Gare aux imprévus : retards annoncés, quais fermés, frets en transit.</p>
+      <p><b>Objectif :</b> chaque train doit repartir à l'heure affichée au-dessus de lui. Le zéro retard est toujours possible. Barème : ≤ 5 min → ★★★, ≤ 10 → ★★, ≤ 15 → ★ — une étoile débloque la gare suivante.</p>
+      <button class="btn" id="btn-start">Prendre le service</button>
+    </div>
+  </div>
+  <div class="overlay hidden" id="end">
+    <div class="card">
+      <h1>Fin du service</h1>
+      <div id="stars"></div>
+      <div id="end-delay" style="color:var(--muted);font-size:17px;margin-bottom:6px;"></div>
+      <div id="end-stats" style="color:var(--muted);font-size:14px;line-height:1.8;margin-bottom:10px;font-family:ui-monospace,Menlo,monospace;"></div>
+      <div style="display:flex;gap:10px;justify-content:center;">
+        <button class="btn" id="btn-replay">Rejouer</button>
+        <button class="btn hidden" id="btn-next">Gare suivante →</button>
+        <button class="btn" id="btn-end-map">🗺 Carte</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div id="hub">
+  <div id="hub-inner">
+    <h1 class="hub-title">STATION</h1>
+    <div class="hub-sub">Le poste d'aiguillage — un service parfait dans chaque gare</div>
+    <div id="hub-map"></div>
+  </div>
+</div>
+
+<!-- Ordre de chargement important : catalogue → moteur → horaire → rendu → jeu → hub → démarrage -->
+<script src="js/catalog.js"></script>
+<script src="js/engine.js"></script>
+<script src="js/schedule.js"></script>
+<script src="js/render.js"></script>
+<script src="js/game.js"></script>
+<script src="js/hub.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>

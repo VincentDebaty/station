@@ -1,0 +1,32 @@
+{
+  "id": "namur",
+  "name": "Namur",
+  "country": "🇧🇪 Belgique",
+  "desc": "Le carrefour wallon : six directions réelles, et le quai 6 en impasse — réservé au côté ouest, parfait pour les Bruxelles–Dinant qui rebroussent ici comme dans la réalité.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },
+    { "id": 6, "deadEnd": true }
+  ],
+  "portals": {
+    "BRUXELLES":  { "side": "L", "color": "#2dd4bf", "abbr": "B" },
+    "CHARLEROI":  { "side": "L", "color": "#f5b23c", "abbr": "C" },
+    "DINANT":     { "side": "L", "color": "#4ade80", "abbr": "D" },
+    "LIEGE":      { "side": "R", "color": "#f2588f", "abbr": "LG", "label": "LIÈGE" },
+    "LUXEMBOURG": { "side": "R", "color": "#a78bfa", "abbr": "LX" },
+    "ARLON":      { "side": "R", "color": "#60a5fa", "abbr": "A" }
+  },
+  "links": {
+    "BRUXELLES": [1, 2, 3, 6],
+    "CHARLEROI": [2, 3, 4, 6],
+    "DINANT": [3, 4, 5, 6],
+    "LIEGE": [1, 2, 3],
+    "LUXEMBOURG": [2, 3, 4],
+    "ARLON": [3, 4, 5]
+  },
+  "sameSidePairs": [["BRUXELLES", "DINANT"], ["DINANT", "BRUXELLES"]],
+  "gen": {
+    "nMin": 14, "nMax": 17, "gapMin": 1.8, "gapMax": 3.2,
+    "cars": [1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 7],
+    "freightRate": 0.4, "quietRate": 0.2
+  }
+}

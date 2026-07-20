@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gare Centrale — prototype v2</title>
+<style>
+  :root {
+    --bg: #0E1420;
+    --panel: #151d2e;
+    --track-dim: #323d4f;
+    --red: #ef4444;
+    --green: #4ade80;
+    --text: #dbe2ee;
+    --muted: #7a8699;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+    overflow: hidden; user-select: none; -webkit-user-select: none;
+  }
+  #topbar { display: flex; align-items: center; gap: 14px; padding: 10px 16px; height: 62px; }
+  #clock {
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 26px; font-weight: 600; letter-spacing: 1px;
+    border: 1px solid #2a3550; border-radius: 10px;
+    padding: 6px 14px; background: var(--panel);
+  }
+  #timeline { flex: 1; position: relative; height: 44px; border-bottom: 1px solid #2a3550; margin: 0 8px; }
+  .tl-train {
+    position: absolute; top: 2px; transform: translateX(-50%);
+    display: flex; flex-direction: column; align-items: center; gap: 2px;
+    font-size: 10px; color: var(--muted);
+    font-family: ui-monospace, Menlo, monospace; transition: opacity .4s;
+  }
+  .tl-dot { width: 9px; height: 12px; border-radius: 3px; position: relative; z-index: 0; }
+  .tl-train.done { opacity: 0.18; }
+  /* train à l'arrêt en gare : sa pastille s'efface entièrement de la frise */
+  .tl-train.arrived { opacity: 0; transition: opacity .6s; }
+  /* halo pulsant sur les trains présents en gare */
+  .tl-train.active { color: var(--text); }
+  .tl-train.active .tl-dot::after {
+    content: ""; position: absolute; inset: -5px;
+    border-radius: 8px; background: var(--c);
+    filter: blur(6px); z-index: -1;
+    animation: tlpulse 1.8s ease-in-out infinite;
+  }
+  @keyframes tlpulse { 0%, 100% { opacity: .12; } 50% { opacity: .8; } }
+  .btn {
+    background: var(--panel); border: 1px solid #2a3550; color: var(--text);
+    border-radius: 10px; padding: 8px 14px; font-size: 15px; cursor: pointer; font-family: inherit;
+  }
+  .btn:hover { border-color: #40507a; }
+  .btn.active { color: #2dd4bf; border-color: #2dd4bf; }
+  #board-wrap { position: relative; height: calc(100% - 62px); }
+  svg { width: 100%; height: 100%; display: block; }
+
+  .track { stroke: var(--track-dim); stroke-width: 3.5; fill: none; stroke-linecap: round; pointer-events: none; }
+  .route { fill: none; stroke-width: 5; stroke-linecap: round; filter: drop-shadow(0 0 6px currentColor); pointer-events: none; }
+  .route.pending { stroke-dasharray: 10 8; opacity: .55; }
+  .platform { fill: #1b2436; stroke: #3b465c; stroke-width: 1.5; cursor: pointer; }
+  .platform.eligible { stroke: #ffffff; stroke-dasharray: 7 5; stroke-width: 2.5; }
+  .platform-label {
+    fill: var(--text); font-size: 24px; font-weight: 600;
+    text-anchor: middle; dominant-baseline: central; pointer-events: none;
+  }
+  .plat-dot { pointer-events: none; }
+  .portal {
+    fill: none; stroke-width: 2.5;
+    filter: drop-shadow(0 0 5px currentColor);
+  }
+  .portal-tag-text {
+    font-size: 17px; font-weight: 700; letter-spacing: 1px;
+    text-anchor: middle; dominant-baseline: central; pointer-events: none;
+  }
+  .train-body { cursor: pointer; filter: drop-shadow(0 0 7px currentColor); }
+  .train-label {
+    font-size: 13px; font-weight: 700; fill: #08141a;
+    text-anchor: middle; dominant-baseline: central; pointer-events: none;
+  }
+  .train.selected .train-body { stroke: #ffffff; stroke-width: 2.5; }
+  .train.ready .train-body { animation: pulse 1.1s ease-in-out infinite; }
+  @keyframes pulse { 50% { filter: drop-shadow(0 0 16px currentColor); } }
+  .chip { font-family: ui-monospace, Menlo, monospace; font-size: 13px; dominant-baseline: central; pointer-events: none; }
+  .badge { pointer-events: none; }
+  .badge rect { stroke-width: 1.2; }
+  .badge text {
+    font-family: ui-monospace, Menlo, monospace; font-size: 12px; font-weight: 600;
+    text-anchor: middle; dominant-baseline: central;
+  }
+  .badge.late text { font-weight: 700; }
+  .conflict-ring {
+    fill: none; stroke: var(--red); stroke-width: 3;
+    animation: ring .9s ease-out forwards;
+    filter: drop-shadow(0 0 8px var(--red));
+  }
+  @keyframes ring { 0% { r: 6; opacity: 1; } 100% { r: 26; opacity: 0; } }
+  #delay {
+    position: absolute; left: 18px; bottom: 16px;
+    border: 1px solid var(--green); color: var(--green);
+    border-radius: 12px; padding: 8px 16px; font-size: 20px;
+    background: rgba(14,20,32,.85);
+    font-family: ui-monospace, Menlo, monospace;
+  }
+  #delay.warn { border-color: #f5b23c; color: #f5b23c; }
+  #delay.bad { border-color: var(--red); color: var(--red); }
+  #toast {
+    position: absolute; bottom: 18px; left: 50%; transform: translateX(-50%);
+    background: rgba(21,29,46,.95); border: 1px solid #2a3550;
+    padding: 9px 18px; border-radius: 10px; font-size: 15px; color: var(--muted);
+    opacity: 0; transition: opacity .3s; pointer-events: none; white-space: nowrap;
+  }
+  #toast.show { opacity: 1; }
+  .overlay {
+    position: absolute; inset: 0; background: rgba(10,14,24,.82);
+    display: flex; align-items: center; justify-content: center; z-index: 10;
+  }
+  .card {
+    background: var(--panel); border: 1px solid #2a3550; border-radius: 18px;
+    padding: 34px 40px; max-width: 540px; text-align: center;
+  }
+  .card h1 { font-size: 26px; margin-bottom: 18px; font-weight: 600; }
+  .card p { color: var(--muted); font-size: 15px; line-height: 1.65; margin-bottom: 12px; text-align: left; }
+  .card p b { color: var(--text); font-weight: 600; }
+  .card .btn { margin-top: 14px; font-size: 17px; padding: 10px 26px; color: #2dd4bf; border-color: #2dd4bf; }
+  #stars { font-size: 44px; letter-spacing: 8px; color: #f5b23c; margin: 10px 0 4px; }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+<div id="topbar">
+  <div id="clock">07:00</div>
+  <div id="timeline"></div>
+  <button class="btn" id="btn-pause">⏸</button>
+  <button class="btn speed active" data-s="1">1x</button>
+  <button class="btn speed" data-s="2">2x</button>
+  <button class="btn speed" data-s="4">4x</button>
+  <button class="btn" id="btn-reset" title="Recommencer">⟳</button>
+</div>
+<div id="board-wrap">
+  <svg id="board" viewBox="0 0 1400 760" preserveAspectRatio="xMidYMid meet"></svg>
+  <div id="delay">+0 min</div>
+  <div id="toast"></div>
+  <div class="overlay" id="intro">
+    <div class="card">
+      <h1>Gare Centrale — poste d'aiguillage</h1>
+      <p><b>La couleur d'un train est celle de sa destination.</b> Les trains arrivent des quatre horizons et traversent la gare.</p>
+      <p><b>Votre seul geste :</b> touchez un train qui s'annonce, puis le quai où il doit entrer. Tout le reste est automatique — le train entre dès que la voie est libre, marque un arrêt d'au moins 2 minutes, puis repart seul à l'heure prévue dès que sa sortie se libère.</p>
+      <p><b>Attention :</b> tous les quais ne desservent pas toutes les destinations. Les pastilles colorées aux extrémités des quais indiquent les liaisons possibles. Un mauvais quai, et le train devra refouler d'où il vient — une manœuvre qui coûte très cher en retard.</p>
+      <p><b>Les wagons comptent :</b> chaque train tire de 1 à 5 wagons. Plus le convoi est long, plus il est lent — un train de 5 wagons met presque deux fois plus de temps à traverser le gril et bloque les voies d'autant. Anticipez leurs mouvements.</p>
+      <p><b>Objectif :</b> chaque train doit repartir à l'heure affichée au-dessus de lui. Passée cette heure, son retard file en rouge et s'ajoute au compteur. Finissez la journée avec le moins de retard possible.</p>
+      <button class="btn" id="btn-start">Prendre le service</button>
+    </div>
+  </div>
+  <div class="overlay hidden" id="end">
+    <div class="card">
+      <h1>Fin du service</h1>
+      <div id="stars"></div>
+      <div id="end-delay" style="color:var(--muted);font-size:17px;margin-bottom:6px;"></div>
+      <button class="btn" id="btn-replay">Reprendre le service</button>
+    </div>
+  </div>
+</div>
+
+<script>
+"use strict";
+// ------------------------------------------------------------------
+// Constantes
+// ------------------------------------------------------------------
+const SVGNS = "http://www.w3.org/2000/svg";
+const board = document.getElementById("board");
+
+const PLAT_X1 = 560, PLAT_X2 = 840, PLAT_H = 42;
+const PLATFORMS = [
+  { id: 1, cy: 180 }, { id: 2, cy: 305 }, { id: 3, cy: 430 }, { id: 4, cy: 555 }
+];
+const PORTALS = {
+  NORD:  { side: "L", x: 150,  cy: 215, label: "NORD"  },
+  OUEST: { side: "L", x: 150,  cy: 520, label: "OUEST" },
+  EST:   { side: "R", x: 1250, cy: 215, label: "EST"   },
+  SUD:   { side: "R", x: 1250, cy: 520, label: "SUD"   }
+};
+const DEST_COLOR = { NORD: "#2dd4bf", OUEST: "#f5b23c", EST: "#f2588f", SUD: "#a78bfa" };
+const DEST_ABBR  = { NORD: "N", OUEST: "O", EST: "E", SUD: "S" };
+
+// Quels quais chaque portail dessert (entrée ET sortie)
+const LINKS = { NORD: [1, 2], OUEST: [3, 4], EST: [1, 2, 3], SUD: [2, 3, 4] };
+
+const TRAVEL = 1.6;             // minutes de jeu pour traverser un gril
+const MIN_DWELL = 2;            // arrêt minimum en minutes de jeu (8 s réelles à x1)
+const SEC_PER_GAMEMIN = 4.0;    // 1 min de jeu = 4 s réelles à x1
+
+// Wagons : 1 à 5 par train — plus le convoi est long, plus il est lent
+const MAX_CARS = 5;
+const CAR_LEN = 30, CAR_GAP = 5, CAR_SPACING = CAR_LEN + CAR_GAP;
+function trainLen(t) { return t.cars * CAR_SPACING - CAR_GAP; }
+function slowness(t) { return 1 + (t.cars - 1) * 0.22; } // 5 wagons ≈ 1.9× plus lent
+
+// ------------------------------------------------------------------
+// Géométrie : un chemin par liaison (portail <-> quai), direction libre
+// ------------------------------------------------------------------
+function cubic(p0, c1, c2, p1, t) {
+  const u = 1 - t;
+  return {
+    x: u*u*u*p0.x + 3*u*u*t*c1.x + 3*u*t*t*c2.x + t*t*t*p1.x,
+    y: u*u*u*p0.y + 3*u*u*t*c1.y + 3*u*t*t*c2.y + t*t*t*p1.y
+  };
+}
+function samplePath(p0, c1, c2, p1, n = 60) {
+  const pts = [];
+  for (let i = 0; i <= n; i++) pts.push(cubic(p0, c1, c2, p1, i / n));
+  return pts;
+}
+function pathD(pts) {
+  return "M " + pts.map(p => p.x.toFixed(1) + " " + p.y.toFixed(1)).join(" L ");
+}
+
+const paths = {};   // "in:PORTAIL:quai" / "out:PORTAIL:quai" -> {id, pts, cum, len, side, dur}
+const meshD = [];   // tracés gris du maillage (béziers seuls)
+const STOP_MARGIN = 30;
+
+for (const [pname, p] of Object.entries(PORTALS)) {
+  for (const pid of LINKS[pname]) {
+    const q = PLATFORMS.find(x => x.id === pid);
+    let bez, edgeX, dir; // dir +1 : la voie continue vers la droite du quai
+    if (p.side === "L") {
+      bez = samplePath(
+        { x: p.x, y: p.cy }, { x: p.x + 190, y: p.cy },
+        { x: PLAT_X1 - 190, y: q.cy }, { x: PLAT_X1, y: q.cy });
+      edgeX = PLAT_X1; dir = 1;
+    } else {
+      bez = samplePath(
+        { x: p.x, y: p.cy }, { x: p.x - 190, y: p.cy },
+        { x: PLAT_X2 + 190, y: q.cy }, { x: PLAT_X2, y: q.cy });
+      edgeX = PLAT_X2; dir = -1;
+    }
+    meshD.push(pathD(bez));
+    const run = toX => {
+      const pts = [], n = 24;
+      for (let i = 1; i <= n; i++) pts.push({ x: edgeX + (toX - edgeX) * i / n, y: q.cy });
+      return pts;
+    };
+    // entrée : on tire jusqu'en tête de quai (extrémité opposée)
+    const farX  = dir === 1 ? PLAT_X2 - STOP_MARGIN : PLAT_X1 + STOP_MARGIN;
+    // sortie : elle démarre en tête de quai côté portail de sortie
+    const nearX = dir === 1 ? PLAT_X1 + STOP_MARGIN : PLAT_X2 - STOP_MARGIN;
+    for (const [role, endX] of [["in", farX], ["out", nearX]]) {
+      const id = role + ":" + pname + ":" + pid;
+      const pts = bez.concat(run(endX));
+      const cum = [0];
+      for (let i = 1; i < pts.length; i++)
+        cum.push(cum[i - 1] + Math.hypot(pts[i].x - pts[i-1].x, pts[i].y - pts[i-1].y));
+      const len = cum[cum.length - 1];
+      paths[id] = { id, pts, cum, len, side: p.side, dur: TRAVEL * len / 700 };
+    }
+  }
+}
+
+// Conflits : deux chemins du même gril à moins de 16 px l'un de l'autre
+const conflicts = {};
+{
+  const ids = Object.keys(paths);
+  for (const id of ids) conflicts[id] = {};
+  for (let a = 0; a < ids.length; a++) {
+    for (let b = a + 1; b < ids.length; b++) {
+      const ra = paths[ids[a]], rb = paths[ids[b]];
+      if (ra.side !== rb.side) continue;
+      // Zone de conflit : intervalle d'abscisse, sur chaque chemin, où il
+      // passe à moins de 16 px de l'autre — l'aiguillage/croisement partagé
+      let touching = false;
+      let aLo = Infinity, aHi = -Infinity, bLo = Infinity, bHi = -Infinity;
+      for (let i = 0; i < ra.pts.length; i++) for (let j = 0; j < rb.pts.length; j++) {
+        const pa = ra.pts[i], pb = rb.pts[j];
+        if ((pa.x - pb.x) ** 2 + (pa.y - pb.y) ** 2 < 16 * 16) {
+          touching = true;
+          aLo = Math.min(aLo, ra.cum[i]); aHi = Math.max(aHi, ra.cum[i]);
+          bLo = Math.min(bLo, rb.cum[j]); bHi = Math.max(bHi, rb.cum[j]);
+        }
+      }
+      if (touching) {
+        const M = 14; // marge de sécurité en px
+        conflicts[ids[a]][ids[b]] = { lo: aLo - M, hi: aHi + M };
+        conflicts[ids[b]][ids[a]] = { lo: bLo - M, hi: bHi + M };
+      }
+    }
+  }
+}
+
+// ------------------------------------------------------------------
+// Horaire (minutes après 07:00) — trains dans les deux sens
+// ------------------------------------------------------------------
+// cars : nombre de wagons (1 à 5) — les convois lourds ont un peu plus de marge
+// Le service s'intensifie : arrivées toutes les 3 min, puis toutes les 2 min
+const SCHEDULE = [
+  { id: "T01", from: "NORD",  to: "EST",   arr: 1,  dep: 8,  cars: 2 },
+  { id: "T02", from: "EST",   to: "OUEST", arr: 3,  dep: 11, cars: 4 },
+  { id: "T03", from: "OUEST", to: "SUD",   arr: 6,  dep: 13, cars: 1 },
+  { id: "T04", from: "SUD",   to: "NORD",  arr: 9,  dep: 18, cars: 5 },
+  { id: "T05", from: "NORD",  to: "EST",   arr: 12, dep: 20, cars: 3 },
+  { id: "T06", from: "EST",   to: "NORD",  arr: 15, dep: 23, cars: 2 },
+  { id: "T07", from: "OUEST", to: "EST",   arr: 18, dep: 27, cars: 5 },
+  { id: "T08", from: "SUD",   to: "OUEST", arr: 21, dep: 28, cars: 1 },
+  { id: "T09", from: "EST",   to: "SUD",   arr: 23, dep: 31, cars: 3 },
+  { id: "T10", from: "NORD",  to: "EST",   arr: 25, dep: 31, cars: 2 },
+  { id: "T11", from: "SUD",   to: "OUEST", arr: 27, dep: 34, cars: 4 },
+  { id: "T12", from: "OUEST", to: "EST",   arr: 29, dep: 37, cars: 1 },
+  { id: "T13", from: "OUEST", to: "SUD",   arr: 31, dep: 40, cars: 2 },
+  { id: "T14", from: "SUD",   to: "NORD",  arr: 33, dep: 41, cars: 5 }
+];
+
+// ------------------------------------------------------------------
+// État
+// ------------------------------------------------------------------
+let trains, gameMin, speed, paused, started, ended, totalDelay, selected, activeRoutes, queueSeq;
+
+function resetGame() {
+  trains = SCHEDULE.map(s => ({
+    ...s,
+    cars: Math.min(MAX_CARS, Math.max(1, s.cars || 1)),
+    state: "scheduled", // scheduled | waiting | movingIn | dwell | movingOut | done
+    progress: 0,
+    platform: null, target: null,
+    entryPath: null, exitPath: null, pendingEl: null, stopS: null,
+    actualArr: null, queuedAt: null, el: null, carEls: null,
+    badgeEl: null, badgeText: null, badgeRect: null, headPos: null
+  }));
+  gameMin = 0; speed = 1; paused = false; ended = false;
+  totalDelay = 0; selected = null; activeRoutes = {}; queueSeq = 0;
+  document.querySelectorAll(".speed").forEach(b => b.classList.toggle("active", b.dataset.s === "1"));
+  document.getElementById("btn-pause").textContent = "⏸";
+  drawStatic();
+  buildTimeline();
+  updateDelay();
+}
+
+// ------------------------------------------------------------------
+// Rendu statique
+// ------------------------------------------------------------------
+let gTracks, gRoutes, gPlatforms, gPortals, gTrains, gFx, gChips;
+
+function el(tag, attrs, parent) {
+  const e = document.createElementNS(SVGNS, tag);
+  for (const [k, v] of Object.entries(attrs || {})) e.setAttribute(k, v);
+  if (parent) parent.appendChild(e);
+  return e;
+}
+
+function drawStatic() {
+  board.innerHTML = "";
+  gTracks    = el("g", {}, board);
+  gPlatforms = el("g", {}, board);
+  gRoutes    = el("g", {}, board);
+  gPortals   = el("g", {}, board);
+  gChips     = el("g", {}, board);
+  gTrains    = el("g", {}, board);
+  gFx        = el("g", {}, board);
+
+  // Maillage : uniquement les liaisons existantes
+  for (const d of meshD)
+    el("path", { d, class: "track" }, gTracks);
+
+  // Quais + pastilles de liaison
+  for (const q of PLATFORMS) {
+    const rect = el("rect", {
+      x: PLAT_X1, y: q.cy - PLAT_H / 2, width: PLAT_X2 - PLAT_X1, height: PLAT_H,
+      rx: 10, class: "platform", "data-platform": q.id
+    }, gPlatforms);
+    rect.addEventListener("click", () => onPlatformClick(q.id));
+    el("text", { x: (PLAT_X1 + PLAT_X2) / 2, y: q.cy, class: "platform-label" }, gPlatforms)
+      .textContent = q.id;
+
+    // pastilles : gauche = portails L reliés, droite = portails R reliés
+    let li = 0, ri = 0;
+    for (const [pname, p] of Object.entries(PORTALS)) {
+      if (!LINKS[pname].includes(q.id)) continue;
+      const dot = el("circle", { r: 5.5, class: "plat-dot" }, gPlatforms);
+      dot.style.fill = DEST_COLOR[pname];
+      if (p.side === "L") { dot.setAttribute("cx", PLAT_X1 + 16 + li * 16); li++; }
+      else                { dot.setAttribute("cx", PLAT_X2 - 16 - ri * 16); ri++; }
+      dot.setAttribute("cy", q.cy - PLAT_H / 2 + 9);
+    }
+
+    const chip = el("text", {
+      x: (PLAT_X1 + PLAT_X2) / 2, y: q.cy + PLAT_H / 2 + 14,
+      class: "chip", id: "depchip-" + q.id, "text-anchor": "middle", fill: "var(--muted)"
+    }, gChips);
+    chip.textContent = "";
+  }
+
+  // Portails, colorés à leur propre couleur (= couleur des trains qui y vont)
+  for (const [name, p] of Object.entries(PORTALS)) {
+    const w = 96, h = 150;
+    const bx = p.side === "L" ? p.x - w - 6 : p.x + 6;
+    const c = DEST_COLOR[name];
+    const grp = el("g", { style: "cursor:pointer" }, gPortals);
+    const r = el("rect", { x: bx, y: p.cy - h / 2, width: w, height: h, rx: 24, class: "portal" }, grp);
+    r.style.stroke = c; r.style.color = c; r.style.fill = "transparent";
+    const tw = 26 + p.label.length * 11;
+    const tx = p.side === "L" ? bx : bx + w - tw;
+    const tag = el("rect", { x: tx, y: p.cy - h / 2 - 44, width: tw, height: 32, rx: 8 }, grp);
+    tag.style.fill = "#141b2c"; tag.style.stroke = c; tag.style.strokeWidth = "1.5";
+    const tt = el("text", { x: tx + tw / 2, y: p.cy - h / 2 - 28, class: "portal-tag-text" }, grp);
+    tt.textContent = p.label; tt.style.fill = c;
+    const dots = el("text", { x: bx + w / 2, y: p.cy, class: "portal-tag-text", "font-size": "22" }, grp);
+    dots.textContent = "···"; dots.style.fill = c;
+    // taper le portail = sélectionner le premier train de sa file d'attente
+    grp.addEventListener("click", ev => {
+      ev.stopPropagation();
+      const q = trains.filter(o => o.state === "waiting" && o.from === name)
+                      .sort((a, b) => a.queuedAt - b.queuedAt);
+      const t = q.find(o => !o.target) || q[0];
+      if (t) onTrainClick(t);
+      else toast("Aucun train en attente à " + name);
+    });
+  }
+}
+
+function buildTimeline() {
+  const tl = document.getElementById("timeline");
+  tl.innerHTML = "";
+  const t0 = 0, t1 = Math.max(...trains.map(t => t.arr)) + 3;
+  for (const t of trains) {
+    const d = document.createElement("div");
+    d.className = "tl-train"; d.id = "tl-" + t.id;
+    d.style.setProperty("--c", DEST_COLOR[t.to]);
+    d.style.left = (5 + 90 * (t.arr - t0) / (t1 - t0)) + "%";
+    d.innerHTML = '<div class="tl-dot" style="background:' + DEST_COLOR[t.to] + '"></div><span class="tl-time">' + fmt(t.arr) + '</span>';
+    tl.appendChild(d);
+  }
+}
+
+// ------------------------------------------------------------------
+// Enclenchement
+// ------------------------------------------------------------------
+function toast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg; t.classList.add("show");
+  clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove("show"), 2400);
+}
+function flashAt(pt, msg) {
+  const c = el("circle", { cx: pt.x, cy: pt.y, r: 6, class: "conflict-ring" }, gFx);
+  setTimeout(() => c.remove(), 900);
+  if (msg) toast(msg);
+}
+// Intervalle d'abscisse occupé par un convoi sur son chemin actif, et son
+// sens de parcours (+1 : s croissant). Sert au relâchement par section.
+function occupiedSpan(t, pathId) {
+  const path = paths[pathId];
+  const tail = (t.cars - 1) * CAR_SPACING;
+  if (t.state === "movingIn") {
+    const headS = Math.min(t.progress * path.len, t.stopS);
+    return { lo: headS - tail, hi: headS, dir: 1 };
+  }
+  if (t.state === "movingOut") {
+    const headS = (1 - t.progress) * path.len;
+    return { lo: headS, hi: headS + tail, dir: -1 };
+  }
+  if (t.state === "movingBack") {
+    const headS = (1 - t.progress) * path.len;
+    return { lo: headS - tail, hi: headS, dir: -1 };
+  }
+  return null;
+}
+function canGrant(pathId) {
+  if (activeRoutes[pathId]) return false; // chemin déjà occupé par un autre train
+  for (const aid of Object.keys(activeRoutes)) {
+    const zone = conflicts[aid][pathId]; // zone partagée, sur le chemin actif
+    if (!zone) continue;
+    const occ = occupiedSpan(activeRoutes[aid], aid);
+    if (!occ) return false;
+    // libre seulement si le convoi actif a entièrement dépassé la zone,
+    // dernier wagon compris — un train qui ne l'a pas encore atteinte bloque
+    const cleared = occ.dir === 1 ? occ.lo > zone.hi : occ.hi < zone.lo;
+    if (!cleared) return false;
+  }
+  return true;
+}
+function grant(pathId, train) {
+  activeRoutes[pathId] = train;
+  const c = DEST_COLOR[train.to];
+  const p = el("path", { d: pathD(paths[pathId].pts), class: "route",
+    id: "route-" + pathId.replace(":", "-") }, gRoutes);
+  p.style.stroke = c; p.style.color = c;
+}
+function release(pathId) {
+  delete activeRoutes[pathId];
+  const p = document.getElementById("route-" + pathId.replace(":", "-"));
+  if (p) p.remove();
+}
+
+// ------------------------------------------------------------------
+// Interaction : sélection du train, choix du quai
+// ------------------------------------------------------------------
+function platformReserved(pid) {
+  return trains.some(t =>
+    (t.platform === pid && (t.state === "movingIn" || t.state === "dwell")) ||
+    (t.target === pid && t.state === "waiting"));
+}
+function refreshEligible() {
+  document.querySelectorAll(".platform").forEach(pl => {
+    const pid = +pl.dataset.platform;
+    const ok = selected && selected.state === "waiting" && !selected.target &&
+               LINKS[selected.from].includes(pid) && !platformReserved(pid);
+    pl.classList.toggle("eligible", !!ok);
+  });
+}
+function onPlatformClick(pid) {
+  if (!selected || selected.state !== "waiting" || selected.target) return;
+  const q = PLATFORMS.find(x => x.id === pid);
+  const center = { x: (PLAT_X1 + PLAT_X2) / 2, y: q.cy };
+  if (!LINKS[selected.from].includes(pid)) {
+    flashAt(center, "Aucune voie depuis " + selected.from + " vers le quai " + pid);
+    return;
+  }
+  if (platformReserved(pid)) {
+    flashAt(center, "Quai " + pid + " déjà réservé");
+    return;
+  }
+  // Le piège volontaire : on accepte un quai qui ne dessert PAS la destination.
+  // Le train y restera bloqué et le retard filera — au joueur de lire les pastilles.
+  selected.target = pid;
+  const pathId = "in:" + selected.from + ":" + pid;
+  const pend = el("path", { d: pathD(paths[pathId].pts), class: "route pending" }, gRoutes);
+  pend.style.stroke = DEST_COLOR[selected.to]; pend.style.color = DEST_COLOR[selected.to];
+  selected.pendingEl = pend;
+  selected = null;
+  refreshEligible();
+}
+function onTrainClick(t) {
+  if (ended) return;
+  if (t.state === "waiting" && !t.target) {
+    selected = t;
+    t.el.classList.add("selected"); // retour visuel immédiat, sans attendre le tick
+    refreshEligible();
+    return;
+  }
+  // Train en attente déjà affecté : retoucher = annuler et rechoisir
+  if (t.state === "waiting" && t.target) {
+    t.target = null;
+    if (t.pendingEl) { t.pendingEl.remove(); t.pendingEl = null; }
+    selected = t;
+    t.el.classList.add("selected");
+    refreshEligible();
+    toast(t.id + " : affectation annulée — choisissez un nouveau quai");
+    return;
+  }
+  if (t.state === "dwell" && paths["out:" + t.to + ":" + t.platform]) {
+    toast(t.id + " à quai " + t.platform + " — départ " + fmt(t.dep) + " vers " + t.to);
+    return;
+  }
+  if (t.state === "movingIn" || t.state === "movingOut" || t.state === "movingBack") {
+    toast(t.id + " est en mouvement");
+    return;
+  }
+  // Train coincé sur un quai sans liaison vers sa destination : manœuvre de
+  // refoulement — il ressort par où il est venu et se remet dans la file.
+  if (t.state === "dwell" && !paths["out:" + t.to + ":" + t.platform]) {
+    const backPath = "in:" + t.from + ":" + t.platform;
+    if (!canGrant(backPath)) {
+      const q = PLATFORMS.find(x => x.id === t.platform);
+      flashAt({ x: (PLAT_X1 + PLAT_X2) / 2, y: q.cy }, "Manœuvre impossible : gril occupé");
+      return;
+    }
+    grant(backPath, t);
+    t.exitPath = backPath;
+    t.state = "movingBack";
+    // repart de la position d'arrêt réelle (les demi-tours s'arrêtent tôt)
+    t.progress = 1 - t.stopS / paths[backPath].len;
+    document.getElementById("depchip-" + t.platform).textContent = "";
+    toast(t.id + " refoule vers " + t.from + " — le retard file");
+    refreshEligible();
+  }
+}
+board.addEventListener("click", e => {
+  if (e.target === board) { selected = null; refreshEligible(); }
+});
+
+// ------------------------------------------------------------------
+// Boucle de jeu
+// ------------------------------------------------------------------
+function fmt(min) {
+  const m = Math.max(0, Math.floor(min));
+  const h = 7 + Math.floor(m / 60);
+  return String(h).padStart(2, "0") + ":" + String(m % 60).padStart(2, "0");
+}
+// Retard vivant : le retard déjà encaissé + celui qui se creuse pour les
+// trains pas encore partis — le compteur bouge PENDANT que le joueur hésite
+function liveDelay() {
+  let d = totalDelay;
+  for (const t of trains)
+    if (t.state !== "movingOut" && t.state !== "done")
+      d += Math.max(0, gameMin - t.dep);
+  return d;
+}
+function updateDelay() {
+  const d = document.getElementById("delay");
+  const v = liveDelay();
+  d.textContent = "retard +" + Math.round(v) + " min";
+  d.className = v <= 5 ? "" : v <= 10 ? "warn" : "bad";
+}
+function trainNode(t) {
+  const g = el("g", { class: "train" }, gTrains);
+  const c = DEST_COLOR[t.to];
+  t.carEls = [];
+  for (let i = 0; i < t.cars; i++) {
+    const car = el("g", {}, g);
+    // zone de clic généreuse (invisible) : indispensable au doigt
+    el("rect", { x: -CAR_SPACING / 2 - 4, y: -26, width: CAR_SPACING + 8, height: 52, fill: "transparent" }, car);
+    const body = el("rect", {
+      x: -CAR_LEN / 2, y: i === 0 ? -10 : -8,
+      width: CAR_LEN, height: i === 0 ? 20 : 16, rx: i === 0 ? 8 : 5,
+      class: "train-body"
+    }, car);
+    body.style.fill = c; body.style.color = c;
+    if (i > 0) body.style.opacity = "0.72";
+    if (i === 0) el("text", { x: 0, y: 0.5, class: "train-label" }, car).textContent = DEST_ABBR[t.to];
+    t.carEls.push(car);
+  }
+  // Badge au-dessus de la loco : heure de départ, puis retard qui file en rouge
+  const badge = el("g", { class: "badge", visibility: "hidden" }, g);
+  t.badgeRect = el("rect", { x: -36, y: -11, width: 72, height: 20, rx: 6 }, badge);
+  t.badgeRect.style.fill = "rgba(14,20,32,.88)";
+  t.badgeText = el("text", { y: 0.5 }, badge);
+  t.badgeEl = badge;
+  g.addEventListener("click", ev => { ev.stopPropagation(); onTrainClick(t); });
+  return g;
+}
+// Point à l'abscisse curviligne s (extrapole avant 0 et après len : indispensable
+// pour faire entrer/sortir les wagons proprement par les portails)
+function pathPoint(path, s) {
+  const pts = path.pts, cum = path.cum, L = path.len;
+  const sc = Math.min(Math.max(s, 0), L);
+  let i = 0;
+  while (i < cum.length - 2 && cum[i + 1] < sc) i++;
+  const segLen = cum[i + 1] - cum[i] || 1;
+  const f = (sc - cum[i]) / segLen;
+  const dx = (pts[i + 1].x - pts[i].x) / segLen;
+  const dy = (pts[i + 1].y - pts[i].y) / segLen;
+  const over = s - sc;
+  const x = pts[i].x + (pts[i + 1].x - pts[i].x) * f + dx * over;
+  const y = pts[i].y + (pts[i + 1].y - pts[i].y) * f + dy * over;
+  let ang = Math.atan2(dy, dx) * 180 / Math.PI;
+  if (ang > 90) ang -= 180; if (ang < -90) ang += 180;
+  return { x, y, ang };
+}
+// headS : abscisse de la loco ; tailDir : +1/-1 selon le côté où traînent les wagons
+function placeTrain(t, pathId, headS, tailDir) {
+  const path = paths[pathId];
+  for (let i = 0; i < t.cars; i++) {
+    const p = pathPoint(path, headS + tailDir * i * CAR_SPACING);
+    if (i === 0) t.headPos = { x: p.x, y: p.y };
+    t.carEls[i].setAttribute("transform",
+      "translate(" + p.x.toFixed(1) + " " + p.y.toFixed(1) + ") rotate(" + p.ang.toFixed(1) + ")");
+  }
+}
+function updateBadge(t) {
+  if (!t.badgeEl || !t.headPos || t.state === "movingOut" || t.state === "done") {
+    if (t.badgeEl) t.badgeEl.setAttribute("visibility", "hidden");
+    return;
+  }
+  const late = gameMin - t.dep;
+  let txt, color;
+  if (late > 0) { txt = "+" + Math.ceil(late) + " min"; color = "var(--red)"; }
+  else if (late > -3) { txt = "dép " + fmt(t.dep); color = "#f5b23c"; }
+  else { txt = "dép " + fmt(t.dep); color = "var(--green)"; }
+  t.badgeEl.classList.toggle("late", late > 0);
+  t.badgeText.textContent = txt;
+  t.badgeText.style.fill = color;
+  t.badgeRect.style.stroke = color;
+  t.badgeEl.setAttribute("visibility", "visible");
+  t.badgeEl.setAttribute("transform",
+    "translate(" + t.headPos.x.toFixed(1) + " " + (t.headPos.y - 30).toFixed(1) + ")");
+}
+
+function tick(dtMin) {
+  for (const t of trains) {
+    switch (t.state) {
+
+      case "scheduled":
+        if (gameMin >= t.arr) {
+          t.state = "waiting";
+          t.queuedAt = queueSeq++;
+          t.el = trainNode(t);
+          const tl = document.getElementById("tl-" + t.id);
+          if (tl) tl.classList.add("active", "arrived");
+          refreshEligible();
+        }
+        break;
+
+      case "waiting": {
+        // File d'attente devant le portail d'origine, espacée selon la longueur des convois,
+        // dans l'ordre réel d'arrivée au portail (un refoulé repart en bout de file)
+        const queue = trains.filter(o => o.state === "waiting" && o.from === t.from)
+                            .sort((a, b) => a.queuedAt - b.queuedAt);
+        const idx = queue.indexOf(t);
+        const p = PORTALS[t.from];
+        let off = 44;
+        for (let k = 0; k < idx; k++) off += trainLen(queue[k]) + 16;
+        const sgn = p.side === "L" ? -1 : 1;
+        for (let i = 0; i < t.cars; i++) {
+          const x = p.x + sgn * (off + CAR_LEN / 2 + i * CAR_SPACING);
+          if (i === 0) t.headPos = { x, y: p.cy };
+          t.carEls[i].setAttribute("transform", "translate(" + x + " " + p.cy + ")");
+        }
+        t.el.classList.toggle("selected", selected === t);
+        t.el.classList.toggle("ready", !t.target);
+        // Entrée automatique dès que l'itinéraire demandé est libre
+        if (t.target) {
+          const pathId = "in:" + t.from + ":" + t.target;
+          if (canGrant(pathId)) {
+            if (t.pendingEl) { t.pendingEl.remove(); t.pendingEl = null; }
+            grant(pathId, t);
+            t.entryPath = pathId;
+            t.platform = t.target;
+            // Demi-tour (origine et destination du même côté) : le train
+            // s'arrête tôt, queue en tête de quai côté portail, pour pouvoir
+            // ressortir en marche arrière sans traverser tout le quai
+            const uturn = PORTALS[t.from].side === PORTALS[t.to].side;
+            const path = paths[pathId];
+            t.stopS = uturn
+              ? path.len - (PLAT_X2 - PLAT_X1 - 2 * STOP_MARGIN) + (t.cars - 1) * CAR_SPACING
+              : path.len;
+            t.state = "movingIn";
+            t.progress = 0;
+            t.el.classList.remove("ready", "selected");
+          }
+        }
+        break;
+      }
+
+      case "movingIn": {
+        const path = paths[t.entryPath];
+        t.progress += dtMin / (path.dur * slowness(t));
+        const stopP = t.stopS / path.len;
+        if (t.progress >= stopP) {
+          t.progress = stopP;
+          t.state = "dwell";
+          t.actualArr = gameMin;
+          release(t.entryPath);
+          const chip = document.getElementById("depchip-" + t.platform);
+          if (paths["out:" + t.to + ":" + t.platform]) {
+            chip.textContent = "dep " + fmt(t.dep) + " → " + t.to;
+            chip.style.fill = DEST_COLOR[t.to];
+          } else {
+            chip.textContent = "✕ " + t.to + " inaccessible — touchez le train";
+            chip.style.fill = "var(--red)";
+          }
+          refreshEligible();
+        }
+        placeTrain(t, t.entryPath, t.progress * path.len, -1);
+        break;
+      }
+
+      case "dwell": {
+        const canLeave = gameMin >= Math.max(t.dep, t.actualArr + MIN_DWELL);
+        if (canLeave) {
+          const pathId = "out:" + t.to + ":" + t.platform;
+          if (!paths[pathId]) break; // quai sans liaison vers la destination : bloqué
+          if (canGrant(pathId)) {
+            grant(pathId, t);
+            t.exitPath = pathId;
+            t.state = "movingOut";
+            t.progress = 0;
+            totalDelay += Math.max(0, gameMin - t.dep);
+            updateDelay();
+            document.getElementById("depchip-" + t.platform).textContent = "";
+            refreshEligible();
+          }
+        }
+        break;
+      }
+
+      case "movingBack": {
+        // Refoulement : le convoi recule, wagons de queue en tête de manœuvre
+        const path = paths[t.exitPath];
+        t.progress += dtMin / (path.dur * slowness(t));
+        if (t.progress >= 1) {
+          release(t.exitPath);
+          t.exitPath = null;
+          t.platform = null; t.target = null; t.actualArr = null;
+          t.state = "waiting";
+          t.queuedAt = queueSeq++;
+        } else {
+          placeTrain(t, t.exitPath, (1 - t.progress) * path.len, -1);
+        }
+        break;
+      }
+
+      case "movingOut": {
+        // le chemin est défini portail -> quai : on le parcourt à l'envers,
+        // et on prolonge jusqu'à ce que le dernier wagon ait quitté le gril
+        const path = paths[t.exitPath];
+        t.progress += dtMin / (path.dur * slowness(t));
+        const tail = (t.cars - 1) * CAR_SPACING;
+        const endP = 1 + tail / path.len;
+        if (t.progress >= endP) {
+          t.state = "done";
+          release(t.exitPath);
+          t.el.remove();
+          const tl = document.getElementById("tl-" + t.id);
+          if (tl) { tl.classList.remove("active"); tl.classList.add("done"); }
+        } else {
+          // demi-tour compris : au départ, la loco change de bout (changement
+          // de cabine) et mène toujours le convoi vers sa sortie
+          placeTrain(t, t.exitPath, (1 - t.progress) * path.len, 1);
+        }
+        break;
+      }
+    }
+    updateBadge(t);
+  }
+  updateDelay();
+
+  if (!ended && trains.every(t => t.state === "done")) endGame();
+}
+
+function endGame() {
+  ended = true;
+  const d = Math.round(totalDelay);
+  const stars = d <= 5 ? 3 : d <= 10 ? 2 : d <= 15 ? 1 : 0;
+  document.getElementById("stars").textContent = "★★★".slice(0, stars) + "☆☆☆".slice(0, 3 - stars);
+  document.getElementById("end-delay").textContent =
+    d === 0 ? "Service parfait — aucun retard." : "Retard cumulé : " + d + " min";
+  document.getElementById("end").classList.remove("hidden");
+}
+
+// ------------------------------------------------------------------
+// Horloge
+// ------------------------------------------------------------------
+let lastTs = null;
+function frame(ts) {
+  if (lastTs === null) lastTs = ts;
+  const dtReal = Math.min(0.1, (ts - lastTs) / 1000);
+  lastTs = ts;
+  if (started && !paused && !ended) {
+    const dtMin = dtReal * speed / SEC_PER_GAMEMIN;
+    gameMin += dtMin;
+    tick(dtMin);
+    document.getElementById("clock").textContent = fmt(gameMin);
+  }
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+
+// ------------------------------------------------------------------
+// Contrôles
+// ------------------------------------------------------------------
+document.getElementById("btn-pause").addEventListener("click", () => {
+  paused = !paused;
+  document.getElementById("btn-pause").textContent = paused ? "▶" : "⏸";
+});
+document.querySelectorAll(".speed").forEach(b => b.addEventListener("click", () => {
+  speed = +b.dataset.s;
+  paused = false;
+  document.getElementById("btn-pause").textContent = "⏸";
+  document.querySelectorAll(".speed").forEach(x => x.classList.toggle("active", x === b));
+}));
+document.getElementById("btn-start").addEventListener("click", () => {
+  document.getElementById("intro").classList.add("hidden");
+  started = true;
+});
+document.getElementById("btn-reset").addEventListener("click", () => {
+  resetGame(); started = true;
+  document.getElementById("end").classList.add("hidden");
+});
+document.getElementById("btn-replay").addEventListener("click", () => {
+  resetGame(); started = true;
+  document.getElementById("end").classList.add("hidden");
+});
+
+started = false;
+resetGame();
+</script>
+</body>
+</html>

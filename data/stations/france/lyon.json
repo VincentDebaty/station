@@ -1,0 +1,29 @@
+{
+  "id": "lyon",
+  "name": "Lyon Part-Dieu",
+  "country": "🇫🇷 France",
+  "desc": "Le grand carrefour du Sud-Est : cinq directions traversantes, des TGV pressés et un flux qui ne s'arrête jamais — la gare la plus dense que vous ayez vue jusqu'ici.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }, { "id": 6 }
+  ],
+  "portals": {
+    "PARIS":        { "side": "L", "color": "#f2588f", "abbr": "P" },
+    "SAINTETIENNE": { "side": "L", "color": "#4ade80", "abbr": "SE", "label": "SAINT-ÉTIENNE" },
+    "GENEVE":       { "side": "R", "color": "#a78bfa", "abbr": "GE", "label": "GENÈVE" },
+    "GRENOBLE":     { "side": "R", "color": "#f5b23c", "abbr": "GR" },
+    "MARSEILLE":    { "side": "R", "color": "#2dd4bf", "abbr": "MA" }
+  },
+  "links": {
+    "PARIS": [1, 2, 3, 4],
+    "SAINTETIENNE": [3, 4, 5, 6],
+    "GENEVE": [1, 2, 3],
+    "GRENOBLE": [3, 4, 5],
+    "MARSEILLE": [2, 4, 5, 6]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 15, "nMax": 18, "gapMin": 1.6, "gapMax": 2.8,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6],
+    "freightRate": 0.3, "quietRate": 0.15
+  }
+}
