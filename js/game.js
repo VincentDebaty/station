@@ -337,6 +337,11 @@ function tick(dtMin) {
         placeQueue(t, dtMin);
         t.el.classList.toggle("selected", selected === t);
         t.el.classList.toggle("ready", !t.freight && !t.target);
+        // FIFO sur la voie d'approche : tant qu'un train du même portail, entré
+        // avant lui dans la file, n'a pas dégagé la voie, il ne peut pas
+        // s'engager — pas de dépassement (le 2ᵉ ne double jamais le 1ᵉʳ).
+        if (trains.some(o => o !== t && o.from === t.from && o.queuedAt < t.queuedAt &&
+            (o.state === "approaching" || o.state === "waiting"))) break;
         if (t.freight) {
           // Le fret verrouille tout son itinéraire et traverse sans s'arrêter
           const pin = "in:" + t.from + ":" + t.plat;

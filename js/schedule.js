@@ -71,6 +71,11 @@ function simulateDay(schedule, assign, dt, events) {
           if (now >= (t.arrEff ?? t.arr)) t.state = "waiting";
           break;
         case "waiting": {
+          // FIFO sur la voie d'approche : un train du même portail, arrivé
+          // avant lui, occupe encore la voie devant → il patiente derrière.
+          // Pas de dépassement (même contrainte que le jeu).
+          if (sims.some(o => o !== t && o.from === t.from && o.state === "waiting" &&
+              (o.arrEff ?? o.arr) < (t.arrEff ?? t.arr))) break;
           if (held[t.plat]) break;
           if (closures.some(c => c.plat === t.plat && now >= c.start && now < c.end)) break;
           held[t.plat] = true;
@@ -139,7 +144,7 @@ function generateSchedule() {
   // Filtres de qualité : on retire les journées trop congestionnées
   // (attente > 15 min) et celles qui échouent au contrôle final à pas fin
   // — la garantie « zéro retard possible » doit tenir à la précision du jeu
-  for (let attempt = 0; attempt < 5; attempt++) {
+  for (let attempt = 0; attempt < 10; attempt++) {
     const day = generateOnce();
     if (Math.max(...day.schedule.map(s => s.dep - (s.arrEff ?? s.arr))) > 15) continue;
     const res = simulateDay(day.schedule, day.schedule.map(s => s.hint), 0.005, day.events);
@@ -224,7 +229,7 @@ function generateOnce() {
   let res = simulateDay(draft, assign, 0.02, events);
   for (let i = 0; i < draft.length; i++)
     if (!draft[i].freight) draft[i].dep = Math.ceil(res[i].depReal + REACTION_MARGIN);
-  for (let k = 0; k < 15; k++) {
+  for (let k = 0; k < 45; k++) {
     res = simulateDay(draft, assign, 0.01, events);
     let bumped = false;
     for (let i = 0; i < draft.length; i++) {
