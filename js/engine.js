@@ -68,16 +68,15 @@ function loadStation(cfg) {
   const topQ = 400 - stepQ * (nQ - 1) / 2;
   PLATFORMS = cfg.platforms.map((q, i) => ({ ...q, cy: Math.round(topQ + i * stepQ) }));
   PORTALS = {}; DEST_COLOR = {}; DEST_ABBR = {};
-  // Gare terminus : tous les portails du même côté. On rentre le point de
-  // convergence vers l'intérieur pour dégager, au bord, un bandeau réservé aux
-  // noms de villes — les voies (et donc les convois) démarrent à sa droite.
-  const oneSided = new Set(Object.values(cfg.portals).map(p => p.side)).size === 1;
+  // Point de convergence à distance fixe des quais, terminus compris : le
+  // faisceau aiguillage → quais garde la même largeur généreuse partout
+  // (les gares à quais desservis d'un seul côté ne sont plus écrasées).
   for (const side of ["L", "R"]) {
     const names = Object.keys(cfg.portals).filter(k => cfg.portals[k].side === side);
     names.forEach((k, i) => {
       const c = cfg.portals[k];
       PORTALS[k] = {
-        side, x: side === "L" ? (oneSided ? 320 : 150) : (oneSided ? 1080 : 1250),
+        side, x: side === "L" ? 150 : 1250,
         cy: names.length === 1 ? 405 : Math.round(170 + 470 * i / (names.length - 1)),
         label: c.label || k,
         in: c.in !== false, out: c.out !== false
