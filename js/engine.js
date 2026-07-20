@@ -21,7 +21,12 @@ const SEC_PER_GAMEMIN = 4.0;    // 1 min de jeu = 4 s réelles à x1
 // (7 wagons = 240 px, la longueur utile d'un quai)
 const MAX_CARS = 7;
 const CAR_LEN = 30, CAR_GAP = 5, CAR_SPACING = CAR_LEN + CAR_GAP;
-const EXIT_RUN = 420; // fuite après le gril : détour par la voie de départ + hors carte
+const EXIT_RUN = 700; // fuite après le gril : jusqu'au bord réel de l'écran, pas juste le viewBox
+// Point de fuite des voies : bien AU-DELÀ du viewBox (1400×760). Le plan étant
+// letterboxé (preserveAspectRatio "meet"), le bord du viewBox n'est pas le bord
+// de l'écran ; on prolonge donc les voies d'arrivée/départ dans la bande de
+// letterbox pour que les convois émergent et disparaissent au ras de l'écran.
+const EDGE_RUN = 360;
 function trainLen(t) { return t.cars * CAR_SPACING - CAR_GAP; }
 function slowness(t) { return 1 + (t.cars - 1) * 0.22; } // 7 wagons ≈ 2.3× plus lent
 
@@ -130,7 +135,7 @@ function loadStation(cfg) {
   // - voie du haut (DÉPARTS) : prolonge le point de convergence vers le bord
   APPROACH = {}; DEPART = {};
   for (const [pname, p] of Object.entries(PORTALS)) {
-  const startX = p.side === "L" ? -10 : 1410;
+  const startX = p.side === "L" ? -EDGE_RUN : 1400 + EDGE_RUN;
   const mk = pts => {
     const cum = [0];
     for (let i = 1; i < pts.length; i++)

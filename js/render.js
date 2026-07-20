@@ -46,14 +46,6 @@ function drawStatic() {
   }, defs);
   el("rect", { width: 8, height: 8, fill: "rgba(239,68,68,.08)" }, pat);
   el("line", { x1: 0, y1: 0, x2: 0, y2: 8, stroke: "var(--red)", "stroke-width": 2, opacity: 0.5 }, pat);
-  // Fondus de bord : les convois se dissolvent dans la couleur du fond en
-  // entrant/sortant, au lieu d'être tranchés net par le bord du plan.
-  const fadeL = el("linearGradient", { id: "fadeL", x1: 0, y1: 0, x2: 1, y2: 0 }, defs);
-  el("stop", { offset: "0%",   "stop-color": "#0E1420", "stop-opacity": 1 }, fadeL);
-  el("stop", { offset: "100%", "stop-color": "#0E1420", "stop-opacity": 0 }, fadeL);
-  const fadeR = el("linearGradient", { id: "fadeR", x1: 0, y1: 0, x2: 1, y2: 0 }, defs);
-  el("stop", { offset: "0%",   "stop-color": "#0E1420", "stop-opacity": 0 }, fadeR);
-  el("stop", { offset: "100%", "stop-color": "#0E1420", "stop-opacity": 1 }, fadeR);
   // Les trains entrent et sortent par les bords de la carte : le viewBox
   // les découpe naturellement, wagon par wagon
   gTracks    = el("g", {}, board);
@@ -113,25 +105,14 @@ function drawStatic() {
   if (only === "L")      el("rect", { x: -1000, y: 0, width: 1000 + PANEL_W, height: 760, fill: "var(--bg)" }, gPortals);
   else if (only === "R") el("rect", { x: 1400 - PANEL_W, y: 0, width: 1000 + PANEL_W, height: 760, fill: "var(--bg)" }, gPortals);
 
-  // Fondus de bord — posés au-dessus des convois mais sous les noms : les
-  // wagons se dissolvent dans le fond en entrant/sortant, plutôt que d'être
-  // tranchés net. En terminus, un seul fondu adoucit le bord intérieur du
-  // bandeau ; sinon, un fondu à chaque bord ouvert.
-  const FADE = 96;
-  if (only === "L")      el("rect", { x: PANEL_W, y: 0, width: FADE, height: 760, fill: "url(#fadeL)", "pointer-events": "none" }, gPortals);
-  else if (only === "R") el("rect", { x: 1400 - PANEL_W - FADE, y: 0, width: FADE, height: 760, fill: "url(#fadeR)", "pointer-events": "none" }, gPortals);
-  else {
-    el("rect", { x: 0, y: 0, width: FADE, height: 760, fill: "url(#fadeL)", "pointer-events": "none" }, gPortals);
-    el("rect", { x: 1400 - FADE, y: 0, width: FADE, height: 760, fill: "url(#fadeR)", "pointer-events": "none" }, gPortals);
-  }
-
-  // Portails : les voies filent jusqu'au bord de la carte, où les convois se
-  // dissolvent. Le nom de la destination, en trait léger, se pose juste
-  // au-dessus de la voie — le train qui sort glisse dessous (voir validatePortal).
+  // Portails : les voies filent jusqu'au BORD RÉEL de l'écran (au-delà du
+  // viewBox, EDGE_RUN dans la bande de letterbox) — les convois émergent et
+  // disparaissent au ras de l'écran. Le nom de la destination, en trait léger,
+  // se pose juste au-dessus de la voie ; le train qui sort glisse dessous.
   portalUI = {};
   for (const [name, p] of Object.entries(PORTALS)) {
     const c = DEST_COLOR[name];
-    const edge = p.side === "L" ? -10 : 1410;   // point de fuite des voies
+    const edge = p.side === "L" ? -EDGE_RUN : 1400 + EDGE_RUN;   // point de fuite = bord écran
     const lnOut = el("line", { x1: edge, y1: p.cy, x2: p.x, y2: p.cy, class: "track" }, gTracks);
     lnOut.style.stroke = c; lnOut.style.opacity = "0.30";
     const lnIn = el("path", { d: pathD(APPROACH[name].pts), class: "track" }, gTracks);

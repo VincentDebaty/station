@@ -8,6 +8,10 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#0E1420">
 <title>Station — Le poste d'aiguillage</title>
+<!-- PWA : installable et jouable hors-ligne (« Ajouter à l'écran d'accueil ») -->
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-title" content="Station">
 <link rel="stylesheet" href="css/station.css">
 </head>
 <body>
@@ -87,5 +91,12 @@
 <script src="js/game.js"></script>
 <script src="js/hub.js"></script>
 <script src="js/main.js"></script>
+<!-- Service worker : cache hors-ligne. Ignoré en file:// (nécessite http/https). -->
+<script>
+  if ("serviceWorker" in navigator)
+    window.addEventListener("load", () =>
+      navigator.serviceWorker.register("sw.js").catch(err =>
+        console.warn("Service worker non enregistré :", err)));
+</script>
 </body>
 </html>
