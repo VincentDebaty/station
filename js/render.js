@@ -95,20 +95,11 @@ function drawStatic() {
     }
   }
 
-  // Bandeau de gauche (gare terminus) : masque opaque couleur du fond qui
-  // couvre l'amorce hors-champ des voies. Les convois émergent de derrière
-  // — « depuis la ville » — et les noms s'y posent, seuls, tout à gauche.
-  // PANEL_W = bord intérieur du bandeau (là où les voies redeviennent visibles).
-  // Le rectangle déborde largement vers l'extérieur pour couvrir aussi la bande
-  // de letterbox : le viewBox recadré laisserait sinon voir l'amorce des voies.
-  const PANEL_W = 180;
-  if (only === "L")      el("rect", { x: -1000, y: 0, width: 1000 + PANEL_W, height: 760, fill: "var(--bg)" }, gPortals);
-  else if (only === "R") el("rect", { x: 1400 - PANEL_W, y: 0, width: 1000 + PANEL_W, height: 760, fill: "var(--bg)" }, gPortals);
-
-  // Portails : les voies filent jusqu'au BORD RÉEL de l'écran (au-delà du
-  // viewBox, EDGE_RUN dans la bande de letterbox) — les convois émergent et
-  // disparaissent au ras de l'écran. Le nom de la destination, en trait léger,
-  // se pose juste au-dessus de la voie ; le train qui sort glisse dessous.
+  // Portails (terminus compris) : les voies filent jusqu'au BORD RÉEL de
+  // l'écran (au-delà du viewBox, EDGE_RUN dans la bande de letterbox) — les
+  // convois émergent et disparaissent au ras de l'écran, sans bandeau qui les
+  // arrête. Le nom de la destination, en trait léger, se pose juste au-dessus
+  // de la voie ; le train qui sort glisse dessous.
   portalUI = {};
   for (const [name, p] of Object.entries(PORTALS)) {
     const c = DEST_COLOR[name];
@@ -121,19 +112,15 @@ function drawStatic() {
     const cvg = el("circle", { cx: p.x, cy: p.cy, r: 5, "pointer-events": "none" }, gTracks);
     cvg.style.fill = c; cvg.style.opacity = "0.85";
     const grp = el("g", { style: "cursor:pointer" }, gPortals);
-    // terminus : le nom se pose sur le bandeau, à hauteur de sa voie (cy).
-    // Ailleurs : au ras du bord, juste au-dessus de la voie, là où le convoi
-    // se dissout — il glisse dessous en sortant.
-    const term = only === p.side;
+    // nom au ras du bord, juste au-dessus de la voie, là où le convoi
+    // disparaît — il glisse dessous en sortant.
     const tw = (22 + p.label.length * 10) * UIK;
-    const nameY = term ? p.cy : p.cy - 34 * UIK;
-    const nameCx = p.side === "L" ? (term ? 14 : 12) + tw / 2
-                                  : (term ? 1386 : 1388) - tw / 2;
+    const nameY = p.cy - 34 * UIK;
+    const nameCx = p.side === "L" ? 12 + tw / 2 : 1388 - tw / 2;
     // zone de clic généreuse (sélectionne le 1er train en file du portail)
     el("rect", {
-      x: p.side === "L" ? 0 : (term ? 1400 - PANEL_W : 1340),
-      y: nameY - (term ? 26 : 30),
-      width: term ? PANEL_W : 96, height: term ? 52 : 88,
+      x: p.side === "L" ? 0 : 1340,
+      y: nameY - 30, width: 96, height: 88,
       fill: "transparent"
     }, grp);
     const tt = el("text", { x: nameCx, y: nameY, class: "portal-name" }, grp);
