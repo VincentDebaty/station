@@ -9,7 +9,7 @@
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }
   ],
   "portals": {
-    "BRUXELLES": { "side": "L", "color": "#2dd4bf", "abbr": "B" },
+    "BRUXELLES": { "side": "L", "color": "#25dede", "abbr": "B" },
     "ANVERS":    { "side": "L", "color": "#f5b23c", "abbr": "AN" },
     "LIEGE":     { "side": "R", "color": "#4ade80", "abbr": "LG", "label": "LIÈGE" },
     "GENK":      { "side": "R", "color": "#60a5fa", "abbr": "GK" }

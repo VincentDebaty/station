@@ -29,47 +29,70 @@ body {
   overscroll-behavior: none;
 }
 /* ---- HUD minimal flottant (façon Mini Metro) ----
-   Aucune barre : les commandes flottent sur le plateau, qui occupe tout
-   l'écran. Verre dépoli translucide pour rester lisible au-dessus des voies. */
+   Empilé et centré en haut : cadre horloge → poignée → menu déroulant.
+   Verre dépoli translucide pour rester lisible au-dessus des voies. */
+#hud-top {
+  position: absolute; z-index: 8; top: calc(10px + var(--safe-t)); left: 50%;
+  transform: translateX(-50%);
+  display: flex; flex-direction: column; align-items: center; gap: 5px;
+}
+/* Gare terminus : cadre HUD à droite, centré verticalement. La poignée passe à
+   GAUCHE du cadre et le menu s'ouvre VERS LA GAUCHE (disposition horizontale)
+   pour ne pas déborder sur les quais en dessous. */
+#hud-top.terminus {
+  top: 50%; left: auto; right: calc(16px + var(--safe-r)); transform: translateY(-50%);
+  flex-direction: row-reverse; align-items: center; gap: 6px;
+}
+#hud-top.terminus #hud-handle { width: 16px; height: 58px; }
+#hud-top.terminus #hud-handle::before { width: 4px; height: 34px; }
+#hud-top.terminus.open #hud-handle::before { width: 4px; height: 40px; }
 #hud-clock {
-  position: absolute; z-index: 8; left: 50%; transform: translateX(-50%);
   background: rgba(21, 29, 46, .55); border: 1px solid #2a3550;
   border-radius: 12px; color: var(--text);
   backdrop-filter: blur(7px); -webkit-backdrop-filter: blur(7px);
   -webkit-tap-highlight-color: transparent; touch-action: manipulation;
-}
-/* horloge centrée en haut de l'écran */
-#hud-clock {
-  top: calc(10px + var(--safe-t));
-  display: flex; align-items: baseline; gap: 9px;
-  padding: 7px 15px; cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  padding: 6px 15px 7px; cursor: pointer;
   font-family: ui-monospace, "SF Mono", Menlo, monospace;
   transition: border-color .15s, opacity .35s;
 }
+#clock-row { display: flex; align-items: baseline; gap: 9px; }
+/* Poignée : petite barre qui déplie/replie le menu d'icônes sous le cadre. */
+#hud-handle {
+  display: flex; align-items: center; justify-content: center;
+  width: 58px; height: 16px; padding: 0; border: 0; background: none;
+  cursor: pointer; -webkit-tap-highlight-color: transparent;
+}
+#hud-handle::before {
+  content: ""; width: 34px; height: 4px; border-radius: 2px;
+  background: #46536b; transition: background .15s, width .15s;
+}
+#hud-handle:hover::before { background: #5c6a86; }
+#hud-top.open #hud-handle::before { background: #2dd4bf; width: 40px; }
+/* Drapeau + nom de la gare, ligne du haut ; séparé de l'heure par un filet. */
+#station-tag {
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  width: 100%; padding-bottom: 4px; border-bottom: 1px solid #2a3550;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+#station-tag:empty { display: none; }
+#station-tag .flag { font-size: 15px; line-height: 1; }
+#station-tag .nm { font-size: 12.5px; font-weight: 600; color: var(--text); }
 #hud-clock.paused { border-color: #2dd4bf; }
 #clock { font-size: 24px; font-weight: 600; letter-spacing: 1px; }
 #delay { font-size: 15px; font-weight: 600; color: var(--green); }
 #delay.warn { color: #f5b23c; }
 #delay.bad { color: var(--red); }
-/* mention « En pause » : sous l'horloge, teal comme sa bordure en pause */
+/* mention « En pause » : en flux sous la poignée, teal comme la bordure en pause */
 #pause-tag {
-  position: absolute; z-index: 8; left: 50%; transform: translateX(-50%);
-  top: calc(56px + var(--safe-t));
   padding: 3px 12px; border-radius: 8px;
   background: rgba(45, 212, 191, .14); border: 1px solid #2dd4bf; color: #2dd4bf;
   font-size: 12px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;
   pointer-events: none; white-space: nowrap;
 }
-/* Voile plein écran : LE fond en question. Il couvre tout le plateau derrière
-   les commandes ; à opacité marquée + léger flou, le réseau ne fait plus que
-   transparaître. Un clic sur le voile (hors carte) referme le volet. */
-#hud-controls {
-  position: absolute; inset: 0; z-index: 9;
-  display: flex; align-items: center; justify-content: center;
-  background: transparent;
-  backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
-}
-/* Carte opaque au centre qui porte les boutons (▶ 1x 2x 4x / ↺ sons aide ✕) */
+/* Menu déroulant : panneau d'icônes en flux, juste sous la poignée. */
+#hud-controls { z-index: 9; }
+/* Carte opaque qui porte les boutons (▶ 1x 2x 4x / ↺ sons aide ✕) */
 .hud-panel {
   display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
   justify-items: stretch; padding: 10px;
@@ -199,86 +222,201 @@ svg { width: 100%; height: 100%; display: block; }
 #stars { font-size: 44px; letter-spacing: 8px; color: #f5b23c; margin: 10px 0 4px; }
 .hidden { display: none !important; }
 
-/* ---- carte-parcours (hub) ---- */
+/* ---- carte du monde (sélection des gares) ---- */
 #hub {
-  position: absolute; inset: 0; z-index: 30; background: var(--bg);
-  overflow-y: auto; display: flex; justify-content: center;
+  position: absolute; inset: 0; z-index: 30; background: var(--bg); overflow: hidden;
 }
-#hub-inner { width: min(1080px, 94vw); padding: 30px 0 50px; text-align: center; }
-/* Aide de la carte : discrète — un simple « ? » gris, sans fond ni contour. */
-.hub-help {
-  position: absolute; top: calc(16px + var(--safe-t)); right: 18px; z-index: 31;
-  width: 40px; height: 40px;
+/* La carte occupe toute la surface (plus de barre en haut). */
+#hub-map { position: absolute; inset: 0; }
+
+/* Bouton flottant unique : zone courante + flèche retour, en haut à gauche. */
+.map-back {
+  position: absolute; z-index: 3;
+  top: calc(14px + var(--safe-t)); left: calc(14px + var(--safe-l));
+  display: flex; align-items: center; gap: 6px;
+  height: 38px; padding: 0 16px 0 11px; border-radius: 19px;
+  background: rgba(18, 26, 43, .82); border: 1px solid #2a3550;
+  color: var(--text); font-size: 15px; font-weight: 500; cursor: pointer;
+  box-shadow: 0 4px 14px -4px rgba(0, 0, 0, .5);
+  backdrop-filter: blur(4px); transition: background .15s, border-color .15s;
+}
+.map-back .arw { font-size: 22px; line-height: 1; margin-top: -2px; color: var(--muted); }
+.map-back:hover { background: rgba(26, 37, 58, .92); border-color: #2dd4bf; }
+.map-back.hidden { display: none; }
+
+/* Bouton « Gare aléatoire » — flottant discret en bas au centre. */
+.map-random {
+  position: absolute; z-index: 4;
+  bottom: calc(16px + var(--safe-b)); left: 50%; transform: translateX(-50%);
+  display: flex; align-items: center; gap: 6px;
+  height: 32px; padding: 0 13px; border-radius: 16px; white-space: nowrap;
+  background: rgba(18, 26, 43, .8); border: 1px solid #2a3550; color: var(--text);
+  font-size: 12.5px; font-weight: 500; cursor: pointer;
+  box-shadow: 0 4px 12px -6px rgba(0, 0, 0, .5); backdrop-filter: blur(4px);
+  transition: background .15s, border-color .15s;
+}
+.map-random svg { display: block; width: 15px; height: 15px; color: var(--muted); }
+.map-random:hover { background: rgba(26, 37, 58, .9); border-color: #2dd4bf; }
+.map-random.hidden { display: none; } /* visibilité pilotée par updateChrome (monde + continent jouable) */
+#worldmap { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.map-bg { fill: transparent; }
+
+/* Frontières RÉELLES des pays (Natural Earth), rendues lissées.
+   Niveau monde : trait quasi invisible → les continents lisent en silhouettes. */
+.country-land {
+  fill: #1a2338; stroke: #0e1420; stroke-width: .6;
+  vector-effect: non-scaling-stroke; cursor: pointer; transition: fill .25s, opacity .25s;
+}
+@media (hover: hover) {
+  #hub-map[data-level="world"] .country-land:hover { fill: #26355a; }
+}
+/* Zoom continent/pays : pays hors focus estompés (contexte), focus mis en avant. */
+#hub-map[data-level="continent"] .country-land,
+#hub-map[data-level="country"] .country-land { opacity: .22; cursor: default; }
+#hub-map[data-level="continent"] .country-land.in-focus,
+#hub-map[data-level="country"] .country-land.in-focus {
+  opacity: 1; stroke: #3d4c6b; stroke-width: .8;
+}
+#hub-map[data-level="continent"] .country-land.in-focus.playable {
+  fill: #16333a; stroke: #2dd4bf; cursor: pointer;
+}
+@media (hover: hover) {
+  #hub-map[data-level="continent"] .country-land.in-focus.playable:hover { fill: #1c4249; }
+}
+#hub-map[data-level="country"] .country-land.is-current {
+  opacity: 1; fill: #16333a; stroke: #2dd4bf; stroke-width: .8;
+}
+
+/* Réseau reliant les villes d'un pays — SVG en overlay écran (positions
+   ajustées), posé sous les pastilles, non interactif. */
+.city-net { position: absolute; inset: 0; pointer-events: none; }
+.map-network {
+  fill: none; stroke: var(--track-dim); stroke-width: 2; stroke-dasharray: 4 5;
+  stroke-linecap: round; opacity: .7;
+}
+/* Courbes + trains décoratifs (illustration, niveau monde). */
+.deco-route {
+  fill: none; stroke: #2a3550; stroke-width: 1.5; stroke-dasharray: 3 6;
+  vector-effect: non-scaling-stroke; opacity: .5;
+}
+.deco-train { filter: drop-shadow(0 0 5px currentColor); animation: mapRun 16s linear infinite; }
+@keyframes mapRun { to { offset-distance: 100%; } }
+@media (prefers-reduced-motion: reduce) { .deco-train { animation: none; display: none; } }
+
+/* Niveaux : détail décoratif (courbes+trains) masqué dès qu'on zoome. */
+#hub-map:not([data-level="world"]) .lyr-deco { display: none; }
+
+/* Overlay de marqueurs/labels (HTML, positionné en pixels). */
+#map-labels { position: absolute; inset: 0; pointer-events: none; transition: opacity .25s; }
+#hub-map.tweening #map-labels { opacity: 0; }
+.map-chip { position: absolute; transform: translate(-50%, -50%); pointer-events: auto; text-align: center; }
+.map-chip .nm { font-size: 13px; font-weight: 600; line-height: 1.25; color: var(--text); }
+.map-chip .pg { color: #f5b23c; font-size: 11px; margin-top: 1px; }
+.map-chip .st { color: #f5b23c; font-size: 14px; letter-spacing: 2px; }
+.map-chip .bd { color: var(--muted); font-size: 10px; font-family: ui-monospace, Menlo, monospace; }
+
+/* Chip continent (niveau monde) — libellé léger, pastille discrète. */
+.continent-chip {
+  cursor: pointer; color: var(--text); padding: 5px 12px; border-radius: 12px;
+  background: rgba(21, 29, 46, .45); border: 1px solid rgba(58, 69, 94, .5);
+}
+.continent-chip .nm { font-weight: 400; font-size: 15px; letter-spacing: 1.5px; }
+@media (hover: hover) { .continent-chip:hover { border-color: #2dd4bf; } }
+
+/* Pays jouable (niveau continent) : bulle drapeau + ANNEAU de progression autour
+   (piste fine ; arc plus épais = étoiles gagnées / total). */
+.country-chip { width: 34px; height: 34px; cursor: pointer; }
+.country-chip .cflag {
+  position: absolute; inset: 0; z-index: 1;
   display: flex; align-items: center; justify-content: center;
-  font-size: 26px; font-weight: 500; line-height: 1;
-  color: var(--muted); background: none; border: 0;
-  cursor: pointer; opacity: .6; transition: color .15s, opacity .15s;
-}
-.hub-help:hover { color: #2dd4bf; opacity: 1; }
-.hub-title { font-size: 34px; letter-spacing: 8px; font-weight: 700; }
-.hub-sub { color: var(--muted); margin: 6px 0 22px; }
-/* Libellé de pays ancré en haut à gauche de SON bloc, juste au-dessus de
-   ses gares : la limite du bloc le sépare nettement de la région du dessus. */
-.hub-region {
-  position: absolute; top: 0; left: 1%; z-index: 3;
-  background: var(--panel); border: 1px solid #2a3550;
-  border-radius: 10px; padding: 6px 16px; font-weight: 600;
-}
-#hub-map { position: relative; text-align: left; }
-/* Une région = une ligne parcourue de gauche à droite. */
-.hub-block { position: relative; height: 236px; margin-bottom: 40px; }
-.hub-block > svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
-/* Voie : trait net d'épaisseur constante malgré l'étirement du viewBox. */
-.hub-path {
-  fill: none; stroke: var(--track-dim); stroke-width: 2.5;
-  stroke-dasharray: 5 5; stroke-linecap: round;
-  vector-effect: non-scaling-stroke;
-}
-.hub-path.done {
-  stroke: #2dd4bf; stroke-dasharray: none; opacity: .8;
-  filter: drop-shadow(0 0 5px rgba(45, 212, 191, .4));
-}
-/* Le nœud est centré sur son point : la disque tombe pile sur la voie,
-   la légende est posée dessous sans décaler le centrage. */
-.hub-node {
-  position: absolute; transform: translate(-50%, -50%);
-  width: 50px; height: 50px; cursor: pointer;
-}
-.hub-node .disc {
-  width: 50px; height: 50px; border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 20px; font-weight: 700; color: #2dd4bf;
-  background: var(--panel); border: 2px solid #2dd4bf;
-  box-shadow: 0 0 18px rgba(45, 212, 191, .25);
+  width: 34px; height: 34px; border-radius: 50%; font-size: 18px;
+  background: var(--panel); box-shadow: 0 0 14px rgba(45, 212, 191, .22);
   transition: transform .15s;
 }
-/* La règle globale `svg { width:100% }` remplirait la pastille : on force ici
-   une taille de cadenas explicite, plus discrète que la pastille. */
-.hub-node .disc svg { width: 20px; height: 20px; display: block; }
-.hub-node .cap {
-  position: absolute; top: 60px; left: 50%; transform: translateX(-50%);
-  width: 132px; text-align: center;
+/* SVG dimensionné explicitement (la règle globale svg{width:100%} le remplirait). */
+.country-chip .cring {
+  position: absolute; top: 50%; left: 50%; width: 44px; height: 44px; margin: -22px 0 0 -22px;
+  transform: rotate(-90deg); overflow: visible; pointer-events: none;
 }
-/* Une gare sur deux : cartouche posé au-dessus de la pastille. */
-.hub-node.cap-up .cap { top: auto; bottom: 60px; }
+.country-chip .cring .track { fill: none; stroke: #33405c; stroke-width: 2; }
+.country-chip .cring .prog { fill: none; stroke: #2dd4bf; stroke-width: 4; stroke-linecap: round; }
+@media (hover: hover) { .country-chip:hover .cflag { transform: scale(1.1); } }
+
+/* Villes (niveau pays) : point-gare NUMÉROTÉ (ordre de jeu) + libellé léger,
+   cartouche dessous/dessus. Teal = jouable, gris = verrouillé. */
+.city-chip { width: 22px; height: 22px; cursor: pointer; }
+.city-chip .dot {
+  position: relative;
+  display: flex; align-items: center; justify-content: center;
+  width: 22px; height: 22px; border-radius: 50%;
+  font-size: 12px; font-weight: 700; color: #0e1420;
+  background: #2dd4bf; box-shadow: 0 0 8px rgba(45, 212, 191, .5);
+  transition: transform .15s;
+}
+.city-chip .cap {
+  position: absolute; top: 20px; left: 50%; transform: translateX(-50%);
+  width: 130px; text-align: center;
+}
+.city-chip.cap-up .cap { top: auto; bottom: 20px; }
+.city-chip .nm { font-weight: 400; font-size: 13px; text-shadow: 0 1px 3px rgba(0, 0, 0, .85); }
+/* Retard record affiché à côté des étoiles (ex. « ★★★ +2 »). */
+.city-chip .st .dl {
+  color: var(--green); font-size: 11px; font-weight: 600; letter-spacing: 0; margin-left: 5px;
+}
+.city-chip.locked { cursor: default; }
+.city-chip.locked .dot { background: #3a4560; color: #9aa6bd; box-shadow: none; }
+.city-chip.locked .nm { color: var(--muted); }
 @media (hover: hover) {
-  .hub-node:hover .disc { transform: scale(1.08); }
-  .hub-node.locked:hover .disc { transform: none; }
+  .city-chip:not(.locked):hover .dot { transform: scale(1.2); }
+  .city-chip:not(.locked):hover .nm { color: #63e6d4; }
 }
-.hub-node .nm { font-size: 14px; font-weight: 600; line-height: 1.25; }
-.hub-node .st { color: #f5b23c; font-size: 15px; letter-spacing: 2px; }
-.hub-node .bd { color: var(--muted); font-size: 11px; font-family: ui-monospace, Menlo, monospace; }
-.hub-node.locked { cursor: default; }
-.hub-node.locked .disc {
-  border-color: #3b465c; box-shadow: none; color: var(--muted);
-  background: #131a29; opacity: .6;
+/* Gare COURANTE (prochaine à réaliser) : anneau teal qui pulse en fondu. */
+.city-chip.current .dot::after {
+  content: ""; position: absolute; inset: -5px; border-radius: 50%;
+  border: 2px solid #2dd4bf; animation: cityPulse 1.7s ease-out infinite;
 }
-.hub-node.locked .cap { opacity: .5; }
-/* Gare courante : pastille pulsée pour guider l'œil vers « où reprendre ». */
-.hub-node.current .disc { animation: hubpulse 1.6s ease-in-out infinite; }
-@keyframes hubpulse {
-  50% { box-shadow: 0 0 26px rgba(45, 212, 191, .6); transform: scale(1.06); }
+@keyframes cityPulse {
+  0%   { transform: scale(1);   opacity: .85; }
+  100% { transform: scale(2.1); opacity: 0; }
 }
+@media (prefers-reduced-motion: reduce) { .city-chip.current .dot::after { animation: none; opacity: .5; } }
+
+/* ---- Fiche de gare (modale ouverte au clic d'une ville) ---- */
+#map-modal {
+  position: absolute; inset: 0; z-index: 10;
+  display: flex; align-items: center; justify-content: center; padding: 20px;
+  background: rgba(6, 10, 18, .62); backdrop-filter: blur(3px);
+}
+#map-modal.hidden { display: none; }
+.mm-card {
+  position: relative; width: min(380px, 92vw); text-align: center;
+  background: var(--panel); border: 1px solid #2a3550; border-radius: 18px;
+  padding: 24px 24px 22px; box-shadow: 0 24px 60px -12px rgba(0, 0, 0, .7);
+}
+.mm-close {
+  position: absolute; top: 12px; right: 12px; width: 32px; height: 32px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  background: none; border: 0; color: var(--muted); cursor: pointer;
+}
+.mm-close:hover { color: var(--text); background: rgba(255, 255, 255, .05); }
+.mm-close svg { width: 20px; height: 20px; display: block; }
+.mm-diff { color: var(--muted); font-size: 12px; letter-spacing: .5px; text-transform: uppercase; }
+.mm-diff .pips { margin-left: 6px; letter-spacing: 2px; color: #3b465c; }
+.mm-diff .pips .on { color: #f5b23c; }
+.mm-name { font-size: 22px; font-weight: 700; margin: 8px 0 4px; }
+.mm-spec { color: var(--muted); font-size: 13px; font-family: ui-monospace, Menlo, monospace; }
+.mm-stars { color: #f5b23c; font-size: 18px; letter-spacing: 3px; margin: 10px 0 2px; }
+.mm-delay { color: var(--green); font-size: 12px; font-family: ui-monospace, Menlo, monospace; margin-bottom: 4px; }
+.mm-desc { color: var(--muted); font-size: 14px; line-height: 1.55; margin: 6px 0 18px; }
+.mm-actions { display: flex; flex-direction: column; gap: 10px; }
+.mm-play { width: 100%; background: #16333a; border-color: #2dd4bf; color: #eafbf7; font-weight: 600; }
+.mm-play:hover { background: #1c4249; }
+.mm-lock {
+  display: flex; align-items: center; gap: 9px; text-align: left;
+  background: #1b1522; border: 1px solid #3a2a3c; border-radius: 10px;
+  padding: 10px 12px; color: #dcb4bc; font-size: 13px; line-height: 1.4;
+}
+.mm-lock svg { flex: none; width: 15px; height: 15px; fill: currentColor; display: block; }
 
 /* ================================================================
    Mobile — le jeu se joue en paysage
@@ -311,10 +449,11 @@ svg { width: 100%; height: 100%; display: block; }
 
 /* ---- paysage court (téléphone) : HUD compacté, plateau maximisé ---- */
 @media (max-height: 500px) {
-  #hud-clock { top: calc(8px + var(--safe-t)); padding: 5px 12px; gap: 7px; }
+  #hud-top { top: calc(8px + var(--safe-t)); gap: 4px; }
+  #hud-clock { padding: 5px 12px; gap: 2px; }
   #clock { font-size: 20px; }
   #delay { font-size: 13px; }
-  #pause-tag { top: calc(46px + var(--safe-t)); font-size: 11px; padding: 2px 10px; }
+  #pause-tag { font-size: 11px; padding: 2px 10px; }
   .hud-panel { padding: 6px; gap: 6px; }
   #hud-controls .btn {
     min-height: 36px; min-width: 36px; padding: 5px 9px;

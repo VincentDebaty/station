@@ -1,6 +1,6 @@
 {
   "id": "paris-nord",
-  "name": "Paris Gare du Nord",
+  "name": "Paris-Nord",
   "tagline": "Paris-Nord — 8 quais en impasse, Eurostar voies 1-2. Boss final.",
   "difficulty": 5,
   "country": "🇫🇷 France",
@@ -12,7 +12,7 @@
   ],
   "portals": {
     "LONDRES":   { "side": "L", "color": "#f2588f", "abbr": "LO" },
-    "BRUXELLES": { "side": "L", "color": "#2dd4bf", "abbr": "B" },
+    "BRUXELLES": { "side": "L", "color": "#25dede", "abbr": "B" },
     "LILLE":     { "side": "L", "color": "#60a5fa", "abbr": "LI" },
     "AMIENS":    { "side": "L", "color": "#f5b23c", "abbr": "AM" },
     "CREIL":     { "side": "L", "color": "#a78bfa", "abbr": "CR" }

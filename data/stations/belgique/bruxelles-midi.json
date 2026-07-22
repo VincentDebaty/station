@@ -13,7 +13,7 @@
     "GAND":   { "side": "L", "color": "#f5b23c", "abbr": "G" },
     "MONS":   { "side": "L", "color": "#4ade80", "abbr": "M" },
     "PARIS":  { "side": "L", "color": "#f2588f", "abbr": "P" },
-    "ANVERS": { "side": "R", "color": "#2dd4bf", "abbr": "AN" },
+    "ANVERS": { "side": "R", "color": "#25dede", "abbr": "AN" },
     "NAMUR":  { "side": "R", "color": "#60a5fa", "abbr": "N" },
     "LIEGE":  { "side": "R", "color": "#a78bfa", "abbr": "LG", "label": "LIÈGE" }
   },

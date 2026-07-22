@@ -1,93 +1,21 @@
 "use strict";
 // ------------------------------------------------------------------
-// Navigation : carte-parcours <-> gares
+// Navigation : carte du monde <-> gares
 // ------------------------------------------------------------------
-// La carte-parcours : un bloc par pays, parcouru de gauche à droite.
-// La première gare disponible ouvre la ligne à gauche ; la progression
-// avance vers la droite (une étoile débloque la gare suivante).
-function renderHub() {
-  const map = document.getElementById("hub-map");
-  map.innerHTML = "";
-  const regions = [];
-  for (const cfg of CATALOG) {
-    const last = regions[regions.length - 1];
-    if (!last || last.name !== cfg.country) regions.push({ name: cfg.country, items: [] });
-    regions[regions.length - 1].items.push(cfg);
-  }
-  const prog = getProgress();
-  for (const region of regions) {
-    const block = document.createElement("div");
-    block.className = "hub-block";
-    map.appendChild(block);
-    // Libellé ancré en haut à gauche du bloc, juste au-dessus de ses gares.
-    const banner = document.createElement("div");
-    banner.className = "hub-region";
-    banner.textContent = region.name;
-    block.appendChild(banner);
-    const n = region.items.length;
-    // Positions : réparties horizontalement, ondulation douce et déterministe.
-    // Ondulation centrée (50 %) pour laisser de la place aux légendes posées
-    // en alternance au-dessus/en dessous des pastilles (voir cap-up plus bas).
-    const pos = region.items.map((_, i) => ({
-      x: n === 1 ? 50 : 6 + 88 * i / (n - 1),
-      y: 50 + 9 * Math.sin(i * 0.9 + 0.4)
-    }));
-    // Combien de gares de cette région sont déjà ouvertes (préfixe contigu),
-    // et laquelle est « courante » : première ouverte pas encore parfaite
-    // (3 étoiles) — le point de reprise, propre à CE pays.
-    let lastOpen = -1, regionCurrent = -1;
-    region.items.forEach((cfg, i) => {
-      if (!isUnlocked(CATALOG.indexOf(cfg))) return;
-      lastOpen = i;
-      if (regionCurrent === -1 && ((prog[cfg.id] || {}).stars || 0) < 3) regionCurrent = i;
-    });
-    const svg = document.createElementNS(SVGNS, "svg");
-    svg.setAttribute("viewBox", "0 0 100 100");
-    svg.setAttribute("preserveAspectRatio", "none");
-    const d = pos.map((p, i) => (i ? "L " : "M ") + p.x + " " + p.y).join(" ");
-    // Voie de fond (grisée) sur tout le trajet.
-    const base = document.createElementNS(SVGNS, "path");
-    base.setAttribute("class", "hub-path");
-    base.setAttribute("d", d);
-    svg.appendChild(base);
-    // Voie « parcourue » (accent) jusqu'à la dernière gare ouverte.
-    if (lastOpen >= 1) {
-      const done = document.createElementNS(SVGNS, "path");
-      done.setAttribute("class", "hub-path done");
-      done.setAttribute("d", pos.slice(0, lastOpen + 1)
-        .map((p, i) => (i ? "L " : "M ") + p.x + " " + p.y).join(" "));
-      svg.appendChild(done);
-    }
-    block.appendChild(svg);
-    region.items.forEach((cfg, i) => {
-      const gi = CATALOG.indexOf(cfg);
-      const unlocked = isUnlocked(gi);
-      const p = prog[cfg.id] || {};
-      const node = document.createElement("div");
-      // Légende alternée : une gare sur deux porte son cartouche au-dessus,
-      // pour que les gares serrées (jusqu'à 10 par pays) ne se chevauchent pas.
-      node.className = "hub-node" + (unlocked ? "" : " locked") +
-        (i === regionCurrent ? " current" : "") + (i % 2 ? " cap-up" : "");
-      node.style.left = pos[i].x + "%";
-      node.style.top = pos[i].y + "%";
-      node.innerHTML =
-        '<div class="disc">' + (unlocked ? cfg.name[0] : icon(ICON.lock, 14)) + "</div>" +
-        '<div class="cap">' +
-          '<div class="nm">' + cfg.name + "</div>" +
-          '<div class="st">' + "★".repeat(p.stars || 0) + "☆".repeat(3 - (p.stars || 0)) + "</div>" +
-          (p.bestDelay != null ? '<div class="bd">record : +' + p.bestDelay + " min</div>" : "") +
-        "</div>";
-      if (unlocked) node.addEventListener("click", () => startStation(gi));
-      block.appendChild(node);
-    });
-  }
-}
+// La sélection des gares se fait sur une carte du monde zoomable (js/map.js) :
+// monde → continent → pays → clic sur une ville lance la partie. renderHub()
+// reste le point d'entrée historique (appelé par showHub) mais délègue
+// désormais entièrement au renderer de la carte.
+function renderHub() { renderMap(); }
 function showHub() {
   started = false;
   document.getElementById("help").classList.add("hidden");
   document.getElementById("end").classList.add("hidden");
-  renderHub();
+  // Afficher #hub AVANT de rendre la carte : l'overlay se positionne d'après la
+  // taille rendue du SVG (screenPos). Si #hub est encore display:none, sa largeur
+  // vaut 0 et toutes les villes se tassent dans le coin haut-gauche.
   document.getElementById("hub").classList.remove("hidden");
+  renderHub();
 }
 // Cliquer une gare prend le service SANS écran intercalé : le clic autorise
 // l'audio, la partie démarre aussitôt, et la description de la gare passe en
@@ -95,6 +23,15 @@ function showHub() {
 function startStation(i) {
   currentIdx = i;
   const cfg = CATALOG[i];
+  // Cartouche haut-gauche : drapeau (1er token du champ country « 🇧🇪 Belgique »)
+  // + nom de la gare.
+  const flag = (cfg.country || "").trim().split(" ")[0];
+  document.getElementById("station-tag").innerHTML =
+    '<span class="flag">' + flag + '</span><span class="nm">' + cfg.name + "</span>";
+  // Gare terminus (tous les quais en impasse) : le côté droit est vide (butoirs),
+  // on y place le cadre HUD, centré verticalement, pour dégager le haut du plan.
+  const terminus = (cfg.platforms || []).length > 0 && cfg.platforms.every(p => p.deadEnd);
+  document.getElementById("hud-top").classList.toggle("terminus", terminus);
   loadStation(cfg);
   document.getElementById("hub").classList.add("hidden");
   document.getElementById("end").classList.add("hidden");

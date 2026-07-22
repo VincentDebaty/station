@@ -77,16 +77,27 @@ document.getElementById("btn-replay").innerHTML = icon(ICON.restart, 18) + "Rejo
 updatePauseIcon();
 updateMuteIcon();
 
-hudClock.addEventListener("click", () => hudControls.classList.toggle("hidden"));
-// on referme le volet dès qu'on clique sur le voile (hors carte) OU sur
-// n'importe quel bouton. En phase de CAPTURE : certains boutons (pause, sons)
-// remplacent leur propre icône dans leur handler, ce qui détache e.target ;
-// en capture on lit e.target avant cette mutation. L'action du bouton
-// (phase de bulle) s'exécute ensuite normalement, le chemin d'événement étant figé.
+// Le menu d'icônes se déplie/replie sous le cadre via la poignée (ou en tapant
+// le cadre). #hud-top.open pilote l'état visuel de la poignée.
+const hudTop = document.getElementById("hud-top");
+function setMenu(open) {
+  hudControls.classList.toggle("hidden", !open);
+  hudTop.classList.toggle("open", open);
+}
+function toggleMenu() { setMenu(hudControls.classList.contains("hidden")); }
+hudClock.addEventListener("click", toggleMenu);
+document.getElementById("hud-handle").addEventListener("click", toggleMenu);
+// on referme dès qu'on clique un bouton du menu. En phase de CAPTURE : certains
+// boutons (pause, sons) remplacent leur propre icône dans leur handler, ce qui
+// détache e.target ; en capture on lit e.target avant cette mutation. L'action
+// du bouton (phase de bulle) s'exécute ensuite, le chemin d'événement étant figé.
 hudControls.addEventListener("click", e => {
-  if (e.target === hudControls || e.target.closest(".btn"))
-    hudControls.classList.add("hidden");
+  if (e.target.closest(".btn")) setMenu(false);
 }, true);
+// clic hors du HUD → referme le menu.
+document.addEventListener("click", e => {
+  if (!hudControls.classList.contains("hidden") && !hudTop.contains(e.target)) setMenu(false);
+});
 btnPausep.addEventListener("click", () => { paused = !paused; updatePauseIcon(); });
 document.querySelectorAll(".speed").forEach(b => b.addEventListener("click", () => {
   speed = +b.dataset.s;
@@ -104,7 +115,6 @@ function openHelp() {
 }
 function closeHelp() { helpOverlay.classList.add("hidden"); }
 document.getElementById("btn-help").addEventListener("click", openHelp);
-document.getElementById("btn-help-map").addEventListener("click", openHelp);
 document.getElementById("btn-help-close").addEventListener("click", closeHelp);
 // clic sur le fond (hors carte) : referme l'aide
 helpOverlay.addEventListener("click", e => { if (e.target === helpOverlay) closeHelp(); });

@@ -9,7 +9,7 @@
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
   ],
   "portals": {
-    "BRUXELLES": { "side": "L", "color": "#2dd4bf", "abbr": "B" },
+    "BRUXELLES": { "side": "L", "color": "#25dede", "abbr": "B" },
     "MALINES":   { "side": "L", "color": "#f5b23c", "abbr": "MA" },
     "LIEGE":     { "side": "R", "color": "#f2588f", "abbr": "LG", "label": "LIÈGE" },
     "AARSCHOT":  { "side": "R", "color": "#4ade80", "abbr": "AA" },

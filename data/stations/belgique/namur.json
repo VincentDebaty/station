@@ -10,7 +10,7 @@
     { "id": 6, "deadEnd": true }
   ],
   "portals": {
-    "BRUXELLES":  { "side": "L", "color": "#2dd4bf", "abbr": "B" },
+    "BRUXELLES":  { "side": "L", "color": "#25dede", "abbr": "B" },
     "CHARLEROI":  { "side": "L", "color": "#f5b23c", "abbr": "C" },
     "DINANT":     { "side": "L", "color": "#4ade80", "abbr": "D" },
     "LIEGE":      { "side": "R", "color": "#f2588f", "abbr": "LG", "label": "LIÈGE" },

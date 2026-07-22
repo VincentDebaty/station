@@ -10,7 +10,7 @@
     { "id": 4, "deadEnd": true }, { "id": 5, "deadEnd": true }, { "id": 6, "deadEnd": true }
   ],
   "portals": {
-    "BRUXELLES": { "side": "L", "color": "#2dd4bf", "abbr": "B" },
+    "BRUXELLES": { "side": "L", "color": "#25dede", "abbr": "B" },
     "GAND":      { "side": "L", "color": "#f5b23c", "abbr": "G" },
     "ESSEN":     { "side": "L", "color": "#f2588f", "abbr": "ES" },
     "LIER":      { "side": "L", "color": "#a78bfa", "abbr": "LI" }

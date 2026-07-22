@@ -1,0 +1,29 @@
+{
+  "id": "clermont-ferrand",
+  "name": "Clermont-Ferrand",
+  "tagline": "Clermont-Ferrand — nœud auvergnat : 4 quais, Paris et Lyon d'un côté, le Massif de l'autre.",
+  "difficulty": 1,
+  "country": "🇫🇷 France",
+  "desc": "Le nœud auvergnat au pied du Massif central : quatre quais, des rames courtes vers Paris, Lyon, Nîmes par les Cévennes et Aurillac. Petit gabarit, tempo serré — la rampe d'accès idéale.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }
+  ],
+  "portals": {
+    "PARIS":    { "side": "L", "color": "#f2588f", "abbr": "P" },
+    "AURILLAC": { "side": "L", "color": "#f5b23c", "abbr": "AU" },
+    "LYON":     { "side": "R", "color": "#60a5fa", "abbr": "LY" },
+    "NIMES":    { "side": "R", "color": "#4ade80", "abbr": "NI", "label": "NÎMES" }
+  },
+  "links": {
+    "PARIS": [1, 2, 3],
+    "AURILLAC": [2, 3, 4],
+    "LYON": [1, 2, 3],
+    "NIMES": [2, 3, 4]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 12, "nMax": 15, "gapMin": 1.6, "gapMax": 2.8,
+    "cars": [1, 1, 2, 2, 3, 3, 4],
+    "freightRate": 0.3, "quietRate": 0.25
+  }
+}

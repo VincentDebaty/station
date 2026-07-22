@@ -10,7 +10,7 @@
   ],
   "portals": {
     "PARIS":    { "side": "L", "color": "#f2588f", "abbr": "P" },
-    "NANTES":   { "side": "L", "color": "#2dd4bf", "abbr": "NA" },
+    "NANTES":   { "side": "L", "color": "#25dede", "abbr": "NA" },
     "TOULOUSE": { "side": "R", "color": "#4ade80", "abbr": "TO" },
     "BAYONNE":  { "side": "R", "color": "#f5b23c", "abbr": "BY" },
     "ARCACHON": { "side": "R", "color": "#60a5fa", "abbr": "AR" }

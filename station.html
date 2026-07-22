@@ -17,23 +17,30 @@
 <body>
 <div id="board-wrap">
   <svg id="board" viewBox="0 0 1400 760" preserveAspectRatio="xMidYMid meet"></svg>
-  <!-- HUD minimal flottant (façon Mini Metro) -->
-  <!-- horloge + retard ; taper déplie/replie le volet de commandes -->
-  <div id="hud-clock" role="button" tabindex="0" aria-label="Commandes">
-    <span id="clock">07:00</span>
-    <span id="delay">+0</span>
-  </div>
-  <div id="pause-tag" class="hidden">En pause</div>
-  <div id="hud-controls" class="hidden">
-    <div class="hud-panel">
-      <button class="btn icon" id="btn-pausep" title="Pause"></button>
-      <button class="btn speed active" data-s="1">1x</button>
-      <button class="btn speed" data-s="2">2x</button>
-      <button class="btn speed" data-s="4">4x</button>
-      <button class="btn icon" id="btn-reset" title="Recommencer"></button>
-      <button class="btn icon" id="btn-mute" title="Sons"></button>
-      <button class="btn icon" id="btn-help" title="Comment jouer"></button>
-      <button class="btn icon" id="btn-hub" title="Quitter vers la carte"></button>
+  <!-- HUD minimal flottant (façon Mini Metro), empilé et centré en haut :
+       cadre horloge (drapeau + nom + heure) → poignée → menu déroulant d'icônes. -->
+  <div id="hud-top">
+    <div id="hud-clock" role="button" tabindex="0" aria-label="Commandes">
+      <div id="station-tag"></div>
+      <div id="clock-row">
+        <span id="clock">07:00</span>
+        <span id="delay">+0</span>
+      </div>
+    </div>
+    <!-- Petite barre-poignée : déplie/replie le menu d'icônes sous le cadre. -->
+    <button id="hud-handle" aria-label="Menu"></button>
+    <div id="pause-tag" class="hidden">En pause</div>
+    <div id="hud-controls" class="hidden">
+      <div class="hud-panel">
+        <button class="btn icon" id="btn-pausep" title="Pause"></button>
+        <button class="btn speed active" data-s="1">1x</button>
+        <button class="btn speed" data-s="2">2x</button>
+        <button class="btn speed" data-s="4">4x</button>
+        <button class="btn icon" id="btn-reset" title="Recommencer"></button>
+        <button class="btn icon" id="btn-mute" title="Sons"></button>
+        <button class="btn icon" id="btn-help" title="Comment jouer"></button>
+        <button class="btn icon" id="btn-hub" title="Quitter vers la carte"></button>
+      </div>
     </div>
   </div>
   <div class="overlay hidden" id="end">
@@ -54,12 +61,9 @@
   <div id="infobar"><span id="infobar-msg"></span></div>
 </div>
 <div id="hub">
-  <button id="btn-help-map" class="hub-help" title="Comment jouer" aria-label="Comment jouer">?</button>
-  <div id="hub-inner">
-    <h1 class="hub-title">STATION</h1>
-    <div class="hub-sub">Le poste d'aiguillage — un service parfait dans chaque gare</div>
-    <div id="hub-map"></div>
-  </div>
+  <!-- Carte du monde zoomable (SVG + overlay de labels + bouton retour flottant),
+       entièrement construite par js/map.js. -->
+  <div id="hub-map"></div>
 </div>
 <!-- Aide « Comment jouer » : au niveau du body, en fixed au-dessus de tout
      (carte comprise), donc accessible aussi bien en jeu que depuis la carte. -->
@@ -82,21 +86,33 @@
   </div>
 </div>
 
-<!-- Ordre de chargement important : store → catalogue → moteur → horaire → rendu → jeu → hub → démarrage -->
+<!-- Ordre de chargement important : store → catalogue → moteur → horaire → rendu → jeu → géo → fond de carte → carte → hub → démarrage -->
 <script src="js/store.js"></script>
 <script src="js/catalog.js"></script>
 <script src="js/engine.js"></script>
 <script src="js/schedule.js"></script>
 <script src="js/render.js"></script>
 <script src="js/game.js"></script>
+<script src="js/geo.js"></script>
+<script src="data/worldmap.js"></script>
+<script src="js/map.js"></script>
 <script src="js/hub.js"></script>
 <script src="js/main.js"></script>
 <!-- Service worker : cache hors-ligne. Ignoré en file:// (nécessite http/https). -->
 <script>
-  if ("serviceWorker" in navigator)
+  if ("serviceWorker" in navigator) {
+    // Quand une NOUVELLE version du service worker prend la main, on recharge une
+    // fois pour afficher tout de suite les fichiers à jour (garde anti-boucle).
+    let swRefreshing = false;
+    navigator.serviceWorker.addEventListener("controllerchange", () => {
+      if (swRefreshing) return;
+      swRefreshing = true;
+      window.location.reload();
+    });
     window.addEventListener("load", () =>
       navigator.serviceWorker.register("sw.js").catch(err =>
         console.warn("Service worker non enregistré :", err)));
+  }
 </script>
 </body>
 </html>

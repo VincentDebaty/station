@@ -13,7 +13,7 @@
     "SAINTETIENNE": { "side": "L", "color": "#4ade80", "abbr": "SE", "label": "SAINT-ÉTIENNE" },
     "GENEVE":       { "side": "R", "color": "#a78bfa", "abbr": "GE", "label": "GENÈVE" },
     "GRENOBLE":     { "side": "R", "color": "#f5b23c", "abbr": "GR" },
-    "MARSEILLE":    { "side": "R", "color": "#2dd4bf", "abbr": "MA" }
+    "MARSEILLE":    { "side": "R", "color": "#25dede", "abbr": "MA" }
   },
   "links": {
     "PARIS": [1, 2, 3, 4],

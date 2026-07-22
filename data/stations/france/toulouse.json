@@ -1,0 +1,31 @@
+{
+  "id": "toulouse",
+  "name": "Toulouse Matabiau",
+  "tagline": "Toulouse — carrefour du Sud : 6 quais traversants, cinq directions sans répit.",
+  "difficulty": 3,
+  "country": "🇫🇷 France",
+  "desc": "Le grand carrefour occitan : six quais traversants et cinq directions — Bordeaux, Bayonne, Narbonne vers la Méditerranée, Foix vers les Pyrénées et Brive vers Paris. Un flux dense qui ne faiblit jamais.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }, { "id": 6 }
+  ],
+  "portals": {
+    "BORDEAUX": { "side": "L", "color": "#f5b23c", "abbr": "Bx" },
+    "BAYONNE":  { "side": "L", "color": "#25dede", "abbr": "By" },
+    "NARBONNE": { "side": "R", "color": "#4ade80", "abbr": "Na" },
+    "FOIX":     { "side": "R", "color": "#60a5fa", "abbr": "Fx" },
+    "BRIVE":    { "side": "R", "color": "#a78bfa", "abbr": "Br" }
+  },
+  "links": {
+    "BORDEAUX": [1, 2, 3, 4],
+    "BAYONNE": [3, 4, 5, 6],
+    "NARBONNE": [1, 2, 3],
+    "FOIX": [3, 4, 5],
+    "BRIVE": [2, 4, 5, 6]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 15, "nMax": 18, "gapMin": 1.6, "gapMax": 2.8,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6],
+    "freightRate": 0.3, "quietRate": 0.15
+  }
+}
