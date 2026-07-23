@@ -640,6 +640,9 @@ function layoutOverlay() {
           const pen = placed.reduce((sum, b) => sum + overlapArea(box, b), 0) + Math.abs(s) * 900;
           if (pen < bestPen) { bestPen = pen; bx = x; by = y; }
         }
+      // Décalage manuel optionnel de la bulle-voisin (geo.js : chipDy), pour
+      // l'écarter d'un amas de gares — ex. la Belgique remontée dans la vue France.
+      if (g.chipDy) by += g.chipDy;
       const cp = countryProgress(slug);
       const frac = cp.max ? cp.earned / cp.max : 0;
       const el = chip(bx, by, "country-chip neighbor");

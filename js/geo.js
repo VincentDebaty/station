@@ -34,7 +34,7 @@ const GEO = {
 
   // Pays jouables uniquement. iso = ADM0_A3 (lien vers WORLDMAP).
   countries: {
-    belgique: { name: "Belgique", flag: "🇧🇪", iso: "BEL", continent: "europe",
+    belgique: { name: "Belgique", flag: "🇧🇪", iso: "BEL", continent: "europe", chipDy: -20,
       cities: {
         "bruxelles-midi": [4.336, 50.836], anvers: [4.421, 51.219], gand: [3.710, 51.036],
         bruges: [3.217, 51.197], louvain: [4.716, 50.881], namur: [4.862, 50.469],
