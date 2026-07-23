@@ -366,6 +366,9 @@ function chip(x, y, cls) {
   return d;
 }
 function starStr(n) { return "★".repeat(n) + "☆".repeat(3 - n); }
+// Variante « pleines seulement » : sur la carte-pays, on n'affiche pas les
+// étoiles vides (2 étoiles → « ★★ », pas « ★★☆ ») — plus lisible.
+function starStrFull(n) { return "★".repeat(n); }
 // Anti-agglutination des pastilles-villes : répulsion pour qu'aucune paire ne se
 // chevauche, + léger rappel vers la vraie position géo (`bx,by`) → réparties mais
 // restant proches de leur emplacement réel. Nodes mutés en place ({x,y,bx,by}).
@@ -494,6 +497,10 @@ function layoutOverlay() {
       }
     }
 
+    // Positions finales des villes (ordre de jeu) exposées pour l'animation de
+    // « voyage » vers la gare suivante (mapJourneyToNext).
+    MAP.cityNodes = nodes.map(n => ({ id: n.id, gi: catalogIndexOf(n.id), x: n.x, y: n.y }));
+
     // Réseau décoratif reliant les villes (ordre de jeu), sur les positions
     // ajustées, dans un SVG écran posé SOUS les pastilles.
     if (nodes.length > 1) {
@@ -578,7 +585,7 @@ function layoutOverlay() {
         '<span class="dot">' + n.num + (m.unlocked ? "" : lockSvg) + "</span>" +
         '<div class="cap" style="width:' + capW.toFixed(0) + "px;transform:translateX(calc(-50% + " + bestC.dx.toFixed(0) + 'px))">' +
         '<div class="nm">' + label + "</div>" +
-        '<div class="st">' + starStr(m.stars) +
+        '<div class="st">' + starStrFull(m.stars) +
           (m.best != null ? '<span class="dl">' + clockSvg + m.best + "′</span>" : "") + "</div></div>";
       // Toute ville ouvre sa fiche (verrouillée comprise) ; le lancement se fait
       // depuis la modale.
@@ -819,6 +826,81 @@ function openStationModal(gi) {
   const play = MAP.modal.querySelector(".mm-play");
   if (play) play.addEventListener("click", () => { const g = +play.dataset.gi; closeModal(); startStation(g); });
   MAP.modal.classList.remove("hidden");
+}
+
+// ------------------------------------------------------------------
+// Animation « voyage » vers la gare suivante.
+// ------------------------------------------------------------------
+// Pays (slug) qui contient une gare du catalogue (index gi).
+function stationCountrySlug(gi) {
+  const id = (typeof CATALOG !== "undefined" && CATALOG[gi]) ? CATALOG[gi].id : null;
+  if (!id) return null;
+  for (const slug in GEO.countries) {
+    const c = GEO.countries[slug];
+    if (c.cities && c.cities[id]) return slug;
+  }
+  return null;
+}
+// À l'enchaînement « gare suivante », on montre la carte du pays et un convoi file
+// le long de la ligne, de la gare terminée jusqu'à la suivante qui s'illumine,
+// puis on lance la partie (onDone). Un clic passe l'animation. Respecte
+// prefers-reduced-motion (bascule directe, sans carte).
+function mapJourneyToNext(fromGi, toGi, onDone) {
+  let done = false;
+  const finish = () => { if (!done) { done = true; onDone(); } };
+  const slug = stationCountrySlug(toGi);
+  const reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (!slug || reduce) { finish(); return; }
+  if (!MAP.built) buildMap();
+  document.getElementById("hub").classList.remove("hidden");
+  if (typeof started !== "undefined") started = false;
+  focusCountry(slug, true); // instantané → MAP.cityNodes prêt
+
+  const nodes = MAP.cityNodes || [];
+  const kf = nodes.findIndex(n => n.gi === fromGi);
+  const kt = nodes.findIndex(n => n.gi === toGi);
+  const cw = MAP.svg.clientWidth, ch = MAP.svg.clientHeight;
+  if (kf < 0 || kt < 0 || !cw || !ch) { finish(); return; }
+
+  // Cubique du segment kf→kt, identique à celle du réseau (smoothOpenPath).
+  const P = i => nodes[Math.max(0, Math.min(nodes.length - 1, i))];
+  const p1 = P(kf), p2 = P(kt), p0 = P(kf - 1), p3 = P(kt + 1);
+  const c1 = { x: p1.x + (p2.x - p0.x) / 6, y: p1.y + (p2.y - p0.y) / 6 };
+  const c2 = { x: p2.x - (p3.x - p1.x) / 6, y: p2.y - (p3.y - p1.y) / 6 };
+  const bez = t => { const m = 1 - t; return {
+    x: m * m * m * p1.x + 3 * m * m * t * c1.x + 3 * m * t * t * c2.x + t * t * t * p2.x,
+    y: m * m * m * p1.y + 3 * m * m * t * c1.y + 3 * m * t * t * c2.y + t * t * t * p2.y }; };
+
+  const mk = (tag, attrs) => {
+    const e = document.createElementNS(SVGNS, tag);
+    for (const k in attrs) e.setAttribute(k, attrs[k]);
+    return e;
+  };
+  const svg = mk("svg", { class: "map-journey", width: cw, height: ch, viewBox: "0 0 " + cw + " " + ch });
+  const dSeg = "M" + p1.x + "," + p1.y + " C" + c1.x + "," + c1.y + " " + c2.x + "," + c2.y + " " + p2.x + "," + p2.y;
+  const line = mk("path", { class: "mj-line", d: dSeg });
+  const ring = mk("circle", { class: "mj-ring", cx: p2.x.toFixed(1), cy: p2.y.toFixed(1), r: 16 });
+  const dot = mk("circle", { class: "mj-dot", cx: p1.x.toFixed(1), cy: p1.y.toFixed(1), r: 6 });
+  svg.appendChild(line); svg.appendChild(ring); svg.appendChild(dot);
+  MAP.host.appendChild(svg);
+  const len = line.getTotalLength();
+  line.style.strokeDasharray = len; line.style.strokeDashoffset = len;
+
+  let raf = null, t0 = null, endT = null;
+  const cleanup = () => { if (raf) cancelAnimationFrame(raf); if (endT) clearTimeout(endT); if (svg.parentNode) svg.remove(); };
+  svg.addEventListener("click", () => { cleanup(); finish(); });
+  const DUR = 1150;
+  function step(ts) {
+    if (t0 === null) t0 = ts;
+    const e = Math.min(1, (ts - t0) / DUR);
+    const k = e < 0.5 ? 2 * e * e : 1 - Math.pow(-2 * e + 2, 2) / 2; // easeInOutQuad
+    line.style.strokeDashoffset = len * (1 - k);
+    const q = bez(k);
+    dot.setAttribute("cx", q.x.toFixed(1)); dot.setAttribute("cy", q.y.toFixed(1));
+    if (e < 1) { raf = requestAnimationFrame(step); }
+    else { ring.classList.add("pulse"); endT = setTimeout(() => { cleanup(); finish(); }, 480); }
+  }
+  raf = requestAnimationFrame(step);
 }
 
 // ------------------------------------------------------------------
