@@ -1,6 +1,7 @@
 {
   "id": "lyon",
   "name": "Lyon Part-Dieu",
+  "city": "Lyon",
   "tagline": "Lyon Part-Dieu — 5 directions traversantes, TGV pressés, flux dense.",
   "difficulty": 3,
   "country": "🇫🇷 France",

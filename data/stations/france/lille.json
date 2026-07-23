@@ -1,6 +1,7 @@
 {
   "id": "lille",
   "name": "Lille-Flandres",
+  "city": "Lille",
   "tagline": "Lille-Flandres — grand terminus TER : 6 quais à heurtoir, l'étoile du Nord rebrousse.",
   "difficulty": 1,
   "country": "🇫🇷 France",

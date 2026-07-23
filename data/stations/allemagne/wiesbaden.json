@@ -1,6 +1,7 @@
 {
   "id": "wiesbaden",
   "name": "Wiesbaden Hbf",
+  "city": "Wiesbaden",
   "tagline": "Wiesbaden Hbf — terminus néo-baroque : 6 quais à heurtoir, tout rebrousse vers le Rhin.",
   "difficulty": 2,
   "country": "🇩🇪 Allemagne",

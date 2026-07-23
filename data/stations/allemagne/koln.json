@@ -1,6 +1,7 @@
 {
   "id": "koln",
   "name": "Köln Hbf",
+  "city": "Köln",
   "tagline": "Köln Hbf — densité extrême sous la cathédrale : 7 quais, tout passe par le pont Hohenzollern.",
   "difficulty": 4,
   "country": "🇩🇪 Allemagne",

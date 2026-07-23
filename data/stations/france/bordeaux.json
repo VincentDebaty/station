@@ -1,6 +1,7 @@
 {
   "id": "bordeaux",
   "name": "Bordeaux Saint-Jean",
+  "city": "Bordeaux",
   "tagline": "Bordeaux — carrefour du Sud-Ouest : 6 quais traversants, flux dense sans répit.",
   "difficulty": 3,
   "country": "🇫🇷 France",

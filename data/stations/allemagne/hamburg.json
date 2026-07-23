@@ -1,6 +1,7 @@
 {
   "id": "hamburg",
   "name": "Hamburg Hbf",
+  "city": "Hamburg",
   "tagline": "Hamburg Hbf — le goulot du Nord : record de fréquentation, densité extrême.",
   "difficulty": 4,
   "country": "🇩🇪 Allemagne",

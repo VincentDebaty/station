@@ -1,6 +1,7 @@
 {
   "id": "frankfurt",
   "name": "Frankfurt (Main) Hbf",
+  "city": "Frankfurt",
   "tagline": "Frankfurt (Main) Hbf — hub central de l'Allemagne : 8 quais à heurtoir, tous les axes ICE.",
   "difficulty": 5,
   "country": "🇩🇪 Allemagne",

@@ -41,7 +41,11 @@ Strasbourg), mauvaise gare (Lille-Flandres≠Lille-Europe pour Bruxelles/Eurosta
 ```jsonc
 {
   "id": "liege",                    // = nom de fichier, = clé dans geo.js
-  "name": "Liège-Guillemins",
+  "name": "Liège-Guillemins",       // nom COMPLET de la gare (fiche détaillée)
+  "city": "Liège",                  // nom de VILLE affiché sur la carte-pays.
+                                    // À AJOUTER dès que le nom diffère de la ville
+                                    // (ex. « … Hbf », « …-Central »). Sinon omis
+                                    // (la carte retombe sur `name`).
   "tagline": "…",                   // une ligne, accroche de la carte
   "desc": "…",                      // 2-3 phrases, caractère réel
   "difficulty": 4,                  // 1..5, définit le palier (§5)

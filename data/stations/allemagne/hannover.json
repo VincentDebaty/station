@@ -1,6 +1,7 @@
 {
   "id": "hannover",
   "name": "Hannover Hbf",
+  "city": "Hannover",
   "tagline": "Hannover Hbf — croisée des dorsales ICE du Nord : 6 quais, Nord-Sud × Ouest-Est.",
   "difficulty": 3,
   "country": "🇩🇪 Allemagne",

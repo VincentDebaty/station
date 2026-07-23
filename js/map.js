@@ -528,7 +528,9 @@ function layoutOverlay() {
     const metas = nodes.map(n => {
       const gi = catalogIndexOf(n.id);
       const cfg = gi >= 0 ? CATALOG[gi] : null;
-      const label = cfg ? cfg.name : n.id;
+      // Sur la carte-pays : nom de VILLE (cfg.city) pour alléger — la fiche
+      // détaillée garde le nom complet de la gare (cfg.name).
+      const label = cfg ? (cfg.city || cfg.name) : n.id;
       // Largeur RÉELLE estimée du cartouche (nom sur UNE ligne, cf. .nm nowrap) :
       // les noms courts (Namur) n'écartent plus inutilement, les longs
       // (Bruxelles-Midi, Gand-Saint-Pierre) réservent la place qu'il faut.
@@ -612,7 +614,7 @@ function layoutOverlay() {
       // Un simple liseré au bord (peu du voisin visible) reste masqué.
       const fracFrame = (iw * ih) / (vb[2] * vb[3]);
       const fracSelf = (iw * ih) / (rr.w * rr.h);
-      if (fracFrame < 0.14 && fracSelf < 0.5) continue;
+      if (fracFrame < 0.08 && fracSelf < 0.2) continue;
       const raw = screenPos(country.lx, country.ly);
       const cx = Math.max(64, Math.min(cw - 64, raw.x));
       const cy = Math.max(52, Math.min(ch - 66, raw.y));

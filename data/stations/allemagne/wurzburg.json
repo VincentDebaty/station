@@ -1,6 +1,7 @@
 {
   "id": "wurzburg",
   "name": "Würzburg Hbf",
+  "city": "Würzburg",
   "tagline": "Würzburg Hbf — croisée ICE de Franconie : 4 quais où deux dorsales se rencontrent.",
   "difficulty": 1,
   "country": "🇩🇪 Allemagne",

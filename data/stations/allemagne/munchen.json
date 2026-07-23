@@ -1,6 +1,7 @@
 {
   "id": "munchen",
   "name": "München Hbf",
+  "city": "München",
   "tagline": "München Hbf — l'une des plus grandes gares terminus d'Europe : 8 quais, deux ailes.",
   "difficulty": 5,
   "country": "🇩🇪 Allemagne",

@@ -1,6 +1,7 @@
 {
   "id": "liege",
   "name": "Liège-Guillemins",
+  "city": "Liège",
   "tagline": "Liège-Guillemins — hub traversant sous la voûte Calatrava : 9 voies, 6 directions, flux dense.",
   "desc": "Cinq quais îlots, neuf voies : la grande artère Bruxelles–Liège–Aachen file de part en part, tandis que les branches de Namur, du Luxembourg, de Maastricht et des omnibus de Liers se greffent au passage. GV internationales pressées et dessertes wallonnes s'entrecroisent — le carrefour le plus chargé de Wallonie.",
   "difficulty": 4,

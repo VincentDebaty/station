@@ -1,6 +1,7 @@
 {
   "id": "leipzig",
   "name": "Leipzig Hbf",
+  "city": "Leipzig",
   "tagline": "Leipzig Hbf — plus grande gare terminus d'Europe : 7 quais à heurtoir, deux halls.",
   "difficulty": 4,
   "country": "🇩🇪 Allemagne",

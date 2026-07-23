@@ -1,6 +1,7 @@
 {
   "id": "berlin",
   "name": "Berlin Hbf",
+  "city": "Berlin",
   "tagline": "Berlin Hbf — gare-capitale à deux niveaux croisés : 8 quais, Nord-Sud × Est-Ouest.",
   "difficulty": 5,
   "country": "🇩🇪 Allemagne",

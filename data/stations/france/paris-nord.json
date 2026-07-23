@@ -1,6 +1,7 @@
 {
   "id": "paris-nord",
   "name": "Paris-Nord",
+  "city": "Paris",
   "tagline": "Paris-Nord — 8 quais en impasse, Eurostar voies 1-2. Boss final.",
   "difficulty": 5,
   "country": "🇫🇷 France",

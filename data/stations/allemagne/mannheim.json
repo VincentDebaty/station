@@ -1,6 +1,7 @@
 {
   "id": "mannheim",
   "name": "Mannheim Hbf",
+  "city": "Mannheim",
   "tagline": "Mannheim Hbf — l'un des plus grands nœuds ICE d'Allemagne : 6 quais, 6 axes en étoile.",
   "difficulty": 3,
   "country": "🇩🇪 Allemagne",

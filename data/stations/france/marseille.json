@@ -1,6 +1,7 @@
 {
   "id": "marseille",
   "name": "Marseille Saint-Charles",
+  "city": "Marseille",
   "tagline": "Marseille — terminus méditerranéen : longues rames, peu de place.",
   "difficulty": 2,
   "country": "🇫🇷 France",
