@@ -2,7 +2,7 @@
   {
     "country": "belgique",
     "label": "🇧🇪 Belgique",
-    "stations": ["charleroi", "hasselt", "libramont", "anvers", "louvain", "bruges", "gand", "namur", "liege", "mons", "bruxelles-midi"]
+    "stations": ["charleroi", "hasselt", "libramont", "ottignies", "tournai", "anvers", "louvain", "bruges", "gand", "namur", "liege", "mons", "bruxelles-midi"]
   },
   {
     "country": "france",

@@ -1,10 +1,10 @@
 {
   "id": "metz",
   "name": "Metz-Ville",
-  "tagline": "Metz — sillon lorrain vers le Luxembourg : long corridor fret qui coupe la gare.",
+  "tagline": "Metz-Ville — sillon lorrain et triage de Woippy : le fret le plus lourd de France.",
   "difficulty": 4,
   "country": "🇫🇷 France",
-  "desc": "Le verrou du sillon lorrain : cinq quais, la frontière luxembourgeoise toute proche et le grand corridor fret vers Bettembourg et l'Allemagne qui traverse sans prévenir. Les convois y sont longs — anticipez leur passage.",
+  "desc": "Le verrou du sillon lorrain, sous la gare impériale de 1908 (élue plus belle gare de France) : cinq quais, la frontière luxembourgeoise toute proche, et le plus grand triage de France à Woippy juste au nord — l'axe fret Bettembourg–Metz–Dijon traverse sans prévenir. Les convois y sont longs : anticipez leur passage.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
   ],

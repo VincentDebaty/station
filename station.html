@@ -17,29 +17,39 @@
 <body>
 <div id="board-wrap">
   <svg id="board" viewBox="0 0 1400 760" preserveAspectRatio="xMidYMid meet"></svg>
-  <!-- HUD minimal flottant (façon Mini Metro), empilé et centré en haut :
-       cadre horloge (drapeau + nom + heure) → poignée → menu déroulant d'icônes. -->
+  <!-- HUD minimal flottant (façon Mini Metro) : cadre horloge (drapeau + nom +
+       heure) centré en haut ; les réglages passent par l'engrenage à droite. -->
+  <!-- Drapeau + nom de la gare : chip ancrée en haut à gauche. -->
+  <div id="station-tag"></div>
   <div id="hud-top">
-    <div id="hud-clock" role="button" tabindex="0" aria-label="Commandes">
-      <div id="station-tag"></div>
+    <div id="hud-clock">
       <div id="clock-row">
         <span id="clock">07:00</span>
         <span id="delay">+0</span>
       </div>
     </div>
-    <!-- Petite barre-poignée : déplie/replie le menu d'icônes sous le cadre. -->
-    <button id="hud-handle" aria-label="Menu"></button>
     <div id="pause-tag" class="hidden">En pause</div>
-    <div id="hud-controls" class="hidden">
-      <div class="hud-panel">
-        <button class="btn icon" id="btn-pausep" title="Pause"></button>
-        <button class="btn speed active" data-s="1">1x</button>
-        <button class="btn speed" data-s="2">2x</button>
-        <button class="btn speed" data-s="4">4x</button>
-        <button class="btn icon" id="btn-reset" title="Recommencer"></button>
-        <button class="btn icon" id="btn-mute" title="Sons"></button>
-        <button class="btn icon" id="btn-help" title="Comment jouer"></button>
-        <button class="btn icon" id="btn-hub" title="Quitter vers la carte"></button>
+  </div>
+  <!-- Commandes flottantes haut-droite : LECTURE (play/pause + vitesse) et
+       RÉGLAGES, deux boutons côte à côte, chacun avec son menu déroulant. -->
+  <div id="hud-tools">
+    <!-- Lecture : commandes DIRECTES — play/pause (bascule au tap) + vitesse
+         (cycle 1x → 2x → 4x au tap). -->
+    <button class="btn icon" id="btn-playback" aria-label="Pause / lecture"></button>
+    <button class="btn" id="btn-speed" aria-label="Vitesse de simulation">1x</button>
+    <!-- Réglages : recommencer, son, aide … puis Quitter, séparé par un filet. -->
+    <div id="settings">
+      <button class="btn icon" id="btn-settings" aria-label="Réglages" aria-expanded="false"></button>
+      <div id="hud-controls" class="hidden">
+        <div class="hud-panel">
+          <div class="act-row">
+            <button class="btn icon" id="btn-reset" title="Recommencer"></button>
+            <button class="btn icon" id="btn-mute" title="Sons"></button>
+            <button class="btn icon" id="btn-help" title="Comment jouer"></button>
+            <span class="act-sep"></span>
+            <button class="btn icon danger" id="btn-hub" title="Quitter vers la carte"></button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -56,9 +66,9 @@
       </div>
     </div>
   </div>
-  <!-- Bande d'information réservée en bas : le plan se réduit au-dessus, donc
-       elle ne masque jamais un quai. Une seule ligne (messages raccourcis). -->
-  <div id="infobar"><span id="infobar-msg"></span></div>
+  <!-- Voile « préparation du service » : affiché pendant que le Web Worker
+       calibre la journée (grosses gares). Le plan reste visible dessous. -->
+  <div id="preparing" class="hidden"><div class="prep-inner"><span class="prep-spin"></span>Préparation du service…</div></div>
 </div>
 <div id="hub">
   <!-- Carte du monde zoomable (SVG + overlay de labels + bouton retour flottant),

@@ -5,7 +5,10 @@
 // layout vertical, chemins, zones de conflit et liaisons autorisées.
 // ------------------------------------------------------------------
 const SVGNS = "http://www.w3.org/2000/svg";
-const board = document.getElementById("board");
+// Ce fichier est aussi chargé dans un Web Worker (génération d'horaire hors
+// thread principal, voir js/gen-worker.js) : là, `document` n'existe pas. On
+// garde donc l'accès au board optionnel — seul le rendu (main thread) l'utilise.
+const board = (typeof document !== "undefined") ? document.getElementById("board") : null;
 
 const PLAT_X1 = 560, PLAT_X2 = 840, PLAT_H = 42;
 
@@ -77,7 +80,7 @@ function loadStation(cfg) {
       const c = cfg.portals[k];
       PORTALS[k] = {
         side, x: side === "L" ? 150 : 1250,
-        cy: names.length === 1 ? 405 : Math.round(170 + 470 * i / (names.length - 1)),
+        cy: names.length === 1 ? 405 : Math.round(220 + 420 * i / (names.length - 1)),
         label: c.label || k,
         in: c.in !== false, out: c.out !== false
       };

@@ -1,0 +1,29 @@
+{
+  "id": "ottignies",
+  "name": "Ottignies",
+  "tagline": "Ottignies — nœud du Brabant wallon : la jonction en X vers Bruxelles, Namur, Louvain et Charleroi.",
+  "difficulty": 1,
+  "country": "🇧🇪 Belgique",
+  "desc": "Le nœud ferroviaire du Brabant wallon, jonction en X où l'axe Bruxelles–Namur (ligne 161) croise les lignes vers Louvain et Charleroi. Quatre quais, un flux régulier de navetteurs — et, tout près, la navette de Louvain-la-Neuve qui rebrousse. Un carrefour idéal pour se faire la main.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }
+  ],
+  "portals": {
+    "BRUXELLES": { "side": "L", "color": "#25dede", "abbr": "B" },
+    "LOUVAIN":   { "side": "L", "color": "#f5b23c", "abbr": "LN" },
+    "NAMUR":     { "side": "R", "color": "#4ade80", "abbr": "N" },
+    "CHARLEROI": { "side": "R", "color": "#60a5fa", "abbr": "C" }
+  },
+  "links": {
+    "BRUXELLES": [1, 2, 3],
+    "LOUVAIN": [2, 3, 4],
+    "NAMUR": [1, 2, 3],
+    "CHARLEROI": [2, 3, 4]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 12, "nMax": 15, "gapMin": 1.6, "gapMax": 2.8,
+    "cars": [1, 1, 2, 2, 3, 3, 4],
+    "freightRate": 0.2, "quietRate": 0.25
+  }
+}

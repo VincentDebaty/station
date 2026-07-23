@@ -1,10 +1,10 @@
 {
   "id": "bruges",
   "name": "Bruges",
-  "tagline": "Bruges — porte de la côte : 5 quais, l'intérieur d'un côté, la mer de l'autre.",
+  "tagline": "Bruges — porte de la côte : 5 quais, l'intérieur d'un côté, l'éventail du littoral de l'autre.",
   "difficulty": 2,
   "country": "🇧🇪 Belgique",
-  "desc": "La porte de la côte flamande : cinq quais, les directes vers Gand et Courtrai d'un côté, les trains de la mer vers Ostende, Blankenberge et Zeebruges de l'autre. Un flux régulier, sans temps mort.",
+  "desc": "La porte de la côte flamande : d'un côté l'intérieur vers Gand, Bruxelles et Courtrai ; de l'autre, l'éventail du littoral où les IC se scindent vers Ostende, Blankenberge et Knokke. Un flux régulier que l'été gonfle — sans temps mort.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
   ],
@@ -13,14 +13,14 @@
     "COURTRAI":     { "side": "L", "color": "#f5b23c", "abbr": "CT" },
     "OSTENDE":      { "side": "R", "color": "#f2588f", "abbr": "OS" },
     "BLANKENBERGE": { "side": "R", "color": "#4ade80", "abbr": "BL" },
-    "ZEEBRUGES":    { "side": "R", "color": "#60a5fa", "abbr": "ZB" }
+    "KNOKKE":       { "side": "R", "color": "#60a5fa", "abbr": "KN" }
   },
   "links": {
     "GAND": [1, 2, 3],
     "COURTRAI": [3, 4, 5],
     "OSTENDE": [1, 2, 3, 4],
     "BLANKENBERGE": [2, 3, 4, 5],
-    "ZEEBRUGES": [1, 2, 4, 5]
+    "KNOKKE": [1, 2, 4, 5]
   },
   "sameSidePairs": [],
   "gen": {

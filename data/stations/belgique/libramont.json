@@ -1,24 +1,24 @@
 {
   "id": "libramont",
   "name": "Libramont",
-  "tagline": "Libramont — nœud ardennais : 4 quais, la ligne du Luxembourg et ses antennes.",
+  "tagline": "Libramont — nœud ardennais : la ligne du Luxembourg et son antenne vers Bertrix.",
   "difficulty": 1,
   "country": "🇧🇪 Belgique",
-  "desc": "Le petit nœud de l'Ardenne, sur la ligne 162 Namur–Luxembourg : quatre quais, des rames courtes qui se croisent vers Namur, Arlon, Bertrix et Bastogne. Gabarit réduit, tempo serré.",
+  "desc": "Le nœud de l'Ardenne, gare en service la plus haute de Belgique (485 m) : sur la ligne 162 Bruxelles/Namur–Luxembourg, avec l'antenne 165 qui bifurque vers Bertrix et le sud. Quatre quais, des rames courtes qui se croisent vers Namur, Luxembourg, Arlon et Bertrix — gabarit réduit, tempo serré.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }
   ],
   "portals": {
-    "NAMUR":    { "side": "L", "color": "#4ade80", "abbr": "N" },
-    "BERTRIX":  { "side": "L", "color": "#f5b23c", "abbr": "BX" },
-    "ARLON":    { "side": "R", "color": "#60a5fa", "abbr": "A" },
-    "BASTOGNE": { "side": "R", "color": "#a78bfa", "abbr": "BA" }
+    "NAMUR":      { "side": "L", "color": "#4ade80", "abbr": "N" },
+    "BERTRIX":    { "side": "L", "color": "#f5b23c", "abbr": "BX" },
+    "LUXEMBOURG": { "side": "R", "color": "#a78bfa", "abbr": "LX" },
+    "ARLON":      { "side": "R", "color": "#60a5fa", "abbr": "A" }
   },
   "links": {
     "NAMUR": [1, 2, 3],
     "BERTRIX": [2, 3, 4],
-    "ARLON": [1, 2, 3],
-    "BASTOGNE": [2, 3, 4]
+    "LUXEMBOURG": [1, 2, 3],
+    "ARLON": [2, 3, 4]
   },
   "sameSidePairs": [],
   "gen": {

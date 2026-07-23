@@ -4,7 +4,7 @@
   "tagline": "Marseille — terminus méditerranéen : longues rames, peu de place.",
   "difficulty": 2,
   "country": "🇫🇷 France",
-  "desc": "Le terminus de la Méditerranée : six quais face au grand escalier, cinq directions, et des rames longues qui manœuvrent dans un mouchoir de poche.",
+  "desc": "Le terminus de la Méditerranée : seize voies en cul-de-sac dans la réalité, six ici, face au grand escalier de 1926 — cinq directions et des rames longues qui manœuvrent dans un mouchoir de poche. (Un jour, la gare souterraine la rendra traversante.)",
   "platforms": [
     { "id": 1, "deadEnd": true }, { "id": 2, "deadEnd": true }, { "id": 3, "deadEnd": true },
     { "id": 4, "deadEnd": true }, { "id": 5, "deadEnd": true }, { "id": 6, "deadEnd": true }

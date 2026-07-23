@@ -4,7 +4,7 @@
   "tagline": "Hasselt — capitale du Limbourg : 4 quais, tempo serré, aucune marge.",
   "difficulty": 1,
   "country": "🇧🇪 Belgique",
-  "desc": "La capitale du Limbourg : quatre quais, des rames courtes qui s'échangent vers Bruxelles, Liège, Anvers et Genk. Petit gabarit, cadence nette — l'endroit rêvé pour prendre le poste en main.",
+  "desc": "La capitale du Limbourg, pivot de l'axe est-ouest où l'IC venu du littoral et de Bruxelles bascule vers Genk : quatre quais, des rames courtes qui s'échangent vers Bruxelles, Anvers, Liège et Genk. Cadence nette, petit gabarit — l'endroit rêvé pour prendre le poste en main.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }
   ],

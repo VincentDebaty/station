@@ -4,7 +4,7 @@
   "tagline": "Bordeaux — carrefour du Sud-Ouest : 6 quais traversants, flux dense sans répit.",
   "difficulty": 3,
   "country": "🇫🇷 France",
-  "desc": "Le grand carrefour du Sud-Ouest : six quais traversants, cinq directions vers Paris, Nantes, Toulouse, Bayonne et le Bassin d'Arcachon. Un flux dense qui ne s'arrête jamais — la gare la plus nerveuse de l'Aquitaine.",
+  "desc": "Le grand carrefour du Sud-Ouest, sous la plus vaste verrière ferroviaire d'Europe : six quais, cinq directions vers Paris (LGV), Toulouse, Bayonne et l'Espagne, Nantes et le Bassin d'Arcachon. Un flux dense qui ne s'arrête jamais — la gare la plus nerveuse de l'Aquitaine.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }, { "id": 6 }
   ],

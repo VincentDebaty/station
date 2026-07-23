@@ -4,7 +4,7 @@
   "tagline": "Anvers — terminus : tout bute sur un heurtoir, tout rebrousse.",
   "difficulty": 2,
   "country": "🇧🇪 Belgique",
-  "desc": "La cathédrale ferroviaire — une gare TERMINUS : tous les quais butent sur un heurtoir, tous les trains rebroussent, et tout le trafic passe par une seule gorge. La vôtre.",
+  "desc": "La cathédrale ferroviaire, sur trois niveaux : ici, dans le grand hall historique, tous les quais butent sur un heurtoir — tous les trains rebroussent, et tout le trafic passe par une seule gorge. La vôtre. (Les voies traversantes du tunnel nord-sud, elles, filent sous vos pieds.)",
   "platforms": [
     { "id": 1, "deadEnd": true }, { "id": 2, "deadEnd": true }, { "id": 3, "deadEnd": true },
     { "id": 4, "deadEnd": true }, { "id": 5, "deadEnd": true }, { "id": 6, "deadEnd": true }

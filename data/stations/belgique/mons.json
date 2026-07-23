@@ -1,31 +1,31 @@
 {
   "id": "mons",
   "name": "Mons",
-  "tagline": "Mons — Borinage et axe fret vers la France : convois lourds, anticipez.",
+  "tagline": "Mons — nouvelle gare Calatrava, porte de la France : dorsale wallonne × axe Bruxelles–Maubeuge.",
   "difficulty": 4,
   "country": "🇧🇪 Belgique",
-  "desc": "La porte du Borinage : cinq quais, l'axe marchandises vers Quiévrain et la France, le charbon d'hier remplacé par des convois qui bloquent tout le gril. Un long fret ne se rattrape pas — anticipez.",
+  "desc": "La porte du Borinage, sous la passerelle Calatrava inaugurée en 2025 : l'axe Bruxelles–France y croise la dorsale wallonne. Six quais où s'entrecroisent les IC vers Charleroi, les frontaliers de Quévy et Quiévrain (Maubeuge, Valenciennes) et les directes de Tournai — Ouigo et trains de nuit compris. Un flux transfrontalier dense : anticipez les croisements.",
   "platforms": [
-    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }, { "id": 6 }
   ],
   "portals": {
-    "BRUXELLES":  { "side": "L", "color": "#25dede", "abbr": "B" },
-    "ATH":        { "side": "L", "color": "#f5b23c", "abbr": "AT" },
-    "CHARLEROI":  { "side": "R", "color": "#4ade80", "abbr": "C" },
-    "TOURNAI":    { "side": "R", "color": "#f2588f", "abbr": "TO" },
-    "QUIEVRAIN":  { "side": "R", "color": "#a78bfa", "abbr": "QU", "label": "QUIÉVRAIN" }
+    "BRUXELLES": { "side": "L", "color": "#25dede", "abbr": "B" },
+    "CHARLEROI": { "side": "L", "color": "#4ade80", "abbr": "C" },
+    "TOURNAI":   { "side": "R", "color": "#f2588f", "abbr": "TO" },
+    "QUIEVRAIN": { "side": "R", "color": "#a78bfa", "abbr": "QU", "label": "QUIÉVRAIN" },
+    "QUEVY":     { "side": "R", "color": "#f5b23c", "abbr": "QV", "label": "QUÉVY" }
   },
   "links": {
     "BRUXELLES": [1, 2, 3, 4],
-    "ATH": [2, 3, 4, 5],
-    "CHARLEROI": [1, 2, 3],
-    "TOURNAI": [2, 3, 4],
-    "QUIEVRAIN": [3, 4, 5]
+    "CHARLEROI": [3, 4, 5, 6],
+    "TOURNAI": [1, 2, 3],
+    "QUIEVRAIN": [2, 3, 4, 5],
+    "QUEVY": [4, 5, 6]
   },
   "sameSidePairs": [],
   "gen": {
-    "nMin": 13, "nMax": 16, "gapMin": 1.8, "gapMax": 3.0,
-    "cars": [2, 3, 3, 4, 4, 5, 6, 7, 7],
-    "freightRate": 0.7, "quietRate": 0.15
+    "nMin": 14, "nMax": 17, "gapMin": 1.6, "gapMax": 2.6,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6, 7],
+    "freightRate": 0.3, "quietRate": 0.15
   }
 }

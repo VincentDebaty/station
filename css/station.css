@@ -29,79 +29,116 @@ body {
   overscroll-behavior: none;
 }
 /* ---- HUD minimal flottant (façon Mini Metro) ----
-   Empilé et centré en haut : cadre horloge → poignée → menu déroulant.
-   Verre dépoli translucide pour rester lisible au-dessus des voies. */
+   Cadre horloge centré en haut ; les réglages passent par l'engrenage (#settings)
+   ancré en haut à droite. Verre dépoli translucide pour rester lisible au-dessus
+   des voies. */
 #hud-top {
   position: absolute; z-index: 8; top: calc(10px + var(--safe-t)); left: 50%;
   transform: translateX(-50%);
   display: flex; flex-direction: column; align-items: center; gap: 5px;
 }
-/* Gare terminus : cadre HUD à droite, centré verticalement. La poignée passe à
-   GAUCHE du cadre et le menu s'ouvre VERS LA GAUCHE (disposition horizontale)
-   pour ne pas déborder sur les quais en dessous. */
+/* Gare terminus : cadre HUD à droite, centré verticalement (le flanc droit du
+   plan est vide, butoirs). L'engrenage reste, lui, en haut à droite. */
 #hud-top.terminus {
   top: 50%; left: auto; right: calc(16px + var(--safe-r)); transform: translateY(-50%);
-  flex-direction: row-reverse; align-items: center; gap: 6px;
 }
-#hud-top.terminus #hud-handle { width: 16px; height: 58px; }
-#hud-top.terminus #hud-handle::before { width: 4px; height: 34px; }
-#hud-top.terminus.open #hud-handle::before { width: 4px; height: 40px; }
 #hud-clock {
   background: rgba(21, 29, 46, .55); border: 1px solid #2a3550;
   border-radius: 12px; color: var(--text);
   backdrop-filter: blur(7px); -webkit-backdrop-filter: blur(7px);
-  -webkit-tap-highlight-color: transparent; touch-action: manipulation;
-  display: flex; flex-direction: column; align-items: center; gap: 3px;
-  padding: 6px 15px 7px; cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  padding: 5px 13px;
   font-family: ui-monospace, "SF Mono", Menlo, monospace;
   transition: border-color .15s, opacity .35s;
 }
-#clock-row { display: flex; align-items: baseline; gap: 9px; }
-/* Poignée : petite barre qui déplie/replie le menu d'icônes sous le cadre. */
-#hud-handle {
-  display: flex; align-items: center; justify-content: center;
-  width: 58px; height: 16px; padding: 0; border: 0; background: none;
-  cursor: pointer; -webkit-tap-highlight-color: transparent;
+#clock-row { display: flex; align-items: baseline; gap: 8px; }
+/* Commandes flottantes haut-droite : lecture + réglages côte à côte. */
+#hud-tools {
+  position: absolute; z-index: 10;
+  top: calc(10px + var(--safe-t)); right: calc(12px + var(--safe-r));
+  display: flex; align-items: flex-start; gap: 8px;
 }
-#hud-handle::before {
-  content: ""; width: 34px; height: 4px; border-radius: 2px;
-  background: #46536b; transition: background .15s, width .15s;
+/* L'engrenage ancre son menu déroulant (position relative). */
+#settings { position: relative; }
+/* Boutons directs (lecture, vitesse, réglages) : MÊME gabarit carré, verre dépoli. */
+#btn-playback, #btn-speed, #btn-settings {
+  background: rgba(21, 29, 46, .55); border: 1px solid #2a3550;
+  backdrop-filter: blur(7px); -webkit-backdrop-filter: blur(7px);
+  color: var(--text); border-radius: 12px;
+  width: 34px; height: 34px; min-width: 0; min-height: 0; padding: 0;
+  display: inline-flex; align-items: center; justify-content: center;
 }
-#hud-handle:hover::before { background: #5c6a86; }
-#hud-top.open #hud-handle::before { background: #2dd4bf; width: 40px; }
-/* Drapeau + nom de la gare, ligne du haut ; séparé de l'heure par un filet. */
+/* Vitesse : libellé compact ; teal quand accéléré (> 1x). */
+#btn-speed {
+  font-size: 13px; font-weight: 700;
+  font-family: ui-monospace, Menlo, monospace; letter-spacing: .5px;
+}
+#btn-speed.active { color: #2dd4bf; border-color: #2dd4bf; }
+#btn-settings svg { transition: transform .25s ease; }
+#settings.open #btn-settings { color: #2dd4bf; border-color: #2dd4bf; }
+#settings.open #btn-settings svg { transform: rotate(60deg); }
+/* Menu réglages : déroulant sous l'engrenage, aligné à droite. */
+#hud-controls { position: absolute; top: calc(100% + 8px); right: 0; z-index: 9; }
+/* Drapeau + nom de la gare : chip verre dépoli ancrée en haut à gauche. */
+/* Cartouche haut-gauche = bouton RETOUR vers la carte, MÊME logique que « ‹ »
+   sur la carte : flèche + libellé, pastille cliquable au survol accentué. */
 #station-tag {
-  display: flex; align-items: center; justify-content: center; gap: 6px;
-  width: 100%; padding-bottom: 4px; border-bottom: 1px solid #2a3550;
+  position: absolute; z-index: 8;
+  top: calc(10px + var(--safe-t)); left: calc(12px + var(--safe-l));
+  display: flex; align-items: center; gap: 6px; cursor: pointer;
+  padding: 7px 13px 7px 10px; border-radius: 12px;
+  background: rgba(21, 29, 46, .55); border: 1px solid #2a3550;
+  backdrop-filter: blur(7px); -webkit-backdrop-filter: blur(7px);
   font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  transition: background .15s, border-color .15s;
 }
 #station-tag:empty { display: none; }
+#station-tag .arw { font-size: 22px; line-height: 1; margin-top: -2px; color: var(--muted); transition: color .15s; }
 #station-tag .flag { font-size: 15px; line-height: 1; }
-#station-tag .nm { font-size: 12.5px; font-weight: 600; color: var(--text); }
+#station-tag .nm { font-size: 13px; font-weight: 600; color: var(--text); }
+@media (hover: hover) {
+  #station-tag:hover { background: rgba(26, 37, 58, .92); border-color: #2dd4bf; }
+  #station-tag:hover .arw { color: #2dd4bf; }
+}
 #hud-clock.paused { border-color: #2dd4bf; }
-#clock { font-size: 24px; font-weight: 600; letter-spacing: 1px; }
-#delay { font-size: 15px; font-weight: 600; color: var(--green); }
+#clock { font-size: 21px; font-weight: 600; letter-spacing: 1px; }
+#delay { font-size: 14px; font-weight: 600; color: var(--green); transition: color .2s; }
 #delay.warn { color: #f5b23c; }
-#delay.bad { color: var(--red); }
+/* Retard critique : un halo rouge respire autour du chiffre (taille inchangée)
+   pour attirer l'œil sans clignoter agressivement — coupé si reduced-motion. */
+#delay.bad { color: var(--red); animation: delay-pulse 1.2s ease-in-out infinite; }
+@keyframes delay-pulse {
+  0%, 100% { text-shadow: 0 0 3px rgba(239, 68, 68, .35); }
+  50%      { text-shadow: 0 0 11px rgba(239, 68, 68, .9); }
+}
+@media (prefers-reduced-motion: reduce) {
+  #delay.bad { animation: none; }
+}
 /* mention « En pause » : en flux sous la poignée, teal comme la bordure en pause */
 #pause-tag {
   padding: 3px 12px; border-radius: 8px;
   background: rgba(45, 212, 191, .14); border: 1px solid #2dd4bf; color: #2dd4bf;
   font-size: 12px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;
-  pointer-events: none; white-space: nowrap;
+  white-space: nowrap; cursor: pointer; -webkit-tap-highlight-color: transparent;
 }
-/* Menu déroulant : panneau d'icônes en flux, juste sous la poignée. */
-#hud-controls { z-index: 9; }
-/* Carte opaque qui porte les boutons (▶ 1x 2x 4x / ↺ sons aide ✕) */
+/* Terminus : le HUD est une rangée horizontale (poignée à gauche du cadre) ; le
+   badge sort de ce flux et se place centré JUSTE SOUS le cadre horloge. Le
+   décalage « right » (demi-largeur du cadre) est posé en JS car le nom de gare
+   fait varier la largeur du cadre. */
+#hud-top.terminus #pause-tag {
+  position: absolute; top: 100%; margin-top: 8px; transform: translateX(50%);
+}
+/* Carte opaque : panneau porté par un menu déroulant (lecture ou réglages). */
 .hud-panel {
-  display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
-  justify-items: stretch; padding: 10px;
+  display: flex; flex-direction: column; gap: 8px; padding: 10px;
   background: var(--panel); border: 1px solid #2a3550; border-radius: 14px;
   box-shadow: 0 12px 40px rgba(0, 0, 0, .45);
 }
-@media (hover: hover) {
-  #hud-clock:hover { border-color: #40507a; }
-}
+/* Rangée d'actions : recommencer, son, aide … puis Quitter, isolé par un filet. */
+.hud-panel .act-row { display: flex; align-items: center; gap: 8px; }
+.hud-panel .act-sep { width: 1px; align-self: stretch; margin: 3px 3px; background: #2a3550; }
+/* « Quitter » : teinte rouge au survol (action de sortie, à distinguer nettement). */
+.btn.danger:hover { border-color: var(--red); color: #f87171; }
 /* icônes vectorielles (Material) centrées dans les boutons */
 .btn svg { display: block; }
 .btn.icon { padding: 6px; } /* boutons-icônes carrés */
@@ -123,35 +160,54 @@ body {
   .btn:hover { border-color: #40507a; }
 }
 .btn.active { color: #2dd4bf; border-color: #2dd4bf; }
-/* Colonne : le plan occupe l'espace restant, la bande d'info est réservée en bas */
+/* Le plan de voies occupe désormais toute la hauteur : plus de bande d'info en
+   bas (jeu 100 % visuel, aucun message texte). */
 #board-wrap { position: relative; height: 100%; display: flex; flex-direction: column; }
 svg { width: 100%; height: 100%; display: block; }
 #board { flex: 1 1 auto; min-height: 0; height: auto; }
-/* Bande d'information réservée : toujours présente, une seule ligne. Le plan
-   étant au-dessus, un message n'y masque jamais un quai. */
-#infobar {
-  flex: 0 0 auto; height: 40px; padding: 0 20px;
-  display: flex; align-items: center; justify-content: center;
-  border-top: 1px solid rgba(255,255,255,.055); background: rgba(14,20,32,.5);
-  color: var(--muted); font-size: 14px;
+/* Voile « préparation du service » pendant la génération asynchrone (worker). */
+#preparing {
+  position: absolute; inset: 0; z-index: 7; display: flex;
+  align-items: center; justify-content: center; pointer-events: none;
+  background: rgba(14, 20, 32, .35); backdrop-filter: blur(1.5px);
 }
-#infobar-msg {
-  max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  opacity: 0; transition: opacity .3s;
+#preparing.hidden { display: none; }
+.prep-inner {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 18px; border-radius: 12px;
+  background: rgba(21, 29, 46, .9); border: 1px solid #2a3550;
+  color: var(--text); font-size: 14px; font-weight: 600;
 }
-#infobar-msg.show { opacity: 1; }
+.prep-spin {
+  width: 15px; height: 15px; border-radius: 50%;
+  border: 2px solid #2a3550; border-top-color: #2dd4bf;
+  animation: prep-spin .7s linear infinite;
+}
+@keyframes prep-spin { to { transform: rotate(360deg); } }
 
 .track { stroke: var(--track-dim); stroke-width: 3.5; fill: none; stroke-linecap: round; pointer-events: none; }
-.route { fill: none; stroke-width: 5; stroke-linecap: round; filter: drop-shadow(0 0 6px currentColor); pointer-events: none; }
+.route { fill: none; stroke-width: 5; stroke-linecap: round; filter: drop-shadow(0 0 4px currentColor); pointer-events: none; }
 .route.pending { stroke-dasharray: 10 8; opacity: .55; }
-.platform { fill: #1b2436; stroke: #3b465c; stroke-width: 1.5; cursor: pointer; }
-.platform.eligible { stroke: #ffffff; stroke-dasharray: 7 5; stroke-width: 2.5; }
+.platform { fill: url(#platGrad); stroke: #3b465c; stroke-width: 1.5; cursor: pointer; transition: stroke .2s, fill .2s; }
+/* Quai occupé : liseré à la couleur du convoi présent (--occ posé en JS), afin
+   de distinguer d'un coup d'œil libre / occupé au repos. */
+.platform.occupied { stroke: var(--occ, #3b465c); stroke-width: 2.5; }
+/* Quai éligible pendant une sélection : surligné à la couleur du train choisi
+   (--elig posé en JS) — plus invitant que le blanc neutre. Défini APRÈS
+   .occupied pour l'emporter le temps de la sélection. */
+.platform.eligible {
+  stroke: var(--elig, #ffffff); stroke-dasharray: 7 5; stroke-width: 2.5;
+  fill: color-mix(in srgb, var(--elig, #ffffff) 14%, #1b2436);
+}
 .platform-label {
   fill: var(--text); font-size: 24px; font-weight: 600;
   text-anchor: middle; dominant-baseline: central; pointer-events: none;
 }
-.plat-dot { pointer-events: none; }
 .plat { transition: opacity .2s; }
+/* Quai fermé : numéro estompé + pilule éteinte — signale « désactivé » sans
+   dépendre du rouge (le cadenas + les hachures portent le reste du message). */
+.plat.closed .platform-label { opacity: .28; }
+.plat.closed .platform { fill: #141b29; stroke: #2a3446; }
 .buffer-stop { fill: var(--red); pointer-events: none; filter: drop-shadow(0 0 4px var(--red)); }
 .portal {
   fill: none; stroke-width: 2.5;
@@ -181,6 +237,10 @@ svg { width: 100%; height: 100%; display: block; }
   transition: transform .6s ease-out, opacity .6s ease-out;
 }
 .train-body { cursor: pointer; filter: drop-shadow(0 0 7px currentColor); }
+/* Masque d'embarquement : assombrit la portion « vide » du wagon. Sa largeur
+   recule de la tête vers la queue à mesure qu'on approche du départ (jauge de
+   batterie horizontale). Couleur ≈ fond pour un rendu « creux ». */
+.board-mask { fill: #0a0f19; opacity: .8; pointer-events: none; }
 .train-label {
   font-size: 12px; font-weight: 700; fill: #08141a;
   text-anchor: middle; dominant-baseline: central; pointer-events: none;
@@ -219,7 +279,20 @@ svg { width: 100%; height: 100%; display: block; }
 .card p { color: var(--muted); font-size: 15px; line-height: 1.65; margin-bottom: 12px; text-align: left; }
 .card p b { color: var(--text); font-weight: 600; }
 .card .btn { margin-top: 14px; font-size: 17px; padding: 10px 26px; color: #2dd4bf; border-color: #2dd4bf; }
+/* Bouton principal contextuel (suivante / rejouer / carte) : rempli teal, il
+   guide l'action à faire après le service. */
+.card .btn.primary { background: #2dd4bf; color: #0b1a1f; border-color: #2dd4bf; font-weight: 600; }
+.card .btn.primary:hover { background: #3ee0cc; border-color: #3ee0cc; }
 #stars { font-size: 44px; letter-spacing: 8px; color: #f5b23c; margin: 10px 0 4px; }
+/* Écran de fin : la carte prend l'état RÉUSSITE (étoiles dorées) ou ÉCHEC
+   (0 étoile). L'échec est sans ambiguïté : liséré rouge, titre rouge, étoiles
+   éteintes → « c'est raté, il faut recommencer ». */
+#end .card.fail {
+  border-color: rgba(239, 68, 68, .55);
+  box-shadow: 0 0 0 1px rgba(239, 68, 68, .2), 0 24px 60px -24px rgba(0, 0, 0, .65);
+}
+#end .card.fail #end-title { color: #f87171; }
+#end .card.fail #stars { color: #4d566d; } /* étoiles vides éteintes (non gagnées) */
 .hidden { display: none !important; }
 
 /* ---- carte du monde (sélection des gares) ---- */
@@ -244,19 +317,21 @@ svg { width: 100%; height: 100%; display: block; }
 .map-back:hover { background: rgba(26, 37, 58, .92); border-color: #2dd4bf; }
 .map-back.hidden { display: none; }
 
-/* Bouton « Gare aléatoire » — flottant discret en bas au centre. */
+/* Bouton « Partie rapide » — CTA contour teal (bord + libellé teal, fond
+   transparent), coin sup. droit. */
 .map-random {
   position: absolute; z-index: 4;
-  bottom: calc(16px + var(--safe-b)); left: 50%; transform: translateX(-50%);
-  display: flex; align-items: center; gap: 6px;
-  height: 32px; padding: 0 13px; border-radius: 16px; white-space: nowrap;
-  background: rgba(18, 26, 43, .8); border: 1px solid #2a3550; color: var(--text);
-  font-size: 12.5px; font-weight: 500; cursor: pointer;
-  box-shadow: 0 4px 12px -6px rgba(0, 0, 0, .5); backdrop-filter: blur(4px);
-  transition: background .15s, border-color .15s;
+  top: calc(14px + var(--safe-t)); right: calc(14px + var(--safe-r));
+  display: flex; align-items: center; gap: 7px;
+  height: 34px; padding: 0 16px; border-radius: 17px; white-space: nowrap;
+  background: transparent; border: 1px solid #2dd4bf; color: #2dd4bf;
+  font-size: 13px; font-weight: 600; letter-spacing: .2px; cursor: pointer;
+  backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+  transition: background .15s, box-shadow .15s, transform .1s;
 }
-.map-random svg { display: block; width: 15px; height: 15px; color: var(--muted); }
-.map-random:hover { background: rgba(26, 37, 58, .9); border-color: #2dd4bf; }
+.map-random svg { display: block; width: 15px; height: 15px; color: #2dd4bf; }
+.map-random:hover { background: rgba(45, 212, 191, .12); box-shadow: 0 4px 18px -6px rgba(45, 212, 191, .5); }
+.map-random:active { transform: translateY(1px); }
 .map-random.hidden { display: none; } /* visibilité pilotée par updateChrome (monde + continent jouable) */
 #worldmap { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 .map-bg { fill: transparent; }
@@ -294,14 +369,23 @@ svg { width: 100%; height: 100%; display: block; }
   fill: none; stroke: var(--track-dim); stroke-width: 2; stroke-dasharray: 4 5;
   stroke-linecap: round; opacity: .7;
 }
-/* Courbes + trains décoratifs (illustration, niveau monde). */
+/* Courbes + trains décoratifs (illustration, niveau monde). La ligne « coule »
+   (dash animé) dans le sens du convoi → on lit une vraie liaison ferroviaire,
+   pas des taches posées sur les continents. */
 .deco-route {
-  fill: none; stroke: #2a3550; stroke-width: 1.5; stroke-dasharray: 3 6;
-  vector-effect: non-scaling-stroke; opacity: .5;
+  fill: none; stroke: #35435f; stroke-width: 1.6; stroke-dasharray: 3 7;
+  vector-effect: non-scaling-stroke; opacity: .6;
+  animation: decoFlow 1.4s linear infinite;
 }
+@keyframes decoFlow { to { stroke-dashoffset: -10; } }
+/* Le train est une COMÈTE : tête pleine + traînée qui s'estompe derrière (fill
+   en dégradé posé en JS), orientée dans le sens de la marche (offset-rotate). */
 .deco-train { filter: drop-shadow(0 0 5px currentColor); animation: mapRun 16s linear infinite; }
 @keyframes mapRun { to { offset-distance: 100%; } }
-@media (prefers-reduced-motion: reduce) { .deco-train { animation: none; display: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .deco-train { animation: none; display: none; }
+  .deco-route { animation: none; }
+}
 
 /* Niveaux : détail décoratif (courbes+trains) masqué dès qu'on zoome. */
 #hub-map:not([data-level="world"]) .lyr-deco { display: none; }
@@ -321,7 +405,28 @@ svg { width: 100%; height: 100%; display: block; }
   background: rgba(21, 29, 46, .45); border: 1px solid rgba(58, 69, 94, .5);
 }
 .continent-chip .nm { font-weight: 400; font-size: 15px; letter-spacing: 1.5px; }
-@media (hover: hover) { .continent-chip:hover { border-color: #2dd4bf; } }
+/* Continent avec du contenu : accent teal + mini-barre de progression + compteur.
+   La barre reprend le langage visuel de l'anneau des pays. */
+.continent-chip.playable { border-color: rgba(45, 212, 191, .55); background: rgba(21, 33, 46, .6); }
+.continent-chip .cbar {
+  width: 74px; height: 4px; margin: 5px auto 0; border-radius: 2px;
+  background: rgba(58, 69, 94, .55); overflow: hidden;
+}
+.continent-chip .cbar > span {
+  display: block; height: 100%; border-radius: 2px; background: #2dd4bf;
+  box-shadow: 0 0 6px rgba(45, 212, 191, .5); transition: width .4s ease;
+}
+.continent-chip.playable .pg { margin-top: 3px; font-size: 10.5px; letter-spacing: .5px; }
+@media (hover: hover) { .continent-chip.playable:hover { border-color: #2dd4bf; } }
+/* Continent « à venir » : estompé, non accentué, badge discret — pas de fausse
+   promesse de contenu. */
+.continent-chip.soon { opacity: .48; }
+.continent-chip.soon .nm { color: var(--muted); }
+.continent-chip .soon-tag {
+  font-size: 9.5px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase;
+  color: var(--muted); margin-top: 2px;
+}
+@media (hover: hover) { .continent-chip.soon:hover { border-color: rgba(58, 69, 94, .5); } }
 
 /* Pays jouable (niveau continent) : bulle drapeau + ANNEAU de progression autour
    (piste fine ; arc plus épais = étoiles gagnées / total). */
@@ -341,6 +446,23 @@ svg { width: 100%; height: 100%; display: block; }
 .country-chip .cring .track { fill: none; stroke: #33405c; stroke-width: 2; }
 .country-chip .cring .prog { fill: none; stroke: #2dd4bf; stroke-width: 4; stroke-linecap: round; }
 @media (hover: hover) { .country-chip:hover .cflag { transform: scale(1.1); } }
+/* Nom du pays sous le drapeau (identification sans ambiguïté). */
+.country-chip .cnm {
+  position: absolute; top: 40px; left: 50%; transform: translateX(-50%);
+  white-space: nowrap; font-size: 12px; font-weight: 500; color: var(--text);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, .85); pointer-events: none;
+}
+@media (hover: hover) { .country-chip:hover .cnm { color: #63e6d4; } }
+/* Pays « à continuer » : drapeau qui respire (halo teal pulsé) + nom accentué. */
+.country-chip.current .cflag { animation: countryPulse 1.7s ease-in-out infinite; }
+.country-chip.current .cnm { color: #63e6d4; font-weight: 600; }
+@keyframes countryPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(45, 212, 191, .55), 0 0 14px rgba(45, 212, 191, .3); }
+  50%      { box-shadow: 0 0 0 5px rgba(45, 212, 191, 0), 0 0 20px rgba(45, 212, 191, .6); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .country-chip.current .cflag { animation: none; box-shadow: 0 0 0 2px #2dd4bf, 0 0 14px rgba(45, 212, 191, .4); }
+}
 
 /* Villes (niveau pays) : point-gare NUMÉROTÉ (ordre de jeu) + libellé léger,
    cartouche dessous/dessus. Teal = jouable, gris = verrouillé. */
@@ -355,22 +477,41 @@ svg { width: 100%; height: 100%; display: block; }
 }
 .city-chip .cap {
   position: absolute; top: 20px; left: 50%; transform: translateX(-50%);
-  width: 130px; text-align: center;
+  width: 130px; text-align: center; /* width réelle posée en inline (= estimation JS) */
 }
 .city-chip.cap-up .cap { top: auto; bottom: 20px; }
-.city-chip .nm { font-weight: 400; font-size: 13px; text-shadow: 0 1px 3px rgba(0, 0, 0, .85); }
-/* Retard record affiché à côté des étoiles (ex. « ★★★ +2 »). */
+/* Nom sur UNE ligne : l'estimation de largeur (map.js) suppose un cartouche non
+   replié — un retour à la ligne casserait l'anti-chevauchement. */
+.city-chip .nm { font-weight: 400; font-size: 13px; white-space: nowrap; text-shadow: 0 1px 3px rgba(0, 0, 0, .85); }
+/* Retard record à côté des étoiles : horloge + minutes (ex. « ★★★ ⏱2′ »). Teinte
+   froide CLAIRE (lisible sur le fond sombre) mais neutre → ne rivalise pas avec
+   l'or des étoiles et ne passe pas pour un bonus. */
 .city-chip .st .dl {
-  color: var(--green); font-size: 11px; font-weight: 600; letter-spacing: 0; margin-left: 5px;
+  color: #bcc8de; font-size: 11px; font-weight: 600; letter-spacing: 0;
+  margin-left: 6px; vertical-align: middle;
+  display: inline-flex; align-items: center; gap: 2px;
 }
+.city-chip .st .dl svg { width: 11px; height: 11px; display: block; opacity: 1; }
 .city-chip.locked { cursor: default; }
 .city-chip.locked .dot { background: #3a4560; color: #9aa6bd; box-shadow: none; }
 .city-chip.locked .nm { color: var(--muted); }
+.city-chip.locked .st { color: #55617a; } /* étoiles vides éteintes → « pas encore ouvert » */
+/* Cadenas dans le coin du point verrouillé : lève l'ambiguïté verrouillé / non-joué. */
+.city-chip .dot .lock {
+  position: absolute; right: -5px; bottom: -5px; width: 13px; height: 13px;
+  padding: 1.5px; border-radius: 50%; background: #0e1420; color: #aab4c8;
+  box-shadow: 0 0 0 1px #46536b;
+}
 @media (hover: hover) {
   .city-chip:not(.locked):hover .dot { transform: scale(1.2); }
   .city-chip:not(.locked):hover .nm { color: #63e6d4; }
 }
-/* Gare COURANTE (prochaine à réaliser) : anneau teal qui pulse en fondu. */
+/* Gare COURANTE (prochaine à réaliser) : point accentué (halo teal permanent) +
+   nom mis en avant + anneau qui pulse en fondu — visible d'un coup d'œil. */
+.city-chip.current .dot {
+  box-shadow: 0 0 0 3px rgba(45, 212, 191, .35), 0 0 16px rgba(45, 212, 191, .85);
+}
+.city-chip.current .nm { color: #63e6d4; font-weight: 600; }
 .city-chip.current .dot::after {
   content: ""; position: absolute; inset: -5px; border-radius: 50%;
   border: 2px solid #2dd4bf; animation: cityPulse 1.7s ease-out infinite;
@@ -380,6 +521,12 @@ svg { width: 100%; height: 100%; display: block; }
   100% { transform: scale(2.1); opacity: 0; }
 }
 @media (prefers-reduced-motion: reduce) { .city-chip.current .dot::after { animation: none; opacity: .5; } }
+
+/* Pays voisin JOUABLE au niveau pays : MÊME chip qu'au niveau continent (drapeau
+   + anneau + nom), simplement un peu en retrait — le pays focalisé (ses gares)
+   reste la scène principale. Le clic y voyage (cf. la forme voisine). */
+.country-chip.neighbor { opacity: .9; }
+@media (hover: hover) { .country-chip.neighbor:hover { opacity: 1; } }
 
 /* ---- Fiche de gare (modale ouverte au clic d'une ville) ---- */
 #map-modal {
@@ -450,6 +597,8 @@ svg { width: 100%; height: 100%; display: block; }
 /* ---- paysage court (téléphone) : HUD compacté, plateau maximisé ---- */
 @media (max-height: 500px) {
   #hud-top { top: calc(8px + var(--safe-t)); gap: 4px; }
+  #hud-tools { top: calc(8px + var(--safe-t)); }
+  #btn-playback, #btn-settings { padding: 6px; }
   #hud-clock { padding: 5px 12px; gap: 2px; }
   #clock { font-size: 20px; }
   #delay { font-size: 13px; }
@@ -459,7 +608,6 @@ svg { width: 100%; height: 100%; display: block; }
     min-height: 36px; min-width: 36px; padding: 5px 9px;
     font-size: 14px; border-radius: 8px;
   }
-  #infobar { height: 32px; font-size: 12.5px; padding: 0 14px; }
   .card { padding: 22px 24px; border-radius: 14px; }
   .card h1 { font-size: 22px; margin-bottom: 12px; }
   .card p { font-size: 13.5px; line-height: 1.55; margin-bottom: 9px; }

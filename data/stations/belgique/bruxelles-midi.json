@@ -4,7 +4,7 @@
   "tagline": "Bruxelles-Midi — 8 quais, 6 directions dont Paris. Le boss régional.",
   "difficulty": 5,
   "country": "🇧🇪 Belgique",
-  "desc": "La plus grande gare du pays : huit quais, six directions dont Paris, un trafic qui ne pardonne rien. Le boss de la région — bonne chance, aiguilleur.",
+  "desc": "La plus grande gare du pays, sur la jonction Nord-Midi que tout traverse : huit quais, six directions — Anvers et Gand vers le nord, Mons et Paris vers le sud, Namur et Liège vers l'est. Unique gare Eurostar de Bruxelles (Londres, Paris, Amsterdam). Le boss régional ne pardonne rien — bonne chance, aiguilleur.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 },
     { "id": 5 }, { "id": 6 }, { "id": 7 }, { "id": 8 }

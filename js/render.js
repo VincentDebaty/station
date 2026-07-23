@@ -29,15 +29,18 @@ function drawStatic() {
   // seul le zoom d'affichage change, donc la difficulté reste identique.
   const sides = new Set(Object.values(PORTALS).map(p => p.side));
   const only = sides.size === 1 ? [...sides][0] : null;
+  const cys = [...PLATFORMS.map(q => q.cy), ...Object.values(PORTALS).map(p => p.cy)];
+  const yBot = Math.max(...cys) + 58;     // marge basse : voie d'approche (cy+36) + wagon
   if (only) {
-    const cys = [...PLATFORMS.map(q => q.cy), ...Object.values(PORTALS).map(p => p.cy)];
     const yTop = Math.min(...cys) - 85;   // marge : badges d'heure (×1.5 sur mobile) + noms
-    const yBot = Math.max(...cys) + 58;   // marge : voie d'approche (cy+36) + wagon
     const xL = only === "L" ? 8 : PLAT_X1 - 55;
     const xR = only === "L" ? PLAT_X2 + 55 : 1392;
     board.setAttribute("viewBox", `${xL} ${yTop} ${xR - xL} ${yBot - yTop}`);
   } else {
-    board.setAttribute("viewBox", "0 0 1400 760");
+    // Gare traversante : réseau des deux côtés → on garde la pleine largeur et
+    // la marge haute (le HUD flotte au-dessus du centre : l'horloge ne doit pas
+    // recouvrir le badge du quai du haut), mais on rogne la bande noire du bas.
+    board.setAttribute("viewBox", `0 0 1400 ${yBot}`);
   }
   const defs = el("defs", {}, board);
   const pat = el("pattern", {
@@ -46,6 +49,11 @@ function drawStatic() {
   }, defs);
   el("rect", { width: 8, height: 8, fill: "rgba(239,68,68,.08)" }, pat);
   el("line", { x1: 0, y1: 0, x2: 0, y2: 8, stroke: "var(--red)", "stroke-width": 2, opacity: 0.5 }, pat);
+  // Léger dégradé vertical sur les quais : reflet en haut, ombre en bas — donne
+  // du relief à la pilule sans changer sa couleur perçue (quai libre au repos).
+  const pg2 = el("linearGradient", { id: "platGrad", x1: 0, y1: 0, x2: 0, y2: 1 }, defs);
+  el("stop", { offset: 0, "stop-color": "#243049" }, pg2);
+  el("stop", { offset: 1, "stop-color": "#161f30" }, pg2);
   // Les trains entrent et sortent par les bords de la carte : le viewBox
   // les découpe naturellement, wagon par wagon
   gTracks    = el("g", {}, board);
@@ -64,11 +72,11 @@ function drawStatic() {
   for (const m of meshD) {
     const t = el("path", { d: m.d, class: "track" }, gTracks);
     t.style.stroke = DEST_COLOR[m.portal];
-    t.style.opacity = "0.30";
+    t.style.opacity = "0.38";
   }
 
-  // Quais + pastilles de liaison — groupés par quai pour pouvoir assombrir
-  // d'un bloc les quais non valides pendant une sélection
+  // Quais — groupés par quai pour pouvoir assombrir d'un bloc les quais non
+  // valides pendant une sélection
   for (const q of PLATFORMS) {
     const pg = el("g", { class: "plat", id: "plat-" + q.id }, gPlatforms);
     const rect = el("rect", {
@@ -82,17 +90,6 @@ function drawStatic() {
     // heurtoir du quai en impasse
     if (q.deadEnd)
       el("rect", { x: PLAT_X2 + 4, y: q.cy - 13, width: 7, height: 26, rx: 2, class: "buffer-stop" }, pg);
-
-    // pastilles : gauche = portails L reliés, droite = portails R reliés
-    let li = 0, ri = 0;
-    for (const [pname, p] of Object.entries(PORTALS)) {
-      if (!LINKS[pname].includes(q.id)) continue;
-      const dot = el("circle", { r: 5.5, class: "plat-dot" }, pg);
-      dot.style.fill = DEST_COLOR[pname];
-      if (p.side === "L") { dot.setAttribute("cx", PLAT_X1 + 16 + li * 16); li++; }
-      else                { dot.setAttribute("cx", PLAT_X2 - 16 - ri * 16); ri++; }
-      dot.setAttribute("cy", q.cy - PLAT_H / 2 + 9);
-    }
   }
 
   // Portails (terminus compris) : les voies filent jusqu'au BORD RÉEL de
@@ -105,9 +102,9 @@ function drawStatic() {
     const c = DEST_COLOR[name];
     const edge = p.side === "L" ? -EDGE_RUN : 1400 + EDGE_RUN;   // point de fuite = bord écran
     const lnOut = el("line", { x1: edge, y1: p.cy, x2: p.x, y2: p.cy, class: "track" }, gTracks);
-    lnOut.style.stroke = c; lnOut.style.opacity = "0.30";
+    lnOut.style.stroke = c; lnOut.style.opacity = "0.38";
     const lnIn = el("path", { d: pathD(APPROACH[name].pts), class: "track" }, gTracks);
-    lnIn.style.stroke = c; lnIn.style.opacity = "0.30";
+    lnIn.style.stroke = c; lnIn.style.opacity = "0.38";
     // point de convergence marqué à la couleur de la ville
     const cvg = el("circle", { cx: p.x, cy: p.cy, r: 5, "pointer-events": "none" }, gTracks);
     cvg.style.fill = c; cvg.style.opacity = "0.85";
@@ -226,18 +223,13 @@ const SND = {
   end()      { playTone(659, 0, 0.12); playTone(830, 0.13, 0.12); playTone(988, 0.26, 0.3); }
 };
 
-// Tous les messages passent par la bande d'info réservée en bas (une seule
-// ligne, jamais par-dessus le plan). Le texte apparaît puis s'efface ; la
-// bande, elle, reste toujours là.
-function toast(msg, ms) {
-  const s = document.getElementById("infobar-msg");
-  s.textContent = msg; s.classList.add("show");
-  clearTimeout(s._h); s._h = setTimeout(() => s.classList.remove("show"), ms || 2600);
-}
-function flashAt(pt, msg) {
+// Jeu 100 % visuel : plus de bande d'info ni de message texte. toast() est
+// conservé (encore appelé un peu partout) mais ne fait plus rien — l'action se
+// lit sur le plan : quai barré pour une fermeture, convoi qui refoule, etc.
+function toast(_msg, _ms) { /* désactivé — feedback purement visuel */ }
+function flashAt(pt) {
   const c = el("circle", { cx: pt.x, cy: pt.y, r: 6, class: "conflict-ring" }, gFx);
   setTimeout(() => c.remove(), 900);
-  if (msg) toast(msg);
 }
 
 function fmt(min) {
@@ -249,6 +241,7 @@ function trainNode(t) {
   const g = el("g", { class: "train" }, gQueue);
   const c = t.freight ? "#8f98a8" : DEST_COLOR[t.to];
   t.carEls = [];
+  t.maskEls = []; // masques « vide » : largeur pilotée par l'embarquement à quai
   for (let i = 0; i < t.cars; i++) {
     const car = el("g", {}, g);
     // zone de clic généreuse (invisible) : indispensable au doigt
@@ -263,6 +256,13 @@ function trainNode(t) {
     }, car);
     body.style.fill = c; body.style.color = c;
     if (i > 0) body.style.opacity = "0.72";
+    // Masque « vide » posé PAR-DESSUS la caisse, ancré au bord queue (-x).
+    // Largeur 0 par défaut (wagon plein) ; l'embarquement la fait varier.
+    const mask = el("rect", {
+      x: -CAR_LEN / 2, y: -bh / 2, width: 0, height: bh,
+      rx: (i === 0 ? 8 : 5) * UIK, class: "board-mask"
+    }, car);
+    t.maskEls.push(mask);
     if (i === 0) {
       const lbl = el("text", { x: 0, y: 0.5, class: "train-label" }, car);
       lbl.textContent = t.freight ? "F" : DEST_ABBR[t.to];
@@ -428,4 +428,43 @@ function updateBadge(t) {
   t.badgeEl.setAttribute("transform",
     "translate(" + t.headPos.x.toFixed(1) + " " +
     (t.headPos.y - 30 * UIK - (t.badgeLift || 0)).toFixed(1) + ")");
+}
+// Embarquement à quai : pendant l'arrêt (dwell), le convoi se « remplit » comme
+// une jauge de batterie horizontale — la partie pleine (couleur vive) avance de
+// la loco vers le dernier wagon, la partie vide (masque sombre) recule, à mesure
+// qu'on approche de l'heure de départ. Plein = prêt à repartir. Hors arrêt, le
+// masque disparaît (wagons pleins, aspect normal).
+function updateBoarding(t) {
+  if (t.freight || !t.maskEls) return;
+  if (t.state !== "dwell") {
+    for (const m of t.maskEls) m.setAttribute("width", 0);
+    return;
+  }
+  // fin d'arrêt = départ prévu si une sortie existe, sinon simple arrêt minimum
+  const hasOut = !!paths["out:" + t.to + ":" + t.platform];
+  const end = hasOut ? Math.max(t.dep, t.actualArr + MIN_DWELL)
+                     : t.actualArr + MIN_DWELL;
+  const denom = end - t.actualArr;
+  const p = denom > 0 ? Math.min(1, Math.max(0, (gameMin - t.actualArr) / denom)) : 1;
+  const n = t.maskEls.length;
+  // Sens de la tête à l'écran : les caisses gardent leur x local orienté vers la
+  // droite (rotation bridée à l'endroit), mais selon le portail d'origine la tête
+  // du convoi est à droite (s croissant vers la droite) ou à gauche. On lit le
+  // signe du tangent au point d'arrêt pour placer le masque « vide » côté queue.
+  const pth = paths[t.entryPath];
+  let headRight = true;
+  if (pth) {
+    const s1 = Math.min(t.stopS, pth.len), s0 = Math.max(0, s1 - 2);
+    headRight = pathPoint(pth, s1).x - pathPoint(pth, s0).x >= 0;
+  }
+  // p balaie tout le convoi : n·p wagons pleins ; le wagon courant se remplit
+  // partiellement, du côté tête vers le côté queue, en continuité avec le voisin.
+  for (let i = 0; i < n; i++) {
+    const frac = Math.min(1, Math.max(0, p * n - i)); // la tête se remplit d'abord
+    const w = (1 - frac) * CAR_LEN;                    // portion « vide » (côté queue)
+    const m = t.maskEls[i];
+    // vide côté queue : à gauche (-x) si la tête est à droite, sinon à droite (+x)
+    m.setAttribute("x", (headRight ? -CAR_LEN / 2 : CAR_LEN / 2 - w).toFixed(2));
+    m.setAttribute("width", w.toFixed(2));
+  }
 }

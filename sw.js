@@ -11,7 +11,7 @@
 // La coquille est toujours préchargée à l'installation pour un premier lancement
 // hors-ligne. Incrémenter CACHE_VERSION purge l'ancien cache à l'activation.
 // ------------------------------------------------------------------
-const CACHE_VERSION = "station-v26";
+const CACHE_VERSION = "station-v38";
 
 // Coquille de l'app préchargée à l'installation : tout le nécessaire pour un
 // premier lancement hors-ligne. Les fiches de gares non listées ici sont mises
@@ -24,6 +24,7 @@ const PRECACHE = [
   "js/catalog.js",
   "js/engine.js",
   "js/schedule.js",
+  "js/gen-worker.js",
   "js/render.js",
   "js/game.js",
   "js/geo.js",

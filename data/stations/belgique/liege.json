@@ -1,31 +1,35 @@
 {
   "id": "liege",
   "name": "Liège-Guillemins",
-  "tagline": "Liège — axe fret vers l'Allemagne : convois lourds, anticipez.",
+  "tagline": "Liège-Guillemins — hub traversant sous la voûte Calatrava : 9 voies, 6 directions, flux dense.",
+  "desc": "Cinq quais îlots, neuf voies : la grande artère Bruxelles–Liège–Aachen file de part en part, tandis que les branches de Namur, du Luxembourg, de Maastricht et des omnibus de Liers se greffent au passage. GV internationales pressées et dessertes wallonnes s'entrecroisent — le carrefour le plus chargé de Wallonie.",
   "difficulty": 4,
   "country": "🇧🇪 Belgique",
-  "desc": "La porte de l'Allemagne et l'axe marchandises wallon : convois lourds vers Aachen, Maastricht et Luxembourg, frets fréquents — un long train bloque tout, anticipez.",
   "platforms": [
-    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 },
+    { "id": 5 }, { "id": 6 },
+    { "id": 7 }, { "id": 8 }, { "id": 9 }
   ],
   "portals": {
     "BRUXELLES":  { "side": "L", "color": "#25dede", "abbr": "B" },
+    "LIERS":      { "side": "L", "color": "#60a5fa", "abbr": "LI" },
     "NAMUR":      { "side": "L", "color": "#4ade80", "abbr": "N" },
     "AACHEN":     { "side": "R", "color": "#f2588f", "abbr": "AC" },
-    "MAASTRICHT": { "side": "R", "color": "#f5b23c", "abbr": "M" },
-    "LUXEMBOURG": { "side": "R", "color": "#a78bfa", "abbr": "LX" }
+    "LUXEMBOURG": { "side": "R", "color": "#a78bfa", "abbr": "LX" },
+    "MAASTRICHT": { "side": "R", "color": "#f5b23c", "abbr": "M" }
   },
   "links": {
-    "BRUXELLES": [1, 2, 3, 4],
-    "NAMUR": [3, 4, 5],
-    "AACHEN": [1, 2, 3],
-    "MAASTRICHT": [2, 3, 4],
-    "LUXEMBOURG": [3, 4, 5]
+    "BRUXELLES": [3, 4, 5, 6],
+    "LIERS": [1, 5, 7, 8, 9],
+    "NAMUR": [2, 6, 7, 8],
+    "AACHEN": [4, 5, 6],
+    "LUXEMBOURG": [5, 7, 8],
+    "MAASTRICHT": [1, 2, 3, 9]
   },
   "sameSidePairs": [],
   "gen": {
-    "nMin": 13, "nMax": 16, "gapMin": 1.8, "gapMax": 3.0,
-    "cars": [2, 3, 3, 4, 4, 5, 6, 7, 7],
-    "freightRate": 0.7, "quietRate": 0.15
+    "nMin": 16, "nMax": 20, "gapMin": 1.5, "gapMax": 2.6,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6],
+    "freightRate": 0.2, "quietRate": 0.12
   }
 }

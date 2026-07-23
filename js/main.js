@@ -44,7 +44,9 @@ const ICON = {
   volumeOff: "M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z",
   close:     "M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z",
   help:      "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z",
-  lock:      "M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1s3.1 1.39 3.1 3.1v2z"
+  lock:      "M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1s3.1 1.39 3.1 3.1v2z",
+  settings:  "M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z",
+  logout:    "M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"
 };
 function icon(d, size) {
   return '<svg viewBox="0 0 24 24" width="' + (size || 22) + '" height="' + (size || 22) +
@@ -57,53 +59,89 @@ function icon(d, size) {
 // ------------------------------------------------------------------
 const hudClock = document.getElementById("hud-clock");
 const hudControls = document.getElementById("hud-controls");
-const btnPausep = document.getElementById("btn-pausep");
+const btnPlayback = document.getElementById("btn-playback");
+const btnSpeed = document.getElementById("btn-speed");
 const pauseTag = document.getElementById("pause-tag");
 function updatePauseIcon() {
-  btnPausep.innerHTML = icon(paused ? ICON.play : ICON.pause, 24);
+  // Bouton lecture = bascule DIRECTE : son icône est l'action à faire au tap
+  // (▶ pour reprendre quand en pause, ⏸ pour mettre en pause quand ça tourne).
+  btnPlayback.innerHTML = icon(paused ? ICON.play : ICON.pause, 20);
+  btnPlayback.title = paused ? "Reprendre" : "Pause";
   hudClock.classList.toggle("paused", paused);
-  btnPausep.title = paused ? "Reprendre" : "Pause";
   pauseTag.classList.toggle("hidden", !paused);
+  // Bouton vitesse : libellé = vitesse courante, accentué au-delà de 1x.
+  btnSpeed.textContent = speed + "x";
+  btnSpeed.classList.toggle("active", speed > 1);
 }
 function updateMuteIcon() {
   document.getElementById("btn-mute").innerHTML = icon(muted ? ICON.volumeOff : ICON.volumeOn, 22);
 }
 // icônes fixes
 document.getElementById("btn-reset").innerHTML = icon(ICON.restart, 26); // restart plus grand
-document.getElementById("btn-hub").innerHTML = icon(ICON.close, 24);     // croix : quitter vers la carte
+document.getElementById("btn-hub").innerHTML = icon(ICON.logout, 22);    // logout : quitter vers la carte
 document.getElementById("btn-help").innerHTML = icon(ICON.help, 22);     // aide dans le volet de réglages
+document.getElementById("btn-settings").innerHTML = icon(ICON.settings, 20); // engrenage : ouvre le volet
 // (l'aide de la carte est un simple « ? » gris, défini en HTML/CSS)
 document.getElementById("btn-replay").innerHTML = icon(ICON.restart, 18) + "Rejouer"; // fin de service : flèche « refresh » + texte
 updatePauseIcon();
 updateMuteIcon();
 
-// Le menu d'icônes se déplie/replie sous le cadre via la poignée (ou en tapant
-// le cadre). #hud-top.open pilote l'état visuel de la poignée.
+// Le menu d'icônes se déplie/replie sous l'engrenage (haut à droite).
+// #settings.open pilote l'état visuel du bouton (teal + rotation).
 const hudTop = document.getElementById("hud-top");
+const settingsWrap = document.getElementById("settings");
+const btnSettings = document.getElementById("btn-settings");
+// ------------------------------------------------------------------
+// Cadre horloge en gare terminus : le flanc droit du plan est vide
+// (butoirs). On centre le cadre dans cet espace libre — entre le bord
+// droit des quais et le bord de l'écran. La largeur de cette marge se
+// mesure à l'exécution : le plan est mis à l'échelle « meet » et la
+// marge varie selon l'écran (surtout sur mobile). Hors terminus, on
+// laisse l'ancrage par défaut du CSS (right: 16px).
+// ------------------------------------------------------------------
+function positionTerminusHud() {
+  if (!hudTop.classList.contains("terminus")) {
+    hudTop.style.right = ""; pauseTag.style.right = ""; return;
+  }
+  const plat = document.querySelector(".platform");
+  if (!plat) return;
+  const platRight = plat.getBoundingClientRect().right;
+  const clockW = hudClock.getBoundingClientRect().width;
+  const gap = window.innerWidth - platRight; // marge libre à droite des quais
+  // Centre du cadre au milieu de la marge ; repli sur 16px si trop étroite.
+  hudTop.style.right = Math.max(16, gap / 2 - clockW / 2) + "px";
+  // Badge « En pause » centré sous le cadre : le cadre est collé au bord droit
+  // du HUD, donc son centre est à clockW/2 du bord (cf. translateX(50%) en CSS).
+  pauseTag.style.right = clockW / 2 + "px";
+}
+window.addEventListener("resize", positionTerminusHud);
 function setMenu(open) {
   hudControls.classList.toggle("hidden", !open);
-  hudTop.classList.toggle("open", open);
+  settingsWrap.classList.toggle("open", open);
+  btnSettings.setAttribute("aria-expanded", open ? "true" : "false");
 }
 function toggleMenu() { setMenu(hudControls.classList.contains("hidden")); }
-hudClock.addEventListener("click", toggleMenu);
-document.getElementById("hud-handle").addEventListener("click", toggleMenu);
+btnSettings.addEventListener("click", toggleMenu);
+// Lecture : bascule pause/reprise au tap. Vitesse : cycle 1x → 2x → 4x → 1x
+// (change le rythme sans toucher à l'état pause).
+btnPlayback.addEventListener("click", () => { paused = !paused; updatePauseIcon(); });
+btnSpeed.addEventListener("click", () => { speed = speed >= 4 ? 1 : speed * 2; updatePauseIcon(); });
 // on referme dès qu'on clique un bouton du menu. En phase de CAPTURE : certains
 // boutons (pause, sons) remplacent leur propre icône dans leur handler, ce qui
 // détache e.target ; en capture on lit e.target avant cette mutation. L'action
 // du bouton (phase de bulle) s'exécute ensuite, le chemin d'événement étant figé.
+// On ne referme QUE sur une action (recommencer/son/aide/quitter) : régler le
+// rythme dans le segment lecture laisse le menu ouvert (contrôle de jeu, pas
+// un réglage ponctuel).
 hudControls.addEventListener("click", e => {
-  if (e.target.closest(".btn")) setMenu(false);
+  if (e.target.closest(".act-row .btn")) setMenu(false);
 }, true);
-// clic hors du HUD → referme le menu.
+// clic hors du menu réglages → le referme.
 document.addEventListener("click", e => {
-  if (!hudControls.classList.contains("hidden") && !hudTop.contains(e.target)) setMenu(false);
+  if (!hudControls.classList.contains("hidden") && !settingsWrap.contains(e.target)) setMenu(false);
 });
-btnPausep.addEventListener("click", () => { paused = !paused; updatePauseIcon(); });
-document.querySelectorAll(".speed").forEach(b => b.addEventListener("click", () => {
-  speed = +b.dataset.s;
-  paused = false; updatePauseIcon(); // choisir une vitesse relance le jeu
-  document.querySelectorAll(".speed").forEach(x => x.classList.toggle("active", x === b));
-}));
+// Le badge « En pause » sert aussi de bouton reprise : un tap relance le jeu.
+pauseTag.addEventListener("click", () => { paused = false; updatePauseIcon(); });
 // Aide (règles du jeu) à la demande : depuis la carte et depuis le volet de
 // réglages. Ouverte en cours de partie, elle met en pause — on lit sans que
 // le temps de jeu file derrière l'overlay.
@@ -123,17 +161,82 @@ document.getElementById("btn-mute").addEventListener("click", () => {
   setMuted(muted);
   updateMuteIcon();
 });
-document.getElementById("btn-reset").addEventListener("click", () => {
-  resetGame(); started = true;
+document.getElementById("btn-reset").addEventListener("click", async () => {
   document.getElementById("end").classList.add("hidden");
+  await resetGame(); started = true; // génération asynchrone : on attend la journée
 });
-document.getElementById("btn-replay").addEventListener("click", () => {
-  resetGame(); started = true;
+document.getElementById("btn-replay").addEventListener("click", async () => {
   document.getElementById("end").classList.add("hidden");
+  await resetGame(); started = true;
 });
 document.getElementById("btn-hub").addEventListener("click", () => showHub());
 document.getElementById("btn-end-map").addEventListener("click", () => showHub());
+// Cartouche haut-gauche = bouton retour vers la carte (même logique que « ‹ »
+// sur la carte). Le contenu est réécrit à chaque partie mais l'élément persiste.
+(function () {
+  const tag = document.getElementById("station-tag");
+  tag.setAttribute("role", "button");
+  tag.setAttribute("aria-label", "Revenir à la carte");
+  tag.addEventListener("click", () => showHub());
+})();
 document.getElementById("btn-next").addEventListener("click", () => startStation(currentIdx + 1));
+
+// ------------------------------------------------------------------
+// Démo « limites » : gare construite à la volée pour éprouver les plafonds
+// (quais, destinations, trains, frets). Se lance par l'URL —
+//   station.html?limits              → 10 quais · 10 dest · 30 trains · 2 frets
+//   station.html?limits=10,5,30,2    → quais, destinations/côté, trains, frets
+//   station.html?limits=13,6,40,3    → mode « extrême » : chargé, ~11 s de génération
+// Le défaut est le point d'équilibre mesuré : le plus tendu qui reste lisible,
+// rapide à générer (~2 s) et toujours solvable à zéro. Au-delà de ~34 trains la
+// génération explose ET le zéro n'est plus garanti (pas assez de quais).
+// Hors carte du monde (aucune entrée géo requise). La génération passe par le
+// Web Worker, donc même une grosse gare ne fige pas l'écran au lancement.
+// ------------------------------------------------------------------
+function buildLimitsStation(params) {
+  const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v | 0));
+  const Q = clamp(params[0] || 10, 2, 13);   // quais : 13 = mur géométrique
+  const P = clamp(params[1] || 5, 1, 8);     // destinations PAR CÔTÉ
+  const nTrains = clamp(params[2] || 30, 2, 80);
+  const nFreight = clamp(params[3] ?? 2, 0, 12);
+  // palette distincte (au-delà, les couleurs se répètent — limite de lisibilité)
+  const COLORS = ["#f2588f","#4ade80","#a78bfa","#f5b23c","#25dede","#60a5fa",
+                  "#fb923c","#34d399","#c084fc","#f87171","#2dd4bf","#facc15",
+                  "#818cf8","#f472b6","#22d3ee","#a3e635"];
+  const platforms = Array.from({ length: Q }, (_, i) => ({ id: i + 1 }));
+  const portals = {}, links = {};
+  // Liaisons en fenêtre glissante : chaque portail dessert une bande d'environ
+  // 60 % des quais, la bande se décale selon l'indice du portail. Résultat :
+  // faisceau très dense (chaque quai reste desservi des deux côtés, donc du
+  // fret et des rebroussements possibles) SANS le coût du maillage complet —
+  // l'assignation gloutonne du générateur teste ~win options/train, pas Q.
+  const win = Math.min(Q, Math.max(6, Math.ceil(Q * 0.6)));
+  let ci = 0;
+  for (const side of ["L", "R"]) for (let i = 0; i < P; i++) {
+    const name = side + "_" + i;
+    portals[name] = { side, color: COLORS[ci % COLORS.length],
+      abbr: (side === "L" ? "O" : "E") + (i + 1),
+      label: (side === "L" ? "OUEST " : "EST ") + (i + 1) };
+    const start = P > 1 ? Math.round(i / (P - 1) * (Q - win)) : 0;
+    links[name] = platforms.slice(start, start + win).map(p => p.id);
+    ci++;
+  }
+  return {
+    id: "limits-demo", adhoc: true,
+    name: "LIMITES · " + Q + "q " + (2 * P) + "d " + nTrains + "t " + nFreight + "f",
+    tagline: "Démo limites — " + Q + " quais, " + (2 * P) + " destinations, " +
+             nTrains + " trains, " + nFreight + " frets. maillage complet.",
+    maxDelay: 100000, // pas de game over : on veut observer la saturation
+    platforms, portals, links, sameSidePairs: "all",
+    gen: { nMin: nTrains, nMax: nTrains, gapMin: 1.8, gapMax: 3.0,
+           cars: [3, 4, 5, 5, 6, 7], freightCount: nFreight, quietRate: 0.6 }
+  };
+}
+function limitsParamsFromURL() {
+  const raw = new URLSearchParams(location.search).get("limits");
+  if (raw === null) return null;               // pas de démo demandée
+  return raw.split(",").map(s => parseInt(s, 10)); // [] si "?limits" seul
+}
 
 // ------------------------------------------------------------------
 // Démarrage : chargement du catalogue (data/stations/) puis carte-parcours
@@ -142,7 +245,12 @@ started = false;
 // Chargement store (progression + préférences) ET catalogue avant la carte :
 // la carte lit la progression, l'icône son lit la préférence hydratée.
 Promise.all([loadStore(), loadCatalog()])
-  .then(() => { muted = getMuted(); updateMuteIcon(); showHub(); })
+  .then(() => {
+    muted = getMuted(); updateMuteIcon();
+    const lp = limitsParamsFromURL();
+    if (lp) startAdhocStation(buildLimitsStation(lp)); // démo limites directe
+    else showHub();
+  })
   .catch(err => {
     console.error(err);
     document.getElementById("hub-map").innerHTML =

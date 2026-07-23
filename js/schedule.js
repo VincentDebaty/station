@@ -6,6 +6,13 @@
 // départ faisable + une marge de réaction pour l'humain.
 // ------------------------------------------------------------------
 const REACTION_MARGIN = 1.5;   // marge laissée au joueur (minutes de jeu)
+// Densité globale du trafic (réglage transversal, toutes gares confondues) :
+// on veut un jeu sans temps mort. Le service démarre plus tôt et les arrivées
+// sont resserrées — quitte à ce que les convois fassent la queue sur la voie
+// d'approche. Le calibrage « zéro retard possible » s'adapte (les départs sont
+// repoussés en conséquence), donc la journée reste gagnable, juste plus dense.
+const FIRST_ARRIVAL = [0.5, 1];   // 1re arrivée (était [1, 2]) : service plus tôt
+const ARRIVAL_GAP_SCALE = 0.82;   // < 1 : écart entre arrivées resserré (~18 % plus dense)
 const rnd = (a, b) => a + Math.random() * (b - a);
 const pick = arr => arr[Math.floor(Math.random() * arr.length)];
 
@@ -165,7 +172,7 @@ function generateOnce() {
   // espacement des arrivées
   const n = GEN.nMin + Math.floor(Math.random() * (GEN.nMax - GEN.nMin + 1));
   const draft = [];
-  let arr = rnd(1, 2);
+  let arr = rnd(FIRST_ARRIVAL[0], FIRST_ARRIVAL[1]);
   for (let i = 0; i < n; i++) {
     const [from, to] = pick(PAIRS);
     draft.push({
@@ -173,22 +180,29 @@ function generateOnce() {
       from, to, cars: pick(GEN.cars),
       arr: Math.round(arr * 2) / 2, dep: 0
     });
-    arr += rnd(GEN.gapMin, GEN.gapMax);
+    arr += rnd(GEN.gapMin, GEN.gapMax) * ARRIVAL_GAP_SCALE;
   }
   const lastArr = draft[draft.length - 1].arr;
   // 1c) parfois, un lourd convoi de fret traverse la gare sans s'arrêter :
   // il verrouille tout son itinéraire (entrée + sortie) le temps du transit
   const cross = PAIRS.filter(([a, b]) => PORTALS[a].side !== PORTALS[b].side);
-  if (cross.length && Math.random() < (GEN.freightRate || 0)) {
+  // Nombre de frets sur la journée : soit imposé par la fiche (freightCount,
+  // pour les gares « stress test »), soit le tirage historique 0/1 selon
+  // freightRate — les fiches existantes gardent exactement leur comportement.
+  const nFreight = cross.length === 0 ? 0
+    : (GEN.freightCount != null ? GEN.freightCount
+       : (Math.random() < (GEN.freightRate || 0) ? 1 : 0));
+  for (let f = 0; f < nFreight; f++) {
     const [from, to] = pick(cross);
-    const plat = pick(LINKS[from].filter(q => LINKS[to].includes(q)));
+    const opts = LINKS[from].filter(q => LINKS[to].includes(q));
+    if (!opts.length) continue;
     const fArr = Math.round(rnd(8, Math.max(12, lastArr - 6)));
     draft.push({
-      id: "F01", freight: true, from, to, plat,
+      id: "F" + String(f + 1).padStart(2, "0"), freight: true, from, to, plat: pick(opts),
       cars: 8 + Math.floor(rnd(0, 3)), arr: fArr, dep: fArr
     });
-    draft.sort((a, b) => a.arr - b.arr);
   }
+  if (nFreight > 0) draft.sort((a, b) => a.arr - b.arr);
   // 1b) tirage des imprévus : ~20 % de journées calmes, sinon 1 ou 2 événements,
   //     intégrés au calibrage — le zéro retard reste garanti malgré eux
   const events = [];

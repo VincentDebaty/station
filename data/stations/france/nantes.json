@@ -1,32 +1,31 @@
 {
   "id": "nantes",
   "name": "Nantes",
-  "tagline": "Nantes — terminus de l'Ouest : 6 quais à heurtoir, longues rames vers l'Atlantique.",
+  "tagline": "Nantes — porte de l'Atlantique : gare traversante, l'axe Paris–Le Croisic et les branches du Sud.",
   "difficulty": 2,
   "country": "🇫🇷 France",
-  "desc": "La porte de l'Atlantique : six quais à heurtoir, cinq directions vers Paris, Rennes, Bordeaux, Le Croisic et La Rochelle. Des rames longues qui rebroussent toutes — orchestrez la manœuvre.",
+  "desc": "La porte de l'Atlantique, sous la mezzanine suspendue de Ricciotti (2020) : une gare traversante d'axe est-ouest où les trains de Paris filent vers Saint-Nazaire, Le Croisic et Quimper, croisant les branches de Rennes et du Sud vers Bordeaux. Six quais, un flux qui ne rebrousse plus — trouvez les bonnes voies.",
   "platforms": [
-    { "id": 1, "deadEnd": true }, { "id": 2, "deadEnd": true }, { "id": 3, "deadEnd": true },
-    { "id": 4, "deadEnd": true }, { "id": 5, "deadEnd": true }, { "id": 6, "deadEnd": true }
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }, { "id": 6 }
   ],
   "portals": {
-    "PARIS":      { "side": "L", "color": "#f2588f", "abbr": "P" },
-    "RENNES":     { "side": "L", "color": "#25dede", "abbr": "RE" },
-    "BORDEAUX":   { "side": "L", "color": "#4ade80", "abbr": "BX" },
-    "LECROISIC":  { "side": "L", "color": "#f5b23c", "abbr": "LC", "label": "LE CROISIC" },
-    "LAROCHELLE": { "side": "L", "color": "#60a5fa", "abbr": "LR", "label": "LA ROCHELLE" }
+    "PARIS":     { "side": "R", "color": "#f2588f", "abbr": "P" },
+    "BORDEAUX":  { "side": "R", "color": "#4ade80", "abbr": "BX" },
+    "LECROISIC": { "side": "L", "color": "#f5b23c", "abbr": "LC", "label": "LE CROISIC" },
+    "QUIMPER":   { "side": "L", "color": "#a78bfa", "abbr": "QU" },
+    "RENNES":    { "side": "L", "color": "#25dede", "abbr": "RE" }
   },
   "links": {
-    "PARIS": [1, 2, 3, 5],
-    "RENNES": [2, 3, 4],
-    "BORDEAUX": [1, 2, 6],
-    "LECROISIC": [4, 5, 6],
-    "LAROCHELLE": [3, 4, 5, 6]
+    "PARIS": [1, 2, 3, 4],
+    "BORDEAUX": [3, 4, 5, 6],
+    "LECROISIC": [1, 2, 3],
+    "QUIMPER": [4, 5, 6],
+    "RENNES": [2, 3, 4, 5]
   },
-  "sameSidePairs": "all",
+  "sameSidePairs": [],
   "gen": {
-    "nMin": 12, "nMax": 15, "gapMin": 1.9, "gapMax": 3.2,
-    "cars": [3, 3, 4, 4, 5, 5, 6, 7],
-    "freightRate": 0, "quietRate": 0.2
+    "nMin": 13, "nMax": 16, "gapMin": 1.8, "gapMax": 3.0,
+    "cars": [1, 2, 2, 3, 3, 4, 4, 5],
+    "freightRate": 0.1, "quietRate": 0.2
   }
 }

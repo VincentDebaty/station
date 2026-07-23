@@ -16,10 +16,10 @@
 
 const GEO = {
   // Projection équirectangulaire interne (ratio 2:1 du monde). Le viewBox du
-  // niveau monde est décalé vers le haut en coordonnées (y négatif) pour que les
-  // terres (qui ne descendent pas jusqu'au pôle Sud, Antarctique retiré) tombent
-  // un peu plus BAS à l'écran, sous l'en-tête.
-  world: { W: 2000, H: 1000, viewBox: [0, -120, 2000, 1000] },
+  // niveau monde est resserré sur la BANDE HABITÉE (≈ lat +75 à −56) : on retire
+  // le vide au-dessus du pôle Nord et l'essentiel de l'Antarctique, ce qui
+  // agrandit les continents. Cadré verticalement sur le centre des terres.
+  world: { W: 2000, H: 1000, viewBox: [0, 45, 2000, 800] },
 
   // Les 6 zones. bbox [lonMin,latMin,lonMax,latMax] = cadrage de zoom (fiable,
   // pas de souci d'antiméridien contrairement à un calcul sur les formes).
@@ -39,7 +39,8 @@ const GEO = {
         "bruxelles-midi": [4.336, 50.836], anvers: [4.421, 51.219], gand: [3.710, 51.036],
         bruges: [3.217, 51.197], louvain: [4.716, 50.881], namur: [4.862, 50.469],
         charleroi: [4.437, 50.412], mons: [3.952, 50.454], liege: [5.567, 50.639],
-        hasselt: [5.338, 50.930], libramont: [5.378, 49.921]
+        hasselt: [5.338, 50.930], libramont: [5.378, 49.921],
+        ottignies: [4.570, 50.671], tournai: [3.395, 50.613]
       } },
     france: { name: "France", flag: "🇫🇷", iso: "FRA", continent: "europe",
       cities: {

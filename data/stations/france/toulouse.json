@@ -4,7 +4,7 @@
   "tagline": "Toulouse — carrefour du Sud : 6 quais traversants, cinq directions sans répit.",
   "difficulty": 3,
   "country": "🇫🇷 France",
-  "desc": "Le grand carrefour occitan : six quais traversants et cinq directions — Bordeaux, Bayonne, Narbonne vers la Méditerranée, Foix vers les Pyrénées et Brive vers Paris. Un flux dense qui ne faiblit jamais.",
+  "desc": "Le grand pôle occitan, sur la transversale Bordeaux–Méditerranée : six quais traversants et cinq directions — Bordeaux, Bayonne, Narbonne vers la mer, Foix vers les Pyrénées et Brive vers Paris (l'axe POLT). Plus de vingt lignes TER y convergent — un flux qui ne faiblit jamais.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }, { "id": 6 }
   ],

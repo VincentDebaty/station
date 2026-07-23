@@ -1,23 +1,23 @@
 {
   "id": "lille",
   "name": "Lille-Flandres",
-  "tagline": "Lille-Flandres — terminus à heurtoirs : tout le monde rebrousse.",
+  "tagline": "Lille-Flandres — grand terminus TER : 6 quais à heurtoir, l'étoile du Nord rebrousse.",
   "difficulty": 1,
   "country": "🇫🇷 France",
-  "desc": "Premier terminus français : quatre directions, six quais à heurtoir et la gorge unique des gares en cul-de-sac. Tout le monde rebrousse — à vous d'orchestrer le ballet.",
+  "desc": "La plus grande gare TER de province : six quais à heurtoir, tout rebrousse — vers Paris, le bassin minier de Douai, la Flandre maritime de Dunkerque et la Belgique par Tournai. (L'Eurostar, lui, file par Lille-Europe voisine.) À vous d'orchestrer le ballet.",
   "platforms": [
     { "id": 1, "deadEnd": true }, { "id": 2, "deadEnd": true }, { "id": 3, "deadEnd": true },
     { "id": 4, "deadEnd": true }, { "id": 5, "deadEnd": true }, { "id": 6, "deadEnd": true }
   ],
   "portals": {
     "PARIS":     { "side": "L", "color": "#f2588f", "abbr": "P" },
-    "BRUXELLES": { "side": "L", "color": "#25dede", "abbr": "B" },
+    "TOURNAI":   { "side": "L", "color": "#25dede", "abbr": "TO" },
     "DOUAI":     { "side": "L", "color": "#f5b23c", "abbr": "D" },
     "DUNKERQUE": { "side": "L", "color": "#60a5fa", "abbr": "DK" }
   },
   "links": {
     "PARIS": [1, 2, 3, 4],
-    "BRUXELLES": [2, 3, 4, 5],
+    "TOURNAI": [2, 3, 4, 5],
     "DOUAI": [3, 4, 5, 6],
     "DUNKERQUE": [1, 2, 5, 6]
   },

@@ -1,10 +1,10 @@
 {
   "id": "clermont-ferrand",
   "name": "Clermont-Ferrand",
-  "tagline": "Clermont-Ferrand — nœud auvergnat : 4 quais, Paris et Lyon d'un côté, le Massif de l'autre.",
+  "tagline": "Clermont-Ferrand — étoile auvergnate sans TGV : 4 quais au pied du Massif.",
   "difficulty": 1,
   "country": "🇫🇷 France",
-  "desc": "Le nœud auvergnat au pied du Massif central : quatre quais, des rames courtes vers Paris, Lyon, Nîmes par les Cévennes et Aurillac. Petit gabarit, tempo serré — la rampe d'accès idéale.",
+  "desc": "Le nœud auvergnat au pied du Massif central, étoile de bifurcation à six branches — et l'une des rares grandes villes sans TGV : quatre quais, des Intercités classiques vers Paris et des TER vers Lyon, Aurillac et Nîmes par les Cévennes (Le Cévenol). Petit gabarit, tempo serré — la rampe d'accès idéale.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }
   ],

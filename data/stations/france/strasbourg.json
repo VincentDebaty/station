@@ -1,10 +1,10 @@
 {
   "id": "strasbourg",
   "name": "Strasbourg",
-  "tagline": "Strasbourg — porte du Rhin : long corridor fret qui coupe la gare.",
+  "tagline": "Strasbourg — porte de l'Allemagne : hub transfrontalier, TGV Est et pont de Kehl.",
   "difficulty": 4,
   "country": "🇫🇷 France",
-  "desc": "La porte du Rhin : cinq directions dont l'Allemagne, et le grand corridor fret rhénan qui coupe la gare sans prévenir. Les convois y sont longs, très longs.",
+  "desc": "La porte de l'Allemagne, sous la bulle de verre de 2007 : terminus de la LGV Est et carrefour transfrontalier où se croisent Paris, Metz, l'axe rhénan vers Bâle et Colmar, et l'Allemagne par le pont de Kehl (Offenburg). Cinq quais, des rames internationales pressées et un flux qui ne retombe jamais — le fret rhénan, lui, contourne par Hausbergen.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
   ],
@@ -24,8 +24,8 @@
   },
   "sameSidePairs": [],
   "gen": {
-    "nMin": 13, "nMax": 16, "gapMin": 1.8, "gapMax": 3.0,
-    "cars": [2, 3, 3, 4, 4, 5, 6, 7, 7],
-    "freightRate": 0.75, "quietRate": 0.15
+    "nMin": 14, "nMax": 17, "gapMin": 1.6, "gapMax": 2.7,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6],
+    "freightRate": 0.15, "quietRate": 0.12
   }
 }

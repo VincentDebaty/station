@@ -10,8 +10,54 @@ let trains, gameMin, speed, paused, started, ended, totalDelay, selected, active
 const DEFAULT_MAX_DELAY = 120;
 function maxDelay() { return STATION.maxDelay ?? DEFAULT_MAX_DELAY; }
 
-function resetGame() {
-  const day = generateSchedule(); // nouvelle journée à chaque partie
+// ------------------------------------------------------------------
+// Génération d'horaire hors thread principal (Web Worker).
+// La simulation du « joueur parfait » peut prendre plusieurs secondes sur une
+// grosse gare ; on la délègue au worker pour ne pas figer l'écran. Repli
+// synchrone si les Workers sont indisponibles (vieux moteur, contexte réduit).
+// ------------------------------------------------------------------
+let _genWorker = null, _genSeq = 0;
+function genWorker() {
+  if (_genWorker === null) {
+    try { _genWorker = (typeof Worker !== "undefined") ? new Worker("js/gen-worker.js") : false; }
+    catch (e) { _genWorker = false; }
+  }
+  return _genWorker || null;
+}
+function generateDay(cfg) {
+  const w = genWorker();
+  if (!w) return Promise.resolve(generateSchedule()); // repli synchrone
+  const id = ++_genSeq;
+  return new Promise(resolve => {
+    const onMsg = e => {
+      if (!e.data || e.data.id !== id) return;   // ignore une réponse périmée (rejeu rapide)
+      w.removeEventListener("message", onMsg);
+      if (e.data.error) { console.warn("Worker:", e.data.error); resolve(generateSchedule()); return; }
+      resolve({ schedule: e.data.schedule, events: e.data.events });
+    };
+    w.addEventListener("message", onMsg);
+    w.postMessage({ id, cfg });
+  });
+}
+// Voile « préparation du service » pendant la génération asynchrone.
+function setPreparing(on) {
+  const el = document.getElementById("preparing");
+  if (el) el.classList.toggle("hidden", !on);
+}
+
+async function resetGame() {
+  // Gèle la boucle pendant la génération : la journée arrive du worker de façon
+  // asynchrone. On dessine tout de suite le plan (vide) pour que le joueur voie
+  // le réseau se poser, puis on peuple les trains à réception.
+  started = false; ended = false; paused = false;
+  gameMin = 0; speed = 1;
+  totalDelay = 0; selected = null; activeRoutes = {}; queueSeq = 0;
+  document.getElementById("hud-controls").classList.add("hidden");
+  document.getElementById("settings").classList.remove("open"); // engrenage revient à l'état repos
+  if (typeof updatePauseIcon === "function") updatePauseIcon(); // paused=false → icône ▶→⏸, clock non-teal
+  drawStatic();
+  setPreparing(true);
+  const day = await generateDay(STATION);
   SCHEDULE = day.schedule;
   EVENTS = day.events.map(ev => ({ ...ev, revealed: false, cleared: false, el: null }));
   trains = SCHEDULE.map(s => ({
@@ -22,17 +68,12 @@ function resetGame() {
     platform: null, target: s.freight ? s.plat : null,
     entryPath: null, exitPath: null, exitTo: null, refoul: false, validated: false,
     pendingEl: null, stopS: null, startS: 0, backS: 0,
-    actualArr: null, queuedAt: null, el: null, carEls: null,
+    actualArr: null, queuedAt: null, el: null, carEls: null, maskEls: null,
     badgeEl: null, badgeText: null, badgeRect: null, headPos: null
   }));
-  gameMin = 0; speed = 1; paused = false; ended = false;
-  totalDelay = 0; selected = null; activeRoutes = {}; queueSeq = 0;
-  document.querySelectorAll(".speed").forEach(b => b.classList.toggle("active", b.dataset.s === "1"));
-  document.getElementById("hud-controls").classList.add("hidden");
-  if (typeof updatePauseIcon === "function") updatePauseIcon(); // paused=false → icône ▶→⏸, clock non-teal
-  drawStatic();
   buildTimeline();
   updateDelay();
+  setPreparing(false);
 }
 
 // ------------------------------------------------------------------
@@ -129,36 +170,44 @@ function platformOccupied(pid) {
 // Imprévus : révélation en cours de partie (le calibrage les connaît déjà,
 // le joueur les découvre ici)
 // ------------------------------------------------------------------
+// Cadenas (Material Symbols) — signifiant NON coloré : la fermeture reste lisible
+// même sans percevoir le rouge (daltonisme), en plus de la texture hachurée.
+const LOCK_D = "M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1s3.1 1.39 3.1 3.1v2z";
 function showClosure(ev) {
   const q = PLATFORMS.find(x => x.id === ev.plat);
+  // le quai passe en « désactivé » : numéro grisé, teinte éteinte — lecture
+  // indépendante de la couleur (cf. daltonisme)
+  const plat = document.getElementById("plat-" + ev.plat);
+  if (plat) plat.classList.add("closed");
   const g = el("g", {}, gFx);
   el("rect", {
     x: PLAT_X1, y: q.cy - PLAT_H / 2, width: PLAT_X2 - PLAT_X1, height: PLAT_H,
     rx: 10, fill: "url(#hatch)", stroke: "var(--red)", "stroke-width": 1.5,
     "pointer-events": "none"
   }, g);
-  // Alerte SUR le quai : icône travaux + heure de réouverture, en grand.
-  // Le fond (pastille) est dimensionné d'après le texte réellement mesuré.
+  // Pastille compacte au centre du quai : cadenas + heure de réouverture (même
+  // langage visuel que les badges « dép HH:MM »). Ensemble mesuré et centré.
   const mid = (PLAT_X1 + PLAT_X2) / 2;
+  const icoS = 15 * UIK, gap = 5 * UIK;
   const bg = el("rect", {
-    rx: 9 * UIK, fill: "rgba(14,20,32,.94)", stroke: "var(--red)",
+    rx: 8 * UIK, fill: "rgba(14,20,32,.94)", stroke: "var(--red)",
     "stroke-width": 1.3, "pointer-events": "none"
   }, g);
-  const txt = el("text", { x: mid, y: q.cy, class: "closure-tag" }, g);
-  txt.style.fontSize = (16 * UIK) + "px";
+  const txt = el("text", { y: q.cy, class: "closure-tag" }, g);
+  txt.style.fontSize = (15 * UIK) + "px";
   txt.style.dominantBaseline = "central";
-  txt.textContent = "fermé jusqu'à " + fmt(ev.end);
-  // pastille ajustée au texte (repli sur une taille fixe si getBBox indispo)
-  let b; try { b = txt.getBBox(); } catch (e) { b = null; }
-  const padX = 15 * UIK, padY = 8 * UIK;
-  if (b && b.width) {
-    bg.setAttribute("x", b.x - padX); bg.setAttribute("y", b.y - padY);
-    bg.setAttribute("width", b.width + 2 * padX); bg.setAttribute("height", b.height + 2 * padY);
-  } else {
-    const w = 210 * UIK, h = 30 * UIK;
-    bg.setAttribute("x", mid - w / 2); bg.setAttribute("y", q.cy - h / 2);
-    bg.setAttribute("width", w); bg.setAttribute("height", h);
-  }
+  txt.textContent = fmt(ev.end);
+  let tw; try { tw = txt.getBBox().width; } catch (e) { tw = 44 * UIK; }
+  const totalW = icoS + gap + tw;
+  const x0 = mid - totalW / 2;               // bord gauche de [cadenas · texte]
+  txt.setAttribute("x", x0 + icoS + gap + tw / 2);
+  const lock = el("path", { d: LOCK_D, "pointer-events": "none" }, g);
+  lock.setAttribute("transform",
+    "translate(" + x0.toFixed(1) + " " + (q.cy - icoS / 2).toFixed(1) + ") scale(" + (icoS / 24).toFixed(3) + ")");
+  lock.style.fill = "var(--red)";
+  const padX = 12 * UIK, padY = 7 * UIK;
+  bg.setAttribute("x", x0 - padX); bg.setAttribute("y", q.cy - icoS / 2 - padY);
+  bg.setAttribute("width", totalW + 2 * padX); bg.setAttribute("height", icoS + 2 * padY);
   ev.el = g;
 }
 function processEvents() {
@@ -194,6 +243,8 @@ function processEvents() {
     if (ev.type === "closure" && ev.revealed && !ev.cleared && gameMin >= ev.end) {
       ev.cleared = true;
       if (ev.el) { ev.el.remove(); ev.el = null; }
+      const plat = document.getElementById("plat-" + ev.plat);
+      if (plat) plat.classList.remove("closed"); // quai réactivé
       toast("Quai " + ev.plat + " rouvert");
       refreshEligible();
     }
@@ -202,14 +253,30 @@ function processEvents() {
 function refreshEligible() {
   const selecting = selected && !selected.target &&
     (selected.state === "waiting" || selected.state === "approaching");
+  const eligColor = selecting ? (selected.freight ? "#8f98a8" : DEST_COLOR[selected.to]) : null;
   document.querySelectorAll(".platform").forEach(pl => {
     const pid = +pl.dataset.platform;
-    // tout quai accessible depuis l'origine est proposé : au joueur de lire
-    // les pastilles — un mauvais choix vaudra un refoulement automatique
+    // tout quai accessible depuis l'origine est surligné (.eligible) pendant
+    // la sélection — un mauvais choix vaudra un refoulement automatique
     const ok = selecting &&
                LINKS[selected.from].includes(pid) &&
                !platformReserved(pid) && !platformClosed(pid);
     pl.classList.toggle("eligible", !!ok);
+    if (ok) pl.style.setProperty("--elig", eligColor);
+    else pl.style.removeProperty("--elig");
+  });
+}
+// État de repos des quais : un quai physiquement occupé porte un liseré à la
+// couleur du convoi présent. Rafraîchi à chaque tick (l'occupation évolue).
+function refreshPlatformStates() {
+  document.querySelectorAll(".platform").forEach(pl => {
+    const pid = +pl.dataset.platform;
+    const occ = trains.find(t => t.platform === pid &&
+      (t.state === "movingIn" || t.state === "dwell" ||
+       t.state === "movingThrough" || t.state === "movingBack"));
+    pl.classList.toggle("occupied", !!occ);
+    if (occ) pl.style.setProperty("--occ", occ.freight ? "#8f98a8" : DEST_COLOR[occ.to]);
+    else pl.style.removeProperty("--occ");
   });
 }
 function onPlatformClick(pid) {
@@ -397,9 +464,9 @@ function tick(dtMin) {
           t.state = "dwell";
           t.actualArr = gameMin;
           release(t.entryPath);
-          // l'heure de départ est déjà portée par le badge au-dessus du train,
-          // et la destination par la pastille colorée du quai : pas de doublon
-          // sous le quai. Un mauvais quai se résout par refoulement + toast.
+          // l'heure de départ est déjà portée par le badge au-dessus du train :
+          // pas de doublon sous le quai. Un mauvais quai se résout par
+          // refoulement + toast.
           refreshEligible();
         }
         // freinage progressif à l'approche du point d'arrêt, en partant
@@ -535,7 +602,7 @@ function tick(dtMin) {
             t.backS = 0; t.startS = 0;
             t.el.remove(); t.el = null;
             if (t.badgeEl) t.badgeEl.remove(); // badge dans son calque à part
-            t.carEls = null; t.badgeEl = null; t.headPos = null;
+            t.carEls = null; t.maskEls = null; t.badgeEl = null; t.headPos = null;
             t.arrEff = gameMin + 1.5;
             t.state = "scheduled";
           } else {
@@ -632,13 +699,23 @@ function tick(dtMin) {
       }
     }
     updateBadge(t);
+    updateBoarding(t);
   }
   updateTimeline();
   updateDelay();
+  refreshPlatformStates();
 
   // retard plafond dépassé : on arrête tout, service interrompu
   if (!ended && liveDelay() > maxDelay()) { endGame(true); return; }
-  if (!ended && trains.every(t => t.state === "done")) endGame();
+  // Fin de service : dès que chaque train a QUITTÉ LE GRIL (itinéraire relâché),
+  // le score est figé — inutile d'attendre qu'il ait fini de glisser hors écran.
+  // La modale sort donc plus tôt ; le dernier convoi termine sa sortie derrière
+  // le voile assombri.
+  if (!ended && trains.every(t =>
+      t.state === "done" ||
+      ((t.state === "movingOut" || t.state === "movingThrough") &&
+       !Object.values(activeRoutes).includes(t))))
+    endGame();
 }
 
 // failed = true : retard plafond dépassé (game over, 0 étoile, rien à débloquer)
@@ -648,16 +725,26 @@ function endGame(failed) {
   // sinon le retard cumulé réellement encaissé
   const d = Math.round(failed ? liveDelay() : totalDelay);
   const stars = failed ? 0 : (d <= 5 ? 3 : d <= 10 ? 2 : d <= 15 ? 1 : 0);
-  if (!failed) saveResult(STATION.id, stars, d); // un échec ne modifie pas le record
-  document.getElementById("end-title").textContent = failed ? "Service interrompu" : "Fin du service";
+  // Réussite = au moins une étoile (débloque la suite). 0 étoile = échec, qu'on
+  // ait terminé sans étoile OU crevé le plafond de retard : dans les deux cas il
+  // faut recommencer. On le rend visuellement sans ambiguïté.
+  const win = stars >= 1;
+  if (!failed && !STATION.adhoc) saveResult(STATION.id, stars, d); // un échec (ou la démo limites) ne modifie pas le record
+  const card = document.querySelector("#end .card");
+  card.classList.toggle("win", win);
+  card.classList.toggle("fail", !win);
+  document.getElementById("end-title").textContent =
+    failed ? "Service interrompu" : (win ? "Fin du service" : "Objectif manqué");
   document.getElementById("stars").textContent = "★★★".slice(0, stars) + "☆☆☆".slice(0, 3 - stars);
   // une étoile ne débloque que la gare suivante DU MÊME pays (les autres
   // pays sont déjà ouverts) ; en fin de pays, on invite à en choisir un autre
   const nextInCountry = sameCountry(currentIdx, currentIdx + 1);
   document.getElementById("end-delay").textContent = failed
     ? "Retard de +" + d + " min — la limite de " + maxDelay() + " min est dépassée."
-    : (d === 0 ? "Service parfait — aucun retard." : "Retard cumulé : " + d + " min") +
-      (stars >= 1 && nextInCountry ? " — gare suivante débloquée !" : "");
+    : win
+      ? (d === 0 ? "Service parfait — aucun retard." : "Retard cumulé : " + d + " min") +
+        (nextInCountry ? " — gare suivante débloquée !" : "")
+      : "Retard cumulé : " + d + " min — il faut ≤ 15 min pour décrocher une étoile. Réessayez !";
   // bilan de la journée
   const pax = trains.filter(t => !t.freight);
   const onTime = pax.filter(t => (t.depDelay || 0) < 1).length;
@@ -673,8 +760,13 @@ function endGame(failed) {
     "Trains à l'heure : " + onTime + "/" + pax.length +
     (worst ? "<br>Pire retard : " + worst.id + " (+" + Math.round(worst.depDelay) + " min)" : "") +
     (inc.length ? "<br>Incidents gérés : " + inc.join(", ") : "");
-  (failed ? SND.incident : SND.end)();
+  (win ? SND.end : SND.incident)(); // 0 étoile → tonalité d'échec, pas la fanfare
   const next = !failed && nextInCountry && isUnlocked(currentIdx + 1);
   document.getElementById("btn-next").classList.toggle("hidden", !next);
+  // Bouton principal (rempli teal) selon le contexte : « suivante » si gagné +
+  // débloqué, « rejouer » si échec, « carte » si gagné en fin de pays.
+  document.getElementById("btn-next").classList.toggle("primary", next);
+  document.getElementById("btn-replay").classList.toggle("primary", !win && !next);
+  document.getElementById("btn-end-map").classList.toggle("primary", win && !next);
   document.getElementById("end").classList.remove("hidden");
 }
