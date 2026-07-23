@@ -48,6 +48,14 @@ const GEO = {
         strasbourg: [7.734, 48.585], nantes: [-1.542, 47.218], bordeaux: [-0.556, 44.826],
         lyon: [4.842, 45.750], marseille: [5.380, 43.303],
         toulouse: [1.454, 43.611], "clermont-ferrand": [3.087, 45.778]
+      } },
+    allemagne: { name: "Allemagne", flag: "🇩🇪", iso: "DEU", continent: "europe",
+      cities: {
+        berlin: [13.369, 52.525], munchen: [11.558, 48.140], frankfurt: [8.664, 50.107],
+        hamburg: [10.006, 53.553],
+        koln: [6.959, 50.943], hannover: [9.741, 52.377], leipzig: [12.383, 51.345],
+        mannheim: [8.469, 49.479], munster: [7.635, 51.956], wiesbaden: [8.244, 50.070],
+        wurzburg: [9.936, 49.801], freiburg: [7.841, 47.997]
       } }
   }
 };

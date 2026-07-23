@@ -51,6 +51,38 @@ function ringToPts(flat) {
   }
   return pts;
 }
+// Point dans un anneau (ray casting), coords écran. Sert à garder les gares
+// à l'intérieur de la frontière du pays.
+function pnpoly(poly, x, y) {
+  let c = false;
+  for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+    const xi = poly[i][0], yi = poly[i][1], xj = poly[j][0], yj = poly[j][1];
+    if (((yi > y) !== (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi)) c = !c;
+  }
+  return c;
+}
+// Mêmes cubiques que smoothClosedPath, mais ÉCHANTILLONNÉES en points : donne la
+// frontière telle qu'elle est RÉELLEMENT tracée (lissée), pour les tests géométriques
+// (garder les gares dedans). Tester le polygone brut ne suffit pas : le lissage se
+// rétracte vers l'intérieur sur les angles convexes.
+function smoothClosedPts(pts, seg) {
+  const n = pts.length;
+  if (n < 3) return pts.slice();
+  const out = [];
+  for (let i = 0; i < n; i++) {
+    const p0 = pts[(i - 1 + n) % n], p1 = pts[i], p2 = pts[(i + 1) % n], p3 = pts[(i + 2) % n];
+    const c1x = p1[0] + (p2[0] - p0[0]) / 6, c1y = p1[1] + (p2[1] - p0[1]) / 6;
+    const c2x = p2[0] - (p3[0] - p1[0]) / 6, c2y = p2[1] - (p3[1] - p1[1]) / 6;
+    for (let t = 0; t < seg; t++) {
+      const u = t / seg, m = 1 - u;
+      out.push([
+        m * m * m * p1[0] + 3 * m * m * u * c1x + 3 * m * u * u * c2x + u * u * u * p2[0],
+        m * m * m * p1[1] + 3 * m * m * u * c1y + 3 * m * u * u * c2y + u * u * u * p2[1]
+      ]);
+    }
+  }
+  return out;
+}
 // Chemin fermé LISSÉ (Catmull-Rom → cubiques) : adoucit l'angulosité du 110m.
 function smoothClosedPath(pts) {
   const n = pts.length;
@@ -65,6 +97,23 @@ function smoothClosedPath(pts) {
          p2[0].toFixed(1) + "," + p2[1].toFixed(1);
   }
   return d + "Z";
+}
+// Chemin OUVERT lissé (Catmull-Rom → cubiques) passant par une suite de points
+// {x,y} — extrémités dupliquées (pas de bouclage). Sert au réseau des villes,
+// pour retrouver la douceur des courbes des plans de gare (cohérence visuelle).
+function smoothOpenPath(pts) {
+  const n = pts.length;
+  if (n < 3) return "M" + pts.map(p => p.x.toFixed(1) + "," + p.y.toFixed(1)).join(" L ");
+  let d = "M" + pts[0].x.toFixed(1) + "," + pts[0].y.toFixed(1);
+  for (let i = 0; i < n - 1; i++) {
+    const p0 = pts[i - 1] || pts[i], p1 = pts[i], p2 = pts[i + 1], p3 = pts[i + 2] || p2;
+    const c1x = p1.x + (p2.x - p0.x) / 6, c1y = p1.y + (p2.y - p0.y) / 6;
+    const c2x = p2.x - (p3.x - p1.x) / 6, c2y = p2.y - (p3.y - p1.y) / 6;
+    d += "C" + c1x.toFixed(1) + "," + c1y.toFixed(1) + " " +
+         c2x.toFixed(1) + "," + c2y.toFixed(1) + " " +
+         p2.x.toFixed(1) + "," + p2.y.toFixed(1);
+  }
+  return d;
 }
 function countryPathD(country) {
   return country.r.map(flat => smoothClosedPath(ringToPts(flat))).join(" ");
@@ -123,6 +172,7 @@ function buildMap() {
   const gLand = document.createElementNS(SVGNS, "g");
   gLand.setAttribute("class", "lyr-land");
   MAP.gLand = gLand;
+  const playablePaths = []; // redessinés en dernier (voir plus bas)
   for (const country of WORLDMAP.countries) {
     if (MAP_EXCLUDE.has(country.iso)) continue; // Islande, Féroé, Malte, Andorre…
     const p = document.createElementNS(SVGNS, "path");
@@ -146,7 +196,12 @@ function buildMap() {
       }
     });
     gLand.appendChild(p);
+    if (playable) playablePaths.push(p);
   }
+  // Les pays jouables sont redessinés en dernier : leur bordure surlignée passe
+  // ainsi AU-DESSUS des voisins tracés après eux (sinon le remplissage d'un
+  // voisin recouvre la bordure — ex. l'Allemagne, masquée par France/NL/Pologne).
+  for (const p of playablePaths) gLand.appendChild(p);
   svg.appendChild(gLand);
 
   // Courbes + trains décoratifs (niveau monde).
@@ -410,6 +465,35 @@ function layoutOverlay() {
     });
     dodgeCities(nodes, 104, 420, 0.028, { x0: 56, x1: cw - 56, y0: 64, y1: ch - 74 });
 
+    // La répulsion peut pousser une gare de bord HORS de la frontière (Köln,
+    // Freiburg…). On la ramène le long du segment vers sa vraie position géo
+    // (toujours à l'intérieur) jusqu'à repasser dans le polygone du pays.
+    const self = MAP.byIso[c.iso];
+    if (self) {
+      // Frontière LISSÉE en coords écran (celle qui est réellement tracée) :
+      // on projette les sommets puis on échantillonne les mêmes cubiques.
+      const rings = self.r.map(flat => {
+        const proj = [];
+        for (let i = 0; i < flat.length; i += 2) { const u = screenPos(flat[i], flat[i + 1]); proj.push([u.x, u.y]); }
+        return smoothClosedPts(proj, 6);
+      });
+      const inside = (x, y) => rings.some(r => pnpoly(r, x, y));
+      for (const n of nodes) {
+        if (inside(n.x, n.y)) continue; // n.bx/n.by = vraie position géo (dedans)
+        let lo = 0, hi = 1; // lo → position déplacée (dehors), hi → origine (dedans)
+        for (let k = 0; k < 20; k++) {
+          const m = (lo + hi) / 2;
+          if (inside(n.x + (n.bx - n.x) * m, n.y + (n.by - n.y) * m)) hi = m; else lo = m;
+        }
+        n.x += (n.bx - n.x) * hi; n.y += (n.by - n.y) * hi; // sur la frontière
+        // petit retrait vers l'intérieur : la pastille (~14 px de rayon) ne
+        // chevauche pas le trait, elle est franchement DANS le pays.
+        const dx = n.bx - n.x, dy = n.by - n.y, dl = Math.hypot(dx, dy) || 1;
+        const inset = Math.min(dl, 16);
+        n.x += dx / dl * inset; n.y += dy / dl * inset;
+      }
+    }
+
     // Réseau décoratif reliant les villes (ordre de jeu), sur les positions
     // ajustées, dans un SVG écran posé SOUS les pastilles.
     if (nodes.length > 1) {
@@ -418,8 +502,8 @@ function layoutOverlay() {
       net.setAttribute("width", cw); net.setAttribute("height", ch);
       const path = document.createElementNS(SVGNS, "path");
       path.setAttribute("class", "map-network");
-      path.setAttribute("d", nodes.map((n, i) =>
-        (i ? "L" : "M") + n.x.toFixed(1) + "," + n.y.toFixed(1)).join(" "));
+      // Courbe douce (comme les voies des plans de gare) plutôt qu'une ligne brisée.
+      path.setAttribute("d", smoothOpenPath(nodes));
       net.appendChild(path);
       MAP.labels.appendChild(net);
     }
@@ -522,7 +606,13 @@ function layoutOverlay() {
       // l'affiche pas. Zoom sur un petit pays → le voisin remplit une bonne part
       // de l'écran (France sous la Belgique) : on l'affiche. (Projection iso →
       // les aires en unités SVG sont proportionnelles aux aires géo.)
-      if ((iw * ih) / (vb[2] * vb[3]) < 0.14) continue;
+      // Affiché si le voisin occupe une bonne part du CADRE (grand pays, ex.
+      // France sous l'Allemagne) OU si l'essentiel du VOISIN est dans le cadre
+      // (petit pays, ex. Belgique — sinon il n'atteint jamais le seuil du cadre).
+      // Un simple liseré au bord (peu du voisin visible) reste masqué.
+      const fracFrame = (iw * ih) / (vb[2] * vb[3]);
+      const fracSelf = (iw * ih) / (rr.w * rr.h);
+      if (fracFrame < 0.14 && fracSelf < 0.5) continue;
       const raw = screenPos(country.lx, country.ly);
       const cx = Math.max(64, Math.min(cw - 64, raw.x));
       const cy = Math.max(52, Math.min(ch - 66, raw.y));

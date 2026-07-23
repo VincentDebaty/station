@@ -1,0 +1,35 @@
+{
+  "id": "leipzig",
+  "name": "Leipzig Hbf",
+  "tagline": "Leipzig Hbf — plus grande gare terminus d'Europe : 7 quais à heurtoir, deux halls.",
+  "difficulty": 4,
+  "country": "🇩🇪 Allemagne",
+  "desc": "La plus grande gare terminus d'Europe par la surface (1915), héritière du partage entre chemins de fer prussiens et saxons — deux halls symétriques : sept quais à heurtoir où tout rebrousse, vers Berlin et Dresde, Francfort et Munich par les LGV de Thuringe, Halle et la Saxe. Orchestrez les demi-tours.",
+  "platforms": [
+    { "id": 1, "deadEnd": true }, { "id": 2, "deadEnd": true }, { "id": 3, "deadEnd": true },
+    { "id": 4, "deadEnd": true }, { "id": 5, "deadEnd": true }, { "id": 6, "deadEnd": true },
+    { "id": 7, "deadEnd": true }
+  ],
+  "portals": {
+    "BERLIN":   { "side": "L", "color": "#4ade80", "abbr": "B" },
+    "DRESDEN":  { "side": "L", "color": "#f5b23c", "abbr": "DD" },
+    "FRANKFURT":{ "side": "L", "color": "#f2588f", "abbr": "F" },
+    "HALLE":    { "side": "L", "color": "#25dede", "abbr": "HL" },
+    "MUNCHEN":  { "side": "L", "color": "#a78bfa", "abbr": "M", "label": "MÜNCHEN" },
+    "CHEMNITZ": { "side": "L", "color": "#60a5fa", "abbr": "C" }
+  },
+  "links": {
+    "BERLIN": [1, 2, 3, 4],
+    "DRESDEN": [4, 5, 6, 7],
+    "FRANKFURT": [1, 2, 3, 5],
+    "HALLE": [2, 3, 6, 7],
+    "MUNCHEN": [1, 4, 5, 6],
+    "CHEMNITZ": [3, 4, 6, 7]
+  },
+  "sameSidePairs": "all",
+  "gen": {
+    "nMin": 14, "nMax": 17, "gapMin": 1.8, "gapMax": 3.0,
+    "cars": [3, 3, 4, 4, 5, 5, 6, 7],
+    "freightRate": 0, "quietRate": 0.15
+  }
+}

@@ -367,7 +367,9 @@ function updateDelay() {
   const d = document.getElementById("delay");
   const v = liveDelay();
   d.textContent = "+" + Math.round(v);
-  d.className = v <= 5 ? "" : v <= 10 ? "warn" : "bad";
+  // Couleur alignée sur le barème d'étoiles : vert tant qu'on vise 3★ (< 10),
+  // ambre tant qu'une étoile reste jouable (< 30), rouge dès que 0★ (≥ 30).
+  d.className = v < 10 ? "" : v < 30 ? "warn" : "bad";
 }
 
 function tick(dtMin) {
@@ -639,7 +641,7 @@ function tick(dtMin) {
         // Convoi de fret : traverse entrée + sortie d'une seule traite
         const pin = paths[t.entryPath], pout = paths[t.exitPath];
         const totalArc = pin.len + pout.len;
-        const durTot = TRAVEL * totalArc / 700 * slowness(t);
+        const durTot = TRAVEL * totalArc / 700 * FREIGHT_SLOWNESS;
         t.progress += dtMin / durTot;
         const tail = (t.cars - 1) * CAR_SPACING;
         const endU = 1 + (tail + EXIT_RUN) / totalArc;
@@ -724,17 +726,26 @@ function endGame(failed) {
   // en échec, on affiche le retard « vivant » (celui qui a crevé le plafond),
   // sinon le retard cumulé réellement encaissé
   const d = Math.round(failed ? liveDelay() : totalDelay);
-  const stars = failed ? 0 : (d <= 5 ? 3 : d <= 10 ? 2 : d <= 15 ? 1 : 0);
+  // Tolérance de retard (minutes) : 3★ < 10, 2★ < 20, 1★ < 30, sinon 0.
+  const stars = failed ? 0 : (d < 10 ? 3 : d < 20 ? 2 : d < 30 ? 1 : 0);
   // Réussite = au moins une étoile (débloque la suite). 0 étoile = échec, qu'on
   // ait terminé sans étoile OU crevé le plafond de retard : dans les deux cas il
   // faut recommencer. On le rend visuellement sans ambiguïté.
   const win = stars >= 1;
+  // Étoiles de CETTE gare avant enregistrement : sert à savoir si ce service
+  // vient de boucler le pays (dernier maillon décroché à l'instant).
+  const prevStars = (getProgress()[STATION.id] || {}).stars || 0;
   if (!failed && !STATION.adhoc) saveResult(STATION.id, stars, d); // un échec (ou la démo limites) ne modifie pas le record
+  // Pays terminé À L'INSTANT : gagné, cette gare passe de 0 à ≥1 étoile, et toutes
+  // les gares du pays ont désormais au moins une étoile. (Seule cette gare a pu
+  // changer ce tour-ci, d'où la condition sur prevStars.)
+  const justCompletedCountry = win && !STATION.adhoc && prevStars === 0 && countryComplete(currentIdx);
   const card = document.querySelector("#end .card");
   card.classList.toggle("win", win);
   card.classList.toggle("fail", !win);
+  card.classList.toggle("country-done", justCompletedCountry);
   document.getElementById("end-title").textContent =
-    failed ? "Service interrompu" : (win ? "Fin du service" : "Objectif manqué");
+    failed ? "Service interrompu" : justCompletedCountry ? "Pays terminé !" : (win ? "Fin du service" : "Objectif manqué");
   document.getElementById("stars").textContent = "★★★".slice(0, stars) + "☆☆☆".slice(0, 3 - stars);
   // une étoile ne débloque que la gare suivante DU MÊME pays (les autres
   // pays sont déjà ouverts) ; en fin de pays, on invite à en choisir un autre
@@ -744,7 +755,7 @@ function endGame(failed) {
     : win
       ? (d === 0 ? "Service parfait — aucun retard." : "Retard cumulé : " + d + " min") +
         (nextInCountry ? " — gare suivante débloquée !" : "")
-      : "Retard cumulé : " + d + " min — il faut ≤ 15 min pour décrocher une étoile. Réessayez !";
+      : "Retard cumulé : " + d + " min — il faut moins de 30 min pour décrocher une étoile. Réessayez !";
   // bilan de la journée
   const pax = trains.filter(t => !t.freight);
   const onTime = pax.filter(t => (t.depDelay || 0) < 1).length;
@@ -760,6 +771,20 @@ function endGame(failed) {
     "Trains à l'heure : " + onTime + "/" + pax.length +
     (worst ? "<br>Pire retard : " + worst.id + " (+" + Math.round(worst.depDelay) + " min)" : "") +
     (inc.length ? "<br>Incidents gérés : " + inc.join(", ") : "");
+  // Bandeau « pays terminé » : drapeau + nom + total d'étoiles du pays.
+  const ec = document.getElementById("end-country");
+  if (justCompletedCountry) {
+    const country = CATALOG[currentIdx].country || "";
+    const toks = country.trim().split(" ");
+    const cflag = toks[0], cname = toks.slice(1).join(" ") || country;
+    let earned = 0, total = 0;
+    const prog = getProgress();
+    for (const c of CATALOG) if (c.country === country) { total += 3; earned += (prog[c.id] || {}).stars || 0; }
+    ec.innerHTML = '<span class="ec-flag">' + cflag + "</span>" +
+      '<span class="ec-txt"><b>' + cname + "</b> — toutes les gares décrochées !" +
+      '<span class="ec-stars">' + earned + " / " + total + " ★</span></span>";
+    ec.classList.remove("hidden");
+  } else ec.classList.add("hidden");
   (win ? SND.end : SND.incident)(); // 0 étoile → tonalité d'échec, pas la fanfare
   const next = !failed && nextInCountry && isUnlocked(currentIdx + 1);
   document.getElementById("btn-next").classList.toggle("hidden", !next);

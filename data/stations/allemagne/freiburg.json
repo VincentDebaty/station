@@ -1,0 +1,29 @@
+{
+  "id": "freiburg",
+  "name": "Freiburg Hbf",
+  "tagline": "Freiburg Hbf — vallée du Rhin et Forêt-Noire : 4 quais entre Bâle et la Höllentalbahn.",
+  "difficulty": 1,
+  "country": "🇩🇪 Allemagne",
+  "desc": "La porte de la Forêt-Noire, sur la ligne de la vallée du Rhin (Bâle ↔ Offenburg) : quatre quais où les ICE filent nord-sud, tandis que se greffent les antennes régionales — la raide Höllentalbahn vers Neustadt à l'est, la ligne de Breisach à l'ouest. Petit gabarit, tempo net — la rampe d'accès idéale.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }
+  ],
+  "portals": {
+    "OFFENBURG": { "side": "L", "color": "#f5b23c", "abbr": "OF" },
+    "BREISACH":  { "side": "L", "color": "#4ade80", "abbr": "BR" },
+    "BALE":      { "side": "R", "color": "#60a5fa", "abbr": "BA", "label": "BÂLE" },
+    "NEUSTADT":  { "side": "R", "color": "#a78bfa", "abbr": "NE" }
+  },
+  "links": {
+    "OFFENBURG": [1, 2, 3],
+    "BREISACH": [2, 3, 4],
+    "BALE": [1, 2, 3],
+    "NEUSTADT": [2, 3, 4]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 12, "nMax": 15, "gapMin": 1.6, "gapMax": 2.8,
+    "cars": [1, 1, 2, 2, 3, 3, 4],
+    "freightRate": 0.3, "quietRate": 0.25
+  }
+}

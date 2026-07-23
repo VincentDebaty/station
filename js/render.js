@@ -109,15 +109,18 @@ function drawStatic() {
     const cvg = el("circle", { cx: p.x, cy: p.cy, r: 5, "pointer-events": "none" }, gTracks);
     cvg.style.fill = c; cvg.style.opacity = "0.85";
     const grp = el("g", { style: "cursor:pointer" }, gPortals);
-    // nom au ras du bord, juste au-dessus de la voie, là où le convoi
-    // disparaît — il glisse dessous en sortant.
+    // nom centré au-dessus de l'AIGUILLAGE (point de convergence), juste au-dessus
+    // de la voie — le convoi qui part glisse dessous en quittant le faisceau.
     const tw = (22 + p.label.length * 10) * UIK;
     const nameY = p.cy - 34 * UIK;
-    const nameCx = p.side === "L" ? 12 + tw / 2 : 1388 - tw / 2;
-    // zone de clic généreuse (sélectionne le 1er train en file du portail)
+    const nameCx = p.x;
+    // zone de clic du nom (sélectionne le 1er train en file du portail). Elle
+    // reste STRICTEMENT au-dessus de la voie : le nom est posé au ras de
+    // l'aiguillage, or les convois y stationnent — une zone qui descendrait sur
+    // la voie volerait les clics destinés aux trains (il fallait « s'y reprendre »).
     el("rect", {
-      x: p.side === "L" ? 0 : 1340,
-      y: nameY - 30, width: 96, height: 88,
+      x: nameCx - Math.max(50, tw / 2), y: nameY - 20 * UIK,
+      width: Math.max(100, tw), height: 34 * UIK,
       fill: "transparent"
     }, grp);
     const tt = el("text", { x: nameCx, y: nameY, class: "portal-name" }, grp);

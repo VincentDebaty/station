@@ -1,0 +1,29 @@
+{
+  "id": "wurzburg",
+  "name": "Würzburg Hbf",
+  "tagline": "Würzburg Hbf — croisée ICE de Franconie : 4 quais où deux dorsales se rencontrent.",
+  "difficulty": 1,
+  "country": "🇩🇪 Allemagne",
+  "desc": "Le nœud ICE de Basse-Franconie, sur le Main : quatre quais au croisement de deux dorsales à grande vitesse — Francfort ↔ Nuremberg d'ouest en est, Hanovre ↔ Stuttgart du nord au sud. Rames rapides, tempo serré — un carrefour pour se faire la main.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }
+  ],
+  "portals": {
+    "FRANKFURT": { "side": "L", "color": "#f2588f", "abbr": "F" },
+    "HANNOVER":  { "side": "L", "color": "#25dede", "abbr": "H" },
+    "NURNBERG":  { "side": "R", "color": "#f5b23c", "abbr": "N", "label": "NÜRNBERG" },
+    "STUTTGART": { "side": "R", "color": "#4ade80", "abbr": "ST" }
+  },
+  "links": {
+    "FRANKFURT": [1, 2, 3],
+    "HANNOVER": [2, 3, 4],
+    "NURNBERG": [1, 2, 3],
+    "STUTTGART": [2, 3, 4]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 12, "nMax": 15, "gapMin": 1.6, "gapMax": 2.8,
+    "cars": [1, 1, 2, 2, 3, 3, 4],
+    "freightRate": 0.2, "quietRate": 0.25
+  }
+}

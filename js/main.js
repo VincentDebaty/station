@@ -78,7 +78,6 @@ function updateMuteIcon() {
 }
 // icônes fixes
 document.getElementById("btn-reset").innerHTML = icon(ICON.restart, 26); // restart plus grand
-document.getElementById("btn-hub").innerHTML = icon(ICON.logout, 22);    // logout : quitter vers la carte
 document.getElementById("btn-help").innerHTML = icon(ICON.help, 22);     // aide dans le volet de réglages
 document.getElementById("btn-settings").innerHTML = icon(ICON.settings, 20); // engrenage : ouvre le volet
 // (l'aide de la carte est un simple « ? » gris, défini en HTML/CSS)
@@ -169,16 +168,37 @@ document.getElementById("btn-replay").addEventListener("click", async () => {
   document.getElementById("end").classList.add("hidden");
   await resetGame(); started = true;
 });
-document.getElementById("btn-hub").addEventListener("click", () => showHub());
 document.getElementById("btn-end-map").addEventListener("click", () => showHub());
 // Cartouche haut-gauche = bouton retour vers la carte (même logique que « ‹ »
-// sur la carte). Le contenu est réécrit à chaque partie mais l'élément persiste.
+// sur la carte). Une partie EN COURS demande confirmation (abandon = progression
+// du service perdue) ; sinon (partie finie) on repart directement.
+const confirmQuit = document.getElementById("confirm-quit");
+let _wasPausedBeforeConfirm = false;
+function showConfirmQuit() {
+  _wasPausedBeforeConfirm = paused;
+  confirmQuit.classList.remove("hidden");
+  // Gèle la partie pendant la décision : aucun retard n'est encaissé « à vide ».
+  if (started && !ended) { paused = true; updatePauseIcon(); }
+}
+function dismissConfirmQuit() {
+  confirmQuit.classList.add("hidden");
+  // « Rester » : on reprend là où on en était (sauf si déjà en pause avant).
+  if (started && !ended && !_wasPausedBeforeConfirm) { paused = false; updatePauseIcon(); }
+}
 (function () {
   const tag = document.getElementById("station-tag");
   tag.setAttribute("role", "button");
   tag.setAttribute("aria-label", "Revenir à la carte");
-  tag.addEventListener("click", () => showHub());
+  tag.addEventListener("click", () => {
+    if (started && !ended) showConfirmQuit();
+    else showHub();
+  });
 })();
+document.getElementById("btn-quit-cancel").addEventListener("click", dismissConfirmQuit);
+document.getElementById("btn-quit-confirm").addEventListener("click", () => {
+  confirmQuit.classList.add("hidden"); showHub();
+});
+confirmQuit.addEventListener("click", e => { if (e.target === confirmQuit) dismissConfirmQuit(); });
 document.getElementById("btn-next").addEventListener("click", () => startStation(currentIdx + 1));
 
 // ------------------------------------------------------------------

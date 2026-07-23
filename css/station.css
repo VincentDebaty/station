@@ -134,11 +134,8 @@ body {
   background: var(--panel); border: 1px solid #2a3550; border-radius: 14px;
   box-shadow: 0 12px 40px rgba(0, 0, 0, .45);
 }
-/* Rangée d'actions : recommencer, son, aide … puis Quitter, isolé par un filet. */
-.hud-panel .act-row { display: flex; align-items: center; gap: 8px; }
-.hud-panel .act-sep { width: 1px; align-self: stretch; margin: 3px 3px; background: #2a3550; }
-/* « Quitter » : teinte rouge au survol (action de sortie, à distinguer nettement). */
-.btn.danger:hover { border-color: var(--red); color: #f87171; }
+/* Actions (recommencer, son, aide) EMPILÉES verticalement sous l'engrenage. */
+.hud-panel .act-row { display: flex; flex-direction: column; align-items: stretch; gap: 8px; }
 /* icônes vectorielles (Material) centrées dans les boutons */
 .btn svg { display: block; }
 .btn.icon { padding: 6px; } /* boutons-icônes carrés */
@@ -268,8 +265,9 @@ svg { width: 100%; height: 100%; display: block; }
   overflow-y: auto; -webkit-overflow-scrolling: touch;
   padding: 16px calc(16px + var(--safe-r)) calc(16px + var(--safe-b)) calc(16px + var(--safe-l));
 }
-/* L'aide vit au niveau du body : fixed et au-dessus du hub (z-index 30). */
-#help { position: fixed; z-index: 40; }
+/* L'aide et la confirmation de sortie vivent au niveau du body : fixed et
+   au-dessus du hub (z-index 30). */
+#help, #confirm-quit { position: fixed; z-index: 40; }
 .card {
   background: var(--panel); border: 1px solid #2a3550; border-radius: 18px;
   padding: 34px 40px; max-width: 560px; text-align: center;
@@ -279,6 +277,9 @@ svg { width: 100%; height: 100%; display: block; }
 .card p { color: var(--muted); font-size: 15px; line-height: 1.65; margin-bottom: 12px; text-align: left; }
 .card p b { color: var(--text); font-weight: 600; }
 .card .btn { margin-top: 14px; font-size: 17px; padding: 10px 26px; color: #2dd4bf; border-color: #2dd4bf; }
+/* Action destructrice (quitter une partie en cours) : teinte rouge d'alerte. */
+.card .btn.danger { color: #f87171; border-color: var(--red); }
+@media (hover: hover) { .card .btn.danger:hover { background: rgba(248, 113, 113, .12); border-color: var(--red); } }
 /* Bouton principal contextuel (suivante / rejouer / carte) : rempli teal, il
    guide l'action à faire après le service. */
 .card .btn.primary { background: #2dd4bf; color: #0b1a1f; border-color: #2dd4bf; font-weight: 600; }
@@ -293,6 +294,25 @@ svg { width: 100%; height: 100%; display: block; }
 }
 #end .card.fail #end-title { color: #f87171; }
 #end .card.fail #stars { color: #4d566d; } /* étoiles vides éteintes (non gagnées) */
+
+/* Achèvement d'un pays : le service qui décroche le dernier maillon est souligné
+   — titre doré, liseré chaud, et un bandeau « pays terminé ». */
+#end .card.country-done {
+  border-color: rgba(245, 178, 60, .6);
+  box-shadow: 0 0 0 1px rgba(245, 178, 60, .25), 0 24px 60px -24px rgba(0, 0, 0, .65);
+}
+#end .card.country-done #end-title { color: #f5b23c; }
+#end-country {
+  display: flex; align-items: center; justify-content: center; gap: 12px;
+  margin: 4px 0 14px; padding: 12px 16px; border-radius: 14px; text-align: left;
+  background: linear-gradient(135deg, rgba(245, 178, 60, .16), rgba(45, 212, 191, .14));
+  border: 1px solid rgba(245, 178, 60, .35);
+}
+#end-country .ec-flag { font-size: 30px; line-height: 1; }
+#end-country .ec-txt { display: flex; flex-direction: column; font-size: 14px; color: var(--text); }
+#end-country .ec-txt b { font-size: 16px; font-weight: 700; }
+#end-country .ec-stars { color: #f5b23c; font-weight: 700; font-size: 13px; margin-top: 2px; }
+
 .hidden { display: none !important; }
 
 /* ---- carte du monde (sélection des gares) ---- */
@@ -366,8 +386,8 @@ svg { width: 100%; height: 100%; display: block; }
    ajustées), posé sous les pastilles, non interactif. */
 .city-net { position: absolute; inset: 0; pointer-events: none; }
 .map-network {
-  fill: none; stroke: var(--track-dim); stroke-width: 2; stroke-dasharray: 4 5;
-  stroke-linecap: round; opacity: .7;
+  fill: none; stroke: #2dd4bf; stroke-width: 2; stroke-dasharray: 4 6;
+  stroke-linecap: round; opacity: .38;
 }
 /* Courbes + trains décoratifs (illustration, niveau monde). La ligne « coule »
    (dash animé) dans le sens du convoi → on lit une vraie liaison ferroviaire,

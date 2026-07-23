@@ -1,0 +1,33 @@
+{
+  "id": "hamburg",
+  "name": "Hamburg Hbf",
+  "tagline": "Hamburg Hbf — le goulot du Nord : record de fréquentation, densité extrême.",
+  "difficulty": 4,
+  "country": "🇩🇪 Allemagne",
+  "desc": "La gare la plus fréquentée d'Allemagne, écoulée sur une poignée de voies (huit dans la réalité) sous la grande halle d'acier de 1906 : la porte du Nord, où les trains de Kiel, du Danemark et de la Baltique (Lübeck) plongent vers Hanovre, Brême et Berlin. Aucune marge — le goulot par excellence.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }, { "id": 6 }, { "id": 7 }
+  ],
+  "portals": {
+    "KIEL":       { "side": "L", "color": "#25dede", "abbr": "KI" },
+    "COPENHAGUE": { "side": "L", "color": "#a78bfa", "abbr": "CP", "label": "COPENHAGUE" },
+    "LUBECK":     { "side": "L", "color": "#4ade80", "abbr": "LU", "label": "LÜBECK" },
+    "HANNOVER":   { "side": "R", "color": "#f5b23c", "abbr": "H" },
+    "BREMEN":     { "side": "R", "color": "#60a5fa", "abbr": "HB" },
+    "BERLIN":     { "side": "R", "color": "#f2588f", "abbr": "B" }
+  },
+  "links": {
+    "KIEL": [1, 2, 3, 4],
+    "COPENHAGUE": [1, 2, 5, 6],
+    "LUBECK": [3, 4, 5, 7],
+    "HANNOVER": [1, 2, 3, 4],
+    "BERLIN": [3, 4, 5, 6, 7],
+    "BREMEN": [1, 2, 6, 7]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 16, "nMax": 19, "gapMin": 1.5, "gapMax": 2.5,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6],
+    "freightRate": 0.15, "quietRate": 0.12
+  }
+}

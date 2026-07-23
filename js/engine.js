@@ -32,6 +32,10 @@ const EXIT_RUN = 700; // fuite après le gril : jusqu'au bord réel de l'écran,
 const EDGE_RUN = 360;
 function trainLen(t) { return t.cars * CAR_SPACING - CAR_GAP; }
 function slowness(t) { return 1 + (t.cars - 1) * 0.22; } // 7 wagons ≈ 2.3× plus lent
+// Fret : long mais PAS lent. Il traverse le gril à la vitesse d'un 3 wagons quelle
+// que soit sa longueur, pour ne pas verrouiller entrée+sortie trop longtemps (sinon
+// il asphyxie la gare). Voir movingThrough (game.js) et le calibrage (schedule.js).
+const FREIGHT_SLOWNESS = 1 + (3 - 1) * 0.22;
 
 // ------------------------------------------------------------------
 // Géométrie : un chemin par liaison (portail <-> quai), direction libre

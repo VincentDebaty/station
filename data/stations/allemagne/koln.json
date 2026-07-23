@@ -1,0 +1,33 @@
+{
+  "id": "koln",
+  "name": "Köln Hbf",
+  "tagline": "Köln Hbf — densité extrême sous la cathédrale : 7 quais, tout passe par le pont Hohenzollern.",
+  "difficulty": 4,
+  "country": "🇩🇪 Allemagne",
+  "desc": "La gare la plus dense d'Allemagne, serrée au pied de la cathédrale : sept quais seulement pour un flux ICE incessant, où tout le trafic est-ouest s'engouffre sur le pont Hohenzollern. Düsseldorf et le Ruhr au nord, le Rhin vers Bonn et Coblence au sud, Aix-la-Chapelle et Bruxelles à l'ouest, Francfort par la LGV. Aucune marge — c'est le goulot.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }, { "id": 6 }, { "id": 7 }
+  ],
+  "portals": {
+    "AACHEN":     { "side": "L", "color": "#f2588f", "abbr": "AC" },
+    "BONN":       { "side": "L", "color": "#4ade80", "abbr": "BN" },
+    "TRIER":      { "side": "L", "color": "#a78bfa", "abbr": "TR" },
+    "DUSSELDORF": { "side": "R", "color": "#25dede", "abbr": "D", "label": "DÜSSELDORF" },
+    "FRANKFURT":  { "side": "R", "color": "#f5b23c", "abbr": "F" },
+    "WUPPERTAL":  { "side": "R", "color": "#60a5fa", "abbr": "W" }
+  },
+  "links": {
+    "AACHEN": [1, 2, 3, 4],
+    "BONN": [1, 2, 5, 6],
+    "TRIER": [3, 4, 5, 7],
+    "DUSSELDORF": [1, 2, 3, 4],
+    "FRANKFURT": [3, 4, 5, 6, 7],
+    "WUPPERTAL": [1, 2, 6, 7]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 16, "nMax": 19, "gapMin": 1.5, "gapMax": 2.5,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6],
+    "freightRate": 0.2, "quietRate": 0.12
+  }
+}

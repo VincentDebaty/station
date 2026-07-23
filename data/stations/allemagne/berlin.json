@@ -1,0 +1,34 @@
+{
+  "id": "berlin",
+  "name": "Berlin Hbf",
+  "tagline": "Berlin Hbf — gare-capitale à deux niveaux croisés : 8 quais, Nord-Sud × Est-Ouest.",
+  "difficulty": 5,
+  "country": "🇩🇪 Allemagne",
+  "desc": "La gare de la capitale (2006), plus grande gare de croisement d'Europe : deux lignes superposées à angle droit — l'est-ouest sur le viaduc, le nord-sud dans le tunnel. Huit quais traversants où Hambourg et Munich se croisent avec Cologne, Hanovre et Varsovie. Le boss final — bonne chance, aiguilleur.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 },
+    { "id": 5 }, { "id": 6 }, { "id": 7 }, { "id": 8 }
+  ],
+  "portals": {
+    "HAMBURG":  { "side": "L", "color": "#25dede", "abbr": "HH" },
+    "HANNOVER": { "side": "L", "color": "#f5b23c", "abbr": "H" },
+    "KOLN":     { "side": "L", "color": "#a78bfa", "abbr": "KO", "label": "KÖLN" },
+    "LEIPZIG":  { "side": "R", "color": "#4ade80", "abbr": "L" },
+    "MUNCHEN":  { "side": "R", "color": "#f2588f", "abbr": "M", "label": "MÜNCHEN" },
+    "WARSCHAU": { "side": "R", "color": "#60a5fa", "abbr": "WA", "label": "VARSOVIE" }
+  },
+  "links": {
+    "HAMBURG": [1, 2, 5, 6],
+    "HANNOVER": [3, 4, 7, 8],
+    "KOLN": [1, 4, 5, 8],
+    "LEIPZIG": [1, 2, 3, 4],
+    "MUNCHEN": [3, 4, 5, 6],
+    "WARSCHAU": [5, 6, 7, 8]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 18, "nMax": 22, "gapMin": 1.4, "gapMax": 2.4,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6, 7],
+    "freightRate": 0.15, "quietRate": 0.1
+  }
+}

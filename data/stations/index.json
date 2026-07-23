@@ -2,11 +2,16 @@
   {
     "country": "belgique",
     "label": "🇧🇪 Belgique",
-    "stations": ["charleroi", "hasselt", "libramont", "ottignies", "tournai", "anvers", "louvain", "bruges", "gand", "namur", "liege", "mons", "bruxelles-midi"]
+    "stations": ["tournai", "bruges", "gand", "anvers", "hasselt", "liege", "libramont", "namur", "charleroi", "mons", "ottignies", "louvain", "bruxelles-midi"]
   },
   {
     "country": "france",
     "label": "🇫🇷 France",
-    "stations": ["lille", "clermont-ferrand", "marseille", "nantes", "lyon", "bordeaux", "toulouse", "strasbourg", "metz", "paris-nord"]
+    "stations": ["lille", "clermont-ferrand", "nantes", "bordeaux", "toulouse", "marseille", "lyon", "strasbourg", "metz", "paris-nord"]
+  },
+  {
+    "country": "allemagne",
+    "label": "🇩🇪 Allemagne",
+    "stations": ["freiburg", "mannheim", "wiesbaden", "frankfurt", "koln", "munster", "hannover", "hamburg", "berlin", "leipzig", "wurzburg", "munchen"]
   }
 ]

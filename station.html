@@ -37,7 +37,8 @@
          (cycle 1x → 2x → 4x au tap). -->
     <button class="btn icon" id="btn-playback" aria-label="Pause / lecture"></button>
     <button class="btn" id="btn-speed" aria-label="Vitesse de simulation">1x</button>
-    <!-- Réglages : recommencer, son, aide … puis Quitter, séparé par un filet. -->
+    <!-- Réglages : recommencer, son, aide — empilés verticalement sous l'engrenage.
+         (Quitter vers la carte se fait par la flèche du cartouche haut-gauche.) -->
     <div id="settings">
       <button class="btn icon" id="btn-settings" aria-label="Réglages" aria-expanded="false"></button>
       <div id="hud-controls" class="hidden">
@@ -46,8 +47,6 @@
             <button class="btn icon" id="btn-reset" title="Recommencer"></button>
             <button class="btn icon" id="btn-mute" title="Sons"></button>
             <button class="btn icon" id="btn-help" title="Comment jouer"></button>
-            <span class="act-sep"></span>
-            <button class="btn icon danger" id="btn-hub" title="Quitter vers la carte"></button>
           </div>
         </div>
       </div>
@@ -59,6 +58,9 @@
       <div id="stars"></div>
       <div id="end-delay" style="color:var(--muted);font-size:17px;margin-bottom:6px;"></div>
       <div id="end-stats" style="color:var(--muted);font-size:14px;line-height:1.8;margin-bottom:10px;font-family:ui-monospace,Menlo,monospace;"></div>
+      <!-- Bandeau « pays terminé » : affiché uniquement quand ce service boucle
+           le dernier maillon d'un pays. -->
+      <div id="end-country" class="hidden"></div>
       <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
         <button class="btn" id="btn-end-map">← Carte</button>
         <button class="btn" id="btn-replay">Rejouer</button>
@@ -82,8 +84,20 @@
     <h1>Comment jouer</h1>
     <p><b>Votre seul geste :</b> touchez un train qui s'annonce, puis le quai où il doit entrer — les pastilles colorées indiquent les liaisons de chaque quai. Le train entre dès que la voie est libre, marque un arrêt d'au moins 2 minutes, puis repart seul à l'heure prévue.</p>
     <p><b>Les wagons comptent :</b> plus le convoi est long, plus il est lent et plus il bloque les voies longtemps. Gare aux imprévus : retards annoncés, quais fermés, frets en transit.</p>
-    <p><b>Objectif :</b> chaque train doit repartir à l'heure affichée au-dessus de lui. Le zéro retard est toujours possible. Barème : ≤ 5 min → ★★★, ≤ 10 → ★★, ≤ 15 → ★ — une étoile débloque la gare suivante.</p>
+    <p><b>Objectif :</b> chaque train doit repartir à l'heure affichée au-dessus de lui. Le zéro retard est toujours possible. Barème : &lt; 10 min → ★★★, &lt; 20 → ★★, &lt; 30 → ★ — une étoile débloque la gare suivante.</p>
     <button class="btn" id="btn-help-close">Compris</button>
+  </div>
+</div>
+<!-- Confirmation avant de quitter une partie en cours : annuler le niveau perd
+     la progression du service, on demande donc validation. -->
+<div class="overlay hidden" id="confirm-quit">
+  <div class="card">
+    <h1>Quitter le service ?</h1>
+    <p>La partie en cours sera abandonnée et votre progression sur ce service sera perdue.</p>
+    <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+      <button class="btn" id="btn-quit-cancel">Rester</button>
+      <button class="btn danger" id="btn-quit-confirm">Quitter</button>
+    </div>
   </div>
 </div>
 <!-- Le plan de voies est large : le jeu se joue en paysage. En portrait sur

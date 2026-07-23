@@ -1,0 +1,32 @@
+{
+  "id": "wiesbaden",
+  "name": "Wiesbaden Hbf",
+  "tagline": "Wiesbaden Hbf — terminus néo-baroque : 6 quais à heurtoir, tout rebrousse vers le Rhin.",
+  "difficulty": 2,
+  "country": "🇩🇪 Allemagne",
+  "desc": "Terminus monumental de 1906, en cul-de-sac au pied de la ville thermale : six quais à heurtoir où tout rebrousse — la dense navette S-Bahn vers Francfort et Mayence, les régionaux du Rheingau vers Rüdesheim et de la Ländchesbahn vers Limburg. Votre première gare allemande où chaque train fait demi-tour.",
+  "platforms": [
+    { "id": 1, "deadEnd": true }, { "id": 2, "deadEnd": true }, { "id": 3, "deadEnd": true },
+    { "id": 4, "deadEnd": true }, { "id": 5, "deadEnd": true }, { "id": 6, "deadEnd": true }
+  ],
+  "portals": {
+    "FRANKFURT": { "side": "L", "color": "#f2588f", "abbr": "F" },
+    "MAINZ":     { "side": "L", "color": "#25dede", "abbr": "MZ" },
+    "LIMBURG":   { "side": "L", "color": "#4ade80", "abbr": "LB" },
+    "RUDESHEIM": { "side": "L", "color": "#60a5fa", "abbr": "RU", "label": "RÜDESHEIM" },
+    "DARMSTADT": { "side": "L", "color": "#f5b23c", "abbr": "DA" }
+  },
+  "links": {
+    "FRANKFURT": [1, 2, 3, 5],
+    "MAINZ": [2, 3, 4],
+    "LIMBURG": [1, 2, 6],
+    "RUDESHEIM": [4, 5, 6],
+    "DARMSTADT": [3, 4, 5, 6]
+  },
+  "sameSidePairs": "all",
+  "gen": {
+    "nMin": 12, "nMax": 15, "gapMin": 1.9, "gapMax": 3.2,
+    "cars": [2, 2, 3, 3, 4, 4, 5],
+    "freightRate": 0, "quietRate": 0.2
+  }
+}

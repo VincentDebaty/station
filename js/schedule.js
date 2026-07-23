@@ -36,7 +36,7 @@ function simulateDay(schedule, assign, dt, events) {
       // fret : itinéraire entrée+sortie verrouillé, parcouru d'une traite
       const pin = paths[t.entryPath], pout = paths[t.exitPath];
       const totalArc = pin.len + pout.len;
-      const durTot = TRAVEL * totalArc / 700 * slowness(t);
+      const durTot = TRAVEL * totalArc / 700 * FREIGHT_SLOWNESS;
       const h = totalArc * t.elapsed / durTot;
       if (pathId === t.entryPath) return { lo: h - tail, hi: Math.min(h, pin.len), dir: 1 };
       if (h <= pin.len) return null; // pas encore atteint : tout reste bloqué
@@ -107,7 +107,7 @@ function simulateDay(schedule, assign, dt, events) {
         case "movingThrough": {
           const pin = paths[t.entryPath], pout = paths[t.exitPath];
           const totalArc = pin.len + pout.len;
-          const durTot = TRAVEL * totalArc / 700 * slowness(t);
+          const durTot = TRAVEL * totalArc / 700 * FREIGHT_SLOWNESS;
           t.elapsed += dt;
           const h = totalArc * t.elapsed / durTot;
           const tail = (t.cars - 1) * CAR_SPACING;
