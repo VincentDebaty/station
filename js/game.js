@@ -979,7 +979,10 @@ function endGame(failed) {
     ec.classList.remove("hidden");
   } else ec.classList.add("hidden");
   (perfect ? SND.perfect : win ? SND.end : SND.incident)(); // parfait → fanfare, 0 étoile → échec
-  const next = !failed && nextInCountry && isUnlocked(currentIdx + 1);
+  // « Gare suivante » seulement si CE service est réussi (≥ 1 étoile). Une gare
+  // déjà débloquée par une partie passée ne doit PAS proposer d'avancer après un
+  // échec : sur une manche ratée, l'action mise en avant reste « Rejouer ».
+  const next = win && nextInCountry && isUnlocked(currentIdx + 1);
   document.getElementById("btn-next").classList.toggle("hidden", !next);
   // Bouton principal (rempli teal) selon le contexte : « suivante » si gagné +
   // débloqué, « rejouer » si échec, « carte » si gagné en fin de pays.
