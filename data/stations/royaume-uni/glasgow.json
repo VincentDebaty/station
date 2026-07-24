@@ -1,0 +1,36 @@
+{
+  "id": "glasgow",
+  "name": "Glasgow Central",
+  "city": "Glasgow",
+  "tagline": "Glasgow Central — grand terminus sous le « Hielanman's Umbrella » : tout franchit la Clyde au sud.",
+  "difficulty": 4,
+  "country": "🇬🇧 Royaume-Uni",
+  "desc": "La gare la plus fréquentée d'Écosse, dont le pont vitré enjambe Argyle Street. Un terminus en éventail où tout sort par une seule gorge au sud, franchissant la Clyde : la ligne de la côte ouest vers Carlisle et Londres, l'Ayrshire et l'Inverclyde au sud-ouest, Édimbourg et le Lanarkshire au sud-est. Son poste d'aiguillage détenait le plus long châssis d'enclenchement jamais construit en Grande-Bretagne — à votre tour de tenir les leviers.",
+  "platforms": [
+    { "id": 1, "deadEnd": true }, { "id": 2, "deadEnd": true }, { "id": 3, "deadEnd": true },
+    { "id": 4, "deadEnd": true }, { "id": 5, "deadEnd": true }, { "id": 6, "deadEnd": true },
+    { "id": 7, "deadEnd": true }
+  ],
+  "portals": {
+    "LONDON":    { "side": "L", "color": "#f2588f", "abbr": "L", "label": "LONDON EU" },
+    "AYR":       { "side": "L", "color": "#4ade80", "abbr": "AY" },
+    "GOUROCK":   { "side": "L", "color": "#25dede", "abbr": "GK" },
+    "EDINBURGH": { "side": "L", "color": "#f5b23c", "abbr": "ED" },
+    "PAISLEY":   { "side": "L", "color": "#60a5fa", "abbr": "PA" },
+    "LANARK":    { "side": "L", "color": "#a78bfa", "abbr": "LK" }
+  },
+  "links": {
+    "LONDON": [1, 2, 3, 4],
+    "EDINBURGH": [1, 2, 5],
+    "AYR": [3, 4, 5, 6],
+    "GOUROCK": [5, 6, 7],
+    "PAISLEY": [2, 3, 6, 7],
+    "LANARK": [4, 5, 7]
+  },
+  "sameSidePairs": "all",
+  "gen": {
+    "nMin": 15, "nMax": 18, "gapMin": 1.6, "gapMax": 2.7,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6, 7],
+    "freightRate": 0, "quietRate": 0.14
+  }
+}

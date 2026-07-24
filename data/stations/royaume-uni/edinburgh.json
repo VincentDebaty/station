@@ -1,0 +1,32 @@
+{
+  "id": "edinburgh",
+  "name": "Edinburgh Waverley",
+  "city": "Edinburgh",
+  "tagline": "Edinburgh Waverley — la gare dans le ravin : deux gorges est-ouest, quais en anneau.",
+  "difficulty": 3,
+  "country": "🇬🇧 Royaume-Uni",
+  "desc": "Encaissée dans une vallée étroite au cœur de la ville, coiffée d'une grande verrière victorienne, disposée en anneau autour d'un quai-île. Pas de nord ni de sud : deux gorges seulement — à l'est le tunnel de Calton vers Londres et la côte est, à l'ouest Haymarket vers Glasgow, Fife, Aberdeen et Stirling. Les culs-de-sac en épis terminent les régionaux ; le grand axe, lui, traverse.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }, { "id": 6 }
+  ],
+  "portals": {
+    "LONDON":       { "side": "L", "color": "#f2588f", "abbr": "L", "label": "LONDON KX" },
+    "NORTHBERWICK": { "side": "L", "color": "#4ade80", "abbr": "NB", "label": "NORTH BERWICK" },
+    "GLASGOW":      { "side": "R", "color": "#25dede", "abbr": "GL" },
+    "ABERDEEN":     { "side": "R", "color": "#f5b23c", "abbr": "AB" },
+    "STIRLING":     { "side": "R", "color": "#a78bfa", "abbr": "ST" }
+  },
+  "links": {
+    "LONDON": [1, 2, 3, 4],
+    "NORTHBERWICK": [4, 5, 6],
+    "GLASGOW": [1, 2, 3, 4],
+    "ABERDEEN": [3, 4, 5],
+    "STIRLING": [4, 5, 6]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 14, "nMax": 17, "gapMin": 1.6, "gapMax": 2.8,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6],
+    "freightRate": 0.1, "quietRate": 0.18
+  }
+}

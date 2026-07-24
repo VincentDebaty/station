@@ -1,0 +1,33 @@
+{
+  "id": "manchester",
+  "name": "Manchester Piccadilly",
+  "city": "Manchester",
+  "tagline": "Manchester Piccadilly — gare à deux étages : quais traversants perchés, tiroirs en contrebas.",
+  "difficulty": 3,
+  "country": "🇬🇧 Royaume-Uni",
+  "desc": "Sous la grande halle vitrée à quatre travées, douze quais en cul-de-sac reçoivent les trains de Londres et du sud ; deux quais traversants, perchés sur le corridor de Castlefield, filent d'ouest en est vers Liverpool, l'aéroport et le Yorkshire — le goulot le plus saturé du réseau. Le quai en impasse laisse rebrousser les services de l'aéroport, comme dans la réalité.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },
+    { "id": 6, "deadEnd": true }
+  ],
+  "portals": {
+    "LIVERPOOL": { "side": "L", "color": "#25dede", "abbr": "LV" },
+    "PRESTON":   { "side": "L", "color": "#60a5fa", "abbr": "PR" },
+    "AIRPORT":   { "side": "R", "color": "#f5b23c", "abbr": "AP", "label": "AÉROPORT" },
+    "SHEFFIELD": { "side": "R", "color": "#4ade80", "abbr": "SH" },
+    "LONDON":    { "side": "R", "color": "#f2588f", "abbr": "L", "label": "LONDON EU" }
+  },
+  "links": {
+    "LIVERPOOL": [1, 2, 3, 4],
+    "PRESTON": [2, 3, 4, 5],
+    "AIRPORT": [1, 2, 3, 6],
+    "SHEFFIELD": [3, 4, 5],
+    "LONDON": [1, 2, 6]
+  },
+  "sameSidePairs": [["LONDON", "AIRPORT"], ["AIRPORT", "LONDON"]],
+  "gen": {
+    "nMin": 14, "nMax": 17, "gapMin": 1.7, "gapMax": 3.0,
+    "cars": [1, 2, 2, 3, 3, 4, 4, 5, 5, 6],
+    "freightRate": 0, "quietRate": 0.18
+  }
+}

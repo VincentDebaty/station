@@ -1,0 +1,36 @@
+{
+  "id": "liverpool",
+  "name": "Liverpool Lime Street",
+  "city": "Liverpool",
+  "tagline": "Liverpool Lime Street — le plus ancien grand terminus du monde : tout sort à l'est par la tranchée d'Edge Hill.",
+  "difficulty": 4,
+  "country": "🇬🇧 Royaume-Uni",
+  "desc": "Le plus ancien grand terminus de grande ligne encore en service (1836), sous une halle en arc de 1867 qui fut la plus vaste du monde. Tout s'échappe à l'est par la tranchée en pente d'Edge Hill : Manchester à l'est, Leeds et les Pennines au nord-est, Preston au nord, Chester et le pays de Galles à l'ouest, Londres Euston au sud par Crewe. Un seul goulot, un flux voyageur incessant.",
+  "platforms": [
+    { "id": 1, "deadEnd": true }, { "id": 2, "deadEnd": true }, { "id": 3, "deadEnd": true },
+    { "id": 4, "deadEnd": true }, { "id": 5, "deadEnd": true }, { "id": 6, "deadEnd": true },
+    { "id": 7, "deadEnd": true }
+  ],
+  "portals": {
+    "MANCHESTER": { "side": "L", "color": "#25dede", "abbr": "MA" },
+    "LONDON":     { "side": "L", "color": "#f2588f", "abbr": "L", "label": "LONDON EU" },
+    "LEEDS":      { "side": "L", "color": "#4ade80", "abbr": "LE" },
+    "PRESTON":    { "side": "L", "color": "#60a5fa", "abbr": "PR" },
+    "NORWICH":    { "side": "L", "color": "#a78bfa", "abbr": "NW" },
+    "CHESTER":    { "side": "L", "color": "#f5b23c", "abbr": "CH" }
+  },
+  "links": {
+    "MANCHESTER": [1, 2, 3, 4],
+    "LONDON": [1, 2, 5],
+    "LEEDS": [3, 4, 5, 6],
+    "PRESTON": [5, 6, 7],
+    "NORWICH": [2, 3, 6, 7],
+    "CHESTER": [4, 5, 7]
+  },
+  "sameSidePairs": "all",
+  "gen": {
+    "nMin": 15, "nMax": 18, "gapMin": 1.6, "gapMax": 2.7,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6, 7],
+    "freightRate": 0, "quietRate": 0.14
+  }
+}

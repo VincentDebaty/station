@@ -1,0 +1,31 @@
+{
+  "id": "reading",
+  "name": "Reading",
+  "tagline": "Reading — carrefour à quatre directions, rouvert en 2014 : le fret glisse sous les voyageurs.",
+  "difficulty": 2,
+  "country": "🇬🇧 Royaume-Uni",
+  "desc": "Le grand carrefour de l'ouest londonien : Paddington à l'est, Bristol et le pays de Galles à l'ouest, Oxford et les Midlands au nord, Basingstoke et la côte sud. Longtemps saturé par les trains de fret lents qui traversaient à niveau, il a été dénoué en 2014 par un saut-de-mouton — le fret passe désormais sous les express. À vous d'accorder les lents et les rapides.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }, { "id": 6 }
+  ],
+  "portals": {
+    "PADDINGTON":  { "side": "L", "color": "#f2588f", "abbr": "PA" },
+    "OXFORD":      { "side": "L", "color": "#f5b23c", "abbr": "OX" },
+    "BRISTOL":     { "side": "R", "color": "#25dede", "abbr": "BR" },
+    "BASINGSTOKE": { "side": "R", "color": "#60a5fa", "abbr": "BK" },
+    "GUILDFORD":   { "side": "R", "color": "#a78bfa", "abbr": "GU" }
+  },
+  "links": {
+    "PADDINGTON": [1, 2, 3, 4],
+    "OXFORD": [4, 5, 6],
+    "BRISTOL": [1, 2, 3, 4],
+    "BASINGSTOKE": [3, 4, 5],
+    "GUILDFORD": [4, 5, 6]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 13, "nMax": 16, "gapMin": 1.8, "gapMax": 3.0,
+    "cars": [1, 2, 2, 3, 3, 4, 4, 5],
+    "freightRate": 0.35, "quietRate": 0.2
+  }
+}

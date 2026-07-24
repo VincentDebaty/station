@@ -1,0 +1,32 @@
+{
+  "id": "bristol",
+  "name": "Bristol Temple Meads",
+  "city": "Bristol",
+  "tagline": "Bristol Temple Meads — halle de Brunel sur tracé courbe : l'ouest et le sud-ouest se croisent.",
+  "difficulty": 2,
+  "country": "🇬🇧 Royaume-Uni",
+  "desc": "La plus ancienne et la plus grande gare de Bristol, coiffée du train shed courbe de Brunel (1840), classé Grade I. Paddington à l'est, l'Exeter et les Cornouailles au sud-ouest, Cardiff et le pays de Galles à l'ouest, Birmingham et le nord par le CrossCountry, Gloucester au nord. Le fret contourne par des voies d'évitement — les quais restent aux voyageurs.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }, { "id": 6 }
+  ],
+  "portals": {
+    "EXETER":     { "side": "L", "color": "#4ade80", "abbr": "EX" },
+    "CARDIFF":    { "side": "L", "color": "#a78bfa", "abbr": "CF" },
+    "PADDINGTON": { "side": "R", "color": "#f2588f", "abbr": "PA" },
+    "BIRMINGHAM": { "side": "R", "color": "#f5b23c", "abbr": "BX" },
+    "GLOUCESTER": { "side": "R", "color": "#60a5fa", "abbr": "GL" }
+  },
+  "links": {
+    "EXETER": [1, 2, 3, 4],
+    "CARDIFF": [3, 4, 5, 6],
+    "PADDINGTON": [1, 2, 3, 4],
+    "BIRMINGHAM": [3, 4, 5],
+    "GLOUCESTER": [4, 5, 6]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 13, "nMax": 16, "gapMin": 1.8, "gapMax": 3.0,
+    "cars": [1, 2, 2, 3, 3, 4, 4, 5],
+    "freightRate": 0.1, "quietRate": 0.2
+  }
+}

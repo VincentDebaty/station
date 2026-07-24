@@ -13,5 +13,10 @@
     "country": "allemagne",
     "label": "🇩🇪 Allemagne",
     "stations": ["freiburg", "stuttgart", "frankfurt", "koln", "munster", "hannover", "hamburg", "berlin", "dresden", "leipzig", "nurnberg", "munchen"]
+  },
+  {
+    "country": "royaume-uni",
+    "label": "🇬🇧 Royaume-Uni",
+    "stations": ["york", "norwich", "reading", "bristol", "manchester", "leeds", "edinburgh", "glasgow", "liverpool", "birmingham", "waterloo"]
   }
 ]

@@ -56,6 +56,14 @@ const GEO = {
         koln: [6.959, 50.943], hannover: [9.741, 52.377], leipzig: [12.383, 51.345],
         stuttgart: [9.182, 48.784], nurnberg: [11.082, 49.446], munster: [7.635, 51.956],
         dresden: [13.732, 51.041], freiburg: [7.841, 47.997]
+      } },
+    "royaume-uni": { name: "Royaume-Uni", flag: "🇬🇧", iso: "GBR", continent: "europe",
+      frame: [-5.8, 50.6, 1.8, 56.5], neighbors: { belgique: [3.25, 51.22] },
+      cities: {
+        york: [-1.093, 53.958], norwich: [1.306, 52.627], reading: [-0.972, 51.459],
+        bristol: [-2.582, 51.449], manchester: [-2.230, 53.477], leeds: [-1.548, 53.795],
+        edinburgh: [-3.188, 55.952], glasgow: [-4.257, 55.860], liverpool: [-2.978, 53.408],
+        birmingham: [-1.900, 52.478], waterloo: [-0.113, 51.503]
       } }
   }
 };

@@ -605,12 +605,24 @@ function layoutOverlay() {
     const vb = readVB();
     const vx0 = vb[0], vy0 = vb[1], vx1 = vb[0] + vb[2], vy1 = vb[1] + vb[3];
     const R = 19, C = 2 * Math.PI * R;
+    // Voisins affichés : par défaut, détection auto par recouvrement du cadre.
+    // Un pays peut IMPOSER ses voisins (geo.js : `neighbors`, objet slug→ancre) —
+    // ex. le Royaume-Uni pointe vers la Belgique (porte du continent) plutôt que la
+    // France, dont le centroïde plus au sud se rabattait au même coin. L'ancre géo
+    // optionnelle [lon,lat] repositionne le chip (défaut : `lx/ly` du pays) — utile
+    // quand l'ancre de label tombe, une fois rabattue, sur le mauvais pays (l'ancre
+    // belge lx=4.8 ≈ Liège se rabattait côté Maastricht/NL).
+    const curCountry = GEO.countries[MAP.countrySlug];
+    const forced = curCountry && curCountry.neighbors ? curCountry.neighbors : null;
     for (const slug in GEO.countries) {
       const g = GEO.countries[slug];
       if (slug === MAP.countrySlug || g.continent !== MAP.contId) continue;
       if (!countryStationIds(slug).length) continue;
       const country = MAP.byIso[g.iso];
       if (!country) continue;
+      if (forced) {
+        if (!(slug in forced)) continue; // liste imposée : on ne garde que celle-ci
+      } else {
       const rr = geoBoxToRect(countryGeoBbox(country)); // emprise en unités SVG
       const iw = Math.min(rr.x + rr.w, vx1) - Math.max(rr.x, vx0);
       const ih = Math.min(rr.y + rr.h, vy1) - Math.max(rr.y, vy0);
@@ -627,7 +639,10 @@ function layoutOverlay() {
       const fracFrame = (iw * ih) / (vb[2] * vb[3]);
       const fracSelf = (iw * ih) / (rr.w * rr.h);
       if (fracFrame < 0.08 && fracSelf < 0.2) continue;
-      const raw = screenPos(country.lx, country.ly);
+      }
+      // Ancre du chip : override géo si fourni (forced[slug] = [lon,lat]), sinon lx/ly.
+      const anchor = (forced && Array.isArray(forced[slug])) ? forced[slug] : [country.lx, country.ly];
+      const raw = screenPos(anchor[0], anchor[1]);
       const cx = Math.max(64, Math.min(cw - 64, raw.x));
       const cy = Math.max(52, Math.min(ch - 66, raw.y));
       // Axe libre = le bord sur lequel on est rabattu (haut/bas → glisse en x ;
@@ -723,7 +738,10 @@ function focusCountry(slug, instant) {
   const country = g && MAP.byIso[g.iso];
   if (!country) return;
   MAP.level = "country"; MAP.countrySlug = slug; MAP.contId = g.continent;
-  goTo(targetVB(countryGeoBbox(country), 0.05), instant);
+  // Cadrage : emprise auto de la métropole, SAUF si le pays fournit un `frame`
+  // géo explicite [lonMin,latMin,lonMax,latMax] — utile quand les gares n'occupent
+  // qu'une partie du territoire (Royaume-Uni : rien au nord de l'Écosse centrale).
+  goTo(targetVB(g.frame || countryGeoBbox(country), 0.05), instant);
 }
 function zoomOut() {
   if (MAP.animating) return;
