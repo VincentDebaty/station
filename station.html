@@ -157,8 +157,13 @@
       window.location.reload();
     });
     window.addEventListener("load", () =>
-      navigator.serviceWorker.register("sw.js").catch(err =>
-        console.warn("Service worker non enregistré :", err)));
+      // updateViaCache: "none" → le navigateur revalide TOUJOURS sw.js (jamais
+      // depuis son cache HTTP) : une mise à jour est détectée dès la visite
+      // suivante, prend la main (skipWaiting/claim) et déclenche le reload
+      // ci-dessus. Fini les versions figées après un déploiement.
+      navigator.serviceWorker.register("sw.js", { updateViaCache: "none" })
+        .then(reg => reg.update()) // force un contrôle de mise à jour au chargement
+        .catch(err => console.warn("Service worker non enregistré :", err)));
   }
 </script>
 </body>
