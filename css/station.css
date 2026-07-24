@@ -55,7 +55,7 @@ body {
 /* Commandes flottantes haut-droite : lecture + réglages côte à côte. */
 #hud-tools {
   position: absolute; z-index: 10;
-  top: calc(10px + var(--safe-t)); right: calc(12px + var(--safe-r));
+  top: calc(10px + var(--safe-t)); right: calc(4px + var(--safe-r));
   display: flex; align-items: flex-start; gap: 8px;
 }
 /* L'engrenage ancre son menu déroulant (position relative). */
@@ -84,7 +84,7 @@ body {
    sur la carte : flèche + libellé, pastille cliquable au survol accentué. */
 #station-tag {
   position: absolute; z-index: 8;
-  top: calc(10px + var(--safe-t)); left: calc(12px + var(--safe-l));
+  top: calc(10px + var(--safe-t)); left: calc(4px + var(--safe-l));
   display: flex; align-items: center; gap: 6px; cursor: pointer;
   padding: 7px 13px 7px 10px; border-radius: 12px;
   background: rgba(21, 29, 46, .55); border: 1px solid #2a3550;
@@ -183,6 +183,10 @@ svg { width: 100%; height: 100%; display: block; }
 @keyframes prep-spin { to { transform: rotate(360deg); } }
 
 .track { stroke: var(--track-dim); stroke-width: 3.5; fill: none; stroke-linecap: round; pointer-events: none; }
+/* Mise en avant du faisceau sélectionné : la ville d'origine ressort un peu ;
+   les autres liaisons restent VISIBLES (on ne cache rien). */
+[data-beam] { transition: opacity .18s ease; }
+.mesh.beam-lit { opacity: .82 !important; }
 .route { fill: none; stroke-width: 5; stroke-linecap: round; filter: drop-shadow(0 0 4px currentColor); pointer-events: none; }
 .route.pending { stroke-dasharray: 10 8; opacity: .55; }
 .platform { fill: url(#platGrad); stroke: #3b465c; stroke-width: 1.5; cursor: pointer; transition: stroke .2s, fill .2s; }
@@ -238,6 +242,8 @@ svg { width: 100%; height: 100%; display: block; }
    recule de la tête vers la queue à mesure qu'on approche du départ (jauge de
    batterie horizontale). Couleur ≈ fond pour un rendu « creux ». */
 .board-mask { fill: #0a0f19; opacity: .8; pointer-events: none; }
+/* Contour du wagon : silhouette toujours lisible, wagon plein ou vide */
+.train-outline { fill: none; stroke-width: 1.4; opacity: .85; pointer-events: none; }
 .train-label {
   font-size: 12px; font-weight: 700; fill: #08141a;
   text-anchor: middle; dominant-baseline: central; pointer-events: none;
@@ -359,11 +365,11 @@ svg { width: 100%; height: 100%; display: block; }
 /* Frontières RÉELLES des pays (Natural Earth), rendues lissées.
    Niveau monde : trait quasi invisible → les continents lisent en silhouettes. */
 .country-land {
-  fill: #1a2338; stroke: #0e1420; stroke-width: .6;
+  fill: #2e3f60; stroke: #47597f; stroke-width: .6;
   vector-effect: non-scaling-stroke; cursor: pointer; transition: fill .25s, opacity .25s;
 }
 @media (hover: hover) {
-  #hub-map[data-level="world"] .country-land:hover { fill: #26355a; }
+  #hub-map[data-level="world"] .country-land:hover { fill: #3b4f78; }
 }
 /* Zoom continent/pays : pays hors focus estompés (contexte), focus mis en avant. */
 #hub-map[data-level="continent"] .country-land,

@@ -12,6 +12,6 @@
   {
     "country": "allemagne",
     "label": "🇩🇪 Allemagne",
-    "stations": ["freiburg", "mannheim", "wiesbaden", "frankfurt", "koln", "munster", "hannover", "hamburg", "berlin", "leipzig", "wurzburg", "munchen"]
+    "stations": ["freiburg", "stuttgart", "frankfurt", "koln", "munster", "hannover", "hamburg", "berlin", "dresden", "leipzig", "nurnberg", "munchen"]
   }
 ]

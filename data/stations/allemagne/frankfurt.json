@@ -14,7 +14,7 @@
   "portals": {
     "KOLN":     { "side": "L", "color": "#f5b23c", "abbr": "KO", "label": "KÖLN" },
     "MANNHEIM": { "side": "L", "color": "#60a5fa", "abbr": "MA" },
-    "WURZBURG": { "side": "L", "color": "#a78bfa", "abbr": "WB", "label": "WÜRZBURG" },
+    "WURZBURG": { "side": "L", "color": "#c084fc", "abbr": "WB", "label": "WÜRZBURG" },
     "HANNOVER": { "side": "L", "color": "#25dede", "abbr": "H" },
     "MAINZ":    { "side": "L", "color": "#4ade80", "abbr": "MZ" },
     "FULDA":    { "side": "L", "color": "#f2588f", "abbr": "FD" }

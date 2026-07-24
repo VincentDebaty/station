@@ -1,0 +1,34 @@
+{
+  "id": "dresden",
+  "name": "Dresden Hbf",
+  "city": "Dresden",
+  "tagline": "Dresden Hbf — grand nœud de Saxe sous la toiture Foster : 6 quais au carrefour de l'Elbe.",
+  "difficulty": 3,
+  "country": "🇩🇪 Allemagne",
+  "desc": "La grande gare de Saxe au bord de l'Elbe, coiffée de sa membrane translucide rénovée par Norman Foster : six quais traversants où se croisent les axes — Leipzig et Francfort à l'ouest, Berlin au nord, Chemnitz au sud-ouest, Prague par la vallée de l'Elbe au sud-est, Görlitz à l'est, Cottbus au nord-est. Le grand carrefour de l'Est allemand, sur le corridor fret de l'Elbe.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }, { "id": 6 }
+  ],
+  "portals": {
+    "LEIPZIG":  { "side": "L", "color": "#f5b23c", "abbr": "L" },
+    "BERLIN":   { "side": "L", "color": "#c084fc", "abbr": "B" },
+    "CHEMNITZ": { "side": "L", "color": "#4ade80", "abbr": "C" },
+    "PRAGUE":   { "side": "R", "color": "#f2588f", "abbr": "PR" },
+    "GORLITZ":  { "side": "R", "color": "#25dede", "abbr": "GÖ", "label": "GÖRLITZ" },
+    "COTTBUS":  { "side": "R", "color": "#60a5fa", "abbr": "CO" }
+  },
+  "links": {
+    "LEIPZIG": [1, 2, 3, 4],
+    "BERLIN": [1, 2, 5, 6],
+    "CHEMNITZ": [3, 4, 5, 6],
+    "PRAGUE": [1, 2, 3, 4],
+    "GORLITZ": [3, 4, 5, 6],
+    "COTTBUS": [1, 2, 5, 6]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 15, "nMax": 18, "gapMin": 1.6, "gapMax": 2.8,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6],
+    "freightRate": 0.3, "quietRate": 0.15
+  }
+}

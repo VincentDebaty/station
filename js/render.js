@@ -70,9 +70,9 @@ function drawStatic() {
   // Maillage teinté : chaque voie porte discrètement la couleur de sa ville
   // — on distingue d'un coup d'œil à quel portail appartient chaque courbe
   for (const m of meshD) {
-    const t = el("path", { d: m.d, class: "track" }, gTracks);
+    const t = el("path", { d: m.d, class: "track mesh", "data-beam": m.portal }, gTracks);
     t.style.stroke = DEST_COLOR[m.portal];
-    t.style.opacity = "0.38";
+    t.style.opacity = "0.5";
   }
 
   // Quais — groupés par quai pour pouvoir assombrir d'un bloc les quais non
@@ -98,21 +98,29 @@ function drawStatic() {
   // arrête. Le nom de la destination, en trait léger, se pose juste au-dessus
   // de la voie ; le train qui sort glisse dessous.
   portalUI = {};
+  // écart vertical entre villes voisines d'un même côté : sert à borner l'offset
+  // du libellé pour qu'il reste TOUJOURS collé à SA ligne (jamais à celle du
+  // dessus), même sur tactile (UIK=1.5) ou quand les villes sont nombreuses.
+  const sideCount = {};
+  for (const q of Object.values(PORTALS)) sideCount[q.side] = (sideCount[q.side] || 0) + 1;
   for (const [name, p] of Object.entries(PORTALS)) {
     const c = DEST_COLOR[name];
     const edge = p.side === "L" ? -EDGE_RUN : 1400 + EDGE_RUN;   // point de fuite = bord écran
-    const lnOut = el("line", { x1: edge, y1: p.cy, x2: p.x, y2: p.cy, class: "track" }, gTracks);
+    const lnOut = el("line", { x1: edge, y1: p.cy, x2: p.x, y2: p.cy, class: "track", "data-beam": name }, gTracks);
     lnOut.style.stroke = c; lnOut.style.opacity = "0.38";
-    const lnIn = el("path", { d: pathD(APPROACH[name].pts), class: "track" }, gTracks);
+    const lnIn = el("path", { d: pathD(APPROACH[name].pts), class: "track", "data-beam": name }, gTracks);
     lnIn.style.stroke = c; lnIn.style.opacity = "0.38";
     // point de convergence marqué à la couleur de la ville
-    const cvg = el("circle", { cx: p.x, cy: p.cy, r: 5, "pointer-events": "none" }, gTracks);
+    const cvg = el("circle", { cx: p.x, cy: p.cy, r: 5, "pointer-events": "none", "data-beam": name }, gTracks);
     cvg.style.fill = c; cvg.style.opacity = "0.85";
     const grp = el("g", { style: "cursor:pointer" }, gPortals);
     // nom centré au-dessus de l'AIGUILLAGE (point de convergence), juste au-dessus
     // de la voie — le convoi qui part glisse dessous en quittant le faisceau.
     const tw = (22 + p.label.length * 10) * UIK;
-    const nameY = p.cy - 34 * UIK;
+    // offset au-dessus de la voie : borné à 40 % de l'écart entre villes (< 50 %
+    // ⇒ le nom penche toujours vers SA ligne), plafonné au confort tactile.
+    const gap = sideCount[p.side] > 1 ? 420 / (sideCount[p.side] - 1) : Infinity;
+    const nameY = p.cy - Math.min(34 * UIK, gap * 0.40);
     const nameCx = p.x;
     // zone de clic du nom (sélectionne le 1er train en file du portail). Elle
     // reste STRICTEMENT au-dessus de la voie : le nom est posé au ras de
@@ -123,7 +131,7 @@ function drawStatic() {
       width: Math.max(100, tw), height: 34 * UIK,
       fill: "transparent"
     }, grp);
-    const tt = el("text", { x: nameCx, y: nameY, class: "portal-name" }, grp);
+    const tt = el("text", { x: nameCx, y: nameY, class: "portal-name", "data-beam": name }, grp);
     tt.textContent = p.label;
     tt.style.fill = c; tt.style.color = c; // color : currentColor du halo de validation
     tt.style.fontSize = (15 * UIK) + "px";
@@ -139,6 +147,17 @@ function drawStatic() {
     // repère de sortie pour l'effet « validé » : nom + géométrie de la voie
     portalUI[name] = { text: tt, cy: p.cy, side: p.side, px: p.x, edge, nameX: nameCx };
   }
+}
+
+// Mise en avant du faisceau sélectionné : la ville d'origine du train choisi
+// ressort un peu (les AUTRES liaisons restent pleinement visibles — on ne cache
+// rien). name=null → repos.
+function focusPortal(name) {
+  const on = name != null;
+  board.querySelectorAll("[data-beam]").forEach(elm => {
+    const mine = elm.getAttribute("data-beam") === name;
+    elm.classList.toggle("beam-lit", on && mine);
+  });
 }
 
 // « Validé » : quand un convoi sort et glisse sous le nom de sa destination,
@@ -266,6 +285,13 @@ function trainNode(t) {
       rx: (i === 0 ? 8 : 5) * UIK, class: "board-mask"
     }, car);
     t.maskEls.push(mask);
+    // Contour persistant, posé PAR-DESSUS le masque : un wagon vide reste
+    // visible (sa silhouette) même quand le masque l'assombrit entièrement.
+    const outline = el("rect", {
+      x: -CAR_LEN / 2, y: -bh / 2, width: CAR_LEN, height: bh,
+      rx: (i === 0 ? 8 : 5) * UIK, class: "train-outline"
+    }, car);
+    outline.style.stroke = c;
     if (i === 0) {
       const lbl = el("text", { x: 0, y: 0.5, class: "train-label" }, car);
       lbl.textContent = t.freight ? "F" : DEST_ABBR[t.to];

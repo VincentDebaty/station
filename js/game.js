@@ -254,6 +254,8 @@ function refreshEligible() {
   const selecting = selected && !selected.target &&
     (selected.state === "waiting" || selected.state === "approaching");
   const eligColor = selecting ? (selected.freight ? "#8f98a8" : DEST_COLOR[selected.to]) : null;
+  // faisceau : on éclaire la ville d'origine du train choisi, on estompe le reste
+  if (typeof focusPortal === "function") focusPortal(selecting ? selected.from : null);
   document.querySelectorAll(".platform").forEach(pl => {
     const pid = +pl.dataset.platform;
     // tout quai accessible depuis l'origine est surligné (.eligible) pendant
@@ -768,9 +770,7 @@ function endGame(failed) {
   if (nEv) inc.push(nEv + " imprévu" + (nEv > 1 ? "s" : ""));
   if (nFret) inc.push(nFret + " fret" + (nFret > 1 ? "s" : ""));
   document.getElementById("end-stats").innerHTML =
-    "Trains à l'heure : " + onTime + "/" + pax.length +
-    (worst ? "<br>Pire retard : " + worst.id + " (+" + Math.round(worst.depDelay) + " min)" : "") +
-    (inc.length ? "<br>Incidents gérés : " + inc.join(", ") : "");
+    "Trains à l'heure : " + onTime + "/" + pax.length;
   // Bandeau « pays terminé » : drapeau + nom + total d'étoiles du pays.
   const ec = document.getElementById("end-country");
   if (justCompletedCountry) {

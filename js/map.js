@@ -466,7 +466,12 @@ function layoutOverlay() {
       const p = screenPos(c.cities[id][0], c.cities[id][1]);
       return { id, num: i + 1, x: p.x, y: p.y, bx: p.x, by: p.y };
     });
-    dodgeCities(nodes, 104, 420, 0.028, { x0: 56, x1: cw - 56, y0: 64, y1: ch - 74 });
+    // Anti-chevauchement des PASTILLES uniquement (≈ taille d'un point), avec un
+    // rappel géo fort : les villes restent à leur vraie position, seules deux
+    // pastilles réellement superposées se dégagent d'un cheveu. Le chevauchement
+    // des LIBELLÉS est géré à part (candidats dessus/dessous + décalage, ci-dessous),
+    // sans bouger le point → la géographie n'est plus faussée.
+    dodgeCities(nodes, 38, 300, 0.10, { x0: 56, x1: cw - 56, y0: 64, y1: ch - 74 });
 
     // La répulsion peut pousser une gare de bord HORS de la frontière (Köln,
     // Freiburg…). On la ramène le long du segment vers sa vraie position géo

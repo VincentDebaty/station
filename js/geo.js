@@ -54,8 +54,8 @@ const GEO = {
         berlin: [13.369, 52.525], munchen: [11.558, 48.140], frankfurt: [8.664, 50.107],
         hamburg: [10.006, 53.553],
         koln: [6.959, 50.943], hannover: [9.741, 52.377], leipzig: [12.383, 51.345],
-        mannheim: [8.469, 49.479], munster: [7.635, 51.956], wiesbaden: [8.244, 50.070],
-        wurzburg: [9.936, 49.801], freiburg: [7.841, 47.997]
+        stuttgart: [9.182, 48.784], nurnberg: [11.082, 49.446], munster: [7.635, 51.956],
+        dresden: [13.732, 51.041], freiburg: [7.841, 47.997]
       } }
   }
 };
