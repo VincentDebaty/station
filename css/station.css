@@ -128,6 +128,7 @@ body {
 #hud-top.terminus #pause-tag {
   position: absolute; top: 100%; margin-top: 8px; transform: translateX(50%);
 }
+
 /* Carte opaque : panneau porté par un menu déroulant (lecture ou réglages). */
 .hud-panel {
   display: flex; flex-direction: column; gap: 8px; padding: 10px;
@@ -193,13 +194,29 @@ svg { width: 100%; height: 100%; display: block; }
 /* Quai occupé : liseré à la couleur du convoi présent (--occ posé en JS), afin
    de distinguer d'un coup d'œil libre / occupé au repos. */
 .platform.occupied { stroke: var(--occ, #3b465c); stroke-width: 2.5; }
-/* Quai éligible pendant une sélection : surligné à la couleur du train choisi
-   (--elig posé en JS) — plus invitant que le blanc neutre. Défini APRÈS
+/* Quai éligible pendant une sélection : TOUS les quais accessibles depuis
+   l'origine sont surlignés à l'identique, à la couleur de la destination
+   (--elig posé en JS). On n'indique PAS lequel dessert vraiment la destination —
+   au joueur de le savoir ; un mauvais choix vaut un refoulement. Défini APRÈS
    .occupied pour l'emporter le temps de la sélection. */
 .platform.eligible {
   stroke: var(--elig, #ffffff); stroke-dasharray: 7 5; stroke-width: 2.5;
   fill: color-mix(in srgb, var(--elig, #ffffff) 14%, #1b2436);
+  animation: elig-pulse 1.2s ease-in-out infinite; /* « touchez ici » : ça respire */
 }
+@keyframes elig-pulse {
+  0%, 100% { stroke-width: 2.5; filter: drop-shadow(0 0 2px var(--elig, #fff)); }
+  50%      { stroke-width: 3.4; filter: drop-shadow(0 0 9px var(--elig, #fff)); }
+}
+@media (prefers-reduced-motion: reduce) { .platform.eligible { animation: none; } }
+/* Quai en défaut : un train y stationne sans pouvoir repartir vers sa
+   destination — liseré rouge pulsé, le temps qu'il refoule. Explique l'attente. */
+.platform.wrong {
+  stroke: var(--red); stroke-width: 2.5;
+  animation: wrong-pulse 1s ease-in-out infinite;
+}
+@keyframes wrong-pulse { 50% { stroke-width: 3.6; } }
+@media (prefers-reduced-motion: reduce) { .platform.wrong { animation: none; } }
 .platform-label {
   fill: var(--text); font-size: 24px; font-weight: 600;
   text-anchor: middle; dominant-baseline: central; pointer-events: none;
@@ -248,9 +265,29 @@ svg { width: 100%; height: 100%; display: block; }
   font-size: 12px; font-weight: 700; fill: #08141a;
   text-anchor: middle; dominant-baseline: central; pointer-events: none;
 }
-.train.selected .train-body { stroke: #ffffff; stroke-width: 2.5; }
 .train.ready .train-body { animation: pulse 1.1s ease-in-out infinite; }
 @keyframes pulse { 50% { filter: drop-shadow(0 0 16px currentColor); } }
+/* Train SÉLECTIONNÉ : halo blanc marqué et pulsé — le choix doit SAUTER AUX YEUX
+   (« c'est ce train, choisissez un quai »). Défini après .ready pour primer. */
+.train.selected .train-body {
+  stroke: #ffffff; stroke-width: 3.5;
+  animation: sel-pulse .85s ease-in-out infinite;
+}
+@keyframes sel-pulse {
+  0%, 100% { filter: drop-shadow(0 0 7px #fff) drop-shadow(0 0 12px currentColor); }
+  50%      { filter: drop-shadow(0 0 16px #fff) drop-shadow(0 0 22px currentColor); }
+}
+/* Train prêt à repartir mais VOIE OCCUPÉE (un autre convoi passe) : pulsation
+   ambre — explique pourquoi il reste à quai. */
+.train.holding .train-body { animation: hold-pulse .9s ease-in-out infinite; }
+@keyframes hold-pulse {
+  0%, 100% { filter: drop-shadow(0 0 5px #f5b23c); }
+  50%      { filter: drop-shadow(0 0 15px #f5b23c); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .train.selected .train-body, .train.holding .train-body, .train.ready .train-body { animation: none; }
+  .train.selected .train-body { filter: drop-shadow(0 0 12px #fff); }
+}
 .badge { pointer-events: none; }
 .badge rect { stroke-width: 1.2; }
 .badge text {
@@ -264,6 +301,69 @@ svg { width: 100%; height: 100%; display: block; }
   filter: drop-shadow(0 0 8px var(--red));
 }
 @keyframes ring { 0% { r: 6; opacity: 1; } 100% { r: 26; opacity: 0; } }
+/* Pilule-éclair : court message posé sur le plan, qui monte et s'efface.
+   warn = rouge (erreur/sanction), info = teal (rappel neutre, ex. fret auto). */
+.flash-label { pointer-events: none; animation: flashlbl 1.1s ease-out forwards; }
+.flash-label text {
+  font-weight: 600; text-anchor: middle; dominant-baseline: central;
+  paint-order: stroke; stroke: #0E1420; stroke-width: 3px; stroke-linejoin: round;
+}
+.flash-label rect { fill: rgba(14, 20,32, .94); stroke-width: 1.3; }
+.flash-label.warn rect { stroke: var(--red); }
+.flash-label.warn text { fill: #ffb4b4; }
+.flash-label.info rect { stroke: #2dd4bf; }
+.flash-label.info text { fill: #7ee7d7; }
+.flash-label.ok rect { stroke: var(--green); }
+.flash-label.ok text { fill: #b6f5c8; }
+.flash-label.wait rect { stroke: #f5b23c; }
+.flash-label.wait text { fill: #ffd98a; }
+@keyframes flashlbl {
+  0%   { opacity: 0; transform: translateY(7px); }
+  16%  { opacity: 1; transform: translateY(0); }
+  74%  { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-11px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .flash-label { animation: flashlbl-fade 1.1s ease-out forwards; }
+  @keyframes flashlbl-fade { 0%,12%,74% { opacity: 1; } 100% { opacity: 0; } }
+}
+
+/* Départ à l'heure : éclat vert (anneau + coche + étincelles) posé sur le convoi,
+   à la place d'un libellé. */
+.ontime { pointer-events: none; }
+.ontime-ring {
+  fill: none; stroke: var(--green); stroke-width: 3;
+  filter: drop-shadow(0 0 8px var(--green));
+  animation: ring-green .8s ease-out forwards;
+}
+@keyframes ring-green { 0% { r: 6; opacity: .9; } 100% { r: 30; opacity: 0; } }
+.ontime-check {
+  fill: none; stroke: var(--green); stroke-width: 3.5;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 0 5px var(--green));
+  stroke-dasharray: 1; stroke-dashoffset: 1;
+  transform-box: fill-box; transform-origin: center;
+  animation: check-draw .85s cubic-bezier(.2,.7,.3,1) forwards;
+}
+@keyframes check-draw {
+  0%   { stroke-dashoffset: 1; opacity: 0; transform: scale(.6); }
+  20%  { opacity: 1; }
+  55%  { stroke-dashoffset: 0; transform: scale(1.12); }
+  72%  { transform: scale(1); }
+  100% { stroke-dashoffset: 0; opacity: 0; }
+}
+.ontime-spark {
+  fill: var(--green); filter: drop-shadow(0 0 4px var(--green));
+  animation: spark-fly .8s ease-out forwards;
+}
+@keyframes spark-fly {
+  0%   { transform: translate(0, 0) scale(1); opacity: 1; }
+  100% { transform: translate(var(--dx), var(--dy)) scale(.3); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ontime-ring, .ontime-check, .ontime-spark { animation: ontime-fade .8s ease-out forwards; }
+  @keyframes ontime-fade { 0% { opacity: 1; } 100% { opacity: 0; } }
+}
 .overlay {
   position: absolute; inset: 0; background: rgba(10,14,24,.82);
   display: flex; align-items: center; justify-content: center; z-index: 10;
@@ -273,7 +373,7 @@ svg { width: 100%; height: 100%; display: block; }
 }
 /* L'aide et la confirmation de sortie vivent au niveau du body : fixed et
    au-dessus du hub (z-index 30). */
-#help, #confirm-quit { position: fixed; z-index: 40; }
+#help, #confirm-quit, #welcome { position: fixed; z-index: 40; }
 .card {
   background: var(--panel); border: 1px solid #2a3550; border-radius: 18px;
   padding: 34px 40px; max-width: 560px; text-align: center;
@@ -290,6 +390,66 @@ svg { width: 100%; height: 100%; display: block; }
    guide l'action à faire après le service. */
 .card .btn.primary { background: #2dd4bf; color: #0b1a1f; border-color: #2dd4bf; font-weight: 600; }
 .card .btn.primary:hover { background: #3ee0cc; border-color: #3ee0cc; }
+/* --- Écran de BIENVENUE (accueil première fois) : lecture « tutoriel » nette,
+   distincte de l'aide de rappel (badge teal, pas en pastilles numérotées). --- */
+.card.welcome { border-color: #2dd4bf; box-shadow: 0 0 0 1px rgba(45,212,191,.25), 0 20px 60px rgba(0,0,0,.5); }
+.card.welcome .wc-badge {
+  display: inline-block; margin-bottom: 12px; padding: 4px 13px; border-radius: 999px;
+  background: rgba(45,212,191,.14); border: 1px solid #2dd4bf; color: #2dd4bf;
+  font-size: 12px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase;
+}
+.card.welcome h1 { margin-bottom: 10px; }
+.card.welcome .wc-lead { color: var(--text); text-align: center; font-size: 15.5px; margin-bottom: 20px; }
+.card.welcome .wc-steps { list-style: none; text-align: left; margin: 0 auto 16px; max-width: 440px; }
+.card.welcome .wc-steps li {
+  display: flex; align-items: center; gap: 13px; padding: 11px 0;
+  color: var(--text); font-size: 15px; line-height: 1.45;
+  border-top: 1px solid #232f47;
+}
+.card.welcome .wc-steps li:first-child { border-top: 0; }
+.card.welcome .wc-num {
+  flex: 0 0 30px; width: 30px; height: 30px; border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: rgba(45,212,191,.16); border: 1px solid #2dd4bf; color: #2dd4bf;
+  font-weight: 700; font-size: 15px;
+}
+.card.welcome .wc-steps b { color: #7ee7d7; font-weight: 700; }
+.card.welcome .wc-tip { color: var(--muted); text-align: center; font-size: 13.5px; margin-bottom: 4px; }
+.card.welcome .btn.primary { margin-top: 18px; }
+
+/* --- Repère de TUTORIEL guidé : spotlight (halo pulsé sur la cible, reste de
+   l'écran assombri par l'ombre géante du halo) + bulle à ergot. Le calque ne
+   capte pas les taps ; seule la bulle/le bouton le font. --- */
+#coach { position: fixed; inset: 0; z-index: 38; pointer-events: none; }
+#coach.hidden { display: none; }
+#coach-ring {
+  position: absolute; border-radius: 12px; border: 2.5px solid #2dd4bf;
+  box-shadow: 0 0 0 9999px rgba(10,14,24,.58), 0 0 18px rgba(45,212,191,.6);
+  pointer-events: none;
+  animation: coach-pulse 1.2s ease-in-out infinite;
+  transition: left .2s ease, top .2s ease, width .2s ease, height .2s ease;
+}
+@keyframes coach-pulse {
+  50% { border-color: #7ee7d7; box-shadow: 0 0 0 9999px rgba(10,14,24,.58), 0 0 28px rgba(45,212,191,.95); }
+}
+#coach-bubble {
+  position: absolute; transform: translateX(-50%); pointer-events: auto;
+  max-width: min(86vw, 330px); padding: 13px 16px; border-radius: 12px;
+  background: var(--panel); border: 1px solid #2dd4bf; color: var(--text);
+  box-shadow: 0 12px 40px rgba(0,0,0,.55); text-align: center;
+}
+#coach-bubble p { margin: 0; font-size: 14.5px; line-height: 1.45; }
+#coach-bubble b { color: #7ee7d7; font-weight: 700; }
+#coach-bubble .btn { margin-top: 12px; font-size: 15px; padding: 7px 22px; }
+#coach-bubble .btn.hidden { display: none; }
+/* ergot pointant la cible (bulle au-dessus ou en dessous) */
+#coach-bubble::after {
+  content: ""; position: absolute; left: var(--caret, 50%); transform: translateX(-50%);
+  border: 8px solid transparent;
+}
+#coach-bubble.below::after { bottom: 100%; border-bottom-color: #2dd4bf; }
+#coach-bubble.above::after { top: 100%; border-top-color: #2dd4bf; }
+@media (prefers-reduced-motion: reduce) { #coach-ring { animation: none; } }
 #stars { font-size: 44px; letter-spacing: 8px; color: #f5b23c; margin: 10px 0 4px; }
 /* Écran de fin : la carte prend l'état RÉUSSITE (étoiles dorées) ou ÉCHEC
    (0 étoile). L'échec est sans ambiguïté : liséré rouge, titre rouge, étoiles
@@ -308,6 +468,23 @@ svg { width: 100%; height: 100%; display: block; }
   box-shadow: 0 0 0 1px rgba(245, 178, 60, .25), 0 24px 60px -24px rgba(0, 0, 0, .65);
 }
 #end .card.country-done #end-title { color: #f5b23c; }
+
+/* Service PARFAIT (zéro retard) : titre doré + étoiles qui scintillent, halo
+   chaud sur la carte — récompense la journée sans faute. */
+#end .card.perfect {
+  border-color: rgba(245, 178, 60, .7);
+  box-shadow: 0 0 0 1px rgba(245, 178, 60, .3), 0 0 40px -8px rgba(245, 178, 60, .35), 0 24px 60px -24px rgba(0, 0, 0, .65);
+}
+#end .card.perfect #end-title { color: #f5b23c; }
+#end .card.perfect #stars {
+  color: #ffd66b;
+  animation: perfect-shine 1.4s ease-in-out infinite;
+}
+@keyframes perfect-shine {
+  0%, 100% { filter: drop-shadow(0 0 5px rgba(245, 178, 60, .55)); transform: scale(1); }
+  50%      { filter: drop-shadow(0 0 18px rgba(255, 214, 107, .95)); transform: scale(1.05); }
+}
+@media (prefers-reduced-motion: reduce) { #end .card.perfect #stars { animation: none; } }
 #end-country {
   display: flex; align-items: center; justify-content: center; gap: 12px;
   margin: 4px 0 14px; padding: 12px 16px; border-radius: 14px; text-align: left;

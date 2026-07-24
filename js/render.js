@@ -241,8 +241,15 @@ const SND = {
   announce() { playTone(830, 0, 0.12); playTone(1108, 0.13, 0.2); },
   freight()  { playTone(98, 0, 0.55, "sawtooth", 0.045); playTone(147, 0, 0.55, "sawtooth", 0.03); },
   depart()   { playTone(1244, 0, 0.08, "triangle"); playTone(1661, 0.09, 0.13, "triangle"); },
+  // Départ À L'HEURE : carillon ascendant qui MONTE avec la série (plafonné) —
+  // plus la série est longue, plus la récompense sonore grimpe.
+  onTime(n)  { const k = Math.min((n || 1) - 1, 7), base = 720 + k * 66;
+               playTone(base, 0, 0.08, "triangle", 0.05);
+               playTone(base * 1.5, 0.07, 0.14, "triangle", 0.045); },
   incident() { playTone(622, 0, 0.16, "square", 0.03); playTone(466, 0.18, 0.24, "square", 0.03); },
-  end()      { playTone(659, 0, 0.12); playTone(830, 0.13, 0.12); playTone(988, 0.26, 0.3); }
+  end()      { playTone(659, 0, 0.12); playTone(830, 0.13, 0.12); playTone(988, 0.26, 0.3); },
+  // Service PARFAIT : petite fanfare montante, plus riche que end().
+  perfect()  { [523, 659, 784, 1047, 1319].forEach((f, i) => playTone(f, i * 0.10, 0.24, "triangle", 0.05)); }
 };
 
 // Jeu 100 % visuel : plus de bande d'info ni de message texte. toast() est
@@ -252,6 +259,56 @@ function toast(_msg, _ms) { /* désactivé — feedback purement visuel */ }
 function flashAt(pt) {
   const c = el("circle", { cx: pt.x, cy: pt.y, r: 6, class: "conflict-ring" }, gFx);
   setTimeout(() => c.remove(), 900);
+}
+// Pilule-éclair : un court message posé sur le plan (même langage visuel que les
+// badges et la pastille de fermeture), qui monte et s'efface. Sert à rendre
+// lisibles les retours autrefois muets — tap sur un fret, quai refusé, refoulement.
+// kind : "warn" (rouge) pour une erreur/sanction, "info" (teal) pour un simple rappel.
+function flashLabel(pt, text, kind) {
+  if (!gFx || !pt) return;
+  const cls = kind === "warn" ? "warn" : kind === "ok" ? "ok" : kind === "wait" ? "wait" : "info";
+  const g = el("g", { class: "flash-label " + cls }, gFx);
+  const rect = el("rect", { rx: 7 * UIK }, g);           // posé d'abord : sous le texte
+  const txt = el("text", { x: pt.x, y: pt.y }, g);
+  txt.style.fontSize = (13 * UIK) + "px";
+  txt.textContent = text;
+  let w; try { w = txt.getBBox().width; } catch (e) { w = text.length * 7 * UIK; }
+  const padX = 11 * UIK, h = 23 * UIK;
+  rect.setAttribute("x", pt.x - w / 2 - padX);
+  rect.setAttribute("y", pt.y - h / 2);
+  rect.setAttribute("width", w + 2 * padX);
+  rect.setAttribute("height", h);
+  setTimeout(() => g.remove(), 1100);
+}
+
+// Départ À L'HEURE : plutôt qu'un libellé, un petit éclat vert posé sur la tête
+// du convoi — un anneau qui s'ouvre + une coche qui se dessine. Au-delà du 1er
+// de la série, des étincelles fusent et s'intensifient avec le combo (écho
+// visuel du carillon montant SND.onTime).
+function flashOnTime(pt, streak) {
+  if (!gFx || !pt) return;
+  const n = Math.min(streak || 1, 6);
+  const g = el("g", { class: "ontime" }, gFx);
+  el("circle", { cx: pt.x, cy: pt.y, r: 6, class: "ontime-ring" }, g);
+  // Coche centrée sur la tête ; pathLength=1 pour la faire « s'écrire » via le dash
+  const s = 9 * UIK * (1 + (n - 1) * 0.08);   // grandit un peu avec la série
+  el("path", {
+    d: "M " + (pt.x - s) + " " + pt.y +
+       " l " + (s * 0.72).toFixed(1) + " " + (s * 0.72).toFixed(1) +
+       " l " + (s * 1.35).toFixed(1) + " " + (-s * 1.5).toFixed(1),
+    pathLength: 1, class: "ontime-check"
+  }, g);
+  // Étincelles en couronne à partir de la 2e série (nombre croissant, plafonné)
+  if (n >= 2) {
+    const sparks = Math.min(n + 1, 7);
+    for (let i = 0; i < sparks; i++) {
+      const a = (i / sparks) * Math.PI * 2;
+      const sp = el("circle", { cx: pt.x, cy: pt.y, r: 2.2 * UIK, class: "ontime-spark" }, g);
+      sp.style.setProperty("--dx", (Math.cos(a) * 24 * UIK).toFixed(1) + "px");
+      sp.style.setProperty("--dy", (Math.sin(a) * 24 * UIK).toFixed(1) + "px");
+    }
+  }
+  setTimeout(() => g.remove(), 950);
 }
 
 function fmt(min) {
@@ -266,8 +323,10 @@ function trainNode(t) {
   t.maskEls = []; // masques « vide » : largeur pilotée par l'embarquement à quai
   for (let i = 0; i < t.cars; i++) {
     const car = el("g", {}, g);
-    // zone de clic généreuse (invisible) : indispensable au doigt
-    el("rect", { x: -CAR_SPACING / 2 - 4, y: -26, width: CAR_SPACING + 8, height: 52, fill: "transparent" }, car);
+    // zone de clic généreuse (invisible) : indispensable au doigt. Hauteur
+    // grossie sur tactile (×UIK) pour une cible confortable même sur petit écran.
+    const hitH = 52 * UIK;
+    el("rect", { x: -CAR_SPACING / 2 - 6, y: -hitH / 2, width: CAR_SPACING + 12, height: hitH, fill: "transparent" }, car);
     // hauteur (verticale) grossie sur mobile ; la longueur CAR_LEN reste fixe
     // pour ne pas empiéter sur l'espacement (physique du gril)
     const bh = (i === 0 ? 20 : 16) * UIK;
@@ -308,6 +367,11 @@ function trainNode(t) {
   t.badgeText = el("text", { y: 0.5 * UIK }, badge);
   t.badgeText.style.fontSize = (12 * UIK) + "px";
   t.badgeEl = badge;
+  // Le badge d'heure, posé AU-DESSUS du convoi, est une cible naturelle : on le
+  // rend cliquable et il sélectionne le train (les enfants tapent l'heure).
+  badge.style.pointerEvents = "auto";
+  badge.style.cursor = "pointer";
+  badge.addEventListener("click", ev => { ev.stopPropagation(); onTrainClick(t); });
   g.addEventListener("click", ev => { ev.stopPropagation(); onTrainClick(t); });
   return g;
 }
@@ -439,6 +503,7 @@ function updateBadge(t) {
   // le badge apparaît dès que le train s'est immobilisé à son point d'attente
   if (t.freight || !t.badgeEl || !t.headPos ||
       (t.state === "approaching" && !t.settled) ||
+      t.wrongPlatform || // mauvais quai : le badge « dép HH:MM » serait trompeur
       t.state === "movingOut" || t.state === "done") {
     if (t.badgeEl) t.badgeEl.setAttribute("visibility", "hidden");
     return;
@@ -465,14 +530,15 @@ function updateBadge(t) {
 // masque disparaît (wagons pleins, aspect normal).
 function updateBoarding(t) {
   if (t.freight || !t.maskEls) return;
-  if (t.state !== "dwell") {
+  // Jauge d'embarquement seulement à l'arrêt sur un BON quai. Hors arrêt, ou sur
+  // un mauvais quai (aucune sortie vers la destination → le convoi rebrousse
+  // plein, sans débarquer), les wagons restent pleins (masque nul).
+  const hasOut = t.state === "dwell" && !!paths["out:" + t.to + ":" + t.platform];
+  if (!hasOut) {
     for (const m of t.maskEls) m.setAttribute("width", 0);
     return;
   }
-  // fin d'arrêt = départ prévu si une sortie existe, sinon simple arrêt minimum
-  const hasOut = !!paths["out:" + t.to + ":" + t.platform];
-  const end = hasOut ? Math.max(t.dep, t.actualArr + MIN_DWELL)
-                     : t.actualArr + MIN_DWELL;
+  const end = Math.max(t.dep, t.actualArr + MIN_DWELL);
   const denom = end - t.actualArr;
   const p = denom > 0 ? Math.min(1, Math.max(0, (gameMin - t.actualArr) / denom)) : 1;
   const n = t.maskEls.length;

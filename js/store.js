@@ -17,6 +17,7 @@
 const SCHEMA_VERSION = 1;
 const KEY_PROGRESS = "station-progress";
 const KEY_MUTED = "station-muted";
+const KEY_ONBOARDED = "station-onboarded"; // « le joueur a déjà appris le geste »
 
 // --- Support de stockage : natif si Capacitor est présent, sinon
 //     localStorage. Interface identique, asynchrone : read → string|null. ---
@@ -41,6 +42,7 @@ const _store = makeBackend();
 // --- Caches mémoire : lus en synchrone par le jeu, hydratés par loadStore. ---
 let _progress = { version: SCHEMA_VERSION, stations: {} };
 let _muted = false;
+let _onboarded = false;
 
 // --- Migration : amène n'importe quel format vers le schéma courant. ---
 function migrate(raw) {
@@ -53,14 +55,16 @@ function migrate(raw) {
 
 // --- Chargement unique au démarrage, AVANT toute lecture de progression. ---
 async function loadStore() {
-  const [rawProg, rawMuted] = await Promise.all([
+  const [rawProg, rawMuted, rawOnboarded] = await Promise.all([
     _store.read(KEY_PROGRESS),
-    _store.read(KEY_MUTED)
+    _store.read(KEY_MUTED),
+    _store.read(KEY_ONBOARDED)
   ]);
   let parsed = null;
   try { parsed = rawProg ? JSON.parse(rawProg) : null; } catch (e) { parsed = null; }
   _progress = migrate(parsed);
   _muted = rawMuted === "1";
+  _onboarded = rawOnboarded === "1";
   // Si la sauvegarde n'était pas déjà au schéma courant, on la réécrit migrée.
   if (!parsed || parsed.version !== SCHEMA_VERSION) persistProgress();
 }
@@ -88,3 +92,11 @@ function saveResult(id, stars, delay) {
 // ------------------------------------------------------------------
 function getMuted() { return _muted; }
 function setMuted(on) { _muted = !!on; _store.write(KEY_MUTED, _muted ? "1" : "0"); }
+
+// ------------------------------------------------------------------
+// API accueil premier service : le geste central (train → quai) n'est enseigné
+// qu'une seule fois. Une fois le premier aiguillage réussi, on ne réaccueille
+// plus jamais le joueur (même support durable que la progression).
+// ------------------------------------------------------------------
+function getOnboarded() { return _onboarded; }
+function setOnboarded(on) { _onboarded = !!on; _store.write(KEY_ONBOARDED, _onboarded ? "1" : "0"); }

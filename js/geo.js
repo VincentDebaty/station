@@ -29,7 +29,7 @@ const GEO = {
     { id: "am-sud",      name: "Amérique du Sud",            bbox: [-82, -56, -34, 13] },
     { id: "afrique",     name: "Afrique",                    bbox: [-19, -35, 52, 38] },
     { id: "asie",        name: "Asie",                       bbox: [26, 5, 150, 75] },
-    { id: "sea-oceanie", name: "Asie du Sud-Est / Océanie",  bbox: [92, -48, 180, 28] }
+    { id: "sea-oceanie", name: "Océanie",                    bbox: [92, -48, 180, 28] }
   ],
 
   // Pays jouables uniquement. iso = ADM0_A3 (lien vers WORLDMAP).

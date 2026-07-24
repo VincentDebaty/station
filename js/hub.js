@@ -44,6 +44,7 @@ async function startStation(i) {
   // (gares terminus). Nécessite les quais présents et mis en page.
   positionTerminusHud();
   started = true;
+  maybeStartOnboarding(); // premier service : accueil (aide + départ en pause)
   // orientation : tagline court dans la bande d'info réservée (une ligne).
   // La description longue (cfg.desc) reste disponible pour un usage ultérieur.
   toast(cfg.tagline || cfg.name, 6000);

@@ -25,7 +25,15 @@ function frame(ts) {
     gameMin += dtMin;
     tick(dtMin);
     document.getElementById("clock").textContent = fmt(gameMin);
+  } else if (started && ended && !paused && !orientationBlocked &&
+             typeof anyTrainMoving === "function" && anyTrainMoving()) {
+    // Service terminé, score figé : on laisse les derniers convois TERMINER leur
+    // sortie en arrière-plan (derrière la modale), sans avancer l'horloge ni le
+    // score — le mouvement de sortie ne dépend que de dtMin, pas de gameMin.
+    tick(dtReal * speed / SEC_PER_GAMEMIN);
   }
+  // Repère de tutoriel : recalé chaque frame (même en pause) pour épouser sa cible.
+  if (typeof positionCoach === "function") positionCoach();
   requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
@@ -151,6 +159,27 @@ function openHelp() {
   if (started && !ended) { paused = true; updatePauseIcon(); }
 }
 function closeHelp() { helpOverlay.classList.add("hidden"); }
+// ------------------------------------------------------------------
+// Écran de bienvenue (accueil première fois) : distinct de l'aide de rappel.
+// Ouvert par maybeStartOnboarding() ; sa fermeture relance le service guidé.
+// ------------------------------------------------------------------
+const welcomeOverlay = document.getElementById("welcome");
+function openWelcome() {
+  hudControls.classList.add("hidden");
+  welcomeOverlay.classList.remove("hidden");
+  if (started && !ended) { paused = true; updatePauseIcon(); }
+}
+function closeWelcome() {
+  welcomeOverlay.classList.add("hidden");
+  // relance le service : un train s'annonce, puis le jeu se regèle à son arrivée
+  if (typeof onboardingWelcomeClosed === "function") onboardingWelcomeClosed();
+}
+document.getElementById("btn-welcome-start").addEventListener("click", closeWelcome);
+welcomeOverlay.addEventListener("click", e => { if (e.target === welcomeOverlay) closeWelcome(); });
+// Bouton du repère de tutoriel (« Suivant » / « Continuer ») : avance/termine.
+document.getElementById("coach-next").addEventListener("click", () => {
+  if (typeof coachNext === "function") coachNext();
+});
 document.getElementById("btn-help").addEventListener("click", openHelp);
 document.getElementById("btn-help-close").addEventListener("click", closeHelp);
 // clic sur le fond (hors carte) : referme l'aide
@@ -163,10 +192,12 @@ document.getElementById("btn-mute").addEventListener("click", () => {
 document.getElementById("btn-reset").addEventListener("click", async () => {
   document.getElementById("end").classList.add("hidden");
   await resetGame(); started = true; // génération asynchrone : on attend la journée
+  maybeStartOnboarding(); // sans effet si déjà initié (garde interne)
 });
 document.getElementById("btn-replay").addEventListener("click", async () => {
   document.getElementById("end").classList.add("hidden");
   await resetGame(); started = true;
+  maybeStartOnboarding(); // sans effet si déjà initié (garde interne)
 });
 document.getElementById("btn-end-map").addEventListener("click", () => showHub());
 // Cartouche haut-gauche = bouton retour vers la carte (même logique que « ‹ »

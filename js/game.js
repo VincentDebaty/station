@@ -4,11 +4,153 @@
 // interactions (sélection train/quai), imprévus et boucle de simulation.
 // ------------------------------------------------------------------
 let trains, gameMin, speed, paused, started, ended, totalDelay, selected, activeRoutes, queueSeq;
+let onTimeStreak; // série de départs à l'heure consécutifs (juice : combo)
 
 // Retard plafond : au-delà, le service est interrompu (game over). Réglable
 // par gare via le champ « maxDelay » de sa fiche ; 120 min par défaut.
 const DEFAULT_MAX_DELAY = 120;
 function maxDelay() { return STATION.maxDelay ?? DEFAULT_MAX_DELAY; }
+
+// ------------------------------------------------------------------
+// Accueil du tout premier service : TUTORIEL GUIDÉ (une seule fois)
+// ------------------------------------------------------------------
+// Au premier lancement (flag persistant côté store), on prend le joueur par la
+// main avec des repères VISUELS — un halo pulsé + une bulle qui pointe EXACTEMENT
+// quoi toucher, le reste de l'écran assombri (spotlight). Six temps :
+//   1. le 1er train à choisir     2. le quai où l'envoyer
+//   3. où se lit le retard         4. le 2e train
+//   5. son quai                    6. l'objectif (< 30 min → étoile → ville suivante)
+// Le service se gèle pendant chaque repère et reprend quand le joueur agit.
+// Ne s'affiche qu'UNE fois (setOnboarded à la fin).
+// Phases : null (initié) | "welcome" | "wait1"/"tap1"/"plat1" | "delay"
+//          | "wait2"/"tap2"/"plat2" | "goal".
+let onboarding = null;
+let _tutFirstId = null;  // id du 1er train guidé (pour en désigner un AUTRE ensuite)
+let _coachTarget = null; // élément DOM que le repère pointe (suivi chaque frame)
+
+function maybeStartOnboarding() {
+  // Démo « limites » (adhoc) et joueur déjà initié : aucun accueil.
+  if (STATION.adhoc || (typeof getOnboarded === "function" && getOnboarded())) {
+    onboarding = null; hideCoach(); return;
+  }
+  _tutFirstId = null;
+  onboarding = "welcome";
+  if (typeof openWelcome === "function") openWelcome(); // écran de bienvenue ET pause
+}
+function freezeGame(on) {
+  paused = !!on;
+  if (typeof updatePauseIcon === "function") updatePauseIcon();
+}
+// Fin de la bienvenue : le service tourne jusqu'à ce que le 1er train se pose.
+function onboardingWelcomeClosed() {
+  if (onboarding !== "welcome") return;
+  onboarding = "wait1";
+  freezeGame(false);
+}
+// Un quai qui dessert la destination du train ET libre (le bon choix à désigner).
+function tutServingPlatform(t) {
+  const links = LINKS[t.from] || [];
+  const good = links.filter(pid => paths["out:" + t.to + ":" + pid] &&
+    !platformReserved(pid) && !platformClosed(pid));
+  return good[0] ?? links.find(pid => paths["out:" + t.to + ":" + pid]) ?? links[0];
+}
+// Appelé chaque tick : fait apparaître le repère quand le bon train est prêt.
+function onboardingTick() {
+  if (onboarding === "wait1") {
+    const t = trains.find(o => !o.freight && !o.target && o.settled &&
+      (o.state === "waiting" || o.state === "approaching"));
+    if (!t) return;
+    _tutFirstId = t.id;
+    freezeGame(true); onboarding = "tap1";
+    coachAt(t.el, "Voici un train qui s'annonce. <b>Touchez-le</b> pour le choisir.");
+  } else if (onboarding === "wait2") {
+    const t = trains.find(o => !o.freight && !o.target && o.settled && o.id !== _tutFirstId &&
+      (o.state === "waiting" || o.state === "approaching"));
+    if (!t) return;
+    freezeGame(true); onboarding = "tap2";
+    coachAt(t.el, "Un autre train arrive. <b>Touchez-le</b> à son tour.");
+  }
+}
+// Tap sur un train voyageur pendant le tutoriel → on désigne son quai.
+function onboardingTrainTapped(t) {
+  if (onboarding !== "tap1" && onboarding !== "tap2") return;
+  const pl = document.querySelector('.platform[data-platform="' + tutServingPlatform(t) + '"]');
+  onboarding = (onboarding === "tap1") ? "plat1" : "plat2";
+  coachAt(pl, "Envoyez-le sur ce <b>quai éclairé</b> : il dessert sa destination.");
+}
+// Quai choisi pendant le tutoriel → étape d'explication suivante.
+function onboardingPlatformChosen() {
+  if (onboarding === "plat1") {
+    onboarding = "delay";
+    coachAt(document.getElementById("delay"),
+      "Il entre, s'arrête, puis repartira seul à l'heure. <b>Ici s'affiche le retard</b> cumulé — gardez-le au plus bas.",
+      "Suivant");
+  } else if (onboarding === "plat2") {
+    onboarding = "goal";
+    coachAt(document.getElementById("delay"),
+      "À vous ! Terminez le service avec <b>moins de 30 min</b> de retard pour décrocher une étoile et débloquer la ville suivante.",
+      "Continuer");
+  }
+}
+// Bouton du repère (étapes d'explication) : avance / termine.
+function coachNext() {
+  if (onboarding === "delay") {
+    onboarding = "wait2"; hideCoach(); freezeGame(false); // le 1er part, un 2e arrive
+  } else if (onboarding === "goal") {
+    onboarding = null; hideCoach();
+    if (typeof setOnboarded === "function") setOnboarded(true);
+    freezeGame(false);
+  }
+}
+// --- Repère : halo pulsé sur la cible (spotlight) + bulle de texte (+ bouton). ---
+function coachAt(target, html, btnLabel) {
+  _coachTarget = target || null;
+  const box = document.getElementById("coach");
+  const txt = document.getElementById("coach-text");
+  const btn = document.getElementById("coach-next");
+  if (!box || !txt || !btn) return;
+  txt.innerHTML = html;
+  btn.textContent = btnLabel || "Suivant";
+  btn.classList.toggle("hidden", !btnLabel); // bouton seulement pour les explications
+  box.classList.remove("hidden");
+  positionCoach();
+}
+function hideCoach() {
+  _coachTarget = null;
+  const box = document.getElementById("coach");
+  if (box) box.classList.add("hidden");
+}
+// Recalé chaque frame (depuis la boucle) : le halo épouse la cible, la bulle se
+// place au-dessus ou en dessous selon la place, ergot pointé vers la cible.
+function positionCoach() {
+  const box = document.getElementById("coach");
+  if (!box || box.classList.contains("hidden")) return;
+  if (!_coachTarget || !_coachTarget.getBoundingClientRect) return;
+  const r = _coachTarget.getBoundingClientRect();
+  if (!r.width && !r.height) return;
+  const ring = document.getElementById("coach-ring");
+  const bubble = document.getElementById("coach-bubble");
+  const pad = 8;
+  ring.style.left = (r.left - pad) + "px";
+  ring.style.top = (r.top - pad) + "px";
+  ring.style.width = (r.width + 2 * pad) + "px";
+  ring.style.height = (r.height + 2 * pad) + "px";
+  const vh = window.innerHeight, vw = window.innerWidth;
+  const below = (r.top + r.height / 2) < vh * 0.5; // cible haute → bulle dessous
+  const targetCx = r.left + r.width / 2;
+  // bulle maintenue entièrement à l'écran (cible au bord comprise)…
+  const bw = bubble.offsetWidth || 300, half = bw / 2 + 8;
+  const cx = Math.max(half, Math.min(vw - half, targetCx));
+  bubble.style.left = cx + "px";
+  // …mais l'ergot continue de pointer la cible même si la bulle a été recentrée
+  const caret = Math.max(14, Math.min(bw - 14, targetCx - (cx - bw / 2)));
+  bubble.style.setProperty("--caret", caret + "px");
+  bubble.classList.toggle("above", !below);
+  bubble.classList.toggle("below", below);
+  const gap = 16;
+  if (below) { bubble.style.top = (r.top + r.height + gap) + "px"; bubble.style.bottom = "auto"; }
+  else { bubble.style.top = "auto"; bubble.style.bottom = (vh - r.top + gap) + "px"; }
+}
 
 // ------------------------------------------------------------------
 // Génération d'horaire hors thread principal (Web Worker).
@@ -52,6 +194,8 @@ async function resetGame() {
   started = false; ended = false; paused = false;
   gameMin = 0; speed = 1;
   totalDelay = 0; selected = null; activeRoutes = {}; queueSeq = 0;
+  onTimeStreak = 0;
+  hideCoach(); // efface un éventuel repère de tutoriel resté d'un service précédent
   document.getElementById("hud-controls").classList.add("hidden");
   document.getElementById("settings").classList.remove("open"); // engrenage revient à l'état repos
   if (typeof updatePauseIcon === "function") updatePauseIcon(); // paused=false → icône ▶→⏸, clock non-teal
@@ -258,12 +402,16 @@ function refreshEligible() {
   if (typeof focusPortal === "function") focusPortal(selecting ? selected.from : null);
   document.querySelectorAll(".platform").forEach(pl => {
     const pid = +pl.dataset.platform;
-    // tout quai accessible depuis l'origine est surligné (.eligible) pendant
-    // la sélection — un mauvais choix vaudra un refoulement automatique
+    // TOUS les quais accessibles depuis l'origine sont surlignés à l'identique
+    // (à la couleur de la destination). On ne dit PAS lequel dessert vraiment la
+    // destination : c'est au joueur de le savoir. Un mauvais choix reste possible
+    // et sanctionné par un refoulement — signalé au clic et à l'arrêt, mais pas
+    // AVANT le choix (sinon il n'y aurait plus d'erreur possible, donc plus de jeu).
     const ok = selecting &&
                LINKS[selected.from].includes(pid) &&
                !platformReserved(pid) && !platformClosed(pid);
     pl.classList.toggle("eligible", !!ok);
+    pl.classList.remove("serves"); // (plus de distinction visuelle à la sélection)
     if (ok) pl.style.setProperty("--elig", eligColor);
     else pl.style.removeProperty("--elig");
   });
@@ -277,6 +425,9 @@ function refreshPlatformStates() {
       (t.state === "movingIn" || t.state === "dwell" ||
        t.state === "movingThrough" || t.state === "movingBack"));
     pl.classList.toggle("occupied", !!occ);
+    // Quai en défaut : un train y stationne alors qu'il n'en repart pas vers sa
+    // destination → liseré rouge le temps qu'il refoule (explique l'attente).
+    pl.classList.toggle("wrong", !!(occ && occ.wrongPlatform && occ.state === "dwell"));
     if (occ) pl.style.setProperty("--occ", occ.freight ? "#8f98a8" : DEST_COLOR[occ.to]);
     else pl.style.removeProperty("--occ");
   });
@@ -287,20 +438,23 @@ function onPlatformClick(pid) {
   const q = PLATFORMS.find(x => x.id === pid);
   const center = { x: (PLAT_X1 + PLAT_X2) / 2, y: q.cy };
   if (!LINKS[selected.from].includes(pid)) {
-    flashAt(center, "Quai " + pid + " : pas de voie depuis " + PORTALS[selected.from].label);
+    flashAt(center); flashLabel(center, "Aucune voie ici", "warn");
     return;
   }
   if (platformReserved(pid)) {
-    flashAt(center, "Quai " + pid + " déjà réservé");
+    flashAt(center); flashLabel(center, "Quai réservé", "warn");
     return;
   }
   if (platformClosed(pid)) {
-    flashAt(center, "Quai " + pid + " fermé");
+    flashAt(center); flashLabel(center, "Quai fermé", "warn");
     return;
   }
   selected.target = pid;
   const pathId = "in:" + selected.from + ":" + pid;
-  // l'itinéraire en pointillés démarre à la position actuelle du convoi
+  // l'itinéraire en pointillés démarre à la position actuelle du convoi. On NE
+  // révèle PAS ici qu'un quai est mauvais : le tracé reste à la couleur de la
+  // destination. L'erreur ne se découvre qu'à l'arrivée du train (pilule + demi-
+  // tour), pour laisser le joueur se tromper.
   const ap = APPROACH[selected.from];
   const lead = slicePts(ap, selected.qs != null ? selected.qs : ap.len, ap.len);
   const pend = el("path", {
@@ -310,17 +464,21 @@ function onPlatformClick(pid) {
   pend.style.stroke = DEST_COLOR[selected.to]; pend.style.color = DEST_COLOR[selected.to];
   selected.pendingEl = pend;
   selected = null;
+  onboardingPlatformChosen(); // accueil : geste complet → joueur initié
   refreshEligible();
 }
 function onTrainClick(t) {
   if (ended) return;
   if (t.freight) {
-    toast("Fret — passage automatique prioritaire");
+    // Le fret traverse tout seul : on ne l'aiguille pas. On l'ACQUITTE quand
+    // même (le tap n'est plus « mort ») par une pilule d'info sur le convoi.
+    flashLabel(t.headPos, "Fret · passage auto", "info");
     return;
   }
   // Sélectionnable dès l'approche : on peut préparer l'itinéraire avant l'arrêt
   const routable = t.state === "waiting" || t.state === "approaching";
   if (routable && !t.target) {
+    onboardingTrainTapped(t); // tutoriel : le repère passe du train à son quai
     selected = t;
     t.el.classList.add("selected"); // retour visuel immédiat, sans attendre le tick
     refreshEligible();
@@ -357,12 +515,15 @@ board.addEventListener("click", e => {
 // Boucle de jeu
 // ------------------------------------------------------------------
 // Retard vivant : le retard déjà encaissé + celui qui se creuse pour les
-// trains pas encore partis — le compteur bouge PENDANT que le joueur hésite
+// trains pas encore partis — le compteur bouge PENDANT que le joueur hésite.
+// On ne compte que les MINUTES ENTIÈRES de retard, par convoi : un train sous
+// la minute est « à l'heure » (même règle que la pastille) et pèse 0. Ainsi le
+// compteur et la mention « à l'heure » ne peuvent plus se contredire.
 function liveDelay() {
   let d = totalDelay;
   for (const t of trains)
     if (!t.freight && (t.state !== "movingOut" || t.refoul) && t.state !== "done")
-      d += Math.max(0, gameMin - t.dep);
+      d += Math.floor(Math.max(0, gameMin - t.dep - DEPART_GRACE));
   return d;
 }
 function updateDelay() {
@@ -372,6 +533,15 @@ function updateDelay() {
   // Couleur alignée sur le barème d'étoiles : vert tant qu'on vise 3★ (< 10),
   // ambre tant qu'une étoile reste jouable (< 30), rouge dès que 0★ (≥ 30).
   d.className = v < 10 ? "" : v < 30 ? "warn" : "bad";
+}
+
+// Reste-t-il un convoi en mouvement ? Sert à prolonger l'animation APRÈS la fin
+// du service : la modale sort tôt (score figé), mais les derniers convois doivent
+// finir de glisser hors écran en arrière-plan.
+function anyTrainMoving() {
+  return !!trains && trains.some(t =>
+    t.state === "movingOut" || t.state === "movingThrough" ||
+    t.state === "movingIn" || t.state === "movingBack");
 }
 
 function tick(dtMin) {
@@ -394,7 +564,7 @@ function tick(dtMin) {
       case "approaching":
         placeQueue(t, dtMin);
         t.el.classList.toggle("selected", selected === t);
-        t.el.classList.toggle("ready", !t.freight && !t.target);
+        t.el.classList.toggle("ready", !t.freight && !t.target && selected !== t);
         if (gameMin >= (t.arrEff ?? t.arr)) {
           t.state = "waiting";
           // le train est à l'arrêt en gare : son heure d'arrivée s'efface
@@ -407,7 +577,7 @@ function tick(dtMin) {
       case "waiting": {
         placeQueue(t, dtMin);
         t.el.classList.toggle("selected", selected === t);
-        t.el.classList.toggle("ready", !t.freight && !t.target);
+        t.el.classList.toggle("ready", !t.freight && !t.target && selected !== t);
         // FIFO sur la voie d'approche : tant qu'un train du même portail, entré
         // avant lui dans la file, n'a pas dégagé la voie, il ne peut pas
         // s'engager — pas de dépassement (le 2ᵉ ne double jamais le 1ᵉʳ).
@@ -496,35 +666,23 @@ function tick(dtMin) {
         // cabine, voie du haut — vers son portail d'origine, puis se
         // représentera à l'arrivée. La perte de temps est la sanction.
         if (!paths["out:" + t.to + ":" + t.platform]) {
-          if (gameMin >= t.actualArr + MIN_DWELL) {
-            const backOut = "out:" + t.from + ":" + t.platform;
-            if (paths[backOut]) {
-              if (canGrant(backOut)) {
-                grant(backOut, t);
-                t.exitPath = backOut;
-                t.exitTo = t.from; // la sortie mène au portail d'origine
-                t.refoul = true;
-                // sortie du même côté que l'entrée : le convoi glisse
-                // d'abord le long du quai, comme un demi-tour
-                t.backS = Math.max(0, (PLAT_X2 - PLAT_X1 - 2 * STOP_MARGIN) - (t.cars - 1) * CAR_SPACING);
-                t.state = "movingOut";
-                t.progress = 0;
-                SND.depart();
-                toast(t.id + " refoule — quai " + t.platform + " ≠ " + PORTALS[t.to].label);
-                refreshEligible();
-              }
-            } else {
-              // portail sans voie de départ : ancienne manœuvre en marche arrière
-              const backPath = "in:" + t.from + ":" + t.platform;
-              if (canGrant(backPath)) {
-                grant(backPath, t);
-                t.exitPath = backPath;
-                t.state = "movingBack";
-                t.progress = 1 - t.stopS / paths[backPath].len;
-                toast(t.id + " refoule — quai " + t.platform + " ≠ " + PORTALS[t.to].label);
-                refreshEligible();
-              }
-            }
+          if (!t.wrongPlatform) {
+            // instant de l'arrêt sur le mauvais quai : on l'explique tout de
+            // suite (pilule + son), puis le train refoule sans attendre
+            t.wrongPlatform = true;
+            flashLabel(t.headPos, "Mauvais quai — refoulement", "warn");
+            SND.incident();
+          }
+          // Demi-tour IMMÉDIAT (plein, sans arrêt) : le convoi RECULE le long de
+          // sa voie d'entrée jusqu'à l'aiguillage et s'y arrête, prêt à être
+          // ré-aiguillé — il ne quitte jamais l'écran (pas de disparition/réapparition).
+          const backPath = "in:" + t.from + ":" + t.platform;
+          if (canGrant(backPath)) {
+            grant(backPath, t);
+            t.exitPath = backPath;
+            t.state = "movingBack";
+            t.progress = 1 - t.stopS / paths[backPath].len;
+            refreshEligible();
           }
           break;
         }
@@ -532,6 +690,7 @@ function tick(dtMin) {
         if (canLeave) {
           const pathId = "out:" + t.to + ":" + t.platform;
           if (canGrant(pathId)) {
+            t.holding = false;
             grant(pathId, t);
             t.exitPath = pathId;
             // Demi-tour : le convoi est garé au fond du quai ; la sortie
@@ -542,12 +701,33 @@ function tick(dtMin) {
               : 0;
             t.state = "movingOut";
             t.progress = 0;
-            t.depDelay = Math.max(0, gameMin - t.dep);
-            totalDelay += t.depDelay;
-            SND.depart();
+            t.depDelay = Math.max(0, gameMin - t.dep - DEPART_GRACE);
+            // On n'encaisse que les minutes entières (même règle que liveDelay
+            // et que la mention « à l'heure »). depDelay garde la valeur brute
+            // pour la pastille et le pire retardataire du bilan.
+            totalDelay += Math.floor(t.depDelay);
+            // Juice : un départ À L'HEURE (< 1 min) allonge la série et
+            // déclenche un éclat vert + un carillon qui monte avec le combo ;
+            // un départ en retard casse la série (le badge rouge suffit à le dire).
+            if (t.depDelay < 1) {
+              onTimeStreak++;
+              flashOnTime(t.headPos, onTimeStreak);
+              SND.onTime(onTimeStreak);
+            } else {
+              onTimeStreak = 0;
+              SND.depart();
+            }
             updateDelay();
             refreshEligible();
+          } else if (!t.holding) {
+            // Prêt à repartir, mais sa voie de sortie est occupée par le passage
+            // d'un autre convoi : on le SIGNALE (pilule ambre + pulsation du
+            // train) pour que le joueur comprenne pourquoi il reste à quai.
+            t.holding = true;
+            flashLabel(t.headPos, "Voie occupée", "wait");
           }
+        } else {
+          t.holding = false; // arrêt en cours (embarquement) : pas encore bloqué
         }
         break;
       }
@@ -560,7 +740,12 @@ function tick(dtMin) {
           release(t.exitPath);
           t.exitPath = null;
           t.platform = null; t.target = null; t.actualArr = null;
-          t.qs = null; // il se représentera au portail en douceur
+          t.wrongPlatform = false;
+          // Le convoi a reculé jusqu'à l'aiguillage : on l'y LAISSE (tête à la
+          // gorge du portail), il ne repart PAS hors écran. En passant en
+          // « waiting » avec un qs valide (≠ null), placeQueue le fait juste
+          // glisser à sa position d'attente sans le cacher/réapparaître.
+          t.qs = APPROACH[t.from].len; t.settled = false;
           t.state = "waiting";
           t.queuedAt = queueSeq++; // un refoulé repart en bout de file
           gQueue.appendChild(t.el); // ressorti du tunnel, sur la ligne d'approche
@@ -601,6 +786,7 @@ function tick(dtMin) {
             if (activeRoutes[t.exitPath] === t) release(t.exitPath);
             t.refoul = false; t.exitTo = null; t.exitPath = null;
             t.platform = null; t.target = null; t.actualArr = null;
+            t.wrongPlatform = false;
             t.validated = false;
             t.qs = null; t.settled = false; t.progress = 0;
             t.backS = 0; t.startS = 0;
@@ -704,10 +890,12 @@ function tick(dtMin) {
     }
     updateBadge(t);
     updateBoarding(t);
+    if (t.el) t.el.classList.toggle("holding", !!t.holding); // voie de sortie occupée
   }
   updateTimeline();
   updateDelay();
   refreshPlatformStates();
+  onboardingTick(); // accueil : gèle le service dès qu'un train est prêt à tapoter
 
   // retard plafond dépassé : on arrête tout, service interrompu
   if (!ended && liveDelay() > maxDelay()) { endGame(true); return; }
@@ -734,6 +922,9 @@ function endGame(failed) {
   // ait terminé sans étoile OU crevé le plafond de retard : dans les deux cas il
   // faut recommencer. On le rend visuellement sans ambiguïté.
   const win = stars >= 1;
+  // Service PARFAIT : gagné, terminé sans le moindre retard cumulé. Déclenche la
+  // célébration (étoiles dorées scintillantes, titre dédié, fanfare).
+  const perfect = win && !failed && d === 0;
   // Étoiles de CETTE gare avant enregistrement : sert à savoir si ce service
   // vient de boucler le pays (dernier maillon décroché à l'instant).
   const prevStars = (getProgress()[STATION.id] || {}).stars || 0;
@@ -746,8 +937,10 @@ function endGame(failed) {
   card.classList.toggle("win", win);
   card.classList.toggle("fail", !win);
   card.classList.toggle("country-done", justCompletedCountry);
+  card.classList.toggle("perfect", perfect);
   document.getElementById("end-title").textContent =
-    failed ? "Service interrompu" : justCompletedCountry ? "Pays terminé !" : (win ? "Fin du service" : "Objectif manqué");
+    failed ? "Service interrompu" : justCompletedCountry ? "Pays terminé !"
+      : perfect ? "Sans faute !" : (win ? "Fin du service" : "Objectif manqué");
   document.getElementById("stars").textContent = "★★★".slice(0, stars) + "☆☆☆".slice(0, 3 - stars);
   // une étoile ne débloque que la gare suivante DU MÊME pays (les autres
   // pays sont déjà ouverts) ; en fin de pays, on invite à en choisir un autre
@@ -785,7 +978,7 @@ function endGame(failed) {
       '<span class="ec-stars">' + earned + " / " + total + " ★</span></span>";
     ec.classList.remove("hidden");
   } else ec.classList.add("hidden");
-  (win ? SND.end : SND.incident)(); // 0 étoile → tonalité d'échec, pas la fanfare
+  (perfect ? SND.perfect : win ? SND.end : SND.incident)(); // parfait → fanfare, 0 étoile → échec
   const next = !failed && nextInCountry && isUnlocked(currentIdx + 1);
   document.getElementById("btn-next").classList.toggle("hidden", !next);
   // Bouton principal (rempli teal) selon le contexte : « suivante » si gagné +

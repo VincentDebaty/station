@@ -30,6 +30,16 @@
     </div>
     <div id="pause-tag" class="hidden">En pause</div>
   </div>
+  <!-- Repère de tutoriel (premier service) : halo pulsé sur la cible + bulle
+       qui pointe quoi toucher, reste de l'écran assombri (spotlight). Le calque
+       ne capte pas les taps (sauf le bouton) pour laisser jouer dessous. -->
+  <div id="coach" class="hidden">
+    <div id="coach-ring"></div>
+    <div id="coach-bubble" class="below">
+      <p id="coach-text"></p>
+      <button class="btn primary hidden" id="coach-next">Suivant</button>
+    </div>
+  </div>
   <!-- Commandes flottantes haut-droite : LECTURE (play/pause + vitesse) et
        RÉGLAGES, deux boutons côte à côte, chacun avec son menu déroulant. -->
   <div id="hud-tools">
@@ -86,6 +96,19 @@
     <p><b>Les wagons comptent :</b> plus le convoi est long, plus il est lent et plus il bloque les voies longtemps. Gare aux imprévus : retards annoncés, quais fermés, frets en transit.</p>
     <p><b>Objectif :</b> chaque train doit repartir à l'heure affichée au-dessus de lui. Le zéro retard est toujours possible. Barème : &lt; 10 min → ★★★, &lt; 20 → ★★, &lt; 30 → ★ — une étoile débloque la gare suivante.</p>
     <button class="btn" id="btn-help-close">Compris</button>
+  </div>
+</div>
+<!-- Accueil « première fois » : écran de BIENVENUE distinct de l'aide de rappel.
+     Ouvert automatiquement au tout premier service (flag station-onboarded), il
+     enseigne le geste unique en 3 pas, puis laisse la place au jeu guidé (pause
+     à l'arrivée du 1er train + pilule d'indice). Ne réapparaît plus ensuite. -->
+<div class="overlay hidden" id="welcome">
+  <div class="card welcome">
+    <div class="wc-badge">Bienvenue</div>
+    <h1>Le poste d'aiguillage</h1>
+    <p class="wc-lead">Vous dirigez la gare : faites entrer et repartir chaque train <b>à l'heure</b>.</p>
+    <p class="wc-tip">Je vous montre, pas à pas, avec deux trains — les repères indiquent quoi toucher. Rien ne presse.</p>
+    <button class="btn primary" id="btn-welcome-start">Commencer</button>
   </div>
 </div>
 <!-- Confirmation avant de quitter une partie en cours : annuler le niveau perd

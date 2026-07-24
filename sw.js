@@ -11,7 +11,7 @@
 // La coquille est toujours préchargée à l'installation pour un premier lancement
 // hors-ligne. Incrémenter CACHE_VERSION purge l'ancien cache à l'activation.
 // ------------------------------------------------------------------
-const CACHE_VERSION = "station-v38";
+const CACHE_VERSION = "station-v52";
 
 // Coquille de l'app préchargée à l'installation : tout le nécessaire pour un
 // premier lancement hors-ligne. Les fiches de gares non listées ici sont mises
@@ -67,8 +67,17 @@ self.addEventListener("fetch", event => {
           return res;
         })
         // Réseau indisponible : on retombe sur le cache (jeu jouable hors-ligne).
-        .catch(() => cache.match(req).then(cached => cached ||
-          (req.mode === "navigate" ? cache.match("station.html") : undefined)))
+        // On renvoie TOUJOURS une Response — jamais undefined, sinon le navigateur
+        // lève « Failed to convert value to 'Response' » (ex. favicon.ico absent).
+        .catch(async () => {
+          const cached = await cache.match(req);
+          if (cached) return cached;
+          if (req.mode === "navigate") {
+            const shell = await cache.match("station.html");
+            if (shell) return shell;
+          }
+          return new Response("", { status: 504, statusText: "Ressource indisponible hors-ligne" });
+        })
     )
   );
 });
