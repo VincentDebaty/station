@@ -76,10 +76,17 @@ const FREIGHT_COLOR = "#8f98a8";
 // Un convoi se montre sur la voie d'approche APPROACH_LEAD minute(s) avant son
 // heure : c'est la fenêtre où il roule vers sa place dans la file.
 const APPROACH_LEAD = 1.3;
-// Le fret, lui, s'annonce bien plus tôt — et son quai de transit est affiché et
-// réservé dès cet instant. Le joueur ne peut donc plus le viser par mégarde et
-// se retrouver à devoir refouler. Voir showFreightNotice() (game.js).
+// Le fret, lui, s'annonce bien plus tôt — mais l'annonce et la réservation sont
+// deux temps distincts :
+//  · FREIGHT_NOTICE : le quai est SIGNALÉ (trame légère + pastille « F · HH:MM »).
+//    Le joueur voit venir le sillon mais garde le quai à sa main : il peut encore
+//    y envoyer un voyageur, le fret s'effacera devant lui.
+//  · FREIGHT_LOCK   : le quai est RÉSERVÉ pour de bon (trame pleine, quai éteint,
+//    plus attribuable) — juste avant que le convoi ne se présente.
+// Réserver dès l'annonce privait le joueur d'un quai bien trop tôt.
+// Voir showFreightNotice() / lockFreightNotice() (game.js).
 const FREIGHT_NOTICE = 3;
+const FREIGHT_LOCK = 1;
 
 // ------------------------------------------------------------------
 // Géométrie : un chemin par liaison (portail <-> quai), direction libre

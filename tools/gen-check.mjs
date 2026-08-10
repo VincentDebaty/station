@@ -15,6 +15,13 @@
 //   node tools/gen-check.mjs                 # tout le catalogue, K=6
 //   node tools/gen-check.mjs liege           # une gare (par id), K plus élevé
 //   node tools/gen-check.mjs liege lyon 30   # gares ciblées, K=30
+//   node tools/gen-check.mjs --seed=1        # journées REPRODUCTIBLES
+//
+// --seed=N remplace Math.random par un générateur graine, réinitialisé à
+// l'identique avant chaque gare : deux exécutions tirent alors exactement les
+// mêmes journées. Indispensable pour comparer un AVANT/APRÈS de calibrage ou
+// de géométrie — sans lui, l'écart de « retard garanti » mesure surtout le
+// bruit du tirage.
 //
 // Sortie : un tableau par gare + un verdict global. Code de sortie ≠ 0 si un
 // contrôle échoue (utilisable en pre-commit / CI).
@@ -27,16 +34,39 @@ import { fileURLToPath } from "url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const read = f => fs.readFileSync(path.join(ROOT, f), "utf8");
 
-// --- arguments : ids de gare (lettres) + K facultatif (nombre) ---
-const rawArgs = process.argv.slice(2);
+// --- arguments : ids de gare (lettres) + K facultatif (nombre) + --seed=N ---
+let SEED = null;
+const rawArgs = process.argv.slice(2).filter(a => {
+  const m = /^--seed=(\d+)$/.exec(a);
+  if (m) { SEED = parseInt(m[1], 10); return false; }
+  return true;
+});
 const kArg = rawArgs.find(a => /^\d+$/.test(a));
 const K = kArg ? parseInt(kArg, 10) : (rawArgs.some(a => !/^\d+$/.test(a)) ? 30 : 6);
 const filter = rawArgs.filter(a => !/^\d+$/.test(a));
 const DELAY_MAX = 0.30; // min de jeu : marge au-dessus du seuil interne (0.15) du générateur
 
+// --- tirage reproductible (--seed) --------------------------------------
+// mulberry32 : court, bien distribué, suffisant pour rejouer des journées.
+// `reseed()` est rappelé avant chaque gare pour que le retrait d'une gare du
+// filtre ne décale pas les journées des suivantes.
+function mulberry32(a) {
+  return function () {
+    a |= 0; a = a + 0x6D2B79F5 | 0;
+    let t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+// Shim : on ne touche JAMAIS au Math du process, seulement à celui du sandbox.
+const mathShim = Object.create(Math);
+let reseed = () => {};
+if (SEED != null) reseed = () => { mathShim.random = mulberry32(SEED); };
+reseed();
+
 // --- contexte moteur : engine.js + schedule.js sont neutres vis-à-vis du DOM ---
 function makeEngine() {
-  const sandbox = { Math, console, JSON };
+  const sandbox = { Math: mathShim, console, JSON };
   sandbox.self = { onmessage: null, postMessage() {} }; // engine.js est aussi un worker
   vm.createContext(sandbox);
   vm.runInContext(read("js/engine.js"), sandbox, { filename: "engine.js" });
@@ -60,6 +90,7 @@ let failed = 0;
 for (const { id, country } of cards) {
   const cfg = JSON.parse(read(`data/stations/${country}/${id}.json`));
   const problems = [];
+  reseed();   // mêmes journées pour cette gare d'une exécution à l'autre
 
   // 1) connectivité : on interroge les PAIRS que le moteur a réellement construites
   vm.runInContext("loadStation(" + JSON.stringify(cfg) + ")", eng);
@@ -112,7 +143,8 @@ for (const { id, country } of cards) {
 
 // --- rapport ---
 const pad = (s, n) => String(s).padEnd(n);
-console.log(`\ngen-check — ${cards.length} gare(s), K=${K} journées chacune\n`);
+console.log(`\ngen-check — ${cards.length} gare(s), K=${K} journées chacune` +
+            (SEED != null ? `, graine ${SEED} (reproductible)` : "") + "\n");
 console.log(pad("gare", 18) + pad("état", 6) + pad("trains", 9) + pad("retard", 8) + "problèmes");
 console.log("-".repeat(72));
 for (const r of rows)

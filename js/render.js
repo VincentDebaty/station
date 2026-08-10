@@ -12,6 +12,13 @@ let portalUI = {}; // repères de sortie par portail (nom + géométrie) pour l'
 // abréviations sur les trains et hauteur des wagons — sans toucher à
 // l'espacement horizontal (CAR_SPACING), qui régit la physique du gril.
 const UIK = (window.matchMedia && window.matchMedia("(pointer: coarse)").matches) ? 1.5 : 1;
+// Facteur de la file miniature : elle se loge entre le nom de la ville et le
+// bord de carte, une largeur FIXE et étroite. On la grossit donc moins que le
+// reste sur tactile — sinon deux convois symboliques n'y tiendraient plus.
+const QK = Math.min(UIK, 1.25);
+// Bords du cadrage courant (renseignés par drawStatic) : la file miniature s'y
+// borne, pour rester dans le champ quel que soit le gabarit de la gare.
+let VIEW_X1 = 0, VIEW_X2 = 1400;
 
 function el(tag, attrs, parent) {
   const e = document.createElementNS(SVGNS, tag);
@@ -45,6 +52,7 @@ function drawStatic() {
   const xL = only === "R" ? PLAT_X1 - 55 : 0;
   const xR = only === "L" ? PLAT_X2 + 55 : 1400;
   board.setAttribute("viewBox", `${xL} ${yTop} ${xR - xL} ${yBot - yTop}`);
+  VIEW_X1 = xL; VIEW_X2 = xR;
   const defs = el("defs", {}, board);
   const pat = el("pattern", {
     id: "hatch", width: 8, height: 8,
@@ -151,15 +159,155 @@ function drawStatic() {
     tt.style.fontSize = (15 * UIK) + "px";
     grp.addEventListener("click", ev => {
       ev.stopPropagation();
-      const here = o => (o.state === "waiting" || o.state === "approaching") &&
-                        o.from === name && !o.freight;
-      const q = trains.filter(here).sort((a, b) => a.queuedAt - b.queuedAt);
-      const t = q.find(o => !o.target) || q[0];
-      if (t) onTrainClick(t);
-      else toast("Aucun train en attente à " + p.label);
+      selectNextAtPortal(name);
+    });
+    // File d'attente en réduction (cf. updateQueueUI), posée dans le couloir
+    // vide entre la voie des départs et celle des arrivées. Dans gBadges : elle
+    // survole le maillage, comme les badges d'heure.
+    const strip = el("g", { class: "qstrip", style: "cursor:pointer" }, gBadges);
+    strip.addEventListener("click", ev => {
+      ev.stopPropagation();
+      selectNextAtPortal(name);
     });
     // repère de sortie pour l'effet « validé » : nom + géométrie de la voie
-    portalUI[name] = { text: tt, cy: p.cy, side: p.side, px: p.x, edge, nameX: nameCx };
+    portalUI[name] = {
+      text: tt, cy: p.cy, side: p.side, px: p.x, edge, nameX: nameCx,
+      nameY, nameW: tw, strip, stripSig: null
+    };
+  }
+}
+
+// Prochain convoi en attente à un portail : celui qui n'a pas encore de quai,
+// à défaut le premier de la file. Partagé par le nom de la ville et par la file
+// miniature — deux cibles pour un même geste, sur un plan où la file elle-même
+// est en grande partie hors champ.
+function selectNextAtPortal(name) {
+  const q = trains
+    .filter(o => (o.state === "waiting" || o.state === "approaching") &&
+                 o.from === name && !o.freight)
+    .sort((a, b) => a.queuedAt - b.queuedAt);
+  const t = q.find(o => !o.target) || q[0];
+  if (t) { onTrainClick(t); return; }
+  // Personne en attente : le tap n'est pas mort pour autant — il l'annonce.
+  const u = portalUI[name];
+  if (u) flashLabel({ x: u.nameX, y: u.nameY }, "Aucun train en attente", "info");
+}
+
+// ------------------------------------------------------------------
+// File d'attente en réduction
+// ------------------------------------------------------------------
+// La voie d'approche ne mesure qu'environ 150 px À L'INTÉRIEUR du cadrage (du
+// bord au point de convergence), alors qu'un convoi de 7 wagons en fait 240 :
+// le premier train n'entre dans le champ que par le nez, et le DEUXIÈME
+// stationne entièrement hors carte. Le joueur ne pouvait donc savoir ni combien
+// de convois patientaient, ni pour quelles villes — or c'est exactement ce dont
+// dépend la seule vraie décision du jeu : garder un quai libre ou non.
+// On dessine donc la file en réduction : un convoi symbolique par train en
+// attente, à la couleur de sa destination et à sa vraie longueur (un bloc par
+// wagon, motrice tournée vers la gare), rangés du plus proche de la gorge au
+// plus lointain — même sens que la vraie file, qui s'étire vers le bord.
+// Un convoi DÉJÀ aiguillé s'estompe : reste en pleine lumière ce qui demande
+// encore une décision. Un convoi dont le retard court porte un cerne rouge.
+//
+// PLACEMENT : sur la ligne du NOM de la ville, entre lui et le bord de carte.
+// C'est la seule bande dont le plan garantisse qu'elle reste dégagée (nameY est
+// borné à 40 % de l'écart au portail voisin, justement pour que le nom ne
+// touche jamais la voie du dessus). Le couloir entre la voie des départs et
+// celle des arrivées, lui, ne fait que 16 px — 6 px sur tactile, où les caisses
+// sont grossies : la file s'y superposait au convoi de tête.
+// La largeur, elle, est comptée : on ne pose que ce qui tient avant le nom, le
+// reste passe en « +N ».
+const Q_CAR = 3, Q_GAP = 1.2, Q_SEP = 7, Q_MAX = 4; // unités ×QK
+function updateQueueUI() {
+  if (!portalUI || !trains) return;
+  for (const [name, u] of Object.entries(portalUI)) {
+    if (!u.strip) continue;
+    const q = trains
+      .filter(o => !o.freight && o.from === name &&
+                   (o.state === "waiting" || o.state === "approaching"))
+      .sort((a, b) => a.queuedAt - b.queuedAt);
+    // Un seul convoi : sa tête et son badge d'heure sont à l'écran, la
+    // miniature ferait doublon. Elle n'apparaît que lorsque la file déborde.
+    const show = q.length >= 2;
+    // Reconstruction seulement quand le CONTENU change (la file est stable des
+    // minutes durant) : sinon on redessinerait tout le calque à chaque frame.
+    const sig = show ? q.map(t => t.id + (t.target ? "+" : "-") +
+                                  (lateness(t, gameMin) >= 1 ? "!" : "")).join(",") : "";
+    if (sig === u.stripSig) continue;
+    u.stripSig = sig;
+    while (u.strip.firstChild) u.strip.removeChild(u.strip.firstChild);
+    if (!show) continue;
+
+    const car = Q_CAR * QK, gap = Q_GAP * QK, sep = Q_SEP * QK;
+    const moreW = 16 * QK;                    // largeur réservée au « +N »
+    // Place disponible entre le bord de carte et le nom de la ville.
+    const room = u.side === "L"
+      ? (u.nameX - u.nameW / 2 - 6) - (VIEW_X1 + 6)
+      : (VIEW_X2 - 6) - (u.nameX + u.nameW / 2 + 6);
+    if (room < moreW + 4) continue;           // nom trop large : pas la place, on renonce
+    // On empile tant que ça tient, en gardant de quoi écrire le « +N » s'il
+    // reste des convois à annoncer — mieux vaut deux convois lisibles et un
+    // compte juste que quatre blocs illisibles.
+    const cells = [];
+    let W = 0;
+    for (const t of q) {
+      const w = t.cars * (car + gap) - gap;
+      const need = W + (cells.length ? sep : 0) + w;
+      const rest = q.length - cells.length - 1;      // convois encore non posés
+      if (cells.length >= Q_MAX || need + (rest > 0 ? sep + moreW : 0) > room) break;
+      W = need;
+      cells.push({ t, w });
+    }
+    const extra = q.length - cells.length;
+    if (extra > 0) { W += (cells.length ? sep : 0) + moreW; cells.push({ t: null, w: moreW }); }
+    // accrochée au nom de la ville, la file s'étirant vers le bord de carte
+    const left = u.side === "L" ? u.nameX - u.nameW / 2 - 6 - W : u.nameX + u.nameW / 2 + 6;
+    const yc = u.nameY;
+    const hLoco = 9 * QK, hCar = 6.5 * QK;
+    // Plaque de fond : détache les blocs du maillage teinté qu'ils peuvent
+    // survoler, et fait lire la file comme UN objet plutôt que comme des points.
+    el("rect", {
+      x: left - 7, y: yc - hLoco / 2 - 5, width: W + 14, height: hLoco + 10,
+      rx: (hLoco + 10) / 2, class: "qstrip-plate"
+    }, u.strip);
+
+    let s = 0;
+    for (const c of cells) {
+      // index croissant = plus loin de la gare : vers le bord GAUCHE pour un
+      // portail de gauche, vers le bord droit pour un portail de droite.
+      const x = u.side === "L" ? left + W - s - c.w : left + s;
+      s += c.w + sep;
+      if (!c.t) {
+        const tx = el("text", { x: x + c.w / 2, y: yc, class: "qstrip-more" }, u.strip);
+        tx.style.fontSize = (11 * QK) + "px";
+        tx.textContent = "+" + extra;
+        continue;
+      }
+      const g = el("g", { class: "qtrain" + (c.t.target ? " routed" : "") }, u.strip);
+      const col = DEST_COLOR[c.t.to];
+      for (let i = 0; i < c.t.cars; i++) {
+        // la motrice regarde la gare : dernier bloc côté gorge
+        const loco = u.side === "L" ? i === c.t.cars - 1 : i === 0;
+        const h = loco ? hLoco : hCar;
+        const r = el("rect", {
+          x: x + i * (car + gap), y: yc - h / 2,
+          width: car, height: h, rx: Math.min(1.6 * QK, car / 2)
+        }, g);
+        r.style.fill = col;
+      }
+      if (lateness(c.t, gameMin) >= 1)
+        el("rect", {
+          x: x - 3, y: yc - hLoco / 2 - 3, width: c.w + 6, height: hLoco + 6,
+          rx: 4, class: "qtrain-late"
+        }, g);
+    }
+    // Cible de clic : toute la bande, même geste que le nom de la ville. Elle
+    // reste dans la hauteur du nom — débordante vers le bas, elle volerait les
+    // clics destinés aux convois de la voie des départs.
+    el("rect", {
+      x: left - 10, y: yc - 15 * QK, width: W + 20, height: 30 * QK,
+      fill: "transparent", class: "qhit"
+    }, u.strip);
   }
 }
 
@@ -470,6 +618,10 @@ function placeQueue(t, dtMin) {
     .sort((a, b) => a.queuedAt - b.queuedAt);
   const idx = queue.indexOf(t);
   const ap = APPROACH[t.from];
+  // Changement de gare : le réseau (APPROACH) est reconstruit avant que les
+  // convois de la gare précédente aient disparu. Une frame peut donc arriver ici
+  // avec un portail qui n'existe plus — on laisse simplement passer.
+  if (!ap) return;
   // la loco se poste dans l'amorce de la courbe de raccordement : bien
   // visible sur la carte, mais encore nettement sous la voie des départs
   let sTarget = ap.len - 85;

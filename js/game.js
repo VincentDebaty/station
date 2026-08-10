@@ -211,8 +211,9 @@ async function resetGame() {
     progress: 0, qs: null,
     platform: null, target: s.freight ? s.plat : null,
     entryPath: null, exitPath: null, exitTo: null, refoul: false, validated: false,
-    // fret : annoncé (quai réservé et hachuré) bien avant d'être admis en gare
-    announced: false, noticeEl: null,
+    // fret : d'abord annoncé (quai signalé, encore attribuable), puis verrouillé
+    // (quai réservé) juste avant le passage — voir FREIGHT_NOTICE / FREIGHT_LOCK
+    announced: false, locked: false, noticeEl: null,
     pendingEl: null, stopS: null, startS: 0, backS: 0,
     actualArr: null, queuedAt: null, el: null, carEls: null, maskEls: null,
     badgeEl: null, badgeText: null, badgeRect: null, headPos: null
@@ -298,12 +299,12 @@ function platformReserved(pid) {
   return trains.some(t =>
     (t.platform === pid && (t.state === "movingIn" || t.state === "dwell")) ||
     (t.target === pid && (t.state === "waiting" || t.state === "approaching")) ||
-    // Fret annoncé : son quai de transit est réservé dès l'annonce, donc bien
-    // avant qu'il ne se présente. C'est la contrepartie de l'annonce anticipée —
-    // le joueur voit le quai hachuré et ne peut plus l'attribuer par mégarde.
-    // (« scheduled » : annoncé mais pas encore à l'heure ; « waiting » : tenu au
-    // signal d'entrée. Dès « movingThrough » on redevient permissif — voir plus haut.)
-    (t.freight && t.announced && t.plat === pid &&
+    // Fret : son quai n'est bloqué qu'au VERROUILLAGE (FREIGHT_LOCK min avant le
+    // passage), pas dès l'annonce — pendant la fenêtre d'annonce le quai reste
+    // attribuable, simplement signalé, et le fret cède la place s'il est pris.
+    // (« scheduled » : verrouillé mais pas encore à l'heure ; « waiting » : tenu
+    // au signal d'entrée. Dès « movingThrough » on redevient permissif — voir plus haut.)
+    (t.freight && t.locked && t.plat === pid &&
      (t.state === "scheduled" || t.state === "waiting")));
 }
 function platformClosed(pid) {
@@ -366,18 +367,19 @@ function showClosure(ev) {
 // Annonce de fret : le quai qu'il va traverser est marqué à l'avance
 // (hachures grises + pastille « F · HH:MM »), exactement comme une fermeture
 // mais dans le gris du fret et sans le rouge de l'incident — ce n'est pas une
-// panne, c'est un sillon réservé. Le joueur a FREIGHT_NOTICE minutes pour en
+// panne, c'est un sillon annoncé. Le joueur a FREIGHT_NOTICE minutes pour en
 // tenir compte, au lieu de le découvrir quand le convoi s'engage.
+// À ce stade le marquage est en trame LÉGÈRE (classe « pending ») : c'est un
+// préavis, pas une interdiction — le quai reste attribuable jusqu'au
+// verrouillage (lockFreightNotice).
 function showFreightNotice(t) {
   const q = PLATFORMS.find(x => x.id === t.plat);
   if (!q) return;
-  const plat = document.getElementById("plat-" + t.plat);
-  if (plat) plat.classList.add("reserved");
-  const g = el("g", {}, gFx);
+  const g = el("g", { class: "freight-notice pending" }, gFx);
   el("rect", {
     x: PLAT_X1, y: q.cy - PLAT_H / 2, width: PLAT_X2 - PLAT_X1, height: PLAT_H,
     rx: 10, fill: "url(#hatch-freight)", stroke: FREIGHT_COLOR, "stroke-width": 1.5,
-    "pointer-events": "none"
+    class: "freight-hatch", "pointer-events": "none"
   }, g);
   // Pastille centrée « F · heure de passage » — même gabarit que la pastille
   // de fermeture, pour que les deux marquages se lisent du même coup d'œil.
@@ -398,8 +400,23 @@ function showFreightNotice(t) {
   bg.setAttribute("height", 16 * UIK + 2 * padY);
   t.noticeEl = g;
 }
+// Verrouillage : le préavis devient une réservation ferme. La trame passe au
+// plein, le quai s'éteint (.reserved) et n'est plus attribuable — une pilule le
+// dit sur place, pour que le passage préavis → réservé ne soit pas muet.
+function lockFreightNotice(t) {
+  if (t.locked) return;
+  t.locked = true;
+  if (t.noticeEl) t.noticeEl.classList.remove("pending");
+  const plat = document.getElementById("plat-" + t.plat);
+  if (plat) plat.classList.add("reserved");
+  const q = PLATFORMS.find(x => x.id === t.plat);
+  if (q) flashLabel({ x: (PLAT_X1 + PLAT_X2) / 2, y: q.cy - PLAT_H / 2 - 12 },
+                    "Quai réservé", "wait");
+  refreshEligible();
+}
 function hideFreightNotice(t) {
   if (t.noticeEl) { t.noticeEl.remove(); t.noticeEl = null; }
+  t.locked = false;
   const plat = document.getElementById("plat-" + t.plat);
   if (plat) plat.classList.remove("reserved");
 }
@@ -602,16 +619,17 @@ function tick(dtMin) {
         // Le fret ne prend JAMAIS place dans la file d'approche : il est tenu au
         // signal d'entrée, hors du plateau, et n'est admis que lorsque la voie
         // est libre (voir « waiting »). Il ne peut donc plus bloquer les convois
-        // derrière lui. Ce qu'on montre à l'avance, c'est son QUAI : annoncé et
-        // réservé FREIGHT_NOTICE minutes avant son passage.
+        // derrière lui. Ce qu'on montre à l'avance, c'est son QUAI : signalé
+        // FREIGHT_NOTICE minutes avant, puis réservé FREIGHT_LOCK minute avant.
         if (t.freight) {
           if (!t.announced && gameMin >= t.arr - FREIGHT_NOTICE) {
             t.announced = true;
             SND.freight();
             showFreightNotice(t);
-            toast("Fret annoncé à " + fmt(t.arr) + " — quai " + t.plat + " réservé");
-            refreshEligible();
+            toast("Fret annoncé à " + fmt(t.arr) + " — quai " + t.plat);
           }
+          if (t.announced && !t.locked && gameMin >= t.arr - FREIGHT_LOCK)
+            lockFreightNotice(t);
           if (gameMin >= t.arr) t.state = "waiting";
           break;
         }
@@ -640,6 +658,11 @@ function tick(dtMin) {
 
       case "waiting": {
         if (t.freight) {
+          // À l'heure dite, le quai est forcément réservé (filet si l'annonce ou
+          // le verrouillage n'ont pas eu lieu : fret dont l'heure est déjà passée
+          // au démarrage, avance rapide, etc.)
+          if (!t.announced) { t.announced = true; showFreightNotice(t); }
+          if (!t.locked) lockFreightNotice(t);
           // Soupape : un fret qui n'a jamais trouvé de créneau est dérouté. Le
           // service ne doit pas rester suspendu à un convoi qui ne compte même
           // pas au score (la fin de service attend que tout le monde ait fini).
@@ -982,6 +1005,7 @@ function tick(dtMin) {
   updateTimeline();
   updateDelay();
   refreshPlatformStates();
+  updateQueueUI(); // file d'attente en réduction (l'essentiel se joue hors champ)
   onboardingTick(); // accueil : gèle le service dès qu'un train est prêt à tapoter
 
   // retard plafond dépassé : on arrête tout, service interrompu

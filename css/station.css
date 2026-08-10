@@ -226,6 +226,14 @@ svg { width: 100%; height: 100%; display: block; }
    Une fermeture l'emporte (:not(.closed)) : hors service prime sur réservé. */
 .plat.reserved:not(.closed) .platform-label { opacity: .5; }
 .plat.reserved:not(.closed) .platform { stroke: #6d7686; }
+/* Marquage du sillon de fret, en deux temps (cf. FREIGHT_NOTICE / FREIGHT_LOCK) :
+   « pending » = préavis, trame à peine posée et quai toujours attribuable ;
+   sans la classe = réservation ferme, trame pleine et quai éteint.
+   Seule la TRAME s'allège : la pastille « F · HH:MM » reste à pleine opacité
+   dans les deux temps, c'est l'information utile (et son fond opaque masque le
+   numéro du quai, qui sinon transparaîtrait dessous). */
+.freight-hatch { transition: opacity .35s ease; }
+.freight-notice.pending .freight-hatch { opacity: .3; }
 .buffer-stop { fill: var(--red); pointer-events: none; filter: drop-shadow(0 0 4px var(--red)); }
 .portal {
   fill: none; stroke-width: 2.5;
@@ -324,6 +332,25 @@ svg { width: 100%; height: 100%; display: block; }
 @keyframes badge-blink { 50% { opacity: .22; } }
 @media (prefers-reduced-motion: reduce) {
   .badge.late-idle { animation: none; }
+}
+/* File d'attente en réduction, au bord de la carte (cf. updateQueueUI) : ce qui
+   patiente hors champ sur la voie d'approche, rendu lisible en miniature.
+   Seule la bande transparente reçoit les clics — les blocs, eux, ne doivent pas
+   avaler le geste destiné aux convois. */
+.qstrip * { pointer-events: none; }
+.qstrip .qhit { pointer-events: all; }
+.qstrip-plate { fill: rgba(14, 20, 32, .88); }
+/* Convoi déjà aiguillé : il attend son itinéraire, plus aucune décision à
+   prendre — il s'efface derrière ceux qui en réclament une. */
+.qstrip .routed rect { opacity: .3; }
+/* Retard qui court sur un convoi de la file : cerne rouge, même code que le
+   badge d'heure passé au rouge. */
+.qtrain-late {
+  fill: none; stroke: var(--red); stroke-width: 1.4; opacity: .9;
+}
+.qstrip-more {
+  fill: #8f98a8; font-weight: 700;
+  text-anchor: middle; dominant-baseline: central;
 }
 .conflict-ring {
   fill: none; stroke: var(--red); stroke-width: 3;
