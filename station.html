@@ -13,6 +13,64 @@
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <meta name="apple-mobile-web-app-title" content="Station">
 <link rel="stylesheet" href="css/station.css">
+<!-- Filet de diagnostic : sur téléphone il n'y a pas de console, et une erreur
+     JS laisse un écran noir sans la moindre explication. On affiche donc en
+     clair, en bas de l'écran, toute erreur non rattrapée (script manquant
+     compris). Placé avant les scripts du jeu pour les couvrir tous. -->
+<script>
+(function () {
+  function show(msg) {
+    var b = document.getElementById("errbar");
+    if (!b) {
+      b = document.createElement("div");
+      b.id = "errbar";
+      // styles EN LIGNE : le bandeau doit rester visible même si c'est la
+      // feuille de style qui a échoué.
+      b.style.cssText = "position:fixed;z-index:999;left:8px;right:8px;bottom:8px;" +
+        "padding:9px 12px;border-radius:10px;background:rgba(40,12,16,.96);" +
+        "border:1px solid #ef4444;color:#ffd9d9;font:12px/1.45 ui-monospace,Menlo,monospace;" +
+        "white-space:pre-wrap;word-break:break-word;text-align:left";
+      b.addEventListener("click", function () { b.remove(); });
+      (document.body || document.documentElement).appendChild(b);
+    }
+    b.textContent = msg;
+  }
+  // Auto-réparation d'un MÉLANGE DE VERSIONS. Un fichier resservi périmé par un
+  // cache face à un autre déjà à jour donne « Can't find variable: X » et un
+  // plan vide (vu sur iPhone : engine.js d'hier, game.js du jour). On purge
+  // alors tous les caches et on recharge UNE seule fois. Deux garde-fous :
+  //  - hors-ligne on ne purge RIEN (ce cache est la seule copie jouable) ;
+  //  - un drapeau de session empêche toute boucle de rechargement.
+  function selfHeal(msg) {
+    if (!/find variable|is not defined/i.test(msg)) return false;
+    if (navigator.onLine === false) return false;
+    try {
+      if (sessionStorage.getItem("station-healed")) return false;
+      sessionStorage.setItem("station-healed", "1");
+    } catch (e) { return false; }
+    var again = function () { location.reload(); };
+    if (window.caches && caches.keys) {
+      caches.keys()
+        .then(function (ks) { return Promise.all(ks.map(function (k) { return caches.delete(k); })); })
+        .then(again, again);
+    } else again();
+    return true;
+  }
+  // capture = true : attrape aussi les erreurs de CHARGEMENT (script/CSS 404),
+  // qui ne remontent pas jusqu'à window en phase de bouillonnement.
+  window.addEventListener("error", function (e) {
+    if (e.target && e.target !== window && e.target.src)
+      return show("⚠ fichier non chargé : " + String(e.target.src).split("/").pop());
+    var f = (e.filename || "").split("/").pop();
+    if (selfHeal(e.message || "")) return show("⚠ versions incohérentes — rechargement…");
+    show("⚠ " + (e.message || "erreur") + "\n" + f + ":" + (e.lineno || "?"));
+  }, true);
+  window.addEventListener("unhandledrejection", function (e) {
+    var r = e.reason;
+    show("⚠ " + ((r && r.message) || r));
+  });
+})();
+</script>
 </head>
 <body>
 <div id="board-wrap">
@@ -93,7 +151,7 @@
   <div class="card">
     <h1>Comment jouer</h1>
     <p><b>Votre seul geste :</b> touchez un train qui s'annonce, puis le quai où il doit entrer — les pastilles colorées indiquent les liaisons de chaque quai. Le train entre dès que la voie est libre, marque un arrêt d'au moins 2 minutes, puis repart seul à l'heure prévue.</p>
-    <p><b>Les wagons comptent :</b> plus le convoi est long, plus il est lent et plus il bloque les voies longtemps. Gare aux imprévus : retards annoncés, quais fermés, frets en transit.</p>
+    <p><b>Les wagons comptent :</b> plus le convoi est long, plus il est lent et plus il bloque les voies longtemps. Gare aux imprévus : retards annoncés, quais fermés, frets en transit — un fret s'annonce à l'avance et son quai apparaît hachuré en gris le temps qu'il passe.</p>
     <p><b>Objectif :</b> chaque train doit repartir à l'heure affichée au-dessus de lui. Le zéro retard est toujours possible. Barème : &lt; 10 min → ★★★, &lt; 20 → ★★, &lt; 30 → ★ — une étoile débloque la gare suivante.</p>
     <button class="btn" id="btn-help-close">Compris</button>
   </div>

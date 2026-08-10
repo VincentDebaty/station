@@ -10,7 +10,9 @@ const SVGNS = "http://www.w3.org/2000/svg";
 // garde donc l'accès au board optionnel — seul le rendu (main thread) l'utilise.
 const board = (typeof document !== "undefined") ? document.getElementById("board") : null;
 
-const PLAT_X1 = 560, PLAT_X2 = 840, PLAT_H = 42;
+const PLAT_H = 42;
+// PLAT_X1 / PLAT_X2 ne sont pas des constantes libres : ils DÉCOULENT du convoi
+// le plus long (voir PLAT_LEN, plus bas, après les constantes de wagons).
 
 // État de la gare chargée — rempli par loadStation()
 let STATION, currentIdx = 0;
@@ -25,11 +27,33 @@ const SEC_PER_GAMEMIN = 4.0;    // 1 min de jeu = 4 s réelles à x1
 // finissent par faire monter le compteur d'une minute pleine. On absorbe ce
 // bruit : sous ce seuil, le retard compte pour zéro. ~0,6 s réelle à x1.
 const DEPART_GRACE = 0.15;      // minutes de jeu de tolérance au départ
+// Retard d'un convoi à un instant donné, tolérance déduite. UNE SEULE
+// définition, partagée par la pastille au-dessus du train, le compteur du HUD
+// et le score : dupliquer la formule (ne serait-ce qu'en oubliant la tolérance)
+// fait basculer les deux affichages à une fraction de minute d'écart, et le
+// joueur voit le « +1 » du train avant celui de l'horloge.
+function lateness(t, now) { return now - t.dep - DEPART_GRACE; }
 
 // Wagons : 1 à 7 par train — plus le convoi est long, plus il est lent
-// (7 wagons = 240 px, la longueur utile d'un quai)
 const MAX_CARS = 7;
 const CAR_LEN = 30, CAR_GAP = 5, CAR_SPACING = CAR_LEN + CAR_GAP;
+// Hauteur de caisse de la motrice (les wagons suivants sont un peu plus bas).
+// Le rendu la grossit sur tactile (×UIK) ; la LONGUEUR, elle, ne bouge jamais.
+const CAR_H = 20;
+
+// --- Longueur d'un quai : DÉRIVÉE du convoi le plus long ---------------------
+// Un quai doit accueillir un MAX_CARS wagons avec la MÊME marge visible à
+// chaque extrémité. Fixer sa longueur à la main (elle valait 280) laissait un
+// 7 wagons (240 px) le nez à 15 px du heurtoir et la queue à 25 px de l'autre
+// bord : le convoi paraissait à l'étroit et de travers. On calcule donc les
+// deux bords à partir de la rame, jamais l'inverse.
+// La marge reprend celle qui borde déjà le convoi VERTICALEMENT, (PLAT_H -
+// CAR_H) / 2 : le liseré de quai fait ainsi le même tour partout, au lieu
+// d'être fin en haut et large aux extrémités.
+const PLAT_MARGIN = (PLAT_H - CAR_H) / 2;     // nez du convoi <-> bord de quai
+const PLAT_LEN = MAX_CARS * CAR_SPACING - CAR_GAP + 2 * PLAT_MARGIN; // 240 + 60
+const PLAT_MID = 700;                         // centre du viewBox (1400 de large)
+const PLAT_X1 = PLAT_MID - PLAT_LEN / 2, PLAT_X2 = PLAT_MID + PLAT_LEN / 2;
 const EXIT_RUN = 700; // fuite après le gril : jusqu'au bord réel de l'écran, pas juste le viewBox
 // Point de fuite des voies : bien AU-DELÀ du viewBox (1400×760). Le plan étant
 // letterboxé (preserveAspectRatio "meet"), le bord du viewBox n'est pas le bord
@@ -42,6 +66,17 @@ function slowness(t) { return 1 + (t.cars - 1) * 0.22; } // 7 wagons ≈ 2.3× p
 // que soit sa longueur, pour ne pas verrouiller entrée+sortie trop longtemps (sinon
 // il asphyxie la gare). Voir movingThrough (game.js) et le calibrage (schedule.js).
 const FREIGHT_SLOWNESS = 1 + (3 - 1) * 0.22;
+// Gris du fret : il n'a pas de destination voyageur, donc pas de couleur de
+// portail — c'est son signe distinctif sur tout le plateau (convoi, itinéraire,
+// liseré de quai, trame du quai réservé).
+const FREIGHT_COLOR = "#8f98a8";
+// Un convoi se montre sur la voie d'approche APPROACH_LEAD minute(s) avant son
+// heure : c'est la fenêtre où il roule vers sa place dans la file.
+const APPROACH_LEAD = 1.3;
+// Le fret, lui, s'annonce bien plus tôt — et son quai de transit est affiché et
+// réservé dès cet instant. Le joueur ne peut donc plus le viser par mégarde et
+// se retrouver à devoir refouler. Voir showFreightNotice() (game.js).
+const FREIGHT_NOTICE = 3;
 
 // ------------------------------------------------------------------
 // Géométrie : un chemin par liaison (portail <-> quai), direction libre
@@ -62,7 +97,14 @@ function pathD(pts) {
   return "M " + pts.map(p => p.x.toFixed(1) + " " + p.y.toFixed(1)).join(" L ");
 }
 
-const STOP_MARGIN = 30;
+// Point d'arrêt en tête de quai, mesuré sur le CENTRE du wagon de tête (c'est
+// ce que suivent les chemins). Le nez dépasse ce centre de CAR_LEN / 2 : on
+// l'ajoute, sinon la marge réelle devant le convoi vaut 15 px au lieu de
+// PLAT_MARGIN. Avec cette définition, PLAT_LEN - 2 * STOP_MARGIN vaut
+// exactement l'empattement d'un MAX_CARS wagons : il se pose pile entre les
+// deux marges, et le jeu de recul d'un demi-tour (voir backS, game.js) tombe
+// naturellement à zéro pour lui.
+const STOP_MARGIN = PLAT_MARGIN + CAR_LEN / 2;
 // Dégagement au portail : si une zone de conflit touche la gorge (s ≤ 0), le
 // dégagement requis s'étend sur toute la zone de convergence approche/départ.
 // C'est aussi la distance qu'un convoi sortant doit avoir dépassée (dernier

@@ -95,33 +95,8 @@ updateMuteIcon();
 
 // Le menu d'icônes se déplie/replie sous l'engrenage (haut à droite).
 // #settings.open pilote l'état visuel du bouton (teal + rotation).
-const hudTop = document.getElementById("hud-top");
 const settingsWrap = document.getElementById("settings");
 const btnSettings = document.getElementById("btn-settings");
-// ------------------------------------------------------------------
-// Cadre horloge en gare terminus : le flanc droit du plan est vide
-// (butoirs). On centre le cadre dans cet espace libre — entre le bord
-// droit des quais et le bord de l'écran. La largeur de cette marge se
-// mesure à l'exécution : le plan est mis à l'échelle « meet » et la
-// marge varie selon l'écran (surtout sur mobile). Hors terminus, on
-// laisse l'ancrage par défaut du CSS (right: 16px).
-// ------------------------------------------------------------------
-function positionTerminusHud() {
-  if (!hudTop.classList.contains("terminus")) {
-    hudTop.style.right = ""; pauseTag.style.right = ""; return;
-  }
-  const plat = document.querySelector(".platform");
-  if (!plat) return;
-  const platRight = plat.getBoundingClientRect().right;
-  const clockW = hudClock.getBoundingClientRect().width;
-  const gap = window.innerWidth - platRight; // marge libre à droite des quais
-  // Centre du cadre au milieu de la marge ; repli sur 16px si trop étroite.
-  hudTop.style.right = Math.max(16, gap / 2 - clockW / 2) + "px";
-  // Badge « En pause » centré sous le cadre : le cadre est collé au bord droit
-  // du HUD, donc son centre est à clockW/2 du bord (cf. translateX(50%) en CSS).
-  pauseTag.style.right = clockW / 2 + "px";
-}
-window.addEventListener("resize", positionTerminusHud);
 function setMenu(open) {
   hudControls.classList.toggle("hidden", !open);
   settingsWrap.classList.toggle("open", open);

@@ -37,11 +37,6 @@ body {
   transform: translateX(-50%);
   display: flex; flex-direction: column; align-items: center; gap: 5px;
 }
-/* Gare terminus : cadre HUD à droite, centré verticalement (le flanc droit du
-   plan est vide, butoirs). L'engrenage reste, lui, en haut à droite. */
-#hud-top.terminus {
-  top: 50%; left: auto; right: calc(16px + var(--safe-r)); transform: translateY(-50%);
-}
 #hud-clock {
   background: rgba(21, 29, 46, .55); border: 1px solid #2a3550;
   border-radius: 12px; color: var(--text);
@@ -121,14 +116,6 @@ body {
   font-size: 12px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;
   white-space: nowrap; cursor: pointer; -webkit-tap-highlight-color: transparent;
 }
-/* Terminus : le HUD est une rangée horizontale (poignée à gauche du cadre) ; le
-   badge sort de ce flux et se place centré JUSTE SOUS le cadre horloge. Le
-   décalage « right » (demi-largeur du cadre) est posé en JS car le nom de gare
-   fait varier la largeur du cadre. */
-#hud-top.terminus #pause-tag {
-  position: absolute; top: 100%; margin-top: 8px; transform: translateX(50%);
-}
-
 /* Carte opaque : panneau porté par un menu déroulant (lecture ou réglages). */
 .hud-panel {
   display: flex; flex-direction: column; gap: 8px; padding: 10px;
@@ -144,6 +131,13 @@ body {
   fill: var(--red); font-size: 13px; font-weight: 600; text-anchor: middle;
   font-family: ui-monospace, Menlo, monospace;
   filter: drop-shadow(0 0 4px var(--red));
+}
+/* Pastille « F · HH:MM » d'un quai réservé pour un transit de fret : même
+   gabarit que la fermeture, mais dans le gris du fret — réservé ≠ en panne. */
+.freight-tag {
+  fill: #b6bdc9; font-size: 13px; font-weight: 600; text-anchor: middle;
+  font-family: ui-monospace, Menlo, monospace;
+  filter: drop-shadow(0 0 4px rgba(143, 152, 168, .9));
 }
 .btn {
   background: var(--panel); border: 1px solid #2a3550; color: var(--text);
@@ -226,6 +220,12 @@ svg { width: 100%; height: 100%; display: block; }
    dépendre du rouge (le cadenas + les hachures portent le reste du message). */
 .plat.closed .platform-label { opacity: .28; }
 .plat.closed .platform { fill: #141b29; stroke: #2a3446; }
+/* Quai réservé à un fret annoncé : liseré gris et numéro adouci. Plus discret
+   qu'une fermeture (le quai n'est pas hors service, il est pris), mais assez net
+   pour qu'on n'essaie pas d'y envoyer un train — le tap y répond « Quai réservé ».
+   Une fermeture l'emporte (:not(.closed)) : hors service prime sur réservé. */
+.plat.reserved:not(.closed) .platform-label { opacity: .5; }
+.plat.reserved:not(.closed) .platform { stroke: #6d7686; }
 .buffer-stop { fill: var(--red); pointer-events: none; filter: drop-shadow(0 0 4px var(--red)); }
 .portal {
   fill: none; stroke-width: 2.5;
@@ -284,9 +284,31 @@ svg { width: 100%; height: 100%; display: block; }
   0%, 100% { filter: drop-shadow(0 0 5px #f5b23c); }
   50%      { filter: drop-shadow(0 0 15px #f5b23c); }
 }
+/* Halo d'état : couches concentriques dessinées sous la caisse (cf. trainNode),
+   invisibles au repos. C'est le signal PRINCIPAL de sélection — il ne dépend
+   d'aucun `filter`, contrairement aux halos ci-dessus qui ne s'affichent pas
+   sur iOS/Safari. Seule l'opacité du groupe est animée : la propriété la plus
+   sûrement rendue partout. Les couches gardent leur opacité propre (fixée en
+   JS), qui se multiplie par celle du groupe — d'où le fondu progressif. */
+.state-ring { opacity: 0; pointer-events: none; }
+.state-ring rect { fill: none; stroke: #fff; stroke-linejoin: round; }
+.train.selected .state-ring {
+  opacity: 1;
+  animation: ring-pulse 1.1s ease-in-out infinite;
+}
+/* Voie occupée : même halo, teinte ambre — cohérent avec hold-pulse. */
+.train.holding .state-ring rect { stroke: #f5b23c; }
+.train.holding .state-ring {
+  opacity: .9;
+  animation: ring-pulse 1.1s ease-in-out infinite;
+}
+.train.selected .state-ring rect { stroke: #fff; }  /* la sélection prime sur holding */
+@keyframes ring-pulse { 50% { opacity: .3; } }
 @media (prefers-reduced-motion: reduce) {
   .train.selected .train-body, .train.holding .train-body, .train.ready .train-body { animation: none; }
   .train.selected .train-body { filter: drop-shadow(0 0 12px #fff); }
+  /* Halo conservé mais fixe : le repère visuel reste, sans clignotement. */
+  .train.selected .state-ring, .train.holding .state-ring { animation: none; opacity: 1; }
 }
 .badge { pointer-events: none; }
 .badge rect { stroke-width: 1.2; }
@@ -295,6 +317,14 @@ svg { width: 100%; height: 100%; display: block; }
   text-anchor: middle; dominant-baseline: central;
 }
 .badge.late text { font-weight: 700; }
+/* Train non démarré (encore à l'arrêt sur la voie d'approche) dont le retard
+   court : le badge clignote pour réclamer un aiguillage. Opacité seulement —
+   les filtres SVG animés ne rendent pas sur iOS. */
+.badge.late-idle { animation: badge-blink .9s ease-in-out infinite; }
+@keyframes badge-blink { 50% { opacity: .22; } }
+@media (prefers-reduced-motion: reduce) {
+  .badge.late-idle { animation: none; }
+}
 .conflict-ring {
   fill: none; stroke: var(--red); stroke-width: 3;
   animation: ring .9s ease-out forwards;
@@ -837,3 +867,4 @@ svg { width: 100%; height: 100%; display: block; }
   .card p { font-size: 13.5px; line-height: 1.55; margin-bottom: 9px; }
   #stars { font-size: 36px; }
 }
+

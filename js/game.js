@@ -211,6 +211,8 @@ async function resetGame() {
     progress: 0, qs: null,
     platform: null, target: s.freight ? s.plat : null,
     entryPath: null, exitPath: null, exitTo: null, refoul: false, validated: false,
+    // fret : annoncé (quai réservé et hachuré) bien avant d'être admis en gare
+    announced: false, noticeEl: null,
     pendingEl: null, stopS: null, startS: 0, backS: 0,
     actualArr: null, queuedAt: null, el: null, carEls: null, maskEls: null,
     badgeEl: null, badgeText: null, badgeRect: null, headPos: null
@@ -276,7 +278,7 @@ function canGrant(pathId) {
 }
 function grant(pathId, train) {
   activeRoutes[pathId] = train;
-  const c = train.freight ? "#8f98a8" : DEST_COLOR[train.to];
+  const c = train.freight ? FREIGHT_COLOR : DEST_COLOR[train.to];
   const p = el("path", { d: pathD(paths[pathId].pts), class: "route",
     id: "route-" + pathId.replace(":", "-") }, gRoutes);
   p.style.stroke = c; p.style.color = c;
@@ -295,7 +297,14 @@ function release(pathId) {
 function platformReserved(pid) {
   return trains.some(t =>
     (t.platform === pid && (t.state === "movingIn" || t.state === "dwell")) ||
-    (t.target === pid && (t.state === "waiting" || t.state === "approaching")));
+    (t.target === pid && (t.state === "waiting" || t.state === "approaching")) ||
+    // Fret annoncé : son quai de transit est réservé dès l'annonce, donc bien
+    // avant qu'il ne se présente. C'est la contrepartie de l'annonce anticipée —
+    // le joueur voit le quai hachuré et ne peut plus l'attribuer par mégarde.
+    // (« scheduled » : annoncé mais pas encore à l'heure ; « waiting » : tenu au
+    // signal d'entrée. Dès « movingThrough » on redevient permissif — voir plus haut.)
+    (t.freight && t.announced && t.plat === pid &&
+     (t.state === "scheduled" || t.state === "waiting")));
 }
 function platformClosed(pid) {
   // une fermeture ne bloque que si elle est effectivement révélée (donc posée
@@ -354,6 +363,46 @@ function showClosure(ev) {
   bg.setAttribute("width", totalW + 2 * padX); bg.setAttribute("height", icoS + 2 * padY);
   ev.el = g;
 }
+// Annonce de fret : le quai qu'il va traverser est marqué à l'avance
+// (hachures grises + pastille « F · HH:MM »), exactement comme une fermeture
+// mais dans le gris du fret et sans le rouge de l'incident — ce n'est pas une
+// panne, c'est un sillon réservé. Le joueur a FREIGHT_NOTICE minutes pour en
+// tenir compte, au lieu de le découvrir quand le convoi s'engage.
+function showFreightNotice(t) {
+  const q = PLATFORMS.find(x => x.id === t.plat);
+  if (!q) return;
+  const plat = document.getElementById("plat-" + t.plat);
+  if (plat) plat.classList.add("reserved");
+  const g = el("g", {}, gFx);
+  el("rect", {
+    x: PLAT_X1, y: q.cy - PLAT_H / 2, width: PLAT_X2 - PLAT_X1, height: PLAT_H,
+    rx: 10, fill: "url(#hatch-freight)", stroke: FREIGHT_COLOR, "stroke-width": 1.5,
+    "pointer-events": "none"
+  }, g);
+  // Pastille centrée « F · heure de passage » — même gabarit que la pastille
+  // de fermeture, pour que les deux marquages se lisent du même coup d'œil.
+  const mid = (PLAT_X1 + PLAT_X2) / 2;
+  const bg = el("rect", {
+    rx: 8 * UIK, fill: "rgba(14,20,32,.94)", stroke: FREIGHT_COLOR,
+    "stroke-width": 1.3, "pointer-events": "none"
+  }, g);
+  const txt = el("text", { x: mid, y: q.cy, class: "freight-tag" }, g);
+  txt.style.fontSize = (15 * UIK) + "px";
+  txt.style.dominantBaseline = "central";
+  txt.textContent = "F · " + fmt(t.arr);
+  let tw; try { tw = txt.getBBox().width; } catch (e) { tw = 62 * UIK; }
+  const padX = 12 * UIK, padY = 7 * UIK;
+  bg.setAttribute("x", mid - tw / 2 - padX);
+  bg.setAttribute("y", q.cy - 8 * UIK - padY);
+  bg.setAttribute("width", tw + 2 * padX);
+  bg.setAttribute("height", 16 * UIK + 2 * padY);
+  t.noticeEl = g;
+}
+function hideFreightNotice(t) {
+  if (t.noticeEl) { t.noticeEl.remove(); t.noticeEl = null; }
+  const plat = document.getElementById("plat-" + t.plat);
+  if (plat) plat.classList.remove("reserved");
+}
 function processEvents() {
   for (const ev of EVENTS) {
     if (!ev.revealed) {
@@ -397,7 +446,7 @@ function processEvents() {
 function refreshEligible() {
   const selecting = selected && !selected.target &&
     (selected.state === "waiting" || selected.state === "approaching");
-  const eligColor = selecting ? (selected.freight ? "#8f98a8" : DEST_COLOR[selected.to]) : null;
+  const eligColor = selecting ? (selected.freight ? FREIGHT_COLOR : DEST_COLOR[selected.to]) : null;
   // faisceau : on éclaire la ville d'origine du train choisi, on estompe le reste
   if (typeof focusPortal === "function") focusPortal(selecting ? selected.from : null);
   document.querySelectorAll(".platform").forEach(pl => {
@@ -428,7 +477,7 @@ function refreshPlatformStates() {
     // Quai en défaut : un train y stationne alors qu'il n'en repart pas vers sa
     // destination → liseré rouge le temps qu'il refoule (explique l'attente).
     pl.classList.toggle("wrong", !!(occ && occ.wrongPlatform && occ.state === "dwell"));
-    if (occ) pl.style.setProperty("--occ", occ.freight ? "#8f98a8" : DEST_COLOR[occ.to]);
+    if (occ) pl.style.setProperty("--occ", occ.freight ? FREIGHT_COLOR : DEST_COLOR[occ.to]);
     else pl.style.removeProperty("--occ");
   });
 }
@@ -523,7 +572,7 @@ function liveDelay() {
   let d = totalDelay;
   for (const t of trains)
     if (!t.freight && (t.state !== "movingOut" || t.refoul) && t.state !== "done")
-      d += Math.floor(Math.max(0, gameMin - t.dep - DEPART_GRACE));
+      d += Math.floor(Math.max(0, lateness(t, gameMin)));
   return d;
 }
 function updateDelay() {
@@ -550,21 +599,36 @@ function tick(dtMin) {
     switch (t.state) {
 
       case "scheduled":
+        // Le fret ne prend JAMAIS place dans la file d'approche : il est tenu au
+        // signal d'entrée, hors du plateau, et n'est admis que lorsque la voie
+        // est libre (voir « waiting »). Il ne peut donc plus bloquer les convois
+        // derrière lui. Ce qu'on montre à l'avance, c'est son QUAI : annoncé et
+        // réservé FREIGHT_NOTICE minutes avant son passage.
+        if (t.freight) {
+          if (!t.announced && gameMin >= t.arr - FREIGHT_NOTICE) {
+            t.announced = true;
+            SND.freight();
+            showFreightNotice(t);
+            toast("Fret annoncé à " + fmt(t.arr) + " — quai " + t.plat + " réservé");
+            refreshEligible();
+          }
+          if (gameMin >= t.arr) t.state = "waiting";
+          break;
+        }
         // Le train apparaît au loin ~1,3 min avant son heure et approche en douceur
-        if (gameMin >= (t.arrEff ?? t.arr) - 1.3) {
+        if (gameMin >= (t.arrEff ?? t.arr) - APPROACH_LEAD) {
           t.state = "approaching";
           t.queuedAt = queueSeq++; // ordre réel d'entrée sur la voie d'approche
           t.el = trainNode(t);
           const tl = document.getElementById("tl-" + t.id);
           if (tl) tl.classList.add("active");
-          if (t.freight) SND.freight(); // les voyageurs arrivent sans carillon
         }
         break;
 
-      case "approaching":
+      case "approaching": // (jamais un fret : il ne rejoint pas la file)
         placeQueue(t, dtMin);
         t.el.classList.toggle("selected", selected === t);
-        t.el.classList.toggle("ready", !t.freight && !t.target && selected !== t);
+        t.el.classList.toggle("ready", !t.target && selected !== t);
         if (gameMin >= (t.arrEff ?? t.arr)) {
           t.state = "waiting";
           // le train est à l'arrêt en gare : son heure d'arrivée s'efface
@@ -575,33 +639,56 @@ function tick(dtMin) {
         break;
 
       case "waiting": {
-        placeQueue(t, dtMin);
-        t.el.classList.toggle("selected", selected === t);
-        t.el.classList.toggle("ready", !t.freight && !t.target && selected !== t);
-        // FIFO sur la voie d'approche : tant qu'un train du même portail, entré
-        // avant lui dans la file, n'a pas dégagé la voie, il ne peut pas
-        // s'engager — pas de dépassement (le 2ᵉ ne double jamais le 1ᵉʳ).
-        if (trains.some(o => o !== t && o.from === t.from && o.queuedAt < t.queuedAt &&
-            (o.state === "approaching" || o.state === "waiting"))) break;
         if (t.freight) {
+          // Soupape : un fret qui n'a jamais trouvé de créneau est dérouté. Le
+          // service ne doit pas rester suspendu à un convoi qui ne compte même
+          // pas au score (la fin de service attend que tout le monde ait fini).
+          if (gameMin > t.arr + 45) { hideFreightNotice(t); t.state = "done"; break; }
+          // Fret tenu au signal d'entrée, HORS plateau : il ne consomme aucune
+          // place dans la file et n'est admis que lorsque la voie d'approche de
+          // son portail est vide de tout voyageur. Il s'efface toujours devant
+          // eux — jamais l'inverse — donc il ne peut plus provoquer de cascade.
+          if (trains.some(o => o !== t && !o.freight && o.from === t.from &&
+              (o.state === "approaching" || o.state === "waiting"))) break;
           // Le fret verrouille tout son itinéraire et traverse sans s'arrêter
           const pin = "in:" + t.from + ":" + t.plat;
           const pout = "out:" + t.to + ":" + t.plat;
+          // …et il cède aussi son quai à tout voyageur qui l'occupe déjà ou qui
+          // l'a choisi avant l'annonce (les autres portails ne sont pas couverts
+          // par le test de voie ci-dessus).
           const busy = trains.some(o => o !== t &&
-            ((o.platform === t.plat && (o.state === "movingIn" || o.state === "dwell" || o.state === "movingThrough")) ||
-             (o.target === t.plat && o.state === "waiting")));
+            ((o.platform === t.plat &&
+              (o.state === "movingIn" || o.state === "dwell" || o.state === "movingThrough")) ||
+             (o.target === t.plat &&
+              (o.state === "waiting" || o.state === "approaching"))));
           if (!busy && !platformClosed(t.plat) && canGrant(pin) && canGrant(pout)) {
+            // il s'engage depuis l'amorce de la voie d'approche, comme s'il
+            // venait d'y déboucher : même géométrie d'entrée qu'auparavant
+            const ap = APPROACH[t.from];
+            t.qs = ap.len - 85;
+            t.startS = -85;
+            t.el = trainNode(t);
             grant(pin, t); grant(pout, t);
             t.entryPath = pin; t.exitPath = pout; t.platform = t.plat;
-            t.startS = t.qs != null ? -(APPROACH[t.from].len - t.qs) : 0;
             t.state = "movingThrough";
             t.progress = 0;
+            hideFreightNotice(t); // le quai passe du « réservé » à l'occupé réel
             gTrains.appendChild(t.el); // entre en gare : calque découpé au tunnel
             toast("Fret en transit — quai " + t.plat + " neutralisé");
             refreshEligible();
           }
           break;
         }
+        placeQueue(t, dtMin);
+        t.el.classList.toggle("selected", selected === t);
+        t.el.classList.toggle("ready", !t.target && selected !== t);
+        // FIFO sur la voie d'approche : tant qu'un train du même portail, entré
+        // avant lui dans la file, n'a pas dégagé la voie, il ne peut pas
+        // s'engager — pas de dépassement (le 2ᵉ ne double jamais le 1ᵉʳ).
+        // (Le fret n'est pas dans la file : il n'entre pas dans ce test.)
+        if (trains.some(o => o !== t && !o.freight && o.from === t.from &&
+            o.queuedAt < t.queuedAt &&
+            (o.state === "approaching" || o.state === "waiting"))) break;
         // Entrée automatique dès que l'itinéraire demandé est libre — et que
         // le quai est physiquement dégagé (un fret en transit peut encore
         // l'occuper alors que le joueur a déjà pré-affecté le quai)
@@ -701,7 +788,7 @@ function tick(dtMin) {
               : 0;
             t.state = "movingOut";
             t.progress = 0;
-            t.depDelay = Math.max(0, gameMin - t.dep - DEPART_GRACE);
+            t.depDelay = Math.max(0, lateness(t, gameMin));
             // On n'encaisse que les minutes entières (même règle que liveDelay
             // et que la mention « à l'heure »). depDelay garde la valeur brute
             // pour la pastille et le pire retardataire du bilan.

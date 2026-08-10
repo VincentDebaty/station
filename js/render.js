@@ -22,26 +22,20 @@ function el(tag, attrs, parent) {
 
 function drawStatic() {
   board.innerHTML = "";
-  // Gare terminus : tous les portails du même côté, le réseau n'occupe qu'un
-  // flanc. On cadre le viewBox au plus près du contenu réel (portails, quais,
-  // voie d'approche) pour agrandir le faisceau et occuper toute la place ;
-  // "meet" recentre dans le cadre. Aucune coordonnée du réseau n'est touchée —
-  // seul le zoom d'affichage change, donc la difficulté reste identique.
+  // MÊME disposition pour TOUTES les gares : le cadre horloge flotte en haut au
+  // centre, donc le plan garde partout la MÊME marge haute (y = 0) — l'horloge ne
+  // doit jamais recouvrir le badge d'heure du quai du haut. On rogne seulement la
+  // bande noire du bas et, en gare terminus (tous les portails du même côté), le
+  // flanc vide côté butoirs : sans ce rognage le réseau se tasserait sur une
+  // moitié de l'écran, l'autre restant noire. Aucune coordonnée du réseau n'est
+  // touchée — seul le cadrage change, donc la difficulté reste identique.
   const sides = new Set(Object.values(PORTALS).map(p => p.side));
   const only = sides.size === 1 ? [...sides][0] : null;
   const cys = [...PLATFORMS.map(q => q.cy), ...Object.values(PORTALS).map(p => p.cy)];
   const yBot = Math.max(...cys) + 58;     // marge basse : voie d'approche (cy+36) + wagon
-  if (only) {
-    const yTop = Math.min(...cys) - 85;   // marge : badges d'heure (×1.5 sur mobile) + noms
-    const xL = only === "L" ? 8 : PLAT_X1 - 55;
-    const xR = only === "L" ? PLAT_X2 + 55 : 1392;
-    board.setAttribute("viewBox", `${xL} ${yTop} ${xR - xL} ${yBot - yTop}`);
-  } else {
-    // Gare traversante : réseau des deux côtés → on garde la pleine largeur et
-    // la marge haute (le HUD flotte au-dessus du centre : l'horloge ne doit pas
-    // recouvrir le badge du quai du haut), mais on rogne la bande noire du bas.
-    board.setAttribute("viewBox", `0 0 1400 ${yBot}`);
-  }
+  const xL = only === "R" ? PLAT_X1 - 55 : 0;
+  const xR = only === "L" ? PLAT_X2 + 55 : 1400;
+  board.setAttribute("viewBox", `${xL} 0 ${xR - xL} ${yBot}`);
   const defs = el("defs", {}, board);
   const pat = el("pattern", {
     id: "hatch", width: 8, height: 8,
@@ -49,6 +43,14 @@ function drawStatic() {
   }, defs);
   el("rect", { width: 8, height: 8, fill: "rgba(239,68,68,.08)" }, pat);
   el("line", { x1: 0, y1: 0, x2: 0, y2: 8, stroke: "var(--red)", "stroke-width": 2, opacity: 0.5 }, pat);
+  // Même trame, dans le gris du fret : un quai réservé pour un transit n'est pas
+  // une panne — il se distingue d'une fermeture au premier coup d'œil.
+  const patF = el("pattern", {
+    id: "hatch-freight", width: 8, height: 8,
+    patternUnits: "userSpaceOnUse", patternTransform: "rotate(45)"
+  }, defs);
+  el("rect", { width: 8, height: 8, fill: "rgba(143,152,168,.08)" }, patF);
+  el("line", { x1: 0, y1: 0, x2: 0, y2: 8, stroke: FREIGHT_COLOR, "stroke-width": 2, opacity: 0.45 }, patF);
   // Léger dégradé vertical sur les quais : reflet en haut, ombre en bas — donne
   // du relief à la pilule sans changer sa couleur perçue (quai libre au repos).
   const pg2 = el("linearGradient", { id: "platGrad", x1: 0, y1: 0, x2: 0, y2: 1 }, defs);
@@ -194,7 +196,7 @@ function buildTimeline() {
   now.style.left = (3 + TL_PAST / TL_SPAN * 92) + "%";
   tl.appendChild(now);
   trains.forEach((t, i) => {
-    const c = t.freight ? "#8f98a8" : DEST_COLOR[t.to];
+    const c = t.freight ? FREIGHT_COLOR : DEST_COLOR[t.to];
     const d = document.createElement("div");
     d.className = "tl-train" + (i % 2 ? " alt" : ""); // deux rangées en quinconce
     d.id = "tl-" + t.id;
@@ -318,18 +320,34 @@ function fmt(min) {
 }
 function trainNode(t) {
   const g = el("g", { class: "train" }, gQueue);
-  const c = t.freight ? "#8f98a8" : DEST_COLOR[t.to];
+  const c = t.freight ? FREIGHT_COLOR : DEST_COLOR[t.to];
   t.carEls = [];
   t.maskEls = []; // masques « vide » : largeur pilotée par l'embarquement à quai
   for (let i = 0; i < t.cars; i++) {
     const car = el("g", {}, g);
+    // hauteur (verticale) grossie sur mobile ; la longueur CAR_LEN reste fixe
+    // pour ne pas empiéter sur l'espacement (physique du gril)
+    const bh = (i === 0 ? CAR_H : CAR_H - 4) * UIK;
+    // Halo d'état (sélection / voie occupée), dessiné EN PREMIER donc SOUS la
+    // caisse : seule sa moitié extérieure se voit, d'où un dégradé qui rayonne
+    // au lieu d'un cadre. Il est fait de traits concentriques de plus en plus
+    // larges et transparents plutôt que d'un `filter: drop-shadow` : sur
+    // iOS/Safari les halos filtrés d'un élément SVG ne s'affichent pas de façon
+    // fiable (rien n'était visible sur iPhone). Seule l'opacité du groupe est
+    // animée — c'est rendu partout. Épaisseurs ×UIK pour rester lisibles au doigt.
+    const glow = el("g", { class: "state-ring" }, car);
+    for (const [w, o] of [[16, 0.10], [10, 0.18], [5.5, 0.34], [2.5, 0.75]]) {
+      const lay = el("rect", {
+        x: -CAR_LEN / 2, y: -bh / 2, width: CAR_LEN, height: bh,
+        rx: (i === 0 ? 8 : 5) * UIK
+      }, glow);
+      lay.style.strokeWidth = (w * UIK) + "px";
+      lay.style.opacity = o;
+    }
     // zone de clic généreuse (invisible) : indispensable au doigt. Hauteur
     // grossie sur tactile (×UIK) pour une cible confortable même sur petit écran.
     const hitH = 52 * UIK;
     el("rect", { x: -CAR_SPACING / 2 - 6, y: -hitH / 2, width: CAR_SPACING + 12, height: hitH, fill: "transparent" }, car);
-    // hauteur (verticale) grossie sur mobile ; la longueur CAR_LEN reste fixe
-    // pour ne pas empiéter sur l'espacement (physique du gril)
-    const bh = (i === 0 ? 20 : 16) * UIK;
     const body = el("rect", {
       x: -CAR_LEN / 2, y: -bh / 2,
       width: CAR_LEN, height: bh, rx: (i === 0 ? 8 : 5) * UIK,
@@ -432,8 +450,11 @@ function placeTrain(t, pathId, headS, tailDir) {
 // d'arrêt juste avant la jonction. Les suivants patientent derrière,
 // hors carte s'il le faut. t.qs = abscisse curviligne de la loco.
 function placeQueue(t, dtMin) {
+  // Le fret n'entre jamais dans la file : il attend hors plateau (sans nœud
+  // graphique) et s'engage d'une traite dès qu'il est admis — il ne doit donc
+  // pas décaler les convois derrière lui.
   const queue = trains.filter(o =>
-    (o.state === "waiting" || o.state === "approaching") && o.from === t.from)
+    !o.freight && (o.state === "waiting" || o.state === "approaching") && o.from === t.from)
     .sort((a, b) => a.queuedAt - b.queuedAt);
   const idx = queue.indexOf(t);
   const ap = APPROACH[t.from];
@@ -508,13 +529,23 @@ function updateBadge(t) {
     if (t.badgeEl) t.badgeEl.setAttribute("visibility", "hidden");
     return;
   }
-  const late = gameMin - t.dep;
+  const late = lateness(t, gameMin);
   let txt, color;
   // le retard ne s'affiche qu'une fois la minute entière écoulée
   if (late >= 1) { txt = "+" + Math.floor(late) + " min"; color = "var(--red)"; }
   else if (late > -3) { txt = "dép " + fmt(t.dep); color = "#f5b23c"; }
   else { txt = "dép " + fmt(t.dep); color = "var(--green)"; }
   t.badgeEl.classList.toggle("late", late >= 1);
+  // Retard qui court sur un convoi encore NON DÉMARRÉ (à l'arrêt sur la voie
+  // d'approche, pas encore aiguillé vers un quai) : c'est le seul cas où le
+  // joueur peut le régler à l'instant. Son retard clignote pour l'appeler à
+  // l'œil, là où un train déjà en gare garde un badge rouge fixe.
+  // Dès qu'il est SÉLECTIONNÉ, le clignotement s'arrête : l'appel a été
+  // entendu, et deux pulsations désynchronisées (le cerne de sélection bat à
+  // 1,1 s, le badge à 0,9 s) donneraient un scintillement brouillon.
+  t.badgeEl.classList.toggle("late-idle",
+    late >= 1 && selected !== t &&
+    (t.state === "waiting" || t.state === "approaching"));
   t.badgeText.textContent = txt;
   t.badgeText.style.fill = color;
   t.badgeRect.style.stroke = color;

@@ -30,19 +30,12 @@ async function startStation(i) {
   // flèche + drapeau + nom, cliquable pour revenir à la carte.
   document.getElementById("station-tag").innerHTML =
     '<span class="arw">‹</span><span class="flag">' + flag + '</span><span class="nm">' + cfg.name + "</span>";
-  // Gare terminus (tous les quais en impasse) : le côté droit est vide (butoirs),
-  // on y place le cadre HUD, centré verticalement, pour dégager le haut du plan.
-  const terminus = (cfg.platforms || []).length > 0 && cfg.platforms.every(p => p.deadEnd);
-  document.getElementById("hud-top").classList.toggle("terminus", terminus);
   loadStation(cfg);
   document.getElementById("hub").classList.add("hidden");
   document.getElementById("end").classList.add("hidden");
   document.getElementById("help").classList.add("hidden");
   ensureAudio(); // geste utilisateur : autorise le son
   await resetGame(); // génération asynchrone (worker) : on attend la journée
-  // Le plan est dessiné : on centre le cadre horloge dans la marge droite
-  // (gares terminus). Nécessite les quais présents et mis en page.
-  positionTerminusHud();
   started = true;
   maybeStartOnboarding(); // premier service : accueil (aide + départ en pause)
   // orientation : tagline court dans la bande d'info réservée (une ligne).
@@ -57,15 +50,12 @@ async function startAdhocStation(cfg) {
   currentIdx = -1;
   document.getElementById("station-tag").innerHTML =
     '<span class="arw">‹</span><span class="flag">🧪</span><span class="nm">' + cfg.name + "</span>";
-  const terminus = (cfg.platforms || []).length > 0 && cfg.platforms.every(p => p.deadEnd);
-  document.getElementById("hud-top").classList.toggle("terminus", terminus);
   loadStation(cfg);
   document.getElementById("hub").classList.add("hidden");
   document.getElementById("end").classList.add("hidden");
   document.getElementById("help").classList.add("hidden");
   ensureAudio();
   await resetGame();
-  positionTerminusHud();
   started = true;
   toast(cfg.tagline || cfg.name, 6000);
 }

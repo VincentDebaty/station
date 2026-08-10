@@ -78,24 +78,39 @@ function simulateDay(schedule, assign, dt, events) {
           if (now >= (t.arrEff ?? t.arr)) t.state = "waiting";
           break;
         case "waiting": {
-          // FIFO sur la voie d'approche : un train du même portail, arrivé
-          // avant lui, occupe encore la voie devant → il patiente derrière.
-          // Pas de dépassement (même contrainte que le jeu).
-          if (sims.some(o => o !== t && o.from === t.from && o.state === "waiting" &&
-              (o.arrEff ?? o.arr) < (t.arrEff ?? t.arr))) break;
-          if (held[t.plat]) break;
-          if (closures.some(c => c.plat === t.plat && now >= c.start && now < c.end)) break;
-          held[t.plat] = true;
           if (t.freight) {
+            // Le fret attend HORS de la voie d'approche (tenu au signal
+            // d'entrée) : tant qu'il n'est pas admis il ne réserve rien —
+            // ni la file, ni son quai. Il n'est admis que lorsque la voie
+            // d'approche de son portail est vide de tout voyageur : il
+            // s'efface devant eux, jamais l'inverse. (Même règle que le jeu,
+            // où un voyageur est sur la voie dès arr − 1,3.)
+            if (sims.some(o => o !== t && !o.freight && o.from === t.from &&
+                (o.state === "waiting" ||
+                 (o.state === "scheduled" &&
+                  now >= (o.arrEff ?? o.arr) - APPROACH_LEAD)))) break;
+            if (held[t.plat]) break;
+            if (closures.some(c => c.plat === t.plat && now >= c.start && now < c.end)) break;
             const pin = "in:" + t.from + ":" + t.plat;
             const pout = "out:" + t.to + ":" + t.plat;
             if (free(pin) && free(pout)) {
+              held[t.plat] = true;
               active[pin] = t; active[pout] = t;
               t.entryPath = pin; t.exitPath = pout;
               t.state = "movingThrough"; t.elapsed = 0; t.occStart = now;
             }
             break;
           }
+          // FIFO sur la voie d'approche : un train du même portail, arrivé
+          // avant lui, occupe encore la voie devant → il patiente derrière.
+          // Pas de dépassement (même contrainte que le jeu). Le fret est EXCLU
+          // de la file : il attend hors gril, il ne bloque donc personne.
+          if (sims.some(o => o !== t && !o.freight && o.from === t.from &&
+              o.state === "waiting" &&
+              (o.arrEff ?? o.arr) < (t.arrEff ?? t.arr))) break;
+          if (held[t.plat]) break;
+          if (closures.some(c => c.plat === t.plat && now >= c.start && now < c.end)) break;
+          held[t.plat] = true;
           const pid = "in:" + t.from + ":" + t.plat;
           if (free(pid)) {
             active[pid] = t; t.entryPath = pid;
@@ -199,7 +214,9 @@ function generateOnce() {
     const fArr = Math.round(rnd(8, Math.max(12, lastArr - 6)));
     draft.push({
       id: "F" + String(f + 1).padStart(2, "0"), freight: true, from, to, plat: pick(opts),
-      cars: 8 + Math.floor(rnd(0, 3)), arr: fArr, dep: fArr
+      // 6-7 wagons (était 8-10) : le convoi reste le plus long du plateau
+      // (MAX_CARS = 7 côté voyageurs) sans immobiliser le gril aussi longtemps.
+      cars: 6 + Math.floor(rnd(0, 2)), arr: fArr, dep: fArr
     });
   }
   if (nFreight > 0) draft.sort((a, b) => a.arr - b.arr);
