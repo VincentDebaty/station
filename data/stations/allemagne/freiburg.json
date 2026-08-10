@@ -16,10 +16,10 @@
     "NEUSTADT":  { "side": "R", "color": "#a78bfa", "abbr": "NE" }
   },
   "links": {
-    "OFFENBURG": [1, 2, 3],
-    "BREISACH": [2, 3, 4],
+    "OFFENBURG": [2, 3, 4],
+    "BREISACH": [1, 2],
     "BALE": [1, 2, 3],
-    "NEUSTADT": [2, 3, 4]
+    "NEUSTADT": [3, 4]
   },
   "sameSidePairs": [],
   "gen": {

@@ -16,8 +16,8 @@
   },
   "links": {
     "PARIS": [1, 2, 3],
-    "AURILLAC": [2, 3, 4],
-    "LYON": [1, 2, 3],
+    "AURILLAC": [3, 4],
+    "LYON": [1, 2],
     "NIMES": [2, 3, 4]
   },
   "sameSidePairs": [],

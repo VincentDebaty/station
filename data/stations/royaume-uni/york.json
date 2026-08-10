@@ -16,9 +16,9 @@
   },
   "links": {
     "NEWCASTLE": [1, 2, 3],
-    "SCARBOROUGH": [2, 3, 4],
+    "SCARBOROUGH": [4],
     "LONDON": [1, 2, 3],
-    "LEEDS": [2, 3, 4]
+    "LEEDS": [3, 4]
   },
   "sameSidePairs": [],
   "gen": {

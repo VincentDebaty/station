@@ -15,9 +15,9 @@
     "ARLON":      { "side": "R", "color": "#60a5fa", "abbr": "A" }
   },
   "links": {
-    "NAMUR": [1, 2, 3],
-    "BERTRIX": [2, 3, 4],
-    "LUXEMBOURG": [1, 2, 3],
+    "NAMUR": [1, 2, 3, 4],
+    "BERTRIX": [3, 4],
+    "LUXEMBOURG": [1, 2],
     "ARLON": [2, 3, 4]
   },
   "sameSidePairs": [],

@@ -15,10 +15,10 @@
     "CHARLEROI": { "side": "R", "color": "#60a5fa", "abbr": "C" }
   },
   "links": {
-    "BRUXELLES": [1, 2, 3],
-    "LOUVAIN": [2, 3, 4],
-    "NAMUR": [1, 2, 3],
-    "CHARLEROI": [2, 3, 4]
+    "BRUXELLES": [1, 2, 3, 4],
+    "LOUVAIN": [1, 2],
+    "NAMUR": [1, 2, 3, 4],
+    "CHARLEROI": [3, 4]
   },
   "sameSidePairs": [],
   "gen": {

@@ -16,9 +16,9 @@
   },
   "links": {
     "BRUXELLES": [1, 2, 3],
-    "COURTRAI": [2, 3, 4],
-    "LILLE": [1, 2, 3],
-    "MONS": [2, 3, 4]
+    "COURTRAI": [3, 4],
+    "LILLE": [1, 2, 3, 4],
+    "MONS": [2, 3]
   },
   "sameSidePairs": [],
   "gen": {

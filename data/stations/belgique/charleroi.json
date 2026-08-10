@@ -16,10 +16,10 @@
     "COUVIN":    { "side": "R", "color": "#60a5fa", "abbr": "CV" }
   },
   "links": {
-    "BRUXELLES": [1, 2, 3],
-    "MONS": [2, 3, 4],
+    "BRUXELLES": [2, 3, 4],
+    "MONS": [1, 2, 3],
     "NAMUR": [1, 2, 3],
-    "COUVIN": [2, 3, 4]
+    "COUVIN": [4]
   },
   "sameSidePairs": [],
   "gen": {
