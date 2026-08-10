@@ -22,20 +22,29 @@ function el(tag, attrs, parent) {
 
 function drawStatic() {
   board.innerHTML = "";
-  // MÊME disposition pour TOUTES les gares : le cadre horloge flotte en haut au
-  // centre, donc le plan garde partout la MÊME marge haute (y = 0) — l'horloge ne
-  // doit jamais recouvrir le badge d'heure du quai du haut. On rogne seulement la
-  // bande noire du bas et, en gare terminus (tous les portails du même côté), le
-  // flanc vide côté butoirs : sans ce rognage le réseau se tasserait sur une
-  // moitié de l'écran, l'autre restant noire. Aucune coordonnée du réseau n'est
-  // touchée — seul le cadrage change, donc la difficulté reste identique.
+  // Cadrage : on encadre la bande réellement dessinée avec DEUX marges nommées,
+  // les mêmes pour toutes les gares. En haut, CLOCK_ROOM réserve la place du
+  // cadre horloge, qui flotte au centre et ne doit jamais recouvrir le badge
+  // d'heure du quai du haut ; auparavant le cadrage partait toujours de y = 0,
+  // donc cette réserve variait du simple au double selon la hauteur du gril
+  // (trop rase sur une grande gare, gâchée sur une petite). En bas, BOTTOM_ROOM
+  // ajoute une vraie respiration SOUS la voie d'approche de la ville la plus
+  // basse, qui frôlait le bord. On rogne aussi, en gare terminus (tous les
+  // portails du même côté), le flanc vide côté butoirs : sans ce rognage le
+  // réseau se tasserait sur une moitié de l'écran, l'autre restant noire.
+  // Aucune coordonnée du réseau n'est touchée — seul le cadrage change, donc la
+  // difficulté reste identique.
+  const CLOCK_ROOM = 140, BOTTOM_ROOM = 30;
   const sides = new Set(Object.values(PORTALS).map(p => p.side));
   const only = sides.size === 1 ? [...sides][0] : null;
   const cys = [...PLATFORMS.map(q => q.cy), ...Object.values(PORTALS).map(p => p.cy)];
-  const yBot = Math.max(...cys) + 58;     // marge basse : voie d'approche (cy+36) + wagon
+  // haut : badge d'heure posé au-dessus d'un convoi (30 + hauteur/2, ×UIK)
+  const yTop = Math.min(...cys) - 44 * UIK - CLOCK_ROOM;
+  // bas : voie d'approche (cy + 36) + demi-caisse de wagon
+  const yBot = Math.max(...cys) + 36 + 14 * UIK + BOTTOM_ROOM;
   const xL = only === "R" ? PLAT_X1 - 55 : 0;
   const xR = only === "L" ? PLAT_X2 + 55 : 1400;
-  board.setAttribute("viewBox", `${xL} 0 ${xR - xL} ${yBot}`);
+  board.setAttribute("viewBox", `${xL} ${yTop} ${xR - xL} ${yBot - yTop}`);
   const defs = el("defs", {}, board);
   const pat = el("pattern", {
     id: "hatch", width: 8, height: 8,
@@ -103,8 +112,8 @@ function drawStatic() {
   // écart vertical entre villes voisines d'un même côté : sert à borner l'offset
   // du libellé pour qu'il reste TOUJOURS collé à SA ligne (jamais à celle du
   // dessus), même sur tactile (UIK=1.5) ou quand les villes sont nombreuses.
-  const sideCount = {};
-  for (const q of Object.values(PORTALS)) sideCount[q.side] = (sideCount[q.side] || 0) + 1;
+  const sideCys = {};
+  for (const q of Object.values(PORTALS)) (sideCys[q.side] = sideCys[q.side] || []).push(q.cy);
   for (const [name, p] of Object.entries(PORTALS)) {
     const c = DEST_COLOR[name];
     const edge = p.side === "L" ? -EDGE_RUN : 1400 + EDGE_RUN;   // point de fuite = bord écran
@@ -119,9 +128,12 @@ function drawStatic() {
     // nom centré au-dessus de l'AIGUILLAGE (point de convergence), juste au-dessus
     // de la voie — le convoi qui part glisse dessous en quittant le faisceau.
     const tw = (22 + p.label.length * 10) * UIK;
-    // offset au-dessus de la voie : borné à 40 % de l'écart entre villes (< 50 %
-    // ⇒ le nom penche toujours vers SA ligne), plafonné au confort tactile.
-    const gap = sideCount[p.side] > 1 ? 420 / (sideCount[p.side] - 1) : Infinity;
+    // offset au-dessus de la voie : borné à 40 % de l'écart à la ville voisine
+    // (< 50 % ⇒ le nom penche toujours vers SA ligne), plafonné au confort
+    // tactile. L'écart se lit sur la géométrie réelle : il dépend désormais de
+    // la hauteur du gril, pas d'un écartement fixe.
+    const near = sideCys[p.side].filter(y => y !== p.cy).map(y => Math.abs(y - p.cy));
+    const gap = near.length ? Math.min(...near) : Infinity;
     const nameY = p.cy - Math.min(34 * UIK, gap * 0.40);
     const nameCx = p.x;
     // zone de clic du nom (sélectionne le 1er train en file du portail). Elle

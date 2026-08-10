@@ -11,6 +11,9 @@ const SVGNS = "http://www.w3.org/2000/svg";
 const board = (typeof document !== "undefined") ? document.getElementById("board") : null;
 
 const PLAT_H = 42;
+// Axe horizontal du réseau : gril ET villes sont centrés dessus, si bien que le
+// plan reste symétrique haut/bas quel que soit le nombre de quais.
+const CENTER_Y = 400;
 // PLAT_X1 / PLAT_X2 ne sont pas des constantes libres : ils DÉCOULENT du convoi
 // le plus long (voir PLAT_LEN, plus bas, après les constantes de wagons).
 
@@ -120,9 +123,17 @@ function loadStation(cfg) {
   // --- layout : quais et portails répartis selon leur nombre ---
   const nQ = cfg.platforms.length;
   const stepQ = nQ > 1 ? Math.min(100, 520 / (nQ - 1)) : 0;
-  const topQ = 400 - stepQ * (nQ - 1) / 2;
+  const spanQ = stepQ * (nQ - 1);                 // hauteur du gril
+  const topQ = CENTER_Y - spanQ / 2;
   PLATFORMS = cfg.platforms.map((q, i) => ({ ...q, cy: Math.round(topQ + i * stepQ) }));
   PORTALS = {}; DEST_COLOR = {}; DEST_ABBR = {};
+  // Les villes se répartissent sur la MÊME bande verticale que les quais, et
+  // jamais au-delà (spanP ≤ spanQ), autour du même centre. L'écartement était
+  // fixé à 420 px quel que soit le nombre de quais : sur une petite gare
+  // (4 quais, gril haut de 300 px) les destinations débordaient nettement en
+  // haut et en bas du gril — plan étiré, courbes inutilement raides et marge
+  // basse mangée par la voie d'approche de la ville du bas.
+  const spanP = Math.min(420, spanQ);
   // Point de convergence à distance fixe des quais, terminus compris : le
   // faisceau aiguillage → quais garde la même largeur généreuse partout
   // (les gares à quais desservis d'un seul côté ne sont plus écrasées).
@@ -132,7 +143,8 @@ function loadStation(cfg) {
       const c = cfg.portals[k];
       PORTALS[k] = {
         side, x: side === "L" ? 150 : 1250,
-        cy: names.length === 1 ? 405 : Math.round(220 + 420 * i / (names.length - 1)),
+        cy: names.length === 1 ? CENTER_Y
+                               : Math.round(CENTER_Y - spanP / 2 + spanP * i / (names.length - 1)),
         label: c.label || k,
         in: c.in !== false, out: c.out !== false
       };
