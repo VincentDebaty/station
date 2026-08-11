@@ -64,11 +64,12 @@ const EXIT_RUN = 700; // fuite après le gril : jusqu'au bord réel de l'écran,
 // letterbox pour que les convois émergent et disparaissent au ras de l'écran.
 const EDGE_RUN = 360;
 function trainLen(t) { return t.cars * CAR_SPACING - CAR_GAP; }
-function slowness(t) { return 1 + (t.cars - 1) * 0.22; } // 7 wagons ≈ 2.3× plus lent
-// Fret : long mais PAS lent. Il traverse le gril à la vitesse d'un 3 wagons quelle
-// que soit sa longueur, pour ne pas verrouiller entrée+sortie trop longtemps (sinon
-// il asphyxie la gare). Voir movingThrough (game.js) et le calibrage (schedule.js).
+// Fret : long mais PAS lent. Il roule à la vitesse d'un 3 wagons quelle que soit
+// sa longueur, sur TOUS ses mouvements (traversée d'une traite, entrée, sortie),
+// pour ne pas verrouiller le gril trop longtemps — sinon il asphyxie la gare.
 const FREIGHT_SLOWNESS = 1 + (3 - 1) * 0.22;
+// 7 wagons ≈ 2.3× plus lent qu'une rame seule (voyageurs uniquement)
+function slowness(t) { return t.freight ? FREIGHT_SLOWNESS : 1 + (t.cars - 1) * 0.22; }
 // Gris du fret : couleur de ses WAGONS uniquement. Sa motrice, elle, prend la
 // couleur de la destination comme n'importe quel convoi — c'est ainsi qu'il
 // annonce où il va, donc quels quais peuvent le recevoir. Wagons gris = « celui-ci

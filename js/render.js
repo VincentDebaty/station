@@ -95,6 +95,15 @@ function drawStatic() {
       rx: 10, class: "platform", "data-platform": q.id
     }, pg);
     rect.addEventListener("click", () => onPlatformClick(q.id));
+    // Liseré « promis » : un convoi encore dehors a déjà choisi ce quai. Il lui
+    // faut son PROPRE tracé — un rect n'a qu'un seul liseré, or un quai peut
+    // être occupé PAR un convoi et promis À un autre, et les deux doivent se
+    // lire en même temps. Posé en retrait, à la couleur du convoi attendu.
+    el("rect", {
+      x: PLAT_X1 + 5, y: q.cy - PLAT_H / 2 + 5,
+      width: PLAT_X2 - PLAT_X1 - 10, height: PLAT_H - 10,
+      rx: 6, class: "claim", "pointer-events": "none"
+    }, pg);
     el("text", { x: (PLAT_X1 + PLAT_X2) / 2, y: q.cy, class: "platform-label" }, pg)
       .textContent = q.id;
 
@@ -174,9 +183,11 @@ function drawStatic() {
 // miniature — deux cibles pour un même geste, sur un plan où la file elle-même
 // est en grande partie hors champ.
 function selectNextAtPortal(name) {
+  // Le fret est exclu du CHOIX (il s'aiguille seul) mais reste dans la file
+  // affichée : le tap sur la ville désigne le prochain convoi à décider.
   const q = trains
     .filter(o => (o.state === "waiting" || o.state === "approaching") &&
-                 o.from === name)
+                 o.from === name && !o.freight)
     .sort((a, b) => a.queuedAt - b.queuedAt);
   const t = q.find(o => !o.target) || q[0];
   if (t) { onTrainClick(t); return; }
@@ -223,7 +234,7 @@ function updateQueueUI() {
     const show = q.length >= 2;
     // Reconstruction seulement quand le CONTENU change (la file est stable des
     // minutes durant) : sinon on redessinerait tout le calque à chaque frame.
-    const sig = show ? q.map(t => t.id + (t.target ? "+" : "-") +
+    const sig = show ? q.map(t => t.id + ((t.target || t.freight) ? "+" : "-") +
                                   (lateness(t, gameMin) >= 1 ? "!" : "")).join(",") : "";
     if (sig === u.stripSig) continue;
     u.stripSig = sig;
@@ -275,7 +286,8 @@ function updateQueueUI() {
         tx.textContent = "+" + extra;
         continue;
       }
-      const g = el("g", { class: "qtrain" + (c.t.target ? " routed" : "") }, u.strip);
+      // estompé = plus rien à décider : déjà aiguillé, ou fret (jamais à aiguiller)
+      const g = el("g", { class: "qtrain" + ((c.t.target || c.t.freight) ? " routed" : "") }, u.strip);
       const col = DEST_COLOR[c.t.to];
       for (let i = 0; i < c.t.cars; i++) {
         // la motrice regarde la gare : dernier bloc côté gorge
@@ -531,9 +543,10 @@ function trainNode(t) {
     outline.style.stroke = cc;
     if (i === 0) {
       const lbl = el("text", { x: 0, y: 0.5, class: "train-label" }, car);
-      // « F » sur la loco d'un fret : la couleur dit la destination, la lettre
-      // dit que ce convoi traverse sans s'arrêter (pas d'heure de départ).
-      lbl.textContent = t.freight ? "F" : DEST_ABBR[t.to];
+      // Même marquage pour tous, fret compris : la loco porte l'initiale de sa
+      // destination. Ce qui distingue un fret, ce sont ses wagons gris et
+      // l'absence d'heure de départ.
+      lbl.textContent = DEST_ABBR[t.to];
       lbl.style.fontSize = (12 * UIK) + "px";
     }
     t.carEls.push(car);

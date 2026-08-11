@@ -150,3 +150,23 @@ corriger avant de committer.
 3. Composer chaque fiche (§2) en respectant hybride (§0) et connectivité (§3).
 4. Enregistrer (§4) : index.json + geo.js.
 5. `node tools/gen-check.mjs` → itérer jusqu'à « Toutes les gares passent ».
+
+## 8. Deux pièges d'écriture, mesurés
+
+**La duplication de fiches.** En retirant noms et couleurs, il ne reste d'une
+fiche que sa structure — quais, côtés, `links`. Huit gares réparties sur quatre
+pays se sont retrouvées STRICTEMENT identiques (la gare d'ouverture recopiée de
+pays en pays), et dix-huit autres jumelées. On croit alors que les plans se
+ressemblent à cause de la géométrie du faisceau ; c'est faux, ce sont les mêmes
+fiches. Avant d'ajouter une gare, comparer son empreinte structurelle à celles
+du catalogue.
+
+**Quatre directions équivalentes.** Le réflexe est de faire desservir à chaque
+ville trois quais sur quatre. Une vraie gare a une **ligne principale**, qui
+occupe le tronc du gril, et des **antennes**, cantonnées à un ou deux quais.
+C'est ce qui distingue deux gares de même gabarit — et ça ne coûte rien : le
+retard garanti ne bouge pas (mesuré : écart 0,00 entre liaisons d'origine et
+redécoupées, à fiche et graine identiques).
+
+Pour explorer l'espace des structures avant d'écrire :
+`tools/PROMPT-panorama-gares.md`.

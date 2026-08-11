@@ -88,7 +88,7 @@ function onboardingPlatformChosen() {
   } else if (onboarding === "plat2") {
     onboarding = "goal";
     coachAt(document.getElementById("delay"),
-      "À vous ! Terminez le service avec <b>moins de 30 min</b> de retard pour décrocher une étoile et débloquer la ville suivante.",
+      "Un quai occupé peut quand même être choisi : le convoi <b>attend dehors</b>, sans pénalité — seule compte l'heure de départ. À vous ! Terminez le service avec <b>moins de 30 min</b> de retard pour décrocher une étoile.",
       "Continuer");
   }
 }
@@ -293,14 +293,47 @@ function release(pathId) {
 // ------------------------------------------------------------------
 // Interaction : sélection du train, choix du quai
 // ------------------------------------------------------------------
+// Quai PROMIS : un convoi encore dehors l'a déjà choisi. C'est la seule
+// réservation qui INTERDIT le choix — deux convois ne peuvent pas viser le même
+// quai, sinon le second entrerait sur un quai qu'on lui a pris.
+function platformClaimed(pid) {
+  return trains.some(t => t.target === pid &&
+    (t.state === "waiting" || t.state === "approaching"));
+}
 // Réservation pour l'AFFECTATION : un convoi en transit (movingThrough) ne
 // bloque pas le choix du quai — on peut pré-affecter, l'entrée attendra.
 // Le fret n'a plus aucun régime propre ici : il réserve son quai comme les
 // autres, dès qu'un joueur le lui a donné, et pas avant.
+// Sert aux choix AUTOMATIQUES (fret, tutoriel), qui veulent un quai franchement
+// disponible ; le joueur, lui, a le droit de viser un quai encore occupé (cf.
+// onPlatformClick).
 function platformReserved(pid) {
-  return trains.some(t =>
-    (t.platform === pid && (t.state === "movingIn" || t.state === "dwell")) ||
-    (t.target === pid && (t.state === "waiting" || t.state === "approaching")));
+  return platformClaimed(pid) ||
+    trains.some(t => t.platform === pid &&
+      (t.state === "movingIn" || t.state === "dwell"));
+}
+// Choix du quai d'un FRET — il s'aiguille seul, le joueur n'y touche pas.
+// Il se sert exactement comme le joueur sert un voyageur : le premier quai qui
+// dessert sa destination, ni fermé ni déjà promis à un autre convoi. Ce quai
+// lui est alors réservé et il attend que l'itinéraire se libère (l'entrée est
+// re-vérifiée juste après). On n'exige donc PAS que la voie soit libre à
+// l'instant du choix : sinon, sur une gare chargée où tous les quais sont
+// promis en permanence, le fret ne se servirait jamais et bloquerait sa file.
+// Le quai de calibrage (hint) passe en premier — c'est celui que le générateur
+// a retenu pour que la journée reste jouable à zéro.
+function pickFreightPlatform(t) {
+  const ok = pid => !!paths["out:" + t.to + ":" + pid] &&   // dessert sa destination
+    !platformReserved(pid) && !platformClosed(pid);
+  if (t.hint != null && LINKS[t.from].includes(t.hint) && ok(t.hint)) return t.hint;
+  const free = LINKS[t.from].filter(ok);
+  // à défaut du quai de calibrage : celui où il peut s'engager TOUT DE SUITE
+  // (entrée et sortie libres, personne à quai) — il squatte ainsi le moins
+  // longtemps possible un quai dont le joueur pourrait avoir besoin.
+  return free.find(pid =>
+    !trains.some(o => o !== t && o.platform === pid &&
+      (o.state === "movingIn" || o.state === "dwell" || o.state === "movingThrough")) &&
+    canGrant("in:" + t.from + ":" + pid) && canGrant("out:" + t.to + ":" + pid))
+    ?? free[0] ?? null;
 }
 function platformClosed(pid) {
   // une fermeture ne bloque que si elle est effectivement révélée (donc posée
@@ -412,10 +445,14 @@ function refreshEligible() {
     // destination : c'est au joueur de le savoir. Un mauvais choix reste possible
     // et sanctionné par un refoulement — signalé au clic et à l'arrêt, mais pas
     // AVANT le choix (sinon il n'y aurait plus d'erreur possible, donc plus de jeu).
+    // Un quai OCCUPÉ reste éligible : le convoi patientera dehors et entrera
+    // dès qu'il se libère. Il s'affiche seulement d'une main plus légère
+    // (« busy ») — disponible, mais pas tout de suite.
     const ok = selecting &&
                LINKS[selected.from].includes(pid) &&
-               !platformReserved(pid) && !platformClosed(pid);
+               !platformClaimed(pid) && !platformClosed(pid);
     pl.classList.toggle("eligible", !!ok);
+    pl.classList.toggle("busy", !!ok && platformOccupied(pid));
     pl.classList.remove("serves"); // (plus de distinction visuelle à la sélection)
     if (ok) pl.style.setProperty("--elig", eligColor);
     else pl.style.removeProperty("--elig");
@@ -435,6 +472,16 @@ function refreshPlatformStates() {
     pl.classList.toggle("wrong", !!(occ && occ.wrongPlatform && occ.state === "dwell"));
     if (occ) pl.style.setProperty("--occ", DEST_COLOR[occ.to]);
     else pl.style.removeProperty("--occ");
+    // Quai PROMIS : un convoi encore dehors l'a choisi et attend d'y entrer. On
+    // le montre au repos, à la couleur du convoi ATTENDU (pas de celui qui est
+    // là) — c'est ce qui rend l'attente lisible plutôt que muette, et ce qui
+    // évite au joueur de compter sur un quai déjà pris.
+    const claim = trains.find(t => t.target === pid &&
+      (t.state === "waiting" || t.state === "approaching"));
+    const grp = pl.parentNode;
+    grp.classList.toggle("claimed", !!claim);
+    if (claim) grp.style.setProperty("--claim", DEST_COLOR[claim.to]);
+    else grp.style.removeProperty("--claim");
   });
 }
 function onPlatformClick(pid) {
@@ -446,14 +493,21 @@ function onPlatformClick(pid) {
     flashAt(center); flashLabel(center, "Aucune voie ici", "warn");
     return;
   }
-  if (platformReserved(pid)) {
-    flashAt(center); flashLabel(center, "Quai réservé", "warn");
+  // Seul un quai DÉJÀ PROMIS à un autre convoi est refusé. Un quai simplement
+  // occupé, lui, s'accepte : le convoi patiente dehors et entrera dès qu'il se
+  // libère (cf. l'entrée automatique, plus bas dans tick). C'est le cœur du
+  // jeu — attendre à l'extérieur ne coûte rien, seule compte l'heure de départ,
+  // donc la ressource rare est le quai. Refuser ce geste obligeait à revenir
+  // tapoter plus tard : de la charge mécanique, pas une décision.
+  if (platformClaimed(pid)) {
+    flashAt(center); flashLabel(center, "Quai déjà promis", "warn");
     return;
   }
   if (platformClosed(pid)) {
     flashAt(center); flashLabel(center, "Quai fermé", "warn");
     return;
   }
+  const deferred = platformOccupied(pid); // entrée différée : on le DIT
   selected.target = pid;
   const pathId = "in:" + selected.from + ":" + pid;
   // l'itinéraire en pointillés démarre à la position actuelle du convoi. On NE
@@ -469,11 +523,29 @@ function onPlatformClick(pid) {
   pend.style.stroke = DEST_COLOR[selected.to]; pend.style.color = DEST_COLOR[selected.to];
   selected.pendingEl = pend;
   selected = null;
+  // Quai encore occupé : le geste a bien été pris, mais rien ne bougera tout de
+  // suite. Sans cette pilule, l'immobilité se lirait comme un geste raté.
+  // Pilule posée AU-DESSUS du quai, pas en son centre : le quai est justement
+  // occupé par un convoi, et le message tomberait en plein sur ses caisses.
+  if (deferred)
+    flashLabel({ x: center.x, y: q.cy - PLAT_H / 2 - 13 },
+               "Quai occupé — il entrera après", "wait");
   onboardingPlatformChosen(); // accueil : geste complet → joueur initié
   refreshEligible();
+  // Le liseré « promis » se pose ICI, pas au prochain tick : en pause — le
+  // moment où l'on aiguille le plus — aucun tick ne viendrait le peindre, et le
+  // geste resterait sans trace jusqu'à la reprise.
+  refreshPlatformStates();
 }
 function onTrainClick(t) {
   if (ended) return;
+  if (t.freight) {
+    // Le fret s'aiguille tout seul : il n'y a rien à décider pour lui. On ne le
+    // sélectionne donc pas — mais le tap n'est pas mort pour autant, une pilule
+    // dit pourquoi (règle générale du jeu : aucun geste sans retour).
+    flashLabel(t.headPos, "Fret · passage auto", "info");
+    return;
+  }
   // Sélectionnable dès l'approche : on peut préparer l'itinéraire avant l'arrêt
   const routable = t.state === "waiting" || t.state === "approaching";
   if (routable && !t.target) {
@@ -566,7 +638,9 @@ function tick(dtMin) {
       case "approaching":
         placeQueue(t, dtMin);
         t.el.classList.toggle("selected", selected === t);
-        t.el.classList.toggle("ready", !t.target && selected !== t);
+        // « ready » = ce convoi attend une décision. Jamais pour un fret : il
+        // n'y a rien à décider, il ne doit donc pas appeler le doigt.
+        t.el.classList.toggle("ready", !t.freight && !t.target && selected !== t);
         if (gameMin >= (t.arrEff ?? t.arr)) {
           t.state = "waiting";
           // le train est à l'arrêt en gare : son heure d'arrivée s'efface
@@ -579,7 +653,9 @@ function tick(dtMin) {
       case "waiting": {
         placeQueue(t, dtMin);
         t.el.classList.toggle("selected", selected === t);
-        t.el.classList.toggle("ready", !t.target && selected !== t);
+        // « ready » = ce convoi attend une décision. Jamais pour un fret : il
+        // n'y a rien à décider, il ne doit donc pas appeler le doigt.
+        t.el.classList.toggle("ready", !t.freight && !t.target && selected !== t);
         // FIFO sur la voie d'approche : tant qu'un train du même portail, entré
         // avant lui dans la file, n'a pas dégagé la voie, il ne peut pas
         // s'engager — pas de dépassement (le 2ᵉ ne double jamais le 1ᵉʳ).
@@ -588,6 +664,15 @@ function tick(dtMin) {
         if (trains.some(o => o !== t && o.from === t.from &&
             o.queuedAt < t.queuedAt &&
             (o.state === "approaching" || o.state === "waiting"))) break;
+        // Le fret n'est PAS aiguillé par le joueur : il se donne son quai tout
+        // seul, et seulement à l'instant où il peut réellement s'engager (voir
+        // pickFreightPlatform). Tant qu'aucun quai ne convient il patiente sans
+        // rien réserver — le joueur garde donc tous ses quais à sa main.
+        if (t.freight && !t.target) {
+          const pid = pickFreightPlatform(t);
+          if (pid == null) break;
+          t.target = pid;
+        }
         // Entrée automatique dès que l'itinéraire demandé est libre — et que
         // le quai est physiquement dégagé (un convoi en transit peut encore
         // l'occuper alors que le joueur a déjà pré-affecté le quai)
@@ -596,13 +681,14 @@ function tick(dtMin) {
             (o.state === "movingIn" || o.state === "dwell" || o.state === "movingThrough"));
           const pathId = "in:" + t.from + ":" + t.target;
           const outId = "out:" + t.to + ":" + t.target;
-          // Le fret ne s'arrête pas : il lui faut son itinéraire ENTIER (entrée
-          // ET sortie) d'un seul tenant, sinon il s'immobiliserait au milieu du
-          // gril. Sur un quai qui ne dessert pas sa destination il n'y a pas de
-          // sortie : il entre alors comme un voyageur et refoulera — même
-          // sanction pour tout le monde.
-          const through = t.freight && !!paths[outId];
-          if (!busy && canGrant(pathId) && (!through || canGrant(outId))) {
+          // CANTONNEMENT du fret : il s'engage dès que le bloc SUIVANT est libre
+          // (sa voie d'entrée + le quai), sans exiger la suite. Si sa voie de
+          // sortie est libre elle aussi, il verrouille tout et traverse d'une
+          // traite ; sinon il entre quand même et s'arrêtera au quai, au rouge,
+          // le temps que la sortie se dégage (voir « dwell »). C'est ce qui
+          // l'empêche de geler toute sa ligne en tête de file.
+          const through = t.freight && !!paths[outId] && canGrant(outId);
+          if (!busy && canGrant(pathId)) {
             if (t.pendingEl) { t.pendingEl.remove(); t.pendingEl = null; }
             grant(pathId, t);
             t.entryPath = pathId;
@@ -685,7 +771,10 @@ function tick(dtMin) {
           }
           break;
         }
-        const canLeave = gameMin >= Math.max(t.dep, t.actualArr + MIN_DWELL);
+        // Un FRET ne stationne pas : s'il est là, c'est qu'il a trouvé sa sortie
+        // occupée en arrivant. Il tient donc le signal et repart à la seconde
+        // où elle se libère — ni heure de départ, ni arrêt minimum.
+        const canLeave = t.freight || gameMin >= Math.max(t.dep, t.actualArr + MIN_DWELL);
         if (canLeave) {
           const pathId = "out:" + t.to + ":" + t.platform;
           if (canGrant(pathId)) {
@@ -700,21 +789,27 @@ function tick(dtMin) {
               : 0;
             t.state = "movingOut";
             t.progress = 0;
-            t.depDelay = Math.max(0, lateness(t, gameMin));
-            // On n'encaisse que les minutes entières (même règle que liveDelay
-            // et que la mention « à l'heure »). depDelay garde la valeur brute
-            // pour la pastille et le pire retardataire du bilan.
-            totalDelay += Math.floor(t.depDelay);
-            // Juice : un départ À L'HEURE (< 1 min) allonge la série et
-            // déclenche un éclat vert + un carillon qui monte avec le combo ;
-            // un départ en retard casse la série (le badge rouge suffit à le dire).
-            if (t.depDelay < 1) {
-              onTimeStreak++;
-              flashOnTime(t.headPos, onTimeStreak);
-              SND.onTime(onTimeStreak);
-            } else {
-              onTimeStreak = 0;
+            // Le fret n'a pas d'heure à tenir : il ne pèse pas au score et ne
+            // touche NI au retard cumulé, NI à la série de départs à l'heure.
+            if (t.freight) {
               SND.depart();
+            } else {
+              t.depDelay = Math.max(0, lateness(t, gameMin));
+              // On n'encaisse que les minutes entières (même règle que liveDelay
+              // et que la mention « à l'heure »). depDelay garde la valeur brute
+              // pour la pastille et le pire retardataire du bilan.
+              totalDelay += Math.floor(t.depDelay);
+              // Juice : un départ À L'HEURE (< 1 min) allonge la série et
+              // déclenche un éclat vert + un carillon qui monte avec le combo ;
+              // un départ en retard casse la série (le badge rouge suffit à le dire).
+              if (t.depDelay < 1) {
+                onTimeStreak++;
+                flashOnTime(t.headPos, onTimeStreak);
+                SND.onTime(onTimeStreak);
+              } else {
+                onTimeStreak = 0;
+                SND.depart();
+              }
             }
             updateDelay();
             refreshEligible();

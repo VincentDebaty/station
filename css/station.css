@@ -196,6 +196,24 @@ svg { width: 100%; height: 100%; display: block; }
   50%      { stroke-width: 3.4; filter: drop-shadow(0 0 9px var(--elig, #fff)); }
 }
 @media (prefers-reduced-motion: reduce) { .platform.eligible { animation: none; } }
+/* Quai éligible mais ENCORE OCCUPÉ : le choix est permis (le convoi patientera
+   dehors et entrera dès qu'il se libère), mais il n'est pas immédiat. Même
+   liseré à la couleur de la destination, sans le remplissage teinté et sur un
+   souffle plus lent : « oui, mais pas tout de suite ». */
+.platform.eligible.busy {
+  fill: url(#platGrad);
+  animation-duration: 2.2s;
+}
+/* Quai PROMIS : un convoi encore dehors l'a choisi. Liseré intérieur en
+   pointillés à SA couleur (--claim posé en JS), qui défile vers le quai comme
+   l'itinéraire en attente — le quai est déjà pris, même s'il paraît libre. */
+.claim {
+  fill: none; stroke: var(--claim, transparent); stroke-width: 2.4;
+  stroke-dasharray: 6 6; opacity: 0; transition: opacity .2s;
+}
+.plat.claimed .claim { opacity: 1; animation: claim-march 1.1s linear infinite; }
+@keyframes claim-march { to { stroke-dashoffset: -12; } }
+@media (prefers-reduced-motion: reduce) { .plat.claimed .claim { animation: none; } }
 /* Quai en défaut : un train y stationne sans pouvoir repartir vers sa
    destination — liseré rouge pulsé, le temps qu'il refoule. Explique l'attente. */
 .platform.wrong {

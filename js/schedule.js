@@ -91,24 +91,26 @@ function simulateDay(schedule, assign, dt, events) {
           // joueur le réserve : plus personne ne peut s'y glisser)
           held[t.plat] = true;
           const pid = "in:" + t.from + ":" + t.plat;
+          if (!free(pid)) break;
+          // CANTONNEMENT du fret (même règle que le jeu) : il s'engage dès que
+          // sa voie d'entrée et le quai sont libres. Si sa sortie l'est aussi,
+          // il verrouille tout et traverse d'une traite ; sinon il entre comme
+          // un voyageur et s'arrêtera au quai jusqu'à ce qu'elle se dégage.
+          // depReal = l'instant où il s'engage (il n'a pas de départ à tenir,
+          // mais le générateur s'en sert pour choisir son quai).
           if (t.freight) {
-            // Le fret ne s'arrête pas : il lui faut entrée ET sortie d'un seul
-            // tenant. depReal = l'instant où il s'engage (il n'a pas de départ
-            // à tenir, mais le générateur s'en sert pour choisir son quai).
             const pout = "out:" + t.to + ":" + t.plat;
-            if (free(pid) && free(pout)) {
+            t.depReal = now;
+            if (free(pout)) {
               active[pid] = t; active[pout] = t;
               t.entryPath = pid; t.exitPath = pout;
-              t.state = "movingThrough"; t.elapsed = 0;
-              t.occStart = now; t.depReal = now;
+              t.state = "movingThrough"; t.elapsed = 0; t.occStart = now;
+              break;
             }
-            break;
           }
-          if (free(pid)) {
-            active[pid] = t; t.entryPath = pid;
-            t.stopP = 1; // tous les trains tirent jusqu'en tête de quai
-            t.state = "movingIn"; t.elapsed = 0; t.occStart = now;
-          }
+          active[pid] = t; t.entryPath = pid;
+          t.stopP = 1; // tous les trains tirent jusqu'en tête de quai
+          t.state = "movingIn"; t.elapsed = 0; t.occStart = now;
           break;
         }
         case "movingThrough": {
@@ -130,11 +132,13 @@ function simulateDay(schedule, assign, dt, events) {
           }
           break;
         case "dwell": {
-          if (now < Math.max(t.dep, t.actualArr + MIN_DWELL)) break;
+          // le fret ne stationne pas : il repart dès que sa sortie se libère
+          if (!t.freight && now < Math.max(t.dep, t.actualArr + MIN_DWELL)) break;
           const pid = "out:" + t.to + ":" + t.plat;
           if (free(pid)) {
             active[pid] = t; t.exitPath = pid;
-            t.state = "movingOut"; t.elapsed = 0; t.depReal = now;
+            t.state = "movingOut"; t.elapsed = 0;
+            if (!t.freight) t.depReal = now;
           }
           break;
         }
@@ -166,11 +170,14 @@ function generateSchedule() {
     // être réellement atteignable, pas seulement train par train
     let tot = 0, ok = true;
     for (let i = 0; i < day.schedule.length; i++) {
-      // un fret qui ne trouve jamais son créneau bloque la file derrière lui :
-      // la journée n'est pas jouable, on la rejette (il n'a pas d'heure de
-      // départ à tenir, donc il ne pèse pas dans le total de retard)
+      if (day.schedule[i].freight) {
+        // un fret qui n'obtient jamais sa sortie reste planté à quai et bloque
+        // la gare : la journée n'est pas jouable, on la rejette. Il n'a pas
+        // d'heure de départ à tenir, donc il ne pèse pas dans le total.
+        if (!res[i].exitPath) { ok = false; break; }
+        continue;
+      }
       if (res[i].depReal == null) { ok = false; break; }
-      if (day.schedule[i].freight) continue;
       tot += Math.max(0, res[i].depReal - day.schedule[i].dep);
     }
     if (ok && tot <= 0.15) return day;
