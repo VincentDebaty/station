@@ -436,7 +436,7 @@ function flashAt(pt) {
 // kind : "warn" (rouge) pour une erreur/sanction, "info" (teal) pour un simple rappel.
 function flashLabel(pt, text, kind) {
   if (!gFx || !pt) return;
-  const cls = kind === "warn" ? "warn" : kind === "ok" ? "ok" : kind === "wait" ? "wait" : "info";
+  const cls = kind === "warn" ? "warn" : kind === "ok" ? "ok" : "info";
   const g = el("g", { class: "flash-label " + cls }, gFx);
   const rect = el("rect", { rx: 7 * UIK }, g);           // posé d'abord : sous le texte
   const txt = el("text", { x: pt.x, y: pt.y }, g);
@@ -449,6 +449,33 @@ function flashLabel(pt, text, kind) {
   rect.setAttribute("width", w + 2 * padX);
   rect.setAttribute("height", h);
   setTimeout(() => g.remove(), 1100);
+}
+
+// Entrée différée (quai encore occupé) : le geste EST pris, le convoi prend la
+// file. Pas de phrase — une phrase dit « occupé » et se lit comme un refus,
+// alors que rien n'est refusé. Un sablier, lui, dit « ça vient » : il se remplit
+// en une seconde puis s'efface. Posé AU-DESSUS du quai, pas dessus : le quai est
+// justement pris par un convoi.
+function flashWait(pt) {
+  if (!gFx || !pt) return;
+  const g = el("g", { class: "flash-wait" }, gFx);
+  el("circle", { cx: pt.x, cy: pt.y, r: 14 * UIK, class: "flash-wait-disc" }, g);
+  const gl = el("g", { class: "flash-wait-glass" }, g);
+  gl.setAttribute("transform", "translate(" + pt.x + " " + pt.y + ")");
+  const w = 4.8 * UIK, h = 7 * UIK, b = w + 1.4 * UIK;
+  // Deux cônes pointe contre pointe : celui du haut se vide vers le col, celui
+  // du bas se remplit depuis sa base (animation CSS ; l'origine de transform est
+  // le col en haut, la base en bas — c'est ce qui fait « couler » le sable).
+  el("path", { d: "M " + (-w) + " " + (-h) + " L " + w + " " + (-h) + " L 0 0 Z",
+               class: "flash-wait-sand top" }, gl);
+  el("path", { d: "M " + (-w) + " " + h + " L " + w + " " + h + " L 0 0 Z",
+               class: "flash-wait-sand bot" }, gl);
+  // Silhouette : le nœud papillon d'un trait, plus les deux plateaux
+  el("path", { d: "M " + (-w) + " " + (-h) + " L " + w + " " + (-h) + " L " + (-w) + " " + h +
+                  " L " + w + " " + h + " Z", class: "flash-wait-frame" }, gl);
+  el("path", { d: "M " + (-b) + " " + (-h) + " H " + b + " M " + (-b) + " " + h + " H " + b,
+               class: "flash-wait-frame caps" }, gl);
+  setTimeout(() => g.remove(), 1000);
 }
 
 // Départ À L'HEURE : plutôt qu'un libellé, un petit éclat vert posé sur la tête

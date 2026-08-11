@@ -524,12 +524,10 @@ function onPlatformClick(pid) {
   selected.pendingEl = pend;
   selected = null;
   // Quai encore occupé : le geste a bien été pris, mais rien ne bougera tout de
-  // suite. Sans cette pilule, l'immobilité se lirait comme un geste raté.
-  // Pilule posée AU-DESSUS du quai, pas en son centre : le quai est justement
-  // occupé par un convoi, et le message tomberait en plein sur ses caisses.
-  if (deferred)
-    flashLabel({ x: center.x, y: q.cy - PLAT_H / 2 - 13 },
-               "Quai occupé — il entrera après", "wait");
+  // suite. Sans ce signe, l'immobilité se lirait comme un geste raté — et dire
+  // « occupé » se lirait comme un refus, alors que le convoi prend simplement la
+  // file. D'où le sablier : une seconde, au-dessus du quai.
+  if (deferred) flashWait({ x: center.x, y: q.cy - PLAT_H / 2 - 14 });
   onboardingPlatformChosen(); // accueil : geste complet → joueur initié
   refreshEligible();
   // Le liseré « promis » se pose ICI, pas au prochain tick : en pause — le

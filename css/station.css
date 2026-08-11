@@ -399,8 +399,6 @@ svg { width: 100%; height: 100%; display: block; }
 .flash-label.info text { fill: #7ee7d7; }
 .flash-label.ok rect { stroke: var(--green); }
 .flash-label.ok text { fill: #b6f5c8; }
-.flash-label.wait rect { stroke: #f5b23c; }
-.flash-label.wait text { fill: #ffd98a; }
 @keyframes flashlbl {
   0%   { opacity: 0; transform: translateY(7px); }
   16%  { opacity: 1; transform: translateY(0); }
@@ -410,6 +408,32 @@ svg { width: 100%; height: 100%; display: block; }
 @media (prefers-reduced-motion: reduce) {
   .flash-label { animation: flashlbl-fade 1.1s ease-out forwards; }
   @keyframes flashlbl-fade { 0%,12%,74% { opacity: 1; } 100% { opacity: 0; } }
+}
+
+/* Sablier d'attente : le quai visé est encore pris, le convoi fait la file.
+   Une seconde, pas un mot. Ambre, comme tout ce qui « patiente » dans le jeu
+   (feu de maintien, halo holding). Pas de filter : invisible sur iPhone. */
+.flash-wait { pointer-events: none; animation: flashwait 1s ease-out forwards; }
+.flash-wait-disc { fill: rgba(14, 20, 32, .94); stroke: #f5b23c; stroke-width: 1.3; }
+.flash-wait-frame {
+  fill: none; stroke: #ffd98a; stroke-width: 1.5; stroke-linejoin: round;
+}
+.flash-wait-frame.caps { stroke-width: 2.2; stroke-linecap: round; }
+.flash-wait-sand { fill: #f5b23c; transform-box: fill-box; }
+/* le sable coule : le cône du haut se vide vers le col, celui du bas se remplit */
+.flash-wait-sand.top { transform-origin: center bottom; animation: sand-drain .74s ease-in forwards; }
+.flash-wait-sand.bot { transform-origin: center bottom; animation: sand-fill .74s ease-out forwards; }
+@keyframes sand-drain { 0% { transform: scaleY(1); } 100% { transform: scaleY(.12); } }
+@keyframes sand-fill  { 0% { transform: scaleY(.12); } 100% { transform: scaleY(1); } }
+@keyframes flashwait {
+  0%   { opacity: 0; transform: translateY(5px); }
+  14%  { opacity: 1; transform: translateY(0); }
+  76%  { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-8px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .flash-wait { animation: flashlbl-fade 1s ease-out forwards; }
+  .flash-wait-sand.top, .flash-wait-sand.bot { animation: none; }
 }
 
 /* Départ à l'heure : éclat vert (anneau + coche + étincelles) posé sur le convoi,
