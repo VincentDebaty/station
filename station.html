@@ -88,16 +88,6 @@
     </div>
     <div id="pause-tag" class="hidden">En pause</div>
   </div>
-  <!-- Repère de tutoriel (premier service) : halo pulsé sur la cible + bulle
-       qui pointe quoi toucher, reste de l'écran assombri (spotlight). Le calque
-       ne capte pas les taps (sauf le bouton) pour laisser jouer dessous. -->
-  <div id="coach" class="hidden">
-    <div id="coach-ring"></div>
-    <div id="coach-bubble" class="below">
-      <p id="coach-text"></p>
-      <button class="btn primary hidden" id="coach-next">Suivant</button>
-    </div>
-  </div>
   <!-- Commandes flottantes haut-droite : LECTURE (play/pause + vitesse) et
        RÉGLAGES, deux boutons côte à côte, chacun avec son menu déroulant. -->
   <div id="hud-tools">
@@ -129,6 +119,9 @@
       <!-- Bandeau « pays terminé » : affiché uniquement quand ce service boucle
            le dernier maillon d'un pays. -->
       <div id="end-country" class="hidden"></div>
+      <!-- Récompense : la gare voisine que ce service ouvre. Imposée à une
+           étoile, au choix du joueur à deux et trois (js/game.js). -->
+      <div id="end-unlock" class="hidden"></div>
       <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
         <button class="btn" id="btn-end-map">← Carte</button>
         <button class="btn" id="btn-replay">Rejouer</button>
@@ -145,6 +138,19 @@
        entièrement construite par js/map.js. -->
   <div id="hub-map"></div>
 </div>
+<!-- Repère de tutoriel : au niveau du body, pour couvrir aussi bien le
+   plan de voies que la CARTE — la première étape du tutoriel s'y joue
+   (« choisis ta première gare ») : halo pulsé sur la cible + bulle
+     qui pointe quoi toucher, reste de l'écran assombri (spotlight). Le calque
+     ne capte pas les taps (sauf le bouton) pour laisser jouer dessous. -->
+<div id="coach" class="hidden">
+  <div id="coach-ring"></div>
+  <div id="coach-bubble" class="below">
+    <p id="coach-text"></p>
+    <button class="btn primary hidden" id="coach-next">Suivant</button>
+  </div>
+</div>
+
 <!-- Aide « Comment jouer » : au niveau du body, en fixed au-dessus de tout
      (carte comprise), donc accessible aussi bien en jeu que depuis la carte. -->
 <div class="overlay hidden" id="help">
@@ -182,6 +188,18 @@
     </div>
   </div>
 </div>
+<!-- Confirmation avant de recommencer : le service en cours est jeté et une
+     NOUVELLE journée est tirée — le geste est à un doigt de l'engrenage. -->
+<div class="overlay hidden" id="confirm-reset">
+  <div class="card">
+    <h1>Recommencer le service ?</h1>
+    <p>Le service en cours sera abandonné. Une nouvelle journée sera tirée : les trains et leurs horaires ne seront pas les mêmes.</p>
+    <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+      <button class="btn" id="btn-reset-cancel">Continuer</button>
+      <button class="btn danger" id="btn-reset-confirm">Recommencer</button>
+    </div>
+  </div>
+</div>
 <!-- Le plan de voies est large : le jeu se joue en paysage. En portrait sur
      mobile, on invite à tourner l'appareil et la simulation est gelée. -->
 <div id="rotate">
@@ -200,8 +218,12 @@
 <script src="js/render.js"></script>
 <script src="js/game.js"></script>
 <script src="js/geo.js"></script>
+<script src="data/places.js"></script>
+<script src="data/lines.js"></script>
+<script src="js/network.js"></script>
 <script src="data/worldmap.js"></script>
 <script src="js/map.js"></script>
+<script src="js/mapnet.js"></script>
 <script src="js/hub.js"></script>
 <script src="js/main.js"></script>
 <!-- Service worker : cache hors-ligne. Ignoré en file:// (nécessite http/https). -->

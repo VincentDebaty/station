@@ -17,23 +17,55 @@ function maxDelay() { return STATION.maxDelay ?? DEFAULT_MAX_DELAY; }
 // Au premier lancement (flag persistant côté store), on prend le joueur par la
 // main avec des repères VISUELS — un halo pulsé + une bulle qui pointe EXACTEMENT
 // quoi toucher, le reste de l'écran assombri (spotlight). Six temps :
+//   0. choisir sa première gare (sur la CARTE, avant tout service)
 //   1. le 1er train à choisir     2. le quai où l'envoyer
 //   3. où se lit le retard         4. le 2e train
 //   5. son quai                    6. l'objectif (< 30 min → étoile → ville suivante)
 // Le service se gèle pendant chaque repère et reprend quand le joueur agit.
 // Ne s'affiche qu'UNE fois (setOnboarded à la fin).
-// Phases : null (initié) | "welcome" | "wait1"/"tap1"/"plat1" | "delay"
-//          | "wait2"/"tap2"/"plat2" | "goal".
+// Phases : null (initié) | "pickStation" (sur la CARTE) | "welcome"
+//          | "wait1"/"tap1"/"plat1" | "delay" | "wait2"/"tap2"/"plat2" | "goal"
+//          | "free" (jeu libre, mais on guette encore) | "hold" | "speed".
+// Les deux dernières étapes sont OPPORTUNISTES : elles ne se déclenchent que si
+// la situation se présente pendant ce premier service — un feu rouge, puis le
+// moment où il n'y a plus rien à aiguiller.
 let onboarding = null;
 let _tutFirstId = null;  // id du 1er train guidé (pour en désigner un AUTRE ensuite)
+let _tutHoldSeen = false, _tutSpeedSeen = false; // étapes opportunistes, une fois chacune
 let _coachTarget = null; // élément DOM que le repère pointe (suivi chaque frame)
 
+// ---- Étape 0, sur la CARTE : choisir sa première gare -------------------
+// Les portes d'entrée pulsent déjà (js/mapnet.js) ; il reste à NOMMER le geste.
+// Pas de halo ici : les portes sont plusieurs et équivalentes, en cerner une
+// seule dirait « celle-ci » alors que le joueur choisit librement.
+function maybeStartMapOnboarding() {
+  const done = (typeof getOnboarded === "function") && getOnboarded();
+  const started = (typeof noStationEarned === "function") && !noStationEarned();
+  if (done || started) { if (onboarding === "pickStation") { onboarding = null; hideCoach(); } return; }
+  onboarding = "pickStation";
+  coachAt(null, "Bienvenue ! Les gares qui <b>pulsent</b> sont ouvertes. " +
+                "<b>Choisis ta première gare</b> pour prendre ton premier service.");
+}
+
+// Fiche de gare ouverte pendant l'étape 0 : le repère se déplace sur le bouton
+// qui lance le service. Une fiche VERROUILLÉE porte elle aussi ce bouton, mais
+// il mène ailleurs (vers une gare ouverte) — le texte doit le dire, sinon il
+// promet au joueur une gare qu'il ne va pas prendre.
+function onboardingStationCard(play, unlocked) {
+  if (onboarding !== "pickStation") return;
+  if (!play) { hideCoach(); return; }
+  coachAt(play, unlocked
+    ? "Prends le service : tu diriges cette gare pendant une journée."
+    : "Cette gare est encore fermée. <b>Commence par une gare ouverte</b> — celle-ci te convient.");
+}
+
 function maybeStartOnboarding() {
+  hideCoach(); // le repère de l'étape 0 (carte / fiche) n'a plus lieu d'être
   // Démo « limites » (adhoc) et joueur déjà initié : aucun accueil.
   if (STATION.adhoc || (typeof getOnboarded === "function" && getOnboarded())) {
     onboarding = null; hideCoach(); return;
   }
-  _tutFirstId = null;
+  _tutFirstId = null; _tutHoldSeen = false; _tutSpeedSeen = false;
   onboarding = "welcome";
   if (typeof openWelcome === "function") openWelcome(); // écran de bienvenue ET pause
 }
@@ -57,12 +89,19 @@ function tutServingPlatform(t) {
 // Appelé chaque tick : fait apparaître le repère quand le bon train est prêt.
 function onboardingTick() {
   if (onboarding === "wait1") {
-    const t = trains.find(o => !o.freight && !o.target && o.settled &&
+    const ready = trains.filter(o => !o.freight && !o.target && o.settled &&
       (o.state === "waiting" || o.state === "approaching"));
-    if (!t) return;
+    if (!ready.length) return;
+    // On préfère un train dont le choix PORTE la règle : plusieurs quais
+    // s'allument, mais tous ne desservent pas sa destination. Enseigner sur un
+    // train sans piège laisserait croire « quai allumé = bon quai ».
+    const t = ready.find(o => { const n = tutPlatformCounts(o); return n.lit > 1 && n.serving < n.lit; })
+           || ready[0];
     _tutFirstId = t.id;
     freezeGame(true); onboarding = "tap1";
     coachAt(t.el, "Voici un train qui s'annonce. <b>Touchez-le</b> pour le choisir.");
+  } else if (onboarding === "free") {
+    onboardingWatch();
   } else if (onboarding === "wait2") {
     const t = trains.find(o => !o.freight && !o.target && o.settled && o.id !== _tutFirstId &&
       (o.state === "waiting" || o.state === "approaching"));
@@ -71,12 +110,65 @@ function onboardingTick() {
     coachAt(t.el, "Un autre train arrive. <b>Touchez-le</b> à son tour.");
   }
 }
+// Combien de quais s'allument à la sélection, et combien repartent réellement
+// vers la destination du train. Calculé sur l'ÉTAT du jeu et non sur le DOM :
+// onboardingTrainTapped est appelé avant refreshEligible(), les classes
+// `.eligible` ne sont pas encore posées.
+function tutPlatformCounts(t) {
+  const lit = (LINKS[t.from] || []).filter(pid => !platformClaimed(pid) && !platformClosed(pid));
+  return { lit: lit.length, serving: lit.filter(pid => paths["out:" + t.to + ":" + pid]).length };
+}
+// Plus rien à aiguiller : tout train voyageur présent a son quai, et aucun
+// nouveau n'attend une décision. Le joueur n'a plus qu'à regarder — autant le
+// lui dire, plutôt que de le laisser attendre en temps réel.
+function tutIdle() {
+  if (!trains.length) return false;
+  return !trains.some(o => !o.freight && !o.target &&
+    (o.state === "waiting" || o.state === "approaching"));
+}
+// Veille pendant le jeu libre du premier service.
+function onboardingWatch() {
+  if (!_tutHoldSeen) {
+    // Feu rouge : un convoi À QUAI dont la voie de sortie est prise. C'est le
+    // cas le plus déroutant — le train est là, à l'heure, et ne part pas.
+    const t = trains.find(o => o.holding && o.state === "dwell" && o.el);
+    if (t) {
+      _tutHoldSeen = true; freezeGame(true); onboarding = "hold";
+      coachAt(t.el, "Feu rouge : ce train est prêt, mais <b>sa voie de sortie est occupée</b>. " +
+                    "Il repartira seul dès qu'elle se libère — vous n'avez rien à faire, " +
+                    "et le retard court pendant ce temps.", "Compris");
+      return;
+    }
+  }
+  if (!_tutSpeedSeen && tutIdle()) {
+    const btn = document.getElementById("btn-speed");
+    if (!btn) return;
+    _tutSpeedSeen = true; freezeGame(true); onboarding = "speed";
+    coachAt(btn, "Tous les trains présents ont leur quai : plus rien à décider pour l'instant. " +
+                 "<b>Accélérez</b> pour ne pas attendre — vous pourrez ralentir dès qu'un train s'annonce.",
+            "Compris");
+  }
+}
 // Tap sur un train voyageur pendant le tutoriel → on désigne son quai.
+// C'est LE point où se joue la règle : tous les quais atteignables s'allument,
+// mais ils ne desservent pas tous la destination du train. Le dire ici, sinon
+// « quai éclairé = bon quai » s'installe et le joueur ne comprend pas ses
+// premiers refoulements.
 function onboardingTrainTapped(t) {
   if (onboarding !== "tap1" && onboarding !== "tap2") return;
   const pl = document.querySelector('.platform[data-platform="' + tutServingPlatform(t) + '"]');
-  onboarding = (onboarding === "tap1") ? "plat1" : "plat2";
-  coachAt(pl, "Envoyez-le sur ce <b>quai éclairé</b> : il dessert sa destination.");
+  const first = onboarding === "tap1";
+  onboarding = first ? "plat1" : "plat2";
+  const n = tutPlatformCounts(t);
+  const choice = n.lit > 1 && n.serving < n.lit; // y a-t-il vraiment un piège ?
+  coachAt(pl, first
+    ? (choice
+        ? "Plusieurs quais s'allument : le train peut entrer sur chacun. Mais tous ne " +
+          "repartent pas vers <b>sa</b> destination — <b>celui-ci, oui</b>."
+        : "Envoyez-le sur ce <b>quai éclairé</b> : il dessert sa destination.")
+    : (choice
+        ? "À nouveau plusieurs quais possibles. <b>Celui-ci</b> dessert sa destination."
+        : "Envoyez-le sur ce <b>quai éclairé</b>."));
 }
 // Quai choisi pendant le tutoriel → étape d'explication suivante.
 function onboardingPlatformChosen() {
@@ -97,9 +189,14 @@ function coachNext() {
   if (onboarding === "delay") {
     onboarding = "wait2"; hideCoach(); freezeGame(false); // le 1er part, un 2e arrive
   } else if (onboarding === "goal") {
-    onboarding = null; hideCoach();
+    // Le guidage pas-à-pas est fini et ne se rejouera plus (setOnboarded), mais
+    // on continue de guetter deux situations sur CE service : le premier feu
+    // rouge, et le moment où il n'y a plus rien à aiguiller.
+    onboarding = "free"; hideCoach();
     if (typeof setOnboarded === "function") setOnboarded(true);
     freezeGame(false);
+  } else if (onboarding === "hold" || onboarding === "speed") {
+    onboarding = "free"; hideCoach(); freezeGame(false);
   }
 }
 // --- Repère : halo pulsé sur la cible (spotlight) + bulle de texte (+ bouton). ---
@@ -125,7 +222,22 @@ function hideCoach() {
 function positionCoach() {
   const box = document.getElementById("coach");
   if (!box || box.classList.contains("hidden")) return;
-  if (!_coachTarget || !_coachTarget.getBoundingClientRect) return;
+  // Sans cible : bulle seule, centrée en bas. Sert aux étapes qui parlent de
+  // PLUSIEURS éléments à la fois (les portes d'entrée sur la carte) — y poser un
+  // halo désignerait arbitrairement l'un d'eux.
+  if (!_coachTarget) {
+    const ring = document.getElementById("coach-ring");
+    const bubble = document.getElementById("coach-bubble");
+    ring.style.display = "none";
+    bubble.classList.remove("above"); bubble.classList.add("no-caret");
+    bubble.style.left = "50%";
+    bubble.style.top = "auto";
+    bubble.style.bottom = "calc(26px + var(--safe-b))";
+    return;
+  }
+  document.getElementById("coach-ring").style.display = "";
+  document.getElementById("coach-bubble").classList.remove("no-caret");
+  if (!_coachTarget.getBoundingClientRect) return;
   const r = _coachTarget.getBoundingClientRect();
   if (!r.width && !r.height) return;
   const ring = document.getElementById("coach-ring");
@@ -1046,12 +1158,19 @@ function endGame(failed) {
   document.getElementById("stars").textContent = "★★★".slice(0, stars) + "☆☆☆".slice(0, 3 - stars);
   // une étoile ne débloque que la gare suivante DU MÊME pays (les autres
   // pays sont déjà ouverts) ; en fin de pays, on invite à en choisir un autre
-  const nextInCountry = sameCountry(currentIdx, currentIdx + 1);
+  // Une gare voisine s'est-elle ouverte grâce à ce service ? (message de fin)
+  const opened = win && typeof netLinks === "function" && (() => {
+    const prog = getProgress();
+    return netLinks(CATALOG[currentIdx].id).to.some(id => {
+      const gi = CATALOG.findIndex(c => c.id === id);
+      return gi >= 0 && !((prog[id] || {}).stars) && isUnlocked(gi);
+    });
+  })();
   document.getElementById("end-delay").textContent = failed
     ? "Retard de +" + d + " min — la limite de " + maxDelay() + " min est dépassée."
     : win
       ? (d === 0 ? "Service parfait — aucun retard." : "Retard cumulé : " + d + " min") +
-        (nextInCountry ? " — gare suivante débloquée !" : "")
+        (opened ? " — de nouvelles gares s'ouvrent !" : "")
       : "Retard cumulé : " + d + " min — il faut moins de 30 min pour décrocher une étoile. Réessayez !";
   // bilan de la journée
   const pax = trains.filter(t => !t.freight);
@@ -1081,15 +1200,113 @@ function endGame(failed) {
     ec.classList.remove("hidden");
   } else ec.classList.add("hidden");
   (perfect ? SND.perfect : win ? SND.end : SND.incident)(); // parfait → fanfare, 0 étoile → échec
-  // « Gare suivante » seulement si CE service est réussi (≥ 1 étoile). Une gare
-  // déjà débloquée par une partie passée ne doit PAS proposer d'avancer après un
-  // échec : sur une manche ratée, l'action mise en avant reste « Rejouer ».
-  const next = win && nextInCountry && isUnlocked(currentIdx + 1);
-  document.getElementById("btn-next").classList.toggle("hidden", !next);
-  // Bouton principal (rempli teal) selon le contexte : « suivante » si gagné +
-  // débloqué, « rejouer » si échec, « carte » si gagné en fin de pays.
-  document.getElementById("btn-next").classList.toggle("primary", next);
-  document.getElementById("btn-replay").classList.toggle("primary", !win && !next);
-  document.getElementById("btn-end-map").classList.toggle("primary", win && !next);
+  // ---- RÉCOMPENSE : ouvrir une gare voisine -------------------------------
+  // Un service réussi donne le droit d'en ouvrir UNE. Le nombre d'étoiles décide
+  // de la latitude : imposée à une étoile, au choix (à niveau égal ou moindre) à
+  // deux, libre à trois. Voir unlockChoices() dans js/catalog.js.
+  //
+  // Redessiné après le choix du joueur SANS repasser par endGame() : réenclencher
+  // tout le bilan rejouerait le son et réenregistrerait le score.
+  const reward = document.getElementById("end-unlock");
+  const nameOf = id => { const c = CATALOG.find(x => x.id === id); return c ? (c.city || c.name) : id; };
+  const pipsOf = id => {
+    const d = Math.max(1, Math.min(5, (CATALOG.find(x => x.id === id) || {}).difficulty || 1));
+    return '<span class="pips"><span class="on">' + "●".repeat(d) + "</span>" + "○".repeat(5 - d) + "</span>";
+  };
+  let openedNow = null;
+
+  function paintActions() {
+    const choices = (win && !STATION.adhoc && typeof unlockChoices === "function")
+      ? unlockChoices(CATALOG[currentIdx].id, stars) : [];
+    // Une seule candidate : rien à décider, on ouvre et on l'annonce. C'est le
+    // cas systématique à une étoile.
+    if (!openedNow && choices.length === 1) { openStation(choices[0]); openedNow = choices[0]; }
+    const pending = !openedNow && choices.length > 1;
+
+    // La CARTE derrière la fiche quand un choix est en attente : on décide en
+    // voyant le réseau, pas une liste de noms. Elle porte les étoiles qu'on vient
+    // de gagner (mapnetSetChoices reconstruit) et fait pulser les candidates.
+    const end = document.getElementById("end");
+    const hub = document.getElementById("hub");
+    if (pending && typeof mapnetSetChoices === "function") {
+      hub.classList.remove("hidden");
+      // La disposition en colonnes est posée AVANT de mesurer : sinon on mesure
+      // la fiche encore centrée, on croit la bande libre bien plus étroite
+      // qu'elle ne l'est, et la carte se dézoome sur toute l'Europe de l'Ouest.
+      end.classList.remove("hidden");
+      end.classList.add("over-map");
+      mapnetSetChoices(choices, CATALOG[currentIdx].id);
+      const slug = (typeof stationCountrySlug === "function") ? stationCountrySlug(currentIdx) : null;
+      if (slug && typeof frameCountryBeside === "function") {
+        const r = end.querySelector(".card").getBoundingClientRect();
+        const wide = window.innerWidth > 720;
+        frameCountryBeside(slug, wide ? { left: r.right + 16 } : { bottom: window.innerHeight - r.top + 12 });
+      }
+    } else {
+      end.classList.remove("over-map");
+      if (typeof mapnetSetChoices === "function" && MAPNET.choices) mapnetSetChoices([]);
+      // Choix résolu : la carte se retire, sauf si on part justement dessus.
+      if (!openedNow) hub.classList.add("hidden");
+    }
+
+    if (openedNow) {
+      reward.innerHTML = '<div class="eu-title">Nouvelle gare ouverte</div>' +
+        '<div class="eu-done">' + nameOf(openedNow) + " " + pipsOf(openedNow) + "</div>";
+      reward.classList.remove("hidden");
+    } else if (pending) {
+      reward.innerHTML = '<div class="eu-title">Ouvre une gare voisine</div>' +
+        '<div class="eu-row">' + choices.map(id =>
+          '<button class="btn eu-pick" data-id="' + id + '">' + nameOf(id) + " " + pipsOf(id) + "</button>").join("") + "</div>";
+      reward.classList.remove("hidden");
+      // Choisir une gare, c'est déjà s'y engager : on n'ajoute pas un écran de
+      // plus. Le convoi file sur la carte de la gare qu'on quitte vers celle
+      // qu'on vient d'ouvrir, puis le service y démarre.
+      for (const b of reward.querySelectorAll(".eu-pick"))
+        b.addEventListener("click", () => {
+          const id = b.dataset.id;
+          openStation(id);
+          openedNow = id;
+          const gi = CATALOG.findIndex(c => c.id === id);
+          if (gi < 0) { paintActions(); return; }
+          paintActions();               // la carte annonce « Gare ouverte » derrière le voyage
+          document.getElementById("end").classList.add("hidden");
+          if (typeof mapJourneyToNext === "function")
+            mapJourneyToNext(currentIdx, gi, () => startStation(gi));
+          else startStation(gi);
+        });
+    } else reward.classList.add("hidden");
+
+    // « Gare suivante » = une VOISINE ouverte et jamais jouée, la plus facile
+    // d'abord — un pas de plus le long des voies, pas l'entrée suivante du
+    // catalogue. Tant qu'un choix est en attente, aucune autre action : le
+    // joueur ne doit pas pouvoir quitter en laissant sa récompense sur la table.
+    let nextGi = -1;
+    if (win && !pending && typeof netLinks === "function") {
+      const prog = getProgress();
+      const cand = netLinks(CATALOG[currentIdx].id).to
+        .map(id => CATALOG.findIndex(c => c.id === id))
+        .filter(gi => gi >= 0 && !((prog[CATALOG[gi].id] || {}).stars) && isUnlocked(gi));
+      cand.sort((a, b) => (CATALOG[a].difficulty || 1) - (CATALOG[b].difficulty || 1));
+      if (cand.length) nextGi = cand[0];
+    }
+    const next = nextGi >= 0;
+    const btnNext = document.getElementById("btn-next");
+    if (next) {
+      btnNext.dataset.gi = nextGi;
+      // Le bouton porte le NOM de la gare : « Ottignies → » dit où l'on va,
+      // « Gare suivante → » laisse deviner.
+      btnNext.textContent = (CATALOG[nextGi].city || CATALOG[nextGi].name) + " →";
+    }
+    btnNext.classList.toggle("hidden", !next);
+    btnNext.classList.toggle("primary", next);
+    const btnReplay = document.getElementById("btn-replay");
+    btnReplay.classList.toggle("hidden", pending);
+    btnReplay.classList.toggle("primary", !win && !next);
+    const btnMap = document.getElementById("btn-end-map");
+    btnMap.classList.toggle("hidden", pending);
+    btnMap.classList.toggle("primary", win && !next);
+  }
+  paintActions();
+
   document.getElementById("end").classList.remove("hidden");
 }

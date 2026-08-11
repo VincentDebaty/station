@@ -164,16 +164,41 @@ document.getElementById("btn-mute").addEventListener("click", () => {
   setMuted(muted);
   updateMuteIcon();
 });
-document.getElementById("btn-reset").addEventListener("click", async () => {
+async function doReset() {
   document.getElementById("end").classList.add("hidden");
   await resetGame(); started = true; // génération asynchrone : on attend la journée
   maybeStartOnboarding(); // sans effet si déjà initié (garde interne)
+}
+// Recommencer : le bouton est à un doigt de l'engrenage, et le geste jette le
+// service en cours pour en tirer un NOUVEAU (autres trains, autres horaires) —
+// il demande donc confirmation, comme quitter. Service déjà terminé ou pas
+// encore commencé : rien à perdre, on repart sans rien demander.
+const confirmReset = document.getElementById("confirm-reset");
+let _wasPausedBeforeReset = false;
+function showConfirmReset() {
+  _wasPausedBeforeReset = paused;
+  confirmReset.classList.remove("hidden");
+  // Gèle la partie le temps de décider : pas de retard encaissé « à vide ».
+  paused = true; updatePauseIcon();
+}
+function dismissConfirmReset() {
+  confirmReset.classList.add("hidden");
+  // « Continuer » : on reprend là où on en était (sauf si déjà en pause avant).
+  if (!_wasPausedBeforeReset) { paused = false; updatePauseIcon(); }
+}
+document.getElementById("btn-reset").addEventListener("click", () => {
+  if (started && !ended) showConfirmReset();
+  else doReset();
 });
-document.getElementById("btn-replay").addEventListener("click", async () => {
-  document.getElementById("end").classList.add("hidden");
-  await resetGame(); started = true;
-  maybeStartOnboarding(); // sans effet si déjà initié (garde interne)
+document.getElementById("btn-reset-cancel").addEventListener("click", dismissConfirmReset);
+document.getElementById("btn-reset-confirm").addEventListener("click", async () => {
+  confirmReset.classList.add("hidden");
+  await doReset();
 });
+confirmReset.addEventListener("click", e => { if (e.target === confirmReset) dismissConfirmReset(); });
+// « Rejouer » sur l'écran de fin : le service est terminé, il n'y a rien à
+// abandonner — pas de confirmation.
+document.getElementById("btn-replay").addEventListener("click", doReset);
 document.getElementById("btn-end-map").addEventListener("click", () => showHub());
 // Cartouche haut-gauche = bouton retour vers la carte (même logique que « ‹ »
 // sur la carte). Une partie EN COURS demande confirmation (abandon = progression
@@ -209,7 +234,10 @@ confirmQuit.addEventListener("click", e => { if (e.target === confirmQuit) dismi
 // la gare terminée à la suivante) avant de lancer le service. Repli direct si
 // l'animation n'est pas disponible.
 document.getElementById("btn-next").addEventListener("click", () => {
-  const from = currentIdx, to = currentIdx + 1;
+  // La cible est posée par showEnd (game.js) : une VOISINE que ce service vient
+  // d'ouvrir, pas l'entrée suivante du catalogue.
+  const from = currentIdx, to = +document.getElementById("btn-next").dataset.gi;
+  if (!(to >= 0)) { showHub(); return; }
   document.getElementById("end").classList.add("hidden");
   if (typeof mapJourneyToNext === "function") mapJourneyToNext(from, to, () => startStation(to));
   else startStation(to);

@@ -42,15 +42,103 @@ async function loadCatalog() {
 // Progression (étoiles + record par id) : persistance dans js/store.js
 // (getProgress / saveResult). Ici, seule la logique de DÉVERROUILLAGE, qui
 // dépend du catalogue.
-// Déverrouillage PAR PAYS : la première gare d'un pays (la plus facile) est
-// toujours ouverte ; les suivantes se débloquent à ≥ 1 étoile sur la
-// précédente du MÊME pays. Aucun couloir entre pays.
-function sameCountry(i, j) {
-  return CATALOG[i] && CATALOG[j] && CATALOG[i].country === CATALOG[j].country;
+//
+// DÉVERROUILLAGE PAR LE RÉSEAU, gagné service après service.
+//
+// Les gares les plus faciles (difficulté ≤ ENTRY_DIFFICULTY) sont les PORTES
+// D'ENTRÉE : ouvertes tant que le joueur n'a RIEN décroché, partout, pour qu'il
+// choisisse par où commencer. Dès son premier service réussi, les autres portes
+// se referment : il s'est engagé quelque part, et le reste se gagne de proche en
+// proche comme n'importe quelle gare.
+//
+// Ensuite, chaque service RÉUSSI donne le droit d'ouvrir UNE gare voisine, et
+// le nombre d'étoiles décide de la latitude laissée au joueur :
+//   ★☆☆  la plus facile des voisines encore fermées — sans choix ;
+//   ★★☆  au choix parmi les voisines fermées PAS PLUS DURES que celle-ci ;
+//   ★★★  au choix parmi toutes ses voisines fermées.
+// Rejouer une gare redonne une ouverture : c'est ce qui garantit qu'aucune
+// gare ne devient inatteignable (Anvers n'a que Gand pour voisine — il faut
+// pouvoir revenir à Gand pour l'ouvrir après avoir ouvert Bruges).
+//
+// Une gare ouverte l'est DÉFINITIVEMENT et se mémorise (js/store.js) : ce choix
+// appartient au joueur, il ne se recalcule pas.
+const ENTRY_DIFFICULTY = 1;
+
+function stationDifficulty(id) {
+  const c = CATALOG.find(x => x.id === id);
+  return c ? Math.max(1, Math.min(5, c.difficulty || 1)) : 1;
+}
+function isEarned(id, prog) {
+  return (((prog || getProgress())[id] || {}).stars || 0) >= 1;
+}
+// Aucune gare décrochée nulle part : la partie n'a pas encore commencé.
+function noStationEarned() {
+  const prog = getProgress();
+  return !CATALOG.some(c => ((prog[c.id] || {}).stars || 0) > 0);
+}
+// Une porte d'entrée doit MENER quelque part. Une gare facile sans voisine
+// jouable est un piège : le joueur s'y engage, les autres portes se referment,
+// et il se retrouve avec une seule gare pour toujours. Tant qu'un pays n'a pas
+// de voisinage praticable (l'Allemagne attend ses lignes), il n'offre pas de
+// porte — mieux vaut un pays encore fermé qu'un cul-de-sac.
+function isEntryDoor(id) {
+  if (stationDifficulty(id) > ENTRY_DIFFICULTY) return false;
+  return typeof netLinks === "function" &&
+    netLinks(id).to.some(nb => CATALOG.some(c => c.id === nb));
 }
 function isUnlocked(i) {
-  if (i === 0 || !sameCountry(i - 1, i)) return true; // tête de pays : ouverte
-  return ((getProgress()[CATALOG[i - 1].id] || {}).stars || 0) >= 1;
+  const c = CATALOG[i];
+  if (!c) return false;
+  if (isEarned(c.id)) return true;   // déjà décrochée : toujours rejouable
+  if (isOpened(c.id)) return true;   // ouverte par une voisine
+  // Porte d'entrée : disponible seulement avant le premier service réussi.
+  return noStationEarned() && isEntryDoor(c.id);
+}
+
+// Voisines encore fermées d'une gare, de la plus facile à la plus dure.
+function lockedNeighbours(id) {
+  if (typeof netLinks !== "function") return [];
+  return netLinks(id).to
+    .filter(nb => {
+      const gi = CATALOG.findIndex(c => c.id === nb);
+      return gi >= 0 && !isUnlocked(gi);
+    })
+    .sort((a, b) => stationDifficulty(a) - stationDifficulty(b));
+}
+// Ce qu'un service à `stars` étoiles donne le droit d'ouvrir depuis `id`.
+// Liste vide = rien à ouvrir (toutes les voisines sont déjà accessibles).
+function unlockChoices(id, stars) {
+  if (!(stars >= 1)) return [];
+  const locked = lockedNeighbours(id);
+  if (stars === 1) return locked.slice(0, 1);            // imposé : la plus facile
+  if (stars === 2) {                                     // au choix, à niveau égal ou moindre
+    const cap = stationDifficulty(id);
+    const within = locked.filter(nb => stationDifficulty(nb) <= cap);
+    // Un palier SUPÉRIEUR ne doit jamais retirer une possibilité. Sans ce
+    // repli, faire mieux pouvait tout bloquer : à Namur (3), une étoile ouvrait
+    // Liège (4) — « la plus facile encore fermée », sans plafond — tandis que
+    // deux étoiles n'ouvraient RIEN, le plafond l'excluant. On garantit donc au
+    // minimum ce qu'une étoile aurait donné.
+    // (`locked` est trié par difficulté : si `within` n'est pas vide, il
+    // contient forcément locked[0], le choix d'une étoile.)
+    return within.length ? within : locked.slice(0, 1);
+  }
+  return locked;                                         // trois étoiles : tout le voisinage
+}
+
+// Gares ouvertes et jamais jouées, de la plus facile à la plus dure : c'est le
+// front de progression, celui qu'on propose quand le joueur clique une gare
+// encore fermée.
+function openFrontier(country) {
+  const prog = getProgress();
+  const out = [];
+  for (let i = 0; i < CATALOG.length; i++) {
+    const c = CATALOG[i];
+    if (country && c.country !== country) continue;
+    if (isEarned(c.id, prog) || !isUnlocked(i)) continue;
+    out.push(i);
+  }
+  return out.sort((a, b) => stationDifficulty(CATALOG[a].id) - stationDifficulty(CATALOG[b].id));
 }
 // Pays « terminé » = toutes ses gares décrochées (≥ 1 étoile). Sert à souligner
 // l'achèvement d'un pays en fin de service.

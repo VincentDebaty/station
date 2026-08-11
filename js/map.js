@@ -2,14 +2,23 @@
 // ------------------------------------------------------------------
 // Carte du monde zoomable — sélection des gares (remplace le hub linéaire).
 //
-// 3 niveaux dans UN SEUL SVG en coordonnées géographiques : monde → continent →
-// pays. Zoom = animation du viewBox (preserveAspectRatio "meet" → pas de
-// distorsion). Frontières RÉELLES (WORLDMAP / Natural Earth), rendues LISSÉES
-// (Catmull-Rom → Bézier) pour un trait doux, légèrement courbé.
+// UN SEUL SVG en coordonnées géographiques, avec un ZOOM LIBRE : molette,
+// pincement et glissement agissent directement sur le viewBox
+// (preserveAspectRatio "meet", viewBox toujours ramené au rapport de l'écran →
+// échelle = cw / largeur du viewBox). Frontières RÉELLES (WORLDMAP / Natural
+// Earth), rendues LISSÉES (Catmull-Rom → Bézier).
 //
-//  - SVG : formes des pays (fond), réseau décoratif d'un pays, courbes+trains.
-//  - Overlay HTML (#map-labels) : chips continent, pastilles pays (avec anti-
-//    chevauchement), pastilles-villes. Placés en pixels après chaque zoom.
+// Il n'y a PLUS de niveaux « monde / continent / pays ». La carte se comporte
+// comme une carte en ligne : une seule vue, un zoom continu, et le détail qui
+// vient avec l'échelle (js/mapnet.js). Aucun état de navigation à tenir, donc
+// aucun moyen de s'y perdre.
+//
+// Elle s'ouvre CHEZ L'UTILISATEUR (userCountrySlug, geo.js), à défaut sur
+// l'Europe. Cliquer un pays le cadre — un raccourci, pas un changement d'état.
+//
+//  - SVG : formes des pays (fond), arêtes du réseau (js/mapnet.js), trains déco.
+//  - Overlay #map-net : les villes, gérées par js/mapnet.js — il SURVIT aux
+//    vols de caméra et n'est jamais reconstruit pendant un geste.
 //
 // Contrats réutilisés inchangés : startStation, isUnlocked, getProgress, CATALOG,
 // GEO/geoProject/countryProgress (geo.js), WORLDMAP (worldmap.js), icon/ICON.
@@ -17,8 +26,9 @@
 
 const MAP = {
   built: false, svg: null, gLand: null, gDeco: null,
-  labels: null, backBtn: null, host: null, modal: null, rndBtn: null,
-  level: "world", contId: null, countrySlug: null, raf: null, animating: false,
+  homeBtn: null, host: null, modal: null,
+  raf: null, animating: false, far: null, framed: false,
+  homeVB: null, homeName: "", lastFramed: null,
   byCont: {}, byIso: {}, isoToSlug: {}
 };
 
@@ -51,38 +61,6 @@ function ringToPts(flat) {
   }
   return pts;
 }
-// Point dans un anneau (ray casting), coords écran. Sert à garder les gares
-// à l'intérieur de la frontière du pays.
-function pnpoly(poly, x, y) {
-  let c = false;
-  for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
-    const xi = poly[i][0], yi = poly[i][1], xj = poly[j][0], yj = poly[j][1];
-    if (((yi > y) !== (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi)) c = !c;
-  }
-  return c;
-}
-// Mêmes cubiques que smoothClosedPath, mais ÉCHANTILLONNÉES en points : donne la
-// frontière telle qu'elle est RÉELLEMENT tracée (lissée), pour les tests géométriques
-// (garder les gares dedans). Tester le polygone brut ne suffit pas : le lissage se
-// rétracte vers l'intérieur sur les angles convexes.
-function smoothClosedPts(pts, seg) {
-  const n = pts.length;
-  if (n < 3) return pts.slice();
-  const out = [];
-  for (let i = 0; i < n; i++) {
-    const p0 = pts[(i - 1 + n) % n], p1 = pts[i], p2 = pts[(i + 1) % n], p3 = pts[(i + 2) % n];
-    const c1x = p1[0] + (p2[0] - p0[0]) / 6, c1y = p1[1] + (p2[1] - p0[1]) / 6;
-    const c2x = p2[0] - (p3[0] - p1[0]) / 6, c2y = p2[1] - (p3[1] - p1[1]) / 6;
-    for (let t = 0; t < seg; t++) {
-      const u = t / seg, m = 1 - u;
-      out.push([
-        m * m * m * p1[0] + 3 * m * m * u * c1x + 3 * m * u * u * c2x + u * u * u * p2[0],
-        m * m * m * p1[1] + 3 * m * m * u * c1y + 3 * m * u * u * c2y + u * u * u * p2[1]
-      ]);
-    }
-  }
-  return out;
-}
 // Chemin fermé LISSÉ (Catmull-Rom → cubiques) : adoucit l'angulosité du 110m.
 function smoothClosedPath(pts) {
   const n = pts.length;
@@ -97,23 +75,6 @@ function smoothClosedPath(pts) {
          p2[0].toFixed(1) + "," + p2[1].toFixed(1);
   }
   return d + "Z";
-}
-// Chemin OUVERT lissé (Catmull-Rom → cubiques) passant par une suite de points
-// {x,y} — extrémités dupliquées (pas de bouclage). Sert au réseau des villes,
-// pour retrouver la douceur des courbes des plans de gare (cohérence visuelle).
-function smoothOpenPath(pts) {
-  const n = pts.length;
-  if (n < 3) return "M" + pts.map(p => p.x.toFixed(1) + "," + p.y.toFixed(1)).join(" L ");
-  let d = "M" + pts[0].x.toFixed(1) + "," + pts[0].y.toFixed(1);
-  for (let i = 0; i < n - 1; i++) {
-    const p0 = pts[i - 1] || pts[i], p1 = pts[i], p2 = pts[i + 1], p3 = pts[i + 2] || p2;
-    const c1x = p1.x + (p2.x - p0.x) / 6, c1y = p1.y + (p2.y - p0.y) / 6;
-    const c2x = p2.x - (p3.x - p1.x) / 6, c2y = p2.y - (p3.y - p1.y) / 6;
-    d += "C" + c1x.toFixed(1) + "," + c1y.toFixed(1) + " " +
-         c2x.toFixed(1) + "," + c2y.toFixed(1) + " " +
-         p2.x.toFixed(1) + "," + p2.y.toFixed(1);
-  }
-  return d;
 }
 function countryPathD(country) {
   return country.r.map(flat => smoothClosedPath(ringToPts(flat))).join(" ");
@@ -165,7 +126,7 @@ function buildMap() {
   bg.setAttribute("class", "map-bg");
   bg.setAttribute("x", 0); bg.setAttribute("y", 0);
   bg.setAttribute("width", GEO.world.W); bg.setAttribute("height", GEO.world.H);
-  bg.addEventListener("click", () => zoomOut());
+  // Le fond ne fait rien : sur une carte, cliquer le vide ne dézoome pas.
   svg.appendChild(bg);
 
   // Formes des pays (une fois, lissées). Style/état pilotés par CSS + classes.
@@ -182,18 +143,11 @@ function buildMap() {
     p.setAttribute("d", countryPathD(country));
     p.dataset.cont = country.cont;
     p.dataset.iso = country.iso;
+    // Cliquer un pays jouable le cadre. C'est un raccourci de caméra : on peut
+    // aussi bien y arriver au pincement, et rien n'est mémorisé.
     p.addEventListener("click", ev => {
       ev.stopPropagation();
-      // au niveau monde : on ne zoome que sur un continent qui a du contenu
-      // (cohérent avec le chip « Bientôt » — pas de plongée dans le vide)
-      if (MAP.level === "world") {
-        if (continentProgress(country.cont).max > 0) focusContinent(country.cont);
-      } else if (MAP.level === "continent" && country.cont === MAP.contId) {
-        if (playable) focusCountry(slug);
-      } else if (MAP.level === "country" && country.cont === MAP.contId) {
-        // au niveau pays : cliquer un pays voisin JOUABLE y voyage directement.
-        if (playable && slug !== MAP.countrySlug) focusCountry(slug);
-      }
+      if (playable) frameCountry(slug);
     });
     gLand.appendChild(p);
     if (playable) playablePaths.push(p);
@@ -213,11 +167,6 @@ function buildMap() {
 
   host.appendChild(svg);
 
-  const labels = document.createElement("div");
-  labels.id = "map-labels";
-  MAP.labels = labels;
-  host.appendChild(labels);
-
   // Modale « fiche de gare » (ouverte au clic d'une ville). Clic sur le voile = fermer.
   const modal = document.createElement("div");
   modal.id = "map-modal"; modal.className = "hidden";
@@ -225,35 +174,23 @@ function buildMap() {
   MAP.modal = modal;
   host.appendChild(modal);
 
-  // Bouton flottant unique : affiche la zone courante (« ‹ Belgique ») et revient
-  // en arrière d'un niveau. Masqué au niveau monde (rien au-dessus).
-  const back = document.createElement("button");
-  back.className = "map-back";
-  back.setAttribute("aria-label", "Revenir en arrière");
-  back.addEventListener("click", () => zoomOut());
-  MAP.backBtn = back;
-  host.appendChild(back);
+  // Il n'y a plus de « retour » — plus de niveau à remonter. À la place, un
+  // bouton qui REVIENT CHEZ SOI : le cadrage d'ouverture. Il ne s'affiche QUE
+  // lorsqu'on s'en est éloigné : au lancement on y est déjà, et un bouton qui
+  // ne fait rien quand on le presse passe pour cassé.
+  const home = document.createElement("button");
+  home.className = "map-home hidden";
+  home.setAttribute("aria-label", "Revenir à ma région");
+  home.addEventListener("click", () => frameHome());
+  MAP.homeBtn = home;
+  host.appendChild(home);
 
-  // Bouton « Partie rapide » (carte du monde) : lance une gare débloquée au hasard.
-  const rnd = document.createElement("button");
-  rnd.className = "map-random";
-  rnd.innerHTML =
-    '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true">' +
-    '<path d="M8 5v14l11-7z"/></svg>' +
-    "<span>Partie rapide</span>";
-  // Monde → toutes gares ; continent → gares du continent focalisé seulement.
-  rnd.addEventListener("click", () => {
-    const i = randomAvailableIndex(MAP.level === "continent" ? MAP.contId : null);
-    if (i >= 0) startStation(i);
-  });
-  MAP.rndBtn = rnd;
-  host.appendChild(rnd);
-
-  window.addEventListener("resize", () => { if (!MAP.animating) layoutOverlay(); });
+  bindCamera(host); // molette, pincement, glisser
+  window.addEventListener("resize", () => { if (!MAP.animating) mapnetPosition(); });
   document.addEventListener("keydown", e => {
     if (e.key !== "Escape" || document.getElementById("hub").classList.contains("hidden")) return;
     if (MAP.modal && !MAP.modal.classList.contains("hidden")) closeModal(); // modale d'abord
-    else zoomOut();
+    else frameHome();
   });
 
   MAP.built = true;
@@ -335,6 +272,7 @@ function tweenTo(t, ms, onDone) {
     const w = Math.exp(sLw + (tLw - sLw) * k), h = Math.exp(sLh + (tLh - sLh) * k);
     const cx = sCx + (tCx - sCx) * k, cy = sCy + (tCy - sCy) * k;
     setVB([cx - w / 2, cy - h / 2, w, h]);
+    mapnetPosition(); // le réseau reste vivant pendant le vol, il ne clignote pas
     if (e < 1) { MAP.raf = requestAnimationFrame(step); }
     else { MAP.raf = null; MAP.animating = false; MAP.host.classList.remove("tweening"); onDone && onDone(); }
   }
@@ -355,463 +293,240 @@ function screenPos(lon, lat) {
   return uToScreen(u.x, u.y);
 }
 
-// ------------------------------------------------------------------
-// Overlay HTML : reconstruit à chaque arrivée de zoom.
-// ------------------------------------------------------------------
-function chip(x, y, cls) {
-  const d = document.createElement("div");
-  d.className = "map-chip " + cls;
-  d.style.left = x + "px"; d.style.top = y + "px";
-  MAP.labels.appendChild(d);
-  return d;
-}
 function starStr(n) { return "★".repeat(n) + "☆".repeat(3 - n); }
 // Variante « pleines seulement » : sur la carte-pays, on n'affiche pas les
 // étoiles vides (2 étoiles → « ★★ », pas « ★★☆ ») — plus lisible.
 function starStrFull(n) { return "★".repeat(n); }
-// Anti-agglutination des pastilles-villes : répulsion pour qu'aucune paire ne se
-// chevauche, + léger rappel vers la vraie position géo (`bx,by`) → réparties mais
-// restant proches de leur emplacement réel. Nodes mutés en place ({x,y,bx,by}).
-function dodgeCities(nodes, minDist, iters, spring, bnd) {
-  // Déloge d'abord les points quasi confondus (ex. 2 gares d'une même ville).
-  nodes.forEach((n, i) => { n.x += Math.cos(i * 2.4) * 0.6; n.y += Math.sin(i * 2.4) * 0.6; });
-  for (let it = 0; it < iters; it++) {
-    for (let i = 0; i < nodes.length; i++)
-      for (let j = i + 1; j < nodes.length; j++) {
-        const a = nodes[i], b = nodes[j];
-        let dx = b.x - a.x, dy = b.y - a.y;
-        let d = Math.hypot(dx, dy) || 0.001;
-        if (d < minDist) {
-          const push = (minDist - d) / 2, ux = dx / d, uy = dy / d;
-          a.x -= ux * push; a.y -= uy * push;
-          b.x += ux * push; b.y += uy * push;
-        }
-      }
-    for (const n of nodes) {
-      n.x += (n.bx - n.x) * spring; n.y += (n.by - n.y) * spring;
-      // Bords « durs » DANS la simulation : une gare bloquée contre un bord
-      // repousse les autres au lieu de venir se superposer après coup.
-      if (bnd) {
-        n.x = Math.max(bnd.x0, Math.min(bnd.x1, n.x));
-        n.y = Math.max(bnd.y0, Math.min(bnd.y1, n.y));
-      }
-    }
-  }
-}
 
-function layoutOverlay() {
-  if (!MAP.labels) return;
-  const cw = MAP.svg.clientWidth, ch = MAP.svg.clientHeight;
-  if (!cw || !ch) return; // carte masquée (largeur nulle) : ne pas repositionner
-  MAP.labels.innerHTML = "";
-  const inView = (p) => p.x > -40 && p.x < cw + 40 && p.y > -40 && p.y < ch + 40;
 
-  if (MAP.level === "world") {
-    for (const c of GEO.continents) {
-      const ctr = continentCentroid(c.id);
-      const p = screenPos(ctr[0], ctr[1]);
-      const prog = continentProgress(c.id);
-      const playable = prog.max > 0; // au moins une gare disponible dans le jeu
-      const el = chip(p.x, p.y, "continent-chip " + (playable ? "playable" : "soon"));
-      const frac = playable ? Math.round((prog.earned / prog.max) * 100) : 0;
-      el.innerHTML = '<div class="nm">' + c.name + "</div>" +
-        (playable ? '<div class="cbar"><span style="width:' + frac + '%"></span></div>' +
-                    '<div class="pg">' + prog.earned + " / " + prog.max + " ★</div>"
-                  : '<div class="soon-tag">Bientôt</div>');
-      // Continent « à venir » : pas de gares → on ne zoome pas dans le vide.
-      if (playable) el.addEventListener("click", () => focusContinent(c.id));
-    }
-
-  } else if (MAP.level === "continent") {
-    // Pays JOUABLES seulement : bulle drapeau + NOM + anneau de progression
-    // (étoiles gagnées / total). Les autres pays restent de simples formes.
-    const list = (MAP.byCont[MAP.contId] || [])
-      .map(country => ({ country, slug: slugOfIso(country.iso), p: screenPos(country.lx, country.ly) }))
-      .filter(o => o.slug && countryStationIds(o.slug).length && inView(o.p));
-    // anti-chevauchement des pastilles-pays (comme les villes) : répulsion +
-    // rappel vers la vraie position géo → évite l'agglutination (Benelux, etc.)
-    const nodes = list.map(o => ({ o, x: o.p.x, y: o.p.y, bx: o.p.x, by: o.p.y }));
-    dodgeCities(nodes, 76, 260, 0.03, { x0: 48, x1: cw - 48, y0: 46, y1: ch - 58 });
-    const curSlug = currentCountrySlug(MAP.contId); // pays « à continuer » (anneau pulsé)
-    const R = 19, C = 2 * Math.PI * R; // anneau de progression autour du drapeau
-    for (const n of nodes) {
-      const o = n.o;
-      const prog = countryProgress(o.slug);
-      const g = GEO.countries[o.slug];
-      const frac = prog.max ? prog.earned / prog.max : 0;
-      const el = chip(n.x, n.y, "country-chip" + (o.slug === curSlug ? " current" : ""));
-      el.innerHTML =
-        '<svg class="cring" viewBox="0 0 44 44">' +
-          '<circle class="track" cx="22" cy="22" r="' + R + '"/>' +
-          (frac > 0 ? '<circle class="prog" cx="22" cy="22" r="' + R +
-            '" stroke-dasharray="' + (frac * C).toFixed(1) + " " + C.toFixed(1) + '"/>' : "") +
-        "</svg>" +
-        '<span class="cflag">' + g.flag + "</span>" +
-        '<div class="cnm">' + g.name + "</div>";
-      el.addEventListener("click", () => focusCountry(o.slug));
-    }
-
-  } else if (MAP.level === "country") {
-    const c = GEO.countries[MAP.countrySlug];
-    const prog = (typeof getProgress === "function") ? getProgress() : {};
-    // Villes en ORDRE DE JEU (difficulté) : sert au réseau ET rend l'ordre lisible.
-    const ids = Object.keys(c.cities || {}).sort((a, b) => {
-      const ia = catalogIndexOf(a), ib = catalogIndexOf(b);
-      return (ia < 0 ? 1e9 : ia) - (ib < 0 ? 1e9 : ib);
-    });
-    // Position de départ = vraie position géo, puis anti-agglutination (répulsion
-    // + rappel) pour dégrouper le cluster (ex. Bruxelles) sans trop s'en éloigner.
-    // num = ordre de jeu (1 = plus facile) — les ids sont déjà triés par difficulté.
-    const nodes = ids.map((id, i) => {
-      const p = screenPos(c.cities[id][0], c.cities[id][1]);
-      return { id, num: i + 1, x: p.x, y: p.y, bx: p.x, by: p.y };
-    });
-    // Anti-chevauchement des PASTILLES uniquement (≈ taille d'un point), avec un
-    // rappel géo fort : les villes restent à leur vraie position, seules deux
-    // pastilles réellement superposées se dégagent d'un cheveu. Le chevauchement
-    // des LIBELLÉS est géré à part (candidats dessus/dessous + décalage, ci-dessous),
-    // sans bouger le point → la géographie n'est plus faussée.
-    dodgeCities(nodes, 38, 300, 0.10, { x0: 56, x1: cw - 56, y0: 64, y1: ch - 74 });
-
-    // La répulsion peut pousser une gare de bord HORS de la frontière (Köln,
-    // Freiburg…). On la ramène le long du segment vers sa vraie position géo
-    // (toujours à l'intérieur) jusqu'à repasser dans le polygone du pays.
-    const self = MAP.byIso[c.iso];
-    if (self) {
-      // Frontière LISSÉE en coords écran (celle qui est réellement tracée) :
-      // on projette les sommets puis on échantillonne les mêmes cubiques.
-      const rings = self.r.map(flat => {
-        const proj = [];
-        for (let i = 0; i < flat.length; i += 2) { const u = screenPos(flat[i], flat[i + 1]); proj.push([u.x, u.y]); }
-        return smoothClosedPts(proj, 6);
-      });
-      const inside = (x, y) => rings.some(r => pnpoly(r, x, y));
-      for (const n of nodes) {
-        if (inside(n.x, n.y)) continue; // n.bx/n.by = vraie position géo (dedans)
-        let lo = 0, hi = 1; // lo → position déplacée (dehors), hi → origine (dedans)
-        for (let k = 0; k < 20; k++) {
-          const m = (lo + hi) / 2;
-          if (inside(n.x + (n.bx - n.x) * m, n.y + (n.by - n.y) * m)) hi = m; else lo = m;
-        }
-        n.x += (n.bx - n.x) * hi; n.y += (n.by - n.y) * hi; // sur la frontière
-        // petit retrait vers l'intérieur : la pastille (~14 px de rayon) ne
-        // chevauche pas le trait, elle est franchement DANS le pays.
-        const dx = n.bx - n.x, dy = n.by - n.y, dl = Math.hypot(dx, dy) || 1;
-        const inset = Math.min(dl, 16);
-        n.x += dx / dl * inset; n.y += dy / dl * inset;
-      }
-    }
-
-    // Positions finales des villes (ordre de jeu) exposées pour l'animation de
-    // « voyage » vers la gare suivante (mapJourneyToNext).
-    MAP.cityNodes = nodes.map(n => ({ id: n.id, gi: catalogIndexOf(n.id), x: n.x, y: n.y }));
-
-    // Réseau décoratif reliant les villes (ordre de jeu), sur les positions
-    // ajustées, dans un SVG écran posé SOUS les pastilles.
-    if (nodes.length > 1) {
-      const net = document.createElementNS(SVGNS, "svg");
-      net.setAttribute("class", "city-net");
-      net.setAttribute("width", cw); net.setAttribute("height", ch);
-      const path = document.createElementNS(SVGNS, "path");
-      path.setAttribute("class", "map-network");
-      // Courbe douce (comme les voies des plans de gare) plutôt qu'une ligne brisée.
-      path.setAttribute("d", smoothOpenPath(nodes));
-      net.appendChild(path);
-      MAP.labels.appendChild(net);
-    }
-
-    // Villes = petit point-gare (teal jouable / gris verrouillé) + libellé léger,
-    // posé dessous OU dessus selon la place libre. Plus de grosse pastille ronde.
-    const curGi = currentIndex(MAP.countrySlug); // prochaine gare à réaliser (anneau pulsé)
-    // Cadenas (gare verrouillée) + horloge (retard record) — signifiants clairs,
-    // pour lever l'ambiguïté « verrouillé / non-joué » et « +N = quoi ? ».
-    const lockSvg = '<svg class="lock" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1s3.1 1.39 3.1 3.1v2z"/></svg>';
-    const clockSvg = '<svg viewBox="0 0 24 24" width="10" height="10" fill="currentColor" aria-hidden="true"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>';
-    const CAPH = 40, DY = 18 + CAPH / 2;
-    // Recouvrement (aire) de deux boîtes AABB — 0 si disjointes. Sert à noter
-    // finement une position de cartouche (« chevauche un peu » ≠ « chevauche tout »).
-    const overlapArea = (a, b) => {
-      const ox = Math.min(a.x + a.w / 2, b.x + b.w / 2) - Math.max(a.x - a.w / 2, b.x - b.w / 2);
-      const oy = Math.min(a.y + a.h / 2, b.y + b.h / 2) - Math.max(a.y - a.h / 2, b.y - b.h / 2);
-      return ox > 0 && oy > 0 ? ox * oy : 0;
-    };
-    // Métadonnées par ville, puis on ENSEMENCE d'abord toutes les pastilles :
-    // ainsi un cartouche posé tôt évite AUSSI les points posés après lui.
-    const metas = nodes.map(n => {
-      const gi = catalogIndexOf(n.id);
-      const cfg = gi >= 0 ? CATALOG[gi] : null;
-      // Sur la carte-pays : nom de VILLE (cfg.city) pour alléger — la fiche
-      // détaillée garde le nom complet de la gare (cfg.name).
-      const label = cfg ? (cfg.city || cfg.name) : n.id;
-      // Largeur RÉELLE estimée du cartouche (nom sur UNE ligne, cf. .nm nowrap) :
-      // les noms courts (Namur) n'écartent plus inutilement, les longs
-      // (Bruxelles-Midi, Gand-Saint-Pierre) réservent la place qu'il faut.
-      const capW = Math.min(172, Math.max(60, label.length * 7.4 + 26));
-      const isCur = gi === curGi;
-      return {
-        n, gi, label, capW, isCur,
-        unlocked: gi >= 0 && typeof isUnlocked === "function" && isUnlocked(gi),
-        stars: (prog[n.id] || {}).stars || 0,
-        best: (prog[n.id] || {}).bestDelay
-      };
-    });
-    // La gare courante porte un halo pulsé plus large → footprint agrandi.
-    const placed = metas.map(m => ({ x: m.n.x, y: m.n.y, w: m.isCur ? 34 : 24, h: m.isCur ? 34 : 24 }));
-    // Placement en ORDRE SPATIAL (haut→bas, gauche→droite) : les voisins sont
-    // traités à la suite, donc l'alternance dessous/dessus se fait proprement au
-    // lieu de dépendre de l'ordre de difficulté.
-    for (const m of metas.slice().sort((a, b) => a.n.y - b.n.y || a.n.x - b.n.x)) {
-      const { n, label, capW } = m;
-      // Positions candidates : dessous/dessus × décalage horizontal (centré, puis
-      // décalé à droite/gauche). On retient celle qui recouvre le MOINS d'aire.
-      const shift = Math.min(56, capW * 0.4);
-      const preferUp = n.y < ch * 0.42;
-      const cands = [];
-      for (const useUp of (preferUp ? [true, false] : [false, true]))
-        for (const dx of [0, shift, -shift, 2 * shift, -2 * shift])
-          cands.push({ useUp, dx });
-      let bestC = cands[0], bestPen = Infinity;
-      for (const c of cands) {
-        const cy = c.useUp ? n.y - DY : n.y + DY;
-        const box = { x: n.x + c.dx, y: cy, w: capW, h: CAPH };
-        let pen = placed.reduce((s, b) => s + overlapArea(box, b), 0);
-        if (c.useUp ? cy - CAPH / 2 < 4 : cy + CAPH / 2 > ch - 4) pen += 4000; // hors écran (haut/bas)
-        if (box.x - capW / 2 < 4) pen += (4 - (box.x - capW / 2)) * 30;        //           (gauche)
-        if (box.x + capW / 2 > cw - 4) pen += (box.x + capW / 2 - (cw - 4)) * 30; //         (droite)
-        pen += Math.abs(c.dx) * 4; // à recouvrement égal : cartouche le plus centré sous le point
-        if (pen < bestPen) { bestPen = pen; bestC = c; if (pen === 0) break; }
-      }
-      const capUp = bestC.useUp;
-      placed.push({ x: n.x + bestC.dx, y: capUp ? n.y - DY : n.y + DY, w: capW, h: CAPH });
-
-      const el = chip(n.x, n.y, "city-chip" + (m.unlocked ? "" : " locked") +
-        (m.isCur ? " current" : "") + (capUp ? " cap-up" : ""));
-      el.innerHTML =
-        '<span class="dot">' + n.num + (m.unlocked ? "" : lockSvg) + "</span>" +
-        '<div class="cap" style="width:' + capW.toFixed(0) + "px;transform:translateX(calc(-50% + " + bestC.dx.toFixed(0) + 'px))">' +
-        '<div class="nm">' + label + "</div>" +
-        '<div class="st">' + starStrFull(m.stars) +
-          (m.best != null ? '<span class="dl">' + clockSvg + m.best + "′</span>" : "") + "</div></div>";
-      // Toute ville ouvre sa fiche (verrouillée comprise) ; le lancement se fait
-      // depuis la modale.
-      if (m.gi >= 0) el.addEventListener("click", () => openStationModal(m.gi));
-    }
-
-    // Pays voisins JOUABLES (même continent) présents dans le cadre : affichés
-    // dans LEUR zone, au MÊME format qu'au niveau continent (drapeau + anneau de
-    // progression + nom) → cohérence visuelle, et on sait où mène le clic (la forme
-    // voisine comme ce chip y voyagent). Ancré au centre du pays, rabattu sur le
-    // bord de la vue, puis glissé le long de ce bord pour éviter les gares posées.
-    const vb = readVB();
-    const vx0 = vb[0], vy0 = vb[1], vx1 = vb[0] + vb[2], vy1 = vb[1] + vb[3];
-    const R = 19, C = 2 * Math.PI * R;
-    // Voisins affichés : par défaut, détection auto par recouvrement du cadre.
-    // Un pays peut IMPOSER ses voisins (geo.js : `neighbors`, objet slug→ancre) —
-    // ex. le Royaume-Uni pointe vers la Belgique (porte du continent) plutôt que la
-    // France, dont le centroïde plus au sud se rabattait au même coin. L'ancre géo
-    // optionnelle [lon,lat] repositionne le chip (défaut : `lx/ly` du pays) — utile
-    // quand l'ancre de label tombe, une fois rabattue, sur le mauvais pays (l'ancre
-    // belge lx=4.8 ≈ Liège se rabattait côté Maastricht/NL).
-    const curCountry = GEO.countries[MAP.countrySlug];
-    const forced = curCountry && curCountry.neighbors ? curCountry.neighbors : null;
-    for (const slug in GEO.countries) {
-      const g = GEO.countries[slug];
-      if (slug === MAP.countrySlug || g.continent !== MAP.contId) continue;
-      if (!countryStationIds(slug).length) continue;
-      const country = MAP.byIso[g.iso];
-      if (!country) continue;
-      if (forced) {
-        if (!(slug in forced)) continue; // liste imposée : on ne garde que celle-ci
-      } else {
-      const rr = geoBoxToRect(countryGeoBbox(country)); // emprise en unités SVG
-      const iw = Math.min(rr.x + rr.w, vx1) - Math.max(rr.x, vx0);
-      const ih = Math.min(rr.y + rr.h, vy1) - Math.max(rr.y, vy0);
-      if (iw <= 0 || ih <= 0) continue; // hors champ
-      // Part du cadre occupée par le voisin. Zoom RAPPROCHÉ sur un grand pays → le
-      // voisin n'est qu'un liseré (ex. Belgique en haut de la France) : on ne
-      // l'affiche pas. Zoom sur un petit pays → le voisin remplit une bonne part
-      // de l'écran (France sous la Belgique) : on l'affiche. (Projection iso →
-      // les aires en unités SVG sont proportionnelles aux aires géo.)
-      // Affiché si le voisin occupe une bonne part du CADRE (grand pays, ex.
-      // France sous l'Allemagne) OU si l'essentiel du VOISIN est dans le cadre
-      // (petit pays, ex. Belgique — sinon il n'atteint jamais le seuil du cadre).
-      // Un simple liseré au bord (peu du voisin visible) reste masqué.
-      const fracFrame = (iw * ih) / (vb[2] * vb[3]);
-      const fracSelf = (iw * ih) / (rr.w * rr.h);
-      if (fracFrame < 0.08 && fracSelf < 0.2) continue;
-      }
-      // Ancre du chip : override géo si fourni (forced[slug] = [lon,lat]), sinon lx/ly.
-      const anchor = (forced && Array.isArray(forced[slug])) ? forced[slug] : [country.lx, country.ly];
-      const raw = screenPos(anchor[0], anchor[1]);
-      const cx = Math.max(64, Math.min(cw - 64, raw.x));
-      const cy = Math.max(52, Math.min(ch - 66, raw.y));
-      // Axe libre = le bord sur lequel on est rabattu (haut/bas → glisse en x ;
-      // gauche/droite → glisse en y). On n'autorise qu'un PETIT décalage local
-      // (±~60 px) fortement pénalisé : dégager une gare, oui ; dériver sur un autre
-      // pays (Belgique au-dessus de l'Allemagne), non — la précision géo prime.
-      const slideX = Math.abs(cy - raw.y) >= Math.abs(cx - raw.x);
-      const W = Math.max(72, g.name.length * 7 + 24), H = 66;
-      let bx = cx, by = cy, bestPen = Infinity;
-      for (let k = 0; k <= 2 && bestPen > 0; k++)
-        for (const s of (k === 0 ? [0] : [k, -k])) {
-          const x = slideX ? Math.max(64, Math.min(cw - 64, cx + s * 30)) : cx;
-          const y = slideX ? cy : Math.max(52, Math.min(ch - 66, cy + s * 28));
-          const box = { x, y: y + 12, w: W, h: H };
-          const pen = placed.reduce((sum, b) => sum + overlapArea(box, b), 0) + Math.abs(s) * 900;
-          if (pen < bestPen) { bestPen = pen; bx = x; by = y; }
-        }
-      // Décalage manuel optionnel de la bulle-voisin (geo.js : chipDy), pour
-      // l'écarter d'un amas de gares — ex. la Belgique remontée dans la vue France.
-      if (g.chipDy) by += g.chipDy;
-      const cp = countryProgress(slug);
-      const frac = cp.max ? cp.earned / cp.max : 0;
-      const el = chip(bx, by, "country-chip neighbor");
-      el.innerHTML =
-        '<svg class="cring" viewBox="0 0 44 44">' +
-          '<circle class="track" cx="22" cy="22" r="' + R + '"/>' +
-          (frac > 0 ? '<circle class="prog" cx="22" cy="22" r="' + R +
-            '" stroke-dasharray="' + (frac * C).toFixed(1) + " " + C.toFixed(1) + '"/>' : "") +
-        "</svg>" +
-        '<span class="cflag">' + g.flag + "</span>" +
-        '<div class="cnm">' + g.name + "</div>";
-      el.addEventListener("click", () => focusCountry(slug));
-      placed.push({ x: bx, y: by + 12, w: W, h: H });
-    }
-  }
-}
-
-// ------------------------------------------------------------------
-// Navigation.
-// ------------------------------------------------------------------
-function setFocusClasses() {
-  // Met en évidence le continent focalisé et le pays courant sur les formes.
-  const curIso = MAP.level === "country" && GEO.countries[MAP.countrySlug]
-    ? GEO.countries[MAP.countrySlug].iso : null;
-  const raise = [];
-  for (const path of [...MAP.gLand.children]) {
-    const inFocus = (MAP.level === "continent" || MAP.level === "country") &&
-      path.dataset.cont === MAP.contId;
-    const isCurrent = path.dataset.iso === curIso;
-    path.classList.toggle("in-focus", inFocus);
-    path.classList.toggle("is-current", isCurrent);
-    // Le SVG n'a pas de z-index : l'ordre de peinture = l'ordre dans le DOM. On
-    // remonte les pays mis en évidence en fin de groupe (le courant tout à la fin,
-    // au-dessus) pour que leur liseré ne soit pas recouvert par les voisins.
-    if (inFocus || isCurrent) raise.push({ path, isCurrent });
-  }
-  raise.sort((a, b) => (a.isCurrent ? 1 : 0) - (b.isCurrent ? 1 : 0));
-  for (const r of raise) MAP.gLand.appendChild(r.path);
+// Les formes de pays ne changent plus d'état : plus de continent « focalisé »,
+// plus de pays « courant ». Un pays jouable est teinté, les autres restent en
+// fond. C'est posé une fois pour toutes à la construction (buildMap).
+// L'habillage se réduit à deux boutons, tous deux permanents.
+// A-t-on dérivé loin du cadrage d'ouverture ? Tolérance large : un demi-écran de
+// déplacement ou 15 % de zoom ne comptent pas — sinon le bouton clignoterait au
+// moindre geste.
+function awayFromHome() {
+  if (!MAP.homeVB) return false;
+  const vb = readVB(), h = MAP.homeVB;
+  const zoom = vb[2] / h[2];
+  if (zoom > 1.15 || zoom < 0.87) return true;
+  const dx = (vb[0] + vb[2] / 2) - (h[0] + h[2] / 2);
+  const dy = (vb[1] + vb[3] / 2) - (h[1] + h[3] / 2);
+  return Math.hypot(dx, dy) > h[2] * 0.5;
 }
 function updateChrome() {
-  MAP.host.dataset.level = MAP.level;
-  // Le bouton flottant porte le nom de la zone COURANTE et revient en arrière.
-  const label = MAP.level === "country"
-      ? ((GEO.countries[MAP.countrySlug] || {}).name || "")
-    : MAP.level === "continent"
-      ? ((GEO.continents.find(c => c.id === MAP.contId) || {}).name || "")
-    : "";
-  MAP.backBtn.classList.toggle("hidden", MAP.level === "world");
-  MAP.backBtn.innerHTML = '<span class="arw">‹</span><span class="lbl">' + label + "</span>";
-  // Bouton « Partie rapide » : au monde (toutes gares) et au continent (si ce
-  // continent a au moins une gare débloquée) ; masqué au niveau pays.
-  const canRandom = MAP.level === "world"
-    || (MAP.level === "continent" && availableIndices(MAP.contId).length > 0);
-  MAP.rndBtn.classList.toggle("hidden", !canRandom);
+  // Les routes décoratives entre continents n'ont de sens que de très loin :
+  // de près, ce sont des traits gigantesques en travers de la carte.
+  const far = viewScale() < 1.3;
+  if (far !== MAP.far) { MAP.far = far; MAP.host.classList.toggle("far", far); }
+  // Le bouton « maison » n'existe que s'il a un effet, et il annonce où il mène.
+  if (MAP.homeBtn) {
+    const away = awayFromHome();
+    MAP.homeBtn.classList.toggle("hidden", !away);
+    if (away && MAP.homeBtn.dataset.nm !== MAP.homeName) {
+      MAP.homeBtn.dataset.nm = MAP.homeName;
+      MAP.homeBtn.innerHTML =
+        '<svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor" aria-hidden="true">' +
+        '<path d="M12 5.69l5 4.5V18h-2v-6H9v6H7v-7.81l5-4.5M12 3L2 12h3v8h6v-6h2v6h6v-8h3L12 3z"/></svg>' +
+        '<span class="lbl">' + MAP.homeName + "</span>";
+    }
+  }
 }
+
+// ------------------------------------------------------------------
+// Caméra : zoom LIBRE (molette, pincement) et déplacement (glisser).
+// ------------------------------------------------------------------
+// Le viewBox est toujours ramené au RAPPORT DE L'ÉCRAN. Avec
+// preserveAspectRatio="meet", un viewBox d'un autre rapport se retrouve
+// centré avec des bandes, et l'échelle réelle cesse d'être cw/vb[2] — tout le
+// calcul de LOD et de position s'en trouverait faussé. En le forçant, on a
+// exactement `échelle = cw / largeur du viewBox`.
+function fitVB(vb) {
+  const cw = MAP.svg.clientWidth || 1, ch = MAP.svg.clientHeight || 1;
+  const cx = vb[0] + vb[2] / 2, cy = vb[1] + vb[3] / 2;
+  let w = vb[2], h = vb[3];
+  if (w / h > cw / ch) h = w * ch / cw; else w = h * cw / ch;
+  return [cx - w / 2, cy - h / 2, w, h];
+}
+// Échelle courante, en pixels par unité de projection (2000 unités = tour du monde).
+function viewScale() {
+  const vb = readVB();
+  return (MAP.svg.clientWidth || 1) / vb[2];
+}
+// Bornes de zoom. En bas : le monde entier. En haut : de quoi lire une desserte
+// de banlieue sans que la carte devienne un plan de rue.
+const CAM = { minW: 14, dragging: false, moved: false, pts: new Map(), pinch: null };
+
+// Applique un cadrage : borne, pose, replace le réseau. Aucun état de
+// navigation n'est tenu — le cadrage EST l'état.
+function applyView(vb) {
+  const world = GEO.world;
+  let [x, y, w, h] = fitVB(vb);
+  const maxW = world.viewBox[2];
+  if (w > maxW) { const k = maxW / w; w *= k; h *= k; }
+  if (w < CAM.minW) { const k = CAM.minW / w; w *= k; h *= k; }
+  // Le centre reste dans le monde : on ne dérive pas dans le vide.
+  const cx = Math.max(0, Math.min(world.W, x + w / 2));
+  const cy = Math.max(world.viewBox[1], Math.min(world.viewBox[1] + world.viewBox[3], y + h / 2));
+  setVB([cx - w / 2, cy - h / 2, w, h]);
+  updateChrome();
+  mapnetPosition();
+}
+// Zoom autour d'un point de l'écran : ce point garde sa position géographique
+// sous le doigt (c'est ce qui rend un pincement crédible).
+function camZoomAt(px, py, factor) {
+  const vb = readVB();
+  const s = (MAP.svg.clientWidth || 1) / vb[2];
+  const ux = vb[0] + px / s, uy = vb[1] + py / s;
+  const w = vb[2] / factor, h = vb[3] / factor;
+  const s2 = (MAP.svg.clientWidth || 1) / w;
+  applyView([ux - px / s2, uy - py / s2, w, h]);
+}
+function camPan(dxPx, dyPx) {
+  const vb = readVB();
+  const s = (MAP.svg.clientWidth || 1) / vb[2];
+  applyView([vb[0] - dxPx / s, vb[1] - dyPx / s, vb[2], vb[3]]);
+}
+function bindCamera(host) {
+  host.addEventListener("wheel", ev => {
+    ev.preventDefault();
+    if (MAP.animating) cancelTween();
+    const r = host.getBoundingClientRect();
+    // Molette crantée ou pavé tactile : on borne le pas pour que le zoom reste
+    // continu au lieu de sauter d'un continent à l'autre d'un coup.
+    const step = Math.max(-120, Math.min(120, ev.deltaY));
+    camZoomAt(ev.clientX - r.left, ev.clientY - r.top, Math.exp(-step * 0.0022));
+  }, { passive: false });
+
+  host.addEventListener("pointerdown", ev => {
+    if (ev.pointerType === "mouse" && ev.button !== 0) return;
+    // PAS de setPointerCapture ici : capturer dès l'appui redirige le `click`
+    // vers le fond de carte, et toucher une gare n'ouvrirait plus sa fiche. On
+    // ne capture qu'une fois le doigt VRAIMENT parti (voir onMove).
+    CAM.pts.set(ev.pointerId, { x: ev.clientX, y: ev.clientY });
+    if (CAM.pts.size === 1) { CAM.dragging = true; CAM.moved = false; if (MAP.animating) cancelTween(); }
+    if (CAM.pts.size === 2) {
+      const [a, b] = [...CAM.pts.values()];
+      CAM.pinch = Math.hypot(a.x - b.x, a.y - b.y) || 1;
+    }
+  });
+  const onMove = ev => {
+    const prev = CAM.pts.get(ev.pointerId);
+    if (!prev) return;
+    const cur = { x: ev.clientX, y: ev.clientY };
+    CAM.pts.set(ev.pointerId, cur);
+    if (CAM.pts.size >= 2) {
+      const [a, b] = [...CAM.pts.values()];
+      const d = Math.hypot(a.x - b.x, a.y - b.y) || 1;
+      const r = host.getBoundingClientRect();
+      camZoomAt((a.x + b.x) / 2 - r.left, (a.y + b.y) / 2 - r.top, d / (CAM.pinch || d));
+      CAM.pinch = d;
+      if (!CAM.moved) { CAM.moved = true; try { host.setPointerCapture(ev.pointerId); } catch (e) { /* ignoré */ } }
+      return;
+    }
+    if (!CAM.dragging) return;
+    const dx = cur.x - prev.x, dy = cur.y - prev.y;
+    if (!CAM.moved && Math.abs(dx) + Math.abs(dy) > 3) {
+      CAM.moved = true;
+      // Au-delà du seuil c'est un déplacement, plus un tap : on capture pour
+      // que le glissement survive à la sortie du curseur hors de la carte.
+      try { host.setPointerCapture(ev.pointerId); } catch (e) { /* pointeur déjà perdu */ }
+    }
+    if (CAM.moved) camPan(dx, dy);
+  };
+  host.addEventListener("pointermove", onMove);
+  const onUp = ev => {
+    CAM.pts.delete(ev.pointerId);
+    if (CAM.pts.size < 2) CAM.pinch = null;
+    if (CAM.pts.size === 0) CAM.dragging = false;
+  };
+  host.addEventListener("pointerup", onUp);
+  host.addEventListener("pointercancel", onUp);
+  // Un glisser ne doit pas déclencher le clic qui suit (dézoom sur le fond,
+  // ouverture d'une fiche) : on l'avale en phase de capture.
+  host.addEventListener("click", ev => {
+    if (CAM.moved) { ev.stopPropagation(); ev.preventDefault(); CAM.moved = false; }
+  }, true);
+}
+
+// ------------------------------------------------------------------
+// Cadrages : de simples mouvements de caméra, sans état de navigation.
+// ------------------------------------------------------------------
+// Renvoie le cadrage RÉELLEMENT visé (ajusté au rapport de l'écran). Le lire
+// après coup avec readVB() donnerait le cadrage de DÉPART tant que le vol n'est
+// pas terminé — c'est ainsi que le bouton « maison » a mémorisé la mauvaise
+// référence et a cessé d'apparaître.
 function goTo(vb, instant) {
-  updateChrome(); setFocusClasses();
-  if (instant) { setVB(vb); layoutOverlay(); }
-  else { tweenTo(vb, 560, layoutOverlay); }
+  const fitted = fitVB(vb);
+  if (instant) { setVB(fitted); updateChrome(); mapnetPosition(); }
+  else { tweenTo(fitted, 560, updateChrome); }
+  return fitted;
 }
-function focusWorld(instant) {
-  MAP.level = "world"; MAP.contId = null; MAP.countrySlug = null;
-  goTo(GEO.world.viewBox.slice(), instant);
-}
-function focusContinent(id, instant) {
-  const cont = GEO.continents.find(c => c.id === id);
-  if (!cont) return;
-  MAP.level = "continent"; MAP.contId = id; MAP.countrySlug = null;
-  goTo(targetVB(cont.bbox, 0.06), instant);
-}
-function focusCountry(slug, instant) {
+function frameCountry(slug, instant) {
   const g = GEO.countries[slug];
   const country = g && MAP.byIso[g.iso];
-  if (!country) return;
-  MAP.level = "country"; MAP.countrySlug = slug; MAP.contId = g.continent;
-  // Cadrage : emprise auto de la métropole, SAUF si le pays fournit un `frame`
-  // géo explicite [lonMin,latMin,lonMax,latMax] — utile quand les gares n'occupent
+  if (!country) return false;
+  // Emprise auto de la métropole, SAUF si le pays fournit un `frame` géo
+  // explicite [lonMin,latMin,lonMax,latMax] — utile quand les gares n'occupent
   // qu'une partie du territoire (Royaume-Uni : rien au nord de l'Écosse centrale).
-  goTo(targetVB(g.frame || countryGeoBbox(country), 0.05), instant);
+  MAP.lastFramed = goTo(targetVB(g.frame || countryGeoBbox(country), 0.05), instant);
+  return true;
 }
-function zoomOut() {
-  if (MAP.animating) return;
-  if (MAP.level === "country") focusContinent(MAP.contId);
-  else if (MAP.level === "continent") focusWorld();
+// Cadre un pays dans la partie LIBRE de l'écran, quand une interface en occupe
+// un bord (la fiche de fin de service pendant un choix). Sans cela, le cadrage
+// centre le pays sur tout l'écran et la moitié du réseau se retrouve sous le
+// panneau — c'est ce qui rendait le choix illisible.
+// `reserved` = { left, bottom } en pixels.
+function frameCountryBeside(slug, reserved) {
+  if (!frameCountry(slug, true)) return;
+  const cw = MAP.svg.clientWidth || 1, ch = MAP.svg.clientHeight || 1;
+  const left = Math.max(0, (reserved && reserved.left) || 0);
+  const bottom = Math.max(0, (reserved && reserved.bottom) || 0);
+  const freeW = Math.max(80, cw - left), freeH = Math.max(80, ch - bottom);
+  const vb = readVB();
+  const cx = vb[0] + vb[2] / 2, cy = vb[1] + vb[3] / 2;
+  // On élargit la vue du rapport de place perdue, pour que le pays tienne
+  // ENTIER dans la bande libre, puis on recentre sur le milieu de cette bande.
+  const k = Math.max(cw / freeW, ch / freeH);
+  const w = vb[2] * k, h = vb[3] * k;
+  const scale = cw / w;
+  applyView([cx - (left + freeW / 2) / scale, cy - (freeH / 2) / scale, w, h]);
+}
+
+// Cadrage d'ouverture : CHEZ L'UTILISATEUR (fuseau horaire, puis langue — voir
+// userCountrySlug dans geo.js), à défaut l'Europe. C'est aussi ce que rejoint le
+// bouton « maison » et la touche Échap.
+function frameHome(instant) {
+  const slug = (typeof userCountrySlug === "function") ? userCountrySlug() : null;
+  if (slug && frameCountry(slug, instant)) {
+    MAP.homeName = (GEO.countries[slug] || {}).name || "";
+    MAP.homeVB = MAP.lastFramed;
+  } else {
+    const europe = GEO.continents.find(c => c.id === "europe");
+    MAP.homeName = europe.name;
+    MAP.homeVB = goTo(targetVB(europe.bbox, 0.06), instant);
+  }
 }
 
 // ------------------------------------------------------------------
 // Fiche de gare (modale) — ouverte au clic d'une ville.
 // ------------------------------------------------------------------
-// Gare « disponible » d'un pays = la plus avancée encore débloquée (le front de
-// progression), à proposer quand on clique une gare verrouillée.
+// Gare à proposer quand on clique une gare encore fermée : la plus FACILE des
+// gares ouvertes et jamais jouées du même pays (le front de progression).
 function recommendedIndex(slug) {
   const c = GEO.countries[slug];
-  if (!c) return -1;
-  let best = -1;
-  for (const id of Object.keys(c.cities || {})) {
-    const gi = catalogIndexOf(id);
-    if (gi >= 0 && typeof isUnlocked === "function" && isUnlocked(gi) && gi > best) best = gi;
-  }
-  return best;
+  if (!c || typeof openFrontier !== "function") return -1;
+  const country = (CATALOG[catalogIndexOf(Object.keys(c.cities || {})[0])] || {}).country;
+  const front = openFrontier(country);
+  return front.length ? front[0] : -1;
 }
-// Gare « courante » = la prochaine à réaliser : la 1re débloquée encore jamais
-// jouée (0 étoile) — c'est elle qui, réussie, débloque la suivante.
-function currentIndex(slug) {
-  const c = GEO.countries[slug];
-  if (!c) return -1;
-  const prog = (typeof getProgress === "function") ? getProgress() : {};
-  const gis = Object.keys(c.cities || {}).map(catalogIndexOf).filter(gi => gi >= 0).sort((a, b) => a - b);
-  for (const gi of gis)
-    if (typeof isUnlocked === "function" && isUnlocked(gi) && !((prog[CATALOG[gi].id] || {}).stars))
-      return gi;
-  return -1;
+function closeModal() {
+  if (MAP.modal) MAP.modal.classList.add("hidden");
+  // Fiche refermée sans prendre le service : le tutoriel revient à son étape
+  // « choisis ta première gare » sur la carte.
+  if (typeof maybeStartMapOnboarding === "function") maybeStartMapOnboarding();
 }
-// Pays « courant » d'un continent = celui qui porte la prochaine gare à réaliser
-// (la frontière de progression : plus petit index catalogue encore à faire). Sert
-// à mettre en évidence, au niveau continent, où le joueur doit reprendre.
-function currentCountrySlug(contId) {
-  let best = -1, bestSlug = null;
-  for (const slug in GEO.countries) {
-    if (GEO.countries[slug].continent !== contId) continue;
-    const gi = currentIndex(slug);
-    if (gi >= 0 && (best < 0 || gi < best)) { best = gi; bestSlug = slug; }
-  }
-  return bestSlug;
-}
-// Gares débloquées disponibles, éventuellement restreintes à un continent
-// (bouton « Partie rapide »). Sans contId : toutes gares, tous pays.
-function availableIndices(contId) {
-  if (typeof CATALOG === "undefined") return [];
-  const out = [];
-  if (contId) {
-    for (const slug in GEO.countries) {
-      if (GEO.countries[slug].continent !== contId) continue;
-      for (const id of Object.keys(GEO.countries[slug].cities || {})) {
-        const gi = catalogIndexOf(id);
-        if (gi >= 0 && typeof isUnlocked === "function" && isUnlocked(gi)) out.push(gi);
-      }
-    }
-  } else {
-    for (let i = 0; i < CATALOG.length; i++)
-      if (typeof isUnlocked === "function" && isUnlocked(i)) out.push(i);
-  }
-  return out;
-}
-function randomAvailableIndex(contId) {
-  const pool = availableIndices(contId);
-  return pool.length ? pool[Math.floor(Math.random() * pool.length)] : -1;
-}
-function closeModal() { if (MAP.modal) MAP.modal.classList.add("hidden"); }
 function openStationModal(gi) {
   if (gi < 0 || typeof CATALOG === "undefined" || !CATALOG[gi] || !MAP.modal) return;
   const card = CATALOG[gi];
@@ -826,11 +541,31 @@ function openStationModal(gi) {
   let spec = nQuais + " quais · " + nDir + " destinations";
   if (nDead) spec += " · " + nDead + " impasse" + (nDead > 1 ? "s" : "");
 
+  // Où mènent ces directions : les gares reliées (le réseau de la carte)
+  // d'abord, les antennes ensuite. La carte montre les traits, la fiche les
+  // nomme. Attention : « N destinations » compte les portails du PLAN, alors
+  // que les gares reliées viennent du graphe en union — Namur affiche 6
+  // directions mais touche 5 gares, parce qu'Ottignies la nomme sans qu'elle
+  // nomme Ottignies. Deux comptes différents, deux libellés différents.
+  const links = (typeof netLinks === "function") ? netLinks(card.id) : { to: [], places: [] };
+  const byName = (a, b) => a.localeCompare(b, "fr");
+  const corr = links.to.map(id => {
+    const g = catalogIndexOf(id);
+    return g >= 0 ? (CATALOG[g].city || CATALOG[g].name) : id;
+  }).sort(byName);
+  const pts = (typeof netPlaces === "function") ? netPlaces() : {};
+  const near = links.places.map(k => (pts[k] || {}).label || k).sort(byName);
+  const dests =
+    (corr.length ? '<div class="mm-dline"><span class="k">Gares reliées</span>' +
+      corr.map(s => '<span class="d on">' + s + "</span>").join("") + "</div>" : "") +
+    (near.length ? '<div class="mm-dline"><span class="k">Dessertes</span>' +
+      near.map(s => '<span class="d">' + s + "</span>").join("") + "</div>" : "");
+
   let actions;
   if (unlocked) {
     actions = '<button class="btn mm-play" data-gi="' + gi + '">Prendre le service</button>';
   } else {
-    const frontier = recommendedIndex(MAP.countrySlug);
+    const frontier = recommendedIndex(stationCountrySlug(gi));
     const fname = frontier >= 0 ? CATALOG[frontier].name : null;
     actions =
       '<div class="mm-lock">' + icon(ICON.lock, 15) + "<span>Gare verrouillée</span></div>" +
@@ -846,12 +581,18 @@ function openStationModal(gi) {
       '<div class="mm-stars">' + starStr(stars) + "</div>" +
       (best != null ? '<div class="mm-delay">record : +' + best + " min</div>" : "") +
       '<p class="mm-desc">' + (card.tagline || card.desc || "") + "</p>" +
+      (dests ? '<div class="mm-dests">' + dests + "</div>" : "") +
       '<div class="mm-actions">' + actions + "</div>" +
     "</div>";
   MAP.modal.querySelector(".mm-close").addEventListener("click", closeModal);
   const play = MAP.modal.querySelector(".mm-play");
   if (play) play.addEventListener("click", () => { const g = +play.dataset.gi; closeModal(); startStation(g); });
   MAP.modal.classList.remove("hidden");
+  // Le tutoriel SUIT le joueur au lieu de rester sur la carte : sans cela, la
+  // bulle « choisis ta première gare » restait affichée par-dessus la fiche —
+  // périmée, et posée juste sur le bouton qu'il fallait presser.
+  if (typeof onboardingStationCard === "function")
+    onboardingStationCard(MAP.modal.querySelector(".mm-play"), unlocked);
 }
 
 // ------------------------------------------------------------------
@@ -880,22 +621,25 @@ function mapJourneyToNext(fromGi, toGi, onDone) {
   if (!MAP.built) buildMap();
   document.getElementById("hub").classList.remove("hidden");
   if (typeof started !== "undefined") started = false;
-  focusCountry(slug, true); // instantané → MAP.cityNodes prêt
+  mapnetBuild();
+  frameCountry(slug, true); // instantané → positions du réseau à jour
 
-  const nodes = MAP.cityNodes || [];
-  const kf = nodes.findIndex(n => n.gi === fromGi);
-  const kt = nodes.findIndex(n => n.gi === toGi);
+  // Positions écran prises sur la couche réseau : c'est elle qui fait foi
+  // depuis qu'il n'y a plus qu'une seule voie de rendu pour les villes.
+  const at = gi => {
+    const id = CATALOG[gi] && CATALOG[gi].id;
+    const n = MAPNET.nodes.find(m => m.kind === "station" && m.key === id);
+    return n && n.sx != null ? { x: n.sx, y: n.sy } : null;
+  };
+  const p1 = at(fromGi), p2 = at(toGi);
   const cw = MAP.svg.clientWidth, ch = MAP.svg.clientHeight;
-  if (kf < 0 || kt < 0 || !cw || !ch) { finish(); return; }
+  if (!p1 || !p2 || !cw || !ch) { finish(); return; }
 
-  // Cubique du segment kf→kt, identique à celle du réseau (smoothOpenPath).
-  const P = i => nodes[Math.max(0, Math.min(nodes.length - 1, i))];
-  const p1 = P(kf), p2 = P(kt), p0 = P(kf - 1), p3 = P(kt + 1);
-  const c1 = { x: p1.x + (p2.x - p0.x) / 6, y: p1.y + (p2.y - p0.y) / 6 };
-  const c2 = { x: p2.x - (p3.x - p1.x) / 6, y: p2.y - (p3.y - p1.y) / 6 };
-  const bez = t => { const m = 1 - t; return {
-    x: m * m * m * p1.x + 3 * m * m * t * c1.x + 3 * m * t * t * c2.x + t * t * t * p2.x,
-    y: m * m * m * p1.y + 3 * m * m * t * c1.y + 3 * m * t * t * c2.y + t * t * t * p2.y }; };
+  // Le convoi file le long du segment qui relie les deux gares — le même que
+  // celui du réseau quand elles sont voisines.
+  const bez = t => ({ x: p1.x + (p2.x - p1.x) * t, y: p1.y + (p2.y - p1.y) * t });
+  const dSeg = "M" + p1.x.toFixed(1) + "," + p1.y.toFixed(1) +
+               " L" + p2.x.toFixed(1) + "," + p2.y.toFixed(1);
 
   const mk = (tag, attrs) => {
     const e = document.createElementNS(SVGNS, tag);
@@ -903,7 +647,6 @@ function mapJourneyToNext(fromGi, toGi, onDone) {
     return e;
   };
   const svg = mk("svg", { class: "map-journey", width: cw, height: ch, viewBox: "0 0 " + cw + " " + ch });
-  const dSeg = "M" + p1.x + "," + p1.y + " C" + c1.x + "," + c1.y + " " + c2.x + "," + c2.y + " " + p2.x + "," + p2.y;
   const line = mk("path", { class: "mj-line", d: dSeg });
   const ring = mk("circle", { class: "mj-ring", cx: p2.x.toFixed(1), cy: p2.y.toFixed(1), r: 16 });
   const dot = mk("circle", { class: "mj-dot", cx: p1.x.toFixed(1), cy: p1.y.toFixed(1), r: 6 });
@@ -940,9 +683,15 @@ function renderMap() {
       "geo.js : villes manquantes pour " + missing.map(c => c.id).join(", "));
   }
   if (!MAP.built) buildMap();
+  mapnetBuild(); // le réseau dépend de la progression : on le rebâtit à chaque retour
   closeModal();
   cancelTween(); MAP.animating = false; MAP.host.classList.remove("tweening");
-  if (MAP.level === "country" && MAP.countrySlug) focusCountry(MAP.countrySlug, true);
-  else if (MAP.level === "continent" && MAP.contId) focusContinent(MAP.contId, true);
-  else focusWorld(true);
+  // Première ouverture : on cadre la région de l'utilisateur. Retours suivants :
+  // on laisse le cadrage tel qu'il était — revenir d'une partie ne doit pas
+  // rejeter le joueur à l'autre bout de la carte.
+  if (!MAP.framed) { MAP.framed = true; frameHome(true); }
+  else { updateChrome(); mapnetPosition(); }
+  // Étape 0 du tutoriel : « choisis ta première gare ». Réévaluée à chaque
+  // retour sur la carte — elle disparaît dès qu'une gare est décrochée.
+  if (typeof maybeStartMapOnboarding === "function") maybeStartMapOnboarding();
 }

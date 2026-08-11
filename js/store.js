@@ -14,7 +14,7 @@
 // sauvegarde ancienne au schéma courant, pour ne jamais casser une partie
 // après une mise à jour.
 // ------------------------------------------------------------------
-const SCHEMA_VERSION = 1;
+const SCHEMA_VERSION = 2;
 const KEY_PROGRESS = "station-progress";
 const KEY_MUTED = "station-muted";
 const KEY_ONBOARDED = "station-onboarded"; // « le joueur a déjà appris le geste »
@@ -46,11 +46,15 @@ let _onboarded = false;
 
 // --- Migration : amène n'importe quel format vers le schéma courant. ---
 function migrate(raw) {
-  if (!raw || typeof raw !== "object") return { version: SCHEMA_VERSION, stations: {} };
+  if (!raw || typeof raw !== "object") return { version: SCHEMA_VERSION, stations: {}, opened: [] };
   // v0 (héritage) : objet plat { id: {stars,bestDelay} }, sans champ version.
-  if (raw.version == null) return { version: SCHEMA_VERSION, stations: raw };
-  // Montées de version futures : enchaîner les transformations ici (v1→v2…).
-  return { version: SCHEMA_VERSION, stations: raw.stations || {} };
+  if (raw.version == null) return { version: SCHEMA_VERSION, stations: raw, opened: [] };
+  // v1 → v2 : les gares OUVERTES deviennent un fait mémorisé, plus une
+  // déduction. Le joueur les choisit en fin de service ; on ne peut donc pas
+  // les recalculer après coup. Une sauvegarde v1 repart sans aucune ouverture :
+  // seules les portes d'entrée restent accessibles, et ce qu'elle a déjà
+  // décroché reste décroché.
+  return { version: SCHEMA_VERSION, stations: raw.stations || {}, opened: raw.opened || [] };
 }
 
 // --- Chargement unique au démarrage, AVANT toute lecture de progression. ---
@@ -78,6 +82,22 @@ function persistProgress() {
 // getProgress() rend la table { id: {stars,bestDelay} } (comme avant).
 // ------------------------------------------------------------------
 function getProgress() { return _progress.stations; }
+// ------------------------------------------------------------------
+// Gares OUVERTES par le joueur — un fait, pas une déduction.
+// ------------------------------------------------------------------
+// Terminer un service donne le droit d'ouvrir UNE gare voisine ; à 2 et 3
+// étoiles c'est le joueur qui la désigne. Ce choix ne se recalcule pas : il
+// doit être mémorisé, sans quoi une gare ouverte se refermerait au
+// rechargement.
+function getOpened() { return _progress.opened || (_progress.opened = []); }
+function isOpened(id) { return getOpened().indexOf(id) >= 0; }
+function openStation(id) {
+  const list = getOpened();
+  if (!id || list.indexOf(id) >= 0) return false;
+  list.push(id);
+  persistProgress();
+  return true;
+}
 function saveResult(id, stars, delay) {
   const cur = _progress.stations[id] || { stars: 0, bestDelay: null };
   _progress.stations[id] = {

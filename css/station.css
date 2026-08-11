@@ -486,9 +486,9 @@ svg { width: 100%; height: 100%; display: block; }
   overflow-y: auto; -webkit-overflow-scrolling: touch;
   padding: 16px calc(16px + var(--safe-r)) calc(16px + var(--safe-b)) calc(16px + var(--safe-l));
 }
-/* L'aide et la confirmation de sortie vivent au niveau du body : fixed et
-   au-dessus du hub (z-index 30). */
-#help, #confirm-quit, #welcome { position: fixed; z-index: 40; }
+/* L'aide et les confirmations (sortie, recommencer) vivent au niveau du body :
+   fixed et au-dessus du hub (z-index 30). */
+#help, #confirm-quit, #confirm-reset, #welcome { position: fixed; z-index: 40; }
 .card {
   background: var(--panel); border: 1px solid #2a3550; border-radius: 18px;
   padding: 34px 40px; max-width: 560px; text-align: center;
@@ -549,14 +549,24 @@ svg { width: 100%; height: 100%; display: block; }
 }
 #coach-bubble {
   position: absolute; transform: translateX(-50%); pointer-events: auto;
-  max-width: min(86vw, 330px); padding: 13px 16px; border-radius: 12px;
+  /* `width: max-content` est ESSENTIEL. Sans largeur définie, une boîte
+     absolue se rétracte contre le bord le plus proche : posée près de la droite
+     de l'écran, la bulle se calculait sur la place restante et tombait à une
+     centaine de pixels — cinq mots par ligne. Sa largeur ne doit dépendre que
+     de son texte, jamais de sa position ; positionCoach() la recale ensuite. */
+  width: max-content; max-width: min(90vw, 400px);
+  min-width: 190px;
+  padding: 14px 18px; border-radius: 12px;
   background: var(--panel); border: 1px solid #2dd4bf; color: var(--text);
   box-shadow: 0 12px 40px rgba(0,0,0,.55); text-align: center;
 }
-#coach-bubble p { margin: 0; font-size: 14.5px; line-height: 1.45; }
+#coach-bubble p { margin: 0; font-size: 15px; line-height: 1.5; text-wrap: balance; }
 #coach-bubble b { color: #7ee7d7; font-weight: 700; }
 #coach-bubble .btn { margin-top: 12px; font-size: 15px; padding: 7px 22px; }
 #coach-bubble .btn.hidden { display: none; }
+/* Bulle sans cible (étape « choisis ta première gare ») : pas d'ergot, pas de
+   halo, donc pas de désignation — elle nomme le geste, la carte montre où. */
+#coach-bubble.no-caret::before, #coach-bubble.no-caret::after { display: none; }
 /* ergot pointant la cible (bulle au-dessus ou en dessous) */
 #coach-bubble::after {
   content: ""; position: absolute; left: var(--caret, 50%); transform: translateX(-50%);
@@ -621,72 +631,178 @@ svg { width: 100%; height: 100%; display: block; }
 #hub-map { position: absolute; inset: 0; }
 
 /* Bouton flottant unique : zone courante + flèche retour, en haut à gauche. */
-.map-back {
-  position: absolute; z-index: 3;
-  top: calc(14px + var(--safe-t)); left: calc(14px + var(--safe-l));
-  display: flex; align-items: center; gap: 6px;
-  height: 38px; padding: 0 16px 0 11px; border-radius: 19px;
-  background: rgba(18, 26, 43, .82); border: 1px solid #2a3550;
-  color: var(--text); font-size: 15px; font-weight: 500; cursor: pointer;
-  box-shadow: 0 4px 14px -4px rgba(0, 0, 0, .5);
-  backdrop-filter: blur(4px); transition: background .15s, border-color .15s;
+/* Bouton « maison » : revient au cadrage d'ouverture (la région de
+   l'utilisateur). Il remplace l'ancien bouton retour, qui remontait des niveaux
+   qui n'existent plus. Sur un petit écran, c'est la porte de sortie quand on
+   s'est perdu à pincer. */
+/* Bouton « maison » : revient au cadrage d'ouverture (la région de
+   l'utilisateur). Il remplace l'ancien bouton retour, qui remontait des niveaux
+   qui n'existent plus. Sur un petit écran, c'est la porte de sortie quand on
+   s'est perdu à pincer. */
+/* Ligne d'accueil du tout premier lancement : elle nomme ce que les halos
+   montrent. Elle disparaît dès la première étoile — après quoi la carte se lit
+   seule (grise = fermée, teal = ouverte, teal + étoiles = faite). */
+/* Choix en attente : la CARTE reste visible derrière la fiche de fin, et les
+   gares proposées y pulsent. Le choix devient géographique — on voit d'où l'on
+   vient, où mènent les lignes, et comment le réseau s'étend. Le voile
+   s'allège pour ça (la fiche garde le premier plan par son z-index). */
+/* DEUX COLONNES quand la carte est derrière : la fiche à gauche, le réseau
+   dans la bande restante (le cadrage en tient compte — frameCountryBeside).
+   Centrée, la fiche se posait pile sur la gare qu'on quitte et sur ses
+   voisines, c'est-à-dire sur tout ce qu'on demandait au joueur de regarder. */
+#end.over-map {
+  /* Voile presque nul : c'est la carte qu'on est venu lire, et la fiche se
+     détache déjà seule (fond opaque + ombre portée). Un voile appuyé
+     délavait le réseau au moment précis où il fallait le comparer. */
+  z-index: 31; background: rgba(10, 14, 24, .12);
+  align-items: center; justify-content: flex-start;
 }
-.map-back .arw { font-size: 22px; line-height: 1; margin-top: -2px; color: var(--muted); }
-.map-back:hover { background: rgba(26, 37, 58, .92); border-color: #2dd4bf; }
-.map-back.hidden { display: none; }
-
-/* Bouton « Partie rapide » — CTA contour teal (bord + libellé teal, fond
-   transparent), coin sup. droit. */
-.map-random {
-  position: absolute; z-index: 4;
-  top: calc(14px + var(--safe-t)); right: calc(14px + var(--safe-r));
-  display: flex; align-items: center; gap: 7px;
-  height: 34px; padding: 0 16px; border-radius: 17px; white-space: nowrap;
-  background: transparent; border: 1px solid #2dd4bf; color: #2dd4bf;
-  font-size: 13px; font-weight: 600; letter-spacing: .2px; cursor: pointer;
-  backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
-  transition: background .15s, box-shadow .15s, transform .1s;
+#end.over-map .card {
+  width: min(370px, 40vw); margin: 0;
+  box-shadow: 0 18px 60px rgba(0, 0, 0, .8);
 }
-.map-random svg { display: block; width: 15px; height: 15px; color: #2dd4bf; }
-.map-random:hover { background: rgba(45, 212, 191, .12); box-shadow: 0 4px 18px -6px rgba(45, 212, 191, .5); }
-.map-random:active { transform: translateY(1px); }
-.map-random.hidden { display: none; } /* visibilité pilotée par updateChrome (monde + continent jouable) */
-#worldmap { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
-.map-bg { fill: transparent; }
+/* Écran étroit : pas de place pour deux colonnes — la fiche redevient un
+   panneau du bas, et le cadrage se décale vers le haut. */
+@media (max-width: 720px) {
+  #end.over-map { align-items: flex-end; justify-content: center; }
+  #end.over-map .card { width: min(370px, 92vw); margin-bottom: 4px; }
+}
+.city-chip.choice .dot { box-shadow: 0 0 0 3px rgba(45, 212, 191, .45), 0 0 22px rgba(45, 212, 191, .95); }
+/* La gare qu'on vient de tenir : jamais masquée non plus, mais en doré et sans
+   pulsation — c'est le point de départ, pas une option à choisir. */
+.city-chip.origin .dot { box-shadow: 0 0 0 3px rgba(245, 178, 60, .5), 0 0 18px rgba(245, 178, 60, .8); }
+.city-chip.origin .nm { color: #f5b23c; font-weight: 700; }
 
-/* Frontières RÉELLES des pays (Natural Earth), rendues lissées.
-   Niveau monde : trait quasi invisible → les continents lisent en silhouettes. */
+/* Récompense de fin de service : la gare voisine qu'on ouvre. À une étoile
+   elle est annoncée ; à deux et trois, le joueur la choisit parmi des boutons.
+   Tant qu'il n'a pas choisi, « Rejouer » et « Carte » sont masqués — on ne
+   quitte pas en laissant sa récompense sur la table. */
+#end-unlock {
+  margin: 4px 0 14px; padding: 12px 10px 13px;
+  border: 1px solid #245e5c; border-radius: 14px; background: rgba(20, 51, 58, .55);
+}
+#end-unlock.hidden { display: none; }
+#end-unlock .eu-title {
+  color: #63e6d4; font-size: 11px; letter-spacing: .1em; text-transform: uppercase;
+  margin-bottom: 8px;
+}
+#end-unlock .eu-done { color: var(--text); font-size: 17px; font-weight: 600; }
+/* DEUX colonnes, toujours : en flex-wrap, quatre gares se rangeaient 3 + 1 et
+   la dernière restait orpheline. Une grille fixe donne des boutons de même
+   largeur et un bloc stable quel que soit le nombre de voisines. */
+#end-unlock .eu-row {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px;
+}
+#end-unlock .eu-pick {
+  font-size: 14px; padding: 9px 13px; width: 100%;
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+}
+/* Nombre impair : la dernière reste sur UNE colonne comme les autres. L'étirer
+   sur toute la largeur lui donnait un poids qu'elle n'a pas — toutes les gares
+   proposées sont à égalité, seule leur difficulté les distingue. */
+@media (hover: hover) { #end-unlock .eu-pick:hover { border-color: #2dd4bf; color: #eafbf7; } }
+#end-unlock .pips { font-size: 9px; letter-spacing: 1px; color: #55617a; flex: 0 0 auto; }
+#end-unlock .pips .on { color: #f5b23c; }
+
+
+.map-home {
+  position: absolute; z-index: 6; top: calc(12px + var(--safe-t)); left: calc(12px + var(--safe-l));
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 34px; height: 34px; padding: 0; border-radius: 12px;
+  background: rgba(21, 29, 46, .72); border: 1px solid #2a3550; color: var(--muted);
+  backdrop-filter: blur(7px); -webkit-backdrop-filter: blur(7px);
+  cursor: pointer; transition: color .15s, border-color .15s, background .15s;
+}
+@media (hover: hover) {
+  .map-home:hover { color: #2dd4bf; border-color: #2dd4bf; background: rgba(26, 37, 58, .92); }
+}
+
 .country-land {
-  fill: #2e3f60; stroke: #47597f; stroke-width: .6;
-  vector-effect: non-scaling-stroke; cursor: pointer; transition: fill .25s, opacity .25s;
+  fill: #2b3a5c; stroke: #47597f; stroke-width: .6;
+  /* SANS `non-scaling-stroke`, l'épaisseur est en unités de projection : à
+     l'échelle d'un pays, une frontière de 0,5 unité devient un ruban de 30 px. */
+  vector-effect: non-scaling-stroke;
+  cursor: pointer; transition: fill .2s, opacity .2s;
 }
+/* Un pays JOUABLE est teinté, les autres restent en fond. Il n'y a plus d'état
+   de navigation : ni continent « focalisé », ni pays « courant ». */
+.country-land:not(.playable) { cursor: default; opacity: .5; }
+.country-land.playable { fill: #16333a; stroke: #2dd4bf; stroke-width: 1; }
 @media (hover: hover) {
-  #hub-map[data-level="world"] .country-land:hover { fill: #3b4f78; }
-}
-/* Zoom continent/pays : pays hors focus estompés (contexte), focus mis en avant. */
-#hub-map[data-level="continent"] .country-land,
-#hub-map[data-level="country"] .country-land { opacity: .22; cursor: default; }
-#hub-map[data-level="continent"] .country-land.in-focus,
-#hub-map[data-level="country"] .country-land.in-focus {
-  opacity: 1; stroke: #3d4c6b; stroke-width: .8;
-}
-#hub-map[data-level="continent"] .country-land.in-focus.playable {
-  fill: #16333a; stroke: #2dd4bf; cursor: pointer;
-}
-@media (hover: hover) {
-  #hub-map[data-level="continent"] .country-land.in-focus.playable:hover { fill: #1c4249; }
-}
-#hub-map[data-level="country"] .country-land.is-current {
-  opacity: 1; fill: #16333a; stroke: #2dd4bf; stroke-width: .8;
+  .country-land.playable:hover { fill: #1c4249; }
 }
 
-/* Réseau reliant les villes d'un pays — SVG en overlay écran (positions
-   ajustées), posé sous les pastilles, non interactif. */
-.city-net { position: absolute; inset: 0; pointer-events: none; }
-.map-network {
-  fill: none; stroke: #2dd4bf; stroke-width: 2; stroke-dasharray: 4 6;
-  stroke-linecap: round; opacity: .38;
+/* Couche RÉSEAU (js/mapnet.js) — un seul réseau européen, à détail variable.
+   Les arêtes vivent dans le SVG en unités de projection : `non-scaling-stroke`
+   garde l'épaisseur du trait constante quel que soit le zoom, sans quoi une
+   ligne deviendrait un ruban en vue rapprochée.
+   Une arête porte SON état : éteinte tant qu'aucune de ses deux gares n'est
+   décrochée, à demi quand une seule l'est, allumée quand les deux le sont. La
+   progression électrifie un réseau au lieu de cocher des cases. */
+.lyr-net { pointer-events: none; }
+.map-edge {
+  stroke: #4a5673; stroke-width: 1.4; stroke-linecap: round;
+  vector-effect: non-scaling-stroke; opacity: .55;
 }
+.map-edge.half { stroke: #2dd4bf; opacity: .4; }
+.map-edge.lit  { stroke: #2dd4bf; stroke-width: 2.2; opacity: .9; }
+
+/* Overlay du réseau : le seul calque HTML de la carte. Il ne s'efface pas
+   pendant les vols de caméra — le réseau reste vivant tant qu'on bouge. */
+#map-net { position: absolute; inset: 0; pointer-events: none; }
+#map-net .map-chip { left: 0; top: 0; will-change: transform; }
+#map-net .city-chip { pointer-events: auto; width: auto; height: auto; }
+/* Le cartouche part CENTRÉ sur le point ; c'est mapnetPosition() qui l'écarte,
+   du nombre exact de pixels qu'il a utilisé pour tester les collisions. Tout
+   décalage laissé au CSS (un `top` par palier de zoom) ferait diverger le
+   modèle du rendu — on s'y est fait prendre deux fois. */
+#map-net .map-chip .cap {
+  top: 50%; bottom: auto; left: 50%; transform: translate(-50%, -50%);
+}
+
+/* Villes secondaires : présentes pour que les lignes aillent quelque part, mais
+   jamais pour se disputer l'attention avec une gare jouable. Inertes. */
+.place-chip { pointer-events: none; }
+.place-chip .pdot {
+  display: block; width: 5px; height: 5px; border-radius: 50%;
+  background: #7c8ba6; box-shadow: 0 0 0 2px rgba(14, 20, 32, .8);
+}
+.place-chip .cap { position: absolute; }
+/* Sélecteur porté par #map-net : sans lui, la règle générique .map-chip .nm
+   (13 px, gras, couleur de texte) l'emporte et une desserte de banlieue
+   s'affiche aussi fort qu'une gare jouable. */
+#map-net .place-chip .nm {
+  font-size: 10px; font-weight: 400; letter-spacing: .02em; color: #8593ad;
+  white-space: nowrap; text-shadow: 0 1px 3px rgba(10, 15, 26, .95);
+}
+
+/* ---- Trois habillages pour une même pastille, selon le zoom ----
+   « far »  (Europe)  : un point et un nom. Ni numéro, ni cadenas, ni étoiles —
+                        à cette distance ils ne sont pas lisibles et ils
+                        empilent du bruit sur une carte de continent.
+   « mid »  (pays)    : la pastille numérotée reprend sa place.
+   « near » (région)  : tout, étoiles et record compris.
+   C'est la règle des cartes : le même objet, dessiné selon la distance. */
+/* Taille de la pastille = DIFFICULTÉ de la gare (--d, posé par mapnet.js),
+   multipliée par le facteur du palier de zoom (--k). Une petite bulle en
+   niveau 1, une grosse en niveau 5 : la difficulté se lit sur la carte sans
+   qu'on ait à décoder une numérotation. Les deux barèmes vivent dans
+   js/mapnet.js — le CSS ne fait que les appliquer. */
+#map-net { --k: 1; }
+#map-net .city-chip .dot {
+  width: calc(var(--d) * var(--k)); height: calc(var(--d) * var(--k));
+  font-size: 0; /* plus de numéro : seule la taille parle */
+  box-shadow: 0 0 0 2px rgba(14, 20, 32, .8), 0 0 8px rgba(45, 212, 191, .45);
+}
+#map-net .place-chip .pdot { width: calc(var(--d) * var(--k)); height: calc(var(--d) * var(--k)); }
+#map-net[data-detail="far"] .city-chip .st { display: none; }
+#map-net[data-detail="far"] .city-chip .nm { font-size: 11px; font-weight: 500; }
+
+#map-net[data-detail="mid"] .city-chip .st { display: none; }
+
+/* Les villes secondaires n'existent qu'en vue rapprochée : inutile de leur
+   donner un habillage de loin. */
+#map-net[data-detail="far"] .place-chip { display: none !important; }
 /* Animation « voyage » vers la gare suivante : convoi (mj-dot) qui file le long
    du tronçon (mj-line qui se trace), la gare d'arrivée pulse (mj-ring). Le SVG
    capte le clic pour PASSER l'animation. */
@@ -727,11 +843,13 @@ svg { width: 100%; height: 100%; display: block; }
 }
 
 /* Niveaux : détail décoratif (courbes+trains) masqué dès qu'on zoome. */
-#hub-map:not([data-level="world"]) .lyr-deco { display: none; }
+#hub-map:not(.far) .lyr-deco { display: none; }
 
 /* Overlay de marqueurs/labels (HTML, positionné en pixels). */
-#map-labels { position: absolute; inset: 0; pointer-events: none; transition: opacity .25s; }
-#hub-map.tweening #map-labels { opacity: 0; }
+/* La carte gère elle-même pincement et glissement : sans `touch-action: none`,
+   le navigateur mobile intercepte le geste (défilement, zoom de page) et la
+   caméra ne reçoit jamais rien. */
+#hub-map { touch-action: none; }
 .map-chip { position: absolute; transform: translate(-50%, -50%); pointer-events: auto; text-align: center; }
 .map-chip .nm { font-size: 13px; font-weight: 600; line-height: 1.25; color: var(--text); }
 .map-chip .pg { color: #f5b23c; font-size: 11px; margin-top: 1px; }
@@ -739,70 +857,9 @@ svg { width: 100%; height: 100%; display: block; }
 .map-chip .bd { color: var(--muted); font-size: 10px; font-family: ui-monospace, Menlo, monospace; }
 
 /* Chip continent (niveau monde) — libellé léger, pastille discrète. */
-.continent-chip {
-  cursor: pointer; color: var(--text); padding: 5px 12px; border-radius: 12px;
-  background: rgba(21, 29, 46, .45); border: 1px solid rgba(58, 69, 94, .5);
-}
-.continent-chip .nm { font-weight: 400; font-size: 15px; letter-spacing: 1.5px; }
-/* Continent avec du contenu : accent teal + mini-barre de progression + compteur.
-   La barre reprend le langage visuel de l'anneau des pays. */
-.continent-chip.playable { border-color: rgba(45, 212, 191, .55); background: rgba(21, 33, 46, .6); }
-.continent-chip .cbar {
-  width: 74px; height: 4px; margin: 5px auto 0; border-radius: 2px;
-  background: rgba(58, 69, 94, .55); overflow: hidden;
-}
-.continent-chip .cbar > span {
-  display: block; height: 100%; border-radius: 2px; background: #2dd4bf;
-  box-shadow: 0 0 6px rgba(45, 212, 191, .5); transition: width .4s ease;
-}
-.continent-chip.playable .pg { margin-top: 3px; font-size: 10.5px; letter-spacing: .5px; }
-@media (hover: hover) { .continent-chip.playable:hover { border-color: #2dd4bf; } }
-/* Continent « à venir » : estompé, non accentué, badge discret — pas de fausse
-   promesse de contenu. */
-.continent-chip.soon { opacity: .48; }
-.continent-chip.soon .nm { color: var(--muted); }
-.continent-chip .soon-tag {
-  font-size: 9.5px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase;
-  color: var(--muted); margin-top: 2px;
-}
-@media (hover: hover) { .continent-chip.soon:hover { border-color: rgba(58, 69, 94, .5); } }
 
 /* Pays jouable (niveau continent) : bulle drapeau + ANNEAU de progression autour
    (piste fine ; arc plus épais = étoiles gagnées / total). */
-.country-chip { width: 34px; height: 34px; cursor: pointer; }
-.country-chip .cflag {
-  position: absolute; inset: 0; z-index: 1;
-  display: flex; align-items: center; justify-content: center;
-  width: 34px; height: 34px; border-radius: 50%; font-size: 18px;
-  background: var(--panel); box-shadow: 0 0 14px rgba(45, 212, 191, .22);
-  transition: transform .15s;
-}
-/* SVG dimensionné explicitement (la règle globale svg{width:100%} le remplirait). */
-.country-chip .cring {
-  position: absolute; top: 50%; left: 50%; width: 44px; height: 44px; margin: -22px 0 0 -22px;
-  transform: rotate(-90deg); overflow: visible; pointer-events: none;
-}
-.country-chip .cring .track { fill: none; stroke: #33405c; stroke-width: 2; }
-.country-chip .cring .prog { fill: none; stroke: #2dd4bf; stroke-width: 4; stroke-linecap: round; }
-@media (hover: hover) { .country-chip:hover .cflag { transform: scale(1.1); } }
-/* Nom du pays sous le drapeau (identification sans ambiguïté). */
-.country-chip .cnm {
-  position: absolute; top: 40px; left: 50%; transform: translateX(-50%);
-  white-space: nowrap; font-size: 12px; font-weight: 500; color: var(--text);
-  text-shadow: 0 1px 3px rgba(0, 0, 0, .85); pointer-events: none;
-}
-@media (hover: hover) { .country-chip:hover .cnm { color: #63e6d4; } }
-/* Pays « à continuer » : drapeau qui respire (halo teal pulsé) + nom accentué. */
-.country-chip.current .cflag { animation: countryPulse 1.7s ease-in-out infinite; }
-.country-chip.current .cnm { color: #63e6d4; font-weight: 600; }
-@keyframes countryPulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(45, 212, 191, .55), 0 0 14px rgba(45, 212, 191, .3); }
-  50%      { box-shadow: 0 0 0 5px rgba(45, 212, 191, 0), 0 0 20px rgba(45, 212, 191, .6); }
-}
-@media (prefers-reduced-motion: reduce) {
-  .country-chip.current .cflag { animation: none; box-shadow: 0 0 0 2px #2dd4bf, 0 0 14px rgba(45, 212, 191, .4); }
-}
-
 /* Villes (niveau pays) : point-gare NUMÉROTÉ (ordre de jeu) + libellé léger,
    cartouche dessous/dessus. Teal = jouable, gris = verrouillé. */
 .city-chip { width: 22px; height: 22px; cursor: pointer; }
@@ -816,7 +873,10 @@ svg { width: 100%; height: 100%; display: block; }
 }
 .city-chip .cap {
   position: absolute; top: 20px; left: 50%; transform: translateX(-50%);
-  width: 130px; text-align: center; /* width réelle posée en inline (= estimation JS) */
+  /* Largeur AU CONTENU : c'est elle qu'on mesure pour décider si un nom trouve
+     sa place. Une largeur fixe ferait croire à des collisions partout — un
+     libellé « Namur » n'occupe pas 130 px. */
+  width: max-content; max-width: 168px; text-align: center;
 }
 .city-chip.cap-up .cap { top: auto; bottom: 20px; }
 /* Nom sur UNE ligne : l'estimation de largeur (map.js) suppose un cartouche non
@@ -847,11 +907,15 @@ svg { width: 100%; height: 100%; display: block; }
 }
 /* Gare COURANTE (prochaine à réaliser) : point accentué (halo teal permanent) +
    nom mis en avant + anneau qui pulse en fondu — visible d'un coup d'œil. */
-.city-chip.current .dot {
+/* PORTES D'ENTRÉE — au tout premier lancement seulement. Elles respirent
+   TOUTES ensemble : ce sont des équivalentes, pas une désignation. Dès la
+   première étoile décrochée, plus aucun halo — l'état se lit alors sur la
+   pastille elle-même (grise = fermée, teal = ouverte, teal + étoiles = faite). */
+.city-chip.entry .dot {
   box-shadow: 0 0 0 3px rgba(45, 212, 191, .35), 0 0 16px rgba(45, 212, 191, .85);
 }
-.city-chip.current .nm { color: #63e6d4; font-weight: 600; }
-.city-chip.current .dot::after {
+.city-chip.entry .nm { color: #63e6d4; font-weight: 600; }
+.city-chip.entry .dot::after {
   content: ""; position: absolute; inset: -5px; border-radius: 50%;
   border: 2px solid #2dd4bf; animation: cityPulse 1.7s ease-out infinite;
 }
@@ -859,13 +923,11 @@ svg { width: 100%; height: 100%; display: block; }
   0%   { transform: scale(1);   opacity: .85; }
   100% { transform: scale(2.1); opacity: 0; }
 }
-@media (prefers-reduced-motion: reduce) { .city-chip.current .dot::after { animation: none; opacity: .5; } }
+@media (prefers-reduced-motion: reduce) { .city-chip.entry .dot::after { animation: none; opacity: .5; } }
 
 /* Pays voisin JOUABLE au niveau pays : MÊME chip qu'au niveau continent (drapeau
    + anneau + nom), simplement un peu en retrait — le pays focalisé (ses gares)
    reste la scène principale. Le clic y voyage (cf. la forme voisine). */
-.country-chip.neighbor { opacity: .9; }
-@media (hover: hover) { .country-chip.neighbor:hover { opacity: 1; } }
 
 /* ---- Fiche de gare (modale ouverte au clic d'une ville) ---- */
 #map-modal {
@@ -893,7 +955,20 @@ svg { width: 100%; height: 100%; display: block; }
 .mm-spec { color: var(--muted); font-size: 13px; font-family: ui-monospace, Menlo, monospace; }
 .mm-stars { color: #f5b23c; font-size: 18px; letter-spacing: 3px; margin: 10px 0 2px; }
 .mm-delay { color: var(--green); font-size: 12px; font-family: ui-monospace, Menlo, monospace; margin-bottom: 4px; }
-.mm-desc { color: var(--muted); font-size: 14px; line-height: 1.55; margin: 6px 0 18px; }
+.mm-desc { color: var(--muted); font-size: 14px; line-height: 1.55; margin: 6px 0 14px; }
+/* Où mènent les directions de la gare : correspondances (une autre gare
+   jouable, en teal — c'est une arête de la carte) puis antennes (hors carte). */
+.mm-dests { margin: 0 0 16px; display: flex; flex-direction: column; gap: 6px; }
+.mm-dline { display: flex; flex-wrap: wrap; align-items: baseline; gap: 5px; }
+.mm-dline .k {
+  color: var(--muted); font-size: 10px; letter-spacing: .09em; text-transform: uppercase;
+  width: 100%; margin-bottom: 1px;
+}
+.mm-dline .d {
+  font-size: 11px; padding: 2px 7px; border-radius: 999px;
+  background: #232c40; color: #9aa6bd; border: 1px solid #2f3a52;
+}
+.mm-dline .d.on { background: #14333a; color: #63e6d4; border-color: #245e5c; }
 .mm-actions { display: flex; flex-direction: column; gap: 10px; }
 .mm-play { width: 100%; background: #16333a; border-color: #2dd4bf; color: #eafbf7; font-weight: 600; }
 .mm-play:hover { background: #1c4249; }

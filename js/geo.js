@@ -69,6 +69,49 @@ const GEO = {
 };
 
 // ------------------------------------------------------------------
+// Zone de départ : chez l'utilisateur, sans rien lui demander.
+// ------------------------------------------------------------------
+// La carte s'ouvre sur le pays de l'utilisateur. On le déduit du FUSEAU HORAIRE
+// du navigateur, puis de sa langue — jamais de l'API de géolocalisation : elle
+// ouvrirait le jeu sur une demande de permission, ce qui n'a pas sa place dans
+// un jeu pour enfants, et elle est refusée la plupart du temps.
+// Les fuseaux des pays voisins pointent vers le pays jouable le plus proche :
+// mieux vaut ouvrir sur la Belgique depuis Amsterdam que sur le monde entier.
+const ZONE_BY_TZ = {
+  "Europe/Brussels": "belgique", "Europe/Amsterdam": "belgique",
+  "Europe/Luxembourg": "belgique",
+  "Europe/Paris": "france", "Europe/Monaco": "france", "Europe/Andorra": "france",
+  "Europe/Berlin": "allemagne", "Europe/Busingen": "allemagne",
+  "Europe/Zurich": "allemagne", "Europe/Vienna": "allemagne",
+  "Europe/Prague": "allemagne", "Europe/Copenhagen": "allemagne",
+  "Europe/London": "royaume-uni", "Europe/Dublin": "royaume-uni",
+  "Europe/Isle_of_Man": "royaume-uni", "Europe/Guernsey": "royaume-uni",
+  "Europe/Jersey": "royaume-uni"
+};
+const ZONE_BY_LANG = {
+  "fr-be": "belgique", "nl-be": "belgique", "nl": "belgique",
+  "fr": "france",
+  "de": "allemagne", "de-at": "allemagne", "de-ch": "allemagne",
+  "en-gb": "royaume-uni", "cy": "royaume-uni", "ga": "royaume-uni"
+};
+function userCountrySlug() {
+  try {
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    if (ZONE_BY_TZ[tz] && GEO.countries[ZONE_BY_TZ[tz]]) return ZONE_BY_TZ[tz];
+  } catch (e) { /* Intl indisponible : on passe à la langue */ }
+  const langs = (navigator.languages && navigator.languages.length)
+    ? navigator.languages : [navigator.language || ""];
+  for (const raw of langs) {
+    const l = String(raw).toLowerCase();
+    // « fr-BE » d'abord (plus précis), « fr » ensuite.
+    if (ZONE_BY_LANG[l]) return ZONE_BY_LANG[l];
+    const base = l.split("-")[0];
+    if (ZONE_BY_LANG[base]) return ZONE_BY_LANG[base];
+  }
+  return null; // inconnu : la carte s'ouvrira sur l'Europe
+}
+
+// ------------------------------------------------------------------
 // Projection équirectangulaire lon/lat → unités SVG internes.
 // ------------------------------------------------------------------
 function geoProject(lon, lat) {
