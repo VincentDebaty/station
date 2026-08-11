@@ -297,9 +297,11 @@ function updateQueueUI() {
           x: x + i * (car + gap), y: yc - h / 2,
           width: car, height: h, rx: Math.min(1.6 * QK, car / 2)
         }, g);
-        // même code qu'en grand : loco à la couleur de la destination, wagons
-        // gris pour un fret — la file en réduction reste lisible d'un coup d'œil
-        r.style.fill = (!loco && c.t.freight) ? FREIGHT_COLOR : col;
+        // même code qu'en grand : un fret est gris, cerclé de la couleur de sa
+        // destination — à cette taille le liseré ne tient que sur la motrice,
+        // les wagons restent des blocs gris pleins
+        r.style.fill = c.t.freight ? FREIGHT_COLOR : col;
+        if (c.t.freight && loco) { r.style.stroke = col; r.style.strokeWidth = 1.1 * QK; }
       }
       if (lateness(c.t, gameMin) >= 1)
         el("rect", {
@@ -485,13 +487,14 @@ function fmt(min) {
   return String(h).padStart(2, "0") + ":" + String(m % 60).padStart(2, "0");
 }
 function trainNode(t) {
-  const g = el("g", { class: "train" }, gQueue);
-  // La MOTRICE porte toujours la couleur de la destination : c'est elle qui
-  // annonce où va le convoi, donc quels quais peuvent le recevoir. Un fret garde
-  // en revanche des WAGONS gris : couleur en tête = destination, gris derrière =
-  // « celui-ci ne s'arrête pas ».
+  const g = el("g", { class: "train" + (t.freight ? " freight" : "") }, gQueue);
+  // Deux silhouettes franchement distinctes :
+  //  · voyageurs — caisses PLEINES de la couleur de leur destination ;
+  //  · fret      — caisses GRISES d'un bout à l'autre, CERCLÉES de cette même
+  //    couleur (bordure épaisse + halo). Le convoi se lit donc « gris = fret »
+  //    de loin, et sa destination se lit quand même au liseré.
   const c = DEST_COLOR[t.to];
-  const carColor = i => (i > 0 && t.freight) ? FREIGHT_COLOR : c;
+  const carColor = () => t.freight ? FREIGHT_COLOR : c;
   t.carEls = [];
   t.maskEls = []; // masques « vide » : largeur pilotée par l'embarquement à quai
   for (let i = 0; i < t.cars; i++) {
@@ -525,7 +528,9 @@ function trainNode(t) {
       class: "train-body"
     }, car);
     const cc = carColor(i);
-    body.style.fill = cc; body.style.color = cc;
+    // fill = la caisse ; color = le halo (currentColor) — toujours à la couleur
+    // de la destination, y compris pour un fret dont la caisse est grise
+    body.style.fill = cc; body.style.color = c;
     if (i > 0) body.style.opacity = "0.72";
     // Masque « vide » posé PAR-DESSUS la caisse, ancré au bord queue (-x).
     // Largeur 0 par défaut (wagon plein) ; l'embarquement la fait varier.
@@ -540,7 +545,7 @@ function trainNode(t) {
       x: -CAR_LEN / 2, y: -bh / 2, width: CAR_LEN, height: bh,
       rx: (i === 0 ? 8 : 5) * UIK, class: "train-outline"
     }, car);
-    outline.style.stroke = cc;
+    outline.style.stroke = c;   // le liseré porte la destination, caisse grise comprise
     if (i === 0) {
       const lbl = el("text", { x: 0, y: 0.5, class: "train-label" }, car);
       // Même marquage pour tous, fret compris : la loco porte l'initiale de sa
@@ -733,6 +738,77 @@ function updateBadge(t) {
   t.badgeEl.setAttribute("transform",
     "translate(" + t.headPos.x.toFixed(1) + " " +
     (t.headPos.y - 30 * UIK - (t.badgeLift || 0)).toFixed(1) + ")");
+}
+// ------------------------------------------------------------------
+// Signal d'arrêt : le petit feu rouge posé devant un convoi retenu
+// ------------------------------------------------------------------
+// Un train prêt à repartir dont la voie de sortie est prise ne doit pas rester
+// muet — sinon son immobilité se lit comme un bug. Plutôt qu'une mention de
+// texte (qui passe et qu'il faut lire), on plante un VRAI signal ferroviaire
+// devant sa motrice, au bord du quai : mât, cible à deux feux, le rouge allumé
+// et pulsé. Il reste tant que le convoi est retenu, et s'efface dès qu'il part.
+function signalNode() {
+  const g = el("g", { class: "hold-signal", "pointer-events": "none" }, gBadges);
+  const k = UIK;
+  el("rect", { x: -1.3 * k, y: -2 * k, width: 2.6 * k, height: 16 * k, rx: 1.3 * k,
+    class: "sig-mast" }, g);                                  // mât planté au sol
+  el("rect", { x: -7 * k, y: -22 * k, width: 14 * k, height: 21 * k, rx: 4 * k,
+    class: "sig-head" }, g);                                  // cible
+  el("circle", { cx: 0, cy: -16 * k, r: 3.6 * k, class: "sig-lamp sig-red" }, g);
+  el("circle", { cx: 0, cy: -6.5 * k, r: 3.6 * k, class: "sig-lamp sig-green" }, g);
+  return g;
+}
+// Voie libre : le signal ne s'éteint pas d'un coup — il PASSE AU VERT, le temps
+// qu'on voie le convoi s'ébranler, puis s'efface dans la seconde. C'est ce qui
+// transforme une disparition en explication : « c'est passé au vert, il part ».
+function releaseSignal(g) {
+  g.classList.add("clear");
+  // On retire le nœud sur la FIN de l'animation (horloge d'animation du
+  // navigateur) plutôt que sur un minuteur seul : un onglet en arrière-plan
+  // bride setTimeout, et les signaux éteints s'accumulaient alors dans le DOM.
+  // Le minuteur reste en filet, au cas où l'animation ne jouerait pas.
+  g.addEventListener("animationend", e => { if (e.target === g) g.remove(); }, { once: true });
+  setTimeout(() => g.remove(), 1200);
+}
+// DEUX immobilités à expliquer, un seul signal, toujours planté devant la
+// motrice (côté nez) :
+//  · à quai — prêt à repartir, mais la voie de sortie est prise ;
+//  · sur la voie d'approche — un convoi qui ne peut pas encore s'engager :
+//    itinéraire d'entrée occupé, quai pas encore dégagé, ou un train du même
+//    portail devant lui (FIFO). Un convoi SANS quai attribué n'est pas
+//    « bloqué » : il attend une décision du joueur, et c'est sa pulsation
+//    « ready » qui le dit. Un FRET, lui, ne demande rien à personne : s'il est
+//    encore en file, c'est qu'il est retenu — il a donc son feu.
+// Le sens du nez se lit sur la tangente de la voie qu'il occupe.
+function updateHoldSignal(t) {
+  const atPlatform = !!t.holding && t.state === "dwell";
+  const onApproach = t.state === "waiting" && !!t.settled &&
+                     (t.target != null || t.freight);
+  const on = (atPlatform || onApproach) && !!t.headPos;
+  if (!on) {
+    // le signal reste planté où il était (c'est du mobilier de voie, pas un
+    // badge qui suit le train) : il vire au vert et s'efface tout seul
+    if (t.signalEl) { releaseSignal(t.signalEl); t.signalEl = null; }
+    return;
+  }
+  if (!t.signalEl) t.signalEl = signalNode();
+  // abscisse du nez sur la voie occupée : point d'arrêt à quai, ou position
+  // dans la file sur la voie d'approche
+  const pth = atPlatform ? paths[t.entryPath] : APPROACH[t.from];
+  const sHead = atPlatform ? Math.min(t.stopS ?? 0, pth ? pth.len : 0) : (t.qs ?? 0);
+  let headRight = true;
+  if (pth) {
+    const s1 = sHead, s0 = s1 - 2;
+    headRight = pathPoint(pth, s1).x - pathPoint(pth, s0).x >= 0;
+  }
+  // 22 px du centre de la loco : le mât tient PILE dans l'espace libre devant
+  // son nez (demi-caisse 15 → il occupe 15..29), donc ni sur la caisse, ni sur
+  // la queue du convoi qui précède dans la file (écart de 14 px, cf. placeQueue).
+  // À quai, il tombe au ras du bord (STOP_MARGIN = 26).
+  const dx = (headRight ? 1 : -1) * 22 * UIK;
+  t.signalEl.setAttribute("transform",
+    "translate(" + (t.headPos.x + dx).toFixed(1) + " " +
+    (t.headPos.y + 11 * UIK).toFixed(1) + ")");
 }
 // Embarquement à quai : pendant l'arrêt (dwell), le convoi se « remplit » comme
 // une jauge de batterie horizontale — la partie pleine (couleur vive) avance de

@@ -266,6 +266,36 @@ svg { width: 100%; height: 100%; display: block; }
 .board-mask { fill: #0a0f19; opacity: .8; pointer-events: none; }
 /* Contour du wagon : silhouette toujours lisible, wagon plein ou vide */
 .train-outline { fill: none; stroke-width: 1.4; opacity: .85; pointer-events: none; }
+/* Signal d'arrêt planté devant un convoi retenu (voie de sortie occupée).
+   Remplace l'ancienne mention « Voie occupée » : un feu se comprend sans se
+   lire, et il RESTE tant que l'attente dure, là où une pilule passait.
+   Le rouge pulse en OPACITÉ (et non par un filtre animé : sur iOS les halos
+   filtrés d'un élément SVG ne s'affichent pas de façon fiable). */
+.hold-signal { pointer-events: none; }
+.sig-mast { fill: #55617a; }
+.sig-head { fill: #0e1420; stroke: #55617a; stroke-width: 1.2; }
+/* feu éteint par défaut ; le feu ALLUMÉ dépend de l'état du signal */
+.sig-lamp { fill: #1c2740; stroke: #2a3550; stroke-width: 1; }
+.hold-signal .sig-red {
+  fill: var(--red); stroke: none;
+  filter: drop-shadow(0 0 4px var(--red)); /* halo STATIQUE : rendu partout */
+  animation: sig-pulse 1.1s ease-in-out infinite;
+}
+/* Voie libérée : le rouge s'éteint, le vert s'allume, et tout le signal
+   s'efface dans la seconde (il tient d'abord assez pour être vu). */
+.hold-signal.clear { animation: sig-clear 1s ease-in forwards; }
+.hold-signal.clear .sig-red { fill: #2a1a20; stroke: #2a3550; filter: none; animation: none; }
+.hold-signal.clear .sig-green {
+  fill: var(--green); stroke: none; filter: drop-shadow(0 0 5px var(--green));
+}
+@keyframes sig-pulse { 50% { opacity: .45; } }
+@keyframes sig-clear { 0%, 62% { opacity: 1; } 100% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .hold-signal .sig-red { animation: none; } }
+/* FRET : caisse grise cerclée de la couleur de sa destination. Le liseré n'est
+   plus un simple contour, c'est LE signe distinctif du convoi — on l'épaissit
+   et on le passe à pleine opacité pour qu'il tienne le rôle que la caisse
+   pleine joue chez les voyageurs. */
+.train.freight .train-outline { stroke-width: 2.6; opacity: 1; }
 .train-label {
   font-size: 12px; font-weight: 700; fill: #08141a;
   text-anchor: middle; dominant-baseline: central; pointer-events: none;

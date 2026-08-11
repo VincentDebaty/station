@@ -817,8 +817,9 @@ function tick(dtMin) {
             // Prêt à repartir, mais sa voie de sortie est occupée par le passage
             // d'un autre convoi : on le SIGNALE (pilule ambre + pulsation du
             // train) pour que le joueur comprenne pourquoi il reste à quai.
+            // Plus de mention de texte : un feu rouge se dresse devant la
+            // motrice tant que la voie est prise (updateHoldSignal, render.js).
             t.holding = true;
-            flashLabel(t.headPos, "Voie occupée", "wait");
           }
         } else {
           t.holding = false; // arrêt en cours (embarquement) : pas encore bloqué
@@ -984,6 +985,7 @@ function tick(dtMin) {
     }
     updateBadge(t);
     updateBoarding(t);
+    updateHoldSignal(t); // feu rouge devant un convoi retenu à quai
     if (t.el) t.el.classList.toggle("holding", !!t.holding); // voie de sortie occupée
   }
   updateTimeline();
