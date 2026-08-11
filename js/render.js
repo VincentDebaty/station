@@ -589,6 +589,16 @@ function trainNode(t) {
   const badge = el("g", { class: "badge", visibility: "hidden" }, gBadges);
   t.badgeRect = el("rect", { x: -36 * UIK, y: -11 * UIK, width: 72 * UIK, height: 20 * UIK, rx: 6 * UIK }, badge);
   t.badgeRect.style.fill = "rgba(14,20,32,.88)";
+  // Une horloge plutôt que la mention « dép » : le cadran dit « heure de départ »
+  // sans mot à lire (et sans abréviation à comprendre pour un enfant). Elle
+  // s'efface quand le badge bascule sur le retard — « +3 min » n'est plus une
+  // heure, et le cadran mentirait. Aiguilles figées sur 10 h 10, la pose qui se
+  // lit le mieux en tout petit.
+  const ck = el("g", { class: "badge-clock" }, badge);
+  ck.setAttribute("transform", "translate(" + (-19 * UIK) + " 0)");
+  el("circle", { cx: 0, cy: 0, r: 5.4 * UIK }, ck);
+  el("path", { d: "M 0 0 V " + (-3.2 * UIK) + " M 0 0 L " + (2.6 * UIK) + " " + (1.6 * UIK) }, ck);
+  t.badgeClock = ck;
   t.badgeText = el("text", { y: 0.5 * UIK }, badge);
   t.badgeText.style.fontSize = (12 * UIK) + "px";
   t.badgeEl = badge;
@@ -745,8 +755,14 @@ function updateBadge(t) {
   let txt, color;
   // le retard ne s'affiche qu'une fois la minute entière écoulée
   if (late >= 1) { txt = "+" + Math.floor(late) + " min"; color = "var(--red)"; }
-  else if (late > -3) { txt = "dép " + fmt(t.dep); color = "#f5b23c"; }
-  else { txt = "dép " + fmt(t.dep); color = "var(--green)"; }
+  else if (late > -3) { txt = fmt(t.dep); color = "#f5b23c"; }
+  else { txt = fmt(t.dep); color = "var(--green)"; }
+  // Horloge devant l'heure ; en retard, elle disparaît et l'heure reprend tout
+  // le badge (le texte se recentre, sinon il resterait décalé sur la droite).
+  const clock = late < 1;
+  t.badgeClock.setAttribute("visibility", clock ? "visible" : "hidden");
+  t.badgeClock.style.color = color;
+  t.badgeText.setAttribute("x", (clock ? 7.5 * UIK : 0).toFixed(1));
   t.badgeEl.classList.toggle("late", late >= 1);
   // Retard qui court sur un convoi encore NON DÉMARRÉ (à l'arrêt sur la voie
   // d'approche, pas encore aiguillé vers un quai) : c'est le seul cas où le
@@ -800,17 +816,20 @@ function releaseSignal(g) {
 // DEUX immobilités à expliquer, un seul signal, toujours planté devant la
 // motrice (côté nez) :
 //  · à quai — prêt à repartir, mais la voie de sortie est prise ;
-//  · sur la voie d'approche — un convoi qui ne peut pas encore s'engager :
-//    itinéraire d'entrée occupé, quai pas encore dégagé, ou un train du même
-//    portail devant lui (FIFO). Un convoi SANS quai attribué n'est pas
-//    « bloqué » : il attend une décision du joueur, et c'est sa pulsation
-//    « ready » qui le dit. Un FRET, lui, ne demande rien à personne : s'il est
-//    encore en file, c'est qu'il est retenu — il a donc son feu.
+//  · sur la voie d'approche — le convoi de TÊTE, qui ne peut pas encore
+//    s'engager : itinéraire d'entrée occupé ou quai pas encore dégagé. Ceux qui
+//    le suivent n'en portent pas : ce qui les retient n'est pas un signal, c'est
+//    le convoi devant eux — on le voit, et un feu par wagonnée ferait un mur de
+//    rouge (le fret, aiguillé d'office, l'allumait dès la 2ᵉ place).
+//    Un convoi SANS quai attribué n'est pas « bloqué » non plus : il attend une
+//    décision du joueur, et c'est sa pulsation « ready » qui le dit. Un FRET, en
+//    revanche, ne demande rien à personne : en tête de file, s'il est encore là,
+//    c'est qu'il est retenu — il a donc son feu.
 // Le sens du nez se lit sur la tangente de la voie qu'il occupe.
 function updateHoldSignal(t) {
   const atPlatform = !!t.holding && t.state === "dwell";
   const onApproach = t.state === "waiting" && !!t.settled &&
-                     (t.target != null || t.freight);
+                     (t.target != null || t.freight) && isQueueHead(t);
   const on = (atPlatform || onApproach) && !!t.headPos;
   if (!on) {
     // le signal reste planté où il était (c'est du mobilier de voie, pas un

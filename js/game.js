@@ -261,6 +261,15 @@ function occupiedSpan(t, pathId) {
   }
   return null;
 }
+// Tête de file d'approche : aucun convoi du même portail, entré dans la file
+// avant lui, n'attend encore. C'est LE critère du FIFO (pas de dépassement, le
+// 2ᵉ ne double jamais le 1ᵉʳ) — et aussi celui du feu rouge : seul le premier
+// est retenu par la gare, ceux de derrière sont retenus par lui.
+function isQueueHead(t) {
+  return !trains.some(o => o !== t && o.from === t.from &&
+    o.queuedAt < t.queuedAt &&
+    (o.state === "approaching" || o.state === "waiting"));
+}
 function canGrant(pathId) {
   if (activeRoutes[pathId]) return false; // chemin déjà occupé par un autre train
   for (const aid of Object.keys(activeRoutes)) {
@@ -659,9 +668,7 @@ function tick(dtMin) {
         // s'engager — pas de dépassement (le 2ᵉ ne double jamais le 1ᵉʳ).
         // Le fret compte dans la file comme les autres : il peut donc retenir
         // ceux qui le suivent, et c'est bien là sa nuisance.
-        if (trains.some(o => o !== t && o.from === t.from &&
-            o.queuedAt < t.queuedAt &&
-            (o.state === "approaching" || o.state === "waiting"))) break;
+        if (!isQueueHead(t)) break;
         // Le fret n'est PAS aiguillé par le joueur : il se donne son quai tout
         // seul, et seulement à l'instant où il peut réellement s'engager (voir
         // pickFreightPlatform). Tant qu'aucun quai ne convient il patiente sans
