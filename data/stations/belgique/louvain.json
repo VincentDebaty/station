@@ -16,16 +16,16 @@
     "OTTIGNIES": { "side": "R", "color": "#60a5fa", "abbr": "OT" }
   },
   "links": {
-    "BRUXELLES": [1, 2, 3],
-    "MALINES": [3, 4, 5],
-    "LIEGE": [1, 2, 3, 4],
-    "AARSCHOT": [2, 3, 4, 5],
-    "OTTIGNIES": [1, 2, 4, 5]
+    "BRUXELLES": [1, 2, 3, 4, 5],
+    "MALINES": [1, 2],
+    "LIEGE": [2, 3, 4, 5],
+    "AARSCHOT": [3, 4],
+    "OTTIGNIES": [1, 2]
   },
   "sameSidePairs": [],
   "gen": {
     "nMin": 13, "nMax": 16, "gapMin": 1.8, "gapMax": 3.0,
     "cars": [1, 2, 2, 3, 3, 4, 4, 5],
-    "freightRate": 0.25, "quietRate": 0.2
+    "quietRate": 0.2
   }
 }

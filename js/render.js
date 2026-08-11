@@ -60,14 +60,6 @@ function drawStatic() {
   }, defs);
   el("rect", { width: 8, height: 8, fill: "rgba(239,68,68,.08)" }, pat);
   el("line", { x1: 0, y1: 0, x2: 0, y2: 8, stroke: "var(--red)", "stroke-width": 2, opacity: 0.5 }, pat);
-  // Même trame, dans le gris du fret : un quai réservé pour un transit n'est pas
-  // une panne — il se distingue d'une fermeture au premier coup d'œil.
-  const patF = el("pattern", {
-    id: "hatch-freight", width: 8, height: 8,
-    patternUnits: "userSpaceOnUse", patternTransform: "rotate(45)"
-  }, defs);
-  el("rect", { width: 8, height: 8, fill: "rgba(143,152,168,.08)" }, patF);
-  el("line", { x1: 0, y1: 0, x2: 0, y2: 8, stroke: FREIGHT_COLOR, "stroke-width": 2, opacity: 0.45 }, patF);
   // Léger dégradé vertical sur les quais : reflet en haut, ombre en bas — donne
   // du relief à la pilule sans changer sa couleur perçue (quai libre au repos).
   const pg2 = el("linearGradient", { id: "platGrad", x1: 0, y1: 0, x2: 0, y2: 1 }, defs);
@@ -184,7 +176,7 @@ function drawStatic() {
 function selectNextAtPortal(name) {
   const q = trains
     .filter(o => (o.state === "waiting" || o.state === "approaching") &&
-                 o.from === name && !o.freight)
+                 o.from === name)
     .sort((a, b) => a.queuedAt - b.queuedAt);
   const t = q.find(o => !o.target) || q[0];
   if (t) { onTrainClick(t); return; }
@@ -223,7 +215,7 @@ function updateQueueUI() {
   for (const [name, u] of Object.entries(portalUI)) {
     if (!u.strip) continue;
     const q = trains
-      .filter(o => !o.freight && o.from === name &&
+      .filter(o => o.from === name &&
                    (o.state === "waiting" || o.state === "approaching"))
       .sort((a, b) => a.queuedAt - b.queuedAt);
     // Un seul convoi : sa tête et son badge d'heure sont à l'écran, la
@@ -293,7 +285,9 @@ function updateQueueUI() {
           x: x + i * (car + gap), y: yc - h / 2,
           width: car, height: h, rx: Math.min(1.6 * QK, car / 2)
         }, g);
-        r.style.fill = col;
+        // même code qu'en grand : loco à la couleur de la destination, wagons
+        // gris pour un fret — la file en réduction reste lisible d'un coup d'œil
+        r.style.fill = (!loco && c.t.freight) ? FREIGHT_COLOR : col;
       }
       if (lateness(c.t, gameMin) >= 1)
         el("rect", {
@@ -356,7 +350,7 @@ function buildTimeline() {
   now.style.left = (3 + TL_PAST / TL_SPAN * 92) + "%";
   tl.appendChild(now);
   trains.forEach((t, i) => {
-    const c = t.freight ? FREIGHT_COLOR : DEST_COLOR[t.to];
+    const c = DEST_COLOR[t.to];
     const d = document.createElement("div");
     d.className = "tl-train" + (i % 2 ? " alt" : ""); // deux rangées en quinconce
     d.id = "tl-" + t.id;
@@ -480,7 +474,12 @@ function fmt(min) {
 }
 function trainNode(t) {
   const g = el("g", { class: "train" }, gQueue);
-  const c = t.freight ? FREIGHT_COLOR : DEST_COLOR[t.to];
+  // La MOTRICE porte toujours la couleur de la destination : c'est elle qui
+  // annonce où va le convoi, donc quels quais peuvent le recevoir. Un fret garde
+  // en revanche des WAGONS gris : couleur en tête = destination, gris derrière =
+  // « celui-ci ne s'arrête pas ».
+  const c = DEST_COLOR[t.to];
+  const carColor = i => (i > 0 && t.freight) ? FREIGHT_COLOR : c;
   t.carEls = [];
   t.maskEls = []; // masques « vide » : largeur pilotée par l'embarquement à quai
   for (let i = 0; i < t.cars; i++) {
@@ -513,7 +512,8 @@ function trainNode(t) {
       width: CAR_LEN, height: bh, rx: (i === 0 ? 8 : 5) * UIK,
       class: "train-body"
     }, car);
-    body.style.fill = c; body.style.color = c;
+    const cc = carColor(i);
+    body.style.fill = cc; body.style.color = cc;
     if (i > 0) body.style.opacity = "0.72";
     // Masque « vide » posé PAR-DESSUS la caisse, ancré au bord queue (-x).
     // Largeur 0 par défaut (wagon plein) ; l'embarquement la fait varier.
@@ -528,9 +528,11 @@ function trainNode(t) {
       x: -CAR_LEN / 2, y: -bh / 2, width: CAR_LEN, height: bh,
       rx: (i === 0 ? 8 : 5) * UIK, class: "train-outline"
     }, car);
-    outline.style.stroke = c;
+    outline.style.stroke = cc;
     if (i === 0) {
       const lbl = el("text", { x: 0, y: 0.5, class: "train-label" }, car);
+      // « F » sur la loco d'un fret : la couleur dit la destination, la lettre
+      // dit que ce convoi traverse sans s'arrêter (pas d'heure de départ).
       lbl.textContent = t.freight ? "F" : DEST_ABBR[t.to];
       lbl.style.fontSize = (12 * UIK) + "px";
     }
@@ -610,11 +612,10 @@ function placeTrain(t, pathId, headS, tailDir) {
 // d'arrêt juste avant la jonction. Les suivants patientent derrière,
 // hors carte s'il le faut. t.qs = abscisse curviligne de la loco.
 function placeQueue(t, dtMin) {
-  // Le fret n'entre jamais dans la file : il attend hors plateau (sans nœud
-  // graphique) et s'engage d'une traite dès qu'il est admis — il ne doit donc
-  // pas décaler les convois derrière lui.
+  // Le fret fait partie de la file comme n'importe quel convoi : il s'y range,
+  // s'y fait doubler par personne, et retient ceux qui le suivent.
   const queue = trains.filter(o =>
-    !o.freight && (o.state === "waiting" || o.state === "approaching") && o.from === t.from)
+    (o.state === "waiting" || o.state === "approaching") && o.from === t.from)
     .sort((a, b) => a.queuedAt - b.queuedAt);
   const idx = queue.indexOf(t);
   const ap = APPROACH[t.from];
@@ -685,7 +686,9 @@ function placeEntry(t, pathId, headS) {
   }
 }
 function updateBadge(t) {
-  // le badge apparaît dès que le train s'est immobilisé à son point d'attente
+  // le badge apparaît dès que le train s'est immobilisé à son point d'attente.
+  // Un fret n'en a jamais : il ne stationne pas, donc pas d'heure de départ —
+  // et rien à tenir. Son seul enjeu est de dégager le gril.
   if (t.freight || !t.badgeEl || !t.headPos ||
       (t.state === "approaching" && !t.settled) ||
       t.wrongPlatform || // mauvais quai : le badge « dép HH:MM » serait trompeur

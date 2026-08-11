@@ -78,40 +78,32 @@ function simulateDay(schedule, assign, dt, events) {
           if (now >= (t.arrEff ?? t.arr)) t.state = "waiting";
           break;
         case "waiting": {
-          if (t.freight) {
-            // Le fret attend HORS de la voie d'approche (tenu au signal
-            // d'entrée) : tant qu'il n'est pas admis il ne réserve rien —
-            // ni la file, ni son quai. Il n'est admis que lorsque la voie
-            // d'approche de son portail est vide de tout voyageur : il
-            // s'efface devant eux, jamais l'inverse. (Même règle que le jeu,
-            // où un voyageur est sur la voie dès arr − 1,3.)
-            if (sims.some(o => o !== t && !o.freight && o.from === t.from &&
-                (o.state === "waiting" ||
-                 (o.state === "scheduled" &&
-                  now >= (o.arrEff ?? o.arr) - APPROACH_LEAD)))) break;
-            if (held[t.plat]) break;
-            if (closures.some(c => c.plat === t.plat && now >= c.start && now < c.end)) break;
-            const pin = "in:" + t.from + ":" + t.plat;
-            const pout = "out:" + t.to + ":" + t.plat;
-            if (free(pin) && free(pout)) {
-              held[t.plat] = true;
-              active[pin] = t; active[pout] = t;
-              t.entryPath = pin; t.exitPath = pout;
-              t.state = "movingThrough"; t.elapsed = 0; t.occStart = now;
-            }
-            break;
-          }
           // FIFO sur la voie d'approche : un train du même portail, arrivé
           // avant lui, occupe encore la voie devant → il patiente derrière.
-          // Pas de dépassement (même contrainte que le jeu). Le fret est EXCLU
-          // de la file : il attend hors gril, il ne bloque donc personne.
-          if (sims.some(o => o !== t && !o.freight && o.from === t.from &&
+          // Pas de dépassement (même contrainte que le jeu). Le fret est dans
+          // la file comme les autres : il attend son tour et retient les suivants.
+          if (sims.some(o => o !== t && o.from === t.from &&
               o.state === "waiting" &&
               (o.arrEff ?? o.arr) < (t.arrEff ?? t.arr))) break;
           if (held[t.plat]) break;
           if (closures.some(c => c.plat === t.plat && now >= c.start && now < c.end)) break;
+          // le quai visé est tenu dès l'attente (dans le jeu, l'affectation du
+          // joueur le réserve : plus personne ne peut s'y glisser)
           held[t.plat] = true;
           const pid = "in:" + t.from + ":" + t.plat;
+          if (t.freight) {
+            // Le fret ne s'arrête pas : il lui faut entrée ET sortie d'un seul
+            // tenant. depReal = l'instant où il s'engage (il n'a pas de départ
+            // à tenir, mais le générateur s'en sert pour choisir son quai).
+            const pout = "out:" + t.to + ":" + t.plat;
+            if (free(pid) && free(pout)) {
+              active[pid] = t; active[pout] = t;
+              t.entryPath = pid; t.exitPath = pout;
+              t.state = "movingThrough"; t.elapsed = 0;
+              t.occStart = now; t.depReal = now;
+            }
+            break;
+          }
           if (free(pid)) {
             active[pid] = t; t.entryPath = pid;
             t.stopP = 1; // tous les trains tirent jusqu'en tête de quai
@@ -174,8 +166,11 @@ function generateSchedule() {
     // être réellement atteignable, pas seulement train par train
     let tot = 0, ok = true;
     for (let i = 0; i < day.schedule.length; i++) {
-      if (day.schedule[i].freight) continue;
+      // un fret qui ne trouve jamais son créneau bloque la file derrière lui :
+      // la journée n'est pas jouable, on la rejette (il n'a pas d'heure de
+      // départ à tenir, donc il ne pèse pas dans le total de retard)
       if (res[i].depReal == null) { ok = false; break; }
+      if (day.schedule[i].freight) continue;
       tot += Math.max(0, res[i].depReal - day.schedule[i].dep);
     }
     if (ok && tot <= 0.15) return day;
@@ -198,24 +193,30 @@ function generateOnce() {
     arr += rnd(GEN.gapMin, GEN.gapMax) * ARRIVAL_GAP_SCALE;
   }
   const lastArr = draft[draft.length - 1].arr;
-  // 1c) parfois, un lourd convoi de fret traverse la gare sans s'arrêter :
-  // il verrouille tout son itinéraire (entrée + sortie) le temps du transit
+  // 1c) les convois de fret : ils se présentent comme les autres (file
+  // d'approche, aiguillage par le joueur) mais ne s'arrêtent pas — ils
+  // verrouillent entrée + sortie d'un seul tenant le temps du transit, donc
+  // ils mobilisent un quai ET deux itinéraires sans rien rapporter.
   const cross = PAIRS.filter(([a, b]) => PORTALS[a].side !== PORTALS[b].side);
-  // Nombre de frets sur la journée : soit imposé par la fiche (freightCount,
-  // pour les gares « stress test »), soit le tirage historique 0/1 selon
-  // freightRate — les fiches existantes gardent exactement leur comportement.
+  // COMBIEN : c'est la difficulté de la gare qui le dit — 1 fret au niveau 1,
+  // 5 au niveau 5. Une fiche peut encore l'imposer (freightCount) pour les
+  // gares « stress test ». Une gare TERMINUS n'en voit aucun : traverser sans
+  // s'arrêter suppose d'entrer par un côté et de sortir par l'autre (cross est
+  // alors vide). Les paires de PAIRS ont déjà un quai commun garanti.
   const nFreight = cross.length === 0 ? 0
     : (GEN.freightCount != null ? GEN.freightCount
-       : (Math.random() < (GEN.freightRate || 0) ? 1 : 0));
+       : Math.max(1, Math.min(5, STATION.difficulty || 1)));
   for (let f = 0; f < nFreight; f++) {
     const [from, to] = pick(cross);
-    const opts = LINKS[from].filter(q => LINKS[to].includes(q));
-    if (!opts.length) continue;
-    const fArr = Math.round(rnd(8, Math.max(12, lastArr - 6)));
+    // Arrivées ÉTALÉES sur le service : un fret par tranche, sinon les cinq
+    // se bousculent dans le même quart d'heure et la journée devient injouable.
+    const lo = 6, hi = Math.max(lo + 2, lastArr - 4);
+    const a = lo + (hi - lo) * f / nFreight, b = lo + (hi - lo) * (f + 1) / nFreight;
+    const fArr = Math.round(rnd(a, b));
     draft.push({
-      id: "F" + String(f + 1).padStart(2, "0"), freight: true, from, to, plat: pick(opts),
-      // 6-7 wagons (était 8-10) : le convoi reste le plus long du plateau
-      // (MAX_CARS = 7 côté voyageurs) sans immobiliser le gril aussi longtemps.
+      id: "F" + String(f + 1).padStart(2, "0"), freight: true, from, to,
+      // 6-7 wagons : le convoi reste le plus long du plateau
+      // (MAX_CARS = 7 côté voyageurs) sans immobiliser le gril trop longtemps.
       cars: 6 + Math.floor(rnd(0, 2)), arr: fArr, dep: fArr
     });
   }
@@ -242,8 +243,9 @@ function generateOnce() {
     }
   }
   // 2) affectation gloutonne : pour chaque train, le quai qui le fait partir au plus tôt
-  const opts = draft.map(s =>
-    s.freight ? [s.plat] : LINKS[s.from].filter(q => LINKS[s.to].includes(q)));
+  // (fret compris : lui aussi doit se poser sur un quai qui relie ses deux
+  // portails, et le calibrage lui en cherche un qui ne gêne pas le service)
+  const opts = draft.map(s => LINKS[s.from].filter(q => LINKS[s.to].includes(q)));
   const assign = opts.map(o => o[0]);
   for (let i = 0; i < draft.length; i++) {
     if (opts[i].length === 1) { assign[i] = opts[i][0]; continue; }

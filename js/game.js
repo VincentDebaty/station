@@ -209,11 +209,9 @@ async function resetGame() {
     cars: s.freight ? s.cars : Math.min(MAX_CARS, Math.max(1, s.cars || 1)),
     state: "scheduled", // scheduled | approaching | waiting | movingIn | dwell | movingOut | movingThrough | done
     progress: 0, qs: null,
-    platform: null, target: s.freight ? s.plat : null,
+    // le fret s'aiguille comme les autres : aucun quai ne lui est pré-attribué
+    platform: null, target: null,
     entryPath: null, exitPath: null, exitTo: null, refoul: false, validated: false,
-    // fret : d'abord annoncé (quai signalé, encore attribuable), puis verrouillé
-    // (quai réservé) juste avant le passage — voir FREIGHT_NOTICE / FREIGHT_LOCK
-    announced: false, locked: false, noticeEl: null,
     pendingEl: null, stopS: null, startS: 0, backS: 0,
     actualArr: null, queuedAt: null, el: null, carEls: null, maskEls: null,
     badgeEl: null, badgeText: null, badgeRect: null, headPos: null
@@ -279,7 +277,9 @@ function canGrant(pathId) {
 }
 function grant(pathId, train) {
   activeRoutes[pathId] = train;
-  const c = train.freight ? FREIGHT_COLOR : DEST_COLOR[train.to];
+  // itinéraire à la couleur de la DESTINATION, fret compris (son gris ne vaut
+  // que pour ses wagons — voir trainNode)
+  const c = DEST_COLOR[train.to];
   const p = el("path", { d: pathD(paths[pathId].pts), class: "route",
     id: "route-" + pathId.replace(":", "-") }, gRoutes);
   p.style.stroke = c; p.style.color = c;
@@ -293,19 +293,14 @@ function release(pathId) {
 // ------------------------------------------------------------------
 // Interaction : sélection du train, choix du quai
 // ------------------------------------------------------------------
-// Réservation pour l'AFFECTATION : un fret en transit (movingThrough) ne
-// bloque pas le choix du quai — on peut pré-affecter, l'entrée attendra
+// Réservation pour l'AFFECTATION : un convoi en transit (movingThrough) ne
+// bloque pas le choix du quai — on peut pré-affecter, l'entrée attendra.
+// Le fret n'a plus aucun régime propre ici : il réserve son quai comme les
+// autres, dès qu'un joueur le lui a donné, et pas avant.
 function platformReserved(pid) {
   return trains.some(t =>
     (t.platform === pid && (t.state === "movingIn" || t.state === "dwell")) ||
-    (t.target === pid && (t.state === "waiting" || t.state === "approaching")) ||
-    // Fret : son quai n'est bloqué qu'au VERROUILLAGE (FREIGHT_LOCK min avant le
-    // passage), pas dès l'annonce — pendant la fenêtre d'annonce le quai reste
-    // attribuable, simplement signalé, et le fret cède la place s'il est pris.
-    // (« scheduled » : verrouillé mais pas encore à l'heure ; « waiting » : tenu
-    // au signal d'entrée. Dès « movingThrough » on redevient permissif — voir plus haut.)
-    (t.freight && t.locked && t.plat === pid &&
-     (t.state === "scheduled" || t.state === "waiting")));
+    (t.target === pid && (t.state === "waiting" || t.state === "approaching")));
 }
 function platformClosed(pid) {
   // une fermeture ne bloque que si elle est effectivement révélée (donc posée
@@ -364,62 +359,6 @@ function showClosure(ev) {
   bg.setAttribute("width", totalW + 2 * padX); bg.setAttribute("height", icoS + 2 * padY);
   ev.el = g;
 }
-// Annonce de fret : le quai qu'il va traverser est marqué à l'avance
-// (hachures grises + pastille « F · HH:MM »), exactement comme une fermeture
-// mais dans le gris du fret et sans le rouge de l'incident — ce n'est pas une
-// panne, c'est un sillon annoncé. Le joueur a FREIGHT_NOTICE minutes pour en
-// tenir compte, au lieu de le découvrir quand le convoi s'engage.
-// À ce stade le marquage est en trame LÉGÈRE (classe « pending ») : c'est un
-// préavis, pas une interdiction — le quai reste attribuable jusqu'au
-// verrouillage (lockFreightNotice).
-function showFreightNotice(t) {
-  const q = PLATFORMS.find(x => x.id === t.plat);
-  if (!q) return;
-  const g = el("g", { class: "freight-notice pending" }, gFx);
-  el("rect", {
-    x: PLAT_X1, y: q.cy - PLAT_H / 2, width: PLAT_X2 - PLAT_X1, height: PLAT_H,
-    rx: 10, fill: "url(#hatch-freight)", stroke: FREIGHT_COLOR, "stroke-width": 1.5,
-    class: "freight-hatch", "pointer-events": "none"
-  }, g);
-  // Pastille centrée « F · heure de passage » — même gabarit que la pastille
-  // de fermeture, pour que les deux marquages se lisent du même coup d'œil.
-  const mid = (PLAT_X1 + PLAT_X2) / 2;
-  const bg = el("rect", {
-    rx: 8 * UIK, fill: "rgba(14,20,32,.94)", stroke: FREIGHT_COLOR,
-    "stroke-width": 1.3, "pointer-events": "none"
-  }, g);
-  const txt = el("text", { x: mid, y: q.cy, class: "freight-tag" }, g);
-  txt.style.fontSize = (15 * UIK) + "px";
-  txt.style.dominantBaseline = "central";
-  txt.textContent = "F · " + fmt(t.arr);
-  let tw; try { tw = txt.getBBox().width; } catch (e) { tw = 62 * UIK; }
-  const padX = 12 * UIK, padY = 7 * UIK;
-  bg.setAttribute("x", mid - tw / 2 - padX);
-  bg.setAttribute("y", q.cy - 8 * UIK - padY);
-  bg.setAttribute("width", tw + 2 * padX);
-  bg.setAttribute("height", 16 * UIK + 2 * padY);
-  t.noticeEl = g;
-}
-// Verrouillage : le préavis devient une réservation ferme. La trame passe au
-// plein, le quai s'éteint (.reserved) et n'est plus attribuable — une pilule le
-// dit sur place, pour que le passage préavis → réservé ne soit pas muet.
-function lockFreightNotice(t) {
-  if (t.locked) return;
-  t.locked = true;
-  if (t.noticeEl) t.noticeEl.classList.remove("pending");
-  const plat = document.getElementById("plat-" + t.plat);
-  if (plat) plat.classList.add("reserved");
-  const q = PLATFORMS.find(x => x.id === t.plat);
-  if (q) flashLabel({ x: (PLAT_X1 + PLAT_X2) / 2, y: q.cy - PLAT_H / 2 - 12 },
-                    "Quai réservé", "wait");
-  refreshEligible();
-}
-function hideFreightNotice(t) {
-  if (t.noticeEl) { t.noticeEl.remove(); t.noticeEl = null; }
-  t.locked = false;
-  const plat = document.getElementById("plat-" + t.plat);
-  if (plat) plat.classList.remove("reserved");
-}
 function processEvents() {
   for (const ev of EVENTS) {
     if (!ev.revealed) {
@@ -463,7 +402,7 @@ function processEvents() {
 function refreshEligible() {
   const selecting = selected && !selected.target &&
     (selected.state === "waiting" || selected.state === "approaching");
-  const eligColor = selecting ? (selected.freight ? FREIGHT_COLOR : DEST_COLOR[selected.to]) : null;
+  const eligColor = selecting ? DEST_COLOR[selected.to] : null; // fret compris : c'est sa destination qui compte
   // faisceau : on éclaire la ville d'origine du train choisi, on estompe le reste
   if (typeof focusPortal === "function") focusPortal(selecting ? selected.from : null);
   document.querySelectorAll(".platform").forEach(pl => {
@@ -494,7 +433,7 @@ function refreshPlatformStates() {
     // Quai en défaut : un train y stationne alors qu'il n'en repart pas vers sa
     // destination → liseré rouge le temps qu'il refoule (explique l'attente).
     pl.classList.toggle("wrong", !!(occ && occ.wrongPlatform && occ.state === "dwell"));
-    if (occ) pl.style.setProperty("--occ", occ.freight ? FREIGHT_COLOR : DEST_COLOR[occ.to]);
+    if (occ) pl.style.setProperty("--occ", DEST_COLOR[occ.to]);
     else pl.style.removeProperty("--occ");
   });
 }
@@ -535,12 +474,6 @@ function onPlatformClick(pid) {
 }
 function onTrainClick(t) {
   if (ended) return;
-  if (t.freight) {
-    // Le fret traverse tout seul : on ne l'aiguille pas. On l'ACQUITTE quand
-    // même (le tap n'est plus « mort ») par une pilule d'info sur le convoi.
-    flashLabel(t.headPos, "Fret · passage auto", "info");
-    return;
-  }
   // Sélectionnable dès l'approche : on peut préparer l'itinéraire avant l'arrêt
   const routable = t.state === "waiting" || t.state === "approaching";
   if (routable && !t.target) {
@@ -616,34 +549,21 @@ function tick(dtMin) {
     switch (t.state) {
 
       case "scheduled":
-        // Le fret ne prend JAMAIS place dans la file d'approche : il est tenu au
-        // signal d'entrée, hors du plateau, et n'est admis que lorsque la voie
-        // est libre (voir « waiting »). Il ne peut donc plus bloquer les convois
-        // derrière lui. Ce qu'on montre à l'avance, c'est son QUAI : signalé
-        // FREIGHT_NOTICE minutes avant, puis réservé FREIGHT_LOCK minute avant.
-        if (t.freight) {
-          if (!t.announced && gameMin >= t.arr - FREIGHT_NOTICE) {
-            t.announced = true;
-            SND.freight();
-            showFreightNotice(t);
-            toast("Fret annoncé à " + fmt(t.arr) + " — quai " + t.plat);
-          }
-          if (t.announced && !t.locked && gameMin >= t.arr - FREIGHT_LOCK)
-            lockFreightNotice(t);
-          if (gameMin >= t.arr) t.state = "waiting";
-          break;
-        }
-        // Le train apparaît au loin ~1,3 min avant son heure et approche en douceur
+        // Le train apparaît au loin ~1,3 min avant son heure et approche en douceur.
+        // Le fret suit exactement la même règle : il prend sa place dans la file
+        // d'approche, se fait aiguiller par le joueur, et n'a de particulier que
+        // de ne pas s'arrêter au quai (voir « waiting » et movingThrough).
         if (gameMin >= (t.arrEff ?? t.arr) - APPROACH_LEAD) {
           t.state = "approaching";
           t.queuedAt = queueSeq++; // ordre réel d'entrée sur la voie d'approche
           t.el = trainNode(t);
+          if (t.freight) SND.freight(); // corne grave : un lourd convoi se présente
           const tl = document.getElementById("tl-" + t.id);
           if (tl) tl.classList.add("active");
         }
         break;
 
-      case "approaching": // (jamais un fret : il ne rejoint pas la file)
+      case "approaching":
         placeQueue(t, dtMin);
         t.el.classList.toggle("selected", selected === t);
         t.el.classList.toggle("ready", !t.target && selected !== t);
@@ -657,83 +577,52 @@ function tick(dtMin) {
         break;
 
       case "waiting": {
-        if (t.freight) {
-          // À l'heure dite, le quai est forcément réservé (filet si l'annonce ou
-          // le verrouillage n'ont pas eu lieu : fret dont l'heure est déjà passée
-          // au démarrage, avance rapide, etc.)
-          if (!t.announced) { t.announced = true; showFreightNotice(t); }
-          if (!t.locked) lockFreightNotice(t);
-          // Soupape : un fret qui n'a jamais trouvé de créneau est dérouté. Le
-          // service ne doit pas rester suspendu à un convoi qui ne compte même
-          // pas au score (la fin de service attend que tout le monde ait fini).
-          if (gameMin > t.arr + 45) { hideFreightNotice(t); t.state = "done"; break; }
-          // Fret tenu au signal d'entrée, HORS plateau : il ne consomme aucune
-          // place dans la file et n'est admis que lorsque la voie d'approche de
-          // son portail est vide de tout voyageur. Il s'efface toujours devant
-          // eux — jamais l'inverse — donc il ne peut plus provoquer de cascade.
-          if (trains.some(o => o !== t && !o.freight && o.from === t.from &&
-              (o.state === "approaching" || o.state === "waiting"))) break;
-          // Le fret verrouille tout son itinéraire et traverse sans s'arrêter
-          const pin = "in:" + t.from + ":" + t.plat;
-          const pout = "out:" + t.to + ":" + t.plat;
-          // …et il cède aussi son quai à tout voyageur qui l'occupe déjà ou qui
-          // l'a choisi avant l'annonce (les autres portails ne sont pas couverts
-          // par le test de voie ci-dessus).
-          const busy = trains.some(o => o !== t &&
-            ((o.platform === t.plat &&
-              (o.state === "movingIn" || o.state === "dwell" || o.state === "movingThrough")) ||
-             (o.target === t.plat &&
-              (o.state === "waiting" || o.state === "approaching"))));
-          if (!busy && !platformClosed(t.plat) && canGrant(pin) && canGrant(pout)) {
-            // il s'engage depuis l'amorce de la voie d'approche, comme s'il
-            // venait d'y déboucher : même géométrie d'entrée qu'auparavant
-            const ap = APPROACH[t.from];
-            t.qs = ap.len - 85;
-            t.startS = -85;
-            t.el = trainNode(t);
-            grant(pin, t); grant(pout, t);
-            t.entryPath = pin; t.exitPath = pout; t.platform = t.plat;
-            t.state = "movingThrough";
-            t.progress = 0;
-            hideFreightNotice(t); // le quai passe du « réservé » à l'occupé réel
-            gTrains.appendChild(t.el); // entre en gare : calque découpé au tunnel
-            toast("Fret en transit — quai " + t.plat + " neutralisé");
-            refreshEligible();
-          }
-          break;
-        }
         placeQueue(t, dtMin);
         t.el.classList.toggle("selected", selected === t);
         t.el.classList.toggle("ready", !t.target && selected !== t);
         // FIFO sur la voie d'approche : tant qu'un train du même portail, entré
         // avant lui dans la file, n'a pas dégagé la voie, il ne peut pas
         // s'engager — pas de dépassement (le 2ᵉ ne double jamais le 1ᵉʳ).
-        // (Le fret n'est pas dans la file : il n'entre pas dans ce test.)
-        if (trains.some(o => o !== t && !o.freight && o.from === t.from &&
+        // Le fret compte dans la file comme les autres : il peut donc retenir
+        // ceux qui le suivent, et c'est bien là sa nuisance.
+        if (trains.some(o => o !== t && o.from === t.from &&
             o.queuedAt < t.queuedAt &&
             (o.state === "approaching" || o.state === "waiting"))) break;
         // Entrée automatique dès que l'itinéraire demandé est libre — et que
-        // le quai est physiquement dégagé (un fret en transit peut encore
+        // le quai est physiquement dégagé (un convoi en transit peut encore
         // l'occuper alors que le joueur a déjà pré-affecté le quai)
         if (t.target && !platformClosed(t.target)) {
           const busy = trains.some(o => o !== t && o.platform === t.target &&
             (o.state === "movingIn" || o.state === "dwell" || o.state === "movingThrough"));
           const pathId = "in:" + t.from + ":" + t.target;
-          if (!busy && canGrant(pathId)) {
+          const outId = "out:" + t.to + ":" + t.target;
+          // Le fret ne s'arrête pas : il lui faut son itinéraire ENTIER (entrée
+          // ET sortie) d'un seul tenant, sinon il s'immobiliserait au milieu du
+          // gril. Sur un quai qui ne dessert pas sa destination il n'y a pas de
+          // sortie : il entre alors comme un voyageur et refoulera — même
+          // sanction pour tout le monde.
+          const through = t.freight && !!paths[outId];
+          if (!busy && canGrant(pathId) && (!through || canGrant(outId))) {
             if (t.pendingEl) { t.pendingEl.remove(); t.pendingEl = null; }
             grant(pathId, t);
             t.entryPath = pathId;
             t.platform = t.target;
-            // tous les trains tirent jusqu'en tête de quai (heurtoir compris)
-            t.stopS = paths[pathId].len;
             // le trajet d'entrée démarre au point d'arrêt réel sur la voie
             // d'approche (abscisse négative : en amont du point de convergence)
             t.startS = t.qs != null ? -(APPROACH[t.from].len - t.qs) : 0;
-            t.state = "movingIn";
             t.progress = 0;
             t.badgeLift = 0;
             t.el.classList.remove("ready", "selected");
             gTrains.appendChild(t.el); // entre en gare : calque découpé au tunnel
+            if (through) {
+              grant(outId, t);
+              t.exitPath = outId;
+              t.state = "movingThrough";
+            } else {
+              // tous les trains tirent jusqu'en tête de quai (heurtoir compris)
+              t.stopS = paths[pathId].len;
+              t.state = "movingIn";
+            }
           }
         }
         break;

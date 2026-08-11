@@ -19,16 +19,16 @@
   },
   "links": {
     "HAMBURG": [1, 2, 3, 4],
-    "BREMEN": [1, 2, 5, 6],
+    "BREMEN": [1, 2],
     "DORTMUND": [3, 4, 5, 6],
     "FRANKFURT": [1, 2, 3, 4],
     "BERLIN": [3, 4, 5, 6],
-    "BRAUNSCHWEIG": [1, 2, 5, 6]
+    "BRAUNSCHWEIG": [5, 6]
   },
   "sameSidePairs": [],
   "gen": {
     "nMin": 15, "nMax": 18, "gapMin": 1.6, "gapMax": 2.8,
     "cars": [2, 3, 3, 4, 4, 5, 5, 6],
-    "freightRate": 0.25, "quietRate": 0.15
+    "quietRate": 0.15
   }
 }

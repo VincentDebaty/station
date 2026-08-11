@@ -20,17 +20,17 @@
     "LINDAU":   { "side": "L", "color": "#60a5fa", "abbr": "LI" }
   },
   "links": {
-    "AUGSBURG": [1, 2, 3, 4],
-    "NURNBERG": [5, 6, 7, 8],
-    "SALZBURG": [3, 4, 5, 6],
-    "GARMISCH": [1, 2, 7, 8],
-    "MUHLDORF": [2, 3, 6, 7],
-    "LINDAU": [1, 4, 5, 8]
+    "AUGSBURG": [1, 2, 3, 4, 5],
+    "NURNBERG": [2, 3, 4],
+    "SALZBURG": [5, 6, 7, 8],
+    "GARMISCH": [1, 2],
+    "MUHLDORF": [7, 8],
+    "LINDAU": [4, 5, 6]
   },
   "sameSidePairs": "all",
   "gen": {
     "nMin": 15, "nMax": 19, "gapMin": 1.6, "gapMax": 2.6,
     "cars": [2, 3, 3, 4, 4, 5, 5, 6, 7],
-    "freightRate": 0, "quietRate": 0.1
+    "quietRate": 0.1
   }
 }

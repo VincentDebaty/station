@@ -17,16 +17,16 @@
     "SARREBRUCK": { "side": "R", "color": "#60a5fa", "abbr": "SB" }
   },
   "links": {
-    "PARIS": [1, 2, 3, 4],
-    "NANCY": [3, 4, 5],
-    "LUXEMBOURG": [1, 2, 3],
-    "THIONVILLE": [2, 3, 4],
-    "SARREBRUCK": [4, 5]
+    "PARIS": [1, 2],
+    "NANCY": [1, 2, 3, 4, 5],
+    "LUXEMBOURG": [4, 5],
+    "THIONVILLE": [3, 4, 5],
+    "SARREBRUCK": [1, 2, 3]
   },
   "sameSidePairs": [],
   "gen": {
     "nMin": 13, "nMax": 16, "gapMin": 1.8, "gapMax": 3.0,
     "cars": [2, 3, 3, 4, 4, 5, 6, 7, 7],
-    "freightRate": 0.75, "quietRate": 0.15
+    "quietRate": 0.15
   }
 }

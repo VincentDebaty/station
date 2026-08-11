@@ -16,16 +16,16 @@
     "KNOKKE":       { "side": "R", "color": "#60a5fa", "abbr": "KN" }
   },
   "links": {
-    "GAND": [1, 2, 3],
-    "COURTRAI": [3, 4, 5],
-    "OSTENDE": [1, 2, 3, 4],
-    "BLANKENBERGE": [2, 3, 4, 5],
-    "KNOKKE": [1, 2, 4, 5]
+    "GAND": [1, 2, 3, 4],
+    "COURTRAI": [4, 5],
+    "OSTENDE": [1, 2, 3],
+    "BLANKENBERGE": [3, 4],
+    "KNOKKE": [4, 5]
   },
   "sameSidePairs": [],
   "gen": {
     "nMin": 13, "nMax": 16, "gapMin": 1.8, "gapMax": 3.0,
     "cars": [1, 2, 2, 3, 3, 4, 4, 5],
-    "freightRate": 0.25, "quietRate": 0.2
+    "quietRate": 0.2
   }
 }

@@ -27,6 +27,6 @@
   "gen": {
     "nMin": 13, "nMax": 16, "gapMin": 1.8, "gapMax": 3.0,
     "cars": [1, 2, 2, 3, 3, 4, 4, 5],
-    "freightRate": 0.1, "quietRate": 0.2
+    "quietRate": 0.2
   }
 }

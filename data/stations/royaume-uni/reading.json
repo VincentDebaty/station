@@ -17,15 +17,15 @@
   },
   "links": {
     "PADDINGTON": [1, 2, 3, 4],
-    "OXFORD": [4, 5, 6],
-    "BRISTOL": [1, 2, 3, 4],
-    "BASINGSTOKE": [3, 4, 5],
-    "GUILDFORD": [4, 5, 6]
+    "OXFORD": [3, 4, 5, 6],
+    "BRISTOL": [1, 2, 3],
+    "BASINGSTOKE": [4, 5],
+    "GUILDFORD": [5, 6]
   },
   "sameSidePairs": [],
   "gen": {
     "nMin": 13, "nMax": 16, "gapMin": 1.8, "gapMax": 3.0,
     "cars": [1, 2, 2, 3, 3, 4, 4, 5],
-    "freightRate": 0.35, "quietRate": 0.2
+    "quietRate": 0.2
   }
 }

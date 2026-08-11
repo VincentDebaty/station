@@ -18,17 +18,17 @@
     "BERLIN":     { "side": "R", "color": "#f2588f", "abbr": "B" }
   },
   "links": {
-    "KIEL": [1, 2, 3, 4],
-    "COPENHAGUE": [1, 2, 5, 6],
-    "LUBECK": [3, 4, 5, 7],
+    "KIEL": [1, 2, 3],
+    "COPENHAGUE": [1, 2],
+    "LUBECK": [4, 5, 6, 7],
     "HANNOVER": [1, 2, 3, 4],
-    "BERLIN": [3, 4, 5, 6, 7],
-    "BREMEN": [1, 2, 6, 7]
+    "BERLIN": [5, 6, 7],
+    "BREMEN": [2, 3, 4, 5]
   },
   "sameSidePairs": [],
   "gen": {
     "nMin": 16, "nMax": 19, "gapMin": 1.5, "gapMax": 2.5,
     "cars": [2, 3, 3, 4, 4, 5, 5, 6],
-    "freightRate": 0.15, "quietRate": 0.12
+    "quietRate": 0.12
   }
 }

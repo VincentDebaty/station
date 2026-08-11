@@ -19,16 +19,16 @@
   },
   "links": {
     "WURZBURG": [1, 2, 3, 4],
-    "BAMBERG": [1, 2, 5, 6],
-    "ANSBACH": [3, 4, 5, 6],
-    "MUNCHEN": [1, 2, 3, 4],
-    "REGENSBURG": [3, 4, 5, 6],
-    "HOF": [1, 2, 5, 6]
+    "BAMBERG": [1, 2, 3],
+    "ANSBACH": [5, 6],
+    "MUNCHEN": [2, 3, 4, 5],
+    "REGENSBURG": [4, 5, 6],
+    "HOF": [1, 2]
   },
   "sameSidePairs": [],
   "gen": {
     "nMin": 15, "nMax": 18, "gapMin": 1.6, "gapMax": 2.8,
     "cars": [2, 3, 3, 4, 4, 5, 5, 6],
-    "freightRate": 0.2, "quietRate": 0.15
+    "quietRate": 0.15
   }
 }

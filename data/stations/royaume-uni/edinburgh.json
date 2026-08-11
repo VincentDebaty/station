@@ -18,15 +18,15 @@
   },
   "links": {
     "LONDON": [1, 2, 3, 4],
-    "NORTHBERWICK": [4, 5, 6],
-    "GLASGOW": [1, 2, 3, 4],
-    "ABERDEEN": [3, 4, 5],
+    "NORTHBERWICK": [5, 6],
+    "GLASGOW": [3, 4, 5, 6],
+    "ABERDEEN": [1, 2, 3],
     "STIRLING": [4, 5, 6]
   },
   "sameSidePairs": [],
   "gen": {
     "nMin": 14, "nMax": 17, "gapMin": 1.6, "gapMax": 2.8,
     "cars": [2, 3, 3, 4, 4, 5, 5, 6],
-    "freightRate": 0.1, "quietRate": 0.18
+    "quietRate": 0.18
   }
 }

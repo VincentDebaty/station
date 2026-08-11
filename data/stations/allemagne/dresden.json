@@ -18,17 +18,17 @@
     "COTTBUS":  { "side": "R", "color": "#60a5fa", "abbr": "CO" }
   },
   "links": {
-    "LEIPZIG": [1, 2, 3, 4],
-    "BERLIN": [1, 2, 5, 6],
-    "CHEMNITZ": [3, 4, 5, 6],
-    "PRAGUE": [1, 2, 3, 4],
-    "GORLITZ": [3, 4, 5, 6],
-    "COTTBUS": [1, 2, 5, 6]
+    "LEIPZIG": [1, 2, 3],
+    "BERLIN": [1, 2, 3, 4],
+    "CHEMNITZ": [4, 5, 6],
+    "PRAGUE": [2, 3, 4],
+    "GORLITZ": [5, 6],
+    "COTTBUS": [1, 2]
   },
   "sameSidePairs": [],
   "gen": {
     "nMin": 15, "nMax": 18, "gapMin": 1.6, "gapMax": 2.8,
     "cars": [2, 3, 3, 4, 4, 5, 5, 6],
-    "freightRate": 0.3, "quietRate": 0.15
+    "quietRate": 0.15
   }
 }

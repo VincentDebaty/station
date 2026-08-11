@@ -18,17 +18,17 @@
     "WUPPERTAL":  { "side": "R", "color": "#60a5fa", "abbr": "W" }
   },
   "links": {
-    "AACHEN": [1, 2, 3, 4],
-    "BONN": [1, 2, 5, 6],
-    "TRIER": [3, 4, 5, 7],
+    "AACHEN": [1, 2, 3],
+    "BONN": [3, 4, 5, 6],
+    "TRIER": [6, 7],
     "DUSSELDORF": [1, 2, 3, 4],
-    "FRANKFURT": [3, 4, 5, 6, 7],
-    "WUPPERTAL": [1, 2, 6, 7]
+    "FRANKFURT": [4, 5, 6, 7],
+    "WUPPERTAL": [1, 2]
   },
   "sameSidePairs": [],
   "gen": {
     "nMin": 16, "nMax": 19, "gapMin": 1.5, "gapMax": 2.5,
     "cars": [2, 3, 3, 4, 4, 5, 5, 6],
-    "freightRate": 0.2, "quietRate": 0.12
+    "quietRate": 0.12
   }
 }

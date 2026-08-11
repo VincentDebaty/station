@@ -69,24 +69,15 @@ function slowness(t) { return 1 + (t.cars - 1) * 0.22; } // 7 wagons ≈ 2.3× p
 // que soit sa longueur, pour ne pas verrouiller entrée+sortie trop longtemps (sinon
 // il asphyxie la gare). Voir movingThrough (game.js) et le calibrage (schedule.js).
 const FREIGHT_SLOWNESS = 1 + (3 - 1) * 0.22;
-// Gris du fret : il n'a pas de destination voyageur, donc pas de couleur de
-// portail — c'est son signe distinctif sur tout le plateau (convoi, itinéraire,
-// liseré de quai, trame du quai réservé).
+// Gris du fret : couleur de ses WAGONS uniquement. Sa motrice, elle, prend la
+// couleur de la destination comme n'importe quel convoi — c'est ainsi qu'il
+// annonce où il va, donc quels quais peuvent le recevoir. Wagons gris = « celui-ci
+// ne s'arrête pas ».
 const FREIGHT_COLOR = "#8f98a8";
 // Un convoi se montre sur la voie d'approche APPROACH_LEAD minute(s) avant son
-// heure : c'est la fenêtre où il roule vers sa place dans la file.
+// heure : c'est la fenêtre où il roule vers sa place dans la file. Le fret ne
+// fait PAS exception — il prend la file comme les autres (voir tick(), game.js).
 const APPROACH_LEAD = 1.3;
-// Le fret, lui, s'annonce bien plus tôt — mais l'annonce et la réservation sont
-// deux temps distincts :
-//  · FREIGHT_NOTICE : le quai est SIGNALÉ (trame légère + pastille « F · HH:MM »).
-//    Le joueur voit venir le sillon mais garde le quai à sa main : il peut encore
-//    y envoyer un voyageur, le fret s'effacera devant lui.
-//  · FREIGHT_LOCK   : le quai est RÉSERVÉ pour de bon (trame pleine, quai éteint,
-//    plus attribuable) — juste avant que le convoi ne se présente.
-// Réserver dès l'annonce privait le joueur d'un quai bien trop tôt.
-// Voir showFreightNotice() / lockFreightNotice() (game.js).
-const FREIGHT_NOTICE = 3;
-const FREIGHT_LOCK = 1;
 
 // ------------------------------------------------------------------
 // Géométrie : un chemin par liaison (portail <-> quai), direction libre

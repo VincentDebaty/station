@@ -18,15 +18,15 @@
   },
   "links": {
     "PARIS": [1, 2, 3, 4],
-    "NANTES": [3, 4, 5, 6],
-    "TOULOUSE": [1, 2, 3],
-    "BAYONNE": [3, 4, 5],
-    "ARCACHON": [2, 4, 5, 6]
+    "NANTES": [4, 5, 6],
+    "TOULOUSE": [1, 2, 3, 4],
+    "BAYONNE": [2, 3, 4, 5],
+    "ARCACHON": [5, 6]
   },
   "sameSidePairs": [],
   "gen": {
     "nMin": 15, "nMax": 18, "gapMin": 1.6, "gapMax": 2.8,
     "cars": [2, 3, 3, 4, 4, 5, 5, 6],
-    "freightRate": 0.3, "quietRate": 0.15
+    "quietRate": 0.15
   }
 }

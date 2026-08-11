@@ -103,10 +103,17 @@ avec un autre forme une paire valide.
 
 ## 5. Enveloppes par palier (valeurs de référence `gen`)
 
-`gen` = `{ nMin, nMax, gapMin, gapMax, cars[], freightRate, quietRate }`.
-`cars` = tirage des longueurs (pondéré). `freightRate` = proba d'un fret
-traversant/jour (0..1 ; ou `freightCount` fixe). `quietRate` = proba d'un jour
+`gen` = `{ nMin, nMax, gapMin, gapMax, cars[], quietRate }`.
+`cars` = tirage des longueurs (pondéré). `quietRate` = proba d'un jour
 sans imprévu.
+
+**Fret** : plus aucun réglage dans `gen` — le NOMBRE de convois de fret vient de
+`difficulty` (1 au niveau 1 … 5 au niveau 5), étalés sur la journée. Un fret se
+comporte comme un train normal (file d'approche, aiguillage par le joueur) sauf
+qu'il ne s'arrête pas : il lui faut entrée + sortie libres d'un seul tenant, et
+il n'a pas d'heure de départ. Il traverse donc forcément d'un côté à l'autre :
+une gare TERMINUS (tous les portails du même côté) n'en reçoit aucun.
+`gen.freightCount` reste possible pour forcer un nombre (gares de stress test).
 
 | Diff | Quais | Directions | nMin–nMax | gap | cars (typique) | notes |
 |---|---|---|---|---|---|---|
@@ -115,12 +122,12 @@ sans imprévu.
 | **2** | 5–6 | 5 | 13–16 | 1.8 / 3.0 | `[1,2,2,3,3,4,4,5]` | Louvain, Bruges, Nantes |
 | **2** term. | 6 | 5 | 12–15 | 1.9 / 3.2 | `[3,3,4,4,5,5,6,7]` | Marseille (rames longues) |
 | **3** | 6 | 5–6 | 14–15 → 17–18 | 1.6 / 2.8–3.2 | `[2,3,3,4,4,5,5,6]` (+7 pour 6 dir) | Lyon, Bordeaux, Gand… |
-| **4** | 5–9 | 5–6 | 14–16 → 17–20 | 1.5 / 2.6 | jusqu'à 6–7 | dense ; fret 0.7 SI réel (Metz), sinon 0.15 (Strasbourg) |
+| **4** | 5–9 | 5–6 | 14–16 → 17–20 | 1.5 / 2.6 | jusqu'à 6–7 | dense |
 | **5** | 8 | 6 | 18–22 | 1.4 / 2.4 | `[2,3,3,4,4,5,5,6,7]` | boss (Bruxelles-Midi, Paris-Nord) |
 
 Limites moteur (ne pas dépasser) : **≤ 13 quais**, **~6 directions/côté**,
 **≤ ~30-34 trains/jour** (au-delà : coût de génération cubique + le zéro n'est
-plus garanti). Fret : cars 8–10, non plafonné par MAX_CARS.
+plus garanti). Fret : 6–7 wagons, non plafonné par MAX_CARS.
 
 ## 6. Validation (obligatoire avant commit)
 

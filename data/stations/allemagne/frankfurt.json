@@ -21,16 +21,16 @@
   },
   "links": {
     "KOLN": [1, 2, 3, 4],
-    "MANNHEIM": [5, 6, 7, 8],
-    "WURZBURG": [3, 4, 5, 6],
-    "HANNOVER": [1, 2, 7, 8],
-    "MAINZ": [2, 3, 6, 7],
-    "FULDA": [1, 4, 5, 8]
+    "MANNHEIM": [1, 2, 3, 4, 5],
+    "WURZBURG": [4, 5, 6],
+    "HANNOVER": [2, 3, 4],
+    "MAINZ": [6, 7, 8],
+    "FULDA": [5, 6, 7, 8]
   },
   "sameSidePairs": "all",
   "gen": {
     "nMin": 15, "nMax": 19, "gapMin": 1.6, "gapMax": 2.6,
     "cars": [2, 3, 3, 4, 4, 5, 5, 6, 7],
-    "freightRate": 0, "quietRate": 0.1
+    "quietRate": 0.1
   }
 }

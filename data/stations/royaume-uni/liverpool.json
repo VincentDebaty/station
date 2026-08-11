@@ -20,17 +20,17 @@
     "CHESTER":    { "side": "L", "color": "#f5b23c", "abbr": "CH" }
   },
   "links": {
-    "MANCHESTER": [1, 2, 3, 4],
-    "LONDON": [1, 2, 5],
-    "LEEDS": [3, 4, 5, 6],
-    "PRESTON": [5, 6, 7],
-    "NORWICH": [2, 3, 6, 7],
-    "CHESTER": [4, 5, 7]
+    "MANCHESTER": [3, 4, 5, 6],
+    "LONDON": [1, 2, 3, 4],
+    "LEEDS": [5, 6, 7],
+    "PRESTON": [1, 2],
+    "NORWICH": [4, 5],
+    "CHESTER": [6, 7]
   },
   "sameSidePairs": "all",
   "gen": {
     "nMin": 15, "nMax": 18, "gapMin": 1.6, "gapMax": 2.7,
     "cars": [2, 3, 3, 4, 4, 5, 5, 6, 7],
-    "freightRate": 0, "quietRate": 0.14
+    "quietRate": 0.14
   }
 }

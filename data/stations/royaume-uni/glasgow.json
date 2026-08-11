@@ -20,17 +20,17 @@
     "LANARK":    { "side": "L", "color": "#a78bfa", "abbr": "LK" }
   },
   "links": {
-    "LONDON": [1, 2, 3, 4],
-    "EDINBURGH": [1, 2, 5],
-    "AYR": [3, 4, 5, 6],
-    "GOUROCK": [5, 6, 7],
-    "PAISLEY": [2, 3, 6, 7],
-    "LANARK": [4, 5, 7]
+    "LONDON": [1, 2, 3],
+    "EDINBURGH": [1, 2, 3],
+    "AYR": [4, 5],
+    "GOUROCK": [6, 7],
+    "PAISLEY": [3, 4, 5, 6, 7],
+    "LANARK": [2, 3, 4]
   },
   "sameSidePairs": "all",
   "gen": {
     "nMin": 15, "nMax": 18, "gapMin": 1.6, "gapMax": 2.7,
     "cars": [2, 3, 3, 4, 4, 5, 5, 6, 7],
-    "freightRate": 0, "quietRate": 0.14
+    "quietRate": 0.14
   }
 }

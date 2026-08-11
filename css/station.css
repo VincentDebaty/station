@@ -132,13 +132,6 @@ body {
   font-family: ui-monospace, Menlo, monospace;
   filter: drop-shadow(0 0 4px var(--red));
 }
-/* Pastille « F · HH:MM » d'un quai réservé pour un transit de fret : même
-   gabarit que la fermeture, mais dans le gris du fret — réservé ≠ en panne. */
-.freight-tag {
-  fill: #b6bdc9; font-size: 13px; font-weight: 600; text-anchor: middle;
-  font-family: ui-monospace, Menlo, monospace;
-  filter: drop-shadow(0 0 4px rgba(143, 152, 168, .9));
-}
 .btn {
   background: var(--panel); border: 1px solid #2a3550; color: var(--text);
   border-radius: 10px; padding: 8px 14px; font-size: 15px; cursor: pointer; font-family: inherit;
@@ -220,20 +213,6 @@ svg { width: 100%; height: 100%; display: block; }
    dépendre du rouge (le cadenas + les hachures portent le reste du message). */
 .plat.closed .platform-label { opacity: .28; }
 .plat.closed .platform { fill: #141b29; stroke: #2a3446; }
-/* Quai réservé à un fret annoncé : liseré gris et numéro adouci. Plus discret
-   qu'une fermeture (le quai n'est pas hors service, il est pris), mais assez net
-   pour qu'on n'essaie pas d'y envoyer un train — le tap y répond « Quai réservé ».
-   Une fermeture l'emporte (:not(.closed)) : hors service prime sur réservé. */
-.plat.reserved:not(.closed) .platform-label { opacity: .5; }
-.plat.reserved:not(.closed) .platform { stroke: #6d7686; }
-/* Marquage du sillon de fret, en deux temps (cf. FREIGHT_NOTICE / FREIGHT_LOCK) :
-   « pending » = préavis, trame à peine posée et quai toujours attribuable ;
-   sans la classe = réservation ferme, trame pleine et quai éteint.
-   Seule la TRAME s'allège : la pastille « F · HH:MM » reste à pleine opacité
-   dans les deux temps, c'est l'information utile (et son fond opaque masque le
-   numéro du quai, qui sinon transparaîtrait dessous). */
-.freight-hatch { transition: opacity .35s ease; }
-.freight-notice.pending .freight-hatch { opacity: .3; }
 .buffer-stop { fill: var(--red); pointer-events: none; filter: drop-shadow(0 0 4px var(--red)); }
 .portal {
   fill: none; stroke-width: 2.5;
