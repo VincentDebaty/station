@@ -1254,7 +1254,11 @@ function endGame(failed) {
         '<div class="eu-done">' + nameOf(openedNow) + " " + pipsOf(openedNow) + "</div>";
       reward.classList.remove("hidden");
     } else if (pending) {
-      reward.innerHTML = '<div class="eu-title">Ouvre une gare voisine</div>' +
+      // « Voisine » n'est vrai que si elle l'est : quand tout le voisinage est
+      // déjà ouvert, la récompense porte plus loin et le titre le dit.
+      const beyond = typeof unlockIsBeyond === "function" && unlockIsBeyond(CATALOG[currentIdx].id);
+      reward.innerHTML = '<div class="eu-title">' +
+        (beyond ? "Voisinage complet — ouvre plus loin" : "Ouvre une gare voisine") + "</div>" +
         '<div class="eu-row">' + choices.map(id =>
           '<button class="btn eu-pick" data-id="' + id + '">' + nameOf(id) + " " + pipsOf(id) + "</button>").join("") + "</div>";
       reward.classList.remove("hidden");

@@ -136,9 +136,24 @@ function reachFrom(start) {
   for (let pass = 0; pass < CATALOG.length * 2; pass++) {
     let grew = false;
     for (const id of [...open]) {
-      const locked = netLinks(id).to
-        .filter(nb => CATALOG.some(c => c.id === nb) && !open.has(nb))
-        .sort((a, b) => diffOf(a) - diffOf(b));
+      // Même règle que le jeu : les voisines directes fermées d'abord, sinon on
+      // avance à travers les gares ouvertes jusqu'au premier rang fermé.
+      let locked = netLinks(id).to
+        .filter(nb => CATALOG.some(c => c.id === nb) && !open.has(nb));
+      if (!locked.length) {
+        const seen = new Set([id]); let ring = [id];
+        for (let d = 0; d < CATALOG.length && ring.length && !locked.length; d++) {
+          const next = [];
+          for (const cur of ring)
+            for (const nb of netLinks(cur).to) {
+              if (seen.has(nb) || !CATALOG.some(c => c.id === nb)) continue;
+              seen.add(nb);
+              (open.has(nb) ? next : locked).push(nb);
+            }
+          ring = next;
+        }
+      }
+      locked.sort((a, b) => diffOf(a) - diffOf(b));
       if (locked.length) { open.add(locked[0]); grew = true; }
     }
     if (!grew) break;
@@ -173,7 +188,9 @@ const monotony = [];
 for (const card of CATALOG) {
   const nb = netLinks(card.id).to.filter(id => CATALOG.some(c => c.id === id));
   if (!nb.length) continue;
-  for (let mask = 1; mask < (1 << nb.length); mask++) {
+  // mask 0 = toutes les voisines directes déjà ouvertes : c'est le cas qui
+  // déclenche le repli « on ouvre plus loin ».
+  for (let mask = 0; mask < (1 << nb.length); mask++) {
     // Les voisines HORS masque sont réputées déjà ouvertes.
     _openedSim = new Set(nb.filter((_, i) => !(mask & (1 << i))));
     const c1 = unlockChoices(card.id, 1), c2 = unlockChoices(card.id, 2), c3 = unlockChoices(card.id, 3);

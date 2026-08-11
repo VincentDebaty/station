@@ -105,11 +105,43 @@ function lockedNeighbours(id) {
     })
     .sort((a, b) => stationDifficulty(a) - stationDifficulty(b));
 }
+// Quand TOUTES les voisines sont déjà ouvertes, la récompense porte plus loin :
+// on avance de proche en proche À TRAVERS les gares déjà ouvertes, et on s'arrête
+// au premier rang où l'on trouve du fermé. On ne saute jamais par-dessus une
+// gare fermée — la progression reste le long des voies, elle prend juste appui
+// sur le territoire déjà acquis.
+// Sans ce repli, terminer une gare entourée de gares faites ne rapportait RIEN,
+// ce qui punissait exactement le joueur le plus avancé.
+function nearestLocked(id) {
+  const seen = new Set([id]);
+  let ring = [id];
+  for (let depth = 0; depth < CATALOG.length && ring.length; depth++) {
+    const found = [], next = [];
+    for (const cur of ring) {
+      for (const nb of netLinks(cur).to) {
+        if (seen.has(nb)) continue;
+        const gi = CATALOG.findIndex(c => c.id === nb);
+        if (gi < 0) continue;
+        seen.add(nb);
+        (isUnlocked(gi) ? next : found).push(nb);
+      }
+    }
+    if (found.length) return found.sort((a, b) => stationDifficulty(a) - stationDifficulty(b));
+    ring = next;
+  }
+  return [];
+}
+// Vrai quand la récompense ne porte plus sur une VOISINE directe : le libellé
+// de l'écran de fin doit le dire, sinon « gare voisine » devient un mensonge.
+function unlockIsBeyond(id) {
+  return !lockedNeighbours(id).length && !!nearestLocked(id).length;
+}
 // Ce qu'un service à `stars` étoiles donne le droit d'ouvrir depuis `id`.
-// Liste vide = rien à ouvrir (toutes les voisines sont déjà accessibles).
+// Liste vide = plus rien à ouvrir nulle part (tout le réseau atteignable est
+// déjà acquis).
 function unlockChoices(id, stars) {
   if (!(stars >= 1)) return [];
-  const locked = lockedNeighbours(id);
+  const locked = lockedNeighbours(id).length ? lockedNeighbours(id) : nearestLocked(id);
   if (stars === 1) return locked.slice(0, 1);            // imposé : la plus facile
   if (stars === 2) {                                     // au choix, à niveau égal ou moindre
     const cap = stationDifficulty(id);
