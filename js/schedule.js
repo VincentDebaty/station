@@ -194,7 +194,8 @@ function generateOnce() {
     const [from, to] = pick(PAIRS);
     draft.push({
       id: "T" + String(i + 1).padStart(2, "0"),
-      from, to, cars: pick(GEN.cars),
+      // MIN_CARS : garde-fou, même si une fiche de gare tire un 1
+      from, to, cars: Math.max(MIN_CARS, pick(GEN.cars)),
       arr: Math.round(arr * 2) / 2, dep: 0
     });
     arr += rnd(GEN.gapMin, GEN.gapMax) * ARRIVAL_GAP_SCALE;

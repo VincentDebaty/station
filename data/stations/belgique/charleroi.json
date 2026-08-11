@@ -24,7 +24,7 @@
   "sameSidePairs": [],
   "gen": {
     "nMin": 12, "nMax": 15, "gapMin": 1.6, "gapMax": 2.8,
-    "cars": [1, 1, 2, 2, 3, 3, 4],
+    "cars": [2, 2, 2, 2, 3, 3, 4],
     "quietRate": 0.25
   }
 }

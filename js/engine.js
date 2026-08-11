@@ -37,8 +37,11 @@ const DEPART_GRACE = 0.15;      // minutes de jeu de tolérance au départ
 // joueur voit le « +1 » du train avant celui de l'horloge.
 function lateness(t, now) { return now - t.dep - DEPART_GRACE; }
 
-// Wagons : 1 à 7 par train — plus le convoi est long, plus il est lent
-const MAX_CARS = 7;
+// Wagons : 2 à 7 par train — plus le convoi est long, plus il est lent.
+// MIN_CARS : une motrice seule ne fait pas un convoi (elle se lit comme un
+// wagon perdu sur le plan) ; le tirage est plafonné par le bas, quoi que dise
+// la fiche de la gare.
+const MIN_CARS = 2, MAX_CARS = 7;
 const CAR_LEN = 30, CAR_GAP = 5, CAR_SPACING = CAR_LEN + CAR_GAP;
 // Hauteur de caisse de la motrice (les wagons suivants sont un peu plus bas).
 // Le rendu la grossit sur tactile (×UIK) ; la LONGUEUR, elle, ne bouge jamais.

@@ -104,8 +104,9 @@ avec un autre forme une paire valide.
 ## 5. Enveloppes par palier (valeurs de référence `gen`)
 
 `gen` = `{ nMin, nMax, gapMin, gapMax, cars[], quietRate }`.
-`cars` = tirage des longueurs (pondéré). `quietRate` = proba d'un jour
-sans imprévu.
+`cars` = tirage des longueurs (pondéré), **entre 2 et 7** : une valeur 1 est
+remontée à `MIN_CARS` = 2 par le générateur (une motrice seule n'est pas un
+convoi). `quietRate` = proba d'un jour sans imprévu.
 
 **Fret** : plus aucun réglage dans `gen` — le NOMBRE de convois de fret vient de
 `difficulty` (1 au niveau 1 … 5 au niveau 5), étalés sur la journée. Un fret se
@@ -117,9 +118,9 @@ une gare TERMINUS (tous les portails du même côté) n'en reçoit aucun.
 
 | Diff | Quais | Directions | nMin–nMax | gap | cars (typique) | notes |
 |---|---|---|---|---|---|---|
-| **1** | 4 | 4 | 12–15 | 1.6 / 2.8 | `[1,1,2,2,3,3,4]` | rames courtes, tutoriel |
+| **1** | 4 | 4 | 12–15 | 1.6 / 2.8 | `[2,2,2,2,3,3,4]` | rames courtes, tutoriel |
 | **1** term. | 6 | 4 | 11–14 | 2.0 / 3.4 | `[2,2,3,3,4,4,5]` | Lille |
-| **2** | 5–6 | 5 | 13–16 | 1.8 / 3.0 | `[1,2,2,3,3,4,4,5]` | Louvain, Bruges, Nantes |
+| **2** | 5–6 | 5 | 13–16 | 1.8 / 3.0 | `[2,2,2,3,3,4,4,5]` | Louvain, Bruges, Nantes |
 | **2** term. | 6 | 5 | 12–15 | 1.9 / 3.2 | `[3,3,4,4,5,5,6,7]` | Marseille (rames longues) |
 | **3** | 6 | 5–6 | 14–15 → 17–18 | 1.6 / 2.8–3.2 | `[2,3,3,4,4,5,5,6]` (+7 pour 6 dir) | Lyon, Bordeaux, Gand… |
 | **4** | 5–9 | 5–6 | 14–16 → 17–20 | 1.5 / 2.6 | jusqu'à 6–7 | dense |
