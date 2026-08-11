@@ -594,8 +594,8 @@ function trainNode(t) {
   // s'efface quand le badge bascule sur le retard — « +3 min » n'est plus une
   // heure, et le cadran mentirait. Aiguilles figées sur 10 h 10, la pose qui se
   // lit le mieux en tout petit.
+  // (sa position en x est posée par updateBadge, qui centre l'ensemble)
   const ck = el("g", { class: "badge-clock" }, badge);
-  ck.setAttribute("transform", "translate(" + (-19 * UIK) + " 0)");
   el("circle", { cx: 0, cy: 0, r: 5.4 * UIK }, ck);
   el("path", { d: "M 0 0 V " + (-3.2 * UIK) + " M 0 0 L " + (2.6 * UIK) + " " + (1.6 * UIK) }, ck);
   t.badgeClock = ck;
@@ -758,11 +758,23 @@ function updateBadge(t) {
   else if (late > -3) { txt = fmt(t.dep); color = "#f5b23c"; }
   else { txt = fmt(t.dep); color = "var(--green)"; }
   // Horloge devant l'heure ; en retard, elle disparaît et l'heure reprend tout
-  // le badge (le texte se recentre, sinon il resterait décalé sur la droite).
+  // le badge. On la masque en DISPLAY, jamais en visibility : le badge entier
+  // s'éteint par visibility="hidden", or un enfant en visibility="visible"
+  // ANNULE celle du parent — le cadran restait alors seul en l'air au-dessus
+  // d'un quai vide, sans sa pilule. display:none, lui, ne se laisse pas rouvrir.
   const clock = late < 1;
-  t.badgeClock.setAttribute("visibility", clock ? "visible" : "hidden");
+  t.badgeClock.style.display = clock ? "" : "none";
   t.badgeClock.style.color = color;
-  t.badgeText.setAttribute("x", (clock ? 7.5 * UIK : 0).toFixed(1));
+  // Composition CENTRÉE dans la pilule : [cadran][gouttière][heure], le tout
+  // calé au milieu. La police est à chasse fixe, donc la largeur du texte se
+  // calcule (0.6 em par caractère) — pas besoin d'un getBBox à chaque image, et
+  // « +12 min » se recentre aussi bien que « 07:08 ».
+  const tw = txt.length * 0.6 * 12 * UIK;      // largeur de l'heure
+  const CK = 10.8 * UIK, GUT = 7 * UIK;        // diamètre du cadran, gouttière
+  const x0 = -(clock ? CK + GUT + tw : tw) / 2;  // bord gauche du contenu
+  if (clock) t.badgeClock.setAttribute("transform",
+    "translate(" + (x0 + CK / 2).toFixed(1) + " 0)");
+  t.badgeText.setAttribute("x", (clock ? x0 + CK + GUT + tw / 2 : 0).toFixed(1));
   t.badgeEl.classList.toggle("late", late >= 1);
   // Retard qui court sur un convoi encore NON DÉMARRÉ (à l'arrêt sur la voie
   // d'approche, pas encore aiguillé vers un quai) : c'est le seul cas où le
