@@ -5,7 +5,7 @@
   "tagline": "Liège-Guillemins — 9 voies sous la voûte Calatrava, 6 directions, flux dense.",
   "difficulty": 4,
   "country": "🇧🇪 Belgique",
-  "desc": "Cinq quais îlots, neuf voies : la grande artère de Bruxelles file de part en part vers Aachen, tandis que Namur, le Luxembourg, Maastricht et la ligne de Tongres vers Hasselt se greffent au passage. Grandes vitesses internationales et dessertes wallonnes s'entrecroisent — le carrefour le plus chargé de Wallonie.",
+  "desc": "Cinq quais îlots, neuf voies : la grande artère de Bruxelles file de part en part vers Cologne par Aachen, tandis que Namur, le Luxembourg, Maastricht et la ligne de Tongres vers Hasselt se greffent au passage. Grandes vitesses internationales et dessertes wallonnes s'entrecroisent — le carrefour le plus chargé de Wallonie.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },
     { "id": 6 }, { "id": 7 }, { "id": 8 }, { "id": 9 }
@@ -14,7 +14,7 @@
     "BRUXELLES":  { "side": "L", "color": "#25dede", "abbr": "B" },
     "HASSELT":    { "side": "L", "color": "#60a5fa", "abbr": "H" },
     "NAMUR":      { "side": "L", "color": "#4ade80", "abbr": "N" },
-    "AACHEN":     { "side": "R", "color": "#f2588f", "abbr": "AC" },
+    "COLOGNE":    { "side": "R", "color": "#f2588f", "abbr": "C" },
     "LUXEMBOURG": { "side": "R", "color": "#a78bfa", "abbr": "LX" },
     "MAASTRICHT": { "side": "R", "color": "#f5b23c", "abbr": "MT" }
   },
@@ -22,7 +22,7 @@
     "BRUXELLES":  [3, 4, 5, 6],
     "HASSELT":    [1, 5, 7, 8, 9],
     "NAMUR":      [2, 6, 7, 8],
-    "AACHEN":     [4, 5, 6],
+    "COLOGNE":    [4, 5, 6],
     "LUXEMBOURG": [5, 7, 8],
     "MAASTRICHT": [1, 2, 3, 9]
   },
