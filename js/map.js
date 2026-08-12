@@ -375,8 +375,11 @@ function updateChrome() {
     if (away && MAP.homeBtn.dataset.nm !== nm) {
       MAP.homeBtn.dataset.nm = nm;
       MAP.homeBtn.innerHTML =
+        // Réticule de recentrage (Material « my_location »), le repère que les
+        // cartes en ligne emploient pour « remets-moi au bon cadrage ». Une
+        // maison disait « accueil », ce que ce bouton ne fait plus.
         '<svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor" aria-hidden="true">' +
-        '<path d="M12 5.69l5 4.5V18h-2v-6H9v6H7v-7.81l5-4.5M12 3L2 12h3v8h6v-6h2v6h6v-8h3L12 3z"/></svg>' +
+        '<path d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm8.94 3c-.46-4.17-3.77-7.48-7.94-7.94V1h-2v2.06C6.83 3.52 3.52 6.83 3.06 11H1v2h2.06c.46 4.17 3.77 7.48 7.94 7.94V23h2v-2.06c4.17-.46 7.48-3.77 7.94-7.94H23v-2h-2.06zM12 19c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z"/></svg>' +
         '<span class="lbl">' + nm + "</span>";
     }
   }
