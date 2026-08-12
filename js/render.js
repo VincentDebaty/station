@@ -27,20 +27,33 @@ function el(tag, attrs, parent) {
   return e;
 }
 
-function drawStatic() {
-  board.innerHTML = "";
-  // Cadrage : on encadre la bande réellement dessinée avec DEUX marges nommées,
-  // les mêmes pour toutes les gares. En haut, CLOCK_ROOM réserve la place du
-  // cadre horloge, qui flotte au centre et ne doit jamais recouvrir le badge
-  // d'heure du quai du haut ; auparavant le cadrage partait toujours de y = 0,
-  // donc cette réserve variait du simple au double selon la hauteur du gril
-  // (trop rase sur une grande gare, gâchée sur une petite). En bas, BOTTOM_ROOM
-  // ajoute une vraie respiration SOUS la voie d'approche de la ville la plus
-  // basse, qui frôlait le bord. On rogne aussi, en gare terminus (tous les
-  // portails du même côté), le flanc vide côté butoirs : sans ce rognage le
-  // réseau se tasserait sur une moitié de l'écran, l'autre restant noire.
-  // Aucune coordonnée du réseau n'est touchée — seul le cadrage change, donc la
-  // difficulté reste identique.
+// Cadrage : on encadre la bande réellement dessinée avec DEUX marges nommées,
+// les mêmes pour toutes les gares. En haut, CLOCK_ROOM réserve la place du
+// cadre horloge, qui flotte au centre et ne doit jamais recouvrir le badge
+// d'heure du quai du haut ; auparavant le cadrage partait toujours de y = 0,
+// donc cette réserve variait du simple au double selon la hauteur du gril
+// (trop rase sur une grande gare, gâchée sur une petite). En bas, BOTTOM_ROOM
+// ajoute une vraie respiration SOUS la voie d'approche de la ville la plus
+// basse, qui frôlait le bord. On rogne aussi, en gare terminus (tous les
+// portails du même côté), le flanc vide côté butoirs : sans ce rognage le
+// réseau se tasserait sur une moitié de l'écran, l'autre restant noire.
+// Aucune coordonnée du réseau n'est touchée — seul le cadrage change, donc la
+// difficulté reste identique.
+//
+// MAIS ce rognage a une limite : le plan est letterboxé (preserveAspectRatio
+// "meet"), et les voies ne sont dessinées que jusqu'à EDGE_RUN au-delà du plein
+// cadre 0..1400. Rogner la largeur du viewBox agrandit d'autant la bande de
+// letterbox — au-delà d'un certain point on découvre du noir AVANT le bord de
+// l'écran, et les voies semblent démarrer en l'air (visible sur les terminus).
+// On borne donc le rognage à ce que les voies couvrent réellement. Comme cette
+// bande dépend du rapport de l'écran, le cadrage se rejoue au redimensionnement.
+//
+// Portée DESSINÉE des voies au-delà du plein cadre 0..1400 : au moins EDGE_RUN
+// (la portée du RÉSEAU, où naissent et meurent les convois), davantage si la
+// bande de letterbox l'exige.
+let DRAW_RUN = EDGE_RUN;
+function fitViewBox() {
+  if (typeof PLATFORMS === "undefined" || !PLATFORMS || !PLATFORMS.length) return;
   const CLOCK_ROOM = 140, BOTTOM_ROOM = 30;
   const sides = new Set(Object.values(PORTALS).map(p => p.side));
   const only = sides.size === 1 ? [...sides][0] : null;
@@ -49,10 +62,53 @@ function drawStatic() {
   const yTop = Math.min(...cys) - 44 * UIK - CLOCK_ROOM;
   // bas : voie d'approche (cy + 36) + demi-caisse de wagon
   const yBot = Math.max(...cys) + 36 + 14 * UIK + BOTTOM_ROOM;
-  const xL = only === "R" ? PLAT_X1 - 55 : 0;
-  const xR = only === "L" ? PLAT_X2 + 55 : 1400;
-  board.setAttribute("viewBox", `${xL} ${yTop} ${xR - xL} ${yBot - yTop}`);
+  const vh = yBot - yTop;
+  // Largeur MINIMALE du cadrage : en dessous, la bande de letterbox de chaque
+  // côté dépasserait EDGE_RUN, donc la portée des voies. Le rapport de l'écran
+  // se lit sur le rendu réel ; s'il n'est pas encore mesurable (plan dessiné
+  // hors écran), on garde le rognage plein — le resize repassera derrière.
+  const box = board.getBoundingClientRect();
+  const measured = box.width > 0 && box.height > 0;
+  const minVW = measured ? (box.width / box.height) * vh - 2 * EDGE_RUN : 0;
+  let xL = 0, xR = 1400;
+  if (only === "L") xR = Math.min(1400, Math.max(PLAT_X2 + 55, minVW));
+  else if (only === "R") xL = Math.max(0, Math.min(PLAT_X1 - 55, 1400 - minVW));
+  board.setAttribute("viewBox", `${xL} ${yTop} ${xR - xL} ${vh}`);
   VIEW_X1 = xL; VIEW_X2 = xR;
+  // Bande de letterbox restante, en unités du plan. Le rognage la ramène sous
+  // EDGE_RUN dès qu'il le peut ; sur un écran très large et très bas il ne
+  // suffit plus (rognage nul, bande encore large). On allonge alors le TRACÉ
+  // des voies pour qu'elles touchent quand même le bord — seul le dessin
+  // s'étire, jamais le réseau : les convois continuent d'entrer à EDGE_RUN.
+  const band = measured
+    ? Math.max(0, ((box.width / box.height) * vh - (xR - xL)) / 2) : 0;
+  DRAW_RUN = Math.max(EDGE_RUN, band);
+  stretchTracks();
+}
+window.addEventListener("resize", fitViewBox);
+
+// Repousse jusqu'au bord de l'écran l'amorce des deux voies de chaque portail.
+// Appelée après chaque cadrage : les voies sont dessinées une fois, mais la
+// bande de letterbox, elle, change à chaque redimensionnement.
+function stretchTracks() {
+  for (const u of Object.values(portalUI)) {
+    // changement de gare : le réseau est reconstruit avant le plan, une frame
+    // peut donc passer ici avec un portail qui n'existe plus (cf. placeQueue)
+    if (!APPROACH[u.name]) continue;
+    const edge = u.side === "L" ? -DRAW_RUN : 1400 + DRAW_RUN;
+    u.edge = edge; // le liséré « validé » file jusqu'au même point
+    u.lnOut.setAttribute("x1", edge);
+    // voie d'arrivée : on ne rallonge que son amorce droite (1er point du
+    // tracé), le raccord en courbe reste intact
+    const pts = APPROACH[u.name].pts;
+    u.lnIn.setAttribute("d", pathD([{ x: edge, y: pts[0].y }].concat(pts.slice(1))));
+  }
+}
+
+function drawStatic() {
+  board.innerHTML = "";
+  portalUI = {}; // vidé AVANT le cadrage : plus aucune voie à étirer
+  fitViewBox();
   const defs = el("defs", {}, board);
   const pat = el("pattern", {
     id: "hatch", width: 8, height: 8,
@@ -113,11 +169,10 @@ function drawStatic() {
   }
 
   // Portails (terminus compris) : les voies filent jusqu'au BORD RÉEL de
-  // l'écran (au-delà du viewBox, EDGE_RUN dans la bande de letterbox) — les
+  // l'écran (au-delà du viewBox, DRAW_RUN dans la bande de letterbox) — les
   // convois émergent et disparaissent au ras de l'écran, sans bandeau qui les
   // arrête. Le nom de la destination, en trait léger, se pose juste au-dessus
   // de la voie ; le train qui sort glisse dessous.
-  portalUI = {};
   // écart vertical entre villes voisines d'un même côté : sert à borner l'offset
   // du libellé pour qu'il reste TOUJOURS collé à SA ligne (jamais à celle du
   // dessus), même sur tactile (UIK=1.5) ou quand les villes sont nombreuses.
@@ -125,10 +180,14 @@ function drawStatic() {
   for (const q of Object.values(PORTALS)) (sideCys[q.side] = sideCys[q.side] || []).push(q.cy);
   for (const [name, p] of Object.entries(PORTALS)) {
     const c = DEST_COLOR[name];
-    const edge = p.side === "L" ? -EDGE_RUN : 1400 + EDGE_RUN;   // point de fuite = bord écran
+    const edge = p.side === "L" ? -DRAW_RUN : 1400 + DRAW_RUN;   // point de fuite = bord écran
     const lnOut = el("line", { x1: edge, y1: p.cy, x2: p.x, y2: p.cy, class: "track", "data-beam": name }, gTracks);
     lnOut.style.stroke = c; lnOut.style.opacity = "0.38";
-    const lnIn = el("path", { d: pathD(APPROACH[name].pts), class: "track", "data-beam": name }, gTracks);
+    const inPts = APPROACH[name].pts;
+    const lnIn = el("path", {
+      d: pathD([{ x: edge, y: inPts[0].y }].concat(inPts.slice(1))),
+      class: "track", "data-beam": name
+    }, gTracks);
     lnIn.style.stroke = c; lnIn.style.opacity = "0.38";
     // point de convergence marqué à la couleur de la ville
     const cvg = el("circle", { cx: p.x, cy: p.cy, r: 5, "pointer-events": "none", "data-beam": name }, gTracks);
@@ -170,9 +229,12 @@ function drawStatic() {
       ev.stopPropagation();
       selectNextAtPortal(name);
     });
-    // repère de sortie pour l'effet « validé » : nom + géométrie de la voie
+    // repère de sortie pour l'effet « validé » : nom + géométrie de la voie.
+    // lnOut / lnIn : les deux voies du portail, que stretchTracks rallonge
+    // jusqu'au bord de l'écran à chaque redimensionnement.
     portalUI[name] = {
-      text: tt, cy: p.cy, side: p.side, px: p.x, edge, nameX: nameCx,
+      name, text: tt, cy: p.cy, side: p.side, px: p.x, edge, nameX: nameCx,
+      lnOut, lnIn,
       nameY, nameW: tw, strip, stripSig: null
     };
   }
