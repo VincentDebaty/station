@@ -386,6 +386,117 @@ function updateTimeline() {
 }
 
 // ------------------------------------------------------------------
+// Service parfait : la salve de wagons
+// ------------------------------------------------------------------
+// Un service sans le moindre retard méritait mieux qu'un titre doré. Mais des
+// confettis de fête foraine seraient tombés d'un autre jeu : on lance donc des
+// WAGONS — mêmes caisses arrondies que sur le plan, et surtout les couleurs des
+// destinations de LA journée qu'on vient de réussir. La récompense est faite de
+// la matière du jeu, et elle diffère d'une gare à l'autre.
+//
+// Deux salves partent des coins bas de la fiche et passent par-dessus : c'est
+// la fiche elle-même qu'on encadre. Toile unique plutôt que des centaines de
+// nœuds DOM, et `pointer-events: none` pour que les boutons restent cliquables
+// pendant la fête.
+let confettiRAF = null;
+function stopConfetti() {
+  if (confettiRAF) { cancelAnimationFrame(confettiRAF); confettiRAF = null; }
+  const cv = document.getElementById("confetti");
+  if (cv) {
+    cv.classList.add("hidden");
+    const g = cv.getContext && cv.getContext("2d");
+    if (g) g.clearRect(0, 0, cv.width, cv.height);
+  }
+}
+function perfectConfetti() {
+  const cv = document.getElementById("confetti");
+  const card = document.querySelector("#end .card");
+  if (!cv || !card || !cv.getContext) return;
+  stopConfetti();
+  // Mouvement réduit demandé : la fiche garde son halo doré et ses étoiles qui
+  // scintillent, mais rien ne vole.
+  if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+  const host = cv.parentElement.getBoundingClientRect();
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  cv.width = Math.round(host.width * dpr);
+  cv.height = Math.round(host.height * dpr);
+  const ctx = cv.getContext("2d");
+  ctx.scale(dpr, dpr);
+  cv.classList.remove("hidden");
+
+  // Palette = les destinations du jour, plus l'or du « sans faute ». Repli sur
+  // la palette du jeu si la gare n'est plus chargée (changement d'écran).
+  const dest = (typeof DEST_COLOR === "object" && DEST_COLOR) ? Object.values(DEST_COLOR) : [];
+  const colors = (dest.length ? dest : ["#25dede", "#f2588f", "#4ade80", "#a78bfa", "#60a5fa"])
+    .concat(["#f5b23c", "#ffd66b"]);
+
+  const G = 1500;            // gravité (px/s²)
+  const r = card.getBoundingClientRect();
+  const P = [];
+  // Deux bouches, aux coins BAS de la fiche, tirant vers le haut et vers
+  // l'intérieur : la gerbe enjambe la fiche au lieu de la masquer.
+  for (const side of [-1, 1]) {
+    const ox = (side < 0 ? r.left : r.right) - host.left;
+    const oy = r.bottom - host.top - 8;
+    for (let i = 0; i < 55; i++) {
+      const spread = (Math.random() - 0.5) * 0.7;           // ouverture de la gerbe
+      const ang = -Math.PI / 2 - side * 0.34 + spread;       // vers le haut, incliné vers le centre
+      // On vise une APOGÉE, pas une vitesse : la hauteur atteinte varie comme le
+      // CARRÉ de la vitesse (v²/2g). Une vitesse proportionnelle à la fiche
+      // laissait les caisses retomber à mi-hauteur dès que la fiche était haute
+      // — la gerbe ne franchissait jamais le titre.
+      const apex = r.height * (0.55 + Math.random() * 0.6);
+      const sp = Math.sqrt(2 * G * apex);
+      P.push({
+        x: ox, y: oy,
+        vx: Math.cos(ang) * sp, vy: Math.sin(ang) * sp,
+        // proportions d'un wagon vu de dessus (CAR_LEN × CAR_H, en réduction)
+        w: 7 + Math.random() * 5, h: 4 + Math.random() * 2.5,
+        rot: Math.random() * Math.PI, vrot: (Math.random() - 0.5) * 9,
+        c: colors[(Math.random() * colors.length) | 0]
+      });
+    }
+  }
+
+  // Freinage horizontal, exprimé en FRACTION DE VITESSE RESTANTE PAR SECONDE
+  // (0.10 ⇒ il n'en reste 10 % au bout d'une seconde). Il doit être franc :
+  // sans lui la gerbe traverse tout l'écran et la fiche se retrouve nue au
+  // milieu de caisses parties ailleurs. Là, elles montent, s'ouvrent, puis
+  // retombent en pluie autour de la fiche — c'est elle qu'on fête.
+  const DRAG = 0.10;
+  // Assez long pour que la gerbe monte, franchisse la fiche et retombe hors
+  // champ ; l'effacement final évite qu'elle disparaisse d'un coup.
+  const LIFE = 3.2, FADE = 0.9;
+  let t0 = null, last = null;
+  const step = ts => {
+    if (t0 === null) t0 = last = ts;
+    const dt = Math.min(0.05, (ts - last) / 1000);
+    last = ts;
+    const age = (ts - t0) / 1000;
+    ctx.clearRect(0, 0, host.width, host.height);
+    ctx.globalAlpha = age > LIFE - FADE ? Math.max(0, (LIFE - age) / FADE) : 1;
+    for (const p of P) {
+      p.vy += G * dt;
+      p.vx *= Math.pow(DRAG, dt);
+      p.x += p.vx * dt; p.y += p.vy * dt; p.rot += p.vrot * dt;
+      ctx.save();
+      ctx.translate(p.x, p.y); ctx.rotate(p.rot);
+      ctx.fillStyle = p.c;
+      ctx.beginPath();
+      if (ctx.roundRect) ctx.roundRect(-p.w / 2, -p.h / 2, p.w, p.h, 1.6);
+      else ctx.rect(-p.w / 2, -p.h / 2, p.w, p.h);
+      ctx.fill();
+      ctx.restore();
+    }
+    ctx.globalAlpha = 1;
+    if (age < LIFE) confettiRAF = requestAnimationFrame(step);
+    else stopConfetti();
+  };
+  confettiRAF = requestAnimationFrame(step);
+}
+
+// ------------------------------------------------------------------
 // Avancement du service : la jauge sous l'horloge
 // ------------------------------------------------------------------
 // Le HUD disait l'heure et le retard, rien d'autre : le joueur ne savait ni

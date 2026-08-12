@@ -303,6 +303,7 @@ async function resetGame() {
   // Gèle la boucle pendant la génération : la journée arrive du worker de façon
   // asynchrone. On dessine tout de suite le plan (vide) pour que le joueur voie
   // le réseau se poser, puis on peuple les trains à réception.
+  if (typeof stopConfetti === "function") stopConfetti(); // salve d'un service précédent
   started = false; ended = false; paused = false;
   gameMin = 0; speed = 1;
   totalDelay = 0; selected = null; activeRoutes = {}; queueSeq = 0;
@@ -1326,4 +1327,7 @@ function endGame(failed) {
   paintActions();
 
   document.getElementById("end").classList.remove("hidden");
+  // Salve APRÈS le démasquage : elle se cale sur la fiche, qui se mesurerait à
+  // zéro tant que l'overlay est en display:none.
+  if (perfect && typeof perfectConfetti === "function") perfectConfetti();
 }
