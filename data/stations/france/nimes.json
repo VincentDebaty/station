@@ -1,0 +1,32 @@
+{
+  "id": "nimes",
+  "name": "Nîmes",
+  "tagline": "Nîmes — au pied des arènes, le départ de la ligne des Cévennes.",
+  "difficulty": 2,
+  "country": "🇫🇷 France",
+  "desc": "Au pied des arènes, le départ de la ligne des Cévennes : sept heures de viaducs et de tunnels jusqu'à Clermont, à travers le plus beau désert ferroviaire du pays.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },
+    { "id": 6 }
+  ],
+  "portals": {
+    "MONTPELLIER":      { "side": "L", "color": "#f2588f", "abbr": "MP" },
+    "CLERMONT-FERRAND": { "side": "L", "color": "#4ade80", "abbr": "CF" },
+    "ALES":             { "side": "L", "color": "#a78bfa", "abbr": "AL", "label": "ALÈS" },
+    "AVIGNON":          { "side": "R", "color": "#f5b23c", "abbr": "AV" },
+    "MARSEILLE":        { "side": "R", "color": "#25dede", "abbr": "MA" }
+  },
+  "links": {
+    "MONTPELLIER":      [1, 2, 3, 4],
+    "CLERMONT-FERRAND": [5, 6],
+    "ALES":             [4, 5],
+    "AVIGNON":          [1, 2, 5, 6],
+    "MARSEILLE":        [2, 3, 4]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 13, "nMax": 16, "gapMin": 1.8, "gapMax": 3.0,
+    "cars": [2, 2, 2, 3, 3, 4, 4, 5],
+    "quietRate": 0.2
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "id": "montpellier",
+  "name": "Montpellier-Saint-Roch",
+  "city": "Montpellier",
+  "tagline": "Montpellier-Saint-Roch — la gare du centre, celle où s'arrêtent les trains qui comptent.",
+  "difficulty": 3,
+  "country": "🇫🇷 France",
+  "desc": "La gare du centre, celle où s'arrêtent les trains qui comptent — la gare TGV de Sud-de-France est à sept kilomètres et n'intéresse personne. Cinq directions sur six quais.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },
+    { "id": 6 }
+  ],
+  "portals": {
+    "TOULOUSE":   { "side": "L", "color": "#f2588f", "abbr": "TL" },
+    "NARBONNE":   { "side": "L", "color": "#4ade80", "abbr": "NB" },
+    "NIMES":      { "side": "R", "color": "#f5b23c", "abbr": "NI", "label": "NÎMES" },
+    "MARSEILLE":  { "side": "R", "color": "#60a5fa", "abbr": "MA" },
+    "PARIS-LYON": { "side": "R", "color": "#25dede", "abbr": "PL" }
+  },
+  "links": {
+    "TOULOUSE":   [1, 2, 3],
+    "NARBONNE":   [3, 4, 5, 6],
+    "NIMES":      [1, 2, 3, 4],
+    "MARSEILLE":  [4, 5],
+    "PARIS-LYON": [5, 6]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 14, "nMax": 17, "gapMin": 1.7, "gapMax": 2.9,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6],
+    "quietRate": 0.15
+  }
+}

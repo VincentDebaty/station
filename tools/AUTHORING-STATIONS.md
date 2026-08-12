@@ -134,6 +134,24 @@ avec un autre forme une paire valide.
   (coordonnées de la VILLE, pour la carte monde). Créer l'entrée pays si besoin
   (`{ name, flag, iso, continent, cities: {…} }`).
 
+**Plusieurs gares dans la même ville** (Paris-Nord, Paris-Gare-de-Lyon,
+Paris-Montparnasse) : ne PAS leur donner de `city` commun — la carte afficherait
+trois pastilles « Paris » indiscernables. Chacune porte son nom complet. Et
+comme la règle du centimètre (`mapnet.js`) n'en garderait qu'une, on les écarte
+de quelques kilomètres dans `geo.js`, chacune sur l'axe de sa propre desserte :
+5 km de mensonge, invisibles à l'échelle où l'on choisit une gare, et les trois
+redeviennent cliquables dès qu'on zoome sur la ville.
+
+⚠ **Faire entrer un pays dans `LINE_COUNTRIES` lui retire TOUS ses portails
+comme source de carte** — d'un coup, et y compris ses relations
+internationales. En écrivant les lignes françaises, l'Eurostar (Paris-Nord →
+`LONDRES`) et la vallée du Rhin (Strasbourg → `OFFENBURG`) ont cessé d'exister
+pour la carte : le Royaume-Uni est tombé de 88 gares atteignables à 11, et
+Freiburg n'était même plus une porte d'entrée valable. Ces liaisons doivent être
+RÉÉCRITES comme lignes en même temps que le pays. `net-check` les compte : lire
+la couverture « atteignable depuis chaque porte » avant/après, pas seulement le
+nombre d'erreurs.
+
 Un **cul-de-sac ne s'enregistre nulle part** : ni dans `index.json`, ni dans
 `geo.js`, ni comme point de carte. C'est une chaîne de caractères dans
 `portals`, rien de plus. La carte, elle, se décrit à part : `data/lines.js`

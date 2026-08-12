@@ -1,0 +1,29 @@
+{
+  "id": "reims",
+  "name": "Reims",
+  "tagline": "Reims — une seule sortie à gauche, trois à droite : tout passe par Paris.",
+  "difficulty": 1,
+  "country": "🇫🇷 France",
+  "desc": "Une seule sortie à gauche, trois à droite : tout Reims passe par la gorge de Paris. Quarante-cinq minutes de LGV d'un côté, la Champagne au pas de l'omnibus de l'autre.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
+  ],
+  "portals": {
+    "PARIS-EST":   { "side": "L", "color": "#25dede", "abbr": "PE" },
+    "CHARLEVILLE": { "side": "R", "color": "#a78bfa", "abbr": "CV" },
+    "LAON":        { "side": "R", "color": "#60a5fa", "abbr": "LN" },
+    "EPERNAY":     { "side": "R", "color": "#f2588f", "abbr": "EN", "label": "ÉPERNAY" }
+  },
+  "links": {
+    "PARIS-EST":   [1, 2, 3, 4, 5],
+    "CHARLEVILLE": [1, 2],
+    "LAON":        [3, 4],
+    "EPERNAY":     [4, 5]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 12, "nMax": 15, "gapMin": 1.6, "gapMax": 2.8,
+    "cars": [2, 2, 2, 2, 3, 3, 4],
+    "quietRate": 0.25
+  }
+}

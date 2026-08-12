@@ -51,10 +51,25 @@ const GEO = {
       } },
     france: { name: "France", flag: "🇫🇷", iso: "FRA", continent: "europe",
       cities: {
-        "paris-nord": [2.355, 48.881], lille: [3.070, 50.638], metz: [6.176, 49.120],
-        strasbourg: [7.734, 48.585], nantes: [-1.542, 47.218], bordeaux: [-0.556, 44.826],
-        lyon: [4.842, 45.750], marseille: [5.380, 43.303],
-        toulouse: [1.454, 43.611], "clermont-ferrand": [3.087, 45.778]
+        // Les trois têtes de ligne parisiennes sont à 2 km l'une de l'autre : à
+        // l'échelle du pays elles ne font qu'un point, et la règle du centimètre
+        // (mapnet.js) n'en garderait qu'une. On les ÉCARTE de quelques kilomètres
+        // sur l'axe de leur propre desserte — Nord au nord, Montparnasse à
+        // l'ouest, Lyon au sud-est. Le mensonge est de 5 km, invisible à
+        // l'échelle où l'on choisit une gare, et il rend les trois cliquables.
+        "paris-nord": [2.355, 48.925], "paris-lyon": [2.425, 48.815],
+        "paris-montparnasse": [2.255, 48.825],
+        lille: [3.070, 50.638], amiens: [2.313, 49.891], rouen: [1.094, 49.449],
+        caen: [-0.348, 49.176], rennes: [-1.673, 48.104], "le-mans": [0.193, 47.996],
+        angers: [-0.557, 47.465], nantes: [-1.542, 47.218], tours: [0.724, 47.386],
+        orleans: [1.905, 47.908], vierzon: [2.060, 47.226], limoges: [1.267, 45.836],
+        poitiers: [0.333, 46.582], bordeaux: [-0.556, 44.826], toulouse: [1.454, 43.611],
+        narbonne: [3.006, 43.190], montpellier: [3.881, 43.605], nimes: [4.366, 43.832],
+        avignon: [4.805, 43.942], marseille: [5.380, 43.303], toulon: [5.929, 43.128],
+        nice: [7.262, 43.705], valence: [4.893, 44.928], grenoble: [5.715, 45.191],
+        chambery: [5.920, 45.571], lyon: [4.859, 45.761], dijon: [5.027, 47.323],
+        mulhouse: [7.342, 47.742], strasbourg: [7.734, 48.585], metz: [6.176, 49.120],
+        nancy: [6.175, 48.690], reims: [4.024, 49.259], "clermont-ferrand": [3.087, 45.778]
       } },
     allemagne: { name: "Allemagne", flag: "🇩🇪", iso: "DEU", continent: "europe",
       cities: {

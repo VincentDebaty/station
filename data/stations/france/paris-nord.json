@@ -1,33 +1,33 @@
 {
   "id": "paris-nord",
   "name": "Paris-Nord",
-  "city": "Paris",
-  "tagline": "Paris-Nord — 8 quais en impasse, Eurostar voies 1-2. Boss final.",
+  "tagline": "Paris-Nord — 10 quais à heurtoir, 6 directions dont Londres. Le boss du pays.",
   "difficulty": 5,
   "country": "🇫🇷 France",
-  "desc": "La plus grande gare d'Europe, derrière sa façade aux 23 statues : huit quais en impasse, l'Eurostar pour Londres sous douane sur les voies basses, Bruxelles et Amsterdam juste à côté — et un débit qui ne pardonne aucune hésitation. Le boss final — pour l'instant.",
+  "desc": "La première gare d'Europe, 257 millions de voyageurs : dix quais à heurtoir et six directions dont trois internationales. Le boss du pays — et la seule gare du catalogue à toucher trois pays jouables.",
   "platforms": [
-    { "id": 1, "deadEnd": true }, { "id": 2, "deadEnd": true }, { "id": 3, "deadEnd": true },
-    { "id": 4, "deadEnd": true }, { "id": 5, "deadEnd": true }, { "id": 6, "deadEnd": true },
-    { "id": 7, "deadEnd": true }, { "id": 8, "deadEnd": true }
+    { "id": 1, "deadEnd": true }, { "id": 2, "deadEnd": true }, { "id": 3, "deadEnd": true }, { "id": 4, "deadEnd": true }, { "id": 5, "deadEnd": true },
+    { "id": 6, "deadEnd": true }, { "id": 7, "deadEnd": true }, { "id": 8, "deadEnd": true }, { "id": 9, "deadEnd": true }, { "id": 10, "deadEnd": true }
   ],
   "portals": {
-    "LONDRES":   { "side": "L", "color": "#f2588f", "abbr": "LO" },
-    "BRUXELLES": { "side": "L", "color": "#25dede", "abbr": "B" },
-    "LILLE":     { "side": "L", "color": "#60a5fa", "abbr": "LI" },
-    "AMIENS":    { "side": "L", "color": "#f5b23c", "abbr": "AM" },
-    "CREIL":     { "side": "L", "color": "#a78bfa", "abbr": "CR" }
+    "LONDRES":   { "side": "L", "color": "#a78bfa", "abbr": "LO" },
+    "BRUXELLES": { "side": "L", "color": "#f2588f", "abbr": "B" },
+    "AMSTERDAM": { "side": "L", "color": "#25dede", "abbr": "AS" },
+    "LILLE":     { "side": "L", "color": "#f5b23c", "abbr": "LI" },
+    "AMIENS":    { "side": "L", "color": "#4ade80", "abbr": "AM" },
+    "CREIL":     { "side": "L", "color": "#60a5fa", "abbr": "CR" }
   },
   "links": {
-    "LONDRES": [1, 2, 3],
+    "LONDRES":   [1, 2, 3],
     "BRUXELLES": [1, 2, 3, 4],
-    "LILLE": [3, 4, 5, 6],
-    "AMIENS": [5, 6, 7, 8],
-    "CREIL": [2, 3, 7, 8]
+    "AMSTERDAM": [2, 3, 4],
+    "LILLE":     [4, 5, 6, 7],
+    "AMIENS":    [5, 6, 7, 8, 9, 10],
+    "CREIL":     [8, 9, 10]
   },
   "sameSidePairs": "all",
   "gen": {
-    "nMin": 14, "nMax": 18, "gapMin": 1.7, "gapMax": 2.7,
+    "nMin": 18, "nMax": 22, "gapMin": 1.6, "gapMax": 2.7,
     "cars": [2, 3, 3, 4, 4, 5, 5, 6, 7],
     "quietRate": 0.1
   }

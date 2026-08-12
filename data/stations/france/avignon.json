@@ -1,0 +1,32 @@
+{
+  "id": "avignon",
+  "name": "Avignon-Centre",
+  "city": "Avignon",
+  "tagline": "Avignon-Centre — sous les remparts, 5 quais et l'antenne de Carpentras.",
+  "difficulty": 2,
+  "country": "🇫🇷 France",
+  "desc": "La gare intra-muros, sous les remparts : quatre directions et l'antenne de Carpentras rouverte en 2015. Le TGV, lui, passe à quatre kilomètres — ici on prend le temps.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
+  ],
+  "portals": {
+    "NIMES":      { "side": "L", "color": "#f5b23c", "abbr": "NI", "label": "NÎMES" },
+    "MARSEILLE":  { "side": "L", "color": "#f2588f", "abbr": "MA" },
+    "CARPENTRAS": { "side": "L", "color": "#a78bfa", "abbr": "CP" },
+    "LYON":       { "side": "R", "color": "#4ade80", "abbr": "LY" },
+    "PARIS-LYON": { "side": "R", "color": "#25dede", "abbr": "PL" }
+  },
+  "links": {
+    "NIMES":      [1, 2, 3],
+    "MARSEILLE":  [3, 4],
+    "CARPENTRAS": [5],
+    "LYON":       [1, 2, 3, 4],
+    "PARIS-LYON": [4, 5]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 13, "nMax": 16, "gapMin": 1.8, "gapMax": 3.0,
+    "cars": [2, 2, 2, 3, 3, 4, 4, 5],
+    "quietRate": 0.2
+  }
+}

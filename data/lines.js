@@ -37,7 +37,7 @@
 // Pays dont la topologie vient des LIGNES. Ajouter un pays ici en même temps
 // que ses lignes, jamais avant : sans elles, ses gares n'auraient plus aucune
 // arête.
-const LINE_COUNTRIES = ["🇧🇪 Belgique"];
+const LINE_COUNTRIES = ["🇧🇪 Belgique", "🇫🇷 France"];
 
 const LINES = [
   // ---- Flandre occidentale et orientale --------------------------------
@@ -108,5 +108,105 @@ const LINES = [
     nodes: ["denderleeuw", "grammont", "ath", "jurbise", "mons"] },
   { id: "L94",  name: "Bruxelles – Ath – Tournai",
     nodes: ["bruxelles-midi", "hal", "enghien", "ath", "leuze", "tournai"] },
-  { id: "L94F", name: "Tournai – Lille (frontière française)", nodes: ["tournai", "lille"] }
+  { id: "L94F", name: "Tournai – Lille (frontière française)", nodes: ["tournai", "lille"] },
+  // ==================== FRANCE ====================
+  // Une étoile, pas un maillage : presque tout part d'une des trois têtes de
+  // ligne parisiennes. Les lignes venues de l'Est, de Normandie et du Centre
+  // aboutissent aux gares que le jeu n'ouvre pas (Paris-Est, Saint-Lazare,
+  // Austerlitz, Bercy) : on les fait passer PAR ces points, puis rejoindre la
+  // tête de ligne jouable la plus proche — 2 km plus loin, invisible à l'échelle.
+
+  // ---- Nord et Picardie -------------------------------------------------
+  { id: "LGV-N", name: "Paris-Nord – Arras – Lille", nodes: ["paris-nord", "arras", "lille"] },
+  { id: "L272", name: "Paris-Nord – Creil – Amiens", nodes: ["paris-nord", "creil", "amiens"] },
+  { id: "L281", name: "Amiens – Arras – Lille",      nodes: ["amiens", "arras", "lille"] },
+  { id: "L310", name: "Amiens – Rouen",              nodes: ["amiens", "rouen"] },
+
+  // ---- Normandie ---------------------------------------------------------
+  { id: "L340", name: "Paris-Saint-Lazare – Mantes – Rouen",
+    nodes: ["rouen", "mantes", "parisstlazare", "paris-nord"] },
+  { id: "L365", name: "Rouen – Serquigny – Caen",    nodes: ["rouen", "serquigny", "caen"] },
+  { id: "L390", name: "Caen – Dol – Rennes",         nodes: ["caen", "dol", "rennes"] },
+  { id: "L395", name: "Caen – Alençon – Le Mans",    nodes: ["caen", "alencon", "le-mans"] },
+
+  // ---- Ouest et Bretagne -------------------------------------------------
+  { id: "LGV-A", name: "Paris-Montparnasse – Chartres – Le Mans",
+    nodes: ["paris-montparnasse", "chartres", "le-mans"] },
+  { id: "LGV-BPL", name: "Le Mans – Laval – Rennes", nodes: ["le-mans", "laval", "rennes"] },
+  { id: "L410", name: "Le Mans – Sablé – Angers",    nodes: ["le-mans", "sable", "angers"] },
+  { id: "L415", name: "Angers – Ancenis – Nantes",   nodes: ["angers", "ancenis", "nantes"] },
+  { id: "L470", name: "Rennes – Redon – Nantes",     nodes: ["rennes", "redon", "nantes"] },
+  { id: "L500", name: "Le Mans – Tours",             nodes: ["le-mans", "tours"] },
+
+  // ---- Val de Loire, Berry et Limousin -----------------------------------
+  { id: "L570", name: "Paris-Montparnasse – Vendôme – Tours",
+    nodes: ["paris-montparnasse", "vendome", "tours"] },
+  { id: "L590", name: "Tours – Châtellerault – Poitiers", nodes: ["tours", "chatellerault", "poitiers"] },
+  { id: "L595", name: "Poitiers – Angoulême – Bordeaux", nodes: ["poitiers", "angouleme", "bordeaux"] },
+  { id: "L600", name: "Nantes – La Rochelle – Saintes – Bordeaux",
+    nodes: ["nantes", "lalochesuryon", "larochelle", "saintes", "bordeaux"] },
+  { id: "L610", name: "Tours – Vierzon",             nodes: ["tours", "vierzon"] },
+  { id: "L615", name: "Vierzon – Les Aubrais – Orléans", nodes: ["vierzon", "aubrais", "orleans"] },
+  { id: "L620", name: "Orléans – Étampes – Paris-Austerlitz",
+    nodes: ["orleans", "aubrais", "etampes", "parisausterlitz", "paris-lyon"] },
+  { id: "L630", name: "Vierzon – Châteauroux – Limoges", nodes: ["vierzon", "chateauroux", "limoges"] },
+  { id: "L640", name: "Limoges – Brive – Cahors – Toulouse",
+    nodes: ["limoges", "brive", "cahors", "toulouse"] },
+  { id: "L650", name: "Poitiers – Limoges",          nodes: ["limoges", "poitiers"] },
+
+  // ---- Sud-Ouest et Languedoc -------------------------------------------
+  { id: "L660", name: "Bordeaux – Agen – Montauban – Toulouse",
+    nodes: ["bordeaux", "agen", "montauban", "toulouse"] },
+  { id: "L670", name: "Toulouse – Carcassonne – Narbonne", nodes: ["toulouse", "carcassonne", "narbonne"] },
+  { id: "L680", name: "Narbonne – Béziers – Sète – Montpellier",
+    nodes: ["narbonne", "beziers", "sete", "montpellier"] },
+  { id: "L690", name: "Montpellier – Nîmes",         nodes: ["montpellier", "nimes"] },
+  { id: "L700", name: "Nîmes – Tarascon – Avignon",  nodes: ["nimes", "tarascon", "avignon"] },
+  { id: "L800", name: "Nîmes – Alès – Clermont-Ferrand (ligne des Cévennes)",
+    nodes: ["nimes", "ales", "langogne", "clermont-ferrand"] },
+
+  // ---- Vallée du Rhône, Alpes et Côte d'Azur -----------------------------
+  { id: "L810", name: "Avignon – Miramas – Marseille", nodes: ["avignon", "miramas", "marseille"] },
+  { id: "L820", name: "Avignon – Montélimar – Valence", nodes: ["avignon", "montelimar", "valence"] },
+  { id: "L830", name: "Valence – Vienne – Lyon",     nodes: ["valence", "vienne", "lyon"] },
+  { id: "L840", name: "Valence – Moirans – Grenoble", nodes: ["valence", "moirans", "grenoble"] },
+  { id: "L850", name: "Grenoble – Montmélian – Chambéry", nodes: ["grenoble", "montmelian", "chambery"] },
+  { id: "L860", name: "Lyon – Ambérieu – Chambéry",  nodes: ["lyon", "amberieu", "chambery"] },
+  { id: "L870", name: "Marseille – Toulon",          nodes: ["marseille", "toulon"] },
+  { id: "L880", name: "Toulon – Saint-Raphaël – Cannes – Nice",
+    nodes: ["toulon", "saintraphael", "cannes", "nice"] },
+
+  // ---- Bourgogne, Franche-Comté et Alsace --------------------------------
+  { id: "LGV-SE", name: "Paris-Lyon – Le Creusot – Lyon", nodes: ["paris-lyon", "lecreusot", "lyon"] },
+  { id: "L750", name: "Paris-Lyon – Sens – Dijon",   nodes: ["paris-lyon", "sens", "dijon"] },
+  { id: "L760", name: "Dijon – Mâcon – Lyon",        nodes: ["dijon", "macon", "lyon"] },
+  { id: "L770", name: "Dijon – Dole – Besançon – Belfort – Mulhouse",
+    nodes: ["dijon", "dole", "besancon", "belfort", "mulhouse"] },
+  { id: "L780", name: "Dijon – Culmont-Chalindrey – Nancy", nodes: ["dijon", "culmont", "nancy"] },
+  { id: "L115", name: "Mulhouse – Colmar – Strasbourg", nodes: ["mulhouse", "colmar", "strasbourg"] },
+
+  // ---- Lorraine, Champagne et Massif central -----------------------------
+  { id: "L155", name: "Strasbourg – Sarrebourg – Metz", nodes: ["strasbourg", "sarrebourg", "metz"] },
+  { id: "L160", name: "Strasbourg – Sarrebourg – Nancy", nodes: ["strasbourg", "sarrebourg", "nancy"] },
+  { id: "L170", name: "Nancy – Pont-à-Mousson – Metz", nodes: ["nancy", "pontamousson", "metz"] },
+  { id: "LGV-E", name: "Paris-Est – Châlons – Bar-le-Duc – Nancy",
+    nodes: ["nancy", "barleduc", "chalons", "parisest", "paris-nord"] },
+  { id: "LGV-E2", name: "Paris-Est – Château-Thierry – Reims",
+    nodes: ["reims", "chateauthierry", "parisest", "paris-nord"] },
+  { id: "L690B", name: "Paris-Bercy – Nevers – Vichy – Clermont-Ferrand",
+    nodes: ["clermont-ferrand", "vichy", "nevers", "montargis", "parisbercy", "paris-lyon"] },
+  { id: "L790", name: "Clermont-Ferrand – Roanne – Lyon", nodes: ["clermont-ferrand", "roanne", "lyon"] },
+
+  // ---- Les deux lignes qui recousent le continent ------------------------
+  // Elles ne sont pas là pour le décor : dès que la France a eu ses lignes, ses
+  // portails ont cessé de compter pour la carte, et le Royaume-Uni comme
+  // l'Allemagne se sont retrouvés SANS AUCUNE arête vers le reste — donc
+  // injouables (mesuré : York tombait de 88 gares atteignables à 11, Freiburg
+  // n'était même plus une porte d'entrée valable). L'Eurostar et la vallée du
+  // Rhin sont pourtant deux itinéraires on ne peut plus réels.
+  { id: "Eurostar", name: "Paris-Nord – Lille – Calais – Londres (tunnel sous la Manche)",
+    nodes: ["paris-nord", "arras", "lille", "calais", "waterloo"] },
+  { id: "L4000", name: "Strasbourg – Offenburg – Fribourg (Rheintalbahn)",
+    nodes: ["strasbourg", "offenburg", "freiburg"] },
+  { id: "L4010", name: "Mulhouse – Bâle – Fribourg", nodes: ["mulhouse", "bale", "freiburg"] }
 ];

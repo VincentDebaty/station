@@ -1,32 +1,33 @@
 {
   "id": "bordeaux",
-  "name": "Bordeaux Saint-Jean",
+  "name": "Bordeaux-Saint-Jean",
   "city": "Bordeaux",
-  "tagline": "Bordeaux — carrefour du Sud-Ouest : 6 quais traversants, flux dense sans répit.",
-  "difficulty": 3,
+  "tagline": "Bordeaux-Saint-Jean — sous la plus longue halle d'Europe, 8 quais sans répit.",
+  "difficulty": 4,
   "country": "🇫🇷 France",
-  "desc": "Le grand carrefour du Sud-Ouest, sous la plus vaste verrière ferroviaire d'Europe : six quais, cinq directions vers Paris (LGV), Toulouse, Bayonne et l'Espagne, Nantes et le Bassin d'Arcachon. Un flux dense qui ne s'arrête jamais — la gare la plus nerveuse de l'Aquitaine.",
+  "desc": "Sous la plus longue halle métallique d'Europe : depuis la LGV, Paris est à deux heures et la gare ne désemplit plus. Cinq directions, huit quais, et le flux d'été vers Arcachon en prime.",
   "platforms": [
-    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }, { "id": 6 }
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },
+    { "id": 6 }, { "id": 7 }, { "id": 8 }
   ],
   "portals": {
-    "PARIS":    { "side": "L", "color": "#f2588f", "abbr": "P" },
-    "NANTES":   { "side": "L", "color": "#25dede", "abbr": "NA" },
-    "TOULOUSE": { "side": "R", "color": "#4ade80", "abbr": "TO" },
-    "BAYONNE":  { "side": "R", "color": "#f5b23c", "abbr": "BY" },
-    "ARCACHON": { "side": "R", "color": "#60a5fa", "abbr": "AR" }
+    "PARIS-MONTPARNASSE": { "side": "L", "color": "#25dede", "abbr": "PM", "label": "PARIS-MONTP." },
+    "NANTES":             { "side": "L", "color": "#60a5fa", "abbr": "NA" },
+    "TOULOUSE":           { "side": "R", "color": "#f2588f", "abbr": "TL" },
+    "BAYONNE":            { "side": "R", "color": "#a78bfa", "abbr": "BY" },
+    "ARCACHON":           { "side": "R", "color": "#4ade80", "abbr": "AR" }
   },
   "links": {
-    "PARIS": [1, 2, 3, 4],
-    "NANTES": [4, 5, 6],
-    "TOULOUSE": [1, 2, 3, 4],
-    "BAYONNE": [2, 3, 4, 5],
-    "ARCACHON": [5, 6]
+    "PARIS-MONTPARNASSE": [1, 2, 3, 4],
+    "NANTES":             [5, 6, 7, 8],
+    "TOULOUSE":           [1, 2, 3, 5],
+    "BAYONNE":            [3, 4, 6, 7],
+    "ARCACHON":           [7, 8]
   },
   "sameSidePairs": [],
   "gen": {
-    "nMin": 15, "nMax": 18, "gapMin": 1.6, "gapMax": 2.8,
+    "nMin": 16, "nMax": 20, "gapMin": 1.5, "gapMax": 2.6,
     "cars": [2, 3, 3, 4, 4, 5, 5, 6],
-    "quietRate": 0.15
+    "quietRate": 0.12
   }
 }

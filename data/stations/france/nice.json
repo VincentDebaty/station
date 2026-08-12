@@ -1,0 +1,33 @@
+{
+  "id": "nice",
+  "name": "Nice-Ville",
+  "city": "Nice",
+  "tagline": "Nice-Ville — 12 millions de voyageurs sur 6 quais, et la ligne de Tende.",
+  "difficulty": 3,
+  "country": "🇫🇷 France",
+  "desc": "Douze millions de voyageurs sur six quais, et la ligne de Tende qui grimpe vers le Piémont par trente-quatre tunnels. La gare la plus chargée de France par rapport à sa taille.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },
+    { "id": 6 }
+  ],
+  "portals": {
+    "MARSEILLE":   { "side": "L", "color": "#f2588f", "abbr": "MA" },
+    "PARIS-LYON":  { "side": "L", "color": "#25dede", "abbr": "PL" },
+    "CANNES":      { "side": "L", "color": "#60a5fa", "abbr": "CN" },
+    "VENTIMIGLIA": { "side": "R", "color": "#f5b23c", "abbr": "VE", "label": "VINTIMILLE" },
+    "TENDE":       { "side": "R", "color": "#a78bfa", "abbr": "TE" }
+  },
+  "links": {
+    "MARSEILLE":   [1, 2, 3],
+    "PARIS-LYON":  [3, 4],
+    "CANNES":      [5, 6],
+    "VENTIMIGLIA": [1, 2, 3, 4, 5],
+    "TENDE":       [5, 6]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 14, "nMax": 17, "gapMin": 1.7, "gapMax": 2.9,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6],
+    "quietRate": 0.15
+  }
+}

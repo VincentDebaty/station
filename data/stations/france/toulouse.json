@@ -1,32 +1,35 @@
 {
   "id": "toulouse",
-  "name": "Toulouse Matabiau",
+  "name": "Toulouse-Matabiau",
   "city": "Toulouse",
-  "tagline": "Toulouse — carrefour du Sud : 6 quais traversants, cinq directions sans répit.",
-  "difficulty": 3,
+  "tagline": "Toulouse-Matabiau — 6 directions au bord du canal du Midi, Cerdagne comprise.",
+  "difficulty": 4,
   "country": "🇫🇷 France",
-  "desc": "Le grand pôle occitan, sur la transversale Bordeaux–Méditerranée : six quais traversants et cinq directions — Bordeaux, Bayonne, Narbonne vers la mer, Foix vers les Pyrénées et Brive vers Paris (l'axe POLT). Plus de vingt lignes TER y convergent — un flux qui ne faiblit jamais.",
+  "desc": "Au bord du canal du Midi, la gare de tout le Sud-Ouest : six directions, dont la ligne de Cerdagne qui grimpe à 1 600 m. Huit quais, et pas une minute de battement en pointe.",
   "platforms": [
-    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }, { "id": 6 }
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },
+    { "id": 6 }, { "id": 7 }, { "id": 8 }
   ],
   "portals": {
-    "BORDEAUX": { "side": "L", "color": "#f5b23c", "abbr": "Bx" },
-    "BAYONNE":  { "side": "L", "color": "#25dede", "abbr": "By" },
-    "NARBONNE": { "side": "R", "color": "#4ade80", "abbr": "Na" },
-    "FOIX":     { "side": "R", "color": "#60a5fa", "abbr": "Fx" },
-    "BRIVE":    { "side": "R", "color": "#a78bfa", "abbr": "Br" }
+    "BORDEAUX":        { "side": "L", "color": "#f5b23c", "abbr": "BX" },
+    "LIMOGES":         { "side": "L", "color": "#f2588f", "abbr": "LG" },
+    "PAU":             { "side": "L", "color": "#a78bfa", "abbr": "PU" },
+    "NARBONNE":        { "side": "R", "color": "#4ade80", "abbr": "NB" },
+    "MONTPELLIER":     { "side": "R", "color": "#25dede", "abbr": "MP" },
+    "LATOUR-DE-CAROL": { "side": "R", "color": "#60a5fa", "abbr": "LT", "label": "LATOUR-DE-C." }
   },
   "links": {
-    "BORDEAUX": [2, 3, 4, 5, 6],
-    "BAYONNE": [1, 2, 3],
-    "NARBONNE": [2, 3, 4, 5],
-    "FOIX": [1, 2],
-    "BRIVE": [4, 5, 6]
+    "BORDEAUX":        [1, 2, 3, 4],
+    "LIMOGES":         [4, 5, 6],
+    "PAU":             [7, 8],
+    "NARBONNE":        [1, 2, 3, 7],
+    "MONTPELLIER":     [4, 5, 8],
+    "LATOUR-DE-CAROL": [5, 6]
   },
   "sameSidePairs": [],
   "gen": {
-    "nMin": 15, "nMax": 18, "gapMin": 1.6, "gapMax": 2.8,
+    "nMin": 16, "nMax": 20, "gapMin": 1.5, "gapMax": 2.6,
     "cars": [2, 3, 3, 4, 4, 5, 5, 6],
-    "quietRate": 0.15
+    "quietRate": 0.12
   }
 }

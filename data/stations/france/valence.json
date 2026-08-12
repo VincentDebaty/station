@@ -1,0 +1,32 @@
+{
+  "id": "valence",
+  "name": "Valence-Ville",
+  "city": "Valence",
+  "tagline": "Valence-Ville — le pivot du couloir rhodanien : les Alpes s'y détachent.",
+  "difficulty": 2,
+  "country": "🇫🇷 France",
+  "desc": "Le pivot du couloir rhodanien : c'est ici que la ligne des Alpes se détache de celle de la Méditerranée. La gare TGV est à dix kilomètres — deux gares pour une ville, comme souvent.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
+  ],
+  "portals": {
+    "LYON":       { "side": "L", "color": "#f2588f", "abbr": "LY" },
+    "PARIS-LYON": { "side": "L", "color": "#25dede", "abbr": "PL" },
+    "MARSEILLE":  { "side": "R", "color": "#f5b23c", "abbr": "MA" },
+    "GRENOBLE":   { "side": "R", "color": "#4ade80", "abbr": "GR" },
+    "BRIANCON":   { "side": "R", "color": "#a78bfa", "abbr": "BC", "label": "BRIANÇON" }
+  },
+  "links": {
+    "LYON":       [1, 2, 3],
+    "PARIS-LYON": [3, 4, 5],
+    "MARSEILLE":  [1, 2, 3, 4],
+    "GRENOBLE":   [4, 5],
+    "BRIANCON":   [5]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 13, "nMax": 16, "gapMin": 1.8, "gapMax": 3.0,
+    "cars": [2, 2, 2, 3, 3, 4, 4, 5],
+    "quietRate": 0.2
+  }
+}

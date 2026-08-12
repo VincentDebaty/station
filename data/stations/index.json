@@ -13,7 +13,14 @@
   {
     "country": "france",
     "label": "🇫🇷 France",
-    "stations": ["lille", "clermont-ferrand", "nantes", "bordeaux", "toulouse", "marseille", "lyon", "strasbourg", "metz", "paris-nord"]
+    "stations": [
+      "caen", "angers", "vierzon", "narbonne", "toulon", "chambery", "reims",
+      "amiens", "rouen", "le-mans", "orleans", "limoges", "poitiers", "nimes",
+      "avignon", "valence", "grenoble", "mulhouse", "clermont-ferrand",
+      "lille", "rennes", "nantes", "tours", "montpellier", "nice", "dijon", "metz", "nancy",
+      "paris-lyon", "paris-montparnasse", "bordeaux", "toulouse", "marseille", "lyon", "strasbourg",
+      "paris-nord"
+    ]
   },
   {
     "country": "allemagne",

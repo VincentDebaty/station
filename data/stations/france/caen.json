@@ -1,0 +1,31 @@
+{
+  "id": "caen",
+  "name": "Caen",
+  "tagline": "Caen — cinq directions sur cinq quais : la plus déséquilibrée du catalogue.",
+  "difficulty": 1,
+  "country": "🇫🇷 France",
+  "desc": "Cinq quais, cinq directions : c'est la gare la plus déséquilibrée du catalogue pour sa taille. Tout ce qui va vers l'ouest doit trouver sa place entre deux Paris.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
+  ],
+  "portals": {
+    "PARIS-ST-LAZARE": { "side": "L", "color": "#25dede", "abbr": "PS" },
+    "ROUEN":           { "side": "L", "color": "#f5b23c", "abbr": "RO" },
+    "CHERBOURG":       { "side": "R", "color": "#a78bfa", "abbr": "CH" },
+    "RENNES":          { "side": "R", "color": "#f2588f", "abbr": "RE" },
+    "LE MANS":         { "side": "R", "color": "#4ade80", "abbr": "LM" }
+  },
+  "links": {
+    "PARIS-ST-LAZARE": [1, 2, 3],
+    "ROUEN":           [3, 4, 5],
+    "CHERBOURG":       [1, 2, 3],
+    "RENNES":          [4, 5],
+    "LE MANS":         [3, 5]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 12, "nMax": 15, "gapMin": 1.6, "gapMax": 2.8,
+    "cars": [2, 2, 2, 2, 3, 3, 4],
+    "quietRate": 0.25
+  }
+}

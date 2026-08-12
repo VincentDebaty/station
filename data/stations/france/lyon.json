@@ -2,31 +2,34 @@
   "id": "lyon",
   "name": "Lyon Part-Dieu",
   "city": "Lyon",
-  "tagline": "Lyon Part-Dieu — 5 directions traversantes, TGV pressés, flux dense.",
-  "difficulty": 3,
+  "tagline": "Lyon Part-Dieu — première gare de province : 9 quais, 6 directions, chantier permanent.",
+  "difficulty": 4,
   "country": "🇫🇷 France",
-  "desc": "Le grand carrefour du Sud-Est : cinq directions traversantes, des TGV pressés et un flux qui ne s'arrête jamais — la gare la plus dense que vous ayez vue jusqu'ici.",
+  "desc": "La première gare de province, 42 millions de voyageurs sur un site qui n'était qu'une caserne en 1978 : neuf quais, six directions, et le chantier permanent qui va avec.",
   "platforms": [
-    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }, { "id": 6 }
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },
+    { "id": 6 }, { "id": 7 }, { "id": 8 }, { "id": 9 }
   ],
   "portals": {
-    "PARIS":        { "side": "L", "color": "#f2588f", "abbr": "P" },
-    "SAINTETIENNE": { "side": "L", "color": "#4ade80", "abbr": "SE", "label": "SAINT-ÉTIENNE" },
-    "GENEVE":       { "side": "R", "color": "#a78bfa", "abbr": "GE", "label": "GENÈVE" },
-    "GRENOBLE":     { "side": "R", "color": "#f5b23c", "abbr": "GR" },
-    "MARSEILLE":    { "side": "R", "color": "#25dede", "abbr": "MA" }
+    "PARIS-LYON":    { "side": "L", "color": "#25dede", "abbr": "PL" },
+    "DIJON":         { "side": "L", "color": "#f5b23c", "abbr": "DI" },
+    "SAINT-ETIENNE": { "side": "L", "color": "#a78bfa", "abbr": "SE", "label": "ST-ÉTIENNE" },
+    "GENEVE":        { "side": "R", "color": "#60a5fa", "abbr": "GE", "label": "GENÈVE" },
+    "GRENOBLE":      { "side": "R", "color": "#4ade80", "abbr": "GR" },
+    "MARSEILLE":     { "side": "R", "color": "#f2588f", "abbr": "MA" }
   },
   "links": {
-    "PARIS": [1, 2, 3, 4],
-    "SAINTETIENNE": [4, 5, 6],
-    "GENEVE": [1, 2],
-    "GRENOBLE": [2, 3],
-    "MARSEILLE": [3, 4, 5, 6]
+    "PARIS-LYON":    [1, 2, 3, 4],
+    "DIJON":         [4, 5, 6],
+    "SAINT-ETIENNE": [7, 8, 9],
+    "GENEVE":        [1, 2, 7],
+    "GRENOBLE":      [3, 8, 9],
+    "MARSEILLE":     [4, 5, 6, 9]
   },
   "sameSidePairs": [],
   "gen": {
-    "nMin": 15, "nMax": 18, "gapMin": 1.6, "gapMax": 2.8,
+    "nMin": 16, "nMax": 20, "gapMin": 1.5, "gapMax": 2.6,
     "cars": [2, 3, 3, 4, 4, 5, 5, 6],
-    "quietRate": 0.15
+    "quietRate": 0.12
   }
 }

@@ -1,0 +1,32 @@
+{
+  "id": "le-mans",
+  "name": "Le Mans",
+  "tagline": "Le Mans — là où la LGV Atlantique se coupe en deux : moitié Rennes, moitié Nantes.",
+  "difficulty": 2,
+  "country": "🇫🇷 France",
+  "desc": "Le premier embranchement de la LGV Atlantique : ici les rames se séparent, moitié Rennes, moitié Nantes. Cinq directions sur six quais — la gare la plus dense de sa catégorie.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },
+    { "id": 6 }
+  ],
+  "portals": {
+    "PARIS-MONTPARNASSE": { "side": "L", "color": "#25dede", "abbr": "PM", "label": "PARIS-MONTP." },
+    "TOURS":              { "side": "L", "color": "#f5b23c", "abbr": "TS" },
+    "RENNES":             { "side": "R", "color": "#f2588f", "abbr": "RE" },
+    "ANGERS":             { "side": "R", "color": "#4ade80", "abbr": "AG" },
+    "CAEN":               { "side": "R", "color": "#60a5fa", "abbr": "CA" }
+  },
+  "links": {
+    "PARIS-MONTPARNASSE": [1, 2, 3, 4],
+    "TOURS":              [4, 5, 6],
+    "RENNES":             [1, 2, 3],
+    "ANGERS":             [3, 4, 5],
+    "CAEN":               [5, 6]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 13, "nMax": 16, "gapMin": 1.8, "gapMax": 3.0,
+    "cars": [2, 2, 2, 3, 3, 4, 4, 5],
+    "quietRate": 0.2
+  }
+}

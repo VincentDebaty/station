@@ -1,0 +1,31 @@
+{
+  "id": "vierzon",
+  "name": "Vierzon",
+  "tagline": "Vierzon — 25 000 habitants, 5 directions : la meilleure gare-école de France.",
+  "difficulty": 1,
+  "country": "🇫🇷 France",
+  "desc": "Vingt-cinq mille habitants, cinq directions : c'est ici que le Paris–Toulouse croise le Nantes–Lyon. La gare la plus disproportionnée de France — et pour cette raison, la meilleure gare-école.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
+  ],
+  "portals": {
+    "PARIS-AUSTERLITZ": { "side": "L", "color": "#25dede", "abbr": "PA", "label": "PARIS-AUSTERL." },
+    "TOURS":            { "side": "L", "color": "#f5b23c", "abbr": "TS" },
+    "LIMOGES":          { "side": "R", "color": "#f2588f", "abbr": "LG" },
+    "BOURGES":          { "side": "R", "color": "#4ade80", "abbr": "BG" },
+    "MONTLUCON":        { "side": "R", "color": "#a78bfa", "abbr": "ML", "label": "MONTLUÇON" }
+  },
+  "links": {
+    "PARIS-AUSTERLITZ": [1, 2, 3],
+    "TOURS":            [3, 4, 5],
+    "LIMOGES":          [1, 2, 3, 4],
+    "BOURGES":          [4, 5],
+    "MONTLUCON":        [2, 5]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 12, "nMax": 15, "gapMin": 1.6, "gapMax": 2.8,
+    "cars": [2, 2, 2, 2, 3, 3, 4],
+    "quietRate": 0.25
+  }
+}

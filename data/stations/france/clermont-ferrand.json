@@ -1,29 +1,32 @@
 {
   "id": "clermont-ferrand",
   "name": "Clermont-Ferrand",
-  "tagline": "Clermont-Ferrand — étoile auvergnate sans TGV : 4 quais au pied du Massif.",
-  "difficulty": 1,
+  "tagline": "Clermont-Ferrand — la gare la plus isolée du catalogue : aucune LGV, et les Cévennes.",
+  "difficulty": 2,
   "country": "🇫🇷 France",
-  "desc": "Le nœud auvergnat au pied du Massif central, étoile de bifurcation à six branches — et l'une des rares grandes villes sans TGV : quatre quais, des Intercités classiques vers Paris et des TER vers Lyon, Aurillac et Nîmes par les Cévennes (Le Cévenol). Petit gabarit, tempo serré — la rampe d'accès idéale.",
+  "desc": "Au pied du puy de Dôme, la gare la plus isolée du catalogue : aucune LGV, aucune électrification vers le sud, et sept heures de Cévennes pour rejoindre Nîmes. C'est ce qui fait son caractère.",
   "platforms": [
-    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },
+    { "id": 6 }
   ],
   "portals": {
-    "PARIS":    { "side": "L", "color": "#f2588f", "abbr": "P" },
-    "AURILLAC": { "side": "L", "color": "#f5b23c", "abbr": "AU" },
-    "LYON":     { "side": "R", "color": "#60a5fa", "abbr": "LY" },
-    "NIMES":    { "side": "R", "color": "#4ade80", "abbr": "NI", "label": "NÎMES" }
+    "PARIS-BERCY": { "side": "L", "color": "#25dede", "abbr": "PB" },
+    "MONTLUCON":   { "side": "L", "color": "#a78bfa", "abbr": "ML", "label": "MONTLUÇON" },
+    "LYON":        { "side": "R", "color": "#f2588f", "abbr": "LY" },
+    "NIMES":       { "side": "R", "color": "#f5b23c", "abbr": "NI", "label": "NÎMES" },
+    "AURILLAC":    { "side": "R", "color": "#4ade80", "abbr": "AU" }
   },
   "links": {
-    "PARIS": [1, 2, 3],
-    "AURILLAC": [3, 4],
-    "LYON": [1, 2],
-    "NIMES": [2, 3, 4]
+    "PARIS-BERCY": [1, 2, 3],
+    "MONTLUCON":   [4, 5, 6],
+    "LYON":        [1, 2, 3, 4],
+    "NIMES":       [4, 5, 6],
+    "AURILLAC":    [6]
   },
   "sameSidePairs": [],
   "gen": {
-    "nMin": 12, "nMax": 15, "gapMin": 1.6, "gapMax": 2.8,
-    "cars": [2, 2, 2, 2, 3, 3, 4],
-    "quietRate": 0.25
+    "nMin": 13, "nMax": 16, "gapMin": 1.8, "gapMax": 3.0,
+    "cars": [2, 2, 2, 3, 3, 4, 4, 5],
+    "quietRate": 0.2
   }
 }

@@ -1,30 +1,33 @@
 {
   "id": "strasbourg",
   "name": "Strasbourg",
-  "tagline": "Strasbourg — porte de l'Allemagne : hub transfrontalier, TGV Est et pont de Kehl.",
+  "tagline": "Strasbourg — sous la verrière-bulle, 8 quais et le Rhin à deux kilomètres.",
   "difficulty": 4,
   "country": "🇫🇷 France",
-  "desc": "La porte de l'Allemagne, sous la bulle de verre de 2007 : terminus de la LGV Est et carrefour transfrontalier où se croisent Paris, Metz, l'axe rhénan vers Bâle et Colmar, et l'Allemagne par le pont de Kehl (Offenburg). Cinq quais, des rames internationales pressées et un flux qui ne retombe jamais — le fret rhénan, lui, contourne par Hausbergen.",
+  "desc": "Sous la verrière-bulle de 2007, la deuxième gare de province : depuis la LGV Est, Paris est à 1 h 46. Six directions, huit quais, et le Rhin à deux kilomètres.",
   "platforms": [
-    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },
+    { "id": 6 }, { "id": 7 }, { "id": 8 }
   ],
   "portals": {
-    "PARIS":     { "side": "L", "color": "#f2588f", "abbr": "P" },
-    "METZ":      { "side": "L", "color": "#4ade80", "abbr": "MZ" },
-    "OFFENBURG": { "side": "R", "color": "#f5b23c", "abbr": "OF" },
-    "BALE":      { "side": "R", "color": "#60a5fa", "abbr": "BA", "label": "BÂLE" },
-    "COLMAR":    { "side": "R", "color": "#a78bfa", "abbr": "CO" }
+    "PARIS-EST": { "side": "L", "color": "#25dede", "abbr": "PE" },
+    "METZ":      { "side": "L", "color": "#f5b23c", "abbr": "MZ" },
+    "NANCY":     { "side": "L", "color": "#4ade80", "abbr": "NY" },
+    "MULHOUSE":  { "side": "R", "color": "#60a5fa", "abbr": "MU" },
+    "COLMAR":    { "side": "R", "color": "#a78bfa", "abbr": "CL" },
+    "OFFENBURG": { "side": "R", "color": "#f2588f", "abbr": "OF" }
   },
   "links": {
-    "PARIS": [1, 2, 3],
-    "METZ": [3, 4, 5],
-    "OFFENBURG": [1, 2],
-    "BALE": [2, 3, 4, 5],
-    "COLMAR": [4, 5]
+    "PARIS-EST": [1, 2, 3, 4],
+    "METZ":      [4, 5, 6],
+    "NANCY":     [6, 7, 8],
+    "MULHOUSE":  [1, 2, 5, 6],
+    "COLMAR":    [3, 4, 7],
+    "OFFENBURG": [7, 8]
   },
   "sameSidePairs": [],
   "gen": {
-    "nMin": 14, "nMax": 17, "gapMin": 1.6, "gapMax": 2.7,
+    "nMin": 16, "nMax": 20, "gapMin": 1.5, "gapMax": 2.6,
     "cars": [2, 3, 3, 4, 4, 5, 5, 6],
     "quietRate": 0.12
   }

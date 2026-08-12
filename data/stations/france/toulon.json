@@ -1,0 +1,29 @@
+{
+  "id": "toulon",
+  "name": "Toulon",
+  "tagline": "Toulon — deux voies pour tout le trafic entre Marseille et Nice.",
+  "difficulty": 1,
+  "country": "🇫🇷 France",
+  "desc": "Entre la rade et le mont Faron, la gare la plus contrainte de la côte : deux voies pour tout le trafic entre Marseille et Nice. Le goulet du Var passe ici, et nulle part ailleurs.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
+  ],
+  "portals": {
+    "MARSEILLE":  { "side": "L", "color": "#f2588f", "abbr": "MA" },
+    "PARIS-LYON": { "side": "L", "color": "#25dede", "abbr": "PL" },
+    "NICE":       { "side": "R", "color": "#60a5fa", "abbr": "NC" },
+    "HYERES":     { "side": "R", "color": "#a78bfa", "abbr": "HY", "label": "HYÈRES" }
+  },
+  "links": {
+    "MARSEILLE":  [1, 2, 3, 4],
+    "PARIS-LYON": [3, 4, 5],
+    "NICE":       [1, 2, 3, 4, 5],
+    "HYERES":     [4, 5]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 12, "nMax": 15, "gapMin": 1.6, "gapMax": 2.8,
+    "cars": [2, 2, 2, 2, 3, 3, 4],
+    "quietRate": 0.25
+  }
+}

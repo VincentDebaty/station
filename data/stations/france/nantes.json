@@ -1,31 +1,34 @@
 {
   "id": "nantes",
   "name": "Nantes",
-  "tagline": "Nantes — porte de l'Atlantique : gare traversante, l'axe Paris–Le Croisic et les branches du Sud.",
-  "difficulty": 2,
+  "tagline": "Nantes — 7 quais tournés vers l'océan, la transversale de La Rochelle en prime.",
+  "difficulty": 3,
   "country": "🇫🇷 France",
-  "desc": "La porte de l'Atlantique, sous la mezzanine suspendue de Ricciotti (2020) : une gare traversante d'axe est-ouest où les trains de Paris filent vers Saint-Nazaire, Le Croisic et Quimper, croisant les branches de Rennes et du Sud vers Bordeaux. Six quais, un flux qui ne rebrousse plus — trouvez les bonnes voies.",
+  "desc": "La sixième gare de province, tournée vers l'océan : trois directions vers l'intérieur, trois vers la côte. La ligne de Bordeaux par La Rochelle est la seule transversale de l'Atlantique.",
   "platforms": [
-    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }, { "id": 6 }
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },
+    { "id": 6 }, { "id": 7 }
   ],
   "portals": {
-    "PARIS":     { "side": "R", "color": "#f2588f", "abbr": "P" },
-    "BORDEAUX":  { "side": "R", "color": "#4ade80", "abbr": "BX" },
-    "LECROISIC": { "side": "L", "color": "#f5b23c", "abbr": "LC", "label": "LE CROISIC" },
-    "QUIMPER":   { "side": "L", "color": "#a78bfa", "abbr": "QU" },
-    "RENNES":    { "side": "L", "color": "#25dede", "abbr": "RE" }
+    "PARIS-MONTPARNASSE": { "side": "L", "color": "#25dede", "abbr": "PM", "label": "PARIS-MONTP." },
+    "ANGERS":             { "side": "L", "color": "#4ade80", "abbr": "AG" },
+    "BORDEAUX":           { "side": "L", "color": "#f5b23c", "abbr": "BX" },
+    "RENNES":             { "side": "R", "color": "#60a5fa", "abbr": "RE" },
+    "QUIMPER":            { "side": "R", "color": "#a78bfa", "abbr": "QU" },
+    "LE CROISIC":         { "side": "R", "color": "#f2588f", "abbr": "LC" }
   },
   "links": {
-    "PARIS": [1, 2, 3, 4],
-    "BORDEAUX": [3, 4, 5, 6],
-    "LECROISIC": [1, 2, 3],
-    "QUIMPER": [4, 5, 6],
-    "RENNES": [2, 3, 4, 5]
+    "PARIS-MONTPARNASSE": [1, 2, 3, 4],
+    "ANGERS":             [2, 3, 4, 5],
+    "BORDEAUX":           [6, 7],
+    "RENNES":             [1, 2, 3],
+    "QUIMPER":            [4, 5, 6],
+    "LE CROISIC":         [5, 6, 7]
   },
   "sameSidePairs": [],
   "gen": {
-    "nMin": 13, "nMax": 16, "gapMin": 1.8, "gapMax": 3.0,
-    "cars": [2, 2, 2, 3, 3, 4, 4, 5],
-    "quietRate": 0.2
+    "nMin": 14, "nMax": 17, "gapMin": 1.7, "gapMax": 2.9,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6],
+    "quietRate": 0.15
   }
 }

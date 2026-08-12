@@ -1,0 +1,33 @@
+{
+  "id": "limoges",
+  "name": "Limoges-Bénédictins",
+  "city": "Limoges",
+  "tagline": "Limoges-Bénédictins — sous le dôme, le milieu du POLT.",
+  "difficulty": 2,
+  "country": "🇫🇷 France",
+  "desc": "Sous le dôme de béton le plus photographié du réseau, la gare tient le milieu du POLT — Paris–Orléans–Limoges–Toulouse, la ligne que le TGV n'a jamais remplacée.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },
+    { "id": 6 }
+  ],
+  "portals": {
+    "PARIS-AUSTERLITZ": { "side": "L", "color": "#25dede", "abbr": "PA", "label": "PARIS-AUSTERL." },
+    "POITIERS":         { "side": "L", "color": "#4ade80", "abbr": "PO" },
+    "ANGOULEME":        { "side": "L", "color": "#a78bfa", "abbr": "AN", "label": "ANGOULÊME" },
+    "TOULOUSE":         { "side": "R", "color": "#f2588f", "abbr": "TL" },
+    "BRIVE":            { "side": "R", "color": "#f5b23c", "abbr": "BV" }
+  },
+  "links": {
+    "PARIS-AUSTERLITZ": [1, 2, 3],
+    "POITIERS":         [4, 5],
+    "ANGOULEME":        [6],
+    "TOULOUSE":         [1, 2, 3, 4],
+    "BRIVE":            [4, 5, 6]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 13, "nMax": 16, "gapMin": 1.8, "gapMax": 3.0,
+    "cars": [2, 2, 2, 3, 3, 4, 4, 5],
+    "quietRate": 0.2
+  }
+}

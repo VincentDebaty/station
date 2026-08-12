@@ -1,0 +1,31 @@
+{
+  "id": "poitiers",
+  "name": "Poitiers",
+  "tagline": "Poitiers — dans la tranchée sous la ville haute : un tronc, deux antennes.",
+  "difficulty": 2,
+  "country": "🇫🇷 France",
+  "desc": "Dans la tranchée sous la ville haute : le tronc Paris–Bordeaux tient les quatre premiers quais, La Rochelle et Limoges se partagent le reste. Deux antennes, un tronc — la géométrie classique.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
+  ],
+  "portals": {
+    "PARIS-MONTPARNASSE": { "side": "L", "color": "#25dede", "abbr": "PM", "label": "PARIS-MONTP." },
+    "TOURS":              { "side": "L", "color": "#f5b23c", "abbr": "TS" },
+    "BORDEAUX":           { "side": "R", "color": "#4ade80", "abbr": "BX" },
+    "LA ROCHELLE":        { "side": "R", "color": "#60a5fa", "abbr": "LR" },
+    "LIMOGES":            { "side": "R", "color": "#f2588f", "abbr": "LG" }
+  },
+  "links": {
+    "PARIS-MONTPARNASSE": [1, 2, 3],
+    "TOURS":              [3, 4, 5],
+    "BORDEAUX":           [1, 2, 3, 4],
+    "LA ROCHELLE":        [4, 5],
+    "LIMOGES":            [2, 5]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 13, "nMax": 16, "gapMin": 1.8, "gapMax": 3.0,
+    "cars": [2, 2, 2, 3, 3, 4, 4, 5],
+    "quietRate": 0.2
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "id": "grenoble",
+  "name": "Grenoble",
+  "tagline": "Grenoble — au fond de la cuvette : peu d'itinéraires, énormément de monde.",
+  "difficulty": 2,
+  "country": "🇫🇷 France",
+  "desc": "Au fond de la cuvette, cernée par trois massifs : quatre directions seulement, mais 8,8 millions de voyageurs — c'est la gare la plus fréquentée du catalogue pour si peu d'itinéraires.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },
+    { "id": 6 }
+  ],
+  "portals": {
+    "LYON":     { "side": "L", "color": "#f2588f", "abbr": "LY" },
+    "VALENCE":  { "side": "L", "color": "#60a5fa", "abbr": "VL" },
+    "CHAMBERY": { "side": "R", "color": "#25dede", "abbr": "CM", "label": "CHAMBÉRY" },
+    "GAP":      { "side": "R", "color": "#a78bfa", "abbr": "GA" }
+  },
+  "links": {
+    "LYON":     [1, 2, 3],
+    "VALENCE":  [3, 4, 5, 6],
+    "CHAMBERY": [1, 2, 3, 4],
+    "GAP":      [5, 6]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 13, "nMax": 16, "gapMin": 1.8, "gapMax": 3.0,
+    "cars": [2, 2, 2, 3, 3, 4, 4, 5],
+    "quietRate": 0.2
+  }
+}

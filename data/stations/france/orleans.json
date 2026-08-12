@@ -1,0 +1,30 @@
+{
+  "id": "orleans",
+  "name": "Orléans",
+  "tagline": "Orléans — 6 quais à heurtoir : la ville a exigé sa gare au centre, les trains rebroussent.",
+  "difficulty": 2,
+  "country": "🇫🇷 France",
+  "desc": "La ville a exigé sa gare au centre : les trains quittent la ligne aux Aubrais, entrent en cul-de-sac et rebroussent. Six quais à heurtoir pour une préfecture — la rançon d'un caprice de 1843.",
+  "platforms": [
+    { "id": 1, "deadEnd": true }, { "id": 2, "deadEnd": true }, { "id": 3, "deadEnd": true }, { "id": 4, "deadEnd": true }, { "id": 5, "deadEnd": true },
+    { "id": 6, "deadEnd": true }
+  ],
+  "portals": {
+    "PARIS-AUSTERLITZ": { "side": "L", "color": "#25dede", "abbr": "PA", "label": "PARIS-AUSTERL." },
+    "TOURS":            { "side": "L", "color": "#f5b23c", "abbr": "TS" },
+    "VIERZON":          { "side": "L", "color": "#4ade80", "abbr": "VI" },
+    "CHARTRES":         { "side": "L", "color": "#a78bfa", "abbr": "CT" }
+  },
+  "links": {
+    "PARIS-AUSTERLITZ": [1, 2, 3, 4],
+    "TOURS":            [3, 4, 5],
+    "VIERZON":          [5, 6],
+    "CHARTRES":         [1, 2, 6]
+  },
+  "sameSidePairs": "all",
+  "gen": {
+    "nMin": 12, "nMax": 15, "gapMin": 2.0, "gapMax": 3.3,
+    "cars": [2, 2, 3, 3, 4, 4, 5],
+    "quietRate": 0.2
+  }
+}

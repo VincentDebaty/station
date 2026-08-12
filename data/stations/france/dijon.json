@@ -1,0 +1,33 @@
+{
+  "id": "dijon",
+  "name": "Dijon-Ville",
+  "city": "Dijon",
+  "tagline": "Dijon-Ville — là où l'axe Paris–Lyon croise la transversale de Nancy.",
+  "difficulty": 3,
+  "country": "🇫🇷 France",
+  "desc": "Le carrefour de la Bourgogne, là où l'axe Paris–Lyon croise la transversale Nancy–Méditerranée. Sept quais, cinq directions, et le TGV qui passe sans s'arrêter juste à côté.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },
+    { "id": 6 }, { "id": 7 }
+  ],
+  "portals": {
+    "PARIS-LYON": { "side": "L", "color": "#25dede", "abbr": "PL" },
+    "NANCY":      { "side": "L", "color": "#4ade80", "abbr": "NY" },
+    "LYON":       { "side": "R", "color": "#f2588f", "abbr": "LY" },
+    "MULHOUSE":   { "side": "R", "color": "#60a5fa", "abbr": "MU" },
+    "BESANCON":   { "side": "R", "color": "#a78bfa", "abbr": "BS", "label": "BESANÇON" }
+  },
+  "links": {
+    "PARIS-LYON": [1, 2, 3, 4],
+    "NANCY":      [5, 6, 7],
+    "LYON":       [1, 2, 3, 5],
+    "MULHOUSE":   [4, 6],
+    "BESANCON":   [6, 7]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 14, "nMax": 17, "gapMin": 1.7, "gapMax": 2.9,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6],
+    "quietRate": 0.15
+  }
+}

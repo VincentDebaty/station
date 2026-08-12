@@ -1,0 +1,34 @@
+{
+  "id": "rennes",
+  "name": "Rennes",
+  "tagline": "Rennes — depuis la LGV, Paris à 1 h 25 : le pivot de toute la Bretagne.",
+  "difficulty": 3,
+  "country": "🇫🇷 France",
+  "desc": "Depuis la LGV, Paris est à 1 h 25 : la gare a doublé de taille et sert de pivot à toute la Bretagne. Brest et Quimper repartent vers la pointe, Nantes descend par Redon.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },
+    { "id": 6 }, { "id": 7 }
+  ],
+  "portals": {
+    "PARIS-MONTPARNASSE": { "side": "L", "color": "#25dede", "abbr": "PM", "label": "PARIS-MONTP." },
+    "LE MANS":            { "side": "L", "color": "#4ade80", "abbr": "LM" },
+    "CAEN":               { "side": "L", "color": "#f5b23c", "abbr": "CA" },
+    "BREST":              { "side": "R", "color": "#f2588f", "abbr": "BR" },
+    "QUIMPER":            { "side": "R", "color": "#a78bfa", "abbr": "QU" },
+    "NANTES":             { "side": "R", "color": "#60a5fa", "abbr": "NA" }
+  },
+  "links": {
+    "PARIS-MONTPARNASSE": [1, 2, 3, 4],
+    "LE MANS":            [2, 3, 4, 5],
+    "CAEN":               [6, 7],
+    "BREST":              [1, 2, 3],
+    "QUIMPER":            [4, 5, 6],
+    "NANTES":             [5, 6, 7]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 14, "nMax": 17, "gapMin": 1.7, "gapMax": 2.9,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6],
+    "quietRate": 0.15
+  }
+}

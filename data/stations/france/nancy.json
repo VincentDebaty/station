@@ -1,0 +1,33 @@
+{
+  "id": "nancy",
+  "name": "Nancy-Ville",
+  "city": "Nancy",
+  "tagline": "Nancy-Ville — à vingt minutes de Metz, sa rivale de toujours.",
+  "difficulty": 3,
+  "country": "🇫🇷 France",
+  "desc": "À vingt minutes de Metz, sa rivale de toujours : même taille, même trafic, deux gares que tout oppose. Ici, cinq directions et la transversale de Dijon que personne n'emprunte.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },
+    { "id": 6 }
+  ],
+  "portals": {
+    "PARIS-EST":  { "side": "L", "color": "#25dede", "abbr": "PE" },
+    "DIJON":      { "side": "L", "color": "#f5b23c", "abbr": "DI" },
+    "METZ":       { "side": "R", "color": "#4ade80", "abbr": "MZ" },
+    "STRASBOURG": { "side": "R", "color": "#f2588f", "abbr": "ST" },
+    "EPINAL":     { "side": "R", "color": "#a78bfa", "abbr": "EP", "label": "ÉPINAL" }
+  },
+  "links": {
+    "PARIS-EST":  [1, 2, 3],
+    "DIJON":      [4, 5, 6],
+    "METZ":       [1, 2, 3, 4],
+    "STRASBOURG": [5, 6],
+    "EPINAL":     [3, 6]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 14, "nMax": 17, "gapMin": 1.7, "gapMax": 2.9,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6],
+    "quietRate": 0.15
+  }
+}

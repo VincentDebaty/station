@@ -1,0 +1,35 @@
+{
+  "id": "tours",
+  "name": "Saint-Pierre-des-Corps",
+  "city": "Tours",
+  "tagline": "Saint-Pierre-des-Corps — le vrai carrefour du Centre, à 2 km d'une gare en impasse.",
+  "difficulty": 3,
+  "country": "🇫🇷 France",
+  "desc": "La gare de Tours ne traverse pas : c'est un cul-de-sac en ville, et tout ce qui passe s'arrête ici, à Saint-Pierre-des-Corps. Cinq lignes s'y croisent au milieu des betteraves — le vrai carrefour du Centre.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },
+    { "id": 6 }, { "id": 7 }
+  ],
+  "portals": {
+    "PARIS-MONTPARNASSE": { "side": "L", "color": "#25dede", "abbr": "PM", "label": "PARIS-MONTP." },
+    "LE MANS":            { "side": "L", "color": "#4ade80", "abbr": "LM" },
+    "NANTES":             { "side": "L", "color": "#60a5fa", "abbr": "NA" },
+    "BORDEAUX":           { "side": "R", "color": "#f5b23c", "abbr": "BX" },
+    "VIERZON":            { "side": "R", "color": "#f2588f", "abbr": "VI" },
+    "ORLEANS":            { "side": "R", "color": "#a78bfa", "abbr": "OR", "label": "ORLÉANS" }
+  },
+  "links": {
+    "PARIS-MONTPARNASSE": [1, 2, 3, 4, 5],
+    "LE MANS":            [2, 3],
+    "NANTES":             [6, 7],
+    "BORDEAUX":           [1, 2, 3, 4, 5],
+    "VIERZON":            [4, 5, 6],
+    "ORLEANS":            [6, 7]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 14, "nMax": 17, "gapMin": 1.7, "gapMax": 2.9,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6],
+    "quietRate": 0.15
+  }
+}

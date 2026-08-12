@@ -1,0 +1,30 @@
+{
+  "id": "mulhouse",
+  "name": "Mulhouse",
+  "tagline": "Mulhouse — le dernier nœud avant la Suisse : deux frontières à 30 km.",
+  "difficulty": 2,
+  "country": "🇫🇷 France",
+  "desc": "Le dernier nœud avant la Suisse : quatre directions, dont deux qui franchissent une frontière à moins de trente kilomètres. La gare la plus internationale du catalogue français après Paris-Nord.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },
+    { "id": 6 }
+  ],
+  "portals": {
+    "STRASBOURG": { "side": "L", "color": "#f2588f", "abbr": "ST" },
+    "COLMAR":     { "side": "L", "color": "#a78bfa", "abbr": "CL" },
+    "BALE":       { "side": "R", "color": "#60a5fa", "abbr": "BA", "label": "BÂLE" },
+    "DIJON":      { "side": "R", "color": "#f5b23c", "abbr": "DI" }
+  },
+  "links": {
+    "STRASBOURG": [1, 2, 3, 4, 6],
+    "COLMAR":     [3, 4, 5],
+    "BALE":       [1, 2, 3],
+    "DIJON":      [4, 5, 6]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 13, "nMax": 16, "gapMin": 1.8, "gapMax": 3.0,
+    "cars": [2, 2, 2, 3, 3, 4, 4, 5],
+    "quietRate": 0.2
+  }
+}

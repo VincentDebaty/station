@@ -1,0 +1,29 @@
+{
+  "id": "narbonne",
+  "name": "Narbonne",
+  "tagline": "Narbonne — le nœud du Sud : l'Atlantique y rencontre la Méditerranée.",
+  "difficulty": 1,
+  "country": "🇫🇷 France",
+  "desc": "Le nœud du Sud : c'est ici que la ligne de Bordeaux rejoint celle de la Méditerranée, et que se séparent l'Espagne et la vallée du Rhône. Cinq quais pour un carrefour de cette importance.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
+  ],
+  "portals": {
+    "TOULOUSE":    { "side": "L", "color": "#f2588f", "abbr": "TL" },
+    "PERPIGNAN":   { "side": "L", "color": "#a78bfa", "abbr": "PP" },
+    "MONTPELLIER": { "side": "R", "color": "#25dede", "abbr": "MP" },
+    "MARSEILLE":   { "side": "R", "color": "#f5b23c", "abbr": "MA" }
+  },
+  "links": {
+    "TOULOUSE":    [1, 2, 3],
+    "PERPIGNAN":   [3, 4, 5],
+    "MONTPELLIER": [1, 2, 3, 4],
+    "MARSEILLE":   [4, 5]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 12, "nMax": 15, "gapMin": 1.6, "gapMax": 2.8,
+    "cars": [2, 2, 2, 2, 3, 3, 4],
+    "quietRate": 0.25
+  }
+}
