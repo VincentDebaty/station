@@ -146,6 +146,15 @@ function mapnetBuild() {
       const isEntry = unlocked && !stars; // ouverte, encore à faire
       const isChoice = !!(MAPNET.choices && MAPNET.choices.has(id));
       const isOrigin = MAPNET.origin === id;
+      // QUI RESPIRE. L'anneau pulsé veut dire « à toi de jouer ». Pendant un
+      // choix de fin de service, la carte ne doit donc dire qu'UNE chose :
+      // « prends l'une de ces candidates ». Or toute gare ouverte-jamais-jouée
+      // respire en permanence : à la fin d'Amiens, on proposait Rouen et
+      // Paris-Nord pendant que Dinant pulsait à l'identique en Belgique, et ce
+      // halo se lisait comme une troisième candidate.
+      // Les autres gares gardent leur place et leur libellé (cf. minScale plus
+      // bas, qui reste sur isEntry) — elles cessent seulement de battre.
+      const isPulsing = isChoice || (isEntry && !MAPNET.choices);
 
       // La pastille ne porte plus son rang de jeu : sa TAILLE dit la difficulté
       // (petite en 1, grosse en 5). On lit d'un coup d'œil où sont les morceaux,
@@ -153,7 +162,7 @@ function mapnetBuild() {
       const diff = Math.max(1, Math.min(5, card.difficulty || 1));
       const el = document.createElement("div");
       el.className = "map-chip city-chip" + (unlocked ? "" : " locked") +
-        (isEntry || isChoice ? " entry" : "") + (isChoice ? " choice" : "") +
+        (isPulsing ? " entry" : "") + (isChoice ? " choice" : "") +
         (isOrigin ? " origin" : "");
       el.style.setProperty("--d", DOT_D[diff] + "px");
       el.innerHTML =

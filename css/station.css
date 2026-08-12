@@ -947,12 +947,13 @@ svg { width: 100%; height: 100%; display: block; }
   .city-chip:not(.locked):hover .dot { transform: scale(1.2); }
   .city-chip:not(.locked):hover .nm { color: #63e6d4; }
 }
-/* Gare COURANTE (prochaine à réaliser) : point accentué (halo teal permanent) +
-   nom mis en avant + anneau qui pulse en fondu — visible d'un coup d'œil. */
-/* PORTES D'ENTRÉE — au tout premier lancement seulement. Elles respirent
-   TOUTES ensemble : ce sont des équivalentes, pas une désignation. Dès la
-   première étoile décrochée, plus aucun halo — l'état se lit alors sur la
-   pastille elle-même (grise = fermée, teal = ouverte, teal + étoiles = faite). */
+/* GARE À JOUER : point accentué (halo teal permanent), nom mis en avant, et un
+   anneau qui pulse en fondu — visible d'un coup d'œil.
+   Qui porte `.entry` est décidé dans js/mapnet.js (`isPulsing`), pas ici :
+   toute gare ouverte et jamais jouée respire, à tout moment de la partie et pas
+   seulement au premier lancement ; SAUF pendant un choix de fin de service, où
+   seules les candidates battent — deux halos de sens différents sur la même
+   carte se lisent comme un seul. */
 .city-chip.entry .dot {
   box-shadow: 0 0 0 3px rgba(45, 212, 191, .35), 0 0 16px rgba(45, 212, 191, .85);
 }
