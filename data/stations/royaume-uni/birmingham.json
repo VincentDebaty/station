@@ -2,32 +2,33 @@
   "id": "birmingham",
   "name": "Birmingham New Street",
   "city": "Birmingham",
-  "tagline": "Birmingham New Street — le goulot souterrain : sept quais sous dalle, un tunnel à chaque tête.",
+  "tagline": "Birmingham New Street — 37 M de voyageurs sous une dalle : le vrai carrefour.",
   "difficulty": 4,
   "country": "🇬🇧 Royaume-Uni",
-  "desc": "Classée « gare souterraine », enfouie sous dalle et sans lumière naturelle jusqu'à l'atrium en dôme de 2015 : tout mouvement passe par des tunnels aux deux têtes. Cœur du réseau CrossCountry, croisement national — Wolverhampton et l'Écosse au nord-ouest, Londres au sud-est, Bristol et le sud-ouest, Derby et Manchester. Zéro marge : c'est le goulot des Midlands.",
+  "desc": "Trente-sept millions de voyageurs sous une dalle de béton : la gare la plus fréquentée hors de Londres, et la seule où toutes les lignes du pays se croisent vraiment. Six directions, aucune lumière du jour.",
   "platforms": [
-    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }, { "id": 6 }, { "id": 7 }
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },
+    { "id": 6 }, { "id": 7 }, { "id": 8 }
   ],
   "portals": {
-    "WOLVERHAMPTON": { "side": "L", "color": "#f5b23c", "abbr": "WV", "label": "WOLVERHAMPTON" },
-    "DERBY":         { "side": "L", "color": "#a78bfa", "abbr": "DY" },
-    "MANCHESTER":    { "side": "L", "color": "#25dede", "abbr": "MA" },
-    "LONDON":        { "side": "R", "color": "#f2588f", "abbr": "L", "label": "LONDON EU" },
-    "BRISTOL":       { "side": "R", "color": "#4ade80", "abbr": "BR" },
-    "BOURNEMOUTH":   { "side": "R", "color": "#60a5fa", "abbr": "BM", "label": "BOURNEMOUTH" }
+    "EUSTON":     { "side": "L", "color": "#25dede", "abbr": "EU" },
+    "OXFORD":     { "side": "L", "color": "#a78bfa", "abbr": "OX" },
+    "BRISTOL":    { "side": "L", "color": "#4ade80", "abbr": "BS" },
+    "MANCHESTER": { "side": "R", "color": "#f5b23c", "abbr": "MR" },
+    "CREWE":      { "side": "R", "color": "#60a5fa", "abbr": "CW" },
+    "DERBY":      { "side": "R", "color": "#f2588f", "abbr": "DY" }
   },
   "links": {
-    "WOLVERHAMPTON": [1, 2, 3, 4],
-    "DERBY": [3, 4, 5, 7],
-    "MANCHESTER": [1, 2, 6, 7],
-    "LONDON": [1, 2, 3, 4],
-    "BRISTOL": [3, 4, 5, 6, 7],
-    "BOURNEMOUTH": [1, 2, 6, 7]
+    "EUSTON":     [1, 2, 3, 4],
+    "OXFORD":     [4, 5, 6],
+    "BRISTOL":    [6, 7, 8],
+    "MANCHESTER": [1, 2, 3, 7],
+    "CREWE":      [4, 5, 8],
+    "DERBY":      [5, 6, 7]
   },
   "sameSidePairs": [],
   "gen": {
-    "nMin": 16, "nMax": 19, "gapMin": 1.5, "gapMax": 2.5,
+    "nMin": 16, "nMax": 20, "gapMin": 1.5, "gapMax": 2.6,
     "cars": [2, 3, 3, 4, 4, 5, 5, 6],
     "quietRate": 0.12
   }

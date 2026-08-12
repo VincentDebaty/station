@@ -30,6 +30,13 @@
   {
     "country": "royaume-uni",
     "label": "🇬🇧 Royaume-Uni",
-    "stations": ["york", "norwich", "reading", "bristol", "manchester", "leeds", "edinburgh", "glasgow", "liverpool", "birmingham", "waterloo"]
+    "stations": [
+      "salisbury", "plymouth", "leicester", "chester", "carlisle", "doncaster", "stirling", "perth",
+      "oxford", "southampton", "brighton", "exeter", "derby", "nottingham", "norwich", "cambridge",
+      "peterborough", "aberdeen",
+      "reading", "bristol", "cardiff", "crewe", "liverpool", "preston", "sheffield", "york", "newcastle",
+      "euston", "kings-cross", "paddington", "birmingham", "manchester", "leeds", "edinburgh", "glasgow",
+      "waterloo"
+    ]
   }
 ]

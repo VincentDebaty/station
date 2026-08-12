@@ -1,0 +1,32 @@
+{
+  "id": "cambridge",
+  "name": "Cambridge",
+  "tagline": "Cambridge — un quai unique de 400 m jusqu'en 2011 ; huit voies aujourd'hui.",
+  "difficulty": 2,
+  "country": "🇬🇧 Royaume-Uni",
+  "desc": "Un quai unique de quatre cents mètres jusqu'en 2011 — les trains s'y garaient à deux par voie. Aujourd'hui huit voies, et deux Londres au sud : King's Cross et Liverpool Street.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },
+    { "id": 6 }
+  ],
+  "portals": {
+    "KING'S CROSS":     { "side": "L", "color": "#25dede", "abbr": "KX", "label": "KING'S CROSS" },
+    "LIVERPOOL STREET": { "side": "L", "color": "#f5b23c", "abbr": "LS", "label": "LIVERPOOL ST" },
+    "STANSTED":         { "side": "L", "color": "#60a5fa", "abbr": "SN" },
+    "PETERBOROUGH":     { "side": "R", "color": "#4ade80", "abbr": "PB" },
+    "NORWICH":          { "side": "R", "color": "#f2588f", "abbr": "NR" }
+  },
+  "links": {
+    "KING'S CROSS":     [1, 2, 3],
+    "LIVERPOOL STREET": [3, 4],
+    "STANSTED":         [5, 6],
+    "PETERBOROUGH":     [1, 2, 3, 4],
+    "NORWICH":          [4, 5, 6]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 13, "nMax": 16, "gapMin": 1.8, "gapMax": 3.0,
+    "cars": [2, 2, 2, 3, 3, 4, 4, 5],
+    "quietRate": 0.2
+  }
+}

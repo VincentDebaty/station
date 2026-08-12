@@ -2,31 +2,34 @@
   "id": "bristol",
   "name": "Bristol Temple Meads",
   "city": "Bristol",
-  "tagline": "Bristol Temple Meads — halle de Brunel sur tracé courbe : l'ouest et le sud-ouest se croisent.",
-  "difficulty": 2,
+  "tagline": "Bristol Temple Meads — la première grande gare du monde encore debout.",
+  "difficulty": 3,
   "country": "🇬🇧 Royaume-Uni",
-  "desc": "La plus ancienne et la plus grande gare de Bristol, coiffée du train shed courbe de Brunel (1840), classé Grade I. Paddington à l'est, l'Exeter et les Cornouailles au sud-ouest, Cardiff et le pays de Galles à l'ouest, Birmingham et le nord par le CrossCountry, Gloucester au nord. Le fret contourne par des voies d'évitement — les quais restent aux voyageurs.",
+  "desc": "La première grande gare du monde encore debout, bâtie par Brunel en 1840 : treize voies sous une charpente de bois. Cinq directions, et le pays de Galles à vingt minutes sous l'estuaire.",
   "platforms": [
-    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }, { "id": 6 }
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },
+    { "id": 6 }, { "id": 7 }, { "id": 8 }
   ],
   "portals": {
-    "EXETER":     { "side": "L", "color": "#4ade80", "abbr": "EX" },
-    "CARDIFF":    { "side": "L", "color": "#a78bfa", "abbr": "CF" },
-    "PADDINGTON": { "side": "R", "color": "#f2588f", "abbr": "PA" },
-    "BIRMINGHAM": { "side": "R", "color": "#f5b23c", "abbr": "BX" },
-    "GLOUCESTER": { "side": "R", "color": "#60a5fa", "abbr": "GL" }
+    "PADDINGTON": { "side": "L", "color": "#25dede", "abbr": "PD" },
+    "BIRMINGHAM": { "side": "L", "color": "#f2588f", "abbr": "BM" },
+    "SALISBURY":  { "side": "L", "color": "#f5b23c", "abbr": "SA" },
+    "CARDIFF":    { "side": "R", "color": "#4ade80", "abbr": "CF" },
+    "EXETER":     { "side": "R", "color": "#60a5fa", "abbr": "EX" },
+    "WESTON":     { "side": "R", "color": "#a78bfa", "abbr": "WS" }
   },
   "links": {
-    "EXETER": [1, 2, 3, 4],
-    "CARDIFF": [3, 4, 5, 6],
     "PADDINGTON": [1, 2, 3, 4],
-    "BIRMINGHAM": [3, 4, 5],
-    "GLOUCESTER": [4, 5, 6]
+    "BIRMINGHAM": [4, 5, 6],
+    "SALISBURY":  [7, 8],
+    "CARDIFF":    [1, 2, 3, 7],
+    "EXETER":     [4, 5, 8],
+    "WESTON":     [5, 6]
   },
   "sameSidePairs": [],
   "gen": {
-    "nMin": 13, "nMax": 16, "gapMin": 1.8, "gapMax": 3.0,
-    "cars": [2, 2, 2, 3, 3, 4, 4, 5],
-    "quietRate": 0.2
+    "nMin": 14, "nMax": 17, "gapMin": 1.7, "gapMax": 2.9,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6],
+    "quietRate": 0.15
   }
 }

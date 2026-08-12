@@ -1,0 +1,29 @@
+{
+  "id": "leicester",
+  "name": "Leicester",
+  "tagline": "Leicester — quatre voies sur la Midland Main Line, cadence de pointe.",
+  "difficulty": 1,
+  "country": "🇬🇧 Royaume-Uni",
+  "desc": "Quatre voies sur la Midland Main Line, la ligne que le TGV n'a jamais atteinte : Saint-Pancras est à une heure, Derby à vingt minutes. Petit gabarit, cadence d'heure de pointe.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
+  ],
+  "portals": {
+    "ST PANCRAS": { "side": "L", "color": "#25dede", "abbr": "SP" },
+    "BIRMINGHAM": { "side": "L", "color": "#f2588f", "abbr": "BM" },
+    "DERBY":      { "side": "R", "color": "#a78bfa", "abbr": "DY" },
+    "NOTTINGHAM": { "side": "R", "color": "#f5b23c", "abbr": "NG" }
+  },
+  "links": {
+    "ST PANCRAS": [1, 2, 3],
+    "BIRMINGHAM": [3, 4, 5],
+    "DERBY":      [1, 2, 3, 4],
+    "NOTTINGHAM": [4, 5]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 12, "nMax": 15, "gapMin": 1.6, "gapMax": 2.8,
+    "cars": [2, 2, 2, 2, 3, 3, 4],
+    "quietRate": 0.25
+  }
+}

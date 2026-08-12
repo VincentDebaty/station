@@ -1,32 +1,32 @@
 {
   "id": "norwich",
   "name": "Norwich",
-  "tagline": "Norwich — terminus de l'East Anglia sous sa façade Renaissance : tout rebrousse par un goulot d'une seule voie.",
+  "tagline": "Norwich — le terminus de l'East Anglia, au bout de la ligne droite.",
   "difficulty": 2,
   "country": "🇬🇧 Royaume-Uni",
-  "desc": "Le terminus de la Great Eastern, coiffé de sa façade Renaissance de 1886 à tour-horloge. Six voies en cul-de-sac qui se resserrent sur une gorge unique au sud, jusqu'au pont tournant de Trowse — réduit à une seule voie. Londres Liverpool Street au sud, Cambridge à l'ouest, et l'éventail côtier : Great Yarmouth, Lowestoft, Sheringham. Rames régionales, gorge sous tension.",
+  "desc": "Le terminus de l'East Anglia, au bout de cent quatre-vingts kilomètres de ligne droite depuis Londres : six quais à heurtoir, les Broads d'un côté, les Fens de l'autre.",
   "platforms": [
-    { "id": 1, "deadEnd": true }, { "id": 2, "deadEnd": true }, { "id": 3, "deadEnd": true },
-    { "id": 4, "deadEnd": true }, { "id": 5, "deadEnd": true }, { "id": 6, "deadEnd": true }
+    { "id": 1, "deadEnd": true }, { "id": 2, "deadEnd": true }, { "id": 3, "deadEnd": true }, { "id": 4, "deadEnd": true }, { "id": 5, "deadEnd": true },
+    { "id": 6, "deadEnd": true }
   ],
   "portals": {
-    "LONDON":     { "side": "L", "color": "#f2588f", "abbr": "L", "label": "LONDON LS" },
-    "CAMBRIDGE":  { "side": "L", "color": "#4ade80", "abbr": "CB" },
-    "YARMOUTH":   { "side": "L", "color": "#f5b23c", "abbr": "GY", "label": "GT YARMOUTH" },
-    "LOWESTOFT":  { "side": "L", "color": "#60a5fa", "abbr": "LO" },
-    "SHERINGHAM": { "side": "L", "color": "#a78bfa", "abbr": "SH" }
+    "LIVERPOOL STREET": { "side": "L", "color": "#25dede", "abbr": "LS", "label": "LIVERPOOL ST" },
+    "CAMBRIDGE":        { "side": "L", "color": "#a78bfa", "abbr": "CB" },
+    "PETERBOROUGH":     { "side": "L", "color": "#4ade80", "abbr": "PB" },
+    "GREAT YARMOUTH":   { "side": "L", "color": "#f5b23c", "abbr": "GY", "label": "GT YARMOUTH" },
+    "SHERINGHAM":       { "side": "L", "color": "#60a5fa", "abbr": "SG" }
   },
   "links": {
-    "LONDON": [1, 2, 3, 4],
-    "CAMBRIDGE": [1, 2, 5],
-    "YARMOUTH": [3, 4, 5, 6],
-    "LOWESTOFT": [2, 3, 6],
-    "SHERINGHAM": [4, 5, 6]
+    "LIVERPOOL STREET": [1, 2, 3, 4],
+    "CAMBRIDGE":        [3, 4, 5],
+    "PETERBOROUGH":     [5, 6],
+    "GREAT YARMOUTH":   [1, 2, 6],
+    "SHERINGHAM":       [2, 5]
   },
   "sameSidePairs": "all",
   "gen": {
-    "nMin": 12, "nMax": 15, "gapMin": 1.9, "gapMax": 3.2,
+    "nMin": 12, "nMax": 15, "gapMin": 2.0, "gapMax": 3.3,
     "cars": [2, 2, 3, 3, 4, 4, 5],
-    "quietRate": 0.22
+    "quietRate": 0.2
   }
 }

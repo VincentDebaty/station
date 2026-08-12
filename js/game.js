@@ -329,6 +329,7 @@ async function resetGame() {
     badgeEl: null, badgeText: null, badgeRect: null, headPos: null
   }));
   buildTimeline();
+  buildServiceBar();
   updateDelay();
   setPreparing(false);
 }
@@ -1106,6 +1107,7 @@ function tick(dtMin) {
     if (t.el) t.el.classList.toggle("holding", !!t.holding); // voie de sortie occupée
   }
   updateTimeline();
+  updateServiceBar(); // horizon : curseur + encoches (reste-à-faire, pointe à venir)
   updateDelay();
   refreshPlatformStates();
   updateQueueUI(); // file d'attente en réduction (l'essentiel se joue hors champ)

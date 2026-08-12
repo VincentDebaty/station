@@ -1,0 +1,34 @@
+{
+  "id": "paddington",
+  "name": "London Paddington",
+  "tagline": "London Paddington — la gare de Brunel : le Grand Ouest et le pays de Galles.",
+  "difficulty": 4,
+  "country": "🇬🇧 Royaume-Uni",
+  "desc": "La gare de Brunel, sous la verrière de 1854 : le Grand Ouest, le pays de Galles et la Cornouailles. Six directions, et le train de nuit de Penzance qui part du quai 6 à minuit passé.",
+  "platforms": [
+    { "id": 1, "deadEnd": true }, { "id": 2, "deadEnd": true }, { "id": 3, "deadEnd": true }, { "id": 4, "deadEnd": true }, { "id": 5, "deadEnd": true },
+    { "id": 6, "deadEnd": true }, { "id": 7, "deadEnd": true }, { "id": 8, "deadEnd": true }, { "id": 9, "deadEnd": true }
+  ],
+  "portals": {
+    "READING":  { "side": "L", "color": "#f5b23c", "abbr": "RD" },
+    "BRISTOL":  { "side": "L", "color": "#4ade80", "abbr": "BS" },
+    "CARDIFF":  { "side": "L", "color": "#f2588f", "abbr": "CF" },
+    "EXETER":   { "side": "L", "color": "#60a5fa", "abbr": "EX" },
+    "OXFORD":   { "side": "L", "color": "#a78bfa", "abbr": "OX" },
+    "PENZANCE": { "side": "L", "color": "#25dede", "abbr": "PZ" }
+  },
+  "links": {
+    "READING":  [1, 2, 3, 4],
+    "BRISTOL":  [3, 4, 5],
+    "CARDIFF":  [5, 6, 7],
+    "EXETER":   [7, 8, 9],
+    "OXFORD":   [1, 2, 8, 9],
+    "PENZANCE": [6, 9]
+  },
+  "sameSidePairs": "all",
+  "gen": {
+    "nMin": 16, "nMax": 20, "gapMin": 1.7, "gapMax": 2.9,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6, 7],
+    "quietRate": 0.12
+  }
+}

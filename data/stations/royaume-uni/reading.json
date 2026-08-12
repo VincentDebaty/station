@@ -1,31 +1,34 @@
 {
   "id": "reading",
   "name": "Reading",
-  "tagline": "Reading — carrefour à quatre directions, rouvert en 2014 : le fret glisse sous les voyageurs.",
-  "difficulty": 2,
+  "tagline": "Reading — 15 voies pour une ville moyenne : le carrefour du sud de l'Angleterre.",
+  "difficulty": 3,
   "country": "🇬🇧 Royaume-Uni",
-  "desc": "Le grand carrefour de l'ouest londonien : Paddington à l'est, Bristol et le pays de Galles à l'ouest, Oxford et les Midlands au nord, Basingstoke et la côte sud. Longtemps saturé par les trains de fret lents qui traversaient à niveau, il a été dénoué en 2014 par un saut-de-mouton — le fret passe désormais sous les express. À vous d'accorder les lents et les rapides.",
+  "desc": "Quinze voies pour une ville moyenne : refaite à neuf en 2015, c'est le carrefour de tout le sud de l'Angleterre. Deux Londres différents s'y rejoignent, Paddington et Waterloo, sans jamais se croiser.",
   "platforms": [
-    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }, { "id": 6 }
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },
+    { "id": 6 }, { "id": 7 }
   ],
   "portals": {
-    "PADDINGTON":  { "side": "L", "color": "#f2588f", "abbr": "PA" },
-    "OXFORD":      { "side": "L", "color": "#f5b23c", "abbr": "OX" },
-    "BRISTOL":     { "side": "R", "color": "#25dede", "abbr": "BR" },
-    "BASINGSTOKE": { "side": "R", "color": "#60a5fa", "abbr": "BK" },
-    "GUILDFORD":   { "side": "R", "color": "#a78bfa", "abbr": "GU" }
+    "PADDINGTON":  { "side": "L", "color": "#25dede", "abbr": "PD" },
+    "WATERLOO":    { "side": "L", "color": "#f5b23c", "abbr": "WL" },
+    "GATWICK":     { "side": "L", "color": "#a78bfa", "abbr": "GK" },
+    "BRISTOL":     { "side": "R", "color": "#4ade80", "abbr": "BS" },
+    "OXFORD":      { "side": "R", "color": "#f2588f", "abbr": "OX" },
+    "SOUTHAMPTON": { "side": "R", "color": "#60a5fa", "abbr": "SO" }
   },
   "links": {
-    "PADDINGTON": [1, 2, 3, 4],
-    "OXFORD": [3, 4, 5, 6],
-    "BRISTOL": [1, 2, 3],
-    "BASINGSTOKE": [4, 5],
-    "GUILDFORD": [5, 6]
+    "PADDINGTON":  [1, 2, 3, 4],
+    "WATERLOO":    [2, 3, 4],
+    "GATWICK":     [5, 6, 7],
+    "BRISTOL":     [1, 2, 3, 4, 5],
+    "OXFORD":      [5, 6],
+    "SOUTHAMPTON": [6, 7]
   },
   "sameSidePairs": [],
   "gen": {
-    "nMin": 13, "nMax": 16, "gapMin": 1.8, "gapMax": 3.0,
-    "cars": [2, 2, 2, 3, 3, 4, 4, 5],
-    "quietRate": 0.2
+    "nMin": 14, "nMax": 17, "gapMin": 1.7, "gapMax": 2.9,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6],
+    "quietRate": 0.15
   }
 }

@@ -1,0 +1,36 @@
+{
+  "id": "crewe",
+  "name": "Crewe",
+  "tagline": "Crewe — sept directions pour 70 000 habitants : la gare la plus reliée du catalogue.",
+  "difficulty": 3,
+  "country": "🇬🇧 Royaume-Uni",
+  "desc": "Sept directions pour soixante-dix mille habitants : une ville née d'un nœud ferroviaire et de rien d'autre, en 1837. C'est la gare la plus reliée de tout le catalogue — devant Bruxelles, devant Paris.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },
+    { "id": 6 }, { "id": 7 }
+  ],
+  "portals": {
+    "EUSTON":     { "side": "L", "color": "#25dede", "abbr": "EU" },
+    "BIRMINGHAM": { "side": "L", "color": "#f2588f", "abbr": "BM" },
+    "DERBY":      { "side": "L", "color": "#a78bfa", "abbr": "DY" },
+    "MANCHESTER": { "side": "R", "color": "#f5b23c", "abbr": "MR" },
+    "LIVERPOOL":  { "side": "R", "color": "#4ade80", "abbr": "LV" },
+    "CHESTER":    { "side": "R", "color": "#60a5fa", "abbr": "CH" },
+    "PRESTON":    { "side": "R", "color": "#a3e635", "abbr": "PR" }
+  },
+  "links": {
+    "EUSTON":     [1, 2, 3],
+    "BIRMINGHAM": [3, 4, 5],
+    "DERBY":      [5, 6, 7],
+    "MANCHESTER": [1, 2, 3],
+    "LIVERPOOL":  [3, 4, 5],
+    "CHESTER":    [6, 7],
+    "PRESTON":    [1, 5, 6]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 14, "nMax": 17, "gapMin": 1.7, "gapMax": 2.9,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6],
+    "quietRate": 0.15
+  }
+}

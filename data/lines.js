@@ -37,7 +37,7 @@
 // Pays dont la topologie vient des LIGNES. Ajouter un pays ici en même temps
 // que ses lignes, jamais avant : sans elles, ses gares n'auraient plus aucune
 // arête.
-const LINE_COUNTRIES = ["🇧🇪 Belgique", "🇫🇷 France"];
+const LINE_COUNTRIES = ["🇧🇪 Belgique", "🇫🇷 France", "🇬🇧 Royaume-Uni"];
 
 const LINES = [
   // ---- Flandre occidentale et orientale --------------------------------
@@ -204,9 +204,106 @@ const LINES = [
   // injouables (mesuré : York tombait de 88 gares atteignables à 11, Freiburg
   // n'était même plus une porte d'entrée valable). L'Eurostar et la vallée du
   // Rhin sont pourtant deux itinéraires on ne peut plus réels.
-  { id: "Eurostar", name: "Paris-Nord – Lille – Calais – Londres (tunnel sous la Manche)",
-    nodes: ["paris-nord", "arras", "lille", "calais", "waterloo"] },
+  { id: "Eurostar", name: "Paris-Nord – Lille – Calais – Londres St Pancras (tunnel sous la Manche)",
+    nodes: ["paris-nord", "arras", "lille", "calais", "stpancras", "kings-cross"] },
   { id: "L4000", name: "Strasbourg – Offenburg – Fribourg (Rheintalbahn)",
     nodes: ["strasbourg", "offenburg", "freiburg"] },
-  { id: "L4010", name: "Mulhouse – Bâle – Fribourg", nodes: ["mulhouse", "bale", "freiburg"] }
+  { id: "L4010", name: "Mulhouse – Bâle – Fribourg", nodes: ["mulhouse", "bale", "freiburg"] },
+  // ==================== ROYAUME-UNI ====================
+  // Quatre compagnies rivales, quatre lignes principales, quatre terminus
+  // londoniens qui ne communiquent pas : c'est la topologie que le pays a
+  // gardée. Rien ne traverse Londres — tout y bute.
+
+  // ---- West Coast Main Line et le Nord-Ouest -----------------------------
+  { id: "WCML", name: "Euston – Rugby – Birmingham",
+    nodes: ["euston", "rugby", "nuneaton", "birmingham"] },
+  { id: "WCML-B", name: "Birmingham – Wolverhampton – Crewe",
+    nodes: ["birmingham", "wolverhampton", "crewe"] },
+  { id: "WCML-C", name: "Euston – Rugby – Crewe", nodes: ["euston", "rugby", "crewe"] },
+  { id: "WCML-D", name: "Crewe – Warrington – Wigan – Preston",
+    nodes: ["crewe", "warrington", "wigan", "preston"] },
+  { id: "WCML-E", name: "Preston – Lancaster – Oxenholme – Carlisle",
+    nodes: ["preston", "lancaster", "oxenholme", "carlisle"] },
+  { id: "WCML-F", name: "Carlisle – Motherwell – Glasgow",
+    nodes: ["carlisle", "motherwell", "glasgow"] },
+  { id: "CRE-M", name: "Crewe – Manchester",   nodes: ["crewe", "manchester"] },
+  { id: "CRE-L", name: "Crewe – Liverpool",    nodes: ["crewe", "liverpool"] },
+  { id: "CRE-C", name: "Crewe – Chester",      nodes: ["crewe", "chester"] },
+  { id: "WIRRAL", name: "Chester – Liverpool", nodes: ["chester", "liverpool"] },
+  { id: "MARCHES", name: "Chester – Shrewsbury – Newport – Cardiff",
+    nodes: ["chester", "shrewsbury", "newport", "cardiff"] },
+  { id: "CHATMOSS", name: "Liverpool – Manchester (la ligne de 1830)",
+    nodes: ["liverpool", "manchester"] },
+  { id: "BOLTON", name: "Manchester – Preston", nodes: ["manchester", "preston"] },
+  { id: "PRE-L", name: "Preston – Wigan – Liverpool", nodes: ["preston", "wigan", "liverpool"] },
+
+  // ---- East Coast Main Line et le Nord-Est -------------------------------
+  { id: "ECML", name: "King's Cross – Peterborough – Doncaster – York",
+    nodes: ["kings-cross", "peterborough", "grantham", "doncaster", "york"] },
+  { id: "ECML-B", name: "York – Darlington – Durham – Newcastle",
+    nodes: ["york", "darlington", "durham", "newcastle"] },
+  { id: "ECML-C", name: "Newcastle – Berwick – Edinburgh",
+    nodes: ["newcastle", "berwick", "edinburgh"] },
+  { id: "KX-SP", name: "King's Cross – St Pancras (deux cents mètres)",
+    nodes: ["kings-cross", "stpancras"] },
+  { id: "WAKE", name: "Doncaster – Wakefield – Leeds", nodes: ["doncaster", "wakefield", "leeds"] },
+  { id: "DON-S", name: "Doncaster – Sheffield",  nodes: ["doncaster", "sheffield"] },
+  { id: "DON-Y", name: "Doncaster – York",       nodes: ["doncaster", "york"] },
+  { id: "TPE", name: "Leeds – York",             nodes: ["leeds", "york"] },
+  { id: "TPE-B", name: "Manchester – Leeds",     nodes: ["manchester", "leeds"] },
+  { id: "SETTLE", name: "Leeds – Settle – Carlisle", nodes: ["leeds", "carlisle"] },
+  { id: "LDS-S", name: "Leeds – Wakefield – Sheffield", nodes: ["leeds", "wakefield", "sheffield"] },
+  { id: "TYNE", name: "Carlisle – Newcastle (vallée de la Tyne)", nodes: ["carlisle", "newcastle"] },
+  { id: "CARST", name: "Carlisle – Carstairs – Edinburgh", nodes: ["carlisle", "carstairs", "edinburgh"] },
+
+  // ---- Great Western et le Sud-Ouest -------------------------------------
+  { id: "GWML", name: "Paddington – Reading",    nodes: ["paddington", "reading"] },
+  { id: "GWML-B", name: "Reading – Swindon – Bath – Bristol",
+    nodes: ["reading", "swindon", "bath", "bristol"] },
+  { id: "SWALES", name: "Bristol – Newport – Cardiff", nodes: ["bristol", "newport", "cardiff"] },
+  { id: "XC", name: "Bristol – Cheltenham – Birmingham", nodes: ["bristol", "cheltenham", "birmingham"] },
+  { id: "BEX", name: "Bristol – Taunton – Exeter", nodes: ["bristol", "taunton", "exeter"] },
+  { id: "CORN", name: "Exeter – Newton Abbot – Plymouth", nodes: ["exeter", "newtonabbot", "plymouth"] },
+  { id: "BHANTS", name: "Reading – Newbury – Taunton", nodes: ["reading", "newbury", "taunton"] },
+  { id: "CHERW", name: "Reading – Oxford",       nodes: ["reading", "oxford"] },
+  { id: "CHERW-B", name: "Oxford – Banbury – Birmingham", nodes: ["oxford", "banbury", "birmingham"] },
+
+  // ---- South Western et la Manche ----------------------------------------
+  { id: "SWML", name: "Waterloo – Basingstoke – Southampton",
+    nodes: ["waterloo", "basingstoke", "southampton"] },
+  { id: "WAT-R", name: "Waterloo – Guildford – Reading", nodes: ["waterloo", "guildford", "reading"] },
+  { id: "WOE", name: "Waterloo – Salisbury – Exeter", nodes: ["waterloo", "salisbury", "exeter"] },
+  { id: "WESSEX", name: "Salisbury – Southampton", nodes: ["salisbury", "southampton"] },
+  { id: "WESSEX-B", name: "Salisbury – Westbury – Bristol", nodes: ["salisbury", "westbury", "bristol"] },
+  { id: "BML", name: "Brighton – Gatwick – Londres Victoria",
+    nodes: ["brighton", "gatwick", "victoria", "waterloo"] },
+  { id: "COASTWAY", name: "Brighton – Southampton (par la côte)", nodes: ["brighton", "southampton"] },
+
+  // ---- Midlands et East Anglia -------------------------------------------
+  { id: "MML", name: "St Pancras – Leicester – Loughborough – Derby",
+    nodes: ["stpancras", "leicester", "loughborough", "derby"] },
+  { id: "LEI-B", name: "Leicester – Nuneaton – Birmingham",
+    nodes: ["leicester", "nuneaton", "birmingham"] },
+  { id: "DER-N", name: "Derby – Nottingham",     nodes: ["derby", "nottingham"] },
+  { id: "MML-B", name: "Derby – Chesterfield – Sheffield", nodes: ["derby", "chesterfield", "sheffield"] },
+  { id: "NSTAFF", name: "Derby – Stoke – Crewe", nodes: ["derby", "stoke", "crewe"] },
+  { id: "ROBIN", name: "Nottingham – Sheffield", nodes: ["nottingham", "sheffield"] },
+  { id: "NOT-P", name: "Nottingham – Grantham – Peterborough",
+    nodes: ["nottingham", "grantham", "peterborough"] },
+  { id: "XC-B", name: "Birmingham – Derby",      nodes: ["birmingham", "derby"] },
+  { id: "HOPE", name: "Sheffield – Manchester (Hope Valley)", nodes: ["sheffield", "manchester"] },
+  { id: "GEML", name: "Norwich – Ipswich – Colchester – Liverpool Street",
+    nodes: ["norwich", "ipswich", "colchester", "liverpoolst", "kings-cross"] },
+  { id: "BRECK", name: "Norwich – Ely – Cambridge", nodes: ["norwich", "ely", "cambridge"] },
+  { id: "NOR-P", name: "Norwich – Ely – Peterborough", nodes: ["norwich", "ely", "peterborough"] },
+  { id: "CAMB", name: "Cambridge – King's Cross", nodes: ["cambridge", "kings-cross"] },
+  { id: "FEN", name: "Cambridge – Ely – Peterborough", nodes: ["cambridge", "ely", "peterborough"] },
+
+  // ---- Écosse -------------------------------------------------------------
+  { id: "E&G", name: "Glasgow – Edinburgh",      nodes: ["glasgow", "edinburgh"] },
+  { id: "CUMB", name: "Glasgow – Falkirk – Stirling", nodes: ["glasgow", "falkirk", "stirling"] },
+  { id: "FIFE", name: "Edinburgh – Stirling",    nodes: ["edinburgh", "stirling"] },
+  { id: "HIGH", name: "Stirling – Perth",        nodes: ["stirling", "perth"] },
+  { id: "DUND", name: "Perth – Dundee – Aberdeen", nodes: ["perth", "dundee", "aberdeen"] },
+  { id: "FIFE-B", name: "Edinburgh – Dundee – Aberdeen", nodes: ["edinburgh", "dundee", "aberdeen"] }
 ];

@@ -85,6 +85,13 @@
         <span id="clock">07:00</span>
         <span id="delay">+0</span>
       </div>
+      <!-- Avancement du service : bandeau au ras du bord BAS du cadre, qui se
+           remplit à la proportion de convois ayant quitté le quai. Posé dans
+           le cadre (et non dessous) : c'est l'horloge elle-même qui se
+           remplit, un seul objet à lire au lieu de deux. -->
+      <div id="service-bar" class="hidden" aria-hidden="true">
+        <div id="service-fill"></div>
+      </div>
     </div>
     <div id="pause-tag" class="hidden">En pause</div>
   </div>

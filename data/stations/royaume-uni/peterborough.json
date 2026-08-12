@@ -1,0 +1,34 @@
+{
+  "id": "peterborough",
+  "name": "Peterborough",
+  "tagline": "Peterborough — au milieu des Fens, le croisement de l'Est et de la transversale.",
+  "difficulty": 2,
+  "country": "🇬🇧 Royaume-Uni",
+  "desc": "Au milieu des Fens, là où la ligne de l'Est croise la transversale Birmingham–Norwich : sept voies, six directions, et pas une colline à l'horizon.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },
+    { "id": 6 }
+  ],
+  "portals": {
+    "KING'S CROSS": { "side": "L", "color": "#25dede", "abbr": "KX", "label": "KING'S CROSS" },
+    "CAMBRIDGE":    { "side": "L", "color": "#a78bfa", "abbr": "CB" },
+    "NORWICH":      { "side": "L", "color": "#f2588f", "abbr": "NR" },
+    "YORK":         { "side": "R", "color": "#f5b23c", "abbr": "YK" },
+    "NOTTINGHAM":   { "side": "R", "color": "#4ade80", "abbr": "NG" },
+    "LINCOLN":      { "side": "R", "color": "#60a5fa", "abbr": "LN" }
+  },
+  "links": {
+    "KING'S CROSS": [1, 2, 3],
+    "CAMBRIDGE":    [3, 4],
+    "NORWICH":      [5, 6],
+    "YORK":         [1, 2, 3, 4],
+    "NOTTINGHAM":   [4, 5],
+    "LINCOLN":      [2, 6]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 13, "nMax": 16, "gapMin": 1.8, "gapMax": 3.0,
+    "cars": [2, 2, 2, 3, 3, 4, 4, 5],
+    "quietRate": 0.2
+  }
+}

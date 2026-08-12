@@ -1,0 +1,31 @@
+{
+  "id": "carlisle",
+  "name": "Carlisle",
+  "tagline": "Carlisle — la dernière gare anglaise, et la ligne de Settle qui en descend.",
+  "difficulty": 1,
+  "country": "🇬🇧 Royaume-Uni",
+  "desc": "La dernière gare anglaise avant l'Écosse, et le point où sept compagnies se rejoignaient au XIXᵉ. La ligne de Settle en descend par les tourbières — la plus belle du pays, et la plus fragile.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
+  ],
+  "portals": {
+    "PRESTON":   { "side": "L", "color": "#f2588f", "abbr": "PR" },
+    "LEEDS":     { "side": "L", "color": "#4ade80", "abbr": "LD" },
+    "GLASGOW":   { "side": "R", "color": "#a78bfa", "abbr": "GW" },
+    "EDINBURGH": { "side": "R", "color": "#25dede", "abbr": "ED" },
+    "NEWCASTLE": { "side": "R", "color": "#60a5fa", "abbr": "NC" }
+  },
+  "links": {
+    "PRESTON":   [1, 2, 3],
+    "LEEDS":     [3, 4, 5],
+    "GLASGOW":   [1, 2, 3, 4],
+    "EDINBURGH": [4, 5],
+    "NEWCASTLE": [2, 5]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 12, "nMax": 15, "gapMin": 1.6, "gapMax": 2.8,
+    "cars": [2, 2, 2, 2, 3, 3, 4],
+    "quietRate": 0.25
+  }
+}

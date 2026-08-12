@@ -2,31 +2,34 @@
   "id": "edinburgh",
   "name": "Edinburgh Waverley",
   "city": "Edinburgh",
-  "tagline": "Edinburgh Waverley — la gare dans le ravin : deux gorges est-ouest, quais en anneau.",
-  "difficulty": 3,
+  "tagline": "Edinburgh Waverley — 20 voies au fond d'un ravin, deux gorges et rien d'autre.",
+  "difficulty": 4,
   "country": "🇬🇧 Royaume-Uni",
-  "desc": "Encaissée dans une vallée étroite au cœur de la ville, coiffée d'une grande verrière victorienne, disposée en anneau autour d'un quai-île. Pas de nord ni de sud : deux gorges seulement — à l'est le tunnel de Calton vers Londres et la côte est, à l'ouest Haymarket vers Glasgow, Fife, Aberdeen et Stirling. Les culs-de-sac en épis terminent les régionaux ; le grand axe, lui, traverse.",
+  "desc": "Vingt voies au fond d'un ravin, entre la vieille ville et les jardins de Princes Street : la deuxième gare d'Écosse par la taille, la première par le nombre de directions. Deux gorges, est et ouest, et rien d'autre.",
   "platforms": [
-    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }, { "id": 6 }
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },
+    { "id": 6 }, { "id": 7 }, { "id": 8 }, { "id": 9 }
   ],
   "portals": {
-    "LONDON":       { "side": "L", "color": "#f2588f", "abbr": "L", "label": "LONDON KX" },
-    "NORTHBERWICK": { "side": "L", "color": "#4ade80", "abbr": "NB", "label": "NORTH BERWICK" },
-    "GLASGOW":      { "side": "R", "color": "#25dede", "abbr": "GL" },
-    "ABERDEEN":     { "side": "R", "color": "#f5b23c", "abbr": "AB" },
-    "STIRLING":     { "side": "R", "color": "#a78bfa", "abbr": "ST" }
+    "KING'S CROSS": { "side": "L", "color": "#25dede", "abbr": "KX", "label": "KING'S CROSS" },
+    "NEWCASTLE":    { "side": "L", "color": "#60a5fa", "abbr": "NC" },
+    "CARLISLE":     { "side": "L", "color": "#a78bfa", "abbr": "CA" },
+    "GLASGOW":      { "side": "R", "color": "#f5b23c", "abbr": "GW" },
+    "STIRLING":     { "side": "R", "color": "#4ade80", "abbr": "ST" },
+    "ABERDEEN":     { "side": "R", "color": "#f2588f", "abbr": "AB" }
   },
   "links": {
-    "LONDON": [1, 2, 3, 4],
-    "NORTHBERWICK": [5, 6],
-    "GLASGOW": [3, 4, 5, 6],
-    "ABERDEEN": [1, 2, 3],
-    "STIRLING": [4, 5, 6]
+    "KING'S CROSS": [1, 2, 3, 4],
+    "NEWCASTLE":    [3, 4, 5],
+    "CARLISLE":     [6, 7, 8, 9],
+    "GLASGOW":      [1, 2, 3, 6],
+    "STIRLING":     [4, 5, 8, 9],
+    "ABERDEEN":     [5, 7, 8, 9]
   },
   "sameSidePairs": [],
   "gen": {
-    "nMin": 14, "nMax": 17, "gapMin": 1.6, "gapMax": 2.8,
+    "nMin": 16, "nMax": 20, "gapMin": 1.5, "gapMax": 2.6,
     "cars": [2, 3, 3, 4, 4, 5, 5, 6],
-    "quietRate": 0.18
+    "quietRate": 0.12
   }
 }

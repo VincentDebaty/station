@@ -182,44 +182,59 @@ const PLACES = {
   warschau:     [21.003, 52.229],  // Varsovie, Pologne (la fiche de Berlin écrit WARSCHAU)
   zurich:       [8.540, 47.378],   // Suisse
 
-  // --- Royaume-Uni --------------------------------------------------------
-  aberdeen:     [-2.097, 57.144],
-  airport:      [-2.276, 53.365],  // Manchester Airport
-  ayr:          [-4.625, 55.458],
-  basingstoke:  [-1.089, 51.268],
-  bournemouth:  [-1.874, 50.727],
-  bradford:     [-1.751, 53.793],
-  cambridge:    [0.137, 52.194],
-  cardiff:      [-3.179, 51.476],
-  chester:      [-2.881, 53.196],
-  derby:        [-1.463, 52.916],
-  exeter:       [-3.543, 50.729],
-  gloucester:   [-2.235, 51.865],
-  gourock:      [-4.816, 55.962],
-  yarmouth:     [1.722, 52.607],   // Great Yarmouth
+  // --- Royaume-Uni : POINTS DE PASSAGE seulement --------------------------
+  // Les quatre têtes de ligne londoniennes jouables sont dans le catalogue ;
+  // St Pancras, Liverpool Street et Victoria n'y sont pas, mais les lignes
+  // passent par elles avant de rejoindre la gare jouable la plus proche —
+  // King's Cross est à deux cents mètres de St Pancras.
+  stpancras:    [-0.126, 51.531],
+  liverpoolst:  [-0.081, 51.519],
+  victoria:     [-0.144, 51.495],
+
+  banbury:      [-1.328, 52.060],
+  basingstoke:  [-1.088, 51.268],
+  bath:         [-2.356, 51.377],
+  berwick:      [-2.011, 55.775],
+  carstairs:    [-3.669, 55.693],
+  cheltenham:   [-2.100, 51.897],
+  chesterfield: [-1.420, 53.238],
+  colchester:   [0.893, 51.901],
+  darlington:   [-1.547, 54.521],
+  dundee:       [-2.971, 56.457],
+  durham:       [-1.581, 54.780],
+  ely:          [0.266, 52.390],
+  falkirk:      [-3.786, 56.002],
+  gatwick:      [-0.161, 51.157],
+  grantham:     [-0.642, 52.906],
   guildford:    [-0.581, 51.237],
-  harrogate:    [-1.538, 53.993],
-  lanark:       [-3.778, 55.674],
-  lowestoft:    [1.750, 52.475],
-  newcastle:    [-1.617, 54.968],
-  northberwick: [-2.723, 56.058],
-  oxford:       [-1.245, 51.753],
-  paisley:      [-4.423, 55.846],
-  portsmouth:   [-1.091, 50.798],
-  preston:      [-2.708, 53.758],
-  scarborough:  [-0.404, 54.280],
-  sheffield:    [-1.466, 53.378],
-  sheringham:   [1.207, 52.943],
-  stirling:     [-3.936, 56.119],
+  ipswich:      [1.144, 52.051],
+  lancaster:    [-2.807, 54.048],
+  loughborough: [-1.196, 52.779],
+  motherwell:   [-3.994, 55.792],
+  newbury:      [-1.323, 51.398],
+  newport:      [-2.998, 51.588],
+  newtonabbot:  [-3.609, 50.529],
+  nuneaton:     [-1.464, 52.527],
+  oxenholme:    [-2.722, 54.305],
+  rugby:        [-1.250, 52.379],
+  shrewsbury:   [-2.750, 52.711],
+  stoke:        [-2.181, 53.008],
+  swindon:      [-1.785, 51.566],
+  taunton:      [-3.103, 51.023],
+  wakefield:    [-1.506, 53.682],
+  warrington:   [-2.603, 53.386],
+  westbury:     [-2.200, 51.267],
+  wigan:        [-2.632, 53.543],
   wolverhampton: [-2.129, 52.588]
 };
 
 // Noms de portail qui désignent en réalité une gare JOUABLE sous un autre nom :
-// une fiche peut nommer un terminus (Paddington) ou la ville dans sa langue
-// (Londres) là où le catalogue connaît « London Waterloo ». Sans cette table,
-// on perdrait de vraies arêtes — dont l'Eurostar Paris–Londres.
+// une fiche peut nommer la ville dans sa langue là où le catalogue connaît la
+// gare. Sans cette table, on perdrait de vraies arêtes.
+// « PADDINGTON » n'y figure plus : c'est une gare jouable depuis août 2026.
+// « LONDRES », lui, désigne l'Eurostar — qui arrive à St Pancras, mitoyenne de
+// King's Cross.
 const PLACE_ALIASES = {
-  paddington: "waterloo",
-  londres:    "waterloo",
-  london:     "waterloo"
+  londres: "kings-cross",
+  london:  "kings-cross"
 };

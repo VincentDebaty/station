@@ -1,0 +1,32 @@
+{
+  "id": "nottingham",
+  "name": "Nottingham",
+  "tagline": "Nottingham — là où la plus longue transversale du pays croise la Midland.",
+  "difficulty": 2,
+  "country": "🇬🇧 Royaume-Uni",
+  "desc": "Huit voies dans un tranchée, sous une gare édouardienne en terre cuite : c'est ici que la ligne Liverpool–Norwich, la plus longue transversale du pays, croise celle de Saint-Pancras.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },
+    { "id": 6 }
+  ],
+  "portals": {
+    "ST PANCRAS":   { "side": "L", "color": "#25dede", "abbr": "SP" },
+    "LEICESTER":    { "side": "L", "color": "#4ade80", "abbr": "LE" },
+    "DERBY":        { "side": "L", "color": "#a78bfa", "abbr": "DY" },
+    "SHEFFIELD":    { "side": "R", "color": "#60a5fa", "abbr": "SH" },
+    "PETERBOROUGH": { "side": "R", "color": "#f5b23c", "abbr": "PB" }
+  },
+  "links": {
+    "ST PANCRAS":   [1, 2, 3],
+    "LEICESTER":    [2, 3, 4],
+    "DERBY":        [5, 6],
+    "SHEFFIELD":    [1, 2, 3, 4],
+    "PETERBOROUGH": [4, 5, 6]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 13, "nMax": 16, "gapMin": 1.8, "gapMax": 3.0,
+    "cars": [2, 2, 2, 3, 3, 4, 4, 5],
+    "quietRate": 0.2
+  }
+}

@@ -2,32 +2,34 @@
   "id": "manchester",
   "name": "Manchester Piccadilly",
   "city": "Manchester",
-  "tagline": "Manchester Piccadilly — gare à deux étages : quais traversants perchés, tiroirs en contrebas.",
-  "difficulty": 3,
+  "tagline": "Manchester Piccadilly — 14 voies sur la plus vieille ligne du monde.",
+  "difficulty": 4,
   "country": "🇬🇧 Royaume-Uni",
-  "desc": "Sous la grande halle vitrée à quatre travées, douze quais en cul-de-sac reçoivent les trains de Londres et du sud ; deux quais traversants, perchés sur le corridor de Castlefield, filent d'ouest en est vers Liverpool, l'aéroport et le Yorkshire — le goulot le plus saturé du réseau. Le quai en impasse laisse rebrousser les services de l'aéroport, comme dans la réalité.",
+  "desc": "Quatorze voies dont quatre en surplomb, sur la ligne la plus ancienne du monde encore en service — Liverpool 1830. Six directions, et le goulet de Castlefield qui bloque la moitié du nord de l'Angleterre.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },
-    { "id": 6, "deadEnd": true }
+    { "id": 6 }, { "id": 7 }, { "id": 8 }
   ],
   "portals": {
-    "LIVERPOOL": { "side": "L", "color": "#25dede", "abbr": "LV" },
-    "PRESTON":   { "side": "L", "color": "#60a5fa", "abbr": "PR" },
-    "AIRPORT":   { "side": "R", "color": "#f5b23c", "abbr": "AP", "label": "AÉROPORT" },
-    "SHEFFIELD": { "side": "R", "color": "#4ade80", "abbr": "SH" },
-    "LONDON":    { "side": "R", "color": "#f2588f", "abbr": "L", "label": "LONDON EU" }
+    "EUSTON":    { "side": "L", "color": "#25dede", "abbr": "EU" },
+    "CREWE":     { "side": "L", "color": "#60a5fa", "abbr": "CW" },
+    "LIVERPOOL": { "side": "L", "color": "#4ade80", "abbr": "LV" },
+    "LEEDS":     { "side": "R", "color": "#f5b23c", "abbr": "LD" },
+    "PRESTON":   { "side": "R", "color": "#f2588f", "abbr": "PR" },
+    "SHEFFIELD": { "side": "R", "color": "#a78bfa", "abbr": "SH" }
   },
   "links": {
-    "LIVERPOOL": [1, 2, 3, 4],
-    "PRESTON": [2, 3, 4, 5],
-    "AIRPORT": [1, 2, 3, 6],
-    "SHEFFIELD": [3, 4, 5],
-    "LONDON": [1, 2, 6]
+    "EUSTON":    [1, 2, 3, 4],
+    "CREWE":     [3, 4, 5],
+    "LIVERPOOL": [6, 7, 8],
+    "LEEDS":     [1, 2, 3, 6],
+    "PRESTON":   [4, 5, 7],
+    "SHEFFIELD": [5, 6, 8]
   },
-  "sameSidePairs": [["LONDON", "AIRPORT"], ["AIRPORT", "LONDON"]],
+  "sameSidePairs": [],
   "gen": {
-    "nMin": 14, "nMax": 17, "gapMin": 1.7, "gapMax": 3.0,
-    "cars": [2, 2, 2, 3, 3, 4, 4, 5, 5, 6],
-    "quietRate": 0.18
+    "nMin": 16, "nMax": 20, "gapMin": 1.5, "gapMax": 2.6,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6],
+    "quietRate": 0.12
   }
 }

@@ -1,0 +1,29 @@
+{
+  "id": "aberdeen",
+  "name": "Aberdeen",
+  "tagline": "Aberdeen — la gare de granit, au bout de la côte est.",
+  "difficulty": 2,
+  "country": "🇬🇧 Royaume-Uni",
+  "desc": "La gare de granit, au bout de la côte est : trois façons d'en descendre vers le sud, une seule d'en repartir vers le nord et les champs pétroliers. Tout passe par Inverness ou par Dundee.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
+  ],
+  "portals": {
+    "EDINBURGH": { "side": "L", "color": "#a78bfa", "abbr": "ED" },
+    "PERTH":     { "side": "L", "color": "#f5b23c", "abbr": "PH" },
+    "GLASGOW":   { "side": "L", "color": "#25dede", "abbr": "GW" },
+    "INVERNESS": { "side": "R", "color": "#4ade80", "abbr": "IV" }
+  },
+  "links": {
+    "EDINBURGH": [1, 2, 3],
+    "PERTH":     [3, 4],
+    "GLASGOW":   [4, 5],
+    "INVERNESS": [1, 2, 3, 4, 5]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 13, "nMax": 16, "gapMin": 1.8, "gapMax": 3.0,
+    "cars": [2, 2, 2, 3, 3, 4, 4, 5],
+    "quietRate": 0.2
+  }
+}

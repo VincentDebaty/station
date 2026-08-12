@@ -1,0 +1,32 @@
+{
+  "id": "newcastle",
+  "name": "Newcastle",
+  "tagline": "Newcastle — sur le pont de Stephenson, les courbes les plus serrées du réseau.",
+  "difficulty": 3,
+  "country": "🇬🇧 Royaume-Uni",
+  "desc": "Sur le pont de Stephenson au-dessus de la Tyne, la gare aux courbes les plus serrées du réseau : douze voies en éventail, et la ligne de la vallée de la Tyne qui part vers Carlisle par le mur d'Hadrien.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },
+    { "id": 6 }
+  ],
+  "portals": {
+    "KING'S CROSS":  { "side": "L", "color": "#25dede", "abbr": "KX", "label": "KING'S CROSS" },
+    "YORK":          { "side": "L", "color": "#f5b23c", "abbr": "YK" },
+    "CARLISLE":      { "side": "L", "color": "#a78bfa", "abbr": "CA" },
+    "EDINBURGH":     { "side": "R", "color": "#4ade80", "abbr": "ED" },
+    "MIDDLESBROUGH": { "side": "R", "color": "#f2588f", "abbr": "MI" }
+  },
+  "links": {
+    "KING'S CROSS":  [1, 2, 3],
+    "YORK":          [2, 3, 4],
+    "CARLISLE":      [5, 6],
+    "EDINBURGH":     [1, 2, 3, 4],
+    "MIDDLESBROUGH": [4, 5, 6]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 14, "nMax": 17, "gapMin": 1.7, "gapMax": 2.9,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6],
+    "quietRate": 0.15
+  }
+}

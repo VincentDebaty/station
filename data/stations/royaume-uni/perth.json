@@ -1,0 +1,29 @@
+{
+  "id": "perth",
+  "name": "Perth",
+  "tagline": "Perth — sept voies pour 50 000 habitants : la gare des Highlands, presque vide.",
+  "difficulty": 1,
+  "country": "🇬🇧 Royaume-Uni",
+  "desc": "Sept voies pour une ville de cinquante mille habitants : la gare des Highlands, bâtie quand Perth était le pivot de tout le nord. Aujourd'hui presque vide, et magnifique.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
+  ],
+  "portals": {
+    "STIRLING":  { "side": "L", "color": "#4ade80", "abbr": "ST" },
+    "EDINBURGH": { "side": "L", "color": "#a78bfa", "abbr": "ED" },
+    "INVERNESS": { "side": "R", "color": "#25dede", "abbr": "IV" },
+    "ABERDEEN":  { "side": "R", "color": "#f2588f", "abbr": "AB" }
+  },
+  "links": {
+    "STIRLING":  [1, 2, 3],
+    "EDINBURGH": [3, 4, 5],
+    "INVERNESS": [1, 2, 3, 4],
+    "ABERDEEN":  [4, 5]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 12, "nMax": 15, "gapMin": 1.6, "gapMax": 2.8,
+    "cars": [2, 2, 2, 2, 3, 3, 4],
+    "quietRate": 0.25
+  }
+}

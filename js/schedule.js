@@ -16,6 +16,53 @@ const ARRIVAL_GAP_SCALE = 0.82;   // < 1 : écart entre arrivées resserré (~18
 const rnd = (a, b) => a + Math.random() * (b - a);
 const pick = arr => arr[Math.floor(Math.random() * arr.length)];
 
+// ------------------------------------------------------------------
+// Forme de la journée : la courbe d'affluence
+// ------------------------------------------------------------------
+// Jusqu'ici les arrivées se tiraient avec un écart uniforme du premier au
+// dernier convoi : la pression était PLATE d'un bout à l'autre du service — ni
+// accalmie, ni coup de feu, ni retombée. Or un poste d'aiguillage, c'est fait
+// de pointes : c'est là que naissent la tension et le souvenir d'une partie.
+//
+// On module donc l'écart entre arrivées par une densité d(u), où u est la
+// position dans le service (0 = premier convoi, 1 = dernier). L'écart est
+// DIVISÉ par d : une densité de 2 rapproche les arrivées deux fois plus.
+//
+// La courbe est NORMALISÉE (cf. rushWeights) : la durée totale du service reste
+// en moyenne celle d'avant, seule sa RÉPARTITION change. Sans cette
+// renormalisation, une gare à pointe étirerait ou raccourcirait sa journée et
+// sortirait des enveloppes de calibrage mesurées gare par gare.
+//
+// Le profil est une propriété de la FICHE de gare (`gen.rush`) : c'est un
+// caractère, pas un hasard. Une desserte de banlieue respire deux fois par
+// jour, un nœud de transit reste tendu du début à la fin — même moteur,
+// sensation différente, sans toucher à la géométrie.
+const bell = (u, c, w) => Math.exp(-(((u - c) / w) ** 2));
+// Amplitudes calibrées sur la mesure qui compte : le nombre de convois présents
+// dans une fenêtre GLISSANTE de 5 minutes de jeu (compter par fraction du
+// service ne mesure rien — chaque sixième contient n/6 trains par
+// construction). Repère sur une gare à 18 convois : le service plat oscille
+// entre 2 et 3 par tranche de 5 min ; « pointe » descend à 2 au creux et monte
+// à 5 au sommet. Les courbes sont volontairement un peu marquées : le tirage
+// aléatoire des écarts (gapMin..gapMax) en gomme une partie.
+const RUSH = {
+  plat:   _ => 1,                                    // pression constante (comportement d'avant)
+  pointe: u => 1 + 1.80 * bell(u, 0.55, 0.21),       // une pointe nette au milieu — défaut
+  double: u => 1 + 1.60 * bell(u, 0.24, 0.13)        // deux pointes : matin et soir
+                 + 1.90 * bell(u, 0.74, 0.14),
+  rafale: u => 1 + 2.60 * bell(u, 0.78, 0.15)        // long calme, puis bourrasque finale
+};
+const RUSH_DEFAULT = "pointe";
+// Poids d'écart, un par convoi : 1/d, renormalisés pour que leur MOYENNE vaille
+// exactement 1. C'est cette renormalisation qui préserve la durée du service.
+function rushWeights(n) {
+  const f = RUSH[(GEN && GEN.rush) || RUSH_DEFAULT] || RUSH[RUSH_DEFAULT];
+  const w = [];
+  for (let i = 0; i < n; i++) w.push(1 / f((i + 0.5) / n));
+  const mean = w.reduce((a, b) => a + b, 0) / (n || 1);
+  return w.map(x => x / mean);
+}
+
 // Simulation headless de la journée : mêmes règles que le jeu
 // (entrée dès que possible, arrêt minimum, relâchement par section,
 // et les imprévus : arrivée retardée, quai fermé, transit de fret)
@@ -189,6 +236,8 @@ function generateOnce() {
   // espacement des arrivées
   const n = GEN.nMin + Math.floor(Math.random() * (GEN.nMax - GEN.nMin + 1));
   const draft = [];
+  // écarts modulés par la courbe d'affluence de la gare (cf. rushWeights)
+  const gapW = rushWeights(n);
   let arr = rnd(FIRST_ARRIVAL[0], FIRST_ARRIVAL[1]);
   for (let i = 0; i < n; i++) {
     const [from, to] = pick(PAIRS);
@@ -198,7 +247,7 @@ function generateOnce() {
       from, to, cars: Math.max(MIN_CARS, pick(GEN.cars)),
       arr: Math.round(arr * 2) / 2, dep: 0
     });
-    arr += rnd(GEN.gapMin, GEN.gapMax) * ARRIVAL_GAP_SCALE;
+    arr += rnd(GEN.gapMin, GEN.gapMax) * ARRIVAL_GAP_SCALE * gapW[i];
   }
   const lastArr = draft[draft.length - 1].arr;
   // 1c) les convois de fret : ils se présentent comme les autres (file

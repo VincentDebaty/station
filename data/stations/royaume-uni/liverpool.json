@@ -2,35 +2,32 @@
   "id": "liverpool",
   "name": "Liverpool Lime Street",
   "city": "Liverpool",
-  "tagline": "Liverpool Lime Street — le plus ancien grand terminus du monde : tout sort à l'est par la tranchée d'Edge Hill.",
-  "difficulty": 4,
+  "tagline": "Liverpool Lime Street — le plus vieux terminus de grande ligne encore en usage.",
+  "difficulty": 3,
   "country": "🇬🇧 Royaume-Uni",
-  "desc": "Le plus ancien grand terminus de grande ligne encore en service (1836), sous une halle en arc de 1867 qui fut la plus vaste du monde. Tout s'échappe à l'est par la tranchée en pente d'Edge Hill : Manchester à l'est, Leeds et les Pennines au nord-est, Preston au nord, Chester et le pays de Galles à l'ouest, Londres Euston au sud par Crewe. Un seul goulot, un flux voyageur incessant.",
+  "desc": "Le plus vieux terminus de grande ligne au monde encore en usage (1836), taillé dans le grès rouge : neuf voies à heurtoir au fond d'une tranchée. De là part la transversale la plus longue du pays, jusqu'à Norwich.",
   "platforms": [
-    { "id": 1, "deadEnd": true }, { "id": 2, "deadEnd": true }, { "id": 3, "deadEnd": true },
-    { "id": 4, "deadEnd": true }, { "id": 5, "deadEnd": true }, { "id": 6, "deadEnd": true },
-    { "id": 7, "deadEnd": true }
+    { "id": 1, "deadEnd": true }, { "id": 2, "deadEnd": true }, { "id": 3, "deadEnd": true }, { "id": 4, "deadEnd": true }, { "id": 5, "deadEnd": true },
+    { "id": 6, "deadEnd": true }, { "id": 7, "deadEnd": true }
   ],
   "portals": {
-    "MANCHESTER": { "side": "L", "color": "#25dede", "abbr": "MA" },
-    "LONDON":     { "side": "L", "color": "#f2588f", "abbr": "L", "label": "LONDON EU" },
-    "LEEDS":      { "side": "L", "color": "#4ade80", "abbr": "LE" },
-    "PRESTON":    { "side": "L", "color": "#60a5fa", "abbr": "PR" },
-    "NORWICH":    { "side": "L", "color": "#a78bfa", "abbr": "NW" },
-    "CHESTER":    { "side": "L", "color": "#f5b23c", "abbr": "CH" }
+    "EUSTON":     { "side": "L", "color": "#25dede", "abbr": "EU" },
+    "MANCHESTER": { "side": "L", "color": "#f5b23c", "abbr": "MR" },
+    "CREWE":      { "side": "L", "color": "#60a5fa", "abbr": "CW" },
+    "CHESTER":    { "side": "L", "color": "#4ade80", "abbr": "CH" },
+    "NORWICH":    { "side": "L", "color": "#f2588f", "abbr": "NR" }
   },
   "links": {
-    "MANCHESTER": [3, 4, 5, 6],
-    "LONDON": [1, 2, 3, 4],
-    "LEEDS": [5, 6, 7],
-    "PRESTON": [1, 2],
-    "NORWICH": [4, 5],
-    "CHESTER": [6, 7]
+    "EUSTON":     [1, 2, 3, 4],
+    "MANCHESTER": [3, 4, 5],
+    "CREWE":      [5, 6],
+    "CHESTER":    [6, 7],
+    "NORWICH":    [1, 2, 7]
   },
   "sameSidePairs": "all",
   "gen": {
-    "nMin": 15, "nMax": 18, "gapMin": 1.6, "gapMax": 2.7,
-    "cars": [2, 3, 3, 4, 4, 5, 5, 6, 7],
-    "quietRate": 0.14
+    "nMin": 14, "nMax": 18, "gapMin": 1.9, "gapMax": 3.1,
+    "cars": [2, 2, 3, 3, 4, 4, 5],
+    "quietRate": 0.15
   }
 }

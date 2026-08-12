@@ -80,12 +80,26 @@ const GEO = {
         dresden: [13.732, 51.041], freiburg: [7.841, 47.997]
       } },
     "royaume-uni": { name: "Royaume-Uni", flag: "🇬🇧", iso: "GBR", continent: "europe",
-      frame: [-5.8, 50.6, 1.8, 56.5], neighbors: { belgique: [3.25, 51.22] },
+      frame: [-6.3, 49.9, 1.9, 57.6], neighbors: { belgique: [3.25, 51.22] },
       cities: {
-        york: [-1.093, 53.958], norwich: [1.306, 52.627], reading: [-0.972, 51.459],
-        bristol: [-2.582, 51.449], manchester: [-2.230, 53.477], leeds: [-1.548, 53.795],
-        edinburgh: [-3.188, 55.952], glasgow: [-4.257, 55.860], liverpool: [-2.978, 53.408],
-        birmingham: [-1.900, 52.478], waterloo: [-0.113, 51.503]
+        // Les quatre têtes de ligne londoniennes tiennent dans deux kilomètres.
+        // Même traitement qu'à Paris : on les écarte de quelques kilomètres, sur
+        // l'axe de leur propre ligne — Euston au nord-ouest, King's Cross au
+        // nord-est, Paddington à l'ouest, Waterloo au sud. Sans cet écart, la
+        // règle du centimètre n'en garderait qu'une et trois seraient injouables.
+        waterloo: [-0.100, 51.435], euston: [-0.205, 51.567],
+        "kings-cross": [-0.070, 51.572], paddington: [-0.295, 51.505],
+        reading: [-0.972, 51.459], oxford: [-1.270, 51.753], southampton: [-1.414, 50.907],
+        brighton: [-0.141, 50.829], salisbury: [-1.806, 51.071], bristol: [-2.582, 51.449],
+        cardiff: [-3.179, 51.476], exeter: [-3.544, 50.730], plymouth: [-4.143, 50.378],
+        birmingham: [-1.900, 52.478], leicester: [-1.124, 52.632], nottingham: [-1.147, 52.947],
+        derby: [-1.463, 52.916], crewe: [-2.433, 53.089], chester: [-2.880, 53.197],
+        manchester: [-2.230, 53.477], liverpool: [-2.978, 53.408], preston: [-2.707, 53.756],
+        carlisle: [-2.933, 54.891], leeds: [-1.548, 53.795], sheffield: [-1.462, 53.378],
+        doncaster: [-1.139, 53.523], york: [-1.093, 53.958], newcastle: [-1.617, 54.969],
+        norwich: [1.306, 52.627], cambridge: [0.138, 52.194], peterborough: [-0.250, 52.575],
+        edinburgh: [-3.188, 55.952], glasgow: [-4.257, 55.860], stirling: [-3.936, 56.119],
+        perth: [-3.439, 56.393], aberdeen: [-2.098, 57.144]
       } }
   }
 };

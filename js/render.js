@@ -386,6 +386,41 @@ function updateTimeline() {
 }
 
 // ------------------------------------------------------------------
+// Avancement du service : la jauge sous l'horloge
+// ------------------------------------------------------------------
+// Le HUD disait l'heure et le retard, rien d'autre : le joueur ne savait ni
+// combien de convois restaient, ni s'il en était au tiers ou aux trois quarts.
+// Il ne pouvait donc ni se doser, ni voir venir la fin.
+//
+// Une jauge, remplie à la proportion de convois AYANT QUITTÉ LE QUAI. C'est la
+// mesure la plus honnête de l'avancement : ce qui compte, ce n'est pas l'heure
+// qui passe, c'est le travail écoulé. Un convoi compte dès qu'il s'ébranle
+// (movingOut, ou movingThrough pour un fret qui traverse) et non à sa
+// disparition hors champ — sinon le cran arriverait longtemps après le geste
+// qui l'a mérité.
+let SVC = null;
+function buildServiceBar() {
+  const bar = document.getElementById("service-bar");
+  if (!bar) return;
+  const fill = document.getElementById("service-fill");
+  fill.style.width = "0%";
+  // pas encore de journée (génération en cours) : la jauge reste masquée
+  SVC = (trains && trains.length) ? { fill, total: trains.length, shown: -1 } : null;
+  bar.classList.toggle("hidden", !SVC);
+}
+function updateServiceBar() {
+  if (!SVC) return;
+  let gone = 0;
+  for (const t of trains)
+    if (t.state === "done" || t.state === "movingOut" || t.state === "movingThrough") gone++;
+  // On n'écrit dans le DOM qu'au CHANGEMENT : la jauge est stable des minutes
+  // durant, et cette fonction tourne à chaque image.
+  if (gone === SVC.shown) return;
+  SVC.shown = gone;
+  SVC.fill.style.width = (gone / SVC.total * 100).toFixed(1) + "%";
+}
+
+// ------------------------------------------------------------------
 // Sons : petites signatures synthétisées (WebAudio), aucun fichier.
 // Volume bas — ambiance de poste d'aiguillage, pas de fanfare.
 // ------------------------------------------------------------------

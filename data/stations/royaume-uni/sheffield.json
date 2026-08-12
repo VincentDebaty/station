@@ -1,0 +1,32 @@
+{
+  "id": "sheffield",
+  "name": "Sheffield",
+  "tagline": "Sheffield — entre la rivière et la colline, la porte du Peak District.",
+  "difficulty": 3,
+  "country": "🇬🇧 Royaume-Uni",
+  "desc": "Neuf voies coincées entre la rivière et la colline, dans la ville de l'acier : la ligne de la Hope Valley traverse le Peak District par un tunnel de cinq kilomètres pour rejoindre Manchester.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },
+    { "id": 6 }
+  ],
+  "portals": {
+    "LEEDS":      { "side": "L", "color": "#4ade80", "abbr": "LD" },
+    "MANCHESTER": { "side": "L", "color": "#f5b23c", "abbr": "MR" },
+    "ST PANCRAS": { "side": "R", "color": "#25dede", "abbr": "SP" },
+    "NOTTINGHAM": { "side": "R", "color": "#60a5fa", "abbr": "NG" },
+    "BIRMINGHAM": { "side": "R", "color": "#f2588f", "abbr": "BM" }
+  },
+  "links": {
+    "LEEDS":      [1, 2, 3],
+    "MANCHESTER": [3, 4, 5, 6],
+    "ST PANCRAS": [1, 2, 3, 4],
+    "NOTTINGHAM": [4, 5],
+    "BIRMINGHAM": [5, 6]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 14, "nMax": 17, "gapMin": 1.7, "gapMax": 2.9,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6],
+    "quietRate": 0.15
+  }
+}

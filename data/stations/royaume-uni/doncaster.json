@@ -1,0 +1,31 @@
+{
+  "id": "doncaster",
+  "name": "Doncaster",
+  "tagline": "Doncaster — la ville de la Mallard : cinq directions où l'East Coast se sépare.",
+  "difficulty": 1,
+  "country": "🇬🇧 Royaume-Uni",
+  "desc": "C'est ici que se sont construites les locomotives les plus rapides du monde, la Mallard comprise. Aujourd'hui, un carrefour à cinq directions où l'East Coast se sépare pour Leeds et pour York.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
+  ],
+  "portals": {
+    "KING'S CROSS": { "side": "L", "color": "#25dede", "abbr": "KX", "label": "KING'S CROSS" },
+    "SHEFFIELD":    { "side": "L", "color": "#60a5fa", "abbr": "SH" },
+    "YORK":         { "side": "R", "color": "#f5b23c", "abbr": "YK" },
+    "LEEDS":        { "side": "R", "color": "#4ade80", "abbr": "LD" },
+    "HULL":         { "side": "R", "color": "#a78bfa", "abbr": "HU" }
+  },
+  "links": {
+    "KING'S CROSS": [1, 2, 3],
+    "SHEFFIELD":    [3, 4, 5],
+    "YORK":         [1, 2, 3, 4],
+    "LEEDS":        [4, 5],
+    "HULL":         [2, 5]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 12, "nMax": 15, "gapMin": 1.6, "gapMax": 2.8,
+    "cars": [2, 2, 2, 2, 3, 3, 4],
+    "quietRate": 0.25
+  }
+}

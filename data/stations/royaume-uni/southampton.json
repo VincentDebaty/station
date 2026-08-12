@@ -1,0 +1,32 @@
+{
+  "id": "southampton",
+  "name": "Southampton Central",
+  "city": "Southampton",
+  "tagline": "Southampton Central — le port de l'Atlantique, entre le tunnel et les docks.",
+  "difficulty": 2,
+  "country": "🇬🇧 Royaume-Uni",
+  "desc": "Le port de l'Atlantique, d'où partaient les paquebots : cinq quais entre le tunnel et les docks. La ligne de la côte ouest file vers Bournemouth, celle du Wessex remonte vers Salisbury.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
+  ],
+  "portals": {
+    "WATERLOO":    { "side": "L", "color": "#25dede", "abbr": "WL" },
+    "READING":     { "side": "L", "color": "#f5b23c", "abbr": "RD" },
+    "BOURNEMOUTH": { "side": "R", "color": "#a78bfa", "abbr": "BH" },
+    "SALISBURY":   { "side": "R", "color": "#4ade80", "abbr": "SA" },
+    "PORTSMOUTH":  { "side": "R", "color": "#f2588f", "abbr": "PO" }
+  },
+  "links": {
+    "WATERLOO":    [1, 2, 3],
+    "READING":     [3, 4, 5],
+    "BOURNEMOUTH": [1, 2, 3],
+    "SALISBURY":   [4, 5],
+    "PORTSMOUTH":  [2, 5]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 13, "nMax": 16, "gapMin": 1.8, "gapMax": 3.0,
+    "cars": [2, 2, 2, 3, 3, 4, 4, 5],
+    "quietRate": 0.2
+  }
+}

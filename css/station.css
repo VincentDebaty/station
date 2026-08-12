@@ -42,9 +42,12 @@ body {
   border-radius: 12px; color: var(--text);
   backdrop-filter: blur(7px); -webkit-backdrop-filter: blur(7px);
   display: flex; flex-direction: column; align-items: center; gap: 2px;
-  padding: 5px 13px;
+  /* réserve en bas : la jauge d'avancement s'y loge sans serrer les chiffres */
+  padding: 5px 13px 9px;
   font-family: ui-monospace, "SF Mono", Menlo, monospace;
   transition: border-color .15s, opacity .35s;
+  /* ancre de la jauge (absolue) + arrondi des coins bas respecté */
+  position: relative; overflow: hidden;
 }
 #clock-row { display: flex; align-items: baseline; gap: 8px; }
 /* Commandes flottantes haut-droite : lecture + réglages côte à côte. */
@@ -111,6 +114,37 @@ body {
 }
 @media (prefers-reduced-motion: reduce) {
   #delay.bad { animation: none; }
+}
+/* ---- Avancement du service ----
+   Un bandeau logé DANS le cadre de l'heure, au ras de son bord bas : c'est
+   l'horloge elle-même qui se remplit à mesure que les convois quittent le
+   quai. Un seul objet à lire au lieu de deux, et la question « où en suis-je ? »
+   trouve sa réponse là où l'œil va déjà. Aucun chiffre, dans la ligne du parti
+   « 100 % visuel » du reste du jeu.
+   Il est en position absolue : il ne participe pas au flux, donc l'heure reste
+   centrée exactement comme avant.
+   RETRAIT LATÉRAL, et non pleine largeur : une bande droite menée jusqu'aux
+   bords d'un cadre très arrondi se fait rogner par la courbe et finit en deux
+   petits biseaux, qui accrochent l'œil. En la rentrant dans la portion PLATE du
+   bord bas, avec ses propres bouts arrondis, on obtient une pilule dans une
+   pilule — mêmes formes, aucun conflit. (L'autre voie serait d'aplatir le
+   cadre, mais son rayon de 12 px fait la famille avec les boutons et les
+   panneaux du HUD.) */
+#service-bar {
+  position: absolute; left: 10px; right: 10px; bottom: 4px; height: 3px;
+  border-radius: 2px; overflow: hidden;
+  background: rgba(45, 212, 191, .14);
+}
+#service-bar.hidden { display: none; }
+/* Le remplissage avance par paliers (un convoi = un cran) : la transition les
+   adoucit, et chaque départ se voit — c'est la récompense discrète du geste. */
+#service-fill {
+  height: 100%; width: 0; border-radius: 2px;
+  background: #2dd4bf;
+  transition: width .45s ease;
+}
+@media (prefers-reduced-motion: reduce) {
+  #service-fill { transition: none; }
 }
 /* mention « En pause » : en flux sous la poignée, teal comme la bordure en pause */
 #pause-tag {
@@ -1021,9 +1055,10 @@ svg { width: 100%; height: 100%; display: block; }
   #hud-top { top: calc(8px + var(--safe-t)); gap: 4px; }
   #hud-tools { top: calc(8px + var(--safe-t)); }
   #btn-playback, #btn-settings { padding: 6px; }
-  #hud-clock { padding: 5px 12px; gap: 2px; }
+  #hud-clock { padding: 5px 12px 8px; gap: 2px; }
   #clock { font-size: 20px; }
   #delay { font-size: 13px; }
+  #service-bar { height: 3px; }
   #pause-tag { font-size: 11px; padding: 2px 10px; }
   .hud-panel { padding: 6px; gap: 6px; }
   #hud-controls .btn {

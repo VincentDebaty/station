@@ -1,0 +1,30 @@
+{
+  "id": "brighton",
+  "name": "Brighton",
+  "tagline": "Brighton — terminus face à la mer : tout vient de Londres et y retourne.",
+  "difficulty": 2,
+  "country": "🇬🇧 Royaume-Uni",
+  "desc": "Un terminus sous une verrière courbe de 1840, face à la mer : tout arrive de Londres et repart vers Londres, sauf la ligne de la côte qui longe la Manche jusqu'à Southampton.",
+  "platforms": [
+    { "id": 1, "deadEnd": true }, { "id": 2, "deadEnd": true }, { "id": 3, "deadEnd": true }, { "id": 4, "deadEnd": true }, { "id": 5, "deadEnd": true },
+    { "id": 6, "deadEnd": true }
+  ],
+  "portals": {
+    "LONDON VICTORIA": { "side": "L", "color": "#25dede", "abbr": "VI", "label": "LDN VICTORIA" },
+    "LONDON BRIDGE":   { "side": "L", "color": "#a78bfa", "abbr": "LB", "label": "LDN BRIDGE" },
+    "SOUTHAMPTON":     { "side": "L", "color": "#4ade80", "abbr": "SO" },
+    "HASTINGS":        { "side": "L", "color": "#f5b23c", "abbr": "HS" }
+  },
+  "links": {
+    "LONDON VICTORIA": [1, 2, 3, 4],
+    "LONDON BRIDGE":   [3, 4, 5],
+    "SOUTHAMPTON":     [5, 6],
+    "HASTINGS":        [1, 2, 6]
+  },
+  "sameSidePairs": "all",
+  "gen": {
+    "nMin": 12, "nMax": 15, "gapMin": 2.0, "gapMax": 3.3,
+    "cars": [2, 2, 3, 3, 4, 4, 5],
+    "quietRate": 0.2
+  }
+}

@@ -125,6 +125,13 @@ Terminus (`sameSidePairs: "all"`, tous les portails du même côté, quais
 `deadEnd`) : les trains entrent et rebroussent ; tout portail partageant un quai
 avec un autre forme une paire valide.
 
+⚠ **Dans un terminus, un quai qui n'appartient qu'à UN portail est mort.** Le
+train entre par un portail et repart par un AUTRE : il lui faut donc deux
+portails sur le même quai. C'est l'erreur la plus facile à rater — l'œil voit un
+quai desservi, le moteur voit un cul-de-sac. Règle : **chaque quai d'un terminus
+figure dans au moins deux listes de `links`** (mesuré sur London Waterloo, quais
+6 et 8, que seuls Reading et Portsmouth desservaient).
+
 ## 4. Enregistrement (2 fichiers)
 
 - `data/stations/index.json` : ajouter l'`id` dans le bloc `stations` du pays
@@ -162,10 +169,29 @@ destination).
 
 ## 5. Enveloppes par palier (valeurs de référence `gen`)
 
-`gen` = `{ nMin, nMax, gapMin, gapMax, cars[], quietRate }`.
+`gen` = `{ nMin, nMax, gapMin, gapMax, cars[], quietRate, rush }`.
 `cars` = tirage des longueurs (pondéré), **entre 2 et 7** : une valeur 1 est
 remontée à `MIN_CARS` = 2 par le générateur (une motrice seule n'est pas un
 convoi). `quietRate` = proba d'un jour sans imprévu.
+
+**`rush` — la forme de la journée** (facultatif, défaut `"pointe"`). Module
+l'écart entre arrivées selon la position dans le service : une densité de 2
+rapproche les arrivées deux fois plus. La courbe est **normalisée**, donc la
+durée du service ne change pas — seule sa répartition change, et les enveloppes
+ci-dessous restent valables telles quelles.
+
+| `rush` | forme | pour quelle gare |
+|---|---|---|
+| `"pointe"` | une pointe nette au milieu (défaut) | le cas général |
+| `"double"` | deux pointes, matin et soir | desserte de banlieue, navetteurs |
+| `"rafale"` | long calme puis bourrasque finale | gare qui « prend » tard |
+| `"plat"` | pression constante | à réserver aux gares tutoriel |
+
+C'est un levier de **caractère**, pas de difficulté : deux gares aux mêmes
+chiffres se jouent différemment selon leur profil. Repère mesuré sur une gare à
+18 convois : en fenêtre glissante de 5 min, `plat` oscille entre 2 et 3 convois,
+`pointe` entre 2 au creux et 5 au sommet. Attention, un profil marqué creuse
+aussi les accalmies — vérifier au `gen-check` que le retard garanti reste bas.
 
 **Fret** : plus aucun réglage dans `gen` — le NOMBRE de convois de fret vient de
 `difficulty` (1 au niveau 1 … 5 au niveau 5), étalés sur la journée. Un fret se

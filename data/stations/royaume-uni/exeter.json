@@ -1,0 +1,33 @@
+{
+  "id": "exeter",
+  "name": "Exeter St Davids",
+  "city": "Exeter",
+  "tagline": "Exeter St Davids — trois façons d'arriver de Londres, une seule d'en repartir.",
+  "difficulty": 2,
+  "country": "🇬🇧 Royaume-Uni",
+  "desc": "Trois façons d'arriver de Londres — par Bristol, par Taunton, par Salisbury — et une seule d'en repartir vers la Cornouailles. La gare où deux compagnies rivales se sont partagé la voie au XIXᵉ.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },
+    { "id": 6 }
+  ],
+  "portals": {
+    "PADDINGTON": { "side": "L", "color": "#25dede", "abbr": "PD" },
+    "WATERLOO":   { "side": "L", "color": "#f5b23c", "abbr": "WL" },
+    "BRISTOL":    { "side": "L", "color": "#4ade80", "abbr": "BS" },
+    "PLYMOUTH":   { "side": "R", "color": "#f2588f", "abbr": "PL" },
+    "BARNSTAPLE": { "side": "R", "color": "#a78bfa", "abbr": "BA" }
+  },
+  "links": {
+    "PADDINGTON": [1, 2, 3],
+    "WATERLOO":   [3, 4],
+    "BRISTOL":    [5, 6],
+    "PLYMOUTH":   [1, 2, 3, 4, 5],
+    "BARNSTAPLE": [5, 6]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 13, "nMax": 16, "gapMin": 1.8, "gapMax": 3.0,
+    "cars": [2, 2, 2, 3, 3, 4, 4, 5],
+    "quietRate": 0.2
+  }
+}
