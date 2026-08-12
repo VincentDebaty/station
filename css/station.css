@@ -94,9 +94,11 @@ body {
 #station-tag .arw { font-size: 22px; line-height: 1; margin-top: -2px; color: var(--muted); transition: color .15s; }
 #station-tag .flag { font-size: 15px; line-height: 1; }
 #station-tag .nm { font-size: 13px; font-weight: 600; color: var(--text); }
-/* Difficulté : mêmes pastilles que la fiche gare de la carte (mm-diff). */
-#station-tag .dif { font-size: 9px; line-height: 1; letter-spacing: 1.5px; color: #3b465c; margin-left: 1px; }
-#station-tag .dif .on { color: #f5b23c; }
+/* Difficulté : la MÊME jauge que la fiche de gare (.mm-row .gauge), en plus
+   petit — un niveau se lit pareil partout dans le jeu. */
+#station-tag .dif { display: flex; align-items: center; gap: 3px; margin-left: 3px; }
+#station-tag .dif .b { width: 4px; height: 10px; border-radius: 1.5px; background: #3b465c; }
+#station-tag .dif .b.on { background: #f5b23c; }
 @media (hover: hover) {
   #station-tag:hover { background: rgba(26, 37, 58, .92); border-color: #2dd4bf; }
   #station-tag:hover .arw { color: #2dd4bf; }
@@ -755,8 +757,10 @@ svg { width: 100%; height: 100%; display: block; }
    sur toute la largeur lui donnait un poids qu'elle n'a pas — toutes les gares
    proposées sont à égalité, seule leur difficulté les distingue. */
 @media (hover: hover) { #end-unlock .eu-pick:hover { border-color: #2dd4bf; color: #eafbf7; } }
-#end-unlock .pips { font-size: 9px; letter-spacing: 1px; color: #55617a; flex: 0 0 auto; }
-#end-unlock .pips .on { color: #f5b23c; }
+/* Difficulté des gares proposées : la MÊME jauge que partout ailleurs. */
+#end-unlock .pips { display: flex; align-items: center; gap: 3px; flex: 0 0 auto; }
+#end-unlock .pips .b { width: 4px; height: 11px; border-radius: 1.5px; background: #3b465c; }
+#end-unlock .pips .b.on { background: #f5b23c; }
 
 
 .map-home {
@@ -983,14 +987,19 @@ svg { width: 100%; height: 100%; display: block; }
 /* ---- Fiche de gare (modale ouverte au clic d'une ville) ---- */
 #map-modal {
   position: absolute; inset: 0; z-index: 10;
-  display: flex; align-items: center; justify-content: center; padding: 20px;
+  display: flex; align-items: center; justify-content: center; padding: 14px;
   background: rgba(6, 10, 18, .62); backdrop-filter: blur(3px);
 }
 #map-modal.hidden { display: none; }
+/* Fiche COURTE : un nom, quatre chiffres, deux lignes, un bouton. Aucune
+   phrase à lire — la carte raconte déjà le réseau, la fiche ne fait que donner
+   la mesure de la gare et le geste pour y aller. Assez basse pour tenir
+   partout, y compris un téléphone couché : le bouton reste sous les yeux. */
 .mm-card {
-  position: relative; width: min(380px, 92vw); text-align: center;
+  position: relative; width: min(360px, 92vw); text-align: left;
   background: var(--panel); border: 1px solid #2a3550; border-radius: 18px;
-  padding: 24px 24px 22px; box-shadow: 0 24px 60px -12px rgba(0, 0, 0, .7);
+  padding: 20px 20px 18px; box-shadow: 0 24px 60px -12px rgba(0, 0, 0, .7);
+  max-height: 100%; overflow-y: auto; overscroll-behavior: contain;
 }
 .mm-close {
   position: absolute; top: 12px; right: 12px; width: 32px; height: 32px; border-radius: 8px;
@@ -999,27 +1008,41 @@ svg { width: 100%; height: 100%; display: block; }
 }
 .mm-close:hover { color: var(--text); background: rgba(255, 255, 255, .05); }
 .mm-close svg { width: 20px; height: 20px; display: block; }
-.mm-diff { color: var(--muted); font-size: 12px; letter-spacing: .5px; text-transform: uppercase; }
-.mm-diff .pips { margin-left: 6px; letter-spacing: 2px; color: #3b465c; }
-.mm-diff .pips .on { color: #f5b23c; }
-.mm-name { font-size: 22px; font-weight: 700; margin: 8px 0 4px; }
-.mm-spec { color: var(--muted); font-size: 13px; font-family: ui-monospace, Menlo, monospace; }
-.mm-stars { color: #f5b23c; font-size: 18px; letter-spacing: 3px; margin: 10px 0 2px; }
-.mm-delay { color: var(--green); font-size: 12px; font-family: ui-monospace, Menlo, monospace; margin-bottom: 4px; }
-.mm-desc { color: var(--muted); font-size: 14px; line-height: 1.55; margin: 6px 0 14px; }
-/* Où mènent les directions de la gare : correspondances (une autre gare
-   jouable, en teal — c'est une arête de la carte) puis antennes (hors carte). */
-.mm-dests { margin: 0 0 16px; display: flex; flex-direction: column; gap: 6px; }
-.mm-dline { display: flex; flex-wrap: wrap; align-items: baseline; gap: 5px; }
-.mm-dline .k {
-  color: var(--muted); font-size: 10px; letter-spacing: .09em; text-transform: uppercase;
-  width: 100%; margin-bottom: 1px;
+.mm-name { font-size: 20px; font-weight: 700; line-height: 1.2; margin: 0 34px 0 0; }
+.mm-name .fl { margin-right: 7px; font-size: 15px; vertical-align: 2px; }
+
+/* La mesure de la gare : trois chiffres, aucun mot de liaison. */
+.mm-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; margin: 14px 0 10px; }
+.mm-stat {
+  background: #1b2337; border: 1px solid #2a3550; border-radius: 12px;
+  padding: 8px 4px 7px; text-align: center;
 }
-.mm-dline .d {
-  font-size: 11px; padding: 2px 7px; border-radius: 999px;
-  background: #232c40; color: #9aa6bd; border: 1px solid #2f3a52;
+.mm-stat b { display: block; font-size: 18px; font-weight: 700; line-height: 1.1; }
+.mm-stat span {
+  display: block; color: var(--muted); font-size: 10px; letter-spacing: .07em;
+  text-transform: uppercase; margin-top: 3px;
 }
-.mm-dline .d.on { background: #14333a; color: #63e6d4; border-color: #245e5c; }
+
+/* Difficulté, flux, record : libellé à gauche, jauge ou étoiles à droite. */
+.mm-rows { display: flex; flex-direction: column; margin-bottom: 14px; }
+.mm-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 7px 0; border-top: 1px solid #232c42;
+}
+.mm-row .k { color: var(--muted); font-size: 11px; letter-spacing: .07em; text-transform: uppercase; }
+.mm-row .v { display: flex; align-items: center; gap: 9px; }
+/* UNE seule jauge pour les deux mesures — cinq crans, même forme : ce qui se
+   compare se lit pareil. La couleur dit laquelle : ambre pour la difficulté
+   (comme les étoiles et la pastille en jeu), teal pour le flux. */
+.mm-row .gauge { display: flex; align-items: center; gap: 4px; }
+.mm-row .gauge .b { width: 6px; height: 14px; border-radius: 2px; background: #313d57; }
+.mm-row .gauge .b.on { background: #2dd4bf; }
+.mm-row .gauge.diff .b.on { background: #f5b23c; }
+.mm-row .s { color: #f5b23c; font-size: 15px; letter-spacing: 2px; }
+.mm-row .d { color: var(--green); font-size: 13px; font-family: ui-monospace, Menlo, monospace; }
+/* Pas encore de record : ni vert ni chiffré — c'est une absence, pas un score. */
+.mm-row .d.none { color: var(--muted); font-family: inherit; font-size: 12px; }
+
 .mm-actions { display: flex; flex-direction: column; gap: 10px; }
 .mm-play { width: 100%; background: #16333a; border-color: #2dd4bf; color: #eafbf7; font-weight: 600; }
 .mm-play:hover { background: #1c4249; }
@@ -1029,6 +1052,17 @@ svg { width: 100%; height: 100%; display: block; }
   padding: 10px 12px; color: #dcb4bc; font-size: 13px; line-height: 1.4;
 }
 .mm-lock svg { flex: none; width: 15px; height: 15px; fill: currentColor; display: block; }
+
+/* Téléphone couché : la fiche est assez courte pour tenir telle quelle, on la
+   resserre juste un peu. Une seule colonne partout — le bouton reste centré
+   sous les chiffres, là où le doigt le cherche. */
+@media (max-height: 420px) {
+  .mm-card { padding: 16px 18px 14px; }
+  .mm-name { font-size: 18px; }
+  .mm-stats { margin: 10px 0 6px; }
+  .mm-rows { margin-bottom: 10px; }
+  .mm-row { padding: 5px 0; }
+}
 
 /* ================================================================
    Mobile — le jeu se joue en paysage

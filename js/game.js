@@ -1212,9 +1212,12 @@ function endGame(failed) {
   // tout le bilan rejouerait le son et réenregistrerait le score.
   const reward = document.getElementById("end-unlock");
   const nameOf = id => { const c = CATALOG.find(x => x.id === id); return c ? (c.city || c.name) : id; };
+  // Même jauge que la fiche de gare et le cartouche : cinq crans, jamais des
+  // pastilles ici et des barres ailleurs pour dire la même chose.
   const pipsOf = id => {
     const d = Math.max(1, Math.min(5, (CATALOG.find(x => x.id === id) || {}).difficulty || 1));
-    return '<span class="pips"><span class="on">' + "●".repeat(d) + "</span>" + "○".repeat(5 - d) + "</span>";
+    return '<span class="pips">' + Array.from({ length: 5 }, (_, i) =>
+      '<span class="b' + (i < d ? " on" : "") + '"></span>').join("") + "</span>";
   };
   let openedNow = null;
 

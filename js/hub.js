@@ -22,9 +22,12 @@ function showHub() {
 // toast non bloquant. L'aide (règles) reste à la demande via l'icône « ? ».
 // Pastilles de difficulté (mêmes symboles que la fiche de la carte) : le joueur
 // garde en jeu le repère qu'il avait avant de prendre le service.
+// Difficulté du cartouche : la MÊME jauge à cinq crans que la fiche de gare
+// (js/map.js) — une seule façon de montrer un niveau dans tout le jeu.
 function diffPips(d) {
   const n = Math.max(1, Math.min(5, d || 1));
-  return '<span class="dif"><span class="on">' + "●".repeat(n) + "</span>" + "○".repeat(5 - n) + "</span>";
+  return '<span class="dif">' + Array.from({ length: 5 }, (_, i) =>
+    '<span class="b' + (i < n ? " on" : "") + '"></span>').join("") + "</span>";
 }
 async function startStation(i) {
   currentIdx = i;

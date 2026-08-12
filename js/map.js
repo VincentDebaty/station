@@ -583,29 +583,52 @@ function openStationModal(gi) {
   const nDir = Object.keys(card.portals || {}).length;
   const rec = (typeof getProgress === "function" ? getProgress() : {})[card.id] || {};
   const stars = rec.stars || 0, best = rec.bestDelay;
-  const pips = '<span class="on">' + "●".repeat(diff) + "</span>" + "○".repeat(5 - diff);
-  let spec = nQuais + " quais · " + nDir + " destinations";
-  if (nDead) spec += " · " + nDead + " impasse" + (nDead > 1 ? "s" : "");
 
-  // Où mènent ces directions : les gares reliées (le réseau de la carte)
-  // d'abord, les antennes ensuite. La carte montre les traits, la fiche les
-  // nomme. Attention : « N destinations » compte les portails du PLAN, alors
-  // que les gares reliées viennent du graphe en union — Namur affiche 6
-  // directions mais touche 5 gares, parce qu'Ottignies la nomme sans qu'elle
-  // nomme Ottignies. Deux comptes différents, deux libellés différents.
-  const links = (typeof netLinks === "function") ? netLinks(card.id) : { to: [], places: [] };
-  const byName = (a, b) => a.localeCompare(b, "fr");
-  const corr = links.to.map(id => {
-    const g = catalogIndexOf(id);
-    return g >= 0 ? (CATALOG[g].city || CATALOG[g].name) : id;
-  }).sort(byName);
-  const pts = (typeof netPlaces === "function") ? netPlaces() : {};
-  const near = links.places.map(k => (pts[k] || {}).label || k).sort(byName);
-  const dests =
-    (corr.length ? '<div class="mm-dline"><span class="k">Gares reliées</span>' +
-      corr.map(s => '<span class="d on">' + s + "</span>").join("") + "</div>" : "") +
-    (near.length ? '<div class="mm-dline"><span class="k">Dessertes</span>' +
-      near.map(s => '<span class="d">' + s + "</span>").join("") + "</div>" : "");
+  // ---- La fiche tient en trois regards : TROIS chiffres, TROIS lignes, UN
+  // bouton. Tout le reste a été coupé (gares reliées, dessertes, description,
+  // barème, nom de la difficulté) : la carte montre déjà le réseau, et un
+  // paragraphe de plus n'aide personne à choisir sa prochaine gare. Ce qui
+  // reste tient en un coup d'œil, sans une phrase à lire.
+  const gen = card.gen || {};
+  const trains = gen.nMin ? (gen.nMax > gen.nMin ? gen.nMin + "–" + gen.nMax : String(gen.nMin)) : null;
+  // Cadence moyenne des arrivées, en minutes de jeu : le calcul du générateur
+  // lui-même (écart moyen × le resserrement qu'il applique), pris à la source
+  // pour que la fiche ne mente jamais si le calibrage bouge.
+  const scale = (typeof ARRIVAL_GAP_SCALE === "number") ? ARRIVAL_GAP_SCALE : 1;
+  const cadence = gen.gapMin != null ? (gen.gapMin + gen.gapMax) / 2 * scale : null;
+  const num = x => x.toFixed(1).replace(".", ",");
+
+  const tile = (v, k) => '<div class="mm-stat"><b>' + v + "</b><span>" + k + "</span></div>";
+  const stats =
+    tile(nQuais, "quais") +
+    tile(nDir, nDir > 1 ? "directions" : "direction") +
+    (trains ? tile(trains, "trains") : "");
+
+  // Le flux ne se chiffre pas : cinq barres suffisent à dire « ça arrive vite ».
+  // Les seuils sont en minutes de jeu entre deux arrivées — un écart absolu,
+  // pas un rang dans le catalogue : ajouter une gare ne déplace pas l'échelle.
+  const fluxLevel = cadence == null ? 0 :
+    cadence <= 1.65 ? 5 : cadence <= 1.78 ? 4 : cadence <= 1.92 ? 3 : cadence <= 2.05 ? 2 : 1;
+  // UNE seule jauge dans la fiche, sur cinq crans : difficulté et flux se lisent
+  // du même geste. Seule la couleur les sépare (ambre / teal), pas la forme.
+  const bars = n => Array.from({ length: 5 }, (_, i) =>
+    '<span class="b' + (i < n ? " on" : "") + '"></span>').join("");
+
+  // Trois lignes, aucune phrase : les jauges et les étoiles disent tout — seul
+  // le retard garde son chiffre, c'est un record.
+  const rows =
+    '<div class="mm-row"><span class="k">Difficulté</span>' +
+      '<span class="gauge diff">' + bars(diff) + "</span></div>" +
+    (fluxLevel ? '<div class="mm-row"><span class="k">Flux</span>' +
+      '<span class="gauge">' + bars(fluxLevel) + "</span></div>" : "") +
+    '<div class="mm-row"><span class="k">Record</span>' +
+      '<span class="v"><span class="s">' + starStr(stars) + "</span>" +
+      (best != null ? '<span class="d">+' + best + " min</span>"
+                    : '<span class="d none">jamais jouée</span>') +
+      "</span></div>";
+
+  // Drapeau seul : le pays se reconnaît sans le lire, et la carte le dit déjà.
+  const flag = (card.country || "").split(" ")[0];
 
   let actions;
   if (unlocked) {
@@ -618,16 +641,14 @@ function openStationModal(gi) {
       (fname ? '<button class="btn mm-play" data-gi="' + frontier + '">Jouer ' + fname + " →</button>" : "");
   }
 
+  // Une seule colonne, courte : le bouton reste au centre, sous les chiffres,
+  // à tous les formats — c'est le geste qu'on vient chercher.
   MAP.modal.innerHTML =
     '<div class="mm-card' + (unlocked ? "" : " is-locked") + '">' +
       '<button class="mm-close" aria-label="Fermer">' + icon(ICON.close, 20) + "</button>" +
-      '<div class="mm-diff">Difficulté <span class="pips">' + pips + "</span></div>" +
-      '<h2 class="mm-name">' + card.name + "</h2>" +
-      '<div class="mm-spec">' + spec + "</div>" +
-      '<div class="mm-stars">' + starStr(stars) + "</div>" +
-      (best != null ? '<div class="mm-delay">record : +' + best + " min</div>" : "") +
-      '<p class="mm-desc">' + (card.tagline || card.desc || "") + "</p>" +
-      (dests ? '<div class="mm-dests">' + dests + "</div>" : "") +
+      '<h2 class="mm-name"><span class="fl">' + flag + "</span>" + card.name + "</h2>" +
+      '<div class="mm-stats">' + stats + "</div>" +
+      '<div class="mm-rows">' + rows + "</div>" +
       '<div class="mm-actions">' + actions + "</div>" +
     "</div>";
   MAP.modal.querySelector(".mm-close").addEventListener("click", closeModal);
