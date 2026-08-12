@@ -29,9 +29,17 @@
       "duisburg", "osnabruck", "kassel", "saarbrucken", "freiburg", "regensburg", "bielefeld",
       "munster", "bremen", "kiel", "lubeck", "rostock", "magdeburg", "wurzburg", "mainz",
       "koblenz", "bonn", "ulm", "augsburg",
-      "dresden", "dusseldorf", "dortmund", "essen", "halle", "erfurt", "mannheim", "karlsruhe",
+      "trier", "dresden", "dusseldorf", "dortmund", "essen", "halle", "erfurt", "mannheim", "karlsruhe",
       "berlin", "frankfurt", "koln", "hamburg", "leipzig", "stuttgart", "nurnberg", "hannover",
       "munchen"
+    ]
+  },
+  {
+    "country": "luxembourg",
+    "label": "🇱🇺 Luxembourg",
+    "stations": [
+      "kautenbach", "ettelbruck", "rodange", "petange", "esch-sur-alzette",
+      "bettembourg", "luxembourg"
     ]
   },
   {

@@ -37,7 +37,8 @@
 // Pays dont la topologie vient des LIGNES. Ajouter un pays ici en même temps
 // que ses lignes, jamais avant : sans elles, ses gares n'auraient plus aucune
 // arête.
-const LINE_COUNTRIES = ["🇧🇪 Belgique", "🇫🇷 France", "🇬🇧 Royaume-Uni", "🇩🇪 Allemagne"];
+const LINE_COUNTRIES = ["🇧🇪 Belgique", "🇫🇷 France", "🇬🇧 Royaume-Uni", "🇩🇪 Allemagne",
+  "🇱🇺 Luxembourg"];
 
 const LINES = [
   // ---- Flandre occidentale et orientale --------------------------------
@@ -370,8 +371,18 @@ const LINES = [
   { id: "HA-L", name: "Halle – Leipzig",         nodes: ["halle", "leipzig"] },
   { id: "L-DD", name: "Leipzig – Riesa – Dresde", nodes: ["leipzig", "riesa", "dresden"] },
   { id: "B-DD", name: "Berlin – Elsterwerda – Dresde", nodes: ["berlin", "elsterwerda", "dresden"] },
-  { id: "SFS-EF", name: "Leipzig – Weimar – Erfurt", nodes: ["leipzig", "weimar", "erfurt"] },
-  { id: "Saalebahn", name: "Halle – Naumburg – Erfurt", nodes: ["halle", "naumburg", "erfurt"] },
+  // La LGV Erfurt – Leipzig ne dessert PAS Weimar : elle quitte Erfurt plein
+  // nord-est, franchit la Finne en tunnel et l'Unstrut en viaduc, puis rejoint
+  // Leipzig à la bifurcation de Gröbers. La faire passer par Weimar la collait
+  // au tracé de la Saalebahn — deux lignes en un seul trait dédoublé.
+  { id: "SFS-EF", name: "Leipzig – Gröbers – Unstrut – Erfurt (LGV)",
+    nodes: ["leipzig", "grobers", "unstruttal", "erfurt"] },
+  // La Saalebahn plonge au sud-est par Iéna avant de remonter la vallée de la
+  // Saale : sans ce point, la corde Erfurt – Naumburg venait coller au tracé de
+  // la SFS par Weimar (4 px d'écart à Naumburg) et les deux lignes se lisaient
+  // comme un seul trait dédoublé.
+  { id: "Saalebahn", name: "Halle – Naumburg – Iéna – Erfurt",
+    nodes: ["halle", "naumburg", "jena", "erfurt"] },
   { id: "SFS-EB", name: "Erfurt – Cobourg – Nuremberg (LGV)", nodes: ["erfurt", "coburg", "nurnberg"] },
   { id: "Mitte", name: "Erfurt – Eisenach – Fulda", nodes: ["erfurt", "eisenach", "fulda"] },
 
@@ -381,5 +392,36 @@ const LINES = [
   // commit que les fiches, jamais après (la leçon de l'Eurostar).
   { id: "L37", name: "Liège – Aachen – Cologne (le Thalys)", nodes: ["liege", "aachen", "koln"] },
   { id: "LGV-E3", name: "Sarrebruck – Forbach – Metz (l'ICE de Paris)",
-    nodes: ["saarbrucken", "forbach", "metz"] }
+    nodes: ["saarbrucken", "forbach", "metz"] },
+
+  // ---- Trèves : les trois lignes qui la sortent du cul-de-sac -------------
+  // Coblence et Sarrebruck portaient déjà un portail TRIER, sans destinataire.
+  // L'Eifel (Cologne – Trèves) a rouvert fin mars 2026 après les crues de 2021 :
+  // sans elle, Trèves n'aurait que deux arêtes allemandes.
+  { id: "Mosel", name: "Coblence – Cochem – Bullay – Wittlich – Trèves",
+    nodes: ["koblenz", "cochem", "bullay", "wittlich", "trier"] },
+  { id: "Eifel", name: "Cologne – Euskirchen – Gerolstein – Trèves",
+    nodes: ["koln", "euskirchen", "gerolstein", "trier"] },
+  { id: "Saar", name: "Trèves – Merzig – Sarrebruck", nodes: ["trier", "merzig", "saarbrucken"] },
+
+  // ==================== LUXEMBOURG ====================
+  // Une étoile, pas un maillage : six branches partent de la capitale et rien
+  // ne se referme, sauf au sud où le bassin minier forme la seule boucle du
+  // pays (Luxembourg – Bettembourg – Esch – Pétange – Luxembourg). Trois des
+  // branches sortent du pays, vers trois voisins déjà jouables — c'est ce qui
+  // fait du Grand-Duché la charnière de l'Europe de l'Ouest.
+  { id: "CFL10", name: "Luxembourg – Mersch – Ettelbruck – Kautenbach – Troisvierges",
+    nodes: ["luxembourg", "mersch", "ettelbruck", "kautenbach", "clervaux", "troisvierges"] },
+  { id: "L42", name: "Troisvierges – Gouvy – Vielsalm – Rivage – Liège (la ligne des Ardennes)",
+    nodes: ["troisvierges", "gouvy", "vielsalm", "rivage", "liege"] },
+  { id: "CFL6", name: "Luxembourg – Kleinbettingen – Arlon",
+    nodes: ["luxembourg", "kleinbettingen", "arlon"] },
+  { id: "CFL1", name: "Luxembourg – Wasserbillig – Trèves",
+    nodes: ["luxembourg", "wasserbillig", "trier"] },
+  { id: "CFL3", name: "Luxembourg – Bettembourg – Thionville – Metz",
+    nodes: ["luxembourg", "bettembourg", "thionville", "metz"] },
+  { id: "CFL60", name: "Bettembourg – Noertzange – Esch-sur-Alzette – Belval – Pétange",
+    nodes: ["bettembourg", "noertzange", "esch-sur-alzette", "belval", "differdange", "petange"] },
+  { id: "CFL70", name: "Luxembourg – Dippach – Bascharage – Pétange – Rodange",
+    nodes: ["luxembourg", "dippach", "bascharage", "petange", "rodange"] }
 ];

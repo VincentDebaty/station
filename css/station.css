@@ -842,12 +842,10 @@ svg { width: 100%; height: 100%; display: block; }
 }
 
 /* ---- Trois habillages pour une même pastille, selon le zoom ----
-   « far »  (Europe)  : un point menu et un nom discret.
-   « mid »  (pays)    : la pastille reprend du corps.
-   « near » (région)  : pleine taille, la couleur du résultat bien lisible.
-   C'est la règle des cartes : le même objet, dessiné selon la distance.
-   Le palier ne change plus QUE la taille : depuis que le résultat est dans la
-   couleur du point, il n'y a plus rien à masquer de loin. */
+   « far »  (Europe)  : un point menu et un nom discret, sans le chiffre.
+   « mid »  (pays)    : la pastille reprend du corps, le record apparaît.
+   « near » (région)  : pleine taille, tout se lit.
+   C'est la règle des cartes : le même objet, dessiné selon la distance. */
 /* Taille de la pastille = DIFFICULTÉ de la gare (--d, posé par mapnet.js),
    multipliée par le facteur du palier de zoom (--k). Une petite bulle en
    niveau 1, une grosse en niveau 5 : la difficulté se lit sur la carte sans
@@ -856,42 +854,65 @@ svg { width: 100%; height: 100%; display: block; }
 #map-net { --k: 1; }
 #map-net .city-chip .dot {
   width: calc(var(--d) * var(--k)); height: calc(var(--d) * var(--k));
-  font-size: 0; /* plus de numéro : seule la taille parle */
-  box-shadow: 0 0 0 2px rgba(14, 20, 32, .8), 0 0 8px var(--chip-glow);
+  font-size: 0; /* aucun texte dans la pastille : ce qu'elle porte est une forme */
+  /* Trois couches, de dedans en dehors : l'anneau teal qui dessine le contour du
+     point même quand il est creux, le liseré sombre qui le détache des voies,
+     et la lueur. L'anneau est en `inset` et non en `border` : une bordure
+     mangerait le diamètre posé par --d, et le modèle de collision (js/mapnet.js)
+     ne verrait plus la même taille que l'écran. */
+  box-shadow: inset 0 0 0 2px var(--chip),
+              0 0 0 2px rgba(14, 20, 32, .8), 0 0 8px var(--chip-glow);
 }
 #map-net[data-detail="far"] .city-chip .nm { font-size: 11px; font-weight: 500; }
 
-/* ---- LE RÉSULTAT EST LA COULEUR DU POINT ----
-   Les étoiles et le retard ne s'écrivent plus sous chaque gare (cf. js/mapnet.js) :
-   ils se lisent dans la teinte. Un seul couple de variables porte la couleur et
-   sa lueur, et les deux règles de .dot n'écrivent que `var(...)` — sinon la
-   spécificité décide à notre place, et c'est déjà arrivé (le point verrouillé
-   gardait la lueur teal malgré son `box-shadow: none`).
-   L'échelle reste DANS la palette du jeu : elle glisse du teal au fuchsia, sans
-   jamais passer par le chaud. Un détour par l'or et l'orange avait été essayé —
-   il se lisait bien, mais il jurait avec tout le reste de l'écran.
-     verrouillée .... gris-bleu, hors échelle
-     0 étoile ....... teal (jamais jouée OU jouée sans rien décrocher : dans les
-                      deux cas il reste tout à faire, et l'anneau pulse)
-     1 ★ ............ bleu
-     2 ★ ............ violet
-     3 ★ ............ fuchsia
-   Chaque cran porte DEUX teintes : la base et un rehaut plus clair. La pastille
-   n'est pas un aplat mais un dégradé de l'un vers l'autre — une bille éclairée
-   d'en haut, comme les autres volumes de l'interface. */
-.city-chip        { --chip: #2dd4bf; --chip-hi: #6ff0e2; --chip-glow: rgba(45, 212, 191, .45); }
-.city-chip.locked { --chip: #3a4560; --chip-hi: #4a566f; --chip-glow: transparent; }
-.city-chip.s1     { --chip: #3d9be8; --chip-hi: #7cc4f5; --chip-glow: rgba(61, 155, 232, .5); }
-.city-chip.s2     { --chip: #8b6ef0; --chip-hi: #b9a4ff; --chip-glow: rgba(139, 110, 240, .5); }
-.city-chip.s3     { --chip: #e35bd4; --chip-hi: #f79ceb; --chip-glow: rgba(227, 91, 212, .55); }
+/* ---- DEUX COULEURS, PAS UNE DE PLUS ----
+   Teal jouable, gris-bleu verrouillée. La couleur ne dit RIEN du résultat : le
+   résultat est le chiffre écrit dans la pastille (cf. js/mapnet.js). Deux
+   échelles de teintes par étoiles ont été essayées et abandonnées — le chiffre
+   est plus précis, et la carte reste dans la palette du jeu.
+   Le couple base + rehaut sert le VOLUME, pas le sens : la pastille est un
+   dégradé de l'un vers l'autre, une bille éclairée d'en haut.
+   Tout passe par ces variables, et les deux règles de .dot n'écrivent que
+   `var(...)` — sinon la spécificité décide à notre place, et c'est déjà arrivé
+   (le point verrouillé gardait la lueur teal malgré son `box-shadow: none`). */
+.city-chip        { --chip: #2dd4bf; --chip-hi: #6ff0e2; --chip-glow: rgba(45, 212, 191, .45);
+                    --chip-in: rgba(10, 16, 26, .85); }
+/* Verrouillée : PLEINE, pas creuse. Un anneau gris vide se lirait comme une gare
+   ouverte qui attend son premier service, alors qu'elle n'est pas prenable. */
+.city-chip.locked { --chip: #3a4560; --chip-hi: #4a566f; --chip-glow: transparent;
+                    --chip-in: linear-gradient(155deg, var(--chip-hi), var(--chip)); }
+/* Parfaite : le disque est plein comme à trois étoiles, et l'étoile s'y creuse. */
+.city-chip.perfect { --chip-in: linear-gradient(155deg, var(--chip-hi), var(--chip)); }
 
-/* SERVICE PARFAIT (record de 0 minute) : une ÉTOILE creusée DANS la pastille
-   fuchsia. La pastille reste ronde — sa taille continue de dire la difficulté,
-   et les mises en avant de fin de service (halo de candidate, de gare de
-   départ) gardent le box-shadow sur lequel elles reposent. L'étoile elle-même
-   est un SVG posé par js/mapnet.js ; ici on ne règle que sa part du disque.
-   66 % : au-delà, les pointes touchent le bord et la couleur ne fait plus
-   anneau ; en deçà, elle se perd sur une pastille de 13 px. */
+/* ---- LA PASTILLE SE REMPLIT ----
+   Le point part CREUX — un anneau teal sur un fond sombre — et se remplit d'un
+   cran par étoile, jusqu'au disque plein des trois étoiles.
+   Le sens compte plus qu'il n'y paraît : la première version remplissait de
+   FONCÉ, et elle disait exactement l'inverse de ce qu'on voulait. À trois
+   étoiles la pastille n'était plus qu'un mince anneau autour d'un trou, donc
+   la mieux réussie avait l'air de la plus vide, pendant qu'une gare jamais
+   jouée s'affichait en disque plein. Ce qui se remplit doit être ce qu'on gagne.
+   Les fractions sont celles du DISQUE, jamais des pixels : une gare de
+   difficulté 1 (13 px) et une de difficulté 5 (27 px) montrent le même
+   remplissage, et la taille de la pastille continue de ne dire QUE la
+   difficulté. Les paliers sont largement espacés pour que deux crans voisins se
+   séparent sur la plus petite pastille — 36 % de 13 px font 4,7 px, 64 % en font
+   8,3. Sous cet écart, un cran ne se voit plus. */
+.city-chip .dot .fill {
+  border-radius: 50%;
+  background: linear-gradient(155deg, var(--chip-hi), var(--chip));
+}
+.city-chip.s1 .dot .fill { width: 36%; height: 36%; }
+.city-chip.s2 .dot .fill { width: 64%; height: 64%; }
+.city-chip.s3 .dot .fill { width: 100%; height: 100%; }
+
+/* SERVICE PARFAIT (record de 0 minute) : la marque devient une ÉTOILE, et prend
+   un cran de plus que le disque plein des trois étoiles — c'est le dernier
+   échelon du même mouvement, pas un ornement posé à côté. La pastille reste
+   ronde, donc les mises en avant de fin de service (halo de candidate, de gare
+   de départ) gardent le box-shadow sur lequel elles reposent.
+   66 % : au-delà, les pointes touchent le bord et le teal ne fait plus anneau ;
+   en deçà, l'étoile se perd sur une pastille de 13 px. */
 #map-net .city-chip.perfect .dot .pf { width: 66%; height: 66%; display: block; }
 
 /* Animation « voyage » vers la gare suivante : convoi (mj-dot) qui file le long
@@ -958,10 +979,10 @@ svg { width: 100%; height: 100%; display: block; }
   display: flex; align-items: center; justify-content: center;
   width: 22px; height: 22px; border-radius: 50%;
   font-size: 12px; font-weight: 700; color: #0e1420;
-  /* Dégradé, pas aplat : le rehaut en haut à gauche donne du volume au point,
-     et c'est ce qui sauve les crans voisins de l'échelle — deux bleus proches
-     se distinguent mieux éclairés que posés à plat. */
-  background: linear-gradient(155deg, var(--chip-hi), var(--chip));
+  /* Intérieur du point : sombre par défaut (il est creux, il se remplira), et
+     le dégradé teal pour les états qui sont pleins d'emblée — verrouillée,
+     parfaite. Le rehaut en haut à gauche donne du volume à la bille. */
+  background: var(--chip-in);
   box-shadow: 0 0 8px var(--chip-glow);
   transition: transform .15s;
 }
@@ -1071,9 +1092,9 @@ svg { width: 100%; height: 100%; display: block; }
 .mm-row .d { color: var(--green); font-size: 13px; font-family: ui-monospace, Menlo, monospace; }
 /* Pas encore de record : ni vert ni chiffré — c'est une absence, pas un score. */
 .mm-row .d.none { color: var(--muted); font-family: inherit; font-size: 12px; }
-/* Record de 0 minute : le fuchsia de la pastille parfaite sur la carte, pas un
-   « +0 min » qu'on lirait comme un retard nul plutôt que comme un sans-faute. */
-.mm-row .d.perfect { color: #f79ceb; font-family: inherit; font-size: 13px; font-weight: 700; }
+/* Record de 0 minute : le teal de l'étoile qui remplace le chiffre sur la carte,
+   pas un « +0 min » qu'on lirait comme un retard nul plutôt qu'un sans-faute. */
+.mm-row .d.perfect { color: #63e6d4; font-family: inherit; font-size: 13px; font-weight: 700; }
 
 .mm-actions { display: flex; flex-direction: column; gap: 10px; }
 .mm-play { width: 100%; background: #16333a; border-color: #2dd4bf; color: #eafbf7; font-weight: 600; }

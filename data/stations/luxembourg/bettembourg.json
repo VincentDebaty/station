@@ -1,0 +1,32 @@
+{
+  "id": "bettembourg",
+  "name": "Bettembourg",
+  "tagline": "Bettembourg — l'autoroute ferroviaire de Perpignan part d'ici, entre deux trains de frontaliers.",
+  "difficulty": 4,
+  "country": "🇱🇺 Luxembourg",
+  "desc": "Le nœud du sud et le port sec du pays : trente-trois hectares de terminal rail-route contre les quais, l'autoroute ferroviaire de Perpignan à un bout, la ligne de Thionville et Metz à l'autre. Ici le fret n'est pas un décor, c'est le fond du trafic — et il traverse pendant que les frontaliers montent.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },
+    { "id": 6 }
+  ],
+  "portals": {
+    "LUXEMBOURG":            { "side": "L", "color": "#a78bfa", "abbr": "LX" },
+    "ESCH-SUR-ALZETTE":      { "side": "L", "color": "#f2588f", "abbr": "ES", "label": "ESCH/ALZETTE" },
+    "METZ":                  { "side": "R", "color": "#25dede", "abbr": "MZ" },
+    "VOLMERANGE-LES-MINES":  { "side": "R", "color": "#f5b23c", "abbr": "VM", "label": "VOLMERANGE" }
+  },
+  "links": {
+    "LUXEMBOURG":           [1, 2, 3, 4, 5, 6],
+    "ESCH-SUR-ALZETTE":     [3, 4, 5],
+    "METZ":                 [1, 2, 3, 4],
+    "VOLMERANGE-LES-MINES": [5, 6]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 16, "nMax": 19, "gapMin": 1.5, "gapMax": 2.6,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6],
+    "quietRate": 0.12,
+    "rush": "pointe",
+    "freightCount": 6
+  }
+}

@@ -134,6 +134,14 @@ Conséquences à garantir :
 - Encoder les **vrais axes traversants** par des quais partagés (ex. le tronc
   Bruxelles–Aachen de Liège partage les quais 4-5-6).
 
+⚠ **Une antenne se met du côté OPPOSÉ à ce qu'elle dessert, pas du côté où elle
+part.** À Ettelbruck, la navette de Diekirch quitte la gare vers l'est, comme
+Luxembourg : les deux écrites en `R`, la navette n'avait plus aucun partenaire et
+deux quais mouraient avec elle. Ce qu'un côté encode n'est pas un point cardinal
+mais **le sens du parcours** — Diekirch se lit depuis Luxembourg, donc `L`. Le
+réflexe géographique se retourne à chaque fois qu'une antenne repart dans la
+direction de la ligne principale.
+
 Terminus (`sameSidePairs: "all"`, tous les portails du même côté, quais
 `deadEnd`) : les trains entrent et rebroussent ; tout portail partageant un quai
 avec un autre forme une paire valide.

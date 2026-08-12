@@ -71,11 +71,17 @@ const MIN_SEP = 96 / 2.54;
 // s'en sert tel quel. Deux barèmes séparés finiraient par diverger.
 const DOT_D = [0, 13, 16, 19, 23, 27];
 const DETAIL_K = { far: 0.56, mid: 0.8, near: 1 };
+// L'étoile du service PARFAIT, posée DANS la pastille. Même silhouette que le
+// « Parfait » de la fiche ; en SVG et non en glyphe ★, pour qu'elle reste nette
+// de 13 à 27 px sans dépendre d'une police. `currentColor` = la couleur de
+// texte de la pastille, soit le fond sombre de la carte : creusée dans l'or.
+const STAR_SVG = '<svg class="pf" viewBox="0 0 100 100" aria-hidden="true">' +
+  '<polygon fill="currentColor" points="50,2 61,36 98,36 68,58 79,92 50,71 21,92 32,58 2,36 39,36"/></svg>';
 
 // Apparence des pastilles selon l'échelle. Une gare n'a pas à s'afficher de la
-// même façon vue d'Europe et vue de sa région : de loin un point et un nom, de
-// près la pastille numérotée, ses étoiles et son record. Trois habillages pour
-// un seul élément — c'est le CSS qui bascule, via #map-net[data-detail].
+// même façon vue d'Europe et vue de sa région : de loin un point menu, de près
+// la pastille pleine et son nom. Trois habillages pour un seul élément — c'est
+// le CSS qui bascule, via #map-net[data-detail].
 function detailForScale(s) {
   if (s < 8) return "far";
   if (s < 17) return "mid";
@@ -127,8 +133,6 @@ function mapnetBuild() {
   const byId = {};
 
   // --- Gares jouables.
-  const clockSvg = '<svg viewBox="0 0 24 24" width="10" height="10" fill="currentColor" aria-hidden="true"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>';
-
   for (const slug in GEO.countries) {
     const country = GEO.countries[slug];
     // Numérotation : l'ordre de jeu DANS le pays (1 = la plus facile).
@@ -160,19 +164,38 @@ function mapnetBuild() {
       // (petite en 1, grosse en 5). On lit d'un coup d'œil où sont les morceaux,
       // sans avoir à décoder une numérotation propre à chaque pays.
       const diff = Math.max(1, Math.min(5, card.difficulty || 1));
+      // LE RÉSULTAT EST DANS LA PASTILLE, PAS À CÔTÉ. Chaque gare portait ses
+      // étoiles et son record sous son nom : à treize gares belges à l'écran,
+      // cela faisait trente cartouches de trois lignes, et la carte ne se lisait
+      // plus. LA PASTILLE SE REMPLIT à la place : le point part creux, gagne un
+      // cran de teal par étoile décrochée, et l'ÉTOILE se creuse dedans au
+      // service parfait. Creux = tout reste à faire, plein = c'est gagné, et
+      // l'étoile est le dernier cran d'un même mouvement plutôt qu'un ornement à
+      // part. Le tout dans un point qu'on dessinait déjà, sans une ligne de
+      // texte de plus.
+      // Deux chemins ont été essayés avant : une échelle de COULEURS par étoiles
+      // (ambre, puis teal → fuchsia) — lisible mais jamais belle, et elle sortait
+      // de la palette ; puis le RECORD EN CHIFFRES dans la pastille — précis,
+      // mais un nombre sans unité et sans sens de lecture se lit à l'envers (23
+      // paraît meilleur que 1). Le remplissage n'a ni l'un ni l'autre défaut :
+      // plus il y en a, mieux c'est, et ça se voit sans rien savoir.
+      // La couleur ne dit donc RIEN du résultat : teal jouable, gris fermé.
+      const perfect = best === 0;
       const el = document.createElement("div");
       el.className = "map-chip city-chip" + (unlocked ? "" : " locked") +
+        (stars ? " s" + stars : "") + (perfect ? " perfect" : "") +
         (isPulsing ? " entry" : "") + (isChoice ? " choice" : "") +
         (isOrigin ? " origin" : "");
       el.style.setProperty("--d", DOT_D[diff] + "px");
       el.innerHTML =
-        // Rien dans la pastille : le gris suffit à dire « pas encore ouverte ».
-        // Un cadenas par-dessus répétait la même chose et écrasait les petites
-        // gares, dont la pastille ne fait que 13 px en difficulté 1.
-        '<span class="dot"></span>' +
-        '<div class="cap"><div class="nm">' + (card.city || card.name) + "</div>" +
-        '<div class="st">' + "★".repeat(stars) +
-          (best != null ? '<span class="dl">' + clockSvg + best + "′</span>" : "") + "</div></div>";
+        // Pastille VIDE tant qu'aucune étoile n'est décrochée — jamais jouée ou
+        // jouée sans rien ramener, c'est le même creux, et il se lit comme une
+        // case à remplir. Un cadenas sur les gares fermées répétait le gris et
+        // écrasait les petites gares, dont la pastille ne fait que 13 px en
+        // difficulté 1.
+        '<span class="dot">' +
+          (perfect ? STAR_SVG : stars ? '<span class="fill"></span>' : "") + "</span>" +
+        '<div class="cap"><div class="nm">' + (card.city || card.name) + "</div></div>";
       el.addEventListener("click", ev => { ev.stopPropagation(); openStationModal(gi); });
       MAPNET.layer.appendChild(el);
 

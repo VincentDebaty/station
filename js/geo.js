@@ -89,7 +89,22 @@ const GEO = {
         erfurt: [11.038, 50.972], kassel: [9.448, 51.311], wurzburg: [9.936, 49.803],
         mannheim: [8.470, 49.480], karlsruhe: [8.401, 48.994], saarbrucken: [6.991, 49.241],
         mainz: [8.259, 50.001], koblenz: [7.589, 50.351], bonn: [7.097, 50.732],
-        ulm: [9.983, 48.400], augsburg: [10.886, 48.366], regensburg: [12.100, 49.012]
+        ulm: [9.983, 48.400], augsburg: [10.886, 48.366], regensburg: [12.100, 49.012],
+        // Trèves, ajoutée avec le Luxembourg : c'est elle qui donne au Grand-Duché
+        // sa frontière allemande. Sans elle, l'axe de la Moselle s'arrêtait dans le
+        // vide et les portails TRIER de Coblence et Sarrebruck restaient morts.
+        trier: [6.641, 49.756]
+      } },
+    luxembourg: { name: "Luxembourg", flag: "🇱🇺", iso: "LUX", continent: "europe",
+      cities: {
+        // Pétange et Rodange sont à 2,4 km : à l'échelle du pays elles ne font
+        // qu'un point, et c'est le zoom qui les sépare. On ne les écarte PAS
+        // comme les têtes de ligne parisiennes — ce sont deux vraies communes
+        // voisines, et le trait qui les relie est une vraie ligne.
+        luxembourg: [6.134, 49.600], bettembourg: [6.104, 49.518],
+        "esch-sur-alzette": [5.981, 49.494], petange: [5.881, 49.558],
+        rodange: [5.842, 49.546], ettelbruck: [6.104, 49.847],
+        kautenbach: [6.024, 49.947]
       } },
     "royaume-uni": { name: "Royaume-Uni", flag: "🇬🇧", iso: "GBR", continent: "europe",
       frame: [-6.3, 49.9, 1.9, 57.6], neighbors: { belgique: [3.25, 51.22] },

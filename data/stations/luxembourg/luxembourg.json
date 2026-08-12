@@ -1,0 +1,35 @@
+{
+  "id": "luxembourg",
+  "name": "Luxembourg",
+  "tagline": "Luxembourg — quatorze voies à quai, six directions, trois frontières à moins d'une heure.",
+  "difficulty": 5,
+  "country": "🇱🇺 Luxembourg",
+  "desc": "L'étoile du Grand-Duché : six quais et quatorze voies depuis l'agrandissement de 2021, et tout le pays qui converge là. Bruxelles par Arlon et Liège par les Ardennes d'un côté, Metz par Bettembourg et Trèves par la Moselle de l'autre, plus les deux lignes du bassin minier. Deux cent mille frontaliers en font le réseau le plus chargé d'Europe au kilomètre.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },
+    { "id": 6 }, { "id": 7 }, { "id": 8 }, { "id": 9 }
+  ],
+  "portals": {
+    "BRUXELLES":        { "side": "L", "color": "#25dede", "abbr": "B" },
+    "PETANGE":          { "side": "L", "color": "#4ade80", "abbr": "PE", "label": "PÉTANGE" },
+    "LIEGE":            { "side": "L", "color": "#60a5fa", "abbr": "LG", "label": "LIÈGE" },
+    "METZ":             { "side": "R", "color": "#f5b23c", "abbr": "MZ" },
+    "ESCH-SUR-ALZETTE": { "side": "R", "color": "#f2588f", "abbr": "ES", "label": "ESCH/ALZETTE" },
+    "TRIER":            { "side": "R", "color": "#a78bfa", "abbr": "TR", "label": "TRÈVES" }
+  },
+  "links": {
+    "BRUXELLES":        [1, 2, 3, 4],
+    "PETANGE":          [3, 4, 5, 6],
+    "LIEGE":            [6, 7, 8, 9],
+    "METZ":             [1, 2, 3, 4, 5],
+    "ESCH-SUR-ALZETTE": [4, 5, 6, 7],
+    "TRIER":            [7, 8, 9]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 18, "nMax": 22, "gapMin": 1.4, "gapMax": 2.4,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6, 7],
+    "quietRate": 0.1,
+    "rush": "double"
+  }
+}

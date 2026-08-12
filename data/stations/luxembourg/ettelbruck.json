@@ -1,0 +1,30 @@
+{
+  "id": "ettelbruck",
+  "name": "Ettelbruck",
+  "tagline": "Ettelbruck — la porte des Ardennes : la navette de Diekirch attend au bout du quai.",
+  "difficulty": 2,
+  "country": "🇱🇺 Luxembourg",
+  "desc": "Le carrefour du nord : tout ce qui descend des Ardennes s'y arrête, et n'a qu'une seule direction devant lui — Luxembourg. La navette de Diekirch fait la correspondance au bout du faisceau, les rames de Wiltz s'en vont par Kautenbach. Le plus grand échangeau de bus du pays est sur le parvis.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
+  ],
+  "portals": {
+    "LIEGE":      { "side": "L", "color": "#60a5fa", "abbr": "LG", "label": "LIÈGE" },
+    "WILTZ":      { "side": "L", "color": "#f5b23c", "abbr": "W" },
+    "DIEKIRCH":   { "side": "L", "color": "#4ade80", "abbr": "DK" },
+    "LUXEMBOURG": { "side": "R", "color": "#a78bfa", "abbr": "LX" }
+  },
+  "links": {
+    "LIEGE":      [1, 2, 3],
+    "WILTZ":      [1, 2],
+    "DIEKIRCH":   [4, 5],
+    "LUXEMBOURG": [1, 2, 3, 4, 5]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 13, "nMax": 16, "gapMin": 1.8, "gapMax": 3.0,
+    "cars": [2, 2, 2, 3, 3, 4, 4, 5],
+    "quietRate": 0.2,
+    "rush": "pointe"
+  }
+}

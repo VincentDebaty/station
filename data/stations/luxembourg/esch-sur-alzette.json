@@ -1,0 +1,29 @@
+{
+  "id": "esch-sur-alzette",
+  "name": "Esch-sur-Alzette",
+  "tagline": "Esch-sur-Alzette — la capitale du Minett, et la navette qui passe en France en trois minutes.",
+  "difficulty": 3,
+  "country": "🇱🇺 Luxembourg",
+  "desc": "Deuxième ville du pays et capitale des terres rouges : tout remonte sur Luxembourg par Bettembourg, sauf ce qui file vers Pétange en desservant Belval et son université posée sur les hauts fourneaux. Au bord du faisceau, la navette d'Audun-le-Tiche franchit la frontière en trois minutes.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },
+    { "id": 6 }
+  ],
+  "portals": {
+    "PETANGE":         { "side": "L", "color": "#4ade80", "abbr": "PE", "label": "PÉTANGE" },
+    "AUDUN-LE-TICHE":  { "side": "L", "color": "#f5b23c", "abbr": "AU", "label": "AUDUN" },
+    "LUXEMBOURG":      { "side": "R", "color": "#a78bfa", "abbr": "LX" }
+  },
+  "links": {
+    "PETANGE":        [1, 2, 3, 4],
+    "AUDUN-LE-TICHE": [5, 6],
+    "LUXEMBOURG":     [1, 2, 3, 4, 5, 6]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 15, "nMax": 18, "gapMin": 1.6, "gapMax": 2.8,
+    "cars": [3, 3, 4, 4, 5, 5, 6],
+    "quietRate": 0.15,
+    "rush": "double"
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "id": "rodange",
+  "name": "Rodange",
+  "tagline": "Rodange — deux frontières à deux kilomètres, et deux lignes qui ne se croisent qu'au milieu.",
+  "difficulty": 2,
+  "country": "🇱🇺 Luxembourg",
+  "desc": "La pointe sud-ouest du pays : la France à un kilomètre par Longwy, la Belgique à deux par Athus. Les deux lignes frontalières restent séparées d'un bout à l'autre du faisceau et ne partagent qu'un seul quai — celui du milieu, où tout se décide.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
+  ],
+  "portals": {
+    "LONGWY":           { "side": "L", "color": "#4ade80", "abbr": "LY" },
+    "ATHUS":            { "side": "L", "color": "#f5b23c", "abbr": "AS" },
+    "LUXEMBOURG":       { "side": "R", "color": "#a78bfa", "abbr": "LX" },
+    "ESCH-SUR-ALZETTE": { "side": "R", "color": "#f2588f", "abbr": "ES", "label": "ESCH/ALZETTE" }
+  },
+  "links": {
+    "LONGWY":           [1, 2, 3],
+    "ATHUS":            [3, 4, 5],
+    "LUXEMBOURG":       [1, 2, 3],
+    "ESCH-SUR-ALZETTE": [3, 4, 5]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 13, "nMax": 16, "gapMin": 1.8, "gapMax": 3.0,
+    "cars": [2, 2, 3, 3, 4, 4, 5],
+    "quietRate": 0.2,
+    "rush": "double"
+  }
+}

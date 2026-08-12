@@ -149,9 +149,11 @@ const PLACES = {
   fulda:        [9.678, 50.553],
   gelsenkirchen: [7.104, 51.505],
   gottingen:    [9.936, 51.534],
+  grobers:      [12.113, 51.349],  // bifurcation de Gröbers, où la LGV se sépare vers Halle et Leipzig
   hamm:         [7.809, 51.678],
   heidelberg:   [8.670, 49.404],
   ingolstadt:   [11.437, 48.744],
+  jena:         [11.586, 50.927],
   kaiserslautern: [7.769, 49.436],
   landshut:     [12.128, 48.545],
   limburg:      [8.052, 50.386],
@@ -163,13 +165,44 @@ const PLACES = {
   riesa:        [13.294, 51.306],
   schwerin:     [11.408, 53.634],
   treuchtlingen: [10.908, 48.961],
+  unstruttal:   [11.653, 51.276],  // viaduc de l'Unstrut (Karsdorf) : le nord de la LGV Erfurt – Leipzig
   warburg:      [9.146, 51.489],
+  // Weimar n'est traversée par AUCUNE ligne écrite : la LGV passe au nord par
+  // la Finne, la Saalebahn au sud par Iéna. Elle attend sa Thüringer Bahn
+  // (Erfurt – Weimar – Apolda – Naumburg) ; le portail WEIMAR d'Erfurt reste un
+  // cul-de-sac d'ici là. Coordonnée gardée pour ce jour-là.
   weimar:       [11.329, 50.981],
   wismar:       [11.463, 53.892],
   wolfsburg:    [10.788, 52.429],
   wuppertal:    [7.152, 51.255],
   // Forbach : la dernière gare française avant la Sarre.
   forbach:      [6.899, 49.190],
+  // La Moselle et l'Eifel, le tracé des deux lignes de Trèves.
+  bullay:       [7.153, 50.048],
+  cochem:       [7.166, 50.145],
+  euskirchen:   [6.787, 50.660],
+  gerolstein:   [6.663, 50.223],
+  merzig:       [6.638, 49.444],
+  wittlich:     [6.899, 49.976],
+
+  // --- Luxembourg : POINTS DE PASSAGE seulement ---------------------------
+  // Wasserbillig et Kleinbettingen sont les deux gares frontières du pays :
+  // elles donnent leur tracé aux lignes de Trèves et d'Arlon sans se dessiner.
+  // Thionville en fait autant côté français.
+  bascharage:     [5.906, 49.567],   // Bascharage-Sanem
+  belval:         [5.945, 49.500],   // Belval-Université
+  clervaux:       [6.030, 50.055],
+  differdange:    [5.885, 49.524],
+  dippach:        [5.984, 49.581],   // Dippach-Reckange
+  kleinbettingen: [5.918, 49.652],
+  mersch:         [6.106, 49.750],
+  noertzange:     [6.043, 49.505],
+  troisvierges:   [6.000, 50.123],
+  wasserbillig:   [6.499, 49.714],
+  // Belgique et France, sur les lignes du Grand-Duché.
+  gouvy:          [5.945, 50.187],
+  vielsalm:       [5.917, 50.283],
+  thionville:     [6.168, 49.355],
 
   // --- Hors des pays jouables : ce sont eux qui font déborder le réseau du
   //     cadre national, donc ils comptent double pour la lecture « Europe ».
@@ -177,7 +210,8 @@ const PLACES = {
   copenhague:   [12.564, 55.673],  // Danemark
   enschede:     [6.890, 52.221],   // Pays-Bas
   geneve:       [6.142, 46.210],   // Suisse
-  luxembourg:   [6.134, 49.600],   // Luxembourg
+  // (Luxembourg a quitté cette liste : le Grand-Duché est jouable, ses
+  //  coordonnées vivent dans js/geo.js comme celles de toute gare du catalogue.)
   maastricht:   [5.706, 50.850],   // Pays-Bas
   prague:       [14.435, 50.083],  // Tchéquie
   salzburg:     [13.046, 47.813],  // Autriche

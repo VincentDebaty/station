@@ -615,7 +615,11 @@ function openStationModal(gi) {
     '<span class="b' + (i < n ? " on" : "") + '"></span>').join("");
 
   // Trois lignes, aucune phrase : les jauges et les étoiles disent tout — seul
-  // le retard garde son chiffre, c'est un record.
+  // le retard garde son chiffre, c'est un record. Et c'est ICI qu'il vit
+  // désormais : la carte ne l'affiche plus sous chaque gare (js/mapnet.js), elle
+  // n'en garde que la couleur du point. Un record de 0 minute ne s'écrit pas
+  // « +0 min » — c'est un service PARFAIT, et il se dit avec l'étoile qu'on
+  // retrouve à la place du point sur la carte.
   const rows =
     '<div class="mm-row"><span class="k">Difficulté</span>' +
       '<span class="gauge diff">' + bars(diff) + "</span></div>" +
@@ -623,8 +627,11 @@ function openStationModal(gi) {
       '<span class="gauge">' + bars(fluxLevel) + "</span></div>" : "") +
     '<div class="mm-row"><span class="k">Record</span>' +
       '<span class="v"><span class="s">' + starStr(stars) + "</span>" +
-      (best != null ? '<span class="d">+' + best + " min</span>"
-                    : '<span class="d none">jamais jouée</span>') +
+      // Pas d'étoile de plus ici : les trois du record sont juste à côté, une
+      // quatrième se lisait comme un quatrième cran. L'or du mot suffit.
+      (best === 0 ? '<span class="d perfect">Parfait</span>'
+       : best != null ? '<span class="d">+' + best + " min</span>"
+                      : '<span class="d none">jamais jouée</span>') +
       "</span></div>";
 
   // Drapeau seul : le pays se reconnaît sans le lire, et la carte le dit déjà.
