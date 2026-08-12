@@ -1,33 +1,34 @@
 {
   "id": "koln",
   "name": "Köln Hbf",
-  "city": "Köln",
-  "tagline": "Köln Hbf — densité extrême sous la cathédrale : 7 quais, tout passe par le pont Hohenzollern.",
+  "city": "Cologne",
+  "tagline": "Köln Hbf — 11 voies collées à la cathédrale : la porte belge du réseau.",
   "difficulty": 4,
   "country": "🇩🇪 Allemagne",
-  "desc": "La gare la plus dense d'Allemagne, serrée au pied de la cathédrale : sept quais seulement pour un flux ICE incessant, où tout le trafic est-ouest s'engouffre sur le pont Hohenzollern. Düsseldorf et le Ruhr au nord, le Rhin vers Bonn et Coblence au sud, Aix-la-Chapelle et Bruxelles à l'ouest, Francfort par la LGV. Aucune marge — c'est le goulot.",
+  "desc": "Onze voies collées à la cathédrale, sur le pont Hohenzollern : mille trains par jour sur la gare la plus saturée du pays. Les grandes vitesses vers Bruxelles filent par Aachen et Liège — c'est cette porte-là qui relie le réseau allemand au reste de l'Europe.",
   "platforms": [
-    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }, { "id": 6 }, { "id": 7 }
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },
+    { "id": 6 }, { "id": 7 }, { "id": 8 }
   ],
   "portals": {
-    "AACHEN":     { "side": "L", "color": "#f2588f", "abbr": "AC" },
+    "BRUXELLES":  { "side": "L", "color": "#f2588f", "abbr": "BX" },
     "BONN":       { "side": "L", "color": "#4ade80", "abbr": "BN" },
-    "TRIER":      { "side": "L", "color": "#a78bfa", "abbr": "TR" },
+    "KOBLENZ":    { "side": "L", "color": "#a78bfa", "abbr": "KO" },
     "DUSSELDORF": { "side": "R", "color": "#25dede", "abbr": "D", "label": "DÜSSELDORF" },
     "FRANKFURT":  { "side": "R", "color": "#f5b23c", "abbr": "F" },
     "WUPPERTAL":  { "side": "R", "color": "#60a5fa", "abbr": "W" }
   },
   "links": {
-    "AACHEN": [1, 2, 3],
-    "BONN": [3, 4, 5, 6],
-    "TRIER": [6, 7],
+    "BRUXELLES":  [1, 2, 3, 4],
+    "BONN":       [3, 4, 5, 6],
+    "KOBLENZ":    [5, 6, 7, 8],
     "DUSSELDORF": [1, 2, 3, 4],
-    "FRANKFURT": [4, 5, 6, 7],
-    "WUPPERTAL": [1, 2]
+    "FRANKFURT":  [3, 4, 5, 6],
+    "WUPPERTAL":  [5, 6, 7, 8]
   },
   "sameSidePairs": [],
   "gen": {
-    "nMin": 16, "nMax": 19, "gapMin": 1.5, "gapMax": 2.5,
+    "nMin": 16, "nMax": 20, "gapMin": 1.5, "gapMax": 2.6,
     "cars": [2, 3, 3, 4, 4, 5, 5, 6],
     "quietRate": 0.12
   }
