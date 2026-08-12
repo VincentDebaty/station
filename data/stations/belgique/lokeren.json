@@ -1,0 +1,27 @@
+{
+  "id": "lokeren",
+  "name": "Lokeren",
+  "tagline": "Lokeren — sur la diagonale Gand–Anvers, l'antenne de Termonde en prime.",
+  "difficulty": 1,
+  "country": "🇧🇪 Belgique",
+  "desc": "Sur la ligne 59, la grande diagonale du Pays de Waes entre Gand et Anvers, avec l'antenne de Termonde qui s'y greffe. Anvers y est affiché huit fois sur dix : quatre quais, cadence d'omnibus, aucune surprise — sauf celles que vous provoquerez.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }
+  ],
+  "portals": {
+    "GAND":     { "side": "L", "color": "#f5b23c", "abbr": "G" },
+    "TERMONDE": { "side": "L", "color": "#25dede", "abbr": "TE" },
+    "ANVERS":   { "side": "R", "color": "#f2588f", "abbr": "AN" }
+  },
+  "links": {
+    "GAND":     [1, 2, 3],
+    "TERMONDE": [3, 4],
+    "ANVERS":   [1, 2, 3, 4]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 12, "nMax": 15, "gapMin": 1.6, "gapMax": 2.8,
+    "cars": [2, 2, 2, 2, 3, 3, 4],
+    "quietRate": 0.25
+  }
+}

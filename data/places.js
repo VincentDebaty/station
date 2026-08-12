@@ -1,44 +1,71 @@
 "use strict";
 // ------------------------------------------------------------------
-// Lieux SECONDAIRES du réseau — les destinations que citent les fiches sans
-// être elles-mêmes jouables (Ostende, Aachen, Prague…).
+// Lieux du réseau qui ne sont pas des gares jouables — leurs coordonnées, et
+// rien d'autre. Ils ne se dessinent PLUS : la carte ne montre que le réseau
+// jouable, et une ville qu'on ne peut pas prendre en main n'y a pas sa place.
+// Ils servent à deux choses, dans cet ordre :
 //
-// Sans coordonnées, une ligne vers Ostende ne pouvait être qu'un trait qui
-// s'arrête dans le vide. Avec elles, le réseau va vraiment quelque part : ces
-// lieux deviennent de petits points, reliés à leur gare, qui n'apparaissent
-// qu'une fois zoomé (voir le LOD dans js/mapnet.js).
+// 1. **Points de passage** (le rôle qui restera). Une ligne de data/lines.js
+//    enchaîne les gares jouables EN PASSANT par eux : Namur – Ciney – Marloie
+//    donne au trait la forme de la voie, là où Namur – Marloie tendait une
+//    corde à travers la Famenne. Le point lui-même reste invisible.
+// 2. **Extrémités des pays pas encore décrits en lignes** (France, Allemagne,
+//    Royaume-Uni) : tant que leur topologie se déduit des portails, un portail
+//    doit pouvoir se situer quelque part. Ces entrées disparaîtront avec
+//    l'écriture de leurs lignes.
+//
+// Une destination en CUL-DE-SAC (Ostende, Genk, Turnhout, Couvin…) n'a rien à
+// faire ici : elle vit sur le gril et dans le texte de la fiche, jamais sur la
+// carte. Voir tools/AUTHORING-STATIONS.md §0.
 //
 // Clé = NOM du portail tel qu'il est écrit dans la fiche (la clé de l'objet
 // `portals`), normalisé par netKey() : sans accents, sans casse, sans
 // séparateurs. Attention : c'est le nom, PAS le champ `label` qui l'habille à
 // l'écran — la fiche de Berlin écrit `WARSCHAU` et affiche « VARSOVIE ».
 // Valeur = [lon, lat], même convention que GEO.cities.
-//
-// Ces points ne sont PAS jouables : pas de progression, pas de clic. Ils
-// existent pour que le réseau soit continu et lisible à travers l'Europe, y
-// compris hors des pays jouables (Bâle, Zurich, Luxembourg, Prague, Varsovie…).
 // ------------------------------------------------------------------
 
 const PLACES = {
-  // --- Belgique -----------------------------------------------------------
-  aarschot:     [4.837, 50.985],
-  arlon:        [5.812, 49.683],
+  // --- Belgique : POINTS DE PASSAGE seulement -----------------------------
+  // La Belgique tient sa topologie de data/lines.js ; ces points ne sont pas des
+  // destinations mais les gares que les lignes TRAVERSENT — ce sont eux qui
+  // donnent au tracé la forme de la voie plutôt qu'une corde tendue. Une
+  // destination non jouable (Ostende, Genk, Turnhout…) n'a rien à faire ici :
+  // elle vit sur le gril, pas sur la carte.
+  aalter:       [3.450, 51.090],
+  alost:        [4.039, 50.943],   // Aalst
+  anzegem:      [3.475, 50.835],
   bertrix:      [5.257, 49.855],
-  blankenberge: [3.133, 51.313],
-  courtrai:     [3.265, 50.828],
-  couvin:       [4.494, 50.053],
-  dinant:       [4.912, 50.259],
-  eeclo:        [3.564, 51.187],
-  essen:        [4.470, 51.465],
-  genk:         [5.500, 50.965],
-  knokke:       [3.283, 51.345],
-  lier:         [4.570, 51.131],
-  liers:        [5.575, 50.688],
-  malines:      [4.480, 51.028],
-  ostende:      [2.925, 51.228],
-  quievrain:    [3.685, 50.407],
-  quevy:        [3.945, 50.351],
-  termonde:     [4.101, 51.028],
+  braine:       [4.137, 50.607],   // Braine-le-Comte
+  ciney:        [5.100, 50.293],
+  depinte:      [3.644, 50.994],   // De Pinte
+  enghien:      [4.041, 50.694],
+  fleurus:      [4.545, 50.484],
+  ghislain:     [3.814, 50.447],   // Saint-Ghislain
+  grammont:     [3.874, 50.772],   // Geraardsbergen
+  haacht:       [4.639, 50.977],
+  hal:          [4.235, 50.736],   // Halle
+  herseaux:     [3.281, 50.717],
+  huy:          [5.235, 50.520],
+  jurbise:      [3.902, 50.535],
+  kontich:      [4.450, 51.132],
+  leuze:        [3.616, 50.599],   // Leuze-en-Hainaut
+  lier:         [4.570, 51.131],   // Lierre
+  manage:       [4.239, 50.502],
+  niklaas:      [4.145, 51.170],   // Saint-Nicolas / Sint-Niklaas
+  nivelles:     [4.331, 50.599],
+  opwijk:       [4.191, 50.972],
+  puurs:        [4.288, 51.077],
+  rivage:       [5.532, 50.469],
+  roulers:      [3.128, 50.943],   // Roeselare
+  schellebelle: [3.938, 51.020],
+  soignies:     [4.070, 50.583],
+  tirlemont:    [4.933, 50.807],   // Tienen
+  tongres:      [5.470, 50.783],   // Tongeren
+  vilvorde:     [4.428, 50.930],
+  waregem:      [3.417, 50.885],
+  waremme:      [5.256, 50.699],
+  zottegem:     [3.813, 50.868],
 
   // --- France -------------------------------------------------------------
   amiens:       [2.302, 49.892],

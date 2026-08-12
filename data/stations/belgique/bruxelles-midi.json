@@ -2,33 +2,37 @@
   "id": "bruxelles-midi",
   "name": "Bruxelles-Midi",
   "city": "Bruxelles",
-  "tagline": "Bruxelles-Midi — 8 quais, 6 directions dont Paris. Le boss régional.",
+  "tagline": "Bruxelles-Midi — 10 quais, 8 directions dont Paris. Le boss du pays.",
   "difficulty": 5,
   "country": "🇧🇪 Belgique",
-  "desc": "La plus grande gare du pays, sur la jonction Nord-Midi que tout traverse : huit quais, six directions — Anvers et Gand vers le nord, Mons et Paris vers le sud, Namur et Liège vers l'est. Unique gare Eurostar de Bruxelles (Londres, Paris, Amsterdam). Le boss régional ne pardonne rien — bonne chance, aiguilleur.",
+  "desc": "La plus grande gare de Belgique, posée sur la jonction Nord-Midi que tout traverse : dix quais, huit directions. Gand, Mons, Charleroi et Paris filent au sud-ouest ; Anvers, Liège, Namur et Termonde repartent au nord-est. Unique gare Eurostar de la capitale — et rien n'y attend son tour deux fois. Bonne chance, aiguilleur.",
   "platforms": [
-    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 },
-    { "id": 5 }, { "id": 6 }, { "id": 7 }, { "id": 8 }
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },
+    { "id": 6 }, { "id": 7 }, { "id": 8 }, { "id": 9 }, { "id": 10 }
   ],
   "portals": {
-    "GAND":   { "side": "L", "color": "#f5b23c", "abbr": "G" },
-    "MONS":   { "side": "L", "color": "#4ade80", "abbr": "M" },
-    "PARIS":  { "side": "L", "color": "#f2588f", "abbr": "P" },
-    "ANVERS": { "side": "R", "color": "#25dede", "abbr": "AN" },
-    "NAMUR":  { "side": "R", "color": "#60a5fa", "abbr": "N" },
-    "LIEGE":  { "side": "R", "color": "#a78bfa", "abbr": "LG", "label": "LIÈGE" }
+    "GAND":      { "side": "L", "color": "#f5b23c", "abbr": "G" },
+    "MONS":      { "side": "L", "color": "#4ade80", "abbr": "MO" },
+    "CHARLEROI": { "side": "L", "color": "#60a5fa", "abbr": "C" },
+    "PARIS":     { "side": "L", "color": "#e879f9", "abbr": "P" },
+    "ANVERS":    { "side": "R", "color": "#f2588f", "abbr": "AN" },
+    "LIEGE":     { "side": "R", "color": "#a78bfa", "abbr": "LG", "label": "LIÈGE" },
+    "NAMUR":     { "side": "R", "color": "#25dede", "abbr": "N" },
+    "TERMONDE":  { "side": "R", "color": "#a3e635", "abbr": "TE" }
   },
   "links": {
-    "GAND": [1, 2, 4, 5],
-    "MONS": [3, 4, 5],
-    "PARIS": [6, 7, 8],
-    "ANVERS": [1, 2, 3, 7, 8],
-    "NAMUR": [4, 5, 6],
-    "LIEGE": [5, 6, 7, 8]
+    "GAND":      [1, 2, 3, 4],
+    "MONS":      [4, 5, 6],
+    "CHARLEROI": [6, 7],
+    "PARIS":     [8, 9, 10],
+    "ANVERS":    [1, 2, 3, 9, 10],
+    "LIEGE":     [3, 4, 5, 8, 9],
+    "NAMUR":     [5, 6, 7],
+    "TERMONDE":  [1, 2, 7, 8]
   },
   "sameSidePairs": [],
   "gen": {
-    "nMin": 18, "nMax": 22, "gapMin": 1.4, "gapMax": 2.4,
+    "nMin": 20, "nMax": 24, "gapMin": 1.4, "gapMax": 2.4,
     "cars": [2, 3, 3, 4, 4, 5, 5, 6, 7],
     "quietRate": 0.1
   }

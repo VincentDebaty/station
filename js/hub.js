@@ -20,6 +20,12 @@ function showHub() {
 // Cliquer une gare prend le service SANS écran intercalé : le clic autorise
 // l'audio, la partie démarre aussitôt, et la description de la gare passe en
 // toast non bloquant. L'aide (règles) reste à la demande via l'icône « ? ».
+// Pastilles de difficulté (mêmes symboles que la fiche de la carte) : le joueur
+// garde en jeu le repère qu'il avait avant de prendre le service.
+function diffPips(d) {
+  const n = Math.max(1, Math.min(5, d || 1));
+  return '<span class="dif"><span class="on">' + "●".repeat(n) + "</span>" + "○".repeat(5 - n) + "</span>";
+}
 async function startStation(i) {
   currentIdx = i;
   const cfg = CATALOG[i];
@@ -27,9 +33,10 @@ async function startStation(i) {
   // + nom de la gare.
   const flag = (cfg.country || "").trim().split(" ")[0];
   // Cartouche = bouton RETOUR (même logique que « ‹ France » sur la carte) :
-  // flèche + drapeau + nom, cliquable pour revenir à la carte.
+  // flèche + drapeau + nom + difficulté, cliquable pour revenir à la carte.
   document.getElementById("station-tag").innerHTML =
-    '<span class="arw">‹</span><span class="flag">' + flag + '</span><span class="nm">' + cfg.name + "</span>";
+    '<span class="arw">‹</span><span class="flag">' + flag + '</span><span class="nm">' + cfg.name + "</span>" +
+    diffPips(cfg.difficulty);
   loadStation(cfg);
   document.getElementById("hub").classList.add("hidden");
   document.getElementById("end").classList.add("hidden");
@@ -49,7 +56,8 @@ async function startStation(i) {
 async function startAdhocStation(cfg) {
   currentIdx = -1;
   document.getElementById("station-tag").innerHTML =
-    '<span class="arw">‹</span><span class="flag">🧪</span><span class="nm">' + cfg.name + "</span>";
+    '<span class="arw">‹</span><span class="flag">🧪</span><span class="nm">' + cfg.name + "</span>" +
+    diffPips(cfg.difficulty);
   loadStation(cfg);
   document.getElementById("hub").classList.add("hidden");
   document.getElementById("end").classList.add("hidden");

@@ -1,0 +1,27 @@
+{
+  "id": "marloie",
+  "name": "Marloie",
+  "tagline": "Marloie — un hameau, trois directions : le minimum vital.",
+  "difficulty": 1,
+  "country": "🇧🇪 Belgique",
+  "desc": "Quatre voies au milieu des prés de Famenne : la ligne du Luxembourg y croise la 43, descendue de Liège par la vallée de l'Ourthe. Deux quais réels, trois dans le jeu — de quoi croiser, tout juste.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }
+  ],
+  "portals": {
+    "BRUXELLES":  { "side": "L", "color": "#25dede", "abbr": "B" },
+    "LIEGE":      { "side": "L", "color": "#a78bfa", "abbr": "LG", "label": "LIÈGE" },
+    "LUXEMBOURG": { "side": "R", "color": "#f5b23c", "abbr": "LX" }
+  },
+  "links": {
+    "BRUXELLES":  [1, 2, 3],
+    "LIEGE":      [2, 3],
+    "LUXEMBOURG": [1, 2, 3]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 10, "nMax": 13, "gapMin": 2.0, "gapMax": 3.4,
+    "cars": [2, 2, 2, 2, 3, 3, 4],
+    "quietRate": 0.3
+  }
+}

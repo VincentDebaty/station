@@ -1,0 +1,31 @@
+{
+  "id": "denderleeuw",
+  "name": "Denderleeuw",
+  "tagline": "Denderleeuw — l'entonnoir : quatre directions à l'ouest, une seule à l'est.",
+  "difficulty": 3,
+  "country": "🇧🇪 Belgique",
+  "desc": "Neuf voies dans un village de dix mille habitants : c'est ici que tout ce qui vient de Flandre orientale se rassemble avant d'entrer dans Bruxelles. Gand, Courtrai, Termonde et Grammont d'un côté ; de l'autre, une seule gorge, et dix relations cadencées par heure qui doivent y passer.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
+  ],
+  "portals": {
+    "BRUXELLES": { "side": "L", "color": "#25dede", "abbr": "B" },
+    "GAND":      { "side": "R", "color": "#f5b23c", "abbr": "G" },
+    "COURTRAI":  { "side": "R", "color": "#4ade80", "abbr": "CT" },
+    "GRAMMONT":  { "side": "R", "color": "#a78bfa", "abbr": "GR" },
+    "TERMONDE":  { "side": "R", "color": "#f2588f", "abbr": "TE" }
+  },
+  "links": {
+    "BRUXELLES": [1, 2, 3, 4, 5],
+    "GAND":      [1, 2, 3],
+    "COURTRAI":  [3, 4],
+    "GRAMMONT":  [2, 5],
+    "TERMONDE":  [4, 5]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 13, "nMax": 16, "gapMin": 1.9, "gapMax": 3.1,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6],
+    "quietRate": 0.18
+  }
+}

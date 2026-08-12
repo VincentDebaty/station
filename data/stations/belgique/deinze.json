@@ -1,0 +1,27 @@
+{
+  "id": "deinze",
+  "name": "Deinze",
+  "tagline": "Deinze — là où la ligne de la côte quitte celle de Courtrai.",
+  "difficulty": 1,
+  "country": "🇧🇪 Belgique",
+  "desc": "Au bord de la Lys, le point où la ligne 73 s'échappe vers La Panne et les dunes pendant que la 75 continue sur Courtrai. Une entrée, deux sorties, quatre quais : le premier poste du pays.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }
+  ],
+  "portals": {
+    "GAND":     { "side": "L", "color": "#f5b23c", "abbr": "G" },
+    "COURTRAI": { "side": "R", "color": "#25dede", "abbr": "CT" },
+    "LA PANNE": { "side": "R", "color": "#4ade80", "abbr": "PA" }
+  },
+  "links": {
+    "GAND":     [1, 2, 3, 4],
+    "COURTRAI": [1, 2, 3],
+    "LA PANNE": [3, 4]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 12, "nMax": 15, "gapMin": 1.6, "gapMax": 2.8,
+    "cars": [2, 2, 2, 2, 3, 3, 4],
+    "quietRate": 0.25
+  }
+}

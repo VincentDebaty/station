@@ -2,33 +2,34 @@
   "id": "gand",
   "name": "Gand-Saint-Pierre",
   "city": "Gand",
-  "tagline": "Gand — six directions, flux flamand permanent : le grand carrefour du Nord.",
-  "difficulty": 3,
+  "tagline": "Gand — six directions, huit quais : le grand carrefour du Nord.",
+  "difficulty": 4,
   "country": "🇧🇪 Belgique",
-  "desc": "Le grand carrefour flamand : six directions, un flux qui ne retombe jamais entre Bruxelles, Anvers, Bruges, Courtrai, Termonde et Eeklo. Ici tout se croise — à vous de démêler.",
+  "desc": "Le carrefour flamand, douze voies sous une marquise de 1912 : Bruges et la côte à l'ouest, Courtrai et Audenarde au sud, Bruxelles, Anvers et Termonde à l'est. Le flux ne retombe jamais — à vous de démêler.",
   "platforms": [
-    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }, { "id": 6 }
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },
+    { "id": 6 }, { "id": 7 }, { "id": 8 }
   ],
   "portals": {
-    "BRUXELLES": { "side": "L", "color": "#25dede", "abbr": "B" },
-    "ANVERS":    { "side": "L", "color": "#f2588f", "abbr": "AN" },
-    "TERMONDE":  { "side": "L", "color": "#f5b23c", "abbr": "TE" },
-    "BRUGES":    { "side": "R", "color": "#60a5fa", "abbr": "BR" },
-    "COURTRAI":  { "side": "R", "color": "#4ade80", "abbr": "CO" },
-    "EECLO":     { "side": "R", "color": "#a78bfa", "abbr": "EE" }
+    "BRUGES":    { "side": "L", "color": "#60a5fa", "abbr": "BR" },
+    "COURTRAI":  { "side": "L", "color": "#f5b23c", "abbr": "CT" },
+    "AUDENARDE": { "side": "L", "color": "#a78bfa", "abbr": "AU" },
+    "BRUXELLES": { "side": "R", "color": "#25dede", "abbr": "B" },
+    "ANVERS":    { "side": "R", "color": "#f2588f", "abbr": "AN" },
+    "TERMONDE":  { "side": "R", "color": "#4ade80", "abbr": "TE" }
   },
   "links": {
-    "BRUXELLES": [1, 2, 3, 4],
-    "ANVERS": [2, 3, 4, 5],
-    "TERMONDE": [1, 2, 5, 6],
-    "BRUGES": [1, 2, 3, 4],
-    "COURTRAI": [3, 4, 5, 6],
-    "EECLO": [1, 5, 6]
+    "BRUGES":    [1, 2, 3, 4],
+    "COURTRAI":  [3, 4, 5],
+    "AUDENARDE": [6, 7, 8],
+    "BRUXELLES": [1, 2, 3, 4, 5],
+    "ANVERS":    [5, 6, 7, 8],
+    "TERMONDE":  [2, 7, 8]
   },
   "sameSidePairs": [],
   "gen": {
-    "nMin": 14, "nMax": 17, "gapMin": 1.8, "gapMax": 3.2,
-    "cars": [2, 2, 2, 3, 3, 4, 4, 5, 5, 6, 7],
-    "quietRate": 0.2
+    "nMin": 16, "nMax": 20, "gapMin": 1.5, "gapMax": 2.6,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6],
+    "quietRate": 0.12
   }
 }

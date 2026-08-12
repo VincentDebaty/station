@@ -132,8 +132,32 @@ function buildNetwork() {
       } else if (POINTS[key]) {
         linkPair(c.id, key);
       }
-      // Sinon : portail non résolu. Silencieux ici (le rendu ne peut rien en
-      // faire) ; tools/net-check.mjs le signale comme une erreur de fiche.
+      // Sinon : portail non résolu — un CUL-DE-SAC (Ostende, Genk, Turnhout…).
+      // Il vit sur le gril de la gare, jamais sur la carte : rien à faire ici.
+    }
+  }
+
+  // --- 3. Contraction des points de passage. Un lieu n'est pas un nœud du jeu :
+  // il n'a ni progression, ni déblocage, ni pastille. La VOISINE d'une gare est
+  // donc la première GARE atteinte en suivant la voie à travers eux — Herentals
+  // touche Anvers par Lierre, Marloie touche Namur par Ciney. Sans cette étape,
+  // une gare que des points de passage séparent de toutes les autres n'a plus
+  // aucune voisine et le déblocage la laisse dehors : mesuré sur la Belgique, 26
+  // gares sur 29 devenaient inatteignables, et Marloie une porte-piège.
+  const adj = {};
+  for (const [a, b] of NET.edgeList) {
+    (adj[a] = adj[a] || []).push(b);
+    (adj[b] = adj[b] || []).push(a);
+  }
+  for (const id in NET.links) {
+    const seen = new Set([id]), stack = (adj[id] || []).slice();
+    while (stack.length) {
+      const k = stack.pop();
+      if (seen.has(k)) continue;
+      seen.add(k);
+      // On s'arrête à la première gare : au-delà, c'est SA voisine, pas la nôtre.
+      if (isStation(k)) { if (NET.links[id].to.indexOf(k) < 0) NET.links[id].to.push(k); continue; }
+      for (const nx of (adj[k] || [])) if (!seen.has(nx)) stack.push(nx);
     }
   }
 

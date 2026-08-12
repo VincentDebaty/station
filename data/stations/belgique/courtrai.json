@@ -1,0 +1,32 @@
+{
+  "id": "courtrai",
+  "name": "Courtrai",
+  "tagline": "Courtrai — l'épine dorsale de Flandre occidentale : 5 directions, 6 quais.",
+  "difficulty": 3,
+  "country": "🇧🇪 Belgique",
+  "desc": "Neuf voies au bord de la Lys : Bruges descend du nord par Roulers, Lille remonte du sud par Mouscron, Gand et Bruxelles arrivent de l'est. Reste l'antenne du Westhoek vers Poperinge, cantonnée aux deux derniers quais — c'est l'antenne, pas le tronc.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },
+    { "id": 6 }
+  ],
+  "portals": {
+    "BRUGES":    { "side": "L", "color": "#60a5fa", "abbr": "BR" },
+    "LILLE":     { "side": "L", "color": "#f2588f", "abbr": "LI" },
+    "POPERINGE": { "side": "L", "color": "#4ade80", "abbr": "PO" },
+    "GAND":      { "side": "R", "color": "#f5b23c", "abbr": "G" },
+    "BRUXELLES": { "side": "R", "color": "#25dede", "abbr": "B" }
+  },
+  "links": {
+    "BRUGES":    [1, 2, 3, 4],
+    "LILLE":     [3, 4, 5, 6],
+    "POPERINGE": [5, 6],
+    "GAND":      [1, 2, 3, 4],
+    "BRUXELLES": [4, 5, 6]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 14, "nMax": 17, "gapMin": 1.7, "gapMax": 2.9,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6],
+    "quietRate": 0.15
+  }
+}

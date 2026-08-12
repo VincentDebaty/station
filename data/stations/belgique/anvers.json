@@ -3,29 +3,31 @@
   "name": "Anvers-Central",
   "city": "Anvers",
   "tagline": "Anvers — terminus : tout bute sur un heurtoir, tout rebrousse.",
-  "difficulty": 2,
+  "difficulty": 4,
   "country": "🇧🇪 Belgique",
-  "desc": "La cathédrale ferroviaire, sur trois niveaux : ici, dans le grand hall historique, tous les quais butent sur un heurtoir — tous les trains rebroussent, et tout le trafic passe par une seule gorge. La vôtre. (Les voies traversantes du tunnel nord-sud, elles, filent sous vos pieds.)",
+  "desc": "La cathédrale ferroviaire, sur trois niveaux : ici, dans le grand hall historique, tous les quais butent sur un heurtoir. Cinq directions — Bruxelles, Gand, Hasselt, Turnhout, Essen — et une seule gorge pour les faire entrer et sortir. La vôtre.",
   "platforms": [
-    { "id": 1, "deadEnd": true }, { "id": 2, "deadEnd": true }, { "id": 3, "deadEnd": true },
-    { "id": 4, "deadEnd": true }, { "id": 5, "deadEnd": true }, { "id": 6, "deadEnd": true }
+    { "id": 1, "deadEnd": true }, { "id": 2, "deadEnd": true }, { "id": 3, "deadEnd": true }, { "id": 4, "deadEnd": true }, { "id": 5, "deadEnd": true },
+    { "id": 6, "deadEnd": true }, { "id": 7, "deadEnd": true }
   ],
   "portals": {
     "BRUXELLES": { "side": "L", "color": "#25dede", "abbr": "B" },
     "GAND":      { "side": "L", "color": "#f5b23c", "abbr": "G" },
-    "ESSEN":     { "side": "L", "color": "#f2588f", "abbr": "ES" },
-    "LIER":      { "side": "L", "color": "#a78bfa", "abbr": "LI" }
+    "TURNHOUT":  { "side": "L", "color": "#a78bfa", "abbr": "TU" },
+    "HASSELT":   { "side": "L", "color": "#60a5fa", "abbr": "H" },
+    "ESSEN":     { "side": "L", "color": "#f2588f", "abbr": "ES" }
   },
   "links": {
     "BRUXELLES": [1, 2, 3, 4],
-    "GAND": [1, 2, 3, 4, 5],
-    "ESSEN": [3, 4, 5, 6],
-    "LIER": [1, 2, 5, 6]
+    "GAND":      [2, 3, 4, 5],
+    "TURNHOUT":  [5, 6, 7],
+    "HASSELT":   [1, 6, 7],
+    "ESSEN":     [3, 4, 5, 6]
   },
   "sameSidePairs": "all",
   "gen": {
-    "nMin": 10, "nMax": 13, "gapMin": 2.2, "gapMax": 3.6,
+    "nMin": 14, "nMax": 18, "gapMin": 1.9, "gapMax": 3.1,
     "cars": [2, 3, 3, 4, 4, 5, 6],
-    "quietRate": 0.25
+    "quietRate": 0.15
   }
 }

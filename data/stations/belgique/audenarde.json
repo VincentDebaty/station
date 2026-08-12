@@ -1,0 +1,29 @@
+{
+  "id": "audenarde",
+  "name": "Audenarde",
+  "tagline": "Audenarde — sur l'Escaut, au croisement des lignes 86 et 89.",
+  "difficulty": 2,
+  "country": "🇧🇪 Belgique",
+  "desc": "La gare des Ardennes flamandes, refaite en 2019 : Courtrai et l'antenne de Renaix entrent par l'ouest, Bruxelles s'en va par Zottegem et Gand par De Pinte. Quatre quais au milieu des pavés du Tour des Flandres.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }
+  ],
+  "portals": {
+    "COURTRAI":  { "side": "L", "color": "#f5b23c", "abbr": "CT" },
+    "RENAIX":    { "side": "L", "color": "#a78bfa", "abbr": "RX" },
+    "BRUXELLES": { "side": "R", "color": "#25dede", "abbr": "B" },
+    "GAND":      { "side": "R", "color": "#4ade80", "abbr": "G" }
+  },
+  "links": {
+    "COURTRAI":  [1, 2, 3],
+    "RENAIX":    [2, 4],
+    "BRUXELLES": [1, 2, 3, 4],
+    "GAND":      [3, 4]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 12, "nMax": 15, "gapMin": 1.8, "gapMax": 3.1,
+    "cars": [2, 2, 2, 3, 3, 4, 4, 5],
+    "quietRate": 0.2
+  }
+}

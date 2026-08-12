@@ -2,29 +2,32 @@
   "id": "charleroi",
   "name": "Charleroi-Central",
   "city": "Charleroi",
-  "tagline": "Charleroi-Central — croisée de la dorsale wallonne et de l'axe nord-sud : 4 quais nerveux.",
-  "difficulty": 1,
+  "tagline": "Charleroi-Central — la dorsale wallonne croise l'axe nord-sud : 6 quais.",
+  "difficulty": 3,
   "country": "🇧🇪 Belgique",
-  "desc": "Le grand nœud du Pays Noir : ici la dorsale wallonne Mons–Namur croise l'axe nord-sud Bruxelles–Couvin. Quatre quais seulement pour cet éventail de directions — des trains courts qui s'enchaînent, aucune erreur permise. L'endroit rêvé pour prendre le poste en main.",
+  "desc": "Le grand nœud du Pays Noir, onze voies au-dessus de la Sambre : la dorsale Mons–Namur y croise l'axe Bruxelles–Couvin, et la ligne 140 remonte vers Ottignies. Cinq directions, un enchaînement serré — le Hainaut industriel n'attend pas.",
   "platforms": [
-    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },
+    { "id": 6 }
   ],
   "portals": {
     "BRUXELLES": { "side": "L", "color": "#25dede", "abbr": "B" },
-    "MONS":      { "side": "L", "color": "#f5b23c", "abbr": "MO" },
-    "NAMUR":     { "side": "R", "color": "#4ade80", "abbr": "N" },
-    "COUVIN":    { "side": "R", "color": "#60a5fa", "abbr": "CV" }
+    "MONS":      { "side": "L", "color": "#4ade80", "abbr": "MO" },
+    "NAMUR":     { "side": "R", "color": "#f5b23c", "abbr": "N" },
+    "OTTIGNIES": { "side": "R", "color": "#60a5fa", "abbr": "OT" },
+    "COUVIN":    { "side": "R", "color": "#f2588f", "abbr": "CV" }
   },
   "links": {
-    "BRUXELLES": [2, 3, 4],
-    "MONS": [1, 2, 3],
-    "NAMUR": [1, 2, 3],
-    "COUVIN": [4]
+    "BRUXELLES": [1, 2, 3, 4],
+    "MONS":      [4, 5, 6],
+    "NAMUR":     [1, 2, 3, 5, 6],
+    "OTTIGNIES": [3, 4],
+    "COUVIN":    [6]
   },
   "sameSidePairs": [],
   "gen": {
-    "nMin": 12, "nMax": 15, "gapMin": 1.6, "gapMax": 2.8,
-    "cars": [2, 2, 2, 2, 3, 3, 4],
-    "quietRate": 0.25
+    "nMin": 14, "nMax": 17, "gapMin": 1.7, "gapMax": 2.9,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6],
+    "quietRate": 0.15
   }
 }

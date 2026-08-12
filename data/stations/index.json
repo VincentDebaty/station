@@ -2,7 +2,13 @@
   {
     "country": "belgique",
     "label": "🇧🇪 Belgique",
-    "stations": ["tournai", "bruges", "gand", "anvers", "hasselt", "liege", "libramont", "namur", "charleroi", "mons", "ottignies", "louvain", "bruxelles-midi"]
+    "stations": [
+      "landen", "aarschot", "lokeren", "herentals", "mouscron", "deinze", "dinant", "marloie", "arlon",
+      "hasselt", "tournai", "bruges", "ottignies", "audenarde", "lalouviere", "libramont", "ath",
+      "namur", "charleroi", "mons", "courtrai", "denderleeuw", "termonde",
+      "gand", "anvers", "liege", "louvain", "malines",
+      "bruxelles-midi"
+    ]
   },
   {
     "country": "france",

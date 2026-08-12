@@ -1,0 +1,27 @@
+{
+  "id": "dinant",
+  "name": "Dinant",
+  "tagline": "Dinant — trois voies au pied de la citadelle, entre Meuse et Ardenne.",
+  "difficulty": 1,
+  "country": "🇧🇪 Belgique",
+  "desc": "La plus petite gare traversante du catalogue : la vallée de la Meuse au nord vers Namur, la remontée de la Lesse au sud vers Bertrix puis Libramont. Trois quais sous la falaise, des rames courtes, et l'été qui gonfle le trafic des kayaks.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }
+  ],
+  "portals": {
+    "NAMUR":     { "side": "L", "color": "#4ade80", "abbr": "N" },
+    "BERTRIX":   { "side": "R", "color": "#f5b23c", "abbr": "BX" },
+    "LIBRAMONT": { "side": "R", "color": "#f2588f", "abbr": "LB" }
+  },
+  "links": {
+    "NAMUR":     [1, 2, 3],
+    "BERTRIX":   [1, 2],
+    "LIBRAMONT": [2, 3]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 10, "nMax": 13, "gapMin": 2.0, "gapMax": 3.4,
+    "cars": [2, 2, 2, 2, 3, 3, 4],
+    "quietRate": 0.3
+  }
+}

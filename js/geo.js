@@ -40,7 +40,14 @@ const GEO = {
         bruges: [3.217, 51.197], louvain: [4.716, 50.881], namur: [4.862, 50.469],
         charleroi: [4.437, 50.412], mons: [3.952, 50.454], liege: [5.567, 50.639],
         hasselt: [5.338, 50.930], libramont: [5.378, 49.921],
-        ottignies: [4.570, 50.671], tournai: [3.395, 50.613]
+        ottignies: [4.570, 50.671], tournai: [3.395, 50.613],
+        // Les seize ajoutées en août 2026, relevées sur la gare elle-même (iRail).
+        malines: [4.482, 51.017], termonde: [4.101, 51.023], lokeren: [3.988, 51.108],
+        denderleeuw: [4.072, 50.892], audenarde: [3.600, 50.850], deinze: [3.534, 50.978],
+        courtrai: [3.265, 50.825], mouscron: [3.228, 50.741], ath: [3.768, 50.632],
+        lalouviere: [4.180, 50.478], landen: [5.080, 50.748], aarschot: [4.824, 50.984],
+        herentals: [4.830, 51.182], dinant: [4.908, 50.261], marloie: [5.314, 50.203],
+        arlon: [5.810, 49.681]
       } },
     france: { name: "France", flag: "🇫🇷", iso: "FRA", continent: "europe",
       cities: {

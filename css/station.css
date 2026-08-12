@@ -91,6 +91,9 @@ body {
 #station-tag .arw { font-size: 22px; line-height: 1; margin-top: -2px; color: var(--muted); transition: color .15s; }
 #station-tag .flag { font-size: 15px; line-height: 1; }
 #station-tag .nm { font-size: 13px; font-weight: 600; color: var(--text); }
+/* Difficulté : mêmes pastilles que la fiche gare de la carte (mm-diff). */
+#station-tag .dif { font-size: 9px; line-height: 1; letter-spacing: 1.5px; color: #3b465c; margin-left: 1px; }
+#station-tag .dif .on { color: #f5b23c; }
 @media (hover: hover) {
   #station-tag:hover { background: rgba(26, 37, 58, .92); border-color: #2dd4bf; }
   #station-tag:hover .arw { color: #2dd4bf; }
@@ -588,9 +591,18 @@ svg { width: 100%; height: 100%; display: block; }
 
 /* Achèvement d'un pays : le service qui décroche le dernier maillon est souligné
    — titre doré, liseré chaud, et un bandeau « pays terminé ». */
+/* Pays terminé : la carte porte DEUX blocs de plus (le bandeau du pays et la
+   gare ouverte). Elle s'élargit pour que le bandeau tienne sur moins de lignes
+   et que les boutons restent dans l'écran — en 370 px elle débordait par le bas.
+   L'élargissement l'emporte aussi sur la colonne étroite du mode « carte ». */
 #end .card.country-done {
   border-color: rgba(245, 178, 60, .6);
   box-shadow: 0 0 0 1px rgba(245, 178, 60, .25), 0 24px 60px -24px rgba(0, 0, 0, .65);
+  width: min(560px, 94vw); padding: 26px 30px;
+}
+#end.over-map .card.country-done { width: min(520px, 46vw); }
+@media (max-width: 720px) {
+  #end.over-map .card.country-done { width: min(520px, 94vw); }
 }
 #end .card.country-done #end-title { color: #f5b23c; }
 
@@ -707,15 +719,31 @@ svg { width: 100%; height: 100%; display: block; }
 
 .map-home {
   position: absolute; z-index: 6; top: calc(12px + var(--safe-t)); left: calc(12px + var(--safe-l));
-  display: inline-flex; align-items: center; justify-content: center;
-  width: 34px; height: 34px; padding: 0; border-radius: 12px;
-  background: rgba(21, 29, 46, .72); border: 1px solid #2a3550; color: var(--muted);
+  /* Une PASTILLE, pas un carré : le nom de la région tient à côté de l'icône.
+     Enfermé dans 34 px, le libellé débordait et devenait illisible — c'est ce
+     qui faisait lire « Belgique » comme une étiquette de lieu posée sur la
+     carte d'Allemagne, au lieu d'un bouton qui y ramène. */
+  display: inline-flex; align-items: center; gap: 8px;
+  height: 34px; padding: 0 14px 0 11px; border-radius: 999px;
+  background: rgba(21, 29, 46, .88); border: 1px solid #2dd4bf; color: #2dd4bf;
   backdrop-filter: blur(7px); -webkit-backdrop-filter: blur(7px);
-  cursor: pointer; transition: color .15s, border-color .15s, background .15s;
+  cursor: pointer; transition: background .15s, box-shadow .15s;
+  animation: homeIn .18s ease;
 }
+.map-home .lbl {
+  font-size: 13px; font-weight: 600; color: var(--text);
+  white-space: nowrap; line-height: 1;
+}
+/* La feuille pose `svg { width: 100% }` pour le plan de voies : sans reprise
+   explicite, l'icône remplissait toute la pastille et chassait le libellé
+   au-dehors — le bouton affichait « Belgique » à côté de lui-même. */
+.map-home svg { width: 15px; height: 15px; flex: 0 0 auto; }
+.map-home.hidden { display: none; }
 @media (hover: hover) {
-  .map-home:hover { color: #2dd4bf; border-color: #2dd4bf; background: rgba(26, 37, 58, .92); }
+  .map-home:hover { background: rgba(26, 45, 58, .95); box-shadow: 0 0 14px -2px rgba(45, 212, 191, .5); }
 }
+@keyframes homeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .map-home { animation: none; } }
 
 .country-land {
   fill: #2b3a5c; stroke: #47597f; stroke-width: .6;
@@ -760,22 +788,6 @@ svg { width: 100%; height: 100%; display: block; }
   top: 50%; bottom: auto; left: 50%; transform: translate(-50%, -50%);
 }
 
-/* Villes secondaires : présentes pour que les lignes aillent quelque part, mais
-   jamais pour se disputer l'attention avec une gare jouable. Inertes. */
-.place-chip { pointer-events: none; }
-.place-chip .pdot {
-  display: block; width: 5px; height: 5px; border-radius: 50%;
-  background: #7c8ba6; box-shadow: 0 0 0 2px rgba(14, 20, 32, .8);
-}
-.place-chip .cap { position: absolute; }
-/* Sélecteur porté par #map-net : sans lui, la règle générique .map-chip .nm
-   (13 px, gras, couleur de texte) l'emporte et une desserte de banlieue
-   s'affiche aussi fort qu'une gare jouable. */
-#map-net .place-chip .nm {
-  font-size: 10px; font-weight: 400; letter-spacing: .02em; color: #8593ad;
-  white-space: nowrap; text-shadow: 0 1px 3px rgba(10, 15, 26, .95);
-}
-
 /* ---- Trois habillages pour une même pastille, selon le zoom ----
    « far »  (Europe)  : un point et un nom. Ni numéro, ni cadenas, ni étoiles —
                         à cette distance ils ne sont pas lisibles et ils
@@ -794,15 +806,11 @@ svg { width: 100%; height: 100%; display: block; }
   font-size: 0; /* plus de numéro : seule la taille parle */
   box-shadow: 0 0 0 2px rgba(14, 20, 32, .8), 0 0 8px rgba(45, 212, 191, .45);
 }
-#map-net .place-chip .pdot { width: calc(var(--d) * var(--k)); height: calc(var(--d) * var(--k)); }
 #map-net[data-detail="far"] .city-chip .st { display: none; }
 #map-net[data-detail="far"] .city-chip .nm { font-size: 11px; font-weight: 500; }
 
 #map-net[data-detail="mid"] .city-chip .st { display: none; }
 
-/* Les villes secondaires n'existent qu'en vue rapprochée : inutile de leur
-   donner un habillage de loin. */
-#map-net[data-detail="far"] .place-chip { display: none !important; }
 /* Animation « voyage » vers la gare suivante : convoi (mj-dot) qui file le long
    du tronçon (mj-line qui se trace), la gare d'arrivée pulse (mj-ring). Le SVG
    capte le clic pour PASSER l'animation. */

@@ -1,29 +1,31 @@
 {
   "id": "ottignies",
   "name": "Ottignies",
-  "tagline": "Ottignies — nœud du Brabant wallon : la jonction en X vers Bruxelles, Namur, Louvain et Charleroi.",
-  "difficulty": 1,
+  "tagline": "Ottignies — la jonction en X du Brabant wallon, navette de Louvain-la-Neuve comprise.",
+  "difficulty": 2,
   "country": "🇧🇪 Belgique",
-  "desc": "Le nœud ferroviaire du Brabant wallon, jonction en X où l'axe Bruxelles–Namur (ligne 161) croise les lignes vers Louvain et Charleroi. Quatre quais, un flux régulier de navetteurs — et, tout près, la navette de Louvain-la-Neuve qui rebrousse. Un carrefour idéal pour se faire la main.",
+  "desc": "Le nœud du Brabant wallon, jonction en X où l'axe Bruxelles–Namur croise les lignes de Louvain et de Charleroi. Cinq quais, un flux de navetteurs qui ne se relâche qu'en creux de journée — et la navette de Louvain-la-Neuve qui vient rebrousser au milieu.",
   "platforms": [
-    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
   ],
   "portals": {
-    "BRUXELLES": { "side": "L", "color": "#25dede", "abbr": "B" },
-    "LOUVAIN":   { "side": "L", "color": "#f5b23c", "abbr": "LN" },
-    "NAMUR":     { "side": "R", "color": "#4ade80", "abbr": "N" },
-    "CHARLEROI": { "side": "R", "color": "#60a5fa", "abbr": "C" }
+    "BRUXELLES":        { "side": "L", "color": "#25dede", "abbr": "B" },
+    "LOUVAIN":          { "side": "L", "color": "#f5b23c", "abbr": "LN" },
+    "NAMUR":            { "side": "R", "color": "#4ade80", "abbr": "N" },
+    "CHARLEROI":        { "side": "R", "color": "#60a5fa", "abbr": "C" },
+    "LOUVAIN-LA-NEUVE": { "side": "R", "color": "#f2588f", "abbr": "LL", "label": "LOUVAIN-LA-N." }
   },
   "links": {
-    "BRUXELLES": [1, 2, 3, 4],
-    "LOUVAIN": [1, 2],
-    "NAMUR": [1, 2, 3, 4],
-    "CHARLEROI": [3, 4]
+    "BRUXELLES":        [1, 2, 3, 4, 5],
+    "LOUVAIN":          [1, 2],
+    "NAMUR":            [2, 3, 4, 5],
+    "CHARLEROI":        [1, 4, 5],
+    "LOUVAIN-LA-NEUVE": [1, 2]
   },
   "sameSidePairs": [],
   "gen": {
-    "nMin": 12, "nMax": 15, "gapMin": 1.6, "gapMax": 2.8,
-    "cars": [2, 2, 2, 2, 3, 3, 4],
-    "quietRate": 0.25
+    "nMin": 13, "nMax": 16, "gapMin": 1.8, "gapMax": 3.0,
+    "cars": [2, 2, 2, 3, 3, 4, 4, 5],
+    "quietRate": 0.2
   }
 }

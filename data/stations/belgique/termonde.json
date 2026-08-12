@@ -1,0 +1,32 @@
+{
+  "id": "termonde",
+  "name": "Termonde",
+  "tagline": "Termonde — l'étoile de la Dendre : cinq lignes, aucun tronc.",
+  "difficulty": 3,
+  "country": "🇧🇪 Belgique",
+  "desc": "Au confluent de la Dendre et de l'Escaut, quatre lignes se croisent sans qu'aucune ne domine : Gand à l'ouest, Lokeren au nord-ouest, Anvers par Puurs, Louvain par Malines, Bruxelles par Opwijk. Aucune direction ne dépasse trois quais — ici, il n'y a que des antennes.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },
+    { "id": 6 }
+  ],
+  "portals": {
+    "GAND":      { "side": "L", "color": "#f5b23c", "abbr": "G" },
+    "LOKEREN":   { "side": "L", "color": "#60a5fa", "abbr": "LK" },
+    "ANVERS":    { "side": "L", "color": "#f2588f", "abbr": "AN" },
+    "LOUVAIN":   { "side": "R", "color": "#4ade80", "abbr": "LN" },
+    "BRUXELLES": { "side": "R", "color": "#25dede", "abbr": "B" }
+  },
+  "links": {
+    "GAND":      [1, 2, 3],
+    "LOKEREN":   [3, 4],
+    "ANVERS":    [5, 6],
+    "LOUVAIN":   [1, 2, 5],
+    "BRUXELLES": [3, 4, 6]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 14, "nMax": 17, "gapMin": 1.7, "gapMax": 2.9,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6],
+    "quietRate": 0.15
+  }
+}

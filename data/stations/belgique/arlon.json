@@ -1,0 +1,27 @@
+{
+  "id": "arlon",
+  "name": "Arlon",
+  "tagline": "Arlon — la dernière gare avant le Luxembourg, et l'antenne d'Athus.",
+  "difficulty": 1,
+  "country": "🇧🇪 Belgique",
+  "desc": "Chef-lieu de la province la plus méridionale, à quinze kilomètres du Grand-Duché : tous les trains y marquent l'arrêt, de l'omnibus d'Athus à l'IC de Bruxelles. Quatre quais, un flux de frontaliers qui gonfle matin et soir.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }
+  ],
+  "portals": {
+    "BRUXELLES":  { "side": "L", "color": "#25dede", "abbr": "B" },
+    "LUXEMBOURG": { "side": "R", "color": "#a78bfa", "abbr": "LX" },
+    "ATHUS":      { "side": "R", "color": "#f5b23c", "abbr": "AS" }
+  },
+  "links": {
+    "BRUXELLES":  [1, 2, 3, 4],
+    "LUXEMBOURG": [1, 2, 3],
+    "ATHUS":      [3, 4]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 12, "nMax": 15, "gapMin": 1.6, "gapMax": 2.8,
+    "cars": [2, 2, 2, 2, 3, 3, 4],
+    "quietRate": 0.25
+  }
+}

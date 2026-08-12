@@ -2,7 +2,7 @@
   "id": "libramont",
   "name": "Libramont",
   "tagline": "Libramont — nœud ardennais : la ligne du Luxembourg et son antenne vers Bertrix.",
-  "difficulty": 1,
+  "difficulty": 2,
   "country": "🇧🇪 Belgique",
   "desc": "Le nœud de l'Ardenne, gare en service la plus haute de Belgique (485 m) : sur la ligne 162 Bruxelles/Namur–Luxembourg, avec l'antenne 165 qui bifurque vers Bertrix et le sud. Quatre quais, des rames courtes qui se croisent vers Namur, Luxembourg, Arlon et Bertrix — gabarit réduit, tempo serré.",
   "platforms": [
@@ -15,10 +15,10 @@
     "ARLON":      { "side": "R", "color": "#60a5fa", "abbr": "A" }
   },
   "links": {
-    "NAMUR": [1, 2, 3, 4],
-    "BERTRIX": [3, 4],
+    "NAMUR":      [1, 2, 3, 4],
+    "BERTRIX":    [3, 4],
     "LUXEMBOURG": [1, 2],
-    "ARLON": [2, 3, 4]
+    "ARLON":      [2, 3, 4]
   },
   "sameSidePairs": [],
   "gen": {

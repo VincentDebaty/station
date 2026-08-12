@@ -1,0 +1,32 @@
+{
+  "id": "malines",
+  "name": "Malines",
+  "tagline": "Malines — le croisement fondateur du réseau belge : 5 directions, 6 quais.",
+  "difficulty": 4,
+  "country": "🇧🇪 Belgique",
+  "desc": "C'est d'ici qu'est parti le premier train du continent, en 1835, et le réseau s'est construit autour : l'axe Bruxelles–Anvers tient les quais du milieu, la vieille ligne 53 les traverse en biais de Termonde à Louvain, et l'IC de Turnhout s'échappe par Lierre. Onze voies en vrai, six quais pour vous — aucune marge.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },
+    { "id": 6 }
+  ],
+  "portals": {
+    "ANVERS":    { "side": "L", "color": "#f2588f", "abbr": "AN" },
+    "TERMONDE":  { "side": "L", "color": "#f5b23c", "abbr": "TE" },
+    "TURNHOUT":  { "side": "L", "color": "#a78bfa", "abbr": "TU" },
+    "BRUXELLES": { "side": "R", "color": "#25dede", "abbr": "B" },
+    "LOUVAIN":   { "side": "R", "color": "#4ade80", "abbr": "LN" }
+  },
+  "links": {
+    "ANVERS":    [1, 2, 3, 4],
+    "TERMONDE":  [5, 6],
+    "TURNHOUT":  [1, 6],
+    "BRUXELLES": [1, 2, 3, 4, 5],
+    "LOUVAIN":   [4, 5, 6]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 15, "nMax": 18, "gapMin": 1.6, "gapMax": 2.7,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6],
+    "quietRate": 0.12
+  }
+}

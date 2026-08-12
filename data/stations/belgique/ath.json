@@ -1,0 +1,29 @@
+{
+  "id": "ath",
+  "name": "Ath",
+  "tagline": "Ath — la petite croix parfaite : deux lignes, quatre directions, quatre quais.",
+  "difficulty": 2,
+  "country": "🇧🇪 Belgique",
+  "desc": "Le croisement exact de la ligne 94 (Bruxelles–Tournai) et de la ligne 90 (Grammont–Jurbise) : deux directions par côté, sur quatre quais. La cité des Géants regarde passer les IC de Tournai et les omnibus qui descendent vers Mons.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }
+  ],
+  "portals": {
+    "TOURNAI":   { "side": "L", "color": "#f2588f", "abbr": "TO" },
+    "MONS":      { "side": "L", "color": "#4ade80", "abbr": "MO" },
+    "BRUXELLES": { "side": "R", "color": "#25dede", "abbr": "B" },
+    "GRAMMONT":  { "side": "R", "color": "#a78bfa", "abbr": "GR" }
+  },
+  "links": {
+    "TOURNAI":   [1, 2, 3],
+    "MONS":      [3, 4],
+    "BRUXELLES": [1, 2, 3, 4],
+    "GRAMMONT":  [3, 4]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 12, "nMax": 15, "gapMin": 1.8, "gapMax": 3.1,
+    "cars": [2, 2, 2, 3, 3, 4, 4, 5],
+    "quietRate": 0.2
+  }
+}

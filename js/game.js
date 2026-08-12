@@ -1285,13 +1285,24 @@ function endGame(failed) {
     // catalogue. Tant qu'un choix est en attente, aucune autre action : le
     // joueur ne doit pas pouvoir quitter en laissant sa récompense sur la table.
     let nextGi = -1;
-    if (win && !pending && typeof netLinks === "function") {
+    if (win && !pending) {
       const prog = getProgress();
-      const cand = netLinks(CATALOG[currentIdx].id).to
-        .map(id => CATALOG.findIndex(c => c.id === id))
-        .filter(gi => gi >= 0 && !((prog[CATALOG[gi].id] || {}).stars) && isUnlocked(gi));
-      cand.sort((a, b) => (CATALOG[a].difficulty || 1) - (CATALOG[b].difficulty || 1));
-      if (cand.length) nextGi = cand[0];
+      // La gare qu'on VIENT d'ouvrir passe avant tout : c'est la récompense de
+      // ce service, et depuis qu'un voisinage complet fait porter l'ouverture
+      // plus loin, elle n'est plus forcément une voisine directe — chercher
+      // seulement parmi celles-ci laissait le bouton sur « Rejouer » alors que
+      // la carte annonçait une gare ouverte.
+      if (openedNow) {
+        const gi = CATALOG.findIndex(c => c.id === openedNow);
+        if (gi >= 0 && !((prog[openedNow] || {}).stars)) nextGi = gi;
+      }
+      if (nextGi < 0 && typeof netLinks === "function") {
+        const cand = netLinks(CATALOG[currentIdx].id).to
+          .map(id => CATALOG.findIndex(c => c.id === id))
+          .filter(gi => gi >= 0 && !((prog[CATALOG[gi].id] || {}).stars) && isUnlocked(gi));
+        cand.sort((a, b) => (CATALOG[a].difficulty || 1) - (CATALOG[b].difficulty || 1));
+        if (cand.length) nextGi = cand[0];
+      }
     }
     const next = nextGi >= 0;
     const btnNext = document.getElementById("btn-next");

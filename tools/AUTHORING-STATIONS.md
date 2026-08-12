@@ -14,6 +14,38 @@ directions **que dans l'enveloppe du palier** (voir §5). On ne fait PAS grandir
 une petite gare à sa taille réelle si ça casse le palier (Charleroi ≈ 11 voies
 en vrai, mais reste d1 / 4 quais, gare-tutoriel).
 
+### Ce que nomme un portail : la destination AFFICHÉE sur le quai
+
+Un portail porte le nom que le voyageur lit, pas celui de la gare suivante.
+
+1. **La grande destination de l'axe**, même à deux ou trois gares de là. Liège
+   annonce `BRUXELLES` et non Landen, `LUXEMBOURG` et non Marloie : Landen et
+   Marloie sont des **gares de passage**. Elles restent parfaitement jouables —
+   la continuité du pays ne vient pas des noms de portails mais des lignes
+   (`data/lines.js`), et **le déblocage non plus** : on ouvre une VOISINE du
+   réseau, pas la ville affichée sur le quai. Un portail à +2 ou +3 gares ne
+   débloque donc rien, et c'est voulu.
+   *Comment trancher* : le classement des destinations réellement annoncées se
+   lit sur les liveboards (§1). À popularité comparable, préférer la gare
+   **jouable** — elle donne au pays sa continuité de lecture. Ne jamais nommer
+   le bout d'un long IC par-dessus la grande ville de l'axe (les trains de
+   Tournai affichent « Turnhout » ; le portail dit `BRUXELLES`).
+2. **À défaut, un cul-de-sac** : le terminus d'une antenne ou d'une frontière
+   que le jeu n'ouvre pas (`OSTENDE`, `KNOKKE`, `GENK`, `COUVIN`, `TURNHOUT`,
+   `LUXEMBOURG`, `LOUVAIN-LA-NEUVE`…). On les garde délibérément — Bruges sans
+   la côte n'est plus Bruges — et ils fournissent souvent le **second côté** sans
+   lequel le moteur ne forme aucune paire : Arlon n'a qu'un seul voisin belge,
+   sans `LUXEMBOURG` la gare ne génère aucun train (§3).
+
+**Un cul-de-sac n'est pas un objet de carte.** Pas de coordonnées, pas de point,
+pas de trait : il n'existe que sur le gril et dans le texte de la fiche. La
+carte ne montre que le réseau **jouable** — une ville qu'on ne peut pas prendre
+en main n'a rien à y faire, et l'y dessiner ne fait qu'encombrer le zoom local.
+
+Corollaire : ne pas transformer une antenne en gare jouable pour « boucler la
+carte ». Une gare entre au catalogue parce qu'elle fait un bon poste
+d'aiguillage, jamais pour donner un point d'arrivée à un trait.
+
 ## 1. Recherche des données réelles (un agent par gare, en parallèle)
 
 Pour chaque gare, récupérer :
@@ -53,7 +85,8 @@ Strasbourg), mauvaise gare (Lille-Flandres≠Lille-Europe pour Bruxelles/Eurosta
   "platforms": [                    // impasse : "deadEnd": true (heurtoir)
     { "id": 1 }, { "id": 2 }, …
   ],
-  "portals": {                      // = destinations
+  "portals": {                      // = destinations. Gare jouable voisine
+                                    // d'abord, cul-de-sac ensuite (§0).
     "BRUXELLES": { "side": "L", "color": "#25dede", "abbr": "B" },
     "AACHEN":    { "side": "R", "color": "#f2588f", "abbr": "AC", "label": "AACHEN" }
     // side L = entre par la gauche, R = par la droite. label si accent/nom long.
@@ -101,6 +134,14 @@ avec un autre forme une paire valide.
   (coordonnées de la VILLE, pour la carte monde). Créer l'entrée pays si besoin
   (`{ name, flag, iso, continent, cities: {…} }`).
 
+Un **cul-de-sac ne s'enregistre nulle part** : ni dans `index.json`, ni dans
+`geo.js`, ni comme point de carte. C'est une chaîne de caractères dans
+`portals`, rien de plus. La carte, elle, se décrit à part : `data/lines.js`
+enchaîne les gares JOUABLES d'un pays le long de leurs lignes réelles
+(`data/places.js` ne sert plus qu'aux **points de passage** qui donnent leur
+tracé à ces lignes — Lierre, Alost, Grammont, Ciney… — jamais à une
+destination).
+
 ## 5. Enveloppes par palier (valeurs de référence `gen`)
 
 `gen` = `{ nMin, nMax, gapMin, gapMax, cars[], quietRate }`.
@@ -124,7 +165,13 @@ une gare TERMINUS (tous les portails du même côté) n'en reçoit aucun.
 | **2** term. | 6 | 5 | 12–15 | 1.9 / 3.2 | `[3,3,4,4,5,5,6,7]` | Marseille (rames longues) |
 | **3** | 6 | 5–6 | 14–15 → 17–18 | 1.6 / 2.8–3.2 | `[2,3,3,4,4,5,5,6]` (+7 pour 6 dir) | Lyon, Bordeaux, Gand… |
 | **4** | 5–9 | 5–6 | 14–16 → 17–20 | 1.5 / 2.6 | jusqu'à 6–7 | dense |
-| **5** | 8 | 6 | 18–22 | 1.4 / 2.4 | `[2,3,3,4,4,5,5,6,7]` | boss (Bruxelles-Midi, Paris-Nord) |
+| **5** | 8–10 | 6–8 | 18–24 | 1.4 / 2.4 | `[2,3,3,4,4,5,5,6,7]` | boss (Bruxelles-Midi, Paris-Nord) |
+
+Au-delà de **9 quais / 6 directions**, on sort de ce qui a été éprouvé : le
+générateur travaille sur toutes les paires, le coût monte vite et le zéro n'est
+plus garanti d'office. Une gare de ce gabarit (Bruxelles-Midi à 10 quais et 8
+directions) se valide sur **30 journées** (`gen-check <id>`), pas sur 6, et se
+redescend d'une direction si elle peine.
 
 Limites moteur (ne pas dépasser) : **≤ 13 quais**, **~6 directions/côté**,
 **≤ ~30-34 trains/jour** (au-delà : coût de génération cubique + le zéro n'est
@@ -136,21 +183,32 @@ plus garanti). Fret : 6–7 wagons, non plafonné par MAX_CARS.
 node tools/gen-check.mjs                # tout le catalogue, K=6
 node tools/gen-check.mjs <id>           # une gare, K=30
 node tools/gen-check.mjs <id1> <id2> 20 # gares ciblées, K=20
+node tools/net-check.mjs                # le réseau de la carte
 ```
 
-Charge le vrai moteur + générateur (headless, sans navigateur) et vérifie pour
-chaque gare : **connectivité** (aucun portail/quai mort) + **K journées
-générées** (0 erreur, aucun train non plaçable, retard garanti sous le seuil).
-Code de sortie ≠ 0 si échec. Un « portail mort » ou un retard > seuil = à
-corriger avant de committer.
+`gen-check` charge le vrai moteur + générateur (headless, sans navigateur) et
+vérifie pour chaque gare : **connectivité** (aucun portail/quai mort) + **K
+journées générées** (0 erreur, aucun train non plaçable, retard garanti sous le
+seuil). Code de sortie ≠ 0 si échec. Un « portail mort » ou un retard > seuil =
+à corriger avant de committer.
+
+`net-check` vérifie le réseau DESSINÉ : lignes continues, points de passage
+plausibles, aucune gare jouable isolée. Un portail qui ne désigne aucune gare
+jouable n'y est **pas** une erreur — c'est un cul-de-sac (§0), et la carte
+l'ignore.
 
 ## 7. Récap du flux pour un nouveau pays
 
 1. Lister les gares visées + attribuer une difficulté (bâtir la rampe 1→5).
 2. Un agent de recherche par gare (§1), en parallèle.
-3. Composer chaque fiche (§2) en respectant hybride (§0) et connectivité (§3).
-4. Enregistrer (§4) : index.json + geo.js.
-5. `node tools/gen-check.mjs` → itérer jusqu'à « Toutes les gares passent ».
+3. **Tracer le graphe du pays d'abord** : qui est voisin de qui, sur quelle
+   ligne. C'est lui qui donne les portails (§0), donc les côtés L/R, donc la
+   forme du gril — pas l'inverse.
+4. Composer chaque fiche (§2) en respectant hybride (§0) et connectivité (§3).
+5. Enregistrer (§4) : index.json + geo.js, puis les lignes du pays dans
+   `data/lines.js` (+ `LINE_COUNTRIES`).
+6. `node tools/gen-check.mjs` et `node tools/net-check.mjs` → itérer jusqu'à
+   « Toutes les gares passent ».
 
 ## 8. Deux pièges d'écriture, mesurés
 

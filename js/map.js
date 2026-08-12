@@ -28,7 +28,7 @@ const MAP = {
   built: false, svg: null, gLand: null, gDeco: null,
   homeBtn: null, host: null, modal: null,
   raf: null, animating: false, far: null, framed: false,
-  homeVB: null, homeName: "", lastFramed: null,
+  homeSlug: null, lastFramed: null,
   byCont: {}, byIso: {}, isoToSlug: {}
 };
 
@@ -175,13 +175,12 @@ function buildMap() {
   host.appendChild(modal);
 
   // Il n'y a plus de « retour » — plus de niveau à remonter. À la place, un
-  // bouton qui REVIENT CHEZ SOI : le cadrage d'ouverture. Il ne s'affiche QUE
-  // lorsqu'on s'en est éloigné : au lancement on y est déjà, et un bouton qui
-  // ne fait rien quand on le presse passe pour cassé.
+  // bouton qui RECADRE le pays sous la vue et le nomme : c'est le seul repère
+  // dont on ait besoin quand on s'est perdu à pincer.
   const home = document.createElement("button");
   home.className = "map-home hidden";
-  home.setAttribute("aria-label", "Revenir à ma région");
-  home.addEventListener("click", () => frameHome());
+  home.setAttribute("aria-label", "Recadrer ce pays");
+  home.addEventListener("click", () => { if (MAP.homeSlug) frameCountry(MAP.homeSlug); });
   MAP.homeBtn = home;
   host.appendChild(home);
 
@@ -190,7 +189,7 @@ function buildMap() {
   document.addEventListener("keydown", e => {
     if (e.key !== "Escape" || document.getElementById("hub").classList.contains("hidden")) return;
     if (MAP.modal && !MAP.modal.classList.contains("hidden")) closeModal(); // modale d'abord
-    else frameHome();
+    else if (MAP.homeSlug) frameCountry(MAP.homeSlug);
   });
 
   MAP.built = true;
@@ -303,33 +302,82 @@ function starStrFull(n) { return "★".repeat(n); }
 // plus de pays « courant ». Un pays jouable est teinté, les autres restent en
 // fond. C'est posé une fois pour toutes à la construction (buildMap).
 // L'habillage se réduit à deux boutons, tous deux permanents.
-// A-t-on dérivé loin du cadrage d'ouverture ? Tolérance large : un demi-écran de
+// Pays SOUS LA VUE : la gare jouable la plus proche du centre décide. Sans
+// niveaux de navigation, c'est la seule définition qui reste vraie quel que
+// soit le geste — et c'est celle que le joueur lit à l'écran.
+function countryAtCenter() {
+  const vb = readVB();
+  const cx = vb[0] + vb[2] / 2, cy = vb[1] + vb[3] / 2;
+  const inView = ll => {
+    const u = geoProject(ll[0], ll[1]);
+    return u.x >= vb[0] && u.x <= vb[0] + vb[2] && u.y >= vb[1] && u.y <= vb[1] + vb[3];
+  };
+  // Deux critères, dans cet ordre :
+  //  1. l'emprise du pays contient le CENTRE de la vue — c'est ce qu'on regarde ;
+  //  2. parmi ceux-là, celui qui a le plus de gares dans le cadre.
+  // La seule surface ne suffit pas : cadrée sur la Belgique, la vue est plus
+  // large qu'elle, et l'emprise de la France — bien plus vaste — la couvrait
+  // davantage. Le seul comptage de gares ne suffit pas non plus : la Belgique en
+  // a vingt-neuf dans un mouchoir de poche et gagnerait partout.
+  let best = null, bestN = -1, bestArea = Infinity, fallback = null, fbArea = 0;
+  for (const slug in GEO.countries) {
+    const g = GEO.countries[slug];
+    const country = MAP.byIso[g.iso];
+    if (!country) continue;
+    const r = geoBoxToRect(countryGeoBbox(country));
+    const iw = Math.min(r.x + r.w, vb[0] + vb[2]) - Math.max(r.x, vb[0]);
+    const ih = Math.min(r.y + r.h, vb[1] + vb[3]) - Math.max(r.y, vb[1]);
+    const overlap = (iw > 0 && ih > 0) ? iw * ih : 0;
+    if (overlap > fbArea) { fbArea = overlap; fallback = slug; }
+    if (cx < r.x || cx > r.x + r.w || cy < r.y || cy > r.y + r.h) continue;
+    let n = 0;
+    for (const id in g.cities) if (inView(g.cities[id])) n++;
+    const area = r.w * r.h;
+    if (n > bestN || (n === bestN && area < bestArea)) { best = slug; bestN = n; bestArea = area; }
+  }
+  return best || fallback;
+}
+// Cadrage que prendrait `frameCountry(slug)` — calculé sans bouger la caméra,
+// pour savoir si le bouton a quelque chose à faire.
+function countryVB(slug) {
+  const g = GEO.countries[slug];
+  const country = g && MAP.byIso[g.iso];
+  if (!country) return null;
+  return fitVB(targetVB(g.frame || countryGeoBbox(country), 0.05));
+}
+// A-t-on dérivé loin d'un cadrage donné ? Tolérance large : un demi-écran de
 // déplacement ou 15 % de zoom ne comptent pas — sinon le bouton clignoterait au
 // moindre geste.
-function awayFromHome() {
-  if (!MAP.homeVB) return false;
-  const vb = readVB(), h = MAP.homeVB;
-  const zoom = vb[2] / h[2];
+function awayFrom(ref) {
+  if (!ref) return false;
+  const vb = readVB();
+  const zoom = vb[2] / ref[2];
   if (zoom > 1.15 || zoom < 0.87) return true;
-  const dx = (vb[0] + vb[2] / 2) - (h[0] + h[2] / 2);
-  const dy = (vb[1] + vb[3] / 2) - (h[1] + h[3] / 2);
-  return Math.hypot(dx, dy) > h[2] * 0.5;
+  const dx = (vb[0] + vb[2] / 2) - (ref[0] + ref[2] / 2);
+  const dy = (vb[1] + vb[3] / 2) - (ref[1] + ref[3] / 2);
+  return Math.hypot(dx, dy) > ref[2] * 0.5;
 }
 function updateChrome() {
   // Les routes décoratives entre continents n'ont de sens que de très loin :
   // de près, ce sont des traits gigantesques en travers de la carte.
   const far = viewScale() < 1.3;
   if (far !== MAP.far) { MAP.far = far; MAP.host.classList.toggle("far", far); }
-  // Le bouton « maison » n'existe que s'il a un effet, et il annonce où il mène.
+  // Le bouton RECADRE le pays qu'on est en train de regarder, et le nomme. Il
+  // n'apparaît que s'il a un effet : déjà bien cadré, il ne ferait rien, et un
+  // bouton sans effet passe pour cassé.
   if (MAP.homeBtn) {
-    const away = awayFromHome();
+    const slug = countryAtCenter();
+    const ref = slug ? countryVB(slug) : null;
+    const away = !!ref && awayFrom(ref);
     MAP.homeBtn.classList.toggle("hidden", !away);
-    if (away && MAP.homeBtn.dataset.nm !== MAP.homeName) {
-      MAP.homeBtn.dataset.nm = MAP.homeName;
+    MAP.homeSlug = slug;
+    const nm = away ? (GEO.countries[slug] || {}).name || "" : "";
+    if (away && MAP.homeBtn.dataset.nm !== nm) {
+      MAP.homeBtn.dataset.nm = nm;
       MAP.homeBtn.innerHTML =
         '<svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor" aria-hidden="true">' +
         '<path d="M12 5.69l5 4.5V18h-2v-6H9v6H7v-7.81l5-4.5M12 3L2 12h3v8h6v-6h2v6h6v-8h3L12 3z"/></svg>' +
-        '<span class="lbl">' + MAP.homeName + "</span>";
+        '<span class="lbl">' + nm + "</span>";
     }
   }
 }
@@ -494,19 +542,14 @@ function frameCountryBeside(slug, reserved) {
   applyView([cx - (left + freeW / 2) / scale, cy - (freeH / 2) / scale, w, h]);
 }
 
-// Cadrage d'ouverture : CHEZ L'UTILISATEUR (fuseau horaire, puis langue — voir
-// userCountrySlug dans geo.js), à défaut l'Europe. C'est aussi ce que rejoint le
-// bouton « maison » et la touche Échap.
+// Cadrage d'OUVERTURE seulement : chez l'utilisateur (fuseau horaire, puis
+// langue — voir userCountrySlug dans geo.js), à défaut l'Europe. Ensuite c'est
+// le pays sous la vue qui fait référence, pas celui-ci.
 function frameHome(instant) {
   const slug = (typeof userCountrySlug === "function") ? userCountrySlug() : null;
-  if (slug && frameCountry(slug, instant)) {
-    MAP.homeName = (GEO.countries[slug] || {}).name || "";
-    MAP.homeVB = MAP.lastFramed;
-  } else {
-    const europe = GEO.continents.find(c => c.id === "europe");
-    MAP.homeName = europe.name;
-    MAP.homeVB = goTo(targetVB(europe.bbox, 0.06), instant);
-  }
+  if (slug && frameCountry(slug, instant)) return;
+  const europe = GEO.continents.find(c => c.id === "europe");
+  goTo(targetVB(europe.bbox, 0.06), instant);
 }
 
 // ------------------------------------------------------------------

@@ -3,14 +3,14 @@
 //
 //     node tools/net-check.mjs
 //
-// Le réseau de la carte est DÉDUIT des fiches : chaque portail doit mener
-// quelque part — une autre gare jouable, ou un lieu secondaire dont on connaît
-// les coordonnées. Un portail qui ne résout pas est une ligne qui s'arrête dans
-// le vide sur la carte ; c'est ce que ce contrôle interdit.
+// Le réseau de la carte ne montre que les gares JOUABLES, reliées par les
+// lignes de data/lines.js (ou, pour les pays pas encore décrits, déduites des
+// portails). Un portail qui ne désigne aucune gare est un cul-de-sac : il vit
+// sur le gril, pas sur la carte, et ce contrôle le laisse passer.
 //
-// Il signale aussi ce qui est LOUCHE sans être faux :
-//   - un lieu secondaire très loin de la gare qui le dessert (coordonnée
-//     probablement erronée, ou desserte invraisemblable) ;
+// Il signale ce qui est LOUCHE sans être faux :
+//   - un lieu très loin de la gare qui le dessert (coordonnée probablement
+//     erronée, ou desserte invraisemblable) ;
 //   - une arête déclarée d'un seul côté (le graphe se lit en union, donc elle
 //     compte quand même — mais c'est souvent l'indice qu'une fiche nomme un
 //     terminus au lieu d'une ville) ;
@@ -59,13 +59,16 @@ const used = new Set();
 for (const card of CATALOG) {
   const src = cityOf[card.id];
   if (!src) { errors.push(`${card.id} : aucune coordonnée dans geo.js`); continue; }
-  // Un portail doit mener quelque part : gare jouable, alias, ou lieu connu.
+  // Un portail qui ne désigne aucune gare jouable n'est PAS une erreur : c'est
+  // un cul-de-sac (Ostende, Genk, Turnhout…), gardé sur le gril et absent de la
+  // carte — voir tools/AUTHORING-STATIONS.md §0. On ne vérifie donc que la
+  // vraisemblance des lieux qui, eux, ont des coordonnées.
   for (const name in card.portals || {}) {
     const key = netKey(name);
     if (PLACE_ALIASES[key]) continue;
     if (CATALOG.some(c => c.id !== card.id && (netKey(c.id) === key || netKey(c.city) === key))) continue;
     const p = PLACES[key];
-    if (!p) { errors.push(`${card.id} → « ${name} » : lieu inconnu (ni gare, ni alias, ni entrée de PLACES)`); continue; }
+    if (!p) continue;                        // cul-de-sac : rien à situer
     used.add(key);
     const d = km(src, p);
     if (d > 400) warns.push(`${card.id} → ${name} : ${Math.round(d)} km`);

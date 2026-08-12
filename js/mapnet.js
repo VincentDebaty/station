@@ -5,7 +5,11 @@
 //
 // Deux sortes de nœuds, tous à leur VRAIE position géographique :
 //   • les gares JOUABLES (catalogue) — pastille numérotée, cliquable ;
-//   • les villes SECONDAIRES (data/places.js) — petit point gris, inerte.
+//   • les POINTS DE PASSAGE (data/places.js) — jamais dessinés. Ils n'existent
+//     que comme géométrie : c'est par eux que le tracé d'une ligne épouse la
+//     voie au lieu de tendre une corde. La carte ne montre que le réseau
+//     jouable ; une ville qu'on ne peut pas prendre en main n'y a pas sa place
+//     (tools/AUTHORING-STATIONS.md §0).
 // Les arêtes viennent de js/network.js, donc des fiches elles-mêmes.
 //
 // Principe de rendu, celui des cartes en ligne :
@@ -52,8 +56,6 @@ const LOD = {
   city: 3.2,       // les autres gares jouables
   hubLabel: 2.6,   // leur nom
   cityLabel: 7,    // le nom des autres
-  place: 17,       // villes secondaires (points gris)
-  placeLabel: 24,  // leur nom
   HUBS: 14         // combien de gares comptent comme « grands nœuds »
 };
 
@@ -68,7 +70,6 @@ const MIN_SEP = 96 / 2.54;
 // seules : le CSS les reçoit en variables (--d, --k), et le modèle de collision
 // s'en sert tel quel. Deux barèmes séparés finiraient par diverger.
 const DOT_D = [0, 13, 16, 19, 23, 27];
-const PLACE_D = 5;
 const DETAIL_K = { far: 0.56, mid: 0.8, near: 1 };
 
 // Apparence des pastilles selon l'échelle. Une gare n'a pas à s'afficher de la
@@ -184,22 +185,14 @@ function mapnetBuild() {
     });
   }
 
-  // --- Villes secondaires : le réseau ne s'arrête plus au bord du catalogue.
-  // Leur libellé est déjà mis en forme par network.js (netTitleCase).
+  // --- Points de passage : aucun DOM, aucune pastille, aucun libellé. Ils
+  // entrent quand même dans le graphe des nœuds parce que la CONTRACTION en a
+  // besoin (voir plus bas) : sans nœud, un segment qui passe par eux n'aurait
+  // pas de représentant et disparaîtrait au lieu de se contracter.
   const places = netPlaces();
   for (const key in places) {
-    const p = places[key];
-    const u = geoProject(p.lonlat[0], p.lonlat[1]);
-    const el = document.createElement("div");
-    el.className = "map-chip place-chip";
-    el.style.setProperty("--d", PLACE_D + "px");
-    el.innerHTML = '<span class="pdot"></span><div class="cap"><div class="nm">' + p.label + "</div></div>";
-    MAPNET.layer.appendChild(el);
-    const node = {
-      key, kind: "place", u, el, cap: el.querySelector(".cap"),
-      minScale: LOD.place, labelScale: LOD.placeLabel, rank: 1000, diam: PLACE_D,
-      capW: 0, capH: 0, capUp: false
-    };
+    const u = geoProject(places[key].lonlat[0], places[key].lonlat[1]);
+    const node = { key, kind: "way", u, el: null, cap: null, minScale: 0, rank: Infinity, diam: 0 };
     MAPNET.nodes.push(node); uOf[key] = u; byId[key] = node;
   }
 
@@ -239,7 +232,8 @@ function mapnetBuild() {
 // n'importe quelle estimation de largeur de texte (elle nous a déjà trompés).
 function mapnetMeasure() {
   if (MAPNET.measured || !MAPNET.nodes.length) return;
-  for (const n of MAPNET.nodes) {
+  const drawn = MAPNET.nodes.filter(n => n.el);   // les points de passage n'ont pas de DOM
+  for (const n of drawn) {
     n.el.style.visibility = "hidden";
     n.el.style.display = "";
     // Le cartouche a pu être MASQUÉ à l'image précédente (collision). Le mesurer
@@ -247,11 +241,11 @@ function mapnetMeasure() {
     // alors n'importe où. On le rend d'abord à tous, puis on mesure.
     n.cap.style.display = "";
   }
-  for (const n of MAPNET.nodes) {
+  for (const n of drawn) {
     const r = n.cap.getBoundingClientRect();
     n.capW = r.width; n.capH = r.height;
   }
-  for (const n of MAPNET.nodes) n.el.style.visibility = "";
+  for (const n of drawn) n.el.style.visibility = "";
   MAPNET.measured = true;
 }
 
@@ -289,9 +283,16 @@ function mapnetPosition() {
     // garderait l'état de l'image précédente. `rep` par défaut = lui-même : une
     // arête vers un point hors cadre doit continuer de sortir de l'écran.
     n.shown = false; n.rep = n;
-    if (scale < n.minScale) { n.el.style.display = "none"; n.rep = null; continue; }
+    if (scale < n.minScale) { if (n.el) n.el.style.display = "none"; n.rep = null; continue; }
     const p = uToScreen(n.u.x, n.u.y);
-    if (p.x < -M || p.x > cw + M || p.y < -M || p.y > ch + M) { n.el.style.display = "none"; continue; }
+    if (p.x < -M || p.x > cw + M || p.y < -M || p.y > ch + M) {
+      if (n.el) n.el.style.display = "none";
+      // Un point de passage hors cadre reste son propre représentant : la ligne
+      // qui le traverse doit continuer de sortir de l'écran, pas s'interrompre.
+      if (n.kind === "way") { n.sx = p.x; n.sy = p.y; }
+      continue;
+    }
+    if (!n.el) { n.sx = p.x; n.sy = p.y; vis.push(n); continue; }
     n.el.style.display = "";
     // On écrase le transform CSS de .map-chip : il faut donc reprendre son
     // centrage (-50%, -50%) après la translation, sinon le point se pose par
@@ -308,12 +309,18 @@ function mapnetPosition() {
   // treize gares belges forment une tache là où le réseau devrait se lire.
   // Le tri par rang fait que c'est toujours la PLUS reliée qui survit : à
   // l'échelle de l'Europe, il reste Bruxelles.
+  // Les points de passage sont triés en DERNIER (rang infini) : ils n'évincent
+  // jamais une gare, ne réservent aucune place, mais se contractent comme les
+  // autres. Vue d'Europe, Ciney tombe sur Bruxelles avec Namur et Marloie, et le
+  // maillage intérieur devient un point ; zoomé, plus rien ne l'évince et la
+  // ligne du Luxembourg reprend le tracé de la vallée.
   const kept = [];
   for (const n of vis) {
     let tooClose = false;
     for (const k of kept) {
       if (Math.hypot(n.sx - k.sx, n.sy - k.sy) < MIN_SEP) { tooClose = true; n.rep = k; break; }
     }
+    if (n.kind === "way") { if (!tooClose) n.rep = n; continue; }
     if (tooClose) { n.el.style.display = "none"; n.shown = false; continue; }
     n.shown = true; n.rep = n; kept.push(n);
   }

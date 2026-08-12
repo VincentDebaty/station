@@ -1,0 +1,30 @@
+{
+  "id": "lalouviere",
+  "name": "La Louvière-Centre",
+  "city": "La Louvière",
+  "tagline": "La Louvière — le maillon central de la dorsale wallonne.",
+  "difficulty": 2,
+  "country": "🇧🇪 Belgique",
+  "desc": "C'est ici, et non à Charleroi, que la ligne de Mons rencontre celle de Bruxelles, montée par Manage et Braine-le-Comte. Quatre quais au pied des ascenseurs du canal du Centre, plus l'antenne de Binche qui vient s'y greffer.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }
+  ],
+  "portals": {
+    "MONS":      { "side": "L", "color": "#4ade80", "abbr": "MO" },
+    "CHARLEROI": { "side": "R", "color": "#60a5fa", "abbr": "C" },
+    "BRUXELLES": { "side": "R", "color": "#25dede", "abbr": "B" },
+    "BINCHE":    { "side": "R", "color": "#a78bfa", "abbr": "BI" }
+  },
+  "links": {
+    "MONS":      [1, 2, 3, 4],
+    "CHARLEROI": [1, 2, 3],
+    "BRUXELLES": [3, 4],
+    "BINCHE":    [2, 4]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 12, "nMax": 15, "gapMin": 1.8, "gapMax": 3.1,
+    "cars": [2, 2, 2, 3, 3, 4, 4, 5],
+    "quietRate": 0.2
+  }
+}

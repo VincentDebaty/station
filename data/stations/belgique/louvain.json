@@ -1,31 +1,32 @@
 {
   "id": "louvain",
   "name": "Louvain",
-  "tagline": "Louvain — sur l'artère Bruxelles–Liège : 5 quais, un flux qui ne faiblit pas.",
-  "difficulty": 2,
+  "tagline": "Louvain — 7 quais sur l'artère Bruxelles–Liège : le flux ne faiblit pas.",
+  "difficulty": 4,
   "country": "🇧🇪 Belgique",
-  "desc": "Sur la grande artère Bruxelles–Liège–Aachen : cinq quais, des directes qui filent et des omnibus qui s'insèrent vers Malines, Aarschot et Ottignies. Le flux ne faiblit jamais — trouvez le rythme.",
+  "desc": "Treize voies sous une verrière refaite à neuf, deuxième gare de Flandre : le tronc Bruxelles–Liège occupe le milieu du gril, pendant qu'Anvers s'en va par Malines, Hasselt par Aarschot et Ottignies vers le Brabant wallon. Cinq directions, aucun trou dans la cadence.",
   "platforms": [
-    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },
+    { "id": 6 }, { "id": 7 }
   ],
   "portals": {
     "BRUXELLES": { "side": "L", "color": "#25dede", "abbr": "B" },
-    "MALINES":   { "side": "L", "color": "#f5b23c", "abbr": "MA" },
-    "LIEGE":     { "side": "R", "color": "#f2588f", "abbr": "LG", "label": "LIÈGE" },
-    "AARSCHOT":  { "side": "R", "color": "#4ade80", "abbr": "AA" },
-    "OTTIGNIES": { "side": "R", "color": "#60a5fa", "abbr": "OT" }
+    "ANVERS":    { "side": "L", "color": "#f2588f", "abbr": "AN" },
+    "LIEGE":     { "side": "R", "color": "#a78bfa", "abbr": "LG", "label": "LIÈGE" },
+    "HASSELT":   { "side": "R", "color": "#60a5fa", "abbr": "H" },
+    "OTTIGNIES": { "side": "R", "color": "#f5b23c", "abbr": "OT" }
   },
   "links": {
-    "BRUXELLES": [1, 2, 3, 4, 5],
-    "MALINES": [1, 2],
-    "LIEGE": [2, 3, 4, 5],
-    "AARSCHOT": [3, 4],
-    "OTTIGNIES": [1, 2]
+    "BRUXELLES": [1, 2, 3, 4, 5, 6],
+    "ANVERS":    [1, 2, 7],
+    "LIEGE":     [2, 3, 4, 5],
+    "HASSELT":   [5, 6, 7],
+    "OTTIGNIES": [1, 6, 7]
   },
   "sameSidePairs": [],
   "gen": {
-    "nMin": 13, "nMax": 16, "gapMin": 1.8, "gapMax": 3.0,
-    "cars": [2, 2, 2, 3, 3, 4, 4, 5],
-    "quietRate": 0.2
+    "nMin": 15, "nMax": 18, "gapMin": 1.6, "gapMax": 2.7,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6],
+    "quietRate": 0.12
   }
 }
