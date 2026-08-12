@@ -1,0 +1,30 @@
+{
+  "id": "rostock",
+  "name": "Rostock Hbf",
+  "city": "Rostock",
+  "tagline": "Rostock Hbf — 11 voies au bord de la Baltique, pleines chaque été.",
+  "difficulty": 2,
+  "country": "🇩🇪 Allemagne",
+  "desc": "Onze voies au bord de la Baltique, refaites pour l'Exposition de 2003 : la gare qui se remplit chaque été de tout le nord de l'Allemagne partant en vacances.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
+  ],
+  "portals": {
+    "LUBECK":    { "side": "L", "color": "#f5b23c", "abbr": "HL", "label": "LÜBECK" },
+    "HAMBURG":   { "side": "L", "color": "#60a5fa", "abbr": "HH" },
+    "BERLIN":    { "side": "R", "color": "#25dede", "abbr": "B" },
+    "STRALSUND": { "side": "R", "color": "#a78bfa", "abbr": "SU" }
+  },
+  "links": {
+    "LUBECK":    [1, 2, 3, 4],
+    "HAMBURG":   [2, 3, 4, 5],
+    "BERLIN":    [1, 2, 3, 4, 5],
+    "STRALSUND": [4, 5]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 13, "nMax": 16, "gapMin": 1.8, "gapMax": 3.0,
+    "cars": [2, 2, 2, 3, 3, 4, 4, 5],
+    "quietRate": 0.2
+  }
+}

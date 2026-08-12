@@ -1,0 +1,30 @@
+{
+  "id": "regensburg",
+  "name": "Regensburg Hbf",
+  "city": "Ratisbonne",
+  "tagline": "Regensburg Hbf — sur le Danube, dans la seule grande ville jamais bombardée.",
+  "difficulty": 1,
+  "country": "🇩🇪 Allemagne",
+  "desc": "Sur le Danube, dans la seule grande ville allemande jamais bombardée : huit voies, quatre directions, et le pont de pierre du XIIᵉ à deux pas.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
+  ],
+  "portals": {
+    "NURNBERG": { "side": "L", "color": "#60a5fa", "abbr": "N", "label": "NÜRNBERG" },
+    "MUNCHEN":  { "side": "L", "color": "#f2588f", "abbr": "M", "label": "MÜNCHEN" },
+    "PASSAU":   { "side": "R", "color": "#a78bfa", "abbr": "PA" },
+    "HOF":      { "side": "R", "color": "#25dede", "abbr": "HO" }
+  },
+  "links": {
+    "NURNBERG": [1, 2, 3, 4],
+    "MUNCHEN":  [2, 3, 4, 5],
+    "PASSAU":   [1, 2, 3, 4],
+    "HOF":      [2, 3, 4, 5]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 12, "nMax": 15, "gapMin": 1.6, "gapMax": 2.8,
+    "cars": [2, 2, 2, 2, 3, 3, 4],
+    "quietRate": 0.25
+  }
+}

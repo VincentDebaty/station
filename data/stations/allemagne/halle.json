@@ -1,0 +1,33 @@
+{
+  "id": "halle",
+  "name": "Halle (Saale) Hbf",
+  "city": "Halle",
+  "tagline": "Halle Hbf — 13 voies à vingt minutes de Leipzig, sa rivale depuis 1840.",
+  "difficulty": 3,
+  "country": "🇩🇪 Allemagne",
+  "desc": "Treize voies à vingt minutes de Leipzig, et deux villes qui se disputent le même nœud depuis 1840. Celle-ci a gardé le trafic de l'ouest et du nord.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },
+    { "id": 6 }
+  ],
+  "portals": {
+    "MAGDEBURG": { "side": "L", "color": "#4ade80", "abbr": "MD" },
+    "BERLIN":    { "side": "L", "color": "#25dede", "abbr": "B" },
+    "LEIPZIG":   { "side": "R", "color": "#a78bfa", "abbr": "L" },
+    "ERFURT":    { "side": "R", "color": "#f5b23c", "abbr": "EF" },
+    "NAUMBURG":  { "side": "R", "color": "#f2588f", "abbr": "NB" }
+  },
+  "links": {
+    "MAGDEBURG": [1, 2, 3, 4],
+    "BERLIN":    [3, 4, 5, 6],
+    "LEIPZIG":   [1, 2, 3, 4],
+    "ERFURT":    [3, 4, 5, 6],
+    "NAUMBURG":  [5, 6]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 14, "nMax": 17, "gapMin": 1.7, "gapMax": 2.9,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6],
+    "quietRate": 0.15
+  }
+}

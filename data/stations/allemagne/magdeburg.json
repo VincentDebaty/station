@@ -1,0 +1,30 @@
+{
+  "id": "magdeburg",
+  "name": "Magdeburg Hbf",
+  "city": "Magdebourg",
+  "tagline": "Magdeburg Hbf — sur l'Elbe, à mi-chemin de Hanovre et de Berlin.",
+  "difficulty": 2,
+  "country": "🇩🇪 Allemagne",
+  "desc": "Sur l'Elbe, à mi-chemin de Hanovre et de Berlin : la gare la plus détruite d'Allemagne en 1945, rebâtie à l'identique. Quatre directions, neuf voies.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
+  ],
+  "portals": {
+    "HANNOVER":     { "side": "L", "color": "#f2588f", "abbr": "H" },
+    "BRAUNSCHWEIG": { "side": "L", "color": "#a78bfa", "abbr": "BS" },
+    "BERLIN":       { "side": "R", "color": "#25dede", "abbr": "B" },
+    "HALLE":        { "side": "R", "color": "#f5b23c", "abbr": "HA" }
+  },
+  "links": {
+    "HANNOVER":     [1, 2, 3, 4, 5],
+    "BRAUNSCHWEIG": [4, 5],
+    "BERLIN":       [1, 2, 3, 4],
+    "HALLE":        [2, 3, 4, 5]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 13, "nMax": 16, "gapMin": 1.8, "gapMax": 3.0,
+    "cars": [2, 2, 2, 3, 3, 4, 4, 5],
+    "quietRate": 0.2
+  }
+}

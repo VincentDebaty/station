@@ -109,6 +109,19 @@ Note : le champ `cap` (longueur de quai variable) est de la **donnée morte** �
 non lue par le moteur, ne pas l'ajouter. Tous les quais font la même longueur
 (≤ 7 wagons, `MAX_CARS`).
 
+**Écrire trente-six grils à la main ne marche pas.** Mesuré sur l'Allemagne :
+61 invariants cassés en une passe (portails sans partenaire, quais que rien ne
+dessert). Le remède est une **règle**, pas de la patience :
+- les grandes destinations d'un côté se partagent le gril en **fenêtres qui se
+  recouvrent et pavent 1..q** — d'où « aucun quai orphelin » et « aucun portail
+  mort » par construction ;
+- un **cul-de-sac** ne prend que deux quais au bord : une antenne n'occupe pas
+  le tronc (§8) ;
+- un **terminus** reçoit un pavage CIRCULAIRE, parce que chacun de ses quais
+  doit être desservi par deux portails (voir §3).
+Un côté fait uniquement de culs-de-sac (Dresde vers l'est) n'a pas d'antenne :
+ce sont eux, le tronc.
+
 ## 3. INVARIANT DE CONNECTIVITÉ (le piège n°1)
 
 Un train ne circule qu'entre deux directions de **côtés opposés qui partagent au

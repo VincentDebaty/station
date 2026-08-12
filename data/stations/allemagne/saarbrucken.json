@@ -1,0 +1,30 @@
+{
+  "id": "saarbrucken",
+  "name": "Saarbrücken Hbf",
+  "city": "Sarrebruck",
+  "tagline": "Saarbrücken Hbf — la seconde porte française : l'ICE de Paris entre ici.",
+  "difficulty": 1,
+  "country": "🇩🇪 Allemagne",
+  "desc": "La seconde porte française : à dix kilomètres de la frontière, c'est ici que l'ICE de Paris entre en Allemagne. Dix voies, quatre directions, et deux langues sur les afficheurs.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
+  ],
+  "portals": {
+    "MANNHEIM": { "side": "L", "color": "#f2588f", "abbr": "MA" },
+    "TRIER":    { "side": "L", "color": "#a78bfa", "abbr": "TR" },
+    "METZ":     { "side": "R", "color": "#25dede", "abbr": "MT" },
+    "PARIS":    { "side": "R", "color": "#f5b23c", "abbr": "P" }
+  },
+  "links": {
+    "MANNHEIM": [1, 2, 3, 4, 5],
+    "TRIER":    [4, 5],
+    "METZ":     [1, 2, 3, 4],
+    "PARIS":    [2, 3, 4, 5]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 12, "nMax": 15, "gapMin": 1.6, "gapMax": 2.8,
+    "cars": [2, 2, 2, 2, 3, 3, 4],
+    "quietRate": 0.25
+  }
+}

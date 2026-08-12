@@ -73,11 +73,23 @@ const GEO = {
       } },
     allemagne: { name: "Allemagne", flag: "🇩🇪", iso: "DEU", continent: "europe",
       cities: {
-        berlin: [13.369, 52.525], munchen: [11.558, 48.140], frankfurt: [8.664, 50.107],
+        berlin: [13.369, 52.525], munchen: [11.555, 48.141], frankfurt: [8.663, 50.107],
         hamburg: [10.006, 53.553],
-        koln: [6.959, 50.943], hannover: [9.741, 52.377], leipzig: [12.383, 51.345],
+        koln: [6.958, 50.943], hannover: [9.742, 52.377], leipzig: [12.382, 51.345],
         stuttgart: [9.182, 48.784], nurnberg: [11.082, 49.446], munster: [7.635, 51.956],
-        dresden: [13.732, 51.041], freiburg: [7.841, 47.997]
+        dresden: [13.732, 51.040], freiburg: [7.842, 47.998],
+        // Les vingt-quatre ajoutées en août 2026 (coordonnées Wikidata). La Ruhr
+        // en aligne quatre en quarante kilomètres : contrairement aux quatre
+        // Londres, ce sont de vraies villes distinctes — on ne les écarte pas,
+        // c'est le zoom qui les sépare.
+        dusseldorf: [6.793, 51.220], dortmund: [7.459, 51.517], essen: [7.014, 51.451],
+        duisburg: [6.776, 51.430], bielefeld: [8.532, 52.028], osnabruck: [8.061, 52.273],
+        bremen: [8.814, 53.083], kiel: [10.132, 54.315], lubeck: [10.669, 53.867],
+        rostock: [12.131, 54.078], magdeburg: [11.628, 52.131], halle: [11.988, 51.478],
+        erfurt: [11.038, 50.972], kassel: [9.448, 51.311], wurzburg: [9.936, 49.803],
+        mannheim: [8.470, 49.480], karlsruhe: [8.401, 48.994], saarbrucken: [6.991, 49.241],
+        mainz: [8.259, 50.001], koblenz: [7.589, 50.351], bonn: [7.097, 50.732],
+        ulm: [9.983, 48.400], augsburg: [10.886, 48.366], regensburg: [12.100, 49.012]
       } },
     "royaume-uni": { name: "Royaume-Uni", flag: "🇬🇧", iso: "GBR", continent: "europe",
       frame: [-6.3, 49.9, 1.9, 57.6], neighbors: { belgique: [3.25, 51.22] },

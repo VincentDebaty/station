@@ -1,0 +1,33 @@
+{
+  "id": "erfurt",
+  "name": "Erfurt Hbf",
+  "city": "Erfurt",
+  "tagline": "Erfurt Hbf — refaite en 2017 pour la LGV Berlin–Munich : le pari le plus cher du réseau.",
+  "difficulty": 3,
+  "country": "🇩🇪 Allemagne",
+  "desc": "Refaite en 2017 pour la ligne à grande vitesse de Berlin à Munich : dix voies sur deux niveaux, dans une ville de deux cent mille habitants. Le pari le plus cher du réseau allemand.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },
+    { "id": 6 }
+  ],
+  "portals": {
+    "LEIPZIG":   { "side": "L", "color": "#a78bfa", "abbr": "L" },
+    "HALLE":     { "side": "L", "color": "#f5b23c", "abbr": "HA" },
+    "WEIMAR":    { "side": "L", "color": "#25dede", "abbr": "WE" },
+    "NURNBERG":  { "side": "R", "color": "#60a5fa", "abbr": "N", "label": "NÜRNBERG" },
+    "FRANKFURT": { "side": "R", "color": "#4ade80", "abbr": "F" }
+  },
+  "links": {
+    "LEIPZIG":   [1, 2, 3, 4],
+    "HALLE":     [3, 4, 5, 6],
+    "WEIMAR":    [5, 6],
+    "NURNBERG":  [1, 2, 3, 4],
+    "FRANKFURT": [3, 4, 5, 6]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 14, "nMax": 17, "gapMin": 1.7, "gapMax": 2.9,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6],
+    "quietRate": 0.15
+  }
+}

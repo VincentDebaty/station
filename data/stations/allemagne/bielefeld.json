@@ -1,0 +1,30 @@
+{
+  "id": "bielefeld",
+  "name": "Bielefeld Hbf",
+  "city": "Bielefeld",
+  "tagline": "Bielefeld Hbf — sur la ligne Cologne–Minden : tout passe, presque rien ne s'arrête.",
+  "difficulty": 1,
+  "country": "🇩🇪 Allemagne",
+  "desc": "Sept voies sur la ligne Cologne–Minden, l'une des plus anciennes du pays : tout ce qui va de la Ruhr à Berlin passe ici, et presque rien ne s'y arrête.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
+  ],
+  "portals": {
+    "DORTMUND":  { "side": "L", "color": "#4ade80", "abbr": "DO" },
+    "HAMM":      { "side": "L", "color": "#a78bfa", "abbr": "HM" },
+    "HANNOVER":  { "side": "R", "color": "#f2588f", "abbr": "H" },
+    "PADERBORN": { "side": "R", "color": "#25dede", "abbr": "PB" }
+  },
+  "links": {
+    "DORTMUND":  [1, 2, 3, 4, 5],
+    "HAMM":      [4, 5],
+    "HANNOVER":  [1, 2, 3, 4, 5],
+    "PADERBORN": [4, 5]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 12, "nMax": 15, "gapMin": 1.6, "gapMax": 2.8,
+    "cars": [2, 2, 2, 2, 3, 3, 4],
+    "quietRate": 0.25
+  }
+}

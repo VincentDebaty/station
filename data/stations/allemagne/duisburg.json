@@ -1,0 +1,30 @@
+{
+  "id": "duisburg",
+  "name": "Duisburg Hbf",
+  "city": "Duisbourg",
+  "tagline": "Duisbourg Hbf — le plus grand port fluvial du monde, et 12 voies pour le servir.",
+  "difficulty": 1,
+  "country": "🇩🇪 Allemagne",
+  "desc": "Le plus grand port fluvial du monde, et douze voies pour le desservir : c'est ici que le fret du Rhin rencontre le rail. Quatre directions, cinq quais — la porte d'entrée du bassin.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
+  ],
+  "portals": {
+    "DUSSELDORF": { "side": "L", "color": "#25dede", "abbr": "D", "label": "DÜSSELDORF" },
+    "ESSEN":      { "side": "L", "color": "#f2588f", "abbr": "E" },
+    "MUNSTER":    { "side": "R", "color": "#4ade80", "abbr": "MS", "label": "MÜNSTER" },
+    "AMSTERDAM":  { "side": "R", "color": "#a78bfa", "abbr": "AM" }
+  },
+  "links": {
+    "DUSSELDORF": [1, 2, 3, 4],
+    "ESSEN":      [2, 3, 4, 5],
+    "MUNSTER":    [1, 2, 3, 4, 5],
+    "AMSTERDAM":  [4, 5]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 12, "nMax": 15, "gapMin": 1.6, "gapMax": 2.8,
+    "cars": [2, 2, 2, 2, 3, 3, 4],
+    "quietRate": 0.25
+  }
+}

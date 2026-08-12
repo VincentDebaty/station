@@ -37,7 +37,7 @@
 // Pays dont la topologie vient des LIGNES. Ajouter un pays ici en même temps
 // que ses lignes, jamais avant : sans elles, ses gares n'auraient plus aucune
 // arête.
-const LINE_COUNTRIES = ["🇧🇪 Belgique", "🇫🇷 France", "🇬🇧 Royaume-Uni"];
+const LINE_COUNTRIES = ["🇧🇪 Belgique", "🇫🇷 France", "🇬🇧 Royaume-Uni", "🇩🇪 Allemagne"];
 
 const LINES = [
   // ---- Flandre occidentale et orientale --------------------------------
@@ -305,5 +305,81 @@ const LINES = [
   { id: "FIFE", name: "Edinburgh – Stirling",    nodes: ["edinburgh", "stirling"] },
   { id: "HIGH", name: "Stirling – Perth",        nodes: ["stirling", "perth"] },
   { id: "DUND", name: "Perth – Dundee – Aberdeen", nodes: ["perth", "dundee", "aberdeen"] },
-  { id: "FIFE-B", name: "Edinburgh – Dundee – Aberdeen", nodes: ["edinburgh", "dundee", "aberdeen"] }
+  { id: "FIFE-B", name: "Edinburgh – Dundee – Aberdeen", nodes: ["edinburgh", "dundee", "aberdeen"] },
+  // ==================== ALLEMAGNE ====================
+  // Un maillage, pas une étoile : aucune gare n'est le centre, et l'on traverse
+  // le pays d'un bout à l'autre sans repasser deux fois par le même nœud.
+  // Les trois dernières lignes referment la carte d'Europe — sans elles,
+  // l'Allemagne reste un continent à part (mesuré : 12 gares inatteignables).
+
+  // ---- Rhin et Ruhr -------------------------------------------------------
+  { id: "LinkeRhein", name: "Cologne – Bonn – Coblence – Mayence – Mannheim",
+    nodes: ["koln", "bonn", "koblenz", "mainz", "mannheim"] },
+  { id: "MZ-F", name: "Mayence – Francfort",     nodes: ["mainz", "frankfurt"] },
+  { id: "RUHR", name: "Cologne – Düsseldorf – Duisbourg – Essen – Dortmund",
+    nodes: ["koln", "dusseldorf", "duisburg", "essen", "dortmund"] },
+  { id: "DU-MS", name: "Duisbourg – Oberhausen – Münster", nodes: ["duisburg", "oberhausen", "munster"] },
+  { id: "K-DO", name: "Cologne – Wuppertal – Dortmund", nodes: ["koln", "wuppertal", "dortmund"] },
+  { id: "K-Minden", name: "Dortmund – Hamm – Bielefeld – Minden – Hanovre",
+    nodes: ["dortmund", "hamm", "bielefeld", "minden", "hannover"] },
+  { id: "DO-MS", name: "Dortmund – Münster",     nodes: ["dortmund", "munster"] },
+  { id: "Rollbahn", name: "Münster – Osnabrück – Brême", nodes: ["munster", "osnabruck", "bremen"] },
+  { id: "HB-HH", name: "Brême – Hambourg",       nodes: ["bremen", "hamburg"] },
+  { id: "SFS-KRM", name: "Cologne – Limburg – Francfort (LGV)", nodes: ["koln", "limburg", "frankfurt"] },
+  { id: "Emscher", name: "Essen – Gelsenkirchen – Dortmund", nodes: ["essen", "gelsenkirchen", "dortmund"] },
+  { id: "DO-KS", name: "Dortmund – Warburg – Cassel", nodes: ["dortmund", "warburg", "kassel"] },
+
+  // ---- Le Sud-Ouest -------------------------------------------------------
+  { id: "Riedbahn", name: "Francfort – Mannheim", nodes: ["frankfurt", "mannheim"] },
+  { id: "Rheintal", name: "Mannheim – Karlsruhe – Offenburg – Fribourg – Bâle",
+    nodes: ["mannheim", "karlsruhe", "offenburg", "freiburg", "bale"] },
+  { id: "SFS-MS", name: "Mannheim – Stuttgart",  nodes: ["mannheim", "stuttgart"] },
+  { id: "Pfalz", name: "Mannheim – Kaiserslautern – Sarrebruck",
+    nodes: ["mannheim", "kaiserslautern", "saarbrucken"] },
+  { id: "MA-HD", name: "Mannheim – Heidelberg",  nodes: ["mannheim", "heidelberg"] },
+  { id: "Filstal", name: "Stuttgart – Ulm – Augsbourg – Munich",
+    nodes: ["stuttgart", "ulm", "augsburg", "munchen"] },
+  { id: "S-N", name: "Stuttgart – Crailsheim – Nuremberg", nodes: ["stuttgart", "crailsheim", "nurnberg"] },
+
+  // ---- Bavière ------------------------------------------------------------
+  { id: "SFS-WU", name: "Francfort – Wurtzbourg – Nuremberg", nodes: ["frankfurt", "wurzburg", "nurnberg"] },
+  { id: "SFS-IN", name: "Nuremberg – Ingolstadt – Munich", nodes: ["nurnberg", "ingolstadt", "munchen"] },
+  { id: "N-R", name: "Nuremberg – Ratisbonne",   nodes: ["nurnberg", "regensburg"] },
+  { id: "R-M", name: "Ratisbonne – Landshut – Munich", nodes: ["regensburg", "landshut", "munchen"] },
+  { id: "A-N", name: "Augsbourg – Donauwörth – Treuchtlingen – Nuremberg",
+    nodes: ["augsburg", "donauworth", "treuchtlingen", "nurnberg"] },
+
+  // ---- Le centre et le nord ----------------------------------------------
+  { id: "SFS-GO", name: "Francfort – Fulda – Cassel – Göttingen – Hanovre",
+    nodes: ["frankfurt", "fulda", "kassel", "gottingen", "hannover"] },
+  { id: "H-HH", name: "Hanovre – Hambourg",      nodes: ["hannover", "hamburg"] },
+  { id: "H-HB", name: "Hanovre – Brême",         nodes: ["hannover", "bremen"] },
+  { id: "SFS-B", name: "Hanovre – Wolfsburg – Berlin", nodes: ["hannover", "wolfsburg", "berlin"] },
+  { id: "H-MD", name: "Hanovre – Brunswick – Magdebourg", nodes: ["hannover", "braunschweig", "magdeburg"] },
+  { id: "HH-KI", name: "Hambourg – Kiel",        nodes: ["hamburg", "kiel"] },
+  { id: "HH-HL", name: "Hambourg – Lübeck",      nodes: ["hamburg", "lubeck"] },
+  { id: "KI-HL", name: "Kiel – Lübeck",          nodes: ["lubeck", "kiel"] },
+  { id: "Ostsee", name: "Lübeck – Wismar – Rostock", nodes: ["lubeck", "wismar", "rostock"] },
+  { id: "HH-HR", name: "Hambourg – Schwerin – Rostock", nodes: ["hamburg", "schwerin", "rostock"] },
+  { id: "HR-B", name: "Rostock – Neustrelitz – Berlin", nodes: ["rostock", "neustrelitz", "berlin"] },
+
+  // ---- L'Est ---------------------------------------------------------------
+  { id: "B-MD", name: "Berlin – Magdebourg",     nodes: ["berlin", "magdeburg"] },
+  { id: "MD-HA", name: "Magdebourg – Halle",     nodes: ["magdeburg", "halle"] },
+  { id: "B-HA", name: "Berlin – Bitterfeld – Halle", nodes: ["berlin", "bitterfeld", "halle"] },
+  { id: "HA-L", name: "Halle – Leipzig",         nodes: ["halle", "leipzig"] },
+  { id: "L-DD", name: "Leipzig – Riesa – Dresde", nodes: ["leipzig", "riesa", "dresden"] },
+  { id: "B-DD", name: "Berlin – Elsterwerda – Dresde", nodes: ["berlin", "elsterwerda", "dresden"] },
+  { id: "SFS-EF", name: "Leipzig – Weimar – Erfurt", nodes: ["leipzig", "weimar", "erfurt"] },
+  { id: "Saalebahn", name: "Halle – Naumburg – Erfurt", nodes: ["halle", "naumburg", "erfurt"] },
+  { id: "SFS-EB", name: "Erfurt – Cobourg – Nuremberg (LGV)", nodes: ["erfurt", "coburg", "nurnberg"] },
+  { id: "Mitte", name: "Erfurt – Eisenach – Fulda", nodes: ["erfurt", "eisenach", "fulda"] },
+
+  // ---- Les liaisons qui referment l'Europe --------------------------------
+  // Sans elles, l'Allemagne n'a AUCUNE arête vers le reste du réseau : douze
+  // gares que personne ne peut atteindre. Elles sont écrites dans le même
+  // commit que les fiches, jamais après (la leçon de l'Eurostar).
+  { id: "L37", name: "Liège – Aachen – Cologne (le Thalys)", nodes: ["liege", "aachen", "koln"] },
+  { id: "LGV-E3", name: "Sarrebruck – Forbach – Metz (l'ICE de Paris)",
+    nodes: ["saarbrucken", "forbach", "metz"] }
 ];

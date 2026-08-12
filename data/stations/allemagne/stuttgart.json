@@ -2,32 +2,32 @@
   "id": "stuttgart",
   "name": "Stuttgart Hbf",
   "city": "Stuttgart",
-  "tagline": "Stuttgart Hbf — terminus historique de Paul Bonatz : 6 quais à heurtoir, tout rebrousse au pied du Kessel.",
-  "difficulty": 2,
+  "tagline": "Stuttgart Hbf — 18 voies en cul-de-sac, le chantier du siècle au-dessus.",
+  "difficulty": 4,
   "country": "🇩🇪 Allemagne",
-  "desc": "Terminus emblématique signé Paul Bonatz (1928), coiffé de sa tour à l'étoile Mercedes : seize voies en cul-de-sac dans la réalité, où tout rebrousse au fond de la cuvette — Mannheim et la vallée du Neckar au nord, Munich par Ulm à l'est, Zurich par la Gäubahn au sud, Nuremberg par la Remsbahn au nord-est, Karlsruhe à l'ouest. Votre première gare allemande où chaque train fait demi-tour.",
+  "desc": "Dix-huit voies en cul-de-sac au fond d'une cuvette, le chantier du siècle au-dessus : la gare que l'on démolit pour l'enterrer. Ici, elle rebrousse encore.",
   "platforms": [
-    { "id": 1, "deadEnd": true }, { "id": 2, "deadEnd": true }, { "id": 3, "deadEnd": true },
-    { "id": 4, "deadEnd": true }, { "id": 5, "deadEnd": true }, { "id": 6, "deadEnd": true }
+    { "id": 1, "deadEnd": true }, { "id": 2, "deadEnd": true }, { "id": 3, "deadEnd": true }, { "id": 4, "deadEnd": true }, { "id": 5, "deadEnd": true },
+    { "id": 6, "deadEnd": true }, { "id": 7, "deadEnd": true }, { "id": 8, "deadEnd": true }
   ],
   "portals": {
     "MANNHEIM":  { "side": "L", "color": "#f2588f", "abbr": "MA" },
-    "MUNCHEN":   { "side": "L", "color": "#60a5fa", "abbr": "M", "label": "MÜNCHEN" },
-    "ZURICH":    { "side": "L", "color": "#4ade80", "abbr": "Z", "label": "ZÜRICH" },
-    "NURNBERG":  { "side": "L", "color": "#f5b23c", "abbr": "N", "label": "NÜRNBERG" },
-    "KARLSRUHE": { "side": "L", "color": "#25dede", "abbr": "KA" }
+    "KARLSRUHE": { "side": "L", "color": "#60a5fa", "abbr": "KA" },
+    "ULM":       { "side": "L", "color": "#f5b23c", "abbr": "UL" },
+    "NURNBERG":  { "side": "L", "color": "#25dede", "abbr": "N", "label": "NÜRNBERG" },
+    "ZURICH":    { "side": "L", "color": "#a78bfa", "abbr": "ZH", "label": "ZÜRICH" }
   },
   "links": {
-    "MANNHEIM": [1, 2, 3],
-    "MUNCHEN": [4, 5, 6],
-    "ZURICH": [2, 3, 4],
-    "NURNBERG": [1, 5, 6],
-    "KARLSRUHE": [1, 2, 4, 5]
+    "MANNHEIM":  [1, 2, 3, 4],
+    "KARLSRUHE": [3, 4, 5, 6],
+    "ULM":       [4, 5, 6, 7],
+    "NURNBERG":  [1, 6, 7, 8],
+    "ZURICH":    [1, 2, 7, 8]
   },
   "sameSidePairs": "all",
   "gen": {
-    "nMin": 12, "nMax": 15, "gapMin": 1.9, "gapMax": 3.2,
-    "cars": [2, 2, 3, 3, 4, 4, 5],
-    "quietRate": 0.2
+    "nMin": 15, "nMax": 18, "gapMin": 1.8, "gapMax": 3.0,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6],
+    "quietRate": 0.15
   }
 }

@@ -1,0 +1,33 @@
+{
+  "id": "dortmund",
+  "name": "Dortmund Hbf",
+  "city": "Dortmund",
+  "tagline": "Dortmund Hbf — 16 voies au bout de la Ruhr, pivot de l'est du bassin.",
+  "difficulty": 3,
+  "country": "🇩🇪 Allemagne",
+  "desc": "Seize voies au bout de la Ruhr : la gare qui devait devenir la plus moderne d'Europe en 2000, et qui attend encore. Elle n'en reste pas moins le pivot de l'est du bassin.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },
+    { "id": 6 }, { "id": 7 }
+  ],
+  "portals": {
+    "ESSEN":     { "side": "L", "color": "#f2588f", "abbr": "E" },
+    "WUPPERTAL": { "side": "L", "color": "#60a5fa", "abbr": "W" },
+    "MUNSTER":   { "side": "R", "color": "#4ade80", "abbr": "MS", "label": "MÜNSTER" },
+    "HANNOVER":  { "side": "R", "color": "#25dede", "abbr": "H" },
+    "SIEGEN":    { "side": "R", "color": "#a78bfa", "abbr": "SI" }
+  },
+  "links": {
+    "ESSEN":     [1, 2, 3, 4, 5, 6, 7],
+    "WUPPERTAL": [6, 7],
+    "MUNSTER":   [1, 2, 3, 4, 5],
+    "HANNOVER":  [3, 4, 5, 6, 7],
+    "SIEGEN":    [6, 7]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 14, "nMax": 17, "gapMin": 1.7, "gapMax": 2.9,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6],
+    "quietRate": 0.15
+  }
+}

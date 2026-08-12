@@ -1,0 +1,33 @@
+{
+  "id": "dusseldorf",
+  "name": "Düsseldorf Hbf",
+  "city": "Düsseldorf",
+  "tagline": "Düsseldorf Hbf — 16 voies au cœur du Rhin-Ruhr, la plus ponctuelle du pays.",
+  "difficulty": 3,
+  "country": "🇩🇪 Allemagne",
+  "desc": "Seize voies au cœur du Rhin-Ruhr, la région la plus dense d'Europe : trois cents trains par jour, et la gare la plus ponctuelle du pays — parce qu'ici rien n'a le droit de traîner.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },
+    { "id": 6 }, { "id": 7 }
+  ],
+  "portals": {
+    "KOLN":            { "side": "L", "color": "#f5b23c", "abbr": "K", "label": "KÖLN" },
+    "WUPPERTAL":       { "side": "L", "color": "#60a5fa", "abbr": "W" },
+    "DUISBURG":        { "side": "R", "color": "#25dede", "abbr": "DU" },
+    "ESSEN":           { "side": "R", "color": "#f2588f", "abbr": "E" },
+    "MONCHENGLADBACH": { "side": "R", "color": "#a78bfa", "abbr": "MG", "label": "M.GLADBACH" }
+  },
+  "links": {
+    "KOLN":            [1, 2, 3, 4, 5, 6, 7],
+    "WUPPERTAL":       [6, 7],
+    "DUISBURG":        [1, 2, 3, 4, 5],
+    "ESSEN":           [3, 4, 5, 6, 7],
+    "MONCHENGLADBACH": [6, 7]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 14, "nMax": 17, "gapMin": 1.7, "gapMax": 2.9,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6],
+    "quietRate": 0.15
+  }
+}

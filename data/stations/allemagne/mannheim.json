@@ -1,0 +1,35 @@
+{
+  "id": "mannheim",
+  "name": "Mannheim Hbf",
+  "city": "Mannheim",
+  "tagline": "Mannheim Hbf — le carrefour du Sud-Ouest : plus d'ICE à l'heure qu'ailleurs.",
+  "difficulty": 3,
+  "country": "🇩🇪 Allemagne",
+  "desc": "Le carrefour du Sud-Ouest : six directions, onze voies, et plus d'ICE à l'heure qu'aucune autre gare allemande. Tout ce qui va de la Ruhr à Munich ou à Bâle passe ici.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },
+    { "id": 6 }, { "id": 7 }
+  ],
+  "portals": {
+    "FRANKFURT":   { "side": "L", "color": "#f5b23c", "abbr": "F" },
+    "MAINZ":       { "side": "L", "color": "#60a5fa", "abbr": "MZ" },
+    "SAARBRUCKEN": { "side": "L", "color": "#a78bfa", "abbr": "SB", "label": "SAARBRÜCKEN" },
+    "KARLSRUHE":   { "side": "R", "color": "#25dede", "abbr": "KA" },
+    "STUTTGART":   { "side": "R", "color": "#4ade80", "abbr": "S" },
+    "HEIDELBERG":  { "side": "R", "color": "#f2588f", "abbr": "HD" }
+  },
+  "links": {
+    "FRANKFURT":   [1, 2, 3, 4],
+    "MAINZ":       [3, 4, 5, 6],
+    "SAARBRUCKEN": [4, 5, 6, 7],
+    "KARLSRUHE":   [1, 2, 3, 4, 5],
+    "STUTTGART":   [3, 4, 5, 6, 7],
+    "HEIDELBERG":  [6, 7]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 14, "nMax": 17, "gapMin": 1.7, "gapMax": 2.9,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6],
+    "quietRate": 0.15
+  }
+}

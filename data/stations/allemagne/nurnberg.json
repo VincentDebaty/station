@@ -1,34 +1,35 @@
 {
   "id": "nurnberg",
   "name": "Nürnberg Hbf",
-  "city": "Nürnberg",
-  "tagline": "Nürnberg Hbf — grand carrefour ICE de Franconie : 6 quais où quatre dorsales se croisent.",
-  "difficulty": 3,
+  "city": "Nuremberg",
+  "tagline": "Nürnberg Hbf — la plus grande gare de passage d'Allemagne : 22 voies.",
+  "difficulty": 4,
   "country": "🇩🇪 Allemagne",
-  "desc": "L'une des plus vastes gares de Bavière, grand nœud ICE de Franconie : six quais traversants où se croisent les dorsales — Wurtzbourg et Francfort au nord-ouest, Bamberg et Berlin au nord, Ansbach vers Stuttgart à l'ouest, Munich par la LGV d'Ingolstadt au sud, Ratisbonne et l'Autriche au sud-est, Hof vers la Saxe au nord-est. Un flux dense et continu.",
+  "desc": "Vingt-deux voies dans la plus grande gare de passage d'Allemagne : quatre lignes à grande vitesse s'y croisent, dont celle de Berlin par la forêt de Thuringe.",
   "platforms": [
-    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }, { "id": 6 }
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },
+    { "id": 6 }, { "id": 7 }, { "id": 8 }
   ],
   "portals": {
-    "WURZBURG":   { "side": "L", "color": "#f5b23c", "abbr": "WÜ", "label": "WÜRZBURG" },
-    "BAMBERG":    { "side": "L", "color": "#c084fc", "abbr": "BA" },
-    "ANSBACH":    { "side": "L", "color": "#4ade80", "abbr": "AN" },
-    "MUNCHEN":    { "side": "R", "color": "#60a5fa", "abbr": "M", "label": "MÜNCHEN" },
-    "REGENSBURG": { "side": "R", "color": "#f2588f", "abbr": "R" },
-    "HOF":        { "side": "R", "color": "#25dede", "abbr": "HO" }
+    "WURZBURG":   { "side": "L", "color": "#a78bfa", "abbr": "WU", "label": "WÜRZBURG" },
+    "ERFURT":     { "side": "L", "color": "#4ade80", "abbr": "EF" },
+    "STUTTGART":  { "side": "L", "color": "#25dede", "abbr": "S" },
+    "MUNCHEN":    { "side": "R", "color": "#f2588f", "abbr": "M", "label": "MÜNCHEN" },
+    "REGENSBURG": { "side": "R", "color": "#60a5fa", "abbr": "R" },
+    "AUGSBURG":   { "side": "R", "color": "#f5b23c", "abbr": "A" }
   },
   "links": {
-    "WURZBURG": [1, 2, 3, 4],
-    "BAMBERG": [1, 2, 3],
-    "ANSBACH": [5, 6],
-    "MUNCHEN": [2, 3, 4, 5],
-    "REGENSBURG": [4, 5, 6],
-    "HOF": [1, 2]
+    "WURZBURG":   [1, 2, 3, 4],
+    "ERFURT":     [3, 4, 5, 6],
+    "STUTTGART":  [5, 6, 7, 8],
+    "MUNCHEN":    [1, 2, 3, 4],
+    "REGENSBURG": [3, 4, 5, 6],
+    "AUGSBURG":   [5, 6, 7, 8]
   },
   "sameSidePairs": [],
   "gen": {
-    "nMin": 15, "nMax": 18, "gapMin": 1.6, "gapMax": 2.8,
+    "nMin": 16, "nMax": 20, "gapMin": 1.5, "gapMax": 2.6,
     "cars": [2, 3, 3, 4, 4, 5, 5, 6],
-    "quietRate": 0.15
+    "quietRate": 0.12
   }
 }

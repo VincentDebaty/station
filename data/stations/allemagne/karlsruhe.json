@@ -1,0 +1,33 @@
+{
+  "id": "karlsruhe",
+  "name": "Karlsruhe Hbf",
+  "city": "Karlsruhe",
+  "tagline": "Karlsruhe Hbf — 16 voies au débouché de la vallée du Rhin, la ville du tram-train.",
+  "difficulty": 3,
+  "country": "🇩🇪 Allemagne",
+  "desc": "Seize voies au débouché de la vallée du Rhin : la ville du tram-train, où le réseau régional roule sur les rails des grandes lignes. Cinq directions vers le sud et l'est.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },
+    { "id": 6 }, { "id": 7 }
+  ],
+  "portals": {
+    "MANNHEIM":  { "side": "L", "color": "#f2588f", "abbr": "MA" },
+    "STUTTGART": { "side": "L", "color": "#4ade80", "abbr": "S" },
+    "FREIBURG":  { "side": "R", "color": "#25dede", "abbr": "FR" },
+    "BALE":      { "side": "R", "color": "#60a5fa", "abbr": "BL", "label": "BÂLE" },
+    "KONSTANZ":  { "side": "R", "color": "#a78bfa", "abbr": "KN" }
+  },
+  "links": {
+    "MANNHEIM":  [1, 2, 3, 4, 5],
+    "STUTTGART": [3, 4, 5, 6, 7],
+    "FREIBURG":  [1, 2, 3, 4, 5, 6, 7],
+    "BALE":      [6, 7],
+    "KONSTANZ":  [4, 5]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 14, "nMax": 17, "gapMin": 1.7, "gapMax": 2.9,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6],
+    "quietRate": 0.15
+  }
+}

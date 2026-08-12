@@ -1,0 +1,30 @@
+{
+  "id": "bonn",
+  "name": "Bonn Hbf",
+  "city": "Bonn",
+  "tagline": "Bonn Hbf — cinq voies pour l'ancienne capitale fédérale.",
+  "difficulty": 2,
+  "country": "🇩🇪 Allemagne",
+  "desc": "Cinq voies pour l'ancienne capitale fédérale : la gare est restée celle d'une ville moyenne, quand les ministères étaient à dix minutes à pied.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
+  ],
+  "portals": {
+    "KOLN":       { "side": "L", "color": "#f5b23c", "abbr": "K", "label": "KÖLN" },
+    "EUSKIRCHEN": { "side": "L", "color": "#a78bfa", "abbr": "EU" },
+    "KOBLENZ":    { "side": "R", "color": "#25dede", "abbr": "KO" },
+    "MAINZ":      { "side": "R", "color": "#60a5fa", "abbr": "MZ" }
+  },
+  "links": {
+    "KOLN":       [1, 2, 3, 4, 5],
+    "EUSKIRCHEN": [4, 5],
+    "KOBLENZ":    [1, 2, 3, 4],
+    "MAINZ":      [2, 3, 4, 5]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 13, "nMax": 16, "gapMin": 1.8, "gapMax": 3.0,
+    "cars": [2, 2, 2, 3, 3, 4, 4, 5],
+    "quietRate": 0.2
+  }
+}

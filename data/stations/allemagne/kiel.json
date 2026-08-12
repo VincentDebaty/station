@@ -1,0 +1,30 @@
+{
+  "id": "kiel",
+  "name": "Kiel Hbf",
+  "city": "Kiel",
+  "tagline": "Kiel Hbf — 8 voies à heurtoir face à la Baltique, à cent mètres des ferries.",
+  "difficulty": 2,
+  "country": "🇩🇪 Allemagne",
+  "desc": "Le terminus de la Baltique, à cent mètres des quais des ferries : huit voies à heurtoir face à la mer. Tout ce qui entre en Schleswig-Holstein finit ici ou à Flensbourg.",
+  "platforms": [
+    { "id": 1, "deadEnd": true }, { "id": 2, "deadEnd": true }, { "id": 3, "deadEnd": true }, { "id": 4, "deadEnd": true }, { "id": 5, "deadEnd": true }
+  ],
+  "portals": {
+    "HAMBURG":   { "side": "L", "color": "#60a5fa", "abbr": "HH" },
+    "LUBECK":    { "side": "L", "color": "#f5b23c", "abbr": "HL", "label": "LÜBECK" },
+    "FLENSBURG": { "side": "L", "color": "#a78bfa", "abbr": "FL" },
+    "HUSUM":     { "side": "L", "color": "#25dede", "abbr": "HU" }
+  },
+  "links": {
+    "HAMBURG":   [1, 2, 3, 4],
+    "LUBECK":    [2, 3, 4, 5],
+    "FLENSBURG": [1, 2, 4, 5],
+    "HUSUM":     [1, 2, 3, 5]
+  },
+  "sameSidePairs": "all",
+  "gen": {
+    "nMin": 12, "nMax": 15, "gapMin": 2.0, "gapMax": 3.3,
+    "cars": [2, 2, 3, 3, 4, 4, 5],
+    "quietRate": 0.2
+  }
+}

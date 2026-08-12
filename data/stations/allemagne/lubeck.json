@@ -1,0 +1,30 @@
+{
+  "id": "lubeck",
+  "name": "Lübeck Hbf",
+  "city": "Lübeck",
+  "tagline": "Lübeck Hbf — la reine de la Hanse et la ligne des oiseaux migrateurs.",
+  "difficulty": 2,
+  "country": "🇩🇪 Allemagne",
+  "desc": "La reine de la Hanse et sa gare Art nouveau : quatre directions dont la ligne des oiseaux migrateurs, qui file vers le Danemark par le ferry de Puttgarden.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
+  ],
+  "portals": {
+    "HAMBURG":    { "side": "L", "color": "#60a5fa", "abbr": "HH" },
+    "KIEL":       { "side": "L", "color": "#4ade80", "abbr": "KI" },
+    "ROSTOCK":    { "side": "R", "color": "#f2588f", "abbr": "HR" },
+    "PUTTGARDEN": { "side": "R", "color": "#a78bfa", "abbr": "PU" }
+  },
+  "links": {
+    "HAMBURG":    [1, 2, 3, 4],
+    "KIEL":       [2, 3, 4, 5],
+    "ROSTOCK":    [1, 2, 3, 4, 5],
+    "PUTTGARDEN": [4, 5]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 13, "nMax": 16, "gapMin": 1.8, "gapMax": 3.0,
+    "cars": [2, 2, 2, 3, 3, 4, 4, 5],
+    "quietRate": 0.2
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "id": "ulm",
+  "name": "Ulm Hbf",
+  "city": "Ulm",
+  "tagline": "Ulm Hbf — sur le Danube, là où la ligne de Stuttgart bascule vers la Bavière.",
+  "difficulty": 2,
+  "country": "🇩🇪 Allemagne",
+  "desc": "Au pied de la plus haute flèche d'église du monde, sur le Danube : douze voies là où la ligne de Stuttgart bascule vers la Bavière. La rampe de Geislingen commence juste après.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },
+    { "id": 6 }
+  ],
+  "portals": {
+    "STUTTGART":       { "side": "L", "color": "#4ade80", "abbr": "S" },
+    "AALEN":           { "side": "L", "color": "#a78bfa", "abbr": "AA" },
+    "AUGSBURG":        { "side": "R", "color": "#f5b23c", "abbr": "A" },
+    "MUNCHEN":         { "side": "R", "color": "#f2588f", "abbr": "M", "label": "MÜNCHEN" },
+    "FRIEDRICHSHAFEN": { "side": "R", "color": "#60a5fa", "abbr": "FN" }
+  },
+  "links": {
+    "STUTTGART":       [1, 2, 3, 4, 5, 6],
+    "AALEN":           [5, 6],
+    "AUGSBURG":        [1, 2, 3, 4],
+    "MUNCHEN":         [3, 4, 5, 6],
+    "FRIEDRICHSHAFEN": [5, 6]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 13, "nMax": 16, "gapMin": 1.8, "gapMax": 3.0,
+    "cars": [2, 2, 2, 3, 3, 4, 4, 5],
+    "quietRate": 0.2
+  }
+}

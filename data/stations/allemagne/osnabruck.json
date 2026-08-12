@@ -1,0 +1,30 @@
+{
+  "id": "osnabruck",
+  "name": "Osnabrück Hbf",
+  "city": "Osnabrück",
+  "tagline": "Osnabrück Hbf — deux gares superposées à angle droit, le seul croisement à deux niveaux.",
+  "difficulty": 1,
+  "country": "🇩🇪 Allemagne",
+  "desc": "Deux gares superposées à angle droit : celle du Nord-Sud en bas, celle de l'Ouest-Est en haut. Le seul croisement à deux niveaux du catalogue — ici, c'est une gare à quatre directions.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
+  ],
+  "portals": {
+    "BREMEN":    { "side": "L", "color": "#4ade80", "abbr": "HB" },
+    "HAMBURG":   { "side": "L", "color": "#60a5fa", "abbr": "HH" },
+    "MUNSTER":   { "side": "R", "color": "#25dede", "abbr": "MS", "label": "MÜNSTER" },
+    "AMSTERDAM": { "side": "R", "color": "#a78bfa", "abbr": "AM" }
+  },
+  "links": {
+    "BREMEN":    [1, 2, 3, 4],
+    "HAMBURG":   [2, 3, 4, 5],
+    "MUNSTER":   [1, 2, 3, 4, 5],
+    "AMSTERDAM": [4, 5]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 12, "nMax": 15, "gapMin": 1.6, "gapMax": 2.8,
+    "cars": [2, 2, 2, 2, 3, 3, 4],
+    "quietRate": 0.25
+  }
+}

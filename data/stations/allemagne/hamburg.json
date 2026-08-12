@@ -1,33 +1,34 @@
 {
   "id": "hamburg",
   "name": "Hamburg Hbf",
-  "city": "Hamburg",
-  "tagline": "Hamburg Hbf — le goulot du Nord : record de fréquentation, densité extrême.",
+  "city": "Hambourg",
+  "tagline": "Hamburg Hbf — 12 voies, 250 000 voyageurs par jour : tout le Nord y converge.",
   "difficulty": 4,
   "country": "🇩🇪 Allemagne",
-  "desc": "La gare la plus fréquentée d'Allemagne, écoulée sur une poignée de voies (huit dans la réalité) sous la grande halle d'acier de 1906 : la porte du Nord, où les trains de Kiel, du Danemark et de la Baltique (Lübeck) plongent vers Hanovre, Brême et Berlin. Aucune marge — le goulot par excellence.",
+  "desc": "Douze voies dans une halle de fer de 1906, et deux cent cinquante mille voyageurs par jour : la gare la plus fréquentée d'Allemagne par rapport à sa taille. Tout le Nord y converge.",
   "platforms": [
-    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }, { "id": 6 }, { "id": 7 }
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },
+    { "id": 6 }, { "id": 7 }, { "id": 8 }
   ],
   "portals": {
-    "KIEL":       { "side": "L", "color": "#25dede", "abbr": "KI" },
-    "COPENHAGUE": { "side": "L", "color": "#a78bfa", "abbr": "CP", "label": "COPENHAGUE" },
-    "LUBECK":     { "side": "L", "color": "#4ade80", "abbr": "LU", "label": "LÜBECK" },
-    "HANNOVER":   { "side": "R", "color": "#f5b23c", "abbr": "H" },
+    "KIEL":       { "side": "L", "color": "#4ade80", "abbr": "KI" },
+    "LUBECK":     { "side": "L", "color": "#f5b23c", "abbr": "HL", "label": "LÜBECK" },
+    "COPENHAGUE": { "side": "L", "color": "#a78bfa", "abbr": "CO", "label": "COPENHAGUE" },
+    "HANNOVER":   { "side": "R", "color": "#f2588f", "abbr": "H" },
     "BREMEN":     { "side": "R", "color": "#60a5fa", "abbr": "HB" },
-    "BERLIN":     { "side": "R", "color": "#f2588f", "abbr": "B" }
+    "BERLIN":     { "side": "R", "color": "#25dede", "abbr": "B" }
   },
   "links": {
-    "KIEL": [1, 2, 3],
-    "COPENHAGUE": [1, 2],
-    "LUBECK": [4, 5, 6, 7],
-    "HANNOVER": [1, 2, 3, 4],
-    "BERLIN": [5, 6, 7],
-    "BREMEN": [2, 3, 4, 5]
+    "KIEL":       [1, 2, 3, 4, 5],
+    "LUBECK":     [4, 5, 6, 7, 8],
+    "COPENHAGUE": [7, 8],
+    "HANNOVER":   [1, 2, 3, 4],
+    "BREMEN":     [3, 4, 5, 6],
+    "BERLIN":     [5, 6, 7, 8]
   },
   "sameSidePairs": [],
   "gen": {
-    "nMin": 16, "nMax": 19, "gapMin": 1.5, "gapMax": 2.5,
+    "nMin": 16, "nMax": 20, "gapMin": 1.5, "gapMax": 2.6,
     "cars": [2, 3, 3, 4, 4, 5, 5, 6],
     "quietRate": 0.12
   }

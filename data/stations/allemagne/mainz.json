@@ -1,0 +1,33 @@
+{
+  "id": "mainz",
+  "name": "Mainz Hbf",
+  "city": "Mayence",
+  "tagline": "Mainz Hbf — au confluent du Main et du Rhin, cinq directions sans temps mort.",
+  "difficulty": 2,
+  "country": "🇩🇪 Allemagne",
+  "desc": "Au confluent du Main et du Rhin, neuf voies sous une façade néogothique : la gare où la rive gauche du Rhin croise l'axe de Francfort. Cinq directions, aucun temps mort.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },
+    { "id": 6 }
+  ],
+  "portals": {
+    "KOBLENZ":   { "side": "L", "color": "#a78bfa", "abbr": "KO" },
+    "KOLN":      { "side": "L", "color": "#f5b23c", "abbr": "K", "label": "KÖLN" },
+    "FRANKFURT": { "side": "R", "color": "#25dede", "abbr": "F" },
+    "MANNHEIM":  { "side": "R", "color": "#f2588f", "abbr": "MA" },
+    "WIESBADEN": { "side": "R", "color": "#4ade80", "abbr": "WI" }
+  },
+  "links": {
+    "KOBLENZ":   [1, 2, 3, 4],
+    "KOLN":      [3, 4, 5, 6],
+    "FRANKFURT": [1, 2, 3, 4],
+    "MANNHEIM":  [3, 4, 5, 6],
+    "WIESBADEN": [5, 6]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 13, "nMax": 16, "gapMin": 1.8, "gapMax": 3.0,
+    "cars": [2, 2, 2, 3, 3, 4, 4, 5],
+    "quietRate": 0.2
+  }
+}

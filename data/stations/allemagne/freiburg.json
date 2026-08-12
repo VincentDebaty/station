@@ -1,25 +1,27 @@
 {
   "id": "freiburg",
-  "name": "Freiburg Hbf",
-  "city": "Freiburg",
-  "tagline": "Freiburg Hbf — vallée du Rhin et Forêt-Noire : 4 quais entre Bâle et la Höllentalbahn.",
+  "name": "Freiburg (Breisgau) Hbf",
+  "city": "Fribourg",
+  "tagline": "Freiburg Hbf — au pied de la Forêt-Noire, la porte suisse du réseau.",
   "difficulty": 1,
   "country": "🇩🇪 Allemagne",
-  "desc": "La porte de la Forêt-Noire, sur la ligne de la vallée du Rhin (Bâle ↔ Offenburg) : quatre quais où les ICE filent nord-sud, tandis que se greffent les antennes régionales — la raide Höllentalbahn vers Neustadt à l'est, la ligne de Breisach à l'ouest. Petit gabarit, tempo net — la rampe d'accès idéale.",
+  "desc": "Au pied de la Forêt-Noire, la porte suisse du réseau : c'est par Fribourg — et par Strasbourg, en face — que l'Allemagne rejoint enfin le reste de l'Europe jouable.",
   "platforms": [
-    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
   ],
   "portals": {
-    "OFFENBURG": { "side": "L", "color": "#f5b23c", "abbr": "OF" },
-    "BREISACH":  { "side": "L", "color": "#4ade80", "abbr": "BR" },
-    "BALE":      { "side": "R", "color": "#60a5fa", "abbr": "BA", "label": "BÂLE" },
-    "NEUSTADT":  { "side": "R", "color": "#a78bfa", "abbr": "NE" }
+    "KARLSRUHE": { "side": "L", "color": "#60a5fa", "abbr": "KA" },
+    "OFFENBURG": { "side": "L", "color": "#25dede", "abbr": "OG" },
+    "BALE":      { "side": "R", "color": "#f5b23c", "abbr": "BL", "label": "BÂLE" },
+    "NEUSTADT":  { "side": "R", "color": "#a78bfa", "abbr": "NE" },
+    "BREISACH":  { "side": "R", "color": "#4ade80", "abbr": "BR" }
   },
   "links": {
-    "OFFENBURG": [2, 3, 4],
-    "BREISACH": [1, 2],
-    "BALE": [1, 2, 3],
-    "NEUSTADT": [3, 4]
+    "KARLSRUHE": [1, 2, 3, 4, 5],
+    "OFFENBURG": [4, 5],
+    "BALE":      [1, 2, 3],
+    "NEUSTADT":  [2, 3, 4],
+    "BREISACH":  [3, 4, 5]
   },
   "sameSidePairs": [],
   "gen": {

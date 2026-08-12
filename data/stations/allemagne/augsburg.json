@@ -1,0 +1,33 @@
+{
+  "id": "augsburg",
+  "name": "Augsburg Hbf",
+  "city": "Augsbourg",
+  "tagline": "Augsburg Hbf — 15 voies dans la plus vieille gare-terminus reconvertie du monde.",
+  "difficulty": 2,
+  "country": "🇩🇪 Allemagne",
+  "desc": "Quinze voies dans la plus vieille gare-terminus reconvertie du monde (1846) : la porte de la Bavière, à quarante minutes de Munich.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },
+    { "id": 6 }
+  ],
+  "portals": {
+    "ULM":      { "side": "L", "color": "#f5b23c", "abbr": "UL" },
+    "NURNBERG": { "side": "L", "color": "#60a5fa", "abbr": "N", "label": "NÜRNBERG" },
+    "MUNCHEN":  { "side": "R", "color": "#f2588f", "abbr": "M", "label": "MÜNCHEN" },
+    "LINDAU":   { "side": "R", "color": "#a78bfa", "abbr": "LI" },
+    "FUSSEN":   { "side": "R", "color": "#25dede", "abbr": "FU", "label": "FÜSSEN" }
+  },
+  "links": {
+    "ULM":      [1, 2, 3, 4],
+    "NURNBERG": [3, 4, 5, 6],
+    "MUNCHEN":  [1, 2, 3, 4, 5, 6],
+    "LINDAU":   [5, 6],
+    "FUSSEN":   [3, 4]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 13, "nMax": 16, "gapMin": 1.8, "gapMax": 3.0,
+    "cars": [2, 2, 2, 3, 3, 4, 4, 5],
+    "quietRate": 0.2
+  }
+}

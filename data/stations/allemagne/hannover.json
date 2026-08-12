@@ -1,34 +1,35 @@
 {
   "id": "hannover",
   "name": "Hannover Hbf",
-  "city": "Hannover",
-  "tagline": "Hannover Hbf — croisée des dorsales ICE du Nord : 6 quais, Nord-Sud × Ouest-Est.",
-  "difficulty": 3,
+  "city": "Hanovre",
+  "tagline": "Hannover Hbf — le carrefour du Nord, six directions, aucune marge.",
+  "difficulty": 4,
   "country": "🇩🇪 Allemagne",
-  "desc": "Le grand nœud ICE du nord de l'Allemagne : six quais traversants où la dorsale Hambourg–Munich croise l'axe Cologne–Berlin. Première grande gare de passage du pays — un flux ICE qui se croise sans répit, Brême et Brunswick en renfort.",
+  "desc": "Le carrefour du Nord : six directions, et la seule gare allemande où l'axe est-ouest et l'axe nord-sud portent le même trafic. Douze voies, aucune marge.",
   "platforms": [
-    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }, { "id": 6 }
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },
+    { "id": 6 }, { "id": 7 }, { "id": 8 }
   ],
   "portals": {
-    "HAMBURG":      { "side": "L", "color": "#25dede", "abbr": "HH" },
-    "BREMEN":       { "side": "L", "color": "#a78bfa", "abbr": "HB" },
-    "DORTMUND":     { "side": "L", "color": "#f5b23c", "abbr": "DO" },
-    "FRANKFURT":    { "side": "R", "color": "#f2588f", "abbr": "F" },
-    "BERLIN":       { "side": "R", "color": "#4ade80", "abbr": "B" },
-    "BRAUNSCHWEIG": { "side": "R", "color": "#60a5fa", "abbr": "BS" }
+    "HAMBURG":   { "side": "L", "color": "#60a5fa", "abbr": "HH" },
+    "BREMEN":    { "side": "L", "color": "#4ade80", "abbr": "HB" },
+    "DORTMUND":  { "side": "L", "color": "#f5b23c", "abbr": "DO" },
+    "BERLIN":    { "side": "R", "color": "#25dede", "abbr": "B" },
+    "KASSEL":    { "side": "R", "color": "#f2588f", "abbr": "KS" },
+    "MAGDEBURG": { "side": "R", "color": "#a78bfa", "abbr": "MD" }
   },
   "links": {
-    "HAMBURG": [1, 2, 3, 4],
-    "BREMEN": [1, 2],
-    "DORTMUND": [3, 4, 5, 6],
-    "FRANKFURT": [1, 2, 3, 4],
-    "BERLIN": [3, 4, 5, 6],
-    "BRAUNSCHWEIG": [5, 6]
+    "HAMBURG":   [1, 2, 3, 4],
+    "BREMEN":    [3, 4, 5, 6],
+    "DORTMUND":  [5, 6, 7, 8],
+    "BERLIN":    [1, 2, 3, 4],
+    "KASSEL":    [3, 4, 5, 6],
+    "MAGDEBURG": [5, 6, 7, 8]
   },
   "sameSidePairs": [],
   "gen": {
-    "nMin": 15, "nMax": 18, "gapMin": 1.6, "gapMax": 2.8,
+    "nMin": 16, "nMax": 20, "gapMin": 1.5, "gapMax": 2.6,
     "cars": [2, 3, 3, 4, 4, 5, 5, 6],
-    "quietRate": 0.15
+    "quietRate": 0.12
   }
 }

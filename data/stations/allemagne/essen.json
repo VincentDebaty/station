@@ -1,0 +1,31 @@
+{
+  "id": "essen",
+  "name": "Essen Hbf",
+  "city": "Essen",
+  "tagline": "Essen Hbf — 14 voies au milieu du bassin, un trafic de banlieue continu.",
+  "difficulty": 3,
+  "country": "🇩🇪 Allemagne",
+  "desc": "Quatorze voies au milieu du bassin, entre le Zollverein et la Ruhr : quatre directions seulement, mais un trafic de banlieue continu du matin au soir.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },
+    { "id": 6 }
+  ],
+  "portals": {
+    "DUISBURG":      { "side": "L", "color": "#60a5fa", "abbr": "DU" },
+    "DUSSELDORF":    { "side": "L", "color": "#25dede", "abbr": "D", "label": "DÜSSELDORF" },
+    "DORTMUND":      { "side": "R", "color": "#4ade80", "abbr": "DO" },
+    "GELSENKIRCHEN": { "side": "R", "color": "#a78bfa", "abbr": "GE" }
+  },
+  "links": {
+    "DUISBURG":      [1, 2, 3, 4],
+    "DUSSELDORF":    [3, 4, 5, 6],
+    "DORTMUND":      [1, 2, 3, 4, 5, 6],
+    "GELSENKIRCHEN": [5, 6]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 14, "nMax": 17, "gapMin": 1.7, "gapMax": 2.9,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6],
+    "quietRate": 0.15
+  }
+}
