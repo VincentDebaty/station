@@ -749,9 +749,16 @@ svg { width: 100%; height: 100%; display: block; }
 #end-unlock .eu-row {
   display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px;
 }
+/* Le nom d'abord, la jauge ensuite — mais la jauge PASSE À LA LIGNE quand le
+   nom ne lui laisse pas la place. Collée au bord droit (space-between, sans
+   retour à la ligne), elle débordait du bouton dès qu'un nom long tombait dans
+   une colonne étroite : « Paris-Montparnasse » ou « Peterborough » sur la fiche
+   posée à côté de la carte, en paysage téléphone. Un nom de gare ne se tronque
+   pas — c'est ce qu'on demande de lire — donc c'est la mise en page qui cède. */
 #end-unlock .eu-pick {
-  font-size: 14px; padding: 9px 13px; width: 100%;
-  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  font-size: 14px; padding: 9px 11px; width: 100%;
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: center;
+  gap: 3px 8px; line-height: 1.25; text-align: center;
 }
 /* Nombre impair : la dernière reste sur UNE colonne comme les autres. L'étirer
    sur toute la largeur lui donnait un poids qu'elle n'a pas — toutes les gares
@@ -835,12 +842,12 @@ svg { width: 100%; height: 100%; display: block; }
 }
 
 /* ---- Trois habillages pour une même pastille, selon le zoom ----
-   « far »  (Europe)  : un point et un nom. Ni numéro, ni cadenas, ni étoiles —
-                        à cette distance ils ne sont pas lisibles et ils
-                        empilent du bruit sur une carte de continent.
-   « mid »  (pays)    : la pastille numérotée reprend sa place.
-   « near » (région)  : tout, étoiles et record compris.
-   C'est la règle des cartes : le même objet, dessiné selon la distance. */
+   « far »  (Europe)  : un point menu et un nom discret.
+   « mid »  (pays)    : la pastille reprend du corps.
+   « near » (région)  : pleine taille, la couleur du résultat bien lisible.
+   C'est la règle des cartes : le même objet, dessiné selon la distance.
+   Le palier ne change plus QUE la taille : depuis que le résultat est dans la
+   couleur du point, il n'y a plus rien à masquer de loin. */
 /* Taille de la pastille = DIFFICULTÉ de la gare (--d, posé par mapnet.js),
    multipliée par le facteur du palier de zoom (--k). Une petite bulle en
    niveau 1, une grosse en niveau 5 : la difficulté se lit sur la carte sans
@@ -850,12 +857,42 @@ svg { width: 100%; height: 100%; display: block; }
 #map-net .city-chip .dot {
   width: calc(var(--d) * var(--k)); height: calc(var(--d) * var(--k));
   font-size: 0; /* plus de numéro : seule la taille parle */
-  box-shadow: 0 0 0 2px rgba(14, 20, 32, .8), 0 0 8px rgba(45, 212, 191, .45);
+  box-shadow: 0 0 0 2px rgba(14, 20, 32, .8), 0 0 8px var(--chip-glow);
 }
-#map-net[data-detail="far"] .city-chip .st { display: none; }
 #map-net[data-detail="far"] .city-chip .nm { font-size: 11px; font-weight: 500; }
 
-#map-net[data-detail="mid"] .city-chip .st { display: none; }
+/* ---- LE RÉSULTAT EST LA COULEUR DU POINT ----
+   Les étoiles et le retard ne s'écrivent plus sous chaque gare (cf. js/mapnet.js) :
+   ils se lisent dans la teinte. Un seul couple de variables porte la couleur et
+   sa lueur, et les deux règles de .dot n'écrivent que `var(...)` — sinon la
+   spécificité décide à notre place, et c'est déjà arrivé (le point verrouillé
+   gardait la lueur teal malgré son `box-shadow: none`).
+   L'échelle reste DANS la palette du jeu : elle glisse du teal au fuchsia, sans
+   jamais passer par le chaud. Un détour par l'or et l'orange avait été essayé —
+   il se lisait bien, mais il jurait avec tout le reste de l'écran.
+     verrouillée .... gris-bleu, hors échelle
+     0 étoile ....... teal (jamais jouée OU jouée sans rien décrocher : dans les
+                      deux cas il reste tout à faire, et l'anneau pulse)
+     1 ★ ............ bleu
+     2 ★ ............ violet
+     3 ★ ............ fuchsia
+   Chaque cran porte DEUX teintes : la base et un rehaut plus clair. La pastille
+   n'est pas un aplat mais un dégradé de l'un vers l'autre — une bille éclairée
+   d'en haut, comme les autres volumes de l'interface. */
+.city-chip        { --chip: #2dd4bf; --chip-hi: #6ff0e2; --chip-glow: rgba(45, 212, 191, .45); }
+.city-chip.locked { --chip: #3a4560; --chip-hi: #4a566f; --chip-glow: transparent; }
+.city-chip.s1     { --chip: #3d9be8; --chip-hi: #7cc4f5; --chip-glow: rgba(61, 155, 232, .5); }
+.city-chip.s2     { --chip: #8b6ef0; --chip-hi: #b9a4ff; --chip-glow: rgba(139, 110, 240, .5); }
+.city-chip.s3     { --chip: #e35bd4; --chip-hi: #f79ceb; --chip-glow: rgba(227, 91, 212, .55); }
+
+/* SERVICE PARFAIT (record de 0 minute) : une ÉTOILE creusée DANS la pastille
+   fuchsia. La pastille reste ronde — sa taille continue de dire la difficulté,
+   et les mises en avant de fin de service (halo de candidate, de gare de
+   départ) gardent le box-shadow sur lequel elles reposent. L'étoile elle-même
+   est un SVG posé par js/mapnet.js ; ici on ne règle que sa part du disque.
+   66 % : au-delà, les pointes touchent le bord et la couleur ne fait plus
+   anneau ; en deçà, elle se perd sur une pastille de 13 px. */
+#map-net .city-chip.perfect .dot .pf { width: 66%; height: 66%; display: block; }
 
 /* Animation « voyage » vers la gare suivante : convoi (mj-dot) qui file le long
    du tronçon (mj-line qui se trace), la gare d'arrivée pulse (mj-ring). Le SVG
@@ -907,22 +944,25 @@ svg { width: 100%; height: 100%; display: block; }
 .map-chip { position: absolute; transform: translate(-50%, -50%); pointer-events: auto; text-align: center; }
 .map-chip .nm { font-size: 13px; font-weight: 600; line-height: 1.25; color: var(--text); }
 .map-chip .pg { color: #f5b23c; font-size: 11px; margin-top: 1px; }
-.map-chip .st { color: #f5b23c; font-size: 14px; letter-spacing: 2px; }
 .map-chip .bd { color: var(--muted); font-size: 10px; font-family: ui-monospace, Menlo, monospace; }
 
 /* Chip continent (niveau monde) — libellé léger, pastille discrète. */
 
 /* Pays jouable (niveau continent) : bulle drapeau + ANNEAU de progression autour
    (piste fine ; arc plus épais = étoiles gagnées / total). */
-/* Villes (niveau pays) : point-gare NUMÉROTÉ (ordre de jeu) + libellé léger,
-   cartouche dessous/dessus. Teal = jouable, gris = verrouillé. */
+/* Villes (niveau pays) : point-gare + libellé léger, cartouche dessous/dessus.
+   La taille dit la difficulté, la couleur dit le résultat (barème plus haut). */
 .city-chip { width: 22px; height: 22px; cursor: pointer; }
 .city-chip .dot {
   position: relative;
   display: flex; align-items: center; justify-content: center;
   width: 22px; height: 22px; border-radius: 50%;
   font-size: 12px; font-weight: 700; color: #0e1420;
-  background: #2dd4bf; box-shadow: 0 0 8px rgba(45, 212, 191, .5);
+  /* Dégradé, pas aplat : le rehaut en haut à gauche donne du volume au point,
+     et c'est ce qui sauve les crans voisins de l'échelle — deux bleus proches
+     se distinguent mieux éclairés que posés à plat. */
+  background: linear-gradient(155deg, var(--chip-hi), var(--chip));
+  box-shadow: 0 0 8px var(--chip-glow);
   transition: transform .15s;
 }
 .city-chip .cap {
@@ -936,19 +976,8 @@ svg { width: 100%; height: 100%; display: block; }
 /* Nom sur UNE ligne : l'estimation de largeur (map.js) suppose un cartouche non
    replié — un retour à la ligne casserait l'anti-chevauchement. */
 .city-chip .nm { font-weight: 400; font-size: 13px; white-space: nowrap; text-shadow: 0 1px 3px rgba(0, 0, 0, .85); }
-/* Retard record à côté des étoiles : horloge + minutes (ex. « ★★★ ⏱2′ »). Teinte
-   froide CLAIRE (lisible sur le fond sombre) mais neutre → ne rivalise pas avec
-   l'or des étoiles et ne passe pas pour un bonus. */
-.city-chip .st .dl {
-  color: #bcc8de; font-size: 11px; font-weight: 600; letter-spacing: 0;
-  margin-left: 6px; vertical-align: middle;
-  display: inline-flex; align-items: center; gap: 2px;
-}
-.city-chip .st .dl svg { width: 11px; height: 11px; display: block; opacity: 1; }
 .city-chip.locked { cursor: default; }
-.city-chip.locked .dot { background: #3a4560; color: #9aa6bd; box-shadow: none; }
 .city-chip.locked .nm { color: var(--muted); }
-.city-chip.locked .st { color: #55617a; } /* étoiles vides éteintes → « pas encore ouvert » */
 /* Cadenas dans le coin du point verrouillé : lève l'ambiguïté verrouillé / non-joué. */
 .city-chip .dot .lock {
   position: absolute; right: -5px; bottom: -5px; width: 13px; height: 13px;
@@ -1042,6 +1071,9 @@ svg { width: 100%; height: 100%; display: block; }
 .mm-row .d { color: var(--green); font-size: 13px; font-family: ui-monospace, Menlo, monospace; }
 /* Pas encore de record : ni vert ni chiffré — c'est une absence, pas un score. */
 .mm-row .d.none { color: var(--muted); font-family: inherit; font-size: 12px; }
+/* Record de 0 minute : le fuchsia de la pastille parfaite sur la carte, pas un
+   « +0 min » qu'on lirait comme un retard nul plutôt que comme un sans-faute. */
+.mm-row .d.perfect { color: #f79ceb; font-family: inherit; font-size: 13px; font-weight: 700; }
 
 .mm-actions { display: flex; flex-direction: column; gap: 10px; }
 .mm-play { width: 100%; background: #16333a; border-color: #2dd4bf; color: #eafbf7; font-weight: 600; }
