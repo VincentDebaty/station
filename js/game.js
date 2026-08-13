@@ -1450,6 +1450,15 @@ function endGame(failed) {
     // « Rejouer » ne prend la mise en avant que s'il n'y a rien de mieux à
     // faire : ni gare suivante à prendre, ni service réussi à savourer.
     btnReplay.classList.toggle("primary", !win && !next);
+    // CE QUE LA GARE PEUT ENCORE VERSER, sur le bouton qui y ramène. Sans ce
+    // chiffre, « Rejouer » ne promet rien de mesurable — or c'est exactement la
+    // question que se pose un joueur à court de crédits. Rien à afficher quand
+    // la gare a tout donné : un « +0 » ferait de la reprise une perte de temps
+    // annoncée, et son absence le dit déjà (même règle que sur la carte).
+    const leftHere = (STATION.adhoc || typeof stationCap !== "function") ? 0
+      : Math.max(0, stationCap(STATION.id) - stationBanked(STATION.id));
+    btnReplay.innerHTML = (typeof icon === "function" ? icon(ICON.restart, 18) : "") +
+      "Rejouer" + (leftHere ? " — " + creditsHTML(leftHere, true) : "");
   }
   paintActions();
 

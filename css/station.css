@@ -164,7 +164,14 @@ body {
 /* Actions (recommencer, son, aide) EMPILÉES verticalement sous l'engrenage. */
 .hud-panel .act-row { display: flex; flex-direction: column; align-items: stretch; gap: 8px; }
 /* icônes vectorielles (Material) centrées dans les boutons */
-.btn svg { display: block; }
+/* Une icône de bouton garde SA taille, celle que `icon(path, 18)` a écrite dans
+   l'attribut. La feuille pose `svg { width: 100% }` pour le plan de voies ; dans
+   un bouton en flex, l'icône devenait un élément élastique qui se taillait la
+   part du lion et faisait passer le texte à la ligne — « Rejouer — +180 » se
+   coupait après le tiret. */
+/* `:not(.cr)` : le jeton de la monnaie n'est pas une icône de bouton, c'est un
+   caractère — il se dimensionne en `em` avec le texte qu'il précède. */
+.btn svg:not(.cr) { display: block; flex: none; width: auto; height: auto; }
 .btn.icon { padding: 6px; } /* boutons-icônes carrés */
 .closure-tag {
   fill: var(--red); font-size: 13px; font-weight: 600; text-anchor: middle;
@@ -1282,11 +1289,6 @@ svg { width: 100%; height: 100%; display: block; }
    doigt qui vient d'acheter. */
 .mm-buy[disabled], .mm-play[disabled] { opacity: .4; cursor: default; }
 .mm-play[disabled]:hover { background: #16333a; }
-/* Gare acquise : le bouton d'achat n'est plus une action, c'est un état. Il
-   perd l'or et prend le teal du réseau — la couleur de ce qu'on possède. */
-.mm-buy.done {
-  background: transparent; border-color: #245e5c; color: #63e6d4; opacity: .75;
-}
 .mm-short {
   text-align: center; color: var(--muted); font-size: 12px;
   display: flex; align-items: center; justify-content: center; gap: 5px;

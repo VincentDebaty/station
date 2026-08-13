@@ -626,6 +626,9 @@ function updateCreditsBadge(bump) {
     MAP.purse.classList.add("bump");
   }
 }
+// Instant jusqu'auquel un tap sur « Prendre le service » est ignoré : voir le
+// gestionnaire d'achat, juste en dessous.
+let _buyGuardUntil = 0;
 function closeModal() {
   if (MAP.modal) MAP.modal.classList.add("hidden");
   // Fiche refermée sans prendre le service : le tutoriel revient à son étape
@@ -728,15 +731,19 @@ function openStationModal(gi) {
   // le même écran. Les deux actions vivent désormais côte à côte, et l'achat ne
   // fait qu'ALLUMER la seconde.
   //
-  // Le bouton d'achat garde sa place une fois la gare acquise (« Acquise »,
-  // éteint) : sans lui, la fiche se raccourcirait à l'instant du clic et
-  // « Prendre le service » remonterait sous le doigt qui vient d'appuyer.
+  // L'ORDRE N'EST PAS COSMÉTIQUE : « Prendre le service » est AU-DESSUS, et
+  // l'achat en dessous. Une gare acquise n'a plus de bouton d'achat du tout —
+  // il ne dirait rien que la fiche ne dise déjà. Sa disparition raccourcit donc
+  // la fiche PAR LE BAS, et le bouton de service ne bouge pas d'un pixel : le
+  // doigt qui vient d'acheter ne retombe pas sur « prendre le service » et ne
+  // lance pas un service qu'on n'a pas demandé.
+  // (Rangés dans l'autre sens, avec un « Acquise » éteint pour tenir la place,
+  // il fallait garder à l'écran un bouton mort pour toujours.)
   const price = typeof stationPrice === "function" ? stationPrice(card.id) : 0;
   const buyable = !unlocked && typeof isBuyable === "function" && isBuyable(card.id);
   const short = price - (typeof getCredits === "function" ? getCredits() : 0);
-  let buyBtn;
-  if (unlocked)
-    buyBtn = '<button class="btn mm-buy done" disabled>' + icon(ICON.check, 15) + "Acquise</button>";
+  let buyBtn = "";
+  if (unlocked) buyBtn = "";
   else if (buyable && short <= 0)
     buyBtn = '<button class="btn mm-buy" data-id="' + card.id + '" data-gi="' + gi +
       '">Acheter — ' + creditsHTML(price) + "</button>";
@@ -748,9 +755,9 @@ function openStationModal(gi) {
   else
     buyBtn = '<button class="btn mm-buy" disabled>' + icon(ICON.lock, 15) + "Hors de votre réseau</button>";
 
-  const actions = buyBtn +
+  const actions =
     '<button class="btn mm-play"' + (unlocked ? ' data-gi="' + gi + '"' : " disabled") +
-      ">Prendre le service</button>";
+      ">Prendre le service</button>" + buyBtn;
 
   // Une seule colonne, courte : le bouton reste au centre, sous les chiffres,
   // à tous les formats — c'est le geste qu'on vient chercher.
@@ -764,12 +771,19 @@ function openStationModal(gi) {
     "</div>";
   MAP.modal.querySelector(".mm-close").addEventListener("click", closeModal);
   const play = MAP.modal.querySelector(".mm-play");
-  if (play) play.addEventListener("click", () => { const g = +play.dataset.gi; closeModal(); startStation(g); });
+  if (play) play.addEventListener("click", () => {
+    // Un achat vient de raccourcir la fiche : « Prendre le service » s'est
+    // déplacé vers l'endroit que le doigt occupait. On ignore un second tap
+    // immédiat, sinon un joueur pressé lance un service qu'il n'a pas demandé.
+    if (Date.now() < _buyGuardUntil) return;
+    const g = +play.dataset.gi; closeModal(); startStation(g);
+  });
   // Achat : la gare bascule sous les yeux du joueur — la fiche se redessine sur
   // « Prendre le service », la pastille devient pleine, le solde retombe.
   const buy = MAP.modal.querySelector(".mm-buy[data-id]");
   if (buy) buy.addEventListener("click", () => {
     if (!buyStationById(buy.dataset.id)) return;
+    _buyGuardUntil = Date.now() + 450;
     if (typeof SND === "object" && SND.buy) SND.buy();
     mapnetBuild(); mapnetPosition();
     updateCreditsBadge();
