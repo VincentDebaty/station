@@ -553,6 +553,36 @@ function frameCountryBeside(slug, reserved) {
   const g = GEO.countries[slug];
   const country = g && MAP.byIso[g.iso];
   if (!country) return;
+  frameBoxBeside(g.frame || countryGeoBbox(country), reserved, 0.05);
+}
+// Position géographique d'une gare, quel que soit son pays.
+function stationLonLat(id) {
+  for (const slug in GEO.countries) {
+    const c = GEO.countries[slug];
+    if (c.cities && c.cities[id]) return c.cities[id];
+  }
+  return null;
+}
+// Emprise géo [lonMin, latMin, lonMax, latMax] qui contient toutes ces gares,
+// avec une taille MINIMALE : à deux gares voisines, une emprise nue ferait un
+// zoom de rue, et la carte n'apprendrait plus rien sur l'endroit.
+const MIN_SPAN_LON = 1.6, MIN_SPAN_LAT = 1.0;
+function stationsBbox(ids) {
+  const pts = ids.map(stationLonLat).filter(Boolean);
+  if (!pts.length) return null;
+  let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
+  for (const [lon, lat] of pts) {
+    if (lon < x0) x0 = lon; if (lon > x1) x1 = lon;
+    if (lat < y0) y0 = lat; if (lat > y1) y1 = lat;
+  }
+  const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
+  const w = Math.max(x1 - x0, MIN_SPAN_LON), h = Math.max(y1 - y0, MIN_SPAN_LAT);
+  return [cx - w / 2, cy - h / 2, cx + w / 2, cy + h / 2];
+}
+// Cadre une EMPRISE dans la partie LIBRE de l'écran, quand une interface en
+// occupe un bord.
+function frameBoxBeside(bbox, reserved, pad) {
+  if (!bbox) return;
   const cw = MAP.svg.clientWidth || 1, ch = MAP.svg.clientHeight || 1;
   const left = Math.max(0, (reserved && reserved.left) || 0);
   const bottom = Math.max(0, (reserved && reserved.bottom) || 0);
@@ -565,7 +595,7 @@ function frameCountryBeside(slug, reserved) {
   // HAUTEUR — le relevé en bas d'un téléphone — et le même facteur s'applique
   // aussi à la largeur : la Belgique se retrouvait dézoomée de Leicester à
   // Hanovre pour tenir dans un bandeau de 240 px.
-  const box = targetVB(g.frame || countryGeoBbox(country), 0.05); // [x, y, w, h] en unités
+  const box = targetVB(bbox, pad == null ? 0.18 : pad);            // [x, y, w, h] en unités
   const s = Math.min(freeW / box[2], freeH / box[3]);             // px par unité
   const bcx = box[0] + box[2] / 2, bcy = box[1] + box[3] / 2;
   applyView([bcx - (left + freeW / 2) / s, bcy - (freeH / 2) / s, cw / s, ch / s]);

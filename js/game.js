@@ -1179,6 +1179,29 @@ function tick(dtMin) {
     endGame();
 }
 
+// Décompte d'un montant, de `from` à `to`. Sortie rapide puis ralentie
+// (easeOutCubic) : le chiffre part d'un coup — on voit tout de suite que ça
+// monte — et s'installe doucement sur sa valeur, qu'on a le temps de lire.
+// Respecte prefers-reduced-motion : on pose alors le total, sans mouvement.
+function animateCredits(el, from, to, signed) {
+  if (!el || typeof creditsHTML !== "function") return;
+  const set = v => { el.innerHTML = creditsHTML(v, signed); };
+  const reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (reduce || from === to) { set(to); return; }
+  const DUR = 850;
+  let t0 = null;
+  set(from);
+  requestAnimationFrame(function step(ts) {
+    if (t0 === null) t0 = ts;
+    // Le bloc a pu être redessiné entre-temps (un achat depuis le relevé) :
+    // on cesse de peindre dans un nœud qui n'est plus à l'écran.
+    if (!el.isConnected) return;
+    const e = Math.min(1, (ts - t0) / DUR);
+    set(Math.round(from + (to - from) * (1 - Math.pow(1 - e, 3))));
+    if (e < 1) requestAnimationFrame(step);
+  });
+}
+
 // ------------------------------------------------------------------
 // LA CARTE DERRIÈRE LE RELEVÉ. Le service est fini : la décision suivante est
 // géographique — où aller, quoi ouvrir, avec quel solde. Le relevé se range
@@ -1204,12 +1227,24 @@ function showEndBesideMap() {
   mapnetBuild();               // le solde a changé : d'autres gares sont à portée
   mapnetPosition();
   if (typeof updateCreditsBadge === "function") updateCreditsBadge(true);
-  const slug = (typeof stationCountrySlug === "function") ? stationCountrySlug(currentIdx) : null;
-  if (!slug || typeof frameCountryBeside !== "function") return;
   const r = end.querySelector(".card").getBoundingClientRect();
   const wide = window.innerWidth > 720;
-  frameCountryBeside(slug, wide ? { left: r.right + 16 }
-                                : { bottom: window.innerHeight - r.top + 12 });
+  const reserved = wide ? { left: r.right + 16 }
+                        : { bottom: window.innerHeight - r.top + 12 };
+  // CE QU'IL FAUT VOIR, PAS LE PAYS. Cadrer le pays entier laissait la gare
+  // proposée hors champ ou noyée : le relevé disait « ouvrir Aarschot » et
+  // Aarschot n'était nulle part. On cadre donc la gare qu'on vient de tenir et
+  // TOUT ce qu'elle met à portée d'achat — c'est exactement la décision qui
+  // reste à prendre. Repli sur le pays si la géographie manque.
+  const here = CATALOG[currentIdx].id;
+  const box = (typeof stationsBbox === "function" && typeof netLinks === "function")
+    ? stationsBbox([here].concat(netLinks(here).to.filter(id => isBuyable(id))))
+    : null;
+  if (box && typeof frameBoxBeside === "function") frameBoxBeside(box, reserved);
+  else {
+    const slug = (typeof stationCountrySlug === "function") ? stationCountrySlug(currentIdx) : null;
+    if (slug && typeof frameCountryBeside === "function") frameCountryBeside(slug, reserved);
+  }
 }
 // Quitter le relevé en restant sur la carte. `recenter` : on recadre le pays
 // pour de bon (le joueur a demandé la carte), sinon on se contente d'effacer le
@@ -1331,7 +1366,18 @@ function endGame(failed) {
         '<div class="eu-banked"><span class="gauge money"><span class="fill" style="width:' +
           Math.round(stationBanked(STATION.id) / cap * 100) + '%"></span></span>' +
         '<span class="d">' + stationBanked(STATION.id) + " / " + cap + "</span></div>") +
-      '<div class="eu-solde">Solde ' + creditsHTML(getCredits()) + "</div>";
+      '<div class="eu-solde">Solde <span class="eu-solde-n">' + creditsHTML(getCredits()) + "</span></div>";
+  }
+
+  // LA RECETTE SE COMPTE, ELLE NE S'AFFICHE PAS. Un nombre déjà posé est un
+  // résultat ; un nombre qui monte est un gain — c'est le même chiffre, mais
+  // l'un se lit et l'autre se ressent. Le solde suit le même mouvement, de son
+  // ancienne valeur à la nouvelle : on voit la recette PASSER de la gare à la
+  // bourse, plutôt que deux totaux sans lien.
+  function rollRecette() {
+    if (noPay || gain <= 0) return;
+    animateCredits(reward.querySelector(".eu-gain"), 0, gain, true);
+    animateCredits(reward.querySelector(".eu-solde-n"), getCredits() - gain, getCredits(), false);
   }
 
   function paintActions() {
@@ -1413,6 +1459,7 @@ function endGame(failed) {
 
   document.getElementById("end").classList.remove("hidden");
   showEndBesideMap();
+  rollRecette(); // le décompte part APRÈS le démasquage, sinon il file à vide
   // Salve APRÈS le démasquage : elle se cale sur la fiche, qui se mesurerait à
   // zéro tant que l'overlay est en display:none.
   if (perfect && typeof perfectConfetti === "function") perfectConfetti();
