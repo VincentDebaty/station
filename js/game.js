@@ -1306,11 +1306,15 @@ function endGame(failed) {
     failed ? "Service interrompu" : justCompletedCountry ? "Pays terminé !"
       : perfect ? "Sans faute !" : (win ? "Fin du service" : "Objectif manqué");
   document.getElementById("stars").textContent = "★★★".slice(0, stars) + "☆☆☆".slice(0, 3 - stars);
+  // UNE LIGNE, JAMAIS QUATRE. Le relevé est étroit — il tient sur un tiers
+  // d'écran — et une phrase qui se replie quatre fois pousse les boutons hors
+  // de vue. Le barème est déjà dit par les étoiles éteintes juste au-dessus, et
+  // « Réessayez ! » par le bouton « Rejouer » juste en dessous.
   document.getElementById("end-delay").textContent = failed
-    ? "Retard de +" + d + " min — la limite de " + maxDelay() + " min est dépassée."
+    ? "Retard de +" + d + " min — limite dépassée."
     : win
       ? (d === 0 ? "Service parfait — aucun retard." : "Retard cumulé : " + d + " min")
-      : "Retard cumulé : " + d + " min — il faut moins de 30 min pour décrocher une étoile. Réessayez !";
+      : "Retard cumulé : " + d + " min — il en faut moins de 30.";
   // « Trains à l'heure : 15/15 » a été retiré : c'est le retard cumulé, juste
   // au-dessus, qui décide des étoiles et de la recette — un second décompte à
   // côté du premier n'ajoutait qu'une ligne à lire pour la même information.
