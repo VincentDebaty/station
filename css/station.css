@@ -1203,6 +1203,13 @@ svg { width: 100%; height: 100%; display: block; }
    d'œil ce qui est à portée de bourse de ce qui ne l'est pas encore. */
 .city-chip .pr { font-size: 12px; line-height: 1.25; margin-top: 1px; }
 .city-chip .pr .cr-amt { text-shadow: 0 1px 3px rgba(0, 0, 0, .9); }
+/* DEUX FAITS, DEUX CANAUX. Le CERNE dit « ça s'achète » (la gare touche le
+   réseau) ; la COULEUR DU PRIX dit « ça se paie maintenant ». Sans cette
+   seconde distinction, un prix hors bourse s'écrivait dans le même or qu'un
+   prix payable, et le joueur devait comparer chaque nombre à son solde de tête
+   — deux soustractions pour apprendre qu'il n'a rien à faire ici. */
+.city-chip.buyable:not(.afford) .pr .cr-amt { color: var(--muted); }
+.city-chip.buyable:not(.afford) .pr .cr { opacity: .55; }
 /* Achetable : la pastille quitte la bille grise pleine des gares hors réseau
    et redevient un CERCLE OUVERT, cerclé d'or — creux comme une case à remplir,
    ce qu'elle est. Payable tout de suite : l'or vif, et elle respire (.entry).
