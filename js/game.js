@@ -1384,7 +1384,7 @@ function endGame(failed) {
     let offerId = null;
     if (win && !STATION.adhoc && !boughtNow && typeof netLinks === "function") {
       const cand = netLinks(CATALOG[currentIdx].id).to
-        .filter(id => isBuyable(id) && canAfford(id))
+        .filter(id => canBuy(id))     // payable ET débloquée : sinon on agite un bouton mort
         .sort((a, b) => stationPrice(a) - stationPrice(b));
       if (cand.length) offerId = cand[0];
     }

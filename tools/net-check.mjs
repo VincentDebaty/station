@@ -144,6 +144,7 @@ const diffOf = id => {
 };
 const allEasy = CATALOG.filter(c => diffOf(c.id) <= START_DIFFICULTY).map(c => c.id);
 const entries = allEasy.filter(isStartDoor);
+
 const rejected = allEasy.filter(id => entries.indexOf(id) < 0);
 // Propagation : la frontière d'achat, exactement comme isBuyable la définit —
 // toute voisine d'une gare déjà acquise.
@@ -157,6 +158,25 @@ function reachFrom(start) {
   }
   return open;
 }
+// LES DEUX VERROUS DE PROGRESSION NE PEUVENT PAS ENFERMER — c'est vérifié ici,
+// parce que rien à l'écriture d'un pays ne le signalerait.
+//
+// « Le réseau doit tourner » ne bloque que tant qu'une gare acquise n'a pas
+// servi : jouer une journée suffit, il n'y a rien à prouver.
+//
+// « On n'ouvre que depuis une voisine tenue à ★★ » ne demande jamais que de
+// bien jouer une gare qu'on POSSÈDE déjà. La frontière imposant de toute façon
+// une voisine acquise, la condition porte toujours sur une gare accessible : la
+// couverture est donc exactement celle de la propagation géographique, déjà
+// contrôlée ci-dessus.
+//
+// La version en PALIERS DE DIFFICULTÉ (« niveau d exige ★★ au niveau d−1 »),
+// elle, enfermait : ces portes n'ont que des voisines trop hautes pour leur
+// palier, et le joueur qui s'y engageait ne pouvait plus rien acheter. On les
+// liste — si un jour la règle repasse par les paliers, la sanction est là.
+const trapDoors = entries.filter(id =>
+  !netLinks(id).to.some(nb => CATALOG.some(c => c.id === nb) && diffOf(nb) <= START_DIFFICULTY + 1));
+
 const reach = entries.map(e => ({ e, n: reachFrom(e).size }));
 const worst = reach.reduce((a, b) => (b.n < a.n ? b : a));
 const best = reach.reduce((a, b) => (b.n > a.n ? b : a));
@@ -184,6 +204,8 @@ orphans.forEach(o => console.log("  · " + o));
 
 console.log(`\nPROGRESSION — ${entries.length} portes de départ (difficulté ≤ ${START_DIFFICULTY}) · achat de proche en proche`);
 if (rejected.length) console.log(`  écartées (aucune voisine jouable) : ${rejected.join(", ")}`);
+console.log("  portes sans voisine d'un palier proche (fatales à une règle de paliers) : " +
+  (trapDoors.join(", ") || "aucune"));
 console.log("  atteignable depuis chaque porte :");
 for (const r of reach.sort((a, b) => b.n - a.n))
   console.log(`      ${r.e.padEnd(18)} ${r.n} / ${CATALOG.length}${r.n === CATALOG.length ? "  ✓" : r.n < 5 ? "   ✗ PIÈGE" : ""}`);

@@ -1234,7 +1234,7 @@ svg { width: 100%; height: 100%; display: block; }
 /* Hors bourse : l'étiquette s'éteint. Le prix reste lisible — c'est un objectif
    — mais il cesse d'être une offre, et le joueur n'a plus à le comparer à son
    solde de tête, gare après gare. */
-.city-chip.buyable:not(.afford) .pr .cr-amt {
+.city-chip.buyable:not(.ready) .pr .cr-amt {
   background: #3d4658; color: #9aa6ba; box-shadow: none;
 }
 /* Reste à gagner : chiffre nu, jamais d'étiquette — on ne l'achète pas. */
@@ -1248,7 +1248,7 @@ svg { width: 100%; height: 100%; display: block; }
   --chip-in: rgba(10, 20, 32, .85);
   cursor: pointer;
 }
-.city-chip.buyable.afford {
+.city-chip.buyable.ready {
   --chip: var(--gold); --chip-hi: #ffd684; --chip-glow: rgba(240, 178, 60, .45);
 }
 .city-chip.buyable .nm { color: var(--text); }

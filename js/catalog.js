@@ -154,16 +154,89 @@ function isStartDoor(id) {
   return typeof netLinks === "function" &&
     netLinks(id).to.some(nb => CATALOG.some(c => c.id === nb));
 }
-// Achetable = pas encore acquise, et reliée au réseau déjà acquis.
+// Achetable = pas encore acquise, et reliée au réseau déjà acquis. C'est la
+// FRONTIÈRE GÉOGRAPHIQUE, et elle seule : ce qui empêche de payer aujourd'hui
+// (l'argent, une gare en souffrance, le niveau) se dit à part — voir buyBlock.
 function isBuyable(id) {
   if (!cardOf(id) || isBought(id)) return false;
   if (networkEmpty()) return isStartDoor(id);
   return typeof netLinks === "function" && netLinks(id).to.some(nb => isBought(nb));
 }
 function canAfford(id) { return getCredits() >= stationPrice(id); }
+
+// ------------------------------------------------------------------
+// DEUX CONDITIONS QUI NE S'ACHÈTENT PAS.
+// ------------------------------------------------------------------
+// L'argent seul faisait une progression sans mérite : une gare maîtrisée en
+// finance DEUX ET DEMIE (plafond 2 × tarif contre un prix de 0,8 × tarif), donc
+// le réseau grossissait plus vite qu'on ne l'apprenait. On pouvait mettre
+// quatre gares en réserve sans en jouer une seule, et s'offrir Bruxelles-Midi
+// avec les recettes de Dinant — les neuf gares de difficulté 1 de Belgique
+// coûtent 430 et rapportent 1 040 une fois maîtrisées.
+//
+// D'où deux verrous qui ne se paient pas :
+//
+//   1. LE RÉSEAU DOIT TOURNER. Tant qu'une gare acquise n'a pas assuré un
+//      service entier, on n'en achète pas d'autre. Acheter, jouer, acheter :
+//      un réseau n'est pas une collection.
+//   2. ON N'OUVRE UNE GARE QUE DEPUIS UNE VOISINE BIEN TENUE. Il faut ★★ sur
+//      au moins une des gares déjà acquises qui la touchent. L'argent gagné
+//      ailleurs n'ouvre plus rien tout seul : il faut tenir l'endroit d'où l'on
+//      s'étend.
+//
+//      Formulée en PALIERS DE DIFFICULTÉ (« niveau d exige ★★ au niveau d−1 »),
+//      la règle enfermait le joueur : 11 des 32 portes de départ n'ont que des
+//      voisines de niveau 3 à 5 — Lokeren touche Gand, Termonde et Anvers,
+//      Regensburg touche Nürnberg et München. Une petite gare à côté d'un grand
+//      nœud, c'est la géographie normale, et aucune règle de progression n'a le
+//      droit de la déclarer sans issue. La version locale n'a pas ce défaut :
+//      elle ne demande jamais que de bien tenir une gare qu'on possède DÉJÀ,
+//      donc elle est toujours satisfaisable.
+//
+// Aucune des deux ne se contourne avec un solde plus gros. Toutes deux se
+// disent en clair sur la fiche de gare : un blocage muet serait pire que pas
+// de blocage du tout.
+const OPEN_STARS = 2;
+
+// Une gare a « assuré un service » dès qu'une journée y a été menée à son
+// terme — même sans étoile. C'est le service qui compte, pas le résultat :
+// exiger une étoile enfermerait le joueur qui a acheté trop dur pour lui.
+function stationInService(id) {
+  return (getProgress()[id] || {}).bestDelay != null;
+}
+// La première gare acquise qui n'a jamais servi, s'il y en a une.
+function idleStation() {
+  for (const c of CATALOG) if (isBought(c.id) && !stationInService(c.id)) return c.id;
+  return null;
+}
+// Les gares acquises qui touchent celle-ci — c'est de là qu'on peut s'étendre.
+function ownedNeighbours(id) {
+  if (typeof netLinks !== "function") return [];
+  return netLinks(id).to.filter(nb => isBought(nb));
+}
+// En tient-on au moins une à ★★ ? Au tout début, le réseau est vide et la
+// question ne se pose pas : les portes de départ n'ont aucune voisine acquise.
+function openedFromMastered(id) {
+  if (networkEmpty()) return true;
+  const prog = getProgress();
+  return ownedNeighbours(id).some(nb => (prog[nb] || {}).stars >= OPEN_STARS);
+}
+// Ce qui empêche d'acheter cette gare MAINTENANT — dans l'ordre où le joueur
+// peut y remédier. Rend null quand rien ne s'y oppose.
+function buyBlock(id) {
+  if (!isBuyable(id)) return null;
+  const idle = idleStation();
+  if (idle) return { kind: "service", id: idle };
+  if (!openedFromMastered(id)) return { kind: "maitrise", from: ownedNeighbours(id) };
+  const short = stationPrice(id) - getCredits();
+  if (short > 0) return { kind: "argent", short };
+  return null;
+}
+// Achetable ET payable ET débloquée : le seul cas où le geste est possible.
+function canBuy(id) { return isBuyable(id) && !buyBlock(id); }
 // Achat : passe par le magasin, qui décrémente et mémorise atomiquement.
 function buyStationById(id) {
-  return isBuyable(id) && buyStation(id, stationPrice(id));
+  return canBuy(id) && buyStation(id, stationPrice(id));
 }
 
 // La moins chère des gares achetables — d'un pays donné, ou du réseau entier.
@@ -173,7 +246,7 @@ function cheapestBuyable(country) {
   for (let i = 0; i < CATALOG.length; i++) {
     const c = CATALOG[i];
     if (country && c.country !== country) continue;
-    if (!isBuyable(c.id)) continue;
+    if (!canBuy(c.id)) continue;
     const p = stationPrice(c.id);
     if (p < bestP) { bestP = p; best = i; }
   }

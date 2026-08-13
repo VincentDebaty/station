@@ -139,7 +139,10 @@ function mapnetBuild() {
       // porte SON PRIX, en or ; une gare hors réseau reste sourde et sans prix.
       const buyable = !unlocked && typeof isBuyable === "function" && isBuyable(id);
       const price = buyable ? stationPrice(id) : 0;
-      const afford = buyable && canAfford(id);
+      // « Prête » : achetable, payable, et rien d'autre ne s'y oppose (une gare
+      // en souffrance, un palier pas atteint). C'est le seul état où le geste
+      // est possible tout de suite — donc le seul qui a le droit de respirer.
+      const ready = buyable && typeof canBuy === "function" && canBuy(id);
       // CE QU'UNE GARE ACQUISE PEUT ENCORE RAPPORTER. Sans ce chiffre, la carte
       // ne répondait qu'à une moitié de la question : elle disait où dépenser,
       // jamais où gagner. Le joueur à court de crédits n'avait aucun moyen de
@@ -155,7 +158,7 @@ function mapnetBuild() {
       // et une gare achetable que le solde permet d'ouvrir MAINTENANT. Une gare
       // trop chère ne respire pas : elle porte son prix, ce qui suffit à dire
       // « pas encore » sans mobiliser l'attention.
-      const isPulsing = isEntry || afford;
+      const isPulsing = isEntry || ready;
 
       // La pastille ne porte plus son rang de jeu : sa TAILLE dit la difficulté
       // (petite en 1, grosse en 5). On lit d'un coup d'œil où sont les morceaux,
@@ -180,7 +183,7 @@ function mapnetBuild() {
       const perfect = best === 0;
       const el = document.createElement("div");
       el.className = "map-chip city-chip" + (unlocked ? "" : " locked") +
-        (buyable ? " buyable" : "") + (afford ? " afford" : "") +
+        (buyable ? " buyable" : "") + (ready ? " ready" : "") +
         (stars ? " s" + stars : "") + (perfect ? " perfect" : "") +
         (isPulsing ? " entry" : "");
       el.style.setProperty("--d", DOT_D[diff] + "px");

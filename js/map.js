@@ -741,17 +741,24 @@ function openStationModal(gi) {
   // il fallait garder à l'écran un bouton mort pour toujours.)
   const price = typeof stationPrice === "function" ? stationPrice(card.id) : 0;
   const buyable = !unlocked && typeof isBuyable === "function" && isBuyable(card.id);
-  const short = price - (typeof getCredits === "function" ? getCredits() : 0);
+  // Ce qui s'oppose à l'achat, en toutes lettres. Un bouton éteint sans raison
+  // se lit comme une panne ; avec sa raison, il devient un objectif.
+  const block = buyable && typeof buyBlock === "function" ? buyBlock(card.id) : null;
+  const nameOfId = id => { const c = cardOf(id); return c ? (c.city || c.name) : id; };
   let buyBtn = "";
   if (unlocked) buyBtn = "";
-  else if (buyable && short <= 0)
-    buyBtn = '<button class="btn mm-buy" data-id="' + card.id + '" data-gi="' + gi +
-      '">Acheter — ' + creditsHTML(price) + "</button>";
   else if (buyable)
-    // Bouton mort plutôt qu'absent : le joueur voit ce qu'il vise et ce qui lui
-    // manque, donc combien de services il lui reste à faire.
-    buyBtn = '<button class="btn mm-buy" disabled>Acheter — ' + creditsHTML(price) + "</button>" +
-      '<div class="mm-short">Il vous manque ' + creditsHTML(short) + "</div>";
+    buyBtn = '<button class="btn mm-buy"' +
+      (block ? " disabled" : ' data-id="' + card.id + '" data-gi="' + gi + '"') +
+      ">Acheter — " + creditsHTML(price) + "</button>" +
+      (!block ? "" : '<div class="mm-short">' + (
+        block.kind === "service"
+          ? "Mettez d'abord <b>" + nameOfId(block.id) + "</b> en service"
+        : block.kind === "maitrise"
+          ? "Demande <b>★★</b> sur " +
+            (block.from.length === 1 ? "<b>" + nameOfId(block.from[0]) + "</b>"
+              : block.from.slice(0, 2).map(nameOfId).join(" ou "))
+          : "Il vous manque " + creditsHTML(block.short)) + "</div>");
   else
     buyBtn = '<button class="btn mm-buy" disabled>' + icon(ICON.lock, 15) + "Hors de votre réseau</button>";
 
