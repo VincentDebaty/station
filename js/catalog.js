@@ -106,6 +106,16 @@ function stationPrice(id) { return round10(stationTarif(id) * PRIX_RATIO); }
 // Plafond : ce qu'une gare peut rapporter en tout, sur toute une vie de joueur.
 // La masse monétaire du jeu est donc finie et connue — le farming est impossible.
 function stationCap(id) { return stationTarif(id) * 2; }
+// CE QUI FAIT UNE GARE « FAITE » : le tarif, c'est-à-dire trois étoiles. Pas le
+// plafond.
+//
+// Les jauges se remplissaient jusqu'au plafond, donc un service à ★★★ — moins
+// de dix minutes de retard sur une journée entière — affichait « 460 / 920 »,
+// soit la moitié. Un excellent résultat se lisait comme un travail à moitié
+// fait, et la prime du sans-faute cessait d'être une prime pour devenir la
+// barre à atteindre. Elle doit rester ce qu'elle est : un exploit qu'on va
+// chercher en plus, une fois la gare tenue.
+function stationValue(id) { return stationTarif(id); }
 
 // Multiplicateur de gain, en quarts de tarif. Ce sont EXACTEMENT les paliers
 // d'étoiles (10 / 20 / 30 min) : aucun barème nouveau à apprendre, et le

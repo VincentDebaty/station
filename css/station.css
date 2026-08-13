@@ -1306,6 +1306,10 @@ svg { width: 100%; height: 100%; display: block; }
 }
 .gauge.money .fill { display: block; height: 100%; background: var(--gold); }
 .mm-row .v .gauge.money + .d { color: var(--gold); }
+/* Gare faite : le mot remplace le rapport, et il ne clignote pas — trois
+   étoiles, c'est tenu. La prime du sans-faute se dit ailleurs, là où elle est
+   une somme à prendre (la carte, le bouton « Rejouer »). */
+.gauge.money + .d.full, #end-unlock .eu-banked .d.full { color: var(--gold); font-family: inherit; }
 
 
 /* ==================================================================

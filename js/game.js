@@ -1357,13 +1357,16 @@ function endGame(failed) {
   // vue. Un dessin qui dit « cette gare est pleine » vaut deux lignes de texte.
   function recetteHTML() {
     if (noPay) return "";
-    const cap = stationCap(STATION.id);
+    const cap = stationValue(STATION.id);   // la gare est « faite » à trois étoiles
     return '<div class="eu-title">Recette du service</div>' +
       '<div class="eu-gain' + (gain > 0 ? "" : " none") + '">' + creditsHTML(gain, true) + "</div>" +
-      (gain > 0 || !cap ? "" :
-        '<div class="eu-banked"><span class="gauge money"><span class="fill" style="width:' +
-          Math.round(stationBanked(STATION.id) / cap * 100) + '%"></span></span>' +
-        '<span class="d">' + stationBanked(STATION.id) + " / " + cap + "</span></div>") +
+      (gain > 0 || !cap ? "" : (() => {
+        const got = Math.min(cap, stationBanked(STATION.id));
+        return '<div class="eu-banked"><span class="gauge money"><span class="fill" style="width:' +
+          Math.round(got / cap * 100) + '%"></span></span>' +
+          '<span class="d' + (got >= cap ? " full" : "") + '">' +
+          (got >= cap ? "Complet" : got + " / " + cap) + "</span></div>";
+      })()) +
       "";  // le solde n'est PAS ici : il vit en permanence sur la carte, derrière
            // le relevé, et c'est lui qui s'incrémente sous les yeux du joueur.
   }

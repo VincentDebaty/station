@@ -762,8 +762,11 @@ function openStationModal(gi) {
   // Ce que la gare a déjà versé sur ce qu'elle peut verser en tout : une gare
   // acquise garde un objectif visible même toutes étoiles décrochées, et ce
   // qui reste à prendre se lit sans calcul.
-  const cap = typeof stationCap === "function" ? stationCap(card.id) : 0;
-  const got = typeof stationBanked === "function" ? stationBanked(card.id) : 0;
+  // La jauge se remplit au TARIF (trois étoiles) : c'est là que la gare est
+  // faite. Ce qu'un sans-faute ajoute par-dessus se lit ailleurs — sur la carte
+  // et sur le bouton « Rejouer », qui disent ce qu'il reste à prendre.
+  const cap = typeof stationValue === "function" ? stationValue(card.id) : 0;
+  const got = Math.min(cap, typeof stationBanked === "function" ? stationBanked(card.id) : 0);
 
   // Trois lignes, aucune phrase : les jauges et les étoiles disent tout — seul
   // le retard garde son chiffre, c'est un record. Et c'est ICI qu'il vit
@@ -796,7 +799,8 @@ function openStationModal(gi) {
       '<div class="mm-row"><span class="k">' + (unlocked ? "Encaissé" : "Rapporte") + "</span>" +
         '<span class="v"><span class="gauge money"><span class="fill" style="width:' +
           Math.round(got / cap * 100) + '%"></span></span>' +
-        '<span class="d">' + (unlocked ? got + " / " + cap : "jusqu'à " + cap) +
+        '<span class="d' + (unlocked && got >= cap ? " full" : "") + '">' +
+          (!unlocked ? "jusqu'à " + cap : got >= cap ? "Complet" : got + " / " + cap) +
         "</span></span></div>" : "");
 
   // Drapeau seul : le pays se reconnaît sans le lire, et la carte le dit déjà.
