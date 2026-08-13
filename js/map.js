@@ -239,15 +239,26 @@ function buildMap() {
     const open = legend.classList.toggle("hidden");
     legendBtn.classList.toggle("open", !open);
   });
-  // Lire la légende ne la referme pas : seul un tap AILLEURS la range.
-  legend.addEventListener("click", ev => ev.stopPropagation());
   // UN TAP AILLEURS REFERME CE QUI EST OUVERT — la légende comme le relevé de
   // fin de service. Les deux sont des panneaux posés sur la carte : on en sort
   // en touchant la carte, sans chercher le bouton qui va bien.
-  host.addEventListener("click", () => {
+  //
+  // EN CAPTURE, et c'est tout l'enjeu : les formes de pays et les pastilles
+  // arrêtent la propagation (elles cadrent, elles ouvrent une fiche), donc un
+  // écouteur classique sur l'hôte ne voyait JAMAIS le clic — c'est-à-dire
+  // presque partout, puisque la terre couvre la carte. Ranger un panneau est
+  // une affaire d'écran, pas de cible : cela se décide avant tout le reste.
+  host.addEventListener("click", ev => {
+    // Sauf sur les panneaux eux-mêmes : les lire ne les referme pas.
+    const t = ev.target;
+    if (t.closest && t.closest(".map-legend, .map-legend-btn")) return;
     legend.classList.add("hidden"); legendBtn.classList.remove("open");
-    if (typeof endLeaveMap === "function") endLeaveMap(true);
-  });
+    // Recadrer le pays quand on range le relevé — mais pas quand on vient de
+    // toucher une gare : déplacer la carte sous le doigt qui ouvre une fiche
+    // serait gratuit.
+    if (typeof endLeaveMap === "function")
+      endLeaveMap(!(t.closest && t.closest(".city-chip")));
+  }, true);
   MAP.legend = legend;
   host.appendChild(legend);
   host.appendChild(legendBtn);
