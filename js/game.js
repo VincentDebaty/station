@@ -1417,39 +1417,14 @@ function endGame(failed) {
       else startStation(gi);
     });
 
-    // « Gare suivante » = une VOISINE possédée et jamais jouée, la plus facile
-    // d'abord — un pas de plus le long des voies, pas l'entrée suivante du
-    // catalogue.
-    let nextGi = -1;
-    if (win) {
-      const prog = getProgress();
-      if (boughtNow) {
-        const gi = CATALOG.findIndex(c => c.id === boughtNow);
-        if (gi >= 0 && !((prog[boughtNow] || {}).stars)) nextGi = gi;
-      }
-      if (nextGi < 0 && typeof netLinks === "function") {
-        const cand = netLinks(CATALOG[currentIdx].id).to
-          .map(id => CATALOG.findIndex(c => c.id === id))
-          .filter(gi => gi >= 0 && !((prog[CATALOG[gi].id] || {}).stars) && isUnlocked(gi));
-        cand.sort((a, b) => (CATALOG[a].difficulty || 1) - (CATALOG[b].difficulty || 1));
-        if (cand.length) nextGi = cand[0];
-      }
-    }
-    const next = nextGi >= 0;
-    const btnNext = document.getElementById("btn-next");
-    if (next) {
-      btnNext.dataset.gi = nextGi;
-      // Le bouton porte le NOM de la gare : « Ottignies → » dit où l'on va,
-      // « Gare suivante → » laisse deviner.
-      btnNext.textContent = (CATALOG[nextGi].city || CATALOG[nextGi].name) + " →";
-    }
-    btnNext.classList.toggle("hidden", !next);
-    btnNext.classList.toggle("primary", next);
+    // Plus de bouton « gare suivante ». Il désignait une voisine possédée et
+    // jamais jouée — utile du temps où la fin de service était un cul-de-sac.
+    // La carte est désormais posée à côté du relevé, avec les gares acquises,
+    // leurs recettes restantes et ce qui s'achète : elle propose mieux, et sans
+    // choisir à la place du joueur.
     const btnReplay = document.getElementById("btn-replay");
     btnReplay.classList.remove("hidden");
-    // « Rejouer » ne prend la mise en avant que s'il n'y a rien de mieux à
-    // faire : ni gare suivante à prendre, ni service réussi à savourer.
-    btnReplay.classList.toggle("primary", !win && !next);
+    btnReplay.classList.toggle("primary", !win);
     // CE QUE LA GARE PEUT ENCORE VERSER, sur le bouton qui y ramène. Sans ce
     // chiffre, « Rejouer » ne promet rien de mesurable — or c'est exactement la
     // question que se pose un joueur à court de crédits. Rien à afficher quand

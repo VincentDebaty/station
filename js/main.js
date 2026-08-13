@@ -243,19 +243,6 @@ document.getElementById("btn-quit-confirm").addEventListener("click", () => {
   confirmQuit.classList.add("hidden"); showHub();
 });
 confirmQuit.addEventListener("click", e => { if (e.target === confirmQuit) dismissConfirmQuit(); });
-// « Gare suivante » : petit voyage animé sur la carte du pays (convoi qui file de
-// la gare terminée à la suivante) avant de lancer le service. Repli direct si
-// l'animation n'est pas disponible.
-document.getElementById("btn-next").addEventListener("click", () => {
-  // La cible est posée par showEnd (game.js) : une VOISINE que ce service vient
-  // d'ouvrir, pas l'entrée suivante du catalogue.
-  const from = currentIdx, to = +document.getElementById("btn-next").dataset.gi;
-  if (!(to >= 0)) { showHub(); return; }
-  document.getElementById("end").classList.add("hidden");
-  if (typeof mapJourneyToNext === "function") mapJourneyToNext(from, to, () => startStation(to));
-  else startStation(to);
-});
-
 // ------------------------------------------------------------------
 // Démo « limites » : gare construite à la volée pour éprouver les plafonds
 // (quais, destinations, trains, frets). Se lance par l'URL —
