@@ -1395,13 +1395,10 @@ function endGame(failed) {
       '<div class="eu-gain' + (gain > 0 ? "" : " none") + '">' + creditsHTML(gain, true) + "</div>" +
       (gain > 0 || !cap ? "" : (() => {
         const got = Math.min(cap, stationBanked(STATION.id));
-        const prime = Math.max(0, stationCap(STATION.id) - stationBanked(STATION.id));
         return '<div class="eu-banked"><span class="gauge money"><span class="fill" style="width:' +
           Math.round(got / cap * 100) + '%"></span></span>' +
           '<span class="d' + (got >= cap ? " full" : "") + '">' +
-          (got < cap ? got + " / " + cap
-           : prime > 0 ? "Complet · ★ " + creditsHTML(prime, true)
-           : "Complet") + "</span></div>";
+          (got < cap ? got + " / " + cap : "Complet") + "</span></div>";
       })()) +
       "";  // le solde n'est PAS ici : il vit en permanence sur la carte, derrière
            // le relevé, et c'est lui qui s'incrémente sous les yeux du joueur.
@@ -1473,8 +1470,8 @@ function endGame(failed) {
     // question que se pose un joueur à court de crédits. Rien à afficher quand
     // la gare a tout donné : un « +0 » ferait de la reprise une perte de temps
     // annoncée, et son absence le dit déjà (même règle que sur la carte).
-    const leftHere = (STATION.adhoc || typeof stationCap !== "function") ? 0
-      : Math.max(0, stationCap(STATION.id) - stationBanked(STATION.id));
+    const leftHere = (STATION.adhoc || typeof stationValue !== "function") ? 0
+      : Math.max(0, stationValue(STATION.id) - stationBanked(STATION.id));
     btnReplay.innerHTML = (typeof icon === "function" ? icon(ICON.restart, 18) : "") +
       "Rejouer" + (leftHere ? " — " + creditsHTML(leftHere, true) : "");
   }

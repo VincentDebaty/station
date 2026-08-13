@@ -147,11 +147,17 @@ function mapnetBuild() {
       // ne répondait qu'à une moitié de la question : elle disait où dépenser,
       // jamais où gagner. Le joueur à court de crédits n'avait aucun moyen de
       // choisir sa gare à rejouer autrement qu'au souvenir.
-      // Zéro = la gare a tout donné (service parfait) : on n'écrit alors RIEN.
-      // Un « +0 » sous chaque gare finie serait du bruit, et son absence dit
-      // mieux ce qu'elle veut dire — il ne reste plus rien à y chercher.
-      const left = unlocked && typeof stationCap === "function"
-        ? Math.max(0, stationCap(id) - stationBanked(id)) : 0;
+      //
+      // Ce qui reste par la VOIE NORMALE, jusqu'au plein tarif — pas la prime du
+      // sans-faute. Comptée jusqu'au plafond, une gare jamais jouée annonçait
+      // +640 quand sa fiche disait « 0 / 320 » : deux chiffres pour la même
+      // chose, dont l'un supposait un exploit. La prime a sa ligne dans la
+      // fiche, là où on peut la nommer.
+      // Zéro = la gare est faite : on n'écrit alors RIEN. Un « +0 » sous chaque
+      // gare finie serait du bruit, et son absence dit mieux ce qu'elle veut
+      // dire — il n'y a plus rien à y chercher par la voie ordinaire.
+      const left = unlocked && typeof stationValue === "function"
+        ? Math.max(0, stationValue(id) - stationBanked(id)) : 0;
       // QUI RESPIRE : UNE SEULE CHOSE, ET C'EST UN SERVICE À ASSURER.
       // Une gare acquise qui n'a pas encore tourné — celle-là même qui bloque
       // tout achat tant qu'elle n'a pas servi (js/catalog.js). Rien d'autre.

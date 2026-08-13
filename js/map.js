@@ -767,9 +767,14 @@ function openStationModal(gi) {
   // et sur le bouton « Rejouer », qui disent ce qu'il reste à prendre.
   const cap = typeof stationValue === "function" ? stationValue(card.id) : 0;
   const got = Math.min(cap, typeof stationBanked === "function" ? stationBanked(card.id) : 0);
-  // Ce qui reste à prendre au-delà du plein tarif : la prime du sans-faute.
-  const prime = (unlocked && typeof stationCap === "function")
-    ? Math.max(0, stationCap(card.id) - stationBanked(card.id)) : 0;
+  // LA PRIME DU SANS-FAUTE : ce que le service parfait ajoute PAR-DESSUS le
+  // plein tarif. Une constante, pas un reste — elle vaut la même chose qu'on
+  // ait déjà encaissé le quart ou la totalité du tarif, et c'est bien ainsi
+  // qu'on l'annonce : « le sans-faute rapporte 320 de plus ». Nulle une fois
+  // décroché, puisqu'il n'y a plus rien à en tirer.
+  const prime = (unlocked && typeof stationCap === "function" &&
+                 stationBanked(card.id) < stationCap(card.id))
+    ? stationCap(card.id) - stationValue(card.id) : 0;
 
   // Trois lignes, aucune phrase : les jauges et les étoiles disent tout — seul
   // le retard garde son chiffre, c'est un record. Et c'est ICI qu'il vit
@@ -805,12 +810,11 @@ function openStationModal(gi) {
         '<span class="d' + (unlocked && got >= cap ? " full" : "") + '">' +
           (!unlocked ? "jusqu'à " + cap : got >= cap ? "Complet" : got + " / " + cap) +
         "</span></span></div>" : "") +
-    // CE QUE L'ÉTOILE RAPPORTE, dit avec l'étoile elle-même. « Complet » sur la
-    // ligne du dessus se lirait sinon comme « il n'y a plus rien ici », alors
-    // que la carte annonce +320 sur la même gare — et rien ne disait D'OÙ
-    // viendraient ces 320. La ligne ne paraît que là où la question se pose :
-    // gare tenue à trois étoiles, sans-faute encore à décrocher.
-    (unlocked && got >= cap && prime > 0 ?
+    // CE QUE L'ÉTOILE RAPPORTE, dit avec l'étoile elle-même. Sans cette ligne,
+    // « Complet » se lirait comme « il n'y a plus rien ici », et rien ne dirait
+    // D'OÙ viennent les crédits d'un sans-faute. Elle disparaît une fois
+    // l'étoile décrochée — il n'y a alors plus rien à en tirer.
+    (unlocked && prime > 0 ?
       '<div class="mm-row"><span class="k">Sans faute</span>' +
         // L'étoile de la CARTE, pas un caractère ★ : celui-ci se confondait avec
         // les trois étoiles du record, juste au-dessus. Celle-ci est la marque
