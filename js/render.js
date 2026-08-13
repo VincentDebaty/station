@@ -16,8 +16,10 @@ const UIK = (window.matchMedia && window.matchMedia("(pointer: coarse)").matches
 // bord de carte, une largeur FIXE et étroite. On la grossit donc moins que le
 // reste sur tactile — sinon deux convois symboliques n'y tiendraient plus.
 const QK = Math.min(UIK, 1.25);
-// Bords du cadrage courant (renseignés par drawStatic) : la file miniature s'y
-// borne, pour rester dans le champ quel que soit le gabarit de la gare.
+// Bords LISIBLES du cadrage courant (renseignés par fitViewBox) : la file
+// miniature s'y borne, pour rester dans le champ quel que soit le gabarit de la
+// gare. Ce n'est pas tout à fait le cadrage : la bande de sécurité de l'appareil
+// (îlot de caméra) en est retirée — ce qu'on y poserait serait illisible.
 let VIEW_X1 = 0, VIEW_X2 = 1400;
 
 function el(tag, attrs, parent) {
@@ -52,6 +54,26 @@ function el(tag, attrs, parent) {
 // (la portée du RÉSEAU, où naissent et meurent les convois), davantage si la
 // bande de letterbox l'exige.
 let DRAW_RUN = EDGE_RUN;
+// Bande de sécurité de l'appareil (encoche, îlot de caméra) : en paysage elle
+// mange le bord GAUCHE ou DROIT de l'écran selon le sens de rotation. On la
+// mesure sur une sonde — env() ne se lit pas depuis une custom property — et
+// on prend le pire des deux côtés, le cadrage étant centré de toute façon.
+let safeProbe = null;
+function safeInset() {
+  if (!safeProbe) {
+    safeProbe = document.createElement("div");
+    safeProbe.style.cssText = "position:absolute;top:0;left:0;width:0;height:0;" +
+      "visibility:hidden;pointer-events:none;" +
+      "padding-left:var(--safe-l);padding-right:var(--safe-r)";
+    document.body.appendChild(safeProbe);
+  }
+  const cs = getComputedStyle(safeProbe);
+  return Math.max(parseFloat(cs.paddingLeft) || 0, parseFloat(cs.paddingRight) || 0);
+}
+// Respiration EN PLUS de cette bande, entre le bord de l'écran et l'entrée du
+// plan (x = 0 à gauche, x = 1400 à droite) — là où les convois se présentent.
+const ENTRY_MARGIN = 22; // px écran
+
 function fitViewBox() {
   if (typeof PLATFORMS === "undefined" || !PLATFORMS || !PLATFORMS.length) return;
   const CLOCK_ROOM = 140, BOTTOM_ROOM = 30;
@@ -73,8 +95,37 @@ function fitViewBox() {
   let xL = 0, xR = 1400;
   if (only === "L") xR = Math.min(1400, Math.max(PLAT_X2 + 55, minVW));
   else if (only === "R") xL = Math.max(0, Math.min(PLAT_X1 - 55, 1400 - minVW));
+  // ENTRÉE DU PLAN AU LARGE DU BORD. Le gril d'une petite gare est court : le
+  // plan n'est plus bridé par la hauteur, il s'agrandit jusqu'à remplir la
+  // LARGEUR, et l'aiguillage tombe alors à 10 % du bord contre 20 % sur une
+  // gare dense. Sur un téléphone à îlot de caméra, la file d'approche disparaît
+  // dessous — un convoi qui attend n'existe pas pour le joueur (vu à Marloie,
+  // 3 quais, sur iPhone 16). On plafonne donc l'échelle pour que l'entrée du
+  // plan reste toujours au-delà de la bande de sécurité. Le cadre s'élargit
+  // symétriquement : le réseau ne bouge pas, il est vu d'un peu plus loin.
+  const inset = measured ? safeInset() : 0;
+  if (measured) {
+    const room = box.width / 2 - (inset + ENTRY_MARGIN);
+    const cx = (xL + xR) / 2; // centre du cadre : ce qui tombe au centre de l'écran
+    // Ce qui doit rester au large, de chaque côté : l'entrée du plan là où il y
+    // a des portails, le heurtoir du quai là où il n'y en a pas (en terminus,
+    // le flanc rogné n'est pas vide — les butoirs y touchent presque le bord).
+    const refL = only === "R" ? PLAT_X1 - 11 : 0;
+    const refR = only === "L" ? PLAT_X2 + 11 : 1400;
+    const sMax = Math.min(room / (cx - refL), room / (refR - cx));
+    const s = Math.min(box.width / (xR - xL), box.height / vh);
+    if (sMax > 0 && s > sMax) {
+      const pad = (box.width / sMax - (xR - xL)) / 2;
+      xL -= pad; xR += pad;
+    }
+  }
   board.setAttribute("viewBox", `${xL} ${yTop} ${xR - xL} ${vh}`);
-  VIEW_X1 = xL; VIEW_X2 = xR;
+  // Bords lisibles : le cadrage MOINS la bande de sécurité, convertie en unités
+  // du plan. La file miniature s'y arrête — la pousser sous l'îlot reviendrait à
+  // ne pas l'afficher. Ce qui se dessine hors de ces bords (voies, convois qui
+  // arrivent) n'y perd rien : on sait déjà d'où ils viennent.
+  const safeU = measured ? inset / Math.min(box.width / (xR - xL), box.height / vh) : 0;
+  VIEW_X1 = xL + safeU; VIEW_X2 = xR - safeU;
   // Bande de letterbox restante, en unités du plan. Le rognage la ramène sous
   // EDGE_RUN dès qu'il le peut ; sur un écran très large et très bas il ne
   // suffit plus (rognage nul, bande encore large). On allonge alors le TRACÉ
@@ -82,7 +133,9 @@ function fitViewBox() {
   // s'étire, jamais le réseau : les convois continuent d'entrer à EDGE_RUN.
   const band = measured
     ? Math.max(0, ((box.width / box.height) * vh - (xR - xL)) / 2) : 0;
-  DRAW_RUN = Math.max(EDGE_RUN, band);
+  // le bord de l'écran se lit sur le cadre RETENU (élargi ou rogné), pas sur le
+  // plein cadre : les voies doivent traverser le remplissage comme la bande
+  DRAW_RUN = Math.max(EDGE_RUN, band - xL, xR + band - 1400);
   stretchTracks();
 }
 window.addEventListener("resize", fitViewBox);
