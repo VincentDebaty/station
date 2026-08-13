@@ -113,6 +113,24 @@ function onboardingTick() {
     _tutFirstId = t.id;
     freezeGame(true); onboarding = "tap1";
     coachAt(t.el, "Voici un train qui s'annonce. <b>Touchez-le</b> pour le choisir.");
+  } else if (onboarding === "dwell1") {
+    // LE MOMENT LE PLUS OPAQUE DU JEU : le train est arrivé, il ne bouge plus,
+    // et rien ne dit ni pourquoi ni jusqu'à quand. On attend qu'il soit
+    // vraiment à quai pour l'expliquer — une règle s'enseigne devant ce qu'elle
+    // décrit, pas trois écrans avant.
+    const t = trains.find(o => o.id === _tutFirstId);
+    // Il n'ira jamais à quai (mauvais quai choisi, service fini) : on passe.
+    // Sans cette porte de sortie, le tutoriel attendrait indéfiniment un arrêt
+    // qui n'aura pas lieu, et le deuxième train ne serait jamais présenté.
+    if (!t || t.wrongPlatform || t.state === "done" || t.state === "movingBack" ||
+        t.state === "movingOut") { onboarding = "wait2"; return; }
+    if (t.state !== "dwell" || !t.el) return;
+    freezeGame(true); onboarding = "board";
+    coachAt(t.el,
+      "Il est à quai. Les voyageurs montent et descendent : <b>deux minutes au minimum</b>. " +
+      "Et il ne repartira jamais avant <b>son heure de départ</b>, celle du cadran — " +
+      "même prêt, il attend l'heure. Tout cela se fait seul, vous n'avez rien à faire.",
+      "Compris");
   } else if (onboarding === "free") {
     onboardingWatch();
   } else if (onboarding === "wait2") {
@@ -188,7 +206,7 @@ function onboardingPlatformChosen() {
   if (onboarding === "plat1") {
     onboarding = "delay";
     coachAt(document.getElementById("delay"),
-      "Il entre, s'arrête, puis repartira seul à l'heure. <b>Ici s'affiche le retard</b> cumulé — gardez-le au plus bas.",
+      "Il entre et s'arrête. <b>Ici s'affiche le retard</b> cumulé du service — gardez-le au plus bas.",
       "Suivant");
   } else if (onboarding === "plat2") {
     onboarding = "goal";
@@ -203,6 +221,10 @@ function coachNext() {
     // Accueil de la carte : on le referme, il ne revient plus de la partie.
     _mapWelcomeOff = true; onboarding = null; hideCoach();
   } else if (onboarding === "delay") {
+    // On laisse tourner : le convoi entre en gare, et c'est SON ARRIVÉE À QUAI
+    // qui déclenche l'explication suivante (onboardingTick, étape « dwell1 »).
+    onboarding = "dwell1"; hideCoach(); freezeGame(false);
+  } else if (onboarding === "board") {
     onboarding = "wait2"; hideCoach(); freezeGame(false); // le 1er part, un 2e arrive
   } else if (onboarding === "goal") {
     // Le guidage pas-à-pas est fini et ne se rejouera plus (setOnboarded), mais
