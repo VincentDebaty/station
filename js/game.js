@@ -38,16 +38,26 @@ let _coachTarget = null; // élément DOM que le repère pointe (suivi chaque fr
 // Les portes d'entrée pulsent déjà (js/mapnet.js) ; il reste à NOMMER le geste.
 // Pas de halo ici : les portes sont plusieurs et équivalentes, en cerner une
 // seule dirait « celle-ci » alors que le joueur choisit librement.
+// Un accueil se referme. Sans bouton, la bulle revenait à chaque retour sur la
+// carte et à chaque fiche refermée, et rien ne disait comment s'en défaire —
+// elle finissait par cacher le sud de la Belgique. Fermée, elle ne revient plus
+// de la partie ; au prochain lancement, si le joueur n'a toujours acheté
+// aucune gare, elle se represente : il en a manifestement encore l'usage.
+let _mapWelcomeOff = false;
 function maybeStartMapOnboarding() {
   const done = (typeof getOnboarded === "function") && getOnboarded();
   const started = (typeof networkEmpty === "function") && !networkEmpty();
-  if (done || started) { if (onboarding === "pickStation") { onboarding = null; hideCoach(); } return; }
+  if (done || started || _mapWelcomeOff) {
+    if (onboarding === "pickStation") { onboarding = null; hideCoach(); }
+    return;
+  }
   onboarding = "pickStation";
   // C'est le seul endroit du jeu où le mot « crédits » est prononcé, avec le
   // premier achat : partout ailleurs, le jeton parle tout seul.
   coachAt(null, "Bienvenue ! Vous avez <b>" + (typeof getCredits === "function" ? getCredits() : 150) +
                 " crédits</b> pour ouvrir votre première gare. " +
-                "Les gares qui <b>pulsent</b> sont à votre portée — choisissez la vôtre.");
+                "Les gares qui <b>pulsent</b> sont à votre portée — choisissez la vôtre.",
+          "Compris");
 }
 
 // Fiche de gare ouverte pendant l'étape 0 : le repère se déplace sur le bouton
@@ -189,7 +199,10 @@ function onboardingPlatformChosen() {
 }
 // Bouton du repère (étapes d'explication) : avance / termine.
 function coachNext() {
-  if (onboarding === "delay") {
+  if (onboarding === "pickStation") {
+    // Accueil de la carte : on le referme, il ne revient plus de la partie.
+    _mapWelcomeOff = true; onboarding = null; hideCoach();
+  } else if (onboarding === "delay") {
     onboarding = "wait2"; hideCoach(); freezeGame(false); // le 1er part, un 2e arrive
   } else if (onboarding === "goal") {
     // Le guidage pas-à-pas est fini et ne se rejouera plus (setOnboarded), mais
