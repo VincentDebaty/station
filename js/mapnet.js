@@ -152,13 +152,20 @@ function mapnetBuild() {
       // mieux ce qu'elle veut dire — il ne reste plus rien à y chercher.
       const left = unlocked && typeof stationCap === "function"
         ? Math.max(0, stationCap(id) - stationBanked(id)) : 0;
-      const isEntry = unlocked && !stars; // acquise, encore à faire
-      // QUI RESPIRE. L'anneau pulsé veut dire « à toi de jouer » — et il ne dit
-      // que cela. Deux cas, et deux seulement : une gare acquise jamais jouée,
-      // et une gare achetable que le solde permet d'ouvrir MAINTENANT. Une gare
-      // trop chère ne respire pas : elle porte son prix, ce qui suffit à dire
-      // « pas encore » sans mobiliser l'attention.
-      const isPulsing = isEntry || ready;
+      // QUI RESPIRE : UNE SEULE CHOSE, ET C'EST UN SERVICE À ASSURER.
+      // Une gare acquise qui n'a pas encore tourné — celle-là même qui bloque
+      // tout achat tant qu'elle n'a pas servi (js/catalog.js). Rien d'autre.
+      //
+      // Les gares achetables ont pulsé un temps, elles aussi : à dix pastilles
+      // qui battent, plus rien ne bat. Elles gardent leur étiquette de prix en
+      // or vif, qui dit déjà « à portée » sans réclamer l'attention.
+      const todo = unlocked && (typeof stationInService !== "function" || !stationInService(id));
+      const isPulsing = todo;
+      // Ce qui se joue MAINTENANT ne se cache derrière personne — qu'il s'agisse
+      // d'un service à assurer ou d'une gare à ouvrir. La priorité d'affichage
+      // et la pulsation sont deux choses distinctes : l'une décide qui reste
+      // visible quand deux points se serrent, l'autre réclame le regard.
+      const actionable = todo || ready;
 
       // La pastille ne porte plus son rang de jeu : sa TAILLE dit la difficulté
       // (petite en 1, grosse en 5). On lit d'un coup d'œil où sont les morceaux,
@@ -223,8 +230,8 @@ function mapnetBuild() {
         // verrouillé plus relié qu'elle, on voyait une gare achetable sans
         // comprendre pourquoi elle l'était — Dinant disparaissait derrière
         // Namur, et Libramont semblait ouverte sans raison.
-        minScale: isPulsing ? 0 : rankScale[id],
-        labelScale: isPulsing ? 0 : labelScale[id],
+        minScale: actionable ? 0 : rankScale[id],
+        labelScale: actionable ? 0 : labelScale[id],
         // QUATRE RANGS, dans l'ordre où ils comptent pour le joueur : ce qu'il
         // peut faire MAINTENANT, ce qu'il possède, ce qu'il pourra acheter, le
         // reste. Le degré dans le réseau ne départage plus qu'à l'intérieur
@@ -236,7 +243,7 @@ function mapnetBuild() {
         // évinçait une gare PAYABLE figée à −1. Aarschot, à 50 crédits et la
         // seule chose à faire sur la carte, disparaissait derrière Louvain à
         // 260 — le joueur en concluait qu'il n'avait rien à jouer.
-        rank: (isPulsing ? 0 : unlocked ? 1 : buyable ? 2 : 3) * CATALOG.length + byDeg.indexOf(id),
+        rank: (actionable ? 0 : unlocked ? 1 : buyable ? 2 : 3) * CATALOG.length + byDeg.indexOf(id),
         diff, diam: DOT_D[diff],
         capW: 0, capH: 0, capUp: false
       };

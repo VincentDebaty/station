@@ -1012,12 +1012,10 @@ svg { width: 100%; height: 100%; display: block; }
    seulement au premier lancement ; SAUF pendant un choix de fin de service, où
    seules les candidates battent — deux halos de sens différents sur la même
    carte se lisent comme un seul. */
-/* « À toi de jouer » : le halo et l'anneau prennent la couleur de ce qu'on
-   propose — teal pour une gare acquise à prendre en main, OR pour une gare
-   qu'on peut ouvrir maintenant. Un anneau teal autour d'une pastille dorée
-   disait deux choses à la fois. */
+/* « À toi de jouer », et rien d'autre : une seule gare peut battre à la fois
+   dans un coin de carte, celle qui attend son service. Le teal du réseau, donc
+   — les gares à acheter ne battent plus, leur étiquette suffit. */
 .city-chip.entry { --pulse: #2dd4bf; --pulse-hi: #63e6d4; --pulse-glow: rgba(45, 212, 191, .85); }
-.city-chip.entry.buyable { --pulse: var(--gold); --pulse-hi: #ffd684; --pulse-glow: rgba(240, 178, 60, .8); }
 .city-chip.entry .dot {
   box-shadow: 0 0 0 3px var(--chip-glow), 0 0 16px var(--pulse-glow);
 }
