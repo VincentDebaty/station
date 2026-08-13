@@ -211,11 +211,18 @@ function mapnetBuild() {
         // Namur, et Libramont semblait ouverte sans raison.
         minScale: isPulsing ? 0 : rankScale[id],
         labelScale: isPulsing ? 0 : labelScale[id],
-        // Trois rangs, dans l'ordre où ils comptent pour le joueur : ce qu'il
-        // possède, ce qu'il peut acheter, le reste. Le degré dans le réseau ne
-        // départage plus qu'à l'intérieur d'un même rang.
-        rank: isPulsing ? -1
-          : byDeg.indexOf(id) - (unlocked ? 2 * CATALOG.length : buyable ? CATALOG.length : 0),
+        // QUATRE RANGS, dans l'ordre où ils comptent pour le joueur : ce qu'il
+        // peut faire MAINTENANT, ce qu'il possède, ce qu'il pourra acheter, le
+        // reste. Le degré dans le réseau ne départage plus qu'à l'intérieur
+        // d'un même rang — d'où la multiplication par la taille du catalogue,
+        // qui garantit qu'aucun degré ne franchit une frontière de rang.
+        //
+        // Écrit d'abord en décalages négatifs, la hiérarchie s'inversait sans
+        // qu'on le voie : une gare simplement achetable tombait à −125 et
+        // évinçait une gare PAYABLE figée à −1. Aarschot, à 50 crédits et la
+        // seule chose à faire sur la carte, disparaissait derrière Louvain à
+        // 260 — le joueur en concluait qu'il n'avait rien à jouer.
+        rank: (isPulsing ? 0 : unlocked ? 1 : buyable ? 2 : 3) * CATALOG.length + byDeg.indexOf(id),
         diff, diam: DOT_D[diff],
         capW: 0, capH: 0, capUp: false
       };
