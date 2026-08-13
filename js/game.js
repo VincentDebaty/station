@@ -1362,10 +1362,12 @@ function endGame(failed) {
       '<div class="eu-gain' + (gain > 0 ? "" : " none") + '">' + creditsHTML(gain, true) + "</div>" +
       (gain > 0 || !cap ? "" : (() => {
         const got = Math.min(cap, stationBanked(STATION.id));
+        const prime = Math.max(0, stationCap(STATION.id) - stationBanked(STATION.id));
         return '<div class="eu-banked"><span class="gauge money"><span class="fill" style="width:' +
           Math.round(got / cap * 100) + '%"></span></span>' +
           '<span class="d' + (got >= cap ? " full" : "") + '">' +
-          (got >= cap ? "Complet" : got + " / " + cap) + "</span></div>";
+          (got < cap ? got + " / " + cap
+           : "Complet" + (prime > 0 ? " " + creditsHTML(prime, true) : "")) + "</span></div>";
       })()) +
       "";  // le solde n'est PAS ici : il vit en permanence sur la carte, derrière
            // le relevé, et c'est lui qui s'incrémente sous les yeux du joueur.

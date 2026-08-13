@@ -767,6 +767,9 @@ function openStationModal(gi) {
   // et sur le bouton « Rejouer », qui disent ce qu'il reste à prendre.
   const cap = typeof stationValue === "function" ? stationValue(card.id) : 0;
   const got = Math.min(cap, typeof stationBanked === "function" ? stationBanked(card.id) : 0);
+  // Ce qui reste à prendre au-delà du plein tarif : la prime du sans-faute.
+  const prime = (unlocked && typeof stationCap === "function")
+    ? Math.max(0, stationCap(card.id) - stationBanked(card.id)) : 0;
 
   // Trois lignes, aucune phrase : les jauges et les étoiles disent tout — seul
   // le retard garde son chiffre, c'est un record. Et c'est ICI qu'il vit
@@ -800,7 +803,13 @@ function openStationModal(gi) {
         '<span class="v"><span class="gauge money"><span class="fill" style="width:' +
           Math.round(got / cap * 100) + '%"></span></span>' +
         '<span class="d' + (unlocked && got >= cap ? " full" : "") + '">' +
-          (!unlocked ? "jusqu'à " + cap : got >= cap ? "Complet" : got + " / " + cap) +
+          (!unlocked ? "jusqu'à " + cap
+           : got < cap ? got + " / " + cap
+           // Le plein tarif est encaissé, mais la prime du sans-faute peut
+           // rester à prendre : « Complet » seul se lirait comme « il n'y a
+           // plus rien ici », alors que la carte annonce +320 sur la même gare.
+           // Le montant restant, en or, dit la même chose que partout ailleurs.
+           : "Complet" + (prime > 0 ? " " + creditsHTML(prime, true) : "")) +
         "</span></span></div>" : "");
 
   // Drapeau seul : le pays se reconnaît sans le lire, et la carte le dit déjà.
