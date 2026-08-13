@@ -140,6 +140,15 @@ function mapnetBuild() {
       const buyable = !unlocked && typeof isBuyable === "function" && isBuyable(id);
       const price = buyable ? stationPrice(id) : 0;
       const afford = buyable && canAfford(id);
+      // CE QU'UNE GARE ACQUISE PEUT ENCORE RAPPORTER. Sans ce chiffre, la carte
+      // ne répondait qu'à une moitié de la question : elle disait où dépenser,
+      // jamais où gagner. Le joueur à court de crédits n'avait aucun moyen de
+      // choisir sa gare à rejouer autrement qu'au souvenir.
+      // Zéro = la gare a tout donné (service parfait) : on n'écrit alors RIEN.
+      // Un « +0 » sous chaque gare finie serait du bruit, et son absence dit
+      // mieux ce qu'elle veut dire — il ne reste plus rien à y chercher.
+      const left = unlocked && typeof stationCap === "function"
+        ? Math.max(0, stationCap(id) - stationBanked(id)) : 0;
       const isEntry = unlocked && !stars; // acquise, encore à faire
       // QUI RESPIRE. L'anneau pulsé veut dire « à toi de jouer » — et il ne dit
       // que cela. Deux cas, et deux seulement : une gare acquise jamais jouée,
@@ -183,11 +192,13 @@ function mapnetBuild() {
         // difficulté 1.
         '<span class="dot">' +
           (perfect ? STAR_SVG : stars ? '<span class="fill"></span>' : "") + "</span>" +
-        // Le PRIX sous le nom, en or, et seulement sur ce qui s'achète : c'est
-        // le seul chiffre qui manquait à la carte pour qu'on puisse décider
-        // sans ouvrir une fiche.
+        // UN CHIFFRE SOUS LE NOM, en or, et le SIGNE dit son sens : « 50 », ce
+        // qu'il faut sortir pour ouvrir la gare ; « +120 », ce qu'elle peut
+        // encore rapporter. Même monnaie, même couleur, deux directions — et la
+        // pastille tranche déjà l'une de l'autre (cerne doré contre point teal).
         '<div class="cap"><div class="nm">' + (card.city || card.name) + "</div>" +
-          (buyable ? '<div class="pr">' + creditsHTML(price) + "</div>" : "") + "</div>";
+          (buyable ? '<div class="pr">' + creditsHTML(price) + "</div>"
+           : left ? '<div class="pr earn">' + creditsHTML(left, true) + "</div>" : "") + "</div>";
       el.addEventListener("click", ev => { ev.stopPropagation(); openStationModal(gi); });
       MAPNET.layer.appendChild(el);
 

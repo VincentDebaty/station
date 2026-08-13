@@ -1209,6 +1209,9 @@ svg { width: 100%; height: 100%; display: block; }
    prix payable, et le joueur devait comparer chaque nombre à son solde de tête
    — deux soustractions pour apprendre qu'il n'a rien à faire ici. */
 .city-chip.buyable:not(.afford) .pr .cr-amt { color: var(--muted); }
+/* Reste à gagner sur une gare acquise : le même or, un cran en retrait. Une
+   dépense se décide, une recette se constate — le prix garde la préséance. */
+.city-chip .pr.earn .cr-amt { color: #d9a54a; }
 .city-chip.buyable:not(.afford) .pr .cr { opacity: .55; }
 /* Achetable : la pastille quitte la bille grise pleine des gares hors réseau
    et redevient un CERCLE OUVERT, cerclé d'or — creux comme une case à remplir,
