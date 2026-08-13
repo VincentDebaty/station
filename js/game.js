@@ -149,13 +149,15 @@ function tutPlatformCounts(t) {
   const lit = (LINKS[t.from] || []).filter(pid => !platformClaimed(pid) && !platformClosed(pid));
   return { lit: lit.length, serving: lit.filter(pid => paths["out:" + t.to + ":" + pid]).length };
 }
-// Plus rien à aiguiller : tout train voyageur présent a son quai, et aucun
-// nouveau n'attend une décision. Le joueur n'a plus qu'à regarder — autant le
-// lui dire, plutôt que de le laisser attendre en temps réel.
+// Plus rien à aiguiller NI à regarder entrer : le dernier train voyageur vient
+// de s'arrêter à son quai. Tant qu'un convoi roule encore vers le sien, il se
+// passe quelque chose à l'écran ; geler la partie à cet instant-là ferait
+// manquer l'arrivée. On attend donc que plus aucun train n'attende une décision
+// et qu'aucun ne soit en route vers son quai.
 function tutIdle() {
   if (!trains.length) return false;
-  return !trains.some(o => !o.freight && !o.target &&
-    (o.state === "waiting" || o.state === "approaching"));
+  return !trains.some(o => !o.freight &&
+    (o.state === "waiting" || o.state === "approaching" || o.state === "movingIn"));
 }
 // Veille pendant le jeu libre du premier service.
 function onboardingWatch() {
@@ -175,7 +177,7 @@ function onboardingWatch() {
     const btn = document.getElementById("btn-speed");
     if (!btn) return;
     _tutSpeedSeen = true; freezeGame(true); onboarding = "speed";
-    coachAt(btn, "Tous les trains présents ont leur quai : plus rien à décider pour l'instant. " +
+    coachAt(btn, "Tous les trains présents sont à quai : plus rien à décider pour l'instant. " +
                  "<b>Accélérez</b> pour ne pas attendre — vous pourrez ralentir dès qu'un train s'annonce.",
             "Compris");
   }
@@ -421,6 +423,23 @@ function isQueueHead(t) {
   return !trains.some(o => o !== t && o.from === t.from &&
     o.queuedAt < t.queuedAt &&
     (o.state === "approaching" || o.state === "waiting"));
+}
+// UN CONVOI QUI QUITTE LE QUAI PASSE AVANT UN FRET QUI ARRIVE.
+//
+// Les deux visent la même gorge d'aiguillage ; sans arbitrage, c'est l'ordre du
+// tableau qui tranche, c'est-à-dire le hasard. Or le convoi à quai LIBÈRE une
+// place et tient une heure de départ, quand le fret ne fait que traverser et
+// n'a aucun horaire. Le fret cède donc et s'arrête au quai — un bloc de plus à
+// attendre pour lui, une minute de retard en moins pour l'autre.
+function departureWaiting(exitId, self) {
+  return trains.some(o => {
+    if (o === self || o.state !== "dwell" || o.wrongPlatform || o.platform == null) return false;
+    // « prêt à partir » : le fret l'est toujours, les autres à leur heure.
+    if (!(o.freight || gameMin >= Math.max(o.dep, o.actualArr + MIN_DWELL))) return false;
+    const oid = "out:" + o.to + ":" + o.platform;
+    if (!paths[oid]) return false;
+    return oid === exitId || !!(conflicts[oid] && conflicts[oid][exitId]);
+  });
 }
 function canGrant(pathId) {
   if (activeRoutes[pathId]) return false; // chemin déjà occupé par un autre train
@@ -851,14 +870,15 @@ function tick(dtMin) {
           const busy = trains.some(o => o !== t && o.platform === t.target &&
             (o.state === "movingIn" || o.state === "dwell" || o.state === "movingThrough"));
           const pathId = "in:" + t.from + ":" + t.target;
-          const outId = "out:" + t.to + ":" + t.target;
-          // CANTONNEMENT du fret : il s'engage dès que le bloc SUIVANT est libre
-          // (sa voie d'entrée + le quai), sans exiger la suite. Si sa voie de
-          // sortie est libre elle aussi, il verrouille tout et traverse d'une
-          // traite ; sinon il entre quand même et s'arrêtera au quai, au rouge,
-          // le temps que la sortie se dégage (voir « dwell »). C'est ce qui
-          // l'empêche de geler toute sa ligne en tête de file.
-          const through = t.freight && !!paths[outId] && canGrant(outId);
+          // CANTONNEMENT DU FRET, UN BLOC À LA FOIS. Il s'engage dès que sa voie
+          // d'entrée et le quai sont libres, et il ne réserve QUE cela.
+          //
+          // Il verrouillait auparavant sa voie de sortie au même instant, quand
+          // elle était libre, pour traverser d'une traite. Un convoi à quai qui
+          // partait dans la même direction se retrouvait alors au feu rouge à
+          // cause d'un fret qui n'avait pas encore atteint le quai — il tenait
+          // un aiguillage dont il était encore à une demi-gare. La sortie se
+          // demande donc à l'arrivée au quai, et pas avant (voir « movingIn »).
           if (!busy && canGrant(pathId)) {
             if (t.pendingEl) { t.pendingEl.remove(); t.pendingEl = null; }
             grant(pathId, t);
@@ -871,15 +891,9 @@ function tick(dtMin) {
             t.badgeLift = 0;
             t.el.classList.remove("ready", "selected");
             gTrains.appendChild(t.el); // entre en gare : calque découpé au tunnel
-            if (through) {
-              grant(outId, t);
-              t.exitPath = outId;
-              t.state = "movingThrough";
-            } else {
-              // tous les trains tirent jusqu'en tête de quai (heurtoir compris)
-              t.stopS = paths[pathId].len;
-              t.state = "movingIn";
-            }
+            // tous les trains tirent jusqu'en tête de quai (heurtoir compris)
+            t.stopS = paths[pathId].len;
+            t.state = "movingIn";
           }
         }
         break;
@@ -891,6 +905,21 @@ function tick(dtMin) {
         const stopP = t.stopS / path.len;
         if (t.progress >= stopP) {
           t.progress = stopP;
+          // LE FRET DEMANDE SA SORTIE ICI, au quai, et nulle part avant. Libre :
+          // il enchaîne sans s'arrêter, comme un fret doit le faire. Prise : il
+          // s'arrête au quai, au rouge, et repartira dès qu'elle se dégage
+          // (le « dwell » ordinaire s'en charge — il n'a pas d'heure à tenir).
+          const outId = "out:" + t.to + ":" + t.platform;
+          if (t.freight && paths[outId] && canGrant(outId) && !departureWaiting(outId, t)) {
+            release(t.entryPath);
+            grant(outId, t);
+            t.exitPath = outId;
+            t.startS = t.stopS;   // il reprend la traversée depuis la tête de quai
+            t.progress = 0;
+            t.state = "movingThrough";
+            refreshEligible();
+            break;
+          }
           t.state = "dwell";
           t.actualArr = gameMin;
           release(t.entryPath);
@@ -1095,12 +1124,16 @@ function tick(dtMin) {
         // Convoi de fret : traverse entrée + sortie d'une seule traite
         const pin = paths[t.entryPath], pout = paths[t.exitPath];
         const totalArc = pin.len + pout.len;
-        const durTot = TRAVEL * totalArc / 700 * FREIGHT_SLOWNESS;
-        t.progress += dtMin / durTot;
         const tail = (t.cars - 1) * CAR_SPACING;
         const endU = 1 + (tail + EXIT_RUN) / totalArc;
         // démarrage progressif depuis son point d'arrêt, puis roule sans s'arrêter
         const s0 = t.startS || 0;
+        // La durée suit la DISTANCE QUI RESTE : un fret qui reprend depuis la
+        // tête de quai a la moitié du chemin à faire, il doit y mettre la moitié
+        // du temps. Sans cela il roulait deux fois moins vite après un arrêt.
+        const durTot = TRAVEL * totalArc / 700 * FREIGHT_SLOWNESS *
+                       (endU * totalArc - s0) / (endU * totalArc);
+        t.progress += dtMin / durTot;
         const h = s0 + easeRun(t.progress / endU, 0.12, 0) * (endU * totalArc - s0);
         if (h - tail > pin.len && activeRoutes[t.entryPath] === t)
           release(t.entryPath);
