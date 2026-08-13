@@ -38,25 +38,38 @@ let _coachTarget = null; // élément DOM que le repère pointe (suivi chaque fr
 // Les portes d'entrée pulsent déjà (js/mapnet.js) ; il reste à NOMMER le geste.
 // Pas de halo ici : les portes sont plusieurs et équivalentes, en cerner une
 // seule dirait « celle-ci » alors que le joueur choisit librement.
+// Un accueil se referme. Sans bouton, la bulle revenait à chaque retour sur la
+// carte et à chaque fiche refermée, et rien ne disait comment s'en défaire —
+// elle finissait par cacher le sud de la Belgique. Fermée, elle ne revient plus
+// de la partie ; au prochain lancement, si le joueur n'a toujours acheté
+// aucune gare, elle se represente : il en a manifestement encore l'usage.
+let _mapWelcomeOff = false;
 function maybeStartMapOnboarding() {
   const done = (typeof getOnboarded === "function") && getOnboarded();
-  const started = (typeof noStationEarned === "function") && !noStationEarned();
-  if (done || started) { if (onboarding === "pickStation") { onboarding = null; hideCoach(); } return; }
+  const started = (typeof networkEmpty === "function") && !networkEmpty();
+  if (done || started || _mapWelcomeOff) {
+    if (onboarding === "pickStation") { onboarding = null; hideCoach(); }
+    return;
+  }
   onboarding = "pickStation";
-  coachAt(null, "Bienvenue ! Les gares qui <b>pulsent</b> sont ouvertes. " +
-                "<b>Choisis ta première gare</b> pour prendre ton premier service.");
+  // C'est le seul endroit du jeu où le mot « crédits » est prononcé, avec le
+  // premier achat : partout ailleurs, le jeton parle tout seul.
+  coachAt(null, "Bienvenue ! Vous avez <b>" + (typeof getCredits === "function" ? getCredits() : 150) +
+                " crédits</b> pour ouvrir votre première gare. " +
+                "Les gares qui <b>pulsent</b> sont à votre portée — choisissez la vôtre.",
+          "Compris");
 }
 
 // Fiche de gare ouverte pendant l'étape 0 : le repère se déplace sur le bouton
-// qui lance le service. Une fiche VERROUILLÉE porte elle aussi ce bouton, mais
-// il mène ailleurs (vers une gare ouverte) — le texte doit le dire, sinon il
-// promet au joueur une gare qu'il ne va pas prendre.
-function onboardingStationCard(play, unlocked) {
+// qui porte le geste — « Prendre le service » sur une gare déjà acquise,
+// « Ouvrir » sur une gare qu'il reste à payer. Le texte doit dire lequel des
+// deux, sinon il promet un service là où le joueur va d'abord dépenser.
+function onboardingStationCard(btn, unlocked) {
   if (onboarding !== "pickStation") return;
-  if (!play) { hideCoach(); return; }
-  coachAt(play, unlocked
-    ? "Prends le service : tu diriges cette gare pendant une journée."
-    : "Cette gare est encore fermée. <b>Commence par une gare ouverte</b> — celle-ci te convient.");
+  if (!btn) { hideCoach(); return; }
+  coachAt(btn, unlocked
+    ? "Prenez le service : vous dirigez cette gare pendant une journée."
+    : "<b>Ouvrez cette gare</b> — elle vous appartiendra pour de bon, et vous pourrez la rejouer autant que vous voudrez.");
 }
 
 function maybeStartOnboarding() {
@@ -100,6 +113,24 @@ function onboardingTick() {
     _tutFirstId = t.id;
     freezeGame(true); onboarding = "tap1";
     coachAt(t.el, "Voici un train qui s'annonce. <b>Touchez-le</b> pour le choisir.");
+  } else if (onboarding === "dwell1") {
+    // LE MOMENT LE PLUS OPAQUE DU JEU : le train est arrivé, il ne bouge plus,
+    // et rien ne dit ni pourquoi ni jusqu'à quand. On attend qu'il soit
+    // vraiment à quai pour l'expliquer — une règle s'enseigne devant ce qu'elle
+    // décrit, pas trois écrans avant.
+    const t = trains.find(o => o.id === _tutFirstId);
+    // Il n'ira jamais à quai (mauvais quai choisi, service fini) : on passe.
+    // Sans cette porte de sortie, le tutoriel attendrait indéfiniment un arrêt
+    // qui n'aura pas lieu, et le deuxième train ne serait jamais présenté.
+    if (!t || t.wrongPlatform || t.state === "done" || t.state === "movingBack" ||
+        t.state === "movingOut") { onboarding = "wait2"; return; }
+    if (t.state !== "dwell" || !t.el) return;
+    freezeGame(true); onboarding = "board";
+    coachAt(t.el,
+      "Il est à quai. Les voyageurs montent et descendent : <b>deux minutes au minimum</b>. " +
+      "Et il ne repartira jamais avant <b>son heure de départ</b>, celle du cadran — " +
+      "même prêt, il attend l'heure. Tout cela se fait seul, vous n'avez rien à faire.",
+      "Compris");
   } else if (onboarding === "free") {
     onboardingWatch();
   } else if (onboarding === "wait2") {
@@ -175,7 +206,7 @@ function onboardingPlatformChosen() {
   if (onboarding === "plat1") {
     onboarding = "delay";
     coachAt(document.getElementById("delay"),
-      "Il entre, s'arrête, puis repartira seul à l'heure. <b>Ici s'affiche le retard</b> cumulé — gardez-le au plus bas.",
+      "Il entre et s'arrête. <b>Ici s'affiche le retard</b> cumulé du service — gardez-le au plus bas.",
       "Suivant");
   } else if (onboarding === "plat2") {
     onboarding = "goal";
@@ -186,7 +217,14 @@ function onboardingPlatformChosen() {
 }
 // Bouton du repère (étapes d'explication) : avance / termine.
 function coachNext() {
-  if (onboarding === "delay") {
+  if (onboarding === "pickStation") {
+    // Accueil de la carte : on le referme, il ne revient plus de la partie.
+    _mapWelcomeOff = true; onboarding = null; hideCoach();
+  } else if (onboarding === "delay") {
+    // On laisse tourner : le convoi entre en gare, et c'est SON ARRIVÉE À QUAI
+    // qui déclenche l'explication suivante (onboardingTick, étape « dwell1 »).
+    onboarding = "dwell1"; hideCoach(); freezeGame(false);
+  } else if (onboarding === "board") {
     onboarding = "wait2"; hideCoach(); freezeGame(false); // le 1er part, un 2e arrive
   } else if (onboarding === "goal") {
     // Le guidage pas-à-pas est fini et ne se rejouera plus (setOnboarded), mais
@@ -727,6 +765,20 @@ function updateDelay() {
   d.className = v < 10 ? "" : v < 30 ? "warn" : "bad";
 }
 
+// PAS DE COMPTEUR D'ARGENT PENDANT LE SERVICE — essayé, retiré.
+//
+// Le bandeau affichait la recette en cours, plafond déduit. Le compte est
+// juste, mais il se lit à l'envers : la prime du sans-faute vaut le double, si
+// bien que la première minute de retard fait tomber le nombre de moitié (120 →
+// 60 à Landen). Le joueur ne lit pas « je gagne un peu moins », il lit « je
+// perds de l'argent », et il le lit pendant qu'il travaille. Aucun réglage de
+// présentation ne rattrape cela : ce n'est pas la forme du compteur qui blesse,
+// c'est qu'un gain baisse sous les yeux de celui qui fait de son mieux.
+//
+// La recette s'annonce donc une seule fois, à la fin, quand elle est acquise
+// (voir endGame). Pendant le service il reste le retard, qui monte — une chose
+// qui monte quand on fait mal se lit sans détour.
+
 // Reste-t-il un convoi en mouvement ? Sert à prolonger l'animation APRÈS la fin
 // du service : la modale sort tôt (score figé), mais les derniers convois doivent
 // finir de glisser hors écran en arrière-plan.
@@ -1127,6 +1179,90 @@ function tick(dtMin) {
     endGame();
 }
 
+// Décompte d'un montant, de `from` à `to`. Sortie rapide puis ralentie
+// (easeOutCubic) : le chiffre part d'un coup — on voit tout de suite que ça
+// monte — et s'installe doucement sur sa valeur, qu'on a le temps de lire.
+// Respecte prefers-reduced-motion : on pose alors le total, sans mouvement.
+function animateCredits(el, from, to, signed) {
+  if (!el || typeof creditsHTML !== "function") return;
+  const set = v => { el.innerHTML = creditsHTML(v, signed); };
+  const reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (reduce || from === to) { set(to); return; }
+  const DUR = 850;
+  let t0 = null;
+  set(from);
+  requestAnimationFrame(function step(ts) {
+    if (t0 === null) t0 = ts;
+    // Le bloc a pu être redessiné entre-temps (un achat depuis le relevé) :
+    // on cesse de peindre dans un nœud qui n'est plus à l'écran.
+    if (!el.isConnected) return;
+    const e = Math.min(1, (ts - t0) / DUR);
+    set(Math.round(from + (to - from) * (1 - Math.pow(1 - e, 3))));
+    if (e < 1) requestAnimationFrame(step);
+  });
+}
+
+// ------------------------------------------------------------------
+// LA CARTE DERRIÈRE LE RELEVÉ. Le service est fini : la décision suivante est
+// géographique — où aller, quoi ouvrir, avec quel solde. Le relevé se range
+// donc SUR LE CÔTÉ et laisse les deux tiers de l'écran au réseau, qui reste
+// entièrement cliquable. Le joueur repart d'ici sans écran intermédiaire :
+// rejouer, ou toucher une gare.
+// ------------------------------------------------------------------
+function showEndBesideMap() {
+  const end = document.getElementById("end");
+  const hub = document.getElementById("hub");
+  // Démo « limites » : gare hors catalogue, elle n'est nulle part sur la carte.
+  if (STATION.adhoc || typeof mapnetBuild !== "function") return;
+  hub.classList.remove("hidden");
+  // Le bouton « recadrer ce pays » se retire le temps du relevé : il nomme le
+  // pays sous le CENTRE de l'écran, or le centre est maintenant derrière le
+  // relevé — il annonçait « France » pendant qu'on cadrait la Belgique.
+  MAP.host.classList.add("end-open");
+  // La disposition en colonnes est posée AVANT de mesurer : sinon on mesure la
+  // fiche encore centrée, on croit la bande libre bien plus étroite qu'elle ne
+  // l'est, et la carte se dézoome sur toute l'Europe de l'Ouest.
+  end.classList.add("over-map");
+  if (!MAP.built) buildMap();
+  mapnetBuild();               // le solde a changé : d'autres gares sont à portée
+  mapnetPosition();
+  if (typeof updateCreditsBadge === "function") updateCreditsBadge(true);
+  const r = end.querySelector(".card").getBoundingClientRect();
+  const wide = window.innerWidth > 720;
+  const reserved = wide ? { left: r.right + 16 }
+                        : { bottom: window.innerHeight - r.top + 12 };
+  // CE QU'IL FAUT VOIR, PAS LE PAYS. Cadrer le pays entier laissait la gare
+  // proposée hors champ ou noyée : le relevé disait « ouvrir Aarschot » et
+  // Aarschot n'était nulle part. On cadre donc la gare qu'on vient de tenir et
+  // TOUT ce qu'elle met à portée d'achat — c'est exactement la décision qui
+  // reste à prendre. Repli sur le pays si la géographie manque.
+  const here = CATALOG[currentIdx].id;
+  const box = (typeof stationsBbox === "function" && typeof netLinks === "function")
+    ? stationsBbox([here].concat(netLinks(here).to.filter(id => isBuyable(id))))
+    : null;
+  if (box && typeof frameBoxBeside === "function") frameBoxBeside(box, reserved);
+  else {
+    const slug = (typeof stationCountrySlug === "function") ? stationCountrySlug(currentIdx) : null;
+    if (slug && typeof frameCountryBeside === "function") frameCountryBeside(slug, reserved);
+  }
+}
+// Quitter le relevé en restant sur la carte. `recenter` : on recadre le pays
+// pour de bon (le joueur a demandé la carte), sinon on se contente d'effacer le
+// relevé — il vient de toucher une gare, la déplacer sous son doigt serait pire
+// que de la laisser un peu décalée.
+function endLeaveMap(recenter) {
+  const end = document.getElementById("end");
+  if (!end.classList.contains("over-map")) return false;
+  end.classList.add("hidden");
+  end.classList.remove("over-map");
+  MAP.host.classList.remove("end-open");
+  if (recenter && typeof stationCountrySlug === "function") {
+    const slug = stationCountrySlug(currentIdx);
+    if (slug && typeof frameCountry === "function") frameCountry(slug);
+  }
+  return true;
+}
+
 // failed = true : retard plafond dépassé (game over, 0 étoile, rien à débloquer)
 function endGame(failed) {
   ended = true;
@@ -1145,7 +1281,18 @@ function endGame(failed) {
   // Étoiles de CETTE gare avant enregistrement : sert à savoir si ce service
   // vient de boucler le pays (dernier maillon décroché à l'instant).
   const prevStars = (getProgress()[STATION.id] || {}).stars || 0;
+  // ---- RECETTE : calculée AVANT d'enregistrer le record ------------------
+  // Une gare ne paie que la PROGRESSION : ce service vaut tarif × multiplicateur,
+  // moins ce que la gare a déjà versé. Or « déjà versé » se déduit du meilleur
+  // record — qu'on s'apprête justement à écraser. L'ordre n'est donc pas un
+  // détail : mesuré après, tout service rapporterait zéro.
+  const noPay = failed || STATION.adhoc;
+  const tarif = noPay ? 0 : stationTarif(STATION.id);
+  const payout = noPay ? 0 : stationPayout(STATION.id, d);
+  const banked = noPay ? 0 : stationBanked(STATION.id);
+  const gain = noPay ? 0 : stationGain(STATION.id, d);
   if (!failed && !STATION.adhoc) saveResult(STATION.id, stars, d); // un échec (ou la démo limites) ne modifie pas le record
+  if (gain > 0) addCredits(gain);
   // Pays terminé À L'INSTANT : gagné, cette gare passe de 0 à ≥1 étoile, et toutes
   // les gares du pays ont désormais au moins une étoile. (Seule cette gare a pu
   // changer ce tour-ci, d'où la condition sur prevStars.)
@@ -1159,31 +1306,14 @@ function endGame(failed) {
     failed ? "Service interrompu" : justCompletedCountry ? "Pays terminé !"
       : perfect ? "Sans faute !" : (win ? "Fin du service" : "Objectif manqué");
   document.getElementById("stars").textContent = "★★★".slice(0, stars) + "☆☆☆".slice(0, 3 - stars);
-  // une étoile ne débloque que la gare suivante DU MÊME pays (les autres
-  // pays sont déjà ouverts) ; en fin de pays, on invite à en choisir un autre
-  // Une gare voisine s'est-elle ouverte grâce à ce service ? (message de fin)
-  const opened = win && typeof netLinks === "function" && (() => {
-    const prog = getProgress();
-    return netLinks(CATALOG[currentIdx].id).to.some(id => {
-      const gi = CATALOG.findIndex(c => c.id === id);
-      return gi >= 0 && !((prog[id] || {}).stars) && isUnlocked(gi);
-    });
-  })();
   document.getElementById("end-delay").textContent = failed
     ? "Retard de +" + d + " min — la limite de " + maxDelay() + " min est dépassée."
     : win
-      ? (d === 0 ? "Service parfait — aucun retard." : "Retard cumulé : " + d + " min") +
-        (opened ? " — de nouvelles gares s'ouvrent !" : "")
+      ? (d === 0 ? "Service parfait — aucun retard." : "Retard cumulé : " + d + " min")
       : "Retard cumulé : " + d + " min — il faut moins de 30 min pour décrocher une étoile. Réessayez !";
-  // Bilan de la journée : sur TOUS les trains voyageurs du service, ceux qui
-  // sont repartis avec moins d'une minute de retard. depDelay ne se remplit
-  // qu'au départ réel : un convoi jamais reparti — laissé en file, ou encore à
-  // quai quand le service s'interrompt — n'est pas « à l'heure ». Sans ce
-  // test, ne rien faire du tout affichait un service impeccable (12/12).
-  const pax = trains.filter(t => !t.freight);
-  const onTime = pax.filter(t => t.depDelay != null && t.depDelay < 1).length;
-  document.getElementById("end-stats").innerHTML =
-    "Trains à l'heure : " + onTime + "/" + pax.length;
+  // « Trains à l'heure : 15/15 » a été retiré : c'est le retard cumulé, juste
+  // au-dessus, qui décide des étoiles et de la recette — un second décompte à
+  // côté du premier n'ajoutait qu'une ligne à lire pour la même information.
   // Bandeau « pays terminé » : drapeau + nom + total d'étoiles du pays.
   const ec = document.getElementById("end-country");
   if (justCompletedCountry) {
@@ -1199,133 +1329,117 @@ function endGame(failed) {
     ec.classList.remove("hidden");
   } else ec.classList.add("hidden");
   (perfect ? SND.perfect : win ? SND.end : SND.incident)(); // parfait → fanfare, 0 étoile → échec
-  // ---- RÉCOMPENSE : ouvrir une gare voisine -------------------------------
-  // Un service réussi donne le droit d'en ouvrir UNE. Le nombre d'étoiles décide
-  // de la latitude : imposée à une étoile, au choix (à niveau égal ou moindre) à
-  // deux, libre à trois. Voir unlockChoices() dans js/catalog.js.
+  // ---- RECETTE ET SUITE ---------------------------------------------------
+  // L'écran de fin n'est plus un tribunal qui distribue une gare : c'est un
+  // RELEVÉ. Il annonce ce que le service a rapporté, le nouveau solde, et
+  // propose — sans jamais l'imposer — d'ouvrir une voisine abordable. Rien ne
+  // se perd si le joueur ferme : la décision d'achat reste sur la carte,
+  // indéfiniment.
   //
-  // Redessiné après le choix du joueur SANS repasser par endGame() : réenclencher
-  // tout le bilan rejouerait le son et réenregistrerait le score.
+  // Redessiné après un achat SANS repasser par endGame() : réenclencher tout le
+  // bilan rejouerait le son et réenregistrerait le score.
   const reward = document.getElementById("end-unlock");
   const nameOf = id => { const c = CATALOG.find(x => x.id === id); return c ? (c.city || c.name) : id; };
-  // Même jauge que la fiche de gare et le cartouche : cinq crans, jamais des
-  // pastilles ici et des barres ailleurs pour dire la même chose.
-  const pipsOf = id => {
-    const d = Math.max(1, Math.min(5, (CATALOG.find(x => x.id === id) || {}).difficulty || 1));
-    return '<span class="pips">' + Array.from({ length: 5 }, (_, i) =>
-      '<span class="b' + (i < d ? " on" : "") + '"></span>').join("") + "</span>";
-  };
-  let openedNow = null;
+  let boughtNow = null;
+
+  // Ce que ce service a rapporté. TROIS LIGNES, PAS UNE DE PLUS : le gain, le
+  // solde, et de quoi repartir. Le détail du calcul (tarif × étoiles, déjà
+  // encaissé) a été essayé et retiré — au bout d'un service, personne ne relit
+  // une opération, et le bloc devenait un tableau.
+  //
+  // Seul cas qui demande une explication : « +0 », quand la gare a déjà tout
+  // versé à ce niveau. Elle se donne alors SANS PHRASE, par la jauge
+  // d'encaissement — la même que sur la fiche de gare, où le joueur l'a déjà
+  // vue. Un dessin qui dit « cette gare est pleine » vaut deux lignes de texte.
+  function recetteHTML() {
+    if (noPay) return "";
+    const cap = stationCap(STATION.id);
+    return '<div class="eu-title">Recette du service</div>' +
+      '<div class="eu-gain' + (gain > 0 ? "" : " none") + '">' + creditsHTML(gain, true) + "</div>" +
+      (gain > 0 || !cap ? "" :
+        '<div class="eu-banked"><span class="gauge money"><span class="fill" style="width:' +
+          Math.round(stationBanked(STATION.id) / cap * 100) + '%"></span></span>' +
+        '<span class="d">' + stationBanked(STATION.id) + " / " + cap + "</span></div>") +
+      "";  // le solde n'est PAS ici : il vit en permanence sur la carte, derrière
+           // le relevé, et c'est lui qui s'incrémente sous les yeux du joueur.
+  }
+
+  // LA RECETTE SE COMPTE, ELLE NE S'AFFICHE PAS. Un nombre déjà posé est un
+  // résultat ; un nombre qui monte est un gain — c'est le même chiffre, mais
+  // l'un se lit et l'autre se ressent. Le solde suit le même mouvement, de son
+  // ancienne valeur à la nouvelle : on voit la recette PASSER de la gare à la
+  // bourse, plutôt que deux totaux sans lien.
+  function rollRecette() {
+    if (noPay || gain <= 0) return;
+    animateCredits(reward.querySelector(".eu-gain"), 0, gain, true);
+    // La bourse de la carte compte en même temps : la recette ne s'additionne
+    // pas dans un coin de fiche, elle tombe dans le solde qu'on voit déjà.
+    animateCredits(MAP.purse, getCredits() - gain, getCredits(), false);
+  }
 
   function paintActions() {
-    const choices = (win && !STATION.adhoc && typeof unlockChoices === "function")
-      ? unlockChoices(CATALOG[currentIdx].id, stars) : [];
-    // Une seule candidate : rien à décider, on ouvre et on l'annonce. C'est le
-    // cas systématique à une étoile.
-    if (!openedNow && choices.length === 1) { openStation(choices[0]); openedNow = choices[0]; }
-    const pending = !openedNow && choices.length > 1;
-
-    // La CARTE derrière la fiche quand un choix est en attente : on décide en
-    // voyant le réseau, pas une liste de noms. Elle porte les étoiles qu'on vient
-    // de gagner (mapnetSetChoices reconstruit) et fait pulser les candidates.
-    const end = document.getElementById("end");
-    const hub = document.getElementById("hub");
-    if (pending && typeof mapnetSetChoices === "function") {
-      hub.classList.remove("hidden");
-      // La disposition en colonnes est posée AVANT de mesurer : sinon on mesure
-      // la fiche encore centrée, on croit la bande libre bien plus étroite
-      // qu'elle ne l'est, et la carte se dézoome sur toute l'Europe de l'Ouest.
-      end.classList.remove("hidden");
-      end.classList.add("over-map");
-      mapnetSetChoices(choices, CATALOG[currentIdx].id);
-      const slug = (typeof stationCountrySlug === "function") ? stationCountrySlug(currentIdx) : null;
-      if (slug && typeof frameCountryBeside === "function") {
-        const r = end.querySelector(".card").getBoundingClientRect();
-        const wide = window.innerWidth > 720;
-        frameCountryBeside(slug, wide ? { left: r.right + 16 } : { bottom: window.innerHeight - r.top + 12 });
-      }
-    } else {
-      end.classList.remove("over-map");
-      if (typeof mapnetSetChoices === "function" && MAPNET.choices) mapnetSetChoices([]);
-      // Choix résolu : la carte se retire, sauf si on part justement dessus.
-      if (!openedNow) hub.classList.add("hidden");
+    // La voisine à proposer : achetable, la MOINS CHÈRE, et dans les moyens du
+    // joueur. Rien ne sert d'agiter une gare qu'il ne peut pas payer — la carte
+    // le lui dira mieux, avec son prix et son manque.
+    let offerId = null;
+    if (win && !STATION.adhoc && !boughtNow && typeof netLinks === "function") {
+      const cand = netLinks(CATALOG[currentIdx].id).to
+        .filter(id => canBuy(id))     // payable ET débloquée : sinon on agite un bouton mort
+        .sort((a, b) => stationPrice(a) - stationPrice(b));
+      if (cand.length) offerId = cand[0];
     }
 
-    if (openedNow) {
-      reward.innerHTML = '<div class="eu-title">Nouvelle gare ouverte</div>' +
-        '<div class="eu-done">' + nameOf(openedNow) + " " + pipsOf(openedNow) + "</div>";
-      reward.classList.remove("hidden");
-    } else if (pending) {
-      // « Voisine » n'est vrai que si elle l'est : quand tout le voisinage est
-      // déjà ouvert, la récompense porte plus loin et le titre le dit.
-      const beyond = typeof unlockIsBeyond === "function" && unlockIsBeyond(CATALOG[currentIdx].id);
-      reward.innerHTML = '<div class="eu-title">' +
-        (beyond ? "Voisinage complet — ouvre plus loin" : "Ouvre une gare voisine") + "</div>" +
-        '<div class="eu-row">' + choices.map(id =>
-          '<button class="btn eu-pick" data-id="' + id + '">' + nameOf(id) + " " + pipsOf(id) + "</button>").join("") + "</div>";
-      reward.classList.remove("hidden");
-      // Choisir une gare, c'est déjà s'y engager : on n'ajoute pas un écran de
-      // plus. Le convoi file sur la carte de la gare qu'on quitte vers celle
-      // qu'on vient d'ouvrir, puis le service y démarre.
-      for (const b of reward.querySelectorAll(".eu-pick"))
-        b.addEventListener("click", () => {
-          const id = b.dataset.id;
-          openStation(id);
-          openedNow = id;
-          const gi = CATALOG.findIndex(c => c.id === id);
-          if (gi < 0) { paintActions(); return; }
-          paintActions();               // la carte annonce « Gare ouverte » derrière le voyage
-          document.getElementById("end").classList.add("hidden");
-          if (typeof mapJourneyToNext === "function")
-            mapJourneyToNext(currentIdx, gi, () => startStation(gi));
-          else startStation(gi);
-        });
-    } else reward.classList.add("hidden");
+    let html = recetteHTML();
+    if (boughtNow)
+      html += '<div class="eu-done">' + nameOf(boughtNow) + " ouverte</div>";
+    else if (offerId)
+      html += '<div class="eu-row"><button class="btn eu-buy" data-id="' + offerId + '">' +
+        "Ouvrir " + nameOf(offerId) + " — " + creditsHTML(stationPrice(offerId)) + "</button></div>";
+    reward.innerHTML = html;
+    reward.classList.toggle("hidden", !html);
 
-    // « Gare suivante » = une VOISINE ouverte et jamais jouée, la plus facile
-    // d'abord — un pas de plus le long des voies, pas l'entrée suivante du
-    // catalogue. Tant qu'un choix est en attente, aucune autre action : le
-    // joueur ne doit pas pouvoir quitter en laissant sa récompense sur la table.
-    let nextGi = -1;
-    if (win && !pending) {
-      const prog = getProgress();
-      // La gare qu'on VIENT d'ouvrir passe avant tout : c'est la récompense de
-      // ce service, et depuis qu'un voisinage complet fait porter l'ouverture
-      // plus loin, elle n'est plus forcément une voisine directe — chercher
-      // seulement parmi celles-ci laissait le bouton sur « Rejouer » alors que
-      // la carte annonçait une gare ouverte.
-      if (openedNow) {
-        const gi = CATALOG.findIndex(c => c.id === openedNow);
-        if (gi >= 0 && !((prog[openedNow] || {}).stars)) nextGi = gi;
-      }
-      if (nextGi < 0 && typeof netLinks === "function") {
-        const cand = netLinks(CATALOG[currentIdx].id).to
-          .map(id => CATALOG.findIndex(c => c.id === id))
-          .filter(gi => gi >= 0 && !((prog[CATALOG[gi].id] || {}).stars) && isUnlocked(gi));
-        cand.sort((a, b) => (CATALOG[a].difficulty || 1) - (CATALOG[b].difficulty || 1));
-        if (cand.length) nextGi = cand[0];
-      }
-    }
-    const next = nextGi >= 0;
-    const btnNext = document.getElementById("btn-next");
-    if (next) {
-      btnNext.dataset.gi = nextGi;
-      // Le bouton porte le NOM de la gare : « Ottignies → » dit où l'on va,
-      // « Gare suivante → » laisse deviner.
-      btnNext.textContent = (CATALOG[nextGi].city || CATALOG[nextGi].name) + " →";
-    }
-    btnNext.classList.toggle("hidden", !next);
-    btnNext.classList.toggle("primary", next);
+    // Acheter ici, c'est déjà s'y engager : on n'ajoute pas un écran de plus.
+    // Le convoi file sur la carte de la gare qu'on quitte vers celle qu'on
+    // vient d'ouvrir, puis le service y démarre.
+    const buy = reward.querySelector(".eu-buy");
+    if (buy) buy.addEventListener("click", () => {
+      const id = buy.dataset.id;
+      if (!buyStationById(id)) { paintActions(); return; }
+      boughtNow = id;
+      const gi = CATALOG.findIndex(c => c.id === id);
+      paintActions();
+      if (gi < 0) return;
+      document.getElementById("end").classList.add("hidden");
+      document.getElementById("hub").classList.remove("hidden");
+      if (typeof started !== "undefined") started = false;
+      if (typeof mapJourneyToNext === "function")
+        mapJourneyToNext(currentIdx, gi, () => startStation(gi));
+      else startStation(gi);
+    });
+
+    // Plus de bouton « gare suivante ». Il désignait une voisine possédée et
+    // jamais jouée — utile du temps où la fin de service était un cul-de-sac.
+    // La carte est désormais posée à côté du relevé, avec les gares acquises,
+    // leurs recettes restantes et ce qui s'achète : elle propose mieux, et sans
+    // choisir à la place du joueur.
     const btnReplay = document.getElementById("btn-replay");
-    btnReplay.classList.toggle("hidden", pending);
-    btnReplay.classList.toggle("primary", !win && !next);
-    const btnMap = document.getElementById("btn-end-map");
-    btnMap.classList.toggle("hidden", pending);
-    btnMap.classList.toggle("primary", win && !next);
+    btnReplay.classList.remove("hidden");
+    btnReplay.classList.toggle("primary", !win);
+    // CE QUE LA GARE PEUT ENCORE VERSER, sur le bouton qui y ramène. Sans ce
+    // chiffre, « Rejouer » ne promet rien de mesurable — or c'est exactement la
+    // question que se pose un joueur à court de crédits. Rien à afficher quand
+    // la gare a tout donné : un « +0 » ferait de la reprise une perte de temps
+    // annoncée, et son absence le dit déjà (même règle que sur la carte).
+    const leftHere = (STATION.adhoc || typeof stationCap !== "function") ? 0
+      : Math.max(0, stationCap(STATION.id) - stationBanked(STATION.id));
+    btnReplay.innerHTML = (typeof icon === "function" ? icon(ICON.restart, 18) : "") +
+      "Rejouer" + (leftHere ? " — " + creditsHTML(leftHere, true) : "");
   }
   paintActions();
 
   document.getElementById("end").classList.remove("hidden");
+  showEndBesideMap();
+  rollRecette(); // le décompte part APRÈS le démasquage, sinon il file à vide
   // Salve APRÈS le démasquage : elle se cale sur la fiche, qui se mesurerait à
   // zéro tant que l'overlay est en display:none.
   if (perfect && typeof perfectConfetti === "function") perfectConfetti();

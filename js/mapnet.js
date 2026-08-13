@@ -29,23 +29,8 @@
 
 const MAPNET = {
   built: false, gEdges: null, layer: null,
-  nodes: [], edges: [], measured: false, detail: null,
-  // Gares mises en avant le temps d'un choix de fin de service : elles ne se
-  // cachent à aucun zoom et ne se font jamais évincer par la règle du
-  // centimètre — c'est sur elles que porte la décision.
-  choices: null, origin: null
+  nodes: [], edges: [], measured: false, detail: null
 };
-
-// Met en avant les gares d'un choix (`ids`) et la gare d'OÙ L'ON PART
-// (`origin`). Toutes échappent aux seuils de zoom et à la règle du centimètre :
-// c'est entre elles que se lit la progression du réseau. Liste vide = on lève
-// la mise en avant.
-function mapnetSetChoices(ids, origin) {
-  MAPNET.choices = (ids && ids.length) ? new Set(ids) : null;
-  MAPNET.origin = MAPNET.choices ? (origin || null) : null;
-  mapnetBuild();
-  mapnetPosition();
-}
 
 // Les 46 gares jouables ne SATURENT pas une vue d'Europe tant qu'elles y sont
 // dessinées comme des points — ce sont les libellés qui encombrent, pas les
@@ -147,18 +132,40 @@ function mapnetBuild() {
       const rec = prog[id] || {};
       const stars = rec.stars || 0, best = rec.bestDelay;
       const unlocked = (typeof isUnlocked === "function") && isUnlocked(gi);
-      const isEntry = unlocked && !stars; // ouverte, encore à faire
-      const isChoice = !!(MAPNET.choices && MAPNET.choices.has(id));
-      const isOrigin = MAPNET.origin === id;
-      // QUI RESPIRE. L'anneau pulsé veut dire « à toi de jouer ». Pendant un
-      // choix de fin de service, la carte ne doit donc dire qu'UNE chose :
-      // « prends l'une de ces candidates ». Or toute gare ouverte-jamais-jouée
-      // respire en permanence : à la fin d'Amiens, on proposait Rouen et
-      // Paris-Nord pendant que Dinant pulsait à l'identique en Belgique, et ce
-      // halo se lisait comme une troisième candidate.
-      // Les autres gares gardent leur place et leur libellé (cf. minScale plus
-      // bas, qui reste sur isEntry) — elles cessent seulement de battre.
-      const isPulsing = isChoice || (isEntry && !MAPNET.choices);
+      // TROIS ÉTATS, JAMAIS DEUX. Avant la monnaie, tout ce qui n'était pas
+      // acquis se ressemblait : le joueur ne pouvait pas distinguer ce qui
+      // était à portée de bourse de ce qui ne l'était pas, et la carte restait
+      // muette sur ce qu'il fallait pour avancer. Désormais une gare achetable
+      // porte SON PRIX, en or ; une gare hors réseau reste sourde et sans prix.
+      const buyable = !unlocked && typeof isBuyable === "function" && isBuyable(id);
+      const price = buyable ? stationPrice(id) : 0;
+      // « Prête » : achetable, payable, et rien d'autre ne s'y oppose (une gare
+      // en souffrance, un palier pas atteint). C'est le seul état où le geste
+      // est possible tout de suite — donc le seul qui a le droit de respirer.
+      const ready = buyable && typeof canBuy === "function" && canBuy(id);
+      // CE QU'UNE GARE ACQUISE PEUT ENCORE RAPPORTER. Sans ce chiffre, la carte
+      // ne répondait qu'à une moitié de la question : elle disait où dépenser,
+      // jamais où gagner. Le joueur à court de crédits n'avait aucun moyen de
+      // choisir sa gare à rejouer autrement qu'au souvenir.
+      // Zéro = la gare a tout donné (service parfait) : on n'écrit alors RIEN.
+      // Un « +0 » sous chaque gare finie serait du bruit, et son absence dit
+      // mieux ce qu'elle veut dire — il ne reste plus rien à y chercher.
+      const left = unlocked && typeof stationCap === "function"
+        ? Math.max(0, stationCap(id) - stationBanked(id)) : 0;
+      // QUI RESPIRE : UNE SEULE CHOSE, ET C'EST UN SERVICE À ASSURER.
+      // Une gare acquise qui n'a pas encore tourné — celle-là même qui bloque
+      // tout achat tant qu'elle n'a pas servi (js/catalog.js). Rien d'autre.
+      //
+      // Les gares achetables ont pulsé un temps, elles aussi : à dix pastilles
+      // qui battent, plus rien ne bat. Elles gardent leur étiquette de prix en
+      // or vif, qui dit déjà « à portée » sans réclamer l'attention.
+      const todo = unlocked && (typeof stationInService !== "function" || !stationInService(id));
+      const isPulsing = todo;
+      // Ce qui se joue MAINTENANT ne se cache derrière personne — qu'il s'agisse
+      // d'un service à assurer ou d'une gare à ouvrir. La priorité d'affichage
+      // et la pulsation sont deux choses distinctes : l'une décide qui reste
+      // visible quand deux points se serrent, l'autre réclame le regard.
+      const actionable = todo || ready;
 
       // La pastille ne porte plus son rang de jeu : sa TAILLE dit la difficulté
       // (petite en 1, grosse en 5). On lit d'un coup d'œil où sont les morceaux,
@@ -183,9 +190,9 @@ function mapnetBuild() {
       const perfect = best === 0;
       const el = document.createElement("div");
       el.className = "map-chip city-chip" + (unlocked ? "" : " locked") +
+        (buyable ? " buyable" : "") + (ready ? " ready" : "") +
         (stars ? " s" + stars : "") + (perfect ? " perfect" : "") +
-        (isPulsing ? " entry" : "") + (isChoice ? " choice" : "") +
-        (isOrigin ? " origin" : "");
+        (isPulsing ? " entry" : "");
       el.style.setProperty("--d", DOT_D[diff] + "px");
       el.innerHTML =
         // Pastille VIDE tant qu'aucune étoile n'est décrochée — jamais jouée ou
@@ -195,7 +202,13 @@ function mapnetBuild() {
         // difficulté 1.
         '<span class="dot">' +
           (perfect ? STAR_SVG : stars ? '<span class="fill"></span>' : "") + "</span>" +
-        '<div class="cap"><div class="nm">' + (card.city || card.name) + "</div></div>";
+        // UN CHIFFRE SOUS LE NOM, en or, et le SIGNE dit son sens : « 50 », ce
+        // qu'il faut sortir pour ouvrir la gare ; « +120 », ce qu'elle peut
+        // encore rapporter. Même monnaie, même couleur, deux directions — et la
+        // pastille tranche déjà l'une de l'autre (cerne doré contre point teal).
+        '<div class="cap"><div class="nm">' + (card.city || card.name) + "</div>" +
+          (buyable ? '<div class="pr">' + creditsHTML(price) + "</div>"
+           : left ? '<div class="pr earn">' + creditsHTML(left, true) + "</div>" : "") + "</div>";
       el.addEventListener("click", ev => { ev.stopPropagation(); openStationModal(gi); });
       MAPNET.layer.appendChild(el);
 
@@ -208,9 +221,30 @@ function mapnetBuild() {
         // carrefours dans la règle du centimètre : au premier lancement, une
         // gare jouable vaut mieux qu'un hub verrouillé. Rang normal (le degré)
         // dès la première étoile décrochée.
-        minScale: (isEntry || isChoice || isOrigin) ? 0 : rankScale[id],
-        labelScale: (isEntry || isChoice || isOrigin) ? 0 : labelScale[id],
-        rank: (isEntry || isChoice || isOrigin) ? -1 : byDeg.indexOf(id), diff, diam: DOT_D[diff],
+        // Une gare à portée de bourse ne se cache jamais non plus : c'est
+        // exactement ce que le joueur est venu chercher sur la carte.
+        //
+        // LE RÉSEAU ACQUIS PRIME SUR TOUT LE RESTE dans la règle du centimètre.
+        // Une gare qu'on possède est ce qui explique la carte : c'est d'elle
+        // que part la frontière d'achat. Effacée au profit d'un carrefour
+        // verrouillé plus relié qu'elle, on voyait une gare achetable sans
+        // comprendre pourquoi elle l'était — Dinant disparaissait derrière
+        // Namur, et Libramont semblait ouverte sans raison.
+        minScale: actionable ? 0 : rankScale[id],
+        labelScale: actionable ? 0 : labelScale[id],
+        // QUATRE RANGS, dans l'ordre où ils comptent pour le joueur : ce qu'il
+        // peut faire MAINTENANT, ce qu'il possède, ce qu'il pourra acheter, le
+        // reste. Le degré dans le réseau ne départage plus qu'à l'intérieur
+        // d'un même rang — d'où la multiplication par la taille du catalogue,
+        // qui garantit qu'aucun degré ne franchit une frontière de rang.
+        //
+        // Écrit d'abord en décalages négatifs, la hiérarchie s'inversait sans
+        // qu'on le voie : une gare simplement achetable tombait à −125 et
+        // évinçait une gare PAYABLE figée à −1. Aarschot, à 50 crédits et la
+        // seule chose à faire sur la carte, disparaissait derrière Louvain à
+        // 260 — le joueur en concluait qu'il n'avait rien à jouer.
+        rank: (actionable ? 0 : unlocked ? 1 : buyable ? 2 : 3) * CATALOG.length + byDeg.indexOf(id),
+        diff, diam: DOT_D[diff],
         capW: 0, capH: 0, capUp: false
       };
       MAPNET.nodes.push(node); uOf[id] = u; byId[id] = node;

@@ -184,6 +184,93 @@ function buildMap() {
   MAP.homeBtn = home;
   host.appendChild(home);
 
+  // ------------------------------------------------------------------
+  // LA LÉGENDE. Repliée sous un bouton : la carte se lit sans elle, mais rien
+  // n'explique une convention à qui ne l'a pas devinée.
+  //
+  // Elle est bâtie avec LES MÊMES CLASSES que les pastilles de la carte
+  // (.city-chip, .pr, l'étiquette de prix, l'étoile du parfait) : une légende
+  // dessinée à part finit toujours par décrire un état que le jeu n'a plus.
+  // Ici, changer la couleur d'une pastille change la légende du même geste.
+  // ------------------------------------------------------------------
+  const legend = document.createElement("div");
+  legend.className = "map-legend hidden";
+  // La vignette reprend la STRUCTURE du DOM de la carte (pastille > cap > prix),
+  // pas seulement ses classes : c'est le sélecteur `.city-chip .pr` qui donne à
+  // l'étiquette son fond doré. Recopier l'apparence sans la structure, c'est
+  // rouvrir la porte à une légende qui diverge.
+  const chip = (cls, inner, tag, d) =>
+    '<span class="map-chip city-chip ' + cls + '" style="--d:' + (d || 19) + 'px">' +
+      '<span class="dot">' + (inner || "") + "</span>" +
+      (tag ? '<span class="cap">' + tag + "</span>" : "") + "</span>";
+  const row = (art, title, txt) =>
+    '<li><span class="lg-art">' + art + "</span>" +
+      "<span><b>" + title + "</b> " + txt + "</span></li>";
+  legend.innerHTML =
+    '<div class="lg-head">Lire la carte</div><ul>' +
+    row(chip("s2", '<span class="fill"></span>',
+             '<span class="pr earn">' + creditsHTML(120, true) + "</span>"),
+        "Gare à vous",
+        "elle a servi. Le chiffre est ce qu'elle peut <em>encore</em> rapporter.") +
+    row(chip("s1 entry", '<span class="fill"></span>'),
+        "Un service vous attend",
+        "acquise, jamais tournée. Rien ne s'achète tant qu'elle n'a pas tourné.") +
+    row(chip("perfect", STAR_SVG),
+        "Sans faute",
+        "pas une minute de retard. Elle a tout donné.") +
+    row(chip("locked buyable ready", "",
+             '<span class="pr">' + creditsHTML(50) + "</span>"),
+        "À ouvrir",
+        "à portée de bourse. L'étiquette est son prix.") +
+    row(chip("locked buyable", "",
+             '<span class="pr">' + creditsHTML(260) + "</span>"),
+        "Pas encore",
+        "le prix y est, mais il manque des crédits, un service, ou <b>★★</b> sur la voisine d'où vous partiriez.") +
+    row(chip("locked", "", "", 16),
+        "Hors de votre réseau",
+        "aucune gare acquise ne la touche.") +
+    "</ul>";
+  const legendBtn = document.createElement("button");
+  legendBtn.className = "map-legend-btn";
+  legendBtn.setAttribute("aria-label", "Lire la carte");
+  legendBtn.innerHTML = icon(ICON.help, 18);
+  legendBtn.addEventListener("click", ev => {
+    ev.stopPropagation();
+    const open = legend.classList.toggle("hidden");
+    legendBtn.classList.toggle("open", !open);
+  });
+  // UN TAP AILLEURS REFERME CE QUI EST OUVERT — la légende comme le relevé de
+  // fin de service. Les deux sont des panneaux posés sur la carte : on en sort
+  // en touchant la carte, sans chercher le bouton qui va bien.
+  //
+  // EN CAPTURE, et c'est tout l'enjeu : les formes de pays et les pastilles
+  // arrêtent la propagation (elles cadrent, elles ouvrent une fiche), donc un
+  // écouteur classique sur l'hôte ne voyait JAMAIS le clic — c'est-à-dire
+  // presque partout, puisque la terre couvre la carte. Ranger un panneau est
+  // une affaire d'écran, pas de cible : cela se décide avant tout le reste.
+  host.addEventListener("click", ev => {
+    // Sauf sur les panneaux eux-mêmes : les lire ne les referme pas.
+    const t = ev.target;
+    if (t.closest && t.closest(".map-legend, .map-legend-btn")) return;
+    legend.classList.add("hidden"); legendBtn.classList.remove("open");
+    // Recadrer le pays quand on range le relevé — mais pas quand on vient de
+    // toucher une gare : déplacer la carte sous le doigt qui ouvre une fiche
+    // serait gratuit.
+    if (typeof endLeaveMap === "function")
+      endLeaveMap(!(t.closest && t.closest(".city-chip")));
+  }, true);
+  MAP.legend = legend;
+  host.appendChild(legend);
+  host.appendChild(legendBtn);
+
+  // Le solde, en permanence. C'est le seul chiffre qui compte pour décider où
+  // aller : il doit être visible en même temps que les prix, sans un geste.
+  const purse = document.createElement("div");
+  purse.className = "map-purse";
+  MAP.purse = purse;
+  host.appendChild(purse);
+  updateCreditsBadge();
+
   bindCamera(host); // molette, pincement, glisser
   window.addEventListener("resize", () => { if (!MAP.animating) mapnetPosition(); });
   document.addEventListener("keydown", e => {
@@ -503,6 +590,17 @@ function bindCamera(host) {
 
 // ------------------------------------------------------------------
 // Cadrages : de simples mouvements de caméra, sans état de navigation.
+
+// Cadrage d'OUVERTURE seulement : chez l'utilisateur (fuseau horaire, puis
+// langue — voir userCountrySlug dans geo.js), à défaut l'Europe. Ensuite c'est
+// le pays sous la vue qui fait référence, pas celui-ci.
+function frameHome(instant) {
+  const slug = (typeof userCountrySlug === "function") ? userCountrySlug() : null;
+  if (slug && frameCountry(slug, instant)) return;
+  const europe = GEO.continents.find(c => c.id === "europe");
+  goTo(targetVB(europe.bbox, 0.06), instant);
+}
+
 // ------------------------------------------------------------------
 // Renvoie le cadrage RÉELLEMENT visé (ajusté au rapport de l'écran). Le lire
 // après coup avec readVB() donnerait le cadrage de DÉPART tant que le vol n'est
@@ -524,49 +622,92 @@ function frameCountry(slug, instant) {
   MAP.lastFramed = goTo(targetVB(g.frame || countryGeoBbox(country), 0.05), instant);
   return true;
 }
+
 // Cadre un pays dans la partie LIBRE de l'écran, quand une interface en occupe
-// un bord (la fiche de fin de service pendant un choix). Sans cela, le cadrage
-// centre le pays sur tout l'écran et la moitié du réseau se retrouve sous le
-// panneau — c'est ce qui rendait le choix illisible.
+// un bord (le relevé de fin de service, posé sur le côté). Sans cela, le
+// cadrage centre le pays sur tout l'écran et la moitié du réseau se retrouve
+// sous le panneau — c'est-à-dire sous ce qu'on demande au joueur de regarder.
 // `reserved` = { left, bottom } en pixels.
 function frameCountryBeside(slug, reserved) {
-  if (!frameCountry(slug, true)) return;
+  const g = GEO.countries[slug];
+  const country = g && MAP.byIso[g.iso];
+  if (!country) return;
+  frameBoxBeside(g.frame || countryGeoBbox(country), reserved, 0.05);
+}
+// Position géographique d'une gare, quel que soit son pays.
+function stationLonLat(id) {
+  for (const slug in GEO.countries) {
+    const c = GEO.countries[slug];
+    if (c.cities && c.cities[id]) return c.cities[id];
+  }
+  return null;
+}
+// Emprise géo [lonMin, latMin, lonMax, latMax] qui contient toutes ces gares,
+// avec une taille MINIMALE : à deux gares voisines, une emprise nue ferait un
+// zoom de rue, et la carte n'apprendrait plus rien sur l'endroit.
+const MIN_SPAN_LON = 1.6, MIN_SPAN_LAT = 1.0;
+function stationsBbox(ids) {
+  const pts = ids.map(stationLonLat).filter(Boolean);
+  if (!pts.length) return null;
+  let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
+  for (const [lon, lat] of pts) {
+    if (lon < x0) x0 = lon; if (lon > x1) x1 = lon;
+    if (lat < y0) y0 = lat; if (lat > y1) y1 = lat;
+  }
+  const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
+  const w = Math.max(x1 - x0, MIN_SPAN_LON), h = Math.max(y1 - y0, MIN_SPAN_LAT);
+  return [cx - w / 2, cy - h / 2, cx + w / 2, cy + h / 2];
+}
+// Cadre une EMPRISE dans la partie LIBRE de l'écran, quand une interface en
+// occupe un bord.
+function frameBoxBeside(bbox, reserved, pad) {
+  if (!bbox) return;
   const cw = MAP.svg.clientWidth || 1, ch = MAP.svg.clientHeight || 1;
   const left = Math.max(0, (reserved && reserved.left) || 0);
   const bottom = Math.max(0, (reserved && reserved.bottom) || 0);
   const freeW = Math.max(80, cw - left), freeH = Math.max(80, ch - bottom);
-  const vb = readVB();
-  const cx = vb[0] + vb[2] / 2, cy = vb[1] + vb[3] / 2;
-  // On élargit la vue du rapport de place perdue, pour que le pays tienne
-  // ENTIER dans la bande libre, puis on recentre sur le milieu de cette bande.
-  const k = Math.max(cw / freeW, ch / freeH);
-  const w = vb[2] * k, h = vb[3] * k;
-  const scale = cw / w;
-  applyView([cx - (left + freeW / 2) / scale, cy - (freeH / 2) / scale, w, h]);
-}
-
-// Cadrage d'OUVERTURE seulement : chez l'utilisateur (fuseau horaire, puis
-// langue — voir userCountrySlug dans geo.js), à défaut l'Europe. Ensuite c'est
-// le pays sous la vue qui fait référence, pas celui-ci.
-function frameHome(instant) {
-  const slug = (typeof userCountrySlug === "function") ? userCountrySlug() : null;
-  if (slug && frameCountry(slug, instant)) return;
-  const europe = GEO.continents.find(c => c.id === "europe");
-  goTo(targetVB(europe.bbox, 0.06), instant);
+  // On CALCULE l'échelle qui fait tenir le pays dans la bande libre, puis on
+  // recentre la vue sur le milieu de cette bande.
+  //
+  // Un facteur d'agrandissement appliqué au cadrage plein écran ne marche
+  // QUE si la bande est étroite en largeur. Réservez les deux tiers de la
+  // HAUTEUR — le relevé en bas d'un téléphone — et le même facteur s'applique
+  // aussi à la largeur : la Belgique se retrouvait dézoomée de Leicester à
+  // Hanovre pour tenir dans un bandeau de 240 px.
+  const box = targetVB(bbox, pad == null ? 0.18 : pad);            // [x, y, w, h] en unités
+  const s = Math.min(freeW / box[2], freeH / box[3]);             // px par unité
+  const bcx = box[0] + box[2] / 2, bcy = box[1] + box[3] / 2;
+  applyView([bcx - (left + freeW / 2) / s, bcy - (freeH / 2) / s, cw / s, ch / s]);
 }
 
 // ------------------------------------------------------------------
 // Fiche de gare (modale) — ouverte au clic d'une ville.
 // ------------------------------------------------------------------
-// Gare à proposer quand on clique une gare encore fermée : la plus FACILE des
-// gares ouvertes et jamais jouées du même pays (le front de progression).
+// Gare à proposer quand on clique une gare hors de portée : la moins chère de
+// celles qu'on peut acheter — d'abord dans le pays regardé, à défaut n'importe
+// où sur le réseau (le joueur peut être en train de lorgner un autre pays).
 function recommendedIndex(slug) {
+  if (typeof cheapestBuyable !== "function") return -1;
   const c = GEO.countries[slug];
-  if (!c || typeof openFrontier !== "function") return -1;
-  const country = (CATALOG[catalogIndexOf(Object.keys(c.cities || {})[0])] || {}).country;
-  const front = openFrontier(country);
-  return front.length ? front[0] : -1;
+  const country = c ? (CATALOG[catalogIndexOf(Object.keys(c.cities || {})[0])] || {}).country : null;
+  const here = country ? cheapestBuyable(country) : -1;
+  return here >= 0 ? here : cheapestBuyable(null);
 }
+// Le solde affiché sur la carte. Redessiné à chaque retour de service et après
+// chaque achat ; l'incrément se signale par une pulsation brève, pour que le
+// joueur voie sa recette arriver au lieu de la découvrir en la cherchant.
+function updateCreditsBadge(bump) {
+  if (!MAP.purse || typeof creditsHTML !== "function") return;
+  MAP.purse.innerHTML = creditsHTML(getCredits());
+  if (bump) {
+    MAP.purse.classList.remove("bump");
+    void MAP.purse.offsetWidth;
+    MAP.purse.classList.add("bump");
+  }
+}
+// Instant jusqu'auquel un tap sur « Prendre le service » est ignoré : voir le
+// gestionnaire d'achat, juste en dessous.
+let _buyGuardUntil = 0;
 function closeModal() {
   if (MAP.modal) MAP.modal.classList.add("hidden");
   // Fiche refermée sans prendre le service : le tutoriel revient à son étape
@@ -575,6 +716,10 @@ function closeModal() {
 }
 function openStationModal(gi) {
   if (gi < 0 || typeof CATALOG === "undefined" || !CATALOG[gi] || !MAP.modal) return;
+  // Le relevé de fin de service laisse la carte cliquable à côté de lui.
+  // Toucher une gare, c'est en avoir fini avec le relevé : il s'efface, sinon
+  // il resterait posé en travers de la fiche qu'on vient d'ouvrir.
+  if (typeof endLeaveMap === "function") endLeaveMap();
   const card = CATALOG[gi];
   const unlocked = typeof isUnlocked === "function" && isUnlocked(gi);
   const diff = Math.max(1, Math.min(5, card.difficulty || 1));
@@ -614,6 +759,12 @@ function openStationModal(gi) {
   const bars = n => Array.from({ length: 5 }, (_, i) =>
     '<span class="b' + (i < n ? " on" : "") + '"></span>').join("");
 
+  // Ce que la gare a déjà versé sur ce qu'elle peut verser en tout : une gare
+  // acquise garde un objectif visible même toutes étoiles décrochées, et ce
+  // qui reste à prendre se lit sans calcul.
+  const cap = typeof stationCap === "function" ? stationCap(card.id) : 0;
+  const got = typeof stationBanked === "function" ? stationBanked(card.id) : 0;
+
   // Trois lignes, aucune phrase : les jauges et les étoiles disent tout — seul
   // le retard garde son chiffre, c'est un record. Et c'est ICI qu'il vit
   // désormais : la carte ne l'affiche plus sous chaque gare (js/mapnet.js), elle
@@ -632,21 +783,67 @@ function openStationModal(gi) {
       (best === 0 ? '<span class="d perfect">Parfait</span>'
        : best != null ? '<span class="d">+' + best + " min</span>"
                       : '<span class="d none">jamais jouée</span>') +
-      "</span></div>";
+      "</span></div>" +
+    // LA LIGNE D'ARGENT, présente dans TOUS les cas — et elle ne dit pas la même
+    // chose des deux côtés de l'achat :
+    //   • gare acquise   → « Encaissé 45 / 120 », ce qu'il reste à aller chercher ;
+    //   • gare à acheter → « Rapporte jusqu'à 240 », l'argument d'achat lui-même.
+    // C'est l'information qui manquait pour décider : une gare à 100 qui peut en
+    // verser 240 ne se juge pas sur son prix seul. Et la fiche garde exactement
+    // la même hauteur avant et après l'achat — sans quoi « Prendre le service »
+    // remonterait de quarante pixels sous le doigt qui vient d'appuyer.
+    (cap ?
+      '<div class="mm-row"><span class="k">' + (unlocked ? "Encaissé" : "Rapporte") + "</span>" +
+        '<span class="v"><span class="gauge money"><span class="fill" style="width:' +
+          Math.round(got / cap * 100) + '%"></span></span>' +
+        '<span class="d">' + (unlocked ? got + " / " + cap : "jusqu'à " + cap) +
+        "</span></span></div>" : "");
 
   // Drapeau seul : le pays se reconnaît sans le lire, et la carte le dit déjà.
   const flag = (card.country || "").split(" ")[0];
 
-  let actions;
-  if (unlocked) {
-    actions = '<button class="btn mm-play" data-gi="' + gi + '">Prendre le service</button>';
-  } else {
-    const frontier = recommendedIndex(stationCountrySlug(gi));
-    const fname = frontier >= 0 ? CATALOG[frontier].name : null;
-    actions =
-      '<div class="mm-lock">' + icon(ICON.lock, 15) + "<span>Gare verrouillée</span></div>" +
-      (fname ? '<button class="btn mm-play" data-gi="' + frontier + '">Jouer ' + fname + " →</button>" : "");
-  }
+  // UNE SEULE FICHE, DEUX BOUTONS, TOUJOURS LES MÊMES À LA MÊME PLACE.
+  //
+  // Acheter puis jouer sont deux temps d'un seul geste. Ils se faisaient dans
+  // deux fiches successives d'aspect identique : on cliquait « Ouvrir », la
+  // fiche se redessinait, et il fallait cliquer à nouveau sur ce qui semblait
+  // le même écran. Les deux actions vivent désormais côte à côte, et l'achat ne
+  // fait qu'ALLUMER la seconde.
+  //
+  // L'ORDRE N'EST PAS COSMÉTIQUE : « Prendre le service » est AU-DESSUS, et
+  // l'achat en dessous. Une gare acquise n'a plus de bouton d'achat du tout —
+  // il ne dirait rien que la fiche ne dise déjà. Sa disparition raccourcit donc
+  // la fiche PAR LE BAS, et le bouton de service ne bouge pas d'un pixel : le
+  // doigt qui vient d'acheter ne retombe pas sur « prendre le service » et ne
+  // lance pas un service qu'on n'a pas demandé.
+  // (Rangés dans l'autre sens, avec un « Acquise » éteint pour tenir la place,
+  // il fallait garder à l'écran un bouton mort pour toujours.)
+  const price = typeof stationPrice === "function" ? stationPrice(card.id) : 0;
+  const buyable = !unlocked && typeof isBuyable === "function" && isBuyable(card.id);
+  // Ce qui s'oppose à l'achat, en toutes lettres. Un bouton éteint sans raison
+  // se lit comme une panne ; avec sa raison, il devient un objectif.
+  const block = buyable && typeof buyBlock === "function" ? buyBlock(card.id) : null;
+  const nameOfId = id => { const c = cardOf(id); return c ? (c.city || c.name) : id; };
+  let buyBtn = "";
+  if (unlocked) buyBtn = "";
+  else if (buyable)
+    buyBtn = '<button class="btn mm-buy"' +
+      (block ? " disabled" : ' data-id="' + card.id + '" data-gi="' + gi + '"') +
+      ">Acheter — " + creditsHTML(price) + "</button>" +
+      (!block ? "" : '<div class="mm-short">' + (
+        block.kind === "service"
+          ? "Mettez d'abord <b>" + nameOfId(block.id) + "</b> en service"
+        : block.kind === "maitrise"
+          ? "Demande <b>★★</b> sur " +
+            (block.from.length === 1 ? "<b>" + nameOfId(block.from[0]) + "</b>"
+              : block.from.slice(0, 2).map(nameOfId).join(" ou "))
+          : "Il vous manque " + creditsHTML(block.short)) + "</div>");
+  else
+    buyBtn = '<button class="btn mm-buy" disabled>' + icon(ICON.lock, 15) + "Hors de votre réseau</button>";
+
+  const actions =
+    '<button class="btn mm-play"' + (unlocked ? ' data-gi="' + gi + '"' : " disabled") +
+      ">Prendre le service</button>" + buyBtn;
 
   // Une seule colonne, courte : le bouton reste au centre, sous les chiffres,
   // à tous les formats — c'est le geste qu'on vient chercher.
@@ -660,13 +857,32 @@ function openStationModal(gi) {
     "</div>";
   MAP.modal.querySelector(".mm-close").addEventListener("click", closeModal);
   const play = MAP.modal.querySelector(".mm-play");
-  if (play) play.addEventListener("click", () => { const g = +play.dataset.gi; closeModal(); startStation(g); });
+  if (play) play.addEventListener("click", () => {
+    // Un achat vient de raccourcir la fiche : « Prendre le service » s'est
+    // déplacé vers l'endroit que le doigt occupait. On ignore un second tap
+    // immédiat, sinon un joueur pressé lance un service qu'il n'a pas demandé.
+    if (Date.now() < _buyGuardUntil) return;
+    const g = +play.dataset.gi; closeModal(); startStation(g);
+  });
+  // Achat : la gare bascule sous les yeux du joueur — la fiche se redessine sur
+  // « Prendre le service », la pastille devient pleine, le solde retombe.
+  const buy = MAP.modal.querySelector(".mm-buy[data-id]");
+  if (buy) buy.addEventListener("click", () => {
+    if (!buyStationById(buy.dataset.id)) return;
+    _buyGuardUntil = Date.now() + 450;
+    if (typeof SND === "object" && SND.buy) SND.buy();
+    mapnetBuild(); mapnetPosition();
+    updateCreditsBadge();
+    openStationModal(+buy.dataset.gi);
+  });
   MAP.modal.classList.remove("hidden");
   // Le tutoriel SUIT le joueur au lieu de rester sur la carte : sans cela, la
   // bulle « choisis ta première gare » restait affichée par-dessus la fiche —
   // périmée, et posée juste sur le bouton qu'il fallait presser.
+  // Le repère du tutoriel suit le geste à faire ICI : jouer si la gare est
+  // acquise, l'acheter si elle est à portée.
   if (typeof onboardingStationCard === "function")
-    onboardingStationCard(MAP.modal.querySelector(".mm-play"), unlocked);
+    onboardingStationCard(MAP.modal.querySelector(".mm-play, .mm-buy[data-id]"), unlocked);
 }
 
 // ------------------------------------------------------------------
@@ -757,7 +973,9 @@ function renderMap() {
       "geo.js : villes manquantes pour " + missing.map(c => c.id).join(", "));
   }
   if (!MAP.built) buildMap();
+  MAP.host.classList.remove("end-open"); // plus de relevé posé dessus
   mapnetBuild(); // le réseau dépend de la progression : on le rebâtit à chaque retour
+  updateCreditsBadge(true); // on revient d'un service : la recette vient de tomber
   closeModal();
   cancelTween(); MAP.animating = false; MAP.host.classList.remove("tweening");
   // Première ouverture : on cadre la région de l'utilisateur. Retours suivants :

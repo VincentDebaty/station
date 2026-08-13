@@ -164,7 +164,14 @@ body {
 /* Actions (recommencer, son, aide) EMPILÉES verticalement sous l'engrenage. */
 .hud-panel .act-row { display: flex; flex-direction: column; align-items: stretch; gap: 8px; }
 /* icônes vectorielles (Material) centrées dans les boutons */
-.btn svg { display: block; }
+/* Une icône de bouton garde SA taille, celle que `icon(path, 18)` a écrite dans
+   l'attribut. La feuille pose `svg { width: 100% }` pour le plan de voies ; dans
+   un bouton en flex, l'icône devenait un élément élastique qui se taillait la
+   part du lion et faisait passer le texte à la ligne — « Rejouer — +180 » se
+   coupait après le tiret. */
+/* `:not(.cr)` : le jeton de la monnaie n'est pas une icône de bouton, c'est un
+   caractère — il se dimensionne en `em` avec le texte qu'il précède. */
+.btn svg:not(.cr) { display: block; flex: none; width: auto; height: auto; }
 .btn.icon { padding: 6px; } /* boutons-icônes carrés */
 .closure-tag {
   fill: var(--red); font-size: 13px; font-weight: 600; text-anchor: middle;
@@ -532,6 +539,7 @@ svg { width: 100%; height: 100%; display: block; }
   background: var(--panel); border: 1px solid #2a3550; border-radius: 18px;
   padding: 34px 40px; max-width: 560px; text-align: center;
   margin: auto; /* reste centrée tant qu'elle tient, sinon défile depuis le haut */
+  position: relative; /* ancre de la croix de fermeture (relevé de fin) */
 }
 .card h1 { font-size: 26px; margin-bottom: 18px; font-weight: 600; }
 .card p { color: var(--muted); font-size: 15px; line-height: 1.65; margin-bottom: 12px; text-align: left; }
@@ -636,10 +644,6 @@ svg { width: 100%; height: 100%; display: block; }
   box-shadow: 0 0 0 1px rgba(245, 178, 60, .25), 0 24px 60px -24px rgba(0, 0, 0, .65);
   width: min(560px, 94vw); padding: 26px 30px;
 }
-#end.over-map .card.country-done { width: min(520px, 46vw); }
-@media (max-width: 720px) {
-  #end.over-map .card.country-done { width: min(520px, 94vw); }
-}
 #end .card.country-done #end-title { color: #f5b23c; }
 
 /* Service PARFAIT (zéro retard) : titre doré + étoiles qui scintillent, halo
@@ -698,76 +702,68 @@ svg { width: 100%; height: 100%; display: block; }
 /* Ligne d'accueil du tout premier lancement : elle nomme ce que les halos
    montrent. Elle disparaît dès la première étoile — après quoi la carte se lit
    seule (grise = fermée, teal = ouverte, teal + étoiles = faite). */
-/* Choix en attente : la CARTE reste visible derrière la fiche de fin, et les
-   gares proposées y pulsent. Le choix devient géographique — on voit d'où l'on
-   vient, où mènent les lignes, et comment le réseau s'étend. Le voile
-   s'allège pour ça (la fiche garde le premier plan par son z-index). */
-/* DEUX COLONNES quand la carte est derrière : la fiche à gauche, le réseau
-   dans la bande restante (le cadrage en tient compte — frameCountryBeside).
-   Centrée, la fiche se posait pile sur la gare qu'on quitte et sur ses
-   voisines, c'est-à-dire sur tout ce qu'on demandait au joueur de regarder. */
-#end.over-map {
-  /* Voile presque nul : c'est la carte qu'on est venu lire, et la fiche se
-     détache déjà seule (fond opaque + ombre portée). Un voile appuyé
-     délavait le réseau au moment précis où il fallait le comparer. */
-  z-index: 31; background: rgba(10, 14, 24, .12);
-  align-items: center; justify-content: flex-start;
-}
-#end.over-map .card {
-  width: min(370px, 40vw); margin: 0;
-  box-shadow: 0 18px 60px rgba(0, 0, 0, .8);
-}
-/* Écran étroit : pas de place pour deux colonnes — la fiche redevient un
-   panneau du bas, et le cadrage se décale vers le haut. */
-@media (max-width: 720px) {
-  #end.over-map { align-items: flex-end; justify-content: center; }
-  #end.over-map .card { width: min(370px, 92vw); margin-bottom: 4px; }
-}
-.city-chip.choice .dot { box-shadow: 0 0 0 3px rgba(45, 212, 191, .45), 0 0 22px rgba(45, 212, 191, .95); }
-/* La gare qu'on vient de tenir : jamais masquée non plus, mais en doré et sans
-   pulsation — c'est le point de départ, pas une option à choisir. */
-.city-chip.origin .dot { box-shadow: 0 0 0 3px rgba(245, 178, 60, .5), 0 0 18px rgba(245, 178, 60, .8); }
-.city-chip.origin .nm { color: #f5b23c; font-weight: 700; }
 
 /* Récompense de fin de service : la gare voisine qu'on ouvre. À une étoile
    elle est annoncée ; à deux et trois, le joueur la choisit parmi des boutons.
    Tant qu'il n'a pas choisi, « Rejouer » et « Carte » sont masqués — on ne
    quitte pas en laissant sa récompense sur la table. */
+/* ==================================================================
+   LE RELEVÉ DE FIN, POSÉ À CÔTÉ DE LA CARTE.
+   ==================================================================
+   Le service est fini : ce qui reste à décider est géographique — où
+   aller, quoi ouvrir, avec quel solde. Le relevé se range donc sur le
+   côté et laisse les deux tiers de l'écran au réseau, ENTIÈREMENT
+   cliquable. Centré, il se posait pile sur la gare qu'on quitte et sur
+   ses voisines, c'est-à-dire sur tout ce qu'on demandait de regarder. */
+#end.over-map {
+  /* Voile presque nul : c'est la carte qu'on est venu lire, et le relevé se
+     détache déjà seul (fond opaque + ombre portée). Un voile appuyé délavait
+     le réseau au moment précis où il fallait le parcourir. */
+  z-index: 31; background: rgba(10, 14, 24, .10);
+  align-items: center; justify-content: flex-start;
+  /* LA CARTE RESTE VIVANTE DESSOUS : le voile ne prend aucun clic, seul le
+     relevé en capte. C'est ce qui permet de repartir d'ici sans écran
+     intermédiaire — toucher une gare range le relevé et ouvre sa fiche. */
+  pointer-events: none;
+  overflow: visible;
+}
+#end.over-map .card { pointer-events: auto; }
+/* La croix passe au-dessus de la salve de confettis, qui couvre toute la fiche. */
+#btn-end-close { z-index: 2; }
+/* Le bouton de recadrage nomme le pays sous le CENTRE de l'écran ; le relevé
+   occupe justement ce centre. Il se retire donc le temps du relevé. */
+#hub-map.end-open .map-home { display: none; }
+#end.over-map #confetti { pointer-events: none; }
+#end.over-map .card {
+  width: min(360px, 34vw); margin: 0;
+  box-shadow: 0 18px 60px rgba(0, 0, 0, .8);
+  /* Le voile ne prend pas les clics, il ne peut donc plus défiler : c'est LA
+     FICHE qui défile quand elle dépasse. Sans cela, sur un écran bas, le titre
+     et les boutons se retrouvaient coupés en haut et en bas. */
+  max-height: calc(100% - 8px); overflow-y: auto;
+}
+/* Un pays terminé mérite sa largeur, mais pas au point de manger la carte. */
+#end.over-map .card.country-done { width: min(430px, 42vw); }
+/* Écran étroit : pas de place pour deux colonnes — le relevé redevient un
+   panneau du bas, et le cadrage se décale vers le haut. */
+@media (max-width: 720px) {
+  #end.over-map { align-items: flex-end; justify-content: center; }
+  #end.over-map .card,
+  #end.over-map .card.country-done { width: min(370px, 92vw); margin-bottom: 4px; }
+}
+
+/* Le cadre de la recette est le seul bloc DORÉ de la fiche : c'est la caisse,
+   pas un encouragement. Le teal reste au jeu, l'or reste à l'argent. */
 #end-unlock {
   margin: 4px 0 14px; padding: 12px 10px 13px;
-  border: 1px solid #245e5c; border-radius: 14px; background: rgba(20, 51, 58, .55);
+  border: 1px solid #4a3a1c; border-radius: 14px; background: rgba(48, 36, 12, .4);
 }
 #end-unlock.hidden { display: none; }
 #end-unlock .eu-title {
-  color: #63e6d4; font-size: 11px; letter-spacing: .1em; text-transform: uppercase;
+  color: var(--gold); font-size: 11px; letter-spacing: .1em; text-transform: uppercase;
   margin-bottom: 8px;
 }
 #end-unlock .eu-done { color: var(--text); font-size: 17px; font-weight: 600; }
-/* DEUX colonnes, toujours : en flex-wrap, quatre gares se rangeaient 3 + 1 et
-   la dernière restait orpheline. Une grille fixe donne des boutons de même
-   largeur et un bloc stable quel que soit le nombre de voisines. */
-#end-unlock .eu-row {
-  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px;
-}
-/* Le nom d'abord, la jauge ensuite — mais la jauge PASSE À LA LIGNE quand le
-   nom ne lui laisse pas la place. Collée au bord droit (space-between, sans
-   retour à la ligne), elle débordait du bouton dès qu'un nom long tombait dans
-   une colonne étroite : « Paris-Montparnasse » ou « Peterborough » sur la fiche
-   posée à côté de la carte, en paysage téléphone. Un nom de gare ne se tronque
-   pas — c'est ce qu'on demande de lire — donc c'est la mise en page qui cède. */
-#end-unlock .eu-pick {
-  font-size: 14px; padding: 9px 11px; width: 100%;
-  display: flex; flex-wrap: wrap; align-items: center; justify-content: center;
-  gap: 3px 8px; line-height: 1.25; text-align: center;
-}
-/* Nombre impair : la dernière reste sur UNE colonne comme les autres. L'étirer
-   sur toute la largeur lui donnait un poids qu'elle n'a pas — toutes les gares
-   proposées sont à égalité, seule leur difficulté les distingue. */
-@media (hover: hover) { #end-unlock .eu-pick:hover { border-color: #2dd4bf; color: #eafbf7; } }
-/* Difficulté des gares proposées : la MÊME jauge que partout ailleurs. */
-#end-unlock .pips { display: flex; align-items: center; gap: 3px; flex: 0 0 auto; }
-#end-unlock .pips .b { width: 4px; height: 11px; border-radius: 1.5px; background: #3b465c; }
-#end-unlock .pips .b.on { background: #f5b23c; }
 
 
 .map-home {
@@ -852,17 +848,6 @@ svg { width: 100%; height: 100%; display: block; }
    qu'on ait à décoder une numérotation. Les deux barèmes vivent dans
    js/mapnet.js — le CSS ne fait que les appliquer. */
 #map-net { --k: 1; }
-#map-net .city-chip .dot {
-  width: calc(var(--d) * var(--k)); height: calc(var(--d) * var(--k));
-  font-size: 0; /* aucun texte dans la pastille : ce qu'elle porte est une forme */
-  /* Trois couches, de dedans en dehors : l'anneau teal qui dessine le contour du
-     point même quand il est creux, le liseré sombre qui le détache des voies,
-     et la lueur. L'anneau est en `inset` et non en `border` : une bordure
-     mangerait le diamètre posé par --d, et le modèle de collision (js/mapnet.js)
-     ne verrait plus la même taille que l'écran. */
-  box-shadow: inset 0 0 0 2px var(--chip),
-              0 0 0 2px rgba(14, 20, 32, .8), 0 0 8px var(--chip-glow);
-}
 #map-net[data-detail="far"] .city-chip .nm { font-size: 11px; font-weight: 500; }
 
 /* ---- DEUX COULEURS, PAS UNE DE PLUS ----
@@ -913,7 +898,7 @@ svg { width: 100%; height: 100%; display: block; }
    de départ) gardent le box-shadow sur lequel elles reposent.
    66 % : au-delà, les pointes touchent le bord et le teal ne fait plus anneau ;
    en deçà, l'étoile se perd sur une pastille de 13 px. */
-#map-net .city-chip.perfect .dot .pf { width: 66%; height: 66%; display: block; }
+.city-chip.perfect .dot .pf { width: 66%; height: 66%; display: block; }
 
 /* Animation « voyage » vers la gare suivante : convoi (mj-dot) qui file le long
    du tronçon (mj-line qui se trace), la gare d'arrivée pulse (mj-ring). Le SVG
@@ -977,14 +962,26 @@ svg { width: 100%; height: 100%; display: block; }
 .city-chip .dot {
   position: relative;
   display: flex; align-items: center; justify-content: center;
-  width: 22px; height: 22px; border-radius: 50%;
-  font-size: 12px; font-weight: 700; color: #0e1420;
+  border-radius: 50%; color: #0e1420;
   /* Intérieur du point : sombre par défaut (il est creux, il se remplira), et
      le dégradé teal pour les états qui sont pleins d'emblée — verrouillée,
      parfaite. Le rehaut en haut à gauche donne du volume à la bille. */
   background: var(--chip-in);
-  box-shadow: 0 0 8px var(--chip-glow);
   transition: transform .15s;
+  /* Taille = DIFFICULTÉ (--d, posé par mapnet.js) × le facteur du palier de zoom
+     (--k). Les deux barèmes vivent dans js/mapnet.js — le CSS les applique.
+     Trois couches, de dedans en dehors : l'anneau qui dessine le contour du
+     point même quand il est creux, le liseré sombre qui le détache des voies,
+     et la lueur. L'anneau est en `inset` et non en `border` : une bordure
+     mangerait le diamètre posé par --d, et le modèle de collision (js/mapnet.js)
+     ne verrait plus la même taille que l'écran.
+     Ces règles ne sont PAS réservées à la carte : la légende dessine les mêmes
+     pastilles, avec les mêmes classes, pour qu'elle ne puisse pas mentir sur ce
+     qu'on voit à l'écran. */
+  width: calc(var(--d, 22px) * var(--k, 1)); height: calc(var(--d, 22px) * var(--k, 1));
+  font-size: 0; /* aucun texte dans la pastille : ce qu'elle porte est une forme */
+  box-shadow: inset 0 0 0 2px var(--chip),
+              0 0 0 2px rgba(14, 20, 32, .8), 0 0 8px var(--chip-glow);
 }
 .city-chip .cap {
   position: absolute; top: 20px; left: 50%; transform: translateX(-50%);
@@ -1016,13 +1013,17 @@ svg { width: 100%; height: 100%; display: block; }
    seulement au premier lancement ; SAUF pendant un choix de fin de service, où
    seules les candidates battent — deux halos de sens différents sur la même
    carte se lisent comme un seul. */
+/* « À toi de jouer », et rien d'autre : une seule gare peut battre à la fois
+   dans un coin de carte, celle qui attend son service. Le teal du réseau, donc
+   — les gares à acheter ne battent plus, leur étiquette suffit. */
+.city-chip.entry { --pulse: #2dd4bf; --pulse-hi: #63e6d4; --pulse-glow: rgba(45, 212, 191, .85); }
 .city-chip.entry .dot {
-  box-shadow: 0 0 0 3px rgba(45, 212, 191, .35), 0 0 16px rgba(45, 212, 191, .85);
+  box-shadow: 0 0 0 3px var(--chip-glow), 0 0 16px var(--pulse-glow);
 }
-.city-chip.entry .nm { color: #63e6d4; font-weight: 600; }
+.city-chip.entry .nm { color: var(--pulse-hi); font-weight: 600; }
 .city-chip.entry .dot::after {
   content: ""; position: absolute; inset: -5px; border-radius: 50%;
-  border: 2px solid #2dd4bf; animation: cityPulse 1.7s ease-out infinite;
+  border: 2px solid var(--pulse); animation: cityPulse 1.7s ease-out infinite;
 }
 @keyframes cityPulse {
   0%   { transform: scale(1);   opacity: .85; }
@@ -1167,3 +1168,191 @@ svg { width: 100%; height: 100%; display: block; }
   #stars { font-size: 36px; }
 }
 
+
+/* ==================================================================
+   L'ARGENT — jeton, solde, prix, recette.
+   ==================================================================
+   Une seule couleur pour toute la monnaie : l'OR. Elle ne sert à rien
+   d'autre dans le jeu — le teal dit « jouable », l'ambre dit « difficulté »,
+   l'or dit « ça se paie ». Un joueur n'a donc jamais à se demander ce qu'un
+   chiffre doré veut dire. */
+:root { --gold: #f0b23c; --gold-dim: #8a6a2a; }
+
+/* Le jeton, collé au nombre. Hexagone plein : à 12 px un évidement se referme,
+   et un rond serait pris pour une gare sur la carte. */
+.cr { width: .82em; height: .82em; fill: currentColor; vertical-align: -.06em; flex: none; }
+.cr-amt {
+  display: inline-flex; align-items: center; gap: .22em;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace; font-variant-numeric: tabular-nums;
+  color: var(--gold);
+}
+
+/* --- Le solde, en permanence sur la carte ------------------------------- */
+/* Posé en haut à DROITE : le recadrage occupe déjà la gauche, et le solde se
+   lit en même temps que les prix des pastilles, sans un geste. */
+.map-purse {
+  position: absolute; z-index: 6;
+  top: calc(12px + var(--safe-t)); right: calc(12px + var(--safe-r));
+  display: inline-flex; align-items: center;
+  height: 34px; padding: 0 14px; border-radius: 999px;
+  background: rgba(21, 29, 46, .88); border: 1px solid #4a3a1c;
+  backdrop-filter: blur(7px); -webkit-backdrop-filter: blur(7px);
+  font-size: 15px; font-weight: 600; pointer-events: none;
+}
+.map-purse.bump { animation: purseBump .5s cubic-bezier(.2, 1.2, .3, 1); }
+@keyframes purseBump {
+  0% { transform: scale(1); }
+  35% { transform: scale(1.14); box-shadow: 0 0 18px -3px rgba(240, 178, 60, .65); }
+  100% { transform: scale(1); }
+}
+@media (prefers-reduced-motion: reduce) { .map-purse.bump { animation: none; } }
+
+/* --- Le prix, sous le nom de la gare ------------------------------------ */
+/* Seules les gares ACHETABLES en portent un : c'est ce qui distingue d'un coup
+   d'œil ce qui est à portée de bourse de ce qui ne l'est pas encore. */
+.city-chip .pr { font-size: 12px; line-height: 1.25; margin-top: 2px; }
+.city-chip .pr .cr-amt { text-shadow: 0 1px 3px rgba(0, 0, 0, .9); }
+
+/* COÛT ET GAIN NE SE DISTINGUENT PAS PAR UNE NUANCE.
+   Les deux sont de l'argent, donc de l'or, et un simple « + » disparaît à
+   12 px : « 50 » et « +120 » se lisaient comme deux offres du même genre.
+   C'est la FORME qui les sépare, parce qu'elle survit à la réduction et ne
+   dépend d'aucune perception fine des couleurs :
+
+     • un PRIX est une ÉTIQUETTE — pastille pleine, chiffre creusé dedans,
+       comme une étiquette accrochée à ce qui est en vente ;
+     • un GAIN est un CHIFFRE NU, précédé de « + ».
+
+   Une étiquette s'arrache, un chiffre nu se constate : la différence de geste
+   est dans la différence d'objet. */
+.city-chip .pr:not(.earn) .cr-amt {
+  background: var(--gold); color: #17100a;
+  padding: 1px 7px 1px 6px; border-radius: 999px;
+  text-shadow: none; box-shadow: 0 1px 4px rgba(0, 0, 0, .55);
+}
+/* Hors bourse : l'étiquette s'éteint. Le prix reste lisible — c'est un objectif
+   — mais il cesse d'être une offre, et le joueur n'a plus à le comparer à son
+   solde de tête, gare après gare. */
+.city-chip.buyable:not(.ready) .pr .cr-amt {
+  background: #3d4658; color: #9aa6ba; box-shadow: none;
+}
+/* Reste à gagner : chiffre nu, jamais d'étiquette — on ne l'achète pas. */
+.city-chip .pr.earn .cr-amt { color: var(--gold); }
+/* Achetable : la pastille quitte la bille grise pleine des gares hors réseau
+   et redevient un CERCLE OUVERT, cerclé d'or — creux comme une case à remplir,
+   ce qu'elle est. Payable tout de suite : l'or vif, et elle respire (.entry).
+   Trop chère : l'or éteint, sans halo — visible, mais qui n'appelle pas. */
+.city-chip.buyable {
+  --chip: var(--gold-dim); --chip-hi: #a8823a; --chip-glow: transparent;
+  --chip-in: rgba(10, 20, 32, .85);
+  cursor: pointer;
+}
+.city-chip.buyable.ready {
+  --chip: var(--gold); --chip-hi: #ffd684; --chip-glow: rgba(240, 178, 60, .45);
+}
+.city-chip.buyable .nm { color: var(--text); }
+/* Hors de portée : ni prix, ni couleur, ni pulsation. Le gris veut dire
+   « rien à faire ici pour l'instant », et c'est une information. */
+
+/* --- La recette, sur l'écran de fin ------------------------------------- */
+#end-unlock .eu-gain { font-size: 30px; font-weight: 700; line-height: 1.15; }
+#end-unlock .eu-gain .cr-amt { gap: .18em; }
+/* Rien encaissé : le chiffre reste lisible mais cesse de briller — un « +0 »
+   en or serait une fausse joie. */
+#end-unlock .eu-gain.none .cr-amt { color: var(--muted); }
+/* Pourquoi « +0 » : la gare est pleine à ce niveau. Dit par la jauge, pas par
+   une phrase — c'est la même que sur la fiche de gare. */
+#end-unlock .eu-banked {
+  display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 6px;
+}
+#end-unlock .eu-banked .d {
+  color: var(--gold); font-size: 12px;
+  font-family: ui-monospace, Menlo, monospace; font-variant-numeric: tabular-nums;
+}
+#end-unlock .eu-buy {
+  width: 100%; margin-top: 2px; background: #33250c; border-color: var(--gold); color: #ffe9c2;
+  font-weight: 600; display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+}
+#end-unlock .eu-buy:hover { background: #42300f; }
+#end-unlock .eu-row { margin-top: 12px; padding-top: 12px; border-top: 1px solid #4a3a1c; }
+
+/* --- Fiche de gare : achat, et ce que la gare a déjà versé --------------- */
+.mm-buy {
+  width: 100%; background: #33250c; border-color: var(--gold); color: #ffe9c2; font-weight: 600;
+  display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+}
+.mm-buy:hover { background: #42300f; }
+.mm-buy svg { flex: none; width: 15px; height: 15px; fill: currentColor; display: block; }
+/* Trop cher, hors réseau, déjà acquise : le bouton reste VISIBLE et mort. Sa
+   place ne bouge donc jamais — « Prendre le service » ne remonte pas sous le
+   doigt qui vient d'acheter. */
+.mm-buy[disabled], .mm-play[disabled] { opacity: .4; cursor: default; }
+.mm-play[disabled]:hover { background: #16333a; }
+.mm-short {
+  text-align: center; color: var(--muted); font-size: 12px;
+  display: flex; align-items: center; justify-content: center; gap: 5px;
+}
+/* Encaissé : une jauge CONTINUE — ce n'est pas un palier, c'est un
+   remplissage. Non scopée : la fiche de gare et le relevé de fin montrent le
+   même objet, il ne doit pas exister en deux exemplaires. */
+.gauge.money {
+  width: 74px; height: 6px; border-radius: 3px; background: #313d57;
+  display: block; overflow: hidden; flex: none;
+}
+.gauge.money .fill { display: block; height: 100%; background: var(--gold); }
+.mm-row .v .gauge.money + .d { color: var(--gold); }
+
+
+/* ==================================================================
+   LA LÉGENDE — repliée sous un bouton, en bas à gauche.
+   ==================================================================
+   La carte se lit sans elle : c'est bien le but. Mais rien n'explique
+   une convention à qui ne l'a pas devinée, et six états de pastille
+   valent une phrase chacun. Elle se déroule au tap, se referme au tap
+   suivant ou dès qu'on touche la carte — un panneau qu'on consulte,
+   pas un mode dans lequel on entre. */
+.map-legend-btn {
+  position: absolute; z-index: 7;
+  left: calc(12px + var(--safe-l)); bottom: calc(12px + var(--safe-b));
+  width: 34px; height: 34px; border-radius: 999px;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(21, 29, 46, .88); border: 1px solid #2a3550; color: var(--muted);
+  backdrop-filter: blur(7px); -webkit-backdrop-filter: blur(7px);
+  cursor: pointer; transition: color .15s, border-color .15s;
+}
+.map-legend-btn svg { width: 18px; height: 18px; fill: currentColor; display: block; }
+.map-legend-btn.open, .map-legend-btn:hover { color: #2dd4bf; border-color: #2dd4bf; }
+
+.map-legend {
+  position: absolute; z-index: 7;
+  left: calc(12px + var(--safe-l)); bottom: calc(54px + var(--safe-b));
+  width: min(340px, calc(100vw - 24px));
+  max-height: min(70vh, 520px); overflow-y: auto;
+  background: rgba(15, 21, 35, .96); border: 1px solid #2a3550; border-radius: 14px;
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  padding: 14px 16px 12px; box-shadow: 0 18px 50px rgba(0, 0, 0, .6);
+  animation: legendIn .16s ease;
+}
+.map-legend.hidden { display: none; }
+@keyframes legendIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .map-legend { animation: none; } }
+.map-legend .lg-head {
+  font-size: 11px; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--muted); margin-bottom: 10px;
+}
+.map-legend ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 11px; }
+.map-legend li { display: flex; align-items: flex-start; gap: 12px; font-size: 13px; line-height: 1.45; color: var(--muted); }
+.map-legend li b { color: var(--text); font-weight: 600; }
+.map-legend li em { color: var(--text); font-style: italic; }
+/* La vignette : la VRAIE pastille, sortie de son positionnement absolu. Une
+   largeur fixe aligne les six lignes sur la même colonne. */
+.map-legend .lg-art {
+  flex: none; width: 62px; min-height: 26px;
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+}
+.map-legend .lg-art .map-chip { position: static; transform: none; display: block; }
+/* Le cartouche est absolu sur la carte (il flotte sous la pastille) ; ici il
+   reprend le fil normal, sous le point. */
+.map-legend .lg-art .cap { position: static; transform: none; width: auto; max-width: none; }
+.map-legend .lg-art .pr { font-size: 11px; line-height: 1; margin-top: 3px; }
+.map-legend .lg-art .dot { margin: 0 auto; }

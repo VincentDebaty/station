@@ -14,7 +14,7 @@
 // sauvegarde ancienne au schéma courant, pour ne jamais casser une partie
 // après une mise à jour.
 // ------------------------------------------------------------------
-const SCHEMA_VERSION = 2;
+const SCHEMA_VERSION = 3;
 const KEY_PROGRESS = "station-progress";
 const KEY_MUTED = "station-muted";
 const KEY_ONBOARDED = "station-onboarded"; // « le joueur a déjà appris le geste »
@@ -40,21 +40,52 @@ function makeBackend() {
 const _store = makeBackend();
 
 // --- Caches mémoire : lus en synchrone par le jeu, hydratés par loadStore. ---
-let _progress = { version: SCHEMA_VERSION, stations: {} };
+let _progress = { version: SCHEMA_VERSION, credits: 0, stations: {}, bought: [] };
 let _muted = false;
 let _onboarded = false;
 
+// Dotation de départ : elle appartient à l'économie (js/catalog.js), pas au
+// stockage. Lue au moment de la migration, donc après le chargement de tous les
+// scripts — le repli ne sert qu'à ne jamais rendre une partie injouable.
+function startingCredits() {
+  return (typeof CREDITS_START === "number") ? CREDITS_START : 150;
+}
+
 // --- Migration : amène n'importe quel format vers le schéma courant. ---
 function migrate(raw) {
-  if (!raw || typeof raw !== "object") return { version: SCHEMA_VERSION, stations: {}, opened: [] };
-  // v0 (héritage) : objet plat { id: {stars,bestDelay} }, sans champ version.
-  if (raw.version == null) return { version: SCHEMA_VERSION, stations: raw, opened: [] };
-  // v1 → v2 : les gares OUVERTES deviennent un fait mémorisé, plus une
-  // déduction. Le joueur les choisit en fin de service ; on ne peut donc pas
-  // les recalculer après coup. Une sauvegarde v1 repart sans aucune ouverture :
-  // seules les portes d'entrée restent accessibles, et ce qu'elle a déjà
-  // décroché reste décroché.
-  return { version: SCHEMA_VERSION, stations: raw.stations || {}, opened: raw.opened || [] };
+  // Étape 1 : ramener toute sauvegarde ancienne à la forme v2
+  // { stations, opened }, qui est le plus petit dénominateur commun.
+  let stations = {}, opened = [];
+  if (raw && typeof raw === "object") {
+    // v0 (héritage) : objet plat { id: {stars,bestDelay} }, sans champ version.
+    if (raw.version == null) stations = raw;
+    else { stations = raw.stations || {}; opened = raw.opened || []; }
+  }
+  // Déjà en v3 : rien à déduire, on reprend tel quel (défauts compris).
+  if (raw && raw.version === 3)
+    return {
+      version: 3,
+      credits: Math.max(0, Math.round(raw.credits || 0)),
+      stations, bought: raw.bought || []
+    };
+
+  // Étape 2 : v2 → v3. Le joueur ne perd RIEN et ne reçoit RIEN d'immérité.
+  //
+  // Les gares POSSÉDÉES sont celles qu'il avait ouvertes, plus toutes celles
+  // qu'il a déjà jouées : avant la monnaie, les gares faciles étaient des
+  // portes d'entrée jouables sans figurer dans « opened ». Sans cette union,
+  // une gare décrochée se serait retrouvée à racheter.
+  //
+  // Le solde repart à zéro : son réseau est déjà payé. Ce qu'il a encaissé sur
+  // chaque gare n'a pas à être mémorisé — il se déduit de son record
+  // (stationBanked, js/catalog.js), donc rejouer au même niveau ne rapportera
+  // rien, exactement comme s'il avait toujours joué avec la monnaie.
+  const bought = opened.slice();
+  for (const id in stations)
+    if (((stations[id] || {}).stars || 0) >= 1 && bought.indexOf(id) < 0) bought.push(id);
+  // Partie neuve (ou sauvegarde vide) : la dotation de départ, sans quoi il n'y
+  // aurait pas de quoi ouvrir la première gare.
+  return { version: 3, credits: bought.length ? 0 : startingCredits(), stations, bought };
 }
 
 // --- Chargement unique au démarrage, AVANT toute lecture de progression. ---
@@ -83,18 +114,34 @@ function persistProgress() {
 // ------------------------------------------------------------------
 function getProgress() { return _progress.stations; }
 // ------------------------------------------------------------------
-// Gares OUVERTES par le joueur — un fait, pas une déduction.
+// Gares ACHETÉES par le joueur — un fait, pas une déduction.
 // ------------------------------------------------------------------
-// Terminer un service donne le droit d'ouvrir UNE gare voisine ; à 2 et 3
-// étoiles c'est le joueur qui la désigne. Ce choix ne se recalcule pas : il
-// doit être mémorisé, sans quoi une gare ouverte se refermerait au
-// rechargement.
-function getOpened() { return _progress.opened || (_progress.opened = []); }
-function isOpened(id) { return getOpened().indexOf(id) >= 0; }
-function openStation(id) {
-  const list = getOpened();
-  if (!id || list.indexOf(id) >= 0) return false;
-  list.push(id);
+// Une gare s'ouvre en la payant, sur la carte, quand le joueur le décide. Ce
+// choix ne se recalcule pas : il doit être mémorisé, sans quoi une gare payée
+// se refermerait au rechargement.
+function getBought() { return _progress.bought || (_progress.bought = []); }
+function isBought(id) { return getBought().indexOf(id) >= 0; }
+
+// ------------------------------------------------------------------
+// Solde. Une seule bourse pour tout le réseau, tous pays confondus.
+// ------------------------------------------------------------------
+// Le solde ne descend JAMAIS en dessous de zéro et ne se retire jamais : un
+// service raté rapporte zéro, il ne coûte rien. Toute écriture passe par ici.
+function getCredits() { return _progress.credits || 0; }
+function addCredits(n) {
+  n = Math.round(n || 0);
+  if (n <= 0) return getCredits();
+  _progress.credits = getCredits() + n;
+  persistProgress();
+  return _progress.credits;
+}
+// Achat : atomique. Rend false et ne touche à rien si le solde ne suffit pas ou
+// si la gare est déjà acquise — l'appelant n'a aucune vérification à refaire.
+function buyStation(id, price) {
+  price = Math.max(0, Math.round(price || 0));
+  if (!id || isBought(id) || getCredits() < price) return false;
+  _progress.credits = getCredits() - price;
+  getBought().push(id);
   persistProgress();
   return true;
 }

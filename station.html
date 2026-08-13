@@ -122,20 +122,22 @@
          jour, pas des confettis de fête foraine (cf. perfectConfetti). -->
     <canvas id="confetti" aria-hidden="true"></canvas>
     <div class="card">
+      <!-- Fermer, plutôt que « ← Carte » : la carte est déjà là, derrière. Le
+           bouton ne changeait pas d'écran, il rangeait le relevé — une croix le
+           dit mieux, et rend sa place aux deux actions qui restent. -->
+      <button class="mm-close" id="btn-end-close" aria-label="Fermer"></button>
       <h1 id="end-title">Fin du service</h1>
       <div id="stars"></div>
       <div id="end-delay" style="color:var(--muted);font-size:17px;margin-bottom:6px;"></div>
-      <div id="end-stats" style="color:var(--muted);font-size:14px;line-height:1.8;margin-bottom:10px;font-family:ui-monospace,Menlo,monospace;"></div>
       <!-- Bandeau « pays terminé » : affiché uniquement quand ce service boucle
            le dernier maillon d'un pays. -->
       <div id="end-country" class="hidden"></div>
-      <!-- Récompense : la gare voisine que ce service ouvre. Imposée à une
-           étoile, au choix du joueur à deux et trois (js/game.js). -->
+      <!-- Recette du service : ce qu'il a rapporté, le nouveau solde, et — si
+           une voisine est abordable — de quoi l'ouvrir sans passer par la
+           carte (js/game.js). -->
       <div id="end-unlock" class="hidden"></div>
       <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
-        <button class="btn" id="btn-end-map">← Carte</button>
         <button class="btn" id="btn-replay">Rejouer</button>
-        <button class="btn hidden" id="btn-next">Gare suivante →</button>
       </div>
     </div>
   </div>
