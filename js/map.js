@@ -200,7 +200,7 @@ function buildMap() {
   // l'étiquette son fond doré. Recopier l'apparence sans la structure, c'est
   // rouvrir la porte à une légende qui diverge.
   const chip = (cls, inner, tag, d) =>
-    '<span class="map-chip city-chip ' + cls + '" style="--d:' + (d || 19) + 'px">' +
+    '<span class="map-chip city-chip chip-inline ' + cls + '" style="--d:' + (d || 19) + 'px">' +
       '<span class="dot">' + (inner || "") + "</span>" +
       (tag ? '<span class="cap">' + tag + "</span>" : "") + "</span>";
   const row = (art, title, txt) =>
@@ -812,7 +812,12 @@ function openStationModal(gi) {
     // gare tenue à trois étoiles, sans-faute encore à décrocher.
     (unlocked && got >= cap && prime > 0 ?
       '<div class="mm-row"><span class="k">Sans faute</span>' +
-        '<span class="v"><span class="s">★</span>' +
+        // L'étoile de la CARTE, pas un caractère ★ : celui-ci se confondait avec
+        // les trois étoiles du record, juste au-dessus. Celle-ci est la marque
+        // que porte une gare parfaite sur la carte — le joueur reconnaît la
+        // récompense avant de lire la ligne.
+        '<span class="v"><span class="map-chip city-chip perfect chip-inline" style="--d:20px">' +
+          '<span class="dot">' + (typeof STAR_SVG === "string" ? STAR_SVG : "") + "</span></span>" +
         '<span class="d">' + creditsHTML(prime, true) + "</span></span></div>" : "");
 
   // Drapeau seul : le pays se reconnaît sans le lire, et la carte le dit déjà.

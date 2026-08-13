@@ -1095,6 +1095,9 @@ svg { width: 100%; height: 100%; display: block; }
 .mm-row .gauge .b.on { background: #2dd4bf; }
 .mm-row .gauge.diff .b.on { background: #f5b23c; }
 .mm-row .s { color: #f5b23c; font-size: 15px; letter-spacing: 2px; }
+/* La marque du sans-faute dans la fiche : la pastille de la carte, telle
+   quelle, alignée sur la ligne. */
+.mm-row .chip-inline { flex: none; }
 .mm-row .d { color: var(--green); font-size: 13px; font-family: ui-monospace, Menlo, monospace; }
 /* Pas encore de record : ni vert ni chiffré — c'est une absence, pas un score. */
 .mm-row .d.none { color: var(--muted); font-family: inherit; font-size: 12px; }
@@ -1359,7 +1362,10 @@ svg { width: 100%; height: 100%; display: block; }
   flex: none; width: 62px; min-height: 26px;
   display: flex; flex-direction: column; align-items: center; gap: 2px;
 }
-.map-legend .lg-art .map-chip { position: static; transform: none; display: block; }
+/* Une pastille SORTIE DE LA CARTE — légende, fiche de gare. Elle garde son
+   dessin exact (c'est tout l'intérêt) et perd seulement le positionnement
+   absolu qui la place sur le réseau. */
+.chip-inline.map-chip { position: static; transform: none; display: block; }
 /* Le cartouche est absolu sur la carte (il flotte sous la pastille) ; ici il
    reprend le fil normal, sous le point. */
 .map-legend .lg-art .cap { position: static; transform: none; width: auto; max-width: none; }
