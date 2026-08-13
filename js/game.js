@@ -1447,10 +1447,9 @@ function endGame(failed) {
     btnNext.classList.toggle("primary", next);
     const btnReplay = document.getElementById("btn-replay");
     btnReplay.classList.remove("hidden");
+    // « Rejouer » ne prend la mise en avant que s'il n'y a rien de mieux à
+    // faire : ni gare suivante à prendre, ni service réussi à savourer.
     btnReplay.classList.toggle("primary", !win && !next);
-    const btnMap = document.getElementById("btn-end-map");
-    btnMap.classList.remove("hidden");
-    btnMap.classList.toggle("primary", win && !next);
   }
   paintActions();
 

@@ -122,6 +122,10 @@
          jour, pas des confettis de fête foraine (cf. perfectConfetti). -->
     <canvas id="confetti" aria-hidden="true"></canvas>
     <div class="card">
+      <!-- Fermer, plutôt que « ← Carte » : la carte est déjà là, derrière. Le
+           bouton ne changeait pas d'écran, il rangeait le relevé — une croix le
+           dit mieux, et rend sa place aux deux actions qui restent. -->
+      <button class="mm-close" id="btn-end-close" aria-label="Fermer"></button>
       <h1 id="end-title">Fin du service</h1>
       <div id="stars"></div>
       <div id="end-delay" style="color:var(--muted);font-size:17px;margin-bottom:6px;"></div>
@@ -133,7 +137,6 @@
            carte (js/game.js). -->
       <div id="end-unlock" class="hidden"></div>
       <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
-        <button class="btn" id="btn-end-map">← Carte</button>
         <button class="btn" id="btn-replay">Rejouer</button>
         <button class="btn hidden" id="btn-next">Gare suivante →</button>
       </div>

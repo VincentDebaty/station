@@ -205,10 +205,11 @@ confirmReset.addEventListener("click", e => { if (e.target === confirmReset) dis
 // « Rejouer » sur l'écran de fin : le service est terminé, il n'y a rien à
 // abandonner — pas de confirmation.
 document.getElementById("btn-replay").addEventListener("click", doReset);
-// « Carte » depuis le relevé de fin : la carte est DÉJÀ là, à côté. Le bouton
-// range donc le relevé et recadre le pays au centre, plutôt que de rejouer une
-// bascule d'écran qui n'a plus lieu d'être.
-document.getElementById("btn-end-map").addEventListener("click", () => {
+// Fermer le relevé de fin : la carte est DÉJÀ là, derrière lui. On le range et
+// on recentre le pays. Repli sur la bascule d'écran quand il n'y a pas de carte
+// dessous (démo « limites », gare hors catalogue).
+document.getElementById("btn-end-close").innerHTML = icon(ICON.close, 20);
+document.getElementById("btn-end-close").addEventListener("click", () => {
   if (typeof endLeaveMap === "function" && endLeaveMap(true)) return;
   showHub();
 });
