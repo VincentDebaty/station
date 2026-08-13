@@ -803,14 +803,17 @@ function openStationModal(gi) {
         '<span class="v"><span class="gauge money"><span class="fill" style="width:' +
           Math.round(got / cap * 100) + '%"></span></span>' +
         '<span class="d' + (unlocked && got >= cap ? " full" : "") + '">' +
-          (!unlocked ? "jusqu'à " + cap
-           : got < cap ? got + " / " + cap
-           // Le plein tarif est encaissé, mais la prime du sans-faute peut
-           // rester à prendre : « Complet » seul se lirait comme « il n'y a
-           // plus rien ici », alors que la carte annonce +320 sur la même gare.
-           // Le montant restant, en or, dit la même chose que partout ailleurs.
-           : "Complet" + (prime > 0 ? " " + creditsHTML(prime, true) : "")) +
-        "</span></span></div>" : "");
+          (!unlocked ? "jusqu'à " + cap : got >= cap ? "Complet" : got + " / " + cap) +
+        "</span></span></div>" : "") +
+    // CE QUE L'ÉTOILE RAPPORTE, dit avec l'étoile elle-même. « Complet » sur la
+    // ligne du dessus se lirait sinon comme « il n'y a plus rien ici », alors
+    // que la carte annonce +320 sur la même gare — et rien ne disait D'OÙ
+    // viendraient ces 320. La ligne ne paraît que là où la question se pose :
+    // gare tenue à trois étoiles, sans-faute encore à décrocher.
+    (unlocked && got >= cap && prime > 0 ?
+      '<div class="mm-row"><span class="k">Sans faute</span>' +
+        '<span class="v"><span class="s">★</span>' +
+        '<span class="d">' + creditsHTML(prime, true) + "</span></span></div>" : "");
 
   // Drapeau seul : le pays se reconnaît sans le lire, et la carte le dit déjà.
   const flag = (card.country || "").split(" ")[0];

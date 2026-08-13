@@ -1367,7 +1367,8 @@ function endGame(failed) {
           Math.round(got / cap * 100) + '%"></span></span>' +
           '<span class="d' + (got >= cap ? " full" : "") + '">' +
           (got < cap ? got + " / " + cap
-           : "Complet" + (prime > 0 ? " " + creditsHTML(prime, true) : "")) + "</span></div>";
+           : prime > 0 ? "Complet · ★ " + creditsHTML(prime, true)
+           : "Complet") + "</span></div>";
       })()) +
       "";  // le solde n'est PAS ici : il vit en permanence sur la carte, derrière
            // le relevé, et c'est lui qui s'incrémente sous les yeux du joueur.
