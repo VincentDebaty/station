@@ -1201,18 +1201,34 @@ svg { width: 100%; height: 100%; display: block; }
 /* --- Le prix, sous le nom de la gare ------------------------------------ */
 /* Seules les gares ACHETABLES en portent un : c'est ce qui distingue d'un coup
    d'œil ce qui est à portée de bourse de ce qui ne l'est pas encore. */
-.city-chip .pr { font-size: 12px; line-height: 1.25; margin-top: 1px; }
+.city-chip .pr { font-size: 12px; line-height: 1.25; margin-top: 2px; }
 .city-chip .pr .cr-amt { text-shadow: 0 1px 3px rgba(0, 0, 0, .9); }
-/* DEUX FAITS, DEUX CANAUX. Le CERNE dit « ça s'achète » (la gare touche le
-   réseau) ; la COULEUR DU PRIX dit « ça se paie maintenant ». Sans cette
-   seconde distinction, un prix hors bourse s'écrivait dans le même or qu'un
-   prix payable, et le joueur devait comparer chaque nombre à son solde de tête
-   — deux soustractions pour apprendre qu'il n'a rien à faire ici. */
-.city-chip.buyable:not(.afford) .pr .cr-amt { color: var(--muted); }
-/* Reste à gagner sur une gare acquise : le même or, un cran en retrait. Une
-   dépense se décide, une recette se constate — le prix garde la préséance. */
-.city-chip .pr.earn .cr-amt { color: #d9a54a; }
-.city-chip.buyable:not(.afford) .pr .cr { opacity: .55; }
+
+/* COÛT ET GAIN NE SE DISTINGUENT PAS PAR UNE NUANCE.
+   Les deux sont de l'argent, donc de l'or, et un simple « + » disparaît à
+   12 px : « 50 » et « +120 » se lisaient comme deux offres du même genre.
+   C'est la FORME qui les sépare, parce qu'elle survit à la réduction et ne
+   dépend d'aucune perception fine des couleurs :
+
+     • un PRIX est une ÉTIQUETTE — pastille pleine, chiffre creusé dedans,
+       comme une étiquette accrochée à ce qui est en vente ;
+     • un GAIN est un CHIFFRE NU, précédé de « + ».
+
+   Une étiquette s'arrache, un chiffre nu se constate : la différence de geste
+   est dans la différence d'objet. */
+.city-chip .pr:not(.earn) .cr-amt {
+  background: var(--gold); color: #17100a;
+  padding: 1px 7px 1px 6px; border-radius: 999px;
+  text-shadow: none; box-shadow: 0 1px 4px rgba(0, 0, 0, .55);
+}
+/* Hors bourse : l'étiquette s'éteint. Le prix reste lisible — c'est un objectif
+   — mais il cesse d'être une offre, et le joueur n'a plus à le comparer à son
+   solde de tête, gare après gare. */
+.city-chip.buyable:not(.afford) .pr .cr-amt {
+  background: #3d4658; color: #9aa6ba; box-shadow: none;
+}
+/* Reste à gagner : chiffre nu, jamais d'étiquette — on ne l'achète pas. */
+.city-chip .pr.earn .cr-amt { color: var(--gold); }
 /* Achetable : la pastille quitte la bille grise pleine des gares hors réseau
    et redevient un CERCLE OUVERT, cerclé d'or — creux comme une case à remplir,
    ce qu'elle est. Payable tout de suite : l'or vif, et elle respire (.entry).
