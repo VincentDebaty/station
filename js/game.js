@@ -1175,17 +1175,13 @@ function endGame(failed) {
       ? (d === 0 ? "Service parfait — aucun retard." : "Retard cumulé : " + d + " min") +
         (opened ? " — de nouvelles gares s'ouvrent !" : "")
       : "Retard cumulé : " + d + " min — il faut moins de 30 min pour décrocher une étoile. Réessayez !";
-  // bilan de la journée
+  // Bilan de la journée : sur TOUS les trains voyageurs du service, ceux qui
+  // sont repartis avec moins d'une minute de retard. depDelay ne se remplit
+  // qu'au départ réel : un convoi jamais reparti — laissé en file, ou encore à
+  // quai quand le service s'interrompt — n'est pas « à l'heure ». Sans ce
+  // test, ne rien faire du tout affichait un service impeccable (12/12).
   const pax = trains.filter(t => !t.freight);
-  const onTime = pax.filter(t => (t.depDelay || 0) < 1).length;
-  let worst = null;
-  for (const t of pax)
-    if ((t.depDelay || 0) >= 1 && (!worst || t.depDelay > worst.depDelay)) worst = t;
-  const nEv = EVENTS.filter(ev => ev.revealed).length;
-  const nFret = trains.filter(t => t.freight).length;
-  const inc = [];
-  if (nEv) inc.push(nEv + " imprévu" + (nEv > 1 ? "s" : ""));
-  if (nFret) inc.push(nFret + " fret" + (nFret > 1 ? "s" : ""));
+  const onTime = pax.filter(t => t.depDelay != null && t.depDelay < 1).length;
   document.getElementById("end-stats").innerHTML =
     "Trains à l'heure : " + onTime + "/" + pax.length;
   // Bandeau « pays terminé » : drapeau + nom + total d'étoiles du pays.
