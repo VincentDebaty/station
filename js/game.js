@@ -1311,15 +1311,9 @@ function endGame(failed) {
     : win
       ? (d === 0 ? "Service parfait — aucun retard." : "Retard cumulé : " + d + " min")
       : "Retard cumulé : " + d + " min — il faut moins de 30 min pour décrocher une étoile. Réessayez !";
-  // Bilan de la journée : sur TOUS les trains voyageurs du service, ceux qui
-  // sont repartis avec moins d'une minute de retard. depDelay ne se remplit
-  // qu'au départ réel : un convoi jamais reparti — laissé en file, ou encore à
-  // quai quand le service s'interrompt — n'est pas « à l'heure ». Sans ce
-  // test, ne rien faire du tout affichait un service impeccable (12/12).
-  const pax = trains.filter(t => !t.freight);
-  const onTime = pax.filter(t => t.depDelay != null && t.depDelay < 1).length;
-  document.getElementById("end-stats").innerHTML =
-    "Trains à l'heure : " + onTime + "/" + pax.length;
+  // « Trains à l'heure : 15/15 » a été retiré : c'est le retard cumulé, juste
+  // au-dessus, qui décide des étoiles et de la recette — un second décompte à
+  // côté du premier n'ajoutait qu'une ligne à lire pour la même information.
   // Bandeau « pays terminé » : drapeau + nom + total d'étoiles du pays.
   const ec = document.getElementById("end-country");
   if (justCompletedCountry) {
@@ -1366,7 +1360,8 @@ function endGame(failed) {
         '<div class="eu-banked"><span class="gauge money"><span class="fill" style="width:' +
           Math.round(stationBanked(STATION.id) / cap * 100) + '%"></span></span>' +
         '<span class="d">' + stationBanked(STATION.id) + " / " + cap + "</span></div>") +
-      '<div class="eu-solde">Solde <span class="eu-solde-n">' + creditsHTML(getCredits()) + "</span></div>";
+      "";  // le solde n'est PAS ici : il vit en permanence sur la carte, derrière
+           // le relevé, et c'est lui qui s'incrémente sous les yeux du joueur.
   }
 
   // LA RECETTE SE COMPTE, ELLE NE S'AFFICHE PAS. Un nombre déjà posé est un
@@ -1377,7 +1372,9 @@ function endGame(failed) {
   function rollRecette() {
     if (noPay || gain <= 0) return;
     animateCredits(reward.querySelector(".eu-gain"), 0, gain, true);
-    animateCredits(reward.querySelector(".eu-solde-n"), getCredits() - gain, getCredits(), false);
+    // La bourse de la carte compte en même temps : la recette ne s'additionne
+    // pas dans un coin de fiche, elle tombe dans le solde qu'on voit déjà.
+    animateCredits(MAP.purse, getCredits() - gain, getCredits(), false);
   }
 
   function paintActions() {
