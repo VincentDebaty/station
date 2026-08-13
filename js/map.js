@@ -239,10 +239,14 @@ function buildMap() {
     const open = legend.classList.toggle("hidden");
     legendBtn.classList.toggle("open", !open);
   });
-  // Un tap n'importe où ailleurs la referme : c'est un panneau qu'on consulte,
-  // pas un mode dans lequel on entre.
+  // Lire la légende ne la referme pas : seul un tap AILLEURS la range.
+  legend.addEventListener("click", ev => ev.stopPropagation());
+  // UN TAP AILLEURS REFERME CE QUI EST OUVERT — la légende comme le relevé de
+  // fin de service. Les deux sont des panneaux posés sur la carte : on en sort
+  // en touchant la carte, sans chercher le bouton qui va bien.
   host.addEventListener("click", () => {
     legend.classList.add("hidden"); legendBtn.classList.remove("open");
+    if (typeof endLeaveMap === "function") endLeaveMap(true);
   });
   MAP.legend = legend;
   host.appendChild(legend);
