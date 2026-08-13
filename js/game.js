@@ -1313,22 +1313,24 @@ function endGame(failed) {
   const nameOf = id => { const c = CATALOG.find(x => x.id === id); return c ? (c.city || c.name) : id; };
   let boughtNow = null;
 
-  // Ce que ce service a rapporté, en clair : le calcul avant le total, pour que
-  // « +0 » sur une gare rejouée sans progrès ne passe jamais pour un bug.
+  // Ce que ce service a rapporté. TROIS LIGNES, PAS UNE DE PLUS : le gain, le
+  // solde, et de quoi repartir. Le détail du calcul (tarif × étoiles, déjà
+  // encaissé) a été essayé et retiré — au bout d'un service, personne ne relit
+  // une opération, et le bloc devenait un tableau.
+  //
+  // Seul cas qui demande une explication : « +0 », quand la gare a déjà tout
+  // versé à ce niveau. Elle se donne alors SANS PHRASE, par la jauge
+  // d'encaissement — la même que sur la fiche de gare, où le joueur l'a déjà
+  // vue. Un dessin qui dit « cette gare est pleine » vaut deux lignes de texte.
   function recetteHTML() {
     if (noPay) return "";
-    // Le multiplicateur se dit en ÉTOILES, pas en décimales : c'est le barème
-    // que le joueur vient de voir en haut de la fiche, et « ×0,75 » l'obligerait
-    // à faire le lien lui-même.
-    const mult = perfect ? "parfait" : stars ? "★★★".slice(0, stars) + "☆☆☆".slice(0, 3 - stars) : "0";
-    const detail = banked > 0
-      ? "tarif " + tarif + " × " + mult + " = " + payout + " · déjà encaissé " + banked
-      : "tarif " + tarif + " × " + mult + " = " + payout;
+    const cap = stationCap(STATION.id);
     return '<div class="eu-title">Recette du service</div>' +
-      '<div class="eu-calc">' + detail + "</div>" +
       '<div class="eu-gain' + (gain > 0 ? "" : " none") + '">' + creditsHTML(gain, true) + "</div>" +
-      (gain > 0 || banked === 0 ? "" :
-        '<div class="eu-hint">Cette gare a déjà tout donné à ce niveau — jouez mieux pour en tirer plus.</div>') +
+      (gain > 0 || !cap ? "" :
+        '<div class="eu-banked"><span class="gauge money"><span class="fill" style="width:' +
+          Math.round(stationBanked(STATION.id) / cap * 100) + '%"></span></span>' +
+        '<span class="d">' + stationBanked(STATION.id) + " / " + cap + "</span></div>") +
       '<div class="eu-solde">Solde ' + creditsHTML(getCredits()) + "</div>";
   }
 
