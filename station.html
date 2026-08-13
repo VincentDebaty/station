@@ -84,6 +84,14 @@
       <div id="clock-row">
         <span id="clock">07:00</span>
         <span id="delay">+0</span>
+        <!-- Recette du service EN COURS. Un nombre, son jeton, quatre crans de
+             3 px : le retard cesse d'être un chiffre abstrait, il devient une
+             somme qui s'échappe. Tout le reste — plafond, calcul, reste à
+             encaisser — vit sur la fiche de gare et l'écran de fin. -->
+        <span id="gain" class="hidden" aria-hidden="true">
+          <span id="gain-n"></span>
+          <span id="gain-pips"><i></i><i></i><i></i><i></i></span>
+        </span>
       </div>
       <!-- Avancement du service : bandeau au ras du bord BAS du cadre, qui se
            remplit à la proportion de convois ayant quitté le quai. Posé dans

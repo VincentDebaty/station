@@ -40,23 +40,26 @@ let _coachTarget = null; // élément DOM que le repère pointe (suivi chaque fr
 // seule dirait « celle-ci » alors que le joueur choisit librement.
 function maybeStartMapOnboarding() {
   const done = (typeof getOnboarded === "function") && getOnboarded();
-  const started = (typeof noStationEarned === "function") && !noStationEarned();
+  const started = (typeof networkEmpty === "function") && !networkEmpty();
   if (done || started) { if (onboarding === "pickStation") { onboarding = null; hideCoach(); } return; }
   onboarding = "pickStation";
-  coachAt(null, "Bienvenue ! Les gares qui <b>pulsent</b> sont ouvertes. " +
-                "<b>Choisis ta première gare</b> pour prendre ton premier service.");
+  // C'est le seul endroit du jeu où le mot « crédits » est prononcé, avec le
+  // premier achat : partout ailleurs, le jeton parle tout seul.
+  coachAt(null, "Bienvenue ! Vous avez <b>" + (typeof getCredits === "function" ? getCredits() : 150) +
+                " crédits</b> pour ouvrir votre première gare. " +
+                "Les gares qui <b>pulsent</b> sont à votre portée — choisissez la vôtre.");
 }
 
 // Fiche de gare ouverte pendant l'étape 0 : le repère se déplace sur le bouton
-// qui lance le service. Une fiche VERROUILLÉE porte elle aussi ce bouton, mais
-// il mène ailleurs (vers une gare ouverte) — le texte doit le dire, sinon il
-// promet au joueur une gare qu'il ne va pas prendre.
-function onboardingStationCard(play, unlocked) {
+// qui porte le geste — « Prendre le service » sur une gare déjà acquise,
+// « Ouvrir » sur une gare qu'il reste à payer. Le texte doit dire lequel des
+// deux, sinon il promet un service là où le joueur va d'abord dépenser.
+function onboardingStationCard(btn, unlocked) {
   if (onboarding !== "pickStation") return;
-  if (!play) { hideCoach(); return; }
-  coachAt(play, unlocked
-    ? "Prends le service : tu diriges cette gare pendant une journée."
-    : "Cette gare est encore fermée. <b>Commence par une gare ouverte</b> — celle-ci te convient.");
+  if (!btn) { hideCoach(); return; }
+  coachAt(btn, unlocked
+    ? "Prenez le service : vous dirigez cette gare pendant une journée."
+    : "<b>Ouvrez cette gare</b> — elle vous appartiendra pour de bon, et vous pourrez la rejouer autant que vous voudrez.");
 }
 
 function maybeStartOnboarding() {
@@ -308,6 +311,7 @@ async function resetGame() {
   gameMin = 0; speed = 1;
   totalDelay = 0; selected = null; activeRoutes = {}; queueSeq = 0;
   onTimeStreak = 0;
+  _gainShown = null; // la lueur de palier ne doit pas se déclencher au 1er affichage
   hideCoach(); // efface un éventuel repère de tutoriel resté d'un service précédent
   document.getElementById("hud-controls").classList.add("hidden");
   document.getElementById("settings").classList.remove("open"); // engrenage revient à l'état repos
@@ -725,6 +729,36 @@ function updateDelay() {
   // Couleur alignée sur le barème d'étoiles : vert tant qu'on vise 3★ (< 10),
   // ambre tant qu'une étoile reste jouable (< 30), rouge dès que 0★ (≥ 30).
   d.className = v < 10 ? "" : v < 30 ? "warn" : "bad";
+  updateGain(Math.round(v));
+}
+
+// Recette en cours. Le nombre affiché est celui qui sera VERSÉ, plafond de la
+// gare déduit : sur une gare déjà encaissée à 150, le bandeau montre ce qui
+// reste réellement à gagner, jamais un chiffre qui ne sera pas payé.
+// Les quatre crans sont exactement les paliers d'étoiles — le bandeau enseigne
+// le barème en le montrant, sans un mot.
+let _gainShown = null;
+function updateGain(delay) {
+  const box = document.getElementById("gain");
+  if (!box) return;
+  // Démo « limites » : rien à encaisser, donc rien à afficher.
+  if (STATION.adhoc || typeof stationGain !== "function") { box.classList.add("hidden"); return; }
+  box.classList.remove("hidden");
+  const g = stationGain(STATION.id, delay);
+  const m = payoutMult(delay);                   // 4 crans : parfait, ★★★, ★★☆, ★☆☆
+  const lvl = m === 2 ? 4 : m === 1 ? 3 : m === 0.75 ? 2 : m === 0.5 ? 1 : 0;
+  const n = document.getElementById("gain-n");
+  n.innerHTML = creditsHTML(g);
+  // Une lueur brève au franchissement d'un palier, et rien d'autre : pas de
+  // compte à rebours, pas de phrase. Ce qui change se voit, ce qui dure se tait.
+  if (_gainShown !== null && g !== _gainShown) {
+    box.classList.remove("step");
+    void box.offsetWidth;               // redémarre l'animation même deux fois de suite
+    box.classList.add("step");
+  }
+  _gainShown = g;
+  const pips = document.getElementById("gain-pips").children;
+  for (let i = 0; i < pips.length; i++) pips[i].classList.toggle("on", i < lvl);
 }
 
 // Reste-t-il un convoi en mouvement ? Sert à prolonger l'animation APRÈS la fin
@@ -1145,7 +1179,18 @@ function endGame(failed) {
   // Étoiles de CETTE gare avant enregistrement : sert à savoir si ce service
   // vient de boucler le pays (dernier maillon décroché à l'instant).
   const prevStars = (getProgress()[STATION.id] || {}).stars || 0;
+  // ---- RECETTE : calculée AVANT d'enregistrer le record ------------------
+  // Une gare ne paie que la PROGRESSION : ce service vaut tarif × multiplicateur,
+  // moins ce que la gare a déjà versé. Or « déjà versé » se déduit du meilleur
+  // record — qu'on s'apprête justement à écraser. L'ordre n'est donc pas un
+  // détail : mesuré après, tout service rapporterait zéro.
+  const noPay = failed || STATION.adhoc;
+  const tarif = noPay ? 0 : stationTarif(STATION.id);
+  const payout = noPay ? 0 : stationPayout(STATION.id, d);
+  const banked = noPay ? 0 : stationBanked(STATION.id);
+  const gain = noPay ? 0 : stationGain(STATION.id, d);
   if (!failed && !STATION.adhoc) saveResult(STATION.id, stars, d); // un échec (ou la démo limites) ne modifie pas le record
+  if (gain > 0) addCredits(gain);
   // Pays terminé À L'INSTANT : gagné, cette gare passe de 0 à ≥1 étoile, et toutes
   // les gares du pays ont désormais au moins une étoile. (Seule cette gare a pu
   // changer ce tour-ci, d'où la condition sur prevStars.)
@@ -1159,21 +1204,10 @@ function endGame(failed) {
     failed ? "Service interrompu" : justCompletedCountry ? "Pays terminé !"
       : perfect ? "Sans faute !" : (win ? "Fin du service" : "Objectif manqué");
   document.getElementById("stars").textContent = "★★★".slice(0, stars) + "☆☆☆".slice(0, 3 - stars);
-  // une étoile ne débloque que la gare suivante DU MÊME pays (les autres
-  // pays sont déjà ouverts) ; en fin de pays, on invite à en choisir un autre
-  // Une gare voisine s'est-elle ouverte grâce à ce service ? (message de fin)
-  const opened = win && typeof netLinks === "function" && (() => {
-    const prog = getProgress();
-    return netLinks(CATALOG[currentIdx].id).to.some(id => {
-      const gi = CATALOG.findIndex(c => c.id === id);
-      return gi >= 0 && !((prog[id] || {}).stars) && isUnlocked(gi);
-    });
-  })();
   document.getElementById("end-delay").textContent = failed
     ? "Retard de +" + d + " min — la limite de " + maxDelay() + " min est dépassée."
     : win
-      ? (d === 0 ? "Service parfait — aucun retard." : "Retard cumulé : " + d + " min") +
-        (opened ? " — de nouvelles gares s'ouvrent !" : "")
+      ? (d === 0 ? "Service parfait — aucun retard." : "Retard cumulé : " + d + " min")
       : "Retard cumulé : " + d + " min — il faut moins de 30 min pour décrocher une étoile. Réessayez !";
   // Bilan de la journée : sur TOUS les trains voyageurs du service, ceux qui
   // sont repartis avec moins d'une minute de retard. depDelay ne se remplit
@@ -1199,104 +1233,87 @@ function endGame(failed) {
     ec.classList.remove("hidden");
   } else ec.classList.add("hidden");
   (perfect ? SND.perfect : win ? SND.end : SND.incident)(); // parfait → fanfare, 0 étoile → échec
-  // ---- RÉCOMPENSE : ouvrir une gare voisine -------------------------------
-  // Un service réussi donne le droit d'en ouvrir UNE. Le nombre d'étoiles décide
-  // de la latitude : imposée à une étoile, au choix (à niveau égal ou moindre) à
-  // deux, libre à trois. Voir unlockChoices() dans js/catalog.js.
+  // ---- RECETTE ET SUITE ---------------------------------------------------
+  // L'écran de fin n'est plus un tribunal qui distribue une gare : c'est un
+  // RELEVÉ. Il annonce ce que le service a rapporté, le nouveau solde, et
+  // propose — sans jamais l'imposer — d'ouvrir une voisine abordable. Rien ne
+  // se perd si le joueur ferme : la décision d'achat reste sur la carte,
+  // indéfiniment.
   //
-  // Redessiné après le choix du joueur SANS repasser par endGame() : réenclencher
-  // tout le bilan rejouerait le son et réenregistrerait le score.
+  // Redessiné après un achat SANS repasser par endGame() : réenclencher tout le
+  // bilan rejouerait le son et réenregistrerait le score.
   const reward = document.getElementById("end-unlock");
   const nameOf = id => { const c = CATALOG.find(x => x.id === id); return c ? (c.city || c.name) : id; };
-  // Même jauge que la fiche de gare et le cartouche : cinq crans, jamais des
-  // pastilles ici et des barres ailleurs pour dire la même chose.
-  const pipsOf = id => {
-    const d = Math.max(1, Math.min(5, (CATALOG.find(x => x.id === id) || {}).difficulty || 1));
-    return '<span class="pips">' + Array.from({ length: 5 }, (_, i) =>
-      '<span class="b' + (i < d ? " on" : "") + '"></span>').join("") + "</span>";
-  };
-  let openedNow = null;
+  let boughtNow = null;
+
+  // Ce que ce service a rapporté, en clair : le calcul avant le total, pour que
+  // « +0 » sur une gare rejouée sans progrès ne passe jamais pour un bug.
+  function recetteHTML() {
+    if (noPay) return "";
+    // Le multiplicateur se dit en ÉTOILES, pas en décimales : c'est le barème
+    // que le joueur vient de voir en haut de la fiche, et « ×0,75 » l'obligerait
+    // à faire le lien lui-même.
+    const mult = perfect ? "parfait" : stars ? "★★★".slice(0, stars) + "☆☆☆".slice(0, 3 - stars) : "0";
+    const detail = banked > 0
+      ? "tarif " + tarif + " × " + mult + " = " + payout + " · déjà encaissé " + banked
+      : "tarif " + tarif + " × " + mult + " = " + payout;
+    return '<div class="eu-title">Recette du service</div>' +
+      '<div class="eu-calc">' + detail + "</div>" +
+      '<div class="eu-gain' + (gain > 0 ? "" : " none") + '">' + creditsHTML(gain, true) + "</div>" +
+      (gain > 0 || banked === 0 ? "" :
+        '<div class="eu-hint">Cette gare a déjà tout donné à ce niveau — jouez mieux pour en tirer plus.</div>') +
+      '<div class="eu-solde">Solde ' + creditsHTML(getCredits()) + "</div>";
+  }
 
   function paintActions() {
-    const choices = (win && !STATION.adhoc && typeof unlockChoices === "function")
-      ? unlockChoices(CATALOG[currentIdx].id, stars) : [];
-    // Une seule candidate : rien à décider, on ouvre et on l'annonce. C'est le
-    // cas systématique à une étoile.
-    if (!openedNow && choices.length === 1) { openStation(choices[0]); openedNow = choices[0]; }
-    const pending = !openedNow && choices.length > 1;
-
-    // La CARTE derrière la fiche quand un choix est en attente : on décide en
-    // voyant le réseau, pas une liste de noms. Elle porte les étoiles qu'on vient
-    // de gagner (mapnetSetChoices reconstruit) et fait pulser les candidates.
-    const end = document.getElementById("end");
-    const hub = document.getElementById("hub");
-    if (pending && typeof mapnetSetChoices === "function") {
-      hub.classList.remove("hidden");
-      // La disposition en colonnes est posée AVANT de mesurer : sinon on mesure
-      // la fiche encore centrée, on croit la bande libre bien plus étroite
-      // qu'elle ne l'est, et la carte se dézoome sur toute l'Europe de l'Ouest.
-      end.classList.remove("hidden");
-      end.classList.add("over-map");
-      mapnetSetChoices(choices, CATALOG[currentIdx].id);
-      const slug = (typeof stationCountrySlug === "function") ? stationCountrySlug(currentIdx) : null;
-      if (slug && typeof frameCountryBeside === "function") {
-        const r = end.querySelector(".card").getBoundingClientRect();
-        const wide = window.innerWidth > 720;
-        frameCountryBeside(slug, wide ? { left: r.right + 16 } : { bottom: window.innerHeight - r.top + 12 });
-      }
-    } else {
-      end.classList.remove("over-map");
-      if (typeof mapnetSetChoices === "function" && MAPNET.choices) mapnetSetChoices([]);
-      // Choix résolu : la carte se retire, sauf si on part justement dessus.
-      if (!openedNow) hub.classList.add("hidden");
+    // La voisine à proposer : achetable, la MOINS CHÈRE, et dans les moyens du
+    // joueur. Rien ne sert d'agiter une gare qu'il ne peut pas payer — la carte
+    // le lui dira mieux, avec son prix et son manque.
+    let offerId = null;
+    if (win && !STATION.adhoc && !boughtNow && typeof netLinks === "function") {
+      const cand = netLinks(CATALOG[currentIdx].id).to
+        .filter(id => isBuyable(id) && canAfford(id))
+        .sort((a, b) => stationPrice(a) - stationPrice(b));
+      if (cand.length) offerId = cand[0];
     }
 
-    if (openedNow) {
-      reward.innerHTML = '<div class="eu-title">Nouvelle gare ouverte</div>' +
-        '<div class="eu-done">' + nameOf(openedNow) + " " + pipsOf(openedNow) + "</div>";
-      reward.classList.remove("hidden");
-    } else if (pending) {
-      // « Voisine » n'est vrai que si elle l'est : quand tout le voisinage est
-      // déjà ouvert, la récompense porte plus loin et le titre le dit.
-      const beyond = typeof unlockIsBeyond === "function" && unlockIsBeyond(CATALOG[currentIdx].id);
-      reward.innerHTML = '<div class="eu-title">' +
-        (beyond ? "Voisinage complet — ouvre plus loin" : "Ouvre une gare voisine") + "</div>" +
-        '<div class="eu-row">' + choices.map(id =>
-          '<button class="btn eu-pick" data-id="' + id + '">' + nameOf(id) + " " + pipsOf(id) + "</button>").join("") + "</div>";
-      reward.classList.remove("hidden");
-      // Choisir une gare, c'est déjà s'y engager : on n'ajoute pas un écran de
-      // plus. Le convoi file sur la carte de la gare qu'on quitte vers celle
-      // qu'on vient d'ouvrir, puis le service y démarre.
-      for (const b of reward.querySelectorAll(".eu-pick"))
-        b.addEventListener("click", () => {
-          const id = b.dataset.id;
-          openStation(id);
-          openedNow = id;
-          const gi = CATALOG.findIndex(c => c.id === id);
-          if (gi < 0) { paintActions(); return; }
-          paintActions();               // la carte annonce « Gare ouverte » derrière le voyage
-          document.getElementById("end").classList.add("hidden");
-          if (typeof mapJourneyToNext === "function")
-            mapJourneyToNext(currentIdx, gi, () => startStation(gi));
-          else startStation(gi);
-        });
-    } else reward.classList.add("hidden");
+    let html = recetteHTML();
+    if (boughtNow)
+      html += '<div class="eu-done">' + nameOf(boughtNow) + " ouverte</div>";
+    else if (offerId)
+      html += '<div class="eu-row"><button class="btn eu-buy" data-id="' + offerId + '">' +
+        "Ouvrir " + nameOf(offerId) + " — " + creditsHTML(stationPrice(offerId)) + "</button></div>";
+    reward.innerHTML = html;
+    reward.classList.toggle("hidden", !html);
 
-    // « Gare suivante » = une VOISINE ouverte et jamais jouée, la plus facile
+    // Acheter ici, c'est déjà s'y engager : on n'ajoute pas un écran de plus.
+    // Le convoi file sur la carte de la gare qu'on quitte vers celle qu'on
+    // vient d'ouvrir, puis le service y démarre.
+    const buy = reward.querySelector(".eu-buy");
+    if (buy) buy.addEventListener("click", () => {
+      const id = buy.dataset.id;
+      if (!buyStationById(id)) { paintActions(); return; }
+      boughtNow = id;
+      const gi = CATALOG.findIndex(c => c.id === id);
+      paintActions();
+      if (gi < 0) return;
+      document.getElementById("end").classList.add("hidden");
+      document.getElementById("hub").classList.remove("hidden");
+      if (typeof started !== "undefined") started = false;
+      if (typeof mapJourneyToNext === "function")
+        mapJourneyToNext(currentIdx, gi, () => startStation(gi));
+      else startStation(gi);
+    });
+
+    // « Gare suivante » = une VOISINE possédée et jamais jouée, la plus facile
     // d'abord — un pas de plus le long des voies, pas l'entrée suivante du
-    // catalogue. Tant qu'un choix est en attente, aucune autre action : le
-    // joueur ne doit pas pouvoir quitter en laissant sa récompense sur la table.
+    // catalogue.
     let nextGi = -1;
-    if (win && !pending) {
+    if (win) {
       const prog = getProgress();
-      // La gare qu'on VIENT d'ouvrir passe avant tout : c'est la récompense de
-      // ce service, et depuis qu'un voisinage complet fait porter l'ouverture
-      // plus loin, elle n'est plus forcément une voisine directe — chercher
-      // seulement parmi celles-ci laissait le bouton sur « Rejouer » alors que
-      // la carte annonçait une gare ouverte.
-      if (openedNow) {
-        const gi = CATALOG.findIndex(c => c.id === openedNow);
-        if (gi >= 0 && !((prog[openedNow] || {}).stars)) nextGi = gi;
+      if (boughtNow) {
+        const gi = CATALOG.findIndex(c => c.id === boughtNow);
+        if (gi >= 0 && !((prog[boughtNow] || {}).stars)) nextGi = gi;
       }
       if (nextGi < 0 && typeof netLinks === "function") {
         const cand = netLinks(CATALOG[currentIdx].id).to
@@ -1317,10 +1334,10 @@ function endGame(failed) {
     btnNext.classList.toggle("hidden", !next);
     btnNext.classList.toggle("primary", next);
     const btnReplay = document.getElementById("btn-replay");
-    btnReplay.classList.toggle("hidden", pending);
+    btnReplay.classList.remove("hidden");
     btnReplay.classList.toggle("primary", !win && !next);
     const btnMap = document.getElementById("btn-end-map");
-    btnMap.classList.toggle("hidden", pending);
+    btnMap.classList.remove("hidden");
     btnMap.classList.toggle("primary", win && !next);
   }
   paintActions();

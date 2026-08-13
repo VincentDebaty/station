@@ -29,23 +29,8 @@
 
 const MAPNET = {
   built: false, gEdges: null, layer: null,
-  nodes: [], edges: [], measured: false, detail: null,
-  // Gares mises en avant le temps d'un choix de fin de service : elles ne se
-  // cachent à aucun zoom et ne se font jamais évincer par la règle du
-  // centimètre — c'est sur elles que porte la décision.
-  choices: null, origin: null
+  nodes: [], edges: [], measured: false, detail: null
 };
-
-// Met en avant les gares d'un choix (`ids`) et la gare d'OÙ L'ON PART
-// (`origin`). Toutes échappent aux seuils de zoom et à la règle du centimètre :
-// c'est entre elles que se lit la progression du réseau. Liste vide = on lève
-// la mise en avant.
-function mapnetSetChoices(ids, origin) {
-  MAPNET.choices = (ids && ids.length) ? new Set(ids) : null;
-  MAPNET.origin = MAPNET.choices ? (origin || null) : null;
-  mapnetBuild();
-  mapnetPosition();
-}
 
 // Les 46 gares jouables ne SATURENT pas une vue d'Europe tant qu'elles y sont
 // dessinées comme des points — ce sont les libellés qui encombrent, pas les
@@ -147,18 +132,21 @@ function mapnetBuild() {
       const rec = prog[id] || {};
       const stars = rec.stars || 0, best = rec.bestDelay;
       const unlocked = (typeof isUnlocked === "function") && isUnlocked(gi);
-      const isEntry = unlocked && !stars; // ouverte, encore à faire
-      const isChoice = !!(MAPNET.choices && MAPNET.choices.has(id));
-      const isOrigin = MAPNET.origin === id;
-      // QUI RESPIRE. L'anneau pulsé veut dire « à toi de jouer ». Pendant un
-      // choix de fin de service, la carte ne doit donc dire qu'UNE chose :
-      // « prends l'une de ces candidates ». Or toute gare ouverte-jamais-jouée
-      // respire en permanence : à la fin d'Amiens, on proposait Rouen et
-      // Paris-Nord pendant que Dinant pulsait à l'identique en Belgique, et ce
-      // halo se lisait comme une troisième candidate.
-      // Les autres gares gardent leur place et leur libellé (cf. minScale plus
-      // bas, qui reste sur isEntry) — elles cessent seulement de battre.
-      const isPulsing = isChoice || (isEntry && !MAPNET.choices);
+      // TROIS ÉTATS, JAMAIS DEUX. Avant la monnaie, tout ce qui n'était pas
+      // acquis se ressemblait : le joueur ne pouvait pas distinguer ce qui
+      // était à portée de bourse de ce qui ne l'était pas, et la carte restait
+      // muette sur ce qu'il fallait pour avancer. Désormais une gare achetable
+      // porte SON PRIX, en or ; une gare hors réseau reste sourde et sans prix.
+      const buyable = !unlocked && typeof isBuyable === "function" && isBuyable(id);
+      const price = buyable ? stationPrice(id) : 0;
+      const afford = buyable && canAfford(id);
+      const isEntry = unlocked && !stars; // acquise, encore à faire
+      // QUI RESPIRE. L'anneau pulsé veut dire « à toi de jouer » — et il ne dit
+      // que cela. Deux cas, et deux seulement : une gare acquise jamais jouée,
+      // et une gare achetable que le solde permet d'ouvrir MAINTENANT. Une gare
+      // trop chère ne respire pas : elle porte son prix, ce qui suffit à dire
+      // « pas encore » sans mobiliser l'attention.
+      const isPulsing = isEntry || afford;
 
       // La pastille ne porte plus son rang de jeu : sa TAILLE dit la difficulté
       // (petite en 1, grosse en 5). On lit d'un coup d'œil où sont les morceaux,
@@ -183,9 +171,9 @@ function mapnetBuild() {
       const perfect = best === 0;
       const el = document.createElement("div");
       el.className = "map-chip city-chip" + (unlocked ? "" : " locked") +
+        (buyable ? " buyable" : "") + (afford ? " afford" : "") +
         (stars ? " s" + stars : "") + (perfect ? " perfect" : "") +
-        (isPulsing ? " entry" : "") + (isChoice ? " choice" : "") +
-        (isOrigin ? " origin" : "");
+        (isPulsing ? " entry" : "");
       el.style.setProperty("--d", DOT_D[diff] + "px");
       el.innerHTML =
         // Pastille VIDE tant qu'aucune étoile n'est décrochée — jamais jouée ou
@@ -195,7 +183,11 @@ function mapnetBuild() {
         // difficulté 1.
         '<span class="dot">' +
           (perfect ? STAR_SVG : stars ? '<span class="fill"></span>' : "") + "</span>" +
-        '<div class="cap"><div class="nm">' + (card.city || card.name) + "</div></div>";
+        // Le PRIX sous le nom, en or, et seulement sur ce qui s'achète : c'est
+        // le seul chiffre qui manquait à la carte pour qu'on puisse décider
+        // sans ouvrir une fiche.
+        '<div class="cap"><div class="nm">' + (card.city || card.name) + "</div>" +
+          (buyable ? '<div class="pr">' + creditsHTML(price) + "</div>" : "") + "</div>";
       el.addEventListener("click", ev => { ev.stopPropagation(); openStationModal(gi); });
       MAPNET.layer.appendChild(el);
 
@@ -208,9 +200,23 @@ function mapnetBuild() {
         // carrefours dans la règle du centimètre : au premier lancement, une
         // gare jouable vaut mieux qu'un hub verrouillé. Rang normal (le degré)
         // dès la première étoile décrochée.
-        minScale: (isEntry || isChoice || isOrigin) ? 0 : rankScale[id],
-        labelScale: (isEntry || isChoice || isOrigin) ? 0 : labelScale[id],
-        rank: (isEntry || isChoice || isOrigin) ? -1 : byDeg.indexOf(id), diff, diam: DOT_D[diff],
+        // Une gare à portée de bourse ne se cache jamais non plus : c'est
+        // exactement ce que le joueur est venu chercher sur la carte.
+        //
+        // LE RÉSEAU ACQUIS PRIME SUR TOUT LE RESTE dans la règle du centimètre.
+        // Une gare qu'on possède est ce qui explique la carte : c'est d'elle
+        // que part la frontière d'achat. Effacée au profit d'un carrefour
+        // verrouillé plus relié qu'elle, on voyait une gare achetable sans
+        // comprendre pourquoi elle l'était — Dinant disparaissait derrière
+        // Namur, et Libramont semblait ouverte sans raison.
+        minScale: isPulsing ? 0 : rankScale[id],
+        labelScale: isPulsing ? 0 : labelScale[id],
+        // Trois rangs, dans l'ordre où ils comptent pour le joueur : ce qu'il
+        // possède, ce qu'il peut acheter, le reste. Le degré dans le réseau ne
+        // départage plus qu'à l'intérieur d'un même rang.
+        rank: isPulsing ? -1
+          : byDeg.indexOf(id) - (unlocked ? 2 * CATALOG.length : buyable ? CATALOG.length : 0),
+        diff, diam: DOT_D[diff],
         capW: 0, capH: 0, capUp: false
       };
       MAPNET.nodes.push(node); uOf[id] = u; byId[id] = node;

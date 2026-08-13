@@ -249,6 +249,7 @@ node tools/gen-check.mjs                # tout le catalogue, K=6
 node tools/gen-check.mjs <id>           # une gare, K=30
 node tools/gen-check.mjs <id1> <id2> 20 # gares ciblées, K=20
 node tools/net-check.mjs                # le réseau de la carte
+node tools/eco-check.mjs                # l'économie : tarifs, prix, seuil
 ```
 
 `gen-check` charge le vrai moteur + générateur (headless, sans navigateur) et
@@ -260,7 +261,16 @@ seuil). Code de sortie ≠ 0 si échec. Un « portail mort » ou un retard > seu
 `net-check` vérifie le réseau DESSINÉ : lignes continues, points de passage
 plausibles, aucune gare jouable isolée. Un portail qui ne désigne aucune gare
 jouable n'y est **pas** une erreur — c'est un cul-de-sac (§0), et la carte
-l'ignore.
+l'ignore. Il contrôle aussi la **progression** : une gare qu'aucune porte de
+départ n'atteint de proche en proche est injouable à jamais.
+
+`eco-check` charge le vrai barème (`js/catalog.js`) et contrôle que l'économie
+tient : prix < tarif pour chaque gare, coût d'un pays < ce qu'il rapporte à
+trois étoiles, et surtout le **seuil d'équilibre** — le multiplicateur moyen
+qu'il faut atteindre pour que le réseau continue de croître (0,81 aujourd'hui,
+soit un peu mieux que deux étoiles). Ajouter des gares ne le déplace pas tant
+que tarif et prix dérivent de la même valeur ; le lire quand même après un ajout
+de pays, c'est le seul chiffre qui dit si le jeu reste finissable.
 
 ## 7. Récap du flux pour un nouveau pays
 
@@ -272,8 +282,8 @@ l'ignore.
 4. Composer chaque fiche (§2) en respectant hybride (§0) et connectivité (§3).
 5. Enregistrer (§4) : index.json + geo.js, puis les lignes du pays dans
    `data/lines.js` (+ `LINE_COUNTRIES`).
-6. `node tools/gen-check.mjs` et `node tools/net-check.mjs` → itérer jusqu'à
-   « Toutes les gares passent ».
+6. `node tools/gen-check.mjs`, `node tools/net-check.mjs` et
+   `node tools/eco-check.mjs` → itérer jusqu'à « Toutes les gares passent ».
 
 ## 8. Deux pièges d'écriture, mesurés
 
