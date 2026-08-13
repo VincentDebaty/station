@@ -184,6 +184,70 @@ function buildMap() {
   MAP.homeBtn = home;
   host.appendChild(home);
 
+  // ------------------------------------------------------------------
+  // LA LÉGENDE. Repliée sous un bouton : la carte se lit sans elle, mais rien
+  // n'explique une convention à qui ne l'a pas devinée.
+  //
+  // Elle est bâtie avec LES MÊMES CLASSES que les pastilles de la carte
+  // (.city-chip, .pr, l'étiquette de prix, l'étoile du parfait) : une légende
+  // dessinée à part finit toujours par décrire un état que le jeu n'a plus.
+  // Ici, changer la couleur d'une pastille change la légende du même geste.
+  // ------------------------------------------------------------------
+  const legend = document.createElement("div");
+  legend.className = "map-legend hidden";
+  // La vignette reprend la STRUCTURE du DOM de la carte (pastille > cap > prix),
+  // pas seulement ses classes : c'est le sélecteur `.city-chip .pr` qui donne à
+  // l'étiquette son fond doré. Recopier l'apparence sans la structure, c'est
+  // rouvrir la porte à une légende qui diverge.
+  const chip = (cls, inner, tag, d) =>
+    '<span class="map-chip city-chip ' + cls + '" style="--d:' + (d || 19) + 'px">' +
+      '<span class="dot">' + (inner || "") + "</span>" +
+      (tag ? '<span class="cap">' + tag + "</span>" : "") + "</span>";
+  const row = (art, title, txt) =>
+    '<li><span class="lg-art">' + art + "</span>" +
+      "<span><b>" + title + "</b> " + txt + "</span></li>";
+  legend.innerHTML =
+    '<div class="lg-head">Lire la carte</div><ul>' +
+    row(chip("s2", '<span class="fill"></span>',
+             '<span class="pr earn">' + creditsHTML(120, true) + "</span>"),
+        "Gare à vous",
+        "elle a servi. Le chiffre est ce qu'elle peut <em>encore</em> rapporter.") +
+    row(chip("s1 entry", '<span class="fill"></span>'),
+        "Un service vous attend",
+        "acquise, jamais tournée. Rien ne s'achète tant qu'elle n'a pas tourné.") +
+    row(chip("perfect", STAR_SVG),
+        "Sans faute",
+        "pas une minute de retard. Elle a tout donné.") +
+    row(chip("locked buyable ready", "",
+             '<span class="pr">' + creditsHTML(50) + "</span>"),
+        "À ouvrir",
+        "à portée de bourse. L'étiquette est son prix.") +
+    row(chip("locked buyable", "",
+             '<span class="pr">' + creditsHTML(260) + "</span>"),
+        "Pas encore",
+        "le prix y est, mais il manque des crédits, un service, ou <b>★★</b> sur la voisine d'où vous partiriez.") +
+    row(chip("locked", "", "", 16),
+        "Hors de votre réseau",
+        "aucune gare acquise ne la touche.") +
+    "</ul>";
+  const legendBtn = document.createElement("button");
+  legendBtn.className = "map-legend-btn";
+  legendBtn.setAttribute("aria-label", "Lire la carte");
+  legendBtn.innerHTML = icon(ICON.help, 18);
+  legendBtn.addEventListener("click", ev => {
+    ev.stopPropagation();
+    const open = legend.classList.toggle("hidden");
+    legendBtn.classList.toggle("open", !open);
+  });
+  // Un tap n'importe où ailleurs la referme : c'est un panneau qu'on consulte,
+  // pas un mode dans lequel on entre.
+  host.addEventListener("click", () => {
+    legend.classList.add("hidden"); legendBtn.classList.remove("open");
+  });
+  MAP.legend = legend;
+  host.appendChild(legend);
+  host.appendChild(legendBtn);
+
   // Le solde, en permanence. C'est le seul chiffre qui compte pour décider où
   // aller : il doit être visible en même temps que les prix, sans un geste.
   const purse = document.createElement("div");
