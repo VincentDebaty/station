@@ -702,41 +702,55 @@ function openStationModal(gi) {
        : best != null ? '<span class="d">+' + best + " min</span>"
                       : '<span class="d none">jamais jouée</span>') +
       "</span></div>" +
-    // Une gare ne paie que la progression : cette ligne dit ce qu'il reste à
-    // aller chercher, et remplace l'étoile comme objectif une fois les trois
-    // décrochées. Inutile sur une gare pas encore acquise — elle n'a rien versé.
-    (unlocked && cap ?
-      '<div class="mm-row"><span class="k">Encaissé</span>' +
+    // LA LIGNE D'ARGENT, présente dans TOUS les cas — et elle ne dit pas la même
+    // chose des deux côtés de l'achat :
+    //   • gare acquise   → « Encaissé 45 / 120 », ce qu'il reste à aller chercher ;
+    //   • gare à acheter → « Rapporte jusqu'à 240 », l'argument d'achat lui-même.
+    // C'est l'information qui manquait pour décider : une gare à 100 qui peut en
+    // verser 240 ne se juge pas sur son prix seul. Et la fiche garde exactement
+    // la même hauteur avant et après l'achat — sans quoi « Prendre le service »
+    // remonterait de quarante pixels sous le doigt qui vient d'appuyer.
+    (cap ?
+      '<div class="mm-row"><span class="k">' + (unlocked ? "Encaissé" : "Rapporte") + "</span>" +
         '<span class="v"><span class="gauge money"><span class="fill" style="width:' +
           Math.round(got / cap * 100) + '%"></span></span>' +
-        '<span class="d">' + got + " / " + cap + "</span></span></div>" : "");
+        '<span class="d">' + (unlocked ? got + " / " + cap : "jusqu'à " + cap) +
+        "</span></span></div>" : "");
 
   // Drapeau seul : le pays se reconnaît sans le lire, et la carte le dit déjà.
   const flag = (card.country || "").split(" ")[0];
 
-  // Trois états, jamais deux : acquise (on joue), achetable (on paie, et le
-  // prix est écrit), hors de portée (on ne peut rien faire ici — la fiche le
-  // dit et renvoie vers ce qui est à portée de bourse).
-  let actions;
+  // UNE SEULE FICHE, DEUX BOUTONS, TOUJOURS LES MÊMES À LA MÊME PLACE.
+  //
+  // Acheter puis jouer sont deux temps d'un seul geste. Ils se faisaient dans
+  // deux fiches successives d'aspect identique : on cliquait « Ouvrir », la
+  // fiche se redessinait, et il fallait cliquer à nouveau sur ce qui semblait
+  // le même écran. Les deux actions vivent désormais côte à côte, et l'achat ne
+  // fait qu'ALLUMER la seconde.
+  //
+  // Le bouton d'achat garde sa place une fois la gare acquise (« Acquise »,
+  // éteint) : sans lui, la fiche se raccourcirait à l'instant du clic et
+  // « Prendre le service » remonterait sous le doigt qui vient d'appuyer.
   const price = typeof stationPrice === "function" ? stationPrice(card.id) : 0;
-  if (unlocked) {
-    actions = '<button class="btn mm-play" data-gi="' + gi + '">Prendre le service</button>';
-  } else if (typeof isBuyable === "function" && isBuyable(card.id)) {
-    const short = price - getCredits();
-    actions = short > 0
-      // Bouton mort plutôt qu'absent : le joueur voit ce qu'il vise et ce qui
-      // lui manque, donc combien de services il lui reste à faire.
-      ? '<button class="btn mm-buy" disabled>Ouvrir — ' + creditsHTML(price) + "</button>" +
-        '<div class="mm-short">Il vous manque ' + creditsHTML(short) + "</div>"
-      : '<button class="btn mm-buy" data-id="' + card.id + '" data-gi="' + gi +
-          '">Ouvrir — ' + creditsHTML(price) + "</button>";
-  } else {
-    const frontier = recommendedIndex(stationCountrySlug(gi));
-    const fname = frontier >= 0 ? CATALOG[frontier].name : null;
-    actions =
-      '<div class="mm-lock">' + icon(ICON.lock, 15) + "<span>Hors de votre réseau</span></div>" +
-      (fname ? '<button class="btn mm-goto" data-gi="' + frontier + '">Voir ' + fname + " →</button>" : "");
-  }
+  const buyable = !unlocked && typeof isBuyable === "function" && isBuyable(card.id);
+  const short = price - (typeof getCredits === "function" ? getCredits() : 0);
+  let buyBtn;
+  if (unlocked)
+    buyBtn = '<button class="btn mm-buy done" disabled>' + icon(ICON.check, 15) + "Acquise</button>";
+  else if (buyable && short <= 0)
+    buyBtn = '<button class="btn mm-buy" data-id="' + card.id + '" data-gi="' + gi +
+      '">Acheter — ' + creditsHTML(price) + "</button>";
+  else if (buyable)
+    // Bouton mort plutôt qu'absent : le joueur voit ce qu'il vise et ce qui lui
+    // manque, donc combien de services il lui reste à faire.
+    buyBtn = '<button class="btn mm-buy" disabled>Acheter — ' + creditsHTML(price) + "</button>" +
+      '<div class="mm-short">Il vous manque ' + creditsHTML(short) + "</div>";
+  else
+    buyBtn = '<button class="btn mm-buy" disabled>' + icon(ICON.lock, 15) + "Hors de votre réseau</button>";
+
+  const actions = buyBtn +
+    '<button class="btn mm-play"' + (unlocked ? ' data-gi="' + gi + '"' : " disabled") +
+      ">Prendre le service</button>";
 
   // Une seule colonne, courte : le bouton reste au centre, sous les chiffres,
   // à tous les formats — c'est le geste qu'on vient chercher.
@@ -751,10 +765,6 @@ function openStationModal(gi) {
   MAP.modal.querySelector(".mm-close").addEventListener("click", closeModal);
   const play = MAP.modal.querySelector(".mm-play");
   if (play) play.addEventListener("click", () => { const g = +play.dataset.gi; closeModal(); startStation(g); });
-  // Renvoi vers une gare à portée : on OUVRE SA FICHE, on ne lance rien. Le
-  // joueur reste maître de sa dépense — c'est tout le principe de la monnaie.
-  const goto = MAP.modal.querySelector(".mm-goto");
-  if (goto) goto.addEventListener("click", () => openStationModal(+goto.dataset.gi));
   // Achat : la gare bascule sous les yeux du joueur — la fiche se redessine sur
   // « Prendre le service », la pastille devient pleine, le solde retombe.
   const buy = MAP.modal.querySelector(".mm-buy[data-id]");

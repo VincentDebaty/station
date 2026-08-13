@@ -1273,9 +1273,17 @@ svg { width: 100%; height: 100%; display: block; }
   display: inline-flex; align-items: center; justify-content: center; gap: 7px;
 }
 .mm-buy:hover { background: #42300f; }
-/* Trop cher : le bouton reste VISIBLE et mort. Le joueur voit ce qu'il vise et
-   ce qui lui manque — donc combien de services il lui reste à faire. */
-.mm-buy[disabled] { opacity: .45; cursor: default; }
+.mm-buy svg { flex: none; width: 15px; height: 15px; fill: currentColor; display: block; }
+/* Trop cher, hors réseau, déjà acquise : le bouton reste VISIBLE et mort. Sa
+   place ne bouge donc jamais — « Prendre le service » ne remonte pas sous le
+   doigt qui vient d'acheter. */
+.mm-buy[disabled], .mm-play[disabled] { opacity: .4; cursor: default; }
+.mm-play[disabled]:hover { background: #16333a; }
+/* Gare acquise : le bouton d'achat n'est plus une action, c'est un état. Il
+   perd l'or et prend le teal du réseau — la couleur de ce qu'on possède. */
+.mm-buy.done {
+  background: transparent; border-color: #245e5c; color: #63e6d4; opacity: .75;
+}
 .mm-short {
   text-align: center; color: var(--muted); font-size: 12px;
   display: flex; align-items: center; justify-content: center; gap: 5px;
