@@ -346,7 +346,6 @@ async function resetGame() {
   gameMin = 0; speed = 1;
   totalDelay = 0; selected = null; activeRoutes = {}; queueSeq = 0;
   onTimeStreak = 0;
-  _gainShown = null; // la lueur de palier ne doit pas se déclencher au 1er affichage
   hideCoach(); // efface un éventuel repère de tutoriel resté d'un service précédent
   document.getElementById("hud-controls").classList.add("hidden");
   document.getElementById("settings").classList.remove("open"); // engrenage revient à l'état repos
@@ -764,37 +763,21 @@ function updateDelay() {
   // Couleur alignée sur le barème d'étoiles : vert tant qu'on vise 3★ (< 10),
   // ambre tant qu'une étoile reste jouable (< 30), rouge dès que 0★ (≥ 30).
   d.className = v < 10 ? "" : v < 30 ? "warn" : "bad";
-  updateGain(Math.round(v));
 }
 
-// Recette en cours. Le nombre affiché est celui qui sera VERSÉ, plafond de la
-// gare déduit : sur une gare déjà encaissée à 150, le bandeau montre ce qui
-// reste réellement à gagner, jamais un chiffre qui ne sera pas payé.
-// Les quatre crans sont exactement les paliers d'étoiles — le bandeau enseigne
-// le barème en le montrant, sans un mot.
-let _gainShown = null;
-function updateGain(delay) {
-  const box = document.getElementById("gain");
-  if (!box) return;
-  // Démo « limites » : rien à encaisser, donc rien à afficher.
-  if (STATION.adhoc || typeof stationGain !== "function") { box.classList.add("hidden"); return; }
-  box.classList.remove("hidden");
-  const g = stationGain(STATION.id, delay);
-  const m = payoutMult(delay);                   // 4 crans : parfait, ★★★, ★★☆, ★☆☆
-  const lvl = m === 2 ? 4 : m === 1 ? 3 : m === 0.75 ? 2 : m === 0.5 ? 1 : 0;
-  const n = document.getElementById("gain-n");
-  n.innerHTML = creditsHTML(g);
-  // Une lueur brève au franchissement d'un palier, et rien d'autre : pas de
-  // compte à rebours, pas de phrase. Ce qui change se voit, ce qui dure se tait.
-  if (_gainShown !== null && g !== _gainShown) {
-    box.classList.remove("step");
-    void box.offsetWidth;               // redémarre l'animation même deux fois de suite
-    box.classList.add("step");
-  }
-  _gainShown = g;
-  const pips = document.getElementById("gain-pips").children;
-  for (let i = 0; i < pips.length; i++) pips[i].classList.toggle("on", i < lvl);
-}
+// PAS DE COMPTEUR D'ARGENT PENDANT LE SERVICE — essayé, retiré.
+//
+// Le bandeau affichait la recette en cours, plafond déduit. Le compte est
+// juste, mais il se lit à l'envers : la prime du sans-faute vaut le double, si
+// bien que la première minute de retard fait tomber le nombre de moitié (120 →
+// 60 à Landen). Le joueur ne lit pas « je gagne un peu moins », il lit « je
+// perds de l'argent », et il le lit pendant qu'il travaille. Aucun réglage de
+// présentation ne rattrape cela : ce n'est pas la forme du compteur qui blesse,
+// c'est qu'un gain baisse sous les yeux de celui qui fait de son mieux.
+//
+// La recette s'annonce donc une seule fois, à la fin, quand elle est acquise
+// (voir endGame). Pendant le service il reste le retard, qui monte — une chose
+// qui monte quand on fait mal se lit sans détour.
 
 // Reste-t-il un convoi en mouvement ? Sert à prolonger l'animation APRÈS la fin
 // du service : la modale sort tôt (score figé), mais les derniers convois doivent
@@ -1196,6 +1179,55 @@ function tick(dtMin) {
     endGame();
 }
 
+// ------------------------------------------------------------------
+// LA CARTE DERRIÈRE LE RELEVÉ. Le service est fini : la décision suivante est
+// géographique — où aller, quoi ouvrir, avec quel solde. Le relevé se range
+// donc SUR LE CÔTÉ et laisse les deux tiers de l'écran au réseau, qui reste
+// entièrement cliquable. Le joueur repart d'ici sans écran intermédiaire :
+// rejouer, ou toucher une gare.
+// ------------------------------------------------------------------
+function showEndBesideMap() {
+  const end = document.getElementById("end");
+  const hub = document.getElementById("hub");
+  // Démo « limites » : gare hors catalogue, elle n'est nulle part sur la carte.
+  if (STATION.adhoc || typeof mapnetBuild !== "function") return;
+  hub.classList.remove("hidden");
+  // Le bouton « recadrer ce pays » se retire le temps du relevé : il nomme le
+  // pays sous le CENTRE de l'écran, or le centre est maintenant derrière le
+  // relevé — il annonçait « France » pendant qu'on cadrait la Belgique.
+  MAP.host.classList.add("end-open");
+  // La disposition en colonnes est posée AVANT de mesurer : sinon on mesure la
+  // fiche encore centrée, on croit la bande libre bien plus étroite qu'elle ne
+  // l'est, et la carte se dézoome sur toute l'Europe de l'Ouest.
+  end.classList.add("over-map");
+  if (!MAP.built) buildMap();
+  mapnetBuild();               // le solde a changé : d'autres gares sont à portée
+  mapnetPosition();
+  if (typeof updateCreditsBadge === "function") updateCreditsBadge(true);
+  const slug = (typeof stationCountrySlug === "function") ? stationCountrySlug(currentIdx) : null;
+  if (!slug || typeof frameCountryBeside !== "function") return;
+  const r = end.querySelector(".card").getBoundingClientRect();
+  const wide = window.innerWidth > 720;
+  frameCountryBeside(slug, wide ? { left: r.right + 16 }
+                                : { bottom: window.innerHeight - r.top + 12 });
+}
+// Quitter le relevé en restant sur la carte. `recenter` : on recadre le pays
+// pour de bon (le joueur a demandé la carte), sinon on se contente d'effacer le
+// relevé — il vient de toucher une gare, la déplacer sous son doigt serait pire
+// que de la laisser un peu décalée.
+function endLeaveMap(recenter) {
+  const end = document.getElementById("end");
+  if (!end.classList.contains("over-map")) return false;
+  end.classList.add("hidden");
+  end.classList.remove("over-map");
+  MAP.host.classList.remove("end-open");
+  if (recenter && typeof stationCountrySlug === "function") {
+    const slug = stationCountrySlug(currentIdx);
+    if (slug && typeof frameCountry === "function") frameCountry(slug);
+  }
+  return true;
+}
+
 // failed = true : retard plafond dépassé (game over, 0 étoile, rien à débloquer)
 function endGame(failed) {
   ended = true;
@@ -1378,6 +1410,7 @@ function endGame(failed) {
   paintActions();
 
   document.getElementById("end").classList.remove("hidden");
+  showEndBesideMap();
   // Salve APRÈS le démasquage : elle se cale sur la fiche, qui se mesurerait à
   // zéro tant que l'overlay est en display:none.
   if (perfect && typeof perfectConfetti === "function") perfectConfetti();

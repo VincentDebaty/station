@@ -544,6 +544,33 @@ function frameCountry(slug, instant) {
   return true;
 }
 
+// Cadre un pays dans la partie LIBRE de l'écran, quand une interface en occupe
+// un bord (le relevé de fin de service, posé sur le côté). Sans cela, le
+// cadrage centre le pays sur tout l'écran et la moitié du réseau se retrouve
+// sous le panneau — c'est-à-dire sous ce qu'on demande au joueur de regarder.
+// `reserved` = { left, bottom } en pixels.
+function frameCountryBeside(slug, reserved) {
+  const g = GEO.countries[slug];
+  const country = g && MAP.byIso[g.iso];
+  if (!country) return;
+  const cw = MAP.svg.clientWidth || 1, ch = MAP.svg.clientHeight || 1;
+  const left = Math.max(0, (reserved && reserved.left) || 0);
+  const bottom = Math.max(0, (reserved && reserved.bottom) || 0);
+  const freeW = Math.max(80, cw - left), freeH = Math.max(80, ch - bottom);
+  // On CALCULE l'échelle qui fait tenir le pays dans la bande libre, puis on
+  // recentre la vue sur le milieu de cette bande.
+  //
+  // Un facteur d'agrandissement appliqué au cadrage plein écran ne marche
+  // QUE si la bande est étroite en largeur. Réservez les deux tiers de la
+  // HAUTEUR — le relevé en bas d'un téléphone — et le même facteur s'applique
+  // aussi à la largeur : la Belgique se retrouvait dézoomée de Leicester à
+  // Hanovre pour tenir dans un bandeau de 240 px.
+  const box = targetVB(g.frame || countryGeoBbox(country), 0.05); // [x, y, w, h] en unités
+  const s = Math.min(freeW / box[2], freeH / box[3]);             // px par unité
+  const bcx = box[0] + box[2] / 2, bcy = box[1] + box[3] / 2;
+  applyView([bcx - (left + freeW / 2) / s, bcy - (freeH / 2) / s, cw / s, ch / s]);
+}
+
 // ------------------------------------------------------------------
 // Fiche de gare (modale) — ouverte au clic d'une ville.
 // ------------------------------------------------------------------
@@ -577,6 +604,10 @@ function closeModal() {
 }
 function openStationModal(gi) {
   if (gi < 0 || typeof CATALOG === "undefined" || !CATALOG[gi] || !MAP.modal) return;
+  // Le relevé de fin de service laisse la carte cliquable à côté de lui.
+  // Toucher une gare, c'est en avoir fini avec le relevé : il s'efface, sinon
+  // il resterait posé en travers de la fiche qu'on vient d'ouvrir.
+  if (typeof endLeaveMap === "function") endLeaveMap();
   const card = CATALOG[gi];
   const unlocked = typeof isUnlocked === "function" && isUnlocked(gi);
   const diff = Math.max(1, Math.min(5, card.difficulty || 1));
@@ -802,6 +833,7 @@ function renderMap() {
       "geo.js : villes manquantes pour " + missing.map(c => c.id).join(", "));
   }
   if (!MAP.built) buildMap();
+  MAP.host.classList.remove("end-open"); // plus de relevé posé dessus
   mapnetBuild(); // le réseau dépend de la progression : on le rebâtit à chaque retour
   updateCreditsBadge(true); // on revient d'un service : la recette vient de tomber
   closeModal();

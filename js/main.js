@@ -166,6 +166,10 @@ document.getElementById("btn-mute").addEventListener("click", () => {
 });
 async function doReset() {
   document.getElementById("end").classList.add("hidden");
+  // Le relevé de fin laisse la carte visible derrière lui : on la referme, sans
+  // quoi elle resterait posée sur le plan de voies du service qui redémarre.
+  document.getElementById("end").classList.remove("over-map");
+  document.getElementById("hub").classList.add("hidden");
   await resetGame(); started = true; // génération asynchrone : on attend la journée
   maybeStartOnboarding(); // sans effet si déjà initié (garde interne)
 }
@@ -199,7 +203,13 @@ confirmReset.addEventListener("click", e => { if (e.target === confirmReset) dis
 // « Rejouer » sur l'écran de fin : le service est terminé, il n'y a rien à
 // abandonner — pas de confirmation.
 document.getElementById("btn-replay").addEventListener("click", doReset);
-document.getElementById("btn-end-map").addEventListener("click", () => showHub());
+// « Carte » depuis le relevé de fin : la carte est DÉJÀ là, à côté. Le bouton
+// range donc le relevé et recadre le pays au centre, plutôt que de rejouer une
+// bascule d'écran qui n'a plus lieu d'être.
+document.getElementById("btn-end-map").addEventListener("click", () => {
+  if (typeof endLeaveMap === "function" && endLeaveMap(true)) return;
+  showHub();
+});
 // Cartouche haut-gauche = bouton retour vers la carte (même logique que « ‹ »
 // sur la carte). Une partie EN COURS demande confirmation (abandon = progression
 // du service perdue) ; sinon (partie finie) on repart directement.
