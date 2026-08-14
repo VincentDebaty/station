@@ -1054,7 +1054,7 @@ svg { width: 100%; height: 100%; display: block; }
 .mm-card {
   position: relative; width: min(360px, 92vw); text-align: left;
   background: var(--panel); border: 1px solid #2a3550; border-radius: 18px;
-  padding: 20px 20px 18px; box-shadow: 0 24px 60px -12px rgba(0, 0, 0, .7);
+  padding: 17px 20px 15px; box-shadow: 0 24px 60px -12px rgba(0, 0, 0, .7);
   max-height: 100%; overflow-y: auto; overscroll-behavior: contain;
 }
 .mm-close {
@@ -1068,22 +1068,22 @@ svg { width: 100%; height: 100%; display: block; }
 .mm-name .fl { margin-right: 7px; font-size: 15px; vertical-align: 2px; }
 
 /* La mesure de la gare : trois chiffres, aucun mot de liaison. */
-.mm-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; margin: 14px 0 10px; }
+.mm-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; margin: 11px 0 8px; }
 .mm-stat {
   background: #1b2337; border: 1px solid #2a3550; border-radius: 12px;
-  padding: 8px 4px 7px; text-align: center;
+  padding: 6px 4px 5px; text-align: center;
 }
-.mm-stat b { display: block; font-size: 18px; font-weight: 700; line-height: 1.1; }
+.mm-stat b { display: block; font-size: 17px; font-weight: 700; line-height: 1.1; }
 .mm-stat span {
   display: block; color: var(--muted); font-size: 10px; letter-spacing: .07em;
   text-transform: uppercase; margin-top: 3px;
 }
 
 /* Difficulté, flux, record : libellé à gauche, jauge ou étoiles à droite. */
-.mm-rows { display: flex; flex-direction: column; margin-bottom: 14px; }
+.mm-rows { display: flex; flex-direction: column; margin-bottom: 10px; }
 .mm-row {
   display: flex; align-items: center; justify-content: space-between; gap: 10px;
-  padding: 7px 0; border-top: 1px solid #232c42;
+  padding: 5px 0; border-top: 1px solid #232c42;
 }
 .mm-row .k { color: var(--muted); font-size: 11px; letter-spacing: .07em; text-transform: uppercase; }
 .mm-row .v { display: flex; align-items: center; gap: 9px; }
@@ -1180,12 +1180,19 @@ svg { width: 100%; height: 100%; display: block; }
 /* Téléphone couché : la fiche est assez courte pour tenir telle quelle, on la
    resserre juste un peu. Une seule colonne partout — le bouton reste centré
    sous les chiffres, là où le doigt le cherche. */
-@media (max-height: 420px) {
-  .mm-card { padding: 16px 18px 14px; }
-  .mm-name { font-size: 18px; }
-  .mm-stats { margin: 10px 0 6px; }
-  .mm-rows { margin-bottom: 10px; }
-  .mm-row { padding: 5px 0; }
+@media (max-height: 460px) {
+  .mm-card { padding: 13px 16px 12px; }
+  .mm-name { font-size: 17px; }
+  .mm-stats { margin: 8px 0 5px; }
+  .mm-stat { padding: 4px 4px 4px; }
+  .mm-stat b { font-size: 15px; }
+  .mm-rows { margin-bottom: 7px; }
+  .mm-row { padding: 3px 0; }
+  .palmares { margin-bottom: 7px; }
+  .pl-row { padding: 2px 0; }
+  /* Le seuil se dit déjà par les étoiles : sur un écran vraiment bas, c'est la
+     première chose qu'on peut retirer sans rien perdre. */
+  .pl-row .pl-th { font-size: 12px; }
 }
 
 /* ================================================================
