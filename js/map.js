@@ -288,8 +288,9 @@ function buildMap() {
   host.addEventListener("click", ev => {
     // Sauf sur les panneaux eux-mêmes : les lire ne les referme pas.
     const t = ev.target;
-    if (t.closest && t.closest(".map-legend, .map-legend-btn")) return;
+    if (t.closest && t.closest(".map-legend, .map-legend-btn, .map-carnet, .map-carnet-btn")) return;
     legend.classList.add("hidden"); legendBtn.classList.remove("open");
+    closeCarnet();
     // Recadrer le pays quand on range le relevé — mais pas quand on vient de
     // toucher une gare : déplacer la carte sous le doigt qui ouvre une fiche
     // serait gratuit.
@@ -299,6 +300,28 @@ function buildMap() {
   MAP.legend = legend;
   host.appendChild(legend);
   host.appendChild(legendBtn);
+
+  // Le carnet : un panneau, et son bouton à côté de celui de la légende — deux
+  // outils de lecture, au même endroit.
+  const carnet = document.createElement("div");
+  carnet.className = "map-carnet hidden";
+  carnet.addEventListener("click", ev => ev.stopPropagation());
+  MAP.carnet = carnet;
+  host.appendChild(carnet);
+
+  const carnetBtn = document.createElement("button");
+  carnetBtn.className = "map-carnet-btn";
+  carnetBtn.setAttribute("aria-label", "Carnet de service");
+  // Un cahier à lignes : la liste, par opposition au « ? » de la légende.
+  carnetBtn.innerHTML =
+    '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">' +
+    '<path d="M4 4h13a3 3 0 0 1 3 3v13a1 1 0 0 1-1 1H7a3 3 0 0 1-3-3V4zm3 3v2h9V7H7zm0 4v2h9v-2H7zm0 4v2h6v-2H7z"/></svg>';
+  carnetBtn.addEventListener("click", ev => {
+    ev.stopPropagation();
+    if (carnet.classList.contains("hidden")) openCarnet(); else closeCarnet();
+  });
+  MAP.carnetBtn = carnetBtn;
+  host.appendChild(carnetBtn);
 
   // Le solde, en permanence. C'est le seul chiffre qui compte pour décider où
   // aller : il doit être visible en même temps que les prix, sans un geste.
@@ -491,6 +514,106 @@ function awayFrom(ref) {
   const dy = (vb[1] + vb[3] / 2) - (ref[1] + ref[3] / 2);
   return Math.hypot(dx, dy) > ref[2] * 0.5;
 }
+// ------------------------------------------------------------------
+// LE CARNET DE SERVICE — la même progression, mise à plat.
+// ------------------------------------------------------------------
+// Une carte répond à « OÙ » ; elle répond mal à « QUOI ENSUITE ». Pour comparer
+// ce qu'il reste à prendre sur ses gares, il fallait ouvrir douze fiches l'une
+// après l'autre, ou se souvenir. Le carnet met tout sur une colonne, triée par
+// ce qui rapporte le plus, et un clic y ramène — la carte reste le plaisir, le
+// carnet est l'outil.
+//
+// IL NE MONTRE QUE CE SUR QUOI ON PEUT AGIR : ses gares, et la frontière
+// d'achat. Les cent quarante-cinq gares du catalogue en feraient un annuaire,
+// c'est-à-dire exactement le défaut qu'on reproche à la carte.
+function carnetRows() {
+  const mine = [], near = [];
+  for (const c of CATALOG) {
+    if (isBought(c.id)) mine.push(c);
+    else if (isBuyable(c.id)) near.push(c);
+  }
+  // Les siennes : d'abord celle qui n'a jamais tourné (elle bloque tout achat),
+  // puis le plus gros palier à portée. Les palmarès complets ferment la marche —
+  // il n'y a plus rien à y chercher, mais on veut pouvoir les revoir.
+  mine.sort((a, b) =>
+    (stationInService(a.id) - stationInService(b.id)) ||
+    (stationNextAmount(b.id) - stationNextAmount(a.id)));
+  // La frontière : par prix, le plus accessible d'abord.
+  near.sort((a, b) => stationPrice(a.id) - stationPrice(b.id));
+  return { mine, near };
+}
+function carnetRowHTML(c, owned) {
+  const flag = (c.country || "").trim().split(" ")[0];
+  const nm = c.city || c.name;
+  const rec = (getProgress()[c.id] || {});
+  let droite, cls = "";
+  if (owned) {
+    const done = stationTiersDone(c.id), next = stationNextAmount(c.id);
+    droite = '<span class="cr-pal">' + done + " / " + PALIERS.length + "</span>" +
+      (next ? '<span class="cr-am">' + creditsHTML(next, true) + "</span>"
+            : '<span class="cr-am full">complet</span>');
+    if (!stationInService(c.id)) cls = " todo";
+    else if (!next) cls = " done";
+  } else {
+    const block = buyBlock(c.id);
+    // UNE CAUSE GLOBALE SE DIT UNE FOIS, PAS À CHAQUE LIGNE. Tant qu'une gare
+    // attend son premier service, RIEN ne s'achète : écrire « service en
+    // attente » sur les quatorze lignes de la frontière, c'est quatorze fois le
+    // même bruit — le défaut que la carte a déjà corrigé. La raison passe donc
+    // dans l'en-tête de la section.
+    //
+    // Le PRIX, lui, reste affiché ici alors que la carte le masque, et c'est
+    // délibéré : comparer des prix est précisément ce qu'on vient chercher dans
+    // une liste. Éteint, il ne promet rien — il informe.
+    droite = (block && block.kind === "maitrise")
+      ? '<span class="cr-am need">★★</span>'
+      : '<span class="cr-am price' + (block ? " short" : "") + '">' + creditsHTML(stationPrice(c.id)) + "</span>";
+    cls = (!block ? " ready" : "");
+  }
+  return '<li class="cr-row' + cls + '" data-id="' + c.id + '">' +
+    '<span class="cr-fl">' + flag + "</span>" +
+    '<span class="cr-nm">' + nm + "</span>" +
+    '<span class="cr-rec">' + (rec.bestDelay == null ? "—"
+      : rec.bestDelay === 0 ? "parfait" : "+" + rec.bestDelay + " min") + "</span>" +
+    droite + "</li>";
+}
+function renderCarnet() {
+  if (!MAP.carnet) return;
+  const { mine, near } = carnetRows();
+  const sect = (titre, n, rows, note) =>
+    '<div class="cr-head">' + titre + '<span class="cr-cnt">' + n + "</span>" +
+      (note ? '<span class="cr-note">' + note + "</span>" : "") + "</div>" +
+    (rows || '<div class="cr-vide">rien pour l\'instant</div>');
+  // Ce qui bloque TOUT le réseau se dit ici, une seule fois.
+  const idle = idleStation();
+  const nomIdle = idle ? ((cardOf(idle) || {}).city || (cardOf(idle) || {}).name || idle) : "";
+  MAP.carnet.innerHTML =
+    '<div class="cr-top">Carnet de service' +
+      '<button class="cr-close" aria-label="Fermer">' + icon(ICON.close, 18) + "</button></div>" +
+    '<div class="cr-scroll">' +
+      sect("Mes gares", mine.length,
+        mine.length ? "<ul>" + mine.map(c => carnetRowHTML(c, true)).join("") + "</ul>" : "") +
+      sect("À portée", near.length,
+        near.length ? "<ul>" + near.map(c => carnetRowHTML(c, false)).join("") + "</ul>" : "",
+        idle ? "rien ne s'achète avant le service à " + nomIdle : "") +
+    "</div>";
+  MAP.carnet.querySelector(".cr-close").addEventListener("click", closeCarnet);
+  MAP.carnet.querySelectorAll(".cr-row").forEach(li =>
+    li.addEventListener("click", () => { closeCarnet(); goToStation(li.dataset.id); }));
+}
+function openCarnet() {
+  if (!MAP.carnet) return;
+  if (typeof endLeaveMap === "function") endLeaveMap();
+  renderCarnet();
+  MAP.carnet.classList.remove("hidden");
+  MAP.carnetBtn.classList.add("open");
+}
+function closeCarnet() {
+  if (!MAP.carnet) return;
+  MAP.carnet.classList.add("hidden");
+  MAP.carnetBtn.classList.remove("open");
+}
+
 // Le bandeau de pays. `slug` vient de countryAtCenter() — le pays qu'on
 // REGARDE, la seule définition qui reste vraie sans niveaux de navigation.
 function updateCountryBar(slug) {
@@ -730,10 +853,12 @@ function updateNextBtn() {
                             '<span class="amt">' + creditsHTML(stationNextAmount(mv.id), true) + "</span>";
 }
 // Y ALLER, C'EST Y VOLER PUIS OUVRIR SA FICHE. On ne lance pas le service dans
-// le dos du joueur : le bouton l'amène devant la décision, il la prend.
-function goToNextMove() {
-  const mv = MAPNET.next;
-  if (!mv) return;
+// le dos du joueur : on l'amène devant la décision, il la prend.
+// Partagé par le bouton du pas suivant et par le carnet de service : deux vols
+// écrits séparément auraient fini par cadrer différemment.
+function goToNextMove() { if (MAPNET.next) goToStation(MAPNET.next.id); }
+function goToStation(id) {
+  const mv = { id };
   const gi = catalogIndexOf(mv.id);
   if (gi < 0) return;
   // LA GARE ET SES VOISINES. C'est le contexte de la décision : on ouvre une

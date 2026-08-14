@@ -1585,6 +1585,95 @@ svg { width: 100%; height: 100%; display: block; }
 .map-legend-btn svg { width: 18px; height: 18px; fill: currentColor; display: block; }
 .map-legend-btn.open, .map-legend-btn:hover { color: #2dd4bf; border-color: #2dd4bf; }
 
+/* --- LE CARNET DE SERVICE -------------------------------------------------
+   Son bouton à côté de celui de la légende : deux outils de lecture, au même
+   endroit, et jamais deux panneaux ouverts en même temps. */
+.map-carnet-btn {
+  position: absolute; z-index: 7;
+  left: calc(54px + var(--safe-l)); bottom: calc(12px + var(--safe-b));
+  width: 34px; height: 34px; border-radius: 999px;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(21, 29, 46, .88); border: 1px solid #2a3550; color: var(--muted);
+  backdrop-filter: blur(7px); -webkit-backdrop-filter: blur(7px);
+  cursor: pointer; transition: color .15s, border-color .15s;
+}
+.map-carnet-btn svg { width: 17px; height: 17px; display: block; }
+.map-carnet-btn.open, .map-carnet-btn:hover { color: #2dd4bf; border-color: #2dd4bf; }
+
+.map-carnet {
+  position: absolute; z-index: 8;
+  left: calc(12px + var(--safe-l)); bottom: calc(54px + var(--safe-b));
+  width: min(400px, calc(100vw - 24px));
+  max-height: calc(100vh - 78px - var(--safe-b) - var(--safe-t));
+  max-height: calc(100dvh - 78px - var(--safe-b) - var(--safe-t));
+  display: flex; flex-direction: column;
+  background: rgba(15, 21, 35, .97); border: 1px solid #2a3550; border-radius: 14px;
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, .6);
+  animation: legendIn .16s ease;
+}
+.map-carnet.hidden { display: none; }
+@media (prefers-reduced-motion: reduce) { .map-carnet { animation: none; } }
+.map-carnet .cr-top {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 10px 8px 16px;
+  font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted);
+}
+.map-carnet .cr-close {
+  width: 28px; height: 28px; border: 0; border-radius: 8px; background: none;
+  color: var(--muted); cursor: pointer; display: flex; align-items: center; justify-content: center;
+}
+.map-carnet .cr-close:hover { color: var(--text); background: rgba(255, 255, 255, .05); }
+/* Comme la légende : c'est la LISTE qui défile, l'en-tête reste, et le voile de
+   fin dit qu'il reste des lignes en dessous. */
+.map-carnet .cr-scroll {
+  overflow-y: auto; -webkit-overflow-scrolling: touch; min-height: 0;
+  overscroll-behavior: contain; padding: 0 6px 8px;
+  background:
+    linear-gradient(rgba(15, 21, 35, 0), rgba(15, 21, 35, .98)) bottom / 100% 26px no-repeat local;
+}
+.map-carnet .cr-head {
+  display: flex; align-items: baseline; gap: 7px;
+  padding: 8px 10px 5px; font-size: 11px; letter-spacing: .08em;
+  text-transform: uppercase; color: #6b7d9e;
+}
+.map-carnet .cr-cnt { color: var(--muted); font-variant-numeric: tabular-nums; }
+/* La cause qui vaut pour toute la section — dite une fois, en minuscules :
+   c'est une explication, pas un titre. */
+.map-carnet .cr-note {
+  margin-left: auto; text-transform: none; letter-spacing: 0;
+  color: #63e6d4; font-size: 11px;
+}
+.map-carnet .cr-head { flex-wrap: wrap; }
+.map-carnet .cr-vide { padding: 2px 10px 8px; font-size: 12px; color: #5b6b8a; }
+.map-carnet ul { list-style: none; margin: 0; padding: 0; }
+/* UNE LIGNE = UNE GARE, quatre colonnes toujours au même endroit : le pays, le
+   nom, le record, et ce qu'il reste à y prendre (ou son prix). */
+.map-carnet .cr-row {
+  display: flex; align-items: center; gap: 9px;
+  padding: 7px 10px; border-radius: 9px; cursor: pointer; font-size: 13px;
+}
+.map-carnet .cr-row:hover { background: rgba(45, 212, 191, .09); }
+.map-carnet .cr-fl { font-size: 13px; line-height: 1; flex: none; }
+.map-carnet .cr-nm { flex: 1 1 auto; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.map-carnet .cr-rec {
+  flex: none; color: #5b6b8a; font-size: 11px;
+  font-variant-numeric: tabular-nums; min-width: 52px; text-align: right;
+}
+.map-carnet .cr-pal { flex: none; color: var(--muted); font-size: 11px; font-variant-numeric: tabular-nums; }
+.map-carnet .cr-am { flex: none; min-width: 58px; text-align: right; font-variant-numeric: tabular-nums; }
+.map-carnet .cr-am.full { color: #3f4a63; font-size: 11px; }
+.map-carnet .cr-am.need { color: #6ff0e2; font-size: 11px; }
+.map-carnet .cr-am .cr-amt { color: var(--gold); }
+/* Hors bourse : le prix reste lisible mais cesse d'être une offre — même
+   convention que sur la carte. */
+.map-carnet .cr-am.price.short .cr-amt { color: #6b7d9e; }
+/* Un service en attente respire ici aussi : c'est la seule ligne qui bloque le
+   reste du réseau. */
+.map-carnet .cr-row.todo .cr-nm { color: #63e6d4; font-weight: 600; }
+.map-carnet .cr-row.done { opacity: .55; }
+.map-carnet .cr-row.ready .cr-am .cr-amt { font-weight: 700; }
+
 .map-legend {
   position: absolute; z-index: 7;
   left: calc(12px + var(--safe-l)); bottom: calc(54px + var(--safe-b));

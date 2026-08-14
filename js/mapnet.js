@@ -363,6 +363,10 @@ function mapnetBuild() {
   // Le bouton se réécrit du même geste : il ne peut pas rester en retard sur la
   // carte qu'il commente.
   if (typeof updateNextBtn === "function") updateNextBtn();
+  // Le carnet lit la même progression : ouvert, il se réécrit du même geste
+  // (un achat depuis une fiche le laissait sinon périmé derrière la modale).
+  if (typeof renderCarnet === "function" && MAP.carnet && !MAP.carnet.classList.contains("hidden"))
+    renderCarnet();
   MAPNET.built = true;
 }
 
