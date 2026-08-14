@@ -687,8 +687,29 @@ function goToNextMove() {
   if (!mv) return;
   const gi = catalogIndexOf(mv.id);
   if (gi < 0) return;
-  const box = stationsBbox([mv.id]);
-  if (box) goTo(targetVB(box, 1.6), false);
+  // LA GARE ET SES VOISINES. C'est le contexte de la décision : on ouvre une
+  // gare DEPUIS une voisine, et ce qu'il y a autour dit si l'endroit vaut le
+  // détour. Une gare seule donnerait un plan de rue.
+  const ids = [mv.id].concat(
+    typeof netLinks === "function" ? netLinks(mv.id).to.filter(id => cardOf(id)) : []);
+  const box = stationsBbox(ids);
+  const cur = readVB();
+  let vb = box ? fitVB(targetVB(box, 0.3)) : null;
+  // ALLER QUELQUE PART NE DÉZOOME JAMAIS. Le cadrage précédent partait de
+  // l'emprise d'UNE gare — c'est-à-dire l'emprise MINIMALE de stationsBbox —
+  // et lui appliquait une marge de 160 %, soit quatre fois sa taille : cadré
+  // sur la Belgique, cliquer « Ouvrir Ottignies » reculait d'un facteur deux.
+  // Un bouton qui désigne un point et qui l'éloigne se lit comme une panne.
+  //
+  // Deux garde-fous, donc : on ne s'élargit jamais au-delà de la vue courante,
+  // et on ne descend pas sous la borne de zoom de la caméra.
+  if (vb && vb[2] < CAM.minW) vb = fitVB([vb[0], vb[1], CAM.minW, CAM.minW]);
+  if (!vb || vb[2] > cur[2]) {
+    const ll = stationLonLat(mv.id);
+    const u = ll ? geoProject(ll[0], ll[1]) : null;
+    vb = u ? [u.x - cur[2] / 2, u.y - cur[3] / 2, cur[2], cur[3]] : null;
+  }
+  if (vb) goTo(vb, false);
   // La fiche s'ouvre à l'arrivée : ouverte tout de suite, elle masquerait le vol.
   setTimeout(() => openStationModal(gi), 620);
 }
