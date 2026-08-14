@@ -31,6 +31,9 @@ function diffPips(d) {
 }
 async function startStation(i) {
   currentIdx = i;
+  // Un service commence : le relevé précédent et le bouton qu'il désignait
+  // appartiennent au passé (js/game.js, endFocusId).
+  if (typeof endFocusId !== "undefined") endFocusId = null;
   const cfg = CATALOG[i];
   // Cartouche haut-gauche : drapeau (1er token du champ country « 🇧🇪 Belgique »)
   // + nom de la gare.

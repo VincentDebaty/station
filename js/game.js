@@ -1235,6 +1235,19 @@ function animateCredits(el, from, to, signed) {
   });
 }
 
+// LA GARE QUE DÉSIGNE LE BOUTON — pour que la carte la désigne aussi.
+//
+// Le relevé nomme un pas suivant (« Ouvrir Anvers »), et le joueur devait
+// ensuite CHERCHER Anvers parmi cent quarante-cinq points. Un bouton qui nomme
+// un lieu doit pouvoir être suivi du regard : la pastille correspondante
+// respire tant que le relevé est ouvert.
+//
+// Une seule chose respire à la fois sur la carte (js/mapnet.js) : ici, ce n'est
+// plus le service en attente mais la cible du bouton — qui EST le service en
+// attente quand il y en a un. La règle ne change donc pas, elle se déplace avec
+// ce qu'on demande au joueur de faire.
+let endFocusId = null;
+
 // ------------------------------------------------------------------
 // LA CARTE DERRIÈRE LE RELEVÉ. Le service est fini : la décision suivante est
 // géographique — où aller, quoi ouvrir, avec quel solde. Le relevé se range
@@ -1289,6 +1302,9 @@ function endLeaveMap(recenter) {
   end.classList.add("hidden");
   end.classList.remove("over-map");
   MAP.host.classList.remove("end-open");
+  // Le relevé rangé, son bouton n'existe plus : la carte reprend sa règle
+  // ordinaire (c'est le service en attente qui respire).
+  if (endFocusId) { endFocusId = null; if (typeof mapnetRefresh === "function") mapnetRefresh(); }
   if (recenter && typeof stationCountrySlug === "function") {
     const slug = stationCountrySlug(currentIdx);
     if (slug && typeof frameCountry === "function") frameCountry(slug);
@@ -1501,6 +1517,11 @@ function endGame(failed) {
 
   function paintActions() {
     const step = nextStep();
+    // « Rejouer » désigne ICI : c'est la gare qu'on vient de quitter, et elle a
+    // le même droit d'être montrée que les autres.
+    endFocusId = step.kind === "map" ? null
+      : step.kind === "replay" ? (STATION.adhoc ? null : STATION.id)
+      : step.id || null;
 
     reward.innerHTML = recetteHTML();
     reward.classList.toggle("hidden", !reward.innerHTML);

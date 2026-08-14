@@ -622,7 +622,20 @@ svg { width: 100%; height: 100%; display: block; }
 #coach-bubble.below::after { bottom: 100%; border-bottom-color: #2dd4bf; }
 #coach-bubble.above::after { top: 100%; border-top-color: #2dd4bf; }
 @media (prefers-reduced-motion: reduce) { #coach-ring { animation: none; } }
-#stars { font-size: 44px; letter-spacing: 8px; color: #f5b23c; margin: 10px 0 4px; }
+/* LE RELEVÉ TIENT DANS SON CADRE, boutons compris. Il a gagné trois lignes en
+   deux chantiers (le palmarès, puis le pas suivant) et débordait par le bas :
+   il défilait, mais un bouton coupé en deux se lit comme une panne, pas comme
+   une invitation à faire défiler. Aucune information retirée — seulement
+   l'enflure d'un écran qui n'a plus à faire illusion au centre d'un écran vide,
+   puisqu'il est posé sur le côté de la carte.
+   Les étoiles restent le plus gros objet de la fiche : c'est le résultat, et il
+   se lit d'un coup d'œil depuis l'autre bout de la pièce. */
+#stars { font-size: 34px; letter-spacing: 6px; color: #f5b23c; margin: 4px 0 2px; }
+#end-delay { color: var(--muted); font-size: 15px; margin-bottom: 4px; }
+#end .card h1 { font-size: 22px; margin-bottom: 8px; }
+/* La rangée d'actions porte son propre espacement (gap) : la marge par défaut
+   des boutons de fiche s'y ajoutait, et faisait 22 px entre deux boutons. */
+#end-actions .btn { margin-top: 0; }
 /* Écran de fin : la carte prend l'état RÉUSSITE (étoiles dorées) ou ÉCHEC
    (0 étoile). L'échec est sans ambiguïté : liséré rouge, titre rouge, étoiles
    éteintes → « c'est raté, il faut recommencer ». */
@@ -737,7 +750,7 @@ svg { width: 100%; height: 100%; display: block; }
 #end.over-map .card {
   /* Posé sur le côté, le relevé se resserre : il n'a plus à faire illusion au
      centre d'un écran vide, et chaque pixel rendu est de la carte visible. */
-  padding: 22px 26px;
+  padding: 16px 20px 15px;
   width: min(360px, 34vw); margin: 0;
   box-shadow: 0 18px 60px rgba(0, 0, 0, .8);
   /* Le voile ne prend pas les clics, il ne peut donc plus défiler : c'est LA
@@ -760,7 +773,7 @@ svg { width: 100%; height: 100%; display: block; }
 /* Le cadre de la recette est le seul bloc DORÉ de la fiche : c'est la caisse,
    pas un encouragement. Le teal reste au jeu, l'or reste à l'argent. */
 #end-unlock {
-  margin: 4px 0 14px; padding: 12px 10px 13px;
+  margin: 2px 0 10px; padding: 9px 10px 10px;
   border: 1px solid #4a3a1c; border-radius: 14px; background: rgba(48, 36, 12, .4);
 }
 #end-unlock.hidden { display: none; }
@@ -1021,6 +1034,11 @@ svg { width: 100%; height: 100%; display: block; }
    dans un coin de carte, celle qui attend son service. Le teal du réseau, donc
    — les gares à acheter ne battent plus, leur étiquette suffit. */
 .city-chip.entry { --pulse: #2dd4bf; --pulse-hi: #63e6d4; --pulse-glow: rgba(45, 212, 191, .85); }
+/* UNE GARE À OUVRIR BAT EN OR, pas en teal. Le teal dit « à vous » sur toute la
+   carte ; posé sur un cerne doré, il annonçait une gare acquise et démentait
+   l'anneau qu'il entourait. La pulsation prend donc la couleur de ce qu'elle
+   désigne — c'est aussi celle du bouton qui l'a nommée. */
+.city-chip.entry.buyable { --pulse: var(--gold); --pulse-hi: #ffd684; --pulse-glow: rgba(240, 178, 60, .85); }
 .city-chip.entry .dot {
   box-shadow: 0 0 0 3px var(--chip-glow), 0 0 16px var(--pulse-glow);
 }

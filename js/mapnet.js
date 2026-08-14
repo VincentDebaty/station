@@ -114,6 +114,8 @@ function capMoney(buyable, price, block, left) {
 function mapnetBuild() {
   if (typeof CATALOG === "undefined" || !CATALOG.length || !MAP.svg) return;
   const prog = (typeof getProgress === "function") ? getProgress() : {};
+  // La gare que désigne le bouton du relevé de fin de service, s'il est ouvert.
+  const focus = (typeof endFocusId === "string" && endFocusId) ? endFocusId : null;
 
   // Calques : les arêtes SOUS les formes de pays ? Non — au-dessus, sinon la
   // terre les masque. Elles restent néanmoins sous l'overlay des pastilles.
@@ -209,12 +211,19 @@ function mapnetBuild() {
       // qui battent, plus rien ne bat. Elles gardent leur étiquette de prix en
       // or vif, qui dit déjà « à portée » sans réclamer l'attention.
       const todo = unlocked && (typeof stationInService !== "function" || !stationInService(id));
-      const isPulsing = todo;
+      // PENDANT LE RELEVÉ, C'EST LE BOUTON QUI COMMANDE. Il nomme une gare
+      // (« Ouvrir Anvers »), et le joueur devait ensuite la chercher parmi cent
+      // quarante-cinq points. Tant que le relevé est ouvert, c'est donc SA
+      // cible qui respire — et une seule chose respire toujours, la règle ne
+      // change pas, elle suit ce qu'on demande au joueur de faire.
+      const isPulsing = focus ? id === focus : todo;
       // Ce qui se joue MAINTENANT ne se cache derrière personne — qu'il s'agisse
       // d'un service à assurer ou d'une gare à ouvrir. La priorité d'affichage
       // et la pulsation sont deux choses distinctes : l'une décide qui reste
       // visible quand deux points se serrent, l'autre réclame le regard.
-      const actionable = todo || ready;
+      // La cible du bouton ne se cache derrière personne, quel que soit le zoom :
+      // on vient d'écrire son nom, elle doit être là.
+      const actionable = todo || ready || id === focus;
 
       // La pastille ne porte plus son rang de jeu : sa TAILLE dit la difficulté
       // (petite en 1, grosse en 5). On lit d'un coup d'œil où sont les morceaux,
