@@ -804,26 +804,26 @@ function updateDelay() {
 // raccourci de reprise prennent sa place.
 function updateGoal(v) {
   const row = document.getElementById("goal-row");
-  if (!row) return;
   const rec = document.getElementById("goal-rec");
-  const lost = document.getElementById("goal-lost");
   const redo = document.getElementById("goal-redo");
+  if (!row || !redo) return;
   const best = STATION.adhoc ? null : (getProgress()[STATION.id] || {}).bestDelay;
   // « Perdue » se lit sur le BARÈME lui-même, et sur le retard ARRONDI comme en
   // fin de service : à +29,5 min endGame arrondit à 30 et n'accorde rien.
   const perdu = !STATION.adhoc && typeof palierOf === "function" && palierOf(Math.round(v)) < 0;
-  // Rien à dire — gare jamais jouée dont la journée tient encore, ou démo hors
-  // catalogue : le bandeau n'existe pas. Une ligne vide sous l'horloge se lit
-  // comme un défaut d'affichage.
-  if (STATION.adhoc || (best == null && !perdu)) { row.classList.add("hidden"); return; }
-  row.classList.remove("hidden");
-  row.className = perdu ? "bad" : "";
-  rec.textContent = perdu || best == null ? ""
-    : best === 0 ? "rec. parfait" : "rec. +" + best;
-  lost.innerHTML = perdu ? icon(ICON.close, 12) : "";
-  lost.title = perdu ? "Objectif manqué — il faut moins de 30 min de retard" : "";
+  // LE RACCOURCI DE REPRISE VIT À CÔTÉ DU RETARD, pas sur une ligne à lui. Il
+  // n'apparaît que lorsque la journée est perdue — le retard passé au rouge, à
+  // sa gauche, dit déjà pourquoi. Une croix en plus ne faisait que répéter cette
+  // couleur, et elle occupait une ligne pour ne rien ajouter.
   redo.classList.toggle("hidden", !perdu);
+  // Le record cède la place : la journée perdue, il n'a plus d'objet. Et une
+  // gare jamais jouée n'affiche rien — une ligne vide sous l'horloge se lit
+  // comme un défaut d'affichage.
+  const montre = best != null && !perdu;
+  row.classList.toggle("hidden", !montre);
+  if (montre) rec.textContent = best === 0 ? "rec. parfait" : "rec. +" + best;
 }
+
 
 // PAS DE COMPTEUR D'ARGENT PENDANT LE SERVICE — essayé, retiré.
 //

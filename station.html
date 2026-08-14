@@ -84,6 +84,11 @@
       <div id="clock-row">
         <span id="clock">07:00</span>
         <span id="delay">+0</span>
+        <!-- La journée est perdue : on la reprend d'ici, sans attendre que les
+             derniers convois sortent. Il n'apparaît que dans cet état, donc le
+             retard rouge à sa gauche dit déjà pourquoi il est là — une croix de
+             plus n'aurait fait que répéter la couleur. -->
+        <button id="goal-redo" class="hidden" aria-label="Recommencer le service"></button>
       </div>
       <!-- LE RECORD À BATTRE, et rien d'autre — voir js/game.js, updateGoal.
            C'est la seule chose qu'on ne puisse pas déduire du retard affiché
@@ -91,8 +96,6 @@
            croix et au raccourci de reprise. -->
       <div id="goal-row" class="hidden">
         <span id="goal-rec"></span>
-        <span id="goal-lost"></span>
-        <button id="goal-redo" class="hidden" aria-label="Recommencer le service"></button>
       </div>
       <!-- Avancement du service : bandeau au ras du bord BAS du cadre, qui se
            remplit à la proportion de convois ayant quitté le quai. Posé dans
