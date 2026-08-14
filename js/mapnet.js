@@ -73,6 +73,41 @@ function detailForScale(s) {
   return "near";
 }
 
+function nameOfNode(id) {
+  const c = (typeof cardOf === "function") ? cardOf(id) : null;
+  return c ? (c.city || c.name) : id;
+}
+
+// ------------------------------------------------------------------
+// LA LIGNE D'ARGENT SOUS UNE GARE — et le droit de se taire.
+// ------------------------------------------------------------------
+// Trois choses peuvent s'écrire là, et une seule à la fois :
+//
+//   • UN PRIX — mais seulement si l'argent est bien le dernier obstacle.
+//     Payable tout de suite, c'est une offre (étiquette d'or vif) ; trop cher,
+//     c'est un objectif (étiquette éteinte). Dans les deux cas la promesse est
+//     tenue : réunis la somme et la gare s'ouvre.
+//   • DEUX ÉTOILES — la gare ne s'achète pas avec de l'argent mais avec du
+//     métier : il faut ★★ sur une voisine déjà tenue. Écrire un prix ici serait
+//     mentir, l'effacer sans rien dire laisserait la gare inexpliquée.
+//   • RIEN — le réseau ne tourne pas : une gare acquise attend son premier
+//     service, et tant qu'elle attend plus rien ne se vend nulle part
+//     (js/catalog.js). Douze prix barrés pour une seule cause commune seraient
+//     douze fois le même bruit ; on les retire tous, et la gare qui respire
+//     reste alors le SEUL repère monnayé de la carte. Elle dit d'elle-même où
+//     aller.
+//
+// Et pour une gare acquise : ce qu'elle peut encore verser, en chiffre nu.
+function capMoney(buyable, price, block, left) {
+  if (!buyable)
+    return left ? '<div class="pr earn">' + creditsHTML(left, true) + "</div>" : "";
+  if (!block || block.kind === "argent")
+    return '<div class="pr">' + creditsHTML(price) + "</div>";
+  if (block.kind === "maitrise")
+    return '<div class="pr need">★★</div>';
+  return "";  // kind === "service"
+}
+
 // ------------------------------------------------------------------
 // Construction — une fois, puis à chaque changement de progression.
 // ------------------------------------------------------------------
@@ -139,10 +174,18 @@ function mapnetBuild() {
       // porte SON PRIX, en or ; une gare hors réseau reste sourde et sans prix.
       const buyable = !unlocked && typeof isBuyable === "function" && isBuyable(id);
       const price = buyable ? stationPrice(id) : 0;
+      // CE QUI S'OPPOSE À L'ACHAT, LU UNE SEULE FOIS. La carte affichait un prix
+      // sous toute gare de la frontière, y compris celles qu'aucune somme
+      // n'ouvre aujourd'hui : on lisait douze offres, on en cliquait une, et on
+      // tombait sur deux boutons éteints et une règle jamais annoncée. Un prix
+      // est une PROMESSE ; il n'a le droit de s'afficher que si l'argent est
+      // bien la seule chose qui manque.
+      const block = buyable && typeof buyBlock === "function" ? buyBlock(id) : null;
       // « Prête » : achetable, payable, et rien d'autre ne s'y oppose (une gare
       // en souffrance, un palier pas atteint). C'est le seul état où le geste
       // est possible tout de suite — donc le seul qui a le droit de respirer.
-      const ready = buyable && typeof canBuy === "function" && canBuy(id);
+      // (Exactement canBuy(), mais sans recalculer le blocage qu'on tient déjà.)
+      const ready = buyable && !block;
       // CE QU'UNE GARE ACQUISE PEUT ENCORE RAPPORTER. Sans ce chiffre, la carte
       // ne répondait qu'à une moitié de la question : elle disait où dépenser,
       // jamais où gagner. Le joueur à court de crédits n'avait aucun moyen de
@@ -213,8 +256,10 @@ function mapnetBuild() {
         // encore rapporter. Même monnaie, même couleur, deux directions — et la
         // pastille tranche déjà l'une de l'autre (cerne doré contre point teal).
         '<div class="cap"><div class="nm">' + (card.city || card.name) + "</div>" +
-          (buyable ? '<div class="pr">' + creditsHTML(price) + "</div>"
-           : left ? '<div class="pr earn">' + creditsHTML(left, true) + "</div>" : "") + "</div>";
+          capMoney(buyable, price, block, left) + "</div>";
+      // Ce qu'on ne peut pas dire en trois caractères se dit au survol.
+      if (block && block.kind === "maitrise")
+        el.title = "Demande ★★ sur " + block.from.map(nameOfNode).join(" ou ");
       el.addEventListener("click", ev => { ev.stopPropagation(); openStationModal(gi); });
       MAPNET.layer.appendChild(el);
 

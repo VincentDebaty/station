@@ -1246,6 +1246,14 @@ svg { width: 100%; height: 100%; display: block; }
 }
 /* Reste à gagner : chiffre nu, jamais d'étiquette — on ne l'achète pas. */
 .city-chip .pr.earn .cr-amt { color: var(--gold); }
+/* CE QUI NE S'ACHÈTE PAS ne porte pas d'étiquette. La gare demande ★★ sur une
+   voisine : ni or ni pastille — la forme de l'argent est réservée à l'argent.
+   Deux étoiles creuses, dans le teal du métier, à la place exacte où le prix
+   se serait trouvé : on lit d'un coup que le blocage n'est pas monétaire. */
+.city-chip .pr.need {
+  font-size: 11px; letter-spacing: .12em; color: #6ff0e2;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, .9);
+}
 /* Achetable : la pastille quitte la bille grise pleine des gares hors réseau
    et redevient un CERCLE OUVERT, cerclé d'or — creux comme une case à remplir,
    ce qu'elle est. Payable tout de suite : l'or vif, et elle respire (.entry).

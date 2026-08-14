@@ -214,7 +214,7 @@ function buildMap() {
         "elle a servi. Le chiffre est ce qu'elle peut <em>encore</em> rapporter.") +
     row(chip("s1 entry", '<span class="fill"></span>'),
         "Un service vous attend",
-        "acquise, jamais tournée. Rien ne s'achète tant qu'elle n'a pas tourné.") +
+        "acquise, jamais tournée. Tant qu'elle attend, aucun prix ailleurs.") +
     row(chip("perfect", STAR_SVG),
         "Sans faute",
         "pas une minute de retard. Elle a tout donné.") +
@@ -224,8 +224,13 @@ function buildMap() {
         "à portée de bourse. L'étiquette est son prix.") +
     row(chip("locked buyable", "",
              '<span class="pr">' + creditsHTML(260) + "</span>"),
-        "Pas encore",
-        "le prix y est, mais il manque des crédits, un service, ou <b>★★</b> sur la voisine d'où vous partiriez.") +
+        "Trop chère",
+        "l'étiquette s'éteint : il ne manque plus que les crédits.") +
+    // UN PRIX EST UNE PROMESSE. Il ne s'affiche que si l'argent est le dernier
+    // obstacle ; quand c'est le métier qui manque, la marque le dit.
+    row(chip("locked buyable", "", '<span class="pr need">★★</span>'),
+        "Question de métier",
+        "l'argent n'y peut rien : il faut <b>★★</b> sur une voisine que vous tenez.") +
     row(chip("locked", "", "", 16),
         "Hors de votre réseau",
         "aucune gare acquise ne la touche.") +
