@@ -179,8 +179,8 @@ function buildMap() {
   // dont on ait besoin quand on s'est perdu à pincer.
   const home = document.createElement("button");
   home.className = "map-home hidden";
-  home.setAttribute("aria-label", "Recadrer ce pays");
-  home.addEventListener("click", () => { if (MAP.homeSlug) frameCountry(MAP.homeSlug); });
+  home.setAttribute("aria-label", "Revenir au réseau");
+  home.addEventListener("click", () => mapHome());
   MAP.homeBtn = home;
   host.appendChild(home);
 
@@ -281,7 +281,7 @@ function buildMap() {
   document.addEventListener("keydown", e => {
     if (e.key !== "Escape" || document.getElementById("hub").classList.contains("hidden")) return;
     if (MAP.modal && !MAP.modal.classList.contains("hidden")) closeModal(); // modale d'abord
-    else if (MAP.homeSlug) frameCountry(MAP.homeSlug);
+    else mapHome();
   });
 
   MAP.built = true;
@@ -461,10 +461,17 @@ function updateChrome() {
     const slug = countryAtCenter();
     const ref = slug ? countryVB(slug) : null;
     const away = !!ref && awayFrom(ref);
-    MAP.homeBtn.classList.toggle("hidden", !away);
-    MAP.homeSlug = slug;
-    const nm = away ? (GEO.countries[slug] || {}).name || "" : "";
-    if (away && MAP.homeBtn.dataset.nm !== nm) {
+    // DEUX RÉGIMES POUR UN SEUL BOUTON.
+    //   • Un pays sous la vue : il le nomme et le recadre — et il s'efface une
+    //     fois le pays bien cadré, car un bouton sans effet passe pour cassé.
+    //   • AUCUN pays sous la vue : le joueur s'est perdu. C'est le seul cas où
+    //     le bouton doit rester coûte que coûte ; il ramène alors au réseau
+    //     (voir mapHome), qui ne dépend d'aucun cadrage.
+    const lost = !slug;
+    MAP.homeSlug = slug;                       // null = perdu → repli sur le réseau
+    MAP.homeBtn.classList.toggle("hidden", !away && !lost);
+    const nm = lost ? "Mon réseau" : away ? (GEO.countries[slug] || {}).name || "" : "";
+    if (nm && MAP.homeBtn.dataset.nm !== nm) {
       MAP.homeBtn.dataset.nm = nm;
       MAP.homeBtn.innerHTML =
         // Réticule de recentrage (Material « my_location »), le repère que les
@@ -604,6 +611,35 @@ function frameHome(instant) {
   if (slug && frameCountry(slug, instant)) return;
   const europe = GEO.continents.find(c => c.id === "europe");
   goTo(targetVB(europe.bbox, 0.06), instant);
+}
+
+// ------------------------------------------------------------------
+// LE REPÈRE QUI EXISTE TOUJOURS : le réseau acquis.
+// ------------------------------------------------------------------
+// Le bouton de recadrage nomme le pays sous le CENTRE de la vue et se cache
+// quand il n'y en a pas. Or on peut parfaitement dériver là où aucun pays
+// jouable ne passe sous le centre — le milieu de l'Atlantique, le Sahara — et
+// c'est là, précisément, que le repère manque le plus : plus de pays, donc plus
+// de bouton, donc plus de retour. Il fallait repincer à l'aveugle jusqu'à
+// retomber sur quelque chose.
+//
+// Le réseau, lui, ne dépend d'aucun cadrage : il est toujours quelque part. À
+// défaut (partie neuve), les portes d'entrée — au premier lancement, c'est
+// exactement ce que le joueur cherche.
+function networkBbox() {
+  if (typeof CATALOG === "undefined" || typeof isBought !== "function") return null;
+  const owned = CATALOG.filter(c => isBought(c.id));
+  const src = owned.length ? owned
+    : (typeof isStartDoor === "function" ? CATALOG.filter(c => isStartDoor(c.id)) : []);
+  return src.length ? stationsBbox(src.map(c => c.id)) : null;
+}
+// Le geste « ramène-moi » : le pays sous la vue s'il y en a un, sinon le réseau,
+// sinon le cadrage d'ouverture. Il ne rend jamais la main sans avoir bougé.
+function mapHome() {
+  if (MAP.homeSlug) { frameCountry(MAP.homeSlug); return; }
+  const box = networkBbox();
+  if (box) goTo(targetVB(box, 0.25));
+  else frameHome();
 }
 
 // ------------------------------------------------------------------
