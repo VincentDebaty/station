@@ -227,9 +227,10 @@ function buildMap() {
   // ------------------------------------------------------------------
   // La carte disait tout d'une gare et rien d'un pays. « Combien m'en
   // reste-t-il ? » n'avait aucune réponse à l'écran : il fallait compter les
-  // pastilles pleines. Un bandeau au-dessus dit les gares tenues, les étoiles
-  // décrochées, et marque les quatre jalons sur la barre — l'horizon cesse
-  // d'être un tout-ou-rien à trente gares.
+  // pastilles pleines. Le nom du pays et une jauge y répondent, avec les quatre
+  // jalons marqués dessus — l'horizon cesse d'être un tout-ou-rien à trente
+  // gares. Le décompte chiffré est au carnet, pas ici : au centre d'une barre,
+  // on regarde, on ne lit pas.
   const cn = document.createElement("div");
   cn.className = "map-country hidden";
   MAP.countryBar = cn;
@@ -653,10 +654,14 @@ function updateCountryBar(slug) {
   const s = countryStars(pays);
   const toks = pays.trim().split(" ");
   el.classList.remove("hidden");
+  // UN NOM ET UNE JAUGE, RIEN DE PLUS. « 12 / 29 gares · 33 / 87 ★ » disait deux
+  // fois ce que la barre montre déjà, en chiffres qu'on ne lit pas en passant :
+  // le décompte exact appartient au carnet de service, qui est fait pour être
+  // lu ligne à ligne. Ici, on veut savoir d'un coup d'œil OÙ l'on est et
+  // COMBIEN il reste — un mot et une jauge suffisent.
   el.innerHTML =
     '<span class="cy-flag">' + toks[0] + "</span>" +
-    '<span class="cy-txt"><span class="cy-nm">' + (toks.slice(1).join(" ") || pays) + "</span>" +
-      '<span class="cy-n">' + s.done + " / " + s.n + " gares · " + s.earned + " / " + s.total + " ★</span></span>" +
+    '<span class="cy-nm">' + (toks.slice(1).join(" ") || pays) + "</span>" +
     // LES JALONS SONT DESSINÉS SUR LA BARRE, pas listés à côté : on voit d'un
     // coup celui qu'on vient de passer et celui qu'on vise.
     '<span class="cy-bar"><span class="cy-fill" style="width:' +

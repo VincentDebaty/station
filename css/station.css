@@ -908,11 +908,13 @@ svg { width: 100%; height: 100%; display: block; }
    ligne « ponctualité ». Deux fois le même compteur ferait du bruit. */
 #hub-map.end-open .map-rank { display: none; }
 
-/* --- LE PAYS SOUS LA VUE, en haut au centre --------------------------------
-   Une seule ligne : drapeau, nom, décompte, et une barre où les quatre jalons
-   sont MARQUÉS. Dessinés sur la barre plutôt que listés à côté, ils se lisent
-   d'un coup — celui qu'on vient de passer, celui qu'on vise. */
-/* Posé à même la barre, sans cadre : c'est le titre de ce qu'on regarde, pas un
+/* --- LE PAYS SOUS LA VUE, au centre de la barre -----------------------------
+   Trois signes, pas un de plus : le drapeau, le nom, et une jauge où les quatre
+   jalons sont MARQUÉS. Dessinés sur la jauge plutôt que listés à côté, ils se
+   lisent d'un coup — celui qu'on vient de passer, celui qu'on vise. Le décompte
+   chiffré, lui, est descendu au carnet de service : c'est là qu'on lit ligne à
+   ligne, ici qu'on regarde en passant.
+   Posé à même la barre, sans cadre : c'est le titre de ce qu'on regarde, pas un
    panneau de plus. */
 .map-country {
   display: flex; align-items: center; gap: 9px;
@@ -921,12 +923,10 @@ svg { width: 100%; height: 100%; display: block; }
 }
 .map-country.hidden { display: none; }
 .map-country .cy-flag { font-size: 17px; line-height: 1; }
-.map-country .cy-txt { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .map-country .cy-nm {
   font-size: 13px; font-weight: 600; color: var(--text); line-height: 1;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0;
 }
-.map-country .cy-n { font-size: 10px; color: var(--muted); font-variant-numeric: tabular-nums; line-height: 1; }
 .map-country .cy-bar {
   position: relative; display: block; width: 120px; height: 5px;
   border-radius: 999px; background: #2a3550; overflow: hidden;
