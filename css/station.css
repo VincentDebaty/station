@@ -887,13 +887,28 @@ svg { width: 100%; height: 100%; display: block; }
    garde sa pastille — c'est son identité d'or. */
 .map-rank {
   display: flex; flex-direction: column; gap: 4px;
-  pointer-events: none;
+  /* Bouton lui aussi : il ouvre l'échelle des grades. Même traitement que le
+     pays, à l'autre bout de la barre — deux compteurs qui s'expliquent. */
+  padding: 4px 9px 5px; border: 0; border-radius: 10px;
+  background: none; font-family: inherit; text-align: inherit;
+  cursor: pointer; -webkit-tap-highlight-color: transparent; touch-action: manipulation;
+  transition: background .15s;
 }
+.map-rank.open { background: rgba(255, 255, 255, .07); }
+@media (hover: hover) { .map-rank:hover { background: rgba(255, 255, 255, .07); } }
 .map-rank .rk-top {
-  display: flex; align-items: baseline; justify-content: space-between; gap: 10px;
+  display: flex; align-items: baseline; gap: 3px;
   line-height: 1;
 }
 .map-rank .rk-nm { font-size: 12px; font-weight: 600; color: #9fb2d6; line-height: 1; }
+/* Le nombre est poussé à droite : c'est LUI qui doit s'aligner sur le bord de
+   l'écran, pas le chevron qui suit le nom. */
+.map-rank .rk-n { margin-left: auto; }
+.map-rank .rk-chev {
+  width: 10px; height: 10px; flex: 0 0 auto; align-self: center;
+  color: var(--muted); transition: transform .15s;
+}
+.map-rank.open .rk-chev { transform: rotate(180deg); }
 /* La barre porte l'information ; le nombre n'est là que pour qui veut le
    chiffre exact — d'où sa taille et sa couleur en retrait. */
 /* La barre prend la largeur du bloc, avec un minimum : c'est le NOM DU GRADE et
@@ -913,7 +928,68 @@ svg { width: 100%; height: 100%; display: block; }
 @media (prefers-reduced-motion: reduce) { .map-rank.bump { animation: none; } }
 /* Le relevé de fin de service occupe le côté : le grade y est déjà annoncé,
    ligne « ponctualité ». Deux fois le même compteur ferait du bruit. */
-#hub-map.end-open .map-rank { display: none; }
+#hub-map.end-open .map-rank,
+#hub-map.end-open .map-rank-card { display: none; }
+
+/* --- L'ENCART DE CARRIÈRE --------------------------------------------------
+   L'échelle des six grades, avec leur seuil : ceux qui sont derrière, celui
+   qu'on porte, ceux qui restent. Ancré sous le grade, donc à DROITE — un
+   panneau doit tomber de ce qui l'ouvre, sinon on le cherche. */
+.map-rank-card {
+  position: absolute; z-index: 8;
+  right: calc(12px + var(--safe-r)); top: calc(56px + var(--safe-t));
+  width: min(286px, calc(100vw - 24px));
+  padding: 12px 14px 13px;
+  animation: legendIn .16s ease;   /* ancré à droite : pas de centrage à refaire */
+}
+.map-rank-card.hidden { display: none; }
+@media (prefers-reduced-motion: reduce) { .map-rank-card { animation: none; } }
+.map-rank-card .rc-top {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 10px;
+}
+.map-rank-card .rc-lbl {
+  font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted);
+}
+.map-rank-card .rc-pts {
+  font-size: 15px; font-weight: 700; color: #63e6d4; font-variant-numeric: tabular-nums;
+}
+/* La règle du compteur, écrite une fois. C'est la seule phrase de l'encart :
+   tout le reste est une échelle qui se lit sans texte. */
+.map-rank-card .rc-note {
+  font-size: 11px; line-height: 1.45; color: var(--muted);
+  margin: 7px 0 11px; padding-bottom: 11px; border-bottom: 1px solid #2a3550;
+}
+.map-rank-card .rc-lad { display: flex; flex-direction: column; }
+.map-rank-card .rc-row {
+  display: flex; align-items: baseline; gap: 8px;
+  padding: 4px 0; font-size: 12px;
+}
+/* Une pastille par cran, pleine quand il est acquis : l'échelle se lit à la
+   colonne de gauche, sans avoir à comparer des nombres. */
+.map-rank-card .rc-mk {
+  flex: 0 0 auto; width: 7px; height: 7px; border-radius: 999px;
+  background: #2a3550; box-shadow: inset 0 0 0 1px #3a465f;
+}
+.map-rank-card .rc-nm { flex: 1 1 auto; color: var(--muted); }
+.map-rank-card .rc-at {
+  flex: 0 0 auto; color: #6b7d9e; font-size: 11px; font-variant-numeric: tabular-nums;
+}
+.map-rank-card .rc-row.past .rc-mk { background: #2dd4bf; box-shadow: none; opacity: .5; }
+.map-rank-card .rc-row.past .rc-nm { color: #7e90b3; }
+/* LE GRADE PORTÉ : le seul en clair, avec sa pastille pleine et cerclée. */
+.map-rank-card .rc-row.now .rc-mk {
+  background: #2dd4bf; box-shadow: 0 0 0 3px rgba(45, 212, 191, .22);
+}
+.map-rank-card .rc-row.now .rc-nm { color: var(--text); font-weight: 700; }
+.map-rank-card .rc-row.now .rc-at { color: #9fb2d6; }
+/* Ce qui manque pour le cran suivant : le seul chiffre qu'on vient chercher. */
+.map-rank-card .rc-left {
+  flex: 0 0 auto; font-size: 11px; color: #63e6d4; font-variant-numeric: tabular-nums;
+}
+.map-rank-card .rc-fin {
+  margin-top: 10px; padding-top: 10px; border-top: 1px solid #2a3550;
+  font-size: 11px; color: #f5b23c;
+}
 
 /* --- LE PAYS SOUS LA VUE, au centre de la barre -----------------------------
    Trois signes, pas un de plus : le drapeau, le nom, et une jauge où les quatre
@@ -975,14 +1051,19 @@ svg { width: 100%; height: 100%; display: block; }
    Ce que la jauge résume, en toutes lettres : trois faits accomplis et un
    horizon. Il tombe sous le bandeau, centré comme lui, et se referme au tap
    suivant ou dès qu'on touche la carte — comme la légende et le carnet. */
+/* LE MÊME PANNEAU, DEUX ANCRAGES. Fond, bordure, rayon, ombre : les deux
+   encarts de la barre sont un seul objet dessiné à deux endroits. Écrits deux
+   fois, ils auraient divergé au premier réglage. */
+.map-country-card, .map-rank-card {
+  background: rgba(15, 21, 35, .97); border: 1px solid #2a3550; border-radius: 14px;
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, .6);
+}
 .map-country-card {
   position: absolute; z-index: 8;
   left: 50%; transform: translateX(-50%); top: calc(56px + var(--safe-t));
   width: min(268px, calc(100vw - 24px));
   padding: 12px 14px 13px;
-  background: rgba(15, 21, 35, .97); border: 1px solid #2a3550; border-radius: 14px;
-  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-  box-shadow: 0 18px 50px rgba(0, 0, 0, .6);
   /* SON PROPRE FONDU, qui refait le centrage à chaque image. `legendIn` ne
      déplace QUE la verticale, mais `transform` est une propriété unique :
      l'animation écrasait le translateX(-50%) qui centre l'encart, et celui-ci
@@ -1021,7 +1102,7 @@ svg { width: 100%; height: 100%; display: block; }
     grid-template-areas: "left right" "mid mid";
     row-gap: 9px; padding-bottom: 14px;
   }
-  .map-country-card { top: calc(104px + var(--safe-t)); }
+  .map-country-card, .map-rank-card { top: calc(104px + var(--safe-t)); }
 }
 
 /* --- LE PAS SUIVANT, en bas au centre --------------------------------------

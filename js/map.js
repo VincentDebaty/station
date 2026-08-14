@@ -323,7 +323,7 @@ function buildMap() {
     // JAMAIS DEUX PANNEAUX À LA FOIS. Ils tombent tous les trois du même bord de
     // la barre : ouverts ensemble, ils se recouvrent, et on ne sait plus lequel
     // on est en train de lire.
-    closeCarnet(); closeCountryCard();
+    closeCarnet(); closeCountryCard(); closeRankCard();
     const open = legend.classList.toggle("hidden");
     legendBtn.classList.toggle("open", !open);
   });
@@ -340,10 +340,12 @@ function buildMap() {
     // Sauf sur les panneaux eux-mêmes : les lire ne les referme pas.
     const t = ev.target;
     if (t.closest && t.closest(".map-legend, .map-legend-btn, .map-carnet, .map-carnet-btn," +
-                               " .map-country, .map-country-card")) return;
+                               " .map-country, .map-country-card," +
+                               " .map-rank, .map-rank-card")) return;
     closeLegend();
     closeCarnet();
     closeCountryCard();
+    closeRankCard();
     // Recadrer le pays quand on range le relevé — mais pas quand on vient de
     // toucher une gare : déplacer la carte sous le doigt qui ouvre une fiche
     // serait gratuit.
@@ -387,10 +389,27 @@ function buildMap() {
   // c'est-à-dire le geste le plus progressif du jeu, faisait baisser le seul
   // chiffre affiché en permanence. Rien ne disait au joueur qu'il avançait.
   // La ponctualité ne fait que croître, et son grade la résume d'un mot.
-  const rank = document.createElement("div");
+  //
+  // ET IL S'OUVRE, comme le pays. Un titre et une barre ne disent pas d'où l'on
+  // vient ni où l'on va : ni les grades déjà tenus, ni ce qui reste avant le
+  // suivant, ni même ce qui fait monter le compteur. L'échelle entière tient
+  // dans un encart, et se lit d'un coup — c'est la carrière, pas un chiffre.
+  const rank = document.createElement("button");
   rank.className = "map-rank";
+  rank.setAttribute("aria-expanded", "false");
+  rank.addEventListener("click", ev => {
+    ev.stopPropagation();
+    if (MAP.rankCard.classList.contains("hidden")) openRankCard();
+    else closeRankCard();
+  });
   MAP.rank = rank;
   barR.appendChild(rank);
+
+  const rCard = document.createElement("div");
+  rCard.className = "map-rank-card hidden";
+  rCard.addEventListener("click", ev => ev.stopPropagation());
+  MAP.rankCard = rCard;
+  host.appendChild(rCard);
   updateCreditsBadge();
   updateRankBadge();
 
@@ -664,7 +683,7 @@ function closeLegend() {
 }
 function openCarnet() {
   if (!MAP.carnet) return;
-  closeLegend(); closeCountryCard();
+  closeLegend(); closeCountryCard(); closeRankCard();
   if (typeof endLeaveMap === "function") endLeaveMap();
   renderCarnet();
   MAP.carnet.classList.remove("hidden");
@@ -762,7 +781,7 @@ function renderCountryCard(pays) {
 }
 function openCountryCard() {
   if (!MAP.countryCard || !MAP.countryBar || MAP.countryBar.classList.contains("hidden")) return;
-  closeLegend(); closeCarnet();
+  closeLegend(); closeCarnet(); closeRankCard();
   if (typeof endLeaveMap === "function") endLeaveMap();
   const slug = MAP.homeSlug || countryAtCenter();
   const g = slug ? GEO.countries[slug] : null;
@@ -1161,6 +1180,8 @@ function updateRankBadge(bump) {
   // de la même chose — et la barre passe dessous, pleine largeur du bloc.
   MAP.rank.innerHTML =
     '<span class="rk-top"><span class="rk-nm">' + g.nom + "</span>" +
+      '<svg class="rk-chev" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">' +
+      '<path d="M7 10l5 5 5-5z"/></svg>' +
       '<span class="rk-n">' + pts.toLocaleString("fr-FR") + "</span></span>" +
     '<span class="rk-bar"><span style="width:' +
       Math.round(Math.max(0, Math.min(1, g.part)) * 100) + '%"></span></span>';
@@ -1169,6 +1190,60 @@ function updateRankBadge(bump) {
     void MAP.rank.offsetWidth;
     MAP.rank.classList.add("bump");
   }
+  // Ouvert, l'encart suit le compteur : on revient d'un service, la ponctualité
+  // vient de monter, et l'échelle doit le montrer sans qu'on la referme.
+  if (MAP.rankCard && !MAP.rankCard.classList.contains("hidden")) renderRankCard();
+}
+
+// ------------------------------------------------------------------
+// L'ENCART DE CARRIÈRE — l'échelle entière, et où l'on s'y trouve.
+// ------------------------------------------------------------------
+// La barre du haut affiche un titre et une jauge : de quoi savoir qu'on avance,
+// pas d'où l'on vient ni jusqu'où cela va. L'encart déroule les SIX grades avec
+// leur seuil — ceux qui sont derrière, celui qu'on porte, ceux qui restent — et
+// dit, sur le prochain, ce qu'il manque exactement.
+//
+// Il rappelle aussi COMMENT le compteur monte. C'est la seule règle du jeu
+// qu'aucun écran n'énonçait : la ponctualité se gagne à chaque service, même sur
+// une gare dont le palmarès est complet — c'est précisément ce qui empêche une
+// gare finie de devenir sans intérêt.
+function renderRankCard() {
+  const el = MAP.rankCard;
+  if (!el || typeof GRADES === "undefined") return;
+  const pts = getPoints();
+  const g = gradeOf(pts);
+  const rows = GRADES.map((gr, i) => {
+    const state = i < g.i ? "past" : i === g.i ? "now" : "todo";
+    // « Encore X » ne se dit qu'une fois, sur le grade qu'on VISE : porté par
+    // les cinq lignes, le chiffre cesserait d'être un objectif.
+    const reste = (i === g.i + 1)
+      ? '<span class="rc-left">encore ' + (gr.at - pts).toLocaleString("fr-FR") + "</span>" : "";
+    return '<div class="rc-row ' + state + '"><span class="rc-mk"></span>' +
+      '<span class="rc-nm">' + gr.nom + "</span>" + reste +
+      '<span class="rc-at">' + gr.at.toLocaleString("fr-FR") + "</span></div>";
+  }).join("");
+  el.innerHTML =
+    '<div class="rc-top"><span class="rc-lbl">Ponctualité</span>' +
+      '<span class="rc-pts">' + pts.toLocaleString("fr-FR") + "</span></div>" +
+    '<div class="rc-note">Chaque service en rapporte — d\'autant plus qu\'il est ' +
+      "à l'heure, et même sur une gare au palmarès complet.</div>" +
+    '<div class="rc-lad">' + rows + "</div>" +
+    (g.next ? "" : '<div class="rc-fin">Le dernier grade. Il n\'y a plus rien au-dessus.</div>');
+}
+function openRankCard() {
+  if (!MAP.rankCard) return;
+  closeLegend(); closeCarnet(); closeCountryCard();
+  if (typeof endLeaveMap === "function") endLeaveMap();
+  renderRankCard();
+  MAP.rankCard.classList.remove("hidden");
+  MAP.rank.classList.add("open");
+  MAP.rank.setAttribute("aria-expanded", "true");
+}
+function closeRankCard() {
+  if (!MAP.rankCard) return;
+  MAP.rankCard.classList.add("hidden");
+  MAP.rank.classList.remove("open");
+  MAP.rank.setAttribute("aria-expanded", "false");
 }
 // Instant jusqu'auquel un tap sur « Prendre le service » est ignoré : voir le
 // gestionnaire d'achat, juste en dessous.
