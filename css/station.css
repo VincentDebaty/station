@@ -1105,8 +1105,70 @@ svg { width: 100%; height: 100%; display: block; }
    pas un « +0 min » qu'on lirait comme un retard nul plutôt qu'un sans-faute. */
 .mm-row .d.perfect { color: #63e6d4; font-family: inherit; font-size: 13px; font-weight: 700; }
 
-.mm-actions { display: flex; flex-direction: column; gap: 10px; }
-.mm-play { width: 100%; background: #16333a; border-color: #2dd4bf; color: #eafbf7; font-weight: 600; }
+/* --- LE PALMARÈS : quatre paliers, une colonne par question ---------------
+   « Qu'ai-je déjà ? » (la marque) · « à quel prix d'effort ? » (les étoiles et
+   le seuil) · « combien ça paie ? » (le montant, aligné à droite pour que les
+   quatre se comparent d'un coup d'œil).
+   Trois états, trois intensités — et une seule ligne allumée : la SUIVANTE.
+   C'est elle qu'on est venu chercher. */
+.palmares { display: flex; flex-direction: column; margin-bottom: 10px; }
+.pl-head {
+  display: flex; justify-content: space-between; align-items: baseline;
+  color: var(--muted); font-size: 11px; letter-spacing: .07em; text-transform: uppercase;
+  padding-bottom: 5px;
+}
+.pl-head .pl-sum { font-variant-numeric: tabular-nums; }
+.pl-row {
+  display: flex; align-items: center; gap: 9px;
+  padding: 4px 0; border-top: 1px solid #232c42; font-size: 13px;
+}
+/* La marque tient une largeur FIXE, occupée ou non : sans elle, les quatre
+   seuils se décalaient d'un cran dès qu'un palier tombait, et l'échelle
+   semblait bouger sous les yeux du joueur. */
+.pl-row .pl-mk { flex: 0 0 13px; text-align: center; font-size: 12px; line-height: 1; }
+.pl-row.done .pl-mk::before { content: "✓"; color: #2dd4bf; }
+.pl-row.next .pl-mk::before { content: "▸"; color: var(--gold); }
+/* LA COLONNE DES RANGS TIENT UNE LARGEUR FIXE. Trois étoiles et la pastille du
+   sans-faute n'ont pas la même largeur naturelle : laissées libres, elles
+   décalaient la colonne des seuils d'une ligne à l'autre, et les quatre paliers
+   cessaient de se lire comme une seule échelle. */
+.pl-row .pl-st, .pl-row .pl-perf { flex: 0 0 36px; }
+.pl-row .pl-st { color: #f5b23c; font-size: 13px; letter-spacing: 1px; }
+.pl-row .pl-perf .dot { margin: 0 auto; }
+.pl-row .pl-th { flex: 1 1 auto; color: var(--muted); }
+.pl-row .pl-am { flex: none; font-variant-numeric: tabular-nums; }
+/* DÉCROCHÉ : la ligne s'apaise. Le montant a été versé une fois pour toutes —
+   le laisser en or vif ferait miroiter un gain qui ne reviendra pas. */
+.pl-row.done { opacity: .62; }
+.pl-row.done .pl-am .cr-amt { color: var(--muted); }
+/* LE PROCHAIN PAS : le seul en or, le seul qui promet quelque chose. */
+.pl-row.next { background: linear-gradient(90deg, rgba(240, 178, 60, .09), transparent 70%); }
+.pl-row.next .pl-th { color: var(--text); }
+.pl-row.next .pl-am .cr-amt { color: var(--gold); font-weight: 700; }
+/* Pas encore à portée : présent, mais qui n'appelle pas. */
+.pl-row.todo { opacity: .5; }
+/* AVANT L'ACHAT, le palmarès n'est pas un état : c'est l'ARGUMENT DE VENTE.
+   Rien n'y est « hors de portée » puisque rien n'a commencé — les quatre lignes
+   annoncent ce que la gare peut verser, et une demi-teinte les ferait lire
+   comme un mur. */
+.palmares.sale .pl-row.todo { opacity: .85; }
+.palmares.sale .pl-row .pl-am .cr-amt { color: var(--gold); }
+
+/* LES DEUX GESTES SUR UNE SEULE LIGNE. Empilés, ils coûtaient une hauteur de
+   bouton pour rien et poussaient la fiche hors de l'écran sur une fenêtre
+   basse — le joueur devait faire défiler pour atteindre ce qu'il était venu
+   presser.
+   Côte à côte, ils rendent en outre STABLE ce que l'empilement rendait
+   fragile : la rangée fait la même hauteur qu'il y ait un bouton ou deux, donc
+   « Prendre le service » ne remonte plus d'un cran quand l'achat fait
+   disparaître son voisin. Il s'élargit sur place, et le garde-fou des 450 ms
+   (voir _buyGuardUntil) couvre le doigt encore posé.
+   La raison d'un achat impossible passe à la ligne, sur toute la largeur : une
+   phrase n'a pas à tenir dans une demi-fiche. */
+.mm-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.mm-play, .mm-buy { flex: 1 1 0; min-width: 0; white-space: nowrap; }
+.mm-actions .mm-short { flex: 1 0 100%; }
+.mm-play { background: #16333a; border-color: #2dd4bf; color: #eafbf7; font-weight: 600; }
 .mm-play:hover { background: #1c4249; }
 .mm-lock {
   display: flex; align-items: center; gap: 9px; text-align: left;
@@ -1276,15 +1338,21 @@ svg { width: 100%; height: 100%; display: block; }
 /* Rien encaissé : le chiffre reste lisible mais cesse de briller — un « +0 »
    en or serait une fausse joie. */
 #end-unlock .eu-gain.none .cr-amt { color: var(--muted); }
-/* Pourquoi « +0 » : la gare est pleine à ce niveau. Dit par la jauge, pas par
-   une phrase — c'est la même que sur la fiche de gare. */
-#end-unlock .eu-banked {
-  display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 6px;
+/* CE QU'ON VIENT DE COCHER, ET CE QUI VIENT ENSUITE. Deux lignes qui remplacent
+   la jauge d'encaissement : elle disait « Complet » là où il fallait dire « et
+   maintenant, ceci ». La seconde ligne porte un montant — c'est la raison de
+   rejouer, et c'est le seul or du bloc. */
+#end-unlock .eu-tier {
+  display: flex; align-items: center; justify-content: center; gap: 7px;
+  margin-top: 7px; font-size: 13px;
 }
-#end-unlock .eu-banked .d {
-  color: var(--gold); font-size: 12px;
-  font-family: ui-monospace, Menlo, monospace; font-variant-numeric: tabular-nums;
-}
+#end-unlock .eu-tier .pl-st { color: #f5b23c; font-size: 13px; letter-spacing: 1px; }
+#end-unlock .eu-tier.done { color: #63e6d4; }
+#end-unlock .eu-tier.done::before { content: "✓"; color: #2dd4bf; }
+#end-unlock .eu-tier.next { color: var(--muted); }
+#end-unlock .eu-tier.next .am .cr-amt { color: var(--gold); font-weight: 700; }
+/* Quatre sur quatre : plus de ligne suivante, et c'est un trophée. */
+#end-unlock .eu-tier.full { color: var(--gold); font-weight: 600; letter-spacing: .02em; }
 #end-unlock .eu-buy {
   width: 100%; margin-top: 2px; background: #33250c; border-color: var(--gold); color: #ffe9c2;
   font-weight: 600; display: inline-flex; align-items: center; justify-content: center; gap: 7px;
@@ -1294,7 +1362,7 @@ svg { width: 100%; height: 100%; display: block; }
 
 /* --- Fiche de gare : achat, et ce que la gare a déjà versé --------------- */
 .mm-buy {
-  width: 100%; background: #33250c; border-color: var(--gold); color: #ffe9c2; font-weight: 600;
+  background: #33250c; border-color: var(--gold); color: #ffe9c2; font-weight: 600;
   display: inline-flex; align-items: center; justify-content: center; gap: 7px;
 }
 .mm-buy:hover { background: #42300f; }

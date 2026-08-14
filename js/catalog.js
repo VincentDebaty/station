@@ -49,10 +49,11 @@ async function loadCatalog() {
 //
 // Le prix vaut 80 % du tarif — juste sous le gain d'un service à trois étoiles,
 // pour qu'un sans-faute reste toujours payant. Il en découle un SEUIL : il faut
-// encaisser 81 % du tarif en moyenne pour que le réseau continue de croître,
-// soit un peu mieux que deux étoiles. À une étoile partout, chaque gare ne
-// finance que 0,6 gare : on s'arrête. C'est voulu — s'étendre exige de bien
-// jouer.
+// encaisser 81 % du tarif en moyenne pour que le réseau continue de croître.
+// Avec les paliers géométriques, cela veut dire TROIS ÉTOILES : à ★★★ partout
+// une gare en finance 1,25, à ★★ seulement 0,63, à ★ à peine 0,31. C'est voulu,
+// et c'est plus exigeant qu'avant (où ★★ suffisait presque) — mais c'est la
+// contrepartie d'une échelle qui récompense vraiment la ponctualité.
 //
 // S'arrêter n'est pas être coincé : une gare possédée peut encore rapporter
 // jusqu'à deux fois son tarif (voir stationGain), soit 2,5 fois son propre
@@ -106,28 +107,90 @@ function stationPrice(id) { return round10(stationTarif(id) * PRIX_RATIO); }
 // Plafond : ce qu'une gare peut rapporter en tout, sur toute une vie de joueur.
 // La masse monétaire du jeu est donc finie et connue — le farming est impossible.
 function stationCap(id) { return stationTarif(id) * 2; }
-// CE QUI FAIT UNE GARE « FAITE » : le tarif, c'est-à-dire trois étoiles. Pas le
-// plafond.
-//
-// Les jauges se remplissaient jusqu'au plafond, donc un service à ★★★ — moins
-// de dix minutes de retard sur une journée entière — affichait « 460 / 920 »,
-// soit la moitié. Un excellent résultat se lisait comme un travail à moitié
-// fait, et la prime du sans-faute cessait d'être une prime pour devenir la
-// barre à atteindre. Elle doit rester ce qu'elle est : un exploit qu'on va
-// chercher en plus, une fois la gare tenue.
-function stationValue(id) { return stationTarif(id); }
 
-// Multiplicateur de gain, en quarts de tarif. Ce sont EXACTEMENT les paliers
-// d'étoiles (10 / 20 / 30 min) : aucun barème nouveau à apprendre, et le
-// bandeau de service enseigne l'un en montrant l'autre.
-//   parfait ×2 · ★★★ ×1 · ★★☆ ×0,75 · ★☆☆ ×0,5 · échec ×0
-function payoutMult(delay) {
-  if (delay == null || delay >= 30) return 0;
-  if (delay <= 0) return 2;
-  return delay < 10 ? 1 : delay < 20 ? 0.75 : 0.5;
+// ------------------------------------------------------------------
+// LE PALMARÈS — quatre paliers, et l'argent est posé dessus.
+// ------------------------------------------------------------------
+// EXACTEMENT les mêmes chiffres qu'avant, lus dans l'autre sens.
+//
+// L'économie disait vrai mais parlait comptable : un plafond, un
+// « encaissé 45 / 120 », un « Complet ». Un service à ★★★ — moins de dix
+// minutes de retard sur une journée entière — pouvait donc s'achever sur un
+// « +0 » gris et une jauge pleine. Le joueur ne lisait pas « cette gare a déjà
+// payé ce niveau », il lisait « bien jouer ne rapporte rien ».
+//
+// Or la règle du plafond EST une échelle de paliers : le gain ne dépend que du
+// retard, et le retard ne franchit que quatre seuils. Chacun se décroche une
+// fois, verse son montant, et reste acquis. C'est le même calcul — un palier
+// vaut le tarif cumulé de son cran moins celui du cran précédent, et leur
+// somme fait le plafond au crédit près — mais il se lit comme une liste de
+// choses à aller chercher plutôt que comme un compte qui se solde.
+//
+// Un « +0 » cesse d'être une punition : il dit qu'aucune ligne neuve n'a été
+// cochée, et la ligne suivante est là, avec son prix.
+//
+// `under` est un seuil STRICT, en minutes entières (le retard est arrondi
+// avant d'arriver ici) : « moins de 1 » est donc exactement « aucun retard ».
+// CHAQUE PALIER DOUBLE CE QUE LA GARE A VERSÉ. C'est toute la règle, et elle
+// tient dans la colonne des montants : 80, 80, 160, 320.
+//
+// Les multiplicateurs d'origine (0,5 · 0,75 · 1 · 2) faisaient une BOSSE et non
+// une échelle. Mis en paliers, ils donnaient 160 · 80 · 80 · 320 : le cran le
+// plus facile — finir la journée — payait le double des deux crans plus durs
+// qui le suivaient. Un joueur qui s'améliore voyait sa récompense DIMINUER en
+// montant, ce qui est exactement l'inverse de ce que le jeu promet.
+//
+// La progression géométrique n'a pas ce défaut, et elle a mieux : elle
+// s'énonce. Ce que le joueur lit dans le palmarès, il peut le retenir sans
+// l'apprendre — le pas suivant vaut toujours tout ce qui précède.
+const PALIERS = [
+  { under: 30, mult: 0.25, stars: 1, nom: "Service assuré", seuil: "moins de 30 min" },
+  { under: 20, mult: 0.5,  stars: 2, nom: "Deux étoiles",   seuil: "moins de 20 min" },
+  { under: 10, mult: 1,    stars: 3, nom: "Trois étoiles",  seuil: "moins de 10 min" },
+  { under: 1,  mult: 2,    stars: 3, nom: "Sans faute",     seuil: "aucun retard", parfait: true }
+];
+// Le plus haut palier qu'un service à ce retard décroche — et donc tous ceux
+// d'en dessous. −1 : rien, la journée ne compte pas.
+function palierOf(delay) {
+  if (delay == null) return -1;
+  let k = -1;
+  for (let i = 0; i < PALIERS.length; i++) if (delay < PALIERS[i].under) k = i;
+  return k;
 }
-// Ce qu'un service à ce retard vaut sur cette gare, plafond compris.
-function stationPayout(id, delay) { return Math.round(stationTarif(id) * payoutMult(delay)); }
+// CE QUE LA GARE A VERSÉ UNE FOIS LE PALIER k DÉCROCHÉ — le total cumulé, et
+// la SEULE source de vérité : le montant d'un palier en est la différence, et
+// la recette d'un service en est la valeur. Deux calculs séparés, et l'échelle
+// affichée cesserait un jour de correspondre à l'argent versé.
+//
+// ARRONDI VERS LE BAS, ET C'EST ESSENTIEL. À l'arrondi au plus proche, un tarif
+// de 50 donnait 13 · 12 · 25 · 50 : `Math.round(12,5)` monte à 13 et le premier
+// palier volait un crédit au second, donc l'échelle REDESCENDAIT d'un cran
+// entre une et deux étoiles. Un centime de travers suffit à démentir la règle
+// que le palmarès affiche.
+//
+// Vers le bas, la monotonie est garantie et non plus espérée : les tarifs sont
+// des multiples de 10 (round10), donc le premier palier vaut plancher(t/4) et
+// le deuxième plafond(t/4) — le second est toujours ≥ au premier, quel que
+// soit le tarif. Et la somme reste le plafond exact, puisque plancher(2t) = 2t.
+function palierCumul(id, k) { return Math.floor(stationTarif(id) * PALIERS[k].mult); }
+// Ce que verse le palier i, à lui seul.
+function palierAmount(id, i) {
+  return palierCumul(id, i) - (i ? palierCumul(id, i - 1) : 0);
+}
+// Le multiplicateur se DÉDUIT des paliers, il ne se redit pas : deux barèmes
+// côte à côte finissent toujours par diverger, et celui qui paie ne serait pas
+// forcément celui qui s'affiche.
+function payoutMult(delay) {
+  const k = palierOf(delay);
+  return k < 0 ? 0 : PALIERS[k].mult;
+}
+// Ce qu'un service à ce retard vaut sur cette gare, plafond compris. C'est le
+// CUMUL du palier atteint — pas un produit calculé à part, qui se serait mis à
+// différer du palmarès d'un crédit dès le premier arrondi.
+function stationPayout(id, delay) {
+  const k = palierOf(delay);
+  return k < 0 ? 0 : palierCumul(id, k);
+}
 // Ce que la gare a DÉJÀ versé. Aucun champ à stocker : le meilleur encaissement
 // se déduit du meilleur record, puisque le gain ne dépend que du retard.
 function stationBanked(id) {
@@ -139,6 +202,64 @@ function stationBanked(id) {
 // inutile et le retour sur une gare connue payant.
 function stationGain(id, delay) {
   return Math.max(0, stationPayout(id, delay) - stationBanked(id));
+}
+// Combien de paliers cette gare a déjà rendus — 0 à 4. Rien à stocker : le
+// record les résume tous, puisqu'ils sont emboîtés.
+function stationTiersDone(id) {
+  return palierOf((getProgress()[id] || {}).bestDelay) + 1;
+}
+// Le prochain à décrocher, ou −1 quand le palmarès est complet.
+function stationNextTier(id) {
+  const k = stationTiersDone(id);
+  return k < PALIERS.length ? k : -1;
+}
+// CE QUE VAUT LE PROCHAIN PAS, et rien d'autre. C'est le chiffre que porte la
+// carte sous une gare acquise, et le bouton « Rejouer ». Il remplace un
+// « reste à encaisser jusqu'au plein tarif » qui se taisait sur les gares déjà
+// à ★★★ — alors qu'il leur reste le sans-faute, c'est-à-dire le plus gros
+// palier de tous.
+function stationNextAmount(id) {
+  const k = stationNextTier(id);
+  return k < 0 ? 0 : palierAmount(id, k);
+}
+
+// ------------------------------------------------------------------
+// LE PALMARÈS À L'ÉCRAN — écrit ICI, à côté des paliers qu'il montre.
+// ------------------------------------------------------------------
+// La fiche de gare et le relevé de fin de service montrent le même palmarès.
+// Dessiné deux fois, il aurait divergé au premier réglage — c'est déjà arrivé
+// à la jauge d'encaissement, qui se remplissait au tarif d'un côté et au
+// plafond de l'autre.
+//
+// La colonne d'étoiles n'est pas un ornement : c'est le barème du jeu, celui
+// qu'affiche le bandeau de fin de service. Le palmarès l'enseigne en montrant
+// ce qu'il paie.
+function palierStarsHTML(p) {
+  // Le sans-faute porte la marque de la CARTE — l'étoile creusée dans la
+  // pastille d'or — et non un quatrième caractère ★, qui se lirait comme un
+  // quatrième cran d'une échelle qui n'en compte que trois.
+  if (p.parfait)
+    return '<span class="map-chip city-chip perfect chip-inline pl-perf" style="--d:15px">' +
+      '<span class="dot">' + (typeof STAR_SVG === "string" ? STAR_SVG : "") + "</span></span>";
+  return '<span class="pl-st">' +
+    (typeof starStr === "function" ? starStr(p.stars) : "") + "</span>";
+}
+// `owned` : une gare qu'on ne possède pas n'a rien décroché ni rien « en
+// cours » — son palmarès est un argument de vente, pas un état.
+function palmaresHTML(id, owned) {
+  const done = owned ? stationTiersDone(id) : 0;
+  const rows = PALIERS.map((p, i) => {
+    const state = i < done ? "done" : (owned && i === done) ? "next" : "todo";
+    return '<div class="pl-row ' + state + '">' +
+      '<span class="pl-mk"></span>' + palierStarsHTML(p) +
+      '<span class="pl-th">' + p.seuil + "</span>" +
+      '<span class="pl-am">' + creditsHTML(palierAmount(id, i)) + "</span></div>";
+  }).join("");
+  return '<div class="palmares' + (owned ? "" : " sale") + '"><div class="pl-head"><span>Palmarès</span>' +
+    '<span class="pl-sum">' +
+      (owned ? done + " / " + PALIERS.length
+             : "jusqu'à " + creditsHTML(stationCap(id))) +
+    "</span></div>" + rows + "</div>";
 }
 
 // ------------------------------------------------------------------

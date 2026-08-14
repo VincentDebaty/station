@@ -768,7 +768,7 @@ function openStationModal(gi) {
   const nDead = (card.platforms || []).filter(p => p.deadEnd).length;
   const nDir = Object.keys(card.portals || {}).length;
   const rec = (typeof getProgress === "function" ? getProgress() : {})[card.id] || {};
-  const stars = rec.stars || 0, best = rec.bestDelay;
+  const best = rec.bestDelay;   // le rang d'étoiles se lit dans le palmarès, plus ici
 
   // ---- La fiche tient en trois regards : TROIS chiffres, TROIS lignes, UN
   // bouton. Tout le reste a été coupé (gares reliées, dessertes, description,
@@ -800,70 +800,39 @@ function openStationModal(gi) {
   const bars = n => Array.from({ length: 5 }, (_, i) =>
     '<span class="b' + (i < n ? " on" : "") + '"></span>').join("");
 
-  // Ce que la gare a déjà versé sur ce qu'elle peut verser en tout : une gare
-  // acquise garde un objectif visible même toutes étoiles décrochées, et ce
-  // qui reste à prendre se lit sans calcul.
-  // La jauge se remplit au TARIF (trois étoiles) : c'est là que la gare est
-  // faite. Ce qu'un sans-faute ajoute par-dessus se lit ailleurs — sur la carte
-  // et sur le bouton « Rejouer », qui disent ce qu'il reste à prendre.
-  const cap = typeof stationValue === "function" ? stationValue(card.id) : 0;
-  const got = Math.min(cap, typeof stationBanked === "function" ? stationBanked(card.id) : 0);
-  // LA PRIME DU SANS-FAUTE : ce que le service parfait ajoute PAR-DESSUS le
-  // plein tarif. Une constante, pas un reste — elle vaut la même chose qu'on
-  // ait déjà encaissé le quart ou la totalité du tarif, et c'est bien ainsi
-  // qu'on l'annonce : « le sans-faute rapporte 320 de plus ». Nulle une fois
-  // décroché, puisqu'il n'y a plus rien à en tirer.
-  const prime = (unlocked && typeof stationCap === "function" &&
-                 stationBanked(card.id) < stationCap(card.id))
-    ? stationCap(card.id) - stationValue(card.id) : 0;
-
-  // Trois lignes, aucune phrase : les jauges et les étoiles disent tout — seul
-  // le retard garde son chiffre, c'est un record. Et c'est ICI qu'il vit
-  // désormais : la carte ne l'affiche plus sous chaque gare (js/mapnet.js), elle
-  // n'en garde que la couleur du point. Un record de 0 minute ne s'écrit pas
-  // « +0 min » — c'est un service PARFAIT, et il se dit avec l'étoile qu'on
-  // retrouve à la place du point sur la carte.
+  // Trois lignes, aucune phrase : les jauges disent tout — seul le retard garde
+  // son chiffre, c'est un record. Et c'est ICI qu'il vit désormais : la carte
+  // ne l'affiche plus sous chaque gare (js/mapnet.js), elle n'en garde que la
+  // couleur du point. Un record de 0 minute ne s'écrit pas « +0 min » — c'est
+  // un service PARFAIT, et il se dit avec le mot.
+  //
+  // Les ÉTOILES ont quitté cette ligne : elles sont dans le palmarès juste en
+  // dessous, où elles ne se contentent plus de constater un rang — elles
+  // nomment le palier et portent son montant. Répétées ici, elles faisaient
+  // deux échelles à trois crans à deux lignes d'écart.
   const rows =
     '<div class="mm-row"><span class="k">Difficulté</span>' +
       '<span class="gauge diff">' + bars(diff) + "</span></div>" +
     (fluxLevel ? '<div class="mm-row"><span class="k">Flux</span>' +
       '<span class="gauge">' + bars(fluxLevel) + "</span></div>" : "") +
     '<div class="mm-row"><span class="k">Record</span>' +
-      '<span class="v"><span class="s">' + starStr(stars) + "</span>" +
-      // Pas d'étoile de plus ici : les trois du record sont juste à côté, une
-      // quatrième se lisait comme un quatrième cran. L'or du mot suffit.
+      '<span class="v">' +
       (best === 0 ? '<span class="d perfect">Parfait</span>'
        : best != null ? '<span class="d">+' + best + " min</span>"
                       : '<span class="d none">jamais jouée</span>') +
-      "</span></div>" +
-    // LA LIGNE D'ARGENT, présente dans TOUS les cas — et elle ne dit pas la même
-    // chose des deux côtés de l'achat :
-    //   • gare acquise   → « Encaissé 45 / 120 », ce qu'il reste à aller chercher ;
-    //   • gare à acheter → « Rapporte jusqu'à 240 », l'argument d'achat lui-même.
-    // C'est l'information qui manquait pour décider : une gare à 100 qui peut en
-    // verser 240 ne se juge pas sur son prix seul. Et la fiche garde exactement
-    // la même hauteur avant et après l'achat — sans quoi « Prendre le service »
-    // remonterait de quarante pixels sous le doigt qui vient d'appuyer.
-    (cap ?
-      '<div class="mm-row"><span class="k">' + (unlocked ? "Encaissé" : "Rapporte") + "</span>" +
-        '<span class="v"><span class="gauge money"><span class="fill" style="width:' +
-          Math.round(got / cap * 100) + '%"></span></span>' +
-        '<span class="d' + (unlocked && got >= cap ? " full" : "") + '">' +
-          (!unlocked ? "jusqu'à " + cap : got >= cap ? "Complet" : got + " / " + cap) +
-        "</span></span></div>" : "") +
-    // CE QUE L'ÉTOILE RAPPORTE, dit avec l'étoile elle-même. Sans cette ligne,
-    // « Complet » se lirait comme « il n'y a plus rien ici », et rien ne dirait
-    // D'OÙ viennent les crédits d'un sans-faute. Elle disparaît une fois
-    // l'étoile décrochée — il n'y a alors plus rien à en tirer.
-    (unlocked && prime > 0 ?
-      '<div class="mm-row"><span class="k">Sans faute</span>' +
-        // L'étoile de la CARTE, pas un caractère ★ : celui-ci se confondait avec
-        // les trois étoiles du record, juste au-dessus. Celle-ci est la marque
-        // que porte une gare parfaite sur la carte — le joueur reconnaît la
-        // récompense avant de lire la ligne.
-        '<span class="v"><span class="map-chip city-chip perfect chip-inline" style="--d:20px">' +
-          '<span class="dot">' + (typeof STAR_SVG === "string" ? STAR_SVG : "") + "</span></span>" +
-        '<span class="d">' + creditsHTML(prime, true) + "</span></span></div>" : "");
+      "</span></div>";
+
+  // LE PALMARÈS PREND LA PLACE DE LA JAUGE. « Encaissé 45 / 120 » disait la
+  // vérité en langue de comptable : un total, une part, et un « Complet » qui
+  // se lisait « il n'y a plus rien ici ». Les quatre paliers disent la même
+  // chose en objectifs — ce qui est décroché, ce qui vient ensuite, et combien
+  // il paie. La ligne « Sans faute » n'a plus à être ajoutée à part : elle est
+  // le dernier palier, à sa place dans l'échelle.
+  //
+  // Avant l'achat, le même bloc est l'argument de vente : quatre lignes qui
+  // annoncent tout ce que la gare peut verser, au lieu d'un « jusqu'à 240 » qui
+  // ne disait pas à quel prix d'effort.
+  const palmares = typeof palmaresHTML === "function" ? palmaresHTML(card.id, unlocked) : "";
 
   // Drapeau seul : le pays se reconnaît sans le lire, et la carte le dit déjà.
   const flag = (card.country || "").split(" ")[0];
@@ -918,7 +887,7 @@ function openStationModal(gi) {
       '<button class="mm-close" aria-label="Fermer">' + icon(ICON.close, 20) + "</button>" +
       '<h2 class="mm-name"><span class="fl">' + flag + "</span>" + card.name + "</h2>" +
       '<div class="mm-stats">' + stats + "</div>" +
-      '<div class="mm-rows">' + rows + "</div>" +
+      '<div class="mm-rows">' + rows + "</div>" + palmares +
       '<div class="mm-actions">' + actions + "</div>" +
     "</div>";
   MAP.modal.querySelector(".mm-close").addEventListener("click", closeModal);

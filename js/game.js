@@ -1320,11 +1320,13 @@ function endGame(failed) {
   // record — qu'on s'apprête justement à écraser. L'ordre n'est donc pas un
   // détail : mesuré après, tout service rapporterait zéro.
   const noPay = failed || STATION.adhoc;
-  const tarif = noPay ? 0 : stationTarif(STATION.id);
-  const payout = noPay ? 0 : stationPayout(STATION.id, d);
-  const banked = noPay ? 0 : stationBanked(STATION.id);
   const gain = noPay ? 0 : stationGain(STATION.id, d);
+  // COMBIEN DE PALIERS AVANT, COMBIEN APRÈS. Mesuré de part et d'autre de
+  // l'enregistrement, c'est ce qui permet de nommer la ligne qu'on vient de
+  // cocher — et, quand il n'y en a pas, de montrer celle qui vient.
+  const tiersBefore = noPay ? 0 : stationTiersDone(STATION.id);
   if (!failed && !STATION.adhoc) saveResult(STATION.id, stars, d); // un échec (ou la démo limites) ne modifie pas le record
+  const tiersAfter = noPay ? tiersBefore : stationTiersDone(STATION.id);
   if (gain > 0) addCredits(gain);
   // Pays terminé À L'INSTANT : gagné, cette gare passe de 0 à ≥1 étoile, et toutes
   // les gares du pays ont désormais au moins une étoile. (Seule cette gare a pu
@@ -1384,22 +1386,34 @@ function endGame(failed) {
   // encaissé) a été essayé et retiré — au bout d'un service, personne ne relit
   // une opération, et le bloc devenait un tableau.
   //
-  // Seul cas qui demande une explication : « +0 », quand la gare a déjà tout
-  // versé à ce niveau. Elle se donne alors SANS PHRASE, par la jauge
-  // d'encaissement — la même que sur la fiche de gare, où le joueur l'a déjà
-  // vue. Un dessin qui dit « cette gare est pleine » vaut deux lignes de texte.
+  // UN « +0 » N'EST PLUS UNE PUNITION, C'EST UNE LIGNE PAS ENCORE COCHÉE.
+  //
+  // Le relevé montrait le gain, puis — quand il était nul — une jauge pleine et
+  // le mot « Complet ». Un service à ★★★, six minutes de retard sur une journée
+  // entière, s'achevait donc sur un gros zéro gris et l'annonce que la gare
+  // était finie. Le joueur ne lisait pas « ce palier était déjà payé », il
+  // lisait « bien jouer ne rapporte rien », et le seul bouton disponible
+  // promettait la même chose.
+  //
+  // Deux lignes le remplacent, et elles ne se contredisent jamais :
+  //   • CE QU'ON VIENT DE DÉCROCHER, nommé — c'est la récompense ;
+  //   • CE QUI VIENT ENSUITE, avec son montant — c'est la raison de rejouer.
+  // Palmarès complet : la seule fois où il n'y a plus de ligne suivante, et
+  // c'est alors un trophée qu'on annonce, pas une mine épuisée.
   function recetteHTML() {
     if (noPay) return "";
-    const cap = stationValue(STATION.id);   // la gare est « faite » à trois étoiles
+    const next = stationNextTier(STATION.id);
+    const got = tiersAfter > tiersBefore ? PALIERS[tiersAfter - 1] : null;
     return '<div class="eu-title">Recette du service</div>' +
       '<div class="eu-gain' + (gain > 0 ? "" : " none") + '">' + creditsHTML(gain, true) + "</div>" +
-      (gain > 0 || !cap ? "" : (() => {
-        const got = Math.min(cap, stationBanked(STATION.id));
-        return '<div class="eu-banked"><span class="gauge money"><span class="fill" style="width:' +
-          Math.round(got / cap * 100) + '%"></span></span>' +
-          '<span class="d' + (got >= cap ? " full" : "") + '">' +
-          (got < cap ? got + " / " + cap : "Complet") + "</span></div>";
-      })()) +
+      (got ? '<div class="eu-tier done">' + palierStarsHTML(got) +
+               "<span>" + got.nom + " — décroché</span></div>" : "") +
+      (next < 0
+        ? '<div class="eu-tier full">Palmarès complet · ' +
+            PALIERS.length + " / " + PALIERS.length + "</div>"
+        : '<div class="eu-tier next">' + palierStarsHTML(PALIERS[next]) +
+            "<span>" + PALIERS[next].nom + " — " + PALIERS[next].seuil + "</span>" +
+            '<span class="am">' + creditsHTML(palierAmount(STATION.id, next), true) + "</span></div>") +
       "";  // le solde n'est PAS ici : il vit en permanence sur la carte, derrière
            // le relevé, et c'est lui qui s'incrémente sous les yeux du joueur.
   }
@@ -1470,8 +1484,8 @@ function endGame(failed) {
     // question que se pose un joueur à court de crédits. Rien à afficher quand
     // la gare a tout donné : un « +0 » ferait de la reprise une perte de temps
     // annoncée, et son absence le dit déjà (même règle que sur la carte).
-    const leftHere = (STATION.adhoc || typeof stationValue !== "function") ? 0
-      : Math.max(0, stationValue(STATION.id) - stationBanked(STATION.id));
+    const leftHere = (STATION.adhoc || typeof stationNextAmount !== "function") ? 0
+      : stationNextAmount(STATION.id);
     btnReplay.innerHTML = (typeof icon === "function" ? icon(ICON.restart, 18) : "") +
       "Rejouer" + (leftHere ? " — " + creditsHTML(leftHere, true) : "");
   }

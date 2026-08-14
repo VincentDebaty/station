@@ -191,16 +191,16 @@ function mapnetBuild() {
       // jamais où gagner. Le joueur à court de crédits n'avait aucun moyen de
       // choisir sa gare à rejouer autrement qu'au souvenir.
       //
-      // Ce qui reste par la VOIE NORMALE, jusqu'au plein tarif — pas la prime du
-      // sans-faute. Comptée jusqu'au plafond, une gare jamais jouée annonçait
-      // +640 quand sa fiche disait « 0 / 320 » : deux chiffres pour la même
-      // chose, dont l'un supposait un exploit. La prime a sa ligne dans la
-      // fiche, là où on peut la nommer.
-      // Zéro = la gare est faite : on n'écrit alors RIEN. Un « +0 » sous chaque
+      // LE PROCHAIN PALIER, ET LUI SEUL. La carte comptait ce qui restait
+      // jusqu'au plein tarif : une gare déjà à ★★★ n'affichait donc plus rien,
+      // alors qu'il lui reste le sans-faute — le plus gros palier de tous.
+      // Un total lointain ne se décide pas ; un pas suivant, si. Et c'est
+      // exactement ce que la fiche montre en face, ligne par ligne.
+      // Zéro = palmarès complet : on n'écrit alors RIEN. Un « +0 » sous chaque
       // gare finie serait du bruit, et son absence dit mieux ce qu'elle veut
-      // dire — il n'y a plus rien à y chercher par la voie ordinaire.
-      const left = unlocked && typeof stationValue === "function"
-        ? Math.max(0, stationValue(id) - stationBanked(id)) : 0;
+      // dire — il n'y a plus rien à y chercher.
+      const left = unlocked && typeof stationNextAmount === "function"
+        ? stationNextAmount(id) : 0;
       // QUI RESPIRE : UNE SEULE CHOSE, ET C'EST UN SERVICE À ASSURER.
       // Une gare acquise qui n'a pas encore tourné — celle-là même qui bloque
       // tout achat tant qu'elle n'a pas servi (js/catalog.js). Rien d'autre.

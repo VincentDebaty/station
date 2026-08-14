@@ -65,8 +65,15 @@ vm.runInContext("CATALOG.push(...__cards)", sandbox);
 // bac à sable, il faut les lire dans le contexte.
 const get = expr => vm.runInContext(expr, sandbox);
 const stationTarif = get("stationTarif"), stationPrice = get("stationPrice"),
-      stationCap = get("stationCap"),
+      stationCap = get("stationCap"), PALIERS = get("PALIERS"),
+      palierAmount = get("palierAmount"), palierOf = get("palierOf"),
+      stationPayout = get("stationPayout"),
       PRIX_RATIO = get("PRIX_RATIO"), CREDITS_START = get("CREDITS_START");
+// LES COLONNES SORTENT DES PALIERS, elles ne les redisent pas. Écrits en dur,
+// les multiplicateurs 0,5 / 0,75 ont survécu au passage aux paliers
+// géométriques : le tableau aurait annoncé une recette que le jeu ne verse
+// plus. Un vérificateur qui a sa propre copie du barème ne vérifie rien.
+const M1 = PALIERS[0].mult, M2 = PALIERS[1].mult, M3 = PALIERS[2].mult;
 
 // ------------------------------------------------------------------
 const fmt = n => String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, " ");
@@ -76,11 +83,34 @@ const padL = (s, n) => String(s).padStart(n);
 let fails = 0;
 const fail = msg => { fails++; console.log("  ✗ " + msg); };
 
-// --- 1 et 2 : contrôles par gare. ---
+// --- 1 à 6 : contrôles par gare. ---
+//
+// LES QUATRE DERNIERS PORTENT SUR LE PALMARÈS, et ils ne sont pas décoratifs :
+// c'est un arrondi d'un seul crédit qui a fait redescendre l'échelle de Dinant
+// entre une et deux étoiles (13 puis 12). Un barème ne se relit pas à l'œil sur
+// 145 gares — il se vérifie.
 for (const c of CATALOG) {
   const t = stationTarif(c.id), p = stationPrice(c.id), cap = stationCap(c.id);
   if (p >= t) fail(`${c.id} : prix ${p} ≥ tarif ${t} — un ★★★ ne rembourse pas la gare`);
   if (p >= cap) fail(`${c.id} : prix ${p} ≥ plafond ${cap} — gare impossible à financer`);
+
+  const pal = PALIERS.map((_, i) => palierAmount(c.id, i));
+  // a) l'échelle ne redescend JAMAIS : mieux jouer ne peut pas rapporter moins.
+  for (let i = 1; i < pal.length; i++)
+    if (pal[i] < pal[i - 1])
+      fail(`${c.id} (tarif ${t}) : palier ${i + 1} (${pal[i]}) < palier ${i} (${pal[i - 1]}) — l'échelle redescend`);
+  // b) aucun palier gratuit : une ligne à 0 se lirait comme une promesse vide.
+  if (pal.some(x => x <= 0)) fail(`${c.id} : un palier ne rapporte rien — ${pal.join(" · ")}`);
+  // c) la somme des paliers EST le plafond : pas un crédit perdu en arrondi.
+  const somme = pal.reduce((a, b) => a + b, 0);
+  if (somme !== cap) fail(`${c.id} : somme des paliers ${somme} ≠ plafond ${cap}`);
+  // d) ce que le palmarès promet est ce que la recette verse, à tout retard.
+  for (const d of [null, 0, 4, 9, 12, 19, 25, 29, 33]) {
+    const k = palierOf(d);
+    const cumul = pal.slice(0, k + 1).reduce((a, b) => a + b, 0);
+    if (cumul !== stationPayout(c.id, d))
+      fail(`${c.id} : à +${d} min le palmarès promet ${cumul}, la recette verse ${stationPayout(c.id, d)}`);
+  }
 }
 
 // --- 3 et 4 : agrégats par pays. ---
@@ -101,24 +131,26 @@ for (const [k, g] of by) {
   N += g.n; COST += g.cost; TARIF += g.tarif;
   if (g.cost >= g.tarif) fail(`${k} : coût ${g.cost} ≥ recette à ★★★ ${g.tarif} — pays incomplétable`);
   console.log(pad(k, 16) + padL(g.n, 6) + padL(fmt(g.cost), 9) +
-    padL(fmt(g.tarif * 0.5), 9) + padL(fmt(g.tarif * 0.75), 9) + padL(fmt(g.tarif), 9) +
+    padL(fmt(g.tarif * M1), 9) + padL(fmt(g.tarif * M2), 9) + padL(fmt(g.tarif * M3), 9) +
     padL((g.cost / g.tarif).toFixed(2), 8));
 }
 console.log("─".repeat(66));
 console.log(pad("TOTAL", 16) + padL(N, 6) + padL(fmt(COST), 9) +
-  padL(fmt(TARIF * 0.5), 9) + padL(fmt(TARIF * 0.75), 9) + padL(fmt(TARIF), 9) +
+  padL(fmt(TARIF * M1), 9) + padL(fmt(TARIF * M2), 9) + padL(fmt(TARIF * M3), 9) +
   padL((COST / TARIF).toFixed(2), 8));
 
 // --- Le seuil, en clair. ---
 const seuil = COST / TARIF;
-const palier = seuil <= 0.5 ? "une étoile suffit"
-  : seuil <= 0.75 ? "entre une et deux étoiles"
-  : seuil <= 1 ? "entre deux et trois étoiles"
+const palier = seuil <= M1 ? "une étoile suffit"
+  : seuil <= M2 ? "entre une et deux étoiles"
+  : seuil <= M3 ? "entre deux et trois étoiles"
   : "PLUS que trois étoiles — le jeu exige des services parfaits";
 console.log("");
 console.log(`Prix = ${Math.round(PRIX_RATIO * 100)} % du tarif · dotation de départ ${CREDITS_START}`);
 console.log(`Seuil d'équilibre : ${(seuil * 100).toFixed(0)} % du tarif en moyenne — ${palier}.`);
-console.log(`Masse monétaire maximale : ${fmt(TARIF * 2)} · dépenses obligatoires : ${fmt(COST)}.`);
+console.log(`Masse monétaire maximale : ${fmt(TARIF * PALIERS[PALIERS.length - 1].mult)} · dépenses obligatoires : ${fmt(COST)}.`);
+console.log("Paliers (en tarif) : " + PALIERS.map((x, i) =>
+  x.nom + " +" + ((x.mult - (i ? PALIERS[i-1].mult : 0)) * 100).toFixed(0) + " %").join(" · "));
 if (seuil > 1) fail("le seuil dépasse 100 % : le réseau ne peut pas être complété");
 
 console.log("");
