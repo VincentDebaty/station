@@ -841,12 +841,19 @@ svg { width: 100%; height: 100%; display: block; }
      hauteur (deux rangs sur écran étroit) et un pourcentage aurait déplacé la
      limite avec elle. */
   background: linear-gradient(to top, rgba(9, 13, 22, 0) 0, rgba(9, 13, 22, .96) 12px);
-  /* LA CARTE RESTE SAISISSABLE SOUS LA BARRE : le voile ne prend aucun clic,
-     seuls les boutons en prennent. Sans cela, le tiers haut de l'écran cessait
-     de se glisser au doigt. */
-  pointer-events: none;
+  /* LA BARRE AVALE LE CLIC, ET LA CARTE GLISSE QUAND MÊME DESSOUS.
+     En `pointer-events: none`, le clic traversait le bandeau et atteignait la
+     forme du pays dessous — laquelle se recadre au clic. Toucher « Aiguilleur »
+     dézoomait donc sur l'Allemagne. Une surface pleine qui laisse passer les
+     clics est un mensonge à l'écran.
+     Rien n'est perdu du glissement : la caméra écoute sur l'HÔTE (bindCamera),
+     et la barre est un enfant de l'hôte — appuis, déplacements et molette
+     remontent jusqu'à lui. Seuls les gestionnaires du SVG, qui sont en dessous
+     et non au-dessus, cessent d'être touchés. `touch-action` se pose ici comme
+     sur l'hôte : il ne s'hérite pas, et sans lui le navigateur reprendrait le
+     glissement commencé sur la barre. */
+  touch-action: none;
 }
-.map-topbar button { pointer-events: auto; }
 .tb-left  { grid-area: left;  display: flex; align-items: center; gap: 8px; justify-self: start; }
 .tb-mid   { grid-area: mid;   min-width: 0; justify-self: center; }
 .tb-right { grid-area: right; display: flex; align-items: center; gap: 10px; justify-self: end; }
