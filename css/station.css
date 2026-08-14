@@ -50,42 +50,29 @@ body {
   position: relative; overflow: hidden;
 }
 #clock-row { display: flex; align-items: baseline; gap: 8px; }
-/* --- L'objectif en cours, sous l'horloge ----------------------------------
-   Une ligne, quatre morceaux, toujours dans le même ordre : le palier tenu, la
-   marge qui reste (barre), sa valeur en minutes, le record à battre.
-   Plus petit que l'horloge : c'est un appui, pas le sujet — le sujet reste le
-   plan de voies. */
+/* --- Le record à battre, sous l'horloge ------------------------------------
+   Un seul jeton, en retrait : c'est un repère, pas une consigne. Le bandeau
+   portait aussi les étoiles du palier, une barre de marge et « marge N min » —
+   retirés, ils ré-encodaient le retard déjà affiché juste au-dessus (voir
+   js/game.js, updateGoal). */
 #goal-row {
-  display: flex; align-items: center; gap: 6px;
+  display: flex; align-items: center; gap: 7px;
   font-size: 10px; letter-spacing: .02em; color: var(--muted);
   margin-top: 1px;
 }
 #goal-row.hidden { display: none; }
-#goal-tier { color: #f5b23c; font-size: 9px; letter-spacing: .5px; }
-#goal-bar {
-  display: block; width: 46px; height: 3px; border-radius: 999px;
-  background: #2a3550; overflow: hidden;
-}
-/* La barre SE VIDE quand la marge fond : on regarde une réserve qu'on protège,
-   pas une progression qu'on remplit. */
-#goal-fill {
-  display: block; height: 100%; border-radius: 999px; background: var(--green);
-  transition: width .25s linear, background .25s;
-}
-#goal-row.warn #goal-fill { background: #f5b23c; }
-#goal-row.bad  #goal-fill { background: #f87171; }
-#goal-row.warn #goal-margin { color: #f5b23c; }
-#goal-row.bad  #goal-margin, #goal-row.bad #goal-tier { color: #f87171; }
-#goal-margin { font-variant-numeric: tabular-nums; display: flex; align-items: center; }
-#goal-margin svg { display: block; }
-/* Le sans-faute porte l'or, comme l'étoile qu'il vaudra sur la carte. */
-#goal-row.perfect #goal-margin { color: #f5b23c; }
-#goal-row.perfect #goal-fill { background: #f5b23c; }
+#goal-rec { color: #5b6b8a; font-variant-numeric: tabular-nums; }
+#goal-rec:empty { display: none; }
+/* La croix : la journée ne compte plus. Le mot reste en infobulle. */
+#goal-lost { display: flex; align-items: center; color: #f87171; }
+#goal-lost:empty { display: none; }
+#goal-lost svg { display: block; }
 /* Le raccourci de reprise : rond, discret, à portée immédiate du pouce, et
-   présent seulement quand la journée est perdue. */
+   présent seulement quand la journée est perdue — il ne peut donc pas être
+   pressé par mégarde pendant un service qui tient encore. */
 #goal-redo {
   display: flex; align-items: center; justify-content: center;
-  width: 19px; height: 19px; padding: 0; margin-left: 1px;
+  width: 19px; height: 19px; padding: 0;
   border-radius: 999px; border: 1px solid #f87171; background: rgba(248, 113, 113, .12);
   color: #f87171; cursor: pointer; font-family: inherit;
   -webkit-tap-highlight-color: transparent; touch-action: manipulation;
@@ -93,9 +80,7 @@ body {
 #goal-redo.hidden { display: none; }
 #goal-redo svg { display: block; }
 @media (hover: hover) { #goal-redo:hover { background: rgba(248, 113, 113, .26); } }
-/* Le record : présent mais en retrait — c'est un repère, pas une consigne. */
-#goal-rec { color: #5b6b8a; font-variant-numeric: tabular-nums; }
-#goal-rec:empty { display: none; }
+
 /* Commandes flottantes haut-droite : lecture + réglages côte à côte. */
 #hud-tools {
   position: absolute; z-index: 10;

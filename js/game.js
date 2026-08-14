@@ -786,85 +786,43 @@ function updateDelay() {
 }
 
 // ------------------------------------------------------------------
-// L'OBJECTIF EN COURS — une TENSION QUI MONTE, pas une valeur qui chute.
+// LE RECORD À BATTRE — la seule chose qu'on ne puisse pas déduire.
 // ------------------------------------------------------------------
-// Le retard seul dit où l'on en est, jamais ce qu'on est en train de jouer. Le
-// joueur voyait « +9 » sans savoir qu'une minute de plus lui coûtait la moitié
-// de la recette, et découvrait le barème au relevé — c'est-à-dire trop tard
-// pour en faire quelque chose.
+// Ce bandeau a d'abord porté le palier tenu (trois étoiles), une barre de marge
+// et « marge 4 min ». Retiré : il RÉ-ENCODAIT un nombre déjà affiché. Avec les
+// seuils 10 / 20 / 30, « +8 » donne la marge par soustraction, et les étoiles
+// ne disaient rien que la couleur du « +8 » ne dise déjà (vert, ambre, rouge).
+// Cinq objets à lire pour une information qu'on avait, sur un ruban de dix
+// pixels de haut.
 //
-// Ce bandeau montre le PALIER QU'ON TIENT ENCORE et la MARGE avant de le
-// perdre. C'est le compteur qui avait été retiré (voir juste au-dessus), mais
-// pris par l'autre bout : ce n'est plus un gain qui baisse, c'est une réserve
-// qu'on protège. La différence n'est pas cosmétique — l'un punit celui qui fait
-// de son mieux, l'autre lui donne quelque chose à défendre. Et il n'était pas
-// jouable avant les paliers géométriques : avec l'ancien escalier, la première
-// minute de retard faisait chuter la barre de moitié.
+// Reste ce qui n'est nulle part ailleurs : LE RECORD DE LA GARE. C'est aussi la
+// seule mesure qui décide de l'argent — les crédits ne tombent que si l'on bat
+// son propre palier (js/catalog.js, stationGain). Le joueur court contre
+// lui-même, et le bandeau ne dit que cela.
 //
-// Le RECORD est écrit à côté : c'est lui qu'il faut battre pour toucher un
-// palier neuf, et le joueur court donc contre lui-même.
+// Quand la journée est perdue, le record n'a plus d'objet : la croix et le
+// raccourci de reprise prennent sa place.
 function updateGoal(v) {
   const row = document.getElementById("goal-row");
   if (!row) return;
-  if (STATION.adhoc || typeof PALIERS === "undefined") { row.classList.add("hidden"); return; }
-  row.classList.remove("hidden");
-  // LE PALIER SE JUGE SUR LE RETARD ARRONDI, comme en fin de service — sinon le
-  // bandeau promet ce que le relevé refusera. À +0,5 min il annonçait « sans
-  // faute » alors que endGame arrondit à 1 et n'accorde que trois étoiles.
-  // La BARRE, elle, suit le retard réel : c'est elle qui doit bouger en continu.
-  const vr = Math.round(v);
-  const k = palierOf(vr);
-  const tier = document.getElementById("goal-tier");
-  const fill = document.getElementById("goal-fill");
-  const marg = document.getElementById("goal-margin");
   const rec = document.getElementById("goal-rec");
-
-  // DEUX ÉTATS SE DISENT PAR UN SIGNE, PAS PAR UNE PHRASE. « sans faute » et
-  // « objectif manqué » occupaient trois fois la place de leur symbole sur un
-  // bandeau de dix pixels, et poussaient le record hors du cadre. L'étoile et
-  // la croix se lisent d'un coup d'œil, sans lecture ; le mot reste en
-  // infobulle pour qui survole.
+  const lost = document.getElementById("goal-lost");
   const redo = document.getElementById("goal-redo");
-  if (redo) redo.classList.toggle("hidden", k >= 0);
-  if (k < 0) {
-    // Plus rien à tenir : la journée ne compte plus. On le dit sans détour
-    // plutôt que d'afficher une barre vide qu'on prendrait pour un bug.
-    tier.textContent = "☆☆☆";
-    fill.style.width = "0%";
-    row.className = "bad";
-    marg.innerHTML = icon(ICON.close, 12);
-    marg.title = "Objectif manqué — moins de 30 min de retard sont nécessaires";
-  } else {
-    const p = PALIERS[k];
-    tier.textContent = starStr(p.stars);
-    if (p.parfait) {
-      // LE SANS-FAUTE N'A PAS DE MARGE : il se perd à la première minute. Une
-      // barre qui fondrait laisserait croire qu'il reste du jeu ; elle reste
-      // donc pleine, et c'est le passage à ★★★ qui fera le signal.
-      fill.style.width = "100%";
-      row.className = "perfect";
-      marg.innerHTML = icon(ICON.star, 12);
-      marg.title = "Sans faute — pas une minute de retard";
-    } else {
-      // La BANDE du palier courant : de son propre seuil à celui d'en dessous.
-      // La barre mesure la marge DANS ce palier, pas un pourcentage de la
-      // journée — c'est bien la chute prochaine qu'on regarde.
-      const bas = PALIERS[k + 1] ? PALIERS[k + 1].under : 0;
-      const large = Math.max(1, p.under - bas);
-      const part = Math.max(0, Math.min(1, (p.under - v) / large));
-      fill.style.width = (part * 100).toFixed(0) + "%";
-      // La couleur suit la MARGE, pas le retard absolu : c'est l'imminence de
-      // la perte qui doit alerter, et elle n'arrive pas au même retard selon le
-      // palier qu'on tient.
-      row.className = part > 0.4 ? "" : part > 0.15 ? "warn" : "bad";
-      // Les minutes annoncées sont celles du BARÈME (retard arrondi) : « marge
-      // 1 min » doit vouloir dire qu'une minute de plus fait tomber le palier.
-      marg.textContent = "marge " + Math.max(0, p.under - vr) + " min";
-      marg.title = "";
-    }
-  }
-  const best = (getProgress()[STATION.id] || {}).bestDelay;
-  rec.textContent = best == null ? "" : best === 0 ? "rec. parfait" : "rec. +" + best;
+  const best = STATION.adhoc ? null : (getProgress()[STATION.id] || {}).bestDelay;
+  // « Perdue » se lit sur le BARÈME lui-même, et sur le retard ARRONDI comme en
+  // fin de service : à +29,5 min endGame arrondit à 30 et n'accorde rien.
+  const perdu = !STATION.adhoc && typeof palierOf === "function" && palierOf(Math.round(v)) < 0;
+  // Rien à dire — gare jamais jouée dont la journée tient encore, ou démo hors
+  // catalogue : le bandeau n'existe pas. Une ligne vide sous l'horloge se lit
+  // comme un défaut d'affichage.
+  if (STATION.adhoc || (best == null && !perdu)) { row.classList.add("hidden"); return; }
+  row.classList.remove("hidden");
+  row.className = perdu ? "bad" : "";
+  rec.textContent = perdu || best == null ? ""
+    : best === 0 ? "rec. parfait" : "rec. +" + best;
+  lost.innerHTML = perdu ? icon(ICON.close, 12) : "";
+  lost.title = perdu ? "Objectif manqué — il faut moins de 30 min de retard" : "";
+  redo.classList.toggle("hidden", !perdu);
 }
 
 // PAS DE COMPTEUR D'ARGENT PENDANT LE SERVICE — essayé, retiré.

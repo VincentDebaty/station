@@ -85,16 +85,13 @@
         <span id="clock">07:00</span>
         <span id="delay">+0</span>
       </div>
-      <!-- L'OBJECTIF EN COURS : le palier qu'on tient encore, et la marge qui
-           reste avant de le perdre. Pas une somme — voir js/game.js, updateGoal.
-           `rec` est le record de la gare, la barre à battre. -->
+      <!-- LE RECORD À BATTRE, et rien d'autre — voir js/game.js, updateGoal.
+           C'est la seule chose qu'on ne puisse pas déduire du retard affiché
+           juste au-dessus. Quand la journée est perdue, il cède la place à la
+           croix et au raccourci de reprise. -->
       <div id="goal-row" class="hidden">
-        <span id="goal-tier"></span>
-        <span id="goal-bar"><span id="goal-fill"></span></span>
-        <span id="goal-margin"></span>
         <span id="goal-rec"></span>
-        <!-- La journée est perdue : on peut la reprendre tout de suite, sans
-             attendre que les derniers convois sortent. -->
+        <span id="goal-lost"></span>
         <button id="goal-redo" class="hidden" aria-label="Recommencer le service"></button>
       </div>
       <!-- Avancement du service : bandeau au ras du bord BAS du cadre, qui se
