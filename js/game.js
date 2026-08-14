@@ -1176,14 +1176,36 @@ function tick(dtMin) {
                        (endU * totalArc - s0) / (endU * totalArc);
         t.progress += dtMin / durTot;
         const h = s0 + easeRun(t.progress / endU, 0.12, 0) * (endU * totalArc - s0);
-        if (h - tail > pin.len && activeRoutes[t.entryPath] === t)
-          release(t.entryPath);
+        // LE QUAI SE LIBÈRE QUAND LE FRET L'A QUITTÉ, PAS QUAND IL A QUITTÉ LA
+        // GARE. Le fret garde l'état « movingThrough » de bout en bout, et
+        // `busy` compte cet état comme une occupation (voir plus haut) : son
+        // quai restait donc pris pendant TOUTE la course de sortie, alors qu'il
+        // était déjà loin. Le convoi suivant devait attendre que le fret ait
+        // franchi l'aiguillage de sortie pour s'engager.
+        //
+        // Un voyageur, lui, passe en « movingOut » — état ABSENT de `busy` — et
+        // libère son quai dès qu'il s'ébranle. Le fret s'aligne : dernier wagon
+        // au-delà de la voie d'entrée, le quai est rendu.
+        //
+        // IL Y AVAIT ICI UN release(t.entryPath) QUI NE POUVAIT JAMAIS S'EXÉCUTER :
+        // l'itinéraire d'entrée est relâché au moment même où le fret bascule en
+        // « movingThrough » (voir « movingIn »), donc activeRoutes[entryPath]
+        // n'est déjà plus ce convoi. Sa présence donnait à croire que quelque
+        // chose se libérait ici, et masquait le fait que le quai, lui, ne se
+        // libérait qu'à la gorge du portail.
+        //
+        // Rien n'est relâché de trop : l'itinéraire de SORTIE reste verrouillé
+        // jusqu'à cette gorge (plus bas), donc un convoi entrant dont la route
+        // croise celle du fret sera toujours retenu par l'enclenchement.
+        if (t.platform != null && h - tail > pin.len) {
+          t.platform = null;
+          refreshEligible();
+        }
         // sortie relâchée seulement quand le dernier wagon a dégagé la gorge
         // du portail (au-delà de la fin de l'itinéraire + PORTAL_CLEAR)
         if (h - tail > totalArc + PORTAL_CLEAR && activeRoutes[t.exitPath] === t) {
           release(t.exitPath);
-          t.platform = null; // le quai redevient disponible
-          refreshEligible();
+          refreshEligible();   // le quai, lui, est déjà rendu (voir au-dessus)
         }
         // terminé dès que le dernier wagon a réellement quitté la carte
         if (t.progress >= endU ||

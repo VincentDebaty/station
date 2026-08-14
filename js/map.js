@@ -231,10 +231,30 @@ function buildMap() {
   // jalons marqués dessus — l'horizon cesse d'être un tout-ou-rien à trente
   // gares. Le décompte chiffré est au carnet, pas ici : au centre d'une barre,
   // on regarde, on ne lit pas.
-  const cn = document.createElement("div");
+  //
+  // ET IL S'OUVRE. La jauge dit « où en suis-je » sans dire de quoi elle est
+  // faite : combien de gares tenues, combien d'étoiles, quel jalon vient. Ces
+  // chiffres encombraient la barre (voir plus bas, ils en sont sortis) ; ils
+  // sont désormais À UN TAP, dans un encart qui tombe sous le bandeau. Le
+  // permanent reste léger, le détail reste accessible.
+  const cn = document.createElement("button");
   cn.className = "map-country hidden";
+  cn.setAttribute("aria-expanded", "false");
+  cn.addEventListener("click", ev => {
+    ev.stopPropagation();
+    if (MAP.countryCard.classList.contains("hidden")) openCountryCard();
+    else closeCountryCard();
+  });
   MAP.countryBar = cn;
   barM.appendChild(cn);
+
+  // L'encart lui-même : posé sous la barre, jamais dedans — la barre garde sa
+  // hauteur quoi qu'on ouvre.
+  const cCard = document.createElement("div");
+  cCard.className = "map-country-card hidden";
+  cCard.addEventListener("click", ev => ev.stopPropagation());
+  MAP.countryCard = cCard;
+  host.appendChild(cCard);
 
   const next = document.createElement("button");
   next.className = "map-next hidden";
@@ -299,6 +319,7 @@ function buildMap() {
   legendBtn.innerHTML = icon(ICON.help, 18);
   legendBtn.addEventListener("click", ev => {
     ev.stopPropagation();
+    closeCountryCard();   // jamais deux panneaux ouverts en même temps
     const open = legend.classList.toggle("hidden");
     legendBtn.classList.toggle("open", !open);
   });
@@ -314,9 +335,11 @@ function buildMap() {
   host.addEventListener("click", ev => {
     // Sauf sur les panneaux eux-mêmes : les lire ne les referme pas.
     const t = ev.target;
-    if (t.closest && t.closest(".map-legend, .map-legend-btn, .map-carnet, .map-carnet-btn")) return;
+    if (t.closest && t.closest(".map-legend, .map-legend-btn, .map-carnet, .map-carnet-btn," +
+                               " .map-country, .map-country-card")) return;
     legend.classList.add("hidden"); legendBtn.classList.remove("open");
     closeCarnet();
+    closeCountryCard();
     // Recadrer le pays quand on range le relevé — mais pas quand on vient de
     // toucher une gare : déplacer la carte sous le doigt qui ouvre une fiche
     // serait gratuit.
@@ -629,6 +652,7 @@ function renderCarnet() {
 }
 function openCarnet() {
   if (!MAP.carnet) return;
+  closeCountryCard();
   if (typeof endLeaveMap === "function") endLeaveMap();
   renderCarnet();
   MAP.carnet.classList.remove("hidden");
@@ -650,24 +674,97 @@ function updateCountryBar(slug) {
   const ids = g ? Object.keys(g.cities || {}) : [];
   const card = ids.length ? cardOf(ids[0]) : null;
   const pays = card ? card.country : null;
-  if (!pays) { el.classList.add("hidden"); return; }
+  if (!pays) { el.classList.add("hidden"); closeCountryCard(); return; }
   const s = countryStars(pays);
   const toks = pays.trim().split(" ");
   el.classList.remove("hidden");
   // UN NOM ET UNE JAUGE, RIEN DE PLUS. « 12 / 29 gares · 33 / 87 ★ » disait deux
-  // fois ce que la barre montre déjà, en chiffres qu'on ne lit pas en passant :
-  // le décompte exact appartient au carnet de service, qui est fait pour être
-  // lu ligne à ligne. Ici, on veut savoir d'un coup d'œil OÙ l'on est et
-  // COMBIEN il reste — un mot et une jauge suffisent.
+  // fois ce que la jauge montre déjà, en chiffres qu'on ne lit pas en passant :
+  // le décompte exact est dans l'encart, à un tap. Ici, on veut savoir d'un coup
+  // d'œil OÙ l'on est et COMBIEN il reste — un mot et une jauge suffisent.
+  //
+  // LA JAUGE EST SOUS LE NOM, pas à côté : elle mesure ce pays-là, et l'aligner
+  // dessous le dit sans un mot. Côte à côte, elle passait pour un troisième
+  // objet de la barre, voisin du nom plus qu'attaché à lui.
   el.innerHTML =
     '<span class="cy-flag">' + toks[0] + "</span>" +
-    '<span class="cy-nm">' + (toks.slice(1).join(" ") || pays) + "</span>" +
-    // LES JALONS SONT DESSINÉS SUR LA BARRE, pas listés à côté : on voit d'un
+    '<span class="cy-col"><span class="cy-nm">' + (toks.slice(1).join(" ") || pays) +
+      // Un chevron : la seule marque qui dise « il y a plus à voir ici ». Il
+      // pivote quand l'encart est ouvert, donc il dit aussi comment refermer.
+      '<svg class="cy-chev" viewBox="0 0 24 24" width="11" height="11" fill="currentColor"' +
+      ' aria-hidden="true"><path d="M7 10l5 5 5-5z"/></svg></span>' +
+    // LES JALONS SONT DESSINÉS SUR LA JAUGE, pas listés à côté : on voit d'un
     // coup celui qu'on vient de passer et celui qu'on vise.
     '<span class="cy-bar"><span class="cy-fill" style="width:' +
       Math.round(s.part * 100) + '%"></span>' +
       JALONS.map(j => '<i style="left:' + (j.part * 100) + '%"></i>').join("") +
-    "</span>";
+    "</span></span>";
+  // L'encart suit le pays regardé : ouvert, il se réécrit quand on glisse d'un
+  // pays à l'autre. Un panneau qui reste sur l'ancien pendant que la barre
+  // annonce le nouveau serait un mensonge à l'écran.
+  if (MAP.countryCard && !MAP.countryCard.classList.contains("hidden"))
+    renderCountryCard(pays);
+}
+
+// ------------------------------------------------------------------
+// L'ENCART DE PAYS — ce qui a été fait ici, et ce qui vient.
+// ------------------------------------------------------------------
+// Trois faits et un horizon. Les faits sont ce que le joueur a accompli (gares
+// tenues, étoiles, sans-faute) ; l'horizon est le prochain jalon, avec ce qu'il
+// reste à décrocher et la prime qu'il paie. Rien d'autre : la liste des gares
+// est au carnet, et la redire ici ferait deux listes à tenir d'accord.
+function renderCountryCard(pays) {
+  const el = MAP.countryCard;
+  if (!el || !pays) return;
+  const s = countryStars(pays);
+  const prog = getProgress();
+  // Sans-faute : pas une minute de retard sur une gare. C'est la marque de la
+  // carte (l'étoile creusée), et le seul superlatif du jeu.
+  let parfaites = 0;
+  for (const c of CATALOG)
+    if (c.country === pays && (prog[c.id] || {}).bestDelay === 0) parfaites++;
+  const k = jalonOf(s.part);
+  const next = JALONS[k + 1] || null;
+  const toks = pays.trim().split(" ");
+  const ligne = (nm, val) =>
+    '<div class="cc-row"><span class="cc-k">' + nm + "</span>" +
+    '<span class="cc-v">' + val + "</span></div>";
+  // Étoiles qui manquent pour le jalon suivant : le chiffre qu'on vient
+  // chercher. « Il reste 54 étoiles dans le pays » n'aide personne ; « encore
+  // 11 et le pays passe la moitié » se vise.
+  const manque = next ? Math.max(1, Math.ceil(next.part * s.total - s.earned)) : 0;
+  el.innerHTML =
+    '<div class="cc-top">' + toks[0] + " " + (toks.slice(1).join(" ") || pays) + "</div>" +
+    ligne("Gares tenues", s.done + " / " + s.n) +
+    ligne("Étoiles", s.earned + " / " + s.total + " ★") +
+    ligne("Sans faute", parfaites ? parfaites + (parfaites > 1 ? " gares" : " gare") : "—") +
+    '<div class="cc-sep"></div>' +
+    (next
+      ? '<div class="cc-goal"><span class="cc-gnm">' + next.nom + "</span>" +
+          '<span class="cc-gn">encore ' + manque + " ★ · prime " +
+            (typeof jalonBonus === "function" ? "+" + jalonBonus(pays) : "") +
+          " ponctualité</span></div>"
+      : '<div class="cc-goal done"><span class="cc-gnm">Pays terminé</span>' +
+          '<span class="cc-gn">les quatre jalons sont franchis</span></div>');
+}
+function openCountryCard() {
+  if (!MAP.countryCard || !MAP.countryBar || MAP.countryBar.classList.contains("hidden")) return;
+  if (typeof endLeaveMap === "function") endLeaveMap();
+  const slug = MAP.homeSlug || countryAtCenter();
+  const g = slug ? GEO.countries[slug] : null;
+  const ids = g ? Object.keys(g.cities || {}) : [];
+  const card = ids.length ? cardOf(ids[0]) : null;
+  if (!card) return;
+  renderCountryCard(card.country);
+  MAP.countryCard.classList.remove("hidden");
+  MAP.countryBar.classList.add("open");
+  MAP.countryBar.setAttribute("aria-expanded", "true");
+}
+function closeCountryCard() {
+  if (!MAP.countryCard) return;
+  MAP.countryCard.classList.add("hidden");
+  MAP.countryBar.classList.remove("open");
+  MAP.countryBar.setAttribute("aria-expanded", "false");
 }
 function updateChrome() {
   // Les routes décoratives entre continents n'ont de sens que de très loin :

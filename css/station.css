@@ -919,16 +919,34 @@ svg { width: 100%; height: 100%; display: block; }
 .map-country {
   display: flex; align-items: center; gap: 9px;
   max-width: 100%; min-width: 0;
-  pointer-events: none;
+  /* C'est un BOUTON : il ouvre l'encart du pays. Sans fond ni bordure au repos
+     — la barre est déjà la surface —, mais avec la zone de touche d'un bouton
+     (le padding), parce qu'un titre qui s'ouvre doit se viser au pouce. */
+  padding: 4px 9px 5px; border: 0; border-radius: 10px;
+  background: none; color: inherit; font-family: inherit;
+  cursor: pointer; -webkit-tap-highlight-color: transparent; touch-action: manipulation;
+  transition: background .15s;
 }
+.map-country.open { background: rgba(255, 255, 255, .07); }
+@media (hover: hover) { .map-country:hover { background: rgba(255, 255, 255, .07); } }
 .map-country.hidden { display: none; }
-.map-country .cy-flag { font-size: 17px; line-height: 1; }
+.map-country .cy-flag { font-size: 17px; line-height: 1; flex: 0 0 auto; }
+/* Le nom PUIS la jauge, l'un sous l'autre : la jauge mesure ce pays-là. */
+.map-country .cy-col { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
 .map-country .cy-nm {
+  display: flex; align-items: center; gap: 3px;
   font-size: 13px; font-weight: 600; color: var(--text); line-height: 1;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0;
 }
+.map-country .cy-chev {
+  flex: 0 0 auto; color: var(--muted); transition: transform .15s;
+}
+.map-country.open .cy-chev { transform: rotate(180deg); }
+/* La jauge prend la largeur du nom, avec un minimum : comme celle du grade, à
+   droite de la barre. Une largeur figée aurait dépassé d'un nom court et se
+   serait fait dépasser par un nom long. */
 .map-country .cy-bar {
-  position: relative; display: block; width: 120px; height: 5px;
+  position: relative; display: block; width: auto; min-width: 120px; height: 5px;
   border-radius: 999px; background: #2a3550; overflow: hidden;
 }
 .map-country .cy-fill { display: block; height: 100%; background: #f5b23c; border-radius: 999px; }
@@ -939,7 +957,42 @@ svg { width: 100%; height: 100%; display: block; }
   background: rgba(10, 16, 28, .85); transform: translateX(-1px);
 }
 /* Le relevé de fin annonce déjà le jalon, en grand et avec sa prime. */
-#hub-map.end-open .map-country { display: none; }
+#hub-map.end-open .map-country,
+#hub-map.end-open .map-country-card { display: none; }
+
+/* --- L'ENCART DU PAYS ------------------------------------------------------
+   Ce que la jauge résume, en toutes lettres : trois faits accomplis et un
+   horizon. Il tombe sous le bandeau, centré comme lui, et se referme au tap
+   suivant ou dès qu'on touche la carte — comme la légende et le carnet. */
+.map-country-card {
+  position: absolute; z-index: 8;
+  left: 50%; transform: translateX(-50%); top: calc(56px + var(--safe-t));
+  width: min(268px, calc(100vw - 24px));
+  padding: 12px 14px 13px;
+  background: rgba(15, 21, 35, .97); border: 1px solid #2a3550; border-radius: 14px;
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, .6);
+  animation: legendIn .16s ease;
+}
+.map-country-card.hidden { display: none; }
+@media (prefers-reduced-motion: reduce) { .map-country-card { animation: none; } }
+.map-country-card .cc-top {
+  font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 10px;
+}
+.map-country-card .cc-row {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
+  padding: 3px 0; font-size: 12px;
+}
+.map-country-card .cc-k { color: var(--muted); }
+.map-country-card .cc-v { color: var(--text); font-variant-numeric: tabular-nums; }
+.map-country-card .cc-sep { height: 1px; background: #2a3550; margin: 9px 0 10px; }
+/* L'horizon, pas un fait : il se distingue par la couleur du JEU (teal), celle
+   de la ponctualité qu'il paie — jamais l'or, qui est l'argent. */
+.map-country-card .cc-goal { display: flex; flex-direction: column; gap: 3px; }
+.map-country-card .cc-gnm { font-size: 12px; font-weight: 700; color: #63e6d4; }
+.map-country-card .cc-gn { font-size: 11px; color: var(--muted); }
+.map-country-card .cc-goal.done .cc-gnm { color: #f5b23c; }
+
 /* Écran étroit : la barre passe sur deux rangs plutôt que de comprimer trois
    blocs sur une ligne. Boutons et compteurs se partagent le premier rang — ils
    se lisent d'un coup d'œil et se touchent —, le pays prend le second, où il a
@@ -950,7 +1003,7 @@ svg { width: 100%; height: 100%; display: block; }
     grid-template-areas: "left right" "mid mid";
     row-gap: 9px; padding-bottom: 14px;
   }
-  .map-country .cy-bar { width: 96px; }
+  .map-country-card { top: calc(104px + var(--safe-t)); }
 }
 
 /* --- LE PAS SUIVANT, en bas au centre --------------------------------------
@@ -1756,9 +1809,8 @@ svg { width: 100%; height: 100%; display: block; }
    partent donc d'un cran plus bas — un panneau posé sur le nom du pays le
    masquerait au moment précis où on cherche à se situer. */
 @media (max-width: 620px) {
-  .map-legend, .map-carnet { top: calc(88px + var(--safe-t)); }
-  .map-legend { max-height: calc(100dvh - 102px - var(--safe-b) - var(--safe-t)); }
-  .map-carnet { max-height: calc(100dvh - 102px - var(--safe-b) - var(--safe-t)); }
+  .map-legend, .map-carnet { top: calc(104px + var(--safe-t)); }
+  .map-legend, .map-carnet { max-height: calc(100dvh - 118px - var(--safe-b) - var(--safe-t)); }
 }
 /* Le panneau descend de son bouton : il vient du haut, comme le geste qui
    l'ouvre. */
