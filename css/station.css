@@ -76,7 +76,23 @@ body {
 #goal-row.bad  #goal-fill { background: #f87171; }
 #goal-row.warn #goal-margin { color: #f5b23c; }
 #goal-row.bad  #goal-margin, #goal-row.bad #goal-tier { color: #f87171; }
-#goal-margin { font-variant-numeric: tabular-nums; }
+#goal-margin { font-variant-numeric: tabular-nums; display: flex; align-items: center; }
+#goal-margin svg { display: block; }
+/* Le sans-faute porte l'or, comme l'étoile qu'il vaudra sur la carte. */
+#goal-row.perfect #goal-margin { color: #f5b23c; }
+#goal-row.perfect #goal-fill { background: #f5b23c; }
+/* Le raccourci de reprise : rond, discret, à portée immédiate du pouce, et
+   présent seulement quand la journée est perdue. */
+#goal-redo {
+  display: flex; align-items: center; justify-content: center;
+  width: 19px; height: 19px; padding: 0; margin-left: 1px;
+  border-radius: 999px; border: 1px solid #f87171; background: rgba(248, 113, 113, .12);
+  color: #f87171; cursor: pointer; font-family: inherit;
+  -webkit-tap-highlight-color: transparent; touch-action: manipulation;
+}
+#goal-redo.hidden { display: none; }
+#goal-redo svg { display: block; }
+@media (hover: hover) { #goal-redo:hover { background: rgba(248, 113, 113, .26); } }
 /* Le record : présent mais en retrait — c'est un repère, pas une consigne. */
 #goal-rec { color: #5b6b8a; font-variant-numeric: tabular-nums; }
 #goal-rec:empty { display: none; }

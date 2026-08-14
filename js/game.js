@@ -819,13 +819,21 @@ function updateGoal(v) {
   const marg = document.getElementById("goal-margin");
   const rec = document.getElementById("goal-rec");
 
+  // DEUX ÉTATS SE DISENT PAR UN SIGNE, PAS PAR UNE PHRASE. « sans faute » et
+  // « objectif manqué » occupaient trois fois la place de leur symbole sur un
+  // bandeau de dix pixels, et poussaient le record hors du cadre. L'étoile et
+  // la croix se lisent d'un coup d'œil, sans lecture ; le mot reste en
+  // infobulle pour qui survole.
+  const redo = document.getElementById("goal-redo");
+  if (redo) redo.classList.toggle("hidden", k >= 0);
   if (k < 0) {
     // Plus rien à tenir : la journée ne compte plus. On le dit sans détour
     // plutôt que d'afficher une barre vide qu'on prendrait pour un bug.
     tier.textContent = "☆☆☆";
     fill.style.width = "0%";
     row.className = "bad";
-    marg.textContent = "objectif manqué";
+    marg.innerHTML = icon(ICON.close, 12);
+    marg.title = "Objectif manqué — moins de 30 min de retard sont nécessaires";
   } else {
     const p = PALIERS[k];
     tier.textContent = starStr(p.stars);
@@ -834,8 +842,9 @@ function updateGoal(v) {
       // barre qui fondrait laisserait croire qu'il reste du jeu ; elle reste
       // donc pleine, et c'est le passage à ★★★ qui fera le signal.
       fill.style.width = "100%";
-      row.className = "";
-      marg.textContent = "sans faute";
+      row.className = "perfect";
+      marg.innerHTML = icon(ICON.star, 12);
+      marg.title = "Sans faute — pas une minute de retard";
     } else {
       // La BANDE du palier courant : de son propre seuil à celui d'en dessous.
       // La barre mesure la marge DANS ce palier, pas un pourcentage de la
@@ -851,6 +860,7 @@ function updateGoal(v) {
       // Les minutes annoncées sont celles du BARÈME (retard arrondi) : « marge
       // 1 min » doit vouloir dire qu'une minute de plus fait tomber le palier.
       marg.textContent = "marge " + Math.max(0, p.under - vr) + " min";
+      marg.title = "";
     }
   }
   const best = (getProgress()[STATION.id] || {}).bestDelay;
