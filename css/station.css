@@ -723,6 +723,9 @@ svg { width: 100%; height: 100%; display: block; }
 #end-country .ec-txt { display: flex; flex-direction: column; font-size: 14px; color: var(--text); }
 #end-country .ec-txt b { font-size: 16px; font-weight: 700; }
 #end-country .ec-stars { color: #f5b23c; font-weight: 700; font-size: 13px; margin-top: 2px; }
+/* La prime d'un jalon est de la PONCTUALITÉ, donc teal — jamais l'or, qui est
+   la couleur de l'argent dans ce jeu. */
+#end-country .ec-prime { color: #63e6d4; font-weight: 700; }
 
 .hidden { display: none !important; }
 
@@ -867,6 +870,43 @@ svg { width: 100%; height: 100%; display: block; }
 /* Le relevé de fin de service occupe le côté : le grade y est déjà annoncé,
    ligne « ponctualité ». Deux fois le même compteur ferait du bruit. */
 #hub-map.end-open .map-rank { display: none; }
+
+/* --- LE PAYS SOUS LA VUE, en haut au centre --------------------------------
+   Une seule ligne : drapeau, nom, décompte, et une barre où les quatre jalons
+   sont MARQUÉS. Dessinés sur la barre plutôt que listés à côté, ils se lisent
+   d'un coup — celui qu'on vient de passer, celui qu'on vise. */
+.map-country {
+  position: absolute; z-index: 5;
+  left: 50%; transform: translateX(-50%); top: calc(12px + var(--safe-t));
+  display: flex; align-items: center; gap: 9px;
+  max-width: calc(100vw - 200px);
+  padding: 6px 14px 7px; border-radius: 12px;
+  background: rgba(21, 29, 46, .82); border: 1px solid #2a3550;
+  backdrop-filter: blur(7px); -webkit-backdrop-filter: blur(7px);
+  pointer-events: none;
+}
+.map-country.hidden { display: none; }
+.map-country .cy-flag { font-size: 17px; line-height: 1; }
+.map-country .cy-txt { display: flex; flex-direction: column; gap: 1px; }
+.map-country .cy-nm { font-size: 13px; font-weight: 600; color: var(--text); line-height: 1; }
+.map-country .cy-n { font-size: 10px; color: var(--muted); font-variant-numeric: tabular-nums; line-height: 1; }
+.map-country .cy-bar {
+  position: relative; display: block; width: 120px; height: 5px;
+  border-radius: 999px; background: #2a3550; overflow: hidden;
+}
+.map-country .cy-fill { display: block; height: 100%; background: #f5b23c; border-radius: 999px; }
+/* Un jalon : un trait fin en travers de la barre. Le dernier est au bord droit,
+   on le décale d'un pixel pour qu'il reste visible. */
+.map-country .cy-bar i {
+  position: absolute; top: 0; bottom: 0; width: 1px;
+  background: rgba(10, 16, 28, .85); transform: translateX(-1px);
+}
+/* Le relevé de fin annonce déjà le jalon, en grand et avec sa prime. */
+#hub-map.end-open .map-country { display: none; }
+/* Écran étroit : le bandeau descend sous la bourse plutôt que de la percuter. */
+@media (max-width: 620px) {
+  .map-country { max-width: calc(100vw - 24px); top: calc(52px + var(--safe-t)); }
+}
 
 /* --- LE PAS SUIVANT, en bas au centre --------------------------------------
    Là où le pouce arrive sur un téléphone, et là où l'œil retombe après avoir

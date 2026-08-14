@@ -1415,23 +1415,33 @@ function endGame(failed) {
   // l'enregistrement, c'est ce qui permet de nommer la ligne qu'on vient de
   // cocher — et, quand il n'y en a pas, de montrer celle qui vient.
   const tiersBefore = noPay ? 0 : stationTiersDone(STATION.id);
+  // LE PAYS AVANT ET APRÈS, pour la même raison : les étoiles ne redescendent
+  // jamais, donc un jalon franchi entre ces deux mesures l'est pour de bon, et
+  // rien n'a besoin d'être stocké.
+  const pays = STATION.adhoc ? null : (CATALOG[currentIdx] || {}).country || null;
+  const jalonBefore = pays ? jalonOf(countryStars(pays).part) : -1;
   if (!failed && !STATION.adhoc) saveResult(STATION.id, stars, d); // un échec (ou la démo limites) ne modifie pas le record
   const tiersAfter = noPay ? tiersBefore : stationTiersDone(STATION.id);
+  const paysApres = pays ? countryStars(pays) : null;
+  const jalonAfter = pays ? jalonOf(paysApres.part) : -1;
+  const jalonUp = jalonAfter > jalonBefore ? jalonAfter : -1;
   // ---- PONCTUALITÉ : versée à CHAQUE service, sans plafond ni record à battre.
   // C'est elle qui répond « oui » à la question que les crédits laissent sans
   // réponse sur une gare finie : est-ce que bien jouer sert encore à quelque
   // chose ? Le grade franchi se dit dans le relevé, à sa place — pas en travers
   // de l'écran.
   const ponctu = noPay ? 0 : pointsFor(STATION.id, d);
+  // La prime de jalon s'ajoute à la ponctualité du service : c'est le même
+  // compteur, et le grade peut donc se franchir sur un jalon.
+  const primeJalon = jalonUp >= 0 ? jalonBonus(pays) : 0;
   const gradeBefore = gradeOf(getPoints());
-  if (ponctu > 0) addPoints(ponctu);
+  if (ponctu + primeJalon > 0) addPoints(ponctu + primeJalon);
   const gradeAfter = gradeOf(getPoints());
   const gradeUp = gradeAfter.i > gradeBefore.i;
   if (gain > 0) addCredits(gain);
-  // Pays terminé À L'INSTANT : gagné, cette gare passe de 0 à ≥1 étoile, et toutes
-  // les gares du pays ont désormais au moins une étoile. (Seule cette gare a pu
-  // changer ce tour-ci, d'où la condition sur prevStars.)
-  const justCompletedCountry = win && !STATION.adhoc && prevStars === 0 && countryComplete(currentIdx);
+  // Le dernier jalon EST « pays terminé » : plus de cas particulier, c'est le
+  // quatrième cran d'une échelle qu'on gravit depuis le premier quart.
+  const justCompletedCountry = jalonUp === JALONS.length - 1;
   const card = document.querySelector("#end .card");
   card.classList.toggle("win", win);
   card.classList.toggle("fail", !win);
@@ -1453,18 +1463,20 @@ function endGame(failed) {
   // « Trains à l'heure : 15/15 » a été retiré : c'est le retard cumulé, juste
   // au-dessus, qui décide des étoiles et de la recette — un second décompte à
   // côté du premier n'ajoutait qu'une ligne à lire pour la même information.
-  // Bandeau « pays terminé » : drapeau + nom + total d'étoiles du pays.
+  // BANDEAU DE JALON : le quart, la moitié, les trois quarts, le tout. Il ne
+  // sortait qu'au pays entièrement décroché — vingt-neuf gares en Belgique,
+  // trente-sept en Allemagne — c'est-à-dire presque jamais. Un joueur peut
+  // maintenant fêter quelque chose quatre fois par pays, et voir de loin qu'il
+  // avance.
   const ec = document.getElementById("end-country");
-  if (justCompletedCountry) {
-    const country = CATALOG[currentIdx].country || "";
-    const toks = country.trim().split(" ");
-    const cflag = toks[0], cname = toks.slice(1).join(" ") || country;
-    let earned = 0, total = 0;
-    const prog = getProgress();
-    for (const c of CATALOG) if (c.country === country) { total += 3; earned += (prog[c.id] || {}).stars || 0; }
+  if (jalonUp >= 0) {
+    const toks = pays.trim().split(" ");
+    const cflag = toks[0], cname = toks.slice(1).join(" ") || pays;
     ec.innerHTML = '<span class="ec-flag">' + cflag + "</span>" +
-      '<span class="ec-txt"><b>' + cname + "</b> — toutes les gares décrochées !" +
-      '<span class="ec-stars">' + earned + " / " + total + " ★</span></span>";
+      '<span class="ec-txt"><b>' + cname + "</b> — " + JALONS[jalonUp].nom.toLowerCase() +
+      '<span class="ec-stars">' + paysApres.earned + " / " + paysApres.total + " ★" +
+      (primeJalon ? ' <span class="ec-prime">+' + primeJalon + " ponctualité</span>" : "") +
+      "</span></span>";
     ec.classList.remove("hidden");
   } else ec.classList.add("hidden");
   (perfect ? SND.perfect : win ? SND.end : SND.incident)(); // parfait → fanfare, 0 étoile → échec

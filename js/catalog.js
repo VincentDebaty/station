@@ -371,6 +371,57 @@ function buyStationById(id) {
 }
 
 // ------------------------------------------------------------------
+// LES JALONS D'UN PAYS — un horizon qu'on peut atteindre.
+// ------------------------------------------------------------------
+// Le seul repère de pays était « toutes les gares décrochées ». Sur la Belgique
+// cela fait vingt-neuf gares, sur l'Allemagne trente-sept : un objectif si
+// lointain qu'il ne se voit pas, et qui ne dit rien tant qu'il n'est pas
+// atteint. Un joueur à la moitié d'un pays n'avait aucun moyen de le savoir,
+// ni rien à fêter.
+//
+// Quatre jalons, en ÉTOILES et non en gares : le quart, la moitié, les trois
+// quarts, le tout. En étoiles, parce que c'est la mesure fine — décrocher une
+// gare de plus et améliorer une gare déjà tenue font toutes deux avancer le
+// pays, ce qui est exactement ce qu'on veut encourager.
+//
+// AUCUN ÉTAT À STOCKER : les étoiles ne redescendent jamais, donc un jalon se
+// franchit une fois et une seule. On le détecte en comparant le pays avant et
+// après l'enregistrement du service — le même procédé que pour les paliers.
+const JALONS = [
+  { part: 0.25, nom: "Un quart du pays" },
+  { part: 0.5,  nom: "La moitié du pays" },
+  { part: 0.75, nom: "Trois quarts du pays" },
+  { part: 1,    nom: "Pays terminé" }
+];
+// Étoiles décrochées / possibles sur un pays, et le nombre de gares tenues.
+function countryStars(country) {
+  const prog = getProgress();
+  let earned = 0, total = 0, done = 0, n = 0;
+  for (const c of CATALOG) {
+    if (c.country !== country) continue;
+    const s = (prog[c.id] || {}).stars || 0;
+    n++; total += 3; earned += s; if (s >= 1) done++;
+  }
+  return { earned, total, done, n, part: total ? earned / total : 0 };
+}
+// Le plus haut jalon franchi, ou −1.
+function jalonOf(part) {
+  let k = -1;
+  for (let i = 0; i < JALONS.length; i++) if (part >= JALONS[i].part - 1e-9) k = i;
+  return k;
+}
+// LA PRIME D'UN JALON SE PAIE EN PONCTUALITÉ, JAMAIS EN CRÉDITS. La masse
+// monétaire du jeu est finie, connue et vérifiée (tools/eco-check.mjs) ; y
+// verser des primes la rendrait fausse, et surtout cela reviendrait à financer
+// l'expansion par autre chose que le mérite d'une gare. Un jalon est un fait
+// d'armes : il se consigne, il ne s'encaisse pas.
+function jalonBonus(country) {
+  let tarif = 0;
+  for (const c of CATALOG) if (c.country === country) tarif += stationTarif(c.id);
+  return Math.round(tarif * 0.1);
+}
+
+// ------------------------------------------------------------------
 // LA PONCTUALITÉ — ce qui récompense CHAQUE minute, sur CHAQUE service.
 // ------------------------------------------------------------------
 // Les crédits sont un escalier : quatre paliers, décrochés une fois, et une
@@ -497,11 +548,8 @@ function cheapestBuyable(country) {
   }
   return best;
 }
-// Pays « terminé » = toutes ses gares décrochées (≥ 1 étoile). Sert à souligner
-// l'achèvement d'un pays en fin de service.
-function countryComplete(i) {
-  const country = CATALOG[i] && CATALOG[i].country;
-  if (!country) return false;
-  const prog = getProgress();
-  return CATALOG.every(c => c.country !== country || ((prog[c.id] || {}).stars || 0) >= 1);
-}
+// `countryComplete` a été retiré : « pays terminé » n'est plus un cas
+// particulier mais le dernier des quatre JALONS, et il se mesure en ÉTOILES et
+// non en gares décrochées. L'ancienne définition — « toutes les gares à au
+// moins une étoile » — déclarait un pays fini alors qu'il pouvait lui rester
+// les deux tiers de ses étoiles à prendre.

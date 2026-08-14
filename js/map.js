@@ -197,6 +197,19 @@ function buildMap() {
   // désormais dans une pastille au bas de l'écran. Elle NOMME la gare, dit ce
   // qu'elle coûte ou rapporte, y vole et ouvre sa fiche. Elle disparaît quand
   // il n'y a plus rien à proposer — se taire vaut mieux qu'inventer un geste.
+  // ------------------------------------------------------------------
+  // LE PAYS SOUS LA VUE, ET OÙ L'ON EN EST.
+  // ------------------------------------------------------------------
+  // La carte disait tout d'une gare et rien d'un pays. « Combien m'en
+  // reste-t-il ? » n'avait aucune réponse à l'écran : il fallait compter les
+  // pastilles pleines. Un bandeau au-dessus dit les gares tenues, les étoiles
+  // décrochées, et marque les quatre jalons sur la barre — l'horizon cesse
+  // d'être un tout-ou-rien à trente gares.
+  const cn = document.createElement("div");
+  cn.className = "map-country hidden";
+  MAP.countryBar = cn;
+  host.appendChild(cn);
+
   const next = document.createElement("button");
   next.className = "map-next hidden";
   next.addEventListener("click", ev => { ev.stopPropagation(); goToNextMove(); });
@@ -478,6 +491,31 @@ function awayFrom(ref) {
   const dy = (vb[1] + vb[3] / 2) - (ref[1] + ref[3] / 2);
   return Math.hypot(dx, dy) > ref[2] * 0.5;
 }
+// Le bandeau de pays. `slug` vient de countryAtCenter() — le pays qu'on
+// REGARDE, la seule définition qui reste vraie sans niveaux de navigation.
+function updateCountryBar(slug) {
+  const el = MAP.countryBar;
+  if (!el || typeof countryStars !== "function") return;
+  const g = slug ? GEO.countries[slug] : null;
+  // Le nom du pays au sens du CATALOGUE (« 🇧🇪 Belgique »), qui porte le drapeau.
+  const ids = g ? Object.keys(g.cities || {}) : [];
+  const card = ids.length ? cardOf(ids[0]) : null;
+  const pays = card ? card.country : null;
+  if (!pays) { el.classList.add("hidden"); return; }
+  const s = countryStars(pays);
+  const toks = pays.trim().split(" ");
+  el.classList.remove("hidden");
+  el.innerHTML =
+    '<span class="cy-flag">' + toks[0] + "</span>" +
+    '<span class="cy-txt"><span class="cy-nm">' + (toks.slice(1).join(" ") || pays) + "</span>" +
+      '<span class="cy-n">' + s.done + " / " + s.n + " gares · " + s.earned + " / " + s.total + " ★</span></span>" +
+    // LES JALONS SONT DESSINÉS SUR LA BARRE, pas listés à côté : on voit d'un
+    // coup celui qu'on vient de passer et celui qu'on vise.
+    '<span class="cy-bar"><span class="cy-fill" style="width:' +
+      Math.round(s.part * 100) + '%"></span>' +
+      JALONS.map(j => '<i style="left:' + (j.part * 100) + '%"></i>').join("") +
+    "</span>";
+}
 function updateChrome() {
   // Les routes décoratives entre continents n'ont de sens que de très loin :
   // de près, ce sont des traits gigantesques en travers de la carte.
@@ -497,6 +535,7 @@ function updateChrome() {
     //     le bouton doit rester coûte que coûte ; il ramène alors au réseau
     //     (voir mapHome), qui ne dépend d'aucun cadrage.
     const lost = !slug;
+    updateCountryBar(slug);                    // le bandeau suit le pays regardé
     MAP.homeSlug = slug;                       // null = perdu → repli sur le réseau
     MAP.homeBtn.classList.toggle("hidden", !away && !lost);
     const nm = lost ? "Mon réseau" : away ? (GEO.countries[slug] || {}).name || "" : "";
