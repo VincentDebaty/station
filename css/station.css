@@ -938,8 +938,12 @@ svg { width: 100%; height: 100%; display: block; }
   font-size: 13px; font-weight: 600; color: var(--text); line-height: 1;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0;
 }
+/* La taille en CSS, pas seulement en attributs : la feuille pose
+   `svg { width: 100% }` pour le plan de voies, et un chevron laissé à ses
+   attributs gonflait jusqu'à faire un bandeau de 140 px de haut. */
 .map-country .cy-chev {
-  flex: 0 0 auto; color: var(--muted); transition: transform .15s;
+  width: 11px; height: 11px; flex: 0 0 auto;
+  color: var(--muted); transition: transform .15s;
 }
 .map-country.open .cy-chev { transform: rotate(180deg); }
 /* La jauge prend la largeur du nom, avec un minimum : comme celle du grade, à
@@ -976,9 +980,6 @@ svg { width: 100%; height: 100%; display: block; }
 }
 .map-country-card.hidden { display: none; }
 @media (prefers-reduced-motion: reduce) { .map-country-card { animation: none; } }
-.map-country-card .cc-top {
-  font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 10px;
-}
 .map-country-card .cc-row {
   display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
   padding: 3px 0; font-size: 12px;

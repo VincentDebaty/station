@@ -317,9 +317,13 @@ function buildMap() {
   legendBtn.className = "map-legend-btn";
   legendBtn.setAttribute("aria-label", "Lire la carte");
   legendBtn.innerHTML = icon(ICON.help, 18);
+  MAP.legendBtn = legendBtn;
   legendBtn.addEventListener("click", ev => {
     ev.stopPropagation();
-    closeCountryCard();   // jamais deux panneaux ouverts en même temps
+    // JAMAIS DEUX PANNEAUX À LA FOIS. Ils tombent tous les trois du même bord de
+    // la barre : ouverts ensemble, ils se recouvrent, et on ne sait plus lequel
+    // on est en train de lire.
+    closeCarnet(); closeCountryCard();
     const open = legend.classList.toggle("hidden");
     legendBtn.classList.toggle("open", !open);
   });
@@ -337,7 +341,7 @@ function buildMap() {
     const t = ev.target;
     if (t.closest && t.closest(".map-legend, .map-legend-btn, .map-carnet, .map-carnet-btn," +
                                " .map-country, .map-country-card")) return;
-    legend.classList.add("hidden"); legendBtn.classList.remove("open");
+    closeLegend();
     closeCarnet();
     closeCountryCard();
     // Recadrer le pays quand on range le relevé — mais pas quand on vient de
@@ -650,9 +654,17 @@ function renderCarnet() {
   MAP.carnet.querySelectorAll(".cr-row").forEach(li =>
     li.addEventListener("click", () => { closeCarnet(); goToStation(li.dataset.id); }));
 }
+// Fermer la légende : elle n'avait pas de fonction à elle, chaque appelant
+// remettait la main sur ses deux classes. Les trois panneaux s'excluent
+// maintenant l'un l'autre, cela en fait trop d'endroits pour un même geste.
+function closeLegend() {
+  if (!MAP.legend) return;
+  MAP.legend.classList.add("hidden");
+  MAP.legendBtn.classList.remove("open");
+}
 function openCarnet() {
   if (!MAP.carnet) return;
-  closeCountryCard();
+  closeLegend(); closeCountryCard();
   if (typeof endLeaveMap === "function") endLeaveMap();
   renderCarnet();
   MAP.carnet.classList.remove("hidden");
@@ -725,7 +737,6 @@ function renderCountryCard(pays) {
     if (c.country === pays && (prog[c.id] || {}).bestDelay === 0) parfaites++;
   const k = jalonOf(s.part);
   const next = JALONS[k + 1] || null;
-  const toks = pays.trim().split(" ");
   const ligne = (nm, val) =>
     '<div class="cc-row"><span class="cc-k">' + nm + "</span>" +
     '<span class="cc-v">' + val + "</span></div>";
@@ -733,8 +744,10 @@ function renderCountryCard(pays) {
   // chercher. « Il reste 54 étoiles dans le pays » n'aide personne ; « encore
   // 11 et le pays passe la moitié » se vise.
   const manque = next ? Math.max(1, Math.ceil(next.part * s.total - s.earned)) : 0;
+  // PAS DE TITRE : l'encart pend au bandeau qui vient de nommer le pays, à huit
+  // pixels au-dessus. Le réécrire ne dirait rien de plus et alourdirait le seul
+  // panneau qu'on ouvre en passant.
   el.innerHTML =
-    '<div class="cc-top">' + toks[0] + " " + (toks.slice(1).join(" ") || pays) + "</div>" +
     ligne("Gares tenues", s.done + " / " + s.n) +
     ligne("Étoiles", s.earned + " / " + s.total + " ★") +
     ligne("Sans faute", parfaites ? parfaites + (parfaites > 1 ? " gares" : " gare") : "—") +
@@ -749,6 +762,7 @@ function renderCountryCard(pays) {
 }
 function openCountryCard() {
   if (!MAP.countryCard || !MAP.countryBar || MAP.countryBar.classList.contains("hidden")) return;
+  closeLegend(); closeCarnet();
   if (typeof endLeaveMap === "function") endLeaveMap();
   const slug = MAP.homeSlug || countryAtCenter();
   const g = slug ? GEO.countries[slug] : null;
