@@ -174,15 +174,40 @@ function buildMap() {
   MAP.modal = modal;
   host.appendChild(modal);
 
+  // ------------------------------------------------------------------
+  // UNE SEULE BARRE, EN HAUT.
+  // ------------------------------------------------------------------
+  // Les commandes et les compteurs vivaient chacun dans son coin : le
+  // recadrage en haut à gauche, le pays au centre, la bourse à droite, le grade
+  // dessous, la légende et le carnet tout en bas. Six ancrages, six alignements
+  // différents, et un écran étroit où ils finissaient par se percuter.
+  //
+  // Tout se range désormais sur UNE ligne, en haut : outils de lecture à
+  // gauche, pays regardé au centre, bourse et grade à droite. Le voile ne
+  // prend aucun clic — seuls les boutons en prennent — donc la carte reste
+  // saisissable sous la barre.
+  //
+  // Reste en bas ce qui se touche du pouce : « le pas suivant ».
+  const bar = document.createElement("div");
+  bar.className = "map-topbar";
+  const barL = document.createElement("div"); barL.className = "tb-left";
+  const barM = document.createElement("div"); barM.className = "tb-mid";
+  const barR = document.createElement("div"); barR.className = "tb-right";
+  bar.append(barL, barM, barR);
+  MAP.topbar = bar;
+  host.appendChild(bar);
+
   // Il n'y a plus de « retour » — plus de niveau à remonter. À la place, un
-  // bouton qui RECADRE le pays sous la vue et le nomme : c'est le seul repère
-  // dont on ait besoin quand on s'est perdu à pincer.
+  // bouton qui RECADRE le pays sous la vue. Il ne le nomme plus : le bandeau
+  // central, à trois centimètres de là, affiche déjà « Belgique ». Deux fois le
+  // même mot sur la même ligne, c'était du bruit — l'icône suffit, et le nom
+  // survit en infobulle pour les lecteurs d'écran.
   const home = document.createElement("button");
   home.className = "map-home hidden";
   home.setAttribute("aria-label", "Revenir au réseau");
   home.addEventListener("click", () => mapHome());
   MAP.homeBtn = home;
-  host.appendChild(home);
+  barL.appendChild(home);
 
   // ------------------------------------------------------------------
   // LE PAS SUIVANT, EN PERMANENCE.
@@ -208,7 +233,7 @@ function buildMap() {
   const cn = document.createElement("div");
   cn.className = "map-country hidden";
   MAP.countryBar = cn;
-  host.appendChild(cn);
+  barM.appendChild(cn);
 
   const next = document.createElement("button");
   next.className = "map-next hidden";
@@ -298,8 +323,8 @@ function buildMap() {
       endLeaveMap(!(t.closest && t.closest(".city-chip")));
   }, true);
   MAP.legend = legend;
-  host.appendChild(legend);
-  host.appendChild(legendBtn);
+  host.appendChild(legend);   // le panneau se déroule sous la barre, pas dedans
+  barL.appendChild(legendBtn);
 
   // Le carnet : un panneau, et son bouton à côté de celui de la légende — deux
   // outils de lecture, au même endroit.
@@ -321,23 +346,23 @@ function buildMap() {
     if (carnet.classList.contains("hidden")) openCarnet(); else closeCarnet();
   });
   MAP.carnetBtn = carnetBtn;
-  host.appendChild(carnetBtn);
+  barL.appendChild(carnetBtn);
 
   // Le solde, en permanence. C'est le seul chiffre qui compte pour décider où
   // aller : il doit être visible en même temps que les prix, sans un geste.
   const purse = document.createElement("div");
   purse.className = "map-purse";
   MAP.purse = purse;
-  host.appendChild(purse);
+  barR.appendChild(purse);
 
-  // LE GRADE, sous la bourse. Le solde monte ET DESCEND — acheter une gare,
+  // LE GRADE, à côté de la bourse. Le solde monte ET DESCEND — acheter une gare,
   // c'est-à-dire le geste le plus progressif du jeu, faisait baisser le seul
   // chiffre affiché en permanence. Rien ne disait au joueur qu'il avançait.
   // La ponctualité ne fait que croître, et son grade la résume d'un mot.
   const rank = document.createElement("div");
   rank.className = "map-rank";
   MAP.rank = rank;
-  host.appendChild(rank);
+  barR.appendChild(rank);
   updateCreditsBadge();
   updateRankBadge();
 
@@ -664,13 +689,20 @@ function updateChrome() {
     const nm = lost ? "Mon réseau" : away ? (GEO.countries[slug] || {}).name || "" : "";
     if (nm && MAP.homeBtn.dataset.nm !== nm) {
       MAP.homeBtn.dataset.nm = nm;
+      // Le nom ne s'écrit plus sur le bouton — le bandeau central le dit déjà —
+      // mais il reste dans l'étiquette : c'est ce que lit un lecteur d'écran, et
+      // ce qu'affiche l'infobulle de qui hésite avant de cliquer.
+      MAP.homeBtn.title = "Recadrer : " + nm;
+      MAP.homeBtn.setAttribute("aria-label", "Recadrer : " + nm);
+    }
+    if (!MAP.homeBtn.dataset.ico) {
+      MAP.homeBtn.dataset.ico = "1";
       MAP.homeBtn.innerHTML =
         // Réticule de recentrage (Material « my_location »), le repère que les
         // cartes en ligne emploient pour « remets-moi au bon cadrage ». Une
         // maison disait « accueil », ce que ce bouton ne fait plus.
-        '<svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor" aria-hidden="true">' +
-        '<path d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm8.94 3c-.46-4.17-3.77-7.48-7.94-7.94V1h-2v2.06C6.83 3.52 3.52 6.83 3.06 11H1v2h2.06c.46 4.17 3.77 7.48 7.94 7.94V23h2v-2.06c4.17-.46 7.48-3.77 7.94-7.94H23v-2h-2.06zM12 19c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z"/></svg>' +
-        '<span class="lbl">' + nm + "</span>";
+        '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true">' +
+        '<path d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm8.94 3c-.46-4.17-3.77-7.48-7.94-7.94V1h-2v2.06C6.83 3.52 3.52 6.83 3.06 11H1v2h2.06c.46 4.17 3.77 7.48 7.94 7.94V23h2v-2.06c4.17-.46 7.48-3.77 7.94-7.94H23v-2h-2.06zM12 19c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z"/></svg>';
     }
   }
 }
@@ -1008,11 +1040,14 @@ function updateRankBadge(bump) {
   if (!MAP.rank || typeof gradeOf !== "function") return;
   const pts = getPoints();
   const g = gradeOf(pts);
+  // Deux lignes, pas trois : sur une barre du haut, la hauteur est le budget le
+  // plus serré. Le grade et son total tiennent sur la même ligne — ils parlent
+  // de la même chose — et la barre passe dessous, pleine largeur du bloc.
   MAP.rank.innerHTML =
-    '<span class="rk-nm">' + g.nom + "</span>" +
+    '<span class="rk-top"><span class="rk-nm">' + g.nom + "</span>" +
+      '<span class="rk-n">' + pts.toLocaleString("fr-FR") + "</span></span>" +
     '<span class="rk-bar"><span style="width:' +
-      Math.round(Math.max(0, Math.min(1, g.part)) * 100) + '%"></span></span>' +
-    '<span class="rk-n">' + pts.toLocaleString("fr-FR") + "</span>";
+      Math.round(Math.max(0, Math.min(1, g.part)) * 100) + '%"></span></span>';
   if (bump) {
     MAP.rank.classList.remove("bump");
     void MAP.rank.offsetWidth;

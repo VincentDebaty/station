@@ -734,18 +734,10 @@ svg { width: 100%; height: 100%; display: block; }
 #hub {
   position: absolute; inset: 0; z-index: 30; background: var(--bg); overflow: hidden;
 }
-/* La carte occupe toute la surface (plus de barre en haut). */
+/* La carte occupe toute la surface : la barre du haut (.map-topbar) est posée
+   DESSUS, en voile dégradé, et ne lui prend aucune hauteur. */
 #hub-map { position: absolute; inset: 0; }
 
-/* Bouton flottant unique : zone courante + flèche retour, en haut à gauche. */
-/* Bouton « maison » : revient au cadrage d'ouverture (la région de
-   l'utilisateur). Il remplace l'ancien bouton retour, qui remontait des niveaux
-   qui n'existent plus. Sur un petit écran, c'est la porte de sortie quand on
-   s'est perdu à pincer. */
-/* Bouton « maison » : revient au cadrage d'ouverture (la région de
-   l'utilisateur). Il remplace l'ancien bouton retour, qui remontait des niveaux
-   qui n'existent plus. Sur un petit écran, c'est la porte de sortie quand on
-   s'est perdu à pincer. */
 /* Ligne d'accueil du tout premier lancement : elle nomme ce que les halos
    montrent. Elle disparaît dès la première étoile — après quoi la carte se lit
    seule (grise = fermée, teal = ouverte, teal + étoiles = faite). */
@@ -817,27 +809,57 @@ svg { width: 100%; height: 100%; display: block; }
 }
 
 
+/* ==================================================================
+   LA BARRE DU HAUT.
+   ==================================================================
+   Avant : six ancrages. Le recadrage en haut à gauche, le pays au centre, la
+   bourse à droite, le grade dessous, la légende et le carnet en bas à gauche.
+   Six alignements différents à balayer des yeux, et sur un écran étroit, des
+   blocs qui se percutaient.
+
+   Maintenant : UNE LIGNE. Outils de lecture à gauche, pays regardé au centre,
+   bourse et grade à droite. Ce qui reste en bas est ce qui se touche du pouce —
+   « le pas suivant », et lui seul.
+
+   Le voile s'éteint vers le bas plutôt que de se couper net : une arête
+   horizontale en travers d'une carte se lit comme un bord d'écran, et donnerait
+   l'impression que la carte s'arrête là. */
+.map-topbar {
+  position: absolute; z-index: 6; top: 0; left: 0; right: 0;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  grid-template-areas: "left mid right";
+  align-items: center; gap: 12px;
+  padding: calc(10px + var(--safe-t)) calc(12px + var(--safe-r)) 24px calc(12px + var(--safe-l));
+  background: linear-gradient(180deg,
+    rgba(9, 13, 22, .92) 0%, rgba(9, 13, 22, .78) 42%, rgba(9, 13, 22, 0) 100%);
+  /* LA CARTE RESTE SAISISSABLE SOUS LA BARRE : le voile ne prend aucun clic,
+     seuls les boutons en prennent. Sans cela, le tiers haut de l'écran cessait
+     de se glisser au doigt. */
+  pointer-events: none;
+}
+.map-topbar button { pointer-events: auto; }
+.tb-left  { grid-area: left;  display: flex; align-items: center; gap: 8px; justify-self: start; }
+.tb-mid   { grid-area: mid;   min-width: 0; justify-self: center; }
+.tb-right { grid-area: right; display: flex; align-items: center; gap: 10px; justify-self: end; }
+
 .map-home {
-  position: absolute; z-index: 6; top: calc(12px + var(--safe-t)); left: calc(12px + var(--safe-l));
-  /* Une PASTILLE, pas un carré : le nom de la région tient à côté de l'icône.
-     Enfermé dans 34 px, le libellé débordait et devenait illisible — c'est ce
-     qui faisait lire « Belgique » comme une étiquette de lieu posée sur la
-     carte d'Allemagne, au lieu d'un bouton qui y ramène. */
-  display: inline-flex; align-items: center; gap: 8px;
-  height: 34px; padding: 0 14px 0 11px; border-radius: 999px;
+  /* Icône seule : le bandeau central nomme déjà le pays, à trois centimètres de
+     là. Le mot écrit deux fois sur la même ligne était du bruit. */
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 34px; height: 34px; border-radius: 999px;
   background: rgba(21, 29, 46, .88); border: 1px solid #2dd4bf; color: #2dd4bf;
   backdrop-filter: blur(7px); -webkit-backdrop-filter: blur(7px);
   cursor: pointer; transition: background .15s, box-shadow .15s;
   animation: homeIn .18s ease;
-}
-.map-home .lbl {
-  font-size: 13px; font-weight: 600; color: var(--text);
-  white-space: nowrap; line-height: 1;
+  /* EN DERNIER dans le groupe, quoi qu'il arrive : il apparaît et disparaît au
+     gré du cadrage, et placé en tête il aurait fait sauter la légende et le
+     carnet sous le doigt à chaque glissement de carte. */
+  order: 3;
 }
 /* La feuille pose `svg { width: 100% }` pour le plan de voies : sans reprise
-   explicite, l'icône remplissait toute la pastille et chassait le libellé
-   au-dehors — le bouton affichait « Belgique » à côté de lui-même. */
-.map-home svg { width: 15px; height: 15px; flex: 0 0 auto; }
+   explicite, l'icône remplirait toute la pastille. */
+.map-home svg { width: 16px; height: 16px; flex: 0 0 auto; }
 .map-home.hidden { display: none; }
 
 /* --- LE GRADE, sous la bourse ----------------------------------------------
@@ -845,20 +867,26 @@ svg { width: 100%; height: 100%; display: block; }
    d'OR — de l'argent, qui se dépense et redescend ; le grade est un bandeau
    sobre avec une BARRE — un travail accompli, qui ne fait que croître. Les
    confondre reviendrait à promettre qu'on peut acheter un titre. */
+/* Sur la barre, le grade perd son cadre : le voile est déjà la surface, et un
+   cadre dans un cadre fait deux traits pour un seul objet. La bourse, elle,
+   garde sa pastille — c'est son identité d'or. */
 .map-rank {
-  position: absolute; z-index: 6;
-  right: calc(12px + var(--safe-r, 0px)); top: calc(56px + var(--safe-t));
-  display: flex; flex-direction: column; align-items: flex-end; gap: 3px;
-  padding: 7px 11px 8px; border-radius: 12px;
-  background: rgba(21, 29, 46, .88); border: 1px solid #2a3550;
-  backdrop-filter: blur(7px); -webkit-backdrop-filter: blur(7px);
+  display: flex; flex-direction: column; gap: 4px;
   pointer-events: none;
+}
+.map-rank .rk-top {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 10px;
+  line-height: 1;
 }
 .map-rank .rk-nm { font-size: 12px; font-weight: 600; color: #9fb2d6; line-height: 1; }
 /* La barre porte l'information ; le nombre n'est là que pour qui veut le
    chiffre exact — d'où sa taille et sa couleur en retrait. */
+/* La barre prend la largeur du bloc, avec un minimum : c'est le NOM DU GRADE et
+   son total qui fixent cette largeur. En figeant la barre à 96 px, un grade au
+   nom long — ou un total à cinq chiffres — débordait du bloc, donc du bord
+   droit de l'écran. */
 .map-rank .rk-bar {
-  display: block; width: 96px; height: 4px; border-radius: 999px;
+  display: block; width: auto; min-width: 96px; height: 4px; border-radius: 999px;
   background: #2a3550; overflow: hidden;
 }
 .map-rank .rk-bar span { display: block; height: 100%; background: #2dd4bf; border-radius: 999px; }
@@ -876,20 +904,20 @@ svg { width: 100%; height: 100%; display: block; }
    Une seule ligne : drapeau, nom, décompte, et une barre où les quatre jalons
    sont MARQUÉS. Dessinés sur la barre plutôt que listés à côté, ils se lisent
    d'un coup — celui qu'on vient de passer, celui qu'on vise. */
+/* Posé à même la barre, sans cadre : c'est le titre de ce qu'on regarde, pas un
+   panneau de plus. */
 .map-country {
-  position: absolute; z-index: 5;
-  left: 50%; transform: translateX(-50%); top: calc(12px + var(--safe-t));
   display: flex; align-items: center; gap: 9px;
-  max-width: calc(100vw - 200px);
-  padding: 6px 14px 7px; border-radius: 12px;
-  background: rgba(21, 29, 46, .82); border: 1px solid #2a3550;
-  backdrop-filter: blur(7px); -webkit-backdrop-filter: blur(7px);
+  max-width: 100%; min-width: 0;
   pointer-events: none;
 }
 .map-country.hidden { display: none; }
 .map-country .cy-flag { font-size: 17px; line-height: 1; }
-.map-country .cy-txt { display: flex; flex-direction: column; gap: 1px; }
-.map-country .cy-nm { font-size: 13px; font-weight: 600; color: var(--text); line-height: 1; }
+.map-country .cy-txt { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.map-country .cy-nm {
+  font-size: 13px; font-weight: 600; color: var(--text); line-height: 1;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
 .map-country .cy-n { font-size: 10px; color: var(--muted); font-variant-numeric: tabular-nums; line-height: 1; }
 .map-country .cy-bar {
   position: relative; display: block; width: 120px; height: 5px;
@@ -904,9 +932,17 @@ svg { width: 100%; height: 100%; display: block; }
 }
 /* Le relevé de fin annonce déjà le jalon, en grand et avec sa prime. */
 #hub-map.end-open .map-country { display: none; }
-/* Écran étroit : le bandeau descend sous la bourse plutôt que de la percuter. */
+/* Écran étroit : la barre passe sur deux rangs plutôt que de comprimer trois
+   blocs sur une ligne. Boutons et compteurs se partagent le premier rang — ils
+   se lisent d'un coup d'œil et se touchent —, le pays prend le second, où il a
+   la largeur qu'il lui faut. */
 @media (max-width: 620px) {
-  .map-country { max-width: calc(100vw - 24px); top: calc(52px + var(--safe-t)); }
+  .map-topbar {
+    grid-template-columns: auto 1fr;
+    grid-template-areas: "left right" "mid mid";
+    row-gap: 9px; padding-bottom: 22px;
+  }
+  .map-country .cy-bar { width: 96px; }
 }
 
 /* --- LE PAS SUIVANT, en bas au centre --------------------------------------
@@ -1417,11 +1453,11 @@ svg { width: 100%; height: 100%; display: block; }
 }
 
 /* --- Le solde, en permanence sur la carte ------------------------------- */
-/* Posé en haut à DROITE : le recadrage occupe déjà la gauche, et le solde se
-   lit en même temps que les prix des pastilles, sans un geste. */
+/* À DROITE de la barre du haut : les outils de lecture occupent la gauche, et
+   le solde se lit en même temps que les prix des pastilles, sans un geste.
+   Il garde sa pastille quand le grade a perdu son cadre : la bourse est de
+   l'argent — un jeton qu'on dépense —, le grade est un travail accompli. */
 .map-purse {
-  position: absolute; z-index: 6;
-  top: calc(12px + var(--safe-t)); right: calc(12px + var(--safe-r));
   display: inline-flex; align-items: center;
   height: 34px; padding: 0 14px; border-radius: 999px;
   background: rgba(21, 29, 46, .88); border: 1px solid #4a3a1c;
@@ -1580,7 +1616,7 @@ svg { width: 100%; height: 100%; display: block; }
 
 
 /* ==================================================================
-   LA LÉGENDE — repliée sous un bouton, en bas à gauche.
+   LA LÉGENDE — repliée sous un bouton de la barre du haut.
    ==================================================================
    La carte se lit sans elle : c'est bien le but. Mais rien n'explique
    une convention à qui ne l'a pas devinée, et six états de pastille
@@ -1588,9 +1624,7 @@ svg { width: 100%; height: 100%; display: block; }
    suivant ou dès qu'on touche la carte — un panneau qu'on consulte,
    pas un mode dans lequel on entre. */
 .map-legend-btn {
-  position: absolute; z-index: 7;
-  left: calc(12px + var(--safe-l)); bottom: calc(12px + var(--safe-b));
-  width: 34px; height: 34px; border-radius: 999px;
+  width: 34px; height: 34px; border-radius: 999px; flex: 0 0 auto; order: 1;
   display: flex; align-items: center; justify-content: center;
   background: rgba(21, 29, 46, .88); border: 1px solid #2a3550; color: var(--muted);
   backdrop-filter: blur(7px); -webkit-backdrop-filter: blur(7px);
@@ -1600,12 +1634,10 @@ svg { width: 100%; height: 100%; display: block; }
 .map-legend-btn.open, .map-legend-btn:hover { color: #2dd4bf; border-color: #2dd4bf; }
 
 /* --- LE CARNET DE SERVICE -------------------------------------------------
-   Son bouton à côté de celui de la légende : deux outils de lecture, au même
-   endroit, et jamais deux panneaux ouverts en même temps. */
+   Son bouton à côté de celui de la légende, à gauche de la barre : deux outils
+   de lecture, au même endroit, et jamais deux panneaux ouverts en même temps. */
 .map-carnet-btn {
-  position: absolute; z-index: 7;
-  left: calc(54px + var(--safe-l)); bottom: calc(12px + var(--safe-b));
-  width: 34px; height: 34px; border-radius: 999px;
+  width: 34px; height: 34px; border-radius: 999px; flex: 0 0 auto; order: 2;
   display: flex; align-items: center; justify-content: center;
   background: rgba(21, 29, 46, .88); border: 1px solid #2a3550; color: var(--muted);
   backdrop-filter: blur(7px); -webkit-backdrop-filter: blur(7px);
@@ -1614,12 +1646,14 @@ svg { width: 100%; height: 100%; display: block; }
 .map-carnet-btn svg { width: 17px; height: 17px; display: block; }
 .map-carnet-btn.open, .map-carnet-btn:hover { color: #2dd4bf; border-color: #2dd4bf; }
 
+/* Le panneau tombe SOUS son bouton, donc depuis le haut : il part du bord bas
+   de la barre et prend ce qui reste jusqu'en bas d'écran. */
 .map-carnet {
   position: absolute; z-index: 8;
-  left: calc(12px + var(--safe-l)); bottom: calc(54px + var(--safe-b));
+  left: calc(12px + var(--safe-l)); top: calc(56px + var(--safe-t));
   width: min(400px, calc(100vw - 24px));
-  max-height: calc(100vh - 78px - var(--safe-b) - var(--safe-t));
-  max-height: calc(100dvh - 78px - var(--safe-b) - var(--safe-t));
+  max-height: calc(100vh - 70px - var(--safe-b) - var(--safe-t));
+  max-height: calc(100dvh - 70px - var(--safe-b) - var(--safe-t));
   display: flex; flex-direction: column;
   background: rgba(15, 21, 35, .97); border: 1px solid #2a3550; border-radius: 14px;
   backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
@@ -1690,7 +1724,7 @@ svg { width: 100%; height: 100%; display: block; }
 
 .map-legend {
   position: absolute; z-index: 7;
-  left: calc(12px + var(--safe-l)); bottom: calc(54px + var(--safe-b));
+  left: calc(12px + var(--safe-l)); top: calc(56px + var(--safe-t));
   /* PLUS LARGE, DONC PLUS COURT. Chaque ligne de la légende tenait sur trois
      lignes de texte à 340 px ; le panneau y gagnait en étroitesse ce qu'il
      perdait en hauteur, et c'est la hauteur qui manque. */
@@ -1698,11 +1732,11 @@ svg { width: 100%; height: 100%; display: block; }
   /* TOUTE LA HAUTEUR DISPONIBLE, pas une fraction arbitraire. À 70 % d'une
      fenêtre basse, la dernière ligne se retrouvait tranchée en son milieu : le
      panneau défilait, mais un texte coupé net se lit comme un défaut, pas comme
-     une invitation à faire défiler. On prend donc ce qui reste entre le haut de
-     l'écran et le bouton qui l'ouvre — c'est le maximum honnête — et le dégradé
+     une invitation à faire défiler. On prend donc ce qui reste entre le bouton
+     qui l'ouvre et le bas de l'écran — c'est le maximum honnête — et le dégradé
      de bas de liste (voir plus bas) dit le reste quand ça ne suffit pas. */
-  max-height: calc(100vh - 78px - var(--safe-b) - var(--safe-t));
-  max-height: calc(100dvh - 78px - var(--safe-b) - var(--safe-t));
+  max-height: calc(100vh - 70px - var(--safe-b) - var(--safe-t));
+  max-height: calc(100dvh - 70px - var(--safe-b) - var(--safe-t));
   display: flex; flex-direction: column;
   background: rgba(15, 21, 35, .96); border: 1px solid #2a3550; border-radius: 14px;
   backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
@@ -1710,7 +1744,17 @@ svg { width: 100%; height: 100%; display: block; }
   animation: legendIn .16s ease;
 }
 .map-legend.hidden { display: none; }
-@keyframes legendIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+/* Écran étroit : la barre passe sur deux rangs (voir .map-topbar), les panneaux
+   partent donc d'un cran plus bas — un panneau posé sur le nom du pays le
+   masquerait au moment précis où on cherche à se situer. */
+@media (max-width: 620px) {
+  .map-legend, .map-carnet { top: calc(88px + var(--safe-t)); }
+  .map-legend { max-height: calc(100dvh - 102px - var(--safe-b) - var(--safe-t)); }
+  .map-carnet { max-height: calc(100dvh - 102px - var(--safe-b) - var(--safe-t)); }
+}
+/* Le panneau descend de son bouton : il vient du haut, comme le geste qui
+   l'ouvre. */
+@keyframes legendIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { .map-legend { animation: none; } }
 .map-legend .lg-head {
   font-size: 11px; letter-spacing: .12em; text-transform: uppercase;
