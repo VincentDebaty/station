@@ -976,10 +976,20 @@ svg { width: 100%; height: 100%; display: block; }
   background: rgba(15, 21, 35, .97); border: 1px solid #2a3550; border-radius: 14px;
   backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
   box-shadow: 0 18px 50px rgba(0, 0, 0, .6);
-  animation: legendIn .16s ease;
+  /* SON PROPRE FONDU, qui refait le centrage à chaque image. `legendIn` ne
+     déplace QUE la verticale, mais `transform` est une propriété unique :
+     l'animation écrasait le translateX(-50%) qui centre l'encart, et celui-ci
+     s'affichait décalé à droite pendant toute l'animation avant de sauter au
+     centre. Un panneau centré ne peut pas emprunter l'animation d'un panneau
+     ancré à gauche. */
+  animation: ccIn .16s ease;
 }
-.map-country-card.hidden { display: none; }
+@keyframes ccIn {
+  from { opacity: 0; transform: translate(-50%, -6px); }
+  to   { opacity: 1; transform: translate(-50%, 0); }
+}
 @media (prefers-reduced-motion: reduce) { .map-country-card { animation: none; } }
+.map-country-card.hidden { display: none; }
 .map-country-card .cc-row {
   display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
   padding: 3px 0; font-size: 12px;
