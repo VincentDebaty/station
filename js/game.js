@@ -1318,11 +1318,49 @@ let endFocusId = null;
 // entièrement cliquable. Le joueur repart d'ici sans écran intermédiaire :
 // rejouer, ou toucher une gare.
 // ------------------------------------------------------------------
+// ------------------------------------------------------------------
+// LE RELEVÉ TIENT DANS L'ÉCRAN, TOUJOURS.
+// ------------------------------------------------------------------
+// Un relevé se lit d'un coup et se termine par une action. Sur une fenêtre
+// basse, il dépassait par le bas : les boutons — la seule chose à FAIRE —
+// passaient sous le bord, et rien ne disait qu'il fallait faire défiler.
+//
+// La feuille resserre déjà l'espacement sous 700 px puis sous 540 px de haut
+// (voir « ÉCRAN BAS » dans station.css). Cela suffit dans la vie courante, pas
+// dans les cas extrêmes : un téléphone en paysage, un pays terminé qui ajoute
+// deux blocs, une fenêtre de bureau réduite à 380 px. Ici, on MET À L'ÉCHELLE
+// plutôt que d'amputer — tout reste lisible et rien ne disparaît.
+//
+// `zoom` et non `transform: scale()` : zoom modifie la MISE EN PAGE, donc le
+// centrage et le `max-height` de la fiche continuent de fonctionner tout seuls.
+// Une mise à l'échelle par transform laisse une boîte de la taille d'origine
+// dans le flux, et la fiche réduite se retrouve centrée sur un vide plus grand
+// qu'elle — c'est-à-dire décalée.
+//
+// Le plancher existe pour que le remède ne devienne pas le mal : sous 70 %, on
+// laisse défiler plutôt que d'imposer un texte qu'on ne peut plus lire.
+const END_FIT_FLOOR = 0.7;
+function fitEndCard() {
+  const ov = document.getElementById("end");
+  if (!ov || ov.classList.contains("hidden")) return;
+  const card = ov.querySelector(".card");
+  if (!card) return;
+  card.style.zoom = "";                       // on mesure toujours à taille réelle
+  const st = getComputedStyle(ov);
+  const avail = ov.clientHeight - parseFloat(st.paddingTop) - parseFloat(st.paddingBottom);
+  const nat = card.scrollHeight + 2;          // scrollHeight ignore la bordure
+  if (!(nat > 0) || !(avail > 0) || nat <= avail) return;
+  card.style.zoom = Math.max(END_FIT_FLOOR, avail / nat).toFixed(3);
+}
+// Tourner le téléphone change la hauteur disponible du tout au tout : le relevé
+// se remesure, sinon il reste calé sur l'orientation d'avant.
+window.addEventListener("resize", fitEndCard);
+
 function showEndBesideMap() {
   const end = document.getElementById("end");
   const hub = document.getElementById("hub");
   // Démo « limites » : gare hors catalogue, elle n'est nulle part sur la carte.
-  if (STATION.adhoc || typeof mapnetBuild !== "function") return;
+  if (STATION.adhoc || typeof mapnetBuild !== "function") { fitEndCard(); return; }
   hub.classList.remove("hidden");
   // Le bouton « recadrer ce pays » se retire le temps du relevé : il nomme le
   // pays sous le CENTRE de l'écran, or le centre est maintenant derrière le
@@ -1332,6 +1370,10 @@ function showEndBesideMap() {
   // fiche encore centrée, on croit la bande libre bien plus étroite qu'elle ne
   // l'est, et la carte se dézoome sur toute l'Europe de l'Ouest.
   end.classList.add("over-map");
+  // À L'ÉCHELLE AVANT DE MESURER : la bande libre laissée à la carte se déduit
+  // du rectangle de la fiche, juste en dessous. Mise à l'échelle après coup, on
+  // cadrerait le réseau sur une fiche qui n'a plus cette taille.
+  fitEndCard();
   if (!MAP.built) buildMap();
   mapnetBuild();               // le solde a changé : d'autres gares sont à portée
   mapnetPosition();
