@@ -29,8 +29,17 @@ function diffPips(d) {
   return '<span class="dif">' + Array.from({ length: 5 }, (_, i) =>
     '<span class="b' + (i < n ? " on" : "") + '"></span>').join("") + "</span>";
 }
+// LA DERNIÈRE GARE RÉELLEMENT PRISE EN MAIN — et non `currentIdx`, qui vaut 0
+// au chargement et désigne donc une gare que le joueur n'a jamais jouée. La
+// carte s'en sert comme ANCRE pour ordonner ses propositions ; avec un index
+// par défaut, la première gare du catalogue s'excluait de sa propre proposition
+// (« Landen attend son service » ne s'affichait pas, parce que Landen était
+// réputée être l'endroit d'où l'on regarde).
+let lastPlayedId = null;
+
 async function startStation(i) {
   currentIdx = i;
+  lastPlayedId = (CATALOG[i] || {}).id || null;
   // Un service commence : le relevé précédent et le bouton qu'il désignait
   // appartiennent au passé (js/game.js, endFocusId).
   if (typeof endFocusId !== "undefined") endFocusId = null;

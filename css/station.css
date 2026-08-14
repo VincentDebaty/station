@@ -805,6 +805,38 @@ svg { width: 100%; height: 100%; display: block; }
    au-dehors — le bouton affichait « Belgique » à côté de lui-même. */
 .map-home svg { width: 15px; height: 15px; flex: 0 0 auto; }
 .map-home.hidden { display: none; }
+
+/* --- LE PAS SUIVANT, en bas au centre --------------------------------------
+   Là où le pouce arrive sur un téléphone, et là où l'œil retombe après avoir
+   parcouru la carte. En or : c'est la même promesse que l'étiquette de prix
+   d'une gare à portée, et que le bouton du relevé de fin de service.
+   Trois morceaux dans un ordre fixe — le VERBE (ce qu'on va faire), le NOM (où),
+   le MONTANT (ce que ça coûte ou rapporte) — pour qu'on lise toujours au même
+   endroit la même sorte d'information. */
+.map-next {
+  position: absolute; z-index: 6;
+  left: 50%; transform: translateX(-50%);
+  bottom: calc(16px + var(--safe-b));
+  display: inline-flex; align-items: center; gap: 9px;
+  max-width: calc(100vw - 32px);
+  height: 42px; padding: 0 18px; border-radius: 999px;
+  background: linear-gradient(180deg, #f7c15a, var(--gold));
+  border: 0; color: #1a1206; font-family: inherit; font-size: 15px;
+  box-shadow: 0 6px 22px -4px rgba(240, 178, 60, .55), 0 2px 8px rgba(0, 0, 0, .5);
+  cursor: pointer; white-space: nowrap; overflow: hidden;
+  -webkit-tap-highlight-color: transparent; touch-action: manipulation;
+}
+.map-next .lbl { opacity: .72; font-size: 13px; }
+.map-next b { font-weight: 700; overflow: hidden; text-overflow: ellipsis; }
+/* Le montant sur fond doré : creusé, comme un poinçon — le jeton clair du reste
+   de l'interface disparaîtrait dans l'or. */
+.map-next .amt .cr-amt { color: #1a1206; font-weight: 700; }
+.map-next .amt .cr { opacity: .65; }
+.map-next.hidden { display: none; }
+@media (hover: hover) { .map-next:hover { filter: brightness(1.07); } }
+/* Le relevé de fin de service porte DÉJÀ le pas suivant, en grand. Deux boutons
+   pour la même action, à deux endroits, se contrediraient au premier décalage. */
+#hub-map.end-open .map-next { display: none; }
 @media (hover: hover) {
   .map-home:hover { background: rgba(26, 45, 58, .95); box-shadow: 0 0 14px -2px rgba(45, 212, 191, .5); }
 }

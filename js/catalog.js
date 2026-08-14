@@ -370,6 +370,53 @@ function buyStationById(id) {
   return canBuy(id) && buyStation(id, stationPrice(id));
 }
 
+// ------------------------------------------------------------------
+// LE PAS SUIVANT — les trois gestes qui font avancer, et rien d'autre.
+// ------------------------------------------------------------------
+// Le relevé de fin de service désigne une action et une seule (js/game.js) ;
+// la carte doit désigner LA MÊME, sinon le jeu se contredit d'un écran à
+// l'autre. Les briques vivent donc ici, avec la progression qu'elles lisent,
+// et chaque écran les compose selon ce qu'il sait de son contexte — le relevé
+// peut proposer « rejouer ici », la carte n'a pas d'« ici ».
+//
+// `from` : la gare d'où l'on regarde, s'il y en a une. Elle ne restreint pas le
+// choix, elle l'ORDONNE : à mérite égal, on ne renvoie pas le joueur à l'autre
+// bout de l'Europe.
+function nearFirst(from) {
+  const near = (from && typeof netLinks === "function") ? netLinks(from).to : [];
+  return id => (near.indexOf(id) >= 0 ? 0 : 1);
+}
+// La gare la moins chère qu'on puisse ouvrir MAINTENANT — voisine d'abord.
+function cheapestBuyableNear(from) {
+  const rank = nearFirst(from);
+  const cand = CATALOG.filter(c => canBuy(c.id));
+  if (!cand.length) return null;
+  cand.sort((a, b) => rank(a.id) - rank(b.id) || stationPrice(a.id) - stationPrice(b.id));
+  return cand[0].id;
+}
+// Une gare à soi qui a encore un palier à décrocher — voisine d'abord, facile
+// d'abord : le joueur vient chercher un palier, pas une épreuve.
+function bestOwnedWithTier(from) {
+  const rank = nearFirst(from);
+  const cand = CATALOG.filter(c =>
+    c.id !== from && isBought(c.id) && stationNextAmount(c.id) > 0);
+  if (!cand.length) return null;
+  cand.sort((a, b) => rank(a.id) - rank(b.id) || stationDifficulty(a.id) - stationDifficulty(b.id));
+  return cand[0].id;
+}
+// Ce que la CARTE propose : les trois mêmes cas que le relevé, moins « rejouer
+// ici » — sur la carte, il n'y a pas d'ici. Rend null quand il n'y a plus rien
+// à proposer : mieux vaut se taire que d'inventer un geste.
+function nextMove(from) {
+  const idle = idleStation();
+  if (idle && idle !== from) return { kind: "service", id: idle };
+  const buy = cheapestBuyableNear(from);
+  if (buy) return { kind: "open", id: buy };
+  const go = bestOwnedWithTier(from);
+  if (go) return { kind: "go", id: go };
+  return null;
+}
+
 // La moins chère des gares achetables — d'un pays donné, ou du réseau entier.
 // Sert à proposer une suite quand le joueur clique une gare hors de portée.
 function cheapestBuyable(country) {

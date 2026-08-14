@@ -1476,27 +1476,22 @@ function endGame(failed) {
     if (!win) return { kind: "replay" };              // rater, c'est recommencer
     const here = CATALOG[currentIdx] ? CATALOG[currentIdx].id : null;
 
-    const idle = typeof idleStation === "function" ? idleStation() : null;
+    // Les trois gestes qui font avancer viennent de js/catalog.js — la carte
+    // propose EXACTEMENT les mêmes, et ne peut donc pas contredire ce relevé.
+    // Seul « rejouer ici » est propre à cet écran, et il s'intercale : quand la
+    // gare qu'on vient de tenir a encore un palier, c'est le geste le moins
+    // coûteux qui soit — on ne bouge pas.
+    const idle = idleStation();
     if (idle && idle !== here) return { kind: "service", id: idle };
 
-    if (!boughtNow && typeof netLinks === "function" && here) {
-      const cand = netLinks(here).to
-        .filter(id => canBuy(id))   // payable ET débloquée : sinon on agite un bouton mort
-        .sort((a, b) => stationPrice(a) - stationPrice(b));
-      if (cand.length) return { kind: "open", id: cand[0] };
+    if (!boughtNow) {
+      const buy = cheapestBuyableNear(here);
+      if (buy) return { kind: "open", id: buy };
     }
-
     if (here && stationNextAmount(here) > 0) return { kind: "replay" };
 
-    if (here && typeof netLinks === "function") {
-      const near = netLinks(here).to;
-      const cand = CATALOG.filter(c =>
-        c.id !== here && isBought(c.id) && stationNextAmount(c.id) > 0);
-      cand.sort((a, b) =>
-        (near.indexOf(b.id) >= 0) - (near.indexOf(a.id) >= 0) ||
-        stationDifficulty(a.id) - stationDifficulty(b.id));
-      if (cand.length) return { kind: "go", id: cand[0].id };
-    }
+    const go = bestOwnedWithTier(here);
+    if (go) return { kind: "go", id: go };
     return { kind: "map" };
   }
 

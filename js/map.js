@@ -185,6 +185,25 @@ function buildMap() {
   host.appendChild(home);
 
   // ------------------------------------------------------------------
+  // LE PAS SUIVANT, EN PERMANENCE.
+  // ------------------------------------------------------------------
+  // Le relevé de fin de service désigne une action ; la carte, elle, ne
+  // désignait rien. Le joueur qui y revenait — ou qui l'ouvrait en démarrant —
+  // se retrouvait devant cent quarante-cinq points et devait reconstituer
+  // lui-même ce qu'il pouvait faire : quelle gare est à portée, laquelle a
+  // encore un palier, laquelle attend son premier service.
+  //
+  // Le même calcul qu'en fin de service (js/catalog.js, nextMove) tient
+  // désormais dans une pastille au bas de l'écran. Elle NOMME la gare, dit ce
+  // qu'elle coûte ou rapporte, y vole et ouvre sa fiche. Elle disparaît quand
+  // il n'y a plus rien à proposer — se taire vaut mieux qu'inventer un geste.
+  const next = document.createElement("button");
+  next.className = "map-next hidden";
+  next.addEventListener("click", ev => { ev.stopPropagation(); goToNextMove(); });
+  MAP.nextBtn = next;
+  host.appendChild(next);
+
+  // ------------------------------------------------------------------
   // LA LÉGENDE. Repliée sous un bouton : la carte se lit sans elle, mais rien
   // n'explique une convention à qui ne l'a pas devinée.
   //
@@ -633,6 +652,47 @@ function networkBbox() {
     : (typeof isStartDoor === "function" ? CATALOG.filter(c => isStartDoor(c.id)) : []);
   return src.length ? stationsBbox(src.map(c => c.id)) : null;
 }
+// ------------------------------------------------------------------
+// Le bouton « pas suivant » : son texte, et ce qu'il fait.
+// ------------------------------------------------------------------
+// L'ANCRE, c'est la dernière gare jouée. Elle ne restreint rien : elle ORDONNE
+// les candidats à mérite égal, pour qu'on propose la voisine plutôt qu'une gare
+// à l'autre bout du réseau. Au tout premier lancement il n'y en a pas, et la
+// proposition porte alors sur le réseau entier — ce qui est exactement ce qu'il
+// faut quand on n'a encore rien.
+function nextAnchor() {
+  return (typeof lastPlayedId === "string") ? lastPlayedId : null;
+}
+function updateNextBtn() {
+  const btn = MAP.nextBtn;
+  if (!btn || typeof nextMove !== "function") return;
+  const mv = MAPNET.next;
+  btn.classList.toggle("hidden", !mv);
+  if (!mv) return;
+  const c = cardOf(mv.id);
+  const nm = c ? (c.city || c.name) : mv.id;
+  // Le verbe dit le geste, le montant dit l'enjeu. « Continuer » seul ne dit ni
+  // où l'on va ni ce qu'on y trouve.
+  btn.innerHTML =
+    mv.kind === "service" ? '<span class="lbl">Prendre le service</span><b>' + nm + "</b>"
+    : mv.kind === "open"  ? '<span class="lbl">Ouvrir</span><b>' + nm + "</b>" +
+                            '<span class="amt">' + creditsHTML(stationPrice(mv.id)) + "</span>"
+                          : '<span class="lbl">Continuer</span><b>' + nm + "</b>" +
+                            '<span class="amt">' + creditsHTML(stationNextAmount(mv.id), true) + "</span>";
+}
+// Y ALLER, C'EST Y VOLER PUIS OUVRIR SA FICHE. On ne lance pas le service dans
+// le dos du joueur : le bouton l'amène devant la décision, il la prend.
+function goToNextMove() {
+  const mv = MAPNET.next;
+  if (!mv) return;
+  const gi = catalogIndexOf(mv.id);
+  if (gi < 0) return;
+  const box = stationsBbox([mv.id]);
+  if (box) goTo(targetVB(box, 1.6), false);
+  // La fiche s'ouvre à l'arrivée : ouverte tout de suite, elle masquerait le vol.
+  setTimeout(() => openStationModal(gi), 620);
+}
+
 // Le geste « ramène-moi » : le pays sous la vue s'il y en a un, sinon le réseau,
 // sinon le cadrage d'ouverture. Il ne rend jamais la main sans avoir bougé.
 function mapHome() {

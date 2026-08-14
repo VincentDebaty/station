@@ -29,7 +29,8 @@
 
 const MAPNET = {
   built: false, gEdges: null, layer: null,
-  nodes: [], edges: [], measured: false, detail: null
+  nodes: [], edges: [], measured: false, detail: null,
+  next: null   // la proposition courante de la carte (js/catalog.js, nextMove)
 };
 
 // Les 46 gares jouables ne SATURENT pas une vue d'Europe tant qu'elles y sont
@@ -114,8 +115,16 @@ function capMoney(buyable, price, block, left) {
 function mapnetBuild() {
   if (typeof CATALOG === "undefined" || !CATALOG.length || !MAP.svg) return;
   const prog = (typeof getProgress === "function") ? getProgress() : {};
-  // La gare que désigne le bouton du relevé de fin de service, s'il est ouvert.
-  const focus = (typeof endFocusId === "string" && endFocusId) ? endFocusId : null;
+  // LA PROPOSITION DE LA CARTE — calculée UNE fois, ici, parce que c'est ici
+  // qu'on redessine à chaque changement de progression. Le bouton du bas et la
+  // pastille qui respire la lisent tous deux : deux calculs séparés auraient
+  // fini par désigner deux gares différentes.
+  MAPNET.next = (typeof nextMove === "function")
+    ? nextMove(typeof nextAnchor === "function" ? nextAnchor() : null) : null;
+  // Qui respire : la cible du relevé de fin de service s'il est ouvert — c'est
+  // lui qui parle alors — sinon celle du bouton de la carte.
+  const focus = (typeof endFocusId === "string" && endFocusId) ? endFocusId
+    : (MAPNET.next ? MAPNET.next.id : null);
 
   // Calques : les arêtes SOUS les formes de pays ? Non — au-dessus, sinon la
   // terre les masque. Elles restent néanmoins sous l'overlay des pastilles.
@@ -351,6 +360,9 @@ function mapnetBuild() {
     });
   }
 
+  // Le bouton se réécrit du même geste : il ne peut pas rester en retard sur la
+  // carte qu'il commente.
+  if (typeof updateNextBtn === "function") updateNextBtn();
   MAPNET.built = true;
 }
 
