@@ -1532,6 +1532,19 @@ svg { width: 100%; height: 100%; display: block; }
 #end-actions { display: flex; flex-direction: column; gap: 8px; }
 #end-actions .btn { width: 100%; justify-content: center; }
 #end-actions .btn.hidden { display: none; }
+/* LE BOUTON PRINCIPAL PORTE UN MONTANT, DONC IL NE PEUT PAS ÊTRE TEAL VIF.
+   L'or (#f0b23c) et le teal (#2dd4bf) ont pratiquement la même luminance : le
+   « +27 » de « Rejouer — +27 » ressortait à 1,01 : 1 sur son fond, c'est-à-dire
+   qu'il ne ressortait pas du tout. Mesuré, pas estimé.
+
+   Le teal SOMBRE de la fiche de gare (#16333a, celui de « Prendre le service »)
+   rend 7,1 : 1 sur l'or et 12,5 : 1 sur le libellé. Il est déjà dans le jeu, et
+   les deux boutons qui envoient jouer se ressemblent enfin. Le bouton reste
+   premier par son cerne teal et son texte clair, pas par un aplat criard. */
+#end-actions .btn.primary {
+  background: #16333a; border-color: #2dd4bf; color: #eafbf7; font-weight: 600;
+}
+#end-actions .btn.primary:hover { background: #1c4249; border-color: #63e6d4; }
 
 
 /* --- Fiche de gare : achat, et ce que la gare a déjà versé --------------- */
