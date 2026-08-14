@@ -1431,54 +1431,85 @@ function endGame(failed) {
     animateCredits(MAP.purse, getCredits() - gain, getCredits(), false);
   }
 
-  function paintActions() {
-    // La voisine à proposer : achetable, la MOINS CHÈRE, et dans les moyens du
-    // joueur. Rien ne sert d'agiter une gare qu'il ne peut pas payer — la carte
-    // le lui dira mieux, avec son prix et son manque.
-    let offerId = null;
-    if (win && !STATION.adhoc && !boughtNow && typeof netLinks === "function") {
-      const cand = netLinks(CATALOG[currentIdx].id).to
-        .filter(id => canBuy(id))     // payable ET débloquée : sinon on agite un bouton mort
+  // ------------------------------------------------------------------
+  // LE PAS SUIVANT — un seul, choisi par le jeu, jamais vide.
+  // ------------------------------------------------------------------
+  // Le relevé pouvait s'achever sur un unique bouton « Rejouer » qui ne
+  // promettait rien : gare au palmarès complet, aucune voisine payable, et la
+  // boucle s'arrêtait net. Le joueur restait devant un écran sans suite, à
+  // chercher lui-même sur la carte ce qu'il pouvait bien faire.
+  //
+  // Cinq cas, dans l'ordre où ils servent le joueur — le premier qui s'applique
+  // gagne, et le dernier ne peut pas échouer :
+  //
+  //   1. UN SERVICE EN ATTENTE. Une gare acquise n'a jamais tourné : elle
+  //      bloque TOUS les achats du réseau (js/catalog.js). Tant qu'elle attend,
+  //      rien d'autre n'avance — et le joueur ne rencontre jamais le blocage,
+  //      puisqu'on l'envoie le lever avant qu'il le heurte.
+  //   2. UNE VOISINE À OUVRIR, la moins chère de celles réellement payables.
+  //   3. ICI MÊME, s'il reste un palier à décrocher : le geste le moins coûteux
+  //      qui soit, on ne bouge pas.
+  //   4. AILLEURS SUR LE RÉSEAU : une gare à soi qui a encore un palier. Une
+  //      voisine d'abord — on ne renvoie pas le joueur à l'autre bout de
+  //      l'Europe — et la plus facile d'abord, puisqu'il vient chercher un
+  //      palier, pas une épreuve.
+  //   5. LA CARTE. Tout est décroché, tout est acheté : il n'y a plus de pas
+  //      suivant à désigner, et prétendre le contraire serait mentir.
+  function nextStep() {
+    if (STATION.adhoc) return { kind: "map" };
+    if (!win) return { kind: "replay" };              // rater, c'est recommencer
+    const here = CATALOG[currentIdx] ? CATALOG[currentIdx].id : null;
+
+    const idle = typeof idleStation === "function" ? idleStation() : null;
+    if (idle && idle !== here) return { kind: "service", id: idle };
+
+    if (!boughtNow && typeof netLinks === "function" && here) {
+      const cand = netLinks(here).to
+        .filter(id => canBuy(id))   // payable ET débloquée : sinon on agite un bouton mort
         .sort((a, b) => stationPrice(a) - stationPrice(b));
-      if (cand.length) offerId = cand[0];
+      if (cand.length) return { kind: "open", id: cand[0] };
     }
 
-    let html = recetteHTML();
-    if (boughtNow)
-      html += '<div class="eu-done">' + nameOf(boughtNow) + " ouverte</div>";
-    else if (offerId)
-      html += '<div class="eu-row"><button class="btn eu-buy" data-id="' + offerId + '">' +
-        "Ouvrir " + nameOf(offerId) + " — " + creditsHTML(stationPrice(offerId)) + "</button></div>";
-    reward.innerHTML = html;
-    reward.classList.toggle("hidden", !html);
+    if (here && stationNextAmount(here) > 0) return { kind: "replay" };
 
-    // Acheter ici, c'est déjà s'y engager : on n'ajoute pas un écran de plus.
-    // Le convoi file sur la carte de la gare qu'on quitte vers celle qu'on
-    // vient d'ouvrir, puis le service y démarre.
-    const buy = reward.querySelector(".eu-buy");
-    if (buy) buy.addEventListener("click", () => {
-      const id = buy.dataset.id;
-      if (!buyStationById(id)) { paintActions(); return; }
-      boughtNow = id;
-      const gi = CATALOG.findIndex(c => c.id === id);
-      paintActions();
-      if (gi < 0) return;
-      document.getElementById("end").classList.add("hidden");
-      document.getElementById("hub").classList.remove("hidden");
-      if (typeof started !== "undefined") started = false;
-      if (typeof mapJourneyToNext === "function")
-        mapJourneyToNext(currentIdx, gi, () => startStation(gi));
-      else startStation(gi);
-    });
+    if (here && typeof netLinks === "function") {
+      const near = netLinks(here).to;
+      const cand = CATALOG.filter(c =>
+        c.id !== here && isBought(c.id) && stationNextAmount(c.id) > 0);
+      cand.sort((a, b) =>
+        (near.indexOf(b.id) >= 0) - (near.indexOf(a.id) >= 0) ||
+        stationDifficulty(a.id) - stationDifficulty(b.id));
+      if (cand.length) return { kind: "go", id: cand[0].id };
+    }
+    return { kind: "map" };
+  }
 
-    // Plus de bouton « gare suivante ». Il désignait une voisine possédée et
-    // jamais jouée — utile du temps où la fin de service était un cul-de-sac.
-    // La carte est désormais posée à côté du relevé, avec les gares acquises,
-    // leurs recettes restantes et ce qui s'achète : elle propose mieux, et sans
-    // choisir à la place du joueur.
+  // Partir d'ici vers une autre gare : le relevé se range, le convoi file sur la
+  // carte, le service démarre. Un seul chemin pour les trois cas qui déplacent
+  // le joueur (service en attente, gare ouverte, gare d'ailleurs) — trois copies
+  // auraient fini par diverger sur l'ordre des masquages.
+  function travelTo(id) {
+    const gi = CATALOG.findIndex(c => c.id === id);
+    if (gi < 0) return;
+    document.getElementById("end").classList.add("hidden");
+    document.getElementById("hub").classList.remove("hidden");
+    if (typeof started !== "undefined") started = false;
+    if (typeof mapJourneyToNext === "function")
+      mapJourneyToNext(currentIdx, gi, () => startStation(gi));
+    else startStation(gi);
+  }
+
+  function paintActions() {
+    const step = nextStep();
+
+    reward.innerHTML = recetteHTML();
+    reward.classList.toggle("hidden", !reward.innerHTML);
+
+    // REJOUER EST LE PAS SUIVANT, OU IL EST SECONDAIRE — jamais les deux, et
+    // jamais un bouton principal qui ne promet rien. Quand il n'est pas le pas
+    // suivant, il ne reste à l'écran que s'il a encore quelque chose à offrir.
     const btnReplay = document.getElementById("btn-replay");
-    btnReplay.classList.remove("hidden");
-    btnReplay.classList.toggle("primary", !win);
+    const btnNext = document.getElementById("btn-next");
     // CE QUE LA GARE PEUT ENCORE VERSER, sur le bouton qui y ramène. Sans ce
     // chiffre, « Rejouer » ne promet rien de mesurable — or c'est exactement la
     // question que se pose un joueur à court de crédits. Rien à afficher quand
@@ -1488,6 +1519,31 @@ function endGame(failed) {
       : stationNextAmount(STATION.id);
     btnReplay.innerHTML = (typeof icon === "function" ? icon(ICON.restart, 18) : "") +
       "Rejouer" + (leftHere ? " — " + creditsHTML(leftHere, true) : "");
+    const replayIsStep = step.kind === "replay";
+    btnReplay.classList.toggle("primary", replayIsStep);
+    btnReplay.classList.toggle("hidden", !replayIsStep && !leftHere);
+
+    // Le pas suivant porte SON NOM et SON MONTANT : « Continuer » tout seul ne
+    // dit pas où l'on va, et un bouton qui n'annonce pas ce qu'il coûte ou ce
+    // qu'il rapporte se presse à l'aveugle.
+    btnNext.classList.toggle("hidden", replayIsStep);
+    btnNext.classList.add("primary");
+    if (!replayIsStep) {
+      const nm = step.id ? nameOf(step.id) : "";
+      btnNext.innerHTML =
+        step.kind === "service" ? "Prendre le service à " + nm
+        : step.kind === "open"  ? "Ouvrir " + nm + " — " + creditsHTML(stationPrice(step.id))
+        : step.kind === "go"    ? "Continuer — " + nm + " " + creditsHTML(stationNextAmount(step.id), true)
+                                : "Voir la carte";
+      btnNext.onclick = () => {
+        if (step.kind === "map") { endLeaveMap(true); return; }
+        // Acheter ici, c'est déjà s'y engager : on n'ajoute pas un écran de
+        // plus. Si le solde a bougé entre-temps, on se contente de repeindre.
+        if (step.kind === "open" && !buyStationById(step.id)) { paintActions(); return; }
+        if (step.kind === "open") boughtNow = step.id;
+        travelTo(step.id);
+      };
+    }
   }
   paintActions();
 

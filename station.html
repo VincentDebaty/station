@@ -136,7 +136,12 @@
            une voisine est abordable — de quoi l'ouvrir sans passer par la
            carte (js/game.js). -->
       <div id="end-unlock" class="hidden"></div>
-      <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+      <!-- LE PAS SUIVANT D'ABORD, la reprise ensuite. Le jeu désigne une seule
+           action — ouvrir une voisine, aller lever un service en attente,
+           repartir ailleurs — et « Rejouer » ne reste que s'il a encore un
+           palier à offrir (js/game.js, nextStep). -->
+      <div id="end-actions">
+        <button class="btn hidden" id="btn-next"></button>
         <button class="btn" id="btn-replay">Rejouer</button>
       </div>
     </div>
