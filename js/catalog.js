@@ -371,6 +371,73 @@ function buyStationById(id) {
 }
 
 // ------------------------------------------------------------------
+// LA PONCTUALITÉ — ce qui récompense CHAQUE minute, sur CHAQUE service.
+// ------------------------------------------------------------------
+// Les crédits sont un escalier : quatre paliers, décrochés une fois, et une
+// gare finie ne verse plus rien. C'est ce qui empêche le farming, et il faut le
+// garder. Mais cela laisse un trou : sur une gare au palmarès complet, un
+// service impeccable ne vaut pas mieux qu'un service médiocre — les deux
+// rapportent zéro. Or c'est précisément la promesse du jeu qui s'y perd.
+//
+// D'où un SECOND compteur, qui n'achète rien et ne se dépense pas :
+//
+//   ponctualité = tarif × (1 − retard / 30)
+//
+// Continu, donc chaque minute gagnée se voit ; proportionnel au tarif, donc
+// tenir une grande gare vaut plus que tenir une petite ; nul à trente minutes,
+// comme les étoiles. Et versé à CHAQUE service, sans plafond ni record à
+// battre.
+//
+// POURQUOI CELA NE ROUVRE PAS LE FARMING : ces points n'achètent aucune gare.
+// Les répéter ne fait avancer que le grade, c'est-à-dire un titre. Et comme le
+// barème suit le tarif, s'acharner sur une gare de difficulté 1 rapporte huit
+// fois moins que de bien tenir une difficulté 5 — le raccourci est plus long
+// que le chemin.
+function pointsFor(id, delay) {
+  if (delay == null || delay >= 30) return 0;
+  return Math.round(stationTarif(id) * (1 - Math.max(0, delay) / 30));
+}
+// Reconstitution pour une sauvegarde d'avant la ponctualité : ce que le joueur
+// aurait accumulé si le compteur avait toujours existé — un service par gare,
+// à son meilleur retard. Sous-estime forcément (il a joué plus d'une fois),
+// et c'est le bon sens de l'erreur : on ne crédite que ce qui est prouvé.
+function reconstructPoints() {
+  const prog = getProgress();
+  let total = 0;
+  for (const c of CATALOG) total += pointsFor(c.id, (prog[c.id] || {}).bestDelay);
+  return total;
+}
+// Appelé une fois, après que le magasin ET le catalogue sont chargés.
+function ensurePoints() {
+  if (typeof pointsPending === "function" && pointsPending()) setPoints(reconstructPoints());
+}
+
+// LES GRADES — un titre, pas un pouvoir. Ils ne débloquent rien : ils
+// enregistrent. Les seuils doublent presque à chaque cran, pour que le premier
+// arrive vite (il faut sentir que le compteur sert à quelque chose) et que le
+// dernier reste un horizon lointain.
+const GRADES = [
+  { at: 0,     nom: "Aiguilleur stagiaire" },
+  { at: 1200,  nom: "Aiguilleur" },
+  { at: 3500,  nom: "Chef de poste" },
+  { at: 9000,  nom: "Chef de district" },
+  { at: 20000, nom: "Régulateur" },
+  { at: 45000, nom: "Inspecteur général" }
+];
+// Le grade courant, et ce qu'il reste avant le suivant. `next` vaut null au
+// dernier : il n'y a alors plus de barre à remplir, et c'est une distinction.
+function gradeOf(points) {
+  let i = 0;
+  for (let k = 0; k < GRADES.length; k++) if (points >= GRADES[k].at) i = k;
+  const next = GRADES[i + 1] || null;
+  return {
+    i, nom: GRADES[i].nom, from: GRADES[i].at, next,
+    // Part du chemin parcouru vers le grade suivant, de 0 à 1.
+    part: next ? (points - GRADES[i].at) / (next.at - GRADES[i].at) : 1
+  };
+}
+
+// ------------------------------------------------------------------
 // LE PAS SUIVANT — les trois gestes qui font avancer, et rien d'autre.
 // ------------------------------------------------------------------
 // Le relevé de fin de service désigne une action et une seule (js/game.js) ;

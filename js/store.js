@@ -14,7 +14,7 @@
 // sauvegarde ancienne au schéma courant, pour ne jamais casser une partie
 // après une mise à jour.
 // ------------------------------------------------------------------
-const SCHEMA_VERSION = 3;
+const SCHEMA_VERSION = 4;
 const KEY_PROGRESS = "station-progress";
 const KEY_MUTED = "station-muted";
 const KEY_ONBOARDED = "station-onboarded"; // « le joueur a déjà appris le geste »
@@ -40,7 +40,7 @@ function makeBackend() {
 const _store = makeBackend();
 
 // --- Caches mémoire : lus en synchrone par le jeu, hydratés par loadStore. ---
-let _progress = { version: SCHEMA_VERSION, credits: 0, stations: {}, bought: [] };
+let _progress = { version: SCHEMA_VERSION, credits: 0, points: 0, stations: {}, bought: [] };
 let _muted = false;
 let _onboarded = false;
 
@@ -61,11 +61,28 @@ function migrate(raw) {
     if (raw.version == null) stations = raw;
     else { stations = raw.stations || {}; opened = raw.opened || []; }
   }
-  // Déjà en v3 : rien à déduire, on reprend tel quel (défauts compris).
+  // Déjà en v4 : rien à déduire, on reprend tel quel (défauts compris).
+  if (raw && raw.version === 4)
+    return {
+      version: 4,
+      credits: Math.max(0, Math.round(raw.credits || 0)),
+      points: Math.max(0, Math.round(raw.points || 0)),
+      stations, bought: raw.bought || []
+    };
+  // v3 → v4 : la PONCTUALITÉ apparaît. `points: null` veut dire « pas encore
+  // reconstituée » — et non « zéro ». Un joueur qui a déjà tenu trente gares ne
+  // repart pas de rien : son compteur se déduit de ses records, exactement
+  // comme s'il avait toujours existé (js/catalog.js, reconstructPoints).
+  //
+  // La reconstitution ne peut PAS se faire ici : loadStore() et loadCatalog()
+  // tournent en parallèle (js/main.js), donc le barème ne connaît encore aucune
+  // gare et rendrait la difficulté 1 pour toutes. Elle attend que les deux
+  // soient là.
   if (raw && raw.version === 3)
     return {
-      version: 3,
+      version: 4,
       credits: Math.max(0, Math.round(raw.credits || 0)),
+      points: null,
       stations, bought: raw.bought || []
     };
 
@@ -85,7 +102,13 @@ function migrate(raw) {
     if (((stations[id] || {}).stars || 0) >= 1 && bought.indexOf(id) < 0) bought.push(id);
   // Partie neuve (ou sauvegarde vide) : la dotation de départ, sans quoi il n'y
   // aurait pas de quoi ouvrir la première gare.
-  return { version: 3, credits: bought.length ? 0 : startingCredits(), stations, bought };
+  return {
+    version: 4, credits: bought.length ? 0 : startingCredits(),
+    // Sauvegarde antérieure à la monnaie : elle a des records, donc de la
+    // ponctualité à reconstituer. Partie neuve : rien à reconstituer, zéro.
+    points: bought.length ? null : 0,
+    stations, bought
+  };
 }
 
 // --- Chargement unique au démarrage, AVANT toute lecture de progression. ---
@@ -145,6 +168,29 @@ function buyStation(id, price) {
   persistProgress();
   return true;
 }
+// ------------------------------------------------------------------
+// PONCTUALITÉ — le compteur qui ne redescend jamais.
+// ------------------------------------------------------------------
+// Il n'achète RIEN. C'est un journal de travail, pas une bourse : le solde
+// monte et descend au gré des achats, si bien que le geste le plus progressif
+// du jeu — ouvrir une gare — faisait baisser le seul chiffre visible. La
+// ponctualité, elle, ne fait que croître, et elle croît d'autant plus vite
+// qu'on est à l'heure.
+//
+// `null` = pas encore reconstituée depuis les records (voir migrate).
+function getPoints() { return _progress.points || 0; }
+function pointsPending() { return _progress.points == null; }
+function setPoints(n) {
+  _progress.points = Math.max(0, Math.round(n || 0));
+  persistProgress();
+  return _progress.points;
+}
+function addPoints(n) {
+  n = Math.round(n || 0);
+  if (n <= 0) return getPoints();
+  return setPoints(getPoints() + n);
+}
+
 function saveResult(id, stars, delay) {
   const cur = _progress.stations[id] || { stars: 0, bestDelay: null };
   _progress.stations[id] = {

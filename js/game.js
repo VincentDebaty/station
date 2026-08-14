@@ -1273,6 +1273,7 @@ function showEndBesideMap() {
   mapnetBuild();               // le solde a changé : d'autres gares sont à portée
   mapnetPosition();
   if (typeof updateCreditsBadge === "function") updateCreditsBadge(true);
+  if (typeof updateRankBadge === "function") updateRankBadge(true);   // la ponctualité vient de monter
   const r = end.querySelector(".card").getBoundingClientRect();
   const wide = window.innerWidth > 720;
   const reserved = wide ? { left: r.right + 16 }
@@ -1343,6 +1344,16 @@ function endGame(failed) {
   const tiersBefore = noPay ? 0 : stationTiersDone(STATION.id);
   if (!failed && !STATION.adhoc) saveResult(STATION.id, stars, d); // un échec (ou la démo limites) ne modifie pas le record
   const tiersAfter = noPay ? tiersBefore : stationTiersDone(STATION.id);
+  // ---- PONCTUALITÉ : versée à CHAQUE service, sans plafond ni record à battre.
+  // C'est elle qui répond « oui » à la question que les crédits laissent sans
+  // réponse sur une gare finie : est-ce que bien jouer sert encore à quelque
+  // chose ? Le grade franchi se dit dans le relevé, à sa place — pas en travers
+  // de l'écran.
+  const ponctu = noPay ? 0 : pointsFor(STATION.id, d);
+  const gradeBefore = gradeOf(getPoints());
+  if (ponctu > 0) addPoints(ponctu);
+  const gradeAfter = gradeOf(getPoints());
+  const gradeUp = gradeAfter.i > gradeBefore.i;
   if (gain > 0) addCredits(gain);
   // Pays terminé À L'INSTANT : gagné, cette gare passe de 0 à ≥1 étoile, et toutes
   // les gares du pays ont désormais au moins une étoile. (Seule cette gare a pu
@@ -1430,8 +1441,17 @@ function endGame(failed) {
         : '<div class="eu-tier next">' + palierStarsHTML(PALIERS[next]) +
             "<span>" + PALIERS[next].nom + " — " + PALIERS[next].seuil + "</span>" +
             '<span class="am">' + creditsHTML(palierAmount(STATION.id, next), true) + "</span></div>") +
-      "";  // le solde n'est PAS ici : il vit en permanence sur la carte, derrière
-           // le relevé, et c'est lui qui s'incrémente sous les yeux du joueur.
+      // LA PONCTUALITÉ, TOUJOURS. Elle est la seule ligne du relevé qui ne peut
+      // pas être nulle après un service tenu — et c'est exactement pour cela
+      // qu'elle existe : sur une gare au palmarès complet, elle est ce qui
+      // reste à gagner, et elle dépend de chaque minute.
+      (ponctu > 0
+        ? '<div class="eu-ponctu"><span class="pc-n">+' + ponctu + "</span>" +
+            "<span>ponctualité</span>" +
+            (gradeUp ? '<span class="pc-up">' + gradeAfter.nom + " !</span>" : "") + "</div>"
+        : "");
+      // le solde n'est PAS ici : il vit en permanence sur la carte, derrière
+      // le relevé, et c'est lui qui s'incrémente sous les yeux du joueur.
   }
 
   // LA RECETTE SE COMPTE, ELLE NE S'AFFICHE PAS. Un nombre déjà posé est un

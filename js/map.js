@@ -293,7 +293,17 @@ function buildMap() {
   purse.className = "map-purse";
   MAP.purse = purse;
   host.appendChild(purse);
+
+  // LE GRADE, sous la bourse. Le solde monte ET DESCEND — acheter une gare,
+  // c'est-à-dire le geste le plus progressif du jeu, faisait baisser le seul
+  // chiffre affiché en permanence. Rien ne disait au joueur qu'il avançait.
+  // La ponctualité ne fait que croître, et son grade la résume d'un mot.
+  const rank = document.createElement("div");
+  rank.className = "map-rank";
+  MAP.rank = rank;
+  host.appendChild(rank);
   updateCreditsBadge();
+  updateRankBadge();
 
   bindCamera(host); // molette, pincement, glisser
   window.addEventListener("resize", () => { if (!MAP.animating) mapnetPosition(); });
@@ -827,6 +837,24 @@ function updateCreditsBadge(bump) {
     MAP.purse.classList.add("bump");
   }
 }
+// Le grade et sa barre. Une barre plutôt qu'un « 3 240 / 9 000 » : ce qui
+// compte n'est pas le nombre mais le fait qu'il avance, et une barre le dit
+// sans qu'on ait à lire. Le nombre reste, en petit, pour qui veut le chiffre.
+function updateRankBadge(bump) {
+  if (!MAP.rank || typeof gradeOf !== "function") return;
+  const pts = getPoints();
+  const g = gradeOf(pts);
+  MAP.rank.innerHTML =
+    '<span class="rk-nm">' + g.nom + "</span>" +
+    '<span class="rk-bar"><span style="width:' +
+      Math.round(Math.max(0, Math.min(1, g.part)) * 100) + '%"></span></span>' +
+    '<span class="rk-n">' + pts.toLocaleString("fr-FR") + "</span>";
+  if (bump) {
+    MAP.rank.classList.remove("bump");
+    void MAP.rank.offsetWidth;
+    MAP.rank.classList.add("bump");
+  }
+}
 // Instant jusqu'auquel un tap sur « Prendre le service » est ignoré : voir le
 // gestionnaire d'achat, juste en dessous.
 let _buyGuardUntil = 0;
@@ -989,6 +1017,7 @@ function openStationModal(gi) {
     if (typeof SND === "object" && SND.buy) SND.buy();
     mapnetBuild(); mapnetPosition();
     updateCreditsBadge();
+    updateRankBadge();
     openStationModal(+buy.dataset.gi);
   });
   MAP.modal.classList.remove("hidden");
@@ -1092,6 +1121,7 @@ function renderMap() {
   MAP.host.classList.remove("end-open"); // plus de relevé posé dessus
   mapnetBuild(); // le réseau dépend de la progression : on le rebâtit à chaque retour
   updateCreditsBadge(true); // on revient d'un service : la recette vient de tomber
+  updateRankBadge(true);
   closeModal();
   cancelTween(); MAP.animating = false; MAP.host.classList.remove("tweening");
   // Première ouverture : on cadre la région de l'utilisateur. Retours suivants :

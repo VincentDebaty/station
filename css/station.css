@@ -806,6 +806,38 @@ svg { width: 100%; height: 100%; display: block; }
 .map-home svg { width: 15px; height: 15px; flex: 0 0 auto; }
 .map-home.hidden { display: none; }
 
+/* --- LE GRADE, sous la bourse ----------------------------------------------
+   Deux compteurs, deux natures, et la forme le dit : la bourse est une pastille
+   d'OR — de l'argent, qui se dépense et redescend ; le grade est un bandeau
+   sobre avec une BARRE — un travail accompli, qui ne fait que croître. Les
+   confondre reviendrait à promettre qu'on peut acheter un titre. */
+.map-rank {
+  position: absolute; z-index: 6;
+  right: calc(12px + var(--safe-r, 0px)); top: calc(56px + var(--safe-t));
+  display: flex; flex-direction: column; align-items: flex-end; gap: 3px;
+  padding: 7px 11px 8px; border-radius: 12px;
+  background: rgba(21, 29, 46, .88); border: 1px solid #2a3550;
+  backdrop-filter: blur(7px); -webkit-backdrop-filter: blur(7px);
+  pointer-events: none;
+}
+.map-rank .rk-nm { font-size: 12px; font-weight: 600; color: #9fb2d6; line-height: 1; }
+/* La barre porte l'information ; le nombre n'est là que pour qui veut le
+   chiffre exact — d'où sa taille et sa couleur en retrait. */
+.map-rank .rk-bar {
+  display: block; width: 96px; height: 4px; border-radius: 999px;
+  background: #2a3550; overflow: hidden;
+}
+.map-rank .rk-bar span { display: block; height: 100%; background: #2dd4bf; border-radius: 999px; }
+.map-rank .rk-n {
+  font-size: 10px; color: var(--muted); line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.map-rank.bump { animation: purseBump .5s ease; }
+@media (prefers-reduced-motion: reduce) { .map-rank.bump { animation: none; } }
+/* Le relevé de fin de service occupe le côté : le grade y est déjà annoncé,
+   ligne « ponctualité ». Deux fois le même compteur ferait du bruit. */
+#hub-map.end-open .map-rank { display: none; }
+
 /* --- LE PAS SUIVANT, en bas au centre --------------------------------------
    Là où le pouce arrive sur un téléphone, et là où l'œil retombe après avoir
    parcouru la carte. En or : c'est la même promesse que l'étiquette de prix
@@ -1409,6 +1441,21 @@ svg { width: 100%; height: 100%; display: block; }
 #end-unlock .eu-tier.next .am .cr-amt { color: var(--gold); font-weight: 700; }
 /* Quatre sur quatre : plus de ligne suivante, et c'est un trophée. */
 #end-unlock .eu-tier.full { color: var(--gold); font-weight: 600; letter-spacing: .02em; }
+/* LA PONCTUALITÉ : en teal, jamais en or. L'or, dans ce jeu, c'est l'argent —
+   et ces points n'en sont pas. La séparer du bloc doré par un filet dit qu'on
+   change de monnaie sans avoir à l'écrire. */
+#end-unlock .eu-ponctu {
+  display: flex; align-items: baseline; justify-content: center; gap: 6px;
+  margin-top: 9px; padding-top: 8px; border-top: 1px solid #4a3a1c;
+  font-size: 13px; color: var(--muted);
+}
+#end-unlock .eu-ponctu .pc-n {
+  color: #63e6d4; font-weight: 700; font-size: 16px;
+  font-variant-numeric: tabular-nums;
+}
+/* Un grade franchi ne mérite pas un écran : il mérite d'être nommé, là où le
+   joueur lit déjà ce que son service a valu. */
+#end-unlock .eu-ponctu .pc-up { color: #2dd4bf; font-weight: 700; }
 /* Le pas suivant en premier et sur toute la largeur, la reprise dessous : la
    hiérarchie se lit avant le texte. Le relevé n'occupe qu'un tiers d'écran —
    côte à côte, « Prendre le service à Bruges » se replierait sur trois lignes. */
