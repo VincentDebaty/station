@@ -782,6 +782,79 @@ function updateDelay() {
   // Couleur alignée sur le barème d'étoiles : vert tant qu'on vise 3★ (< 10),
   // ambre tant qu'une étoile reste jouable (< 30), rouge dès que 0★ (≥ 30).
   d.className = v < 10 ? "" : v < 30 ? "warn" : "bad";
+  updateGoal(v);
+}
+
+// ------------------------------------------------------------------
+// L'OBJECTIF EN COURS — une TENSION QUI MONTE, pas une valeur qui chute.
+// ------------------------------------------------------------------
+// Le retard seul dit où l'on en est, jamais ce qu'on est en train de jouer. Le
+// joueur voyait « +9 » sans savoir qu'une minute de plus lui coûtait la moitié
+// de la recette, et découvrait le barème au relevé — c'est-à-dire trop tard
+// pour en faire quelque chose.
+//
+// Ce bandeau montre le PALIER QU'ON TIENT ENCORE et la MARGE avant de le
+// perdre. C'est le compteur qui avait été retiré (voir juste au-dessus), mais
+// pris par l'autre bout : ce n'est plus un gain qui baisse, c'est une réserve
+// qu'on protège. La différence n'est pas cosmétique — l'un punit celui qui fait
+// de son mieux, l'autre lui donne quelque chose à défendre. Et il n'était pas
+// jouable avant les paliers géométriques : avec l'ancien escalier, la première
+// minute de retard faisait chuter la barre de moitié.
+//
+// Le RECORD est écrit à côté : c'est lui qu'il faut battre pour toucher un
+// palier neuf, et le joueur court donc contre lui-même.
+function updateGoal(v) {
+  const row = document.getElementById("goal-row");
+  if (!row) return;
+  if (STATION.adhoc || typeof PALIERS === "undefined") { row.classList.add("hidden"); return; }
+  row.classList.remove("hidden");
+  // LE PALIER SE JUGE SUR LE RETARD ARRONDI, comme en fin de service — sinon le
+  // bandeau promet ce que le relevé refusera. À +0,5 min il annonçait « sans
+  // faute » alors que endGame arrondit à 1 et n'accorde que trois étoiles.
+  // La BARRE, elle, suit le retard réel : c'est elle qui doit bouger en continu.
+  const vr = Math.round(v);
+  const k = palierOf(vr);
+  const tier = document.getElementById("goal-tier");
+  const fill = document.getElementById("goal-fill");
+  const marg = document.getElementById("goal-margin");
+  const rec = document.getElementById("goal-rec");
+
+  if (k < 0) {
+    // Plus rien à tenir : la journée ne compte plus. On le dit sans détour
+    // plutôt que d'afficher une barre vide qu'on prendrait pour un bug.
+    tier.textContent = "☆☆☆";
+    fill.style.width = "0%";
+    row.className = "bad";
+    marg.textContent = "objectif manqué";
+  } else {
+    const p = PALIERS[k];
+    tier.textContent = starStr(p.stars);
+    if (p.parfait) {
+      // LE SANS-FAUTE N'A PAS DE MARGE : il se perd à la première minute. Une
+      // barre qui fondrait laisserait croire qu'il reste du jeu ; elle reste
+      // donc pleine, et c'est le passage à ★★★ qui fera le signal.
+      fill.style.width = "100%";
+      row.className = "";
+      marg.textContent = "sans faute";
+    } else {
+      // La BANDE du palier courant : de son propre seuil à celui d'en dessous.
+      // La barre mesure la marge DANS ce palier, pas un pourcentage de la
+      // journée — c'est bien la chute prochaine qu'on regarde.
+      const bas = PALIERS[k + 1] ? PALIERS[k + 1].under : 0;
+      const large = Math.max(1, p.under - bas);
+      const part = Math.max(0, Math.min(1, (p.under - v) / large));
+      fill.style.width = (part * 100).toFixed(0) + "%";
+      // La couleur suit la MARGE, pas le retard absolu : c'est l'imminence de
+      // la perte qui doit alerter, et elle n'arrive pas au même retard selon le
+      // palier qu'on tient.
+      row.className = part > 0.4 ? "" : part > 0.15 ? "warn" : "bad";
+      // Les minutes annoncées sont celles du BARÈME (retard arrondi) : « marge
+      // 1 min » doit vouloir dire qu'une minute de plus fait tomber le palier.
+      marg.textContent = "marge " + Math.max(0, p.under - vr) + " min";
+    }
+  }
+  const best = (getProgress()[STATION.id] || {}).bestDelay;
+  rec.textContent = best == null ? "" : best === 0 ? "rec. parfait" : "rec. +" + best;
 }
 
 // PAS DE COMPTEUR D'ARGENT PENDANT LE SERVICE — essayé, retiré.

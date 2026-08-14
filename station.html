@@ -85,6 +85,15 @@
         <span id="clock">07:00</span>
         <span id="delay">+0</span>
       </div>
+      <!-- L'OBJECTIF EN COURS : le palier qu'on tient encore, et la marge qui
+           reste avant de le perdre. Pas une somme — voir js/game.js, updateGoal.
+           `rec` est le record de la gare, la barre à battre. -->
+      <div id="goal-row" class="hidden">
+        <span id="goal-tier"></span>
+        <span id="goal-bar"><span id="goal-fill"></span></span>
+        <span id="goal-margin"></span>
+        <span id="goal-rec"></span>
+      </div>
       <!-- Avancement du service : bandeau au ras du bord BAS du cadre, qui se
            remplit à la proportion de convois ayant quitté le quai. Posé dans
            le cadre (et non dessous) : c'est l'horloge elle-même qui se
