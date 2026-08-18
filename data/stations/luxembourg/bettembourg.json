@@ -17,9 +17,9 @@
   },
   "links": {
     "LUXEMBOURG":           [1, 2, 3, 4, 5, 6],
-    "ESCH-SUR-ALZETTE":     [3, 4, 5],
+    "ESCH-SUR-ALZETTE":     [3, 4, 5, 6],
     "METZ":                 [1, 2, 3, 4],
-    "VOLMERANGE-LES-MINES": [5, 6]
+    "VOLMERANGE-LES-MINES": [4, 5, 6]
   },
   "sameSidePairs": [],
   "gen": {
@@ -27,6 +27,6 @@
     "cars": [2, 3, 3, 4, 4, 5, 5, 6],
     "quietRate": 0.12,
     "rush": "pointe",
-    "freightCount": 6
+    "freightCount": 4
   }
 }

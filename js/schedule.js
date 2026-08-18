@@ -13,6 +13,33 @@ const REACTION_MARGIN = 1.5;   // marge laissée au joueur (minutes de jeu)
 // repoussés en conséquence), donc la journée reste gagnable, juste plus dense.
 const FIRST_ARRIVAL = [0.5, 1];   // 1re arrivée (était [1, 2]) : service plus tôt
 const ARRIVAL_GAP_SCALE = 0.82;   // < 1 : écart entre arrivées resserré (~18 % plus dense)
+
+// ------------------------------------------------------------------
+// LA FILE SUR UN QUAI — la seule congestion qui gâche une journée.
+// ------------------------------------------------------------------
+// Attendre dehors ne coûte rien : c'est la règle du jeu, et c'est ce qui rend
+// l'aiguillage intéressant. Mais attendre dehors DERRIÈRE CINQ AUTRES, tous
+// pour le même quai, n'est plus un choix — c'est une file, et le joueur ne fait
+// plus que regarder. Le calibrage ne le voyait pas : il se contente de repousser
+// les départs officiels, si bien qu'une journée en file reste « zéro retard
+// possible » et passait tous les contrôles.
+//
+// Trois causes, traitées ensemble parce qu'aucune ne suffit :
+//   1. le tirage origine/destination était uniforme et sans mémoire — rien
+//      n'empêchait six relations de suite de viser le même quai ;
+//   2. beaucoup de relations n'ont QU'UN SEUL quai commun (LINKS[a] ∩ LINKS[b]),
+//      donc même un tirage varié peut s'entasser ;
+//   3. l'affectation gloutonne n'optimisait que « qui repart le plus tôt »,
+//      sans jamais répartir la charge.
+//
+// PLAT_TAU : combien de temps un convoi PÈSE sur son quai. Ce n'est pas sa durée
+// d'occupation exacte (elle dépend de la longueur du convoi et du trafic) mais
+// l'ordre de grandeur qui compte pour le tirage — arrêt minimum plus dégagement.
+const PLAT_TAU = 6;              // minutes de jeu
+// Ce qu'on accepte au bout du compte. La cible est 3 ; 4 est le repli des gares
+// dont la géométrie ne permet pas mieux. Au-delà, la journée est rejetée.
+const QUEUE_MAX = 3;
+const QUEUE_MAX_FALLBACK = 4;
 const rnd = (a, b) => a + Math.random() * (b - a);
 const pick = arr => arr[Math.floor(Math.random() * arr.length)];
 
@@ -205,11 +232,75 @@ function simulateDay(schedule, assign, dt, events) {
   return sims;
 }
 
+// ------------------------------------------------------------------
+// PRESSION SUR UN QUAI — combien de convois l'attendent EN MÊME TEMPS.
+// ------------------------------------------------------------------
+// La fenêtre d'un convoi court de son ARRIVÉE — l'instant où il se présente et
+// commence à peser, même s'il patiente sur la voie d'approche — à la fin de son
+// occupation du quai. Compter depuis l'entrée en gare ne mesurerait que la file
+// visible et manquerait justement ceux qui font la queue dehors, c'est-à-dire
+// tout le problème.
+//
+// Balayage : +1 par début, −1 par fin, le maximum courant est la pression. À
+// instant égal les fins passent AVANT les débuts (le tri sur le delta s'en
+// charge), sinon deux convois qui se relaient proprement compteraient pour deux.
+function platformPressure(schedule, res) {
+  let worst = 0;
+  for (const q of PLATFORMS) {
+    const evs = [];
+    for (let i = 0; i < schedule.length; i++) {
+      if (res[i].plat !== q.id) continue;
+      const a = schedule[i].arrEff ?? schedule[i].arr;
+      const b = res[i].occEnd ?? res[i].depReal ?? a;
+      evs.push([a, 1], [b, -1]);
+    }
+    evs.sort((x, y) => x[0] - y[0] || x[1] - y[1]);
+    let cur = 0;
+    for (const [, d] of evs) { cur += d; if (cur > worst) worst = cur; }
+  }
+  return worst;
+}
+
 function generateSchedule() {
-  // Filtres de qualité : on retire les journées trop congestionnées
-  // (attente > 15 min) et celles qui échouent au contrôle final à pas fin
-  // — la garantie « zéro retard possible » doit tenir à la précision du jeu
-  for (let attempt = 0; attempt < 10; attempt++) {
+  // Filtres de qualité, dans l'ordre du plus rédhibitoire au plus fin :
+  //   • attente > 15 min : la journée est engorgée, on n'en veut à aucun prix ;
+  //   • contrôle final à pas fin : la garantie « zéro retard possible » doit
+  //     tenir à la précision du jeu, pas seulement à celle du calibrage ;
+  //   • PRESSION SUR UN QUAI : la journée est jouable à zéro mais ne se joue
+  //     pas — on y attend, on n'y aiguille pas. Voir platformPressure.
+  //
+  // La pression se demande en DEUX TEMPS. La cible (3) est ce qu'on veut ; le
+  // repli (4) est ce qu'on accepte des gares dont la géométrie ne permet pas
+  // mieux — Bettembourg, Malines et Leeds ont trop de relations à quai unique
+  // pour tenir 3 à tous les coups. Exiger la cible partout reviendrait à
+  // épuiser les essais puis à rendre n'importe quoi, ce qui est pire.
+  //
+  // LE PALIER STRICT EST COURT, ET C'EST TOUT LE RÉGLAGE. Une gare qui peut
+  // tenir 3 y arrive en un ou deux essais — le tirage sous pression l'y amène
+  // presque toujours du premier coup. En insister douze fois, on ne gagnait
+  // rien sur celles-là et on payait douze calibrages complets sur celles qui ne
+  // le peuvent pas : Bruxelles-Midi passait de 2,2 à 5,5 secondes par journée,
+  // sous les yeux du joueur. Quatre essais suffisent à faire la différence
+  // entre « peut tenir 3 » et « ne le peut pas ».
+  //
+  // Et l'on ne rend JAMAIS une journée non vérifiée : à défaut de trouver
+  // mieux, on garde la moins congestionnée de celles qui ont passé le reste.
+  // LE BUDGET SE COMPTE EN JOURNÉES ÉVALUABLES, PAS EN TIRAGES.
+  //
+  // La boucle rend la première journée qui passe : sur une gare tranquille elle
+  // sort au premier tour et le plafond ne coûte rien. Mais sur les plus
+  // chargées — Bruxelles-Midi, Bettembourg, Malines — le contrôle d'attente
+  // rejette presque TOUS les tirages, bien avant qu'on parle de pression. Y
+  // insister vingt-quatre fois ne trouvait rien de plus et faisait passer la
+  // préparation de 2,2 à 4,7 secondes, sous les yeux du joueur.
+  //
+  // On garde donc les vingt-quatre tirages pour les gares où le filtre sert
+  // vraiment, et l'on abandonne tôt là où il n'a rien à filtrer : dix tirages
+  // sans une seule journée évaluable disent que ce n'est pas la pression qui
+  // bloque, et que le temps du joueur est mieux employé ailleurs.
+  let best = null, bestQ = Infinity, seen = 0;
+  for (let attempt = 0; attempt < 24; attempt++) {
+    if (attempt >= 10 && seen === 0) break;
     const day = generateOnce();
     if (Math.max(...day.schedule.map(s => s.dep - (s.arrEff ?? s.arr))) > 15) continue;
     const res = simulateDay(day.schedule, day.schedule.map(s => s.hint), 0.005, day.events);
@@ -227,10 +318,59 @@ function generateSchedule() {
       if (res[i].depReal == null) { ok = false; break; }
       tot += Math.max(0, res[i].depReal - day.schedule[i].dep);
     }
-    if (ok && tot <= 0.15) return day;
+    if (!ok || tot > 0.15) continue;
+    seen++;
+    const q = platformPressure(day.schedule, res);
+    if (q <= (attempt < 4 ? QUEUE_MAX : QUEUE_MAX_FALLBACK)) return day;
+    if (q < bestQ) { bestQ = q; best = day; }
   }
-  return generateOnce(); // au pire, on accepte la dernière
+  // Aucune journée sous le seuil : la moins encombrée de celles qui tenaient,
+  // et à défaut une dernière — mieux vaut une journée jouable qu'aucune.
+  return best || generateOnce();
 }
+// ------------------------------------------------------------------
+// TIRER UNE RELATION EN TENANT COMPTE DES QUAIS DÉJÀ SOLLICITÉS.
+// ------------------------------------------------------------------
+// La charge de chaque quai AUTOUR d'un instant donné, lue sur les convois déjà
+// tirés. Chacun répartit son poids sur les quais qui peuvent l'accueillir : il
+// n'a pas encore choisi, il a seulement des options.
+function loadAround(t, draft) {
+  const load = {};
+  for (const q of PLATFORMS) load[q.id] = 0;
+  for (const s of draft) {
+    const dt = Math.abs((s.arrEff ?? s.arr) - t);
+    if (dt >= 2 * PLAT_TAU) continue;
+    const opts = LINKS[s.from].filter(q => LINKS[s.to].includes(q));
+    if (!opts.length) continue;
+    const w = Math.exp(-dt / PLAT_TAU) / opts.length;
+    for (const q of opts) load[q] += w;
+  }
+  return load;
+}
+
+// Une relation vaut ce que vaut SON MEILLEUR QUAI LIBRE : c'est celui-là que le
+// joueur prendra. On la note donc 1/(1+charge du plus libre), au carré pour que
+// l'écart se voie — sans jamais tomber à zéro, car aucune relation ne doit
+// disparaître de la journée. Le hasard reste maître, il est seulement informé.
+//
+// C'est ce qui manquait : `pick(PAIRS)` tirait uniformément et sans mémoire, si
+// bien que six relations de suite pouvaient viser le même quai. Sur une gare
+// comme Liège, où plus de la moitié des relations n'ont qu'un quai commun, cela
+// suffisait à fabriquer une file de six trains.
+function pickPairUnderPressure(pairOpts, load) {
+  const w = [];
+  let tot = 0;
+  for (const opts of pairOpts) {
+    let freest = Infinity;
+    for (const q of opts) if (load[q] < freest) freest = load[q];
+    const v = 1 / ((1 + freest) * (1 + freest));
+    w.push(v); tot += v;
+  }
+  let r = Math.random() * tot;
+  for (let i = 0; i < w.length; i++) { r -= w[i]; if (r <= 0) return i; }
+  return w.length - 1;
+}
+
 function generateOnce() {
   // 1) tirage des trains selon la fiche de la gare : liaisons, wagons,
   // espacement des arrivées
@@ -238,15 +378,35 @@ function generateOnce() {
   const draft = [];
   // écarts modulés par la courbe d'affluence de la gare (cf. rushWeights)
   const gapW = rushWeights(n);
+  // Les quais possibles de chaque relation, calculés une fois : c'est
+  // l'intersection des deux portails, et c'est elle qui décide de tout. Une
+  // relation à un seul quai n'a aucune souplesse — c'est celle qu'il faut
+  // espacer, pas interdire.
+  const pairOpts = PAIRS.map(([a, b]) => LINKS[a].filter(q => LINKS[b].includes(q)));
+  // Charge courante par quai, en « convois qui pèsent ». Un convoi à quatre
+  // quais possibles n'en charge chacun que d'un quart : il ne fait pas encore
+  // son choix, il pose seulement une option.
+  const load = {};
+  for (const q of PLATFORMS) load[q.id] = 0;
   let arr = rnd(FIRST_ARRIVAL[0], FIRST_ARRIVAL[1]);
+  let prevArr = arr;
   for (let i = 0; i < n; i++) {
-    const [from, to] = pick(PAIRS);
+    // Le temps passé desserre la pression : un convoi arrivé il y a longtemps a
+    // libéré son quai. Décroissance exponentielle de constante PLAT_TAU — pas
+    // un seuil, sinon la charge sauterait d'un train à l'autre.
+    const decay = Math.exp(-Math.max(0, arr - prevArr) / PLAT_TAU);
+    for (const q in load) load[q] *= decay;
+    prevArr = arr;
+    const k = pickPairUnderPressure(pairOpts, load);
+    const [from, to] = PAIRS[k];
     draft.push({
       id: "T" + String(i + 1).padStart(2, "0"),
       // MIN_CARS : garde-fou, même si une fiche de gare tire un 1
       from, to, cars: Math.max(MIN_CARS, pick(GEN.cars)),
       arr: Math.round(arr * 2) / 2, dep: 0
     });
+    const share = 1 / pairOpts[k].length;
+    for (const q of pairOpts[k]) load[q] += share;
     arr += rnd(GEN.gapMin, GEN.gapMax) * ARRIVAL_GAP_SCALE * gapW[i];
   }
   const lastArr = draft[draft.length - 1].arr;
@@ -263,13 +423,25 @@ function generateOnce() {
   const nFreight = cross.length === 0 ? 0
     : (GEN.freightCount != null ? GEN.freightCount
        : Math.max(1, Math.min(5, STATION.difficulty || 1)));
+  // Les quais possibles de chaque relation traversante — même rôle que
+  // pairOpts pour les voyageurs.
+  const crossOpts = cross.map(([a, b]) => LINKS[a].filter(q => LINKS[b].includes(q)));
   for (let f = 0; f < nFreight; f++) {
-    const [from, to] = pick(cross);
     // Arrivées ÉTALÉES sur le service : un fret par tranche, sinon les cinq
     // se bousculent dans le même quart d'heure et la journée devient injouable.
     const lo = 6, hi = Math.max(lo + 2, lastArr - 4);
     const a = lo + (hi - lo) * f / nFreight, b = lo + (hi - lo) * (f + 1) / nFreight;
     const fArr = Math.round(rnd(a, b));
+    // UN FRET SE TIRE COMME LES AUTRES — et même avec plus de soin. Il ne
+    // s'arrête pas, mais il verrouille son quai ET ses deux itinéraires le
+    // temps du transit : le poser sur un quai déjà couru coûte plus cher qu'un
+    // voyageur de plus. Il était pourtant tiré uniformément, ce qui suffisait à
+    // engorger une gare à six convois de fret comme Bettembourg.
+    //
+    // La charge se mesure AUTOUR DE SON HEURE D'ARRIVÉE, sur les voyageurs déjà
+    // tirés — pas sur la charge de fin de journée, qui ne dit rien de l'instant
+    // où il se présente.
+    const [from, to] = cross[pickPairUnderPressure(crossOpts, loadAround(fArr, draft))];
     draft.push({
       id: "F" + String(f + 1).padStart(2, "0"), freight: true, from, to,
       // 6-7 wagons : le convoi reste le plus long du plateau
@@ -304,15 +476,38 @@ function generateOnce() {
   // portails, et le calibrage lui en cherche un qui ne gêne pas le service)
   const opts = draft.map(s => LINKS[s.from].filter(q => LINKS[s.to].includes(q)));
   const assign = opts.map(o => o[0]);
+  // À départ ÉQUIVALENT, deux quais ne se valent pas : l'un peut être déjà
+  // couru, l'autre libre. Le glouton seul prenait toujours le premier trouvé et
+  // convergeait donc sur le même quai — il fabriquait la file qu'on cherche à
+  // éviter. Une demi-minute d'écart au départ ne se voit pas ; une file de six
+  // se voit tout de suite.
+  const TIE = 0.5; // minutes de jeu
   for (let i = 0; i < draft.length; i++) {
     if (opts[i].length === 1) { assign[i] = opts[i][0]; continue; }
-    let bestQ = opts[i][0], bestT = Infinity;
+    const cands = [];
+    let bestT = Infinity;
     for (const q of opts[i]) {
       assign[i] = q;
       const d = simulateDay(draft, assign, 0.03, events)[i].depReal ?? Infinity;
-      if (d < bestT) { bestT = d; bestQ = q; }
+      cands.push([q, d]);
+      if (d < bestT) bestT = d;
     }
-    assign[i] = bestQ;
+    // Parmi les quais à égalité, le moins sollicité AUTOUR de cette arrivée. On
+    // ne compte que les trains déjà affectés (j < i) : ceux d'après n'ont
+    // encore qu'une valeur provisoire, et les compter reviendrait à préférer
+    // systématiquement le premier quai de leur liste.
+    const aI = draft[i].arrEff ?? draft[i].arr;
+    let bestQ = null, bestLoad = Infinity;
+    for (const [q, d] of cands) {
+      if (!(d <= bestT + TIE)) continue;
+      let near = 0;
+      for (let j = 0; j < i; j++) {
+        if (assign[j] !== q) continue;
+        if (Math.abs((draft[j].arrEff ?? draft[j].arr) - aI) < 2 * PLAT_TAU) near++;
+      }
+      if (near < bestLoad) { bestLoad = near; bestQ = q; }
+    }
+    assign[i] = bestQ == null ? opts[i][0] : bestQ;
   }
   // 3) départ officiel = départ faisable + marge de réaction, puis vérification
   //    (repousser un départ peut décaler les suivants : on itère jusqu'à zéro)

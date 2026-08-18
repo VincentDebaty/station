@@ -10,6 +10,14 @@
 //      l'œil, révélé ici).
 //   2. génération — K journées tirées ; on vérifie 0 erreur, aucun train non
 //      plaçable, et le retard total garanti par le calibrage sous le seuil.
+//   3. congestion — combien de convois attendent LE MÊME QUAI en même temps.
+//      Un horaire peut être « zéro retard possible » et rester une salle
+//      d'attente : le calibrage repousse simplement les départs officiels, si
+//      bien qu'une file de six trains sur un quai passe les deux contrôles
+//      ci-dessus sans rien signaler. C'est pourtant ce qui se ressent le plus
+//      en jouant — on n'aiguille plus, on patiente. On mesure donc la
+//      PRESSION : le nombre maximum de convois dont la fenêtre d'occupation du
+//      quai se chevauche, sur la solution de calibrage.
 //
 // Usage :
 //   node tools/gen-check.mjs                 # tout le catalogue, K=6
@@ -45,6 +53,25 @@ const kArg = rawArgs.find(a => /^\d+$/.test(a));
 const K = kArg ? parseInt(kArg, 10) : (rawArgs.some(a => !/^\d+$/.test(a)) ? 30 : 6);
 const filter = rawArgs.filter(a => !/^\d+$/.test(a));
 const DELAY_MAX = 0.30; // min de jeu : marge au-dessus du seuil interne (0.15) du générateur
+// Pression tolérée sur un quai. Le générateur vise 3 et se replie sur 4
+// (QUEUE_MAX, js/schedule.js) ; le contrôle vérifie qu'il y arrive.
+//
+// MAIS IL LE VÉRIFIE EN TAUX, PAS EN MAXIMUM. Un pic isolé à 5 sur seize
+// journées n'est pas ce que le joueur a signalé : ce qu'il a vécu, ce sont les
+// six derniers convois du service tous sur le même quai, journée après journée.
+// Refuser toute excursion reviendrait à condamner des gares parfaitement
+// jouables pour un instant de pincement, et à pousser à durcir le générateur
+// bien au-delà de ce qui se ressent. On tolère donc le rare, jamais le
+// systématique — et jamais le grave, quelle que soit sa rareté.
+const QUEUE_MAX_CHECK = 4;      // ce qu'on veut tenir
+const QUEUE_HARD = 6;           // jamais, même une seule fois
+const QUEUE_RATE_MAX = 0.12;    // part de journées tolérée au-dessus du seuil
+// UNE JOURNÉE N'EST PAS UN MOTIF. Sur un contrôle court (K=8, celui du
+// pre-commit), une seule excursion pèse déjà 12,5 % et ferait échouer une gare
+// que le même contrôle en K=30 déclare saine. Le taux ne décide donc qu'à
+// partir de DEUX journées — en deçà, c'est du bruit d'échantillonnage, pas un
+// défaut du générateur.
+const QUEUE_MIN_DAYS = 2;
 
 // --- tirage reproductible (--seed) --------------------------------------
 // mulberry32 : court, bien distribué, suffisant pour rejouer des journées.
@@ -83,6 +110,11 @@ for (const group of index)
 if (filter.length) cards = cards.filter(c => filter.includes(c.id));
 if (!cards.length) { console.error("Aucune gare ne correspond à :", filter.join(", ")); process.exit(2); }
 
+// La PRESSION sur un quai se lit dans le moteur (js/schedule.js,
+// platformPressure) — le générateur s'en sert pour filtrer, ce contrôle pour
+// vérifier. Une seconde copie ici aurait fini par mesurer autre chose que ce
+// que le jeu applique, et le contrôle aurait certifié un horaire qu'il ne
+// contrôlait plus.
 const eng = makeEngine();
 const rows = [];
 let failed = 0;
@@ -113,7 +145,10 @@ for (const { id, country } of cards) {
 
   // 2) génération : K journées, on mesure le pire retard garanti et les non-plaçables
   const simulateDay = vm.runInContext("simulateDay", eng);
+  const platformPressure = vm.runInContext("platformPressure", eng);
   let worst = 0, unplaceableDays = 0, errs = 0, minN = Infinity, maxN = 0;
+  // Congestion : pire pression vue, et part des journées qui dépassent le seuil.
+  let queueMax = 0, queueSum = 0, queueDays = 0, days = 0;
   for (let k = 0; k < K; k++) {
     try {
       const day = vm.runInContext("generateSchedule()", eng);
@@ -130,27 +165,38 @@ for (const { id, country } of cards) {
       }
       worst = Math.max(worst, tot);
       if (unplaced) unplaceableDays++;
+      const q = platformPressure(sched, res);
+      queueMax = Math.max(queueMax, q); queueSum += q; days++;
+      if (q > QUEUE_MAX_CHECK) queueDays++;
     } catch (e) { errs++; if (errs <= 2) problems.push("erreur génération : " + e.message); }
   }
   if (errs) problems.push(errs + " journée(s) en erreur");
   if (unplaceableDays) problems.push(unplaceableDays + " journée(s) avec train non plaçable");
   if (worst > DELAY_MAX) problems.push("retard garanti " + worst.toFixed(2) + " > " + DELAY_MAX);
+  if (queueMax >= QUEUE_HARD)
+    problems.push("file de " + queueMax + " au même quai (jamais toléré)");
+  else if (queueDays >= QUEUE_MIN_DAYS && days && queueDays / days > QUEUE_RATE_MAX)
+    problems.push(queueDays + "/" + days + " journée(s) au-dessus de " +
+      QUEUE_MAX_CHECK + " au même quai (max " + queueMax + ")");
 
   const ok = problems.length === 0;
   if (!ok) failed++;
-  rows.push({ id, ok, trains: `${minN}-${maxN}`, delay: worst.toFixed(2), problems });
+  rows.push({ id, ok, trains: `${minN}-${maxN}`, delay: worst.toFixed(2),
+              qMax: queueMax, qMoy: days ? (queueSum / days).toFixed(1) : "—", problems });
 }
 
 // --- rapport ---
 const pad = (s, n) => String(s).padEnd(n);
 console.log(`\ngen-check — ${cards.length} gare(s), K=${K} journées chacune` +
             (SEED != null ? `, graine ${SEED} (reproductible)` : "") + "\n");
-console.log(pad("gare", 18) + pad("état", 6) + pad("trains", 9) + pad("retard", 8) + "problèmes");
-console.log("-".repeat(72));
+console.log(pad("gare", 18) + pad("état", 6) + pad("trains", 9) + pad("retard", 8) +
+            pad("file", 6) + pad("moy", 6) + "problèmes");
+console.log("-".repeat(88));
 for (const r of rows)
   console.log(
     pad(r.id, 18) + pad(r.ok ? "OK" : "FAIL", 6) +
-    pad(r.trains, 9) + pad(r.delay, 8) + (r.problems.join(" ; ") || ""));
-console.log("-".repeat(72));
+    pad(r.trains, 9) + pad(r.delay, 8) +
+    pad(r.qMax, 6) + pad(r.qMoy, 6) + (r.problems.join(" ; ") || ""));
+console.log("-".repeat(88));
 console.log(failed ? `\n${failed} gare(s) en échec.\n` : `\nToutes les gares passent.\n`);
 process.exit(failed ? 1 : 0);
