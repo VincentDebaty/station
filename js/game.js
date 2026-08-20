@@ -1360,61 +1360,32 @@ function showEndBesideMap() {
   const end = document.getElementById("end");
   const hub = document.getElementById("hub");
   // Démo « limites » : gare hors catalogue, elle n'est nulle part sur la carte.
-  if (STATION.adhoc || typeof mapnetBuild !== "function") { fitEndCard(); return; }
+  if (STATION.adhoc || typeof renderCarte !== "function") { fitEndCard(); return; }
   hub.classList.remove("hidden");
-  // Le bouton « recadrer ce pays » se retire le temps du relevé : il nomme le
-  // pays sous le CENTRE de l'écran, or le centre est maintenant derrière le
-  // relevé — il annonçait « France » pendant qu'on cadrait la Belgique.
-  MAP.host.classList.add("end-open");
   // La disposition en colonnes est posée AVANT de mesurer : sinon on mesure la
-  // fiche encore centrée, on croit la bande libre bien plus étroite qu'elle ne
-  // l'est, et la carte se dézoome sur toute l'Europe de l'Ouest.
+  // fiche encore centrée et l'on croit la bande libre plus étroite qu'elle
+  // n'est.
   end.classList.add("over-map");
-  // À L'ÉCHELLE AVANT DE MESURER : la bande libre laissée à la carte se déduit
-  // du rectangle de la fiche, juste en dessous. Mise à l'échelle après coup, on
-  // cadrerait le réseau sur une fiche qui n'a plus cette taille.
   fitEndCard();
-  if (!MAP.built) buildMap();
-  mapnetBuild();               // le solde a changé : d'autres gares sont à portée
-  mapnetPosition();
-  if (typeof updateCreditsBadge === "function") updateCreditsBadge(true);
-  if (typeof updateRankBadge === "function") updateRankBadge(true);   // la ponctualité vient de monter
-  const r = end.querySelector(".card").getBoundingClientRect();
-  const wide = window.innerWidth > 720;
-  const reserved = wide ? { left: r.right + 16 }
-                        : { bottom: window.innerHeight - r.top + 12 };
-  // CE QU'IL FAUT VOIR, PAS LE PAYS. Cadrer le pays entier laissait la gare
-  // proposée hors champ ou noyée : le relevé disait « ouvrir Aarschot » et
-  // Aarschot n'était nulle part. On cadre donc la gare qu'on vient de tenir et
-  // TOUT ce qu'elle met à portée d'achat — c'est exactement la décision qui
-  // reste à prendre. Repli sur le pays si la géographie manque.
-  const here = CATALOG[currentIdx].id;
-  const box = (typeof stationsBbox === "function" && typeof netLinks === "function")
-    ? stationsBbox([here].concat(netLinks(here).to.filter(id => isBuyable(id))))
-    : null;
-  if (box && typeof frameBoxBeside === "function") frameBoxBeside(box, reserved);
-  else {
-    const slug = (typeof stationCountrySlug === "function") ? stationCountrySlug(currentIdx) : null;
-    if (slug && typeof frameCountryBeside === "function") frameCountryBeside(slug, reserved);
-  }
+  // La carte en lignes n'a pas de caméra : il n'y a rien à cadrer, et c'est un
+  // soulagement. L'ancienne devait deviner quoi montrer — le pays ? la gare et
+  // ses voisines à portée ? — parce qu'elle montrait tout à la fois. Ici la
+  // vue ligne désigne déjà la suite, il suffit de la redessiner à jour.
+  renderCarte();
+  if (typeof updateRankBadge === "function") updateRankBadge(true);
 }
 // Quitter le relevé en restant sur la carte. `recenter` : on recadre le pays
 // pour de bon (le joueur a demandé la carte), sinon on se contente d'effacer le
 // relevé — il vient de toucher une gare, la déplacer sous son doigt serait pire
 // que de la laisser un peu décalée.
-function endLeaveMap(recenter) {
+function endLeaveMap() {
   const end = document.getElementById("end");
   if (!end.classList.contains("over-map")) return false;
   end.classList.add("hidden");
   end.classList.remove("over-map");
-  MAP.host.classList.remove("end-open");
-  // Le relevé rangé, son bouton n'existe plus : la carte reprend sa règle
-  // ordinaire (c'est le service en attente qui respire).
-  if (endFocusId) { endFocusId = null; if (typeof mapnetRefresh === "function") mapnetRefresh(); }
-  if (recenter && typeof stationCountrySlug === "function") {
-    const slug = stationCountrySlug(currentIdx);
-    if (slug && typeof frameCountry === "function") frameCountry(slug);
-  }
+  // Le relevé rangé, la carte reprend sa règle ordinaire.
+  if (endFocusId) endFocusId = null;
+  if (typeof renderCarte === "function") renderCarte();
   return true;
 }
 
@@ -1581,7 +1552,7 @@ function endGame(failed) {
     animateCredits(reward.querySelector(".eu-gain"), 0, gain, true);
     // La bourse de la carte compte en même temps : la recette ne s'additionne
     // pas dans un coin de fiche, elle tombe dans le solde qu'on voit déjà.
-    animateCredits(MAP.purse, getCredits() - gain, getCredits(), false);
+    animateCredits(CARTE.bourse, getCredits() - gain, getCredits(), false);
   }
 
   // ------------------------------------------------------------------

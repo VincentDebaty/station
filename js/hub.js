@@ -6,7 +6,9 @@
 // monde → continent → pays → clic sur une ville lance la partie. renderHub()
 // reste le point d'entrée historique (appelé par showHub) mais délègue
 // désormais entièrement au renderer de la carte.
-function renderHub() { renderMap(); }
+// La carte en lignes (js/carte.js) a remplacé la carte géographique. Le
+// point d'entrée historique ne change pas : tout le jeu appelle showHub().
+function renderHub() { renderCarte(); }
 function showHub() {
   started = false;
   document.getElementById("help").classList.add("hidden");
