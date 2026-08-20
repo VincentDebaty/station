@@ -249,3 +249,47 @@ function enveloppeDeGare(gareId, versHub, cfg) {
   const d = difficulteDeGare(gareId, versHub, cfg);
   return enveloppeDe(cfg, d == null ? cfg.difficulty : d, PROFILS[1]);
 }
+
+// ------------------------------------------------------------------
+// CE QUI EST OUVRABLE MAINTENANT.
+// ------------------------------------------------------------------
+// La question que pose la carte, et la seule. `tenues` est l'ensemble des ids
+// de gares déjà acquises.
+//
+// Depuis une gare tenue, on peut ouvrir SA VOISINE le long du réseau : la
+// suivante sur son corridor, ou le boss au bout. Depuis un hub tenu, la
+// première gare non tenue de chacune de ses sorties — c'est le CHOIX de
+// direction que le document place au cœur de la progression.
+function garesOuvrables(tenues) {
+  buildGraphe();
+  const out = new Set();
+  const ajoute = g => { if (g && !tenues.has(g)) out.add(g); };
+
+  for (const id in GRAPHE.hubs) {
+    const h = GRAPHE.hubs[id];
+    if (!h.gareId || !tenues.has(h.gareId)) continue;
+    for (const lien of sortiesDeHub(id)) {
+      const p = prochaineGare(lien, id, tenues);
+      if (p) ajoute(p.gare);
+    }
+  }
+  // Les gares de corridor ouvrent leurs deux voisines immédiates : on peut
+  // avoir pris un corridor par son autre bout.
+  for (const gareId of tenues) {
+    const e = GRAPHE.gares[gareId];
+    if (!e || e.role !== "corridor") continue;
+    const g = e.lien.gares, i = g.indexOf(gareId);
+    if (i < 0) continue;
+    if (i > 0) ajoute(g[i - 1]); else ajoute((GRAPHE.hubs[e.lien.a] || {}).gareId);
+    if (i < g.length - 1) ajoute(g[i + 1]); else ajoute((GRAPHE.hubs[e.lien.b] || {}).gareId);
+  }
+  return out;
+}
+
+// Le graphe connaît-il cette gare ? Tant qu'il ne couvre pas tout le
+// catalogue, c'est ce qui décide s'il a autorité sur elle — voir la règle de
+// préséance dans js/catalog.js.
+function dansLeGraphe(gareId) {
+  buildGraphe();
+  return !!GRAPHE.gares[gareId];
+}

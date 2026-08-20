@@ -288,9 +288,29 @@ function isStartDoor(id) {
 // Achetable = pas encore acquise, et reliée au réseau déjà acquis. C'est la
 // FRONTIÈRE GÉOGRAPHIQUE, et elle seule : ce qui empêche de payer aujourd'hui
 // (l'argent, une gare en souffrance, le niveau) se dit à part — voir buyBlock.
+// L'ensemble des gares acquises, sous la forme qu'attend le graphe.
+function tenues() {
+  const t = new Set();
+  for (const c of CATALOG) if (isBought(c.id)) t.add(c.id);
+  return t;
+}
+// DEUX SOURCES, DANS CET ORDRE DE PRÉSÉANCE — le même partage que js/network.js
+// entre les lignes réelles et la déduction par portails.
+//
+// 1. LE GRAPHE (data/graph.js). Il dit qui s'ouvre depuis où : la gare suivante
+//    du corridor qu'on parcourt, ou le choix d'une nouvelle sortie au bout.
+//    Dès qu'il connaît une gare, il décide seul de son sort.
+//
+// 2. LA FRONTIÈRE GÉOGRAPHIQUE — transitoire. Le graphe ne couvre encore que
+//    102 des 145 gares : les 43 autres attendent qu'un hub soit écrit. Les
+//    laisser au graphe les rendrait injouables, ce qui serait une régression
+//    pour rien. Elles gardent donc l'ancienne règle — s'ouvre ce qui touche
+//    le réseau — jusqu'à ce que leur corridor existe.
 function isBuyable(id) {
   if (!cardOf(id) || isBought(id)) return false;
   if (networkEmpty()) return isStartDoor(id);
+  if (typeof dansLeGraphe === "function" && dansLeGraphe(id))
+    return garesOuvrables(tenues()).has(id);
   return typeof netLinks === "function" && netLinks(id).to.some(nb => isBought(nb));
 }
 function canAfford(id) { return getCredits() >= stationPrice(id); }
@@ -335,11 +355,11 @@ const OPEN_STARS = 2;
 function stationInService(id) {
   return (getProgress()[id] || {}).bestDelay != null;
 }
-// La première gare acquise qui n'a jamais servi, s'il y en a une.
-function idleStation() {
-  for (const c of CATALOG) if (isBought(c.id) && !stationInService(c.id)) return c.id;
-  return null;
-}
+// N'existe plus comme verrou (voir buyBlock) : le jeu n'attend plus qu'une
+// gare ait servi pour en ouvrir une autre. La fonction reste, et rend
+// toujours null, parce que la carte et le relevé l'interrogent encore — elle
+// disparaîtra avec eux au lot suivant.
+function idleStation() { return null; }
 // Les gares acquises qui touchent celle-ci — c'est de là qu'on peut s'étendre.
 function ownedNeighbours(id) {
   if (typeof netLinks !== "function") return [];
@@ -347,18 +367,22 @@ function ownedNeighbours(id) {
 }
 // En tient-on au moins une à ★★ ? Au tout début, le réseau est vide et la
 // question ne se pose pas : les portes de départ n'ont aucune voisine acquise.
-function openedFromMastered(id) {
-  if (networkEmpty()) return true;
-  const prog = getProgress();
-  return ownedNeighbours(id).some(nb => (prog[nb] || {}).stars >= OPEN_STARS);
-}
+// Même sort : le mérite d'une voisine ne conditionne plus rien.
+function openedFromMastered() { return true; }
 // Ce qui empêche d'acheter cette gare MAINTENANT — dans l'ordre où le joueur
 // peut y remédier. Rend null quand rien ne s'y oppose.
+// LES PORTES DURES SONT TOMBÉES. « Réussir est facile, exceller est le vrai
+// jeu » : plus rien n'oblige à rejouer une gare pour avancer. Les deux
+// conditions de mérite — avoir fait tourner chaque gare acquise, tenir une
+// voisine à deux étoiles — demandaient au joueur de revenir en arrière pour
+// aller de l'avant. C'était le contraire de la promesse.
+//
+// Ce qui les remplace n'est pas rien : le GRAPHE. On ne s'ouvre plus n'importe
+// quelle voisine, mais la suivante sur sa ligne — et l'on choisit sa direction
+// au bout. La contrainte est devenue une lecture du réseau plutôt qu'une
+// épreuve à repasser.
 function buyBlock(id) {
   if (!isBuyable(id)) return null;
-  const idle = idleStation();
-  if (idle) return { kind: "service", id: idle };
-  if (!openedFromMastered(id)) return { kind: "maitrise", from: ownedNeighbours(id) };
   const short = stationPrice(id) - getCredits();
   if (short > 0) return { kind: "argent", short };
   return null;
