@@ -11,11 +11,11 @@
   --safe-r: env(safe-area-inset-right, 0px);
   --safe-t: env(safe-area-inset-top, 0px);
   --safe-b: env(safe-area-inset-bottom, 0px);
-  /* Largeur du relevé de fin de service. Partagée, parce que la CARTE doit
-     s'écarter d'exactement autant (#hub.avec-releve) : deux valeurs séparées
-     auraient divergé au premier ajustement, et la ligne serait repassée sous
-     le panneau. */
-  --releve-w: min(360px, 34vw);
+  /* Hauteur du relevé de fin de service, MESURÉE puis écrite ici par
+     js/game.js : la carte doit s'écarter d'exactement autant
+     (#hub.avec-releve), et cette hauteur dépend de ce que le service a
+     rapporté. La valeur ci-dessous n'est qu'un repli avant la mesure. */
+  --releve-h: 132px;
 }
 * { margin: 0; padding: 0; box-sizing: border-box; }
 html, body { height: 100%; }
@@ -761,66 +761,100 @@ svg { width: 100%; height: 100%; display: block; }
    cliquable. Centré, il se posait pile sur la gare qu'on quitte et sur
    ses voisines, c'est-à-dire sur tout ce qu'on demandait de regarder. */
 #end.over-map {
-  /* AUCUN VOILE. Le relevé ne recouvre plus rien : la carte se rétrécit pour
-     lui faire place (#hub.avec-releve, plus bas) et les deux tiennent sur le
-     même écran. Un voile n'aurait plus rien à assombrir, et une fiche flottante
-     au-dessus d'un espace qu'on lui a déjà réservé fait double emploi. */
+  /* AUCUN VOILE, ET AUCUN RECOUVREMENT. Le relevé est une BANDE au bas de
+     l'écran ; la carte occupe tout le haut et lui cède exactement la hauteur
+     qu'il prend (#hub.avec-releve). Les deux tiennent sur le même écran, sans
+     que rien ne passe sous rien. */
   z-index: 31; background: transparent;
-  align-items: center; justify-content: flex-start;
+  align-items: flex-end; justify-content: center;
   /* LA CARTE RESTE VIVANTE DESSOUS : le voile ne prend aucun clic, seul le
      relevé en capte. C'est ce qui permet de repartir d'ici sans écran
      intermédiaire — toucher une gare range le relevé et ouvre sa fiche. */
   pointer-events: none;
   overflow: visible;
+  padding: 8px calc(12px + var(--safe-r)) calc(10px + var(--safe-b)) calc(12px + var(--safe-l));
 }
 #end.over-map .card { pointer-events: auto; }
 /* La croix passe au-dessus de la salve de confettis, qui couvre toute la fiche. */
 #btn-end-close { z-index: 2; }
-/* Le bouton de recadrage nomme le pays sous le CENTRE de l'écran ; le relevé
-   occupe justement ce centre. Il se retire donc le temps du relevé. */
-#hub-map.end-open .map-home { display: none; }
 #end.over-map #confetti { pointer-events: none; }
+
+/* ------------------------------------------------------------------ */
+/* LA BANDE — large et basse, tout sur une seule rangée.               */
+/* ------------------------------------------------------------------ */
+/* En colonne, le relevé prenait un tiers de la largeur sur toute la hauteur :
+   la ligne n'avait plus qu'un moignon d'écran, et une ligne de sept gares y
+   défilait. Couché au bas de l'écran, il rend la largeur entière au réseau —
+   qui en a besoin, puisqu'une ligne EST une longueur. */
 #end.over-map .card {
-  /* Un PANNEAU, plus une fiche : pas d'ombre portée, une bordure discrète. Ce
-     qui le détachait avant, c'était de flotter ; maintenant qu'il a sa
-     colonne, l'ombre ne ferait que dire « je suis par-dessus » — précisément
-     ce qu'on vient de corriger. */
-  padding: 16px 20px 15px;
-  width: var(--releve-w); margin: 0;
-  box-shadow: none; border-color: #263149;
-  /* C'est LA FICHE qui défile quand elle dépasse : le voile ne prend pas les
-     clics et ne peut donc plus le faire. Sans cela, sur un écran bas, le titre
-     et les boutons se retrouvaient coupés. */
-  max-height: calc(100% - 8px); overflow-y: auto;
+  width: 100%; max-width: none; margin: 0;
+  display: flex; align-items: center; gap: 20px;
+  padding: 10px 16px; text-align: left;
+  box-shadow: none; border-color: #263149; border-radius: 16px;
+  max-height: 46vh; overflow-y: auto;
 }
-/* Un pays terminé mérite sa largeur, mais pas au point de manger la carte. */
-#end.over-map .card.country-done { width: min(430px, 42vw); }
-
-/* LA CARTE SE RÉTRÉCIT, ELLE N'EST PLUS RECOUVERTE. C'est tout le sujet : la
-   ligne se dessinait sous le relevé, et l'on ne voyait donc jamais ses
-   premières gares — celles d'où l'on vient. Le retrait vaut la largeur du
-   panneau, et la classe vit sur #hub parce que renderCarte() réécrit
-   entièrement le `class` de #hub-map à chaque rendu. */
-#hub.avec-releve .carte { padding-left: calc(var(--releve-w) + 30px); }
-
-/* TÉLÉPHONE EN PAYSAGE — la façon dont on joue. L'écran est large mais très
-   bas : le panneau se resserre pour rendre à la ligne les gares qu'il lui
-   prenait. 34 vw sur 844 px en font 287 ; une ligne de sept gares passait donc
-   à l'étroit tant que le relevé était ouvert. */
-@media (max-height: 460px) and (min-width: 721px) {
-  :root { --releve-w: 262px; }
-  #end.over-map .card { padding: 12px 16px 12px; }
-  #hub.avec-releve .carte { padding-left: calc(var(--releve-w) + 20px); }
+.e-verdict { flex: 0 0 auto; text-align: center; }
+#end.over-map .e-verdict h1 { font-size: 16px; margin: 0 0 1px; }
+#end.over-map #stars { font-size: 21px; margin: 0; line-height: 1.1; }
+#end.over-map #end-delay { font-size: 12px; margin: 1px 0 0; }
+#end.over-map #end-country {
+  flex: 0 1 auto; margin: 0; padding: 0 0 0 16px; border-left: 1px solid #263149;
 }
-/* Écran étroit : pas de place pour deux colonnes — le relevé redevient un
-   panneau du bas, et la carte lui cède de la hauteur au lieu de la largeur. */
+/* Le barème prend la largeur qui reste, les faits du jour se rangent à côté. */
+#end.over-map #end-unlock {
+  flex: 1 1 auto; min-width: 0; margin: 0;
+  display: flex; align-items: center; gap: 20px;
+}
+#end.over-map .bareme { flex: 1 1 auto; min-width: 120px; margin: 0; }
+#end.over-map .eu-faits { flex: 0 0 auto; }
+#end.over-map .eu-serie, #end.over-map .eu-med { margin: 0; white-space: nowrap; }
+#end.over-map .eu-serie + .eu-med, #end.over-map .eu-med + .eu-med { margin-top: 3px; }
+/* LES DEUX BOUTONS SUR UNE MÊME LIGNE : ils tiennent le bout de la bande, et
+   c'est là que le regard finit sa course. */
+#end.over-map #end-actions { flex: 0 0 auto; flex-direction: row; gap: 10px; }
+#end.over-map #end-actions .btn {
+  width: auto; margin: 0; padding: 9px 16px; white-space: nowrap;
+}
+/* LA CROIX REPREND SA PLACE DANS LA RANGÉE. Posée en absolu dans le coin haut
+   droit de la fiche, elle tombait pile sur « Rejouer » : la fiche est devenue
+   une bande, et son coin haut droit est désormais l'endroit où finissent les
+   boutons. Dans le flux, elle se range simplement au bout. */
+#end.over-map .mm-close { position: static; flex: 0 0 auto; order: 9; width: 30px; height: 30px; }
+/* Le barème ne prend pas toute la place qui reste : étiré sur mille pixels,
+   ses graduations s'éloignent au point qu'on ne lit plus un axe mais trois
+   colonnes séparées. Il garde une longueur d'axe. */
+#end.over-map .bareme {
+  max-width: 420px;
+  /* LA VALEUR SOUS LA BARRE EST EN ABSOLU : elle ne compte pas dans la hauteur
+     du barème, et la bande — qui masque son débordement — la coupait en deux.
+     On lui réserve sa place. */
+  padding-bottom: 15px;
+}
+/* Un pays terminé n'élargit plus rien : la bande fait déjà toute la largeur. */
+#end.over-map .card.country-done { width: 100%; }
+
+/* LA LIGNE MONTE EN HAUT quand la bande est là. Centrée dans l'espace qui
+   reste, elle flottait au milieu d'un grand vide avec les boutons tout en bas :
+   les deux blocs se regardaient sans se tenir. En haut, l'écran se lit du haut
+   vers le bas — le réseau, puis ce qu'on vient d'y faire, puis quoi faire
+   ensuite. */
+#hub.avec-releve .c-ligne { flex: 0 0 auto; }
+
+/* LA CARTE CÈDE LA HAUTEUR DE LA BANDE, mesurée après coup (js/game.js) : elle
+   varie avec ce que le service a rapporté — une médaille de plus, une ligne de
+   plus. Un retrait fixe aurait laissé un trou ou fait passer la ligne dessous. */
+#hub.avec-releve .carte {
+  padding-bottom: calc(var(--releve-h, 132px) + 22px + var(--safe-b));
+}
+
+/* Écran étroit : les deux boutons ne tiennent plus à côté du reste, la bande
+   se replie en deux rangées. Elle reste une bande — c'est la largeur de la
+   ligne qu'on protège, pas la hauteur du relevé. */
 @media (max-width: 720px) {
-  #end.over-map { align-items: flex-end; justify-content: center; }
-  #end.over-map .card,
-  #end.over-map .card.country-done { width: min(370px, 92vw); margin-bottom: 4px; }
-  #end.over-map .card h1 { font-size: 22px; margin-bottom: 12px; }
-  #end.over-map #stars { font-size: 36px; margin: 6px 0 2px; }
-  #hub.avec-releve .carte { padding-left: 16px; padding-bottom: 52vh; }
+  #end.over-map .card { flex-wrap: wrap; gap: 10px 14px; }
+  #end.over-map #end-unlock { flex-basis: 100%; order: 3; }
+  #end.over-map #end-actions { margin-left: auto; }
+  #end.over-map .e-verdict h1 { font-size: 15px; }
 }
 
 /* PLUS DE CADRE. Il était doré parce qu'il encadrait une caisse ; la caisse
@@ -2428,17 +2462,11 @@ svg { width: 100%; height: 100%; display: block; }
   content: "\00bb"; position: absolute; right: -13px; top: -4px;
   font-size: 13px; font-weight: 700; color: #ef4444; line-height: 1;
 }
-.ba-piste.depasse ~ .ba-conseil b, .ba-piste.depasse + .ba-val { color: #f87171; }
+.ba-piste.depasse + .ba-val { color: #f87171; }
 .ba-val {
   position: absolute; top: 13px; transform: translateX(-50%);
   font-size: 11.5px; font-weight: 700; color: var(--text);
   font-variant-numeric: tabular-nums; white-space: nowrap;
 }
 
-/* CE QU'IL RESTE À GAGNER, en minutes. La seule phrase du bloc, et la seule
-   qui commande une action. */
-.ba-conseil {
-  margin-top: 26px; font-size: 12.5px; color: var(--muted); text-align: center;
-}
-.ba-conseil b { color: #6ff0e2; font-weight: 700; }
-.ba-conseil .ba-fini { color: var(--gold); font-weight: 600; }
+

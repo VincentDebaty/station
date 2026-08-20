@@ -1334,9 +1334,27 @@ function fitEndCard() {
   if (!(nat > 0) || !(avail > 0) || nat <= avail) return;
   card.style.zoom = Math.max(END_FIT_FLOOR, avail / nat).toFixed(3);
 }
+// LA HAUTEUR DE LA BANDE, ÉCRITE LÀ OÙ LE CSS LA LIRA. La carte doit s'écarter
+// d'exactement ce que le relevé occupe, et cette hauteur n'est pas connue à
+// l'avance : elle dépend de ce que le service a rapporté — une médaille de
+// plus, une série qui s'affiche, un bandeau de pays. Une valeur fixe aurait
+// laissé un trou sous la ligne ou fait passer la ligne sous la bande.
+//
+// Mesurée APRÈS fitEndCard, parce que celui-ci peut réduire la fiche : c'est
+// la hauteur RENDUE qui compte, pas la hauteur naturelle. getBoundingClientRect
+// tient compte du zoom appliqué.
+function mesureReleve() {
+  const end = document.getElementById("end");
+  const hub = document.getElementById("hub");
+  if (!end || !hub || !end.classList.contains("over-map")) return;
+  const card = end.querySelector(".card");
+  if (!card) return;
+  hub.style.setProperty("--releve-h",
+    Math.ceil(card.getBoundingClientRect().height) + "px");
+}
 // Tourner le téléphone change la hauteur disponible du tout au tout : le relevé
 // se remesure, sinon il reste calé sur l'orientation d'avant.
-window.addEventListener("resize", fitEndCard);
+window.addEventListener("resize", () => { fitEndCard(); mesureReleve(); });
 
 function showEndBesideMap() {
   const end = document.getElementById("end");
@@ -1344,14 +1362,15 @@ function showEndBesideMap() {
   // Démo « limites » : gare hors catalogue, elle n'est nulle part sur la carte.
   if (STATION.adhoc || typeof renderCarte !== "function") { fitEndCard(); return; }
   hub.classList.remove("hidden");
-  // La disposition en colonnes est posée AVANT de mesurer : sinon on mesure la
-  // fiche encore centrée et l'on croit la bande libre plus étroite qu'elle
-  // n'est.
+  // La disposition en bande est posée AVANT de mesurer : sinon on mesure la
+  // fiche encore centrée, et l'on prend la hauteur d'une carte qui n'existe
+  // plus sous cette forme.
   end.classList.add("over-map");
   // LA CARTE S'ÉCARTE, elle n'est plus recouverte : la classe vit sur #hub et
   // non sur #hub-map, dont renderCarte() réécrit le `class` en entier.
   hub.classList.add("avec-releve");
   fitEndCard();
+  mesureReleve();
   // La carte en lignes n'a pas de caméra : il n'y a rien à cadrer, et c'est un
   // soulagement. L'ancienne devait deviner quoi montrer — le pays ? la gare et
   // ses voisines à portée ? — parce qu'elle montrait tout à la fois. Ici la
@@ -1570,26 +1589,10 @@ function endGame(failed) {
     const dia = '<span class="ba-dia' + (record === 0 ? " on" : "") +
       '" title="Sans faute — aucun retard">\u25C6</span>';
 
-    // CE QU'IL RESTE À GAGNER, en minutes, et rien d'autre. Le palier suivant
-    // exige « moins de N », donc N − 1 minutes au plus : l'écart se compte sur
-    // le record, puisque c'est le record que le palmarès retient.
-    const next = STATION.adhoc ? -1 : stationNextTier(STATION.id);
-    let conseil;
-    // ZÉRO ÉTOILE AUJOURD'HUI : le conseil parle de CE SERVICE, pas du record.
-    // Il annonçait « 10 min de moins pour trois étoiles » — mesuré sur un
-    // record de 19 min, donc exact — au bas d'une barre saturée à 96 minutes.
-    // Juste, et inutilisable : ce n'est pas le palier suivant qu'il faut viser
-    // quand on vient de rater le premier.
-    if (!win)
-      conseil = "Sous <b>" + max + " min</b> pour décrocher une étoile";
-    else if (next < 0)
-      conseil = '<span class="ba-fini">Palmarès complet \u00b7 rien au-dessus</span>';
-    else if (record == null)
-      conseil = "Terminer sous " + max + " min pour " + PALIERS[next].nom.toLowerCase();
-    else {
-      const manque = Math.max(1, record - (PALIERS[next].under - 1));
-      conseil = '<b>' + manque + " min</b> de moins pour " + PALIERS[next].nom.toLowerCase();
-    }
+    // PAS DE PHRASE SOUS L'AXE. Il y en a eu une — « 4 min de moins pour le
+    // sans-faute » — et elle disait en toutes lettres ce que l'axe montre déjà :
+    // la distance entre la fin de la barre et la graduation d'à côté. C'est
+    // exactement le blabla que le barème était venu remplacer.
 
     return '<div class="bareme">' +
       '<div class="ba-bandes">' + dia + bandes + "</div>" +
@@ -1600,7 +1603,6 @@ function endGame(failed) {
         '<b class="ba-val" style="left:' + Math.max(4, Math.min(96, pc(d))).toFixed(3) + '%">' +
           d + " min</b>" +
       "</div>" +
-      '<div class="ba-conseil">' + conseil + "</div>" +
       "</div>";
   }
 
@@ -1611,8 +1613,12 @@ function endGame(failed) {
     // La démo « limites » n'est pas au catalogue : elle n'a ni palmarès ni
     // record, et un barème sans repère ne dirait rien.
     if (STATION.adhoc) return "";
-    return baremeHTML() + serieHTML() + medaillesHTML() +
+    const faits = serieHTML() + medaillesHTML() +
       (gradeUp ? '<div class="eu-grade">' + gradeAfter.nom + " !</div>" : "");
+    // DEUX BLOCS, PAS UNE PILE. Le relevé est une bande large et basse : le
+    // barème prend la largeur, les faits du jour se rangent à côté. Empilés,
+    // ils faisaient grandir la bande à chaque médaille.
+    return baremeHTML() + (faits ? '<div class="eu-faits">' + faits + "</div>" : "");
   }
 
   // LA SÉRIE, ET SEULEMENT QUAND ELLE A QUELQUE CHOSE À DIRE. Un « série : 1 »

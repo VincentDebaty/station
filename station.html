@@ -138,9 +138,15 @@
            bouton ne changeait pas d'écran, il rangeait le relevé — une croix le
            dit mieux, et rend sa place aux deux actions qui restent. -->
       <button class="mm-close" id="btn-end-close" aria-label="Fermer"></button>
-      <h1 id="end-title">Fin du service</h1>
-      <div id="stars"></div>
-      <div id="end-delay"></div>
+      <!-- Le verdict — titre, étoiles, retard — tient dans UN élément, parce
+           que le relevé est une BANDE au bas de l'écran : il faut pouvoir le
+           poser d'un bloc à gauche du barème. Trois éléments frères se
+           seraient répartis tout seuls sur la largeur. -->
+      <div class="e-verdict">
+        <h1 id="end-title">Fin du service</h1>
+        <div id="stars"></div>
+        <div id="end-delay"></div>
+      </div>
       <!-- Bandeau « pays terminé » : affiché uniquement quand ce service boucle
            le dernier maillon d'un pays. -->
       <div id="end-country" class="hidden"></div>
