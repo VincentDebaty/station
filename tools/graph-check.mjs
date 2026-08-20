@@ -155,6 +155,33 @@ for (const c of CORRIDORS) {
   }
 }
 
+// --- 4 ter. Les versions de trafic ------------------------------------
+// Un boss porte autant de versions que de sorties. Quand elles sont déclarées
+// — Londres et Paris, dont les terminus SONT les directions — chacune doit
+// viser une sortie réelle et une fiche qui existe. Une version orpheline
+// enverrait le joueur sur une gare que le catalogue ne connaît pas.
+const sortiesDe = {};
+for (const [a2, b2] of LIENS) {
+  (sortiesDe[a2] = sortiesDe[a2] || new Set()).add(b2);
+  (sortiesDe[b2] = sortiesDe[b2] || new Set()).add(a2);
+}
+for (const h of HUBS) {
+  if (!h.versions) continue;
+  const dispo = sortiesDe[h.id] || new Set();
+  const vus2 = new Set();
+  for (const v of h.versions) {
+    if (!dispo.has(v.vers))
+      erreurs.push(`${h.nom} : version vers « ${v.vers} », qui n'est pas une de ses sorties`);
+    if (vus2.has(v.vers)) erreurs.push(`${h.nom} : deux versions vers ${v.vers}`);
+    vus2.add(v.vers);
+    if (v.gare && !GARES.has(v.gare))
+      erreurs.push(`${h.nom} : la version vers ${v.vers} joue « ${v.gare} », absente du catalogue`);
+  }
+  const manquantes = [...dispo].filter(x => !vus2.has(x));
+  if (manquantes.length)
+    alertes.push(`${h.nom} : ${manquantes.length} sortie(s) sans version déclarée (${manquantes.join(", ")})`);
+}
+
 // --- 5. Équilibre des constellations ---------------------------------
 const parC = {};
 for (const h of HUBS) (parC[h.c] = parC[h.c] || []).push(h);

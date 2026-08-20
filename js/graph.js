@@ -156,3 +156,96 @@ function bossMaitrise(hubId, tenues) {
   const s = sortiesDeHub(hubId);
   return s.length > 0 && s.every(l => corridorTermine(l, hubId, tenues));
 }
+
+// ------------------------------------------------------------------
+// L'ENVELOPPE DE GÉNÉRATION SE DÉDUIT DU PALIER.
+// ------------------------------------------------------------------
+// Valeurs relevées sur les 145 fiches du catalogue, palier par palier. Ce sont
+// des MOYENNES observées, pas des chiffres inventés : elles décrivent ce que
+// les gares écrites à la main font déjà, et servent de gabarit à celles qui
+// restent à écrire.
+//
+// La cadence varie peu d'un palier à l'autre (1,5 à 1,8 min entre arrivées) —
+// c'est le NOMBRE de convois qui monte, de 12 à 22. La difficulté d'une
+// journée tient donc à la quantité de trafic, pas à sa nervosité.
+const ENVELOPPES = {
+  1: { nMin: 12, nMax: 15, gapMin: 1.62, gapMax: 2.84, freightCount: 1 },
+  2: { nMin: 13, nMax: 16, gapMin: 1.81, gapMax: 3.02, freightCount: 2 },
+  3: { nMin: 14, nMax: 17, gapMin: 1.71, gapMax: 2.92, freightCount: 3 },
+  4: { nMin: 16, nMax: 20, gapMin: 1.59, gapMax: 2.73, freightCount: 4 },
+  5: { nMin: 18, nMax: 22, gapMin: 1.52, gapMax: 2.58, freightCount: 5 }
+};
+
+// ------------------------------------------------------------------
+// LES VERSIONS DE TRAFIC — la seule répétition du jeu, et elle est méritée.
+// ------------------------------------------------------------------
+// Revenir à un boss déjà battu par une autre ligne le rejoue dans une version
+// différente, plus dure. Deux visites du même boss sont donc séparées d'un
+// corridor entier : la répétition ne se sent pas comme du remplissage.
+//
+// Un boss porte autant de versions que de sorties. La plupart n'ont qu'une
+// fiche : leurs versions se distinguent alors par le PROFIL D'AFFLUENCE, que
+// le moteur sait déjà produire (js/schedule.js, RUSH). Londres et Paris n'en
+// ont pas besoin — leurs terminus sont déjà des directions, et le catalogue
+// les a écrits séparément.
+const PROFILS = [
+  { nom: "heures creuses", rush: "plat",   densite: 0.85, fret: 0 },
+  { nom: "pointe",         rush: "pointe", densite: 1.00, fret: 0 },
+  { nom: "double pointe",  rush: "double", densite: 1.05, fret: 1 },
+  { nom: "bourrasque",     rush: "rafale", densite: 1.10, fret: 1 },
+  { nom: "service tendu",  rush: "pointe", densite: 1.15, fret: 2 },
+  { nom: "nocturne",       rush: "plat",   densite: 0.95, fret: 3 }
+];
+
+// Les versions d'un boss, une par sortie, de la plus douce à la plus rude.
+// L'ordre compte : c'est celui dans lequel le joueur les rencontrera.
+function versionsDeHub(hubId) {
+  buildGraphe();
+  const h = GRAPHE.hubs[hubId];
+  if (!h) return [];
+  const sorties = sortiesDeHub(hubId);
+  // Versions déclarées : on les range dans l'ordre des sorties du graphe, et
+  // l'on complète au profil si une sortie n'en a pas.
+  return sorties.map((lien, i) => {
+    const vers = lien.a === hubId ? lien.b : lien.a;
+    const dec = (h.versions || []).find(v => v.vers === vers);
+    return {
+      vers,
+      gare: (dec && dec.gare) || h.gare,
+      nom: (dec && dec.nom) || PROFILS[Math.min(i, PROFILS.length - 1)].nom,
+      profil: PROFILS[Math.min(i, PROFILS.length - 1)]
+    };
+  });
+}
+
+// ------------------------------------------------------------------
+// CE QU'ON DONNE AU GÉNÉRATEUR.
+// ------------------------------------------------------------------
+// La fiche d'une gare garde sa géométrie — quais, portails, liaisons — mais son
+// bloc `gen` n'est plus lu tel quel : il se recalcule depuis la POSITION de la
+// gare sur son corridor, rabattu sur ce que sa géométrie peut porter.
+//
+// Le champ `difficulty` de la fiche devient DESCRIPTIF : il dit la taille de la
+// gare, plus ce qu'elle doit produire. C'est le renversement du lot 2, et il
+// tient dans cette fonction.
+function enveloppeDe(cfg, niveau, profil) {
+  const n = Math.max(1, Math.min(5, niveau || cfg.difficulty || 1));
+  const e = ENVELOPPES[n], p = profil || PROFILS[1];
+  return {
+    ...cfg.gen,                       // ce que la fiche impose reste prioritaire
+    nMin: Math.round(e.nMin * p.densite),
+    nMax: Math.round(e.nMax * p.densite),
+    gapMin: e.gapMin, gapMax: e.gapMax,
+    freightCount: Math.max(0, e.freightCount + p.fret),
+    rush: p.rush
+  };
+}
+
+// L'enveloppe d'une gare de corridor : sa position décide, sa géométrie limite.
+// `versHub` est le boss vers lequel on voyage — la même gare est plus dure
+// quand on monte vers la métropole que quand on s'en éloigne, et c'est le
+// trafic réel.
+function enveloppeDeGare(gareId, versHub, cfg) {
+  const d = difficulteDeGare(gareId, versHub, cfg);
+  return enveloppeDe(cfg, d == null ? cfg.difficulty : d, PROFILS[1]);
+}

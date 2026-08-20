@@ -68,7 +68,20 @@ const HUBS = [
   // ---- Îles britanniques (9) ----
   { id: "birmingham", nom: "Birmingham", c: "bri", ll: [-1.9, 52.48], rang: 1, gare: "Birmingham" },
   { id: "edimbourg", nom: "Édimbourg", c: "bri", ll: [-3.19, 55.95], rang: 1, gare: "Edinburgh" },
-  { id: "londres", nom: "Londres", c: "bri", ll: [-0.13, 51.51], rang: 1, gare: "London King's Cross" },
+  { id: "londres", nom: "Londres", c: "bri", ll: [-0.13, 51.51], rang: 1, gare: "London King's Cross",
+    // Un boss a autant de VERSIONS que de sorties. Londres n'a pas besoin
+    // qu'on les invente : ses terminus SONT ses directions, et le catalogue
+    // les a déjà écrits comme des fiches distinctes.
+    versions: [
+      { vers: "newcastle",  gare: "London King's Cross", nom: "la Côte Est" },
+      { vers: "birmingham", gare: "London Euston",       nom: "la Côte Ouest" },
+      { vers: "manchester", gare: "London Euston",       nom: "la Côte Ouest" },
+      { vers: "bristol",    gare: "London Paddington",   nom: "le Great Western" },
+      // Waterloo a été le terminus de l'Eurostar jusqu'en 2007 : c'est bien
+      // par là qu'on passait sous la Manche.
+      { vers: "lille",      gare: "London Waterloo",     nom: "le tunnel" },
+      { vers: "amsterdam",  gare: "London Waterloo",     nom: "le tunnel" }
+    ] },
   { id: "manchester", nom: "Manchester", c: "bri", ll: [-2.24, 53.48], rang: 1, gare: "Manchester" },
   { id: "aberdeen", nom: "Aberdeen", c: "bri", ll: [-2.1, 57.15], rang: 2 },
   { id: "bristol", nom: "Bristol", c: "bri", ll: [-2.59, 51.45], rang: 2, gare: "Bristol" },
@@ -82,7 +95,16 @@ const HUBS = [
   { id: "lille", nom: "Lille", c: "nw", ll: [3.06, 50.63], rang: 1, gare: "Lille" },
   { id: "lyon", nom: "Lyon", c: "nw", ll: [4.83, 45.76], rang: 1, gare: "Lyon" },
   { id: "marseille", nom: "Marseille", c: "nw", ll: [5.37, 43.3], rang: 1, gare: "Marseille" },
-  { id: "paris", nom: "Paris", c: "nw", ll: [2.35, 48.86], rang: 1, gare: "Paris-Nord" },
+  { id: "paris", nom: "Paris", c: "nw", ll: [2.35, 48.86], rang: 1, gare: "Paris-Nord",
+    // Paris-Est manque au catalogue : la ligne de Strasbourg se joue depuis
+    // Paris-Nord, sa voisine immédiate, en attendant sa fiche.
+    versions: [
+      { vers: "lille",      gare: "Paris-Nord",         nom: "le Nord" },
+      { vers: "strasbourg", gare: "Paris-Nord",         nom: "l'Est" },
+      { vers: "dijon",      gare: "Paris-Gare-de-Lyon", nom: "le Sud-Est" },
+      { vers: "nantes",     gare: "Paris-Montparnasse", nom: "l'Ouest" },
+      { vers: "bordeaux",   gare: "Paris-Montparnasse", nom: "l'Atlantique" }
+    ] },
   { id: "strasbourg", nom: "Strasbourg", c: "nw", ll: [7.75, 48.58], rang: 1, gare: "Strasbourg" },
   { id: "dijon", nom: "Dijon", c: "nw", ll: [5.04, 47.32], rang: 2, gare: "Dijon" },
   { id: "luxembourg", nom: "Luxembourg", c: "nw", ll: [6.13, 49.61], rang: 2, gare: "Luxembourg" },
