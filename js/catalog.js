@@ -40,73 +40,30 @@ async function loadCatalog() {
 }
 
 // ------------------------------------------------------------------
-// ÉCONOMIE — le tarif, le prix, et le seuil qui tient tout.
+// CE QU'UN SERVICE RAPPORTE — des étoiles, et rien d'autre.
 // ------------------------------------------------------------------
-// Une gare RAPPORTE quand on la joue et COÛTE quand on l'ouvre. Les deux
-// dérivent d'une SEULE valeur de gare : s'ils suivaient deux formules
-// distinctes, l'équilibre se perdrait à la première gare ajoutée au catalogue
-// et plus personne ne pourrait le vérifier.
+// Il y avait ici une économie entière : un tarif par difficulté, un prix
+// d'achat, un plafond de recette par gare, un compteur de ponctualité, et un
+// contrôle d'équilibre (tools/eco-check.mjs) pour que le tout reste soluble.
+// Elle était juste, et elle a été retirée.
 //
-// Le prix vaut 80 % du tarif — juste sous le gain d'un service à trois étoiles,
-// pour qu'un sans-faute reste toujours payant. Il en découle un SEUIL : il faut
-// encaisser 81 % du tarif en moyenne pour que le réseau continue de croître.
-// Avec les paliers géométriques, cela veut dire TROIS ÉTOILES : à ★★★ partout
-// une gare en finance 1,25, à ★★ seulement 0,63, à ★ à peine 0,31. C'est voulu,
-// et c'est plus exigeant qu'avant (où ★★ suffisait presque) — mais c'est la
-// contrepartie d'une échelle qui récompense vraiment la ponctualité.
+// LA RAISON : une monnaie qui n'achète qu'UNE SEULE CHOSE n'est pas une
+// monnaie, c'est un compteur de déblocage déguisé. Le joueur ne ressentait pas
+// la valeur de ce qu'il gagnait, parce qu'il n'avait jamais rien à en faire —
+// et les vrais verrous étaient ailleurs (le mérite, puis le réseau).
 //
-// S'arrêter n'est pas être coincé : une gare possédée peut encore rapporter
-// jusqu'à deux fois son tarif (voir stationGain), soit 2,5 fois son propre
-// prix. Il suffit d'aller s'améliorer sur une gare déjà acquise pour repartir.
+// La ponctualité souffrait du même mal en pire : un second compteur, invisible
+// partout sauf sur un badge, qui doublait ce que les étoiles disent déjà.
 //
-// PRIX_RATIO est LE réglage sensible du jeu : il décide si le jeu est exigeant
-// ou décourageant. Il vit ici, seul, changeable d'un caractère.
-const PRIX_RATIO = 0.8;
-const CREDITS_START = 150;          // dotation : la 1ʳᵉ gare (50) + la 2ᵉ (100)
-// Tarif de base par difficulté = ce que paie un service à TROIS étoiles.
-// Les écarts croissent (60, 80, 100, 120) : une gare de difficulté 5 n'est pas
-// cinq fois une gare de difficulté 1, elle est bien plus que cela.
-const TARIF = { 1: 60, 2: 120, 3: 200, 4: 300, 5: 420 };
-const round10 = n => Math.max(10, Math.round(n / 10) * 10);
-
-// Le crédit a un VISAGE, pas un nom : le mot ne sert qu'à l'accueil et au
-// premier achat, partout ailleurs c'est ce jeton qui précède le nombre. Un
-// hexagone, et non une pièce ronde : sur la carte, tout ce qui est rond est une
-// gare — une pièce y serait une gare de plus. Plein, sans trou : à 12 px un
-// évidement se referme et le jeton devient une tache.
-const CREDIT_PICTO =
-  '<svg class="cr" viewBox="0 0 12 12" aria-hidden="true">' +
-  '<polygon points="11,6 8.5,10.33 3.5,10.33 1,6 3.5,1.67 8.5,1.67"/></svg>';
-// Un montant s'écrit toujours pareil : le jeton, collé au nombre, signe compris.
-function creditsHTML(n, signed) {
-  n = Math.round(n || 0);
-  return '<span class="cr-amt">' + CREDIT_PICTO + (signed && n >= 0 ? "+" : "") + n + "</span>";
-}
+// Reste donc l'échelle des PALIERS. Elle ne paie plus, elle NOMME : quatre
+// crans de retard, décrochés une fois, qui disent au joueur ce qu'il vient de
+// faire et ce qui l'attend s'il revient.
 
 function cardOf(id) { return CATALOG.find(x => x.id === id) || null; }
 function stationDifficulty(id) {
   const c = cardOf(id);
   return c ? Math.max(1, Math.min(5, c.difficulty || 1)) : 1;
 }
-// Flux : cadence moyenne des arrivées, en 5 crans (1 = calme, 5 = tendu). Pris
-// à la source du générateur pour que la fiche de gare, la carte et l'économie
-// ne puissent jamais se contredire.
-function stationFlux(id) {
-  const gen = (cardOf(id) || {}).gen || {};
-  if (gen.gapMin == null) return 3;
-  const scale = (typeof ARRIVAL_GAP_SCALE === "number") ? ARRIVAL_GAP_SCALE : 1;
-  const cadence = (gen.gapMin + gen.gapMax) / 2 * scale;
-  return cadence <= 1.65 ? 5 : cadence <= 1.78 ? 4 : cadence <= 1.92 ? 3 : cadence <= 2.05 ? 2 : 1;
-}
-// Le flux ajuste le tarif de ±10 % — un réglage fin sur l'axe principal qu'est
-// la difficulté, jamais un second axe.
-function stationTarif(id) {
-  return round10(TARIF[stationDifficulty(id)] * (1 + 0.05 * (stationFlux(id) - 3)));
-}
-function stationPrice(id) { return round10(stationTarif(id) * PRIX_RATIO); }
-// Plafond : ce qu'une gare peut rapporter en tout, sur toute une vie de joueur.
-// La masse monétaire du jeu est donc finie et connue — le farming est impossible.
-function stationCap(id) { return stationTarif(id) * 2; }
 
 // ------------------------------------------------------------------
 // LE PALMARÈS — quatre paliers, et l'argent est posé dessus.
@@ -172,39 +129,7 @@ function palierOf(delay) {
 // des multiples de 10 (round10), donc le premier palier vaut plancher(t/4) et
 // le deuxième plafond(t/4) — le second est toujours ≥ au premier, quel que
 // soit le tarif. Et la somme reste le plafond exact, puisque plancher(2t) = 2t.
-function palierCumul(id, k) { return Math.floor(stationTarif(id) * PALIERS[k].mult); }
-// Ce que verse le palier i, à lui seul.
-function palierAmount(id, i) {
-  return palierCumul(id, i) - (i ? palierCumul(id, i - 1) : 0);
-}
-// Le multiplicateur se DÉDUIT des paliers, il ne se redit pas : deux barèmes
-// côte à côte finissent toujours par diverger, et celui qui paie ne serait pas
-// forcément celui qui s'affiche.
-function payoutMult(delay) {
-  const k = palierOf(delay);
-  return k < 0 ? 0 : PALIERS[k].mult;
-}
-// Ce qu'un service à ce retard vaut sur cette gare, plafond compris. C'est le
-// CUMUL du palier atteint — pas un produit calculé à part, qui se serait mis à
-// différer du palmarès d'un crédit dès le premier arrondi.
-function stationPayout(id, delay) {
-  const k = palierOf(delay);
-  return k < 0 ? 0 : palierCumul(id, k);
-}
-// Ce que la gare a DÉJÀ versé. Aucun champ à stocker : le meilleur encaissement
-// se déduit du meilleur record, puisque le gain ne dépend que du retard.
-function stationBanked(id) {
-  const rec = (getProgress()[id] || {});
-  return rec.bestDelay == null ? 0 : stationPayout(id, rec.bestDelay);
-}
-// LA RÈGLE DU PLAFOND : une gare ne paie que la PROGRESSION. Rejouer ne
-// rapporte que si l'on joue mieux qu'avant — c'est ce qui rend le grind
-// inutile et le retour sur une gare connue payant.
-function stationGain(id, delay) {
-  return Math.max(0, stationPayout(id, delay) - stationBanked(id));
-}
-// Combien de paliers cette gare a déjà rendus — 0 à 4. Rien à stocker : le
-// record les résume tous, puisqu'ils sont emboîtés.
+
 function stationTiersDone(id) {
   return palierOf((getProgress()[id] || {}).bestDelay) + 1;
 }
@@ -213,16 +138,6 @@ function stationNextTier(id) {
   const k = stationTiersDone(id);
   return k < PALIERS.length ? k : -1;
 }
-// CE QUE VAUT LE PROCHAIN PAS, et rien d'autre. C'est le chiffre que porte la
-// carte sous une gare acquise, et le bouton « Rejouer ». Il remplace un
-// « reste à encaisser jusqu'au plein tarif » qui se taisait sur les gares déjà
-// à ★★★ — alors qu'il leur reste le sans-faute, c'est-à-dire le plus gros
-// palier de tous.
-function stationNextAmount(id) {
-  const k = stationNextTier(id);
-  return k < 0 ? 0 : palierAmount(id, k);
-}
-
 // ------------------------------------------------------------------
 // LE PALMARÈS À L'ÉCRAN — écrit ICI, à côté des paliers qu'il montre.
 // ------------------------------------------------------------------
@@ -262,12 +177,11 @@ function palmaresHTML(id, owned) {
     return '<div class="pl-row ' + state + '">' +
       '<span class="pl-mk"></span>' + palierStarsHTML(p) +
       '<span class="pl-th">' + p.seuil + "</span>" +
-      '<span class="pl-am">' + creditsHTML(palierAmount(id, i)) + "</span></div>";
+      "</div>";
   }).join("");
   return '<div class="palmares' + (owned ? "" : " sale") + '"><div class="pl-head"><span>Palmarès</span>' +
     '<span class="pl-sum">' +
-      (owned ? done + " / " + PALIERS.length
-             : "jusqu'à " + creditsHTML(stationCap(id))) +
+      done + " / " + PALIERS.length +
     "</span></div>" + rows + "</div>";
 }
 
@@ -322,48 +236,6 @@ function isBuyable(id) {
     return garesOuvrables(tenues()).has(id);
   return typeof netLinks === "function" && netLinks(id).to.some(nb => isBought(nb));
 }
-function canAfford(id) { return getCredits() >= stationPrice(id); }
-
-// ------------------------------------------------------------------
-// DEUX CONDITIONS QUI NE S'ACHÈTENT PAS.
-// ------------------------------------------------------------------
-// L'argent seul faisait une progression sans mérite : une gare maîtrisée en
-// finance DEUX ET DEMIE (plafond 2 × tarif contre un prix de 0,8 × tarif), donc
-// le réseau grossissait plus vite qu'on ne l'apprenait. On pouvait mettre
-// quatre gares en réserve sans en jouer une seule, et s'offrir Bruxelles-Midi
-// avec les recettes de Dinant — les neuf gares de difficulté 1 de Belgique
-// coûtent 430 et rapportent 1 040 une fois maîtrisées.
-//
-// D'où deux verrous qui ne se paient pas :
-//
-//   1. LE RÉSEAU DOIT TOURNER. Tant qu'une gare acquise n'a pas assuré un
-//      service entier, on n'en achète pas d'autre. Acheter, jouer, acheter :
-//      un réseau n'est pas une collection.
-//   2. ON N'OUVRE UNE GARE QUE DEPUIS UNE VOISINE BIEN TENUE. Il faut ★★ sur
-//      au moins une des gares déjà acquises qui la touchent. L'argent gagné
-//      ailleurs n'ouvre plus rien tout seul : il faut tenir l'endroit d'où l'on
-//      s'étend.
-//
-//      Formulée en PALIERS DE DIFFICULTÉ (« niveau d exige ★★ au niveau d−1 »),
-//      la règle enfermait le joueur : 11 des 32 portes de départ n'ont que des
-//      voisines de niveau 3 à 5 — Lokeren touche Gand, Termonde et Anvers,
-//      Regensburg touche Nürnberg et München. Une petite gare à côté d'un grand
-//      nœud, c'est la géographie normale, et aucune règle de progression n'a le
-//      droit de la déclarer sans issue. La version locale n'a pas ce défaut :
-//      elle ne demande jamais que de bien tenir une gare qu'on possède DÉJÀ,
-//      donc elle est toujours satisfaisable.
-//
-// Aucune des deux ne se contourne avec un solde plus gros. Toutes deux se
-// disent en clair sur la fiche de gare : un blocage muet serait pire que pas
-// de blocage du tout.
-const OPEN_STARS = 2;
-
-// Une gare a « assuré un service » dès qu'une journée y a été menée à son
-// terme — même sans étoile. C'est le service qui compte, pas le résultat :
-// exiger une étoile enfermerait le joueur qui a acheté trop dur pour lui.
-function stationInService(id) {
-  return (getProgress()[id] || {}).bestDelay != null;
-}
 // N'existe plus comme verrou (voir buyBlock) : le jeu n'attend plus qu'une
 // gare ait servi pour en ouvrir une autre. La fonction reste, et rend
 // toujours null, parce que la carte et le relevé l'interrogent encore — elle
@@ -390,17 +262,23 @@ function openedFromMastered() { return true; }
 // quelle voisine, mais la suivante sur sa ligne — et l'on choisit sa direction
 // au bout. La contrainte est devenue une lecture du réseau plutôt qu'une
 // épreuve à repasser.
-function buyBlock(id) {
-  if (!isBuyable(id)) return null;
-  const short = stationPrice(id) - getCredits();
-  if (short > 0) return { kind: "argent", short };
-  return null;
-}
+// PLUS RIEN NE BLOQUE. Les crédits étaient le dernier verrou, et c'était le
+// plus faible des trois : les deux autres — jouer ce qu'on possède, tenir une
+// voisine à deux étoiles — faisaient déjà tout le travail, et sont tombés avec
+// le lot 2. Une monnaie qui n'achète qu'une seule chose n'est pas une monnaie,
+// c'est un compteur de déblocage déguisé ; on ne ressentait donc pas la valeur
+// de ce qu'on gagnait.
+//
+// Ce qui ouvre une gare, désormais, c'est le RÉSEAU : la suivante sur sa ligne,
+// et le choix d'une direction au bout d'un corridor. La fonction reste, et rend
+// toujours null, parce que la carte et le relevé l'interrogent encore.
+function buyBlock() { return null; }
 // Achetable ET payable ET débloquée : le seul cas où le geste est possible.
 function canBuy(id) { return isBuyable(id) && !buyBlock(id); }
 // Achat : passe par le magasin, qui décrémente et mémorise atomiquement.
+// Ouvrir une gare ne coûte plus rien : le magasin n'enregistre plus qu'un fait.
 function buyStationById(id) {
-  return canBuy(id) && buyStation(id, stationPrice(id));
+  return canBuy(id) && buyStation(id, 0);
 }
 
 // ------------------------------------------------------------------
@@ -443,71 +321,41 @@ function jalonOf(part) {
   for (let i = 0; i < JALONS.length; i++) if (part >= JALONS[i].part - 1e-9) k = i;
   return k;
 }
-// LA PRIME D'UN JALON SE PAIE EN PONCTUALITÉ, JAMAIS EN CRÉDITS. La masse
-// monétaire du jeu est finie, connue et vérifiée (tools/eco-check.mjs) ; y
-// verser des primes la rendrait fausse, et surtout cela reviendrait à financer
-// l'expansion par autre chose que le mérite d'une gare. Un jalon est un fait
-// d'armes : il se consigne, il ne s'encaisse pas.
-function jalonBonus(country) {
-  let tarif = 0;
-  for (const c of CATALOG) if (c.country === country) tarif += stationTarif(c.id);
-  return Math.round(tarif * 0.1);
-}
 
-// ------------------------------------------------------------------
-// LA PONCTUALITÉ — ce qui récompense CHAQUE minute, sur CHAQUE service.
-// ------------------------------------------------------------------
-// Les crédits sont un escalier : quatre paliers, décrochés une fois, et une
-// gare finie ne verse plus rien. C'est ce qui empêche le farming, et il faut le
-// garder. Mais cela laisse un trou : sur une gare au palmarès complet, un
-// service impeccable ne vaut pas mieux qu'un service médiocre — les deux
-// rapportent zéro. Or c'est précisément la promesse du jeu qui s'y perd.
-//
-// D'où un SECOND compteur, qui n'achète rien et ne se dépense pas :
-//
-//   ponctualité = tarif × (1 − retard / 30)
-//
-// Continu, donc chaque minute gagnée se voit ; proportionnel au tarif, donc
-// tenir une grande gare vaut plus que tenir une petite ; nul à trente minutes,
-// comme les étoiles. Et versé à CHAQUE service, sans plafond ni record à
-// battre.
-//
-// POURQUOI CELA NE ROUVRE PAS LE FARMING : ces points n'achètent aucune gare.
-// Les répéter ne fait avancer que le grade, c'est-à-dire un titre. Et comme le
-// barème suit le tarif, s'acharner sur une gare de difficulté 1 rapporte huit
-// fois moins que de bien tenir une difficulté 5 — le raccourci est plus long
-// que le chemin.
-function pointsFor(id, delay) {
-  if (delay == null || delay >= 30) return 0;
-  return Math.round(stationTarif(id) * (1 - Math.max(0, delay) / 30));
-}
-// Reconstitution pour une sauvegarde d'avant la ponctualité : ce que le joueur
-// aurait accumulé si le compteur avait toujours existé — un service par gare,
-// à son meilleur retard. Sous-estime forcément (il a joué plus d'une fois),
-// et c'est le bon sens de l'erreur : on ne crédite que ce qui est prouvé.
-function reconstructPoints() {
-  const prog = getProgress();
-  let total = 0;
-  for (const c of CATALOG) total += pointsFor(c.id, (prog[c.id] || {}).bestDelay);
-  return total;
-}
-// Appelé une fois, après que le magasin ET le catalogue sont chargés.
-function ensurePoints() {
-  if (typeof pointsPending === "function" && pointsPending()) setPoints(reconstructPoints());
-}
 
 // LES GRADES — un titre, pas un pouvoir. Ils ne débloquent rien : ils
 // enregistrent. Les seuils doublent presque à chaque cran, pour que le premier
 // arrive vite (il faut sentir que le compteur sert à quelque chose) et que le
 // dernier reste un horizon lointain.
+// LE GRADE SE COMPTE EN ÉTOILES, plus en ponctualité. Un compteur qu'on ne
+// voit nulle part ailleurs ne se ressent pas : la ponctualité montait en
+// silence, et son grade avec elle. Les étoiles, elles, sont sur chaque gare de
+// la carte — le joueur sait déjà où il en est, le grade ne fait que le nommer.
+//
+// L'échelle est celle du document : dix crans, espacés de plus en plus, pour
+// que le premier arrive vite et le dernier reste un horizon. Le catalogue
+// actuel plafonne à 435 étoiles (145 gares à trois) — « Légende du rail »
+// suppose donc un réseau bien plus vaste, et c'est voulu.
 const GRADES = [
-  { at: 0,     nom: "Aiguilleur stagiaire" },
-  { at: 1200,  nom: "Aiguilleur" },
-  { at: 3500,  nom: "Chef de poste" },
-  { at: 9000,  nom: "Chef de district" },
-  { at: 20000, nom: "Régulateur" },
-  { at: 45000, nom: "Inspecteur général" }
+  { at: 0,    nom: "Aiguilleur stagiaire" },
+  { at: 25,   nom: "Aiguilleur" },
+  { at: 75,   nom: "Chef de quai" },
+  { at: 150,  nom: "Chef de gare" },
+  { at: 300,  nom: "Chef de ligne" },
+  { at: 600,  nom: "Régulateur" },
+  { at: 1000, nom: "Inspecteur" },
+  { at: 1600, nom: "Directeur régional" },
+  { at: 2400, nom: "Directeur de réseau" },
+  { at: 3500, nom: "Légende du rail" }
 ];
+// Le total d'étoiles décrochées, toutes gares confondues. Rien à stocker : les
+// étoiles ne redescendent jamais, la progression les porte déjà.
+function etoilesTotal() {
+  const prog = getProgress();
+  let n = 0;
+  for (const c of CATALOG) n += (prog[c.id] || {}).stars || 0;
+  return n;
+}
 // Le grade courant, et ce qu'il reste avant le suivant. `next` vaut null au
 // dernier : il n'y a alors plus de barre à remplir, et c'est une distinction.
 function gradeOf(points) {
@@ -538,21 +386,42 @@ function nearFirst(from) {
   return id => (near.indexOf(id) >= 0 ? 0 : 1);
 }
 // La gare la moins chère qu'on puisse ouvrir MAINTENANT — voisine d'abord.
+// LA SUITE EST SUR LA LIGNE, PAS DANS LE PORTEFEUILLE. Cette fonction rendait
+// la gare achetable la MOINS CHÈRE, voisine d'abord — d'où un relevé de fin qui
+// proposait « ouvrir Dinant » au bout d'un service à Namur, alors que Dinant
+// n'est pas sur la ligne de Luxembourg. Le prix décidait de la direction.
+//
+// Le graphe sait où l'on va. On prend donc la gare ouvrable qui prolonge le
+// corridor d'où l'on vient ; le prix ne départage plus que les cas où le
+// graphe reste muet — les gares qu'aucun corridor n'atteint encore.
 function cheapestBuyableNear(from) {
+  if (from && typeof corridorDeGare === "function" && typeof garesOuvrables === "function") {
+    const lien = corridorDeGare(from) ||
+      (hubDeGare(from) ? null : null);
+    const ouvrables = garesOuvrables(tenues());
+    if (lien) {
+      const surLaLigne = [...lien.gares,
+        (hubById(lien.a) || {}).gareId, (hubById(lien.b) || {}).gareId]
+        .filter(g => g && ouvrables.has(g) && canBuy(g));
+      if (surLaLigne.length) return surLaLigne[0];
+    }
+    const hub = typeof hubDeGare === "function" ? hubDeGare(from) : null;
+    if (hub) {
+      // Sur un boss : la première gare ouvrable de l'une de ses sorties. C'est
+      // le CHOIX de direction, et le relevé n'en propose qu'un — la carte les
+      // montre tous.
+      for (const l of sortiesDeHub(hub.id)) {
+        const p = parcours(l, hub.id);
+        const g = p.gares.find(x => ouvrables.has(x) && canBuy(x));
+        if (g) return g;
+      }
+    }
+  }
   const rank = nearFirst(from);
-  const cand = CATALOG.filter(c => canBuy(c.id));
+  const cand = CATALOG.filter(c => canBuy(c.id) &&
+    !(typeof dansLeGraphe === "function" && dansLeGraphe(c.id)));
   if (!cand.length) return null;
-  cand.sort((a, b) => rank(a.id) - rank(b.id) || stationPrice(a.id) - stationPrice(b.id));
-  return cand[0].id;
-}
-// Une gare à soi qui a encore un palier à décrocher — voisine d'abord, facile
-// d'abord : le joueur vient chercher un palier, pas une épreuve.
-function bestOwnedWithTier(from) {
-  const rank = nearFirst(from);
-  const cand = CATALOG.filter(c =>
-    c.id !== from && isBought(c.id) && stationNextAmount(c.id) > 0);
-  if (!cand.length) return null;
-  cand.sort((a, b) => rank(a.id) - rank(b.id) || stationDifficulty(a.id) - stationDifficulty(b.id));
+  cand.sort((a, b) => rank(a.id) - rank(b.id));
   return cand[0].id;
 }
 // Ce que la CARTE propose : les trois mêmes cas que le relevé, moins « rejouer
@@ -563,23 +432,18 @@ function nextMove(from) {
   if (idle && idle !== from) return { kind: "service", id: idle };
   const buy = cheapestBuyableNear(from);
   if (buy) return { kind: "open", id: buy };
-  const go = bestOwnedWithTier(from);
-  if (go) return { kind: "go", id: go };
   return null;
 }
 
 // La moins chère des gares achetables — d'un pays donné, ou du réseau entier.
 // Sert à proposer une suite quand le joueur clique une gare hors de portée.
 function cheapestBuyable(country) {
-  let best = -1, bestP = Infinity;
   for (let i = 0; i < CATALOG.length; i++) {
     const c = CATALOG[i];
     if (country && c.country !== country) continue;
-    if (!canBuy(c.id)) continue;
-    const p = stationPrice(c.id);
-    if (p < bestP) { bestP = p; best = i; }
+    if (canBuy(c.id)) return i;
   }
-  return best;
+  return -1;
 }
 // `countryComplete` a été retiré : « pays terminé » n'est plus un cas
 // particulier mais le dernier des quatre JALONS, et il se mesure en ÉTOILES et

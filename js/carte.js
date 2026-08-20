@@ -251,16 +251,13 @@ function vueEurope() {
 // l'ancienne carte ; elle disparaît, eux non. Le solde s'en ira avec les
 // crédits au lot suivant, où le grade prendra toute la place.
 function bourseHTML() {
-  const cr = typeof creditsHTML === "function"
-    ? `<span class="c-bourse">${creditsHTML(getCredits())}</span>` : "";
-  let gr = "";
-  if (typeof gradeOf === "function" && typeof getPoints === "function") {
-    const g = gradeOf(getPoints());
-    gr = `<span class="c-grade" title="${g.nom}">` +
+  if (typeof gradeOf !== "function" || typeof etoilesTotal !== "function") return "";
+  const n = etoilesTotal(), g = gradeOf(n);
+  return `<div class="c-compteurs">` +
+    `<span class="c-grade" title="${g.nom}">` +
       `<span class="g-nom">${g.nom}</span>` +
-      `<span class="g-jauge"><i style="width:${Math.round(g.part * 100)}%"></i></span></span>`;
-  }
-  return `<div class="c-compteurs">${gr}${cr}</div>`;
+      `<span class="g-jauge"><i style="width:${Math.round(g.part * 100)}%"></i></span></span>` +
+    `<span class="c-etoiles">\u2605 ${n}</span></div>`;
 }
 
 function renderCarte() {
@@ -271,7 +268,7 @@ function renderCarte() {
   hote.innerHTML = CARTE.vue === "constellation" ? vueConstellation()
                  : CARTE.vue === "europe" ? vueEurope() : vueLigne();
   // Le relevé de fin anime le solde : il lui faut l'élément, refait à chaque rendu.
-  CARTE.bourse = hote.querySelector(".c-bourse .cr-amt") || hote.querySelector(".c-bourse");
+  CARTE.etoiles = hote.querySelector(".c-etoiles");
 
   // Un seul écouteur, posé sur l'hôte : le contenu se refait à chaque rendu,
   // et des écouteurs par élément fuiraient à chaque changement de vue.

@@ -316,7 +316,6 @@ Promise.all([loadStore(), loadCatalog()])
   .then(() => {
     // Le magasin et le catalogue sont là : la ponctualité d'une sauvegarde
     // ancienne peut enfin se reconstituer depuis les records (js/catalog.js).
-    ensurePoints();
     muted = getMuted(); updateMuteIcon();
     const lp = limitsParamsFromURL();
     if (lp) startAdhocStation(buildLimitsStation(lp)); // démo limites directe

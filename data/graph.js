@@ -288,6 +288,16 @@ const LIENS = [
 // Produit par `node tools/corridors-propose.mjs --js`, à graine fixe. Deux
 // contraintes l'ont façonné, et elles se reperdent si on ne les écrit pas :
 //
+//   • LA COHÉRENCE DE LIGNE AVANT TOUT. Un corridor doit RESTER SUR LA MÊME
+//     LIGNE réelle. Sans ce critère, Bruxelles – Luxembourg partait par le
+//     Hainaut — Ath, Mons, La Louvière, Charleroi — parce que ce détour
+//     plaçait huit gares au lieu de cinq et tenait sous le plafond de
+//     sinuosité. Aucun voyageur ne le reconnaîtrait : on va de Bruxelles au
+//     Luxembourg par Ottignies, Gembloux et Namur, sur la L161 puis la L162.
+//     Les corridors y ont perdu un tiers de leurs gares et tout gagné en
+//     vérité — mieux vaut cinq gares sur la vraie ligne que huit sur un
+//     détour.
+//
 //   • LA SINUOSITÉ AVANT LA LONGUEUR. Chercher le chemin le plus long place le
 //     plus de gares et donne Montpellier – Toulouse EN PASSANT PAR PARIS. On
 //     filtre d'abord sur le rapport distance parcourue / distance à vol
@@ -297,27 +307,25 @@ const LIENS = [
 //     ligne prise isolément : une gare dans deux corridors s'ouvrirait deux
 //     fois, une gare dans aucun serait injouable.
 const CORRIDORS = [
-  { de: "bruxelles", vers: "cologne", gares: ["ottignies", "louvain", "aarschot", "hasselt", "landen", "liege"] },   // Ottignies · Louvain · Aarschot · Hasselt · Landen · Liège  ×1.45
-  { de: "bruxelles", vers: "luxembourg", gares: ["ath", "mons", "lalouviere", "charleroi", "namur", "marloie", "libramont", "arlon"] },   // Ath · Mons · La Louvière · Charleroi · Namur · Marloie · Libramont · Arlon  ×1.48
-  { de: "cologne", vers: "francfort", gares: ["bonn", "koblenz", "mainz"] },   // Bonn · Coblence · Mayence  ×1.14
+  { de: "berlin", vers: "leipzig", gares: ["halle"] },   // Halle  ×1.23
+  { de: "bruxelles", vers: "cologne", gares: ["louvain", "landen", "liege"] },   // Louvain · Landen · Liège  ×1.07
+  { de: "bruxelles", vers: "luxembourg", gares: ["ottignies", "namur", "marloie", "libramont", "arlon"] },   // Ottignies · Namur · Marloie · Libramont · Arlon  ×1.05
   { de: "cologne", vers: "hambourg", gares: ["dusseldorf", "duisburg", "essen", "dortmund", "munster", "osnabruck", "bremen"] },   // Düsseldorf · Duisbourg · Essen · Dortmund · Münster · Osnabrück · Brême  ×1.12
   { de: "francfort", vers: "hanovre", gares: ["kassel"] },   // Cassel  ×1.01
   { de: "francfort", vers: "nuremberg", gares: ["wurzburg"] },   // Wurtzbourg  ×1.00
-  { de: "hambourg", vers: "berlin", gares: ["lubeck", "rostock"] },   // Lübeck · Rostock  ×1.37
-  { de: "hanovre", vers: "berlin", gares: ["magdeburg", "halle"] },   // Magdebourg · Halle  ×1.45
+  { de: "hambourg", vers: "berlin", gares: ["rostock"] },   // Rostock  ×1.36
   { de: "leipzig", vers: "nuremberg", gares: ["erfurt"] },   // Erfurt  ×1.18
-  { de: "lille", vers: "bruxelles", gares: ["mouscron", "courtrai", "deinze", "gand", "lokeren", "termonde", "denderleeuw"] },   // Mouscron · Courtrai · Deinze · Gand · Lokeren · Termonde · Denderleeuw  ×1.44
+  { de: "lille", vers: "bruxelles", gares: ["tournai", "ath"] },   // Tournai · Ath  ×1.04
   { de: "londres", vers: "birmingham", gares: ["leicester"] },   // Leicester  ×1.20
-  { de: "londres", vers: "manchester", gares: ["cambridge", "peterborough", "nottingham", "derby", "crewe", "liverpool"] },   // Cambridge · Peterborough · Nottingham · Derby · Crewe · Liverpool  ×1.49
-  { de: "luxembourg", vers: "francfort", gares: ["trier", "saarbrucken", "mannheim"] },   // Trèves · Sarrebruck · Mannheim  ×1.50
-  { de: "luxembourg", vers: "strasbourg", gares: ["petange", "esch-sur-alzette", "bettembourg", "metz"] },   // Pétange · Esch-sur-Alzette · Bettembourg · Metz  ×1.30
-  { de: "lyon", vers: "marseille", gares: ["chambery", "grenoble", "valence", "avignon"] },   // Chambéry · Grenoble · Valence · Avignon  ×1.43
-  { de: "manchester", vers: "edimbourg", gares: ["preston", "carlisle", "glasgow", "stirling"] },   // Preston · Carlisle · Glasgow · Stirling  ×1.39
+  { de: "londres", vers: "manchester", gares: ["peterborough", "nottingham", "derby", "crewe"] },   // Peterborough · Nottingham · Derby · Crewe  ×1.24
+  { de: "luxembourg", vers: "francfort", gares: ["trier", "koblenz", "mainz"] },   // Trèves · Coblence · Mayence  ×1.20
+  { de: "luxembourg", vers: "strasbourg", gares: ["bettembourg", "metz"] },   // Bettembourg · Metz  ×1.13
+  { de: "manchester", vers: "edimbourg", gares: ["leeds", "carlisle"] },   // Leeds · Carlisle  ×1.16
   { de: "manchester", vers: "newcastle", gares: ["sheffield", "doncaster", "york"] },   // Sheffield · Doncaster · York  ×1.43
+  { de: "marseille", vers: "montpellier", gares: ["avignon", "nimes"] },   // Avignon · Nîmes  ×1.34
   { de: "montpellier", vers: "toulouse", gares: ["narbonne"] },   // Narbonne  ×1.12
   { de: "munich", vers: "stuttgart", gares: ["augsburg", "ulm"] },   // Augsbourg · Ulm  ×1.03
-  { de: "nuremberg", vers: "munich", gares: ["regensburg"] },   // Ratisbonne  ×1.29
   { de: "paris", vers: "bordeaux", gares: ["rouen", "caen", "le-mans", "tours", "poitiers"] },   // Rouen · Caen · Le Mans · Tours · Poitiers  ×1.45
-  { de: "paris", vers: "lille", gares: ["amiens"] },   // Amiens  ×1.05
-  { de: "paris", vers: "strasbourg", gares: ["reims", "nancy"] },   // Reims · Nancy  ×1.04
+  { de: "paris", vers: "strasbourg", gares: ["nancy"] },   // Nancy  ×1.00
+  { de: "strasbourg", vers: "francfort", gares: ["karlsruhe", "mannheim"] },   // Karlsruhe · Mannheim  ×1.05
 ];

@@ -52,11 +52,10 @@ function maybeStartMapOnboarding() {
     return;
   }
   onboarding = "pickStation";
-  // C'est le seul endroit du jeu où le mot « crédits » est prononcé, avec le
-  // premier achat : partout ailleurs, le jeton parle tout seul.
-  coachAt(null, "Bienvenue ! Vous avez <b>" + (typeof getCredits === "function" ? getCredits() : 150) +
-                " crédits</b> pour ouvrir votre première gare. " +
-                "Les gares qui <b>pulsent</b> sont à votre portée — choisissez la vôtre.",
+  // Plus de solde à annoncer : ouvrir une gare ne coûte rien, c'est le réseau
+  // qui décide de ce qui s'ouvre. Le message dit donc le geste, et rien d'autre.
+  coachAt(null, "Bienvenue ! Les gares qui <b>pulsent</b> sont à votre portée — " +
+                "choisissez la vôtre.",
           "Compris");
 }
 
@@ -1279,24 +1278,7 @@ function tick(dtMin) {
 // (easeOutCubic) : le chiffre part d'un coup — on voit tout de suite que ça
 // monte — et s'installe doucement sur sa valeur, qu'on a le temps de lire.
 // Respecte prefers-reduced-motion : on pose alors le total, sans mouvement.
-function animateCredits(el, from, to, signed) {
-  if (!el || typeof creditsHTML !== "function") return;
-  const set = v => { el.innerHTML = creditsHTML(v, signed); };
-  const reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  if (reduce || from === to) { set(to); return; }
-  const DUR = 850;
-  let t0 = null;
-  set(from);
-  requestAnimationFrame(function step(ts) {
-    if (t0 === null) t0 = ts;
-    // Le bloc a pu être redessiné entre-temps (un achat depuis le relevé) :
-    // on cesse de peindre dans un nœud qui n'est plus à l'écran.
-    if (!el.isConnected) return;
-    const e = Math.min(1, (ts - t0) / DUR);
-    set(Math.round(from + (to - from) * (1 - Math.pow(1 - e, 3))));
-    if (e < 1) requestAnimationFrame(step);
-  });
-}
+
 
 // LA GARE QUE DÉSIGNE LE BOUTON — pour que la carte la désigne aussi.
 //
@@ -1413,7 +1395,6 @@ function endGame(failed) {
   // record — qu'on s'apprête justement à écraser. L'ordre n'est donc pas un
   // détail : mesuré après, tout service rapporterait zéro.
   const noPay = failed || STATION.adhoc;
-  const gain = noPay ? 0 : stationGain(STATION.id, d);
   // COMBIEN DE PALIERS AVANT, COMBIEN APRÈS. Mesuré de part et d'autre de
   // l'enregistrement, c'est ce qui permet de nommer la ligne qu'on vient de
   // cocher — et, quand il n'y en a pas, de montrer celle qui vient.
@@ -1428,20 +1409,17 @@ function endGame(failed) {
   const paysApres = pays ? countryStars(pays) : null;
   const jalonAfter = pays ? jalonOf(paysApres.part) : -1;
   const jalonUp = jalonAfter > jalonBefore ? jalonAfter : -1;
-  // ---- PONCTUALITÉ : versée à CHAQUE service, sans plafond ni record à battre.
-  // C'est elle qui répond « oui » à la question que les crédits laissent sans
-  // réponse sur une gare finie : est-ce que bien jouer sert encore à quelque
-  // chose ? Le grade franchi se dit dans le relevé, à sa place — pas en travers
-  // de l'écran.
-  const ponctu = noPay ? 0 : pointsFor(STATION.id, d);
-  // La prime de jalon s'ajoute à la ponctualité du service : c'est le même
-  // compteur, et le grade peut donc se franchir sur un jalon.
-  const primeJalon = jalonUp >= 0 ? jalonBonus(pays) : 0;
-  const gradeBefore = gradeOf(getPoints());
-  if (ponctu + primeJalon > 0) addPoints(ponctu + primeJalon);
-  const gradeAfter = gradeOf(getPoints());
+  // La ponctualité a disparu : c'était un second compteur, invisible partout
+  // ailleurs, qui doublait ce que les étoiles disent déjà. Un jalon de pays
+  // reste un fait d'armes — il se consigne, il ne se paie plus.
+  // LE GRADE SE COMPTE EN ÉTOILES. `prevStars` et `stars` encadrent déjà
+  // l'enregistrement : ce service a rapporté la différence, et le total se
+  // relit sur la progression — rien à stocker.
+  const etoilesGagnees = noPay ? 0 : Math.max(0, stars - prevStars);
+  const totalApres = typeof etoilesTotal === "function" ? etoilesTotal() : 0;
+  const gradeBefore = gradeOf(totalApres - etoilesGagnees);
+  const gradeAfter = gradeOf(totalApres);
   const gradeUp = gradeAfter.i > gradeBefore.i;
-  if (gain > 0) addCredits(gain);
   // Le dernier jalon EST « pays terminé » : plus de cas particulier, c'est le
   // quatrième cran d'une échelle qu'on gravit depuis le premier quart.
   const justCompletedCountry = jalonUp === JALONS.length - 1;
@@ -1478,7 +1456,7 @@ function endGame(failed) {
     ec.innerHTML = '<span class="ec-flag">' + cflag + "</span>" +
       '<span class="ec-txt"><b>' + cname + "</b> — " + JALONS[jalonUp].nom.toLowerCase() +
       '<span class="ec-stars">' + paysApres.earned + " / " + paysApres.total + " ★" +
-      (primeJalon ? ' <span class="ec-prime">+' + primeJalon + " ponctualité</span>" : "") +
+
       "</span></span>";
     ec.classList.remove("hidden");
   } else ec.classList.add("hidden");
@@ -1519,40 +1497,37 @@ function endGame(failed) {
     if (noPay) return "";
     const next = stationNextTier(STATION.id);
     const got = tiersAfter > tiersBefore ? PALIERS[tiersAfter - 1] : null;
-    return '<div class="eu-title">Recette du service</div>' +
-      '<div class="eu-gain' + (gain > 0 ? "" : " none") + '">' + creditsHTML(gain, true) + "</div>" +
+    return '<div class="eu-title">Ce que ce service a rapporté</div>' +
+      // LE DIAMANT S'EMPILE, IL NE REMPLACE PAS. Un sans-faute donne les trois
+      // étoiles ET le diamant : mieux jouer ne doit jamais rapporter moins.
+      (perfect ? '<div class="eu-diamant">\u25C6<span>Diamant — service parfait</span></div>' : "") +
       (got ? '<div class="eu-tier done">' + palierStarsHTML(got) +
                "<span>" + got.nom + " — décroché</span></div>" : "") +
       (next < 0
         ? '<div class="eu-tier full">Palmarès complet · ' +
             PALIERS.length + " / " + PALIERS.length + "</div>"
         : '<div class="eu-tier next">' + palierStarsHTML(PALIERS[next]) +
-            "<span>" + PALIERS[next].nom + " — " + PALIERS[next].seuil + "</span>" +
-            '<span class="am">' + creditsHTML(palierAmount(STATION.id, next), true) + "</span></div>") +
-      // LA PONCTUALITÉ, TOUJOURS. Elle est la seule ligne du relevé qui ne peut
-      // pas être nulle après un service tenu — et c'est exactement pour cela
-      // qu'elle existe : sur une gare au palmarès complet, elle est ce qui
-      // reste à gagner, et elle dépend de chaque minute.
-      (ponctu > 0
-        ? '<div class="eu-ponctu"><span class="pc-n">+' + ponctu + "</span>" +
-            "<span>ponctualité</span>" +
-            (gradeUp ? '<span class="pc-up">' + gradeAfter.nom + " !</span>" : "") + "</div>"
-        : "");
-      // le solde n'est PAS ici : il vit en permanence sur la carte, derrière
-      // le relevé, et c'est lui qui s'incrémente sous les yeux du joueur.
+            "<span>" + PALIERS[next].nom + " — " + PALIERS[next].seuil + "</span></div>") +
+      // Le total d'étoiles vit en tête de carte, derrière le relevé : c'est lui
+      // qui monte sous les yeux du joueur, pas un chiffre posé ici.
+      (gradeUp ? '<div class="eu-grade">' + gradeAfter.nom + " !</div>" : "");
   }
 
-  // LA RECETTE SE COMPTE, ELLE NE S'AFFICHE PAS. Un nombre déjà posé est un
-  // résultat ; un nombre qui monte est un gain — c'est le même chiffre, mais
-  // l'un se lit et l'autre se ressent. Le solde suit le même mouvement, de son
-  // ancienne valeur à la nouvelle : on voit la recette PASSER de la gare à la
-  // bourse, plutôt que deux totaux sans lien.
+  // Le total d'étoiles de la carte compte en même temps : la récompense ne
+  // s'additionne pas dans un coin de fiche, elle tombe dans le compteur qu'on
+  // voit déjà.
   function rollRecette() {
-    if (noPay || gain <= 0) return;
-    animateCredits(reward.querySelector(".eu-gain"), 0, gain, true);
-    // La bourse de la carte compte en même temps : la recette ne s'additionne
-    // pas dans un coin de fiche, elle tombe dans le solde qu'on voit déjà.
-    animateCredits(CARTE.bourse, getCredits() - gain, getCredits(), false);
+    if (noPay || !CARTE.etoiles || typeof etoilesTotal !== "function") return;
+    const apres = etoilesTotal(), avant = apres - etoilesGagnees;
+    if (apres === avant) return;
+    let t0 = null;
+    const pas = ts => {
+      if (t0 === null) t0 = ts;
+      const k = Math.min(1, (ts - t0) / 600), e = 1 - Math.pow(1 - k, 3);
+      CARTE.etoiles.textContent = "\u2605 " + Math.round(avant + (apres - avant) * e);
+      if (k < 1) requestAnimationFrame(pas);
+    };
+    requestAnimationFrame(pas);
   }
 
   // ------------------------------------------------------------------
@@ -1596,10 +1571,8 @@ function endGame(failed) {
       const buy = cheapestBuyableNear(here);
       if (buy) return { kind: "open", id: buy };
     }
-    if (here && stationNextAmount(here) > 0) return { kind: "replay" };
+    if (here && stationNextTier(here) >= 0) return { kind: "replay" };
 
-    const go = bestOwnedWithTier(here);
-    if (go) return { kind: "go", id: go };
     return { kind: "map" };
   }
 
@@ -1637,18 +1610,18 @@ function endGame(failed) {
     // suivant, il ne reste à l'écran que s'il a encore quelque chose à offrir.
     const btnReplay = document.getElementById("btn-replay");
     const btnNext = document.getElementById("btn-next");
-    // CE QUE LA GARE PEUT ENCORE VERSER, sur le bouton qui y ramène. Sans ce
-    // chiffre, « Rejouer » ne promet rien de mesurable — or c'est exactement la
-    // question que se pose un joueur à court de crédits. Rien à afficher quand
-    // la gare a tout donné : un « +0 » ferait de la reprise une perte de temps
-    // annoncée, et son absence le dit déjà (même règle que sur la carte).
-    const leftHere = (STATION.adhoc || typeof stationNextAmount !== "function") ? 0
-      : stationNextAmount(STATION.id);
+    // REJOUER SE JUSTIFIE PAR CE QUI RESTE À DÉCROCHER, plus par un montant.
+    // Le bouton portait « +30 » : c'était le dernier endroit où un crédit
+    // survivait, et il disait au joueur que revenir sur une gare valait une
+    // somme plutôt qu'une étoile. Il dit maintenant quel palier l'attend.
+    // Rien à afficher quand la gare a tout donné : son absence le dit déjà.
+    const resteIci = (STATION.adhoc || typeof stationNextTier !== "function") ? -1
+      : stationNextTier(STATION.id);
     btnReplay.innerHTML = (typeof icon === "function" ? icon(ICON.restart, 18) : "") +
-      "Rejouer" + (leftHere ? " — " + creditsHTML(leftHere, true) : "");
+      (resteIci >= 0 ? "Rejouer — " + PALIERS[resteIci].nom : "Rejouer");
     const replayIsStep = step.kind === "replay";
     btnReplay.classList.toggle("primary", replayIsStep);
-    btnReplay.classList.toggle("hidden", !replayIsStep && !leftHere);
+    btnReplay.classList.toggle("hidden", !replayIsStep && resteIci < 0);
 
     // Le pas suivant porte SON NOM et SON MONTANT : « Continuer » tout seul ne
     // dit pas où l'on va, et un bouton qui n'annonce pas ce qu'il coûte ou ce
@@ -1659,8 +1632,8 @@ function endGame(failed) {
       const nm = step.id ? nameOf(step.id) : "";
       btnNext.innerHTML =
         step.kind === "service" ? "Prendre le service à " + nm
-        : step.kind === "open"  ? "Ouvrir " + nm + " — " + creditsHTML(stationPrice(step.id))
-        : step.kind === "go"    ? "Continuer — " + nm + " " + creditsHTML(stationNextAmount(step.id), true)
+        : step.kind === "open"  ? "Ouvrir " + nm
+        : step.kind === "go"    ? "Continuer — " + nm
                                 : "Voir la carte";
       btnNext.onclick = () => {
         if (step.kind === "map") { endLeaveMap(true); return; }

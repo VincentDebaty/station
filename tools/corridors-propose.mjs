@@ -65,7 +65,7 @@ const CATALOG = [];
 for (const g of index)
   for (const id of g.stations) CATALOG.push(JSON.parse(read(`data/stations/${g.country}/${id}.json`)));
 ctx.CATALOG = CATALOG;
-const { netLinks, HUBS, LIENS, GEO } = ctx;
+const { netLinks, HUBS, LIENS, GEO, LINES, netKey } = ctx;
 
 const card = Object.fromEntries(CATALOG.map(c => [c.id, c]));
 const nameOf = id => card[id].city || card[id].name || id;
@@ -113,6 +113,41 @@ function km(a, b) {
   return R * Math.hypot((B[0] - A[0]) * rad * Math.cos((A[1] + B[1]) / 2 * rad), (B[1] - A[1]) * rad);
 }
 const SIN_MAX = 1.5;
+
+// ------------------------------------------------------------------
+// LA COHÉRENCE DE LIGNE — ce qui manquait, et qui compte plus que tout.
+// ------------------------------------------------------------------
+// La sinuosité écarte les trajets qui reviennent sur leurs pas, mais elle
+// laisse passer les détours plausibles : Bruxelles – Luxembourg PAR MONS
+// mesure x1,48, sous le plafond, et place huit gares au lieu de cinq. Le
+// glouton l'a donc preferé. Aucun voyageur ne reconnaîtrait ce trajet : on va
+// de Bruxelles au Luxembourg par Ottignies, Gembloux et Namur, sur la L161
+// puis la L162 — pas par le Hainaut.
+//
+// La vraie contrainte n'est ni la longueur ni le tracé : c'est de RESTER SUR
+// LA MÊME LIGNE. On compte donc les changements de ligne réelle le long du
+// trajet, et c'est ce nombre qui départage d'abord.
+const LIGNES = {};
+const cle2 = (a, b) => a < b ? a + "|" + b : b + "|" + a;
+for (const L of LINES) {
+  const brut = (L.nodes || []).map(n =>
+    card[n] ? n : (card[netKey(n)] ? netKey(n) : null)).filter(Boolean);
+  const seq = brut.filter((x, i) => brut.indexOf(x) === i);
+  for (let i = 0; i + 1 < seq.length; i++)
+    (LIGNES[cle2(seq[i], seq[i + 1])] = LIGNES[cle2(seq[i], seq[i + 1])] || []).push(L.id);
+}
+// Combien de fois faut-il changer de ligne pour parcourir ce trajet ? On suit
+// la ligne courante tant qu'elle dessert le pas suivant.
+function changements(suite) {
+  let courante = null, n = 0;
+  for (let i = 0; i + 1 < suite.length; i++) {
+    const dispo = LIGNES[cle2(suite[i], suite[i + 1])] || [];
+    if (courante && dispo.includes(courante)) continue;
+    courante = dispo[0] || null;
+    n++;
+  }
+  return Math.max(0, n - 1);
+}
 function sinuosite(ga, gb, milieu) {
   const suite = [ga, ...milieu, gb];
   let parcouru = 0;
@@ -170,8 +205,14 @@ function essai() {
     // L'ordre compte : filtrer après avoir choisi ne sert à rien.
     const cands = bruts.filter(p => sinuosite(c.ga, c.gb, p) <= SIN_MAX);
     if (!cands.length) { out.set(c, []); continue; }
-    const max = Math.max(...cands.map(p => p.length));
-    const p = pick(cands.filter(x => x.length === max));
+    // D'ABORD la cohérence de ligne, ENSUITE la longueur. L'ordre est tout le
+    // correctif : entre huit gares par le Hainaut et cinq par la L161, c'est
+    // la L161 qu'un voyageur appelle « la ligne de Luxembourg ».
+    const note = p => changements([c.ga, ...p, c.gb]);
+    const mieux = Math.min(...cands.map(note));
+    const droits = cands.filter(p => note(p) === mieux);
+    const max = Math.max(...droits.map(p => p.length));
+    const p = pick(droits.filter(x => x.length === max));
     for (const g of p) libre.delete(g);
     out.set(c, p);
   }
@@ -196,8 +237,9 @@ console.log(`\n${CORRIDORS.length} corridors entre hubs déjà jouables · ${INT
 for (const [c, p] of rangs) {
   const nom = `${hubById[c.a].nom} – ${hubById[c.b].nom}`;
   const sin = p.length ? sinuosite(c.ga, c.gb, p) : 0;
+  const chg = p.length ? changements([c.ga, ...p, c.gb]) : 0;
   console.log(pad(String(p.length), 3) + pad(nom, 30) +
-    pad(p.length ? "×" + sin.toFixed(2) : "", 7) +
+    pad(p.length ? "x" + sin.toFixed(2) : "", 7) + pad(p.length ? chg + " chg" : "", 7) +
     (p.length ? p.map(nameOf).join(" · ") : "— aucun trajet lisible"));
 }
 const h = {};

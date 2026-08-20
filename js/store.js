@@ -14,7 +14,7 @@
 // sauvegarde ancienne au schéma courant, pour ne jamais casser une partie
 // après une mise à jour.
 // ------------------------------------------------------------------
-const SCHEMA_VERSION = 4;
+const SCHEMA_VERSION = 5;
 const KEY_PROGRESS = "station-progress";
 const KEY_MUTED = "station-muted";
 const KEY_ONBOARDED = "station-onboarded"; // « le joueur a déjà appris le geste »
@@ -40,16 +40,13 @@ function makeBackend() {
 const _store = makeBackend();
 
 // --- Caches mémoire : lus en synchrone par le jeu, hydratés par loadStore. ---
-let _progress = { version: SCHEMA_VERSION, credits: 0, points: 0, stations: {}, bought: [] };
+let _progress = { version: SCHEMA_VERSION, stations: {}, bought: [] };
 let _muted = false;
 let _onboarded = false;
 
 // Dotation de départ : elle appartient à l'économie (js/catalog.js), pas au
 // stockage. Lue au moment de la migration, donc après le chargement de tous les
 // scripts — le repli ne sert qu'à ne jamais rendre une partie injouable.
-function startingCredits() {
-  return (typeof CREDITS_START === "number") ? CREDITS_START : 150;
-}
 
 // --- Migration : amène n'importe quel format vers le schéma courant. ---
 function migrate(raw) {
@@ -61,30 +58,21 @@ function migrate(raw) {
     if (raw.version == null) stations = raw;
     else { stations = raw.stations || {}; opened = raw.opened || []; }
   }
-  // Déjà en v4 : rien à déduire, on reprend tel quel (défauts compris).
-  if (raw && raw.version === 4)
-    return {
-      version: 4,
-      credits: Math.max(0, Math.round(raw.credits || 0)),
-      points: Math.max(0, Math.round(raw.points || 0)),
-      stations, bought: raw.bought || []
-    };
-  // v3 → v4 : la PONCTUALITÉ apparaît. `points: null` veut dire « pas encore
-  // reconstituée » — et non « zéro ». Un joueur qui a déjà tenu trente gares ne
-  // repart pas de rien : son compteur se déduit de ses records, exactement
-  // comme s'il avait toujours existé (js/catalog.js, reconstructPoints).
+  // Déjà en v5 : rien à déduire, on reprend tel quel.
+  if (raw && raw.version === 5)
+    return { version: 5, stations, bought: raw.bought || [] };
+  // v4 → v5 : LES CRÉDITS ET LA PONCTUALITÉ DISPARAISSENT, et le joueur ne perd
+  // rien. Ce qu'il avait acquis, ce sont ses GARES et ses RECORDS — les deux
+  // sont conservés tels quels. Le solde ne servait qu'à ouvrir des gares, et
+  // l'on n'en a plus besoin ; le compteur de ponctualité doublait ce que les
+  // étoiles disent déjà, et le grade se relit désormais sur elles.
   //
-  // La reconstitution ne peut PAS se faire ici : loadStore() et loadCatalog()
-  // tournent en parallèle (js/main.js), donc le barème ne connaît encore aucune
-  // gare et rendrait la difficulté 1 pour toutes. Elle attend que les deux
-  // soient là.
+  // Une gare payée reste ouverte : `bought` passe intact. C'est la seule chose
+  // qui compte, et c'est ce qui rend la migration sans risque.
+  if (raw && raw.version === 4)
+    return { version: 5, stations, bought: raw.bought || [] };
   if (raw && raw.version === 3)
-    return {
-      version: 4,
-      credits: Math.max(0, Math.round(raw.credits || 0)),
-      points: null,
-      stations, bought: raw.bought || []
-    };
+    return { version: 5, stations, bought: raw.bought || [] };
 
   // Étape 2 : v2 → v3. Le joueur ne perd RIEN et ne reçoit RIEN d'immérité.
   //
@@ -103,10 +91,9 @@ function migrate(raw) {
   // Partie neuve (ou sauvegarde vide) : la dotation de départ, sans quoi il n'y
   // aurait pas de quoi ouvrir la première gare.
   return {
-    version: 4, credits: bought.length ? 0 : startingCredits(),
+    version: 5,
     // Sauvegarde antérieure à la monnaie : elle a des records, donc de la
     // ponctualité à reconstituer. Partie neuve : rien à reconstituer, zéro.
-    points: bought.length ? null : 0,
     stations, bought
   };
 }
@@ -150,20 +137,12 @@ function isBought(id) { return getBought().indexOf(id) >= 0; }
 // ------------------------------------------------------------------
 // Le solde ne descend JAMAIS en dessous de zéro et ne se retire jamais : un
 // service raté rapporte zéro, il ne coûte rien. Toute écriture passe par ici.
-function getCredits() { return _progress.credits || 0; }
-function addCredits(n) {
-  n = Math.round(n || 0);
-  if (n <= 0) return getCredits();
-  _progress.credits = getCredits() + n;
-  persistProgress();
-  return _progress.credits;
-}
 // Achat : atomique. Rend false et ne touche à rien si le solde ne suffit pas ou
 // si la gare est déjà acquise — l'appelant n'a aucune vérification à refaire.
-function buyStation(id, price) {
-  price = Math.max(0, Math.round(price || 0));
-  if (!id || isBought(id) || getCredits() < price) return false;
-  _progress.credits = getCredits() - price;
+// Ouvrir une gare n'a plus de prix : le magasin n'enregistre qu'un fait. Le
+// second argument reste accepté et ignoré, pour ne pas casser les appels.
+function buyStation(id) {
+  if (!id || isBought(id)) return false;
   getBought().push(id);
   persistProgress();
   return true;
@@ -178,18 +157,6 @@ function buyStation(id, price) {
 // qu'on est à l'heure.
 //
 // `null` = pas encore reconstituée depuis les records (voir migrate).
-function getPoints() { return _progress.points || 0; }
-function pointsPending() { return _progress.points == null; }
-function setPoints(n) {
-  _progress.points = Math.max(0, Math.round(n || 0));
-  persistProgress();
-  return _progress.points;
-}
-function addPoints(n) {
-  n = Math.round(n || 0);
-  if (n <= 0) return getPoints();
-  return setPoints(getPoints() + n);
-}
 
 function saveResult(id, stars, delay) {
   const cur = _progress.stations[id] || { stars: 0, bestDelay: null };
