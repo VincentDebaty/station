@@ -385,38 +385,62 @@ function nearFirst(from) {
   const near = (from && typeof netLinks === "function") ? netLinks(from).to : [];
   return id => (near.indexOf(id) >= 0 ? 0 : 1);
 }
-// La gare la moins chère qu'on puisse ouvrir MAINTENANT — voisine d'abord.
-// LA SUITE EST SUR LA LIGNE, PAS DANS LE PORTEFEUILLE. Cette fonction rendait
-// la gare achetable la MOINS CHÈRE, voisine d'abord — d'où un relevé de fin qui
-// proposait « ouvrir Dinant » au bout d'un service à Namur, alors que Dinant
-// n'est pas sur la ligne de Luxembourg. Le prix décidait de la direction.
+// LA GARE QU'ON OUVRE ENSUITE. Le nom dit encore « la moins chère » : c'est un
+// vestige, il n'y a plus de prix. Ce qu'elle rend, c'est LA SUITE DU CHEMIN.
 //
-// Le graphe sait où l'on va. On prend donc la gare ouvrable qui prolonge le
-// corridor d'où l'on vient ; le prix ne départage plus que les cas où le
-// graphe reste muet — les gares qu'aucun corridor n'atteint encore.
+// Deux fois corrigée, et la seconde fois pour la même raison que la première :
+// le prix, puis la géographie, décidaient de la direction à la place du graphe.
+//
+//   1re version — la moins chère, voisine d'abord. D'où « ouvrir Dinant » au
+//      bout d'un service à Namur : Dinant est proche, et bon marché, mais elle
+//      n'est pas sur la ligne de Luxembourg.
+//   2e version — le corridor d'où l'on vient, puis repli géographique. Mieux,
+//      mais elle proposait ENCORE Dinant dès que ce corridor était fini : plus
+//      rien à ouvrir sur la ligne, donc repli — alors que Bruxelles et
+//      Luxembourg, ses deux termini, ouvrent chacun trois autres lignes.
+//
+// L'ordre ci-dessous épuise le graphe AVANT de sortir du graphe, et c'est le
+// point : on ne quitte le réseau que lorsqu'il n'a plus rien à offrir.
 function cheapestBuyableNear(from) {
-  if (from && typeof corridorDeGare === "function" && typeof garesOuvrables === "function") {
-    const lien = corridorDeGare(from) ||
-      (hubDeGare(from) ? null : null);
+  if (typeof garesOuvrables === "function" && typeof parcours === "function") {
     const ouvrables = garesOuvrables(tenues());
+    const prenable = g => !!g && ouvrables.has(g) && canBuy(g);
+    const gareDe = h => (hubById(h) || {}).gareId;
+    // Une ligne lue DEPUIS un bout donné : ses gares dans l'ordre, puis le
+    // terminus opposé. C'est l'ordre dans lequel on avance dessus.
+    const depuis = (l, h) => { const p = parcours(l, h); return [...p.gares, gareDe(p.vers)]; };
+
+    // 1. LA LIGNE OÙ L'ON EST, et d'abord la gare VOISINE : sur un corridor,
+    //    la suite est le maillon d'à côté, pas le premier de la liste.
+    const lien = typeof corridorDeGare === "function" ? corridorDeGare(from) : null;
     if (lien) {
-      const surLaLigne = [...lien.gares,
-        (hubById(lien.a) || {}).gareId, (hubById(lien.b) || {}).gareId]
-        .filter(g => g && ouvrables.has(g) && canBuy(g));
-      if (surLaLigne.length) return surLaLigne[0];
+      const compo = [gareDe(lien.a), ...(lien.gares || []), gareDe(lien.b)].filter(Boolean);
+      const i = compo.indexOf(from);
+      if (i >= 0) for (const j of [i + 1, i - 1]) if (prenable(compo[j])) return compo[j];
+      const reste = compo.find(prenable);
+      if (reste) return reste;
     }
-    const hub = typeof hubDeGare === "function" ? hubDeGare(from) : null;
-    if (hub) {
-      // Sur un boss : la première gare ouvrable de l'une de ses sorties. C'est
-      // le CHOIX de direction, et le relevé n'en propose qu'un — la carte les
-      // montre tous.
-      for (const l of sortiesDeHub(hub.id)) {
-        const p = parcours(l, hub.id);
-        const g = p.gares.find(x => ouvrables.has(x) && canBuy(x));
+    // 2. LES LIGNES QUI PARTENT D'ICI — du boss où l'on se trouve, ou des deux
+    //    termini de la ligne qu'on vient de finir. C'est le carrefour : on y
+    //    choisit une direction, et le relevé en propose une (la carte les
+    //    montre toutes).
+    const carrefours = [];
+    const ici = typeof hubDeGare === "function" ? hubDeGare(from) : null;
+    if (ici) carrefours.push(ici.id);
+    if (lien) carrefours.push(lien.a, lien.b);
+    for (const h of carrefours)
+      for (const l of sortiesDeHub(h)) {
+        const g = depuis(l, h).find(prenable);
         if (g) return g;
       }
-    }
+    // 3. N'IMPORTE OÙ DANS LE GRAPHE. Le réseau est vaste et le joueur peut
+    //    tenir plusieurs lignes à la fois ; se taire ici l'enverrait hors du
+    //    graphe alors qu'il lui reste des corridors entiers à ouvrir.
+    for (const g of ouvrables) if (prenable(g)) return g;
   }
+  // 4. HORS GRAPHE, et seulement là. Les 68 gares du catalogue qu'aucun
+  //    corridor n'atteint encore attendent leurs hubs ; en attendant, elles
+  //    restent jouables, voisine d'abord.
   const rank = nearFirst(from);
   const cand = CATALOG.filter(c => canBuy(c.id) &&
     !(typeof dansLeGraphe === "function" && dansLeGraphe(c.id)));

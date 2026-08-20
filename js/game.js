@@ -1348,6 +1348,9 @@ function showEndBesideMap() {
   // fiche encore centrée et l'on croit la bande libre plus étroite qu'elle
   // n'est.
   end.classList.add("over-map");
+  // LA CARTE S'ÉCARTE, elle n'est plus recouverte : la classe vit sur #hub et
+  // non sur #hub-map, dont renderCarte() réécrit le `class` en entier.
+  hub.classList.add("avec-releve");
   fitEndCard();
   // La carte en lignes n'a pas de caméra : il n'y a rien à cadrer, et c'est un
   // soulagement. L'ancienne devait deviner quoi montrer — le pays ? la gare et
@@ -1369,6 +1372,7 @@ function endLeaveMap() {
   if (!end.classList.contains("over-map")) return false;
   end.classList.add("hidden");
   end.classList.remove("over-map");
+  document.getElementById("hub").classList.remove("avec-releve");
   // Le relevé rangé, la carte reprend sa règle ordinaire.
   if (endFocusId) endFocusId = null;
   if (typeof renderCarte === "function") renderCarte();
@@ -1393,6 +1397,10 @@ function endGame(failed) {
   // Étoiles de CETTE gare avant enregistrement : sert à savoir si ce service
   // vient de boucler le pays (dernier maillon décroché à l'instant).
   const prevStars = (getProgress()[STATION.id] || {}).stars || 0;
+  // LE RECORD D'AVANT, pour le placer sur le barème à côté du service du jour.
+  // Mesuré après l'enregistrement, il vaudrait le service du jour et les deux
+  // repères se superposeraient toujours.
+  const prevBest = (getProgress()[STATION.id] || {}).bestDelay;
   // ---- RECETTE : calculée AVANT d'enregistrer le record ------------------
   // Une gare ne paie que la PROGRESSION : ce service vaut tarif × multiplicateur,
   // moins ce que la gare a déjà versé. Or « déjà versé » se déduit du meilleur
@@ -1457,7 +1465,14 @@ function endGame(failed) {
   // d'écran — et une phrase qui se replie quatre fois pousse les boutons hors
   // de vue. Le barème est déjà dit par les étoiles éteintes juste au-dessus, et
   // « Réessayez ! » par le bouton « Rejouer » juste en dessous.
-  document.getElementById("end-delay").textContent = failed
+  // LE RETARD EST SUR LE BARÈME, il n'a pas à être redit en toutes lettres
+  // juste au-dessus. La phrase ne reste que là où le barème ne suffit pas :
+  // l'échec, dont le retard sort de l'axe, et la démo « limites », qui n'a pas
+  // de barème du tout.
+  const dl = document.getElementById("end-delay");
+  const barme = !STATION.adhoc && !failed;
+  dl.classList.toggle("hidden", barme);
+  dl.textContent = failed
     ? "Retard de +" + d + " min — limite dépassée."
     : win
       ? (d === 0 ? "Service parfait — aucun retard." : "Retard cumulé : " + d + " min")
@@ -1514,30 +1529,90 @@ function endGame(failed) {
   //   • CE QUI VIENT ENSUITE, avec son montant — c'est la raison de rejouer.
   // Palmarès complet : la seule fois où il n'y a plus de ligne suivante, et
   // c'est alors un trophée qu'on annonce, pas une mine épuisée.
+  // ------------------------------------------------------------------
+  // LE BARÈME — une ligne du temps, et l'on voit tout d'un coup d'œil.
+  // ------------------------------------------------------------------
+  // Ce que le relevé disait avant, il le disait en QUATRE PHRASES : le palier
+  // décroché, le palier suivant et son seuil, le diamant, le total. Quatre
+  // lignes à lire pour une seule question — de combien dois-je m'améliorer ?
+  //
+  // Le barème répond sans un mot de trop. C'est l'axe du RETARD, de zéro à la
+  // limite d'échec ; la barre montre le temps qu'on a mis, les paliers sont
+  // gradués dessus, et l'écart à franchir se VOIT au lieu de se calculer. Le
+  // record d'avant y figure aussi : on sait du même regard si l'on vient de se
+  // dépasser ou de rater son meilleur jour.
+  //
+  // Les bornes se lisent dans PALIERS — jamais écrites en dur ici. Les seuils
+  // sont destinés à devenir réglables par gare ; un axe qui montrerait 10 / 20
+  // / 30 pendant que la gare en compte d'autres serait pire que pas d'axe.
+  function baremeHTML() {
+    const segs = PALIERS.filter(p => !p.parfait).slice().sort((a, b) => a.under - b.under);
+    if (!segs.length) return "";
+    const max = segs[segs.length - 1].under;
+    const pc = v => Math.max(0, Math.min(100, v / max * 100));
+    // Le record APRÈS enregistrement : c'est lui que juge le palmarès.
+    const record = (getProgress()[STATION.id] || {}).bestDelay;
+    // Le repère du record ne s'affiche que s'il dit quelque chose : un record
+    // égal au service du jour se cacherait sous le curseur.
+    const vieux = (prevBest != null && prevBest < d) ? prevBest : null;
+
+    let bas = 0;
+    const bandes = segs.map(p => {
+      const w = (p.under - bas) / max * 100; bas = p.under;
+      // Une bande est ACQUISE quand le record passe dessous : elle s'allume.
+      const acquis = record != null && record < p.under;
+      return '<span class="ba-seg' + (acquis ? " on" : "") + '" style="width:' + w.toFixed(3) + '%">' +
+        '<span class="ba-st">' + "\u2605".repeat(p.stars) + "</span>" +
+        '<span class="ba-sl">\u003c' + p.under + "</span></span>";
+    }).join("");
+
+    // Le sans-faute est un POINT, pas une plage : il vit à l'origine de l'axe.
+    const dia = '<span class="ba-dia' + (record === 0 ? " on" : "") +
+      '" title="Sans faute — aucun retard">\u25C6</span>';
+
+    // CE QU'IL RESTE À GAGNER, en minutes, et rien d'autre. Le palier suivant
+    // exige « moins de N », donc N − 1 minutes au plus : l'écart se compte sur
+    // le record, puisque c'est le record que le palmarès retient.
+    const next = STATION.adhoc ? -1 : stationNextTier(STATION.id);
+    let conseil;
+    // ZÉRO ÉTOILE AUJOURD'HUI : le conseil parle de CE SERVICE, pas du record.
+    // Il annonçait « 10 min de moins pour trois étoiles » — mesuré sur un
+    // record de 19 min, donc exact — au bas d'une barre saturée à 96 minutes.
+    // Juste, et inutilisable : ce n'est pas le palier suivant qu'il faut viser
+    // quand on vient de rater le premier.
+    if (!win)
+      conseil = "Sous <b>" + max + " min</b> pour décrocher une étoile";
+    else if (next < 0)
+      conseil = '<span class="ba-fini">Palmarès complet \u00b7 rien au-dessus</span>';
+    else if (record == null)
+      conseil = "Terminer sous " + max + " min pour " + PALIERS[next].nom.toLowerCase();
+    else {
+      const manque = Math.max(1, record - (PALIERS[next].under - 1));
+      conseil = '<b>' + manque + " min</b> de moins pour " + PALIERS[next].nom.toLowerCase();
+    }
+
+    return '<div class="bareme">' +
+      '<div class="ba-bandes">' + dia + bandes + "</div>" +
+      '<div class="ba-piste' + (d >= max ? " depasse" : "") + '">' +
+        '<i class="ba-fait" style="width:' + pc(d).toFixed(3) + '%"></i>' +
+        (vieux != null ? '<i class="ba-rec" style="left:' + pc(vieux).toFixed(3) +
+          '%" title="Votre record : ' + vieux + ' min"></i>' : "") +
+        '<b class="ba-val" style="left:' + Math.max(4, Math.min(96, pc(d))).toFixed(3) + '%">' +
+          d + " min</b>" +
+      "</div>" +
+      '<div class="ba-conseil">' + conseil + "</div>" +
+      "</div>";
+  }
+
+  // Le relevé, désormais : le barème, puis les FAITS du jour — une série, une
+  // médaille, un grade. Plus de cadre doré ni de titre : le bloc ne raconte
+  // plus ce qu'il contient, il le montre.
   function recetteHTML() {
-    // UN ÉCHEC NE RAPPORTE RIEN — MAIS IL PEUT CASSER UNE SÉRIE, et cela doit
-    // se dire. C'était le seul trou du dispositif : le relevé se taisait
-    // entièrement sur un service manqué, donc six services d'affilée pouvaient
-    // s'éteindre sans un mot, et le compteur repartait de zéro à l'écran
-    // suivant comme s'il n'avait jamais existé.
-    if (noPay) return serieHTML();
-    const next = stationNextTier(STATION.id);
-    const got = tiersAfter > tiersBefore ? PALIERS[tiersAfter - 1] : null;
-    return '<div class="eu-title">Ce que ce service a rapporté</div>' +
-      // LE DIAMANT S'EMPILE, IL NE REMPLACE PAS. Un sans-faute donne les trois
-      // étoiles ET le diamant : mieux jouer ne doit jamais rapporter moins.
-      (perfect ? '<div class="eu-diamant">\u25C6<span>Diamant — service parfait</span></div>' : "") +
-      (got ? '<div class="eu-tier done">' + palierStarsHTML(got) +
-               "<span>" + got.nom + " — décroché</span></div>" : "") +
-      (next < 0
-        ? '<div class="eu-tier full">Palmarès complet · ' +
-            PALIERS.length + " / " + PALIERS.length + "</div>"
-        : '<div class="eu-tier next">' + palierStarsHTML(PALIERS[next]) +
-            "<span>" + PALIERS[next].nom + " — " + PALIERS[next].seuil + "</span></div>") +
-      // Le total d'étoiles vit en tête de carte, derrière le relevé : c'est lui
-      // qui monte sous les yeux du joueur, pas un chiffre posé ici.
-      (gradeUp ? '<div class="eu-grade">' + gradeAfter.nom + " !</div>" : "") +
-      serieHTML() + medaillesHTML();
+    // La démo « limites » n'est pas au catalogue : elle n'a ni palmarès ni
+    // record, et un barème sans repère ne dirait rien.
+    if (STATION.adhoc) return "";
+    return baremeHTML() + serieHTML() + medaillesHTML() +
+      (gradeUp ? '<div class="eu-grade">' + gradeAfter.nom + " !</div>" : "");
   }
 
   // LA SÉRIE, ET SEULEMENT QUAND ELLE A QUELQUE CHOSE À DIRE. Un « série : 1 »
@@ -1549,19 +1624,14 @@ function endGame(failed) {
   // est plus grand que ce qu'on vient de perdre.
   function serieHTML() {
     if (!serie) return "";
-    // COURT, PARCE QUE LE RELEVÉ EST ÉTROIT. « d'affilée sans dépasser dix
-    // minutes » se repliait sur deux lignes et le chiffre se retrouvait à
-    // flotter au milieu du paragraphe. Le seuil de la série est déjà écrit
-    // trois lignes plus haut, dans le palier « Trois étoiles — moins de 10
-    // min » : il n'a pas à être redit ici.
     if (serie.n >= 2)
       return '<div class="eu-serie' + (serie.battu ? " record" : "") + '">' +
         '<span class="es-n">' + serie.n + "</span>" +
-        "<span>d'affilée" + (serie.battu && serie.n > 2 ? " · record" : "") +
+        "<span>d'affilée" + (serie.battu && serie.n > 2 ? " \u00b7 record" : "") +
         "</span></div>";
     if (serie.casse)
       return '<div class="eu-serie casse"><span class="es-n">' + serie.avant + "</span>" +
-        "<span>série interrompue · record " + serie.record + "</span></div>";
+        "<span>série interrompue \u00b7 record " + serie.record + "</span></div>";
     return "";
   }
   // DEUX MÉDAILLES AU PLUS, ET LE RESTE COMPTÉ. Elles se déduisent de la

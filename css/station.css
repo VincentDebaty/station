@@ -11,6 +11,11 @@
   --safe-r: env(safe-area-inset-right, 0px);
   --safe-t: env(safe-area-inset-top, 0px);
   --safe-b: env(safe-area-inset-bottom, 0px);
+  /* Largeur du relevé de fin de service. Partagée, parce que la CARTE doit
+     s'écarter d'exactement autant (#hub.avec-releve) : deux valeurs séparées
+     auraient divergé au premier ajustement, et la ligne serait repassée sous
+     le panneau. */
+  --releve-w: min(360px, 34vw);
 }
 * { margin: 0; padding: 0; box-sizing: border-box; }
 html, body { height: 100%; }
@@ -663,6 +668,7 @@ svg { width: 100%; height: 100%; display: block; }
    se lit d'un coup d'œil depuis l'autre bout de la pièce. */
 #stars { font-size: 34px; letter-spacing: 6px; color: #f5b23c; margin: 4px 0 2px; }
 #end-delay { color: var(--muted); font-size: 15px; margin-bottom: 4px; }
+#end-delay.hidden { display: none; }
 #end .card h1 { font-size: 22px; margin-bottom: 8px; }
 /* La rangée d'actions porte son propre espacement (gap) : la marge par défaut
    des boutons de fiche s'y ajoutait, et faisait 22 px entre deux boutons. */
@@ -755,10 +761,11 @@ svg { width: 100%; height: 100%; display: block; }
    cliquable. Centré, il se posait pile sur la gare qu'on quitte et sur
    ses voisines, c'est-à-dire sur tout ce qu'on demandait de regarder. */
 #end.over-map {
-  /* Voile presque nul : c'est la carte qu'on est venu lire, et le relevé se
-     détache déjà seul (fond opaque + ombre portée). Un voile appuyé délavait
-     le réseau au moment précis où il fallait le parcourir. */
-  z-index: 31; background: rgba(10, 14, 24, .10);
+  /* AUCUN VOILE. Le relevé ne recouvre plus rien : la carte se rétrécit pour
+     lui faire place (#hub.avec-releve, plus bas) et les deux tiennent sur le
+     même écran. Un voile n'aurait plus rien à assombrir, et une fiche flottante
+     au-dessus d'un espace qu'on lui a déjà réservé fait double emploi. */
+  z-index: 31; background: transparent;
   align-items: center; justify-content: flex-start;
   /* LA CARTE RESTE VIVANTE DESSOUS : le voile ne prend aucun clic, seul le
      relevé en capte. C'est ce qui permet de repartir d'ici sans écran
@@ -774,39 +781,54 @@ svg { width: 100%; height: 100%; display: block; }
 #hub-map.end-open .map-home { display: none; }
 #end.over-map #confetti { pointer-events: none; }
 #end.over-map .card {
-  /* Posé sur le côté, le relevé se resserre : il n'a plus à faire illusion au
-     centre d'un écran vide, et chaque pixel rendu est de la carte visible. */
+  /* Un PANNEAU, plus une fiche : pas d'ombre portée, une bordure discrète. Ce
+     qui le détachait avant, c'était de flotter ; maintenant qu'il a sa
+     colonne, l'ombre ne ferait que dire « je suis par-dessus » — précisément
+     ce qu'on vient de corriger. */
   padding: 16px 20px 15px;
-  width: min(360px, 34vw); margin: 0;
-  box-shadow: 0 18px 60px rgba(0, 0, 0, .8);
-  /* Le voile ne prend pas les clics, il ne peut donc plus défiler : c'est LA
-     FICHE qui défile quand elle dépasse. Sans cela, sur un écran bas, le titre
-     et les boutons se retrouvaient coupés en haut et en bas. */
+  width: var(--releve-w); margin: 0;
+  box-shadow: none; border-color: #263149;
+  /* C'est LA FICHE qui défile quand elle dépasse : le voile ne prend pas les
+     clics et ne peut donc plus le faire. Sans cela, sur un écran bas, le titre
+     et les boutons se retrouvaient coupés. */
   max-height: calc(100% - 8px); overflow-y: auto;
 }
 /* Un pays terminé mérite sa largeur, mais pas au point de manger la carte. */
 #end.over-map .card.country-done { width: min(430px, 42vw); }
+
+/* LA CARTE SE RÉTRÉCIT, ELLE N'EST PLUS RECOUVERTE. C'est tout le sujet : la
+   ligne se dessinait sous le relevé, et l'on ne voyait donc jamais ses
+   premières gares — celles d'où l'on vient. Le retrait vaut la largeur du
+   panneau, et la classe vit sur #hub parce que renderCarte() réécrit
+   entièrement le `class` de #hub-map à chaque rendu. */
+#hub.avec-releve .carte { padding-left: calc(var(--releve-w) + 30px); }
+
+/* TÉLÉPHONE EN PAYSAGE — la façon dont on joue. L'écran est large mais très
+   bas : le panneau se resserre pour rendre à la ligne les gares qu'il lui
+   prenait. 34 vw sur 844 px en font 287 ; une ligne de sept gares passait donc
+   à l'étroit tant que le relevé était ouvert. */
+@media (max-height: 460px) and (min-width: 721px) {
+  :root { --releve-w: 262px; }
+  #end.over-map .card { padding: 12px 16px 12px; }
+  #hub.avec-releve .carte { padding-left: calc(var(--releve-w) + 20px); }
+}
 /* Écran étroit : pas de place pour deux colonnes — le relevé redevient un
-   panneau du bas, et le cadrage se décale vers le haut. */
+   panneau du bas, et la carte lui cède de la hauteur au lieu de la largeur. */
 @media (max-width: 720px) {
   #end.over-map { align-items: flex-end; justify-content: center; }
   #end.over-map .card,
   #end.over-map .card.country-done { width: min(370px, 92vw); margin-bottom: 4px; }
   #end.over-map .card h1 { font-size: 22px; margin-bottom: 12px; }
   #end.over-map #stars { font-size: 36px; margin: 6px 0 2px; }
+  #hub.avec-releve .carte { padding-left: 16px; padding-bottom: 52vh; }
 }
 
-/* Le cadre de la recette est le seul bloc DORÉ de la fiche : c'est la caisse,
-   pas un encouragement. Le teal reste au jeu, l'or reste à l'argent. */
-#end-unlock {
-  margin: 2px 0 10px; padding: 9px 10px 10px;
-  border: 1px solid #4a3a1c; border-radius: 14px; background: rgba(48, 36, 12, .4);
-}
+/* PLUS DE CADRE. Il était doré parce qu'il encadrait une caisse ; la caisse
+   est partie avec les crédits, et son titre — « ce que ce service a rapporté »
+   — annonçait un contenu que le barème montre désormais sans le dire. Un cadre
+   qui ne contient plus qu'un graphique n'entoure rien. */
+#end-unlock { margin: 4px 0 12px; }
 #end-unlock.hidden { display: none; }
-#end-unlock .eu-title {
-  color: var(--gold); font-size: 11px; letter-spacing: .1em; text-transform: uppercase;
-  margin-bottom: 8px;
-}
 
 
 /* ==================================================================
@@ -2013,10 +2035,17 @@ svg { width: 100%; height: 100%; display: block; }
 }
 .c-tete { display: flex; align-items: center; gap: 12px; flex: 0 0 auto; }
 .c-titre {
+  min-width: 0;
   flex: 1 1 auto; text-align: center; font-size: 17px; font-weight: 600;
   display: flex; align-items: baseline; justify-content: center; gap: 10px;
 }
-.c-avance { font-family: ui-monospace, Menlo, monospace; font-size: 12px; color: var(--muted); }
+/* Le nom porte la troncature, pas le conteneur : .c-titre est une boîte flex,
+   et `text-overflow` n'a aucun effet sur une boîte flex — c'est l'ÉLÉMENT de
+   texte qui doit être tronquable. Sans ce span, le nœud de texte devenait un
+   élément flex anonyme qui se repliait sur deux lignes en paysage téléphone,
+   et « 1 / 7 » se retrouvait empilé à la verticale à côté. */
+.c-nom { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.c-avance { font-family: ui-monospace, Menlo, monospace; font-size: 12px; color: var(--muted); white-space: nowrap; }
 .c-zoom, .c-retour {
   background: rgba(21, 29, 46, .62); border: 1px solid #2a3550; color: var(--muted);
   border-radius: 9px; padding: 6px 11px; font: inherit; font-size: 12.5px; cursor: pointer;
@@ -2337,3 +2366,74 @@ svg { width: 100%; height: 100%; display: block; }
 #end .eu-med .em-p { color: var(--gold); font-size: 10px; }
 #end .eu-med b { color: var(--gold-hi); font-weight: 700; }
 #end .eu-med.autres { padding-left: 18px; font-size: 11.5px; opacity: .75; }
+
+/* ==================================================================
+   LE BARÈME — l'axe du retard, et l'on voit tout d'un coup d'œil.
+   ==================================================================
+   Il remplace quatre phrases : le palier décroché, le palier suivant et son
+   seuil, le diamant, le total. Quatre lignes à lire pour une seule question —
+   de combien dois-je m'améliorer ? Ici la réponse est une distance. */
+.bareme { margin: 10px 0 2px; }
+
+/* La graduation, au-dessus de la piste : les paliers avec leur seuil. Les
+   largeurs sont proportionnelles aux seuils réels (js/game.js), pas égales —
+   des bandes égales mentiraient dès que les seuils cesseront d'être 10/20/30. */
+.ba-bandes { display: flex; align-items: flex-end; position: relative; padding-left: 14px; }
+.ba-seg {
+  display: flex; flex-direction: column; align-items: center; gap: 1px;
+  border-left: 1px solid #2a3550; padding-bottom: 3px; min-width: 0;
+}
+.ba-seg:first-of-type { border-left: 0; }
+.ba-st { font-size: 10px; letter-spacing: .5px; color: #4d566d; line-height: 1; }
+.ba-sl { font-size: 9.5px; color: #4d566d; font-variant-numeric: tabular-nums; }
+/* Une bande ACQUISE — le record passe dessous — s'allume. Le joueur voit donc
+   d'où il vient en même temps qu'où il va. */
+.ba-seg.on .ba-st { color: var(--gold); }
+.ba-seg.on .ba-sl { color: #8a6a2a; }
+/* Le sans-faute n'est pas une plage, c'est un POINT : il vit à l'origine. */
+.ba-dia {
+  position: absolute; left: 0; bottom: 3px;
+  font-size: 12px; color: #303c56; line-height: 1;
+}
+.ba-dia.on { color: #7fd4ff; text-shadow: 0 0 8px rgba(127, 212, 255, .6); }
+
+/* La piste : le temps qu'on a mis, en longueur. Raccourcir la barre EST le
+   geste du jeu — aucune légende n'a besoin de le dire. */
+.ba-piste {
+  position: relative; height: 9px; margin-left: 14px;
+  border-radius: 999px; background: #1b2334; overflow: visible;
+}
+.ba-fait {
+  position: absolute; inset: 0 auto 0 0; border-radius: 999px;
+  background: linear-gradient(90deg, #2dd4bf, #6ff0e2);
+  transition: width .5s cubic-bezier(.4, 0, .25, 1);
+}
+/* Le record d'AVANT, quand il est meilleur que le service du jour : un trait
+   fin, à gauche du curseur. Il ne s'affiche pas s'il se confond avec lui —
+   deux repères superposés ne disent rien. */
+.ba-rec {
+  position: absolute; top: -3px; bottom: -3px; width: 2px; margin-left: -1px;
+  background: var(--gold); border-radius: 2px;
+}
+/* AU-DELÀ DE L'AXE. Une barre pleine se lit « au maximum », pas « hors
+   barème » : sans marque, un service à 96 minutes ressemblait à un service à
+   30. Les chevrons disent que ça continue au-delà du cadre. */
+.ba-piste.depasse .ba-fait { background: linear-gradient(90deg, #7a4a4a, #ef4444); }
+.ba-piste.depasse::after {
+  content: "\00bb"; position: absolute; right: -13px; top: -4px;
+  font-size: 13px; font-weight: 700; color: #ef4444; line-height: 1;
+}
+.ba-piste.depasse ~ .ba-conseil b, .ba-piste.depasse + .ba-val { color: #f87171; }
+.ba-val {
+  position: absolute; top: 13px; transform: translateX(-50%);
+  font-size: 11.5px; font-weight: 700; color: var(--text);
+  font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+
+/* CE QU'IL RESTE À GAGNER, en minutes. La seule phrase du bloc, et la seule
+   qui commande une action. */
+.ba-conseil {
+  margin-top: 26px; font-size: 12.5px; color: var(--muted); text-align: center;
+}
+.ba-conseil b { color: #6ff0e2; font-weight: 700; }
+.ba-conseil .ba-fini { color: var(--gold); font-weight: 600; }

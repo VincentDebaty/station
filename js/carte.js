@@ -44,8 +44,16 @@ function carteTenues() {
   for (const c of CATALOG) if (isBought(c.id)) t.add(c.id);
   return t;
 }
-// Le corridor à montrer, et depuis quel bout le lire. On préfère celui de la
-// dernière gare jouée : c'est là que le joueur a laissé son attention.
+// Le corridor à montrer. On préfère celui de la dernière gare jouée : c'est là
+// que le joueur a laissé son attention.
+//
+// UNE LIGNE SE LIT TOUJOURS DEPUIS SON ORIGINE, jamais depuis le bout qu'on
+// tient. La première version faisait l'inverse — commencer par une gare
+// possédée semblait aimable — et la ligne changeait donc de sens selon l'état
+// du joueur : Bruxelles – Luxembourg s'affichait tantôt de Bruxelles vers
+// Luxembourg, tantôt à l'envers. Or c'est la même ligne, et un habitué la
+// reconnaît à son ordre. L'origine est celle qu'écrit data/graph.js (`de` →
+// `vers`, contrôlée alignée sur LIENS), c'est-à-dire celle du monde réel.
 function corridorCourant() {
   const tenues = carteTenues();
   const candidates = [];
@@ -54,14 +62,7 @@ function corridorCourant() {
 
   for (const gareId of candidates) {
     const lien = corridorDeGare(gareId);
-    if (lien) {
-      // On le lit depuis le bout déjà tenu, pour que la progression aille
-      // de la gauche vers la droite.
-      const hA = hubById(lien.a), hB = hubById(lien.b);
-      const depuis = (hA && hA.gareId && tenues.has(hA.gareId)) ? lien.a
-                   : (hB && hB.gareId && tenues.has(hB.gareId)) ? lien.b : lien.a;
-      return { lien, depuis };
-    }
+    if (lien) return { lien, depuis: lien.a };
     const hub = hubDeGare(gareId);
     if (hub) {
       // Sur un boss : on montre la sortie la plus avancée, à défaut la première.
@@ -69,11 +70,10 @@ function corridorCourant() {
       if (!sorties.length) continue;
       let best = sorties[0], bestN = -1;
       for (const l of sorties) {
-        const p = parcours(l, hub.id);
-        const n = p.gares.filter(g => tenues.has(g)).length;
+        const n = parcours(l, l.a).gares.filter(g => tenues.has(g)).length;
         if (n > bestN) { bestN = n; best = l; }
       }
-      return { lien: best, depuis: hub.id };
+      return { lien: best, depuis: best.a };
     }
   }
   return null;
@@ -144,7 +144,13 @@ function vueLigne() {
     ? garesDeLigne(cc.lien, cc.depuis)
     : p.gares.concat(hArr && hArr.gareId ? [hArr.gareId] : []);
   const total = composition.length;
-  const faits = composition.filter(g => tenues.has(g)).length;
+  // FAITE, PAS PAYÉE. La jauge comptait les gares tenues et affichait donc
+  // « 7 / 7 » à côté d'une ligne SANS rang — puisqu'un rang exige au moins une
+  // étoile partout. Deux chiffres qui se contredisent sur la même barre : le
+  // joueur cherche la gare manquante et ne la trouve jamais. Une gare payée
+  // mais jamais réussie n'est pas faite, et la ligne le dit.
+  const faits = composition.filter(g =>
+    typeof niveauDeGare === "function" ? niveauDeGare(g) >= 1 : tenues.has(g)).length;
 
   const jalon = (id, role) => {
     const etat = id ? etatDeGare(id) : "fermee";
@@ -161,7 +167,7 @@ function vueLigne() {
   return `
     <div class="c-tete">
       <button class="c-zoom" data-vue="constellation">${hDep && CONSTELLATIONS.find(c => c.id === hDep.c) ? CONSTELLATIONS.find(c => c.id === hDep.c).nom : "Le réseau"} ›</button>
-      <div class="c-titre">${titre}${rang
+      <div class="c-titre"><span class="c-nom">${titre}</span>${rang
         ? `<span class="c-rang r-${rang.id}">${rang.nom}</span>`
         : `<span class="c-avance">${faits} / ${total}</span>`}</div>
       ${bourseHTML()}

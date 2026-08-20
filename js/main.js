@@ -171,6 +171,7 @@ async function doReset() {
   // Le relevé de fin laisse la carte visible derrière lui : on la referme, sans
   // quoi elle resterait posée sur le plan de voies du service qui redémarre.
   document.getElementById("end").classList.remove("over-map");
+  document.getElementById("hub").classList.remove("avec-releve");
   document.getElementById("hub").classList.add("hidden");
   await resetGame(); started = true; // génération asynchrone : on attend la journée
   maybeStartOnboarding(); // sans effet si déjà initié (garde interne)
