@@ -780,65 +780,98 @@ svg { width: 100%; height: 100%; display: block; }
 #end.over-map #confetti { pointer-events: none; }
 
 /* ------------------------------------------------------------------ */
-/* LA BANDE — large et basse, tout sur une seule rangée.               */
+/* LA BANDE — quatre zones, dans l'ordre où on les lit.                */
 /* ------------------------------------------------------------------ */
-/* En colonne, le relevé prenait un tiers de la largeur sur toute la hauteur :
-   la ligne n'avait plus qu'un moignon d'écran, et une ligne de sept gares y
-   défilait. Couché au bas de l'écran, il rend la largeur entière au réseau —
-   qui en a besoin, puisqu'une ligne EST une longueur. */
+/* Première version : cinq groupes alignés à intervalles égaux, tous du même
+   poids visuel. Le regard n'avait aucune raison de commencer quelque part, et
+   l'élément le plus dense — l'axe — recevait le moins de place. Une rangée
+   n'est pas une hiérarchie.
+
+   Quatre zones désormais, séparées par un filet, et l'ordre est celui des
+   questions qu'on se pose en finissant un service :
+   
+     LE RÉSULTAT   combien ai-je mis ?      — le chiffre, en grand
+     L'ÉCHELLE     et par rapport à quoi ?  — l'axe, qui prend la largeur
+     LES FAITS     rien de spécial ?        — série, médaille, grade
+     LES ACTIONS   et maintenant ?          — les deux boutons */
 #end.over-map .card {
   width: 100%; max-width: none; margin: 0;
-  display: flex; align-items: center; gap: 20px;
-  padding: 10px 16px; text-align: left;
+  display: flex; align-items: stretch; gap: 0;
+  padding: 12px 14px; text-align: left;
   box-shadow: none; border-color: #263149; border-radius: 16px;
   max-height: 46vh; overflow-y: auto;
 }
-.e-verdict { flex: 0 0 auto; text-align: center; }
-#end.over-map .e-verdict h1 { font-size: 16px; margin: 0 0 1px; }
-#end.over-map #stars { font-size: 21px; margin: 0; line-height: 1.1; }
-#end.over-map #end-delay { font-size: 12px; margin: 1px 0 0; }
-#end.over-map #end-country {
-  flex: 0 1 auto; margin: 0; padding: 0 0 0 16px; border-left: 1px solid #263149;
+/* Le filet entre zones. Il fait ce que douze pixels de vide ne faisaient pas :
+   dire que l'on change de sujet.
+   
+   Nommé zone par zone, et NON par `* + *` : la croix est le premier enfant du
+   DOM et n'est déplacée au bout que par `order`, qui ne change pas ce que le
+   sélecteur `+` voit. Le filet serait tombé à gauche du résultat, c'est-à-dire
+   avant la première zone. */
+#end.over-map #end-country,
+#end.over-map #end-unlock {
+  padding-left: 18px; margin-left: 18px; border-left: 1px solid #232c42;
 }
-/* Le barème prend la largeur qui reste, les faits du jour se rangent à côté. */
+/* PAS DE FILET AVANT LES BOUTONS. Ils sont poussés au bord droit, loin du
+   reste : le trait ne séparait plus deux zones voisines, il isolait un bouton
+   au milieu du vide. Leur position dit déjà qu'ils ne sont pas du même ordre
+   que ce qui précède. */
+#end.over-map #end-actions { margin-left: auto; padding-left: 18px; }
+
+/* --- LE RÉSULTAT ------------------------------------------------------- */
+.e-verdict {
+  flex: 0 0 auto; display: flex; flex-direction: column; justify-content: center;
+  gap: 3px; min-width: 96px;
+}
+#end.over-map .e-verdict h1 {
+  font-size: 10px; letter-spacing: .09em; text-transform: uppercase;
+  color: var(--muted); font-weight: 700; margin: 0;
+}
+#end.over-map #stars { font-size: 15px; margin: 0; line-height: 1; letter-spacing: 1px; }
+#end.over-map #end-delay { font-size: 12px; margin: 0; color: var(--muted); display: flex; align-items: baseline; gap: 4px; }
+/* LE CHIFFRE DU SERVICE. C'est la donnée qu'on vient chercher : elle a la
+   taille de ce qu'elle vaut, pas celle qui reste. */
+.ed-n { font-size: 25px; font-weight: 700; color: var(--text); line-height: 1; font-variant-numeric: tabular-nums; }
+.ed-u { font-size: 12px; color: var(--muted); }
+#end-delay.depasse .ed-n { color: #f87171; }
+
+/* --- L'ÉCHELLE : elle prend tout ce qui reste. ------------------------- */
 #end.over-map #end-unlock {
   flex: 1 1 auto; min-width: 0; margin: 0;
-  display: flex; align-items: center; gap: 20px;
+  display: flex; align-items: center;
 }
-#end.over-map .bareme { flex: 1 1 auto; min-width: 120px; margin: 0; }
-#end.over-map .eu-faits { flex: 0 0 auto; }
+/* L'axe prend la largeur qu'il peut, dans la limite d'une longueur d'axe :
+   étiré sur mille pixels, ses graduations s'éloignent au point qu'on ne lit
+   plus une échelle mais trois colonnes séparées. */
+#end.over-map .bareme { flex: 1 1 auto; min-width: 140px; max-width: 620px; }
+
+/* --- LES FAITS DU JOUR ------------------------------------------------- */
+#end.over-map .eu-faits {
+  flex: 0 0 auto; display: flex; flex-direction: column; justify-content: center; gap: 4px;
+  padding-left: 18px; margin-left: 18px; border-left: 1px solid #232c42;
+}
 #end.over-map .eu-serie, #end.over-map .eu-med { margin: 0; white-space: nowrap; }
-#end.over-map .eu-serie + .eu-med, #end.over-map .eu-med + .eu-med { margin-top: 3px; }
-/* LES DEUX BOUTONS SUR UNE MÊME LIGNE : ils tiennent le bout de la bande, et
-   c'est là que le regard finit sa course. */
-#end.over-map #end-actions { flex: 0 0 auto; flex-direction: row; gap: 10px; }
+/* --- LES ACTIONS ------------------------------------------------------- */
+#end.over-map #end-country {
+  flex: 0 1 auto; align-self: center; margin: 0;
+}
+#end.over-map #end-actions {
+  flex: 0 0 auto; flex-direction: row; align-items: center; gap: 10px;
+}
 #end.over-map #end-actions .btn {
-  width: auto; margin: 0; padding: 9px 16px; white-space: nowrap;
+  width: auto; margin: 0; padding: 10px 18px; white-space: nowrap;
 }
 /* LA CROIX REPREND SA PLACE DANS LA RANGÉE. Posée en absolu dans le coin haut
    droit de la fiche, elle tombait pile sur « Rejouer » : la fiche est devenue
    une bande, et son coin haut droit est désormais l'endroit où finissent les
-   boutons. Dans le flux, elle se range simplement au bout. */
-#end.over-map .mm-close { position: static; flex: 0 0 auto; order: 9; width: 30px; height: 30px; }
-/* Le barème ne prend pas toute la place qui reste : étiré sur mille pixels,
-   ses graduations s'éloignent au point qu'on ne lit plus un axe mais trois
-   colonnes séparées. Il garde une longueur d'axe. */
-#end.over-map .bareme {
-  max-width: 420px;
-  /* LA VALEUR SOUS LA BARRE EST EN ABSOLU : elle ne compte pas dans la hauteur
-     du barème, et la bande — qui masque son débordement — la coupait en deux.
-     On lui réserve sa place. */
-  padding-bottom: 15px;
+   boutons. Dans le flux, elle se range simplement au bout — sans filet, elle
+   n'est pas une zone mais une sortie. */
+#end.over-map .mm-close {
+  position: static; flex: 0 0 auto; order: 9; align-self: center;
+  width: 30px; height: 30px; margin-left: 10px;
 }
 /* Un pays terminé n'élargit plus rien : la bande fait déjà toute la largeur. */
 #end.over-map .card.country-done { width: 100%; }
-
-/* LA LIGNE MONTE EN HAUT quand la bande est là. Centrée dans l'espace qui
-   reste, elle flottait au milieu d'un grand vide avec les boutons tout en bas :
-   les deux blocs se regardaient sans se tenir. En haut, l'écran se lit du haut
-   vers le bas — le réseau, puis ce qu'on vient d'y faire, puis quoi faire
-   ensuite. */
-#hub.avec-releve .c-ligne { flex: 0 0 auto; }
 
 /* LA CARTE CÈDE LA HAUTEUR DE LA BANDE, mesurée après coup (js/game.js) : elle
    varie avec ce que le service a rapporté — une médaille de plus, une ligne de
@@ -851,10 +884,10 @@ svg { width: 100%; height: 100%; display: block; }
    se replie en deux rangées. Elle reste une bande — c'est la largeur de la
    ligne qu'on protège, pas la hauteur du relevé. */
 @media (max-width: 720px) {
-  #end.over-map .card { flex-wrap: wrap; gap: 10px 14px; }
-  #end.over-map #end-unlock { flex-basis: 100%; order: 3; }
-  #end.over-map #end-actions { margin-left: auto; }
-  #end.over-map .e-verdict h1 { font-size: 15px; }
+  #end.over-map .card { flex-wrap: wrap; gap: 10px 0; }
+  #end.over-map #end-unlock { flex-basis: 100%; order: 3; padding-left: 0; margin-left: 0; border-left: 0; }
+  #end.over-map #end-actions { margin-left: auto; padding-left: 0; }
+  #end.over-map .ed-n { font-size: 21px; }
 }
 
 /* PLUS DE CADRE. Il était doré parce qu'il encadrait une caisse ; la caisse
@@ -2411,36 +2444,34 @@ svg { width: 100%; height: 100%; display: block; }
    ==================================================================
    Il remplace quatre phrases : le palier décroché, le palier suivant et son
    seuil, le diamant, le total. Quatre lignes à lire pour une seule question —
-   de combien dois-je m'améliorer ? Ici la réponse est une distance. */
-.bareme { margin: 10px 0 2px; }
+   de combien dois-je m'améliorer ? Ici la réponse est une distance.
 
-/* La graduation, au-dessus de la piste : les paliers avec leur seuil. Les
-   largeurs sont proportionnelles aux seuils réels (js/game.js), pas égales —
-   des bandes égales mentiraient dès que les seuils cesseront d'être 10/20/30. */
-.ba-bandes { display: flex; align-items: flex-end; position: relative; padding-left: 14px; }
+   Il ne porte plus la valeur du service : elle est passée en grand à côté des
+   étoiles, là où on la cherche. L'axe redevient une ÉCHELLE, et il récupère la
+   hauteur que l'étiquette lui volait. */
+.bareme { display: flex; flex-direction: column; gap: 4px; }
+
+/* Les paliers, au-dessus de la piste. Largeurs proportionnelles aux seuils
+   réels (js/game.js), pas égales — des bandes égales mentiraient dès que les
+   seuils cesseront d'être 10/20/30. */
+.ba-bandes { display: flex; align-items: flex-end; position: relative; padding-left: 13px; }
 .ba-seg {
-  display: flex; flex-direction: column; align-items: center; gap: 1px;
-  border-left: 1px solid #2a3550; padding-bottom: 3px; min-width: 0;
+  text-align: center; font-size: 11px; letter-spacing: 1px; line-height: 1;
+  color: #414c66; border-left: 1px solid #262f45; min-width: 0;
 }
 .ba-seg:first-of-type { border-left: 0; }
-.ba-st { font-size: 10px; letter-spacing: .5px; color: #4d566d; line-height: 1; }
-.ba-sl { font-size: 9.5px; color: #4d566d; font-variant-numeric: tabular-nums; }
 /* Une bande ACQUISE — le record passe dessous — s'allume. Le joueur voit donc
    d'où il vient en même temps qu'où il va. */
-.ba-seg.on .ba-st { color: var(--gold); }
-.ba-seg.on .ba-sl { color: #8a6a2a; }
+.ba-seg.on { color: var(--gold); }
 /* Le sans-faute n'est pas une plage, c'est un POINT : il vit à l'origine. */
-.ba-dia {
-  position: absolute; left: 0; bottom: 3px;
-  font-size: 12px; color: #303c56; line-height: 1;
-}
+.ba-dia { position: absolute; left: 0; bottom: -1px; font-size: 11px; color: #303c56; line-height: 1; }
 .ba-dia.on { color: #7fd4ff; text-shadow: 0 0 8px rgba(127, 212, 255, .6); }
 
 /* La piste : le temps qu'on a mis, en longueur. Raccourcir la barre EST le
    geste du jeu — aucune légende n'a besoin de le dire. */
 .ba-piste {
-  position: relative; height: 9px; margin-left: 14px;
-  border-radius: 999px; background: #1b2334; overflow: visible;
+  position: relative; height: 10px; margin-left: 13px;
+  border-radius: 999px; background: #1b2334;
 }
 .ba-fait {
   position: absolute; inset: 0 auto 0 0; border-radius: 999px;
@@ -2448,25 +2479,32 @@ svg { width: 100%; height: 100%; display: block; }
   transition: width .5s cubic-bezier(.4, 0, .25, 1);
 }
 /* Le record d'AVANT, quand il est meilleur que le service du jour : un trait
-   fin, à gauche du curseur. Il ne s'affiche pas s'il se confond avec lui —
-   deux repères superposés ne disent rien. */
+   fin, à gauche du bout de la barre. Il ne s'affiche pas s'il se confond avec
+   elle — deux repères superposés ne disent rien. */
 .ba-rec {
   position: absolute; top: -3px; bottom: -3px; width: 2px; margin-left: -1px;
   background: var(--gold); border-radius: 2px;
 }
 /* AU-DELÀ DE L'AXE. Une barre pleine se lit « au maximum », pas « hors
    barème » : sans marque, un service à 96 minutes ressemblait à un service à
-   30. Les chevrons disent que ça continue au-delà du cadre. */
+   30. Le chevron dit que ça continue au-delà du cadre. */
 .ba-piste.depasse .ba-fait { background: linear-gradient(90deg, #7a4a4a, #ef4444); }
 .ba-piste.depasse::after {
-  content: "\00bb"; position: absolute; right: -13px; top: -4px;
+  content: "\00bb"; position: absolute; right: -12px; top: -3px;
   font-size: 13px; font-weight: 700; color: #ef4444; line-height: 1;
 }
-.ba-piste.depasse + .ba-val { color: #f87171; }
-.ba-val {
-  position: absolute; top: 13px; transform: translateX(-50%);
-  font-size: 11.5px; font-weight: 700; color: var(--text);
-  font-variant-numeric: tabular-nums; white-space: nowrap;
+
+/* La graduation, AUX BORNES. Les seuils vivaient sous les étoiles, au centre
+   de leur bande : « <10 » posé au milieu du segment 0-10 se lit comme un
+   point, pas comme une frontière. Ici ils sont les traits qu'il faut passer. */
+.ba-ticks { position: relative; height: 12px; margin-left: 13px; }
+.ba-tick {
+  position: absolute; top: 0; transform: translateX(-50%);
+  font-size: 10px; color: #4d566d; font-variant-numeric: tabular-nums;
+  font-style: normal; white-space: nowrap;
 }
+.ba-tick.deb { transform: none; }
+.ba-tick.fin { transform: translateX(-100%); }
+
 
 

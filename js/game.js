@@ -1484,18 +1484,28 @@ function endGame(failed) {
   // d'écran — et une phrase qui se replie quatre fois pousse les boutons hors
   // de vue. Le barème est déjà dit par les étoiles éteintes juste au-dessus, et
   // « Réessayez ! » par le bouton « Rejouer » juste en dessous.
-  // LE RETARD EST SUR LE BARÈME, il n'a pas à être redit en toutes lettres
-  // juste au-dessus. La phrase ne reste que là où le barème ne suffit pas :
-  // l'échec, dont le retard sort de l'axe, et la démo « limites », qui n'a pas
-  // de barème du tout.
+  // LE RETARD EST LE CHIFFRE DU RELEVÉ, et il passe en grand.
+  //
+  // Il a d'abord été une phrase — « Retard cumulé : 13 min » —, puis il a
+  // disparu au profit d'une étiquette collée sous la barre du barème. Les deux
+  // étaient faux pour la même raison : c'est LA donnée du service, celle qu'on
+  // vient chercher, et elle se retrouvait soit noyée dans une phrase, soit
+  // réduite à 11 pixels au bas d'un graphique.
+  //
+  // Elle prend donc la place d'un titre, à côté des étoiles. Le barème n'a
+  // plus à la porter : il redevient ce qu'il est, une échelle — et il y gagne
+  // la hauteur que l'étiquette lui prenait.
   const dl = document.getElementById("end-delay");
-  const barme = !STATION.adhoc && !failed;
-  dl.classList.toggle("hidden", barme);
-  dl.textContent = failed
-    ? "Retard de +" + d + " min — limite dépassée."
-    : win
-      ? (d === 0 ? "Service parfait — aucun retard." : "Retard cumulé : " + d + " min")
-      : "Retard cumulé : " + d + " min — il en faut moins de 30.";
+  dl.classList.remove("hidden");
+  if (STATION.adhoc) {
+    // La démo « limites » n'a pas de barème : sans échelle autour, un chiffre
+    // seul ne dirait rien, et la phrase reste le bon format.
+    dl.textContent = failed ? "Retard de +" + d + " min — limite dépassée."
+      : d === 0 ? "Service parfait — aucun retard." : "Retard cumulé : " + d + " min";
+  } else {
+    dl.innerHTML = '<b class="ed-n">' + d + '</b><span class="ed-u">min</span>';
+    dl.classList.toggle("depasse", !win);
+  }
   // « Trains à l'heure : 15/15 » a été retiré : c'est le retard cumulé, juste
   // au-dessus, qui décide des étoiles et de la recette — un second décompte à
   // côté du premier n'ajoutait qu'une ligne à lire pour la même information.
@@ -1572,7 +1582,7 @@ function endGame(failed) {
     // Le record APRÈS enregistrement : c'est lui que juge le palmarès.
     const record = (getProgress()[STATION.id] || {}).bestDelay;
     // Le repère du record ne s'affiche que s'il dit quelque chose : un record
-    // égal au service du jour se cacherait sous le curseur.
+    // égal au service du jour se cacherait sous la barre.
     const vieux = (prevBest != null && prevBest < d) ? prevBest : null;
 
     let bas = 0;
@@ -1581,18 +1591,23 @@ function endGame(failed) {
       // Une bande est ACQUISE quand le record passe dessous : elle s'allume.
       const acquis = record != null && record < p.under;
       return '<span class="ba-seg' + (acquis ? " on" : "") + '" style="width:' + w.toFixed(3) + '%">' +
-        '<span class="ba-st">' + "\u2605".repeat(p.stars) + "</span>" +
-        '<span class="ba-sl">\u003c' + p.under + "</span></span>";
+        "\u2605".repeat(p.stars) + "</span>";
+    }).join("");
+
+    // LA GRADUATION SOUS L'AXE, aux bornes exactes. Les seuils étaient écrits
+    // sous les étoiles, au milieu de leur bande : « <10 » posé au centre du
+    // segment 0-10 se lit comme un point, pas comme une frontière. Aux bornes,
+    // ils redeviennent ce qu'ils sont — les traits qu'il faut passer.
+    const bornes = [0].concat(segs.map(p => p.under));
+    const ticks = bornes.map((v, i) => {
+      const bout = i === 0 ? " deb" : i === bornes.length - 1 ? " fin" : "";
+      return '<i class="ba-tick' + bout + '" style="left:' + pc(v).toFixed(3) + '%">' +
+        v + (i === bornes.length - 1 ? " min" : "") + "</i>";
     }).join("");
 
     // Le sans-faute est un POINT, pas une plage : il vit à l'origine de l'axe.
     const dia = '<span class="ba-dia' + (record === 0 ? " on" : "") +
       '" title="Sans faute — aucun retard">\u25C6</span>';
-
-    // PAS DE PHRASE SOUS L'AXE. Il y en a eu une — « 4 min de moins pour le
-    // sans-faute » — et elle disait en toutes lettres ce que l'axe montre déjà :
-    // la distance entre la fin de la barre et la graduation d'à côté. C'est
-    // exactement le blabla que le barème était venu remplacer.
 
     return '<div class="bareme">' +
       '<div class="ba-bandes">' + dia + bandes + "</div>" +
@@ -1600,9 +1615,8 @@ function endGame(failed) {
         '<i class="ba-fait" style="width:' + pc(d).toFixed(3) + '%"></i>' +
         (vieux != null ? '<i class="ba-rec" style="left:' + pc(vieux).toFixed(3) +
           '%" title="Votre record : ' + vieux + ' min"></i>' : "") +
-        '<b class="ba-val" style="left:' + Math.max(4, Math.min(96, pc(d))).toFixed(3) + '%">' +
-          d + " min</b>" +
       "</div>" +
+      '<div class="ba-ticks">' + ticks + "</div>" +
       "</div>";
   }
 
