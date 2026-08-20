@@ -26,7 +26,10 @@
 // startStation. Rien d'autre.
 // ------------------------------------------------------------------
 
-const CARTE = { hote: null, vue: "ligne", corridor: null, depuis: null };
+const CARTE = { hote: null, vue: "ligne", corridor: null, depuis: null,
+  // Le voyage : la gare d'où le train doit partir, posée par le relevé de fin
+  // de service (js/game.js) et consommée au rendu suivant. Une seule fois.
+  voyage: null, prochaine: null };
 
 // ------------------------------------------------------------------
 // OÙ EN EST LE JOUEUR ?
@@ -115,13 +118,29 @@ function vueLigne() {
   const surLaLigne = [...p.gares, hArr && hArr.gareId, hDep && hDep.gareId]
     .filter(g => g && ouvrables.has(g));
   const prochaine = surLaLigne.length === 1 ? surLaLigne[0] : null;
+  // Le voyage a besoin d'une destination, et c'est ICI qu'elle se calcule.
+  // Deux gares ouvrables : pas de trajet — on ne choisit pas pour le joueur.
+  CARTE.prochaine = prochaine;
+
+  // LE RANG DE LA LIGNE, en couleur sur le tracé. Une ligne toute tenue n'est
+  // pas une ligne finie : c'est là que commence le vrai jeu, celui de la
+  // repasser jusqu'à l'or. Le rang le dit sans rien exiger — il se voit, il ne
+  // s'annonce pas.
+  const rang = typeof rangDeLigne === "function" ? rangDeLigne(cc.lien, cc.depuis) : null;
 
   // Le nom de la ligne : ses deux bouts. Les vrais noms — « le sillon
   // Sambre-et-Meuse » — s'écriront dans data/graph.js, ils ne se déduisent pas.
   const titre = `${hDep ? hDep.nom : "?"} – ${hArr ? hArr.nom : "?"}`;
-  const total = p.gares.length + (hArr && hArr.gareId ? 1 : 0);
-  const faits = p.gares.filter(g => tenues.has(g)).length +
-                (hArr && hArr.gareId && tenues.has(hArr.gareId) ? 1 : 0);
+  // LA JAUGE COMPTE EXACTEMENT L'ENSEMBLE QUE LE RANG JUGE. Elle le comptait
+  // à part — les intermédiaires plus le boss d'arrivée — et le rang, lui, a
+  // fini par inclure les deux bouts : « 5 / 5 » se serait affiché à côté d'une
+  // ligne sans rang, et le joueur aurait cherché longtemps la gare manquante.
+  // Une seule source, comme pour le palmarès.
+  const composition = typeof garesDeLigne === "function"
+    ? garesDeLigne(cc.lien, cc.depuis)
+    : p.gares.concat(hArr && hArr.gareId ? [hArr.gareId] : []);
+  const total = composition.length;
+  const faits = composition.filter(g => tenues.has(g)).length;
 
   const jalon = (id, role) => {
     const etat = id ? etatDeGare(id) : "fermee";
@@ -138,10 +157,12 @@ function vueLigne() {
   return `
     <div class="c-tete">
       <button class="c-zoom" data-vue="constellation">${hDep && CONSTELLATIONS.find(c => c.id === hDep.c) ? CONSTELLATIONS.find(c => c.id === hDep.c).nom : "Le réseau"} ›</button>
-      <div class="c-titre">${titre}<span class="c-avance">${faits} / ${total}</span></div>
+      <div class="c-titre">${titre}${rang
+        ? `<span class="c-rang r-${rang.id}">${rang.nom}</span>`
+        : `<span class="c-avance">${faits} / ${total}</span>`}</div>
       ${bourseHTML()}
     </div>
-    <div class="c-ligne">
+    <div class="c-ligne"${rang ? ` data-rang="${rang.id}"` : ""}>
       ${jalon(hDep && hDep.gareId, "boss")}
       ${p.gares.map(g => jalon(g)).join("")}
       ${jalon(hArr && hArr.gareId, "boss")}
@@ -195,8 +216,15 @@ function vueConstellation() {
     if (!ha || !hb) continue;
     const sortant = !dedans.has(a) || !dedans.has(b);
     const ouvert = (ha.gareId && tenues.has(ha.gareId)) || (hb.gareId && tenues.has(hb.gareId));
+    // MÊME LOGIQUE À TOUTES LES ÉCHELLES : le rang colore le trait ici comme
+    // il colore le tracé de la vue ligne. C'est ce qui fait qu'on dézoome pour
+    // regarder son travail, et pas seulement pour chercher son chemin.
+    const lien = GRAPHE.corridors.find(l =>
+      (l.a === a && l.b === b) || (l.a === b && l.b === a));
+    const rg = lien && typeof rangDeLigne === "function" ? rangDeLigne(lien, lien.a) : null;
     traits += `<line x1="${X(ha.ll[0])}" y1="${Y(ha.ll[1])}" x2="${X(hb.ll[0])}" y2="${Y(hb.ll[1])}"` +
-      ` class="trait${ouvert ? " ouvert" : ""}${sortant ? " sortant" : ""}${t === "mer" ? " mer" : ""}"/>`;
+      ` class="trait${ouvert ? " ouvert" : ""}${sortant ? " sortant" : ""}${t === "mer" ? " mer" : ""}` +
+      `${rg ? " r-" + rg.id : ""}"/>`;
   }
   const points = hubs.map(h => {
     const tenu = h.gareId && tenues.has(h.gareId);
@@ -247,13 +275,22 @@ function vueEurope() {
 // ------------------------------------------------------------------
 // RENDU ET GESTES
 // ------------------------------------------------------------------
-// Le solde et le grade, en tête d'écran. Ils vivaient dans la barre de
-// l'ancienne carte ; elle disparaît, eux non. Le solde s'en ira avec les
-// crédits au lot suivant, où le grade prendra toute la place.
+// Le grade, les étoiles et la série, en tête d'écran. Les crédits vivaient là ;
+// ils sont partis, et le grade a pris toute la place.
+//
+// LA SÉRIE NE S'AFFICHE QU'À PARTIR DE DEUX. En dessous il n'y a pas d'élan à
+// entretenir, seulement un « 1 » permanent de plus à côté des étoiles — et un
+// compteur qu'on voit toujours cesse d'être vu.
 function bourseHTML() {
   if (typeof gradeOf !== "function" || typeof etoilesTotal !== "function") return "";
   const n = etoilesTotal(), g = gradeOf(n);
+  const s = typeof getSerie === "function" ? getSerie() : { n: 0 };
   return `<div class="c-compteurs">` +
+    // « » » et non « ▸ » : la flèche simple veut déjà dire « le pas suivant »
+    // dans le palmarès et sur le bouton de suite. La reprendre ici pour dire
+    // « d'affilée » ferait porter deux sens au même signe.
+    (s.n >= 2 ? `<span class="c-serie" title="${s.n} services d'affilée sous dix minutes">` +
+      `\u00BB ${s.n}</span>` : "") +
     `<span class="c-grade" title="${g.nom}">` +
       `<span class="g-nom">${g.nom}</span>` +
       `<span class="g-jauge"><i style="width:${Math.round(g.part * 100)}%"></i></span></span>` +
@@ -269,6 +306,7 @@ function renderCarte() {
                  : CARTE.vue === "europe" ? vueEurope() : vueLigne();
   // Le relevé de fin anime le solde : il lui faut l'élément, refait à chaque rendu.
   CARTE.etoiles = hote.querySelector(".c-etoiles");
+  animerVoyage();
 
   // Un seul écouteur, posé sur l'hôte : le contenu se refait à chaque rendu,
   // et des écouteurs par élément fuiraient à chaque changement de vue.
@@ -296,4 +334,63 @@ function jouerOuOuvrir(gareId) {
     return;
   }
   renderCarte();   // rien n'a bougé : on rafraîchit l'état affiché
+}
+
+// ------------------------------------------------------------------
+// LE VOYAGE — un train qui roule jusqu'à la gare suivante.
+// ------------------------------------------------------------------
+// Ce n'est pas un ornement. Le relevé de fin de service désigne une gare par
+// son NOM, dans un bouton ; la carte la marque d'un halo. Entre les deux, le
+// joueur doit faire lui-même le lien entre un mot et un point — et sur une
+// ligne de sept gares, ce lien se fait mal.
+//
+// Le train le fait à sa place : il part de la gare qu'on vient de quitter et
+// s'arrête sur celle qui vient. Le trajet EST la phrase, et il n'y a plus rien
+// à lire.
+//
+// Il ne se déclenche que sur la vue ligne, une seule fois, et seulement quand
+// la destination est SANS AMBIGUÏTÉ (`CARTE.prochaine`, qui reste nul quand
+// deux gares sont ouvrables des deux côtés). Un train qui part au hasard vers
+// l'une des deux mentirait.
+function animerVoyage() {
+  const de = CARTE.voyage;
+  CARTE.voyage = null;                    // consommé : on ne rejoue pas au rendu suivant
+  if (!de || CARTE.vue !== "ligne" || !CARTE.hote) return;
+  const vers = CARTE.prochaine;
+  if (!vers || vers === de) return;
+  const piste = CARTE.hote.querySelector(".c-ligne");
+  if (!piste) return;
+  const a = piste.querySelector('[data-gare="' + de + '"]');
+  const b = piste.querySelector('[data-gare="' + vers + '"]');
+  if (!a || !b) return;                   // la gare jouée n'est pas sur cette ligne
+  // Les animations coûtent leur poids en confort : qui les a désactivées au
+  // niveau du système ne veut pas d'un train qui traverse son écran.
+  if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+  const centre = el => el.offsetLeft + el.offsetWidth / 2;
+  const x0 = centre(a), x1 = centre(b);
+  const train = document.createElement("div");
+  train.className = "c-train";
+  train.textContent = x1 >= x0 ? "\u25B8" : "\u25C2";
+  train.style.top = (a.offsetTop + 22) + "px";   // la hauteur du rail (.jalon::before)
+  piste.appendChild(train);
+
+  // La durée suit la DISTANCE, avec un plancher et un plafond : deux gares
+  // voisines ne méritent pas une seconde entière, et huit gares d'écart ne
+  // doivent pas faire attendre.
+  const duree = Math.max(420, Math.min(1100, Math.abs(x1 - x0) * 3.2));
+  const anim = train.animate(
+    [{ transform: "translateX(" + x0 + "px)", opacity: 0 },
+     { transform: "translateX(" + x0 + "px)", opacity: 1, offset: 0.12 },
+     { transform: "translateX(" + x1 + "px)", opacity: 1 }],
+    { duration: duree, easing: "cubic-bezier(.4,0,.25,1)", fill: "forwards" });
+  // La piste défile AVEC le train : sur une ligne longue, la destination est
+  // hors écran, et une animation qu'on ne voit pas n'a pas eu lieu.
+  if (piste.scrollWidth > piste.clientWidth)
+    piste.scrollTo({ left: Math.max(0, x1 - piste.clientWidth / 2), behavior: "smooth" });
+  anim.onfinish = () => {
+    train.remove();
+    b.classList.add("arrivee");           // la pastille accuse réception
+    setTimeout(() => b.classList.remove("arrivee"), 900);
+  };
 }

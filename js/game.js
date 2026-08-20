@@ -1353,6 +1353,10 @@ function showEndBesideMap() {
   // soulagement. L'ancienne devait deviner quoi montrer — le pays ? la gare et
   // ses voisines à portée ? — parce qu'elle montrait tout à la fois. Ici la
   // vue ligne désigne déjà la suite, il suffit de la redessiner à jour.
+  // LE VOYAGE PART D'ICI. La carte ne sait pas quelle gare vient d'être jouée —
+  // elle sait seulement ce que le joueur possède. On le lui dit, elle décide
+  // s'il y a un trajet à montrer (js/carte.js).
+  CARTE.voyage = STATION.id;
   renderCarte();
   // Le grade est en tête de la carte, et renderCarte() vient de le redessiner.
 }
@@ -1404,7 +1408,24 @@ function endGame(failed) {
   // rien n'a besoin d'être stocké.
   const pays = STATION.adhoc ? null : (CATALOG[currentIdx] || {}).country || null;
   const jalonBefore = pays ? jalonOf(countryStars(pays).part) : -1;
+  // LES MÉDAILLES SE MESURENT DE PART ET D'AUTRE, comme les paliers et les
+  // jalons — et pour la même raison. Elles se déduisent entièrement de la
+  // progression (js/recompense.js) : rien n'est stocké, donc la seule façon de
+  // savoir laquelle vient de tomber est de photographier avant et après.
+  const medAvant = typeof medaillesDe === "function"
+    ? medaillesDe(etatRecompenses()) : new Set();
   if (!failed && !STATION.adhoc) saveResult(STATION.id, stars, d); // un échec (ou la démo limites) ne modifie pas le record
+  // LA SÉRIE SE TIENT ICI, APRÈS L'ENREGISTREMENT ET AVANT LA PHOTO D'APRÈS :
+  // les médailles de style la lisent, elle doit donc être à jour.
+  //
+  // La démo « limites » ne compte pas — elle n'est pas au catalogue et ne
+  // représente aucun service. Un ÉCHEC, lui, compte : il casse la série. C'est
+  // le seul endroit du jeu où rater a une conséquence, et elle est minuscule —
+  // aucune gare ne se referme, aucune étoile ne se perd.
+  const serie = (!STATION.adhoc && typeof pushSerie === "function")
+    ? pushSerie(!failed && stars >= SERIE_SEUIL) : null;
+  const medNouvelles = typeof medaillesNouvelles === "function"
+    ? medaillesNouvelles(medAvant, medaillesDe(etatRecompenses())) : [];
   const tiersAfter = noPay ? tiersBefore : stationTiersDone(STATION.id);
   const paysApres = pays ? countryStars(pays) : null;
   const jalonAfter = pays ? jalonOf(paysApres.part) : -1;
@@ -1494,7 +1515,12 @@ function endGame(failed) {
   // Palmarès complet : la seule fois où il n'y a plus de ligne suivante, et
   // c'est alors un trophée qu'on annonce, pas une mine épuisée.
   function recetteHTML() {
-    if (noPay) return "";
+    // UN ÉCHEC NE RAPPORTE RIEN — MAIS IL PEUT CASSER UNE SÉRIE, et cela doit
+    // se dire. C'était le seul trou du dispositif : le relevé se taisait
+    // entièrement sur un service manqué, donc six services d'affilée pouvaient
+    // s'éteindre sans un mot, et le compteur repartait de zéro à l'écran
+    // suivant comme s'il n'avait jamais existé.
+    if (noPay) return serieHTML();
     const next = stationNextTier(STATION.id);
     const got = tiersAfter > tiersBefore ? PALIERS[tiersAfter - 1] : null;
     return '<div class="eu-title">Ce que ce service a rapporté</div>' +
@@ -1510,7 +1536,48 @@ function endGame(failed) {
             "<span>" + PALIERS[next].nom + " — " + PALIERS[next].seuil + "</span></div>") +
       // Le total d'étoiles vit en tête de carte, derrière le relevé : c'est lui
       // qui monte sous les yeux du joueur, pas un chiffre posé ici.
-      (gradeUp ? '<div class="eu-grade">' + gradeAfter.nom + " !</div>" : "");
+      (gradeUp ? '<div class="eu-grade">' + gradeAfter.nom + " !</div>" : "") +
+      serieHTML() + medaillesHTML();
+  }
+
+  // LA SÉRIE, ET SEULEMENT QUAND ELLE A QUELQUE CHOSE À DIRE. Un « série : 1 »
+  // après chaque bon service serait un compteur de plus à ignorer ; on ne parle
+  // donc qu'à partir de DEUX — c'est là qu'il y a un élan — et au moment où
+  // elle casse, parce qu'un élan qui s'arrête sans un mot n'a jamais existé.
+  //
+  // La casse s'annonce SANS REPROCHE et avec le record : ce qui reste après
+  // est plus grand que ce qu'on vient de perdre.
+  function serieHTML() {
+    if (!serie) return "";
+    // COURT, PARCE QUE LE RELEVÉ EST ÉTROIT. « d'affilée sans dépasser dix
+    // minutes » se repliait sur deux lignes et le chiffre se retrouvait à
+    // flotter au milieu du paragraphe. Le seuil de la série est déjà écrit
+    // trois lignes plus haut, dans le palier « Trois étoiles — moins de 10
+    // min » : il n'a pas à être redit ici.
+    if (serie.n >= 2)
+      return '<div class="eu-serie' + (serie.battu ? " record" : "") + '">' +
+        '<span class="es-n">' + serie.n + "</span>" +
+        "<span>d'affilée" + (serie.battu && serie.n > 2 ? " · record" : "") +
+        "</span></div>";
+    if (serie.casse)
+      return '<div class="eu-serie casse"><span class="es-n">' + serie.avant + "</span>" +
+        "<span>série interrompue · record " + serie.record + "</span></div>";
+    return "";
+  }
+  // DEUX MÉDAILLES AU PLUS, ET LE RESTE COMPTÉ. Elles se déduisent de la
+  // progression, donc la toute première partie qui suit leur arrivée peut en
+  // décrocher huit d'un coup : les afficher toutes noierait ce que le service
+  // vient réellement d'accomplir. Les deux premières de la liste sont les plus
+  // communes — donc celles qu'on vient probablement de franchir.
+  function medaillesHTML() {
+    if (!medNouvelles.length) return "";
+    const vues = medNouvelles.slice(0, 2);
+    return vues.map(m => '<div class="eu-med"><span class="em-p">\u25CF</span>' +
+      "<span><b>" + m.nom + "</b> — " + m.dit + "</span></div>").join("") +
+      (medNouvelles.length > vues.length
+        ? '<div class="eu-med autres">et ' + (medNouvelles.length - vues.length) +
+          " autre" + (medNouvelles.length - vues.length > 1 ? "s" : "") + "</div>"
+        : "");
   }
 
   // Le total d'étoiles de la carte compte en même temps : la récompense ne

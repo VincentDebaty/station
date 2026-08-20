@@ -11,7 +11,7 @@
 // La coquille est toujours préchargée à l'installation pour un premier lancement
 // hors-ligne. Incrémenter CACHE_VERSION purge l'ancien cache à l'activation.
 // ------------------------------------------------------------------
-const CACHE_VERSION = "station-v76";
+const CACHE_VERSION = "station-v77";
 
 // Coquille de l'app préchargée à l'installation : tout le nécessaire pour un
 // premier lancement hors-ligne. Les fiches de gares non listées ici sont mises
@@ -27,25 +27,36 @@ const PRECACHE = [
   "js/gen-worker.js",
   "js/render.js",
   "js/game.js",
-  "js/geo.js",
   "data/places.js",
   "data/lines.js",
+  "data/graph.js",
+  "js/graph.js",
   "js/network.js",
-  "js/map.js",
-  "js/mapnet.js",
+  "js/recompense.js",
+  "js/carte.js",
   "js/hub.js",
   "js/main.js",
   "icons/icon-192.png",
   "icons/icon-512.png",
   "icons/apple-touch-icon.png",
-  "data/worldmap.js",
   "data/stations/index.json"
 ];
 
+// UN FICHIER MANQUANT NE DOIT PLUS COÛTER TOUT LE CACHE. `cache.addAll` est
+// atomique : une seule URL en 404 rejette la promesse entière, l'installation
+// échoue, et le jeu perd le hors-ligne SANS LE MOINDRE SIGNE — la page marche
+// très bien en ligne. C'est exactement ce qui venait d'arriver : la liste
+// nommait encore js/map.js et js/mapnet.js, supprimés avec l'ancienne carte.
+//
+// On met donc chaque fichier en cache SÉPARÉMENT, et l'on n'échoue plus sur un
+// absent : la coquille est préchargée au mieux, et le handler fetch rattrapera
+// le reste au premier passage en ligne. La liste reste à tenir à jour — mais
+// l'oublier ne casse plus rien de silencieux.
 self.addEventListener("install", event => {
   event.waitUntil(
     caches.open(CACHE_VERSION)
-      .then(cache => cache.addAll(PRECACHE))
+      .then(cache => Promise.all(PRECACHE.map(url =>
+        cache.add(url).catch(() => { /* absent ou hors-ligne : tant pis, pas fatal */ }))))
       .then(() => self.skipWaiting())
   );
 });

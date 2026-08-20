@@ -40,7 +40,7 @@ function makeBackend() {
 const _store = makeBackend();
 
 // --- Caches mémoire : lus en synchrone par le jeu, hydratés par loadStore. ---
-let _progress = { version: SCHEMA_VERSION, stations: {}, bought: [] };
+let _progress = { version: SCHEMA_VERSION, stations: {}, bought: [], serie: { n: 0, record: 0 } };
 let _muted = false;
 let _onboarded = false;
 
@@ -58,9 +58,19 @@ function migrate(raw) {
     if (raw.version == null) stations = raw;
     else { stations = raw.stations || {}; opened = raw.opened || []; }
   }
+  // LA SÉRIE SE LIT AVEC UN DÉFAUT, ELLE NE MIGRE PAS. C'est un champ AJOUTÉ,
+  // et un champ ajouté dont l'absence a un sens évident (« aucune série en
+  // cours ») ne justifie pas un cran de schéma : monter en v6 forcerait une
+  // réécriture de toutes les sauvegardes pour y inscrire un zéro. Le numéro de
+  // schéma sert aux changements qui CASSENT une lecture — les crédits en
+  // étaient un, celui-ci n'en est pas.
+  const lireSerie = r => {
+    const v = r && r.serie;
+    return { n: Math.max(0, (v && v.n) | 0), record: Math.max(0, (v && v.record) | 0) };
+  };
   // Déjà en v5 : rien à déduire, on reprend tel quel.
   if (raw && raw.version === 5)
-    return { version: 5, stations, bought: raw.bought || [] };
+    return { version: 5, stations, bought: raw.bought || [], serie: lireSerie(raw) };
   // v4 → v5 : LES CRÉDITS ET LA PONCTUALITÉ DISPARAISSENT, et le joueur ne perd
   // rien. Ce qu'il avait acquis, ce sont ses GARES et ses RECORDS — les deux
   // sont conservés tels quels. Le solde ne servait qu'à ouvrir des gares, et
@@ -70,9 +80,9 @@ function migrate(raw) {
   // Une gare payée reste ouverte : `bought` passe intact. C'est la seule chose
   // qui compte, et c'est ce qui rend la migration sans risque.
   if (raw && raw.version === 4)
-    return { version: 5, stations, bought: raw.bought || [] };
+    return { version: 5, stations, bought: raw.bought || [], serie: lireSerie(raw) };
   if (raw && raw.version === 3)
-    return { version: 5, stations, bought: raw.bought || [] };
+    return { version: 5, stations, bought: raw.bought || [], serie: lireSerie(raw) };
 
   // Étape 2 : v2 → v3. Le joueur ne perd RIEN et ne reçoit RIEN d'immérité.
   //
@@ -94,7 +104,7 @@ function migrate(raw) {
     version: 5,
     // Sauvegarde antérieure à la monnaie : elle a des records, donc de la
     // ponctualité à reconstituer. Partie neuve : rien à reconstituer, zéro.
-    stations, bought
+    stations, bought, serie: lireSerie(raw)
   };
 }
 
@@ -165,6 +175,40 @@ function saveResult(id, stars, delay) {
     bestDelay: cur.bestDelay == null ? delay : Math.min(cur.bestDelay, delay)
   };
   persistProgress();
+}
+
+// ------------------------------------------------------------------
+// LA SÉRIE — le seul compteur qui puisse REDESCENDRE, et c'est exprès.
+// ------------------------------------------------------------------
+// Tout le reste de la progression est un cliquet : les étoiles ne retombent
+// pas, une gare ouverte le reste, un record ne s'abîme pas. C'est ce qui rend
+// le jeu paisible — mais c'est aussi ce qui fait qu'un bon service se ressent
+// comme le précédent, puisque rien n'est jamais en jeu.
+//
+// La série est la contrepartie exacte : elle compte les services d'affilée à
+// trois étoiles, et un service en dessous la ramène à zéro. Elle ne coûte
+// rien — aucune gare ne se referme, aucune étoile ne se perd — donc la casser
+// n'est pas une punition, c'est la fin d'un élan. Et son RECORD, lui, est un
+// cliquet comme les autres : ce qu'on a réussi une fois reste acquis.
+//
+// Elle vit dans la progression, pas dans la session : une série qui
+// s'évaporerait en fermant l'application ne vaudrait pas la peine d'être
+// tenue.
+function getSerie() {
+  const s = _progress.serie || (_progress.serie = { n: 0, record: 0 });
+  return { n: s.n, record: s.record };
+}
+// Enregistre un service. `tenu` : a-t-il atteint le seuil de la série ?
+// Rend l'état AVANT et APRÈS, pour que le relevé sache quoi raconter — une
+// série qui monte et une série qui casse ne se disent pas de la même façon.
+function pushSerie(tenu) {
+  const s = _progress.serie || (_progress.serie = { n: 0, record: 0 });
+  const avant = s.n;
+  s.n = tenu ? s.n + 1 : 0;
+  const battu = s.n > s.record;
+  if (battu) s.record = s.n;
+  persistProgress();
+  return { avant, n: s.n, record: s.record, casse: !tenu && avant > 0, battu };
 }
 
 // ------------------------------------------------------------------
