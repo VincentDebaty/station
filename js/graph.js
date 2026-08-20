@@ -318,8 +318,31 @@ function garesOuvrables(tenues) {
     if (!e || e.role !== "corridor") continue;
     const g = e.lien.gares, i = g.indexOf(gareId);
     if (i < 0) continue;
-    if (i > 0) ajoute(g[i - 1]); else ajoute((GRAPHE.hubs[e.lien.a] || {}).gareId);
-    if (i < g.length - 1) ajoute(g[i + 1]); else ajoute((GRAPHE.hubs[e.lien.b] || {}).gareId);
+    if (i > 0) ajoute(g[i - 1]);
+    if (i < g.length - 1) ajoute(g[i + 1]);
+
+    // UN BOSS S'ATTEINT AU TERME DE SA LIGNE, PAS EN SE TENANT À CÔTÉ.
+    //
+    // La voisine d'une gare de bout, c'est un hub — et l'ouvrir comme une
+    // voisine ordinaire mettait le boss à un pas de la première gare venue.
+    // Sur la ligne de départ, cela se voyait tout de suite : le joueur ouvrait
+    // Ottignies, et Bruxelles — cinq gares de difficulté plus loin sur le
+    // papier — s'allumait au service suivant. Il n'y avait plus de ligne à
+    // parcourir, seulement un raccourci et deux halos entre lesquels choisir.
+    //
+    // Le bout ne s'ouvre donc qu'une fois TOUTES les gares du corridor tenues.
+    if (!g.every(x => tenues.has(x))) continue;
+    const hA = GRAPHE.hubs[e.lien.a] || {}, hB = GRAPHE.hubs[e.lien.b] || {};
+    const tA = hA.gareId && tenues.has(hA.gareId);
+    const tB = hB.gareId && tenues.has(hB.gareId);
+    // On tient déjà un bout : c'est de là qu'on est parti, l'autre s'ouvre.
+    // (`ajoute` ignore les gares tenues, le premier appel est donc sans effet.)
+    if (tA || tB) { ajoute(hA.gareId); ajoute(hB.gareId); }
+    // Aucun bout tenu : c'est la LIGNE DE DÉPART, prise à sa première gare,
+    // donc parcourue depuis `a`. Seul le boss d'arrivée s'ouvre — le hub
+    // d'origine, resté dans le dos du joueur, attend que celui-ci soit battu.
+    // Il s'ouvrira alors de lui-même, par la boucle des hubs tenus ci-dessus.
+    else ajoute(hB.gareId);
   }
   return out;
 }
