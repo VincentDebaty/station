@@ -1372,7 +1372,7 @@ function showEndBesideMap() {
   // ses voisines à portée ? — parce qu'elle montrait tout à la fois. Ici la
   // vue ligne désigne déjà la suite, il suffit de la redessiner à jour.
   renderCarte();
-  if (typeof updateRankBadge === "function") updateRankBadge(true);
+  // Le grade est en tête de la carte, et renderCarte() vient de le redessiner.
 }
 // Quitter le relevé en restant sur la carte. `recenter` : on recadre le pays
 // pour de bon (le joueur a demandé la carte), sinon on se contente d'effacer le
@@ -1613,9 +1613,12 @@ function endGame(failed) {
     document.getElementById("end").classList.add("hidden");
     document.getElementById("hub").classList.remove("hidden");
     if (typeof started !== "undefined") started = false;
-    if (typeof mapJourneyToNext === "function")
-      mapJourneyToNext(currentIdx, gi, () => startStation(gi));
-    else startStation(gi);
+    // Le voyage animé jusqu'à la gare suivante est parti avec la carte
+    // géographique : il suivait une caméra, et il n'y en a plus. Le document
+    // le veut de retour — « voir son train filer le long des lignes
+    // débloquées » — mais sur la carte en lignes, ce qui n'est pas la même
+    // animation. En attendant, on y va directement.
+    startStation(gi);
   }
 
   function paintActions() {

@@ -247,11 +247,20 @@ function vueEurope() {
 // ------------------------------------------------------------------
 // RENDU ET GESTES
 // ------------------------------------------------------------------
-// Le solde, en tête d'écran. Il disparaîtra avec les crédits au lot suivant ;
-// d'ici là il reste visible, au même endroit qu'avant.
+// Le solde et le grade, en tête d'écran. Ils vivaient dans la barre de
+// l'ancienne carte ; elle disparaît, eux non. Le solde s'en ira avec les
+// crédits au lot suivant, où le grade prendra toute la place.
 function bourseHTML() {
-  return typeof creditsHTML === "function"
-    ? `<div class="c-bourse">${creditsHTML(getCredits())}</div>` : "";
+  const cr = typeof creditsHTML === "function"
+    ? `<span class="c-bourse">${creditsHTML(getCredits())}</span>` : "";
+  let gr = "";
+  if (typeof gradeOf === "function" && typeof getPoints === "function") {
+    const g = gradeOf(getPoints());
+    gr = `<span class="c-grade" title="${g.nom}">` +
+      `<span class="g-nom">${g.nom}</span>` +
+      `<span class="g-jauge"><i style="width:${Math.round(g.part * 100)}%"></i></span></span>`;
+  }
+  return `<div class="c-compteurs">${gr}${cr}</div>`;
 }
 
 function renderCarte() {
@@ -262,7 +271,7 @@ function renderCarte() {
   hote.innerHTML = CARTE.vue === "constellation" ? vueConstellation()
                  : CARTE.vue === "europe" ? vueEurope() : vueLigne();
   // Le relevé de fin anime le solde : il lui faut l'élément, refait à chaque rendu.
-  CARTE.bourse = hote.querySelector(".c-bourse");
+  CARTE.bourse = hote.querySelector(".c-bourse .cr-amt") || hote.querySelector(".c-bourse");
 
   // Un seul écouteur, posé sur l'hôte : le contenu se refait à chaque rendu,
   // et des écouteurs par élément fuiraient à chaque changement de vue.

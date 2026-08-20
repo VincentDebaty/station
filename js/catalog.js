@@ -234,6 +234,15 @@ function stationNextAmount(id) {
 // La colonne d'étoiles n'est pas un ornement : c'est le barème du jeu, celui
 // qu'affiche le bandeau de fin de service. Le palmarès l'enseigne en montrant
 // ce qu'il paie.
+// L'échelle d'étoiles, en texte. Elle vivait dans la carte, qui n'existe plus
+// sous cette forme — mais le palmarès, lui, reste. On la ramène auprès de ce
+// qui s'en sert.
+function starStr(n) { return "\u2605".repeat(n) + "\u2606".repeat(3 - n); }
+// L'étoile creusée dans la pastille d'or : la marque du sans-faute, la même
+// que portait la carte pour les gares parfaites.
+const STAR_SVG = '<svg class="pf" viewBox="0 0 100 100" aria-hidden="true">' +
+  '<polygon fill="currentColor" points="50,2 61,36 98,36 68,58 79,92 50,71 21,92 32,58 2,36 39,36"/></svg>';
+
 function palierStarsHTML(p) {
   // Le sans-faute porte la marque de la CARTE — l'étoile creusée dans la
   // pastille d'or — et non un quatrième caractère ★, qui se lirait comme un
