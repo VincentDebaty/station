@@ -2121,19 +2121,95 @@ svg { width: 100%; height: 100%; display: block; }
 .c-graphe .trait.ouvert { stroke: #2dd4bf; stroke-width: 1; }
 .c-graphe .trait.sortant { stroke-dasharray: 2 2; opacity: .5; }
 .c-graphe .trait.mer { stroke-dasharray: .8 1.6; }
-.c-graphe .hub circle { fill: #29344c; stroke: #3a4560; stroke-width: .6; cursor: pointer; }
+.c-graphe .hub circle:not(.cerne) { fill: #29344c; stroke: #3a4560; stroke-width: .6; cursor: pointer; }
 .c-graphe .hub text {
   font-size: 3px; fill: var(--muted); text-anchor: middle;
   font-family: "Segoe UI", system-ui, sans-serif; pointer-events: none;
 }
-.c-graphe .hub.tenu circle { fill: #2dd4bf; stroke: #2dd4bf; }
+.c-graphe .hub.tenu circle:not(.cerne) { fill: #2dd4bf; stroke: #2dd4bf; }
 .c-graphe .hub.tenu text { fill: var(--text); }
-.c-graphe .hub.jouable circle { fill: #0E1420; stroke: #6ff0e2; stroke-width: .9; }
+.c-graphe .hub.jouable circle:not(.cerne) { fill: #0E1420; stroke: #6ff0e2; stroke-width: .9; }
 .c-graphe .hub.jouable text { fill: #6ff0e2; }
-.c-graphe .hub.maitrise circle { fill: var(--gold); stroke: var(--gold); }
+.c-graphe .hub.maitrise circle:not(.cerne) { fill: var(--gold); stroke: var(--gold); }
 .c-graphe .hub.maitrise text { fill: var(--gold-hi); }
-.c-graphe .hub.absent circle { fill: none; stroke: #3a4560; stroke-dasharray: 1 1; cursor: default; }
+.c-graphe .hub.absent circle:not(.cerne) { fill: none; stroke: #3a4560; stroke-dasharray: 1 1; cursor: default; }
 .c-graphe .hub.absent text { fill: #46516b; }
+/* Le cerne du carrefour ouvert. Il sert aussi de cible large au doigt : un
+   point de 2,6 unités dans un carré de 100 ne s'attrape pas mieux qu'un trait. */
+.c-graphe .hub .cerne { fill: transparent; stroke: none; cursor: pointer; }
+.c-graphe .hub.absent .cerne { cursor: default; }
+.c-graphe .hub.choisi .cerne { stroke: #6ff0e2; stroke-width: .5; }
+
+/* Le trait EST la ligne : on doit pouvoir le prendre. Le tracé visible est
+   trop fin pour le doigt, donc il ne reçoit rien — c'est une cible
+   transparente et large, dessous, qui écoute. */
+.c-graphe .trait { pointer-events: none; }
+.c-graphe .lien { cursor: pointer; }
+.c-graphe .lien .cible { stroke: transparent; stroke-width: 4.5; pointer-events: stroke; }
+@media (hover: hover) {
+  .c-graphe .lien:hover .cible { stroke: rgba(45, 212, 191, .16); }
+}
+
+/* ---- Le carrefour : « par où ? » ---- */
+/* Un panneau posé sur le plan, pas un écran de plus : le graphe reste visible
+   derrière, parce que la question porte sur lui. */
+.c-panneau {
+  position: absolute; left: 50%; transform: translateX(-50%);
+  bottom: calc(14px + var(--safe-b)); z-index: 4;
+  width: min(430px, calc(100% - 32px));
+  background: var(--panel); border: 1px solid #2a3550; border-radius: 14px;
+  padding: 11px 11px 12px; display: flex; flex-direction: column; gap: 8px;
+  box-shadow: 0 18px 44px rgba(0, 0, 0, .55);
+  /* Six sorties sur un petit écran : le panneau défile plutôt que de déborder. */
+  max-height: calc(100% - 90px); overflow-y: auto;
+  animation: pMonte .18s cubic-bezier(.3, .8, .35, 1);
+}
+.c-panneau[data-maitrise] { border-color: var(--gold-dim); }
+@keyframes pMonte { from { opacity: 0; transform: translate(-50%, 14px); }
+                    to   { opacity: 1; transform: translate(-50%, 0); } }
+@media (prefers-reduced-motion: reduce) { .c-panneau { animation: none; } }
+
+.p-tete { display: flex; align-items: baseline; gap: 9px; padding: 2px 2px 4px; }
+.p-nom { font-size: 15.5px; font-weight: 600; color: var(--text); }
+.p-sous { flex: 1 1 auto; font-size: 12px; color: var(--muted); }
+.c-panneau[data-maitrise] .p-sous { color: var(--gold); }
+.p-fermer {
+  flex: 0 0 auto; background: none; border: 0; color: var(--muted);
+  font: inherit; font-size: 15px; cursor: pointer; padding: 4px 8px; line-height: 1;
+}
+.p-fermer:hover { color: var(--text); }
+
+.p-lignes { display: flex; flex-direction: column; gap: 6px; }
+.p-ligne, .p-gare {
+  display: flex; align-items: center; gap: 10px; width: 100%; min-height: 44px;
+  background: #182136; border: 1px solid #262f47; border-radius: 10px;
+  padding: 9px 12px; font: inherit; color: var(--text); cursor: pointer;
+  text-align: left;
+}
+.p-ligne:hover, .p-gare:hover { border-color: #2dd4bf; background: #1c2740; }
+.p-ligne:focus-visible, .p-gare:focus-visible { outline: 2px solid #2dd4bf; outline-offset: 2px; }
+.p-vers { flex: 0 0 auto; font-size: 14.5px; }
+.p-ligne .p-vers::before { content: "→ "; color: var(--muted); }
+.p-note {
+  margin-left: auto; font-family: ui-monospace, Menlo, monospace; font-size: 11.5px;
+  color: var(--muted); font-variant-numeric: tabular-nums;
+}
+.p-jauge {
+  flex: 1 1 auto; height: 4px; border-radius: 4px; background: #202a41; overflow: hidden;
+}
+.p-jauge i { display: block; height: 100%; background: #2dd4bf; border-radius: inherit; }
+.p-ligne .c-rang { margin-left: 0; }
+
+/* La gare du boss : une action, donc le jeton d'action du jeu. */
+.p-gare { background: rgba(45, 212, 191, .1); border-color: #2dd4bf; }
+.p-gare .p-vers { color: #6ff0e2; font-weight: 600; }
+.p-gare .p-note { color: var(--gold); font-family: inherit; font-size: 12px; }
+
+/* Une ligne qui n'existe pas encore se dit, et ne se clique pas — un blocage
+   muet vaut mieux qu'un faux espoir. */
+.p-ligne.p-absente {
+  cursor: default; opacity: .45; background: none; border-style: dashed;
+}
 
 /* ---- L'Europe : les constellations et leur complétion ---- */
 .c-europe {

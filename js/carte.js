@@ -29,7 +29,11 @@
 const CARTE = { hote: null, vue: "ligne", corridor: null, depuis: null,
   // Le voyage : la gare d'où le train doit partir, posée par le relevé de fin
   // de service (js/game.js) et consommée au rendu suivant. Une seule fois.
-  voyage: null, prochaine: null };
+  voyage: null, prochaine: null,
+  // Le carrefour ouvert sur la constellation : l'id du hub dont on regarde les
+  // sorties, ou null. Un carrefour est une QUESTION — « par où ? » — et le
+  // panneau est l'endroit où elle se pose.
+  panneau: null };
 
 // ------------------------------------------------------------------
 // OÙ EN EST LE JOUEUR ?
@@ -222,17 +226,30 @@ function vueConstellation() {
     const lien = GRAPHE.corridors.find(l =>
       (l.a === a && l.b === b) || (l.a === b && l.b === a));
     const rg = lien && typeof rangDeLigne === "function" ? rangDeLigne(lien, lien.a) : null;
-    traits += `<line x1="${X(ha.ll[0])}" y1="${Y(ha.ll[1])}" x2="${X(hb.ll[0])}" y2="${Y(hb.ll[1])}"` +
-      ` class="trait${ouvert ? " ouvert" : ""}${sortant ? " sortant" : ""}${t === "mer" ? " mer" : ""}` +
-      `${rg ? " r-" + rg.id : ""}"/>`;
+    const geo = `x1="${X(ha.ll[0])}" y1="${Y(ha.ll[1])}" x2="${X(hb.ll[0])}" y2="${Y(hb.ll[1])}"`;
+    const trace = `<line ${geo} class="trait${ouvert ? " ouvert" : ""}` +
+      `${sortant ? " sortant" : ""}${t === "mer" ? " mer" : ""}${rg ? " r-" + rg.id : ""}"/>`;
+    // LE TRAIT EST UNE LIGNE, DONC ON DOIT POUVOIR LA PRENDRE. Un trait de
+    // 0,7 unité dans un carré de 100 ne s'attrape pas au doigt : on lui adosse
+    // une cible transparente bien plus large, invisible et seule cliquable.
+    // Une ligne pas encore écrite (`gares` vide) n'en reçoit pas — on ne rend
+    // pas cliquable ce qui n'ouvrirait rien.
+    traits += (lien && lien.gares && lien.gares.length)
+      ? `<g class="lien" data-lien="${cleDeLien(lien)}"><line ${geo} class="cible"/>${trace}</g>`
+      : trace;
   }
   const points = hubs.map(h => {
     const tenu = h.gareId && tenues.has(h.gareId);
     const jouable = h.gareId && isBuyable(h.gareId);
     const maitrise = tenu && bossMaitrise(h.id, tenues);
+    const r = h.rang === 1 ? 2.6 : 1.9;
+    // Le carrefour ouvert se marque : sans quoi le panneau flotte, et l'on ne
+    // sait plus de quel point il parle.
     return `<g class="hub${tenu ? " tenu" : ""}${jouable ? " jouable" : ""}${maitrise ? " maitrise" : ""}` +
-      `${h.gareId ? "" : " absent"}" data-hub="${h.id}"${h.gareId ? ` data-gare="${h.gareId}"` : ""}>` +
-      `<circle cx="${X(h.ll[0])}" cy="${Y(h.ll[1])}" r="${h.rang === 1 ? 2.6 : 1.9}"/>` +
+      `${h.gareId ? "" : " absent"}${CARTE.panneau === h.id ? " choisi" : ""}"` +
+      ` data-hub="${h.id}"${h.gareId ? ` data-gare="${h.gareId}"` : ""}>` +
+      `<circle class="cerne" cx="${X(h.ll[0])}" cy="${Y(h.ll[1])}" r="${r + 2.2}"/>` +
+      `<circle cx="${X(h.ll[0])}" cy="${Y(h.ll[1])}" r="${r}"/>` +
       `<text x="${X(h.ll[0])}" y="${Y(h.ll[1]) - 4}">${h.nom}</text></g>`;
   }).join("");
 
@@ -244,7 +261,95 @@ function vueConstellation() {
     </div>
     <svg class="c-graphe" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet">
       <g class="traits">${traits}</g>${points}
-    </svg>`;
+    </svg>
+    ${CARTE.panneau ? panneauDeHub(CARTE.panneau, tenues) : ""}`;
+}
+
+// ------------------------------------------------------------------
+// LE PANNEAU D'UN CARREFOUR — « par où ? », et rien d'autre.
+// ------------------------------------------------------------------
+// Un boss n'est pas une gare de plus sur la carte : c'est l'endroit où le
+// joueur CHOISIT sa direction, et ce choix est le cœur de la progression. Le
+// clic sur le point ouvrait la gare directement — il sautait donc par-dessus
+// la seule décision que la vue constellation existe pour poser.
+//
+// Ici, le point ouvre la liste de ses sorties. Chacune dit ce qu'elle vaut :
+// son rang quand elle est faite, sa jauge quand elle est en cours, « à écrire »
+// quand le corridor n'existe pas encore. La gare du boss reste jouable, en
+// tête de liste, parce qu'elle est une étape de la ligne et non son résumé.
+function panneauDeHub(hubId, tenues) {
+  const h = hubById(hubId);
+  if (!h) return "";
+  const sorties = sortiesDeHub(hubId);
+  const maitrise = h.gareId && tenues.has(h.gareId) && bossMaitrise(hubId, tenues);
+
+  const rangs = sorties.map(lien => {
+    const vers = lien.a === hubId ? lien.b : lien.a;
+    const hv = hubById(vers);
+    const ecrite = !!(lien.gares && lien.gares.length);
+    if (!ecrite)
+      return `<div class="p-ligne p-absente"><span class="p-vers">${hv ? hv.nom : vers}</span>` +
+        `<span class="p-note">à écrire</span></div>`;
+    const rang = typeof rangDeLigne === "function" ? rangDeLigne(lien, hubId) : null;
+    const composition = typeof garesDeLigne === "function"
+      ? garesDeLigne(lien, hubId) : lien.gares;
+    const total = composition.length;
+    const faits = composition.filter(g => tenues.has(g)).length;
+    return `<button class="p-ligne${faits ? " p-entamee" : ""}" data-lien="${cleDeLien(lien)}">` +
+      `<span class="p-vers">${hv ? hv.nom : vers}</span>` +
+      `<span class="p-jauge"><i style="width:${Math.round(100 * faits / total)}%"></i></span>` +
+      (rang ? `<span class="c-rang r-${rang.id}">${rang.nom}</span>`
+            : `<span class="p-note">${faits} / ${total}</span>`) +
+      `</button>`;
+  }).join("");
+
+  const etat = h.gareId ? etatDeGare(h.gareId) : null;
+  const st = h.gareId ? etoilesDe(h.gareId) : 0;
+  const gare = (etat === "tenue" || etat === "ouvrable")
+    ? `<button class="p-gare j-${etat}" data-gare="${h.gareId}">` +
+      `<span class="p-vers">${etat === "tenue" ? "▸ Jouer" : "▸ Ouvrir"} ${nomDe(h.gareId)}</span>` +
+      `<span class="p-note">${st ? "★".repeat(st) : ""}</span></button>`
+    : "";
+
+  return `<div class="c-panneau"${maitrise ? ' data-maitrise="1"' : ""}>
+      <div class="p-tete">
+        <span class="p-nom">${h.nom}</span>
+        <span class="p-sous">${maitrise ? "Gare maîtrisée" :
+          sorties.length + (sorties.length > 1 ? " lignes" : " ligne")}</span>
+        <button class="p-fermer" data-fermer="1" aria-label="Fermer">✕</button>
+      </div>
+      ${gare}
+      <div class="p-lignes">${rangs}</div>
+    </div>`;
+}
+
+// La clé d'un lien dans le DOM, et son retour. Le graphe n'attribue pas d'id
+// aux corridors : ses deux bouts en tiennent lieu, et l'ordre est celui du
+// graphe — jamais celui de la lecture.
+function cleDeLien(lien) { return lien.a + "~" + lien.b; }
+function lienDeCle(cle) {
+  buildGraphe();
+  const [a, b] = String(cle || "").split("~");
+  return GRAPHE.corridors.find(l =>
+    (l.a === a && l.b === b) || (l.a === b && l.b === a)) || null;
+}
+// Ouvrir une ligne, c'est descendre d'une échelle en gardant la question.
+//
+// TOUJOURS DEPUIS SON ORIGINE, jamais depuis le bout par lequel on l'a prise :
+// c'est la règle de `corridorCourant`, et elle vaut ici pour la même raison.
+// Bruxelles – Luxembourg ouverte depuis le panneau de Luxembourg s'afficherait
+// sinon à l'envers de la même ligne ouverte depuis celui de Bruxelles, et le
+// joueur ne reconnaîtrait plus une ligne qu'il connaît. La destination
+// annoncée par la rangée du panneau, elle, reste juste : elle dit où l'on VA,
+// pas dans quel sens le tracé se dessine.
+function ouvrirLigne(cle) {
+  const lien = lienDeCle(cle);
+  if (!lien || !lien.gares || !lien.gares.length) return;
+  CARTE.corridor = lien;
+  CARTE.depuis = lien.a;
+  CARTE.panneau = null;
+  CARTE.vue = "ligne";
+  renderCarte();
 }
 
 // ------------------------------------------------------------------
@@ -312,12 +417,30 @@ function renderCarte() {
   // et des écouteurs par élément fuiraient à chaque changement de vue.
   hote.onclick = ev => {
     const vue = ev.target.closest("[data-vue]");
-    if (vue) { CARTE.vue = vue.dataset.vue; CARTE.corridor = null; renderCarte(); return; }
+    if (vue) {
+      CARTE.vue = vue.dataset.vue; CARTE.corridor = null; CARTE.panneau = null;
+      renderCarte(); return;
+    }
     const cst = ev.target.closest("[data-const]");
-    if (cst) { CARTE.vue = "constellation"; renderCarte(); return; }
+    if (cst) { CARTE.vue = "constellation"; CARTE.panneau = null; renderCarte(); return; }
+    if (ev.target.closest("[data-fermer]")) { CARTE.panneau = null; renderCarte(); return; }
+    // UNE LIGNE SE PREND EN LA TOUCHANT. Le trait du plan et la ligne du
+    // panneau portent la même marque et font la même chose : ouvrir la vue
+    // ligne. C'est le seul geste qui descende d'une échelle.
+    const lien = ev.target.closest("[data-lien]");
+    if (lien) { ouvrirLigne(lien.dataset.lien); return; }
+    // LE CARREFOUR POSE SA QUESTION AVANT DE LANCER SA GARE. Le point porte
+    // aussi `data-gare` — on le teste donc en premier, sans quoi le clic
+    // partirait en jeu et le choix de direction n'aurait jamais lieu.
+    const hub = ev.target.closest("[data-hub]");
+    if (hub) {
+      CARTE.panneau = CARTE.panneau === hub.dataset.hub ? null : hub.dataset.hub;
+      renderCarte(); return;
+    }
     const g = ev.target.closest("[data-gare]");
-    if (!g || !g.dataset.gare) return;
-    jouerOuOuvrir(g.dataset.gare);
+    if (g && g.dataset.gare) { jouerOuOuvrir(g.dataset.gare); return; }
+    // Cliquer à côté referme le panneau : c'est le geste qu'on essaie d'abord.
+    if (CARTE.panneau) { CARTE.panneau = null; renderCarte(); }
   };
 }
 
