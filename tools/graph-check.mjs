@@ -35,20 +35,25 @@ const DETAIL = process.argv.includes("--detail");
 
 const ctx = createContext({ console });
 runInContext(readFileSync(ROOT + "data/graph.js", "utf8") +
-  "\nglobalThis.HUBS = HUBS; globalThis.LIENS = LIENS; globalThis.CONSTELLATIONS = CONSTELLATIONS;", ctx);
-const { HUBS, LIENS, CONSTELLATIONS } = ctx;
+  "\nglobalThis.HUBS = HUBS; globalThis.LIENS = LIENS;" +
+  "globalThis.CONSTELLATIONS = CONSTELLATIONS; globalThis.CORRIDORS = CORRIDORS;", ctx);
+const { HUBS, LIENS, CONSTELLATIONS, CORRIDORS } = ctx;
 
 // Le catalogue, pour vérifier que les fiches annoncées existent vraiment.
 const index = JSON.parse(readFileSync(ROOT + "data/stations/index.json", "utf8"));
-const GARES = new Set();
+const GARES = new Set(), GARE_IDS = new Set(), ID_DE_NOM = {};
 for (const g of index)
   for (const id of g.stations) {
     const c = JSON.parse(readFileSync(`${ROOT}data/stations/${g.country}/${id}.json`, "utf8"));
     GARES.add(c.city || c.name);
+    GARE_IDS.add(c.id);
+    ID_DE_NOM[c.city || c.name] = c.id;
   }
 
 const erreurs = [], alertes = [];
 const byId = Object.fromEntries(HUBS.map(h => [h.id, h]));
+// Les gares qui SONT des hubs : elles ne peuvent pas être aussi de passage.
+const HUB_IDS = new Set(HUBS.filter(h => h.gare && ID_DE_NOM[h.gare]).map(h => ID_DE_NOM[h.gare]));
 
 // --- 1. Intégrité ---------------------------------------------------
 const vus = new Set();
@@ -127,6 +132,29 @@ for (const h of HUBS) {
     alertes.push(`${h.nom} : hub régional à ${d} sorties, il mériterait le rang 1`);
 }
 
+// --- 4 bis. Les corridors ---------------------------------------------
+// Un corridor décrit le CONTENU d'un lien : il doit donc correspondre à un
+// lien, ne contenir que des gares du catalogue, et n'en partager aucune avec
+// un autre — une gare dans deux corridors s'ouvrirait deux fois.
+const liens = new Set(LIENS.map(([a, b]) => a < b ? a + "|" + b : b + "|" + a));
+const gareVue = new Map();
+const parGare = {};
+for (const c of CORRIDORS) {
+  const k = c.de < c.vers ? c.de + "|" + c.vers : c.vers + "|" + c.de;
+  if (!liens.has(k)) erreurs.push(`corridor ${c.de} – ${c.vers} : aucun lien correspondant`);
+  if (!byId[c.de] || !byId[c.vers]) erreurs.push(`corridor vers un hub inconnu : ${c.de} – ${c.vers}`);
+  if (!c.gares.length) alertes.push(`corridor ${c.de} – ${c.vers} : aucune gare`);
+  if (c.gares.length > 10) erreurs.push(`corridor ${c.de} – ${c.vers} : ${c.gares.length} gares, 10 au maximum`);
+  for (const g of c.gares) {
+    if (gareVue.has(g))
+      erreurs.push(`${g} est dans deux corridors : ${gareVue.get(g)} et ${c.de} – ${c.vers}`);
+    gareVue.set(g, `${c.de} – ${c.vers}`);
+    if (!GARE_IDS.has(g)) erreurs.push(`corridor ${c.de} – ${c.vers} : gare inconnue « ${g} »`);
+    // Une gare-hub n'est pas une gare de corridor : elle en est le bout.
+    if (HUB_IDS.has(g)) erreurs.push(`corridor ${c.de} – ${c.vers} : ${g} est un hub`);
+  }
+}
+
 // --- 5. Équilibre des constellations ---------------------------------
 const parC = {};
 for (const h of HUBS) (parC[h.c] = parC[h.c] || []).push(h);
@@ -137,7 +165,8 @@ if (ecart > 2)
 
 // --- Rapport ---------------------------------------------------------
 const pad = (s, n) => String(s).padEnd(n);
-console.log(`\ngraph-check — ${HUBS.length} hubs · ${LIENS.length} liens · ${CONSTELLATIONS.length} constellations\n`);
+console.log(`\ngraph-check — ${HUBS.length} hubs · ${LIENS.length} liens · ` +
+  `${CORRIDORS.length} corridors remplis · ${CONSTELLATIONS.length} constellations\n`);
 console.log(pad("constellation", 26) + pad("hubs", 6) + pad("continentaux", 14) + pad("au catalogue", 14) + "à écrire");
 console.log("-".repeat(74));
 for (const c of CONSTELLATIONS) {
@@ -173,4 +202,6 @@ if (erreurs.length) {
   console.log();
   process.exit(1);
 }
-console.log("\nOK — le graphe est intègre, d'un seul tenant, et ses écartements tiennent.\n");
+const placees = CORRIDORS.reduce((a, c) => a + c.gares.length, 0);
+console.log(`\n${placees} gare(s) de corridor placée(s) · ${GARE_IDS.size - HUB_IDS.size - placees} en attente d'un hub à écrire`);
+console.log("OK — le graphe est intègre, d'un seul tenant, et ses écartements tiennent.\n");

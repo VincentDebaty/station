@@ -32,11 +32,12 @@ import { createContext, runInContext } from "node:vm";
 const ROOT = new URL("..", import.meta.url).pathname;
 const read = f => readFileSync(ROOT + f, "utf8");
 
-let SEED = 1, RESTE = false;
+let SEED = 1, RESTE = false, JS = false;
 for (const a of process.argv.slice(2)) {
   const m = /^--seed=(\d+)$/.exec(a);
   if (m) { SEED = +m[1]; continue; }
   if (a === "--reste") RESTE = true;
+  if (a === "--js") JS = true;      // le bloc CORRIDORS à coller dans data/graph.js
 }
 function mulberry32(a) {
   return function () {
@@ -215,5 +216,16 @@ if (RESTE && best.libre.size) {
     console.log(`  ${pad(nameOf(id), 20)} voisines : ${vois.map(nameOf).join(", ")}` +
       (hubs.length ? `   (touche ${hubs.join(", ")})` : "   (aucun hub à portée)"));
   }
+}
+if (JS) {
+  console.log("\nconst CORRIDORS = [");
+  for (const [c, p] of [...best.out.entries()].filter(([, p]) => p.length)
+      .sort((x, y) => x[0].a.localeCompare(y[0].a) || x[0].b.localeCompare(y[0].b))) {
+    const sin = sinuosite(c.ga, c.gb, p);
+    console.log(`  { de: ${JSON.stringify(c.a)}, vers: ${JSON.stringify(c.b)},` +
+      ` gares: [${p.map(g => JSON.stringify(g)).join(", ")}] },` +
+      `   // ${p.map(nameOf).join(" · ")}  ×${sin.toFixed(2)}`);
+  }
+  console.log("];");
 }
 console.log(`\ngraine ${SEED} — le même appel redonne exactement ce découpage.\n`);

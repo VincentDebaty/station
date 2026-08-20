@@ -242,6 +242,42 @@ Limites moteur (ne pas dépasser) : **≤ 13 quais**, **~6 directions/côté**,
 **≤ ~30-34 trains/jour** (au-delà : coût de génération cubique + le zéro n'est
 plus garanti). Fret : 6–7 wagons, non plafonné par MAX_CARS.
 
+## 5 bis. LE PLAFOND DE FLUX — ce qu'une géométrie peut porter
+
+Mesuré, et c'est la contrainte qui décide de la difficulté d'une gare de
+corridor. On a pris de vraies petites gares et on leur a appliqué les
+enveloppes `gen` de chaque palier, en regardant la **file d'attente** — le
+nombre de convois qui visent le même quai en même temps (`platformPressure`,
+`js/schedule.js`) :
+
+| gare | directions / quais | plafond |
+|---|---|---|
+| Dinant | 3 / 3 | niveau **2** |
+| Landen, Aarschot | 3 / 4 | niveau **3** |
+| Bruges, Namur | 5-6 / 5-6 | niveau **4** |
+| Liège | 6 / 9 | niveau **5** |
+
+**Le générateur ne casse jamais** : à tous les paliers, il produit encore des
+journées jouables à zéro retard. Ce qui casse, c'est la SENSATION. Au-delà du
+plafond, le trafic supplémentaire ne devient pas de la difficulté mais de la
+file : Dinant passe d'une pression de 4 à 7 entre le palier 1 et le palier 5 —
+on n'y aiguille plus, on y attend. C'est exactement ce que le lot 1 a corrigé,
+et qu'il ne faut pas réintroduire par l'enveloppe.
+
+### La règle qui en découle
+
+**Le flux déplace une gare d'un palier, pas de deux.** La difficulté d'une gare
+vient d'abord de sa géométrie — combien de directions à aiguiller, combien de
+quais pour les recevoir — et l'enveloppe `gen` ne fait que l'ajuster.
+
+Conséquence pour l'écriture des corridors : **les gares doivent grossir à
+l'approche du boss**. Une gare de fin de corridor à trois directions restera
+facile quoi qu'on fasse de son trafic. C'est d'ailleurs la réalité du rail —
+les abords des métropoles ont de grandes gares.
+
+Repère : compter environ **un palier par paire de quais**, à partir de trois
+directions.
+
 ## 6. Validation (obligatoire avant commit)
 
 ```bash
