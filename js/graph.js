@@ -251,6 +251,41 @@ function enveloppeDeGare(gareId, versHub, cfg) {
 }
 
 // ------------------------------------------------------------------
+// LES LIGNES DE DÉPART — on ne commence pas par une gare, on commence par
+// une LIGNE.
+// ------------------------------------------------------------------
+// Le tout premier écran proposait les gares faciles reliées au réseau : des
+// noms sans lendemain (Landen, Herentals, Deinze…) posés au milieu de nulle
+// part. Le joueur choisissait donc un POINT, alors que tout le reste du jeu
+// lui fait choisir une DIRECTION — et il tombait, au premier service fini,
+// sur une ligne dont il n'avait pas décidé et dont il ne tenait pas un bout.
+//
+// Une ligne de départ est un corridor écrit, pris depuis son origine : sa
+// première gare est celle qui suit immédiatement le hub, et la suite se
+// parcourt gare après gare jusqu'au boss d'en face. C'est exactement la
+// boucle du jeu, dès le premier geste.
+//
+// TROIS GARES AU MOINS. En dessous, ce n'est pas une ligne : c'est un boss
+// derrière un portillon, et la promesse — « parcourir un corridor » — ne
+// serait pas tenue. Le seuil montera si le catalogue s'étoffe.
+const DEPART_MIN = 3;
+function lignesDeDepart() {
+  buildGraphe();
+  return GRAPHE.corridors.filter(l =>
+    l.gares && l.gares.length >= DEPART_MIN &&
+    GRAPHE.hubs[l.a] && GRAPHE.hubs[l.b] &&
+    typeof cardOf === "function" && cardOf(l.gares[0]));
+}
+// Les gares par lesquelles une partie peut commencer : la première de chaque
+// ligne de départ, et rien d'autre. Le SENS est celui du graphe (`de` → `vers`)
+// — la même règle qu'ailleurs : une ligne se lit toujours depuis son origine.
+function garesDeDepart() {
+  const out = new Set();
+  for (const l of lignesDeDepart()) out.add(l.gares[0]);
+  return out;
+}
+
+// ------------------------------------------------------------------
 // CE QUI EST OUVRABLE MAINTENANT.
 // ------------------------------------------------------------------
 // La question que pose la carte, et la seule. `tenues` est l'ensemble des ids
@@ -262,6 +297,9 @@ function enveloppeDeGare(gareId, versHub, cfg) {
 // direction que le document place au cœur de la progression.
 function garesOuvrables(tenues) {
   buildGraphe();
+  // RIEN DE TENU : le réseau ne commence pas par une gare, il commence par une
+  // ligne. Les seules ouvrables sont donc les premières des lignes de départ.
+  if (!tenues || !tenues.size) return garesDeDepart();
   const out = new Set();
   const ajoute = g => { if (g && !tenues.has(g)) out.add(g); };
 

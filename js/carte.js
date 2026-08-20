@@ -144,13 +144,8 @@ function vueLigne() {
     ? garesDeLigne(cc.lien, cc.depuis)
     : p.gares.concat(hArr && hArr.gareId ? [hArr.gareId] : []);
   const total = composition.length;
-  // FAITE, PAS PAYÉE. La jauge comptait les gares tenues et affichait donc
-  // « 7 / 7 » à côté d'une ligne SANS rang — puisqu'un rang exige au moins une
-  // étoile partout. Deux chiffres qui se contredisent sur la même barre : le
-  // joueur cherche la gare manquante et ne la trouve jamais. Une gare payée
-  // mais jamais réussie n'est pas faite, et la ligne le dit.
-  const faits = composition.filter(g =>
-    typeof niveauDeGare === "function" ? niveauDeGare(g) >= 1 : tenues.has(g)).length;
+  const faits = typeof garesFaites === "function"
+    ? garesFaites(composition) : composition.filter(g => tenues.has(g)).length;
 
   const jalon = (id, role) => {
     const etat = id ? etatDeGare(id) : "fermee";
@@ -181,18 +176,41 @@ function vueLigne() {
       isBought(prochaine) ? "Reprendre" : "Ouvrir"} ${nomDe(prochaine)}</button>` : ""}`;
 }
 
-// Aucune gare tenue : le tout premier écran. On propose les portes de départ,
-// et rien d'autre — le choix du pays se fait en choisissant sa ligne.
+// Aucune gare tenue : le tout premier écran. ON Y CHOISIT UNE LIGNE, pas une
+// gare.
+//
+// Il proposait les gares faciles reliées au réseau : Landen, Herentals,
+// Deinze — des noms sans lendemain, posés au milieu de nulle part. Le joueur
+// choisissait un POINT là où tout le reste du jeu lui fait choisir une
+// DIRECTION, et se retrouvait, son premier service fini, sur une ligne dont
+// il n'avait rien décidé.
+//
+// Une ligne, donc, avec ses deux bouts et sa longueur ; le premier service se
+// joue sur la gare qui suit le hub de départ, et l'on remonte le corridor
+// jusqu'au boss d'en face. Le pays se choisit du même geste — c'est bien le
+// drapeau qu'on regarde en premier, et un joueur commence par CHEZ LUI.
 function vueDepart() {
-  const portes = CATALOG.filter(c => isBuyable(c.id)).slice(0, 8);
+  const lignes = typeof lignesDeDepart === "function" ? lignesDeDepart() : [];
+  if (!lignes.length) return `
+    <div class="c-tete"><div class="c-titre">Aucune ligne n'est encore écrite</div></div>`;
+  // L'ordre du catalogue, c'est-à-dire l'ordre des pays d'index.json : le
+  // joueur trouve le sien sans le chercher.
+  const rang = g => { const i = CATALOG.findIndex(c => c.id === g); return i < 0 ? 1e9 : i; };
+  lignes.sort((x, y) => rang(x.gares[0]) - rang(y.gares[0]));
+
+  const porte = lien => {
+    const hA = hubById(lien.a), hB = hubById(lien.b);
+    const premiere = cardOf(lien.gares[0]);
+    const drapeau = ((premiere && premiere.country) || "").trim().split(" ")[0];
+    return `<button class="porte" data-lien="${cleDeLien(lien)}">
+      <span class="pays">${drapeau}</span>
+      <span class="nom">${hA ? hA.nom : lien.a} <i>→</i> ${hB ? hB.nom : lien.b}</span>
+      <span class="detail">${lien.gares.length} gares · on démarre à ${nomDe(lien.gares[0])}</span>
+    </button>`;
+  };
   return `
-    <div class="c-tete"><div class="c-titre">Choisissez votre première gare</div></div>
-    <div class="c-portes">
-      ${portes.map(c => `<button class="porte" data-gare="${c.id}">
-        <span class="nom">${c.city || c.name}</span>
-        <span class="pays">${(c.country || "").trim().split(" ")[0]}</span>
-      </button>`).join("")}
-    </div>`;
+    <div class="c-tete"><div class="c-titre">Choisissez votre première ligne</div></div>
+    <div class="c-portes">${lignes.map(porte).join("")}</div>`;
 }
 
 // ------------------------------------------------------------------
@@ -300,7 +318,11 @@ function panneauDeHub(hubId, tenues) {
     const composition = typeof garesDeLigne === "function"
       ? garesDeLigne(lien, hubId) : lien.gares;
     const total = composition.length;
-    const faits = composition.filter(g => tenues.has(g)).length;
+    // Le MÊME compte que la vue ligne (js/recompense.js) : « 7 / 7 » s'affichait
+    // ici à côté d'une ligne sans rang, parce qu'on comptait les gares payées
+    // là où le rang exige des gares faites.
+    const faits = typeof garesFaites === "function"
+      ? garesFaites(composition) : composition.filter(g => tenues.has(g)).length;
     return `<button class="p-ligne${faits ? " p-entamee" : ""}" data-lien="${cleDeLien(lien)}">` +
       `<span class="p-vers">${hv ? hv.nom : vers}</span>` +
       `<span class="p-jauge"><i style="width:${Math.round(100 * faits / total)}%"></i></span>` +

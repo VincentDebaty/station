@@ -64,6 +64,17 @@ function niveauDeGare(id) {
   if (r.bestDelay === 0) return 4;
   return r.stars || 0;
 }
+// COMBIEN DE GARES SONT FAITES sur une composition donnée. Une seule fonction,
+// parce que DEUX écrans affichent ce compte à côté d'un rang : la vue ligne
+// (« 3 / 7 ») et le panneau de carrefour. Comptés séparément, ils ont
+// effectivement divergé — le panneau annonçait « 7 / 7 » à côté d'une ligne
+// sans rang, ce qui envoie chercher une gare manquante qui n'existe pas.
+//
+// FAITE, PAS PAYÉE : le rang exige au moins une étoile partout, le compte doit
+// exiger la même chose. Une gare achetée puis jamais réussie n'est pas faite.
+function garesFaites(composition) {
+  return (composition || []).filter(g => niveauDeGare(g) >= 1).length;
+}
 // LES GARES QUI COMPOSENT UNE LIGNE — les intermédiaires ET SES DEUX BOUTS.
 //
 // Les deux, et c'est le point délicat. La première version ne comptait que le

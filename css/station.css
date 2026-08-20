@@ -2132,17 +2132,22 @@ svg { width: 100%; height: 100%; display: block; }
 /* ---- Le tout premier écran ---- */
 .c-portes {
   flex: 1 1 auto; display: grid; gap: 10px; align-content: center;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); max-width: 640px;
-  margin: 0 auto; width: 100%;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); max-width: 780px;
+  margin: 0 auto; width: 100%; overflow-y: auto;
 }
+/* Une porte est une LIGNE : son drapeau, ses deux bouts, sa longueur. Trois
+   informations, dans l'ordre où on les cherche. */
 .porte {
   background: var(--panel); border: 1px solid #2a3550; border-radius: 11px;
-  padding: 14px; font: inherit; color: var(--text); cursor: pointer;
-  display: flex; align-items: center; gap: 10px;
+  padding: 12px 14px; font: inherit; color: var(--text); cursor: pointer;
+  display: grid; grid-template-columns: auto 1fr; gap: 2px 11px; text-align: left;
 }
 .porte:hover { border-color: #2dd4bf; }
-.porte .nom { flex: 1 1 auto; text-align: left; font-size: 14.5px; }
-.porte .pays { font-size: 16px; }
+.porte:focus-visible { outline: 2px solid #2dd4bf; outline-offset: 2px; }
+.porte .pays { grid-row: 1 / 3; align-self: center; font-size: 22px; line-height: 1; }
+.porte .nom { font-size: 14.5px; font-weight: 600; }
+.porte .nom i { color: var(--muted); font-style: normal; }
+.porte .detail { font-size: 11.5px; color: var(--muted); }
 
 /* ---- La constellation : plan de métro ---- */
 .c-graphe { flex: 1 1 auto; width: 100%; height: 100%; min-height: 0; }

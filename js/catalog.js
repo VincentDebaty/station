@@ -231,7 +231,15 @@ function tenues() {
 //    le réseau — jusqu'à ce que leur corridor existe.
 function isBuyable(id) {
   if (!cardOf(id) || isBought(id)) return false;
-  if (networkEmpty()) return isStartDoor(id);
+  // LE PREMIER GESTE EST LE CHOIX D'UNE LIGNE (js/graph.js, lignesDeDepart) :
+  // seules s'ouvrent les gares qui suivent immédiatement un hub. `isStartDoor`
+  // ne sert plus que de filet, tant qu'aucun corridor n'est assez long pour
+  // faire une ligne de départ — il ouvrait des gares faciles sans lendemain,
+  // choisies pour leur difficulté et non pour ce qu'elles amorcent.
+  if (networkEmpty()) {
+    const dep = typeof garesDeDepart === "function" ? garesDeDepart() : null;
+    return dep && dep.size ? dep.has(id) : isStartDoor(id);
+  }
   if (typeof dansLeGraphe === "function" && dansLeGraphe(id))
     return garesOuvrables(tenues()).has(id);
   return typeof netLinks === "function" && netLinks(id).to.some(nb => isBought(nb));
