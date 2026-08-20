@@ -241,6 +241,37 @@ function enveloppeDe(cfg, niveau, profil) {
   };
 }
 
+// ------------------------------------------------------------------
+// LA GARE D'AMORCE SE JOUE EN NIVEAU 1.
+// ------------------------------------------------------------------
+// La toute première gare d'une partie doit être la plus facile du jeu, et
+// aucune tête de ligne ne l'est : le catalogue place en sortie de hub des
+// gares de niveau 2 à 4 (Ottignies 2, Trèves 3, Louvain 4), parce qu'une gare
+// est écrite pour sa taille réelle, pas pour la place qu'elle occupe sur un
+// corridor. Filtrer les lignes de départ sur la difficulté de leur fiche ne
+// laissait qu'une ligne sur sept — et donc plus aucun choix de pays.
+//
+// C'est donc l'ENVELOPPE qui plie, pas le catalogue : la gare garde sa
+// géométrie — ses quais, ses directions, son plan — et ne reçoit qu'une
+// journée de niveau 1. C'est exactement le renversement du lot 2 : la fiche
+// dit ce que la gare EST, la position dit ce qu'elle DOIT PRODUIRE.
+//
+// Une seule gare est concernée, et pour toute la partie : celle par laquelle
+// le joueur est entré dans le réseau. Elle reste sa gare facile, y compris
+// quand il y revient pour ses étoiles — une gare qui durcirait derrière lui
+// serait un piège.
+function estGareDamorce(gareId) {
+  if (!gareId || typeof getBought !== "function") return false;
+  const b = getBought();
+  return b.length > 0 && b[0] === gareId && garesDeDepart().has(gareId);
+}
+// La fiche telle qu'on la JOUE. `difficulty` suit l'enveloppe : les pastilles
+// du cartouche annoncent le service qui vient, pas la taille du bâtiment.
+function ficheDeService(cfg) {
+  if (!cfg || !estGareDamorce(cfg.id)) return cfg;
+  return { ...cfg, difficulty: 1, gen: enveloppeDe(cfg, 1, PROFILS[1]) };
+}
+
 // L'enveloppe d'une gare de corridor : sa position décide, sa géométrie limite.
 // `versHub` est le boss vers lequel on voyage — la même gare est plus dure
 // quand on monte vers la métropole que quand on s'en éloigne, et c'est le

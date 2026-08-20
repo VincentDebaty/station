@@ -45,7 +45,10 @@ async function startStation(i) {
   // Un service commence : le relevé précédent et le bouton qu'il désignait
   // appartiennent au passé (js/game.js, endFocusId).
   if (typeof endFocusId !== "undefined") endFocusId = null;
-  const cfg = CATALOG[i];
+  // LA FICHE TELLE QU'ON LA JOUE, et non telle qu'elle est écrite : la gare
+  // d'amorce d'une partie se joue en niveau 1 (js/graph.js, ficheDeService).
+  const cfg = typeof ficheDeService === "function"
+    ? ficheDeService(CATALOG[i]) : CATALOG[i];
   // Cartouche haut-gauche : drapeau (1er token du champ country « 🇧🇪 Belgique »)
   // + nom de la gare.
   const flag = (cfg.country || "").trim().split(" ")[0];

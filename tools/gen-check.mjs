@@ -24,6 +24,12 @@
 //   node tools/gen-check.mjs liege           # une gare (par id), K plus élevé
 //   node tools/gen-check.mjs liege lyon 30   # gares ciblées, K=30
 //   node tools/gen-check.mjs --seed=1        # journées REPRODUCTIBLES
+//   node tools/gen-check.mjs --niveau=1 ottignies   # enveloppe FORCÉE
+//
+// --niveau=N remplace le bloc `gen` de la fiche par l'enveloppe du niveau N
+// (js/graph.js, enveloppeDe) — c'est ce que fait le jeu pour la gare d'amorce
+// d'une partie, qui se joue en niveau 1 quelle que soit sa fiche. Sans ce
+// drapeau, le contrôle validerait une journée que le joueur ne verra jamais.
 //
 // --seed=N remplace Math.random par un générateur graine, réinitialisé à
 // l'identique avant chaque gare : deux exécutions tirent alors exactement les
@@ -43,10 +49,12 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const read = f => fs.readFileSync(path.join(ROOT, f), "utf8");
 
 // --- arguments : ids de gare (lettres) + K facultatif (nombre) + --seed=N ---
-let SEED = null;
+let SEED = null, NIVEAU = null;
 const rawArgs = process.argv.slice(2).filter(a => {
   const m = /^--seed=(\d+)$/.exec(a);
   if (m) { SEED = parseInt(m[1], 10); return false; }
+  const n = /^--niveau=([1-5])$/.exec(a);
+  if (n) { NIVEAU = parseInt(n[1], 10); return false; }
   return true;
 });
 const kArg = rawArgs.find(a => /^\d+$/.test(a));
@@ -98,6 +106,10 @@ function makeEngine() {
   vm.createContext(sandbox);
   vm.runInContext(read("js/engine.js"), sandbox, { filename: "engine.js" });
   vm.runInContext(read("js/schedule.js"), sandbox, { filename: "schedule.js" });
+  // Le modèle de difficulté vit dans js/graph.js. Ses fonctions de lecture du
+  // réseau ne servent pas ici (HUBS n'est pas chargé, buildGraphe se garde
+  // tout seul) : on ne vient chercher que les enveloppes.
+  vm.runInContext(read("js/graph.js"), sandbox, { filename: "graph.js" });
   return sandbox;
 }
 
@@ -120,7 +132,14 @@ const rows = [];
 let failed = 0;
 
 for (const { id, country } of cards) {
-  const cfg = JSON.parse(read(`data/stations/${country}/${id}.json`));
+  let cfg = JSON.parse(read(`data/stations/${country}/${id}.json`));
+  // Enveloppe forcée : la fiche garde sa géométrie, sa journée change de
+  // niveau. C'est le geste exact de ficheDeService (js/graph.js).
+  if (NIVEAU != null) {
+    eng.__cfg = cfg;
+    const gen = vm.runInContext(`enveloppeDe(this.__cfg, ${NIVEAU}, PROFILS[1])`, eng);
+    cfg = { ...cfg, difficulty: NIVEAU, gen };
+  }
   const problems = [];
   reseed();   // mêmes journées pour cette gare d'une exécution à l'autre
 
@@ -188,6 +207,7 @@ for (const { id, country } of cards) {
 // --- rapport ---
 const pad = (s, n) => String(s).padEnd(n);
 console.log(`\ngen-check — ${cards.length} gare(s), K=${K} journées chacune` +
+  (NIVEAU != null ? `, enveloppe forcée au niveau ${NIVEAU}` : "") +
             (SEED != null ? `, graine ${SEED} (reproductible)` : "") + "\n");
 console.log(pad("gare", 18) + pad("état", 6) + pad("trains", 9) + pad("retard", 8) +
             pad("file", 6) + pad("moy", 6) + "problèmes");
