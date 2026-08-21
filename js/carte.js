@@ -392,7 +392,7 @@ function vueConstellation() {
     const tenu = h.gareId && tenues.has(h.gareId);
     const jouable = h.gareId && isBuyable(h.gareId);
     const maitrise = tenu && bossMaitrise(h.id, tenues);
-    const r = h.rang === 1 ? 2.6 : 1.9;
+    const r = (h.rang === 1 ? 2.6 : 1.9) / (zoomHub ? 1.7 : 1);   // zoomé, le point ne grossit pas d'autant
     // Le carrefour ouvert se marque : sans quoi le panneau flotte, et l'on ne
     // sait plus de quel point il parle.
     return `<g class="hub${tenu ? " tenu" : ""}${jouable ? " jouable" : ""}${depart && jouable ? " depart" : ""}${maitrise ? " maitrise" : ""}` +
@@ -428,16 +428,40 @@ function vueConstellation() {
 // ------------------------------------------------------------------
 function bullesDeHub(hub, X, Y, K, tenues) {
   const hx = X(hub.ll[0]), hy = Y(hub.ll[1]);
-  let out = "";
-  for (const lien of sortiesDeHub(hub.id)) {
+  // LES BULLES SE RÉPARTISSENT AUTOUR DU HUB. Chacune part dans la direction
+  // de sa ligne, à distance fixe dans l'écran (la destination est souvent hors
+  // champ, la bulle ne l'est jamais) ; deux sorties trop proches en angle se
+  // repoussent jusqu'à ne plus se couvrir — Lille, Luxembourg et Cologne
+  // partent de Bruxelles à quelques degrés près.
+  const R = 24 / K, LARGEUR = 31;                 // rayon (monde) et largeur de garde d'une bulle (écran)
+  const sorties = sortiesDeHub(hub.id).map(lien => {
     const vers = lien.a === hub.id ? lien.b : lien.a;
     const hv = hubById(vers);
-    if (!hv) continue;
-    const dx = X(hv.ll[0]) - hx, dy = Y(hv.ll[1]) - hy;
-    const d = Math.hypot(dx, dy) || 1;
-    // À distance fixe du hub DANS L'ÉCRAN (16 unités zoomées) : la destination
-    // est souvent hors champ, la bulle ne l'est jamais.
-    const px = hx + dx / d * (17 / K), py = hy + dy / d * (17 / K);
+    if (!hv) return null;
+    return { lien, hv, ang: Math.atan2(Y(hv.ll[1]) - hy, X(hv.ll[0]) - hx) };
+  }).filter(Boolean);
+  // La pastille « Jouer » du hub prend place dans la ronde, ANCRÉE AU NORD —
+  // là où était son nom, qu'elle remplace. Les bulles s'écartent d'elle, elle
+  // ne bouge pas.
+  const etatHub = hub.gareId ? etatDeGare(hub.gareId) : null;
+  const pastille = etatHub === "tenue" || etatHub === "ouvrable";
+  if (pastille) sorties.push({ fixe: true, ang: -Math.PI / 2 });
+  sorties.sort((u, v) => u.ang - v.ang);
+  const mini = Math.min(LARGEUR / (R * K), 2 * Math.PI / Math.max(1, sorties.length));
+  for (let k = 0; k < 40 && sorties.length > 1; k++) {
+    for (let i = 0; i < sorties.length; i++) {
+      const a = sorties[i], b = sorties[(i + 1) % sorties.length];
+      let gap = b.ang - a.ang; if (i === sorties.length - 1) gap += 2 * Math.PI;
+      if (gap >= mini) continue;
+      const m = mini - gap;
+      if (a.fixe) b.ang += m; else if (b.fixe) a.ang -= m; else { a.ang -= m / 2; b.ang += m / 2; }
+    }
+  }
+  let out = "";
+  for (const so of sorties) {
+    if (so.fixe) continue;
+    const { lien, hv } = so;
+    const px = hx + Math.cos(so.ang) * R, py = hy + Math.sin(so.ang) * R;
     const ecrite = !!(lien.gares && lien.gares.length);
     let corps;
     if (!ecrite) corps = `<text class="bl-prog" x="0" y="3.4">à écrire</text>`;
@@ -457,15 +481,12 @@ function bullesDeHub(hub, X, Y, K, tenues) {
       `<rect class="bl-fond" x="-13.5" y="-6.5" width="27" height="13.5" rx="2.6"/>` +
       `<text class="bl-vers" x="0" y="-1.6">${hv.nom}</text>${corps}</g>`;
   }
-  // Le hub lui-même se joue d'ici : une pastille sous son nom.
-  if (hub.gareId) {
-    const etat = etatDeGare(hub.gareId);
-    if (etat === "tenue" || etat === "ouvrable") {
-      const st = etoilesDe(hub.gareId);
-      out += `<g class="bl jouer" transform="translate(${hx.toFixed(2)} ${(hy + 7.5 / K).toFixed(2)}) scale(${(1 / K).toFixed(4)})" data-gare="${hub.gareId}">` +
-        `<rect class="bl-fond" x="-12" y="-3.2" width="24" height="6.4" rx="3.2"/>` +
-        `<text class="bl-vers" x="0" y="1">${etat === "tenue" ? "Jouer" : "Ouvrir"} ${hub.nom}${st ? " " + "★".repeat(st) : ""}</text></g>`;
-    }
+  // Le hub lui-même se joue d'ici : la pastille, au nord, à la place du nom.
+  if (pastille) {
+    const st = etoilesDe(hub.gareId);
+    out += `<g class="bl jouer" transform="translate(${hx.toFixed(2)} ${(hy - R).toFixed(2)}) scale(${(1 / K).toFixed(4)})" data-gare="${hub.gareId}">` +
+      `<rect class="bl-fond" x="-13" y="-3.4" width="26" height="6.8" rx="3.4"/>` +
+      `<text class="bl-vers" x="0" y="1">${etatHub === "tenue" ? "Jouer" : "Ouvrir"} ${hub.nom}${st ? " " + "★".repeat(st) : ""}</text></g>`;
   }
   return out;
 }
