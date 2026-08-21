@@ -18,6 +18,35 @@ Une ligne = `{ de, vers, gares: [ids de fiches, de de vers vers] }`. Les
 fiches sont une **bibliothèque partagée** : une carte y puise par id, et la
 même gare peut servir sur deux cartes.
 
+### Le plancher déclaré (`minGares`)
+
+Deux règles se contredisent sur certains corridors. R3 veut **4 gares au
+moins** ; le §0 de `AUTHORING-STATIONS.md` interdit d'écrire une gare à moins
+de trois directions réelles, « jamais parce qu'une ligne de carte a besoin
+d'un point de plus ». Or un corridor peut n'offrir aucun quatrième carrefour :
+mesuré le 21 août 2026 sur Montpellier – Toulouse (Sète et Agde : deux
+directions) et Paris – Strasbourg (Bar-le-Duc : deux directions, la ligne de
+Saint-Dizier partant de Revigny et déclassée).
+
+La ligne **déclare** alors son plancher, avec sa raison :
+
+```jsonc
+{ "de": "montpellier", "vers": "toulouse",
+  "gares": ["beziers", "narbonne", "carcassonne"],
+  "minGares": 3,
+  "pourquoi": "Sète et Agde n'ont que deux directions réelles" }
+```
+
+Trois garde-fous, parce qu'une tolérance muette redevient vite la norme :
+le plancher absolu reste **3** ; la tolérance ne s'obtient **jamais** par
+défaut ; et `carte-check` continue de **nommer** ces lignes avec leur motif,
+sous un `⚠`. Une ligne courte reste une dette qu'on a choisie.
+
+Ne l'invoquer qu'après avoir compté les directions **réelles** des candidates
+— antennes en cul-de-sac comprises. Le degré dans `data/lines.js` sous-compte,
+puisqu'il exclut volontairement ces antennes : Béziers y a deux voisins et
+trois directions réelles.
+
 ## 1. Choisir les hubs (avant toute ligne)
 
 Trois mesures ont fixé la méthode sur l'Europe, elles valent pour toute carte :

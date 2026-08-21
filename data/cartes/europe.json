@@ -1095,7 +1095,9 @@
         "paris-est",
         "chalons",
         "nancy"
-      ]
+      ],
+      "minGares": 3,
+      "pourquoi": "Bar-le-Duc n'a que deux directions réelles — la ligne de Saint-Dizier part de Revigny et est déclassée"
     },
     {
       "de": "paris",
@@ -1241,7 +1243,9 @@
         "beziers",
         "narbonne",
         "carcassonne"
-      ]
+      ],
+      "minGares": 3,
+      "pourquoi": "Sète et Agde n'ont que deux directions réelles ; le corridor n'offre pas de quatrième carrefour"
     },
     {
       "de": "montpellier",

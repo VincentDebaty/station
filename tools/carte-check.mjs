@@ -132,13 +132,39 @@ regle("R2", "50 lignes au moins", L.length >= 50 ? "ok" : (LIVRABLE ? "info" : "
 
 // R3 — longueur des lignes.
 const longueur = l => (l.gares || []).length;
-const etatLigne = l => { const n = longueur(l); return n === 0 ? "vide" : n < 4 ? "courte" : n > 9 ? "longue" : "conforme"; };
+// Un corridor pauvre en carrefours ne porte pas toujours quatre gares. Le §0 de
+// tools/AUTHORING-STATIONS.md interdit d'écrire une gare à deux directions —
+// « jamais parce qu'une ligne de carte a besoin d'un point de plus » — et
+// certains corridors n'offrent rien d'autre : Sète sur Montpellier – Toulouse,
+// Bar-le-Duc sur Paris – Strasbourg, tous deux sans la moindre antenne réelle.
+// R3 et ce plancher se contredisaient donc, sans issue.
+// La ligne DÉCLARE alors son plancher (`minGares`) et la raison (`pourquoi`).
+// La tolérance ne s'obtient jamais par défaut, et le rapport continue de la
+// nommer : une ligne courte reste une dette qu'on a choisie, pas une ligne
+// normale. Plancher absolu 3 — en deçà, un corridor n'est plus un corridor.
+const PLANCHER = 4;
+const plancherDe = l => Math.max(3, l.minGares || PLANCHER);
+const etatLigne = l => {
+  const n = longueur(l);
+  if (n === 0) return "vide";
+  if (n > 9) return "longue";
+  if (n < plancherDe(l)) return "courte";
+  return n < PLANCHER ? "tolere" : "conforme";
+};
+// « Tenue » = la ligne satisfait la règle, tolérance déclarée comprise.
+const tenue = l => { const e = etatLigne(l); return e === "conforme" || e === "tolere"; };
 {
-  const compte = { conforme: 0, courte: 0, vide: 0, longue: 0 };
+  const compte = { conforme: 0, tolere: 0, courte: 0, vide: 0, longue: 0 };
   for (const l of L) compte[etatLigne(l)]++;
-  regle("R3", "4 à 9 gares par ligne", compte.conforme === L.length ? "ok" : "ko",
-    `${compte.conforme} conformes · ${compte.courte} trop courtes · ${compte.vide} vides` + (compte.longue ? ` · ${compte.longue} trop longues` : ""),
-    L.filter(l => etatLigne(l) !== "conforme").map(l => `${nomLigne(l)} : ${longueur(l)} gare(s)`));
+  const detail = L.filter(l => !tenue(l)).map(l => `${nomLigne(l)} : ${longueur(l)} gare(s)`);
+  // Les tolérances se lisent au rapport, avec leur motif : elles restent une
+  // dette assumée, pas un silence.
+  for (const l of L.filter(l => etatLigne(l) === "tolere"))
+    detail.push(`${nomLigne(l)} : ${longueur(l)} gare(s), plancher abaissé — ${l.pourquoi || "sans motif déclaré"}`);
+  regle("R3", "4 à 9 gares par ligne", compte.courte + compte.vide + compte.longue ? "ko" : (compte.tolere ? "warn" : "ok"),
+    `${compte.conforme} conformes` + (compte.tolere ? ` · ${compte.tolere} toléré(s) à 3` : "") +
+    ` · ${compte.courte} trop courtes · ${compte.vide} vides` + (compte.longue ? ` · ${compte.longue} trop longues` : ""),
+    detail);
 }
 
 // R4 — zones.
@@ -286,7 +312,7 @@ function candidats(l) {
 // ------------------------------------------------------------------
 // RAPPORT
 // ------------------------------------------------------------------
-const conformes = L.filter(l => etatLigne(l) === "conforme").length;
+const conformes = L.filter(tenue).length;
 const ko = regles.filter(r => r.etat === "ko"), warn = regles.filter(r => r.etat === "warn");
 const titre = `carte-check — ${CARTE.nom}` + (LIVRABLE ? ` · bloc ${[...LIVRABLE].join("+")}` : "") +
   ` : ${Z.length} zones · ${H.length} hubs · ${L.length} lignes · ${conformes}/${L.length} conformes · ` +
@@ -304,7 +330,7 @@ for (const r of regles) {
 }
 
 // Couverture : toujours le compte, le détail sur demande.
-const aFaire = L.filter(l => etatLigne(l) !== "conforme");
+const aFaire = L.filter(l => !tenue(l));
 let fichesManquantes = 0, hubsManquants = new Set();
 const lignesCouv = [];
 for (const l of aFaire) {
