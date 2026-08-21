@@ -1,0 +1,28 @@
+{
+  "id": "celle",
+  "name": "Celle",
+  "tagline": "Celle — deux voies vers Hanovre, une vers Hambourg : la gare aux lumières.",
+  "difficulty": 2,
+  "country": "🇩🇪 Allemagne",
+  "desc": "Au sud, la ligne se dédouble : la Hasenbahn de 1938 file droit sur Hanovre avec les ICE et le metronom, la vieille ligne de 1847 repasse par Lehrte avec la S-Bahn et le fret du corridor. Au nord, tout se rejoint vers Uelzen et Hambourg. Six voies à quai rénovées en gare d'art lumineux, et les trains de marchandises des OHE qui partent de Celle Nord.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }
+  ],
+  "portals": {
+    "HANNOVER": { "side": "L", "color": "#f2588f", "abbr": "H" },
+    "LEHRTE":   { "side": "L", "color": "#f5b23c", "abbr": "LE" },
+    "HAMBURG":  { "side": "R", "color": "#60a5fa", "abbr": "HH" }
+  },
+  "links": {
+    "HANNOVER": [1, 2, 3, 4],
+    "LEHRTE":   [3, 4],
+    "HAMBURG":  [1, 2, 3, 4]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 13, "nMax": 16, "gapMin": 1.8, "gapMax": 3.0,
+    "cars": [2, 2, 2, 3, 3, 4, 4, 5],
+    "quietRate": 0.22,
+    "rush": "double"
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "id": "thionville",
+  "name": "Thionville",
+  "tagline": "Thionville — cinq voies entre Metz et le Luxembourg, et la Moselle qui file vers Trèves.",
+  "difficulty": 3,
+  "country": "🇫🇷 France",
+  "desc": "Le carrefour du sillon lorrain nord : les frontaliers de Metz filent vers Luxembourg sur le tronc, pendant que deux antennes s'en détachent — la vallée de la Fensch vers Hayange et Longwy, la rive de la Moselle vers Apach et Trèves, que seuls les trains du week-end suivent jusqu'au bout. Cinq voies à quai dans un bâtiment impérial de 1878, et le fret de la Moselle qui traverse sans s'arrêter.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
+  ],
+  "portals": {
+    "METZ":       { "side": "L", "color": "#25dede", "abbr": "MZ" },
+    "LONGWY":     { "side": "L", "color": "#4ade80", "abbr": "LW" },
+    "LUXEMBOURG": { "side": "R", "color": "#a78bfa", "abbr": "LX" },
+    "TRIER":      { "side": "R", "color": "#f5b23c", "abbr": "TR", "label": "TRÈVES" }
+  },
+  "links": {
+    "METZ":       [1, 2, 3, 4],
+    "LONGWY":     [4, 5],
+    "LUXEMBOURG": [2, 3, 4, 5],
+    "TRIER":      [1, 2]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 14, "nMax": 15, "gapMin": 1.6, "gapMax": 2.8,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6],
+    "quietRate": 0.15,
+    "rush": "double"
+  }
+}

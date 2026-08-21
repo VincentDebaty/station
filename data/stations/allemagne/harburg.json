@@ -1,0 +1,33 @@
+{
+  "id": "harburg",
+  "name": "Hamburg-Harburg",
+  "city": "Harburg",
+  "tagline": "Hamburg-Harburg — l'entonnoir de l'Elbe : tout le Sud se rejoint avant les ponts.",
+  "difficulty": 4,
+  "country": "🇩🇪 Allemagne",
+  "desc": "Avant de franchir l'Elbe, tout ce qui vient du sud passe ici : les ICE de Hanovre, le metronom de Brême, les trains de Cuxhaven par la Basse-Elbe, et le fret de Maschen, le plus grand triage d'Europe, à dix kilomètres. Troisième gare de Hambourg avec quatre-vingt mille voyageurs par jour, six voies sur trois quais, et au bout du tunnel de la S-Bahn une seule sortie vers le nord.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }, { "id": 6 }, { "id": 7 }
+  ],
+  "portals": {
+    "HANNOVER": { "side": "L", "color": "#f2588f", "abbr": "H" },
+    "BREMEN":   { "side": "L", "color": "#4ade80", "abbr": "HB" },
+    "CUXHAVEN": { "side": "L", "color": "#25dede", "abbr": "CUX" },
+    "HAMBURG":  { "side": "R", "color": "#60a5fa", "abbr": "HH" },
+    "ALTONA":   { "side": "R", "color": "#a78bfa", "abbr": "HA" }
+  },
+  "links": {
+    "HANNOVER": [1, 2, 3, 4],
+    "BREMEN":   [3, 4, 5, 6],
+    "CUXHAVEN": [6, 7],
+    "HAMBURG":  [1, 2, 3, 4, 5, 6, 7],
+    "ALTONA":   [1, 2, 3]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 17, "nMax": 20, "gapMin": 1.5, "gapMax": 2.6,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6, 7],
+    "quietRate": 0.14,
+    "rush": "double"
+  }
+}

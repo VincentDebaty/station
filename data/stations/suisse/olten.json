@@ -1,0 +1,33 @@
+{
+  "id": "olten",
+  "name": "Olten",
+  "tagline": "Olten — le kilomètre zéro du rail suisse : cinq lignes, et pas de voies 5 ni 6.",
+  "difficulty": 4,
+  "country": "🇨🇭 Suisse",
+  "desc": "La gare d'où l'on mesure toutes les distances du réseau : la plaque du kilomètre zéro est scellée sous la marquise. Tout le Plateau s'y noue — Zurich par Aarau et Bâle par le Hauenstein entrent au nord, Berne, Bienne et Lucerne repartent au sud ; seuls les rapides Bâle–Zurich filent par la courbe de contournement sans s'arrêter. Dix voies à quai numérotées de 1 à 12, les 5 et 6 ayant disparu dans un remaniement, et un trafic de fret permanent vers le Gothard et le Lötschberg.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 },
+    { "id": 5 }, { "id": 6 }, { "id": 7 }
+  ],
+  "portals": {
+    "ZURICH":  { "side": "L", "color": "#f5b23c", "abbr": "ZH" },
+    "BALE":    { "side": "L", "color": "#60a5fa", "abbr": "BS", "label": "BÂLE" },
+    "BERNE":   { "side": "R", "color": "#25dede", "abbr": "BE" },
+    "BIENNE":  { "side": "R", "color": "#a78bfa", "abbr": "BI" },
+    "LUCERNE": { "side": "R", "color": "#4ade80", "abbr": "LU" }
+  },
+  "links": {
+    "ZURICH":  [1, 2, 3, 4, 5],
+    "BALE":    [3, 4, 5, 6, 7],
+    "BERNE":   [1, 2, 3, 4],
+    "BIENNE":  [4, 5, 6],
+    "LUCERNE": [5, 6, 7]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 15, "nMax": 18, "gapMin": 1.5, "gapMax": 2.6,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6, 7],
+    "quietRate": 0.15,
+    "rush": "pointe"
+  }
+}

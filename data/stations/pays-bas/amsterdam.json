@@ -1,0 +1,40 @@
+{
+  "id": "amsterdam",
+  "name": "Amsterdam Centraal",
+  "city": "Amsterdam",
+  "tagline": "Amsterdam Centraal — posée sur l'IJ, dix quais, huit directions dont Londres et Berlin. Le boss des Pays-Bas.",
+  "difficulty": 5,
+  "country": "🇳🇱 Pays-Bas",
+  "desc": "Bâtie par Cuypers en 1889 sur trois îles artificielles gagnées sur l'IJ, la gare est traversante de bout en bout : onze voies à quai, le tout coupé en moitiés a/b, et 170 000 voyageurs par jour. À l'ouest, tout passe par Sloterdijk — l'Eurostar vers Bruxelles et Londres par Schiphol et Rotterdam, l'IC de La Haye par Haarlem, la Zaanlijn vers Alkmaar. À l'est, Utrecht emporte l'ICE de Cologne, Amersfoort l'IC de Berlin, Weesp la Flevolijn d'Almere. Le peu de fret qui reste longe l'IJ sur la voie 15.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },
+    { "id": 6 }, { "id": 7 }, { "id": 8 }, { "id": 9 }, { "id": 10 }
+  ],
+  "portals": {
+    "LA HAYE":   { "side": "L", "color": "#f5b23c", "abbr": "LH" },
+    "ALKMAAR":   { "side": "L", "color": "#4ade80", "abbr": "AK" },
+    "BRUXELLES": { "side": "L", "color": "#25dede", "abbr": "B" },
+    "LONDRES":   { "side": "L", "color": "#a78bfa", "abbr": "LO" },
+    "ALMERE":    { "side": "R", "color": "#a3e635", "abbr": "AL" },
+    "UTRECHT":   { "side": "R", "color": "#f2588f", "abbr": "U" },
+    "COLOGNE":   { "side": "R", "color": "#60a5fa", "abbr": "C" },
+    "HANNOVER":  { "side": "R", "color": "#e879f9", "abbr": "H", "label": "HANOVRE" }
+  },
+  "links": {
+    "LA HAYE":   [1, 2, 3, 4, 5],
+    "ALKMAAR":   [1, 2, 3],
+    "BRUXELLES": [5, 6, 7, 8, 9],
+    "LONDRES":   [8, 9, 10],
+    "ALMERE":    [1, 2, 3],
+    "UTRECHT":   [3, 4, 5, 6, 7, 8],
+    "COLOGNE":   [7, 8, 9, 10],
+    "HANNOVER":  [9, 10]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 20, "nMax": 24, "gapMin": 1.4, "gapMax": 2.4,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6, 7],
+    "quietRate": 0.1,
+    "rush": "double"
+  }
+}

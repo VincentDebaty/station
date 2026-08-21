@@ -53,7 +53,10 @@ const GEO = {
         courtrai: [3.265, 50.825], mouscron: [3.228, 50.741], ath: [3.768, 50.632],
         lalouviere: [4.180, 50.478], landen: [5.080, 50.748], aarschot: [4.824, 50.984],
         herentals: [4.830, 51.182], dinant: [4.908, 50.261], marloie: [5.314, 50.203],
-        arlon: [5.810, 49.681]
+        arlon: [5.810, 49.681],
+        verviers: [5.855, 50.589],
+        enghien: [4.047, 50.697],
+        hal: [4.24, 50.733]
       } },
     france: { name: "France", flag: "🇫🇷", iso: "FRA", continent: "europe",
       cities: {
@@ -75,7 +78,14 @@ const GEO = {
         nice: [7.262, 43.705], valence: [4.893, 44.928], grenoble: [5.715, 45.191],
         chambery: [5.920, 45.571], lyon: [4.859, 45.761], dijon: [5.027, 47.323],
         mulhouse: [7.342, 47.742], strasbourg: [7.734, 48.585], metz: [6.176, 49.120],
-        nancy: [6.175, 48.690], reims: [4.024, 49.259], "clermont-ferrand": [3.087, 45.778]
+        nancy: [6.175, 48.690], reims: [4.024, 49.259], "clermont-ferrand": [3.087, 45.778],
+        thionville: [6.168, 49.355],
+        sarrebourg: [7.053, 48.738],
+        miramas: [4.994, 43.586],
+        tarascon: [4.657, 43.801],
+        creil: [2.475, 49.263],
+        arras: [2.782, 50.287],
+        douai: [3.089, 50.371]
       } },
     allemagne: { name: "Allemagne", flag: "🇩🇪", iso: "DEU", continent: "europe",
       cities: {
@@ -99,7 +109,29 @@ const GEO = {
         // Trèves, ajoutée avec le Luxembourg : c'est elle qui donne au Grand-Duché
         // sa frontière allemande. Sans elle, l'axe de la Moselle s'arrêtait dans le
         // vide et les portails TRIER de Coblence et Sarrebruck restaient morts.
-        trier: [6.641, 49.756]
+        trier: [6.641, 49.756],
+        aachen: [6.091, 50.768],
+        bingen: [7.894, 49.967],
+        juterbog: [13.074, 51.993],
+        wittenberg: [12.647, 51.866],
+        bitterfeld: [12.33, 51.624],
+        wuppertal: [7.152, 51.255],
+        hagen: [7.461, 51.363],
+        hamm: [7.809, 51.678],
+        minden: [8.933, 52.291],
+        hanau: [8.929, 50.121],
+        fulda: [9.684, 50.554],
+        bebra: [9.791, 50.974],
+        gottingen: [9.926, 51.537],
+        braunschweig: [10.521, 52.264],
+        brandenburg: [12.562, 52.412],
+        potsdam: [13.064, 52.396],
+        celle: [10.081, 52.622],
+        uelzen: [10.561, 52.965],
+        luneburg: [10.414, 53.25],
+        harburg: [9.992, 53.456],
+        gunzburg: [10.278, 48.459],
+        plochingen: [9.413, 48.711]
       } },
     luxembourg: { name: "Luxembourg", flag: "🇱🇺", iso: "LUX", continent: "europe",
       cities: {
@@ -111,6 +143,20 @@ const GEO = {
         "esch-sur-alzette": [5.981, 49.494], petange: [5.881, 49.558],
         rodange: [5.842, 49.546], ettelbruck: [6.104, 49.847],
         kautenbach: [6.024, 49.947]
+      } },
+    "pays-bas": { name: "Pays-Bas", flag: "🇳🇱", iso: "NLD", continent: "europe",
+      cities: {
+        amsterdam: [4.9, 52.379]
+      } },
+    "suisse": { name: "Suisse", flag: "🇨🇭", iso: "CHE", continent: "europe",
+      cities: {
+        geneve: [6.142, 46.21],
+        zurich: [8.54, 47.378],
+        aarau: [8.051, 47.391],
+        olten: [7.908, 47.352],
+        bern: [7.439, 46.949],
+        fribourg: [7.151, 46.803],
+        lausanne: [6.629, 46.517]
       } },
     "royaume-uni": { name: "Royaume-Uni", flag: "🇬🇧", iso: "GBR", continent: "europe",
       frame: [-6.3, 49.9, 1.9, 57.6], neighbors: { belgique: [3.25, 51.22] },

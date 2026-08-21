@@ -1,0 +1,31 @@
+{
+  "id": "bingen",
+  "name": "Bingen (Rhein) Hbf",
+  "city": "Bingen",
+  "tagline": "Bingen Hbf — à l'entrée des gorges du Rhin, l'île où la Nahe quitte le fleuve.",
+  "difficulty": 3,
+  "country": "🇩🇪 Allemagne",
+  "desc": "Bingerbrück jusqu'en 1993 : une gare-île coincée entre le Rhin et l'embouchure de la Nahe, à l'entrée des gorges. Les ICE et la MittelrheinBahn filent tout droit sur la rive gauche entre Coblence et Mayence ; côté Mayence, la Nahetalbahn se détache vers Bad Kreuznach et le Palatinat. Le poste de commandement de 1936, classé, veille encore sur l'ancien triage rasé pour l'exposition horticole de 2008.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
+  ],
+  "portals": {
+    "KOBLENZ":       { "side": "L", "color": "#a78bfa", "abbr": "KO" },
+    "KOLN":          { "side": "L", "color": "#f5b23c", "abbr": "K", "label": "KÖLN" },
+    "MAINZ":         { "side": "R", "color": "#60a5fa", "abbr": "MZ" },
+    "BAD KREUZNACH": { "side": "R", "color": "#4ade80", "abbr": "KH" }
+  },
+  "links": {
+    "KOBLENZ":       [1, 2, 3, 4],
+    "KOLN":          [3, 4, 5],
+    "MAINZ":         [2, 3, 4, 5],
+    "BAD KREUZNACH": [1, 2]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 14, "nMax": 16, "gapMin": 1.6, "gapMax": 2.8,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6],
+    "quietRate": 0.18,
+    "rush": "double"
+  }
+}

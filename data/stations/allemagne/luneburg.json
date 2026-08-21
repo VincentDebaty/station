@@ -1,0 +1,30 @@
+{
+  "id": "luneburg",
+  "name": "Lüneburg",
+  "tagline": "Lüneburg — deux bâtiments face à face, la Hanse du sel et l'antenne de Lübeck.",
+  "difficulty": 3,
+  "country": "🇩🇪 Allemagne",
+  "desc": "Deux gares se regardent de part et d'autre du parvis : Lüneburg Ost, sur le grand axe de Hambourg, et Lüneburg West de 1874, d'où partent les trains de Lübeck par Büchen et la Wendlandbahn de Dannenberg. Les ICE traversent sans s'arrêter plus d'une minute ; le metronom d'Uelzen et l'erixx du Wendland, eux, y rebroussent.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
+  ],
+  "portals": {
+    "HANNOVER":   { "side": "L", "color": "#f2588f", "abbr": "H" },
+    "DANNENBERG": { "side": "L", "color": "#a78bfa", "abbr": "DAN" },
+    "HAMBURG":    { "side": "R", "color": "#60a5fa", "abbr": "HH" },
+    "LUBECK":     { "side": "R", "color": "#f5b23c", "abbr": "HL", "label": "LÜBECK" }
+  },
+  "links": {
+    "HANNOVER":   [1, 2, 3, 4],
+    "DANNENBERG": [4, 5],
+    "HAMBURG":    [1, 2, 3, 4, 5],
+    "LUBECK":     [3, 4, 5]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 14, "nMax": 16, "gapMin": 1.6, "gapMax": 2.9,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6],
+    "quietRate": 0.2,
+    "rush": "pointe"
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "id": "enghien",
+  "name": "Enghien",
+  "tagline": "Enghien — le tronc de Tournai, plus l'antenne de Grammont : trois directions, cinq voies.",
+  "difficulty": 2,
+  "country": "🇧🇪 Belgique",
+  "desc": "Sur la ligne directe Bruxelles–Lille, la bifurcation de la ligne 123 vers Grammont : les IC de Tournai filent sur le tronc, les S6 venus de Grammont et les S5 qui rebroussent pour Malines se glissent sur le bord. Cinq voies à quai sous un bâtiment néoclassique de 1866 aux pignons à cartouches en losange, copié ailleurs sur le réseau.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
+  ],
+  "portals": {
+    "TOURNAI":   { "side": "L", "color": "#f2588f", "abbr": "TO" },
+    "GRAMMONT":  { "side": "L", "color": "#a78bfa", "abbr": "GR" },
+    "BRUXELLES": { "side": "R", "color": "#25dede", "abbr": "B" }
+  },
+  "links": {
+    "TOURNAI":   [1, 2, 3, 4],
+    "GRAMMONT":  [4, 5],
+    "BRUXELLES": [1, 2, 3, 4, 5]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 13, "nMax": 16, "gapMin": 1.8, "gapMax": 3.0,
+    "cars": [2, 2, 2, 3, 3, 4, 4, 5],
+    "quietRate": 0.2,
+    "rush": "double"
+  }
+}

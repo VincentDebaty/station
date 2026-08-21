@@ -1,0 +1,32 @@
+{
+  "id": "aachen",
+  "name": "Aachen Hbf",
+  "city": "Aix-la-Chapelle",
+  "tagline": "Aachen Hbf — la gare-frontière où le courant change : sept voies entre Liège et Cologne.",
+  "difficulty": 4,
+  "country": "🇩🇪 Allemagne",
+  "desc": "Un bâtiment Jugendstil de 1905 et sept voies à quai, dont quatre à caténaire commutable : c'est ici que les ICE et Eurostar de Bruxelles passent du 3 kV belge au 15 kV allemand avant de filer sur Cologne par Düren. À l'ouest se détachent aussi la ligne de Mönchengladbach et, par Herzogenrath, celle de Heerlen et Maastricht. Faute de rocade, le fret de Montzen se faufile lui aussi par les voies de la gare.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }, { "id": 6 }, { "id": 7 }
+  ],
+  "portals": {
+    "LIEGE":           { "side": "L", "color": "#25dede", "abbr": "LG", "label": "LIÈGE" },
+    "MAASTRICHT":      { "side": "L", "color": "#f5b23c", "abbr": "MT" },
+    "MONCHENGLADBACH": { "side": "L", "color": "#a78bfa", "abbr": "MG", "label": "M.GLADBACH" },
+    "KOLN":            { "side": "R", "color": "#f2588f", "abbr": "K",  "label": "KÖLN" },
+    "DUREN":           { "side": "R", "color": "#4ade80", "abbr": "DN", "label": "DÜREN" }
+  },
+  "links": {
+    "LIEGE":           [3, 4, 5, 6, 7],
+    "MAASTRICHT":      [1, 2, 3, 4, 5],
+    "MONCHENGLADBACH": [1, 2, 3, 4],
+    "KOLN":            [1, 2, 3, 4, 5, 6, 7],
+    "DUREN":           [1, 2, 3, 4]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 15, "nMax": 18, "gapMin": 1.5, "gapMax": 2.6,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6, 7],
+    "quietRate": 0.12
+  }
+}

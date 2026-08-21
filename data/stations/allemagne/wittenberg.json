@@ -1,0 +1,33 @@
+{
+  "id": "wittenberg",
+  "name": "Lutherstadt Wittenberg Hbf",
+  "city": "Wittenberg",
+  "tagline": "Wittenberg Hbf — la ville de Luther, où l'axe Berlin–Halle croise la ligne de l'Elbe.",
+  "difficulty": 3,
+  "country": "🇩🇪 Allemagne",
+  "desc": "Six voies refaites en 2016 pour l'ICE Berlin–Leipzig–Munich, sous une gare « verte » qui produit sa propre énergie. Quatre voies pour le grand axe, deux pour la ligne de l'Elbe qui traverse d'ouest en est, de Dessau vers Falkenberg — deux lignes qui se croisent sans se mélanger, sauf quand tout déborde.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }, { "id": 6 }
+  ],
+  "portals": {
+    "BERLIN":     { "side": "L", "color": "#25dede", "abbr": "B" },
+    "DESSAU":     { "side": "L", "color": "#4ade80", "abbr": "DE" },
+    "HALLE":      { "side": "R", "color": "#f5b23c", "abbr": "HA" },
+    "LEIPZIG":    { "side": "R", "color": "#a78bfa", "abbr": "L" },
+    "FALKENBERG": { "side": "R", "color": "#f2588f", "abbr": "FA" }
+  },
+  "links": {
+    "BERLIN":     [1, 2, 3, 4],
+    "DESSAU":     [4, 5, 6],
+    "HALLE":      [1, 2, 3],
+    "LEIPZIG":    [2, 3, 4],
+    "FALKENBERG": [4, 5, 6]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 14, "nMax": 17, "gapMin": 1.6, "gapMax": 2.9,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6],
+    "quietRate": 0.15,
+    "rush": "pointe"
+  }
+}

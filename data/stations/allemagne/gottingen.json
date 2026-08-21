@@ -1,0 +1,33 @@
+{
+  "id": "gottingen",
+  "name": "Göttingen",
+  "tagline": "Göttingen — huit voies traversantes, tous les ICE du Nord-Sud, et trois lignes de campagne.",
+  "difficulty": 4,
+  "country": "🇩🇪 Allemagne",
+  "desc": "Quatre quais, huit voies traversantes, 230 arrêts par jour : la gare universitaire est le dernier grand arrêt des ICE avant Hanovre, sur l'ancienne Südbahn comme sur la ligne nouvelle. Vers le nord s'en détachent à Northeim la Südharzstrecke de Nordhausen et Halle et la Sollingbahn de Bodenfelde ; vers le sud, la ligne d'Eichenberg et Eschwege mène à Bebra.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },
+    { "id": 6 }
+  ],
+  "portals": {
+    "HANNOVER":   { "side": "L", "color": "#f2588f", "abbr": "H", "label": "HANOVRE" },
+    "HALLE":      { "side": "L", "color": "#4ade80", "abbr": "HA" },
+    "BODENFELDE": { "side": "L", "color": "#25dede", "abbr": "BO" },
+    "KASSEL":     { "side": "R", "color": "#60a5fa", "abbr": "KS" },
+    "BEBRA":      { "side": "R", "color": "#f5b23c", "abbr": "BE" }
+  },
+  "links": {
+    "HANNOVER":   [1, 2, 3, 4],
+    "HALLE":      [3, 4, 5, 6],
+    "BODENFELDE": [5, 6],
+    "KASSEL":     [1, 2, 3, 4, 5, 6],
+    "BEBRA":      [4, 5, 6]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 15, "nMax": 18, "gapMin": 1.5, "gapMax": 2.6,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6, 7],
+    "quietRate": 0.12,
+    "rush": "double"
+  }
+}

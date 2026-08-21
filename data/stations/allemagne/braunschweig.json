@@ -1,0 +1,34 @@
+{
+  "id": "braunschweig",
+  "name": "Braunschweig Hbf",
+  "city": "Brunswick",
+  "tagline": "Braunschweig Hbf — la gare verte de 1960 : deux entrées à l'ouest, quatre sorties à l'est.",
+  "difficulty": 4,
+  "country": "🇩🇪 Allemagne",
+  "desc": "En 1960, Brunswick a fermé sa gare en cul-de-sac et s'est donné une traversante à huit voies, façade de serpentinite verte et cuivre, classée depuis 1993. Tout arrive de Hanovre ou de Hildesheim par l'ouest ; à l'est le faisceau éclate vers Magdebourg, Wolfsburg, la lande d'Uelzen et le Harz. Le triage et le dépôt collés à la gare y font passer le fret à quai.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }, { "id": 6 }, { "id": 7 }
+  ],
+  "portals": {
+    "HANNOVER":    { "side": "L", "color": "#f2588f", "abbr": "H",  "label": "HANOVRE" },
+    "HILDESHEIM":  { "side": "L", "color": "#4ade80", "abbr": "HI" },
+    "MAGDEBURG":   { "side": "R", "color": "#a78bfa", "abbr": "MD", "label": "MAGDEBOURG" },
+    "WOLFSBURG":   { "side": "R", "color": "#25dede", "abbr": "WOB" },
+    "UELZEN":      { "side": "R", "color": "#60a5fa", "abbr": "UE" },
+    "BADHARZBURG": { "side": "R", "color": "#f5b23c", "abbr": "HZ", "label": "BAD HARZBURG" }
+  },
+  "links": {
+    "HANNOVER":    [1, 2, 3, 4, 5],
+    "HILDESHEIM":  [4, 5, 6, 7],
+    "MAGDEBURG":   [1, 2, 3, 4],
+    "WOLFSBURG":   [3, 4, 5, 6],
+    "UELZEN":      [1, 2],
+    "BADHARZBURG": [6, 7]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 15, "nMax": 18, "gapMin": 1.5, "gapMax": 2.6,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6],
+    "quietRate": 0.15
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "id": "arras",
+  "name": "Arras",
+  "tagline": "Arras — le tronc Paris–Lille, et deux antennes qui partent vers la mer.",
+  "difficulty": 3,
+  "country": "🇫🇷 France",
+  "desc": "La capitale de l'Artois sur la grande ligne du Nord : Paris et Amiens arrivent par le sud, Douai et Lille repartent vers le nord-est. Au même bout de la gare se détachent la ligne de Lens, Béthune et Hazebrouck — que le TGV de Dunkerque emprunte depuis 1993 — et la voie unique de Saint-Pol-sur-Ternoise, qui file jusqu'à Étaples. Huit voies à quai, une gare rebâtie dans les années 1950, et le fret du bassin minier qui passe encore.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },
+    { "id": 6 }
+  ],
+  "portals": {
+    "PARIS-NORD": { "side": "L", "color": "#25dede", "abbr": "PN" },
+    "AMIENS":     { "side": "L", "color": "#4ade80", "abbr": "AM" },
+    "LILLE":      { "side": "R", "color": "#f5b23c", "abbr": "LI" },
+    "HAZEBROUCK": { "side": "R", "color": "#60a5fa", "abbr": "HZ" },
+    "SAINT-POL":  { "side": "R", "color": "#f2588f", "abbr": "SP" }
+  },
+  "links": {
+    "PARIS-NORD": [1, 2, 3, 4],
+    "AMIENS":     [3, 4, 5, 6],
+    "LILLE":      [1, 2, 3, 4, 5],
+    "HAZEBROUCK": [4, 5, 6],
+    "SAINT-POL":  [5, 6]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 14, "nMax": 15, "gapMin": 1.6, "gapMax": 2.8,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6],
+    "quietRate": 0.15
+  }
+}

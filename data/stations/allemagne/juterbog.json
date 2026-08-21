@@ -1,0 +1,30 @@
+{
+  "id": "juterbog",
+  "name": "Jüterbog",
+  "tagline": "Jüterbog — la première bifurcation de l'Anhalter Bahn, sous un bâtiment de 1841.",
+  "difficulty": 2,
+  "country": "🇩🇪 Allemagne",
+  "desc": "À soixante kilomètres au sud de Berlin, l'Anhalter Bahn lâche ses deux premières branches : la ligne de Falkenberg vers le sud-est et l'antenne de Treuenbrietzen vers Potsdam. Un bâtiment voyageurs de 1841, parmi les plus vieux du Brandebourg, et un trafic qui n'est plus que régional — mais les navetteurs de Berlin y passent matin et soir.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
+  ],
+  "portals": {
+    "BERLIN":     { "side": "L", "color": "#25dede", "abbr": "B" },
+    "POTSDAM":    { "side": "L", "color": "#4ade80", "abbr": "P" },
+    "WITTENBERG": { "side": "R", "color": "#60a5fa", "abbr": "WB" },
+    "FALKENBERG": { "side": "R", "color": "#f2588f", "abbr": "FA" }
+  },
+  "links": {
+    "BERLIN":     [1, 2, 3, 4],
+    "POTSDAM":    [4, 5],
+    "WITTENBERG": [1, 2, 3],
+    "FALKENBERG": [3, 4, 5]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 13, "nMax": 16, "gapMin": 1.8, "gapMax": 3.0,
+    "cars": [2, 2, 2, 3, 3, 4, 4, 5],
+    "quietRate": 0.2,
+    "rush": "double"
+  }
+}

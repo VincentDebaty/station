@@ -1,0 +1,36 @@
+{
+  "id": "geneve",
+  "name": "Genève-Cornavin",
+  "city": "Genève",
+  "tagline": "Genève-Cornavin — huit voies entre le Léman et la frontière, deux d'entre elles sous douane.",
+  "difficulty": 4,
+  "country": "🇨🇭 Suisse",
+  "desc": "Une gare traversante coincée entre la ville et le lac : 720 trains par jour sur huit voies, dont deux réservées aux trains français, derrière la douane. Tout arrive par Lausanne — les InterCity de Zurich et de Berne, les IR du Valais, le Léman Express — et repart vers l'aéroport, vers Annemasse par le CEVA ou vers Lyon par Bellegarde. Trop étroite pour ce qu'elle porte : deux voies souterraines sont en projet sous la place.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 },
+    { "id": 5 }, { "id": 6 }, { "id": 7 }, { "id": 8 }
+  ],
+  "portals": {
+    "AEROPORT":  { "side": "L", "color": "#60a5fa", "abbr": "AP", "label": "AÉROPORT" },
+    "ANNEMASSE": { "side": "L", "color": "#4ade80", "abbr": "AN" },
+    "LYON":      { "side": "L", "color": "#f2588f", "abbr": "LY" },
+    "ZURICH":    { "side": "R", "color": "#f5b23c", "abbr": "ZH" },
+    "BRIGUE":    { "side": "R", "color": "#a78bfa", "abbr": "BR" },
+    "LAUSANNE":  { "side": "R", "color": "#25dede", "abbr": "LS" }
+  },
+  "links": {
+    "AEROPORT":  [1, 2, 3, 4, 5],
+    "ANNEMASSE": [4, 5, 6],
+    "LYON":      [6, 7, 8],
+    "ZURICH":    [1, 2, 3, 4],
+    "BRIGUE":    [3, 4, 5],
+    "LAUSANNE":  [4, 5, 6, 7, 8]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 16, "nMax": 19, "gapMin": 1.5, "gapMax": 2.6,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6, 7],
+    "quietRate": 0.12,
+    "rush": "double"
+  }
+}

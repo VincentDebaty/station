@@ -1,0 +1,34 @@
+{
+  "id": "hamm",
+  "name": "Hamm (Westf) Hbf",
+  "city": "Hamm",
+  "tagline": "Hamm (Westf) Hbf — douze voies où les ICE de Berlin se coupent en deux.",
+  "difficulty": 4,
+  "country": "🇩🇪 Allemagne",
+  "desc": "Le nœud de l'est westphalien : douze voies à quai où six lignes convergent — la Ruhr et Hagen par l'ouest, Bielefeld, Münster et Paderborn par l'est. Les ICE de Berlin s'y coupent en deux, une moitié vers Düsseldorf par la Ruhr, l'autre vers Cologne par le Bergisches Land. Derrière la gare, ce qui reste du plus grand triage d'Europe.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },
+    { "id": 6 }, { "id": 7 }
+  ],
+  "portals": {
+    "DORTMUND":  { "side": "L", "color": "#4ade80", "abbr": "DO" },
+    "HAGEN":     { "side": "L", "color": "#f5b23c", "abbr": "HA" },
+    "BIELEFELD": { "side": "R", "color": "#f2588f", "abbr": "BI" },
+    "MUNSTER":   { "side": "R", "color": "#25dede", "abbr": "MS", "label": "MÜNSTER" },
+    "PADERBORN": { "side": "R", "color": "#a78bfa", "abbr": "PB" }
+  },
+  "links": {
+    "DORTMUND":  [1, 2, 3, 4, 5, 6],
+    "HAGEN":     [5, 6, 7],
+    "BIELEFELD": [1, 2, 3, 4],
+    "MUNSTER":   [5, 6, 7],
+    "PADERBORN": [3, 4, 5]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 16, "nMax": 19, "gapMin": 1.5, "gapMax": 2.6,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6, 7],
+    "quietRate": 0.12,
+    "rush": "rafale"
+  }
+}

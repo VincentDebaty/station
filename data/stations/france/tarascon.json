@@ -1,0 +1,28 @@
+{
+  "id": "tarascon",
+  "name": "Tarascon-sur-Rhône",
+  "city": "Tarascon",
+  "tagline": "Tarascon — la gare en Y : de Nîmes, on part vers Avignon ou vers Marseille.",
+  "difficulty": 2,
+  "country": "🇫🇷 France",
+  "desc": "À la pointe d'un triangle de voies, juste après le viaduc sur le Rhône : les trains de Nîmes y choisissent Avignon par le raccordement nord ou Arles et Marseille par le sud, qui coupe à niveau et à angle droit la grande ligne de Paris. Quatre voies à quai, et le fret du Languedoc qui file vers le triage de Miramas.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }
+  ],
+  "portals": {
+    "NIMES":     { "side": "L", "color": "#4ade80", "abbr": "NI", "label": "NÎMES" },
+    "AVIGNON":   { "side": "R", "color": "#f5b23c", "abbr": "AV" },
+    "MARSEILLE": { "side": "R", "color": "#f2588f", "abbr": "MA" }
+  },
+  "links": {
+    "NIMES":     [1, 2, 3, 4],
+    "AVIGNON":   [1, 2, 3],
+    "MARSEILLE": [2, 3, 4]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 13, "nMax": 16, "gapMin": 1.8, "gapMax": 3.0,
+    "cars": [2, 2, 2, 3, 3, 4, 4, 5],
+    "quietRate": 0.2
+  }
+}

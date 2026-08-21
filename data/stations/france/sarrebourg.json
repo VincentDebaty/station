@@ -1,0 +1,28 @@
+{
+  "id": "sarrebourg",
+  "name": "Sarrebourg",
+  "tagline": "Sarrebourg — la dernière bifurcation avant Strasbourg : Nancy et Metz s'y rejoignent.",
+  "difficulty": 2,
+  "country": "🇫🇷 France",
+  "desc": "Là où la ligne de Metz vient se coller à celle de Paris et de Nancy, à quatre kilomètres de la bifurcation de Réding. Un pont sur la Sarre élargi de deux à douze voies en 1914, cinq voies à quai, et tout ce qui vient de Lorraine vers Strasbourg qui y passe, TGV compris. Ses antennes d'Abreschviller et de Sarreguemines ont perdu leurs trains : il reste le tronc, et il suffit.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
+  ],
+  "portals": {
+    "NANCY":      { "side": "L", "color": "#4ade80", "abbr": "NY" },
+    "METZ":       { "side": "L", "color": "#25dede", "abbr": "MZ" },
+    "STRASBOURG": { "side": "R", "color": "#f2588f", "abbr": "ST" }
+  },
+  "links": {
+    "NANCY":      [1, 2, 3, 4],
+    "METZ":       [3, 4, 5],
+    "STRASBOURG": [1, 2, 3, 4, 5]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 13, "nMax": 16, "gapMin": 1.8, "gapMax": 3.0,
+    "cars": [2, 2, 2, 3, 3, 4, 4, 5],
+    "quietRate": 0.2,
+    "rush": "pointe"
+  }
+}

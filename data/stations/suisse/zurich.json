@@ -1,0 +1,43 @@
+{
+  "id": "zurich",
+  "name": "Zürich HB",
+  "city": "Zurich",
+  "tagline": "Zürich HB — la halle rebrousse, le souterrain traverse : le boss des Alpes.",
+  "difficulty": 5,
+  "country": "🇨🇭 Suisse",
+  "desc": "Trois mille mouvements par jour, quatre cent mille voyageurs : la plus grande gare de Suisse est deux gares superposées. En haut, la grande halle en cul-de-sac (voies 3 à 18) où les trains de Bâle, de Coire et du Gothard entrent par l'ouest et rebroussent ; en dessous, les gares traversantes de la Museumstrasse (1990) et de la Löwenstrasse (2014), par où Genève et Lucerne filent vers Saint-Gall et Schaffhouse sans changer de sens. Sept directions, deux étages, et pas une minute de marge.",
+  "platforms": [
+    { "id": 1, "deadEnd": true }, { "id": 2, "deadEnd": true }, { "id": 3, "deadEnd": true },
+    { "id": 4, "deadEnd": true }, { "id": 5, "deadEnd": true },
+    { "id": 6 }, { "id": 7 }, { "id": 8 }, { "id": 9 }, { "id": 10 }
+  ],
+  "portals": {
+    "GENEVE":      { "side": "L", "color": "#25dede", "abbr": "GE", "label": "GENÈVE" },
+    "BALE":        { "side": "L", "color": "#60a5fa", "abbr": "BS", "label": "BÂLE" },
+    "LUCERNE":     { "side": "L", "color": "#4ade80", "abbr": "LU" },
+    "MILAN":       { "side": "L", "color": "#f2588f", "abbr": "MI" },
+    "COIRE":       { "side": "L", "color": "#a78bfa", "abbr": "CH" },
+    "ST-GALL":     { "side": "R", "color": "#f5b23c", "abbr": "SG" },
+    "SCHAFFHOUSE": { "side": "R", "color": "#e879f9", "abbr": "SH" }
+  },
+  "links": {
+    "GENEVE":      [1, 2, 3, 6, 7],
+    "BALE":        [2, 3, 4, 5, 6, 7, 8, 9],
+    "LUCERNE":     [8, 9, 10],
+    "MILAN":       [3, 4, 5],
+    "COIRE":       [1, 2, 3, 4],
+    "ST-GALL":     [6, 7, 8, 9, 10],
+    "SCHAFFHOUSE": [6, 7, 8, 9, 10]
+  },
+  "sameSidePairs": [
+    ["GENEVE", "COIRE"], ["COIRE", "GENEVE"],
+    ["BALE", "COIRE"],   ["COIRE", "BALE"],
+    ["BALE", "MILAN"],   ["MILAN", "BALE"]
+  ],
+  "gen": {
+    "nMin": 17, "nMax": 20, "gapMin": 1.4, "gapMax": 2.4,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6, 7],
+    "quietRate": 0.1,
+    "rush": "pointe"
+  }
+}

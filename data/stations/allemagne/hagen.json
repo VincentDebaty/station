@@ -1,0 +1,33 @@
+{
+  "id": "hagen",
+  "name": "Hagen Hbf",
+  "city": "Hagen",
+  "tagline": "Hagen Hbf — la halle d'acier de 1910 où le Sauerland rebrousse vers la Ruhr.",
+  "difficulty": 4,
+  "country": "🇩🇪 Allemagne",
+  "desc": "Dix voies sous la dernière halle d'acier de Rhénanie-du-Nord-Westphalie, derrière une façade néo-baroque de 1910. Par l'ouest arrive tout le Bergisches Land ; à l'est la ligne éclate vers Dortmund par Witten, vers Hamm par Schwerte et Unna, et vers Cassel par la haute vallée de la Ruhr — tandis que les trains de Siegen, montés de la Ruhr-Sieg, rebroussent ici vers la Ruhr. Le fret, lui, trie à Hagen-Vorhalle.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },
+    { "id": 6 }, { "id": 7 }
+  ],
+  "portals": {
+    "WUPPERTAL": { "side": "L", "color": "#60a5fa", "abbr": "W" },
+    "SIEGEN":    { "side": "L", "color": "#a78bfa", "abbr": "SI" },
+    "DORTMUND":  { "side": "R", "color": "#4ade80", "abbr": "DO" },
+    "HAMM":      { "side": "R", "color": "#25dede", "abbr": "HM" },
+    "KASSEL":    { "side": "R", "color": "#f2588f", "abbr": "KS" }
+  },
+  "links": {
+    "WUPPERTAL": [1, 2, 3, 4, 5],
+    "SIEGEN":    [5, 6, 7],
+    "DORTMUND":  [3, 4, 5, 6, 7],
+    "HAMM":      [1, 2, 3, 4],
+    "KASSEL":    [1, 2]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 16, "nMax": 19, "gapMin": 1.5, "gapMax": 2.6,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6, 7],
+    "quietRate": 0.12
+  }
+}

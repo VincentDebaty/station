@@ -1,0 +1,31 @@
+{
+  "id": "verviers",
+  "name": "Verviers-Central",
+  "city": "Verviers",
+  "tagline": "Verviers-Central — la gare-pont de la Vesdre, où Spa rejoint l'axe d'Aachen.",
+  "difficulty": 3,
+  "country": "🇧🇪 Belgique",
+  "desc": "Un bâtiment de 1930 posé en travers des voies, au-dessus du tunnel de la Chic-Chac : cinq voies à quai dans la vallée de la Vesdre, sur la ligne 37 qui monte de Liège vers Welkenraedt et Aachen. L'antenne de Spa se greffe à Pepinster, juste en amont, et ses omnibus poursuivent vers Welkenraedt et Aachen ; les IC d'Ostende filent vers Eupen. Le fret, lui, passe plus au nord par la ligne de Montzen.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
+  ],
+  "portals": {
+    "LIEGE":  { "side": "L", "color": "#25dede", "abbr": "LG", "label": "LIÈGE" },
+    "SPA":    { "side": "L", "color": "#4ade80", "abbr": "SP" },
+    "AACHEN": { "side": "R", "color": "#f2588f", "abbr": "AC" },
+    "EUPEN":  { "side": "R", "color": "#f5b23c", "abbr": "EU" }
+  },
+  "links": {
+    "LIEGE":  [1, 2, 3, 4],
+    "SPA":    [3, 4, 5],
+    "AACHEN": [2, 3, 4, 5],
+    "EUPEN":  [1, 2, 3]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 14, "nMax": 16, "gapMin": 1.6, "gapMax": 3.0,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6],
+    "quietRate": 0.18,
+    "rush": "double"
+  }
+}

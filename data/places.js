@@ -26,6 +26,47 @@
 // ------------------------------------------------------------------
 
 const PLACES = {
+  geislingen: [9.83, 48.624],
+  goppingen: [9.653, 48.703],
+  burg: [11.855, 52.272],
+  genthin: [12.157, 52.408],
+  werder: [12.934, 52.378],
+  sangerhausen: [11.298, 51.471],
+  nordhausen: [10.795, 51.497],
+  northeim: [9.996, 51.707],
+  aschaffenburg: [9.143, 49.98],
+  eichenberg: [9.919, 51.379],
+  eschwege: [10.053, 51.186],
+  melsungen: [9.546, 51.131],
+  badhersfeld: [9.708, 50.868],
+  lohne: [8.704, 52.197],
+  arnsberg: [8.064, 51.397],
+  unna: [7.69, 51.534],
+  schwerte: [7.566, 51.443],
+  bellegarde: [5.826, 46.109],
+  culoz: [5.78, 45.845],
+  lindau: [9.681, 47.544],
+  bregenz: [9.74, 47.503],
+  stgallen: [9.37, 47.423],
+  singen: [8.841, 47.758],
+  schaffhausen: [8.632, 47.698],
+  hengelo: [6.794, 52.262],
+  deventer: [6.16, 52.257],
+  amersfoort: [5.371, 52.153],
+  emmerich: [6.25, 51.834],
+  arnhem: [5.901, 51.985],
+  utrecht: [5.11, 52.089],
+  roosendaal: [4.458, 51.541],
+  rotterdam: [4.469, 51.925],
+  schiphol: [4.762, 52.309],
+  rognac: [5.235, 43.488],
+  arles: [4.632, 43.685],
+  konz: [6.581, 49.701],
+  perl: [6.383, 49.474],
+  apach: [6.378, 49.462],
+  duren: [6.483, 50.809],
+  welkenraedt: [5.975, 50.66],
+  pepinster: [5.806, 50.573],
   // --- Belgique : POINTS DE PASSAGE seulement -----------------------------
   // La Belgique tient sa topologie de data/lines.js ; ces points ne sont pas des
   // destinations mais les gares que les lignes TRAVERSENT — ce sont eux qui
@@ -39,12 +80,10 @@ const PLACES = {
   braine:       [4.137, 50.607],   // Braine-le-Comte
   ciney:        [5.100, 50.293],
   depinte:      [3.644, 50.994],   // De Pinte
-  enghien:      [4.041, 50.694],
   fleurus:      [4.545, 50.484],
   ghislain:     [3.814, 50.447],   // Saint-Ghislain
   grammont:     [3.874, 50.772],   // Geraardsbergen
   haacht:       [4.639, 50.977],
-  hal:          [4.235, 50.736],   // Halle
   herseaux:     [3.281, 50.717],
   huy:          [5.235, 50.520],
   jurbise:      [3.902, 50.535],
@@ -84,7 +123,6 @@ const PLACES = {
   amberieu:     [5.342, 45.954],
   ancenis:      [-1.178, 47.369],
   angouleme:    [0.165, 45.654],
-  arras:        [2.782, 50.287],
   aubrais:      [1.907, 47.927],   // Les Aubrais, la gare de passage d'Orléans
   barleduc:     [5.167, 48.773],
   belfort:      [6.854, 47.633],
@@ -99,7 +137,6 @@ const PLACES = {
   chateauroux:  [1.700, 46.810],
   chateauthierry: [3.410, 49.038],
   colmar:       [7.347, 48.073],
-  creil:        [2.475, 49.263],
   culmont:      [5.443, 47.810],   // Culmont-Chalindrey
   dol:          [-1.751, 48.544],
   dole:         [5.488, 47.096],
@@ -111,7 +148,6 @@ const PLACES = {
   lecreusot:    [4.500, 46.765],
   macon:        [4.825, 46.303],
   mantes:       [1.703, 48.990],
-  miramas:      [4.994, 43.586],
   moirans:      [5.582, 45.322],
   montargis:    [2.743, 48.007],
   montauban:    [1.341, 44.014],
@@ -124,11 +160,9 @@ const PLACES = {
   sable:        [-0.342, 47.842],
   saintes:      [-0.618, 45.749],
   saintraphael: [6.769, 43.424],
-  sarrebourg:   [7.053, 48.738],
   sens:         [3.268, 48.198],
   serquigny:    [0.719, 49.107],
   sete:         [3.697, 43.412],
-  tarascon:     [4.657, 43.801],
   vendome:      [1.021, 47.822],
   vichy:        [3.430, 46.127],
   vienne:       [4.874, 45.521],
@@ -138,26 +172,19 @@ const PLACES = {
   // --- Allemagne : POINTS DE PASSAGE seulement ----------------------------
   // Aachen a un statut à part : c'est par elle que la ligne de Liège entre en
   // Allemagne — le point de passage qui recoud la Belgique au reste.
-  aachen:       [6.091, 50.768],
-  bitterfeld:   [12.330, 51.624],
-  braunschweig: [10.540, 52.252],
   coburg:       [10.968, 50.259],
   crailsheim:   [10.072, 49.135],
   donauworth:   [10.777, 48.718],
   eisenach:     [10.313, 50.978],
   elsterwerda:  [13.522, 51.463],
-  fulda:        [9.678, 50.553],
   gelsenkirchen: [7.104, 51.505],
-  gottingen:    [9.936, 51.534],
   grobers:      [12.113, 51.349],  // bifurcation de Gröbers, où la LGV se sépare vers Halle et Leipzig
-  hamm:         [7.809, 51.678],
   heidelberg:   [8.670, 49.404],
   ingolstadt:   [11.437, 48.744],
   jena:         [11.586, 50.927],
   kaiserslautern: [7.769, 49.436],
   landshut:     [12.128, 48.545],
   limburg:      [8.052, 50.386],
-  minden:       [8.933, 52.291],
   naumburg:     [11.797, 51.163],
   neustrelitz:  [13.070, 53.362],
   oberhausen:   [6.852, 51.478],
@@ -174,7 +201,6 @@ const PLACES = {
   weimar:       [11.329, 50.981],
   wismar:       [11.463, 53.892],
   wolfsburg:    [10.788, 52.429],
-  wuppertal:    [7.152, 51.255],
   // Forbach : la dernière gare française avant la Sarre.
   forbach:      [6.899, 49.190],
   // La Moselle et l'Eifel, le tracé des deux lignes de Trèves.
@@ -202,21 +228,18 @@ const PLACES = {
   // Belgique et France, sur les lignes du Grand-Duché.
   gouvy:          [5.945, 50.187],
   vielsalm:       [5.917, 50.283],
-  thionville:     [6.168, 49.355],
 
   // --- Hors des pays jouables : ce sont eux qui font déborder le réseau du
   //     cadre national, donc ils comptent double pour la lecture « Europe ».
   bale:         [7.590, 47.548],   // Suisse
   copenhague:   [12.564, 55.673],  // Danemark
   enschede:     [6.890, 52.221],   // Pays-Bas
-  geneve:       [6.142, 46.210],   // Suisse
   // (Luxembourg a quitté cette liste : le Grand-Duché est jouable, ses
   //  coordonnées vivent dans js/geo.js comme celles de toute gare du catalogue.)
   maastricht:   [5.706, 50.850],   // Pays-Bas
   prague:       [14.435, 50.083],  // Tchéquie
   salzburg:     [13.046, 47.813],  // Autriche
   warschau:     [21.003, 52.229],  // Varsovie, Pologne (la fiche de Berlin écrit WARSCHAU)
-  zurich:       [8.540, 47.378],   // Suisse
 
   // --- Royaume-Uni : POINTS DE PASSAGE seulement --------------------------
   // Les quatre têtes de ligne londoniennes jouables sont dans le catalogue ;

@@ -120,7 +120,8 @@ const LINES = [
   // ---- Nord et Picardie -------------------------------------------------
   { id: "LGV-N", name: "Paris-Nord – Arras – Lille", nodes: ["paris-nord", "arras", "lille"] },
   { id: "L272", name: "Paris-Nord – Creil – Amiens", nodes: ["paris-nord", "creil", "amiens"] },
-  { id: "L281", name: "Amiens – Arras – Lille",      nodes: ["amiens", "arras", "lille"] },
+  { id: "L281", name: "Amiens – Arras – Douai – Lille",
+    nodes: ["amiens", "arras", "douai", "lille"] },
   { id: "L310", name: "Amiens – Rouen",              nodes: ["amiens", "rouen"] },
 
   // ---- Normandie ---------------------------------------------------------
@@ -167,7 +168,8 @@ const LINES = [
     nodes: ["nimes", "ales", "langogne", "clermont-ferrand"] },
 
   // ---- Vallée du Rhône, Alpes et Côte d'Azur -----------------------------
-  { id: "L810", name: "Avignon – Miramas – Marseille", nodes: ["avignon", "miramas", "marseille"] },
+  { id: "L810", name: "Avignon – Tarascon – Arles – Miramas – Marseille",
+    nodes: ["avignon", "tarascon", "arles", "miramas", "rognac", "marseille"] },
   { id: "L820", name: "Avignon – Montélimar – Valence", nodes: ["avignon", "montelimar", "valence"] },
   { id: "L830", name: "Valence – Vienne – Lyon",     nodes: ["valence", "vienne", "lyon"] },
   { id: "L840", name: "Valence – Moirans – Grenoble", nodes: ["valence", "moirans", "grenoble"] },
@@ -314,13 +316,14 @@ const LINES = [
   // l'Allemagne reste un continent à part (mesuré : 12 gares inatteignables).
 
   // ---- Rhin et Ruhr -------------------------------------------------------
-  { id: "LinkeRhein", name: "Cologne – Bonn – Coblence – Mayence – Mannheim",
-    nodes: ["koln", "bonn", "koblenz", "mainz", "mannheim"] },
+  { id: "LinkeRhein", name: "Cologne – Bonn – Coblence – Bingen – Mayence – Mannheim",
+    nodes: ["koln", "bonn", "koblenz", "bingen", "mainz", "mannheim"] },
   { id: "MZ-F", name: "Mayence – Francfort",     nodes: ["mainz", "frankfurt"] },
   { id: "RUHR", name: "Cologne – Düsseldorf – Duisbourg – Essen – Dortmund",
     nodes: ["koln", "dusseldorf", "duisburg", "essen", "dortmund"] },
   { id: "DU-MS", name: "Duisbourg – Oberhausen – Münster", nodes: ["duisburg", "oberhausen", "munster"] },
-  { id: "K-DO", name: "Cologne – Wuppertal – Dortmund", nodes: ["koln", "wuppertal", "dortmund"] },
+  { id: "K-DO", name: "Cologne – Wuppertal – Hagen – Dortmund",
+    nodes: ["koln", "wuppertal", "hagen", "dortmund"] },
   { id: "K-Minden", name: "Dortmund – Hamm – Bielefeld – Minden – Hanovre",
     nodes: ["dortmund", "hamm", "bielefeld", "minden", "hannover"] },
   { id: "DO-MS", name: "Dortmund – Münster",     nodes: ["dortmund", "munster"] },
@@ -338,12 +341,13 @@ const LINES = [
   { id: "Pfalz", name: "Mannheim – Kaiserslautern – Sarrebruck",
     nodes: ["mannheim", "kaiserslautern", "saarbrucken"] },
   { id: "MA-HD", name: "Mannheim – Heidelberg",  nodes: ["mannheim", "heidelberg"] },
-  { id: "Filstal", name: "Stuttgart – Ulm – Augsbourg – Munich",
-    nodes: ["stuttgart", "ulm", "augsburg", "munchen"] },
+  { id: "Filstal", name: "Stuttgart – Plochingen – Ulm – Günzburg – Augsbourg – Munich",
+    nodes: ["stuttgart", "plochingen", "goppingen", "geislingen", "ulm", "gunzburg", "augsburg", "munchen"] },
   { id: "S-N", name: "Stuttgart – Crailsheim – Nuremberg", nodes: ["stuttgart", "crailsheim", "nurnberg"] },
 
   // ---- Bavière ------------------------------------------------------------
-  { id: "SFS-WU", name: "Francfort – Wurtzbourg – Nuremberg", nodes: ["frankfurt", "wurzburg", "nurnberg"] },
+  { id: "SFS-WU", name: "Francfort – Hanau – Aschaffenbourg – Wurtzbourg – Nuremberg",
+    nodes: ["frankfurt", "hanau", "aschaffenburg", "wurzburg", "nurnberg"] },
   { id: "SFS-IN", name: "Nuremberg – Ingolstadt – Munich", nodes: ["nurnberg", "ingolstadt", "munchen"] },
   { id: "N-R", name: "Nuremberg – Ratisbonne",   nodes: ["nurnberg", "regensburg"] },
   { id: "R-M", name: "Ratisbonne – Landshut – Munich", nodes: ["regensburg", "landshut", "munchen"] },
@@ -351,9 +355,10 @@ const LINES = [
     nodes: ["augsburg", "donauworth", "treuchtlingen", "nurnberg"] },
 
   // ---- Le centre et le nord ----------------------------------------------
-  { id: "SFS-GO", name: "Francfort – Fulda – Cassel – Göttingen – Hanovre",
-    nodes: ["frankfurt", "fulda", "kassel", "gottingen", "hannover"] },
-  { id: "H-HH", name: "Hanovre – Hambourg",      nodes: ["hannover", "hamburg"] },
+  { id: "SFS-GO", name: "Francfort – Hanau – Fulda – Cassel – Göttingen – Hanovre",
+    nodes: ["frankfurt", "hanau", "fulda", "kassel", "gottingen", "hannover"] },
+  { id: "H-HH", name: "Hanovre – Celle – Uelzen – Lüneburg – Harburg – Hambourg",
+    nodes: ["hannover", "celle", "uelzen", "luneburg", "harburg", "hamburg"] },
   { id: "H-HB", name: "Hanovre – Brême",         nodes: ["hannover", "bremen"] },
   { id: "SFS-B", name: "Hanovre – Wolfsburg – Berlin", nodes: ["hannover", "wolfsburg", "berlin"] },
   { id: "H-MD", name: "Hanovre – Brunswick – Magdebourg", nodes: ["hannover", "braunschweig", "magdeburg"] },
@@ -365,9 +370,11 @@ const LINES = [
   { id: "HR-B", name: "Rostock – Neustrelitz – Berlin", nodes: ["rostock", "neustrelitz", "berlin"] },
 
   // ---- L'Est ---------------------------------------------------------------
-  { id: "B-MD", name: "Berlin – Magdebourg",     nodes: ["berlin", "magdeburg"] },
+  { id: "B-MD", name: "Berlin – Potsdam – Werder – Brandebourg – Genthin – Burg – Magdebourg",
+    nodes: ["berlin", "potsdam", "werder", "brandenburg", "genthin", "burg", "magdeburg"] },
   { id: "MD-HA", name: "Magdebourg – Halle",     nodes: ["magdeburg", "halle"] },
-  { id: "B-HA", name: "Berlin – Bitterfeld – Halle", nodes: ["berlin", "bitterfeld", "halle"] },
+  { id: "B-HA", name: "Berlin – Jüterbog – Wittenberg – Bitterfeld – Halle",
+    nodes: ["berlin", "juterbog", "wittenberg", "bitterfeld", "halle"] },
   { id: "HA-L", name: "Halle – Leipzig",         nodes: ["halle", "leipzig"] },
   { id: "L-DD", name: "Leipzig – Riesa – Dresde", nodes: ["leipzig", "riesa", "dresden"] },
   { id: "B-DD", name: "Berlin – Elsterwerda – Dresde", nodes: ["berlin", "elsterwerda", "dresden"] },
@@ -384,13 +391,15 @@ const LINES = [
   { id: "Saalebahn", name: "Halle – Naumburg – Iéna – Erfurt",
     nodes: ["halle", "naumburg", "jena", "erfurt"] },
   { id: "SFS-EB", name: "Erfurt – Cobourg – Nuremberg (LGV)", nodes: ["erfurt", "coburg", "nurnberg"] },
-  { id: "Mitte", name: "Erfurt – Eisenach – Fulda", nodes: ["erfurt", "eisenach", "fulda"] },
+  { id: "Mitte", name: "Erfurt – Eisenach – Bebra",
+    nodes: ["erfurt", "eisenach", "bebra"] },
 
   // ---- Les liaisons qui referment l'Europe --------------------------------
   // Sans elles, l'Allemagne n'a AUCUNE arête vers le reste du réseau : douze
   // gares que personne ne peut atteindre. Elles sont écrites dans le même
   // commit que les fiches, jamais après (la leçon de l'Eurostar).
-  { id: "L37", name: "Liège – Aachen – Cologne (le Thalys)", nodes: ["liege", "aachen", "koln"] },
+  { id: "L37", name: "Liège – Verviers – Welkenraedt – Aachen – Düren – Cologne (le Thalys)",
+    nodes: ["liege", "pepinster", "verviers", "welkenraedt", "aachen", "duren", "koln"] },
   { id: "LGV-E3", name: "Sarrebruck – Forbach – Metz (l'ICE de Paris)",
     nodes: ["saarbrucken", "forbach", "metz"] },
 
@@ -423,5 +432,41 @@ const LINES = [
   { id: "CFL60", name: "Bettembourg – Noertzange – Esch-sur-Alzette – Belval – Pétange",
     nodes: ["bettembourg", "noertzange", "esch-sur-alzette", "belval", "differdange", "petange"] },
   { id: "CFL70", name: "Luxembourg – Dippach – Bascharage – Pétange – Rodange",
-    nodes: ["luxembourg", "dippach", "bascharage", "petange", "rodange"] }
+    nodes: ["luxembourg", "dippach", "bascharage", "petange", "rodange"] },
+  { id: "L123", name: "Enghien – Grammont",
+    nodes: ["enghien", "grammont"] },
+  { id: "L180", name: "Thionville – Apach – Perl – Konz – Trèves (Obermoselstrecke, trains du week-end)",
+    nodes: ["thionville", "apach", "perl", "konz", "trier"] },
+  { id: "NL-A", name: "Amsterdam – Schiphol – Rotterdam – Roosendaal – Anvers",
+    nodes: ["amsterdam", "schiphol", "rotterdam", "roosendaal", "anvers"] },
+  { id: "NL-B", name: "Amsterdam – Utrecht – Arnhem – Emmerich – Duisbourg",
+    nodes: ["amsterdam", "utrecht", "arnhem", "emmerich", "duisburg"] },
+  { id: "NL-C", name: "Amsterdam – Amersfoort – Deventer – Hengelo – Osnabrück",
+    nodes: ["amsterdam", "amersfoort", "deventer", "hengelo", "osnabruck"] },
+  { id: "CH-1", name: "Zurich – Aarau – Olten – Berne – Fribourg – Lausanne – Genève",
+    nodes: ["zurich", "aarau", "olten", "bern", "fribourg", "lausanne", "geneve"] },
+  { id: "CH-2", name: "Zurich – Bâle",
+    nodes: ["zurich", "bale"] },
+  { id: "CH-3", name: "Zurich – Schaffhouse – Singen – Stuttgart",
+    nodes: ["zurich", "schaffhausen", "singen", "stuttgart"] },
+  { id: "CH-4", name: "Zurich – Saint-Gall – Bregenz – Lindau – Munich",
+    nodes: ["zurich", "stgallen", "bregenz", "lindau", "munchen"] },
+  { id: "L890", name: "Lyon – Ambérieu – Culoz – Bellegarde – Genève",
+    nodes: ["lyon", "amberieu", "culoz", "bellegarde", "geneve"] },
+  { id: "BTF-L", name: "Bitterfeld – Delitzsch – Leipzig",
+    nodes: ["bitterfeld", "leipzig"] },
+  { id: "HA-HAM", name: "Hagen – Schwerte – Unna – Hamm",
+    nodes: ["hagen", "schwerte", "unna", "hamm"] },
+  { id: "HA-KS", name: "Hagen – Schwerte – Arnsberg – Warburg – Cassel (Sauerland-Express)",
+    nodes: ["hagen", "schwerte", "arnsberg", "warburg", "kassel"] },
+  { id: "OS-MI", name: "Osnabrück – Löhne – Minden",
+    nodes: ["osnabruck", "lohne", "minden"] },
+  { id: "NSS", name: "Fulda – Bad Hersfeld – Bebra – Melsungen – Cassel (Nord-Süd-Strecke)",
+    nodes: ["fulda", "badhersfeld", "bebra", "melsungen", "kassel"] },
+  { id: "BE-GO", name: "Bebra – Eschwege – Eichenberg – Göttingen",
+    nodes: ["bebra", "eschwege", "eichenberg", "gottingen"] },
+  { id: "Suedharz", name: "Göttingen – Northeim – Nordhausen – Sangerhausen – Halle",
+    nodes: ["gottingen", "northeim", "nordhausen", "sangerhausen", "halle"] },
+  { id: "BS-WOB", name: "Brunswick – Wolfsburg (Weddeler Schleife, l'ICE de Berlin)",
+    nodes: ["braunschweig", "wolfsburg"] }
 ];

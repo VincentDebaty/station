@@ -1,0 +1,31 @@
+{
+  "id": "wuppertal",
+  "name": "Wuppertal Hbf",
+  "city": "Wuppertal",
+  "tagline": "Wuppertal Hbf — cinq voies sous le monorail suspendu, la porte du Bergisches Land.",
+  "difficulty": 3,
+  "country": "🇩🇪 Allemagne",
+  "desc": "L'une des plus vieilles grandes gares d'Allemagne (1848), coincée entre la Wupper et le monorail suspendu qui la survole. Cinq voies à quai seulement pour près de mille circulations par jour : à l'ouest la ligne se dédouble vers Cologne par Solingen et vers Düsseldorf par Vohwinkel, à l'est tout file vers Hagen — sauf la navette de Remscheid, qui revient d'Oberbarmen.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
+  ],
+  "portals": {
+    "KOLN":       { "side": "L", "color": "#f5b23c", "abbr": "K", "label": "KÖLN" },
+    "DUSSELDORF": { "side": "L", "color": "#25dede", "abbr": "D", "label": "DÜSSELDORF" },
+    "HAGEN":      { "side": "R", "color": "#4ade80", "abbr": "HA" },
+    "REMSCHEID":  { "side": "R", "color": "#a78bfa", "abbr": "RS" }
+  },
+  "links": {
+    "KOLN":       [1, 2, 3],
+    "DUSSELDORF": [2, 3, 4, 5],
+    "HAGEN":      [1, 2, 3, 4, 5],
+    "REMSCHEID":  [4, 5]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 14, "nMax": 16, "gapMin": 1.6, "gapMax": 3.0,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6],
+    "quietRate": 0.18,
+    "rush": "double"
+  }
+}

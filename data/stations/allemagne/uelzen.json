@@ -1,0 +1,32 @@
+{
+  "id": "uelzen",
+  "name": "Uelzen",
+  "tagline": "Uelzen — la gare Hundertwasser, là où l'Amerikalinie coupe l'axe de Hambourg.",
+  "difficulty": 3,
+  "country": "🇩🇪 Allemagne",
+  "desc": "Colonnes de céramique et toits bombés : Hundertwasser a redessiné la gare pour l'Expo 2000, et quatre cent cinquante mille curieux viennent la voir chaque année. Sous la couleur, un vrai carrefour : l'axe Hanovre–Hambourg croise l'Amerikalinie, la ligne de fret Brême–Stendal qui évite Hambourg, et une antenne file sur Brunswick par Wieren.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }, { "id": 6 }
+  ],
+  "portals": {
+    "HANNOVER":     { "side": "L", "color": "#f2588f", "abbr": "H" },
+    "BREMEN":       { "side": "L", "color": "#4ade80", "abbr": "HB" },
+    "BRAUNSCHWEIG": { "side": "L", "color": "#a78bfa", "abbr": "BS" },
+    "HAMBURG":      { "side": "R", "color": "#60a5fa", "abbr": "HH" },
+    "STENDAL":      { "side": "R", "color": "#25dede", "abbr": "SDL" }
+  },
+  "links": {
+    "HANNOVER":     [1, 2, 3, 4],
+    "BREMEN":       [3, 4, 5, 6],
+    "BRAUNSCHWEIG": [5, 6],
+    "HAMBURG":      [1, 2, 3, 4, 5],
+    "STENDAL":      [4, 5, 6]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 15, "nMax": 18, "gapMin": 1.6, "gapMax": 3.0,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6],
+    "quietRate": 0.18,
+    "rush": "pointe"
+  }
+}

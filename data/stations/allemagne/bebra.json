@@ -1,0 +1,30 @@
+{
+  "id": "bebra",
+  "name": "Bebra",
+  "tagline": "Bebra — l'ancienne gare-frontière : une seule sortie vers Cassel, trois vers le sud et l'est.",
+  "difficulty": 3,
+  "country": "🇩🇪 Allemagne",
+  "desc": "Gare-frontière du temps de la division, où les trains interzones changeaient de locomotive ; aujourd'hui un nœud régional à cinq voies et un grand triage du sel de potasse. Cassel sort par un bout, Fulda et Eisenach entrent par l'autre : les trains de Fulda vers Erfurt ou Göttingen rebroussent à quai, la courbe de Berlin qui les en dispensait contournant la gare.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
+  ],
+  "portals": {
+    "KASSEL":    { "side": "L", "color": "#60a5fa", "abbr": "KS" },
+    "FULDA":     { "side": "R", "color": "#f5b23c", "abbr": "FD" },
+    "ERFURT":    { "side": "R", "color": "#4ade80", "abbr": "EF" },
+    "GOTTINGEN": { "side": "R", "color": "#a78bfa", "abbr": "GO", "label": "GÖTTINGEN" }
+  },
+  "links": {
+    "KASSEL":    [1, 2, 3, 4, 5],
+    "FULDA":     [1, 2, 3, 4],
+    "ERFURT":    [2, 3, 4, 5],
+    "GOTTINGEN": [4, 5]
+  },
+  "sameSidePairs": [["FULDA","ERFURT"],["ERFURT","FULDA"],["FULDA","GOTTINGEN"],["GOTTINGEN","FULDA"]],
+  "gen": {
+    "nMin": 14, "nMax": 17, "gapMin": 1.6, "gapMax": 3.0,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6],
+    "quietRate": 0.15,
+    "rush": "rafale"
+  }
+}

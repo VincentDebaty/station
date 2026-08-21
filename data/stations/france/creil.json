@@ -1,0 +1,33 @@
+{
+  "id": "creil",
+  "name": "Creil",
+  "tagline": "Creil — la première bifurcation au nord de Paris : cinq directions et le triage à côté.",
+  "difficulty": 3,
+  "country": "🇫🇷 France",
+  "desc": "À cinquante kilomètres de Paris-Nord, l'artère du Nord se sépare en trois : Amiens tout droit, Compiègne et Saint-Quentin vers l'est, l'autorail de Beauvais vers l'ouest — et, par la rive de l'Oise, le Transilien de Pontoise qui arrive côté Paris. Huit voies à quai reconstruites en 1955, vingt mille navetteurs par jour, et le grand triage de Creil juste à côté : le fret du Nord traverse sans s'arrêter.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },
+    { "id": 6 }
+  ],
+  "portals": {
+    "PARIS-NORD":    { "side": "L", "color": "#25dede", "abbr": "PN" },
+    "PONTOISE":      { "side": "L", "color": "#a78bfa", "abbr": "PT" },
+    "AMIENS":        { "side": "R", "color": "#4ade80", "abbr": "AM" },
+    "SAINT-QUENTIN": { "side": "R", "color": "#f5b23c", "abbr": "SQ" },
+    "BEAUVAIS":      { "side": "R", "color": "#f2588f", "abbr": "BV" }
+  },
+  "links": {
+    "PARIS-NORD":    [1, 2, 3, 4, 5],
+    "PONTOISE":      [5, 6],
+    "AMIENS":        [1, 2, 3],
+    "SAINT-QUENTIN": [3, 4, 5],
+    "BEAUVAIS":      [5, 6]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 14, "nMax": 15, "gapMin": 1.6, "gapMax": 2.8,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6],
+    "quietRate": 0.15,
+    "rush": "double"
+  }
+}

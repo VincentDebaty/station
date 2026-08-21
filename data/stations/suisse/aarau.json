@@ -1,0 +1,28 @@
+{
+  "id": "aarau",
+  "name": "Aarau",
+  "tagline": "Aarau — deux routes vers Zurich, une seule vers Olten, sous la plus grande horloge du pays.",
+  "difficulty": 3,
+  "country": "🇨🇭 Suisse",
+  "desc": "Le chef-lieu argovien tient le couloir entre Olten et Zurich, là où la voie se dédouble : les InterCity filent par Lenzburg et le tunnel du Heitersberg, les InterRegio et le RER montent par Wildegg et Brugg. Six voies à quai, une horloge de neuf mètres sur la façade de 2010, et le terminal à conteneurs Hupac qui envoie son fret vers le Gothard. À l'ouest, une seule porte : Olten, que tout le monde emprunte.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
+  ],
+  "portals": {
+    "OLTEN":  { "side": "L", "color": "#25dede", "abbr": "OL" },
+    "ZURICH": { "side": "R", "color": "#f5b23c", "abbr": "ZH" },
+    "BRUGG":  { "side": "R", "color": "#4ade80", "abbr": "BG" }
+  },
+  "links": {
+    "OLTEN":  [1, 2, 3, 4, 5],
+    "ZURICH": [2, 3, 4, 5],
+    "BRUGG":  [1, 2, 3]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 14, "nMax": 16, "gapMin": 1.6, "gapMax": 2.9,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6],
+    "quietRate": 0.2,
+    "rush": "double"
+  }
+}

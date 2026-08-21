@@ -50,7 +50,13 @@ const read = f => fs.readFileSync(path.join(ROOT, f), "utf8");
 
 // --- arguments : ids de gare (lettres) + K facultatif (nombre) + --seed=N ---
 let SEED = null, NIVEAU = null;
+// --fiche=<chemin.json> : une fiche PAS ENCORE ENREGISTRÉE dans index.json. C'est
+// ce qui permet d'écrire des gares en parallèle sans se disputer l'index : on
+// valide le fichier, on l'enregistre ensuite.
+const FICHES = [];
 const rawArgs = process.argv.slice(2).filter(a => {
+  const f = /^--fiche=(.+\.json)$/.exec(a);
+  if (f) { FICHES.push(f[1]); return false; }
   const m = /^--seed=(\d+)$/.exec(a);
   if (m) { SEED = parseInt(m[1], 10); return false; }
   const n = /^--niveau=([1-5])$/.exec(a);
@@ -58,7 +64,7 @@ const rawArgs = process.argv.slice(2).filter(a => {
   return true;
 });
 const kArg = rawArgs.find(a => /^\d+$/.test(a));
-const K = kArg ? parseInt(kArg, 10) : (rawArgs.some(a => !/^\d+$/.test(a)) ? 30 : 6);
+const K = kArg ? parseInt(kArg, 10) : (rawArgs.some(a => !/^\d+$/.test(a)) || FICHES.length ? 30 : 6);
 const filter = rawArgs.filter(a => !/^\d+$/.test(a));
 const DELAY_MAX = 0.30; // min de jeu : marge au-dessus du seuil interne (0.15) du générateur
 // Pression tolérée sur un quai. Le générateur vise 3 et se replie sur 4
@@ -120,6 +126,14 @@ for (const group of index)
   for (const id of group.stations)
     cards.push({ id, country: group.country });
 if (filter.length) cards = cards.filter(c => filter.includes(c.id));
+if (FICHES.length) {
+  if (!filter.length) cards = [];
+  for (const p of FICHES) {
+    const abs = path.isAbsolute(p) ? p : path.resolve(process.cwd(), p);
+    const cfg = JSON.parse(fs.readFileSync(abs, "utf8"));
+    cards.push({ id: cfg.id || path.basename(abs, ".json"), country: "(fiche)", path: abs });
+  }
+}
 if (!cards.length) { console.error("Aucune gare ne correspond à :", filter.join(", ")); process.exit(2); }
 
 // La PRESSION sur un quai se lit dans le moteur (js/schedule.js,
@@ -131,8 +145,8 @@ const eng = makeEngine();
 const rows = [];
 let failed = 0;
 
-for (const { id, country } of cards) {
-  let cfg = JSON.parse(read(`data/stations/${country}/${id}.json`));
+for (const { id, country, path: chemin } of cards) {
+  let cfg = JSON.parse(chemin ? fs.readFileSync(chemin, "utf8") : read(`data/stations/${country}/${id}.json`));
   // Enveloppe forcée : la fiche garde sa géométrie, sa journée change de
   // niveau. C'est le geste exact de ficheDeService (js/graph.js).
   if (NIVEAU != null) {

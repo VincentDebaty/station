@@ -1,0 +1,32 @@
+{
+  "id": "plochingen",
+  "name": "Plochingen",
+  "city": "Plochingen",
+  "tagline": "Plochingen — là où la ligne d'Ulm et celle de Tübingen se rejoignent avant Stuttgart.",
+  "difficulty": 3,
+  "country": "🇩🇪 Allemagne",
+  "desc": "Dernière bifurcation avant la cuvette de Stuttgart : la Filstalbahn venue d'Ulm et la Neckar-Alb-Bahn venue de Tübingen s'y rejoignent, la S-Bahn S1 y fait demi-tour une fois sur deux. Huit voies à quai sous un bâtiment Jugendstil de 1907, un port sur le Neckar et son embranchement de fret.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },
+    { "id": 6 }
+  ],
+  "portals": {
+    "STUTTGART": { "side": "L", "color": "#4ade80", "abbr": "S" },
+    "ULM":       { "side": "R", "color": "#f5b23c", "abbr": "UL" },
+    "TUBINGEN":  { "side": "R", "color": "#a78bfa", "abbr": "TU", "label": "TÜBINGEN" },
+    "KIRCHHEIM": { "side": "R", "color": "#60a5fa", "abbr": "KI" }
+  },
+  "links": {
+    "STUTTGART": [1, 2, 3, 4, 5, 6],
+    "ULM":       [1, 2, 3],
+    "TUBINGEN":  [3, 4, 5],
+    "KIRCHHEIM": [5, 6]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 14, "nMax": 16, "gapMin": 1.6, "gapMax": 2.9,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6],
+    "quietRate": 0.18,
+    "rush": "double"
+  }
+}
