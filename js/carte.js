@@ -149,6 +149,11 @@ function vueLigne() {
   const faits = typeof garesFaites === "function"
     ? garesFaites(composition) : composition.filter(g => tenues.has(g)).length;
 
+  // LE BOUTON D'APPEL : sous la ligne d'ordinaire ; DANS LA BULLE du résultat
+  // quand il y en a une — le service fini, la suite se lit au même endroit
+  // que le résultat, et le regard n'a pas à descendre au bas de l'écran.
+  const suite = prochaine ? `<button class="c-suite" data-gare="${prochaine}">▸ ${
+    isBought(prochaine) ? "Reprendre" : "Ouvrir"} ${nomDe(prochaine)}</button>` : "";
   const jalon = (id, role) => {
     const etat = id ? etatDeGare(id) : "fermee";
     const cl = ["jalon", "j-" + etat, role ? "j-" + role : ""].filter(Boolean).join(" ");
@@ -174,10 +179,9 @@ function vueLigne() {
       ${jalon(hDep && hDep.gareId, "boss")}
       ${p.gares.map(g => jalon(g)).join("")}
       ${jalon(hArr && hArr.gareId, "boss")}
-      ${bilanHTML()}
+      ${bilanHTML(suite)}
     </div>
-    ${prochaine ? `<button class="c-suite" data-gare="${prochaine}">▸ ${
-      isBought(prochaine) ? "Reprendre" : "Ouvrir"} ${nomDe(prochaine)}</button>` : ""}`;
+    ${CARTE.bilan ? "" : suite}`;
 }
 
 // ------------------------------------------------------------------
@@ -189,7 +193,7 @@ function vueLigne() {
 // reprend les étoiles en grand — et il ne dit que ce que les étoiles ne
 // disent pas : le retard, et ce qu'il vaut face au record. Pas de bouton :
 // la gare suivante est à un doigt sur la ligne, la gare jouée aussi.
-function bilanHTML() {
+function bilanHTML(suite) {
   const b = CARTE.bilan;
   if (!b) return "";
   const cl = "c-bilan" + (b.perfect ? " parfait" : "") + (b.win ? "" : " rate");
@@ -206,7 +210,7 @@ function bilanHTML() {
   else if (b.d < b.prevBest) rec = `<div class="cb-record bat">record battu · −${b.prevBest - b.d} min</div>`;
   else if (b.d === b.prevBest) rec = `<div class="cb-record egal">record égalé</div>`;
   else rec = `<div class="cb-record loin">record : ${b.prevBest} min</div>`;
-  return `<div class="${cl}" role="status"><div class="cb-etoiles">${etoiles}</div>${retard}${rec}</div>`;
+  return `<div class="${cl}" role="status"><div class="cb-etoiles">${etoiles}</div>${retard}${rec}${suite || ""}</div>`;
 }
 // La bulle se pose APRÈS le rendu, parce qu'elle se mesure : centrée sous le
 // jalon, à la hauteur de ses petites étoiles (qu'elle remplace). Enfant de la
@@ -217,11 +221,18 @@ function poserBilan() {
   const jalon = CARTE.hote.querySelector(".jalon.j-bilan");
   if (!bulle || !jalon) { if (bulle) bulle.remove(); return; }
   const et = jalon.querySelector(".etoiles");
+  const piste = jalon.parentElement;
+  const haut = (et ? et.offsetTop : jalon.offsetHeight) - 6;   // la bulle part d'ici, dans le jalon
+  // LE GROUPE SE CENTRE — jalons ET bulle. La piste centre ses jalons dans sa
+  // hauteur ; on lui retire en bas ce que la bulle dépasse du jalon, et le
+  // centre des jalons remonte d'autant : c'est l'ensemble qui se retrouve au
+  // milieu. Posé AVANT de mesurer le jalon, puisque cela le déplace.
+  const depasse = bulle.offsetHeight - (jalon.offsetHeight - haut);
+  piste.style.paddingBottom = Math.max(0, depasse) + "px";
   bulle.style.left = (jalon.offsetLeft + jalon.offsetWidth / 2) + "px";
-  bulle.style.top = (jalon.offsetTop + (et ? et.offsetTop : jalon.offsetHeight) - 6) + "px";
+  bulle.style.top = (jalon.offsetTop + haut) + "px";
   // Ligne longue : la gare jouée doit être à l'écran. Le voyage (animerVoyage)
   // fait déjà défiler vers la suivante, qui est voisine — sinon on cadre ici.
-  const piste = jalon.parentElement;
   if (!CARTE.voyage && piste.scrollWidth > piste.clientWidth) {
     const cx = jalon.offsetLeft + jalon.offsetWidth / 2;
     piste.scrollTo({ left: Math.max(0, cx - piste.clientWidth / 2) });
