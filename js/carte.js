@@ -161,7 +161,17 @@ function vueLigne() {
   const fleche = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" ' +
     'stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
     '<path d="M5 12h13M12 6l6 6-6 6"/></svg>';
-  const suiteBulle = prochaine
+  // UN HUB BATTU OUVRE UN CHOIX, pas une gare. Finir une ligne sur sa
+  // métropole, c'est se retrouver à un carrefour : la suite est l'une de ses
+  // sorties, et c'est au joueur de la choisir (meta-progression §2). La bulle
+  // l'envoie donc au panneau du hub plutôt que de lui désigner — comme avant —
+  // la seule gare ouvrable restée sur CETTE ligne, qui était le hub d'où il
+  // venait : « tu viens de battre Bruxelles, retourne à Lille ».
+  const hubBilan = CARTE.bilan && CARTE.bilan.win && typeof hubDeGare === "function"
+    ? hubDeGare(CARTE.bilan.gare) : null;
+  const suiteBulle = hubBilan
+    ? `<button class="c-suite cb-suite" data-carrefour="${hubBilan.id}">Choisir la direction${fleche}</button>`
+    : prochaine
     ? `<button class="c-suite cb-suite" data-gare="${prochaine}" title="${nomDe(prochaine)}">Suivante${fleche}</button>` : "";
   const jalon = (id, role) => {
     const etat = id ? etatDeGare(id) : "fermee";
@@ -398,8 +408,15 @@ function panneauDeHub(hubId, tenues) {
     // là où le rang exige des gares faites.
     const faits = typeof garesFaites === "function"
       ? garesFaites(composition) : composition.filter(g => tenues.has(g)).length;
-    return `<button class="p-ligne${faits ? " p-entamee" : ""}" data-lien="${cleDeLien(lien)}">` +
-      `<span class="p-vers">${hv ? hv.nom : vers}</span>` +
+    // LIGNE FAITE, TERMINUS À BATTRE : toutes les intermédiaires sont faites et
+    // le hub d'en face ne l'est pas. C'est le cas du hub d'origine de la toute
+    // première ligne, resté dans le dos du joueur — et de toute ligne parcourue
+    // jusqu'au bout sans avoir encore pris la métropole. On ne propose pas une
+    // ligne à parcourir, on nomme ce qui reste : le boss.
+    const resteLeBoss = !!(hv && hv.gareId && !tenues.has(hv.gareId) &&
+      lien.gares.every(g => typeof estFaite === "function" ? estFaite(g) : tenues.has(g)));
+    return `<button class="p-ligne${faits ? " p-entamee" : ""}${resteLeBoss ? " p-boss" : ""}" data-lien="${cleDeLien(lien)}">` +
+      `<span class="p-vers">${resteLeBoss ? "Battre " : ""}${hv ? hv.nom : vers}</span>` +
       `<span class="p-jauge"><i style="width:${Math.round(100 * faits / total)}%"></i></span>` +
       (rang ? `<span class="c-rang r-${rang.id}">${rang.nom}</span>`
             : `<span class="p-note">${faits} / ${total}</span>`) +
@@ -545,6 +562,11 @@ function renderCarte() {
     }
     const g = ev.target.closest("[data-gare]");
     if (g && g.dataset.gare) { jouerOuOuvrir(g.dataset.gare); return; }
+    // « Choisir la direction » : la zone, le panneau du hub déplié. Le résultat
+    // a été lu — on le range, sinon il reviendrait sous ce hub sur chacune des
+    // lignes qu'on ouvrira depuis lui.
+    const cf = ev.target.closest("[data-carrefour]");
+    if (cf) { CARTE.bilan = null; CARTE.vue = "constellation"; CARTE.panneau = cf.dataset.carrefour; renderCarte(); return; }
     // Cliquer à côté referme le panneau : c'est le geste qu'on essaie d'abord.
     if (CARTE.panneau) { CARTE.panneau = null; renderCarte(); }
   };

@@ -2093,6 +2093,8 @@ svg { width: 100%; height: 100%; display: block; }
 }
 .p-jauge i { display: block; height: 100%; background: #2dd4bf; border-radius: inherit; }
 .p-ligne .c-rang { margin-left: 0; }
+/* Ligne faite, terminus à battre : le nom passe en or, la couleur des boss. */
+.p-ligne.p-boss .p-vers { color: var(--gold-hi); }
 
 /* La gare du boss : une action, donc le jeton d'action du jeu. */
 .p-gare { background: rgba(45, 212, 191, .1); border-color: #2dd4bf; }
