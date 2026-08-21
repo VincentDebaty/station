@@ -1383,7 +1383,9 @@ function endGame(failed) {
   // la gare suivante est à un doigt, la gare jouée aussi pour recommencer.
   if (!STATION.adhoc && typeof renderCarte === "function") {
     CARTE.bilan = { gare: STATION.id, stars, prevStars, d, prevBest, perfect, failed, win };
-    CARTE.voyage = STATION.id;   // le train file vers la suivante (js/carte.js)
+    // Le train ne part QUE si le service est tenu : sur un échec il n'y a pas
+    // de gare suivante, et le voir rouler vers elle contredisait la bulle.
+    CARTE.voyage = win ? STATION.id : null;   // (js/carte.js, animerVoyage)
     showHub();                   // #end rangé, la carte redessinée avec la bulle
     rollRecette();
     if (perfect && typeof perfectConfetti === "function") {

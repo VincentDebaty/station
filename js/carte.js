@@ -173,7 +173,18 @@ function vueLigne() {
   // venait : « tu viens de battre Bruxelles, retourne à Lille ».
   const hubBilan = CARTE.bilan && CARTE.bilan.win && typeof hubDeGare === "function"
     ? hubDeGare(CARTE.bilan.gare) : null;
-  const suiteBulle = hubBilan
+  // OBJECTIF MANQUÉ : ON NE PASSE PAS. Zéro étoile, c'est le même service à
+  // refaire — et la bulle proposait quand même « Suivante », ce qui revenait
+  // à dire que rater n'empêche rien. Elle ne propose donc plus qu'une chose :
+  // la gare qu'on vient de manquer. La ligne reste cliquable autour, mais ce
+  // n'est plus le jeu qui pousse.
+  const boucle = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" ' +
+    'stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+    '<path d="M20 11.5A8 8 0 1 1 17.4 6L20 8.5"/><path d="M20 4v5h-5"/></svg>';
+  const rate = !!(CARTE.bilan && !CARTE.bilan.win);
+  const suiteBulle = rate
+    ? `<button class="c-suite cb-suite cb-rejouer" data-gare="${CARTE.bilan.gare}" title="${nomDe(CARTE.bilan.gare)}">Recommencer${boucle}</button>`
+    : hubBilan
     ? `<button class="c-suite cb-suite" data-carrefour="${hubBilan.id}">Choisir la direction${fleche}</button>`
     : prochaine
     ? `<button class="c-suite cb-suite" data-gare="${prochaine}" title="${nomDe(prochaine)}">Suivante${fleche}</button>` : "";
@@ -183,7 +194,7 @@ function vueLigne() {
     const st = id ? etoilesDe(id) : 0;
     const bilan = id && CARTE.bilan && CARTE.bilan.gare === id;
     return `<button class="${cl}${bilan ? " j-bilan" : ""}" data-gare="${id || ""}" ${id ? "" : "disabled"}` +
-      `${id && surLaLigne.includes(id) ? ' data-suivante="1"' : ""}>` +
+      `${id && (rate ? id === CARTE.bilan.gare : surLaLigne.includes(id)) ? ' data-suivante="1"' : ""}>` +
       `<span class="pastille"></span>` +
       `<span class="nom">${id ? nomDe(id) : "?"}</span>` +
       `<span class="etoiles">${st ? "★".repeat(st) : ""}</span>` +
