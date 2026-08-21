@@ -1291,34 +1291,15 @@ function tick(dtMin) {
 // plus le service en attente mais la cible du bouton — qui EST le service en
 // attente quand il y en a un. La règle ne change donc pas, elle se déplace avec
 // ce qu'on demande au joueur de faire.
-let endFocusId = null;
-
 // ------------------------------------------------------------------
-// LA CARTE DERRIÈRE LE RELEVÉ. Le service est fini : la décision suivante est
-// géographique — où aller, quoi ouvrir, avec quel solde. Le relevé se range
-// donc SUR LE CÔTÉ et laisse les deux tiers de l'écran au réseau, qui reste
-// entièrement cliquable. Le joueur repart d'ici sans écran intermédiaire :
-// rejouer, ou toucher une gare.
+// LA FICHE DE FIN TIENT DANS L'ÉCRAN — pour la seule démo « limites ».
 // ------------------------------------------------------------------
-// ------------------------------------------------------------------
-// LE RELEVÉ TIENT DANS L'ÉCRAN, TOUJOURS.
-// ------------------------------------------------------------------
-// Un relevé se lit d'un coup et se termine par une action. Sur une fenêtre
-// basse, il dépassait par le bas : les boutons — la seule chose à FAIRE —
-// passaient sous le bord, et rien ne disait qu'il fallait faire défiler.
-//
-// La feuille resserre déjà l'espacement sous 700 px puis sous 540 px de haut
-// (voir « ÉCRAN BAS » dans station.css). Cela suffit dans la vie courante, pas
-// dans les cas extrêmes : un téléphone en paysage, un pays terminé qui ajoute
-// deux blocs, une fenêtre de bureau réduite à 380 px. Ici, on MET À L'ÉCHELLE
-// plutôt que d'amputer — tout reste lisible et rien ne disparaît.
+// Une gare du catalogue ne passe plus par cette fiche : son résultat se pose
+// en BULLE sous la gare, sur la ligne (js/carte.js, bilanHTML). La fiche
+// centrée ne sert plus qu'à la démo limites, qui n'est sur aucune carte.
 //
 // `zoom` et non `transform: scale()` : zoom modifie la MISE EN PAGE, donc le
 // centrage et le `max-height` de la fiche continuent de fonctionner tout seuls.
-// Une mise à l'échelle par transform laisse une boîte de la taille d'origine
-// dans le flux, et la fiche réduite se retrouve centrée sur un vide plus grand
-// qu'elle — c'est-à-dire décalée.
-//
 // Le plancher existe pour que le remède ne devienne pas le mal : sous 70 %, on
 // laisse défiler plutôt que d'imposer un texte qu'on ne peut plus lire.
 const END_FIT_FLOOR = 0.7;
@@ -1334,68 +1315,17 @@ function fitEndCard() {
   if (!(nat > 0) || !(avail > 0) || nat <= avail) return;
   card.style.zoom = Math.max(END_FIT_FLOOR, avail / nat).toFixed(3);
 }
-// LA HAUTEUR DE LA BANDE, ÉCRITE LÀ OÙ LE CSS LA LIRA. La carte doit s'écarter
-// d'exactement ce que le relevé occupe, et cette hauteur n'est pas connue à
-// l'avance : elle dépend de ce que le service a rapporté — une médaille de
-// plus, une série qui s'affiche, un bandeau de pays. Une valeur fixe aurait
-// laissé un trou sous la ligne ou fait passer la ligne sous la bande.
-//
-// Mesurée APRÈS fitEndCard, parce que celui-ci peut réduire la fiche : c'est
-// la hauteur RENDUE qui compte, pas la hauteur naturelle. getBoundingClientRect
-// tient compte du zoom appliqué.
-function mesureReleve() {
-  const end = document.getElementById("end");
-  const hub = document.getElementById("hub");
-  if (!end || !hub || !end.classList.contains("over-map")) return;
-  const card = end.querySelector(".card");
-  if (!card) return;
-  hub.style.setProperty("--releve-h",
-    Math.ceil(card.getBoundingClientRect().height) + "px");
-}
-// Tourner le téléphone change la hauteur disponible du tout au tout : le relevé
-// se remesure, sinon il reste calé sur l'orientation d'avant.
-window.addEventListener("resize", () => { fitEndCard(); mesureReleve(); });
+window.addEventListener("resize", fitEndCard);
 
-function showEndBesideMap() {
-  const end = document.getElementById("end");
-  const hub = document.getElementById("hub");
-  // Démo « limites » : gare hors catalogue, elle n'est nulle part sur la carte.
-  if (STATION.adhoc || typeof renderCarte !== "function") { fitEndCard(); return; }
-  hub.classList.remove("hidden");
-  // La disposition en bande est posée AVANT de mesurer : sinon on mesure la
-  // fiche encore centrée, et l'on prend la hauteur d'une carte qui n'existe
-  // plus sous cette forme.
-  end.classList.add("over-map");
-  // LA CARTE S'ÉCARTE, elle n'est plus recouverte : la classe vit sur #hub et
-  // non sur #hub-map, dont renderCarte() réécrit le `class` en entier.
-  hub.classList.add("avec-releve");
-  fitEndCard();
-  mesureReleve();
-  // La carte en lignes n'a pas de caméra : il n'y a rien à cadrer, et c'est un
-  // soulagement. L'ancienne devait deviner quoi montrer — le pays ? la gare et
-  // ses voisines à portée ? — parce qu'elle montrait tout à la fois. Ici la
-  // vue ligne désigne déjà la suite, il suffit de la redessiner à jour.
-  // LE VOYAGE PART D'ICI. La carte ne sait pas quelle gare vient d'être jouée —
-  // elle sait seulement ce que le joueur possède. On le lui dit, elle décide
-  // s'il y a un trajet à montrer (js/carte.js).
-  CARTE.voyage = STATION.id;
-  renderCarte();
-  // Le grade est en tête de la carte, et renderCarte() vient de le redessiner.
-}
-// Quitter le relevé en restant sur la carte. `recenter` : on recadre le pays
-// pour de bon (le joueur a demandé la carte), sinon on se contente d'effacer le
-// relevé — il vient de toucher une gare, la déplacer sous son doigt serait pire
-// que de la laisser un peu décalée.
-function endLeaveMap() {
-  const end = document.getElementById("end");
-  if (!end.classList.contains("over-map")) return false;
-  end.classList.add("hidden");
-  end.classList.remove("over-map");
-  document.getElementById("hub").classList.remove("avec-releve");
-  // Le relevé rangé, la carte reprend sa règle ordinaire.
-  if (endFocusId) endFocusId = null;
-  if (typeof renderCarte === "function") renderCarte();
-  return true;
+// TROIS ÉTOILES, TROIS OBJETS — et non une chaîne « ★★☆ ». Chacune s'allume à
+// son tour (CSS, st-pop), et une étoile NEUVE — que cette gare n'avait pas
+// avant ce service — brille plus fort : c'est elle, la récompense. Partagé
+// entre la bulle de la ligne et la fiche de la démo.
+function etoilesHTML(stars, prevStars) {
+  return [0, 1, 2].map(i =>
+    '<span class="st' + (i < stars ? " on" : " off") +
+    (i >= prevStars && i < stars ? " neuve" : "") +
+    '" style="--i:' + i + '">★</span>').join("");
 }
 
 // failed = true : retard plafond dépassé (game over, 0 étoile, rien à débloquer)
@@ -1408,305 +1338,27 @@ function endGame(failed) {
   const stars = failed ? 0 : (d < 10 ? 3 : d < 20 ? 2 : d < 30 ? 1 : 0);
   // Réussite = au moins une étoile (débloque la suite). 0 étoile = échec, qu'on
   // ait terminé sans étoile OU crevé le plafond de retard : dans les deux cas il
-  // faut recommencer. On le rend visuellement sans ambiguïté.
+  // faut recommencer.
   const win = stars >= 1;
-  // Service PARFAIT : gagné, terminé sans le moindre retard cumulé. Déclenche la
-  // célébration (étoiles dorées scintillantes, titre dédié, fanfare).
+  // Service PARFAIT : gagné, terminé sans le moindre retard cumulé.
   const perfect = win && !failed && d === 0;
-  // Étoiles de CETTE gare avant enregistrement : sert à savoir si ce service
-  // vient de boucler le pays (dernier maillon décroché à l'instant).
+  // Étoiles et record de CETTE gare AVANT enregistrement : c'est la différence
+  // qui dit ce que le service a rapporté, et le record d'avant qui dit si on
+  // vient de se dépasser. Mesurés après, ils vaudraient le service du jour.
   const prevStars = (getProgress()[STATION.id] || {}).stars || 0;
-  // LE RECORD D'AVANT, pour le placer sur le barème à côté du service du jour.
-  // Mesuré après l'enregistrement, il vaudrait le service du jour et les deux
-  // repères se superposeraient toujours.
   const prevBest = (getProgress()[STATION.id] || {}).bestDelay;
-  // ---- RECETTE : calculée AVANT d'enregistrer le record ------------------
-  // Une gare ne paie que la PROGRESSION : ce service vaut tarif × multiplicateur,
-  // moins ce que la gare a déjà versé. Or « déjà versé » se déduit du meilleur
-  // record — qu'on s'apprête justement à écraser. L'ordre n'est donc pas un
-  // détail : mesuré après, tout service rapporterait zéro.
   const noPay = failed || STATION.adhoc;
-  // COMBIEN DE PALIERS AVANT, COMBIEN APRÈS. Mesuré de part et d'autre de
-  // l'enregistrement, c'est ce qui permet de nommer la ligne qu'on vient de
-  // cocher — et, quand il n'y en a pas, de montrer celle qui vient.
-  const tiersBefore = noPay ? 0 : stationTiersDone(STATION.id);
-  // LE PAYS AVANT ET APRÈS, pour la même raison : les étoiles ne redescendent
-  // jamais, donc un jalon franchi entre ces deux mesures l'est pour de bon, et
-  // rien n'a besoin d'être stocké.
-  const pays = STATION.adhoc ? null : (CATALOG[currentIdx] || {}).country || null;
-  const jalonBefore = pays ? jalonOf(countryStars(pays).part) : -1;
-  // LES MÉDAILLES SE MESURENT DE PART ET D'AUTRE, comme les paliers et les
-  // jalons — et pour la même raison. Elles se déduisent entièrement de la
-  // progression (js/recompense.js) : rien n'est stocké, donc la seule façon de
-  // savoir laquelle vient de tomber est de photographier avant et après.
-  const medAvant = typeof medaillesDe === "function"
-    ? medaillesDe(etatRecompenses()) : new Set();
   if (!failed && !STATION.adhoc) saveResult(STATION.id, stars, d); // un échec (ou la démo limites) ne modifie pas le record
-  // LES TRAINS DU JOUR : combien sont partis, combien à l'heure. C'est le
-  // chiffre que le joueur a VU toute la journée — l'éclat vert à chaque départ
-  // ponctuel — et le relevé le lui rend en un total. Seuls les convois qui ont
-  // effectivement quitté la gare comptent (depDelay est posé au départ).
-  const partis = trains.filter(t => t.depDelay != null);
-  const aLheure = partis.filter(t => t.depDelay < 1).length;
-  // LA SÉRIE SE TIENT ICI, APRÈS L'ENREGISTREMENT ET AVANT LA PHOTO D'APRÈS :
-  // les médailles de style la lisent, elle doit donc être à jour.
-  //
-  // La démo « limites » ne compte pas — elle n'est pas au catalogue et ne
-  // représente aucun service. Un ÉCHEC, lui, compte : il casse la série. C'est
-  // le seul endroit du jeu où rater a une conséquence, et elle est minuscule —
-  // aucune gare ne se referme, aucune étoile ne se perd.
-  const serie = (!STATION.adhoc && typeof pushSerie === "function")
-    ? pushSerie(!failed && stars >= SERIE_SEUIL) : null;
-  const medNouvelles = typeof medaillesNouvelles === "function"
-    ? medaillesNouvelles(medAvant, medaillesDe(etatRecompenses())) : [];
-  const tiersAfter = noPay ? tiersBefore : stationTiersDone(STATION.id);
-  const paysApres = pays ? countryStars(pays) : null;
-  const jalonAfter = pays ? jalonOf(paysApres.part) : -1;
-  const jalonUp = jalonAfter > jalonBefore ? jalonAfter : -1;
-  // La ponctualité a disparu : c'était un second compteur, invisible partout
-  // ailleurs, qui doublait ce que les étoiles disent déjà. Un jalon de pays
-  // reste un fait d'armes — il se consigne, il ne se paie plus.
-  // LE GRADE SE COMPTE EN ÉTOILES. `prevStars` et `stars` encadrent déjà
-  // l'enregistrement : ce service a rapporté la différence, et le total se
-  // relit sur la progression — rien à stocker.
+  // LA SÉRIE SE TIENT APRÈS L'ENREGISTREMENT. La démo « limites » ne compte
+  // pas. Un ÉCHEC, lui, compte : il casse la série — le seul endroit du jeu où
+  // rater a une conséquence, et elle est minuscule.
+  if (!STATION.adhoc && typeof pushSerie === "function") pushSerie(!failed && stars >= SERIE_SEUIL);
   const etoilesGagnees = noPay ? 0 : Math.max(0, stars - prevStars);
-  const totalApres = typeof etoilesTotal === "function" ? etoilesTotal() : 0;
-  const gradeBefore = gradeOf(totalApres - etoilesGagnees);
-  const gradeAfter = gradeOf(totalApres);
-  const gradeUp = gradeAfter.i > gradeBefore.i;
-  // Le dernier jalon EST « pays terminé » : plus de cas particulier, c'est le
-  // quatrième cran d'une échelle qu'on gravit depuis le premier quart.
-  const justCompletedCountry = jalonUp === JALONS.length - 1;
-  const card = document.querySelector("#end .card");
-  card.classList.toggle("win", win);
-  card.classList.toggle("fail", !win);
-  card.classList.toggle("country-done", justCompletedCountry);
-  card.classList.toggle("perfect", perfect);
-  document.getElementById("end-title").textContent =
-    failed ? "Service interrompu" : justCompletedCountry ? "Pays terminé !"
-      : perfect ? "Sans faute !" : (win ? "Fin du service" : "Objectif manqué");
-  // LA GARE EN TITRE. Le relevé parlait de « Fin du service » sans dire où :
-  // le joueur sortait d'une heure à Tournai et lisait une formule. Le nom est
-  // ce qu'il a accompli — c'est lui qui s'inscrit sur la ligne, juste au-dessus.
-  const gareEl = document.getElementById("end-gare");
-  if (gareEl) gareEl.textContent = STATION.adhoc ? (STATION.name || "Démo")
-    : (typeof nomDe === "function" ? nomDe(STATION.id) : (STATION.city || STATION.name));
-  // TROIS ÉTOILES, TROIS OBJETS — et non une chaîne « ★★☆ ». Chacune peut donc
-  // s'allumer à son tour (CSS, st-pop), et une étoile NEUVE — que cette gare
-  // n'avait pas avant ce service — porte sa marque : c'est elle, la récompense.
-  document.getElementById("stars").innerHTML = [0, 1, 2].map(i =>
-    '<span class="st' + (i < stars ? " on" : " off") + (i >= prevStars && i < stars && !noPay ? " neuve" : "") +
-    '" style="--i:' + i + '">\u2605</span>').join("");
-  // Pas de libellé sous les étoiles : trois étoiles allumées se lisent
-  // toutes seules, et « Sans faute ! » est déjà le titre quand il y a lieu.
-  // UNE LIGNE, JAMAIS QUATRE. Le relevé est étroit — il tient sur un tiers
-  // d'écran — et une phrase qui se replie quatre fois pousse les boutons hors
-  // de vue. Le barème est déjà dit par les étoiles éteintes juste au-dessus, et
-  // « Réessayez ! » par le bouton « Rejouer » juste en dessous.
-  // LE RETARD EST LE CHIFFRE DU RELEVÉ, et il passe en grand.
-  //
-  // Il a d'abord été une phrase — « Retard cumulé : 13 min » —, puis il a
-  // disparu au profit d'une étiquette collée sous la barre du barème. Les deux
-  // étaient faux pour la même raison : c'est LA donnée du service, celle qu'on
-  // vient chercher, et elle se retrouvait soit noyée dans une phrase, soit
-  // réduite à 11 pixels au bas d'un graphique.
-  //
-  // Elle prend donc la place d'un titre, à côté des étoiles. Le barème n'a
-  // plus à la porter : il redevient ce qu'il est, une échelle — et il y gagne
-  // la hauteur que l'étiquette lui prenait.
-  const dl = document.getElementById("end-delay");
-  dl.classList.remove("hidden");
-  if (STATION.adhoc) {
-    // La démo « limites » n'a pas de barème : sans échelle autour, un chiffre
-    // seul ne dirait rien, et la phrase reste le bon format.
-    dl.textContent = failed ? "Retard de +" + d + " min — limite dépassée."
-      : d === 0 ? "Service parfait — aucun retard." : "Retard cumulé : " + d + " min";
-  } else {
-    // Le chiffre vit dans les tuiles du relevé (recetteHTML) : ici il ferait
-    // doublon avec lui-même, à dix centimètres.
-    dl.classList.add("hidden");
-  }
-  // « Trains à l'heure : 15/15 » a été retiré : c'est le retard cumulé, juste
-  // au-dessus, qui décide des étoiles et de la recette — un second décompte à
-  // côté du premier n'ajoutait qu'une ligne à lire pour la même information.
-  // BANDEAU DE JALON : le quart, la moitié, les trois quarts, le tout. Il ne
-  // sortait qu'au pays entièrement décroché — vingt-neuf gares en Belgique,
-  // trente-sept en Allemagne — c'est-à-dire presque jamais. Un joueur peut
-  // maintenant fêter quelque chose quatre fois par pays, et voir de loin qu'il
-  // avance.
-  const ec = document.getElementById("end-country");
-  if (jalonUp >= 0) {
-    const toks = pays.trim().split(" ");
-    const cflag = toks[0], cname = toks.slice(1).join(" ") || pays;
-    ec.innerHTML = '<span class="ec-flag">' + cflag + "</span>" +
-      '<span class="ec-txt"><b>' + cname + "</b> — " + JALONS[jalonUp].nom.toLowerCase() +
-      '<span class="ec-stars">' + paysApres.earned + " / " + paysApres.total + " ★" +
-
-      "</span></span>";
-    ec.classList.remove("hidden");
-  } else ec.classList.add("hidden");
   (perfect ? SND.perfect : win ? SND.end : SND.incident)(); // parfait → fanfare, 0 étoile → échec
-  // ---- RECETTE ET SUITE ---------------------------------------------------
-  // L'écran de fin n'est plus un tribunal qui distribue une gare : c'est un
-  // RELEVÉ. Il annonce ce que le service a rapporté, le nouveau solde, et
-  // propose — sans jamais l'imposer — d'ouvrir une voisine abordable. Rien ne
-  // se perd si le joueur ferme : la décision d'achat reste sur la carte,
-  // indéfiniment.
-  //
-  // Redessiné après un achat SANS repasser par endGame() : réenclencher tout le
-  // bilan rejouerait le son et réenregistrerait le score.
-  const reward = document.getElementById("end-unlock");
-  const nameOf = id => { const c = CATALOG.find(x => x.id === id); return c ? (c.city || c.name) : id; };
-  let boughtNow = null;
-
-  // Ce que ce service a rapporté. TROIS LIGNES, PAS UNE DE PLUS : le gain, le
-  // solde, et de quoi repartir. Le détail du calcul (tarif × étoiles, déjà
-  // encaissé) a été essayé et retiré — au bout d'un service, personne ne relit
-  // une opération, et le bloc devenait un tableau.
-  //
-  // UN « +0 » N'EST PLUS UNE PUNITION, C'EST UNE LIGNE PAS ENCORE COCHÉE.
-  //
-  // Le relevé montrait le gain, puis — quand il était nul — une jauge pleine et
-  // le mot « Complet ». Un service à ★★★, six minutes de retard sur une journée
-  // entière, s'achevait donc sur un gros zéro gris et l'annonce que la gare
-  // était finie. Le joueur ne lisait pas « ce palier était déjà payé », il
-  // lisait « bien jouer ne rapporte rien », et le seul bouton disponible
-  // promettait la même chose.
-  //
-  // Deux lignes le remplacent, et elles ne se contredisent jamais :
-  //   • CE QU'ON VIENT DE DÉCROCHER, nommé — c'est la récompense ;
-  //   • CE QUI VIENT ENSUITE, avec son montant — c'est la raison de rejouer.
-  // Palmarès complet : la seule fois où il n'y a plus de ligne suivante, et
-  // c'est alors un trophée qu'on annonce, pas une mine épuisée.
-  // ------------------------------------------------------------------
-  // LE BARÈME — une ligne du temps, et l'on voit tout d'un coup d'œil.
-  // ------------------------------------------------------------------
-  // Ce que le relevé disait avant, il le disait en QUATRE PHRASES : le palier
-  // décroché, le palier suivant et son seuil, le diamant, le total. Quatre
-  // lignes à lire pour une seule question — de combien dois-je m'améliorer ?
-  //
-  // Le barème répond sans un mot de trop. C'est l'axe du RETARD, de zéro à la
-  // limite d'échec ; la barre montre le temps qu'on a mis, les paliers sont
-  // gradués dessus, et l'écart à franchir se VOIT au lieu de se calculer. Le
-  // record d'avant y figure aussi : on sait du même regard si l'on vient de se
-  // dépasser ou de rater son meilleur jour.
-  //
-  // Les bornes se lisent dans PALIERS — jamais écrites en dur ici. Les seuils
-  // sont destinés à devenir réglables par gare ; un axe qui montrerait 10 / 20
-  // / 30 pendant que la gare en compte d'autres serait pire que pas d'axe.
-  function baremeHTML() {
-    const segs = PALIERS.filter(p => !p.parfait).slice().sort((a, b) => a.under - b.under);
-    if (!segs.length) return "";
-    const max = segs[segs.length - 1].under;
-    const pc = v => Math.max(0, Math.min(100, v / max * 100));
-    // Le record APRÈS enregistrement : c'est lui que juge le palmarès.
-    const record = (getProgress()[STATION.id] || {}).bestDelay;
-    // Le repère du record ne s'affiche que s'il dit quelque chose : un record
-    // égal au service du jour se cacherait sous la barre.
-    const vieux = (prevBest != null && prevBest < d) ? prevBest : null;
-
-    let bas = 0;
-    const bandes = segs.map(p => {
-      const w = (p.under - bas) / max * 100; bas = p.under;
-      // Une bande est ACQUISE quand le record passe dessous : elle s'allume.
-      const acquis = record != null && record < p.under;
-      return '<span class="ba-seg' + (acquis ? " on" : "") + '" style="width:' + w.toFixed(3) + '%">' +
-        "\u2605".repeat(p.stars) + "</span>";
-    }).join("");
-
-    // LA GRADUATION SOUS L'AXE, aux bornes exactes. Les seuils étaient écrits
-    // sous les étoiles, au milieu de leur bande : « <10 » posé au centre du
-    // segment 0-10 se lit comme un point, pas comme une frontière. Aux bornes,
-    // ils redeviennent ce qu'ils sont — les traits qu'il faut passer.
-    const bornes = [0].concat(segs.map(p => p.under));
-    const ticks = bornes.map((v, i) => {
-      const bout = i === 0 ? " deb" : i === bornes.length - 1 ? " fin" : "";
-      return '<i class="ba-tick' + bout + '" style="left:' + pc(v).toFixed(3) + '%">' +
-        v + (i === bornes.length - 1 ? " min" : "") + "</i>";
-    }).join("");
-
-    // Le sans-faute est un POINT, pas une plage : il vit à l'origine de l'axe.
-    const dia = '<span class="ba-dia' + (record === 0 ? " on" : "") +
-      '" title="Sans faute — aucun retard">\u25C6</span>';
-
-    return '<div class="bareme">' +
-      '<div class="ba-bandes">' + dia + bandes + "</div>" +
-      '<div class="ba-piste' + (d >= max ? " depasse" : "") + '">' +
-        '<i class="ba-fait" style="width:' + pc(d).toFixed(3) + '%"></i>' +
-        (vieux != null ? '<i class="ba-rec" style="left:' + pc(vieux).toFixed(3) +
-          '%" title="Votre record : ' + vieux + ' min"></i>' : "") +
-      "</div>" +
-      '<div class="ba-ticks">' + ticks + "</div>" +
-      "</div>";
-  }
-
-  // Le relevé, désormais : le barème, puis les FAITS du jour — une série, une
-  // médaille, un grade. Plus de cadre doré ni de titre : le bloc ne raconte
-  // plus ce qu'il contient, il le montre.
-  // LES TUILES — deux mesures, chacune avec son chiffre en grand
-  // et ce qu'il veut dire en dessous. Le relevé d'avant donnait UN chiffre (le
-  // retard) et un axe ; le joueur finissait une journée de vingt-deux trains
-  // sans jamais lire « 22 trains », ni voir combien d'étoiles il venait de
-  // mettre sur la carte. Les tuiles se lisent de gauche à droite dans l'ordre
-  // de la question : combien de retard ? combien de trains à l'heure ? qu'est-ce
-  // que ça m'a rapporté ? et où en est la ligne ?
-  function tuilesHTML() {
-    const tuile = (cl, n, unite, label, chip) =>
-      '<div class="e-tuile' + (cl ? " " + cl : "") + '"><b>' + n +
-      (unite ? "<small>" + unite + "</small>" : "") + "</b><span>" + label + "</span>" +
-      (chip ? '<i class="e-chip ' + chip.cl + '">' + chip.txt + "</i>" : "") + "</div>";
-    // Le retard, et ce qu'il vaut face au record : battu (de combien), égalé,
-    // ou le record qui tient toujours. Un premier service n'a rien à battre.
-    let chip = null;
-    if (!failed && win) {
-      if (prevBest == null) chip = { cl: "neuf", txt: "premier service" };
-      else if (d < prevBest) chip = { cl: "rec", txt: "record \u2212" + (prevBest - d) + " min" };
-      else if (d === prevBest) chip = { cl: "egal", txt: "record \u00e9gal\u00e9" };
-      else chip = { cl: "loin", txt: "record " + prevBest + " min" };
-    }
-    const retard = tuile(win ? "" : "rate", d, "min", "de retard", chip);
-    const ponctu = tuile("", aLheure, "/" + partis.length, partis.length > 1 ? "trains \u00e0 l'heure" : "train \u00e0 l'heure");
-    // Deux tuiles, pas quatre. Les étoiles gagnées se voient déjà sur le
-    // héros (l'étoile neuve brille) et sur la ligne juste au-dessus ; la ligne
-    // y affiche aussi son avancement. Les redire ici, c'était du bruit.
-    return '<div class="e-tuiles">' + retard + ponctu + "</div>";
-  }
-
-  function recetteHTML() {
-    // La démo « limites » n'est pas au catalogue : elle n'a ni palmarès ni
-    // record, et un barème sans repère ne dirait rien.
-    if (STATION.adhoc) return "";
-    // La série n'y figure plus : « 2 d'affilée » était un compteur de plus à
-    // côté du verdict. Elle reste tenue (pushSerie) parce que les médailles
-    // de style la lisent, et c'est là qu'elle se manifeste.
-    const faits = medaillesHTML() +
-      (gradeUp ? '<div class="eu-grade">' + gradeAfter.nom + " !</div>" : "");
-    // TROIS TEMPS, DE HAUT EN BAS : ce que j'ai fait (les tuiles), par rapport
-    // à quoi (le barème, qui prend la largeur), et ce que ça déclenche (série,
-    // médaille, grade — seulement quand il y a quelque chose à dire).
-    return tuilesHTML() + '<div class="e-bas">' + baremeHTML() +
-      (faits ? '<div class="eu-faits">' + faits + "</div>" : "") + "</div>";
-  }
-
-  // DEUX MÉDAILLES AU PLUS, ET LE RESTE COMPTÉ. Elles se déduisent de la
-  // progression, donc la toute première partie qui suit leur arrivée peut en
-  // décrocher huit d'un coup : les afficher toutes noierait ce que le service
-  // vient réellement d'accomplir. Les deux premières de la liste sont les plus
-  // communes — donc celles qu'on vient probablement de franchir.
-  function medaillesHTML() {
-    if (!medNouvelles.length) return "";
-    const vues = medNouvelles.slice(0, 2);
-    return vues.map(m => '<div class="eu-med"><span class="em-p">\u25CF</span>' +
-      "<span><b>" + m.nom + "</b> — " + m.dit + "</span></div>").join("") +
-      (medNouvelles.length > vues.length
-        ? '<div class="eu-med autres">et ' + (medNouvelles.length - vues.length) +
-          " autre" + (medNouvelles.length - vues.length > 1 ? "s" : "") + "</div>"
-        : "");
-  }
 
   // Le total d'étoiles de la carte compte en même temps : la récompense ne
   // s'additionne pas dans un coin de fiche, elle tombe dans le compteur qu'on
-  // voit déjà.
+  // voit déjà. Lancé APRÈS le rendu de la carte, sinon il file à vide.
   function rollRecette() {
     if (noPay || !CARTE.etoiles || typeof etoilesTotal !== "function") return;
     const apres = etoilesTotal(), avant = apres - etoilesGagnees;
@@ -1715,133 +1367,56 @@ function endGame(failed) {
     const pas = ts => {
       if (t0 === null) t0 = ts;
       const k = Math.min(1, (ts - t0) / 600), e = 1 - Math.pow(1 - k, 3);
-      CARTE.etoiles.textContent = "\u2605 " + Math.round(avant + (apres - avant) * e);
+      CARTE.etoiles.textContent = "★ " + Math.round(avant + (apres - avant) * e);
       if (k < 1) requestAnimationFrame(pas);
     };
     requestAnimationFrame(pas);
   }
 
   // ------------------------------------------------------------------
-  // LE PAS SUIVANT — un seul, choisi par le jeu, jamais vide.
+  // LE RÉSULTAT SE POSE SUR LA LIGNE, sous la gare qu'on vient de tenir.
   // ------------------------------------------------------------------
-  // Le relevé pouvait s'achever sur un unique bouton « Rejouer » qui ne
-  // promettait rien : gare au palmarès complet, aucune voisine payable, et la
-  // boucle s'arrêtait net. Le joueur restait devant un écran sans suite, à
-  // chercher lui-même sur la carte ce qu'il pouvait bien faire.
-  //
-  // Cinq cas, dans l'ordre où ils servent le joueur — le premier qui s'applique
-  // gagne, et le dernier ne peut pas échouer :
-  //
-  //   1. UN SERVICE EN ATTENTE. Une gare acquise n'a jamais tourné : elle
-  //      bloque TOUS les achats du réseau (js/catalog.js). Tant qu'elle attend,
-  //      rien d'autre n'avance — et le joueur ne rencontre jamais le blocage,
-  //      puisqu'on l'envoie le lever avant qu'il le heurte.
-  //   2. UNE VOISINE À OUVRIR, la moins chère de celles réellement payables.
-  //   3. ICI MÊME, s'il reste un palier à décrocher : le geste le moins coûteux
-  //      qui soit, on ne bouge pas.
-  //   4. AILLEURS SUR LE RÉSEAU : une gare à soi qui a encore un palier. Une
-  //      voisine d'abord — on ne renvoie pas le joueur à l'autre bout de
-  //      l'Europe — et la plus facile d'abord, puisqu'il vient chercher un
-  //      palier, pas une épreuve.
-  //   5. LA CARTE. Tout est décroché, tout est acheté : il n'y a plus de pas
-  //      suivant à désigner, et prétendre le contraire serait mentir.
-  function nextStep() {
-    if (STATION.adhoc) return { kind: "map" };
-    if (!win) return { kind: "replay" };              // rater, c'est recommencer
-    const here = CATALOG[currentIdx] ? CATALOG[currentIdx].id : null;
-
-    // Les trois gestes qui font avancer viennent de js/catalog.js — la carte
-    // propose EXACTEMENT les mêmes, et ne peut donc pas contredire ce relevé.
-    // Seul « rejouer ici » est propre à cet écran, et il s'intercale : quand la
-    // gare qu'on vient de tenir a encore un palier, c'est le geste le moins
-    // coûteux qui soit — on ne bouge pas.
-    const idle = idleStation();
-    if (idle && idle !== here) return { kind: "service", id: idle };
-
-    if (!boughtNow) {
-      const buy = cheapestBuyableNear(here);
-      if (buy) return { kind: "open", id: buy };
+  // Il a été une fiche centrée, puis une bande au bas de l'écran avec un
+  // barème, des tuiles, une série, des médailles. Tout était vrai, et le
+  // joueur ne voyait plus ce qu'il venait de faire. Il reste ce que les
+  // étoiles ne disent pas : le retard, et le record. La carte fait le reste —
+  // la gare suivante est à un doigt, la gare jouée aussi pour recommencer.
+  if (!STATION.adhoc && typeof renderCarte === "function") {
+    CARTE.bilan = { gare: STATION.id, stars, prevStars, d, prevBest, perfect, failed, win };
+    CARTE.voyage = STATION.id;   // le train file vers la suivante (js/carte.js)
+    showHub();                   // #end rangé, la carte redessinée avec la bulle
+    rollRecette();
+    if (perfect && typeof perfectConfetti === "function") {
+      const bulle = document.querySelector("#hub .c-bilan");
+      if (bulle) perfectConfetti(bulle, document.getElementById("confetti-carte"));
     }
-    if (here && stationNextTier(here) >= 0) return { kind: "replay" };
-
-    return { kind: "map" };
+    return;
   }
 
-  // Partir d'ici vers une autre gare : le relevé se range, le convoi file sur la
-  // carte, le service démarre. Un seul chemin pour les trois cas qui déplacent
-  // le joueur (service en attente, gare ouverte, gare d'ailleurs) — trois copies
-  // auraient fini par diverger sur l'ordre des masquages.
-  function travelTo(id) {
-    const gi = CATALOG.findIndex(c => c.id === id);
-    if (gi < 0) return;
-    document.getElementById("end").classList.add("hidden");
-    document.getElementById("hub").classList.remove("hidden");
-    if (typeof started !== "undefined") started = false;
-    // Le voyage animé jusqu'à la gare suivante est parti avec la carte
-    // géographique : il suivait une caméra, et il n'y en a plus. Le document
-    // le veut de retour — « voir son train filer le long des lignes
-    // débloquées » — mais sur la carte en lignes, ce qui n'est pas la même
-    // animation. En attendant, on y va directement.
-    startStation(gi);
-  }
-
-  function paintActions() {
-    const step = nextStep();
-    // « Rejouer » désigne ICI : c'est la gare qu'on vient de quitter, et elle a
-    // le même droit d'être montrée que les autres.
-    endFocusId = step.kind === "map" ? null
-      : step.kind === "replay" ? (STATION.adhoc ? null : STATION.id)
-      : step.id || null;
-
-    reward.innerHTML = recetteHTML();
-    reward.classList.toggle("hidden", !reward.innerHTML);
-
-    // REJOUER EST LE PAS SUIVANT, OU IL EST SECONDAIRE — jamais les deux, et
-    // jamais un bouton principal qui ne promet rien. Quand il n'est pas le pas
-    // suivant, il ne reste à l'écran que s'il a encore quelque chose à offrir.
-    const btnReplay = document.getElementById("btn-replay");
-    const btnNext = document.getElementById("btn-next");
-    // REJOUER SE JUSTIFIE PAR CE QUI RESTE À DÉCROCHER, plus par un montant.
-    // Le bouton portait « +30 » : c'était le dernier endroit où un crédit
-    // survivait, et il disait au joueur que revenir sur une gare valait une
-    // somme plutôt qu'une étoile. Il dit maintenant quel palier l'attend.
-    // Rien à afficher quand la gare a tout donné : son absence le dit déjà.
-    const resteIci = (STATION.adhoc || typeof stationNextTier !== "function") ? -1
-      : stationNextTier(STATION.id);
-    btnReplay.innerHTML = (typeof icon === "function" ? icon(ICON.restart, 18) : "") +
-      (resteIci >= 0 ? "Rejouer — " + PALIERS[resteIci].nom : "Rejouer");
-    const replayIsStep = step.kind === "replay";
-    btnReplay.classList.toggle("primary", replayIsStep);
-    btnReplay.classList.toggle("hidden", !replayIsStep && resteIci < 0);
-
-    // Le pas suivant porte SON NOM et SON MONTANT : « Continuer » tout seul ne
-    // dit pas où l'on va, et un bouton qui n'annonce pas ce qu'il coûte ou ce
-    // qu'il rapporte se presse à l'aveugle.
-    btnNext.classList.toggle("hidden", replayIsStep);
-    btnNext.classList.add("primary");
-    if (!replayIsStep) {
-      const nm = step.id ? nameOf(step.id) : "";
-      btnNext.innerHTML =
-        step.kind === "service" ? "Prendre le service à " + nm
-        : step.kind === "open"  ? "Ouvrir " + nm
-        : step.kind === "go"    ? "Continuer — " + nm
-                                : "Voir la carte";
-      btnNext.onclick = () => {
-        if (step.kind === "map") { endLeaveMap(true); return; }
-        // Acheter ici, c'est déjà s'y engager : on n'ajoute pas un écran de
-        // plus. Si le solde a bougé entre-temps, on se contente de repeindre.
-        if (step.kind === "open" && !buyStationById(step.id)) { paintActions(); return; }
-        if (step.kind === "open") boughtNow = step.id;
-        travelTo(step.id);
-      };
-    }
-  }
-  paintActions();
-
+  // ---- Démo « limites » : la fiche centrée, sans carte dessous -------------
+  const card = document.querySelector("#end .card");
+  card.classList.toggle("win", win);
+  card.classList.toggle("fail", !win);
+  card.classList.toggle("perfect", perfect);
+  document.getElementById("end-title").textContent =
+    failed ? "Service interrompu" : perfect ? "Sans faute !" : (win ? "Fin du service" : "Objectif manqué");
+  const gareEl = document.getElementById("end-gare");
+  if (gareEl) gareEl.textContent = STATION.name || "Démo";
+  document.getElementById("stars").innerHTML = etoilesHTML(stars, 3); // rien n'est « neuf » : la démo n'enregistre rien
+  const dl = document.getElementById("end-delay");
+  dl.classList.remove("hidden");
+  dl.textContent = failed ? "Retard de +" + d + " min — limite dépassée."
+    : d === 0 ? "Service parfait — aucun retard." : "Retard cumulé : " + d + " min";
+  const btnNext = document.getElementById("btn-next");
+  btnNext.classList.remove("hidden");
+  btnNext.classList.remove("primary");
+  btnNext.textContent = "Voir la carte";
+  btnNext.onclick = () => showHub();
+  const btnReplay = document.getElementById("btn-replay");
+  btnReplay.classList.remove("hidden");
+  btnReplay.classList.add("primary");
+  btnReplay.innerHTML = (typeof icon === "function" ? icon(ICON.restart, 18) : "") + "Rejouer";
   document.getElementById("end").classList.remove("hidden");
-  showEndBesideMap();
-  rollRecette(); // le décompte part APRÈS le démasquage, sinon il file à vide
-  // Salve APRÈS le démasquage : elle se cale sur la fiche, qui se mesurerait à
-  // zéro tant que l'overlay est en display:none.
+  fitEndCard();
   if (perfect && typeof perfectConfetti === "function") perfectConfetti();
 }

@@ -42,9 +42,8 @@ let lastPlayedId = null;
 async function startStation(i) {
   currentIdx = i;
   lastPlayedId = (CATALOG[i] || {}).id || null;
-  // Un service commence : le relevé précédent et le bouton qu'il désignait
-  // appartiennent au passé (js/game.js, endFocusId).
-  if (typeof endFocusId !== "undefined") endFocusId = null;
+  // Un service commence : le résultat du précédent appartient au passé.
+  if (typeof CARTE !== "undefined") CARTE.bilan = null;
   // LA FICHE TELLE QU'ON LA JOUE, et non telle qu'elle est écrite : la gare
   // d'amorce d'une partie se joue en niveau 1 (js/graph.js, ficheDeService).
   const cfg = typeof ficheDeService === "function"

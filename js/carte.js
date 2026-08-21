@@ -26,7 +26,9 @@
 // startStation. Rien d'autre.
 // ------------------------------------------------------------------
 
-const CARTE = { hote: null, vue: "ligne", corridor: null, depuis: null,
+// `bilan` : le résultat du dernier service, posé en bulle sous sa gare sur la
+// vue ligne (js/game.js, endGame). Il tient jusqu'au service suivant.
+const CARTE = { hote: null, vue: "ligne", corridor: null, depuis: null, bilan: null,
   // Le voyage : la gare d'où le train doit partir, posée par le relevé de fin
   // de service (js/game.js) et consommée au rendu suivant. Une seule fois.
   voyage: null, prochaine: null,
@@ -151,7 +153,8 @@ function vueLigne() {
     const etat = id ? etatDeGare(id) : "fermee";
     const cl = ["jalon", "j-" + etat, role ? "j-" + role : ""].filter(Boolean).join(" ");
     const st = id ? etoilesDe(id) : 0;
-    return `<button class="${cl}" data-gare="${id || ""}" ${id ? "" : "disabled"}` +
+    const bilan = id && CARTE.bilan && CARTE.bilan.gare === id;
+    return `<button class="${cl}${bilan ? " j-bilan" : ""}" data-gare="${id || ""}" ${id ? "" : "disabled"}` +
       `${id && surLaLigne.includes(id) ? ' data-suivante="1"' : ""}>` +
       `<span class="pastille"></span>` +
       `<span class="nom">${id ? nomDe(id) : "?"}</span>` +
@@ -167,14 +170,64 @@ function vueLigne() {
         : `<span class="c-avance">${faits} / ${total}</span>`}</div>
       ${bourseHTML()}
     </div>
-    <div class="c-ligne"${rang ? ` data-rang="${rang.id}"` : ""}>
+    <div class="c-ligne${CARTE.bilan ? " avec-bilan" : ""}"${rang ? ` data-rang="${rang.id}"` : ""}>
       ${jalon(hDep && hDep.gareId, "boss")}
       ${p.gares.map(g => jalon(g)).join("")}
       ${jalon(hArr && hArr.gareId, "boss")}
+      ${bilanHTML()}
     </div>
     ${prochaine ? `<button class="c-suite" data-gare="${prochaine}">▸ ${
       isBought(prochaine) ? "Reprendre" : "Ouvrir"} ${nomDe(prochaine)}</button>` : ""}`;
 }
+
+// ------------------------------------------------------------------
+// LA BULLE DU RÉSULTAT — sous la gare qu'on vient de tenir.
+// ------------------------------------------------------------------
+// Le relevé de fin a été une fiche, puis une bande : un écran de plus entre
+// le service et la carte, qui disait beaucoup et ne montrait rien. Ici le
+// résultat s'inscrit LÀ OÙ IL COMPTE — sous le jalon de la gare, dont il
+// reprend les étoiles en grand — et il ne dit que ce que les étoiles ne
+// disent pas : le retard, et ce qu'il vaut face au record. Pas de bouton :
+// la gare suivante est à un doigt sur la ligne, la gare jouée aussi.
+function bilanHTML() {
+  const b = CARTE.bilan;
+  if (!b) return "";
+  const cl = "c-bilan" + (b.perfect ? " parfait" : "") + (b.win ? "" : " rate");
+  const etoiles = typeof etoilesHTML === "function" ? etoilesHTML(b.stars, b.prevStars) : "";
+  const retard = b.failed
+    ? `<div class="cb-retard"><b>${b.d}</b> min — plafond dépassé</div>`
+    : `<div class="cb-retard"><b>${b.d}</b> min de retard</div>`;
+  // Le record : battu (de combien), égalé, ou celui qui tient toujours. Un
+  // premier service n'a rien à battre ; un échec n'a rien à comparer.
+  let rec = "";
+  if (b.failed) rec = "";
+  else if (!b.win) rec = `<div class="cb-record loin">objectif manqué</div>`;
+  else if (b.prevBest == null) rec = `<div class="cb-record neuf">premier service</div>`;
+  else if (b.d < b.prevBest) rec = `<div class="cb-record bat">record battu · −${b.prevBest - b.d} min</div>`;
+  else if (b.d === b.prevBest) rec = `<div class="cb-record egal">record égalé</div>`;
+  else rec = `<div class="cb-record loin">record : ${b.prevBest} min</div>`;
+  return `<div class="${cl}" role="status"><div class="cb-etoiles">${etoiles}</div>${retard}${rec}</div>`;
+}
+// La bulle se pose APRÈS le rendu, parce qu'elle se mesure : centrée sous le
+// jalon, à la hauteur de ses petites étoiles (qu'elle remplace). Enfant de la
+// piste et non de la carte, elle défile avec la ligne.
+function poserBilan() {
+  if (!CARTE.hote) return;
+  const bulle = CARTE.hote.querySelector(".c-bilan");
+  const jalon = CARTE.hote.querySelector(".jalon.j-bilan");
+  if (!bulle || !jalon) { if (bulle) bulle.remove(); return; }
+  const et = jalon.querySelector(".etoiles");
+  bulle.style.left = (jalon.offsetLeft + jalon.offsetWidth / 2) + "px";
+  bulle.style.top = (jalon.offsetTop + (et ? et.offsetTop : jalon.offsetHeight) - 6) + "px";
+  // Ligne longue : la gare jouée doit être à l'écran. Le voyage (animerVoyage)
+  // fait déjà défiler vers la suivante, qui est voisine — sinon on cadre ici.
+  const piste = jalon.parentElement;
+  if (!CARTE.voyage && piste.scrollWidth > piste.clientWidth) {
+    const cx = jalon.offsetLeft + jalon.offsetWidth / 2;
+    piste.scrollTo({ left: Math.max(0, cx - piste.clientWidth / 2) });
+  }
+}
+window.addEventListener("resize", () => { if (CARTE.bilan) poserBilan(); });
 
 // Aucune gare tenue : le tout premier écran. ON Y CHOISIT UNE LIGNE, pas une
 // gare.
@@ -441,6 +494,7 @@ function renderCarte() {
                  : CARTE.vue === "europe" ? vueEurope() : vueLigne();
   // Le relevé de fin anime le solde : il lui faut l'élément, refait à chaque rendu.
   CARTE.etoiles = hote.querySelector(".c-etoiles");
+  poserBilan();    // avant le voyage : lui lit CARTE.voyage, et le consomme
   animerVoyage();
 
   // Un seul écouteur, posé sur l'hôte : le contenu se refait à chaque rendu,

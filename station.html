@@ -138,32 +138,15 @@
            bouton ne changeait pas d'écran, il rangeait le relevé — une croix le
            dit mieux, et rend sa place aux deux actions qui restent. -->
       <button class="mm-close" id="btn-end-close" aria-label="Fermer"></button>
-      <!-- Le verdict — titre, étoiles, retard — tient dans UN élément, parce
-           que le relevé est une BANDE au bas de l'écran : il faut pouvoir le
-           poser d'un bloc à gauche du barème. Trois éléments frères se
-           seraient répartis tout seuls sur la largeur. -->
-      <!-- LE HÉROS DU RELEVÉ, c'est ce qu'on vient d'accomplir : la GARE que
-           l'on vient de tenir, le verdict, et les étoiles — grandes, posées une
-           à une. Le chiffre du retard a rejoint les tuiles (js/game.js) : il
-           n'est plus le titre, il est une mesure parmi les trois qui comptent.
-           Il ne reste ici, en phrase, que pour la démo « limites ». -->
+      <!-- Cette fiche ne sert plus qu'à la démo « limites » : une gare du
+           catalogue voit son résultat en BULLE sous son jalon, sur la ligne
+           (js/carte.js, bilanHTML). -->
       <div class="e-verdict">
         <div id="end-gare"></div>
         <h1 id="end-title">Fin du service</h1>
         <div id="stars"></div>
         <div id="end-delay"></div>
       </div>
-      <!-- Bandeau « pays terminé » : affiché uniquement quand ce service boucle
-           le dernier maillon d'un pays. -->
-      <div id="end-country" class="hidden"></div>
-      <!-- Recette du service : ce qu'il a rapporté, le nouveau solde, et — si
-           une voisine est abordable — de quoi l'ouvrir sans passer par la
-           carte (js/game.js). -->
-      <div id="end-unlock" class="hidden"></div>
-      <!-- LE PAS SUIVANT D'ABORD, la reprise ensuite. Le jeu désigne une seule
-           action — ouvrir une voisine, aller lever un service en attente,
-           repartir ailleurs — et « Rejouer » ne reste que s'il a encore un
-           palier à offrir (js/game.js, nextStep). -->
       <div id="end-actions">
         <button class="btn hidden" id="btn-next"></button>
         <button class="btn" id="btn-replay">Rejouer</button>
@@ -175,6 +158,8 @@
   <div id="preparing" class="hidden"><div class="prep-inner"><span class="prep-spin"></span>Préparation du service…</div></div>
 </div>
 <div id="hub">
+  <!-- Salve du sans-faute, par-dessus la carte et sa bulle de résultat. -->
+  <canvas id="confetti-carte" class="hidden" aria-hidden="true"></canvas>
   <!-- Carte du monde zoomable (SVG + overlay de labels + bouton retour flottant),
        entièrement construite par js/map.js. -->
   <div id="hub-map"></div>

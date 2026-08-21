@@ -516,16 +516,20 @@ function updateTimeline() {
 let confettiRAF = null;
 function stopConfetti() {
   if (confettiRAF) { cancelAnimationFrame(confettiRAF); confettiRAF = null; }
-  const cv = document.getElementById("confetti");
-  if (cv) {
+  // Deux toiles : celle de la fiche (démo limites) et celle de la carte (bulle).
+  for (const id of ["confetti", "confetti-carte"]) {
+    const cv = document.getElementById(id);
+    if (!cv) continue;
     cv.classList.add("hidden");
     const g = cv.getContext && cv.getContext("2d");
     if (g) g.clearRect(0, 0, cv.width, cv.height);
   }
 }
-function perfectConfetti() {
-  const cv = document.getElementById("confetti");
-  const card = document.querySelector("#end .card");
+// `card` : ce qu'on fête — la fiche de la démo par défaut, ou la bulle posée
+// sur la ligne ; `cv` : la toile qui couvre son écran.
+function perfectConfetti(card, cv) {
+  cv = cv || document.getElementById("confetti");
+  card = card || document.querySelector("#end .card");
   if (!cv || !card || !cv.getContext) return;
   stopConfetti();
   // Mouvement réduit demandé : la fiche garde son halo doré et ses étoiles qui
