@@ -849,10 +849,6 @@ svg { width: 100%; height: 100%; display: block; }
 }
 @media (prefers-reduced-motion: reduce) { #stars .st.on { animation: none; } }
 #end .card.fail #stars .st { color: #2c3650; }
-#end-palier { font-size: 13.5px; font-weight: 600; color: var(--text); margin-top: 6px; }
-#end-palier.parfait { color: var(--gold-hi); }
-#end-palier.rate { color: #f87171; }
-#end-palier:empty { display: none; }
 #end.over-map #end-delay { font-size: 12px; margin: 0; color: var(--muted); display: flex; align-items: baseline; gap: 4px; }
 .ed-n { font-size: 25px; font-weight: 700; color: var(--text); line-height: 1; font-variant-numeric: tabular-nums; }
 .ed-u { font-size: 12px; color: var(--muted); }
@@ -861,14 +857,18 @@ svg { width: 100%; height: 100%; display: block; }
 /* --- LA COLONNE DU MILIEU : tuiles, puis barème. ------------------------ */
 #end.over-map #end-unlock {
   grid-area: unlock; min-width: 0; margin: 0;
-  display: flex; flex-direction: column; gap: 12px;
+  display: flex; flex-direction: column; align-items: center; gap: 12px;
 }
+/* Deux tuiles et l'axe, CENTRÉS dans la colonne et de la même largeur : la
+   colonne est large, son contenu ne l'est pas, et collé à gauche il laissait
+   un vide à droite qui ressemblait à un oubli. */
+#end.over-map .e-tuiles, #end.over-map .e-bas { width: min(100%, 560px); }
 /* Les tuiles : le chiffre en 24 px, son sens en 11 px dessous. Quatre au
    plus, et elles se partagent la largeur — sur un écran étroit elles passent
    à deux par rangée (voir plus bas), jamais à une colonne de chiffres. */
 .e-tuiles { display: flex; flex-wrap: wrap; gap: 8px; }
 .e-tuile {
-  flex: 1 1 120px; min-width: 0;
+  flex: 1 1 140px; min-width: 0;
   display: flex; flex-direction: column; gap: 2px;
   padding: 9px 12px 8px; border-radius: 12px;
   background: rgba(255, 255, 255, .035); border: 1px solid #232c42;
@@ -905,7 +905,7 @@ svg { width: 100%; height: 100%; display: block; }
 /* Le barème prend la largeur ; les faits du jour (série, médaille, grade)
    se rangent à sa droite, derrière un filet. */
 .e-bas { display: flex; align-items: center; gap: 18px; }
-#end.over-map .bareme { flex: 1 1 auto; min-width: 160px; max-width: 680px; }
+#end.over-map .bareme { flex: 1 1 auto; min-width: 160px; }
 #end.over-map .eu-faits {
   flex: 0 0 auto; display: flex; flex-direction: column; justify-content: center; gap: 4px;
   padding-left: 18px; border-left: 1px solid #232c42;
@@ -959,7 +959,6 @@ svg { width: 100%; height: 100%; display: block; }
   #end-gare { flex: 1 1 100%; font-size: 20px; }
   #end.over-map .e-verdict h1 { margin: 0; flex: 1 1 100%; order: -1; }
   #end.over-map #stars { font-size: 26px; }
-  #end-palier { margin-top: 0; }
   .e-tuile { flex: 1 1 40%; }
   .e-bas { flex-direction: column; align-items: stretch; gap: 8px; }
   #end.over-map .eu-faits { padding-left: 0; border-left: 0; }

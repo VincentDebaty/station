@@ -1441,25 +1441,7 @@ function endGame(failed) {
   // savoir laquelle vient de tomber est de photographier avant et après.
   const medAvant = typeof medaillesDe === "function"
     ? medaillesDe(etatRecompenses()) : new Set();
-  // LA LIGNE, AVANT ET APRÈS — comme les paliers et les jalons. Le relevé dit
-  // « Lille – Bruxelles : 2 / 6 » et, si ce service vient d'en cocher une, le
-  // montre : c'est la seule façon de voir qu'on a AVANCÉ, et pas seulement
-  // bien joué. Tout se déduit de la progression (js/recompense.js), rien n'est
-  // stocké, donc on photographie de part et d'autre de l'enregistrement.
-  const ligne = (!STATION.adhoc && typeof corridorCourant === "function" &&
-    typeof garesDeLigne === "function" && typeof garesFaites === "function")
-    ? (() => {
-        const cc = corridorCourant();
-        if (!cc) return null;
-        const p = parcours(cc.lien, cc.depuis);
-        const hd = hubById(p.depuis), ha = hubById(p.vers);
-        const compo = garesDeLigne(cc.lien, cc.depuis);
-        return { titre: (hd ? hd.nom : "?") + " \u2013 " + (ha ? ha.nom : "?"),
-          total: compo.length, avant: garesFaites(compo), apres: null, compo };
-      })()
-    : null;
   if (!failed && !STATION.adhoc) saveResult(STATION.id, stars, d); // un échec (ou la démo limites) ne modifie pas le record
-  if (ligne) ligne.apres = garesFaites(ligne.compo);
   // LES TRAINS DU JOUR : combien sont partis, combien à l'heure. C'est le
   // chiffre que le joueur a VU toute la journée — l'éclat vert à chaque départ
   // ponctuel — et le relevé le lui rend en un total. Seuls les convois qui ont
@@ -1515,17 +1497,8 @@ function endGame(failed) {
   document.getElementById("stars").innerHTML = [0, 1, 2].map(i =>
     '<span class="st' + (i < stars ? " on" : " off") + (i >= prevStars && i < stars && !noPay ? " neuve" : "") +
     '" style="--i:' + i + '">\u2605</span>').join("");
-  // LE NOM DU PALIER, sous les étoiles : « Trois étoiles » dit ce que trois
-  // étoiles veulent dire, et « Sans faute » ce que le diamant ajoute.
-  const palEl = document.getElementById("end-palier");
-  if (palEl) {
-    // Le sans-faute est déjà le titre (« Sans faute ! ») : sous les étoiles,
-    // on nomme alors le palier d'étoiles, pas deux fois le même mot.
-    let k = failed ? -1 : palierOf(d);
-    if (k >= 0 && PALIERS[k].parfait) k = PALIERS.findIndex(p => p.stars === 3 && !p.parfait);
-    palEl.textContent = k < 0 ? (failed ? "Retard plafond dépassé" : "Aucune étoile") : PALIERS[k].nom;
-    palEl.className = k < 0 ? "rate" : perfect ? "parfait" : "";
-  }
+  // Pas de libellé sous les étoiles : trois étoiles allumées se lisent
+  // toutes seules, et « Sans faute ! » est déjà le titre quand il y a lieu.
   // UNE LIGNE, JAMAIS QUATRE. Le relevé est étroit — il tient sur un tiers
   // d'écran — et une phrase qui se replie quatre fois pousse les boutons hors
   // de vue. Le barème est déjà dit par les étoiles éteintes juste au-dessus, et
@@ -1670,7 +1643,7 @@ function endGame(failed) {
   // Le relevé, désormais : le barème, puis les FAITS du jour — une série, une
   // médaille, un grade. Plus de cadre doré ni de titre : le bloc ne raconte
   // plus ce qu'il contient, il le montre.
-  // LES TUILES — trois ou quatre mesures, chacune avec son chiffre en grand
+  // LES TUILES — deux mesures, chacune avec son chiffre en grand
   // et ce qu'il veut dire en dessous. Le relevé d'avant donnait UN chiffre (le
   // retard) et un axe ; le joueur finissait une journée de vingt-deux trains
   // sans jamais lire « 22 trains », ni voir combien d'étoiles il venait de
@@ -1693,23 +1666,20 @@ function endGame(failed) {
     }
     const retard = tuile(win ? "" : "rate", d, "min", "de retard", chip);
     const ponctu = tuile("", aLheure, "/" + partis.length, partis.length > 1 ? "trains \u00e0 l'heure" : "train \u00e0 l'heure");
-    // Ce que la carte a gagné : les étoiles NEUVES en grand quand il y en a,
-    // sinon le total — jamais un « +0 », qui punirait un bon service déjà payé.
-    const gain = etoilesGagnees > 0
-      ? tuile("gain", "+" + etoilesGagnees, "\u2605", "sur la carte \u00b7 " + totalApres + " au total")
-      : tuile("", "\u2605 " + totalApres, "", "sur la carte");
-    const lg = ligne
-      ? tuile(ligne.apres > ligne.avant ? "up" : "", ligne.apres, "/" + ligne.total, ligne.titre,
-          ligne.apres > ligne.avant ? { cl: "up", txt: "+" + (ligne.apres - ligne.avant) + " gare" } : null)
-      : "";
-    return '<div class="e-tuiles">' + retard + ponctu + gain + lg + "</div>";
+    // Deux tuiles, pas quatre. Les étoiles gagnées se voient déjà sur le
+    // héros (l'étoile neuve brille) et sur la ligne juste au-dessus ; la ligne
+    // y affiche aussi son avancement. Les redire ici, c'était du bruit.
+    return '<div class="e-tuiles">' + retard + ponctu + "</div>";
   }
 
   function recetteHTML() {
     // La démo « limites » n'est pas au catalogue : elle n'a ni palmarès ni
     // record, et un barème sans repère ne dirait rien.
     if (STATION.adhoc) return "";
-    const faits = serieHTML() + medaillesHTML() +
+    // La série n'y figure plus : « 2 d'affilée » était un compteur de plus à
+    // côté du verdict. Elle reste tenue (pushSerie) parce que les médailles
+    // de style la lisent, et c'est là qu'elle se manifeste.
+    const faits = medaillesHTML() +
       (gradeUp ? '<div class="eu-grade">' + gradeAfter.nom + " !</div>" : "");
     // TROIS TEMPS, DE HAUT EN BAS : ce que j'ai fait (les tuiles), par rapport
     // à quoi (le barème, qui prend la largeur), et ce que ça déclenche (série,
@@ -1718,25 +1688,6 @@ function endGame(failed) {
       (faits ? '<div class="eu-faits">' + faits + "</div>" : "") + "</div>";
   }
 
-  // LA SÉRIE, ET SEULEMENT QUAND ELLE A QUELQUE CHOSE À DIRE. Un « série : 1 »
-  // après chaque bon service serait un compteur de plus à ignorer ; on ne parle
-  // donc qu'à partir de DEUX — c'est là qu'il y a un élan — et au moment où
-  // elle casse, parce qu'un élan qui s'arrête sans un mot n'a jamais existé.
-  //
-  // La casse s'annonce SANS REPROCHE et avec le record : ce qui reste après
-  // est plus grand que ce qu'on vient de perdre.
-  function serieHTML() {
-    if (!serie) return "";
-    if (serie.n >= 2)
-      return '<div class="eu-serie' + (serie.battu ? " record" : "") + '">' +
-        '<span class="es-n">' + serie.n + "</span>" +
-        "<span>d'affilée" + (serie.battu && serie.n > 2 ? " \u00b7 record" : "") +
-        "</span></div>";
-    if (serie.casse)
-      return '<div class="eu-serie casse"><span class="es-n">' + serie.avant + "</span>" +
-        "<span>série interrompue \u00b7 record " + serie.record + "</span></div>";
-    return "";
-  }
   // DEUX MÉDAILLES AU PLUS, ET LE RESTE COMPTÉ. Elles se déduisent de la
   // progression, donc la toute première partie qui suit leur arrivée peut en
   // décrocher huit d'un coup : les afficher toutes noierait ce que le service
