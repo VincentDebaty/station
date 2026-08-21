@@ -547,6 +547,7 @@ const RAD = Math.PI / 180;
 // tiraient le cadre vers le nord-ouest et laissaient le continent tassé en
 // bas à droite.
 const PAYS_HORS_CARTE = new Set(["ISL", "SJM", "FRO", "GRL"]);
+const ETIREMENT_X = 1.35;   // la longitude, élargie (voir projectionDeCarte)
 // Le cadre se calcule sur les PAYS qui portent une zone — c'est eux qu'on
 // voit — et non sur les hubs, qui n'occupent que le cœur du continent. Les
 // côtes lointaines (Svalbard, Canaries, Açores) sont bornées, sinon elles
@@ -568,8 +569,14 @@ function projectionDeCarte() {
     }
   const cosm = Math.cos((lat0 + lat1) / 2 * RAD);
   const s = 98 / Math.max((lon1 - lon0) * cosm, lat1 - lat0, 1);
+  // ÉTIRÉE EN LARGEUR. L'Europe est plus haute que large : cadrée par la
+  // hauteur, elle n'occupait que 70 unités sur les 160 du cadre, et les hubs
+  // du Benelux se marchaient sur les noms. On étire la longitude d'un tiers —
+  // pays, hubs et traits s'élargissent ensemble, rien ne se décale ; les
+  // bulles et les noms, qui portent leur propre transformation, restent
+  // droits. Une carte n'a pas à être conforme, elle a à être lisible.
   return {
-    X: lon => 50 + (lon - (lon0 + lon1) / 2) * cosm * s,
+    X: lon => 50 + (lon - (lon0 + lon1) / 2) * cosm * s * ETIREMENT_X,
     Y: lat => 50 - (lat - (lat0 + lat1) / 2) * s,
     s
   };
