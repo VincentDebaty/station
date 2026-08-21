@@ -2218,12 +2218,18 @@ svg { width: 100%; height: 100%; display: block; }
   font-size: 11.5px; font-weight: 700; letter-spacing: .02em;
   padding: 2px 9px; border-radius: 999px; color: var(--muted); background: #1b2334;
 }
-.cb-record.bat  { color: #0E1420; background: #2dd4bf; }
+.cb-record.bat  { color: #2dd4bf; background: transparent; border: 1px solid rgba(45, 212, 191, .45); }
 .cb-record.egal { color: #63e6d4; background: #16333a; }
 .cb-record.neuf { color: #0E1420; background: #c9d4e6; }
 .cb-record.loin { color: var(--gold); background: #2a2416; }
 /* Le bouton d'appel, dans la bulle : c'est le seul élément qui y prend un clic. */
-.c-bilan .c-suite { pointer-events: auto; margin-top: 7px; font-size: 14.5px; padding: 10px 20px; align-self: stretch; }
+.c-bilan .c-suite {
+  pointer-events: auto; margin-top: 7px; font-size: 14.5px; padding: 10px 16px 10px 20px; align-self: stretch;
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+}
+/* Taille posée ICI : la carte a une règle large sur ses svg (le tracé), qui
+   ferait de la flèche un panneau routier. */
+.c-bilan .c-suite svg { flex: none; display: block; width: 18px; height: 18px; position: static; }
 .c-bilan.parfait { border-color: rgba(245, 178, 60, .65); box-shadow: 0 0 36px -8px rgba(245, 178, 60, .4), 0 18px 44px -18px rgba(0, 0, 0, .8); }
 .c-bilan.parfait::before { border-color: rgba(245, 178, 60, .65); }
 .c-bilan.rate { border-color: rgba(239, 68, 68, .55); }

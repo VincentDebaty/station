@@ -157,8 +157,12 @@ function vueLigne() {
   // Dans la bulle, le bouton dit « Suivante » et rien d'autre : le nom de la
   // gare est déjà sur la ligne, à côté, et « Ouvrir Aix-la-Chapelle » ferait
   // une bulle large comme la ligne. Une largeur fixe, quel que soit le nom.
+  // Une vraie flèche, à droite — c'est un bouton qui emmène, pas une puce.
+  const fleche = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" ' +
+    'stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+    '<path d="M5 12h13M12 6l6 6-6 6"/></svg>';
   const suiteBulle = prochaine
-    ? `<button class="c-suite" data-gare="${prochaine}" title="${nomDe(prochaine)}">▸ Suivante</button>` : "";
+    ? `<button class="c-suite cb-suite" data-gare="${prochaine}" title="${nomDe(prochaine)}">Suivante${fleche}</button>` : "";
   const jalon = (id, role) => {
     const etat = id ? etatDeGare(id) : "fermee";
     const cl = ["jalon", "j-" + etat, role ? "j-" + role : ""].filter(Boolean).join(" ");
