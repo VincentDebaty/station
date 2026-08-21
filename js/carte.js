@@ -598,14 +598,31 @@ function ouvrirLigne(cle, prefere) {
 // en latitude, ajustée au carré du viewBox. Les hubs n'ont pas de nom ici —
 // à cette échelle ce serait un nuage ; c'est la zone qui se lit.
 const RAD = Math.PI / 180;
+// Les pays qui n'ont rien à faire sur la carte : trop loin, trop vides, ils
+// tiraient le cadre vers le nord-ouest et laissaient le continent tassé en
+// bas à droite.
+const PAYS_HORS_CARTE = new Set(["ISL", "SJM", "FRO", "GRL"]);
+// Le cadre se calcule sur les PAYS qui portent une zone — c'est eux qu'on
+// voit — et non sur les hubs, qui n'occupent que le cœur du continent. Les
+// côtes lointaines (Svalbard, Canaries, Açores) sont bornées, sinon elles
+// seules décideraient du cadre.
 function projectionDeCarte() {
   const hubs = tousLesHubs().filter(h => Array.isArray(h.ll));
   if (!hubs.length) return null;
-  const lons = hubs.map(h => h.ll[0]), lats = hubs.map(h => h.ll[1]);
-  const lon0 = Math.min(...lons), lon1 = Math.max(...lons);
-  const lat0 = Math.min(...lats), lat1 = Math.max(...lats);
+  let lon0 = Infinity, lon1 = -Infinity, lat0 = Infinity, lat1 = -Infinity;
+  const vu = (lon, lat) => {
+    if (lon < -11 || lon > 32 || lat < 35 || lat > 71.5) return;
+    lon0 = Math.min(lon0, lon); lon1 = Math.max(lon1, lon);
+    lat0 = Math.min(lat0, lat); lat1 = Math.max(lat1, lat);
+  };
+  for (const h of hubs) vu(h.ll[0], h.ll[1]);
+  if (typeof WORLDMAP !== "undefined" && WORLDMAP.countries)
+    for (const c of WORLDMAP.countries) {
+      if (c.cont !== "europe" || PAYS_HORS_CARTE.has(c.iso) || !zoneDuPays(c, hubs)) continue;
+      for (const r of c.r || []) for (let i = 0; i + 1 < r.length; i += 2) vu(r[i], r[i + 1]);
+    }
   const cosm = Math.cos((lat0 + lat1) / 2 * RAD);
-  const s = 88 / Math.max((lon1 - lon0) * cosm, lat1 - lat0, 1);
+  const s = 92 / Math.max((lon1 - lon0) * cosm, lat1 - lat0, 1);
   return {
     X: lon => 50 + (lon - (lon0 + lon1) / 2) * cosm * s,
     Y: lat => 50 - (lat - (lat0 + lat1) / 2) * s,
@@ -633,12 +650,17 @@ function zoneDuPays(c, hubs) {
   for (const z in votes) if (!best || votes[z] > votes[best]) best = z;
   return best;
 }
+// UN SEUL TRACÉ PAR ZONE. Dessinés pays par pays, les tracés voisins
+// laissaient voir leurs coutures — une frontière par pays, là où l'on ne
+// veut lire que des zones. Tous les anneaux d'une zone vont dans le même
+// <path> : une seule surface, aucune couture, aucun contour. Les pays hors
+// zone font de même, en gris.
 function fondDePays(P) {
   if (typeof WORLDMAP === "undefined" || !WORLDMAP.countries) return "";
   const hubs = tousLesHubs().filter(h => Array.isArray(h.ll));
-  let out = "";
+  const parZone = new Map(); let hors = "";
   for (const c of WORLDMAP.countries) {
-    if (c.cont !== "europe") continue;
+    if (c.cont !== "europe" || PAYS_HORS_CARTE.has(c.iso)) continue;
     let d = "";
     for (const r of c.r || []) {
       let seg = "";
@@ -647,9 +669,13 @@ function fondDePays(P) {
       if (seg) d += seg + "Z";
     }
     if (!d) continue;
-    const zid = zoneDuPays(c, hubs), z = zid && zoneById(zid);
-    out += z ? `<path class="pays zone" data-const="${zid}" style="--col:${z.couleur}" d="${d}"><title>${z.nom}</title></path>`
-             : `<path class="pays" d="${d}"/>`;
+    const zid = zoneDuPays(c, hubs);
+    if (zid) parZone.set(zid, (parZone.get(zid) || "") + d); else hors += d;
+  }
+  let out = hors ? `<path class="pays" d="${hors}"/>` : "";
+  for (const [zid, d] of parZone) {
+    const z = zoneById(zid); if (!z) continue;
+    out += `<path class="pays zone" data-const="${zid}" style="--col:${z.couleur}" d="${d}"><title>${z.nom}</title></path>`;
   }
   return out;
 }
@@ -664,23 +690,16 @@ function vueEurope() {
     </div>`;
   if (!P) return tete;
 
-  // Les lignes : en couleur de zone dès qu'un de leurs bouts est tenu, sinon
-  // un fil discret. Une traversée maritime se pointille, comme partout.
-  let traits = "";
-  for (const l of tousLesLiens()) {
-    const a = hubById(l.a), b = hubById(l.b);
-    if (!a || !b) continue;
-    const ouvert = (a.gareId && tenues.has(a.gareId)) || (b.gareId && tenues.has(b.gareId));
-    const z = zoneById(a.zone) || {};
-    traits += `<line class="lien-eu${ouvert ? " ouvert" : ""}${l.type === "mer" ? " mer" : ""}"` +
-      ` data-za="${a.zone}" data-zb="${b.zone}" style="--col:${z.couleur || "#2dd4bf"}" x1="${P.X(a.ll[0]).toFixed(2)}" y1="${P.Y(a.ll[1]).toFixed(2)}"` +
-      ` x2="${P.X(b.ll[0]).toFixed(2)}" y2="${P.Y(b.ll[1]).toFixed(2)}"/>`;
-  }
-  // Les zones : leurs hubs, et une étiquette au barycentre — nom et avancement.
-  // Le groupe porte ce qu'il faut pour zoomer sur lui (centre, facteur).
-  const groupes = zones.map(z => {
+  // NI HUBS, NI LIGNES, NI FRONTIÈRES : à cette échelle ils faisaient un
+  // écheveau, et la carte ne disait plus que « c'est compliqué ». Il reste les
+  // zones, en couleur, et sur chacune UNE BULLE : son nom, ses étoiles, ses
+  // diamants, et ses hubs tenus en jauge. La zone se touche (pays ou bulle).
+  // Une bulle par zone, au barycentre de ses hubs ; puis elles SE REPOUSSENT
+  // — au cœur du continent, cinq barycentres tiennent dans un mouchoir.
+  const bulles = [];
+  for (const z of zones) {
     const hubs = hubsDeZone(z.id).filter(h => Array.isArray(h.ll));
-    if (!hubs.length) return "";
+    if (!hubs.length) continue;
     const jouables = hubs.filter(h => h.gareId);
     const tenus = jouables.filter(h => tenues.has(h.gareId));
     const xs = hubs.map(h => P.X(h.ll[0])), ys = hubs.map(h => P.Y(h.ll[1]));
@@ -688,25 +707,47 @@ function vueEurope() {
     const etendue = Math.max(Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys), 8);
     const k = Math.min(4.5, 84 / (etendue * 1.25));
     (CARTE.zonesGeo = CARTE.zonesGeo || {})[z.id] = { cx, cy, k };
-    const points = hubs.map(h => {
-      const tenu = h.gareId && tenues.has(h.gareId);
-      const maitrise = tenu && bossMaitrise(h.id, tenues);
-      const cl = maitrise ? " maitrise" : tenu ? " tenu" : h.gareId ? "" : " absent";
-      return `<circle class="eh${cl}" cx="${P.X(h.ll[0]).toFixed(2)}" cy="${P.Y(h.ll[1]).toFixed(2)}" r="${h.rang === 1 ? 1.15 : .85}"/>`;
-    }).join("");
-    const prog = jouables.length ? `${tenus.length} / ${jouables.length}` : "à écrire";
-    return `<g class="ze${jouables.length ? "" : " grise"}" data-const="${z.id}" style="--col:${z.couleur}"` +
-      ` data-cx="${cx.toFixed(2)}" data-cy="${cy.toFixed(2)}" data-k="${k.toFixed(2)}">` +
-      `<circle class="ze-cible" cx="${cx.toFixed(2)}" cy="${cy.toFixed(2)}" r="${(etendue / 2 + 3).toFixed(1)}"/>` +
-      points +
-      // Pas de nom : la couleur des pays dit la zone. Le nom et l'avancement
-      // restent en info-bulle.
-      `<title>${z.nom} — ${prog}</title></g>`;
+    // Les étoiles et diamants de la zone : toutes les gares de ses lignes
+    // (hubs compris), comptées une fois chacune.
+    const gares = new Set();
+    for (const h of hubs) {
+      if (h.gareId) gares.add(h.gareId);
+      for (const l of sortiesDeHub(h.id)) for (const g of l.gares || []) gares.add(g);
+    }
+    let etoiles = 0, diamants = 0;
+    for (const g of gares) { etoiles += etoilesDe(g); if ((getProgress()[g] || {}).bestDelay === 0) diamants++; }
+    const ecrite = jouables.length > 0;
+    bulles.push({ z, x: cx, y: cy, w: ecrite ? 21 : 17, h: ecrite ? 9.4 : 6, ecrite,
+      etoiles, max: gares.size * 3, diamants, part: ecrite ? tenus.length / jouables.length : 0 });
+  }
+  for (let k = 0; k < 80; k++) {
+    let bouge = false;
+    for (let i = 0; i < bulles.length; i++) for (let j = i + 1; j < bulles.length; j++) {
+      const a = bulles[i], b = bulles[j];
+      const dx = (a.w + b.w) / 2 + 1 - Math.abs(a.x - b.x), dy = (a.h + b.h) / 2 + 1 - Math.abs(a.y - b.y);
+      if (dx <= 0 || dy <= 0) continue;
+      bouge = true;
+      if (dx < dy) { const s = a.x <= b.x ? -1 : 1; a.x += s * dx / 2; b.x -= s * dx / 2; }
+      else { const s = a.y <= b.y ? -1 : 1; a.y += s * dy / 2; b.y -= s * dy / 2; }
+    }
+    for (const b of bulles) { b.x = Math.max(b.w / 2, Math.min(100 - b.w / 2, b.x)); b.y = Math.max(b.h / 2, Math.min(100 - b.h / 2, b.y)); }
+    if (!bouge) break;
+  }
+  const groupes = bulles.map(b => {
+    const corps = b.ecrite
+      ? `<text class="zb-prog" x="0" y="1.7">★ ${b.etoiles} / ${b.max}<tspan class="zb-dia" dx="1.8">◆ ${b.diamants}</tspan></text>` +
+        `<rect class="zb-piste" x="-8.5" y="3.1" width="17" height=".8" rx=".4"/>` +
+        `<rect class="zb-fait" x="-8.5" y="3.1" width="${(17 * b.part).toFixed(2)}" height=".8" rx=".4"/>`
+      : "";
+    return `<g class="ze${b.ecrite ? "" : " grise"}" data-const="${b.z.id}" style="--col:${b.z.couleur}">` +
+      `<g class="zb" transform="translate(${b.x.toFixed(2)} ${b.y.toFixed(2)})">` +
+      `<rect class="zb-fond" x="${(-b.w / 2).toFixed(1)}" y="${(-b.h / 2).toFixed(1)}" width="${b.w}" height="${b.h}" rx="2"/>` +
+      `<text class="zb-nom" x="0" y="${b.ecrite ? -1.6 : 0.8}">${b.z.nom}</text>${corps}</g></g>`;
   }).join("");
 
   return tete + `
     <svg class="c-graphe c-carte" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet">
-      <g class="monde">${fondDePays(P)}<g class="traits">${traits}</g>${groupes}</g>
+      <g class="monde">${fondDePays(P)}${groupes}</g>
     </svg>`;
 }
 // Toucher une zone : la carte ZOOME sur elle, puis la vue zone prend la
@@ -719,8 +760,6 @@ function zoomerSurZone(el) {
   const reduit = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   if (!monde || !k || reduit) { renderCarte(); return; }
   for (const t of hote.querySelectorAll(`.ze[data-const="${zid}"], .pays[data-const="${zid}"]`)) t.classList.add("choisie");
-  for (const t of hote.querySelectorAll(".lien-eu"))
-    if (t.dataset.za === zid || t.dataset.zb === zid) t.classList.add("choisie");
   hote.querySelector(".c-carte").classList.add("zoome");
   const cible = `translate(${(50 - k * cx).toFixed(2)}px, ${(50 - k * cy).toFixed(2)}px) scale(${k})`;
   monde.style.transform = cible;
@@ -768,7 +807,11 @@ function renderCarte() {
   if (!hote) return;
   CARTE.hote = hote;
   reparerDepart();
-  // Rien de tenu : on commence sur la carte de la zone, pas sur une ligne.
+  // AU LANCEMENT, L'EUROPE. Le jeu s'ouvre sur le continent, ses zones et
+  // leur avancement ; on touche la sienne, et la zone prend la main. Un seul
+  // rendu est concerné : ensuite les vues s'enchaînent par les gestes.
+  if (!CARTE.lance) { CARTE.lance = true; if (zonesDeCarte().length) CARTE.vue = "europe"; }
+  // Rien de tenu et pas d'Europe à montrer : la carte de la zone, pas une ligne.
   if (CARTE.vue === "ligne" && !carteTenues().size && zonesDeCarte().length) CARTE.vue = "constellation";
   hote.className = "carte v-" + CARTE.vue;
   hote.innerHTML = CARTE.vue === "constellation" ? vueConstellation()
