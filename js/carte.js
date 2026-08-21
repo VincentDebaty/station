@@ -865,7 +865,7 @@ function vueCarte() {
     // Le compte des étoiles tient le coin droit, comme sur la vue ligne : sans
     // rien en face du bouton de dézoom, le nom de la zone n'est plus au milieu.
     : `<button class="c-zoom" data-vue="europe">${flecheRetour()}${nomDeCarte()}</button>
-      <div class="c-titre" style="color:${zone.couleur}">${zone.nom}</div>${bourseHTML()}`;
+      <div class="c-titre" style="color:${zone.couleur}"><span class="c-nom">${zone.nom}</span></div>${bourseHTML()}`;
   CARTE.camCible = cam;
   return `
     <div class="c-tete">${tete}</div>
