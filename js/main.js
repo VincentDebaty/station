@@ -301,6 +301,51 @@ function buildLimitsStation(params) {
            cars: [3, 4, 5, 5, 6, 7], freightCount: nFreight, quietRate: 0.6 }
   };
 }
+// ------------------------------------------------------------------
+// Aperçu du RELEVÉ DE FIN, sans jouer la journée. Se lance par l'URL —
+//   station.html?fin=tournai           → Tournai, service parfait (0 min)
+//   station.html?fin=tournai,6         → 6 min de retard (trois étoiles)
+//   station.html?fin=tournai,24        → 24 min (une étoile)
+//   station.html?fin=tournai,41,echec  → plafond crevé : service interrompu
+// Il fallait tenir une gare entière — dix minutes — pour voir l'écran qu'on
+// est en train de dessiner. Ici la gare se charge, la journée se déclare finie
+// avec le retard demandé, réparti sur quelques convois pour que la tuile
+// « trains à l'heure » ait quelque chose à compter, et le relevé s'ouvre.
+// RIEN N'EST ÉCRIT : le magasin est mis en lecture seule (APERCU_SANS_TRACE),
+// la gare « achetée » et le record « enregistré » s'évaporent au rechargement.
+// ------------------------------------------------------------------
+function finParamsFromURL() {
+  const raw = new URLSearchParams(location.search).get("fin");
+  if (raw === null) return null;
+  const parts = raw.split(",");
+  return { gare: parts[0] || "", retard: Math.max(0, parseInt(parts[1], 10) || 0),
+           echec: parts[2] === "echec" };
+}
+async function apercuFin(p) {
+  let i = CATALOG.findIndex(c => c.id === p.gare);
+  if (i < 0) i = 0;
+  const id = CATALOG[i].id;
+  APERCU_SANS_TRACE = true;
+  if (!isBought(id)) buyStation(id, 0);      // en mémoire seulement
+  _onboarded = true;                        // pas d'accueil, et sans l'écrire (js/store.js)
+  await startStation(i);
+  onboarding = null; hideCoach(); freezeGame(false);
+  const w = document.getElementById("welcome"); if (w) w.classList.add("hidden");
+  paused = true;
+  // Tous les convois sont passés ; le retard se répartit sur les derniers
+  // partis, une ou deux minutes chacun, le reste sur le dernier.
+  let reste = p.retard;
+  for (let k = trains.length - 1; k >= 0; k--) {
+    const t = trains[k];
+    t.state = "done";
+    if (t.freight) continue;
+    const part = reste <= 0 ? 0 : (k === 0 ? reste : Math.min(reste, 1 + (k % 2)));
+    t.depDelay = part; reste -= part;
+  }
+  totalDelay = p.retard;
+  gameMin += 60 * 5;
+  endGame(p.echec);
+}
 function limitsParamsFromURL() {
   const raw = new URLSearchParams(location.search).get("limits");
   if (raw === null) return null;               // pas de démo demandée
@@ -322,7 +367,9 @@ Promise.all([loadStore(), loadCatalog(), loadCartes()])
     // ancienne peut enfin se reconstituer depuis les records (js/catalog.js).
     muted = getMuted(); updateMuteIcon();
     const lp = limitsParamsFromURL();
+    const fp = finParamsFromURL();
     if (lp) startAdhocStation(buildLimitsStation(lp)); // démo limites directe
+    else if (fp) apercuFin(fp);                      // aperçu du relevé de fin
     else showHub();
   })
   .catch(err => {

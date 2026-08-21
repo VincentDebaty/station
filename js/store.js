@@ -167,7 +167,14 @@ async function loadStore() {
   if (!parsed || parsed.version !== SCHEMA_VERSION) persistProgress();
 }
 
+// APERÇU SANS TRACE. L'aperçu du relevé de fin (station.html?fin=…, js/main.js)
+// joue une fin de service pour de faux : il achète la gare, enregistre un
+// record, pousse la série — tout ce que fait une vraie fin, pour que le relevé
+// montre les vraies tuiles. Mais rien ne doit survivre au rechargement : la
+// progression reste en mémoire et n'est plus écrite tant que ce drapeau est levé.
+let APERCU_SANS_TRACE = false;
 function persistProgress() {
+  if (APERCU_SANS_TRACE) return;
   _store.write(KEY_PROGRESS, JSON.stringify(_progress)); // fire-and-forget durable
 }
 
