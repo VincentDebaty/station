@@ -152,7 +152,7 @@ function etatRecompenses() {
   let boss = 0, bossMaitrises = 0, mer = 0;
   const tenues = new Set();
   for (const c of cat) if (typeof isBought === "function" && isBought(c.id)) tenues.add(c.id);
-  const hubs = typeof HUBS !== "undefined" ? HUBS : [];
+  const hubs = typeof tousLesHubs === "function" ? tousLesHubs() : [];
   for (const h of hubs) {
     if (!h.gareId || !tenues.has(h.gareId)) continue;
     boss++;
@@ -160,19 +160,19 @@ function etatRecompenses() {
   }
   // Une traversée maritime FRANCHIE : les deux rives tenues. Le graphe en
   // compte six, et c'est le seul geste du jeu qui ne suit pas un rail.
-  if (typeof LIENS !== "undefined")
-    for (const [a, b, t] of LIENS) {
-      if (t !== "mer") continue;
-      const ha = hubById(a), hb = hubById(b);
+  if (typeof tousLesLiens === "function")
+    for (const l of tousLesLiens()) {
+      if (l.type !== "mer") continue;
+      const ha = hubById(l.a), hb = hubById(l.b);
       if (ha && hb && ha.gareId && hb.gareId && tenues.has(ha.gareId) && tenues.has(hb.gareId)) mer++;
     }
   // Les constellations touchées, et celles entièrement tenues.
   const touchees = new Set(), parCst = {};
   for (const h of hubs) {
-    parCst[h.c] = parCst[h.c] || { n: 0, tenus: 0 };
+    parCst[h.zone] = parCst[h.zone] || { n: 0, tenus: 0 };
     if (!h.gareId) continue;
-    parCst[h.c].n++;
-    if (tenues.has(h.gareId)) { parCst[h.c].tenus++; touchees.add(h.c); }
+    parCst[h.zone].n++;
+    if (tenues.has(h.gareId)) { parCst[h.zone].tenus++; touchees.add(h.zone); }
   }
   let constellationsFinies = 0;
   for (const k in parCst)

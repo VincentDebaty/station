@@ -1,0 +1,9 @@
+[
+  {
+    "id": "europe",
+    "nom": "L'Europe",
+    "gratuite": true,
+    "fichier": "europe.json",
+    "sousTitre": "Le continent, de Lisbonne à Kyiv — la première carte, et la seule gratuite."
+  }
+]

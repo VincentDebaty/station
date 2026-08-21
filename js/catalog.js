@@ -356,12 +356,15 @@ const GRADES = [
   { at: 2400, nom: "Directeur de réseau" },
   { at: 3500, nom: "Légende du rail" }
 ];
-// Le total d'étoiles décrochées, toutes gares confondues. Rien à stocker : les
-// étoiles ne redescendent jamais, la progression les porte déjà.
+// Le total d'étoiles décrochées, toutes gares et TOUTES CARTES confondues.
+// Rien à stocker : les étoiles ne redescendent jamais, la progression les
+// porte déjà. Le grade est un fait de COMPTE, pas de carte : on ne repart pas
+// stagiaire en ouvrant une deuxième carte.
 function etoilesTotal() {
-  const prog = getProgress();
+  const tables = typeof getProgressToutesCartes === "function"
+    ? getProgressToutesCartes() : [getProgress()];
   let n = 0;
-  for (const c of CATALOG) n += (prog[c.id] || {}).stars || 0;
+  for (const prog of tables) for (const id in prog) n += (prog[id] || {}).stars || 0;
   return n;
 }
 // Le grade courant, et ce qu'il reste avant le suivant. `next` vaut null au

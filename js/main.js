@@ -313,7 +313,10 @@ function limitsParamsFromURL() {
 started = false;
 // Chargement store (progression + préférences) ET catalogue avant la carte :
 // la carte lit la progression, l'icône son lit la préférence hydratée.
-Promise.all([loadStore(), loadCatalog()])
+// Puis la CARTE COURANTE : elle se lit dans la sauvegarde, donc après le
+// magasin. Son index se charge en même temps que le reste.
+Promise.all([loadStore(), loadCatalog(), loadCartes()])
+  .then(() => loadCarte(getCarteCourante()))
   .then(() => {
     // Le magasin et le catalogue sont là : la ponctualité d'une sauvegarde
     // ancienne peut enfin se reconstituer depuis les records (js/catalog.js).

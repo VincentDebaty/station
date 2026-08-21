@@ -2,8 +2,8 @@
 // ------------------------------------------------------------------
 // LE GRAPHE, VU DU JEU — où suis-je, et où puis-je aller ?
 // ------------------------------------------------------------------
-// data/graph.js décrit le réseau ; ce fichier répond aux questions que le jeu
-// lui pose. Rien ici ne dessine et rien n'écrit : la carte consomme ces
+// La carte courante (data/cartes/<id>.json, chargée par js/cartes.js) décrit
+// le réseau ; ce fichier répond aux questions que le jeu lui pose. Rien ici ne dessine et rien n'écrit : la carte consomme ces
 // fonctions, la progression aussi, et aucune des deux ne connaît la forme des
 // données.
 //
@@ -18,14 +18,23 @@
 // pour avancer. La performance (étoiles, diamants) est la chasse optionnelle.
 // ------------------------------------------------------------------
 
-const GRAPHE = { pret: false, hubs: {}, gares: {}, sorties: {}, corridors: [] };
+const GRAPHE = { pret: false, hubs: {}, liste: [], gares: {}, sorties: {}, corridors: [] };
+
+// Changer de carte invalide tout : le prochain lecteur reconstruit.
+function resetGraphe() { GRAPHE.pret = false; }
 
 function buildGraphe() {
   if (GRAPHE.pret) return;
-  GRAPHE.hubs = {}; GRAPHE.gares = {}; GRAPHE.sorties = {}; GRAPHE.corridors = [];
-  if (typeof HUBS === "undefined") return;
+  GRAPHE.hubs = {}; GRAPHE.liste = []; GRAPHE.gares = {}; GRAPHE.sorties = {}; GRAPHE.corridors = [];
+  if (typeof CARTE_COURANTE === "undefined" || !CARTE_COURANTE) return;
+  const HUBS = CARTE_COURANTE.hubs || [], LIGNES = CARTE_COURANTE.lignes || [];
 
-  for (const h of HUBS) { GRAPHE.hubs[h.id] = h; GRAPHE.sorties[h.id] = []; }
+  for (const h of HUBS) {
+    // `gareId` est recalculé à chaque construction : une carte rechargée ne
+    // doit pas hériter d'une correspondance faite pour une autre.
+    h.gareId = undefined;
+    GRAPHE.hubs[h.id] = h; GRAPHE.sorties[h.id] = []; GRAPHE.liste.push(h);
+  }
 
   // Le nom d'une fiche du catalogue → l'id du hub qui la joue. Le graphe
   // désigne ses hubs par le NOM de la gare (« Bruxelles ») ; le jeu les
@@ -36,12 +45,14 @@ function buildGraphe() {
       if (h) { GRAPHE.gares[c.id] = { role: "hub", hub: h.id }; h.gareId = c.id; }
     }
 
-  // Chaque lien devient une SORTIE de ses deux extrémités : une ligne se
-  // parcourt dans les deux sens, il n'y a pas de sens privilégié.
-  for (const [a, b, type] of LIENS) {
-    const corr = CORRIDORS.find(c =>
-      (c.de === a && c.vers === b) || (c.de === b && c.vers === a));
-    const lien = { a, b, type: type || "rail", gares: corr ? corr.gares : null };
+  // Chaque ligne devient une SORTIE de ses deux extrémités : une ligne se
+  // parcourt dans les deux sens, il n'y a pas de sens privilégié. `a` est
+  // l'origine réelle (`de`), et c'est depuis elle qu'une ligne se lit.
+  // `gares` vaut null tant que la ligne n'est pas écrite.
+  for (const l of LIGNES) {
+    const a = l.de, b = l.vers;
+    const lien = { a, b, type: l.type || "rail",
+      gares: l.gares && l.gares.length ? l.gares : null, note: l.note };
     GRAPHE.corridors.push(lien);
     if (GRAPHE.sorties[a]) GRAPHE.sorties[a].push(lien);
     if (GRAPHE.sorties[b]) GRAPHE.sorties[b].push(lien);
@@ -52,6 +63,14 @@ function buildGraphe() {
 
 // --- Lecture --------------------------------------------------------
 function hubById(id) { buildGraphe(); return GRAPHE.hubs[id] || null; }
+// Tous les hubs de la carte courante, et toutes ses lignes (écrites ou non).
+function tousLesHubs() { buildGraphe(); return GRAPHE.liste; }
+function tousLesLiens() { buildGraphe(); return GRAPHE.corridors; }
+// Le lien entre deux hubs, quel que soit l'ordre.
+function lienEntre(a, b) {
+  buildGraphe();
+  return GRAPHE.corridors.find(l => (l.a === a && l.b === b) || (l.a === b && l.b === a)) || null;
+}
 // Le hub joué par cette gare, ou null si c'est une gare de corridor.
 function hubDeGare(gareId) {
   buildGraphe();

@@ -14,7 +14,15 @@
 // sauvegarde ancienne au schéma courant, pour ne jamais casser une partie
 // après une mise à jour.
 // ------------------------------------------------------------------
-const SCHEMA_VERSION = 5;
+// v6 (21 août 2026) : LA PROGRESSION EST PAR CARTE. Une carte est une mission
+// indépendante ; ses gares, ses records et sa série ne se mélangent pas à ceux
+// d'une autre. La sauvegarde porte donc `cartes[id] = { stations, bought,
+// serie }`, la carte courante, et les cartes possédées (avec leur mode
+// d'acquisition : gratuite, crédits, achat). Tout le reste — grade, crédits,
+// rangs, médailles — se déduit.
+const SCHEMA_VERSION = 6;
+// La carte de tout joueur d'avant les cartes : l'Europe, et elle est gratuite.
+const CARTE_PAR_DEFAUT = "europe";
 const KEY_PROGRESS = "station-progress";
 const KEY_MUTED = "station-muted";
 const KEY_ONBOARDED = "station-onboarded"; // « le joueur a déjà appris le geste »
@@ -40,7 +48,20 @@ function makeBackend() {
 const _store = makeBackend();
 
 // --- Caches mémoire : lus en synchrone par le jeu, hydratés par loadStore. ---
-let _progress = { version: SCHEMA_VERSION, stations: {}, bought: [], serie: { n: 0, record: 0 } };
+function carteVierge() { return { stations: {}, bought: [], serie: { n: 0, record: 0 } }; }
+function sauvegardeVierge() {
+  return { version: SCHEMA_VERSION, carteCourante: CARTE_PAR_DEFAUT,
+    cartes: { [CARTE_PAR_DEFAUT]: carteVierge() },
+    possedees: { [CARTE_PAR_DEFAUT]: "gratuite" } };
+}
+let _progress = sauvegardeVierge();
+// La progression de la carte COURANTE — c'est elle que lisent tous les
+// accesseurs historiques. Créée à la demande : ouvrir une carte pour la
+// première fois ne demande aucune écriture préalable.
+function _carte() {
+  const id = _progress.carteCourante || CARTE_PAR_DEFAUT;
+  return _progress.cartes[id] || (_progress.cartes[id] = carteVierge());
+}
 let _muted = false;
 let _onboarded = false;
 
@@ -50,6 +71,32 @@ let _onboarded = false;
 
 // --- Migration : amène n'importe quel format vers le schéma courant. ---
 function migrate(raw) {
+  // v6 : déjà par carte. On relit avec des défauts, sans rien déduire.
+  if (raw && raw.version === 6 && raw.cartes && typeof raw.cartes === "object") {
+    const cartes = {};
+    for (const id in raw.cartes) {
+      const c = raw.cartes[id] || {};
+      cartes[id] = { stations: c.stations || {}, bought: c.bought || [], serie: lireSerie(c) };
+    }
+    const possedees = raw.possedees && typeof raw.possedees === "object" ? raw.possedees : {};
+    if (!possedees[CARTE_PAR_DEFAUT]) possedees[CARTE_PAR_DEFAUT] = "gratuite";
+    return { version: 6, carteCourante: raw.carteCourante || CARTE_PAR_DEFAUT, cartes, possedees };
+  }
+  // v5 et avant : UNE seule progression, et c'était l'Europe. Elle devient la
+  // progression de la carte « europe », intacte — le joueur retrouve ses gares,
+  // ses records et sa série exactement où il les avait laissés.
+  const v5 = migrerVersV5(raw);
+  return { version: 6, carteCourante: CARTE_PAR_DEFAUT,
+    cartes: { [CARTE_PAR_DEFAUT]: { stations: v5.stations, bought: v5.bought, serie: v5.serie } },
+    possedees: { [CARTE_PAR_DEFAUT]: "gratuite" } };
+}
+// La série se lit avec un défaut : « aucune série en cours » n'a pas besoin
+// d'être écrit pour être vrai.
+function lireSerie(r) {
+  const v = r && r.serie;
+  return { n: Math.max(0, (v && v.n) | 0), record: Math.max(0, (v && v.record) | 0) };
+}
+function migrerVersV5(raw) {
   // Étape 1 : ramener toute sauvegarde ancienne à la forme v2
   // { stations, opened }, qui est le plus petit dénominateur commun.
   let stations = {}, opened = [];
@@ -64,10 +111,6 @@ function migrate(raw) {
   // réécriture de toutes les sauvegardes pour y inscrire un zéro. Le numéro de
   // schéma sert aux changements qui CASSENT une lecture — les crédits en
   // étaient un, celui-ci n'en est pas.
-  const lireSerie = r => {
-    const v = r && r.serie;
-    return { n: Math.max(0, (v && v.n) | 0), record: Math.max(0, (v && v.record) | 0) };
-  };
   // Déjà en v5 : rien à déduire, on reprend tel quel.
   if (raw && raw.version === 5)
     return { version: 5, stations, bought: raw.bought || [], serie: lireSerie(raw) };
@@ -132,14 +175,46 @@ function persistProgress() {
 // API progression — signatures inchangées pour le reste du jeu.
 // getProgress() rend la table { id: {stars,bestDelay} } (comme avant).
 // ------------------------------------------------------------------
-function getProgress() { return _progress.stations; }
+function getProgress() { return _carte().stations; }
+// Les tables de TOUTES les cartes — pour ce qui est un fait de compte et non
+// de carte : le grade, les crédits. Lecture seule.
+function getProgressToutesCartes() {
+  const out = [];
+  for (const id in _progress.cartes) out.push((_progress.cartes[id] || {}).stations || {});
+  return out;
+}
+
+// ------------------------------------------------------------------
+// LES CARTES — laquelle on joue, lesquelles on possède.
+// ------------------------------------------------------------------
+function getCarteCourante() { return _progress.carteCourante || CARTE_PAR_DEFAUT; }
+// Changer de carte n'efface rien : chaque carte garde sa progression, et l'on
+// y revient où on l'avait laissée. (Le graphe, lui, se recharge : js/cartes.js.)
+function setCarteCourante(id) {
+  if (!id || id === _progress.carteCourante) return;
+  _progress.carteCourante = id;
+  _carte();                       // la progression de cette carte existe désormais
+  persistProgress();
+}
+function cartesPossedees() { return _progress.possedees || (_progress.possedees = {}); }
+function possedeCarte(id) { return !!cartesPossedees()[id]; }
+// Acquérir une carte : `mode` dit comment (« gratuite », « credits », « achat »).
+// C'est un FAIT — le seul que l'économie des cartes écrive. Le solde de
+// crédits, lui, se déduit : gagnés par la progression, moins le prix des
+// cartes acquises en crédits.
+function acquerirCarte(id, mode) {
+  if (!id || possedeCarte(id)) return false;
+  cartesPossedees()[id] = mode || "achat";
+  persistProgress();
+  return true;
+}
 // ------------------------------------------------------------------
 // Gares ACHETÉES par le joueur — un fait, pas une déduction.
 // ------------------------------------------------------------------
 // Une gare s'ouvre en la payant, sur la carte, quand le joueur le décide. Ce
 // choix ne se recalcule pas : il doit être mémorisé, sans quoi une gare payée
 // se refermerait au rechargement.
-function getBought() { return _progress.bought || (_progress.bought = []); }
+function getBought() { const c = _carte(); return c.bought || (c.bought = []); }
 function isBought(id) { return getBought().indexOf(id) >= 0; }
 
 // ------------------------------------------------------------------
@@ -169,8 +244,9 @@ function buyStation(id) {
 // `null` = pas encore reconstituée depuis les records (voir migrate).
 
 function saveResult(id, stars, delay) {
-  const cur = _progress.stations[id] || { stars: 0, bestDelay: null };
-  _progress.stations[id] = {
+  const stations = _carte().stations;
+  const cur = stations[id] || { stars: 0, bestDelay: null };
+  stations[id] = {
     stars: Math.max(cur.stars, stars),                                   // on ne garde que le meilleur score
     bestDelay: cur.bestDelay == null ? delay : Math.min(cur.bestDelay, delay)
   };
@@ -195,14 +271,14 @@ function saveResult(id, stars, delay) {
 // s'évaporerait en fermant l'application ne vaudrait pas la peine d'être
 // tenue.
 function getSerie() {
-  const s = _progress.serie || (_progress.serie = { n: 0, record: 0 });
+  const c = _carte(), s = c.serie || (c.serie = { n: 0, record: 0 });
   return { n: s.n, record: s.record };
 }
 // Enregistre un service. `tenu` : a-t-il atteint le seuil de la série ?
 // Rend l'état AVANT et APRÈS, pour que le relevé sache quoi raconter — une
 // série qui monte et une série qui casse ne se disent pas de la même façon.
 function pushSerie(tenu) {
-  const s = _progress.serie || (_progress.serie = { n: 0, record: 0 });
+  const c = _carte(), s = c.serie || (c.serie = { n: 0, record: 0 });
   const avant = s.n;
   s.n = tenu ? s.n + 1 : 0;
   const battu = s.n > s.record;

@@ -12,7 +12,7 @@
 
 | Lot | Objet | Taille | Dépend de |
 |---|---|---|---|
-| **A** | Le modèle multi-cartes (données + sauvegarde) | M | — |
+| **A** | Le modèle multi-cartes (données + sauvegarde) — **fait le 21 août 2026** | M | — |
 | **B** | Outils d'auteur : contrôle de carte et remplissage des lignes | M | A |
 | **C** | Contenu Europe v1 : porter le bloc de lancement aux règles | XL | B |
 | **D** | La zone comme palier d'objectifs | S | A |
@@ -26,10 +26,27 @@ contenu, XL = contenu long, parallélisable par agents.
 
 ---
 
-## Lot A — Le modèle multi-cartes
+## Lot A — Le modèle multi-cartes — FAIT (21 août 2026)
 
 **But** : le code ne connaît plus « l'Europe » mais « la carte courante » ; la
 progression est rattachée à une carte.
+
+*Livré* : `data/cartes/europe.json` + `index.json` + `README.md` (schéma et
+raison d'être reprise de l'ancien `data/graph.js`, supprimé) ; `js/cartes.js`
+(`loadCartes`, `loadCarte`, `zonesDeCarte`, `hubsDeZone`, `nomDeCarte`) ;
+`js/graph.js` construit depuis `CARTE_COURANTE` et expose `tousLesHubs`,
+`tousLesLiens`, `lienEntre`, `resetGraphe` ; `js/store.js` en schéma **6**
+(`cartes[id] = { stations, bought, serie }`, `carteCourante`, `possedees`) avec
+migration v0/v5 → v6 testée ; `etoilesTotal` somme toutes les cartes ;
+`graph-check` et `corridors-propose` lisent le JSON. Vérifié en headless :
+sauvegarde v5 reprise sans perte, trois vues rendues, zéro erreur JS.
+
+*Reste du lot, reporté* : le point 5 (versions de hub) — les versions sont
+DÉCRITES (`versionsDeHub`) mais pas encore APPLIQUÉES au moment de jouer un
+boss (aucun appelant hors js/graph.js) ; à faire quand le rejeu d'un hub par
+une nouvelle ligne sera branché. Le point 6 (médailles de carte vs de compte)
+n'a bougé que pour le grade ; les médailles restent calculées sur la carte
+courante, ce qui est juste tant qu'il n'y en a qu'une.
 
 1. **`data/cartes/europe.json`** — déplacer `CONSTELLATIONS`, `HUBS`, `LIENS`,
    `CORRIDORS` de `data/graph.js` vers le schéma du §8 du document (`zones`,

@@ -68,6 +68,7 @@ js/
   gen-worker.js               La génération tourne dans un Web Worker
   render.js                   Rendu SVG, frise, animations, sons
   game.js                     État de la partie, enclenchement, interactions, boucle tick()
+  cartes.js                   Chargement des cartes et de la carte courante
   graph.js                    Le graphe vu du jeu : sorties, parcours, difficulté par position,
                               versions de hub, lignes de départ, gares ouvrables
   recompense.js               Série, rangs de ligne, médailles — déduits de la progression
@@ -76,8 +77,8 @@ js/
   hub.js                      Point d'entrée historique showHub(), délègue à carte.js
   main.js                     Horloge, contrôles, démarrage
 data/
-  graph.js                    Le graphe européen : zones, hubs, liens, corridors
-                              (→ data/cartes/europe.json au lot A du plan)
+  cartes/index.json           La liste des cartes (missions indépendantes)
+  cartes/europe.json          La carte Europe : zones, hubs, lignes (voir cartes/README.md)
   lines.js, places.js         Lignes réelles et points de passage pour le tracé
   worldmap.js                 Frontières (Natural Earth), généré
   stations/index.json         Les pays et leurs gares (bibliothèque de fiches)

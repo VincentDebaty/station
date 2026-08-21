@@ -253,9 +253,10 @@ de hub, lignes de départ, ouverture du boss au bout de la ligne), la carte à
 trois échelles (js/carte.js : ligne / constellation / Europe), la couche
 récompense déduite (js/recompense.js).
 
-Ce qui **manque** : la notion de carte (tout est l'Europe en dur, la
-progression n'est pas rattachée à une carte), la zone comme palier
-d'objectifs, l'écran des cartes et leur achat, les crédits.
+Ce qui **manque** (après le lot A du 21 août, qui a donné au code la notion
+de carte et une progression par carte) : la zone comme palier d'objectifs,
+l'écran des cartes et leur achat, les crédits, l'application des versions de
+hub au moment de jouer un boss.
 
 ---
 

@@ -161,7 +161,7 @@ function vueLigne() {
 
   return `
     <div class="c-tete">
-      <button class="c-zoom" data-vue="constellation">${hDep && CONSTELLATIONS.find(c => c.id === hDep.c) ? CONSTELLATIONS.find(c => c.id === hDep.c).nom : "Le réseau"} ›</button>
+      <button class="c-zoom" data-vue="constellation">${hDep && zoneById(hDep.zone) ? zoneById(hDep.zone).nom : "Le réseau"} ›</button>
       <div class="c-titre"><span class="c-nom">${titre}</span>${rang
         ? `<span class="c-rang r-${rang.id}">${rang.nom}</span>`
         : `<span class="c-avance">${faits} / ${total}</span>`}</div>
@@ -222,10 +222,11 @@ function vueDepart() {
 function vueConstellation() {
   const cc = corridorCourant();
   const ancre = cc ? hubById(cc.depuis) : null;
-  const cid = ancre ? ancre.c : (CONSTELLATIONS[0] || {}).id;
-  const cst = CONSTELLATIONS.find(c => c.id === cid) || CONSTELLATIONS[0];
-  const hubs = HUBS.filter(h => h.c === cid);
-  if (!hubs.length) return vueLigne();
+  const zones = zonesDeCarte();
+  const cid = ancre ? ancre.zone : (zones[0] || {}).id;
+  const cst = zoneById(cid) || zones[0];
+  const hubs = hubsDeZone(cid);
+  if (!hubs.length || !cst) return vueLigne();
 
   const tenues = carteTenues();
   const lons = hubs.map(h => h.ll[0]), lats = hubs.map(h => h.ll[1]);
@@ -238,7 +239,8 @@ function vueConstellation() {
   // disent où l'on pourra aller ensuite).
   const dedans = new Set(hubs.map(h => h.id));
   let traits = "";
-  for (const [a, b, t] of LIENS) {
+  for (const lien of tousLesLiens()) {
+    const a = lien.a, b = lien.b, t = lien.type;
     if (!dedans.has(a) && !dedans.has(b)) continue;
     const ha = hubById(a), hb = hubById(b);
     if (!ha || !hb) continue;
@@ -247,8 +249,6 @@ function vueConstellation() {
     // MÊME LOGIQUE À TOUTES LES ÉCHELLES : le rang colore le trait ici comme
     // il colore le tracé de la vue ligne. C'est ce qui fait qu'on dézoome pour
     // regarder son travail, et pas seulement pour chercher son chemin.
-    const lien = GRAPHE.corridors.find(l =>
-      (l.a === a && l.b === b) || (l.a === b && l.b === a));
     const rg = lien && typeof rangDeLigne === "function" ? rangDeLigne(lien, lien.a) : null;
     const geo = `x1="${X(ha.ll[0])}" y1="${Y(ha.ll[1])}" x2="${X(hb.ll[0])}" y2="${Y(hb.ll[1])}"`;
     const trace = `<line ${geo} class="trait${ouvert ? " ouvert" : ""}` +
@@ -279,7 +279,7 @@ function vueConstellation() {
 
   return `
     <div class="c-tete">
-      <button class="c-zoom" data-vue="europe">L'Europe ›</button>
+      <button class="c-zoom" data-vue="europe">${nomDeCarte()} ›</button>
       <div class="c-titre" style="color:${cst.couleur}">${cst.nom}</div>
       <button class="c-retour" data-vue="ligne">‹ Ma ligne</button>
     </div>
@@ -381,12 +381,14 @@ function ouvrirLigne(cle) {
 }
 
 // ------------------------------------------------------------------
-// LA VUE EUROPE — ce qu'il reste du continent.
+// LA VUE CARTE — ce qu'il reste du territoire, zone par zone.
 // ------------------------------------------------------------------
+// L'identifiant de vue reste « europe » (classes CSS .v-europe, .c-europe) :
+// c'est le dézoom maximal d'UNE carte, quel que soit son nom.
 function vueEurope() {
   const tenues = carteTenues();
-  const cartes = CONSTELLATIONS.map(c => {
-    const hubs = HUBS.filter(h => h.c === c.id);
+  const cartes = zonesDeCarte().map(c => {
+    const hubs = hubsDeZone(c.id);
     const jouables = hubs.filter(h => h.gareId);
     const tenus = jouables.filter(h => tenues.has(h.gareId));
     const part = jouables.length ? Math.round(100 * tenus.length / jouables.length) : 0;
@@ -399,7 +401,7 @@ function vueEurope() {
   }).join("");
   return `
     <div class="c-tete">
-      <div class="c-titre">L'Europe</div>
+      <div class="c-titre">${nomDeCarte()}</div>
       <button class="c-retour" data-vue="ligne">‹ Ma ligne</button>
     </div>
     <div class="c-europe">${cartes}</div>`;

@@ -37,7 +37,7 @@ for (const a of process.argv.slice(2)) {
   const m = /^--seed=(\d+)$/.exec(a);
   if (m) { SEED = +m[1]; continue; }
   if (a === "--reste") RESTE = true;
-  if (a === "--js") JS = true;      // le bloc CORRIDORS à coller dans data/graph.js
+  if (a === "--js") JS = true;      // le bloc CORRIDORS (à reporter dans data/cartes/europe.json, champ `gares`)
 }
 function mulberry32(a) {
   return function () {
@@ -56,9 +56,15 @@ for (const [f, n] of [
   ["js/network.js", ["NET"]],
   ["data/places.js", ["PLACES", "PLACE_ALIASES"]],
   ["data/lines.js", ["LINES", "LINE_COUNTRIES"]],
-  ["data/graph.js", ["HUBS", "LIENS", "CONSTELLATIONS"]],
   ["js/geo.js", ["GEO"]]
 ]) runInContext(read(f) + "\n" + n.map(x => `globalThis.${x} = ${x};`).join(""), ctx);
+// La carte, relue sous l'ancienne forme (hubs avec `c`, liens [a, b, type]).
+{
+  const carte = JSON.parse(read("data/cartes/europe.json"));
+  ctx.CONSTELLATIONS = carte.zones;
+  ctx.HUBS = carte.hubs.map(h => ({ ...h, c: h.zone }));
+  ctx.LIENS = carte.lignes.map(l => l.type ? [l.de, l.vers, l.type] : [l.de, l.vers]);
+}
 
 const index = JSON.parse(read("data/stations/index.json"));
 const CATALOG = [];

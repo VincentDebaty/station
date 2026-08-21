@@ -33,11 +33,16 @@ import { createContext, runInContext } from "node:vm";
 const ROOT = new URL("..", import.meta.url).pathname;
 const DETAIL = process.argv.includes("--detail");
 
-const ctx = createContext({ console });
-runInContext(readFileSync(ROOT + "data/graph.js", "utf8") +
-  "\nglobalThis.HUBS = HUBS; globalThis.LIENS = LIENS;" +
-  "globalThis.CONSTELLATIONS = CONSTELLATIONS; globalThis.CORRIDORS = CORRIDORS;", ctx);
-const { HUBS, LIENS, CONSTELLATIONS, CORRIDORS } = ctx;
+// La carte (data/cartes/europe.json), relue sous la forme que ce contrôle a
+// toujours connue : hubs (`c` = zone), liens [a, b, type], corridors remplis.
+const CARTE_ID = (process.argv.find(a => a.startsWith("--carte=")) || "--carte=europe").slice(8);
+const CARTE = JSON.parse(readFileSync(ROOT + "data/cartes/" + CARTE_ID + ".json", "utf8"));
+const CONSTELLATIONS = CARTE.zones;
+const HUBS = CARTE.hubs.map(h => ({ ...h, c: h.zone }));
+const LIENS = CARTE.lignes.map(l => l.type ? [l.de, l.vers, l.type] : [l.de, l.vers]);
+const CORRIDORS = CARTE.lignes.filter(l => l.gares && l.gares.length)
+  .map(l => ({ de: l.de, vers: l.vers, gares: l.gares }));
+void createContext; void runInContext;
 
 // Le catalogue, pour vérifier que les fiches annoncées existent vraiment.
 const index = JSON.parse(readFileSync(ROOT + "data/stations/index.json", "utf8"));
