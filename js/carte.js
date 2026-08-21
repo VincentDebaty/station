@@ -51,29 +51,29 @@ function carteTenues() {
 // ------------------------------------------------------------------
 // LE SENS DE LECTURE — on avance de la gauche vers la droite, toujours.
 // ------------------------------------------------------------------
-// La ligne s'est d'abord lue depuis le bout qu'on tenait, puis — pour qu'elle
-// ne change pas de sens selon l'état du joueur — TOUJOURS depuis son origine
-// écrite (`de` → `vers` dans data/cartes). C'était compter sans le fait qu'un
-// corridor se prend par n'importe lequel de ses deux bouts : Lille –
-// Bruxelles, prise à Bruxelles, s'affichait avec le joueur tout à droite et
-// sa progression qui remontait vers la gauche. Un jeu se parcourt dans le
-// sens de la lecture, et c'est plus fort que la fidélité au sens d'écriture.
+// La ligne s'est lue depuis son origine écrite (`de` → `vers`), puis depuis
+// le bout qu'on tenait, puis depuis « le hub d'où l'on vient de partir ». Ce
+// dernier critère se retournait contre le joueur au moment même où il
+// finissait une ligne : Bruxelles – Luxembourg parcourue de bout en bout,
+// Luxembourg battue, et le relevé s'affichait sur « Luxembourg – Bruxelles »,
+// le joueur tout à gauche — parce que Luxembourg était désormais le hub le
+// plus récent.
 //
-// On lit donc DEPUIS LE BOUT QU'ON TIENT. Les deux bouts tenus, la ligne est
-// finie : on revient au sens d'écriture — sauf si le service qui vient de
-// s'achever est justement l'un des deux, auquel cas il reste là où le joueur
-// vient de le voir, à droite, plutôt que de traverser l'écran sous sa bulle.
+// L'ORIGINE D'UNE LIGNE EST LE BOUT ACQUIS EN PREMIER. L'ordre des
+// acquisitions est la chronologie du joueur — on y lit d'où il est venu, et
+// ce sens ne change plus : ni en battant le bout d'en face, ni en rejouant
+// l'origine, ni selon le carrefour depuis lequel on rouvre la ligne. Un seul
+// bout tenu : c'est lui. Aucun : le carrefour d'où l'on ouvre, à défaut
+// l'origine écrite.
 function sensDeLecture(lien, prefere) {
   if (!lien) return null;
   const gare = h => (hubById(h) || {}).gareId;
-  const tenu = h => { const g = gare(h); return !!g && isBought(g); };
-  const ta = tenu(lien.a), tb = tenu(lien.b);
-  // Le hub d'où l'on vient de partir gagne : c'est le geste le plus récent.
-  if (prefere && (prefere === lien.a || prefere === lien.b) && tenu(prefere)) return prefere;
-  if (tb && !ta) return lien.b;
-  if (ta && !tb) return lien.a;
-  if (ta && tb && CARTE.bilan && CARTE.bilan.gare === gare(lien.a)) return lien.b;
-  return lien.a;
+  const b = typeof getBought === "function" ? getBought() : [];
+  const rang = h => { const g = gare(h); const i = g ? b.indexOf(g) : -1; return i < 0 ? Infinity : i; };
+  const ia = rang(lien.a), ib = rang(lien.b);
+  if (ia === Infinity && ib === Infinity)
+    return prefere && (prefere === lien.a || prefere === lien.b) ? prefere : lien.a;
+  return ia <= ib ? lien.a : lien.b;
 }
 
 // Le corridor à montrer. On préfère celui de la dernière gare jouée : c'est là
