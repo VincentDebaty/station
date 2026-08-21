@@ -1943,7 +1943,12 @@ svg { width: 100%; height: 100%; display: block; }
   background: #2a3550;
 }
 .jalon:first-of-type::before { display: none; }
-.jalon.j-tenue::before, .jalon.j-ouvrable::before { background: #2dd4bf; opacity: .55; }
+/* LE RAIL EN COULEUR, C'EST LE CHEMIN DÉJÀ FAIT — donc un segment ne se
+   colore que si SES DEUX BOUTS sont tenus. Le segment appartenant au jalon de
+   droite, il suffisait d'être tenu ou ouvrable pour le teindre : la couleur
+   franchissait ainsi la gare suivante et courait jusqu'à celle d'avant, qui
+   n'était pas débloquée. Le voisin de gauche a donc son mot à dire. */
+.jalon.j-tenue + .jalon.j-tenue::before { background: #2dd4bf; opacity: .55; }
 .jalon .pastille {
   width: 16px; height: 16px; margin: 3px 0; border-radius: 50%; background: #29344c;
   border: 2px solid #3a4560; position: relative; z-index: 1; transition: transform .15s;

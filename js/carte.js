@@ -48,16 +48,36 @@ function carteTenues() {
   for (const c of CATALOG) if (isBought(c.id)) t.add(c.id);
   return t;
 }
+// ------------------------------------------------------------------
+// LE SENS DE LECTURE — on avance de la gauche vers la droite, toujours.
+// ------------------------------------------------------------------
+// La ligne s'est d'abord lue depuis le bout qu'on tenait, puis — pour qu'elle
+// ne change pas de sens selon l'état du joueur — TOUJOURS depuis son origine
+// écrite (`de` → `vers` dans data/cartes). C'était compter sans le fait qu'un
+// corridor se prend par n'importe lequel de ses deux bouts : Lille –
+// Bruxelles, prise à Bruxelles, s'affichait avec le joueur tout à droite et
+// sa progression qui remontait vers la gauche. Un jeu se parcourt dans le
+// sens de la lecture, et c'est plus fort que la fidélité au sens d'écriture.
+//
+// On lit donc DEPUIS LE BOUT QU'ON TIENT. Les deux bouts tenus, la ligne est
+// finie : on revient au sens d'écriture — sauf si le service qui vient de
+// s'achever est justement l'un des deux, auquel cas il reste là où le joueur
+// vient de le voir, à droite, plutôt que de traverser l'écran sous sa bulle.
+function sensDeLecture(lien, prefere) {
+  if (!lien) return null;
+  const gare = h => (hubById(h) || {}).gareId;
+  const tenu = h => { const g = gare(h); return !!g && isBought(g); };
+  const ta = tenu(lien.a), tb = tenu(lien.b);
+  // Le hub d'où l'on vient de partir gagne : c'est le geste le plus récent.
+  if (prefere && (prefere === lien.a || prefere === lien.b) && tenu(prefere)) return prefere;
+  if (tb && !ta) return lien.b;
+  if (ta && !tb) return lien.a;
+  if (ta && tb && CARTE.bilan && CARTE.bilan.gare === gare(lien.a)) return lien.b;
+  return lien.a;
+}
+
 // Le corridor à montrer. On préfère celui de la dernière gare jouée : c'est là
 // que le joueur a laissé son attention.
-//
-// UNE LIGNE SE LIT TOUJOURS DEPUIS SON ORIGINE, jamais depuis le bout qu'on
-// tient. La première version faisait l'inverse — commencer par une gare
-// possédée semblait aimable — et la ligne changeait donc de sens selon l'état
-// du joueur : Bruxelles – Luxembourg s'affichait tantôt de Bruxelles vers
-// Luxembourg, tantôt à l'envers. Or c'est la même ligne, et un habitué la
-// reconnaît à son ordre. L'origine est celle qu'écrit data/graph.js (`de` →
-// `vers`, contrôlée alignée sur LIENS), c'est-à-dire celle du monde réel.
 function corridorCourant() {
   const tenues = carteTenues();
   const candidates = [];
@@ -66,7 +86,7 @@ function corridorCourant() {
 
   for (const gareId of candidates) {
     const lien = corridorDeGare(gareId);
-    if (lien) return { lien, depuis: lien.a };
+    if (lien) return { lien, depuis: sensDeLecture(lien) };
     const hub = hubDeGare(gareId);
     if (hub) {
       // Sur un boss : on montre la sortie la plus avancée, à défaut la première.
@@ -81,7 +101,8 @@ function corridorCourant() {
         const n = parcours(l, l.a).gares.filter(g => tenues.has(g)).length;
         if (n > bestN) { bestN = n; best = l; }
       }
-      return { lien: best, depuis: best.a };
+      // Sur un hub, on part DE LUI : c'est le bout qu'on tient.
+      return { lien: best, depuis: sensDeLecture(best, hub.id) };
     }
   }
   return null;
@@ -507,11 +528,13 @@ function lienDeCle(cle) {
 // joueur ne reconnaîtrait plus une ligne qu'il connaît. La destination
 // annoncée par la rangée du panneau, elle, reste juste : elle dit où l'on VA,
 // pas dans quel sens le tracé se dessine.
-function ouvrirLigne(cle) {
+// `prefere` : le hub d'où le joueur ouvre la ligne (le panneau de carrefour
+// déplié). C'est de là qu'il part, donc c'est de là qu'elle se lit.
+function ouvrirLigne(cle, prefere) {
   const lien = lienDeCle(cle);
   if (!lien || !lien.gares || !lien.gares.length) return;
   CARTE.corridor = lien;
-  CARTE.depuis = lien.a;
+  CARTE.depuis = sensDeLecture(lien, prefere);
   CARTE.panneau = null;
   CARTE.vue = "ligne";
   renderCarte();
@@ -616,7 +639,7 @@ function renderCarte() {
     // panneau portent la même marque et font la même chose : ouvrir la vue
     // ligne. C'est le seul geste qui descende d'une échelle.
     const lien = ev.target.closest("[data-lien]");
-    if (lien) { ouvrirLigne(lien.dataset.lien); return; }
+    if (lien) { ouvrirLigne(lien.dataset.lien, CARTE.panneau); return; }
     // LE CARREFOUR POSE SA QUESTION AVANT DE LANCER SA GARE. Le point porte
     // aussi `data-gare` — on le teste donc en premier, sans quoi le clic
     // partirait en jeu et le choix de direction n'aurait jamais lieu.
