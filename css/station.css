@@ -2083,7 +2083,11 @@ svg { width: 100%; height: 100%; display: block; }
    d'écran normale — 1 unité ≈ 4,5 px. */
 .bl { cursor: pointer; }
 .bl.absente { cursor: default; opacity: .55; }
-.bl .bl-fond { fill: #151d2e; stroke: #2a3550; stroke-width: .35; }
+/* Un fond un peu transparent : le trait qu'on voit passer DERRIÈRE la bulle
+   redit à quelle ligne elle appartient, et la carte ne se troue pas là où
+   l'étiquette se pose. Assez opaque, quand même, pour que les chiffres se
+   lisent par-dessus un trait de couleur. */
+.bl .bl-fond { fill: #151d2e; fill-opacity: .65; stroke: #2a3550; stroke-width: .35; }
 .bl:hover .bl-fond, .bl:focus-visible .bl-fond { stroke: #2dd4bf; }
 .bl text { text-anchor: middle; font-family: "Segoe UI", system-ui, sans-serif; pointer-events: none; }
 .bl .bl-prog { font-size: 2.5px; fill: var(--gold); font-variant-numeric: tabular-nums; }
