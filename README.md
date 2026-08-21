@@ -83,8 +83,9 @@ data/
   worldmap.js                 Frontières (Natural Earth), généré
   stations/index.json         Les pays et leurs gares (bibliothèque de fiches)
   stations/<pays>/<id>.json   Une fiche par gare : plan de voies, portails, liaisons, gen
-tools/                        Serveur local, contrôles (gen-check, graph-check, net-check),
-                              propositions de corridors, procédure d'écriture des gares
+tools/                        Serveur local, contrôles (gen-check, carte-check, graph-check,
+                              net-check), propositions de corridors, procédures d'écriture
+                              (AUTHORING-STATIONS.md pour une gare, AUTHORING-CARTES.md pour une carte)
 assets/                       Images concept
 prototypes/                   Anciennes versions (prototype Namur, gare centrale v2)
 ```

@@ -6,6 +6,12 @@ juillet 2026. À rejouer pour chaque nouveau pays.
 
 ## 0. Principe directeur : politique HYBRIDE
 
+**Plancher de jouabilité : au moins 3 directions (portails) et 3-4 quais.**
+Mesuré : une gare de passage sur une seule ligne (2 directions, ex. Huy) est
+creuse à jouer — il n'y a rien à aiguiller. Une gare entre au catalogue parce
+qu'elle est un **croisement** d'au moins deux lignes réelles, jamais parce
+qu'une ligne de carte a besoin d'un point de plus.
+
 On garde l'**échelle de difficulté** et sa progression pédagogique (d1 petit →
 d5 gros). On utilise le **réel** pour : *quelles* destinations, leur **côté L/R**
 (géographie), le **type** (traversante / terminus / mixte), le **caractère**
@@ -161,6 +167,10 @@ figure dans au moins deux listes de `links`** (mesuré sur London Waterloo, quai
 - `js/geo.js` : ajouter `<id>: [longitude, latitude]` dans `countries.<pays>.cities`
   (coordonnées de la VILLE, pour la carte monde). Créer l'entrée pays si besoin
   (`{ name, flag, iso, continent, cities: {…} }`).
+- **Sa ligne de carte** : une gare intermédiaire se joue parce qu'une ligne la
+  porte. L'ajouter dans `data/cartes/<carte>.json`, dans le champ `gares` de SA
+  ligne (une seule — règle R6), à sa position réelle de `de` vers `vers`. Un
+  hub se déclare par son nom dans `hubs[].gare`. Voir `tools/AUTHORING-CARTES.md`.
 
 **Plusieurs gares dans la même ville** (Paris-Nord, Paris-Gare-de-Lyon,
 Paris-Montparnasse) : ne PAS leur donner de `city` commun — la carte afficherait
@@ -285,8 +295,14 @@ node tools/gen-check.mjs                # tout le catalogue, K=6
 node tools/gen-check.mjs <id>           # une gare, K=30
 node tools/gen-check.mjs <id1> <id2> 20 # gares ciblées, K=20
 node tools/net-check.mjs                # le réseau de la carte
-node tools/eco-check.mjs                # l'économie : tarifs, prix, seuil
+node tools/carte-check.mjs --livrable=nw,ger --detail   # la carte : règles R1–R8 et couverture
 ```
+
+`carte-check` vérifie les règles de construction d'une carte (20 hubs, 50
+lignes, 3 sorties par hub, 4 à 9 gares par ligne, zones, connexité, une gare
+une ligne, sinuosité, rampe) et liste, ligne par ligne, les gares réelles qui
+manquent. `gen-check` en affiche le résumé en fin de rapport
+(`CARTE_BLOC=nw,ger node tools/gen-check.mjs` pour le résumé d'un bloc).
 
 `gen-check` charge le vrai moteur + générateur (headless, sans navigateur) et
 vérifie pour chaque gare : **connectivité** (aucun portail/quai mort) + **K

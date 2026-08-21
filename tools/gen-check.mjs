@@ -219,4 +219,12 @@ for (const r of rows)
     pad(r.qMax, 6) + pad(r.qMoy, 6) + (r.problems.join(" ; ") || ""));
 console.log("-".repeat(88));
 console.log(failed ? `\n${failed} gare(s) en échec.\n` : `\nToutes les gares passent.\n`);
+// Et la carte : une ligne, pour qu'un seul appel dise si l'on est livrable.
+// Informatif — la carte a ses propres règles et son propre code de sortie
+// (`node tools/carte-check.mjs`), on ne fait pas échouer une fiche pour elles.
+try {
+  const { execFileSync } = await import("node:child_process");
+  const bloc = process.env.CARTE_BLOC ? ["--livrable=" + process.env.CARTE_BLOC] : [];
+  console.log(execFileSync(process.execPath, [path.join(ROOT, "tools/carte-check.mjs"), "--resume", ...bloc], { encoding: "utf8" }).trim() + "\n");
+} catch (e) { if (e.stdout) console.log(String(e.stdout).trim() + "\n"); }
 process.exit(failed ? 1 : 0);

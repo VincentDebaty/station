@@ -13,7 +13,7 @@
 | Lot | Objet | Taille | Dépend de |
 |---|---|---|---|
 | **A** | Le modèle multi-cartes (données + sauvegarde) — **fait le 21 août 2026** | M | — |
-| **B** | Outils d'auteur : contrôle de carte et remplissage des lignes | M | A |
+| **B** | Outils d'auteur : contrôle de carte et remplissage des lignes — **fait le 21 août 2026** | M | A |
 | **C** | Contenu Europe v1 : porter le bloc de lancement aux règles | XL | B |
 | **D** | La zone comme palier d'objectifs | S | A |
 | **E** | L'écran des cartes et la carte courante | M | A |
@@ -79,10 +79,28 @@ sauvegarde v5 se migre sans perte (test headless : charger une sauvegarde
 fabriquée au schéma 5, vérifier étoiles et gares acquises), et
 `data/graph.js` a disparu.
 
-## Lot B — Outils d'auteur
+## Lot B — Outils d'auteur — FAIT (21 août 2026)
 
 **But** : rendre les règles R1–R9 vérifiables et le remplissage des lignes
 outillé, avant d'écrire 200 fiches.
+
+*Livré* : `tools/carte-check.mjs` (R1–R8, `--livrable=nw,ger`, `--detail`,
+`--resume`, `--carte=<id>` ; code de sortie ≠ 0 sur une règle ✘ ; sur un bloc,
+R2 est informatif et un hub sous 3 sorties un avertissement — décisions du 21
+août). La **couverture** remplace l'extension prévue de `corridors-propose` :
+pour chaque ligne à compléter, `carte-check --detail` liste les gares réelles
+que la voie traverse (points de passage de `lines.js`/`places.js` sans fiche)
+et les gares du catalogue sur aucune ligne, en partant de la gare de la
+*version* du hub (Paris-Lyon vers Dijon). `gen-check` affiche le résumé de
+carte en fin de rapport (`CARTE_BLOC=nw,ger` pour un bloc).
+`tools/AUTHORING-CARTES.md` écrit ; `AUTHORING-STATIONS.md` reçoit le plancher
+« ≥ 3 directions » et le rattachement d'une fiche à sa ligne de carte.
+
+*Mesure de départ du lot C* (bloc nw+ger) : 3 hubs à écrire (Amsterdam,
+Zurich, Genève), 36 lignes à compléter, ≥ 89 fiches sur les lignes dont les
+deux hubs existent, 8 lignes sans tracé dans `data/lines.js` (Cologne–Hanovre,
+Francfort–Stuttgart, Lyon–Marseille, Paris–Nantes, Strasbourg–Stuttgart,
+Londres–Newcastle…) à décrire d'abord.
 
 1. **`tools/carte-check.mjs <carte>`** — vérifie R1 (≥ 20 hubs), R2 (≥ 50
    lignes), R2 bis (≥ 3 sorties par hub), R3 (4–9 gares par ligne), R4 (zones de 7–13, ≥ 2 zones),
