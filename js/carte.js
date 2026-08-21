@@ -556,8 +556,11 @@ function projectionDeCarte() {
   const hubs = tousLesHubs().filter(h => Array.isArray(h.ll));
   if (!hubs.length) return null;
   let lon0 = Infinity, lon1 = -Infinity, lat0 = Infinity, lat1 = -Infinity;
+  // Le nord de la Scandinavie sort du cadre (au-delà de 64°) : vide de gares,
+  // il coûtait un quart de l'échelle à tout le continent. On en voit la
+  // moitié, et c'est assez pour savoir où l'on est.
   const vu = (lon, lat) => {
-    if (lon < -11 || lon > 32 || lat < 35 || lat > 71.5) return;
+    if (lon < -11 || lon > 32 || lat < 35 || lat > 64) return;
     lon0 = Math.min(lon0, lon); lon1 = Math.max(lon1, lon);
     lat0 = Math.min(lat0, lat); lat1 = Math.max(lat1, lat);
   };
@@ -775,7 +778,10 @@ function vueCarte() {
   // colonnes sur les côtés, reliées par un trait : on lisait une légende, pas
   // une carte. Sur sa zone, la bulle EST la zone.
   if (niveau === "continent") {
-    const bulles = infos.map(i => ({ i, x: i.cx, y: i.cy, w: i.ecrite ? 21 : 17, h: i.ecrite ? 9.4 : 6 }));
+    // Largeur : le nom le plus long (« Scandinavie et Baltique », 2,1 px par
+    // lettre environ) plus une vraie marge de chaque côté.
+    const largeur = i => Math.max(i.ecrite ? 25 : 20, i.z.nom.length * 1.15 + 7);
+    const bulles = infos.map(i => ({ i, x: i.cx, y: i.cy, w: largeur(i), h: i.ecrite ? 9.4 : 6 }));
     for (let k = 0; k < 80; k++) {
       let bouge = false;
       for (let a = 0; a < bulles.length; a++) for (let b = a + 1; b < bulles.length; b++) {
@@ -805,15 +811,18 @@ function vueCarte() {
   }
 
   // --- La tête ---------------------------------------------------------------
-  const maLigne = tenues.size ? `<button class="c-retour" data-vue="ligne">‹ Ma ligne</button>` : "";
+  // Pas de bouton « Ma ligne » : on rejoint sa ligne en la touchant sur la
+  // carte — c'est la carte qui mène partout, pas un bouton.
   const tete = !zone
-    ? `<div class="c-titre">${nomDeCarte()}</div>${maLigne}`
+    ? `<div class="c-titre">${nomDeCarte()}</div>`
     : depart
-    ? `<button class="c-zoom" data-vue="europe">${nomDeCarte()} ›</button>
+    ? `<button class="c-zoom" data-vue="europe">${flecheRetour()}${nomDeCarte()}</button>
       <div class="c-titre">Choisissez votre gare de départ</div>
       <span class="c-zone" style="color:${zone.couleur}">${zone.nom}</span>`
-    : `<button class="c-zoom" data-vue="europe">${nomDeCarte()} ›</button>
-      <div class="c-titre" style="color:${zone.couleur}">${zone.nom}</div>${maLigne}`;
+    // Le compte des étoiles tient le coin droit, comme sur la vue ligne : sans
+    // rien en face du bouton de dézoom, le nom de la zone n'est plus au milieu.
+    : `<button class="c-zoom" data-vue="europe">${flecheRetour()}${nomDeCarte()}</button>
+      <div class="c-titre" style="color:${zone.couleur}">${zone.nom}</div>${bourseHTML()}`;
   return `
     <div class="c-tete">${tete}</div>
     <svg class="c-graphe c-carte niveau-${niveau}${depart ? " depart" : ""}${zoomHub ? " zoom" : ""}" style="--k:${K.toFixed(3)}" viewBox="0 0 ${CADRE_L} 100" preserveAspectRatio="xMidYMid meet">
