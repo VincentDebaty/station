@@ -661,6 +661,7 @@ function vueEurope() {
     const cx = xs.reduce((a, b) => a + b, 0) / xs.length, cy = ys.reduce((a, b) => a + b, 0) / ys.length;
     const etendue = Math.max(Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys), 8);
     const k = Math.min(4.5, 84 / (etendue * 1.25));
+    (CARTE.zonesGeo = CARTE.zonesGeo || {})[z.id] = { cx, cy, k };
     const points = hubs.map(h => {
       const tenu = h.gareId && tenues.has(h.gareId);
       const maitrise = tenu && bossMaitrise(h.id, tenues);
@@ -698,8 +699,18 @@ function zoomerSurZone(el) {
   hote.querySelector(".c-carte").classList.add("zoome");
   const cible = `translate(${(50 - k * cx).toFixed(2)}px, ${(50 - k * cy).toFixed(2)}px) scale(${k})`;
   monde.style.transform = cible;
-  CARTE.zoomAvant = cible;     // la vue zone repartira de là
+  // LE MOUVEMENT CONTINUE DANS LE MÊME SENS. La vue zone cadre le même
+  // territoire à l'échelle 1 : si elle repartait de la transformation zoomée,
+  // elle se verrait DÉZOOMER vers sa taille — l'inverse du geste. Elle part
+  // donc d'un peu plus petit que sa taille et finit d'arriver.
+  CARTE.zoomAvant = "translate(6px, 6px) scale(0.88)";
   setTimeout(renderCarte, 580);
+}
+// Le geste inverse : remonter de la zone à l'Europe. La carte repart de la
+// zone agrandie — là où le zoom l'avait menée — et dézoome jusqu'au continent.
+function dezoomerVersEurope(zoneId) {
+  const g = zoneId && CARTE.zonesGeo && CARTE.zonesGeo[zoneId];
+  CARTE.zoomAvant = g ? `translate(${(50 - g.k * g.cx).toFixed(2)}px, ${(50 - g.k * g.cy).toFixed(2)}px) scale(${g.k})` : null;
 }
 
 // ------------------------------------------------------------------
@@ -762,7 +773,9 @@ function renderCarte() {
   hote.onclick = ev => {
     const vue = ev.target.closest("[data-vue]");
     if (vue) {
+      const zoneQuittee = CARTE.vue === "constellation" ? CARTE.zone : null;
       CARTE.vue = vue.dataset.vue; CARTE.corridor = null; CARTE.panneau = null; CARTE.zone = null;
+      if (CARTE.vue === "europe") dezoomerVersEurope(zoneQuittee);
       renderCarte(); return;
     }
     // Une zone touchée depuis la vue Europe : c'est ELLE qu'on montre — la
