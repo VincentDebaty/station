@@ -359,6 +359,26 @@ function estFaite(gareId) {
 // suivante sur son corridor, ou le boss au bout. Depuis un hub tenu, la
 // première gare non tenue de chacune de ses sorties — c'est le CHOIX de
 // direction que le document place au cœur de la progression.
+// LE HUB D'ORIGINE DE LA PREMIÈRE LIGNE RESTE FERMÉ SUR CETTE LIGNE.
+//
+// La première ligne est la seule qu'on prend sans tenir aucun de ses bouts :
+// on la joue depuis sa première gare vers le hub d'arrivée. Une fois ce hub
+// battu, la règle des hubs remontait la ligne dans l'autre sens — toutes les
+// intermédiaires faites — et ouvrait le hub d'origine : « tu viens de battre
+// Bruxelles, retourne à Lille ». Or un boss s'atteint au terme d'une ligne
+// PARCOURUE, et celle-ci l'a été dans l'autre sens. Lille reste donc grise
+// tant qu'une autre ligne n'y arrive pas (Paris – Lille, par exemple).
+//
+// Rien n'est stocké : la première gare achetée est la première gare de la
+// première ligne, et l'origine de cette ligne est son `a` — c'est ainsi que
+// les lignes de départ se prennent (garesDeDepart).
+function hubVerrouille(lien, hubId) {
+  if (typeof getBought !== "function") return false;
+  const premiere = getBought()[0];
+  if (!premiere) return false;
+  const e = GRAPHE.gares[premiere];
+  return !!(e && e.role === "corridor" && e.lien === lien && lien.a === hubId);
+}
 function garesOuvrables(tenues) {
   buildGraphe();
   // RIEN DE TENU : le réseau ne commence pas par une gare, il commence par une
@@ -372,7 +392,7 @@ function garesOuvrables(tenues) {
     if (!h.gareId || !tenues.has(h.gareId)) continue;
     for (const lien of sortiesDeHub(id)) {
       const p = prochaineGare(lien, id, tenues);
-      if (p) ajoute(p.gare);
+      if (p && !(p.boss && hubVerrouille(lien, p.boss.id))) ajoute(p.gare);
     }
   }
   // Les gares de corridor ouvrent leurs deux voisines immédiates : on peut
@@ -412,7 +432,10 @@ function garesOuvrables(tenues) {
     const tB = hB.gareId && tenues.has(hB.gareId);
     // On tient déjà un bout : c'est de là qu'on est parti, l'autre s'ouvre.
     // (`ajoute` ignore les gares tenues, le premier appel est donc sans effet.)
-    if (tA || tB) { ajoute(hA.gareId); ajoute(hB.gareId); }
+    if (tA || tB) {
+      if (!hubVerrouille(e.lien, e.lien.a)) ajoute(hA.gareId);
+      ajoute(hB.gareId);
+    }
     // Aucun bout tenu : c'est la LIGNE DE DÉPART, prise à sa première gare,
     // donc parcourue depuis `a`. Seul le boss d'arrivée s'ouvre — le hub
     // d'origine, resté dans le dos du joueur, attend que celui-ci soit battu.

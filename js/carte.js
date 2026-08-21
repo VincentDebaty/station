@@ -241,9 +241,9 @@ function poserBilan() {
   if (!bulle || !jalon) { if (bulle) bulle.remove(); return; }
   const et = jalon.querySelector(".etoiles");
   const piste = jalon.parentElement;
-  // La bulle part de la hauteur des petites étoiles, plus 8 px d'air sous le
-  // nom de la gare : collée, sa flèche touchait le mot.
-  const haut = (et ? et.offsetTop : jalon.offsetHeight) + 2;
+  // La bulle part SOUS la rangée des petites étoiles, avec 6 px d'air : posée
+  // plus haut, elle cachait les étoiles des gares voisines.
+  const haut = (et ? et.offsetTop + et.offsetHeight : jalon.offsetHeight) + 6;
   // LE GROUPE SE CENTRE — jalons ET bulle. La piste centre ses jalons dans sa
   // hauteur ; on lui retire en bas ce que la bulle dépasse du jalon, et le
   // centre des jalons remonte d'autant : c'est l'ensemble qui se retrouve au
@@ -391,6 +391,7 @@ function panneauDeHub(hubId, tenues) {
   if (!h) return "";
   const sorties = sortiesDeHub(hubId);
   const maitrise = h.gareId && tenues.has(h.gareId) && bossMaitrise(hubId, tenues);
+  const ouvrables = typeof garesOuvrables === "function" ? garesOuvrables(tenues) : new Set();
 
   const rangs = sorties.map(lien => {
     const vers = lien.a === hubId ? lien.b : lien.a;
@@ -413,7 +414,9 @@ function panneauDeHub(hubId, tenues) {
     // première ligne, resté dans le dos du joueur — et de toute ligne parcourue
     // jusqu'au bout sans avoir encore pris la métropole. On ne propose pas une
     // ligne à parcourir, on nomme ce qui reste : le boss.
-    const resteLeBoss = !!(hv && hv.gareId && !tenues.has(hv.gareId) &&
+    // « Battre » seulement si le graphe l'autorise : l'origine de la première
+    // ligne reste fermée depuis son arrivée (js/graph.js, hubVerrouille).
+    const resteLeBoss = !!(hv && hv.gareId && ouvrables.has(hv.gareId) &&
       lien.gares.every(g => typeof estFaite === "function" ? estFaite(g) : tenues.has(g)));
     return `<button class="p-ligne${faits ? " p-entamee" : ""}${resteLeBoss ? " p-boss" : ""}" data-lien="${cleDeLien(lien)}">` +
       `<span class="p-vers">${resteLeBoss ? "Battre " : ""}${hv ? hv.nom : vers}</span>` +

@@ -2195,7 +2195,6 @@ svg { width: 100%; height: 100%; display: block; }
    étoiles — qu'elle remplace par les siennes, en grand. Elle ne capte aucun
    clic : la ligne reste entièrement jouable autour d'elle. */
 .c-ligne.avec-bilan { padding-bottom: 130px; } /* repli ; poserBilan pose la valeur exacte pour centrer le groupe */
-.jalon.j-bilan .etoiles { visibility: hidden; }
 .c-bilan {
   position: absolute; transform: translateX(-50%); z-index: 2; pointer-events: none;
   display: flex; flex-direction: column; align-items: center; gap: 5px;
