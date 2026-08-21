@@ -67,8 +67,8 @@ fabriquée au schéma 5, vérifier étoiles et gares acquises), et
 **But** : rendre les règles R1–R9 vérifiables et le remplissage des lignes
 outillé, avant d'écrire 200 fiches.
 
-1. **`tools/carte-check.mjs <carte>`** — vérifie R1 (≥ 20 hubs), R2 (≥ 3
-   sorties par hub), R3 (4–9 gares par ligne), R4 (zones de 7–13, ≥ 2 zones),
+1. **`tools/carte-check.mjs <carte>`** — vérifie R1 (≥ 20 hubs), R2 (≥ 50
+   lignes), R2 bis (≥ 3 sorties par hub), R3 (4–9 gares par ligne), R4 (zones de 7–13, ≥ 2 zones),
    R5 (connexité, aucune fiche référencée absente, aucun hub sans fiche dans
    le sous-ensemble livré), R6 (une gare, une ligne), R7 (sinuosité ≤ 1,5
    depuis `ll` des hubs et `geo.js`), R8 (plafond de flux croissant vers le
@@ -88,22 +88,27 @@ outillé, avant d'écrire 200 fiches.
 
 *Fini quand* : `node tools/carte-check.mjs europe` imprime les 4 écarts connus
 (31 hubs sous 3 sorties, 17 lignes trop courtes, 110 lignes vides, 58 hubs
-sans fiche) et un rapport « bloc nw+ger » exact.
+sans fiche) et un rapport « bloc nw+ger » exact (24 hubs, 39 lignes, 8 hubs
+sous 3 sorties internes).
 
 ## Lot C — Contenu Europe v1
 
 **But** : un bloc d'au moins 20 hubs qui passe `carte-check` sans erreur.
 
-1. **Trancher le bloc** : France-Benelux + Germanie-Alpes (24 hubs, 39 lignes,
-   ~215 fiches) — recommandé — ou avec les Îles britanniques (33 hubs, 53
-   lignes, ~515 fiches).
-2. **Corriger R2 dans le bloc** : Dijon, Nantes, Toulouse, Genève, Leipzig ont
-   2 sorties. Ajouter un tracé réel à chacun (Nantes–Rennes ? Toulouse–
-   Narbonne via Montpellier existe ; Dijon–Strasbourg par Belfort ; Genève–
-   Milan par le Simplon ; Leipzig–Dresde) ou les rétrograder en terminus
-   optionnels. Décision de Vincent (question ouverte n° 2).
-3. **Écrire les hubs manquants** du bloc (3 : Amsterdam, Genève, Zurich —
-   vérifier la liste avec `carte-check`).
+1. **Le bloc est tranché** : France-Benelux + Germanie-Alpes (24 hubs, 39
+   lignes internes, ~215 fiches). Si le bloc livré doit atteindre 50 lignes à
+   lui seul (question ouverte n° 3 du document), les Îles britanniques
+   s'ajoutent en **C bis** après ce lot, même méthode.
+2. **Corriger R2 bis dans le bloc** — règle tranchée : *ajouter des lignes,
+   sinon supprimer le hub*. Huit hubs concernés. Proposer pour chacun une
+   ligne réelle (Nantes–Rennes ; Toulouse–Narbonne ; Dijon–Belfort–Mulhouse
+   ou Dijon–Besançon ; Genève–Simplon–Milan ; Leipzig–Dresde ; Lille,
+   Marseille, Montpellier ont leur 3e sortie vers une zone grisée) et, à
+   défaut de ligne crédible à 4–9 gares, **retirer le hub** et rattacher ses
+   gares aux lignes voisines. Passer la même revue sur les 23 autres hubs de
+   l'Europe avant de livrer leurs zones.
+3. **Écrire les hubs manquants** du bloc : Amsterdam, Zurich, Genève
+   (vérifié le 21 août).
 4. **Remplir les lignes** à 4–9 gares, **ligne par ligne**, un agent par gare
    selon `AUTHORING-STATIONS.md` (recherche réelle → fiche → `gen-check`).
    Ordre : d'abord les lignes de départ (rampe douce), puis les lignes entre

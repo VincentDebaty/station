@@ -158,31 +158,30 @@ Ces règles sont **normatives** : un outil de contrôle (`tools/carte-check.mjs`
 | # | Règle | Pourquoi |
 |---|---|---|
 | R1 | **≥ 20 hubs** par carte | En dessous, la carte n'offre pas assez de choix de direction pour tenir la boucle « battre un hub → choisir une ligne » sur la durée |
-| R2 | **≥ 60 lignes**, c'est-à-dire **≥ 3 lignes par hub** (voir la note de lecture ci-dessous) | Chaque hub doit offrir un choix après sa première victoire ; un hub à 1 ou 2 sorties est un cul-de-sac ou un couloir |
+| R2 | **≥ 50 lignes** par carte, quoi qu'il arrive — c'est un plancher absolu, indépendant du nombre de hubs | Une carte est une mission longue : en dessous de 50 lignes elle se finit trop vite pour mériter d'être une carte |
+| R2 bis | **Chaque hub a ≥ 3 sorties.** Un hub qui ne peut pas en avoir trois (géographie, lignes réelles) **est supprimé** de la carte, jamais gardé comme cul-de-sac | Chaque hub doit offrir un choix après sa première victoire ; un hub à 1 ou 2 sorties est un couloir |
 | R3 | Une ligne compte **4 à 9 gares intermédiaires** → **5 à 10 niveaux** hub d'arrivée compris | Moins de 4 : le hub est à portée de main, la promesse « parcourir une ligne » n'est pas tenue. Plus de 9 : le joueur ne voit plus l'objectif |
 | R4 | Une zone compte **7 à 13 hubs** (cible ~10) et une carte a **≥ 2 zones** | Équilibre de durée entre zones ; une carte à une seule zone n'a pas de niveau 3 |
-| R5 | **Pas de cul-de-sac** : chaque hub a ≥ 3 sorties, chaque gare intermédiaire est sur une ligne, le graphe est connexe | Rien ne doit être injouable ou sans lendemain |
+| R5 | **Pas de cul-de-sac** : chaque gare intermédiaire est sur une ligne, le graphe est connexe | Rien ne doit être injouable ou sans lendemain |
 | R6 | **Une gare intermédiaire appartient à une seule ligne** | Une gare dans deux lignes s'ouvrirait deux fois ; la couverture prime sur l'optimalité de chaque ligne |
 | R7 | Une ligne **reste sur la même ligne réelle** (sinuosité ≤ 1,5 × le vol d'oiseau) | La vérité du tracé avant la longueur : Bruxelles–Luxembourg passe par Namur, pas par le Hainaut |
 | R8 | Les gares intermédiaires **grossissent vers le hub** | La difficulté se déduit de la position mais la géométrie a le dernier mot : une rampe ne tient que si les gares peuvent la porter |
 | R9 | Une **ligne de départ** par zone d'entrée au moins, à rampe douce ; la gare d'amorce se joue en niveau 1 quelle que soit sa fiche | Le premier geste du jeu doit être facile et offrir un choix de pays |
 
-**Note de lecture sur R2 — « 20 hubs donc 60 lignes ».** Le compte se fait
-**par hub** : 20 hubs × 3 sorties = 60 lignes *vues depuis les hubs*. Comme
-chaque tracé relie deux hubs, cela fait **30 tracés distincts** (et 60 parcours
-hub → hub, un par sens). C'est exactement la densité de l'Europe actuelle
-(131 tracés pour 85 hubs = 3,1 sorties par hub). Si l'on voulait 60 *tracés*
-pour 20 hubs, chaque hub aurait 6 sorties — le double du graphe européen et
-le maximum prévu pour un hub continental ; ce n'est pas la lecture retenue.
-**À confirmer par Vincent.**
+**Sur R1 et R2 (tranché le 21 août 2026).** Les deux planchers sont
+indépendants : **20 hubs minimum ET 50 lignes minimum**. Une ligne est un
+tracé entre deux hubs, compté une fois (pas un par sens). Avec 20 hubs,
+50 lignes font 5 sorties par hub en moyenne — une carte minimale est donc
+**dense** ; avec plus de hubs, la densité redescend vers les 3 sorties
+réglementaires (l'Europe : 131 lignes pour 85 hubs, 3,1 par hub).
 
-**Volumes qui en découlent** pour la carte minimale (20 hubs, 30 tracés) :
+**Volumes qui en découlent** pour la carte minimale (20 hubs, 50 lignes) :
 
 | Élément | Compte |
 |---|---|
-| Gares intermédiaires (30 tracés × 4 à 9) | 120 à 270, médiane ~195 |
-| Versions de hub (20 hubs × ≥ 3) | ≥ 60 |
-| **Niveaux** | **≈ 180 à 330** |
+| Gares intermédiaires (50 lignes × 4 à 9) | 200 à 450, médiane ~325 |
+| Versions de hub (20 hubs × ≥ 3, en pratique ≈ 5) | 60 à 100 |
+| **Niveaux** | **≈ 260 à 550** |
 
 Pour l'Europe entière (85 hubs, 131 tracés) : 525 à 1 180 gares
 intermédiaires + ~260 versions de hub → **800 à 1 400 niveaux**.
@@ -219,20 +218,34 @@ Ce que contient `data/graph.js` aujourd'hui, face aux règles du §3 :
 | Règle | Mesure | Verdict |
 |---|---|---|
 | R1 ≥ 20 hubs | **85 hubs**, 27 jouables (fiche écrite), 58 à écrire | ✔ |
-| R2 ≥ 3 sorties / hub | 131 tracés = 3,1 par hub en moyenne ; **31 hubs sous 3** (dont 7 à une seule sortie : Aberdeen, Cork, Porto, Palerme, Bergen, Athènes, Tirana) | ✘ à corriger (ajouter des tracés ou rétrograder en terminus optionnels, §8) |
+| R2 ≥ 50 lignes | **131 lignes** | ✔ |
+| R2 bis ≥ 3 sorties / hub | 3,1 par hub en moyenne mais **31 hubs sous 3** (dont 7 à une seule sortie : Aberdeen, Cork, Porto, Palerme, Bergen, Athènes, Tirana) | ✘ à corriger : **ajouter des lignes, sinon supprimer le hub** (tranché) |
 | R3 4–9 gares par ligne | **21 corridors écrits** sur 131 ; longueurs 1 → 8, 2 → 6, 3 → 3, 4 → 1, 5 → 2, 7 → 1 : **4 conformes** | ✘ le gros du travail de contenu |
 | R4 zones de 7–13 hubs | 9 zones : 7 (Est), 9 ×6, 11 (Germanie), 13 (France-Benelux) | ✔ |
 | R5 connexité | connexe, 41 tracés ont leurs deux bouts jouables | ✔ (sur la partie écrite) |
 | Catalogue | **145 fiches** de gares, 5 pays (BE, FR, DE, LU, UK) | — |
 
-**Bloc de lancement proposé** (à confirmer) : les zones **France et Benelux +
-Germanie et Alpes** — 24 hubs (21 déjà jouables), 39 tracés, 40 gares
-intermédiaires déjà écrites sur ces tracés, **~215 fiches à écrire** pour
-porter tous les tracés à 4–9 gares. C'est le plus petit sous-ensemble qui
-respecte R1/R4 avec le moins de fiches manquantes. L'ajout des Îles
-britanniques (33 hubs, 53 tracés) demande ~300 fiches de plus. Le reste de
-l'Europe s'affiche grisé (« à venir ») et se greffe ensuite, zone par zone,
-sur les hubs-portes.
+**Bloc de lancement (tranché le 21 août 2026)** : les zones **France et
+Benelux + Germanie et Alpes** — 24 hubs (21 déjà jouables ; Amsterdam, Zurich
+et Genève à écrire), 39 lignes internes, 40 gares intermédiaires déjà écrites
+sur ces lignes, **~215 fiches à écrire** pour porter toutes les lignes à 4–9
+gares. Le reste de l'Europe s'affiche grisé (« à venir ») et se greffe
+ensuite, zone par zone, sur les hubs-portes.
+
+Deux points d'attention sur ce bloc :
+
+- **R2 bis à l'intérieur du bloc** : huit hubs y ont moins de 3 sorties
+  internes — Dijon, Nantes, Toulouse, Genève, Leipzig (2 en tout), et Lille,
+  Marseille, Montpellier (2 internes, la 3e sort du bloc vers une zone
+  grisée). Pour les cinq premiers : ajouter une ligne réelle (Nantes–Rennes,
+  Toulouse–Narbonne, Dijon–Belfort–Mulhouse, Genève–Simplon, Leipzig–Dresde…)
+  ou supprimer le hub. Pour les trois autres : la ligne sortante compte dès
+  que la zone voisine est livrée ; en attendant, leur donner une 3e ligne
+  interne ou accepter une sortie « à venir » le temps du lancement.
+- **R2 (≥ 50 lignes)** : le bloc en a 39. Le plancher porte sur la carte
+  Europe entière (131), pas sur son premier bloc livré ; mais si le bloc
+  doit valoir carte complète à lui seul, il faut y adjoindre les Îles
+  britanniques (33 hubs, 53 lignes, ~300 fiches de plus). **À trancher.**
 
 Ce qui est déjà en place dans le code et qu'il faut **conserver** : le graphe
 vu du jeu (js/graph.js : sorties, parcours, difficulté par position, versions
@@ -351,13 +364,12 @@ interface EtatJoueur {
 
 ## 9. Questions ouvertes
 
-1. **R2** : confirmer la lecture « 60 lignes = 3 sorties par hub = 30 tracés »
-   (§3, note).
-2. **Hubs à 1–2 sorties** sur l'Europe (31) : ajouter des tracés, ou les
-   sortir du graphe principal comme *terminus optionnels* (culs-de-sac
-   prestigieux : Brest, Nice, Narvik, Aberdeen…) récompensés en collectibles ?
-3. **Bloc de lancement** de l'Europe : France-Benelux + Germanie (24 hubs,
-   ~215 fiches à écrire) ou avec les Îles britanniques (33 hubs, ~515) ?
+1. ~~R2~~ Tranché : 20 hubs minimum **et** 50 lignes minimum.
+2. ~~Hubs à 1–2 sorties~~ Tranché : ajouter des lignes, sinon supprimer le
+   hub. Reste à faire, hub par hub (31 sur l'Europe, 8 dans le bloc de
+   lancement — §5).
+3. ~~Bloc de lancement~~ Tranché : France-Benelux + Germanie. Reste à dire si
+   le bloc livré doit atteindre 50 lignes à lui seul (§5).
 4. **Barème des crédits** et **prix des cartes** (§7).
 5. **Deuxième carte** pour prouver que le modèle est générique : un pays
    (échelle resserrée) ou un autre continent ? Hors Europe, le catalogue est
