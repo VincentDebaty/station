@@ -547,7 +547,7 @@ const RAD = Math.PI / 180;
 // tiraient le cadre vers le nord-ouest et laissaient le continent tassé en
 // bas à droite.
 const PAYS_HORS_CARTE = new Set(["ISL", "SJM", "FRO", "GRL"]);
-const ETIREMENT_X = 1.35;   // la longitude, élargie (voir projectionDeCarte)
+const ETIREMENT_X = 1.6;    // la longitude, élargie (voir projectionDeCarte)
 // Le cadre se calcule sur les PAYS qui portent une zone — c'est eux qu'on
 // voit — et non sur les hubs, qui n'occupent que le cœur du continent. Les
 // côtes lointaines (Svalbard, Canaries, Açores) sont bornées, sinon elles
@@ -764,44 +764,38 @@ function vueCarte() {
     if (zoomHub) corps += bullesDeHub(zoomHub, X, Y, K, tenues);
   }
 
-  // --- Au continent : les bulles de zone, en colonnes reliées ---------------
+  // --- Au continent : une bulle sur chaque zone ------------------------------
+  // Posée au cœur de la zone (le barycentre de ses hubs), puis les bulles se
+  // repoussent juste assez pour ne pas se couvrir — elles ont été mises en
+  // colonnes sur les côtés, reliées par un trait : on lisait une légende, pas
+  // une carte. Sur sa zone, la bulle EST la zone.
   if (niveau === "continent") {
-    const bulles = infos.map(i => ({ i, ax: i.cx, ay: i.cy, w: i.ecrite && i.ouverte ? 21 : 17, h: i.ecrite && i.ouverte ? 9.4 : 6 }));
-    bulles.sort((u, v) => u.ax - v.ax);
-    const gauche = bulles.slice(0, Math.ceil(bulles.length / 2)), droite = bulles.slice(gauche.length);
-    const colonne = (col, x) => {
-      col.sort((u, v) => u.ay - v.ay);
-      for (const b of col) { b.x = x; b.y = b.ay; }
-      const GAP = 2.2;
-      for (let i = 1; i < col.length; i++)
-        col[i].y = Math.max(col[i].y, col[i - 1].y + (col[i - 1].h + col[i].h) / 2 + GAP);
-      const dernier = col[col.length - 1];
-      if (dernier && dernier.y + dernier.h / 2 > 99) {
-        dernier.y = 99 - dernier.h / 2;
-        for (let i = col.length - 2; i >= 0; i--)
-          col[i].y = Math.min(col[i].y, col[i + 1].y - (col[i].h + col[i + 1].h) / 2 - GAP);
+    const bulles = infos.map(i => ({ i, x: i.cx, y: i.cy, w: i.ecrite ? 21 : 17, h: i.ecrite ? 9.4 : 6 }));
+    for (let k = 0; k < 80; k++) {
+      let bouge = false;
+      for (let a = 0; a < bulles.length; a++) for (let b = a + 1; b < bulles.length; b++) {
+        const u = bulles[a], v = bulles[b];
+        const dx = (u.w + v.w) / 2 + 1.2 - Math.abs(u.x - v.x), dy = (u.h + v.h) / 2 + 1.2 - Math.abs(u.y - v.y);
+        if (dx <= 0 || dy <= 0) continue;
+        bouge = true;
+        if (dx < dy) { const sg = u.x <= v.x ? -1 : 1; u.x += sg * dx / 2; v.x -= sg * dx / 2; }
+        else { const sg = u.y <= v.y ? -1 : 1; u.y += sg * dy / 2; v.y -= sg * dy / 2; }
       }
-      if (col[0] && col[0].y - col[0].h / 2 < 1) col[0].y = 1 + col[0].h / 2;
-    };
-    colonne(gauche, 2 + 21 / 2);
-    colonne(droite, CADRE_L - 2 - 21 / 2);
-    corps += bulles.map(b => {
-      const bord = b.x < CADRE_L / 2 ? b.x + b.w / 2 : b.x - b.w / 2;
-      return `<g class="zl" style="--col:${b.i.z.couleur}"><line x1="${bord.toFixed(1)}" y1="${b.y.toFixed(1)}" x2="${b.ax.toFixed(1)}" y2="${b.ay.toFixed(1)}"/>` +
-        `<circle cx="${b.ax.toFixed(1)}" cy="${b.ay.toFixed(1)}" r=".9"/></g>`;
-    }).join("");
+      for (const b of bulles) { b.x = Math.max(b.w / 2 + 1, Math.min(CADRE_L - b.w / 2 - 1, b.x)); b.y = Math.max(b.h / 2 + 1, Math.min(99 - b.h / 2, b.y)); }
+      if (!bouge) break;
+    }
     corps += bulles.map(b => {
       const i = b.i;
       const cl = "ze" + (!i.ecrite ? " grise" : !i.ouverte ? " verrou" : "");
       const detail = !i.ecrite ? "" : !i.ouverte
-        ? `<text class="zb-prog" x="0" y="1.7">verrouillée</text>`
+        ? `<text class="zb-prog" x="0" y="2.4">verrouillée</text>`
         : `<text class="zb-prog" x="0" y="1.7">★ ${i.etoiles} / ${i.max}<tspan class="zb-dia" dx="1.8">◆ ${i.diamants}</tspan></text>` +
           `<rect class="zb-piste" x="-8.5" y="3.1" width="17" height=".8" rx=".4"/>` +
           `<rect class="zb-fait" x="-8.5" y="3.1" width="${(17 * i.part).toFixed(2)}" height=".8" rx=".4"/>`;
       return `<g class="${cl}" data-const="${i.z.id}" style="--col:${i.z.couleur}">` +
         `<g class="zb" transform="translate(${b.x.toFixed(2)} ${b.y.toFixed(2)})">` +
         `<rect class="zb-fond" x="${(-b.w / 2).toFixed(1)}" y="${(-b.h / 2).toFixed(1)}" width="${b.w}" height="${b.h}" rx="2"/>` +
-        `<text class="zb-nom" x="0" y="${b.h > 7 ? -1.6 : 0.8}">${i.z.nom}</text>${detail}</g></g>`;
+        `<text class="zb-nom" x="0" y="${i.ecrite ? -1.6 : 0.8}">${i.z.nom}</text>${detail}</g></g>`;
     }).join("");
   }
 

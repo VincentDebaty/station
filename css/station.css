@@ -2129,12 +2129,9 @@ svg { width: 100%; height: 100%; display: block; }
 .c-carte .ze.verrou { cursor: default; }
 .c-carte .ze.grise .zb-nom { fill: var(--muted); }
 .c-carte .ze.grise .zb-prog { fill: var(--muted); }
-/* Le trait qui relie la bulle à sa zone, et le point sur la zone. */
-.c-carte .zl line { stroke: var(--col); stroke-width: .35; stroke-opacity: .7; pointer-events: none; }
-.c-carte .zl circle { fill: var(--col); pointer-events: none; }
 /* Le zoom : le monde grossit (transition de .monde), bulles et traits
    s'effacent — à ×4 une bulle de zone ferait tout l'écran. */
-.c-carte .ze, .c-carte .zl { transition: opacity .35s ease; }
+.c-carte .ze { transition: opacity .35s ease; }
 
 /* ---- L'Europe : les constellations et leur complétion (tuiles, repli) ---- */
 .c-europe {
