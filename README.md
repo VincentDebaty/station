@@ -1,7 +1,8 @@
 # Station — Le poste d'aiguillage
 
 Jeu d'aiguillage ferroviaire : orchestrez l'entrée et la sortie des trains d'une gare
-avec zéro retard. Une étoile débloque la gare suivante.
+avec zéro retard. Une étoile ouvre la gare suivante sur la ligne ; au bout de la
+ligne, un hub ; derrière le hub, le choix d'une nouvelle ligne.
 
 ## Lancer le jeu
 
@@ -46,23 +47,43 @@ En cas d'écran vide, un bandeau rouge en bas affiche l'erreur (il n'y a pas de
 console sur téléphone) ; un mélange de versions est détecté et réparé tout seul
 par un rechargement unique — voir le script en tête de `station.html`.
 
+## Documents de conception
+
+- `meta-progression-jeu-aiguillage.md` — la méta-progression en quatre niveaux
+  (gare, ligne, zone, carte), les règles de construction d'une carte, les
+  récompenses, le modèle de données.
+- `plan-de-dev.md` — le plan de réalisation par lots.
+- `tools/AUTHORING-STATIONS.md` — la procédure pour écrire une fiche de gare.
+
 ## Organisation des fichiers
 
 ```
-station.html                  Page du jeu (structure HTML seule)
+station.html                  Page du jeu (structure HTML seule) ; index.html y redirige
 css/station.css               Styles
 js/
-  catalog.js                  Chargement du catalogue JSON + progression (localStorage)
+  store.js                    Persistance (cache mémoire, versionnement, localStorage ou Capacitor)
+  catalog.js                  Chargement du catalogue JSON, paliers, grades
   engine.js                   Constantes, géométrie des voies, loadStation()
   schedule.js                 Générateur d'horaire calibré « zéro retard possible »
+  gen-worker.js               La génération tourne dans un Web Worker
   render.js                   Rendu SVG, frise, animations, sons
   game.js                     État de la partie, enclenchement, interactions, boucle tick()
-  hub.js                      Carte-parcours (sélection des gares)
+  graph.js                    Le graphe vu du jeu : sorties, parcours, difficulté par position,
+                              versions de hub, lignes de départ, gares ouvrables
+  recompense.js               Série, rangs de ligne, médailles — déduits de la progression
+  carte.js                    La carte à trois échelles (ligne / constellation / Europe)
+  network.js, geo.js          Réseau ferré dérivé et coordonnées des villes
+  hub.js                      Point d'entrée historique showHub(), délègue à carte.js
   main.js                     Horloge, contrôles, démarrage
-data/stations/
-  index.json                  Ordre des pays et des gares = ordre de progression
-  belgique/                   namur, charleroi, liege, anvers, bruxelles-midi
-  france/                     lille, lyon, strasbourg, marseille, paris-nord
+data/
+  graph.js                    Le graphe européen : zones, hubs, liens, corridors
+                              (→ data/cartes/europe.json au lot A du plan)
+  lines.js, places.js         Lignes réelles et points de passage pour le tracé
+  worldmap.js                 Frontières (Natural Earth), généré
+  stations/index.json         Les pays et leurs gares (bibliothèque de fiches)
+  stations/<pays>/<id>.json   Une fiche par gare : plan de voies, portails, liaisons, gen
+tools/                        Serveur local, contrôles (gen-check, graph-check, net-check),
+                              propositions de corridors, procédure d'écriture des gares
 assets/                       Images concept
 prototypes/                   Anciennes versions (prototype Namur, gare centrale v2)
 ```
