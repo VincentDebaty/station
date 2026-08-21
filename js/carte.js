@@ -354,7 +354,7 @@ function vueConstellation() {
   // LE HUB CHOISI : la carte zoome sur lui (renderCarte anime la transition)
   // et ses sorties portent leurs bulles.
   const zoomHub = !depart && CARTE.panneau ? hubById(CARTE.panneau) : null;
-  const K = 2.3;
+  const K = 3.2;
   const lons = hubs.map(h => h.ll[0]), lats = hubs.map(h => h.ll[1]);
   const x0 = Math.min(...lons), x1 = Math.max(...lons);
   const y0 = Math.min(...lats), y1 = Math.max(...lats);
@@ -392,13 +392,16 @@ function vueConstellation() {
     const tenu = h.gareId && tenues.has(h.gareId);
     const jouable = h.gareId && isBuyable(h.gareId);
     const maitrise = tenu && bossMaitrise(h.id, tenues);
-    const r = (h.rang === 1 ? 2.6 : 1.9) / (zoomHub ? 1.7 : 1);   // zoomé, le point ne grossit pas d'autant
+    // Zoomé, le point garde à peu près sa taille d'écran (×1,3) : c'est la
+    // carte qu'on rapproche, pas les symboles qu'on gonfle.
+    const f = zoomHub ? 1.3 / K : 1;
+    const r = (h.rang === 1 ? 2.6 : 1.9) * f;
     // Le carrefour ouvert se marque : sans quoi le panneau flotte, et l'on ne
     // sait plus de quel point il parle.
     return `<g class="hub${tenu ? " tenu" : ""}${jouable ? " jouable" : ""}${depart && jouable ? " depart" : ""}${maitrise ? " maitrise" : ""}` +
       `${h.gareId ? "" : " absent"}${CARTE.panneau === h.id ? " choisi" : ""}"` +
       ` data-hub="${h.id}"${h.gareId ? ` data-gare="${h.gareId}"` : ""}>` +
-      `<circle class="cerne" cx="${X(h.ll[0])}" cy="${Y(h.ll[1])}" r="${r + 2.2}"/>` +
+      `<circle class="cerne" cx="${X(h.ll[0])}" cy="${Y(h.ll[1])}" r="${(r + 2.2 * f).toFixed(2)}"/>` +
       `<circle cx="${X(h.ll[0])}" cy="${Y(h.ll[1])}" r="${r}"/>` +
       `<text x="${X(h.ll[0])}" y="${Y(h.ll[1]) - 4}">${h.nom}</text></g>`;
   }).join("");
@@ -414,7 +417,7 @@ function vueConstellation() {
   const bulles = zoomHub ? bullesDeHub(zoomHub, X, Y, K, tenues) : "";
   return `
     <div class="c-tete">${tete}</div>
-    <svg class="c-graphe${depart ? " depart" : ""}${zoomHub ? " zoom" : ""}" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet">
+    <svg class="c-graphe${depart ? " depart" : ""}${zoomHub ? " zoom" : ""}" style="--k:${zoomHub ? K : 1}" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet">
       <g class="monde"><g class="traits">${traits}</g>${points}${bulles}</g>
     </svg>`;
 }
@@ -433,33 +436,32 @@ function bullesDeHub(hub, X, Y, K, tenues) {
   // champ, la bulle ne l'est jamais) ; deux sorties trop proches en angle se
   // repoussent jusqu'à ne plus se couvrir — Lille, Luxembourg et Cologne
   // partent de Bruxelles à quelques degrés près.
-  const R = 24 / K, LARGEUR = 31;                 // rayon (monde) et largeur de garde d'une bulle (écran)
+  const R = 32 / K, LARGEUR = 31;                 // rayon (monde) et largeur de garde d'une bulle (écran)
   const sorties = sortiesDeHub(hub.id).map(lien => {
     const vers = lien.a === hub.id ? lien.b : lien.a;
     const hv = hubById(vers);
     if (!hv) return null;
-    return { lien, hv, ang: Math.atan2(Y(hv.ll[1]) - hy, X(hv.ll[0]) - hx) };
+    return { lien, hv, ligne: Math.atan2(Y(hv.ll[1]) - hy, X(hv.ll[0]) - hx) };
   }).filter(Boolean);
-  // La pastille « Jouer » du hub prend place dans la ronde, ANCRÉE AU NORD —
-  // là où était son nom, qu'elle remplace. Les bulles s'écartent d'elle, elle
-  // ne bouge pas.
-  const etatHub = hub.gareId ? etatDeGare(hub.gareId) : null;
-  const pastille = etatHub === "tenue" || etatHub === "ouvrable";
-  if (pastille) sorties.push({ fixe: true, ang: -Math.PI / 2 });
-  sorties.sort((u, v) => u.ang - v.ang);
+  // CHAQUE BULLE SE POSE JUSTE APRÈS SA LIGNE, DANS LE SENS DES AIGUILLES
+  // D'UNE MONTRE — et n'en bouge que pour laisser la place à la suivante,
+  // toujours dans ce sens. On lit donc la ronde comme un cadran : le trait,
+  // puis sa bulle, puis le trait suivant. (L'écran a l'axe y vers le bas :
+  // l'angle qui croît tourne bien dans le sens horaire.)
   const mini = Math.min(LARGEUR / (R * K), 2 * Math.PI / Math.max(1, sorties.length));
+  for (const so of sorties) so.ang = so.ligne + mini / 2;
+  sorties.sort((u, v) => u.ang - v.ang);
   for (let k = 0; k < 40 && sorties.length > 1; k++) {
+    let bouge = false;
     for (let i = 0; i < sorties.length; i++) {
       const a = sorties[i], b = sorties[(i + 1) % sorties.length];
       let gap = b.ang - a.ang; if (i === sorties.length - 1) gap += 2 * Math.PI;
-      if (gap >= mini) continue;
-      const m = mini - gap;
-      if (a.fixe) b.ang += m; else if (b.fixe) a.ang -= m; else { a.ang -= m / 2; b.ang += m / 2; }
+      if (gap < mini - 1e-6) { b.ang += mini - gap; bouge = true; }
     }
+    if (!bouge) break;
   }
   let out = "";
   for (const so of sorties) {
-    if (so.fixe) continue;
     const { lien, hv } = so;
     const px = hx + Math.cos(so.ang) * R, py = hy + Math.sin(so.ang) * R;
     const ecrite = !!(lien.gares && lien.gares.length);
@@ -481,13 +483,8 @@ function bullesDeHub(hub, X, Y, K, tenues) {
       `<rect class="bl-fond" x="-13.5" y="-6.5" width="27" height="13.5" rx="2.6"/>` +
       `<text class="bl-vers" x="0" y="-1.6">${hv.nom}</text>${corps}</g>`;
   }
-  // Le hub lui-même se joue d'ici : la pastille, au nord, à la place du nom.
-  if (pastille) {
-    const st = etoilesDe(hub.gareId);
-    out += `<g class="bl jouer" transform="translate(${hx.toFixed(2)} ${(hy - R).toFixed(2)}) scale(${(1 / K).toFixed(4)})" data-gare="${hub.gareId}">` +
-      `<rect class="bl-fond" x="-13" y="-3.4" width="26" height="6.8" rx="3.4"/>` +
-      `<text class="bl-vers" x="0" y="1">${etatHub === "tenue" ? "Jouer" : "Ouvrir"} ${hub.nom}${st ? " " + "★".repeat(st) : ""}</text></g>`;
-  }
+  // Pas de bouton « Jouer » pour le hub : il se joue depuis chacune de ses
+  // lignes, où il est un jalon comme les autres.
   return out;
 }
 
