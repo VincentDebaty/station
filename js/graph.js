@@ -287,7 +287,23 @@ function enveloppeDe(cfg, niveau, profil) {
 function estGareDamorce(gareId) {
   if (!gareId || typeof getBought !== "function") return false;
   const b = getBought();
-  return b.length > 0 && b[0] === gareId && garesDeDepart().has(gareId);
+  if (!b.length) return false;
+  // Le hub de départ est la première acquisition (offerte) : les premières
+  // gares de SES lignes de départ s'amorcent à 1, quelle que soit celle que
+  // le joueur prend en premier. Ancienne sauvegarde (première acquisition =
+  // une gare de corridor) : la règle d'avant, le temps que reparerDepart()
+  // lui offre son hub.
+  const h = hubDeDepart();
+  if (h) return lignesDeDepart().some(l => l.a === h.id && l.gares[0] === gareId);
+  return b[0] === gareId && lignesDeDepart().some(l => l.gares[0] === gareId);
+}
+// Le hub choisi au tout premier écran — c'est la première acquisition, et
+// elle est offerte (js/carte.js, choisirHubDeDepart). Null tant qu'on n'a rien,
+// ou sur une sauvegarde d'avant cette règle.
+function hubDeDepart() {
+  if (typeof getBought !== "function") return null;
+  const b = getBought();
+  return b.length ? hubDeGare(b[0]) : null;
 }
 // La fiche telle qu'on la JOUE. `difficulty` suit l'enveloppe : les pastilles
 // du cartouche annoncent le service qui vient, pas la taille du bâtiment.
@@ -331,12 +347,28 @@ function lignesDeDepart() {
     GRAPHE.hubs[l.a] && GRAPHE.hubs[l.b] &&
     typeof cardOf === "function" && cardOf(l.gares[0]));
 }
-// Les gares par lesquelles une partie peut commencer : la première de chaque
-// ligne de départ, et rien d'autre. Le SENS est celui du graphe (`de` → `vers`)
-// — la même règle qu'ailleurs : une ligne se lit toujours depuis son origine.
+// ON COMMENCE PAR UN HUB, ET IL EST OFFERT. Le premier écran proposait des
+// lignes ; le joueur en parcourait une jusqu'au hub d'en face, et le hub
+// d'où il était parti restait dans son dos, fermé — « tu viens de battre
+// Bruxelles, retourne prendre Lille ». Le hub de départ est désormais la
+// première acquisition, gratuite : le joueur le tient sans l'avoir joué (il
+// pourra, et il le faudra pour le rang de la ligne), et ses sorties s'ouvrent
+// par la règle ordinaire des hubs. Un hub de départ est l'origine d'au moins
+// une ligne de départ — sa première gare se joue au niveau 1 (estGareDamorce).
+function hubsDeDepart() {
+  const par = new Map();
+  for (const l of lignesDeDepart()) {
+    const h = GRAPHE.hubs[l.a];
+    if (!h || !h.gareId) continue;
+    if (!par.has(h.id)) par.set(h.id, { hub: h, lignes: [] });
+    par.get(h.id).lignes.push(l);
+  }
+  return [...par.values()];
+}
+// Ce qui peut s'acquérir quand on ne tient rien : les gares des hubs de départ.
 function garesDeDepart() {
   const out = new Set();
-  for (const l of lignesDeDepart()) out.add(l.gares[0]);
+  for (const d of hubsDeDepart()) out.add(d.hub.gareId);
   return out;
 }
 
@@ -359,30 +391,10 @@ function estFaite(gareId) {
 // suivante sur son corridor, ou le boss au bout. Depuis un hub tenu, la
 // première gare non tenue de chacune de ses sorties — c'est le CHOIX de
 // direction que le document place au cœur de la progression.
-// LE HUB D'ORIGINE DE LA PREMIÈRE LIGNE RESTE FERMÉ SUR CETTE LIGNE.
-//
-// La première ligne est la seule qu'on prend sans tenir aucun de ses bouts :
-// on la joue depuis sa première gare vers le hub d'arrivée. Une fois ce hub
-// battu, la règle des hubs remontait la ligne dans l'autre sens — toutes les
-// intermédiaires faites — et ouvrait le hub d'origine : « tu viens de battre
-// Bruxelles, retourne à Lille ». Or un boss s'atteint au terme d'une ligne
-// PARCOURUE, et celle-ci l'a été dans l'autre sens. Lille reste donc grise
-// tant qu'une autre ligne n'y arrive pas (Paris – Lille, par exemple).
-//
-// Rien n'est stocké : la première gare achetée est la première gare de la
-// première ligne, et l'origine de cette ligne est son `a` — c'est ainsi que
-// les lignes de départ se prennent (garesDeDepart).
-function hubVerrouille(lien, hubId) {
-  if (typeof getBought !== "function") return false;
-  const premiere = getBought()[0];
-  if (!premiere) return false;
-  const e = GRAPHE.gares[premiere];
-  return !!(e && e.role === "corridor" && e.lien === lien && lien.a === hubId);
-}
 function garesOuvrables(tenues) {
   buildGraphe();
-  // RIEN DE TENU : le réseau ne commence pas par une gare, il commence par une
-  // ligne. Les seules ouvrables sont donc les premières des lignes de départ.
+  // RIEN DE TENU : le réseau commence par un hub, offert. Les seules
+  // « ouvrables » sont donc les gares des hubs de départ.
   if (!tenues || !tenues.size) return garesDeDepart();
   const out = new Set();
   const ajoute = g => { if (g && !tenues.has(g)) out.add(g); };
@@ -392,7 +404,7 @@ function garesOuvrables(tenues) {
     if (!h.gareId || !tenues.has(h.gareId)) continue;
     for (const lien of sortiesDeHub(id)) {
       const p = prochaineGare(lien, id, tenues);
-      if (p && !(p.boss && hubVerrouille(lien, p.boss.id))) ajoute(p.gare);
+      if (p) ajoute(p.gare);
     }
   }
   // Les gares de corridor ouvrent leurs deux voisines immédiates : on peut
@@ -432,10 +444,7 @@ function garesOuvrables(tenues) {
     const tB = hB.gareId && tenues.has(hB.gareId);
     // On tient déjà un bout : c'est de là qu'on est parti, l'autre s'ouvre.
     // (`ajoute` ignore les gares tenues, le premier appel est donc sans effet.)
-    if (tA || tB) {
-      if (!hubVerrouille(e.lien, e.lien.a)) ajoute(hA.gareId);
-      ajoute(hB.gareId);
-    }
+    if (tA || tB) { ajoute(hA.gareId); ajoute(hB.gareId); }
     // Aucun bout tenu : c'est la LIGNE DE DÉPART, prise à sa première gare,
     // donc parcourue depuis `a`. Seul le boss d'arrivée s'ouvre — le hub
     // d'origine, resté dans le dos du joueur, attend que celui-ci soit battu.

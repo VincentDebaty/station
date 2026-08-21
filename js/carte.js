@@ -70,7 +70,11 @@ function corridorCourant() {
       // Sur un boss : on montre la sortie la plus avancée, à défaut la première.
       const sorties = sortiesDeHub(hub.id).filter(l => l.gares && l.gares.length);
       if (!sorties.length) continue;
-      let best = sorties[0], bestN = -1;
+      // À égalité, la ligne de départ du hub (celle qui en part, niveau 1 en
+      // tête) : c'est elle qu'on montre à qui vient de choisir sa métropole.
+      const dep = sorties.find(l => l.a === hub.id && typeof lignesDeDepart === "function" &&
+        lignesDeDepart().includes(l));
+      let best = dep || sorties[0], bestN = -1;
       for (const l of sorties) {
         const n = parcours(l, l.a).gares.filter(g => tenues.has(g)).length;
         if (n > bestN) { bestN = n; best = l; }
@@ -261,41 +265,60 @@ function poserBilan() {
 }
 window.addEventListener("resize", () => { if (CARTE.bilan) poserBilan(); });
 
-// Aucune gare tenue : le tout premier écran. ON Y CHOISIT UNE LIGNE, pas une
-// gare.
-//
-// Il proposait les gares faciles reliées au réseau : Landen, Herentals,
-// Deinze — des noms sans lendemain, posés au milieu de nulle part. Le joueur
-// choisissait un POINT là où tout le reste du jeu lui fait choisir une
-// DIRECTION, et se retrouvait, son premier service fini, sur une ligne dont
-// il n'avait rien décidé.
-//
-// Une ligne, donc, avec ses deux bouts et sa longueur ; le premier service se
-// joue sur la gare qui suit le hub de départ, et l'on remonte le corridor
-// jusqu'au boss d'en face. Le pays se choisit du même geste — c'est bien le
-// drapeau qu'on regarde en premier, et un joueur commence par CHEZ LUI.
+// Aucune gare tenue : le tout premier écran. ON Y CHOISIT UN HUB DE DÉPART,
+// et il est offert. Le joueur tient alors une métropole sans l'avoir jouée,
+// et la ligne qui en part s'ouvre devant lui, première gare au niveau 1.
+// Le pays se choisit du même geste — c'est bien le drapeau qu'on regarde en
+// premier, et un joueur commence par CHEZ LUI.
 function vueDepart() {
-  const lignes = typeof lignesDeDepart === "function" ? lignesDeDepart() : [];
-  if (!lignes.length) return `
+  const hubs = typeof hubsDeDepart === "function" ? hubsDeDepart() : [];
+  if (!hubs.length) return `
     <div class="c-tete"><div class="c-titre">Aucune ligne n'est encore écrite</div></div>`;
   // L'ordre du catalogue, c'est-à-dire l'ordre des pays d'index.json : le
   // joueur trouve le sien sans le chercher.
   const rang = g => { const i = CATALOG.findIndex(c => c.id === g); return i < 0 ? 1e9 : i; };
-  lignes.sort((x, y) => rang(x.gares[0]) - rang(y.gares[0]));
+  hubs.sort((x, y) => rang(x.hub.gareId) - rang(y.hub.gareId));
 
-  const porte = lien => {
-    const hA = hubById(lien.a), hB = hubById(lien.b);
-    const premiere = cardOf(lien.gares[0]);
-    const drapeau = ((premiere && premiere.country) || "").trim().split(" ")[0];
-    return `<button class="porte" data-lien="${cleDeLien(lien)}">
+  const porte = d => {
+    const fiche = cardOf(d.hub.gareId);
+    const drapeau = ((fiche && fiche.country) || "").trim().split(" ")[0];
+    const vers = d.lignes.map(l => { const h = hubById(l.b); return h ? h.nom : l.b; }).join(", ");
+    const premieres = [...new Set(d.lignes.map(l => nomDe(l.gares[0])))].join(" ou ");
+    return `<button class="porte" data-hubdep="${d.hub.id}">
       <span class="pays">${drapeau}</span>
-      <span class="nom">${hA ? hA.nom : lien.a} <i>→</i> ${hB ? hB.nom : lien.b}</span>
-      <span class="detail">${lien.gares.length} gares · on démarre à ${nomDe(lien.gares[0])}</span>
+      <span class="nom">${d.hub.nom} <i>→</i> ${vers}</span>
+      <span class="detail">${d.lignes.length > 1 ? d.lignes.length + " lignes" : "1 ligne"} · on démarre à ${premieres}</span>
     </button>`;
   };
   return `
-    <div class="c-tete"><div class="c-titre">Choisissez votre première ligne</div></div>
-    <div class="c-portes">${lignes.map(porte).join("")}</div>`;
+    <div class="c-tete"><div class="c-titre">Choisissez votre gare de départ</div></div>
+    <div class="c-portes">${hubs.map(porte).join("")}</div>`;
+}
+// Le hub choisi est OFFERT, et la ligne qui en part s'affiche aussitôt.
+function choisirHubDeDepart(hubId) {
+  const d = (typeof hubsDeDepart === "function" ? hubsDeDepart() : []).find(x => x.hub.id === hubId);
+  if (!d) return;
+  if (typeof buyStation === "function") buyStation(d.hub.gareId);
+  CARTE.corridor = d.lignes[0];
+  CARTE.depuis = hubId;
+  CARTE.panneau = null;
+  CARTE.vue = "ligne";
+  renderCarte();
+}
+// LES SAUVEGARDES D'AVANT : le joueur avait pris une ligne par sa première
+// gare, et son hub d'origine ne lui appartenait pas. On le lui offre, en tête
+// des acquisitions — là où la règle le lit — la première fois que la carte se
+// dessine. Sans effet ensuite.
+function reparerDepart() {
+  if (typeof getBought !== "function" || typeof corridorDeGare !== "function") return;
+  const b = getBought();
+  if (!b.length || hubDeGare(b[0])) return;
+  const lien = corridorDeGare(b[0]);
+  if (!lien || lien.gares[0] !== b[0]) return;        // pas une première gare de ligne
+  const h = hubById(lien.a);
+  if (!h || !h.gareId || b.includes(h.gareId)) return;
+  b.unshift(h.gareId);
+  if (typeof persistProgress === "function") persistProgress();
 }
 
 // ------------------------------------------------------------------
@@ -531,6 +554,7 @@ function renderCarte() {
   const hote = document.getElementById("hub-map");
   if (!hote) return;
   CARTE.hote = hote;
+  reparerDepart();
   hote.className = "carte v-" + CARTE.vue;
   hote.innerHTML = CARTE.vue === "constellation" ? vueConstellation()
                  : CARTE.vue === "europe" ? vueEurope() : vueLigne();
@@ -555,6 +579,8 @@ function renderCarte() {
     // ligne. C'est le seul geste qui descende d'une échelle.
     const lien = ev.target.closest("[data-lien]");
     if (lien) { ouvrirLigne(lien.dataset.lien); return; }
+    const dep = ev.target.closest("[data-hubdep]");
+    if (dep) { choisirHubDeDepart(dep.dataset.hubdep); return; }
     // LE CARREFOUR POSE SA QUESTION AVANT DE LANCER SA GARE. Le point porte
     // aussi `data-gare` — on le teste donc en premier, sans quoi le clic
     // partirait en jeu et le choix de direction n'aurait jamais lieu.
