@@ -2100,6 +2100,11 @@ svg { width: 100%; height: 100%; display: block; }
 
 /* ---- L'Europe : la carte du territoire, zone par zone ---- */
 .c-carte .pays { fill: #151d2e; stroke: #212b42; stroke-width: .22; }
+/* Un pays dans la couleur de sa zone : la teinte sur le fond sombre, pas un
+   aplat — on doit encore voir les lignes et les points par-dessus. */
+.c-carte .pays.zone { fill: var(--col); fill-opacity: .16; stroke: var(--col); stroke-opacity: .35; cursor: pointer; }
+@media (hover: hover) { .c-carte .pays.zone:hover { fill-opacity: .26; } }
+.c-carte.zoome .pays.zone:not(.choisie) { fill-opacity: .06; }
 .c-carte .lien-eu { stroke: #2a3550; stroke-width: .45; stroke-linecap: round; pointer-events: none; }
 .c-carte .lien-eu.ouvert { stroke: var(--col, #2dd4bf); stroke-width: .75; }
 .c-carte .lien-eu.mer { stroke-dasharray: .6 1.2; }

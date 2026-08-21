@@ -612,20 +612,46 @@ function projectionDeCarte() {
     s
   };
 }
-// Le fond : les pays d'Europe, en silhouette. Absent si le fond n'est pas chargé.
+// Le fond : les pays d'Europe, CHACUN DANS LA COULEUR DE SA ZONE. C'est la
+// couleur qui dit la région, pas un nom posé dessus — et elle se lit à toute
+// échelle. La zone d'un pays se déduit des hubs qu'il contient (test
+// point-dans-polygone sur les frontières) ; un pays sans hub reste neutre.
+// Un pays qui touche deux zones prend celle de la majorité de ses hubs.
+function dansAnneau(lon, lat, r) {
+  let dedans = false;
+  for (let i = 0, j = r.length - 2; i < r.length; j = i, i += 2) {
+    const xi = r[i], yi = r[i + 1], xj = r[j], yj = r[j + 1];
+    if ((yi > lat) !== (yj > lat) && lon < (xj - xi) * (lat - yi) / (yj - yi) + xi) dedans = !dedans;
+  }
+  return dedans;
+}
+function zoneDuPays(c, hubs) {
+  const votes = {};
+  for (const h of hubs)
+    if ((c.r || []).some(r => dansAnneau(h.ll[0], h.ll[1], r))) votes[h.zone] = (votes[h.zone] || 0) + 1;
+  let best = null;
+  for (const z in votes) if (!best || votes[z] > votes[best]) best = z;
+  return best;
+}
 function fondDePays(P) {
   if (typeof WORLDMAP === "undefined" || !WORLDMAP.countries) return "";
-  let d = "";
+  const hubs = tousLesHubs().filter(h => Array.isArray(h.ll));
+  let out = "";
   for (const c of WORLDMAP.countries) {
     if (c.cont !== "europe") continue;
+    let d = "";
     for (const r of c.r || []) {
       let seg = "";
       for (let i = 0; i + 1 < r.length; i += 2)
         seg += (i ? "L" : "M") + P.X(r[i]).toFixed(1) + " " + P.Y(r[i + 1]).toFixed(1);
       if (seg) d += seg + "Z";
     }
+    if (!d) continue;
+    const zid = zoneDuPays(c, hubs), z = zid && zoneById(zid);
+    out += z ? `<path class="pays zone" data-const="${zid}" style="--col:${z.couleur}" d="${d}"><title>${z.nom}</title></path>`
+             : `<path class="pays" d="${d}"/>`;
   }
-  return d ? `<path class="pays" d="${d}"/>` : "";
+  return out;
 }
 function vueEurope() {
   const tenues = carteTenues();
@@ -673,11 +699,9 @@ function vueEurope() {
       ` data-cx="${cx.toFixed(2)}" data-cy="${cy.toFixed(2)}" data-k="${k.toFixed(2)}">` +
       `<circle class="ze-cible" cx="${cx.toFixed(2)}" cy="${cy.toFixed(2)}" r="${(etendue / 2 + 3).toFixed(1)}"/>` +
       points +
-      // L'étiquette SOUS le nuage de hubs, pas dessus : au centre du
-      // continent les zones se touchent, et un nom posé au barycentre
-      // recouvrait les points de la voisine.
-      `<text class="ze-nom" x="${cx.toFixed(2)}" y="${(Math.max(...ys) + 3.4).toFixed(2)}">${z.nom}</text>` +
-      `<text class="ze-prog" x="${cx.toFixed(2)}" y="${(Math.max(...ys) + 6).toFixed(2)}">${prog}</text></g>`;
+      // Pas de nom : la couleur des pays dit la zone. Le nom et l'avancement
+      // restent en info-bulle.
+      `<title>${z.nom} — ${prog}</title></g>`;
   }).join("");
 
   return tete + `
@@ -690,12 +714,13 @@ function vueEurope() {
 // comme une continuité. Sans animation (réglage système), on y va tout droit.
 function zoomerSurZone(el) {
   const hote = CARTE.hote, monde = hote && hote.querySelector(".c-carte .monde");
-  const k = parseFloat(el.dataset.k), cx = parseFloat(el.dataset.cx), cy = parseFloat(el.dataset.cy);
+  const zid = el.dataset.const, g = CARTE.zonesGeo && CARTE.zonesGeo[zid];
+  const k = g && g.k, cx = g && g.cx, cy = g && g.cy;
   const reduit = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   if (!monde || !k || reduit) { renderCarte(); return; }
-  el.classList.add("choisie");
+  for (const t of hote.querySelectorAll(`.ze[data-const="${zid}"], .pays[data-const="${zid}"]`)) t.classList.add("choisie");
   for (const t of hote.querySelectorAll(".lien-eu"))
-    if (t.dataset.za === el.dataset.const || t.dataset.zb === el.dataset.const) t.classList.add("choisie");
+    if (t.dataset.za === zid || t.dataset.zb === zid) t.classList.add("choisie");
   hote.querySelector(".c-carte").classList.add("zoome");
   const cible = `translate(${(50 - k * cx).toFixed(2)}px, ${(50 - k * cy).toFixed(2)}px) scale(${k})`;
   monde.style.transform = cible;
