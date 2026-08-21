@@ -1932,14 +1932,20 @@ svg { width: 100%; height: 100%; display: block; }
   background: none; border: 0; color: inherit; font: inherit; cursor: pointer;
   padding: 10px 4px;
 }
+/* UN SEUL AXE POUR LE RAIL ET LES PASTILLES : 21 px sous le haut du jalon
+   (10 px de marge + la demi-hauteur de la plus grande pastille, 22 px). Le
+   rail s'y centre par translation ; la pastille ordinaire, plus petite, se
+   donne la marge qui l'y ramène. Avant, chacun avait son axe — 18, 21 et
+   22,5 px — et la ligne passait sous les points. */
 .jalon::before {
   content: ""; position: absolute; top: 21px; left: -50%; width: 100%; height: 3px;
+  transform: translateY(-50%);
   background: #2a3550;
 }
 .jalon:first-of-type::before { display: none; }
 .jalon.j-tenue::before, .jalon.j-ouvrable::before { background: #2dd4bf; opacity: .55; }
 .jalon .pastille {
-  width: 16px; height: 16px; border-radius: 50%; background: #29344c;
+  width: 16px; height: 16px; margin: 3px 0; border-radius: 50%; background: #29344c;
   border: 2px solid #3a4560; position: relative; z-index: 1; transition: transform .15s;
 }
 .jalon .nom { font-size: 13px; text-align: center; line-height: 1.3; color: var(--muted); }
@@ -1953,7 +1959,7 @@ svg { width: 100%; height: 100%; display: block; }
 .jalon.j-chere .nom { color: var(--gold-dim); }
 .jalon.j-fermee { cursor: default; }
 .jalon.j-fermee .pastille { opacity: .5; }
-.jalon.j-boss .pastille { width: 22px; height: 22px; border-width: 3px; }
+.jalon.j-boss .pastille { width: 22px; height: 22px; margin: 0; border-width: 3px; }
 .jalon.j-boss.j-tenue .pastille { background: var(--gold); border-color: var(--gold); }
 .jalon.j-boss .nom { font-weight: 600; }
 .jalon.j-boss.j-tenue .nom { color: var(--gold-hi); }

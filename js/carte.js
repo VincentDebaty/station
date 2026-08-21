@@ -595,7 +595,7 @@ function animerVoyage() {
   const train = document.createElement("div");
   train.className = "c-train";
   train.textContent = x1 >= x0 ? "\u25B8" : "\u25C2";
-  train.style.top = (a.offsetTop + 22) + "px";   // la hauteur du rail (.jalon::before)
+  train.style.top = (a.offsetTop + 21) + "px";   // l'axe du rail (.jalon::before)
   piste.appendChild(train);
 
   // La durée suit la DISTANCE, avec un plancher et un plafond : deux gares
