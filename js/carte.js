@@ -28,7 +28,9 @@
 
 // `bilan` : le résultat du dernier service, posé en bulle sous sa gare sur la
 // vue ligne (js/game.js, endGame). Il tient jusqu'au service suivant.
-const CARTE = { hote: null, vue: "ligne", corridor: null, depuis: null, bilan: null,
+// `zone` : la zone choisie depuis la vue Europe ; nulle, la vue zone s'ancre
+// sur la ligne en cours (ou la première zone, au tout premier écran).
+const CARTE = { hote: null, vue: "ligne", corridor: null, depuis: null, bilan: null, zone: null,
   // Le voyage : la gare d'où le train doit partir, posée par le relevé de fin
   // de service (js/game.js) et consommée au rendu suivant. Une seule fois.
   voyage: null, prochaine: null,
@@ -276,34 +278,13 @@ function poserBilan() {
 }
 window.addEventListener("resize", () => { if (CARTE.bilan) poserBilan(); });
 
-// Aucune gare tenue : le tout premier écran. ON Y CHOISIT UN HUB DE DÉPART,
-// et il est offert. Le joueur tient alors une métropole sans l'avoir jouée,
-// et la ligne qui en part s'ouvre devant lui, première gare au niveau 1.
-// Le pays se choisit du même geste — c'est bien le drapeau qu'on regarde en
-// premier, et un joueur commence par CHEZ LUI.
+// Aucune gare tenue : le tout premier écran est LA CARTE DE LA ZONE, et l'on
+// y touche son hub de départ (vueConstellation, mode départ). Une liste de
+// cartes a été essayée : treize pavés de texte pour dire « choisissez une
+// ville », là où la carte le montre. Ici, seul le repli quand rien n'est écrit.
 function vueDepart() {
-  const hubs = typeof hubsDeDepart === "function" ? hubsDeDepart() : [];
-  if (!hubs.length) return `
-    <div class="c-tete"><div class="c-titre">Aucune ligne n'est encore écrite</div></div>`;
-  // L'ordre du catalogue, c'est-à-dire l'ordre des pays d'index.json : le
-  // joueur trouve le sien sans le chercher.
-  const rang = g => { const i = CATALOG.findIndex(c => c.id === g); return i < 0 ? 1e9 : i; };
-  hubs.sort((x, y) => rang(x.hub.gareId) - rang(y.hub.gareId));
-
-  const porte = d => {
-    const fiche = cardOf(d.hub.gareId);
-    const drapeau = ((fiche && fiche.country) || "").trim().split(" ")[0];
-    const vers = d.lignes.map(l => { const h = hubById(l.b); return h ? h.nom : l.b; }).join(", ");
-    const premieres = [...new Set(d.lignes.map(l => nomDe(l.gares[0])))].join(" ou ");
-    return `<button class="porte" data-hubdep="${d.hub.id}">
-      <span class="pays">${drapeau}</span>
-      <span class="nom">${d.hub.nom} <i>→</i> ${vers}</span>
-      <span class="detail">${d.lignes.length > 1 ? d.lignes.length + " lignes" : "1 ligne"} · on démarre à ${premieres}</span>
-    </button>`;
-  };
   return `
-    <div class="c-tete"><div class="c-titre">Choisissez votre gare de départ</div></div>
-    <div class="c-portes">${hubs.map(porte).join("")}</div>`;
+    <div class="c-tete"><div class="c-titre">Aucune ligne n'est encore écrite</div></div>`;
 }
 // Le hub choisi est OFFERT, et la ligne qui en part s'affiche aussitôt.
 function choisirHubDeDepart(hubId) {
@@ -312,7 +293,7 @@ function choisirHubDeDepart(hubId) {
   if (typeof buyStation === "function") buyStation(d.hub.gareId);
   CARTE.corridor = d.lignes[0];
   CARTE.depuis = hubId;
-  CARTE.panneau = null;
+  CARTE.panneau = null; CARTE.zone = null;
   CARTE.vue = "ligne";
   renderCarte();
 }
@@ -342,12 +323,26 @@ function vueConstellation() {
   const cc = corridorCourant();
   const ancre = cc ? hubById(cc.depuis) : null;
   const zones = zonesDeCarte();
-  const cid = ancre ? ancre.zone : (zones[0] || {}).id;
+  // Au tout premier écran, la zone du premier hub de départ dans l'ordre du
+  // catalogue (celui des pays d'index.json) : la première zone du fichier
+  // était les Îles britanniques, et le joueur belge cherchait Bruxelles.
+  const zoneDeDepart = () => {
+    const deps = typeof hubsDeDepart === "function" ? hubsDeDepart() : [];
+    const rang = g => { const i = CATALOG.findIndex(c => c.id === g); return i < 0 ? 1e9 : i; };
+    deps.sort((x, y) => rang(x.hub.gareId) - rang(y.hub.gareId));
+    return deps.length ? deps[0].hub.zone : (zones[0] || {}).id;
+  };
+  const cid = CARTE.zone || (ancre ? ancre.zone : zoneDeDepart());
   const cst = zoneById(cid) || zones[0];
   const hubs = hubsDeZone(cid);
   if (!hubs.length || !cst) return vueLigne();
 
   const tenues = carteTenues();
+  // MODE DÉPART : rien n'est tenu, la carte sert à choisir son hub. Les hubs
+  // de départ sont les seuls « jouables » (garesOuvrables), ils battent ; on
+  // en touche un et il est offert (choisirHubDeDepart). Pas de panneau, pas
+  // de « Ma ligne » : il n'y en a pas encore.
+  const depart = !tenues.size;
   const lons = hubs.map(h => h.ll[0]), lats = hubs.map(h => h.ll[1]);
   const x0 = Math.min(...lons), x1 = Math.max(...lons);
   const y0 = Math.min(...lats), y1 = Math.max(...lats);
@@ -388,7 +383,7 @@ function vueConstellation() {
     const r = h.rang === 1 ? 2.6 : 1.9;
     // Le carrefour ouvert se marque : sans quoi le panneau flotte, et l'on ne
     // sait plus de quel point il parle.
-    return `<g class="hub${tenu ? " tenu" : ""}${jouable ? " jouable" : ""}${maitrise ? " maitrise" : ""}` +
+    return `<g class="hub${tenu ? " tenu" : ""}${jouable ? " jouable" : ""}${depart && jouable ? " depart" : ""}${maitrise ? " maitrise" : ""}` +
       `${h.gareId ? "" : " absent"}${CARTE.panneau === h.id ? " choisi" : ""}"` +
       ` data-hub="${h.id}"${h.gareId ? ` data-gare="${h.gareId}"` : ""}>` +
       `<circle class="cerne" cx="${X(h.ll[0])}" cy="${Y(h.ll[1])}" r="${r + 2.2}"/>` +
@@ -396,16 +391,19 @@ function vueConstellation() {
       `<text x="${X(h.ll[0])}" y="${Y(h.ll[1]) - 4}">${h.nom}</text></g>`;
   }).join("");
 
-  return `
-    <div class="c-tete">
-      <button class="c-zoom" data-vue="europe">${nomDeCarte()} ›</button>
+  const tete = depart
+    ? `<button class="c-zoom" data-vue="europe">${nomDeCarte()} ›</button>
+      <div class="c-titre">Choisissez votre gare de départ</div>
+      <span class="c-zone" style="color:${cst.couleur}">${cst.nom}</span>`
+    : `<button class="c-zoom" data-vue="europe">${nomDeCarte()} ›</button>
       <div class="c-titre" style="color:${cst.couleur}">${cst.nom}</div>
-      <button class="c-retour" data-vue="ligne">‹ Ma ligne</button>
-    </div>
-    <svg class="c-graphe" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet">
+      <button class="c-retour" data-vue="ligne">‹ Ma ligne</button>`;
+  return `
+    <div class="c-tete">${tete}</div>
+    <svg class="c-graphe${depart ? " depart" : ""}" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet">
       <g class="traits">${traits}</g>${points}
     </svg>
-    ${CARTE.panneau ? panneauDeHub(CARTE.panneau, tenues) : ""}`;
+    ${CARTE.panneau && !depart ? panneauDeHub(CARTE.panneau, tenues) : ""}`;
 }
 
 // ------------------------------------------------------------------
@@ -531,7 +529,7 @@ function vueEurope() {
   return `
     <div class="c-tete">
       <div class="c-titre">${nomDeCarte()}</div>
-      <button class="c-retour" data-vue="ligne">‹ Ma ligne</button>
+      ${tenues.size ? `<button class="c-retour" data-vue="ligne">‹ Ma ligne</button>` : ""}
     </div>
     <div class="c-europe">${cartes}</div>`;
 }
@@ -566,6 +564,8 @@ function renderCarte() {
   if (!hote) return;
   CARTE.hote = hote;
   reparerDepart();
+  // Rien de tenu : on commence sur la carte de la zone, pas sur une ligne.
+  if (CARTE.vue === "ligne" && !carteTenues().size && zonesDeCarte().length) CARTE.vue = "constellation";
   hote.className = "carte v-" + CARTE.vue;
   hote.innerHTML = CARTE.vue === "constellation" ? vueConstellation()
                  : CARTE.vue === "europe" ? vueEurope() : vueLigne();
@@ -579,23 +579,29 @@ function renderCarte() {
   hote.onclick = ev => {
     const vue = ev.target.closest("[data-vue]");
     if (vue) {
-      CARTE.vue = vue.dataset.vue; CARTE.corridor = null; CARTE.panneau = null;
+      CARTE.vue = vue.dataset.vue; CARTE.corridor = null; CARTE.panneau = null; CARTE.zone = null;
       renderCarte(); return;
     }
+    // Une zone touchée depuis la vue Europe : c'est ELLE qu'on montre — la
+    // vue zone s'ancrait sur la ligne en cours quel que soit le bouton pressé.
     const cst = ev.target.closest("[data-const]");
-    if (cst) { CARTE.vue = "constellation"; CARTE.panneau = null; renderCarte(); return; }
+    if (cst) { CARTE.vue = "constellation"; CARTE.zone = cst.dataset.const; CARTE.panneau = null; renderCarte(); return; }
     if (ev.target.closest("[data-fermer]")) { CARTE.panneau = null; renderCarte(); return; }
     // UNE LIGNE SE PREND EN LA TOUCHANT. Le trait du plan et la ligne du
     // panneau portent la même marque et font la même chose : ouvrir la vue
     // ligne. C'est le seul geste qui descende d'une échelle.
     const lien = ev.target.closest("[data-lien]");
     if (lien) { ouvrirLigne(lien.dataset.lien); return; }
-    const dep = ev.target.closest("[data-hubdep]");
-    if (dep) { choisirHubDeDepart(dep.dataset.hubdep); return; }
     // LE CARREFOUR POSE SA QUESTION AVANT DE LANCER SA GARE. Le point porte
     // aussi `data-gare` — on le teste donc en premier, sans quoi le clic
     // partirait en jeu et le choix de direction n'aurait jamais lieu.
     const hub = ev.target.closest("[data-hub]");
+    // MODE DÉPART : toucher un hub de départ, c'est le choisir — il est offert.
+    // Les autres hubs n'ont rien à dire encore.
+    if (hub && !carteTenues().size) {
+      if (hub.classList.contains("depart")) choisirHubDeDepart(hub.dataset.hub);
+      return;
+    }
     if (hub) {
       CARTE.panneau = CARTE.panneau === hub.dataset.hub ? null : hub.dataset.hub;
       renderCarte(); return;
