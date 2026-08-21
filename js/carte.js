@@ -452,40 +452,80 @@ function vueConstellation() {
 // ------------------------------------------------------------------
 function bullesDeHub(hub, X, Y, K, tenues) {
   const hx = X(hub.ll[0]), hy = Y(hub.ll[1]);
-  // LES BULLES SE RÉPARTISSENT AUTOUR DU HUB. Chacune part dans la direction
-  // de sa ligne, à distance fixe dans l'écran (la destination est souvent hors
-  // champ, la bulle ne l'est jamais) ; deux sorties trop proches en angle se
-  // repoussent jusqu'à ne plus se couvrir — Lille, Luxembourg et Cologne
-  // partent de Bruxelles à quelques degrés près.
-  const R = 32 / K, LARGEUR = 31;                 // rayon (monde) et largeur de garde d'une bulle (écran)
+  // ------------------------------------------------------------------
+  // CHAQUE BULLE SE POSE SUR SON PROPRE TRAIT.
+  // ------------------------------------------------------------------
+  // Elles se sont d'abord réparties en ronde autour du hub, à distance fixe,
+  // en se repoussant à l'angle. Deux sorties séparées de quelques degrés se
+  // chassaient alors l'une l'autre tout autour du cadran, et la bulle finissait
+  // le long d'un trait qui n'était pas le sien : « Luxembourg » se lisait au
+  // bout de la ligne de Paris. Une étiquette qui désigne la mauvaise ligne est
+  // pire qu'une étiquette absente.
+  //
+  // Une bulle ne quitte donc plus son trait. Quand deux se gênent, elles
+  // GLISSENT LE LONG DE LEUR LIGNE, en s'éloignant du hub — et le trait, qui
+  // passe derrière elle et ressort de l'autre côté, dit sans un mot de quelle
+  // ligne elle parle. Le décalage perpendiculaire (une demi-hauteur, la ligne
+  // vient alors lécher son bord) reste pour les cas serrés : deux lignes
+  // presque parallèles ne se séparent pas en s'allongeant.
+  //
+  // Tout se calcule en UNITÉS ÉCRAN — le monde est agrandi ×K, la bulle rendue
+  // à 1/K : un déplacement de 30 unités écran vaut 30/K dans le monde. La
+  // fenêtre visible fait 100 unités, le hub en son centre.
+  //
+  // Enfin, une ligne pas encore écrite n'a qu'un nom à porter : sa bulle est
+  // plus étroite, et c'est autant de place rendue aux autres. À un carrefour à
+  // cinq sorties, cette seule mesure suffit souvent à tout faire tenir.
+  const DEMI_H = 8.2, ECART = 9.6;          // demi-hauteur (garde comprise) et décalage de bord
+  const RAYONS = [29, 33, 37, 41, 45];      // les crans de glissement, du plus proche au plus loin
+  const COTES = [0, 1, -1];                 // sur le trait, puis d'un bord, puis de l'autre
+  const BORD = 48;                          // le carré toujours visible, hub au centre
   const sorties = sortiesDeHub(hub.id).map(lien => {
     const vers = lien.a === hub.id ? lien.b : lien.a;
     const hv = hubById(vers);
     if (!hv) return null;
-    return { lien, hv, ligne: Math.atan2(Y(hv.ll[1]) - hy, X(hv.ll[0]) - hx) };
+    const ecrite = !!(lien.gares && lien.gares.length);
+    return { lien, hv, ecrite, demiL: ecrite ? 15 : 11.6,
+      ligne: Math.atan2(Y(hv.ll[1]) - hy, X(hv.ll[0]) - hx) };
   }).filter(Boolean);
-  // CHAQUE BULLE SE POSE JUSTE APRÈS SA LIGNE, DANS LE SENS DES AIGUILLES
-  // D'UNE MONTRE — et n'en bouge que pour laisser la place à la suivante,
-  // toujours dans ce sens. On lit donc la ronde comme un cadran : le trait,
-  // puis sa bulle, puis le trait suivant. (L'écran a l'axe y vers le bas :
-  // l'angle qui croît tourne bien dans le sens horaire.)
-  const mini = Math.min(LARGEUR / (R * K), 2 * Math.PI / Math.max(1, sorties.length));
-  for (const so of sorties) so.ang = so.ligne + mini / 2;
-  sorties.sort((u, v) => u.ang - v.ang);
-  for (let k = 0; k < 40 && sorties.length > 1; k++) {
-    let bouge = false;
-    for (let i = 0; i < sorties.length; i++) {
-      const a = sorties[i], b = sorties[(i + 1) % sorties.length];
-      let gap = b.ang - a.ang; if (i === sorties.length - 1) gap += 2 * Math.PI;
-      if (gap < mini - 1e-6) { b.ang += mini - gap; bouge = true; }
-    }
-    if (!bouge) break;
-  }
+  // On pose dans le sens du cadran : l'ordre n'a pas d'importance de fond, il
+  // rend seulement le résultat le même d'un rendu à l'autre.
+  sorties.sort((u, v) => u.ligne - v.ligne);
+
+  // On pose une première fois dans l'ordre, puis on repasse : une bulle posée
+  // tôt a choisi sa place sans connaître celles qui la suivaient, et c'est la
+  // dernière servie qui payait tout. Deux relectures suffisent à démêler les
+  // carrefours à cinq sorties.
+  const place = so => {
+    const ux = Math.cos(so.ligne), uy = Math.sin(so.ligne);
+    let best = null;
+    RAYONS.forEach((rho, i) => COTES.forEach(cote => {
+      // Le décalage de bord est perpendiculaire à la ligne, d'exactement une
+      // demi-hauteur : le trait vient lécher le bord de la bulle au lieu de la
+      // traverser. Elle lui reste attachée, c'est tout ce qui compte.
+      const d = cote * ECART;
+      const px = ux * rho - uy * d, py = uy * rho + ux * d;
+      if (Math.abs(px) + so.demiL > BORD || Math.abs(py) + DEMI_H > BORD) return;
+      // Ce qu'il en coûte : s'éloigner coûte un cran, se décaler en coûte deux
+      // et demi — mieux vaut une bulle plus loin sur sa ligne qu'à côté.
+      let note = i + (cote ? 2.5 : 0);
+      for (const autre of sorties) {
+        const p = autre.pos;
+        if (autre === so || !p) continue;
+        note += 100 * Math.max(0, so.demiL + p.demiL - Math.abs(px - p.x)) *
+                      Math.max(0, 2 * DEMI_H - Math.abs(py - p.y));
+      }
+      if (!best || note < best.note) best = { x: px, y: py, demiL: so.demiL, note };
+    }));
+    // Aucun cran ne tient à l'écran : on revient au premier, sur le trait.
+    so.pos = best || { x: ux * RAYONS[0], y: uy * RAYONS[0], demiL: so.demiL };
+  };
+  for (let tour = 0; tour < 3; tour++) for (const so of sorties) place(so);
+
   let out = "";
   for (const so of sorties) {
-    const { lien, hv } = so;
-    const px = hx + Math.cos(so.ang) * R, py = hy + Math.sin(so.ang) * R;
-    const ecrite = !!(lien.gares && lien.gares.length);
+    const { lien, hv, ecrite } = so;
+    const px = hx + so.pos.x / K, py = hy + so.pos.y / K;
     let corps;
     if (!ecrite) corps = `<text class="bl-prog" x="0" y="3.4">à écrire</text>`;
     else {
@@ -501,7 +541,7 @@ function bullesDeHub(hub, X, Y, K, tenues) {
     }
     out += `<g class="bl${ecrite ? "" : " absente"}" transform="translate(${px.toFixed(2)} ${py.toFixed(2)}) scale(${(1 / K).toFixed(4)})"` +
       `${ecrite ? ` data-lien="${cleDeLien(lien)}"` : ""}>` +
-      `<rect class="bl-fond" x="-13.5" y="-6.5" width="27" height="13.5" rx="2.6"/>` +
+      `<rect class="bl-fond" x="${(-so.demiL + 1).toFixed(1)}" y="-6.5" width="${(2 * so.demiL - 2).toFixed(1)}" height="13.5" rx="2.6"/>` +
       `<text class="bl-vers" x="0" y="-1.6">${hv.nom}</text>${corps}</g>`;
   }
   // Pas de bouton « Jouer » pour le hub : il se joue depuis chacune de ses
