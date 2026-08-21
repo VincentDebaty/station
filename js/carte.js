@@ -376,11 +376,22 @@ function vueConstellation() {
   // et ses sorties portent leurs bulles.
   const zoomHub = !depart && CARTE.panneau ? hubById(CARTE.panneau) : null;
   const K = 3.2;
+  // À L'ÉCHELLE. La zone s'étirait pour remplir son carré, longitude et
+  // latitude chacune de son côté : sans fond, personne ne le voyait. Avec
+  // les frontières dessous, une Allemagne deux fois trop large égare plus
+  // qu'elle ne situe. Même facteur sur les deux axes, longitude corrigée du
+  // cosinus : les formes sont justes, la zone est centrée, et le côté le plus
+  // long tient dans 84 unités.
   const lons = hubs.map(h => h.ll[0]), lats = hubs.map(h => h.ll[1]);
   const x0 = Math.min(...lons), x1 = Math.max(...lons);
   const y0 = Math.min(...lats), y1 = Math.max(...lats);
-  const X = l => 8 + (x1 === x0 ? 46 : (l - x0) / (x1 - x0) * 84);
-  const Y = l => 92 - (y1 === y0 ? 46 : (l - y0) / (y1 - y0) * 84);
+  const cosm = Math.cos((y0 + y1) / 2 * RAD);
+  const s = 84 / Math.max((x1 - x0) * cosm, y1 - y0, 1);
+  const X = l => 50 + (l - (x0 + x1) / 2) * cosm * s;
+  const Y = l => 50 - (l - (y0 + y1) / 2) * s;
+  // LE FOND DE PAYS, AVEC SES FRONTIÈRES : ici elles servent — on se situe.
+  // Même projection que les hubs ; le cadre du SVG coupe ce qui dépasse.
+  const fond = fondDeZone({ X, Y });
 
   // Les liens internes à la constellation, plus ceux qui en sortent (ils
   // disent où l'on pourra aller ensuite).
@@ -439,7 +450,7 @@ function vueConstellation() {
   return `
     <div class="c-tete">${tete}</div>
     <svg class="c-graphe${depart ? " depart" : ""}${zoomHub ? " zoom" : ""}" style="--k:${zoomHub ? K : 1}" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet">
-      <g class="monde"><g class="traits">${traits}</g>${points}${bulles}</g>
+      <g class="monde">${fond}<g class="traits">${traits}</g>${points}${bulles}</g>
     </svg>`;
 }
 
@@ -622,7 +633,7 @@ function projectionDeCarte() {
       for (const r of c.r || []) for (let i = 0; i + 1 < r.length; i += 2) vu(r[i], r[i + 1]);
     }
   const cosm = Math.cos((lat0 + lat1) / 2 * RAD);
-  const s = 92 / Math.max((lon1 - lon0) * cosm, lat1 - lat0, 1);
+  const s = 98 / Math.max((lon1 - lon0) * cosm, lat1 - lat0, 1);
   return {
     X: lon => 50 + (lon - (lon0 + lon1) / 2) * cosm * s,
     Y: lat => 50 - (lat - (lat0 + lat1) / 2) * s,
@@ -649,6 +660,27 @@ function zoneDuPays(c, hubs) {
   let best = null;
   for (const z in votes) if (!best || votes[z] > votes[best]) best = z;
   return best;
+}
+// Le fond de la VUE ZONE : tous les pays d'Europe, chacun son tracé — les
+// frontières sont voulues ici. Seuls ceux qui touchent le cadre sont émis.
+function fondDeZone(P) {
+  if (typeof WORLDMAP === "undefined" || !WORLDMAP.countries) return "";
+  let out = "";
+  for (const c of WORLDMAP.countries) {
+    if (c.cont !== "europe" || PAYS_HORS_CARTE.has(c.iso)) continue;
+    let d = "", visible = false;
+    for (const r of c.r || []) {
+      let seg = "";
+      for (let i = 0; i + 1 < r.length; i += 2) {
+        const x = P.X(r[i]), y = P.Y(r[i + 1]);
+        if (x > -20 && x < 120 && y > -20 && y < 120) visible = true;
+        seg += (i ? "L" : "M") + x.toFixed(1) + " " + y.toFixed(1);
+      }
+      if (seg) d += seg + "Z";
+    }
+    if (d && visible) out += `<path class="pays" d="${d}"/>`;
+  }
+  return out ? `<g class="fond">${out}</g>` : "";
 }
 // UN SEUL TRACÉ PAR ZONE. Dessinés pays par pays, les tracés voisins
 // laissaient voir leurs coutures — une frontière par pays, là où l'on ne
@@ -681,14 +713,20 @@ function fondDePays(P) {
 }
 function vueEurope() {
   const tenues = carteTenues();
-  const P = projectionDeCarte();
+  const P0 = projectionDeCarte();
   const zones = zonesDeCarte();
   const tete = `
     <div class="c-tete">
       <div class="c-titre">${nomDeCarte()}</div>
       ${tenues.size ? `<button class="c-retour" data-vue="ligne">‹ Ma ligne</button>` : ""}
     </div>`;
-  if (!P) return tete;
+  if (!P0) return tete;
+  // FORMAT LARGE : le continent au centre (100 de large), et de chaque côté
+  // une marge de 30 pour les bulles. Les écrans sont larges, la carte est
+  // haute — l'espace des côtés était perdu, et les bulles s'entassaient sur
+  // les pays qu'elles commentaient.
+  const OX = 30, LARGE = 160;
+  const P = { X: lon => P0.X(lon) + OX, Y: P0.Y, s: P0.s };
 
   // NI HUBS, NI LIGNES, NI FRONTIÈRES : à cette échelle ils faisaient un
   // écheveau, et la carte ne disait plus que « c'est compliqué ». Il reste les
@@ -706,7 +744,7 @@ function vueEurope() {
     const cx = xs.reduce((a, b) => a + b, 0) / xs.length, cy = ys.reduce((a, b) => a + b, 0) / ys.length;
     const etendue = Math.max(Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys), 8);
     const k = Math.min(4.5, 84 / (etendue * 1.25));
-    (CARTE.zonesGeo = CARTE.zonesGeo || {})[z.id] = { cx, cy, k };
+    (CARTE.zonesGeo = CARTE.zonesGeo || {})[z.id] = { cx, cy, k, ox: LARGE / 2 };
     // Les étoiles et diamants de la zone : toutes les gares de ses lignes
     // (hubs compris), comptées une fois chacune.
     const gares = new Set();
@@ -720,20 +758,37 @@ function vueEurope() {
     bulles.push({ z, x: cx, y: cy, w: ecrite ? 21 : 17, h: ecrite ? 9.4 : 6, ecrite,
       etoiles, max: gares.size * 3, diamants, part: ecrite ? tenus.length / jouables.length : 0 });
   }
-  for (let k = 0; k < 80; k++) {
-    let bouge = false;
-    for (let i = 0; i < bulles.length; i++) for (let j = i + 1; j < bulles.length; j++) {
-      const a = bulles[i], b = bulles[j];
-      const dx = (a.w + b.w) / 2 + 1 - Math.abs(a.x - b.x), dy = (a.h + b.h) / 2 + 1 - Math.abs(a.y - b.y);
-      if (dx <= 0 || dy <= 0) continue;
-      bouge = true;
-      if (dx < dy) { const s = a.x <= b.x ? -1 : 1; a.x += s * dx / 2; b.x -= s * dx / 2; }
-      else { const s = a.y <= b.y ? -1 : 1; a.y += s * dy / 2; b.y -= s * dy / 2; }
+  // LES BULLES SORTENT DE LA CARTE. Deux colonnes, à l'ouest et à l'est du
+  // continent, chacune reliée à sa zone par un trait : la carte reste nue, et
+  // l'on voit d'un coup d'œil à quoi chaque chiffre se rapporte. Les zones
+  // les plus à l'ouest vont à gauche, les autres à droite ; dans une colonne,
+  // l'ordre est celui du nord au sud, et les bulles se poussent juste assez
+  // pour ne pas se toucher.
+  for (const b of bulles) { b.ax = b.x; b.ay = b.y; }          // l'ancre : le cœur de la zone
+  bulles.sort((u, v) => u.ax - v.ax);
+  const gauche = bulles.slice(0, Math.ceil(bulles.length / 2)), droite = bulles.slice(gauche.length);
+  const colonne = (col, x) => {
+    col.sort((u, v) => u.ay - v.ay);
+    for (const b of col) { b.x = x; b.y = b.ay; }
+    const GAP = 2.2;
+    for (let i = 1; i < col.length; i++)
+      col[i].y = Math.max(col[i].y, col[i - 1].y + (col[i - 1].h + col[i].h) / 2 + GAP);
+    const dernier = col[col.length - 1];
+    if (dernier && dernier.y + dernier.h / 2 > 99) {
+      dernier.y = 99 - dernier.h / 2;
+      for (let i = col.length - 2; i >= 0; i--)
+        col[i].y = Math.min(col[i].y, col[i + 1].y - (col[i].h + col[i + 1].h) / 2 - GAP);
     }
-    for (const b of bulles) { b.x = Math.max(b.w / 2, Math.min(100 - b.w / 2, b.x)); b.y = Math.max(b.h / 2, Math.min(100 - b.h / 2, b.y)); }
-    if (!bouge) break;
-  }
-  const groupes = bulles.map(b => {
+    if (col[0] && col[0].y - col[0].h / 2 < 1) col[0].y = 1 + col[0].h / 2;
+  };
+  colonne(gauche, 2 + 21 / 2);
+  colonne(droite, LARGE - 2 - 21 / 2);
+  const traits = bulles.map(b => {
+    const bord = b.x < LARGE / 2 ? b.x + b.w / 2 : b.x - b.w / 2;
+    return `<g class="zl" style="--col:${b.z.couleur}"><line x1="${bord.toFixed(1)}" y1="${b.y.toFixed(1)}" x2="${b.ax.toFixed(1)}" y2="${b.ay.toFixed(1)}"/>` +
+      `<circle cx="${b.ax.toFixed(1)}" cy="${b.ay.toFixed(1)}" r=".9"/></g>`;
+  }).join("");
+  const groupes = traits + bulles.map(b => {
     const corps = b.ecrite
       ? `<text class="zb-prog" x="0" y="1.7">★ ${b.etoiles} / ${b.max}<tspan class="zb-dia" dx="1.8">◆ ${b.diamants}</tspan></text>` +
         `<rect class="zb-piste" x="-8.5" y="3.1" width="17" height=".8" rx=".4"/>` +
@@ -746,7 +801,7 @@ function vueEurope() {
   }).join("");
 
   return tete + `
-    <svg class="c-graphe c-carte" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet">
+    <svg class="c-graphe c-carte" viewBox="0 0 ${LARGE} 100" preserveAspectRatio="xMidYMid meet">
       <g class="monde">${fondDePays(P)}${groupes}</g>
     </svg>`;
 }
@@ -761,7 +816,8 @@ function zoomerSurZone(el) {
   if (!monde || !k || reduit) { renderCarte(); return; }
   for (const t of hote.querySelectorAll(`.ze[data-const="${zid}"], .pays[data-const="${zid}"]`)) t.classList.add("choisie");
   hote.querySelector(".c-carte").classList.add("zoome");
-  const cible = `translate(${(50 - k * cx).toFixed(2)}px, ${(50 - k * cy).toFixed(2)}px) scale(${k})`;
+  const ox = g.ox || 50;   // le centre du cadre (la carte d'Europe est large)
+  const cible = `translate(${(ox - k * cx).toFixed(2)}px, ${(50 - k * cy).toFixed(2)}px) scale(${k})`;
   monde.style.transform = cible;
   // LE MOUVEMENT CONTINUE DANS LE MÊME SENS. La vue zone cadre le même
   // territoire à l'échelle 1 : si elle repartait de la transformation zoomée,
@@ -774,7 +830,7 @@ function zoomerSurZone(el) {
 // zone agrandie — là où le zoom l'avait menée — et dézoome jusqu'au continent.
 function dezoomerVersEurope(zoneId) {
   const g = zoneId && CARTE.zonesGeo && CARTE.zonesGeo[zoneId];
-  CARTE.zoomAvant = g ? `translate(${(50 - g.k * g.cx).toFixed(2)}px, ${(50 - g.k * g.cy).toFixed(2)}px) scale(${g.k})` : null;
+  CARTE.zoomAvant = g ? `translate(${((g.ox || 50) - g.k * g.cx).toFixed(2)}px, ${(50 - g.k * g.cy).toFixed(2)}px) scale(${g.k})` : null;
 }
 
 // ------------------------------------------------------------------
