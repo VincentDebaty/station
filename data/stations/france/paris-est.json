@@ -1,0 +1,35 @@
+{
+  "id": "paris-est",
+  "name": "Paris-Est",
+  "tagline": "Paris-Est — sous la statue de Strasbourg, tout rebrousse.",
+  "difficulty": 4,
+  "country": "🇫🇷 France",
+  "desc": "Le terminus néo-classique de 1849, que couronne la Strasbourg allégorique d'Henri Lemaire. D'ici partent l'Alsace, la Lorraine, la Champagne et le Luxembourg — et rien ne traverse : chaque train entre, s'arrête au heurtoir et repart par où il est venu.",
+  "platforms": [
+    { "id": 1, "deadEnd": true }, { "id": 2, "deadEnd": true }, { "id": 3, "deadEnd": true },
+    { "id": 4, "deadEnd": true }, { "id": 5, "deadEnd": true }, { "id": 6, "deadEnd": true },
+    { "id": 7, "deadEnd": true }, { "id": 8, "deadEnd": true }
+  ],
+  "portals": {
+    "STRASBOURG": { "side": "L", "color": "#25dede", "abbr": "SB" },
+    "NANCY":      { "side": "L", "color": "#f5b23c", "abbr": "NY" },
+    "METZ":       { "side": "L", "color": "#f2588f", "abbr": "MZ" },
+    "LUXEMBOURG": { "side": "L", "color": "#a78bfa", "abbr": "LX" },
+    "REIMS":      { "side": "L", "color": "#4ade80", "abbr": "RE" },
+    "TROYES":     { "side": "L", "color": "#60a5fa", "abbr": "TR" }
+  },
+  "links": {
+    "STRASBOURG": [1, 2, 3],
+    "NANCY":      [3, 4, 5],
+    "METZ":       [5, 6, 7],
+    "LUXEMBOURG": [7, 8, 1],
+    "REIMS":      [2, 4, 6],
+    "TROYES":     [2, 6, 8]
+  },
+  "sameSidePairs": "all",
+  "gen": {
+    "nMin": 16, "nMax": 19, "gapMin": 1.6, "gapMax": 2.8,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6, 7],
+    "quietRate": 0.12
+  }
+}

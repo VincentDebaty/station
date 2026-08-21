@@ -1,0 +1,80 @@
+{
+  "id": "carcassonne",
+  "name": "Carcassonne",
+  "tagline": "Carcassonne — entre le canal du Midi et la Cité, l'antenne de Quillan.",
+  "difficulty": 3,
+  "country": "🇫🇷 France",
+  "desc": "Un bâtiment de 1857 à fronton et horloge, posé entre le canal du Midi et la ville basse. La grande ligne Bordeaux–Sète la traverse ; la voie de la haute vallée de l'Aude s'en va vers Limoux et Quillan.",
+  "platforms": [
+    {
+      "id": 1
+    },
+    {
+      "id": 2
+    },
+    {
+      "id": 3
+    },
+    {
+      "id": 4
+    },
+    {
+      "id": 5
+    }
+  ],
+  "portals": {
+    "TOULOUSE": {
+      "side": "L",
+      "color": "#f5b23c",
+      "abbr": "TL"
+    },
+    "NARBONNE": {
+      "side": "R",
+      "color": "#f2588f",
+      "abbr": "NB"
+    },
+    "QUILLAN": {
+      "side": "R",
+      "color": "#a78bfa",
+      "abbr": "QU"
+    }
+  },
+  "links": {
+    "TOULOUSE": [
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "NARBONNE": [
+      2,
+      3,
+      4,
+      5
+    ],
+    "QUILLAN": [
+      1,
+      2,
+      3
+    ]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 12,
+    "nMax": 15,
+    "gapMin": 1.8,
+    "gapMax": 3.0,
+    "cars": [
+      2,
+      3,
+      3,
+      4,
+      4,
+      5,
+      5,
+      6
+    ],
+    "quietRate": 0.16
+  }
+}

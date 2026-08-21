@@ -1,0 +1,30 @@
+{
+  "id": "chalons",
+  "name": "Châlons-en-Champagne",
+  "city": "Châlons-en-Champagne",
+  "tagline": "Châlons-en-Champagne — la Marne, et l'embranchement de Reims.",
+  "difficulty": 3,
+  "country": "🇫🇷 France",
+  "desc": "Sur la grande ligne de Paris à Strasbourg, là où se détache la voie de Reims. Sous le quai dort un bunker de béton de 1937, creusé contre les gaz et rouvert en 2021 : la gare a traversé deux guerres sans changer de place.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
+  ],
+  "portals": {
+    "PARIS-EST":    { "side": "L", "color": "#25dede", "abbr": "PE" },
+    "REIMS":        { "side": "L", "color": "#4ade80", "abbr": "RE" },
+    "NANCY":        { "side": "R", "color": "#f5b23c", "abbr": "NY" },
+    "SAINT-DIZIER": { "side": "R", "color": "#a78bfa", "abbr": "SD", "label": "ST-DIZIER" }
+  },
+  "links": {
+    "PARIS-EST":    [1, 2, 3, 4],
+    "REIMS":        [4, 5],
+    "NANCY":        [1, 2, 3],
+    "SAINT-DIZIER": [3, 4, 5]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 14, "nMax": 17, "gapMin": 1.6, "gapMax": 2.8,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6],
+    "quietRate": 0.14
+  }
+}

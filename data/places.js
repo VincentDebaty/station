@@ -114,7 +114,6 @@ const PLACES = {
   // ligne parisiennes que le jeu n'ouvre pas (Est, Saint-Lazare, Austerlitz,
   // Bercy) en font partie : les lignes de l'Est, de Normandie et du Centre
   // passent par elles avant de rejoindre la gare jouable la plus proche.
-  parisest:        [2.358, 48.877],
   parisstlazare:   [2.325, 48.876],
   parisausterlitz: [2.365, 48.842],
   parisbercy:      [2.383, 48.839],
@@ -129,12 +128,9 @@ const PLACES = {
   barleduc:     [5.167, 48.773],
   belfort:      [6.854, 47.633],
   besancon:     [6.022, 47.247],
-  beziers:      [3.219, 43.336],
   brive:        [1.529, 45.159],
   cahors:       [1.433, 44.449],
   cannes:       [7.020, 43.554],
-  carcassonne:  [2.352, 43.218],
-  chalons:      [4.349, 48.955],
   chartres:     [1.481, 48.448],
   chateauroux:  [1.700, 46.810],
   chateauthierry: [3.410, 49.038],
