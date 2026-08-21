@@ -1980,14 +1980,34 @@ svg { width: 100%; height: 100%; display: block; }
 }
 @media (prefers-reduced-motion: reduce) { .jalon[data-suivante]::after { animation: none; } }
 
+/* LE BOUTON D'APPEL — le même sous la ligne et dans la bulle du résultat.
+   Il en existait deux, à deux tailles, avec deux flèches : le geste est
+   pourtant identique, et le joueur passe de l'un à l'autre à chaque service.
+   La mesure se pose ICI ; la bulle ne règle plus que sa place. */
 .c-suite {
   flex: 0 0 auto; align-self: center; background: #2dd4bf; color: #0b1a1f;
-  border: 0; border-radius: 11px; padding: 11px 22px; font: inherit;
-  font-size: 15.5px; font-weight: 600; cursor: pointer;
+  border: 0; border-radius: 11px; padding: 10px 16px 10px 20px; font: inherit;
+  font-size: 14.5px; font-weight: 600; cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
   box-shadow: 0 8px 22px rgba(45, 212, 191, .26);
 }
 .c-suite:hover { background: #3ee0cc; }
 .c-suite:focus-visible { outline: 2px solid #6ff0e2; outline-offset: 3px; }
+/* Taille posée ICI : la feuille a une règle large sur ses svg (le plan de
+   voies), qui ferait de la flèche un panneau routier. */
+.c-suite svg { flex: none; display: block; width: 18px; height: 18px; position: static; }
+/* LE BOUTON FAIT GROUPE AVEC LA LIGNE. Collé au bas de l'écran, il flottait
+   seul à cent cinquante pixels du rail : deux objets sans rapport, alors qu'il
+   désigne une gare posée juste au-dessus. Ils tiennent donc dans un même bloc,
+   que ses marges automatiques centrent d'un coup sous l'en-tête. Un bloc, et
+   non deux marges sur deux frères : sans bouton — c'est le cas quand la bulle
+   du résultat est là — le second frère manque, et la ligne partirait au fond
+   de l'écran. */
+.c-groupe {
+  flex: 0 1 auto; min-height: 0; margin: auto 0;
+  display: flex; flex-direction: column; align-items: stretch; gap: 14px;
+}
+.c-groupe > .c-ligne { flex: 0 1 auto; }
 
 /* ---- Le tout premier écran : la carte de la zone, et l'on y touche son hub
    de départ. Les hubs offerts battent ; le reste attend. ---- */
@@ -2216,14 +2236,9 @@ svg { width: 100%; height: 100%; display: block; }
 .cb-record.egal { color: #63e6d4; background: #16333a; }
 .cb-record.neuf { color: #0E1420; background: #c9d4e6; }
 .cb-record.loin { color: var(--gold); background: #2a2416; }
-/* Le bouton d'appel, dans la bulle : c'est le seul élément qui y prend un clic. */
-.c-bilan .c-suite {
-  pointer-events: auto; margin-top: 7px; font-size: 14.5px; padding: 10px 16px 10px 20px; align-self: stretch;
-  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-}
-/* Taille posée ICI : la carte a une règle large sur ses svg (le tracé), qui
-   ferait de la flèche un panneau routier. */
-.c-bilan .c-suite svg { flex: none; display: block; width: 18px; height: 18px; position: static; }
+/* Le bouton d'appel, dans la bulle : c'est le seul élément qui y prend un
+   clic, et il s'y étire sur toute la largeur. Le reste vient de .c-suite. */
+.c-bilan .c-suite { pointer-events: auto; margin-top: 7px; align-self: stretch; }
 .c-bilan.parfait { border-color: rgba(245, 178, 60, .65); box-shadow: 0 0 36px -8px rgba(245, 178, 60, .4), 0 18px 44px -18px rgba(0, 0, 0, .8); }
 .c-bilan.parfait::before { border-color: rgba(245, 178, 60, .65); }
 .c-bilan.rate { border-color: rgba(239, 68, 68, .55); }

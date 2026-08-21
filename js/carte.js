@@ -158,15 +158,18 @@ function vueLigne() {
   // LE BOUTON D'APPEL : sous la ligne d'ordinaire ; DANS LA BULLE du résultat
   // quand il y en a une — le service fini, la suite se lit au même endroit
   // que le résultat, et le regard n'a pas à descendre au bas de l'écran.
-  const suite = prochaine ? `<button class="c-suite" data-gare="${prochaine}">▸ ${
-    isBought(prochaine) ? "Reprendre" : "Ouvrir"} ${nomDe(prochaine)}</button>` : "";
-  // Dans la bulle, le bouton dit « Suivante » et rien d'autre : le nom de la
-  // gare est déjà sur la ligne, à côté, et « Ouvrir Aix-la-Chapelle » ferait
-  // une bulle large comme la ligne. Une largeur fixe, quel que soit le nom.
-  // Une vraie flèche, à droite — c'est un bouton qui emmène, pas une puce.
+  // UN SEUL BOUTON D'APPEL, DEUX PLACES. Celui de la ligne portait une puce
+  // « ▸ » et sa propre taille : deux boutons différents pour le même geste,
+  // selon qu'un service venait de finir ou non. Même flèche, même mesure —
+  // seule la place change (voir .c-suite, css/station.css).
   const fleche = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" ' +
     'stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
     '<path d="M5 12h13M12 6l6 6-6 6"/></svg>';
+  const suite = prochaine ? `<button class="c-suite" data-gare="${prochaine}">${
+    isBought(prochaine) ? "Reprendre" : "Ouvrir"} ${nomDe(prochaine)}${fleche}</button>` : "";
+  // Dans la bulle, le bouton dit « Suivante » et rien d'autre : le nom de la
+  // gare est déjà sur la ligne, à côté, et « Ouvrir Aix-la-Chapelle » ferait
+  // une bulle large comme la ligne. Une largeur fixe, quel que soit le nom.
   // UN HUB BATTU OUVRE UN CHOIX, pas une gare. Finir une ligne sur sa
   // métropole, c'est se retrouver à un carrefour : la suite est l'une de ses
   // sorties, et c'est au joueur de la choisir (meta-progression §2). La bulle
@@ -211,13 +214,15 @@ function vueLigne() {
         : `<span class="c-avance">${faits} / ${total}</span>`}</div>
       ${bourseHTML()}
     </div>
-    <div class="c-ligne${CARTE.bilan ? " avec-bilan" : ""}"${rang ? ` data-rang="${rang.id}"` : ""}>
-      ${jalon(hDep && hDep.gareId, "boss")}
-      ${p.gares.map(g => jalon(g)).join("")}
-      ${jalon(hArr && hArr.gareId, "boss")}
-      ${bilanHTML(suiteBulle)}
-    </div>
-    ${CARTE.bilan ? "" : suite}`;
+    <div class="c-groupe">
+      <div class="c-ligne${CARTE.bilan ? " avec-bilan" : ""}"${rang ? ` data-rang="${rang.id}"` : ""}>
+        ${jalon(hDep && hDep.gareId, "boss")}
+        ${p.gares.map(g => jalon(g)).join("")}
+        ${jalon(hArr && hArr.gareId, "boss")}
+        ${bilanHTML(suiteBulle)}
+      </div>
+      ${CARTE.bilan ? "" : suite}
+    </div>`;
 }
 
 // ------------------------------------------------------------------
