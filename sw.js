@@ -29,6 +29,7 @@ const PRECACHE = [
   "js/game.js",
   "data/places.js",
   "data/lines.js",
+  "data/worldmap.js",
   "data/cartes/index.json",
   "data/cartes/europe.json",
   "js/cartes.js",

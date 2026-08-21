@@ -2098,7 +2098,33 @@ svg { width: 100%; height: 100%; display: block; }
 .bl .bl-fait.r-or { fill: var(--gold); }
 .bl .bl-fait.r-diamant { fill: #7fd4ff; }
 
-/* ---- L'Europe : les constellations et leur complétion ---- */
+/* ---- L'Europe : la carte du territoire, zone par zone ---- */
+.c-carte .pays { fill: #151d2e; stroke: #212b42; stroke-width: .22; }
+.c-carte .lien-eu { stroke: #2a3550; stroke-width: .45; stroke-linecap: round; pointer-events: none; }
+.c-carte .lien-eu.ouvert { stroke: var(--col, #2dd4bf); stroke-width: .75; }
+.c-carte .lien-eu.mer { stroke-dasharray: .6 1.2; }
+.c-carte .ze { cursor: pointer; }
+.c-carte .ze-cible { fill: transparent; }
+.c-carte .ze .eh { fill: var(--col); stroke: #0E1420; stroke-width: .25; opacity: .6; pointer-events: none; }
+.c-carte .ze .eh.tenu { opacity: 1; stroke: #fff; stroke-width: .3; }
+.c-carte .ze .eh.maitrise { fill: var(--gold); opacity: 1; stroke: var(--gold-hi); }
+.c-carte .ze .eh.absent { fill: none; stroke: var(--col); stroke-width: .3; stroke-dasharray: .5 .5; opacity: .5; }
+.c-carte .ze text { text-anchor: middle; font-family: "Segoe UI", system-ui, sans-serif; pointer-events: none;
+  paint-order: stroke; stroke: #0E1420; stroke-width: .7; stroke-linejoin: round; }
+.c-carte .ze .ze-nom { font-size: 2.6px; font-weight: 700; fill: var(--col); }
+.c-carte .ze .ze-prog { font-size: 2.1px; fill: var(--muted); font-variant-numeric: tabular-nums; }
+.c-carte .ze.grise .eh { opacity: .3; }
+.c-carte .ze.grise .ze-nom { opacity: .6; }
+@media (hover: hover) {
+  .c-carte .ze:hover .ze-nom { fill: #fff; }
+  .c-carte .ze:hover .eh { opacity: 1; }
+}
+/* Le zoom : le monde grossit (transition de .monde), les autres zones et les
+   étiquettes s'effacent — à ×4 un nom de zone ferait tout l'écran. */
+.c-carte .ze, .c-carte .lien-eu, .c-carte .ze text { transition: opacity .35s ease; }
+.c-carte.zoome .ze:not(.choisie), .c-carte.zoome .lien-eu:not(.choisie), .c-carte.zoome .ze text { opacity: 0; }
+
+/* ---- L'Europe : les constellations et leur complétion (tuiles, repli) ---- */
 .c-europe {
   flex: 1 1 auto; display: grid; gap: 10px; align-content: center;
   grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));

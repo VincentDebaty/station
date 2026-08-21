@@ -584,28 +584,122 @@ function ouvrirLigne(cle, prefere) {
 // ------------------------------------------------------------------
 // LA VUE CARTE — ce qu'il reste du territoire, zone par zone.
 // ------------------------------------------------------------------
-// L'identifiant de vue reste « europe » (classes CSS .v-europe, .c-europe) :
-// c'est le dézoom maximal d'UNE carte, quel que soit son nom.
+// L'identifiant de vue reste « europe » (classe CSS .v-europe) : c'est le
+// dézoom maximal d'UNE carte, quel que soit son nom.
+//
+// C'EST UNE CARTE, PAS UNE LISTE. Une grille de tuiles disait les zones sans
+// dire où elles sont, et choisir une région sur une liste n'a rien d'un
+// voyage. Ici les hubs sont posés à leurs coordonnées, les lignes entre eux,
+// chaque zone porte sa couleur et son avancement, et le fond de pays
+// (data/worldmap.js, Natural Earth) dit « l'Europe » sans qu'on l'écrive.
+// Toucher une zone ZOOME sur elle, puis la vue zone prend le relais.
+//
+// Une seule projection pour tout le territoire : équirectangulaire corrigée
+// en latitude, ajustée au carré du viewBox. Les hubs n'ont pas de nom ici —
+// à cette échelle ce serait un nuage ; c'est la zone qui se lit.
+const RAD = Math.PI / 180;
+function projectionDeCarte() {
+  const hubs = tousLesHubs().filter(h => Array.isArray(h.ll));
+  if (!hubs.length) return null;
+  const lons = hubs.map(h => h.ll[0]), lats = hubs.map(h => h.ll[1]);
+  const lon0 = Math.min(...lons), lon1 = Math.max(...lons);
+  const lat0 = Math.min(...lats), lat1 = Math.max(...lats);
+  const cosm = Math.cos((lat0 + lat1) / 2 * RAD);
+  const s = 88 / Math.max((lon1 - lon0) * cosm, lat1 - lat0, 1);
+  return {
+    X: lon => 50 + (lon - (lon0 + lon1) / 2) * cosm * s,
+    Y: lat => 50 - (lat - (lat0 + lat1) / 2) * s,
+    s
+  };
+}
+// Le fond : les pays d'Europe, en silhouette. Absent si le fond n'est pas chargé.
+function fondDePays(P) {
+  if (typeof WORLDMAP === "undefined" || !WORLDMAP.countries) return "";
+  let d = "";
+  for (const c of WORLDMAP.countries) {
+    if (c.cont !== "europe") continue;
+    for (const r of c.r || []) {
+      let seg = "";
+      for (let i = 0; i + 1 < r.length; i += 2)
+        seg += (i ? "L" : "M") + P.X(r[i]).toFixed(1) + " " + P.Y(r[i + 1]).toFixed(1);
+      if (seg) d += seg + "Z";
+    }
+  }
+  return d ? `<path class="pays" d="${d}"/>` : "";
+}
 function vueEurope() {
   const tenues = carteTenues();
-  const cartes = zonesDeCarte().map(c => {
-    const hubs = hubsDeZone(c.id);
-    const jouables = hubs.filter(h => h.gareId);
-    const tenus = jouables.filter(h => tenues.has(h.gareId));
-    const part = jouables.length ? Math.round(100 * tenus.length / jouables.length) : 0;
-    return `<button class="cst" data-const="${c.id}" style="--col:${c.couleur}">
-      <span class="cst-nom">${c.nom}</span>
-      <span class="cst-jauge"><i style="width:${part}%"></i></span>
-      <span class="cst-chiffre">${jouables.length ? `${tenus.length} / ${jouables.length}`
-        : `${hubs.length} gares à écrire`}</span>
-    </button>`;
-  }).join("");
-  return `
+  const P = projectionDeCarte();
+  const zones = zonesDeCarte();
+  const tete = `
     <div class="c-tete">
       <div class="c-titre">${nomDeCarte()}</div>
       ${tenues.size ? `<button class="c-retour" data-vue="ligne">‹ Ma ligne</button>` : ""}
-    </div>
-    <div class="c-europe">${cartes}</div>`;
+    </div>`;
+  if (!P) return tete;
+
+  // Les lignes : en couleur de zone dès qu'un de leurs bouts est tenu, sinon
+  // un fil discret. Une traversée maritime se pointille, comme partout.
+  let traits = "";
+  for (const l of tousLesLiens()) {
+    const a = hubById(l.a), b = hubById(l.b);
+    if (!a || !b) continue;
+    const ouvert = (a.gareId && tenues.has(a.gareId)) || (b.gareId && tenues.has(b.gareId));
+    const z = zoneById(a.zone) || {};
+    traits += `<line class="lien-eu${ouvert ? " ouvert" : ""}${l.type === "mer" ? " mer" : ""}"` +
+      ` data-za="${a.zone}" data-zb="${b.zone}" style="--col:${z.couleur || "#2dd4bf"}" x1="${P.X(a.ll[0]).toFixed(2)}" y1="${P.Y(a.ll[1]).toFixed(2)}"` +
+      ` x2="${P.X(b.ll[0]).toFixed(2)}" y2="${P.Y(b.ll[1]).toFixed(2)}"/>`;
+  }
+  // Les zones : leurs hubs, et une étiquette au barycentre — nom et avancement.
+  // Le groupe porte ce qu'il faut pour zoomer sur lui (centre, facteur).
+  const groupes = zones.map(z => {
+    const hubs = hubsDeZone(z.id).filter(h => Array.isArray(h.ll));
+    if (!hubs.length) return "";
+    const jouables = hubs.filter(h => h.gareId);
+    const tenus = jouables.filter(h => tenues.has(h.gareId));
+    const xs = hubs.map(h => P.X(h.ll[0])), ys = hubs.map(h => P.Y(h.ll[1]));
+    const cx = xs.reduce((a, b) => a + b, 0) / xs.length, cy = ys.reduce((a, b) => a + b, 0) / ys.length;
+    const etendue = Math.max(Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys), 8);
+    const k = Math.min(4.5, 84 / (etendue * 1.25));
+    const points = hubs.map(h => {
+      const tenu = h.gareId && tenues.has(h.gareId);
+      const maitrise = tenu && bossMaitrise(h.id, tenues);
+      const cl = maitrise ? " maitrise" : tenu ? " tenu" : h.gareId ? "" : " absent";
+      return `<circle class="eh${cl}" cx="${P.X(h.ll[0]).toFixed(2)}" cy="${P.Y(h.ll[1]).toFixed(2)}" r="${h.rang === 1 ? 1.15 : .85}"/>`;
+    }).join("");
+    const prog = jouables.length ? `${tenus.length} / ${jouables.length}` : "à écrire";
+    return `<g class="ze${jouables.length ? "" : " grise"}" data-const="${z.id}" style="--col:${z.couleur}"` +
+      ` data-cx="${cx.toFixed(2)}" data-cy="${cy.toFixed(2)}" data-k="${k.toFixed(2)}">` +
+      `<circle class="ze-cible" cx="${cx.toFixed(2)}" cy="${cy.toFixed(2)}" r="${(etendue / 2 + 3).toFixed(1)}"/>` +
+      points +
+      // L'étiquette SOUS le nuage de hubs, pas dessus : au centre du
+      // continent les zones se touchent, et un nom posé au barycentre
+      // recouvrait les points de la voisine.
+      `<text class="ze-nom" x="${cx.toFixed(2)}" y="${(Math.max(...ys) + 3.4).toFixed(2)}">${z.nom}</text>` +
+      `<text class="ze-prog" x="${cx.toFixed(2)}" y="${(Math.max(...ys) + 6).toFixed(2)}">${prog}</text></g>`;
+  }).join("");
+
+  return tete + `
+    <svg class="c-graphe c-carte" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet">
+      <g class="monde">${fondDePays(P)}<g class="traits">${traits}</g>${groupes}</g>
+    </svg>`;
+}
+// Toucher une zone : la carte ZOOME sur elle, puis la vue zone prend la
+// main. Le plan de la zone cadre le même territoire, le mouvement se lit
+// comme une continuité. Sans animation (réglage système), on y va tout droit.
+function zoomerSurZone(el) {
+  const hote = CARTE.hote, monde = hote && hote.querySelector(".c-carte .monde");
+  const k = parseFloat(el.dataset.k), cx = parseFloat(el.dataset.cx), cy = parseFloat(el.dataset.cy);
+  const reduit = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (!monde || !k || reduit) { renderCarte(); return; }
+  el.classList.add("choisie");
+  for (const t of hote.querySelectorAll(".lien-eu"))
+    if (t.dataset.za === el.dataset.const || t.dataset.zb === el.dataset.const) t.classList.add("choisie");
+  hote.querySelector(".c-carte").classList.add("zoome");
+  const cible = `translate(${(50 - k * cx).toFixed(2)}px, ${(50 - k * cy).toFixed(2)}px) scale(${k})`;
+  monde.style.transform = cible;
+  CARTE.zoomAvant = cible;     // la vue zone repartira de là
+  setTimeout(renderCarte, 580);
 }
 
 // ------------------------------------------------------------------
@@ -674,7 +768,7 @@ function renderCarte() {
     // Une zone touchée depuis la vue Europe : c'est ELLE qu'on montre — la
     // vue zone s'ancrait sur la ligne en cours quel que soit le bouton pressé.
     const cst = ev.target.closest("[data-const]");
-    if (cst) { CARTE.vue = "constellation"; CARTE.zone = cst.dataset.const; CARTE.panneau = null; renderCarte(); return; }
+    if (cst) { CARTE.vue = "constellation"; CARTE.zone = cst.dataset.const; CARTE.panneau = null; zoomerSurZone(cst); return; }
     if (ev.target.closest("[data-fermer]")) { CARTE.panneau = null; renderCarte(); return; }
     // UNE LIGNE SE PREND EN LA TOUCHANT. Le trait du plan et la ligne du
     // panneau portent la même marque et font la même chose : ouvrir la vue
