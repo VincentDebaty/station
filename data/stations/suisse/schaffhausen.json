@@ -1,0 +1,33 @@
+{
+  "id": "schaffhausen",
+  "name": "Schaffhausen",
+  "city": "Schaffhouse",
+  "tagline": "Schaffhouse — une gare, deux compagnies, deux pantographes : la frontière passe entre les quais.",
+  "difficulty": 3,
+  "country": "🇨🇭 Suisse",
+  "desc": "Gare en copropriété, 65 % aux CFF et 35 % à la Deutsche Bahn, équipée des deux signalisations et des deux largeurs de pantographe ; la douane y est restée après Schengen. À l'ouest, trois routes se séparent à Neuhausen, au-dessus des chutes du Rhin : Winterthur par Andelfingen, Zurich par Bülach et la Hochrheinbahn allemande vers Bâle. À l'est, Singen et l'Allemagne, et la ligne du lac qui franchit le Rhin vers Stein am Rhein et Kreuzlingen. Six voies, et le fret germano-suisse qui y change de compagnie.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }, { "id": 6 }
+  ],
+  "portals": {
+    "ZURICH":      { "side": "L", "color": "#f5b23c", "abbr": "ZH" },
+    "WINTERTHUR":  { "side": "L", "color": "#25dede", "abbr": "WT" },
+    "BALE":        { "side": "L", "color": "#60a5fa", "abbr": "BS", "label": "BÂLE" },
+    "SINGEN":      { "side": "R", "color": "#f2588f", "abbr": "SI" },
+    "KREUZLINGEN": { "side": "R", "color": "#4ade80", "abbr": "KR" }
+  },
+  "links": {
+    "ZURICH":      [1, 2, 3, 4],
+    "WINTERTHUR":  [3, 4, 5, 6],
+    "BALE":        [1, 2],
+    "SINGEN":      [1, 2, 3, 4],
+    "KREUZLINGEN": [4, 5, 6]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 14, "nMax": 17, "gapMin": 1.6, "gapMax": 3.0,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6],
+    "quietRate": 0.2,
+    "rush": "pointe"
+  }
+}

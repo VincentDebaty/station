@@ -1,0 +1,30 @@
+{
+  "id": "dordrecht",
+  "name": "Dordrecht",
+  "tagline": "Dordrecht — trois branches au sud, un seul tronc vers Rotterdam au nord : le trident de la Hollande-Méridionale.",
+  "difficulty": 3,
+  "country": "🇳🇱 Pays-Bas",
+  "desc": "La plus vieille ville de Hollande a une gare de 1872, l'une des deux « Waterstaatstations » de première classe du pays. Au nord, tout file vers Rotterdam par le pont sur la Vieille Meuse ; au sud, la voie se dédouble vers Roosendaal et vers Breda par le pont du Moerdijk, tandis que la MerwedeLingelijn de Geldermalsen vient y rebrousser. Le triage de Kijfhoek est à deux pas : une troisième voie, posée en 1995, laisse les trains de fret attendre sans bloquer les voyageurs. Sept voies à quai en vrai, cinq pour vous.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
+  ],
+  "portals": {
+    "ROOSENDAAL":   { "side": "L", "color": "#60a5fa", "abbr": "RS" },
+    "BREDA":        { "side": "L", "color": "#4ade80", "abbr": "BD" },
+    "GELDERMALSEN": { "side": "L", "color": "#a78bfa", "abbr": "GM" },
+    "ROTTERDAM":    { "side": "R", "color": "#f5b23c", "abbr": "RT" }
+  },
+  "links": {
+    "ROOSENDAAL":   [1, 2, 3],
+    "BREDA":        [2, 3, 4],
+    "GELDERMALSEN": [4, 5],
+    "ROTTERDAM":    [1, 2, 3, 4, 5]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 14, "nMax": 16, "gapMin": 1.6, "gapMax": 2.9,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6],
+    "quietRate": 0.18,
+    "rush": "double"
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "id": "aschaffenburg",
+  "name": "Aschaffenburg Hbf",
+  "city": "Aschaffenbourg",
+  "tagline": "Aschaffenburg Hbf — la porte bavaroise de Francfort, au pied de la rampe du Spessart.",
+  "difficulty": 4,
+  "country": "🇩🇪 Allemagne",
+  "desc": "Huit voies à quai pour les voyageurs et six de plus pour le fret : c'est ici que l'axe de Francfort se sépare entre la Main-Spessart-Bahn vers Wurtzbourg et la vallée du Main vers Miltenberg, tandis que la Rhein-Main-Bahn de Darmstadt y termine. L'ICE 41 de la Ruhr à Munich s'y arrête toutes les heures, et le corridor de fret du Spessart défile sans s'arrêter. Gare reconstruite de 2004 à 2012, avec son bâtiment de 2011.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },
+    { "id": 6 }
+  ],
+  "portals": {
+    "FRANKFURT":  { "side": "L", "color": "#f5b23c", "abbr": "F" },
+    "DARMSTADT":  { "side": "L", "color": "#4ade80", "abbr": "DA" },
+    "WURZBURG":   { "side": "R", "color": "#a78bfa", "abbr": "WU", "label": "WÜRZBURG" },
+    "MILTENBERG": { "side": "R", "color": "#f2588f", "abbr": "MIL" }
+  },
+  "links": {
+    "FRANKFURT":  [1, 2, 3, 4, 5, 6],
+    "DARMSTADT":  [3, 4, 5, 6],
+    "WURZBURG":   [1, 2, 3, 4, 5],
+    "MILTENBERG": [4, 5, 6]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 14, "nMax": 16, "gapMin": 1.6, "gapMax": 2.9,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6, 7],
+    "quietRate": 0.12,
+    "rush": "pointe"
+  }
+}

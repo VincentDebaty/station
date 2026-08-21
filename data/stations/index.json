@@ -19,7 +19,7 @@
       "grenoble", "mulhouse", "clermont-ferrand", "lille", "rennes", "nantes", "tours",
       "montpellier", "nice", "dijon", "metz", "nancy", "paris-lyon", "paris-montparnasse",
       "bordeaux", "toulouse", "marseille", "lyon", "strasbourg", "paris-nord", "thionville",
-      "sarrebourg", "miramas", "tarascon", "creil", "arras", "douai"
+      "sarrebourg", "miramas", "tarascon", "creil", "arras", "douai", "colmar", "selestat"
     ]
   },
   {
@@ -33,7 +33,9 @@
       "hamburg", "leipzig", "stuttgart", "nurnberg", "hannover", "munchen", "aachen", "bingen",
       "juterbog", "wittenberg", "bitterfeld", "wuppertal", "hagen", "hamm", "minden", "hanau",
       "fulda", "bebra", "gottingen", "braunschweig", "brandenburg", "potsdam", "celle",
-      "uelzen", "luneburg", "harburg", "gunzburg", "plochingen"
+      "uelzen", "luneburg", "harburg", "gunzburg", "plochingen", "aschaffenburg", "gemunden",
+      "furth", "bamberg", "lichtenfels", "saalfeld", "weimar", "naumburg", "rheine", "singen",
+      "tuttlingen", "horb", "lindau", "memmingen", "buchloe"
     ]
   },
   {
@@ -59,14 +61,15 @@
     "country": "pays-bas",
     "label": "🇳🇱 Pays-Bas",
     "stations": [
-      "amsterdam"
+      "amsterdam", "rotterdam", "dordrecht", "roosendaal", "amersfoort", "deventer", "hengelo"
     ]
   },
   {
     "country": "suisse",
     "label": "🇨🇭 Suisse",
     "stations": [
-      "geneve", "zurich", "aarau", "olten", "bern", "fribourg", "lausanne"
+      "geneve", "zurich", "aarau", "olten", "bern", "fribourg", "lausanne", "bale",
+      "winterthur", "schaffhausen", "stgallen"
     ]
   }
 ]

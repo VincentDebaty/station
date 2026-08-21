@@ -1,0 +1,33 @@
+{
+  "id": "amersfoort",
+  "name": "Amersfoort Centraal",
+  "city": "Amersfoort",
+  "tagline": "Amersfoort Centraal — le carrefour du centre : l'est et le nord des Pays-Bas se croisent sur trois quais.",
+  "difficulty": 4,
+  "country": "🇳🇱 Pays-Bas",
+  "desc": "Six voies à quai sur trois îlots, et presque tout ce qui roule vers l'est et le nord du pays y change de file : l'IC de Berlin et l'IC d'Enschede arrivent d'Amsterdam par Hilversum, ceux de Groningue et de Leeuwarden montent d'Utrecht ou d'Amsterdam vers Zwolle, et la Valleilijn d'Ede-Wageningen vient mourir à quai. Correspondances quai à quai, 45 000 voyageurs par jour — et le premier escalier mécanique d'une gare néerlandaise, en 1962.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }, { "id": 6 }
+  ],
+  "portals": {
+    "AMSTERDAM": { "side": "L", "color": "#a78bfa", "abbr": "AM" },
+    "UTRECHT":   { "side": "L", "color": "#f2588f", "abbr": "U" },
+    "DEVENTER":  { "side": "R", "color": "#25dede", "abbr": "DV" },
+    "ZWOLLE":    { "side": "R", "color": "#4ade80", "abbr": "ZL" },
+    "EDE":       { "side": "R", "color": "#f5b23c", "abbr": "ED" }
+  },
+  "links": {
+    "AMSTERDAM": [1, 2, 3, 4],
+    "UTRECHT":   [3, 4, 5, 6],
+    "DEVENTER":  [1, 2, 3],
+    "ZWOLLE":    [2, 3, 4, 5],
+    "EDE":       [5, 6]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 16, "nMax": 19, "gapMin": 1.5, "gapMax": 2.6,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6],
+    "quietRate": 0.12,
+    "rush": "double"
+  }
+}

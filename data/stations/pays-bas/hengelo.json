@@ -1,0 +1,29 @@
+{
+  "id": "hengelo",
+  "name": "Hengelo",
+  "tagline": "Hengelo — la porte de la Twente : ici l'IC de Berlin quitte le pays, l'IC d'Enschede s'arrête.",
+  "difficulty": 3,
+  "country": "🇳🇱 Pays-Bas",
+  "desc": "Le dernier aiguillage néerlandais de l'IC Amsterdam–Berlin : à l'est, la voie d'Enschede part vers le sud et celle d'Oldenzaal et de Bad Bentheim vers l'Allemagne ; à l'ouest, Almelo emporte tout vers Deventer ou Zwolle, et la petite ligne de Zutphen arrive par Goor et Delden. Trois voies sous une marquise en fonte de 1900, classée et restaurée en 2010, devant le bâtiment de Schelling de 1951.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }
+  ],
+  "portals": {
+    "AMSTERDAM": { "side": "L", "color": "#a78bfa", "abbr": "AM" },
+    "ZUTPHEN":   { "side": "L", "color": "#f5b23c", "abbr": "ZP" },
+    "ENSCHEDE":  { "side": "R", "color": "#60a5fa", "abbr": "ES" },
+    "HANNOVER":  { "side": "R", "color": "#f2588f", "abbr": "H", "label": "HANOVRE" }
+  },
+  "links": {
+    "AMSTERDAM": [1, 2, 3, 4],
+    "ZUTPHEN":   [1, 2],
+    "ENSCHEDE":  [1, 2, 3],
+    "HANNOVER":  [3, 4]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 14, "nMax": 15, "gapMin": 1.6, "gapMax": 3.0,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6],
+    "quietRate": 0.18
+  }
+}

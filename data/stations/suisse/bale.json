@@ -1,0 +1,39 @@
+{
+  "id": "bale",
+  "name": "Basel SBB",
+  "city": "Bâle",
+  "tagline": "Basel SBB — la plus grande gare frontière d'Europe : trois réseaux sous une seule verrière.",
+  "difficulty": 5,
+  "country": "🇨🇭 Suisse",
+  "desc": "Cent quarante mille voyageurs par jour et trois compagnies sous un même toit : les CFF dans la grande halle traversante, la SNCF dans son aile ouest derrière une barrière de douane (voies 30 à 35), la DB de l'autre côté du Rhin, à la gare badoise, reliée par la Verbindungsbahn. Tout entre par l'est — le Bözberg de Zurich, le Hauenstein de Berne et Lucerne, la ligne du Jura de Bienne — et tout ressort vers la France par la tranchée de l'Elsässerbahn, sauf les ICE d'Allemagne, qui rebroussent ici avant de filer sur Zurich ou Berne. Le fret, lui, longe la gare par la ligne basse de Muttenz sans jamais toucher un quai.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },
+    { "id": 6 }, { "id": 7 }, { "id": 8 }, { "id": 9 }
+  ],
+  "portals": {
+    "MULHOUSE": { "side": "L", "color": "#60a5fa", "abbr": "MU" },
+    "PARIS":    { "side": "L", "color": "#e879f9", "abbr": "P" },
+    "ZURICH":   { "side": "R", "color": "#f5b23c", "abbr": "ZH" },
+    "BERNE":    { "side": "R", "color": "#25dede", "abbr": "BE" },
+    "BIENNE":   { "side": "R", "color": "#a78bfa", "abbr": "BI" },
+    "FREIBURG": { "side": "R", "color": "#4ade80", "abbr": "FR" }
+  },
+  "links": {
+    "MULHOUSE": [2, 3, 4, 5, 6, 7, 8, 9],
+    "PARIS":    [1, 2, 3],
+    "ZURICH":   [1, 2, 3, 4, 5, 6],
+    "BERNE":    [3, 4, 5, 6, 7],
+    "BIENNE":   [8, 9],
+    "FREIBURG": [5, 6, 7, 8]
+  },
+  "sameSidePairs": [
+    ["FREIBURG", "ZURICH"], ["ZURICH", "FREIBURG"],
+    ["FREIBURG", "BERNE"],  ["BERNE", "FREIBURG"]
+  ],
+  "gen": {
+    "nMin": 18, "nMax": 22, "gapMin": 1.4, "gapMax": 2.4,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6, 7],
+    "quietRate": 0.1,
+    "rush": "pointe"
+  }
+}

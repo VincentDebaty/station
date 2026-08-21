@@ -26,6 +26,18 @@
 // ------------------------------------------------------------------
 
 const PLACES = {
+  // Points de passage ajoutés en août 2026, pour que les sept lignes remplies
+  // ce mois-ci suivent la voie et non la corde : le Neckar de la Gäubahn, la
+  // Saale et le Frankenwald entre Weimar et Bamberg, la Thüringer Bahn depuis
+  // Leipzig, et Bad Bentheim sur l'IC Amsterdam – Berlin.
+  badbentheim: [7.157, 52.303],
+  weissenfels: [11.975, 51.203],
+  apolda:      [11.516, 51.026],
+  arnstadt:    [10.951, 50.836],
+  rottenbach:  [11.155, 50.686],
+  probstzella: [11.386, 50.535],
+  erlangen:    [11.002, 49.596],
+  rottweil:    [8.628, 48.163],
   geislingen: [9.83, 48.624],
   goppingen: [9.653, 48.703],
   burg: [11.855, 52.272],
@@ -34,7 +46,6 @@ const PLACES = {
   sangerhausen: [11.298, 51.471],
   nordhausen: [10.795, 51.497],
   northeim: [9.996, 51.707],
-  aschaffenburg: [9.143, 49.98],
   eichenberg: [9.919, 51.379],
   eschwege: [10.053, 51.186],
   melsungen: [9.546, 51.131],
@@ -45,19 +56,10 @@ const PLACES = {
   schwerte: [7.566, 51.443],
   bellegarde: [5.826, 46.109],
   culoz: [5.78, 45.845],
-  lindau: [9.681, 47.544],
   bregenz: [9.74, 47.503],
-  stgallen: [9.37, 47.423],
-  singen: [8.841, 47.758],
-  schaffhausen: [8.632, 47.698],
-  hengelo: [6.794, 52.262],
-  deventer: [6.16, 52.257],
-  amersfoort: [5.371, 52.153],
   emmerich: [6.25, 51.834],
   arnhem: [5.901, 51.985],
   utrecht: [5.11, 52.089],
-  roosendaal: [4.458, 51.541],
-  rotterdam: [4.469, 51.925],
   schiphol: [4.762, 52.309],
   rognac: [5.235, 43.488],
   arles: [4.632, 43.685],
@@ -136,7 +138,6 @@ const PLACES = {
   chartres:     [1.481, 48.448],
   chateauroux:  [1.700, 46.810],
   chateauthierry: [3.410, 49.038],
-  colmar:       [7.347, 48.073],
   culmont:      [5.443, 47.810],   // Culmont-Chalindrey
   dol:          [-1.751, 48.544],
   dole:         [5.488, 47.096],
@@ -185,7 +186,6 @@ const PLACES = {
   kaiserslautern: [7.769, 49.436],
   landshut:     [12.128, 48.545],
   limburg:      [8.052, 50.386],
-  naumburg:     [11.797, 51.163],
   neustrelitz:  [13.070, 53.362],
   oberhausen:   [6.852, 51.478],
   offenburg:    [7.941, 48.471],
@@ -198,7 +198,6 @@ const PLACES = {
   // la Finne, la Saalebahn au sud par Iéna. Elle attend sa Thüringer Bahn
   // (Erfurt – Weimar – Apolda – Naumburg) ; le portail WEIMAR d'Erfurt reste un
   // cul-de-sac d'ici là. Coordonnée gardée pour ce jour-là.
-  weimar:       [11.329, 50.981],
   wismar:       [11.463, 53.892],
   wolfsburg:    [10.788, 52.429],
   // Forbach : la dernière gare française avant la Sarre.
@@ -231,7 +230,6 @@ const PLACES = {
 
   // --- Hors des pays jouables : ce sont eux qui font déborder le réseau du
   //     cadre national, donc ils comptent double pour la lecture « Europe ».
-  bale:         [7.590, 47.548],   // Suisse
   copenhague:   [12.564, 55.673],  // Danemark
   enschede:     [6.890, 52.221],   // Pays-Bas
   // (Luxembourg a quitté cette liste : le Grand-Duché est jouable, ses

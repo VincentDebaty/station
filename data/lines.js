@@ -38,7 +38,7 @@
 // que ses lignes, jamais avant : sans elles, ses gares n'auraient plus aucune
 // arête.
 const LINE_COUNTRIES = ["🇧🇪 Belgique", "🇫🇷 France", "🇬🇧 Royaume-Uni", "🇩🇪 Allemagne",
-  "🇱🇺 Luxembourg"];
+  "🇱🇺 Luxembourg", "🇳🇱 Pays-Bas", "🇨🇭 Suisse"];
 
 const LINES = [
   // ---- Flandre occidentale et orientale --------------------------------
@@ -186,7 +186,8 @@ const LINES = [
   { id: "L770", name: "Dijon – Dole – Besançon – Belfort – Mulhouse",
     nodes: ["dijon", "dole", "besancon", "belfort", "mulhouse"] },
   { id: "L780", name: "Dijon – Culmont-Chalindrey – Nancy", nodes: ["dijon", "culmont", "nancy"] },
-  { id: "L115", name: "Mulhouse – Colmar – Strasbourg", nodes: ["mulhouse", "colmar", "strasbourg"] },
+  { id: "L115", name: "Mulhouse – Colmar – Sélestat – Strasbourg",
+    nodes: ["mulhouse", "colmar", "selestat", "strasbourg"] },
 
   // ---- Lorraine, Champagne et Massif central -----------------------------
   { id: "L155", name: "Strasbourg – Sarrebourg – Metz", nodes: ["strasbourg", "sarrebourg", "metz"] },
@@ -346,8 +347,10 @@ const LINES = [
   { id: "S-N", name: "Stuttgart – Crailsheim – Nuremberg", nodes: ["stuttgart", "crailsheim", "nurnberg"] },
 
   // ---- Bavière ------------------------------------------------------------
-  { id: "SFS-WU", name: "Francfort – Hanau – Aschaffenbourg – Wurtzbourg – Nuremberg",
-    nodes: ["frankfurt", "hanau", "aschaffenburg", "wurzburg", "nurnberg"] },
+  // La Main-Spessart-Bahn suit le Main par Gemünden ; à l'autre bout, tous
+  // les trains de Wurtzbourg s'arrêtent à Fürth avant Nuremberg.
+  { id: "SFS-WU", name: "Francfort – Hanau – Aschaffenbourg – Gemünden – Wurtzbourg – Fürth – Nuremberg",
+    nodes: ["frankfurt", "hanau", "aschaffenburg", "gemunden", "wurzburg", "furth", "nurnberg"] },
   { id: "SFS-IN", name: "Nuremberg – Ingolstadt – Munich", nodes: ["nurnberg", "ingolstadt", "munchen"] },
   { id: "N-R", name: "Nuremberg – Ratisbonne",   nodes: ["nurnberg", "regensburg"] },
   { id: "R-M", name: "Ratisbonne – Landshut – Munich", nodes: ["regensburg", "landshut", "munchen"] },
@@ -391,6 +394,19 @@ const LINES = [
   { id: "Saalebahn", name: "Halle – Naumburg – Iéna – Erfurt",
     nodes: ["halle", "naumburg", "jena", "erfurt"] },
   { id: "SFS-EB", name: "Erfurt – Cobourg – Nuremberg (LGV)", nodes: ["erfurt", "coburg", "nurnberg"] },
+  // La Thüringer Bahn — la route classique de Leipzig vers Erfurt, celle que
+  // la LGV double par le nord. Elle passe par Weissenfels, Naumburg, Apolda
+  // et Weimar ; c'est elle qui donne à Naumburg et Weimar leur arête vers
+  // Leipzig, que la Saalebahn (par Halle) ne leur donnait pas.
+  { id: "Thueringer", name: "Leipzig – Weissenfels – Naumburg – Apolda – Weimar – Erfurt",
+    nodes: ["leipzig", "weissenfels", "naumburg", "apolda", "weimar", "erfurt"] },
+  // La descente d'Erfurt vers la Saale par Arnstadt et Rottenbach, puis le
+  // Frankenwald jusqu'à Bamberg : c'était la grande ligne Berlin – Munich
+  // avant la LGV de 2017, et elle roule toujours.
+  { id: "Erfurt-Saalfeld", name: "Erfurt – Arnstadt – Rottenbach – Saalfeld",
+    nodes: ["erfurt", "arnstadt", "rottenbach", "saalfeld"] },
+  { id: "Frankenwald", name: "Saalfeld – Probstzella – Lichtenfels – Bamberg – Erlangen – Nuremberg",
+    nodes: ["saalfeld", "probstzella", "lichtenfels", "bamberg", "erlangen", "nurnberg"] },
   { id: "Mitte", name: "Erfurt – Eisenach – Bebra",
     nodes: ["erfurt", "eisenach", "bebra"] },
 
@@ -437,20 +453,24 @@ const LINES = [
     nodes: ["enghien", "grammont"] },
   { id: "L180", name: "Thionville – Apach – Perl – Konz – Trèves (Obermoselstrecke, trains du week-end)",
     nodes: ["thionville", "apach", "perl", "konz", "trier"] },
-  { id: "NL-A", name: "Amsterdam – Schiphol – Rotterdam – Roosendaal – Anvers",
-    nodes: ["amsterdam", "schiphol", "rotterdam", "roosendaal", "anvers"] },
+  { id: "NL-A", name: "Amsterdam – Schiphol – Rotterdam – Dordrecht – Roosendaal – Anvers",
+    nodes: ["amsterdam", "schiphol", "rotterdam", "dordrecht", "roosendaal", "anvers"] },
   { id: "NL-B", name: "Amsterdam – Utrecht – Arnhem – Emmerich – Duisbourg",
     nodes: ["amsterdam", "utrecht", "arnhem", "emmerich", "duisburg"] },
-  { id: "NL-C", name: "Amsterdam – Amersfoort – Deventer – Hengelo – Osnabrück",
-    nodes: ["amsterdam", "amersfoort", "deventer", "hengelo", "osnabruck"] },
+  { id: "NL-C", name: "Amsterdam – Amersfoort – Deventer – Hengelo – Bad Bentheim – Rheine – Osnabrück",
+    nodes: ["amsterdam", "amersfoort", "deventer", "hengelo", "badbentheim", "rheine", "osnabruck"] },
   { id: "CH-1", name: "Zurich – Aarau – Olten – Berne – Fribourg – Lausanne – Genève",
     nodes: ["zurich", "aarau", "olten", "bern", "fribourg", "lausanne", "geneve"] },
   { id: "CH-2", name: "Zurich – Bâle",
     nodes: ["zurich", "bale"] },
-  { id: "CH-3", name: "Zurich – Schaffhouse – Singen – Stuttgart",
-    nodes: ["zurich", "schaffhausen", "singen", "stuttgart"] },
-  { id: "CH-4", name: "Zurich – Saint-Gall – Bregenz – Lindau – Munich",
-    nodes: ["zurich", "stgallen", "bregenz", "lindau", "munchen"] },
+  // La Gäubahn remonte le Neckar par Rottweil et Horb : sans ces deux
+  // points, Singen – Stuttgart tendait une corde à travers la Forêt-Noire.
+  { id: "CH-3", name: "Zurich – Winterthour – Schaffhouse – Singen – Tuttlingen – Rottweil – Horb – Stuttgart",
+    nodes: ["zurich", "winterthur", "schaffhausen", "singen", "tuttlingen", "rottweil", "horb", "stuttgart"] },
+  // Depuis l'électrification de l'Allgäu (2020), l'EC Munich – Zurich passe
+  // par Memmingen et Buchloe, et non plus par Kempten.
+  { id: "CH-4", name: "Zurich – Saint-Gall – Bregenz – Lindau – Memmingen – Buchloe – Munich",
+    nodes: ["zurich", "stgallen", "bregenz", "lindau", "memmingen", "buchloe", "munchen"] },
   { id: "L890", name: "Lyon – Ambérieu – Culoz – Bellegarde – Genève",
     nodes: ["lyon", "amberieu", "culoz", "bellegarde", "geneve"] },
   { id: "BTF-L", name: "Bitterfeld – Delitzsch – Leipzig",

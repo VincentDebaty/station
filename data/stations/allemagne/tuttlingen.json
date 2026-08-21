@@ -1,0 +1,30 @@
+{
+  "id": "tuttlingen",
+  "name": "Tuttlingen",
+  "tagline": "Tuttlingen — le nœud zéro du Ringzug : la Gäubahn croise le Danube à l'heure pile.",
+  "difficulty": 2,
+  "country": "🇩🇪 Allemagne",
+  "desc": "Le plus grand bâtiment ferroviaire de la région pour une ville de trente mille habitants : un bloc moderniste de 1933, posé là où la Gäubahn de Stuttgart à Singen coupe la ligne du Danube, d'Ulm à Donaueschingen. Cinq voies à quai, l'InterCity qui s'y cale à l'heure pile et les rames du Ringzug qui s'y croisent à la minute zéro avant de repartir vers Rottweil, Immendingen ou Fridingen.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
+  ],
+  "portals": {
+    "STUTTGART":      { "side": "L", "color": "#4ade80", "abbr": "S" },
+    "ULM":            { "side": "L", "color": "#f5b23c", "abbr": "UL" },
+    "SINGEN":         { "side": "R", "color": "#f2588f", "abbr": "SI" },
+    "DONAUESCHINGEN": { "side": "R", "color": "#60a5fa", "abbr": "DS" }
+  },
+  "links": {
+    "STUTTGART":      [2, 3, 4, 5],
+    "ULM":            [1, 2, 3],
+    "SINGEN":         [3, 4, 5],
+    "DONAUESCHINGEN": [1, 2, 4]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 13, "nMax": 16, "gapMin": 1.8, "gapMax": 3.0,
+    "cars": [2, 2, 2, 3, 3, 4, 4, 5],
+    "quietRate": 0.2,
+    "rush": "double"
+  }
+}

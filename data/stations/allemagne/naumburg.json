@@ -1,0 +1,33 @@
+{
+  "id": "naumburg",
+  "name": "Naumburg (Saale) Hbf",
+  "city": "Naumburg",
+  "tagline": "Naumburg Hbf — cinq voies au confluent de la Saale et de l'Unstrut, et le tram qui attend devant.",
+  "difficulty": 3,
+  "country": "🇩🇪 Allemagne",
+  "desc": "Là où la Thüringer Bahn de Halle et de Leipzig lâche la Saalbahn vers Iéna et Saalfeld : trois voies de grand passage, deux petites en baie pour l'autorail de l'Unstrut. Les ICE ont filé sur la ligne nouvelle en 2017 ; il reste les IC de Nuremberg, un régional toutes les quelques minutes et le fret qui descend vers Bad Kösen.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
+  ],
+  "portals": {
+    "HALLE":    { "side": "L", "color": "#f5b23c", "abbr": "HA" },
+    "LEIPZIG":  { "side": "L", "color": "#a78bfa", "abbr": "L" },
+    "ERFURT":   { "side": "R", "color": "#4ade80", "abbr": "EF" },
+    "SAALFELD": { "side": "R", "color": "#60a5fa", "abbr": "SLF" },
+    "NEBRA":    { "side": "R", "color": "#f2588f", "abbr": "NE" }
+  },
+  "links": {
+    "HALLE":    [1, 2, 3],
+    "LEIPZIG":  [2, 3, 4, 5],
+    "ERFURT":   [1, 2, 3],
+    "SAALFELD": [2, 3, 4],
+    "NEBRA":    [4, 5]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 14, "nMax": 17, "gapMin": 1.6, "gapMax": 3.0,
+    "cars": [2, 2, 3, 3, 4, 4, 5, 6],
+    "quietRate": 0.18,
+    "rush": "double"
+  }
+}

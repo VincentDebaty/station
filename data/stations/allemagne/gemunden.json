@@ -1,0 +1,30 @@
+{
+  "id": "gemunden",
+  "name": "Gemünden (Main)",
+  "city": "Gemünden",
+  "tagline": "Gemünden (Main) — trois vallées, trois lignes, une petite ville qui n'est qu'un nœud.",
+  "difficulty": 3,
+  "country": "🇩🇪 Allemagne",
+  "desc": "Là où la Sinn et la Saale franconienne rejoignent le Main, huit voies à quai pour dix mille habitants : la Main-Spessart-Bahn y reçoit la ligne de Jossa et du Kinzigtal (vers Schlüchtern et Fulda) et la navette de la vallée de la Saale vers Bad Kissingen. Plus d'ICE depuis 2014, mais un fret incessant — la courbe de Nantenbach, juste au sud, raccorde la grande vitesse Hanovre–Wurtzbourg à la ligne du Spessart.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
+  ],
+  "portals": {
+    "FRANKFURT": { "side": "L", "color": "#f5b23c", "abbr": "F" },
+    "FULDA":     { "side": "L", "color": "#60a5fa", "abbr": "FD" },
+    "KISSINGEN": { "side": "L", "color": "#4ade80", "abbr": "KIS", "label": "BAD KISSINGEN" },
+    "WURZBURG":  { "side": "R", "color": "#a78bfa", "abbr": "WU", "label": "WÜRZBURG" }
+  },
+  "links": {
+    "FRANKFURT": [1, 2, 3, 4],
+    "FULDA":     [3, 4, 5],
+    "KISSINGEN": [4, 5],
+    "WURZBURG":  [1, 2, 3, 4, 5]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 14, "nMax": 17, "gapMin": 1.6, "gapMax": 2.9,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6],
+    "quietRate": 0.18
+  }
+}

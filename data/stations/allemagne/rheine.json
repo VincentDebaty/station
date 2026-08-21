@@ -1,0 +1,29 @@
+{
+  "id": "rheine",
+  "name": "Rheine",
+  "tagline": "Rheine — le croisement de l'Emsland : l'IC de Berlin coupe la ligne du fret d'Emden.",
+  "difficulty": 3,
+  "country": "🇩🇪 Allemagne",
+  "desc": "Le nœud du nord du Münsterland : la ligne d'Amsterdam arrive de Salzbergen et repart vers Osnabrück, tandis que l'Emslandstrecke descend d'Emden vers Münster. Cinq voies à quai — dont la voie 8, rouverte en 2015 pour que le RE de Krefeld ne gêne plus l'Intercity — et, sur la ligne de l'Ems, un fret lourd qui ne s'arrête jamais. Le dépôt de Rheine fut le dernier foyer de la vapeur en Allemagne de l'Ouest, en 1977.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
+  ],
+  "portals": {
+    "HENGELO":   { "side": "L", "color": "#60a5fa", "abbr": "HG" },
+    "EMDEN":     { "side": "L", "color": "#4ade80", "abbr": "EM" },
+    "OSNABRUCK": { "side": "R", "color": "#f5b23c", "abbr": "OS", "label": "OSNABRÜCK" },
+    "MUNSTER":   { "side": "R", "color": "#25dede", "abbr": "MS", "label": "MÜNSTER" }
+  },
+  "links": {
+    "HENGELO":   [1, 2, 3],
+    "EMDEN":     [3, 4, 5],
+    "OSNABRUCK": [1, 2, 3, 4],
+    "MUNSTER":   [2, 3, 4, 5]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 14, "nMax": 16, "gapMin": 1.6, "gapMax": 2.9,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6],
+    "quietRate": 0.18
+  }
+}

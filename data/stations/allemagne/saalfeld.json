@@ -1,0 +1,34 @@
+{
+  "id": "saalfeld",
+  "name": "Saalfeld (Saale)",
+  "city": "Saalfeld",
+  "tagline": "Saalfeld — six voies au pied de la rampe du Frankenwald, cinq lignes qui s'y nouent.",
+  "difficulty": 3,
+  "country": "🇩🇪 Allemagne",
+  "desc": "Le nœud du sud de la Thuringe : la Saalbahn arrive d'Iéna, la ligne d'Arnstadt d'Erfurt, celle de Gera par Pößneck, et vers le sud la Frankenwaldbahn attaque quatre cents mètres de dénivelé jusqu'à Lichtenfels. Le dépôt a abrité soixante-dix locomotives à vapeur ; le triage est fermé, les ICE sont partis en 2017, mais le Franken-Thüringen-Express et les autorails de l'Erfurter Bahn s'y croisent toute la journée.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },
+    { "id": 6 }
+  ],
+  "portals": {
+    "LEIPZIG":      { "side": "L", "color": "#a78bfa", "abbr": "L" },
+    "ERFURT":       { "side": "L", "color": "#4ade80", "abbr": "EF" },
+    "GERA":         { "side": "L", "color": "#f2588f", "abbr": "G" },
+    "NURNBERG":     { "side": "R", "color": "#60a5fa", "abbr": "N", "label": "NÜRNBERG" },
+    "BLANKENSTEIN": { "side": "R", "color": "#25dede", "abbr": "BK" }
+  },
+  "links": {
+    "LEIPZIG":      [1, 2, 3],
+    "ERFURT":       [2, 3, 4, 5],
+    "GERA":         [5, 6],
+    "NURNBERG":     [1, 2, 3, 4, 5, 6],
+    "BLANKENSTEIN": [5, 6]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 15, "nMax": 18, "gapMin": 1.6, "gapMax": 2.9,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6],
+    "quietRate": 0.15,
+    "rush": "rafale"
+  }
+}

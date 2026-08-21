@@ -1,0 +1,31 @@
+{
+  "id": "stgallen",
+  "name": "St. Gallen",
+  "city": "Saint-Gall",
+  "tagline": "St. Gallen — la porte orientale : Zurich d'un côté, le Rhin, le lac et Munich de l'autre.",
+  "difficulty": 4,
+  "country": "🇨🇭 Suisse",
+  "desc": "Le nœud de la Suisse orientale, sous un bâtiment néobaroque de 1913 et une horloge binaire au bout de la place : trois à quatre trains grandes lignes par heure vers Zurich, l'EuroCity-Express de Munich par St. Margrethen et Bregenz, le Voralpen-Express qui grimpe vers Herisau et Lucerne, les RER de Romanshorn. Sept voies à quai CFF — les deux voies étroites des Appenzeller Bahnen ont leur propre gare, à côté — et deux douzaines de trains de fret par jour.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }, { "id": 6 }
+  ],
+  "portals": {
+    "ZURICH":     { "side": "L", "color": "#f5b23c", "abbr": "ZH" },
+    "LUCERNE":    { "side": "L", "color": "#4ade80", "abbr": "LU" },
+    "MUNICH":     { "side": "R", "color": "#f2588f", "abbr": "M" },
+    "ROMANSHORN": { "side": "R", "color": "#60a5fa", "abbr": "RO" }
+  },
+  "links": {
+    "ZURICH":     [1, 2, 3, 4, 5],
+    "LUCERNE":    [5, 6],
+    "MUNICH":     [1, 2, 3, 4],
+    "ROMANSHORN": [3, 4, 5, 6]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 15, "nMax": 18, "gapMin": 1.5, "gapMax": 2.6,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6, 7],
+    "quietRate": 0.15,
+    "rush": "pointe"
+  }
+}

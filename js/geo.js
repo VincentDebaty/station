@@ -85,7 +85,10 @@ const GEO = {
         tarascon: [4.657, 43.801],
         creil: [2.475, 49.263],
         arras: [2.782, 50.287],
-        douai: [3.089, 50.371]
+        douai: [3.089, 50.371],
+        // L'Alsace du TER 200, entre Strasbourg et Bâle.
+        selestat: [7.442, 48.256],
+        colmar: [7.347, 48.073]
       } },
     allemagne: { name: "Allemagne", flag: "🇩🇪", iso: "DEU", continent: "europe",
       cities: {
@@ -131,7 +134,26 @@ const GEO = {
         luneburg: [10.414, 53.25],
         harburg: [9.992, 53.456],
         gunzburg: [10.278, 48.459],
-        plochingen: [9.413, 48.711]
+        plochingen: [9.413, 48.711],
+        // Les quinze d'août 2026 : le Spessart et la Franconie (Francfort –
+        // Nuremberg), la Saale et le Frankenwald (Leipzig – Nuremberg), la
+        // Gäubahn (Zurich – Stuttgart), l'Allgäu (Munich – Zurich) et Rheine
+        // sur l'IC d'Amsterdam. Coordonnées Wikidata, comme les précédentes.
+        aschaffenburg: [9.143, 49.980],
+        gemunden: [9.694, 50.052],
+        furth: [10.990, 49.474],
+        bamberg: [10.897, 49.900],
+        lichtenfels: [11.058, 50.146],
+        saalfeld: [11.366, 50.649],
+        weimar: [11.329, 50.981],
+        naumburg: [11.797, 51.163],
+        rheine: [7.436, 52.277],
+        singen: [8.841, 47.758],
+        tuttlingen: [8.818, 47.983],
+        horb: [8.690, 48.443],
+        lindau: [9.681, 47.544],
+        memmingen: [10.180, 47.985],
+        buchloe: [10.727, 48.037]
       } },
     luxembourg: { name: "Luxembourg", flag: "🇱🇺", iso: "LUX", continent: "europe",
       cities: {
@@ -146,7 +168,15 @@ const GEO = {
       } },
     "pays-bas": { name: "Pays-Bas", flag: "🇳🇱", iso: "NLD", continent: "europe",
       cities: {
-        amsterdam: [4.9, 52.379]
+        amsterdam: [4.9, 52.379],
+        // La Randstad vers Anvers (Rotterdam, Dordrecht, Roosendaal) et l'IC
+        // d'Amsterdam vers Berlin (Amersfoort, Deventer, Hengelo).
+        rotterdam: [4.469, 51.925],
+        dordrecht: [4.665, 51.807],
+        roosendaal: [4.458, 51.591],
+        amersfoort: [5.371, 52.153],
+        deventer: [6.160, 52.257],
+        hengelo: [6.794, 52.262]
       } },
     "suisse": { name: "Suisse", flag: "🇨🇭", iso: "CHE", continent: "europe",
       cities: {
@@ -156,7 +186,13 @@ const GEO = {
         olten: [7.908, 47.352],
         bern: [7.439, 46.949],
         fribourg: [7.151, 46.803],
-        lausanne: [6.629, 46.517]
+        lausanne: [6.629, 46.517],
+        // Bâle est la porte du Rhin (Strasbourg – Zurich) ; Winterthour et
+        // Schaffhouse tiennent la Gäubahn ; Saint-Gall l'Arlberg vers Munich.
+        bale: [7.590, 47.548],
+        winterthur: [8.724, 47.500],
+        schaffhausen: [8.632, 47.698],
+        stgallen: [9.370, 47.423]
       } },
     "royaume-uni": { name: "Royaume-Uni", flag: "🇬🇧", iso: "GBR", continent: "europe",
       frame: [-6.3, 49.9, 1.9, 57.6], neighbors: { belgique: [3.25, 51.22] },

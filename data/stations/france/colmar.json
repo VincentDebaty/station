@@ -1,0 +1,28 @@
+{
+  "id": "colmar",
+  "name": "Colmar",
+  "tagline": "Colmar — la halle de 1907, cinq voies, et la vallée de Munster qui se détache au sud.",
+  "difficulty": 3,
+  "country": "🇫🇷 France",
+  "desc": "Sous un bâtiment de 1907 copié sur la gare de Dantzig, un des fleurons de l'architecture allemande d'avant 1914, cinq millions de voyageurs par an : le TER 200 et le TGV de Paris s'y arrêtent entre Strasbourg et Mulhouse, et la ligne de la vallée de Munster, voie unique non électrifiée jusqu'à Metzeral, se détache au sud de la gare, vingt-deux allers-retours par jour. La ligne de Neuf-Brisach vers le Rhin n'a plus que du fret depuis 1969 ; le pont vers Fribourg, détruit en 1945, n'a jamais été reconstruit.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
+  ],
+  "portals": {
+    "STRASBOURG": { "side": "L", "color": "#f2588f", "abbr": "ST" },
+    "MULHOUSE":   { "side": "R", "color": "#60a5fa", "abbr": "MU" },
+    "METZERAL":   { "side": "R", "color": "#4ade80", "abbr": "ME" }
+  },
+  "links": {
+    "STRASBOURG": [1, 2, 3, 4, 5],
+    "MULHOUSE":   [2, 3, 4, 5],
+    "METZERAL":   [1, 2]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 14, "nMax": 15, "gapMin": 1.6, "gapMax": 2.8,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6],
+    "quietRate": 0.18,
+    "rush": "pointe"
+  }
+}

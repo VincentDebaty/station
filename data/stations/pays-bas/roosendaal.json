@@ -1,0 +1,29 @@
+{
+  "id": "roosendaal",
+  "name": "Roosendaal",
+  "tagline": "Roosendaal — la gare-frontière : les trains belges y changent de côté, quatre directions sur deux quais.",
+  "difficulty": 3,
+  "country": "🇳🇱 Pays-Bas",
+  "desc": "Depuis 1854, la porte ferroviaire entre la Belgique et les Pays-Bas : on roule à gauche au sud de la frontière, à droite au nord, et c'est ici, à l'arrêt, que les trains attendent le signal pour changer de voie. Le bâtiment de 1907 imite le palais impérial de Goslar. Deux quais et trois voies en vrai — quatre pour vous — où se croisent l'IC de Vlissingen à Amsterdam, celui de Breda à Zwolle et la navette anversoise ; la HSL a pris l'Eurostar, mais le fret d'Anvers vers Kijfhoek passe toujours par là.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }
+  ],
+  "portals": {
+    "ANVERS":     { "side": "L", "color": "#f2588f", "abbr": "AN" },
+    "VLISSINGEN": { "side": "L", "color": "#60a5fa", "abbr": "VL" },
+    "ROTTERDAM":  { "side": "R", "color": "#f5b23c", "abbr": "RT" },
+    "BREDA":      { "side": "R", "color": "#4ade80", "abbr": "BD" }
+  },
+  "links": {
+    "ANVERS":     [1, 2],
+    "VLISSINGEN": [2, 3, 4],
+    "ROTTERDAM":  [1, 2, 3],
+    "BREDA":      [3, 4]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 13, "nMax": 15, "gapMin": 1.6, "gapMax": 2.9,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6],
+    "quietRate": 0.2
+  }
+}

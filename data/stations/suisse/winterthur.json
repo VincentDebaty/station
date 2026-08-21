@@ -1,0 +1,33 @@
+{
+  "id": "winterthur",
+  "name": "Winterthur",
+  "tagline": "Winterthur — une seule porte vers Zurich, quatre sorties vers l'est : le carrefour de la Suisse orientale.",
+  "difficulty": 4,
+  "country": "🇨🇭 Suisse",
+  "desc": "Quatrième gare du pays, cent trente mille voyageurs par jour sous les coupoles néo-Renaissance de 1896 copiées sur le Palais fédéral. Tout ce qui vient de Zurich passe par le même goulet à l'ouest, puis se déploie : Saint-Gall par Wil, Schaffhouse par Andelfingen, Romanshorn et le lac par Frauenfeld, sans compter la navette de Bülach qui se glisse par Embrach. Neuf voies réelles, dont deux en impasse pour le Tösstal, et un chantier de 110 millions qui vient d'élargir les quais.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 },
+    { "id": 5 }, { "id": 6 }, { "id": 7 }
+  ],
+  "portals": {
+    "ZURICH":      { "side": "L", "color": "#f5b23c", "abbr": "ZH" },
+    "BULACH":      { "side": "L", "color": "#60a5fa", "abbr": "BU", "label": "BÜLACH" },
+    "ST-GALL":     { "side": "R", "color": "#25dede", "abbr": "SG" },
+    "SCHAFFHOUSE": { "side": "R", "color": "#e879f9", "abbr": "SH" },
+    "ROMANSHORN":  { "side": "R", "color": "#4ade80", "abbr": "RH" }
+  },
+  "links": {
+    "ZURICH":      [1, 2, 3, 4, 5, 6, 7],
+    "BULACH":      [6, 7],
+    "ST-GALL":     [1, 2, 3, 4],
+    "SCHAFFHOUSE": [3, 4, 5],
+    "ROMANSHORN":  [5, 6, 7]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 15, "nMax": 18, "gapMin": 1.5, "gapMax": 2.6,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6, 7],
+    "quietRate": 0.15,
+    "rush": "double"
+  }
+}

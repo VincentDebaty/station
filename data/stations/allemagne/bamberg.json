@@ -1,0 +1,36 @@
+{
+  "id": "bamberg",
+  "name": "Bamberg",
+  "city": "Bamberg",
+  "tagline": "Bamberg — sept voies en grès de 1846, une ligne au sud, quatre au nord.",
+  "difficulty": 4,
+  "country": "🇩🇪 Allemagne",
+  "desc": "La fourche de la Haute-Franconie : du sud n'arrive que la ligne de Nuremberg, élargie à quatre voies, et tout s'éparpille au nord — Lichtenfels et Hof, Cobourg et la ligne nouvelle de Berlin, Schweinfurt et Wurtzbourg, la petite Baunachbahn d'Ebern. Le S-Bahn de Nuremberg y fait terminus, le port du canal Main-Danube y envoie ses conteneurs, et le chantier du nœud est le plus gros de l'histoire de la ville classée.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },
+    { "id": 6 }, { "id": 7 }
+  ],
+  "portals": {
+    "LEIPZIG":  { "side": "L", "color": "#a78bfa", "abbr": "L" },
+    "HOF":      { "side": "L", "color": "#25dede", "abbr": "HO" },
+    "COBURG":   { "side": "L", "color": "#f2588f", "abbr": "CO" },
+    "WURZBURG": { "side": "L", "color": "#f5b23c", "abbr": "WU", "label": "WÜRZBURG" },
+    "EBERN":    { "side": "L", "color": "#4ade80", "abbr": "EB" },
+    "NURNBERG": { "side": "R", "color": "#60a5fa", "abbr": "N", "label": "NÜRNBERG" }
+  },
+  "links": {
+    "LEIPZIG":  [1, 2, 3, 4],
+    "HOF":      [3, 4, 5],
+    "COBURG":   [4, 5, 6],
+    "WURZBURG": [5, 6, 7],
+    "EBERN":    [6, 7],
+    "NURNBERG": [1, 2, 3, 4, 5, 6, 7]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 16, "nMax": 19, "gapMin": 1.5, "gapMax": 2.6,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6, 7],
+    "quietRate": 0.12,
+    "rush": "double"
+  }
+}

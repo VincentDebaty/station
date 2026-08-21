@@ -1,0 +1,32 @@
+{
+  "id": "furth",
+  "name": "Fürth (Bayern) Hbf",
+  "city": "Fürth",
+  "tagline": "Fürth Hbf — au bout de la toute première ligne allemande, la fourche de Bamberg et de Wurtzbourg.",
+  "difficulty": 4,
+  "country": "🇩🇪 Allemagne",
+  "desc": "Nuremberg–Fürth, 1835 : la première ligne de chemin de fer d'Allemagne. La gare actuelle (1864) est la fourche où le trafic venu de Nuremberg se partage entre la ligne de Bamberg par Erlangen et celle de Wurtzbourg par Neustadt (Aisch), avec la Rangaubahn de Cadolzburg toutes les demi-heures. Huit voies à quai, deux S-Bahn, et le fret de Bamberg qui passe sur sa voie de dépassement ; plus d'ICE régulier depuis 2009.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },
+    { "id": 6 }
+  ],
+  "portals": {
+    "WURZBURG":   { "side": "L", "color": "#a78bfa", "abbr": "WU", "label": "WÜRZBURG" },
+    "BAMBERG":    { "side": "L", "color": "#4ade80", "abbr": "BA" },
+    "CADOLZBURG": { "side": "L", "color": "#f2588f", "abbr": "CAD" },
+    "NURNBERG":   { "side": "R", "color": "#60a5fa", "abbr": "N", "label": "NÜRNBERG" }
+  },
+  "links": {
+    "WURZBURG":   [1, 2, 3, 4],
+    "BAMBERG":    [3, 4, 5, 6],
+    "CADOLZBURG": [1, 2],
+    "NURNBERG":   [1, 2, 3, 4, 5, 6]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 15, "nMax": 18, "gapMin": 1.5, "gapMax": 2.6,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6],
+    "quietRate": 0.12,
+    "rush": "double"
+  }
+}

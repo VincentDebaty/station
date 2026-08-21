@@ -1,0 +1,35 @@
+{
+  "id": "horb",
+  "name": "Horb",
+  "city": "Horb am Neckar",
+  "tagline": "Horb — trois lignes arrivent par le nord, une seule repart vers le sud : la Kulturbahn s'y brise.",
+  "difficulty": 3,
+  "country": "🇩🇪 Allemagne",
+  "desc": "Sur la rive droite du Neckar, la dernière bifurcation de la Gäubahn avant la montée vers Böblingen et Stuttgart. La ligne de Tübingen et celle de Pforzheim rejoignent la Gäubahn par le nord : les rames de la Kulturbahn y sont « brisées » et repartent en sens inverse, pendant que l'InterCity de Zurich et le RE de Singen filent vers Rottweil par la vallée. Cinq voies à quai, un poste d'aiguillage électromécanique de 1927 remplacé seulement en 2024.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
+  ],
+  "portals": {
+    "STUTTGART": { "side": "L", "color": "#4ade80", "abbr": "S" },
+    "PFORZHEIM": { "side": "L", "color": "#60a5fa", "abbr": "PF" },
+    "TUBINGEN":  { "side": "L", "color": "#a78bfa", "abbr": "TU", "label": "TÜBINGEN" },
+    "SINGEN":    { "side": "R", "color": "#f2588f", "abbr": "SI" },
+    "ROTTWEIL":  { "side": "R", "color": "#f5b23c", "abbr": "RW" }
+  },
+  "links": {
+    "STUTTGART": [2, 3, 4, 5],
+    "PFORZHEIM": [1, 2],
+    "TUBINGEN":  [1, 2, 3, 4],
+    "SINGEN":    [3, 4, 5],
+    "ROTTWEIL":  [1, 2, 3]
+  },
+  "sameSidePairs": [
+    ["PFORZHEIM", "TUBINGEN"], ["TUBINGEN", "PFORZHEIM"]
+  ],
+  "gen": {
+    "nMin": 14, "nMax": 16, "gapMin": 1.6, "gapMax": 2.9,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6],
+    "quietRate": 0.18,
+    "rush": "pointe"
+  }
+}
