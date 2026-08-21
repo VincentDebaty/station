@@ -1,0 +1,90 @@
+{
+  "id": "schwerin",
+  "name": "Schwerin Hbf",
+  "city": "Schwerin",
+  "tagline": "Schwerin — la capitale du lac, en brique claire.",
+  "difficulty": 4,
+  "country": "🇩🇪 Allemagne",
+  "desc": "Façade de brique claire de 1890, signée Ernst Moeller, entrée au patrimoine mondial en 2024 avec l'ensemble du château. Quatre directions s'y croisent : Hambourg par Hagenow, Ludwigslust au sud, Bad Kleinen au nord et l'antenne de Rehna. Le triage, lui, ne sert plus qu'à garer des rames.",
+  "platforms": [
+    {
+      "id": 1
+    },
+    {
+      "id": 2
+    },
+    {
+      "id": 3
+    },
+    {
+      "id": 4
+    },
+    {
+      "id": 5
+    }
+  ],
+  "portals": {
+    "HAMBURG": {
+      "side": "L",
+      "color": "#25dede",
+      "abbr": "HH"
+    },
+    "LUDWIGSLUST": {
+      "side": "L",
+      "color": "#f5b23c",
+      "abbr": "LL"
+    },
+    "BAD KLEINEN": {
+      "side": "R",
+      "color": "#f2588f",
+      "abbr": "BK",
+      "label": "BAD KLEINEN"
+    },
+    "REHNA": {
+      "side": "R",
+      "color": "#a78bfa",
+      "abbr": "RH"
+    }
+  },
+  "links": {
+    "HAMBURG": [
+      1,
+      2,
+      3
+    ],
+    "LUDWIGSLUST": [
+      3,
+      4,
+      5
+    ],
+    "BAD KLEINEN": [
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "REHNA": [
+      4,
+      5
+    ]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 14,
+    "nMax": 17,
+    "gapMin": 1.7,
+    "gapMax": 2.9,
+    "cars": [
+      2,
+      3,
+      3,
+      4,
+      4,
+      5,
+      5,
+      6
+    ],
+    "quietRate": 0.13
+  }
+}

@@ -1286,6 +1286,8 @@
       "de": "strasbourg",
       "vers": "francfort",
       "gares": [
+        "offenburg",
+        "rastatt",
         "karlsruhe",
         "mannheim"
       ]
@@ -1374,7 +1376,10 @@
       "de": "hambourg",
       "vers": "berlin",
       "gares": [
-        "rostock"
+        "schwerin",
+        "badkleinen",
+        "rostock",
+        "neustrelitz"
       ]
     },
     {

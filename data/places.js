@@ -182,11 +182,8 @@ const PLACES = {
   kaiserslautern: [7.769, 49.436],
   landshut:     [12.128, 48.545],
   limburg:      [8.052, 50.386],
-  neustrelitz:  [13.070, 53.362],
   oberhausen:   [6.852, 51.478],
-  offenburg:    [7.941, 48.471],
   riesa:        [13.294, 51.306],
-  schwerin:     [11.408, 53.634],
   treuchtlingen: [10.908, 48.961],
   unstruttal:   [11.653, 51.276],  // viaduc de l'Unstrut (Karsdorf) : le nord de la LGV Erfurt – Leipzig
   warburg:      [9.146, 51.489],

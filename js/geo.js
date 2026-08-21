@@ -141,6 +141,13 @@ const GEO = {
         // Nuremberg), la Saale et le Frankenwald (Leipzig – Nuremberg), la
         // Gäubahn (Zurich – Stuttgart), l'Allgäu (Munich – Zurich) et Rheine
         // sur l'IC d'Amsterdam. Coordonnées Wikidata, comme les précédentes.
+        // Les cinq de la fin août : le corridor du Rhin (Strasbourg – Francfort)
+        // et la Baltique (Hambourg – Berlin). Coordonnées Wikidata.
+        offenburg: [7.941, 48.471],
+        rastatt: [8.212, 48.858],
+        schwerin: [11.408, 53.634],
+        badkleinen: [11.489, 53.815],
+        neustrelitz: [13.070, 53.362],
         aschaffenburg: [9.143, 49.980],
         gemunden: [9.694, 50.052],
         furth: [10.990, 49.474],

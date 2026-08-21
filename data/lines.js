@@ -337,7 +337,7 @@ const LINES = [
   // ---- Le Sud-Ouest -------------------------------------------------------
   { id: "Riedbahn", name: "Francfort – Mannheim", nodes: ["frankfurt", "mannheim"] },
   { id: "Rheintal", name: "Mannheim – Karlsruhe – Offenburg – Fribourg – Bâle",
-    nodes: ["mannheim", "karlsruhe", "offenburg", "freiburg", "bale"] },
+    nodes: ["mannheim", "karlsruhe", "rastatt", "offenburg", "freiburg", "bale"] },
   { id: "SFS-MS", name: "Mannheim – Stuttgart",  nodes: ["mannheim", "stuttgart"] },
   { id: "Pfalz", name: "Mannheim – Kaiserslautern – Sarrebruck",
     nodes: ["mannheim", "kaiserslautern", "saarbrucken"] },
@@ -369,7 +369,8 @@ const LINES = [
   { id: "HH-HL", name: "Hambourg – Lübeck",      nodes: ["hamburg", "lubeck"] },
   { id: "KI-HL", name: "Kiel – Lübeck",          nodes: ["lubeck", "kiel"] },
   { id: "Ostsee", name: "Lübeck – Wismar – Rostock", nodes: ["lubeck", "wismar", "rostock"] },
-  { id: "HH-HR", name: "Hambourg – Schwerin – Rostock", nodes: ["hamburg", "schwerin", "rostock"] },
+  { id: "HH-HR", name: "Hambourg – Schwerin – Bad Kleinen – Rostock",
+    nodes: ["hamburg", "schwerin", "badkleinen", "rostock"] },
   { id: "HR-B", name: "Rostock – Neustrelitz – Berlin", nodes: ["rostock", "neustrelitz", "berlin"] },
 
   // ---- L'Est ---------------------------------------------------------------

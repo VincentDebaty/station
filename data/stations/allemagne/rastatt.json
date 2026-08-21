@@ -1,0 +1,27 @@
+{
+  "id": "rastatt",
+  "name": "Rastatt",
+  "tagline": "Rastatt — la vallée de la Murg s'ouvre sur la ligne du Rhin.",
+  "difficulty": 3,
+  "country": "🇩🇪 Allemagne",
+  "desc": "Sur la grande ligne du Rhin, là où la Murgtalbahn remonte vers Freudenstadt. En août 2017, le tunnel en chantier a fait s'affaisser la voie : Rastatt est devenue terminus pendant sept semaines et le corridor européen s'est arrêté net à ses heurtoirs improvisés.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
+  ],
+  "portals": {
+    "OFFENBURG":    { "side": "L", "color": "#25dede", "abbr": "OG" },
+    "FREUDENSTADT": { "side": "L", "color": "#4ade80", "abbr": "FS" },
+    "KARLSRUHE":    { "side": "R", "color": "#f5b23c", "abbr": "KA" }
+  },
+  "links": {
+    "OFFENBURG":    [1, 2, 3, 4],
+    "FREUDENSTADT": [4, 5],
+    "KARLSRUHE":    [1, 2, 3, 4, 5]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 13, "nMax": 16, "gapMin": 1.7, "gapMax": 2.9,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6],
+    "quietRate": 0.16
+  }
+}

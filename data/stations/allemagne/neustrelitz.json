@@ -1,0 +1,30 @@
+{
+  "id": "neustrelitz",
+  "name": "Neustrelitz Hbf",
+  "city": "Neustrelitz",
+  "tagline": "Neustrelitz — la Nordbahn, et la bifurcation de la Lloydbahn.",
+  "difficulty": 3,
+  "country": "🇩🇪 Allemagne",
+  "desc": "Le nœud du sud-est mecklembourgeois : la Nordbahn de Berlin à Stralsund le traverse, la Lloydbahn s'en détache vers Rostock et Warnemünde, et la transversale de Wittenberge file vers Neubrandenburg. Bâtiments du XIXᵉ classés, faisceau de fret au nord des quais.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
+  ],
+  "portals": {
+    "BERLIN":          { "side": "L", "color": "#25dede", "abbr": "B" },
+    "NEUBRANDENBURG":  { "side": "L", "color": "#a78bfa", "abbr": "NB", "label": "NEUBRANDENBURG" },
+    "STRALSUND":       { "side": "R", "color": "#f2588f", "abbr": "SU" },
+    "ROSTOCK":         { "side": "R", "color": "#f5b23c", "abbr": "HRO" }
+  },
+  "links": {
+    "BERLIN":         [1, 2, 3, 4, 5],
+    "NEUBRANDENBURG": [4, 5],
+    "STRALSUND":      [1, 2, 3],
+    "ROSTOCK":        [3, 4, 5]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 14, "nMax": 17, "gapMin": 1.7, "gapMax": 2.9,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6],
+    "quietRate": 0.15
+  }
+}

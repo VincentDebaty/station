@@ -1,0 +1,29 @@
+{
+  "id": "badkleinen",
+  "name": "Bad Kleinen",
+  "tagline": "Bad Kleinen — une gare bien plus grande que son village.",
+  "difficulty": 3,
+  "country": "🇩🇪 Allemagne",
+  "desc": "L'une des plus vieilles stations du Mecklembourg, ouverte en 1848, et l'un de ses carrefours les plus utiles : Lübeck, Wismar, Schwerin et Rostock s'y rejoignent. Deux quais en île refaits en 2017, pour un bourg que la gare dépasse largement.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
+  ],
+  "portals": {
+    "SCHWERIN": { "side": "L", "color": "#f5b23c", "abbr": "SN" },
+    "LÜBECK":   { "side": "L", "color": "#a78bfa", "abbr": "HL", "label": "LÜBECK" },
+    "ROSTOCK":  { "side": "R", "color": "#25dede", "abbr": "HRO" },
+    "WISMAR":   { "side": "R", "color": "#4ade80", "abbr": "WI" }
+  },
+  "links": {
+    "SCHWERIN": [1, 2, 3],
+    "LÜBECK":   [3, 4, 5],
+    "ROSTOCK":  [2, 3, 4, 5],
+    "WISMAR":   [1, 2]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 13, "nMax": 16, "gapMin": 1.7, "gapMax": 2.9,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6],
+    "quietRate": 0.16
+  }
+}
