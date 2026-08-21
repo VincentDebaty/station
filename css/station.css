@@ -1957,7 +1957,7 @@ svg { width: 100%; height: 100%; display: block; }
 .jalon.j-ouvrable .nom { color: #6ff0e2; }
 .jalon.j-chere .pastille { border-color: var(--gold-dim); }
 .jalon.j-chere .nom { color: var(--gold-dim); }
-.jalon.j-fermee { cursor: default; }
+.jalon.j-fermee, .jalon:disabled { cursor: default; }
 .jalon.j-fermee .pastille { opacity: .5; }
 .jalon.j-boss .pastille { width: 22px; height: 22px; margin: 0; border-width: 3px; }
 .jalon.j-boss.j-tenue .pastille { background: var(--gold); border-color: var(--gold); }
@@ -2058,67 +2058,36 @@ svg { width: 100%; height: 100%; display: block; }
 }
 
 /* ---- Le carrefour : « par où ? » ---- */
-/* Un panneau posé sur le plan, pas un écran de plus : le graphe reste visible
-   derrière, parce que la question porte sur lui. */
-.c-panneau {
-  position: absolute; left: 50%; transform: translateX(-50%);
-  bottom: calc(14px + var(--safe-b)); z-index: 4;
-  width: min(430px, calc(100% - 32px));
-  background: var(--panel); border: 1px solid #2a3550; border-radius: 14px;
-  padding: 11px 11px 12px; display: flex; flex-direction: column; gap: 8px;
-  box-shadow: 0 18px 44px rgba(0, 0, 0, .55);
-  /* Six sorties sur un petit écran : le panneau défile plutôt que de déborder. */
-  max-height: calc(100% - 90px); overflow-y: auto;
-  animation: pMonte .18s cubic-bezier(.3, .8, .35, 1);
+/* ---- Le carrefour vu de près : le zoom, et les bulles de ligne ---- */
+.c-graphe .monde {
+  transform-box: view-box; transform-origin: 0 0;
+  transition: transform .55s cubic-bezier(.4, 0, .2, 1);
 }
-.c-panneau[data-maitrise] { border-color: var(--gold-dim); }
-@keyframes pMonte { from { opacity: 0; transform: translate(-50%, 14px); }
-                    to   { opacity: 1; transform: translate(-50%, 0); } }
-@media (prefers-reduced-motion: reduce) { .c-panneau { animation: none; } }
-
-.p-tete { display: flex; align-items: baseline; gap: 9px; padding: 2px 2px 4px; }
-.p-nom { font-size: 15.5px; font-weight: 600; color: var(--text); }
-.p-sous { flex: 1 1 auto; font-size: 12px; color: var(--muted); }
-.c-panneau[data-maitrise] .p-sous { color: var(--gold); }
-.p-fermer {
-  flex: 0 0 auto; background: none; border: 0; color: var(--muted);
-  font: inherit; font-size: 15px; cursor: pointer; padding: 4px 8px; line-height: 1;
-}
-.p-fermer:hover { color: var(--text); }
-
-.p-lignes { display: flex; flex-direction: column; gap: 6px; }
-.p-ligne, .p-gare {
-  display: flex; align-items: center; gap: 10px; width: 100%; min-height: 44px;
-  background: #182136; border: 1px solid #262f47; border-radius: 10px;
-  padding: 9px 12px; font: inherit; color: var(--text); cursor: pointer;
-  text-align: left;
-}
-.p-ligne:hover, .p-gare:hover { border-color: #2dd4bf; background: #1c2740; }
-.p-ligne:focus-visible, .p-gare:focus-visible { outline: 2px solid #2dd4bf; outline-offset: 2px; }
-.p-vers { flex: 0 0 auto; font-size: 14.5px; }
-.p-ligne .p-vers::before { content: "→ "; color: var(--muted); }
-.p-note {
-  margin-left: auto; font-family: ui-monospace, Menlo, monospace; font-size: 11.5px;
-  color: var(--muted); font-variant-numeric: tabular-nums;
-}
-.p-jauge {
-  flex: 1 1 auto; height: 4px; border-radius: 4px; background: #202a41; overflow: hidden;
-}
-.p-jauge i { display: block; height: 100%; background: #2dd4bf; border-radius: inherit; }
-.p-ligne .c-rang { margin-left: 0; }
-/* Ligne faite, terminus à battre : le nom passe en or, la couleur des boss. */
-.p-ligne.p-boss .p-vers { color: var(--gold-hi); }
-
-/* La gare du boss : une action, donc le jeton d'action du jeu. */
-.p-gare { background: rgba(45, 212, 191, .1); border-color: #2dd4bf; }
-.p-gare .p-vers { color: #6ff0e2; font-weight: 600; }
-.p-gare .p-note { color: var(--gold); font-family: inherit; font-size: 12px; }
-
-/* Une ligne qui n'existe pas encore se dit, et ne se clique pas — un blocage
-   muet vaut mieux qu'un faux espoir. */
-.p-ligne.p-absente {
-  cursor: default; opacity: .45; background: none; border-style: dashed;
-}
+@media (prefers-reduced-motion: reduce) { .c-graphe .monde { transition: none; } }
+/* Zoomé ×2,3, les noms garderaient leur taille d'écran ×2,3 : on les ramène. */
+.c-graphe.zoom .hub text { font-size: 1.35px; }
+.c-graphe.zoom .hub circle:not(.cerne) { stroke-width: .35; }
+.c-graphe.zoom .hub .cerne { stroke-width: .25; }
+.c-graphe.zoom .trait { stroke-width: .4; }
+.c-graphe.zoom .trait.ouvert, .c-graphe.zoom .trait[class*=" r-"] { stroke-width: .55; }
+/* La bulle : rendue à l'échelle 1/K dans le monde zoomé, donc à sa taille
+   d'écran normale — 1 unité ≈ 4,5 px. */
+.bl { cursor: pointer; }
+.bl.absente { cursor: default; opacity: .55; }
+.bl .bl-fond { fill: #151d2e; stroke: #2a3550; stroke-width: .35; }
+.bl:hover .bl-fond, .bl:focus-visible .bl-fond { stroke: #2dd4bf; }
+.bl text { text-anchor: middle; font-family: "Segoe UI", system-ui, sans-serif; pointer-events: none; }
+.bl .bl-vers { font-size: 2.9px; font-weight: 600; fill: var(--text); }
+.bl .bl-prog { font-size: 2.5px; fill: var(--gold); font-variant-numeric: tabular-nums; }
+.bl .bl-dia { fill: #3a4560; }
+.bl .bl-dia.on { fill: #7fd4ff; }
+.bl .bl-piste { fill: #29344c; }
+.bl .bl-fait { fill: #2dd4bf; }
+.bl .bl-fait.r-argent { fill: #c9d4e6; }
+.bl .bl-fait.r-or { fill: var(--gold); }
+.bl .bl-fait.r-diamant { fill: #7fd4ff; }
+.bl.jouer .bl-fond { fill: #16333a; stroke: #2dd4bf; }
+.bl.jouer .bl-vers { fill: #6ff0e2; font-size: 2.6px; }
 
 /* ---- L'Europe : les constellations et leur complétion ---- */
 .c-europe {

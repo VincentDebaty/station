@@ -198,7 +198,10 @@ function vueLigne() {
     const cl = ["jalon", "j-" + etat, role ? "j-" + role : ""].filter(Boolean).join(" ");
     const st = id ? etoilesDe(id) : 0;
     const bilan = id && CARTE.bilan && CARTE.bilan.gare === id;
-    return `<button class="${cl}${bilan ? " j-bilan" : ""}" data-gare="${id || ""}" ${id ? "" : "disabled"}` +
+    // UNE GARE FERMÉE NE SE CLIQUE PAS. Elle se voyait éteinte, et le doigt
+    // partait quand même dessus : le clic ne faisait rien, sans le dire. Le
+    // bouton est désormais désactivé — le geste n'est plus offert du tout.
+    return `<button class="${cl}${bilan ? " j-bilan" : ""}" data-gare="${id || ""}" ${id && etat !== "fermee" ? "" : "disabled"}` +
       `${id && (rate ? id === CARTE.bilan.gare : surLaLigne.includes(id)) ? ' data-suivante="1"' : ""}>` +
       `<span class="pastille"></span>` +
       `<span class="nom">${id ? nomDe(id) : "?"}</span>` +
@@ -348,6 +351,10 @@ function vueConstellation() {
   // en touche un et il est offert (choisirHubDeDepart). Pas de panneau, pas
   // de « Ma ligne » : il n'y en a pas encore.
   const depart = !tenues.size;
+  // LE HUB CHOISI : la carte zoome sur lui (renderCarte anime la transition)
+  // et ses sorties portent leurs bulles.
+  const zoomHub = !depart && CARTE.panneau ? hubById(CARTE.panneau) : null;
+  const K = 2.3;
   const lons = hubs.map(h => h.ll[0]), lats = hubs.map(h => h.ll[1]);
   const x0 = Math.min(...lons), x1 = Math.max(...lons);
   const y0 = Math.min(...lats), y1 = Math.max(...lats);
@@ -403,84 +410,64 @@ function vueConstellation() {
     : `<button class="c-zoom" data-vue="europe">${nomDeCarte()} ›</button>
       <div class="c-titre" style="color:${cst.couleur}">${cst.nom}</div>
       <button class="c-retour" data-vue="ligne">‹ Ma ligne</button>`;
+  CARTE.zoomCible = zoomHub ? { x: X(zoomHub.ll[0]), y: Y(zoomHub.ll[1]), k: K } : null;
+  const bulles = zoomHub ? bullesDeHub(zoomHub, X, Y, K, tenues) : "";
   return `
     <div class="c-tete">${tete}</div>
-    <svg class="c-graphe${depart ? " depart" : ""}" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet">
-      <g class="traits">${traits}</g>${points}
-    </svg>
-    ${CARTE.panneau && !depart ? panneauDeHub(CARTE.panneau, tenues) : ""}`;
+    <svg class="c-graphe${depart ? " depart" : ""}${zoomHub ? " zoom" : ""}" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet">
+      <g class="monde"><g class="traits">${traits}</g>${points}${bulles}</g>
+    </svg>`;
 }
 
 // ------------------------------------------------------------------
-// LE PANNEAU D'UN CARREFOUR — « par où ? », et rien d'autre.
+// LE CARREFOUR, VU DE PRÈS. Toucher un hub ZOOME la carte sur lui, et chaque
+// sortie porte sa bulle : la destination, les étoiles gagnées sur la ligne
+// (x / y), les diamants, la part du chemin faite. On choisit sa ligne en
+// touchant sa bulle ou son trait. Un panneau en liste a précédé ceci : il
+// cachait la carte qu'il commentait.
 // ------------------------------------------------------------------
-// Un boss n'est pas une gare de plus sur la carte : c'est l'endroit où le
-// joueur CHOISIT sa direction, et ce choix est le cœur de la progression. Le
-// clic sur le point ouvrait la gare directement — il sautait donc par-dessus
-// la seule décision que la vue constellation existe pour poser.
-//
-// Ici, le point ouvre la liste de ses sorties. Chacune dit ce qu'elle vaut :
-// son rang quand elle est faite, sa jauge quand elle est en cours, « à écrire »
-// quand le corridor n'existe pas encore. La gare du boss reste jouable, en
-// tête de liste, parce qu'elle est une étape de la ligne et non son résumé.
-function panneauDeHub(hubId, tenues) {
-  const h = hubById(hubId);
-  if (!h) return "";
-  const sorties = sortiesDeHub(hubId);
-  const maitrise = h.gareId && tenues.has(h.gareId) && bossMaitrise(hubId, tenues);
-  const ouvrables = typeof garesOuvrables === "function" ? garesOuvrables(tenues) : new Set();
-
-  const rangs = sorties.map(lien => {
-    const vers = lien.a === hubId ? lien.b : lien.a;
+function bullesDeHub(hub, X, Y, K, tenues) {
+  const hx = X(hub.ll[0]), hy = Y(hub.ll[1]);
+  let out = "";
+  for (const lien of sortiesDeHub(hub.id)) {
+    const vers = lien.a === hub.id ? lien.b : lien.a;
     const hv = hubById(vers);
+    if (!hv) continue;
+    const dx = X(hv.ll[0]) - hx, dy = Y(hv.ll[1]) - hy;
+    const d = Math.hypot(dx, dy) || 1;
+    // À distance fixe du hub DANS L'ÉCRAN (16 unités zoomées) : la destination
+    // est souvent hors champ, la bulle ne l'est jamais.
+    const px = hx + dx / d * (17 / K), py = hy + dy / d * (17 / K);
     const ecrite = !!(lien.gares && lien.gares.length);
-    if (!ecrite)
-      return `<div class="p-ligne p-absente"><span class="p-vers">${hv ? hv.nom : vers}</span>` +
-        `<span class="p-note">à écrire</span></div>`;
-    const rang = typeof rangDeLigne === "function" ? rangDeLigne(lien, hubId) : null;
-    const composition = typeof garesDeLigne === "function"
-      ? garesDeLigne(lien, hubId) : lien.gares;
-    const total = composition.length;
-    // Le MÊME compte que la vue ligne (js/recompense.js) : « 7 / 7 » s'affichait
-    // ici à côté d'une ligne sans rang, parce qu'on comptait les gares payées
-    // là où le rang exige des gares faites.
-    const faits = typeof garesFaites === "function"
-      ? garesFaites(composition) : composition.filter(g => tenues.has(g)).length;
-    // LIGNE FAITE, TERMINUS À BATTRE : toutes les intermédiaires sont faites et
-    // le hub d'en face ne l'est pas. C'est le cas du hub d'origine de la toute
-    // première ligne, resté dans le dos du joueur — et de toute ligne parcourue
-    // jusqu'au bout sans avoir encore pris la métropole. On ne propose pas une
-    // ligne à parcourir, on nomme ce qui reste : le boss.
-    // « Battre » seulement si le graphe l'autorise : l'origine de la première
-    // ligne reste fermée depuis son arrivée (js/graph.js, hubVerrouille).
-    const resteLeBoss = !!(hv && hv.gareId && ouvrables.has(hv.gareId) &&
-      lien.gares.every(g => typeof estFaite === "function" ? estFaite(g) : tenues.has(g)));
-    return `<button class="p-ligne${faits ? " p-entamee" : ""}${resteLeBoss ? " p-boss" : ""}" data-lien="${cleDeLien(lien)}">` +
-      `<span class="p-vers">${resteLeBoss ? "Battre " : ""}${hv ? hv.nom : vers}</span>` +
-      `<span class="p-jauge"><i style="width:${Math.round(100 * faits / total)}%"></i></span>` +
-      (rang ? `<span class="c-rang r-${rang.id}">${rang.nom}</span>`
-            : `<span class="p-note">${faits} / ${total}</span>`) +
-      `</button>`;
-  }).join("");
-
-  const etat = h.gareId ? etatDeGare(h.gareId) : null;
-  const st = h.gareId ? etoilesDe(h.gareId) : 0;
-  const gare = (etat === "tenue" || etat === "ouvrable")
-    ? `<button class="p-gare j-${etat}" data-gare="${h.gareId}">` +
-      `<span class="p-vers">${etat === "tenue" ? "▸ Jouer" : "▸ Ouvrir"} ${nomDe(h.gareId)}</span>` +
-      `<span class="p-note">${st ? "★".repeat(st) : ""}</span></button>`
-    : "";
-
-  return `<div class="c-panneau"${maitrise ? ' data-maitrise="1"' : ""}>
-      <div class="p-tete">
-        <span class="p-nom">${h.nom}</span>
-        <span class="p-sous">${maitrise ? "Gare maîtrisée" :
-          sorties.length + (sorties.length > 1 ? " lignes" : " ligne")}</span>
-        <button class="p-fermer" data-fermer="1" aria-label="Fermer">✕</button>
-      </div>
-      ${gare}
-      <div class="p-lignes">${rangs}</div>
-    </div>`;
+    let corps;
+    if (!ecrite) corps = `<text class="bl-prog" x="0" y="3.4">à écrire</text>`;
+    else {
+      const compo = typeof garesDeLigne === "function" ? garesDeLigne(lien, hub.id) : lien.gares;
+      const etoiles = compo.reduce((n, g) => n + etoilesDe(g), 0);
+      const diamants = compo.filter(g => (getProgress()[g] || {}).bestDelay === 0).length;
+      const faits = typeof garesFaites === "function" ? garesFaites(compo) : 0;
+      const rang = typeof rangDeLigne === "function" ? rangDeLigne(lien, hub.id) : null;
+      corps = `<text class="bl-prog" x="0" y="3.2">★ ${etoiles} / ${compo.length * 3}` +
+        `<tspan class="bl-dia${diamants ? " on" : ""}" dx="2.2">◆ ${diamants}</tspan></text>` +
+        `<rect class="bl-piste" x="-11" y="5" width="22" height=".9" rx=".45"/>` +
+        `<rect class="bl-fait${rang ? " r-" + rang.id : ""}" x="-11" y="5" width="${(22 * faits / compo.length).toFixed(2)}" height=".9" rx=".45"/>`;
+    }
+    out += `<g class="bl${ecrite ? "" : " absente"}" transform="translate(${px.toFixed(2)} ${py.toFixed(2)}) scale(${(1 / K).toFixed(4)})"` +
+      `${ecrite ? ` data-lien="${cleDeLien(lien)}"` : ""}>` +
+      `<rect class="bl-fond" x="-13.5" y="-6.5" width="27" height="13.5" rx="2.6"/>` +
+      `<text class="bl-vers" x="0" y="-1.6">${hv.nom}</text>${corps}</g>`;
+  }
+  // Le hub lui-même se joue d'ici : une pastille sous son nom.
+  if (hub.gareId) {
+    const etat = etatDeGare(hub.gareId);
+    if (etat === "tenue" || etat === "ouvrable") {
+      const st = etoilesDe(hub.gareId);
+      out += `<g class="bl jouer" transform="translate(${hx.toFixed(2)} ${(hy + 7.5 / K).toFixed(2)}) scale(${(1 / K).toFixed(4)})" data-gare="${hub.gareId}">` +
+        `<rect class="bl-fond" x="-12" y="-3.2" width="24" height="6.4" rx="3.2"/>` +
+        `<text class="bl-vers" x="0" y="1">${etat === "tenue" ? "Jouer" : "Ouvrir"} ${hub.nom}${st ? " " + "★".repeat(st) : ""}</text></g>`;
+    }
+  }
+  return out;
 }
 
 // La clé d'un lien dans le DOM, et son retour. Le graphe n'attribue pas d'id
@@ -576,6 +563,21 @@ function renderCarte() {
                  : CARTE.vue === "europe" ? vueEurope() : vueLigne();
   // Le relevé de fin anime le solde : il lui faut l'élément, refait à chaque rendu.
   CARTE.etoiles = hote.querySelector(".c-etoiles");
+  // LE ZOOM SE JOUE, il ne se pose pas. Le SVG est refait à chaque rendu :
+  // pour que la transition existe, le monde repart de sa transformation
+  // d'avant, puis reçoit la nouvelle — c'est le CSS qui fait le trajet.
+  const monde = hote.querySelector(".monde");
+  if (monde) {
+    const z = CARTE.vue === "constellation" ? CARTE.zoomCible : null;
+    const cible = z ? `translate(${(50 - z.k * z.x).toFixed(2)}px, ${(50 - z.k * z.y).toFixed(2)}px) scale(${z.k})`
+                    : "translate(0px, 0px) scale(1)";
+    if (CARTE.zoomAvant && CARTE.zoomAvant !== cible) {
+      monde.style.transform = CARTE.zoomAvant;
+      monde.getBoundingClientRect();               // le point de départ est posé
+    }
+    monde.style.transform = cible;
+    CARTE.zoomAvant = cible;
+  } else CARTE.zoomAvant = null;
   poserBilan();    // avant le voyage : lui lit CARTE.voyage, et le consomme
   animerVoyage();
 

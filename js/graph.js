@@ -156,7 +156,10 @@ function difficulteDeGare(gareId, versHub, cfg) {
 // sorties encore fermées du dernier boss battu.
 function prochaineGare(lien, depuis, tenues) {
   const p = parcours(lien, depuis);
-  for (const g of p.gares) if (!tenues.has(g)) return { gare: g, corridor: p };
+  // La première gare qui reste À FAIRE : pas acquise, ou acquise et ratée.
+  // S'arrêter à la première non acquise laissait le hub sauter par-dessus une
+  // gare ratée et ouvrir celle d'après — la porte se contournait par en haut.
+  for (const g of p.gares) if (!tenues.has(g) || !ouvreLaSuite(g)) return { gare: g, corridor: p };
   // LA MÊME PORTE QU'EN BAS, et il en faut deux parce qu'un boss a deux
   // approches : par la ligne qu'on remonte (ici, depuis le hub d'en face) et
   // par la gare de bout dont il est voisin. Ne la poser qu'à un endroit, c'est
@@ -380,6 +383,24 @@ function estFaite(gareId) {
   if (!gareId || typeof getProgress !== "function") return false;
   return ((getProgress()[gareId] || {}).stars || 0) >= 1;
 }
+// UNE GARE JAMAIS JOUÉE — acquise sans qu'un service y ait jamais été tenu.
+// C'est le hub de départ, offert (hubsDeDepart), et lui seul en pratique :
+// partout ailleurs, ouvrir une gare c'est la jouer dans la foulée. La trace
+// est posée par le relevé de fin, y compris quand il crève le plafond
+// (js/store.js, markTentee).
+function jamaisJouee(gareId) {
+  return !!gareId && typeof getProgress === "function" && !getProgress()[gareId];
+}
+// CE QUI OUVRE LA SUITE. Une gare tenue ne suffit pas : il faut l'avoir
+// FAITE. Un service à zéro étoile laissait la gare acquise et ouvrait quand
+// même sa voisine — le jeu disait « objectif manqué » et débloquait la suite
+// dans le même souffle. La seule exception est la gare offerte, qu'on tient
+// sans l'avoir jouée : elle n'a rien raté, il n'y a rien à reprendre.
+//
+// L'échec ne ferme jamais ce qui était déjà acquis : les gares tenues plus
+// loin sur la ligne restent jouables. Il ne fait qu'une chose — il n'ouvre
+// pas, et la gare ratée redevient la seule chose à faire.
+function ouvreLaSuite(gareId) { return estFaite(gareId) || jamaisJouee(gareId); }
 
 // ------------------------------------------------------------------
 // CE QUI EST OUVRABLE MAINTENANT.
@@ -398,10 +419,15 @@ function garesOuvrables(tenues) {
   if (!tenues || !tenues.size) return garesDeDepart();
   const out = new Set();
   const ajoute = g => { if (g && !tenues.has(g)) out.add(g); };
+  // CE QU'IL RESTE À FAIRE PASSE AVANT CE QU'IL RESTE À PRENDRE. Une gare
+  // acquise et ratée est proposée comme si elle était neuve : c'est elle que
+  // la ligne désigne, elle que le halo pulse, elle que le bouton d'appel
+  // nomme. Le joueur n'a donc jamais rien à chercher après un revers.
+  for (const g of tenues) if (GRAPHE.gares[g] && !ouvreLaSuite(g)) out.add(g);
 
   for (const id in GRAPHE.hubs) {
     const h = GRAPHE.hubs[id];
-    if (!h.gareId || !tenues.has(h.gareId)) continue;
+    if (!h.gareId || !tenues.has(h.gareId) || !ouvreLaSuite(h.gareId)) continue;
     for (const lien of sortiesDeHub(id)) {
       const p = prochaineGare(lien, id, tenues);
       if (p) ajoute(p.gare);
@@ -411,7 +437,7 @@ function garesOuvrables(tenues) {
   // avoir pris un corridor par son autre bout.
   for (const gareId of tenues) {
     const e = GRAPHE.gares[gareId];
-    if (!e || e.role !== "corridor") continue;
+    if (!e || e.role !== "corridor" || !ouvreLaSuite(gareId)) continue;
     const g = e.lien.gares, i = g.indexOf(gareId);
     if (i < 0) continue;
     if (i > 0) ajoute(g[i - 1]);
@@ -427,17 +453,11 @@ function garesOuvrables(tenues) {
     // parcourir, seulement un raccourci et deux halos entre lesquels choisir.
     //
     // Le bout ne s'ouvre donc qu'une fois toutes les gares du corridor
-    // TERMINÉES — et terminées, pas seulement acquises. La nuance a l'air
-    // mince : depuis la disparition des crédits, ouvrir une gare c'est la
-    // jouer dans la foulée, donc « tenue » vaut presque toujours « faite ».
-    // Presque : un service RATÉ laisse la gare acquise et sans étoile. Le
-    // boss s'ouvrait alors au bout d'une ligne que le joueur n'avait pas
-    // réussie — ce qui vide de son sens la seule porte du jeu.
-    //
-    // L'échec ne bloque que le boss, jamais la progression : les voisines
-    // immédiates (au-dessus) restent ouvertes sur les gares acquises. On peut
-    // donc continuer sa route après un revers, et il faudra repasser prendre
-    // son étoile avant d'attaquer la métropole.
+    // TERMINÉES — et terminées, pas seulement acquises. La règle vaut
+    // maintenant partout (voir ouvreLaSuite) : ce contrôle-ci reste parce
+    // qu'un boss a DEUX approches, la ligne qu'on remonte et la gare de bout
+    // dont il est voisin, et qu'une porte posée d'un seul côté se contourne
+    // par l'autre.
     if (!g.every(estFaite)) continue;
     const hA = GRAPHE.hubs[e.lien.a] || {}, hB = GRAPHE.hubs[e.lien.b] || {};
     const tA = hA.gareId && tenues.has(hA.gareId);

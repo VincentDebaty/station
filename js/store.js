@@ -250,6 +250,23 @@ function buyStation(id) {
 //
 // `null` = pas encore reconstituée depuis les records (voir migrate).
 
+// UNE GARE TENTÉE, MÊME RATÉE, LAISSE UNE TRACE. Le graphe distingue trois
+// états, et non deux : une gare FAITE (au moins une étoile) ouvre la suivante,
+// une gare OFFERTE et jamais jouée aussi (le hub de départ), une gare jouée
+// sans étoile n'ouvre rien tant qu'elle n'est pas reprise. Sans cette trace,
+// un service qui crève le plafond de retard n'enregistre rien — la gare passe
+// pour offerte, et l'échec ouvre la suite comme une réussite.
+//
+// L'entrée reste vide de tout score : `bestDelay` nul dit « aucun service
+// mené à son terme », et `stars` à zéro ne fait pas de mal au meilleur.
+function markTentee(id) {
+  if (!id) return;
+  const stations = _carte().stations;
+  if (stations[id]) return;
+  stations[id] = { stars: 0, bestDelay: null };
+  persistProgress();
+}
+
 function saveResult(id, stars, delay) {
   const stations = _carte().stations;
   const cur = stations[id] || { stars: 0, bestDelay: null };

@@ -1348,7 +1348,13 @@ function endGame(failed) {
   const prevStars = (getProgress()[STATION.id] || {}).stars || 0;
   const prevBest = (getProgress()[STATION.id] || {}).bestDelay;
   const noPay = failed || STATION.adhoc;
-  if (!failed && !STATION.adhoc) saveResult(STATION.id, stars, d); // un échec (ou la démo limites) ne modifie pas le record
+  // Un échec (ou la démo limites) ne modifie pas le record — mais il se note
+  // quand même : une gare tentée et ratée n'ouvre pas la suivante (js/graph.js,
+  // ouvreLaSuite), et il faut pouvoir la distinguer d'une gare jamais jouée.
+  if (!STATION.adhoc) {
+    if (failed) markTentee(STATION.id);
+    else saveResult(STATION.id, stars, d);
+  }
   // LA SÉRIE SE TIENT APRÈS L'ENREGISTREMENT. La démo « limites » ne compte
   // pas. Un ÉCHEC, lui, compte : il casse la série — le seul endroit du jeu où
   // rater a une conséquence, et elle est minuscule.
