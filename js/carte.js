@@ -740,7 +740,12 @@ function vueCarte() {
       const ouvert = (ha.gareId && tenues.has(ha.gareId)) || (hb.gareId && tenues.has(hb.gareId));
       const rg = typeof rangDeLigne === "function" ? rangDeLigne(lien, lien.a) : null;
       const geo = `x1="${X(ha.ll[0]).toFixed(2)}" y1="${Y(ha.ll[1]).toFixed(2)}" x2="${X(hb.ll[0]).toFixed(2)}" y2="${Y(hb.ll[1]).toFixed(2)}"`;
-      const trace = `<line ${geo} class="trait${ouvert ? " ouvert" : ""}${sortant ? " sortant" : ""}${lien.type === "mer" ? " mer" : ""}${rg ? " r-" + rg.id : ""}"/>`;
+      // Les pointillés (ligne qui sort de la zone, traversée maritime) se
+      // posent en TAILLE D'ÉCRAN : écrits en unités du monde, ils grossissaient
+      // avec le zoom et devenaient des tirets de dix pixels, très espacés.
+      const tirets = sortant ? ` style="stroke-dasharray:${(1 / K).toFixed(3)} ${(0.8 / K).toFixed(3)}"`
+        : lien.type === "mer" ? ` style="stroke-dasharray:${(0.6 / K).toFixed(3)} ${(0.9 / K).toFixed(3)}"` : "";
+      const trace = `<line ${geo} class="trait${ouvert ? " ouvert" : ""}${sortant ? " sortant" : ""}${lien.type === "mer" ? " mer" : ""}${rg ? " r-" + rg.id : ""}"${tirets}/>`;
       traits += (lien.gares && lien.gares.length)
         ? `<g class="lien" data-lien="${cleDeLien(lien)}"><line ${geo} class="cible"/>${trace}</g>` : trace;
     }

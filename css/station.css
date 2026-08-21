@@ -2037,8 +2037,8 @@ svg { width: 100%; height: 100%; display: block; }
    leur taille à l'œil. Sans cela, un nom de ville ferait l'écran au carrefour. */
 .c-graphe .trait { stroke: #29344c; stroke-width: calc(.7px / var(--k, 1)); stroke-linecap: round; }
 .c-graphe .trait.ouvert { stroke: #2dd4bf; stroke-width: calc(1px / var(--k, 1)); }
-.c-graphe .trait.sortant { stroke-dasharray: 2 2; opacity: .5; }
-.c-graphe .trait.mer { stroke-dasharray: .8 1.6; }
+/* Les pointillés sont posés en ligne par le JS, en taille d'écran (÷k). */
+.c-graphe .trait.sortant { opacity: .5; }
 .c-graphe .hub circle:not(.cerne) { fill: #29344c; stroke: #3a4560; stroke-width: calc(.6px / var(--k, 1)); cursor: pointer; }
 .c-graphe .hub text {
   font-size: 3px; fill: var(--muted); text-anchor: middle;
