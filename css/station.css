@@ -1900,7 +1900,7 @@ svg { width: 100%; height: 100%; display: block; }
    et « 1 / 7 » se retrouvait empilé à la verticale à côté. */
 .c-nom { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 .c-avance { font-family: ui-monospace, Menlo, monospace; font-size: 12px; color: var(--muted); white-space: nowrap; }
-.c-zoom {
+.c-zoom, .c-retour {
   background: rgba(21, 29, 46, .62); border: 1px solid #2a3550; color: var(--muted);
   border-radius: 9px; padding: 6px 11px 6px 8px; font: inherit; font-size: 12.5px; cursor: pointer;
   flex: 0 0 auto; display: inline-flex; align-items: center; gap: 5px;
@@ -1908,8 +1908,8 @@ svg { width: 100%; height: 100%; display: block; }
 /* Taille posée ici : la feuille pose `svg { width: 100% }` pour le plan de
    voies, qui ferait de la flèche un panneau routier. */
 .c-zoom svg { flex: none; display: block; width: 15px; height: 15px; }
-.c-zoom:hover { color: var(--text); border-color: #2dd4bf; }
-.c-zoom:focus-visible { outline: 2px solid #2dd4bf; outline-offset: 2px; }
+.c-zoom:hover, .c-retour:hover { color: var(--text); border-color: #2dd4bf; }
+.c-zoom:focus-visible, .c-retour:focus-visible { outline: 2px solid #2dd4bf; outline-offset: 2px; }
 
 /* ---- La ligne : le rail horizontal, et les gares dessus ---- */
 .c-ligne {
@@ -2023,7 +2023,7 @@ svg { width: 100%; height: 100%; display: block; }
   flex: 0 0 auto; font-size: 12.5px; font-weight: 600; padding: 6px 11px;
   border: 1px solid currentColor; border-radius: 9px; opacity: .85; white-space: nowrap;
 }
-.c-graphe .hub.depart .cerne { stroke: #2dd4bf; stroke-width: .6; animation: depart-bat 1.6s ease-in-out infinite; }
+.c-graphe .hub.depart .cerne { stroke: #2dd4bf; stroke-width: calc(.6px / var(--k, 1)); animation: depart-bat 1.6s ease-in-out infinite; }
 .c-graphe .hub.depart text { font-weight: 700; }
 @keyframes depart-bat { 0%, 100% { opacity: .15; } 50% { opacity: .9; } }
 @media (prefers-reduced-motion: reduce) { .c-graphe .hub.depart .cerne { animation: none; opacity: .6; } }
@@ -2032,59 +2032,56 @@ svg { width: 100%; height: 100%; display: block; }
 .c-graphe.depart .hub:not(.depart) circle, .c-graphe.depart .hub:not(.depart) .cerne { cursor: default; }
 
 .c-graphe { flex: 1 1 auto; width: 100%; height: 100%; min-height: 0; }
-.c-graphe .trait { stroke: #29344c; stroke-width: .7; stroke-linecap: round; }
-.c-graphe .trait.ouvert { stroke: #2dd4bf; stroke-width: 1; }
+/* TAILLE D'ÉCRAN CONSTANTE : la carte est une, la caméra zoome (×k, posé en
+   --k sur le svg), et traits, points et noms se divisent par k pour garder
+   leur taille à l'œil. Sans cela, un nom de ville ferait l'écran au carrefour. */
+.c-graphe .trait { stroke: #29344c; stroke-width: calc(.7px / var(--k, 1)); stroke-linecap: round; }
+.c-graphe .trait.ouvert { stroke: #2dd4bf; stroke-width: calc(1px / var(--k, 1)); }
 .c-graphe .trait.sortant { stroke-dasharray: 2 2; opacity: .5; }
 .c-graphe .trait.mer { stroke-dasharray: .8 1.6; }
-.c-graphe .hub circle:not(.cerne) { fill: #29344c; stroke: #3a4560; stroke-width: .6; cursor: pointer; }
+.c-graphe .hub circle:not(.cerne) { fill: #29344c; stroke: #3a4560; stroke-width: calc(.6px / var(--k, 1)); cursor: pointer; }
 .c-graphe .hub text {
   font-size: 3px; fill: var(--muted); text-anchor: middle;
   font-family: "Segoe UI", system-ui, sans-serif; pointer-events: none;
 }
 .c-graphe .hub.tenu circle:not(.cerne) { fill: #2dd4bf; stroke: #2dd4bf; }
 .c-graphe .hub.tenu text { fill: var(--text); }
-.c-graphe .hub.jouable circle:not(.cerne) { fill: #0E1420; stroke: #6ff0e2; stroke-width: .9; }
+.c-graphe .hub.jouable circle:not(.cerne) { fill: #0E1420; stroke: #6ff0e2; stroke-width: calc(.9px / var(--k, 1)); }
 .c-graphe .hub.jouable text { fill: #6ff0e2; }
 .c-graphe .hub.maitrise circle:not(.cerne) { fill: var(--gold); stroke: var(--gold); }
 .c-graphe .hub.maitrise text { fill: var(--gold-hi); }
 .c-graphe .hub.absent circle:not(.cerne) { fill: none; stroke: #3a4560; stroke-dasharray: 1 1; cursor: default; }
 .c-graphe .hub.absent text { fill: #46516b; }
+/* Un hub d'une zone voisine, au bout d'une ligne qui sort : en retrait, et le
+   toucher emmène dans sa zone. */
+.c-graphe .hub.voisin { opacity: .45; }
+.c-graphe .hub.voisin circle, .c-graphe .hub.voisin .cerne { cursor: pointer; }
 /* Le cerne du carrefour ouvert. Il sert aussi de cible large au doigt : un
    point de 2,6 unités dans un carré de 100 ne s'attrape pas mieux qu'un trait. */
 .c-graphe .hub .cerne { fill: transparent; stroke: none; cursor: pointer; }
 .c-graphe .hub.absent .cerne { cursor: default; }
-.c-graphe .hub.choisi .cerne { stroke: #6ff0e2; stroke-width: .5; }
+.c-graphe .hub.choisi .cerne { stroke: #6ff0e2; stroke-width: calc(.5px / var(--k, 1)); }
 
 /* Le trait EST la ligne : on doit pouvoir le prendre. Le tracé visible est
    trop fin pour le doigt, donc il ne reçoit rien — c'est une cible
    transparente et large, dessous, qui écoute. */
 .c-graphe .trait { pointer-events: none; }
 .c-graphe .lien { cursor: pointer; }
-.c-graphe .lien .cible { stroke: transparent; stroke-width: 4.5; pointer-events: stroke; }
+.c-graphe .lien .cible { stroke: transparent; stroke-width: calc(4.5px / var(--k, 1)); pointer-events: stroke; }
 @media (hover: hover) {
   .c-graphe .lien:hover .cible { stroke: rgba(45, 212, 191, .16); }
 }
 
 /* ---- Le carrefour : « par où ? » ---- */
 /* ---- Le fond de la vue zone : les pays et leurs frontières, en retrait ---- */
-.c-graphe .fond .pays { fill: #131a2a; stroke: #2a3550; stroke-width: .35; stroke-linejoin: round; pointer-events: none; }
-.c-graphe.zoom .fond .pays { stroke-width: calc(.35px / var(--k, 1)); }
+.c-graphe .fond .frontiere { fill: none; stroke: #2a3550; stroke-width: calc(.35px / var(--k, 1)); stroke-linejoin: round; pointer-events: none; }
 /* ---- Le carrefour vu de près : le zoom, et les bulles de ligne ---- */
 .c-graphe .monde {
   transform-box: view-box; transform-origin: 0 0;
   transition: transform .55s cubic-bezier(.4, 0, .2, 1);
 }
 @media (prefers-reduced-motion: reduce) { .c-graphe .monde { transition: none; } }
-/* Zoomé ×k, noms et traits garderaient leur taille d'écran ×k : on les
-   ramène par la même variable que le zoom (style="--k" sur le svg), pour que
-   changer le zoom ne demande pas de retoucher cinq règles. */
-.c-graphe.zoom .hub text { font-size: calc(3.4px / var(--k, 1)); }
-.c-graphe.zoom .hub circle:not(.cerne) { stroke-width: calc(.6px / var(--k, 1)); }
-.c-graphe.zoom .hub .cerne { stroke-width: calc(.5px / var(--k, 1)); }
-.c-graphe.zoom .trait { stroke-width: calc(.8px / var(--k, 1)); }
-.c-graphe.zoom .trait.ouvert { stroke-width: calc(1.1px / var(--k, 1)); }
-.c-graphe.zoom .trait[class*=" r-"] { stroke-width: calc(1.4px / var(--k, 1)); }
-.c-graphe.zoom .lien .cible { stroke-width: calc(4.5px / var(--k, 1)); }
+.c-graphe .hub text { font-size: calc(3.2px / var(--k, 1)); }
 /* La bulle : rendue à l'échelle 1/K dans le monde zoomé, donc à sa taille
    d'écran normale — 1 unité ≈ 4,5 px. */
 .bl { cursor: pointer; }
@@ -2110,9 +2107,13 @@ svg { width: 100%; height: 100%; display: block; }
    voisins. Entre deux zones, c'est le changement de teinte qui fait la
    limite. Hors zone : un gris de fond, sans contour. */
 .c-carte .pays { fill: #161e30; stroke: none; }
-.c-carte .pays.zone { fill: var(--col); fill-opacity: .24; stroke: none; cursor: pointer; }
+.c-carte .pays.zone { fill: var(--col); fill-opacity: .24; stroke: none; cursor: pointer; transition: fill-opacity .4s ease; }
 @media (hover: hover) { .c-carte .pays.zone:hover { fill-opacity: .32; } }
-.c-carte.zoome .pays.zone:not(.choisie) { fill-opacity: .07; }
+/* Verrouillée : rien n'y mène encore — elle s'efface et ne répond pas. */
+.c-carte .pays.zone.verrou { fill-opacity: .08; cursor: default; }
+/* Zoomé sur une zone : les autres s'estompent, la sienne reste. */
+.c-carte.niveau-zone .pays.zone:not(.choisie), .c-carte.niveau-hub .pays.zone:not(.choisie) { fill-opacity: .06; }
+.c-carte.niveau-zone .pays.zone.choisie, .c-carte.niveau-hub .pays.zone.choisie { fill-opacity: .14; }
 .c-carte .ze { cursor: pointer; }
 /* La bulle de zone : même famille que la bulle de ligne (.bl). */
 .c-carte .zb-fond { fill: #151d2e; fill-opacity: .92; stroke: var(--col); stroke-opacity: .55; stroke-width: .3; }
@@ -2123,7 +2124,9 @@ svg { width: 100%; height: 100%; display: block; }
 .c-carte .zb-dia { fill: #7fd4ff; }
 .c-carte .zb-piste { fill: #29344c; }
 .c-carte .zb-fait { fill: var(--col); }
-.c-carte .ze.grise .zb-fond { stroke-opacity: .25; }
+.c-carte .ze.grise .zb-fond, .c-carte .ze.verrou .zb-fond { stroke-opacity: .25; }
+.c-carte .ze.verrou .zb-nom, .c-carte .ze.verrou .zb-prog { fill: var(--muted); }
+.c-carte .ze.verrou { cursor: default; }
 .c-carte .ze.grise .zb-nom { fill: var(--muted); }
 .c-carte .ze.grise .zb-prog { fill: var(--muted); }
 /* Le trait qui relie la bulle à sa zone, et le point sur la zone. */
@@ -2132,7 +2135,6 @@ svg { width: 100%; height: 100%; display: block; }
 /* Le zoom : le monde grossit (transition de .monde), bulles et traits
    s'effacent — à ×4 une bulle de zone ferait tout l'écran. */
 .c-carte .ze, .c-carte .zl { transition: opacity .35s ease; }
-.c-carte.zoome .ze, .c-carte.zoome .zl { opacity: 0; }
 
 /* ---- L'Europe : les constellations et leur complétion (tuiles, repli) ---- */
 .c-europe {
