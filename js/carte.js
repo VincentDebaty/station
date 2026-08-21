@@ -154,6 +154,11 @@ function vueLigne() {
   // que le résultat, et le regard n'a pas à descendre au bas de l'écran.
   const suite = prochaine ? `<button class="c-suite" data-gare="${prochaine}">▸ ${
     isBought(prochaine) ? "Reprendre" : "Ouvrir"} ${nomDe(prochaine)}</button>` : "";
+  // Dans la bulle, le bouton dit « Suivante » et rien d'autre : le nom de la
+  // gare est déjà sur la ligne, à côté, et « Ouvrir Aix-la-Chapelle » ferait
+  // une bulle large comme la ligne. Une largeur fixe, quel que soit le nom.
+  const suiteBulle = prochaine
+    ? `<button class="c-suite" data-gare="${prochaine}" title="${nomDe(prochaine)}">▸ Suivante</button>` : "";
   const jalon = (id, role) => {
     const etat = id ? etatDeGare(id) : "fermee";
     const cl = ["jalon", "j-" + etat, role ? "j-" + role : ""].filter(Boolean).join(" ");
@@ -179,7 +184,7 @@ function vueLigne() {
       ${jalon(hDep && hDep.gareId, "boss")}
       ${p.gares.map(g => jalon(g)).join("")}
       ${jalon(hArr && hArr.gareId, "boss")}
-      ${bilanHTML(suite)}
+      ${bilanHTML(suiteBulle)}
     </div>
     ${CARTE.bilan ? "" : suite}`;
 }
