@@ -473,10 +473,12 @@ function bullesDeHub(hub, X, Y, K, tenues) {
   // à 1/K : un déplacement de 30 unités écran vaut 30/K dans le monde. La
   // fenêtre visible fait 100 unités, le hub en son centre.
   //
-  // Enfin, une ligne pas encore écrite n'a qu'un nom à porter : sa bulle est
-  // plus étroite, et c'est autant de place rendue aux autres. À un carrefour à
-  // cinq sorties, cette seule mesure suffit souvent à tout faire tenir.
-  const DEMI_H = 8.2, ECART = 9.6;          // demi-hauteur (garde comprise) et décalage de bord
+  // La bulle ne porte PAS le nom de la ville : il est déjà sur la carte, au
+  // bout du trait. Elle ne dit que ce que la carte ne montre pas — étoiles,
+  // diamants, avancée — et tient donc sur une ligne et une jauge. Une ligne
+  // pas encore écrite n'a que « à écrire » à dire : sa bulle est plus étroite,
+  // et c'est autant de place rendue aux autres.
+  const DEMI_H = 5.6, ECART = 5.8;          // demi-hauteur (garde comprise) et décalage de bord
   const RAYONS = [29, 33, 37, 41, 45];      // les crans de glissement, du plus proche au plus loin
   const COTES = [0, 1, -1];                 // sur le trait, puis d'un bord, puis de l'autre
   const BORD = 48;                          // le carré toujours visible, hub au centre
@@ -485,7 +487,7 @@ function bullesDeHub(hub, X, Y, K, tenues) {
     const hv = hubById(vers);
     if (!hv) return null;
     const ecrite = !!(lien.gares && lien.gares.length);
-    return { lien, hv, ecrite, demiL: ecrite ? 15 : 11.6,
+    return { lien, hv, ecrite, demiL: ecrite ? 13.4 : 9.4,
       ligne: Math.atan2(Y(hv.ll[1]) - hy, X(hv.ll[0]) - hx) };
   }).filter(Boolean);
   // On pose dans le sens du cadran : l'ordre n'a pas d'importance de fond, il
@@ -527,22 +529,21 @@ function bullesDeHub(hub, X, Y, K, tenues) {
     const { lien, hv, ecrite } = so;
     const px = hx + so.pos.x / K, py = hy + so.pos.y / K;
     let corps;
-    if (!ecrite) corps = `<text class="bl-prog" x="0" y="3.4">à écrire</text>`;
+    if (!ecrite) corps = `<text class="bl-prog" x="0" y="1">à écrire</text>`;
     else {
       const compo = typeof garesDeLigne === "function" ? garesDeLigne(lien, hub.id) : lien.gares;
       const etoiles = compo.reduce((n, g) => n + etoilesDe(g), 0);
       const diamants = compo.filter(g => (getProgress()[g] || {}).bestDelay === 0).length;
       const faits = typeof garesFaites === "function" ? garesFaites(compo) : 0;
       const rang = typeof rangDeLigne === "function" ? rangDeLigne(lien, hub.id) : null;
-      corps = `<text class="bl-prog" x="0" y="3.2">★ ${etoiles} / ${compo.length * 3}` +
-        `<tspan class="bl-dia${diamants ? " on" : ""}" dx="2.2">◆ ${diamants}</tspan></text>` +
-        `<rect class="bl-piste" x="-11" y="5" width="22" height=".9" rx=".45"/>` +
-        `<rect class="bl-fait${rang ? " r-" + rang.id : ""}" x="-11" y="5" width="${(22 * faits / compo.length).toFixed(2)}" height=".9" rx=".45"/>`;
+      corps = `<text class="bl-prog" x="0" y="0.4">★ ${etoiles} / ${compo.length * 3}` +
+        `<tspan class="bl-dia" dx="2.2">◆ ${diamants}</tspan></text>` +
+        `<rect class="bl-piste" x="-10.4" y="2.3" width="20.8" height=".9" rx=".45"/>` +
+        `<rect class="bl-fait${rang ? " r-" + rang.id : ""}" x="-10.4" y="2.3" width="${(20.8 * faits / compo.length).toFixed(2)}" height=".9" rx=".45"/>`;
     }
     out += `<g class="bl${ecrite ? "" : " absente"}" transform="translate(${px.toFixed(2)} ${py.toFixed(2)}) scale(${(1 / K).toFixed(4)})"` +
       `${ecrite ? ` data-lien="${cleDeLien(lien)}"` : ""}>` +
-      `<rect class="bl-fond" x="${(-so.demiL + 1).toFixed(1)}" y="-6.5" width="${(2 * so.demiL - 2).toFixed(1)}" height="13.5" rx="2.6"/>` +
-      `<text class="bl-vers" x="0" y="-1.6">${hv.nom}</text>${corps}</g>`;
+      `<rect class="bl-fond" x="${(-so.demiL + 1).toFixed(1)}" y="-4.1" width="${(2 * so.demiL - 2).toFixed(1)}" height="8.2" rx="2.4"/>${corps}</g>`;
   }
   // Pas de bouton « Jouer » pour le hub : il se joue depuis chacune de ses
   // lignes, où il est un jalon comme les autres.

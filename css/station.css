@@ -2086,10 +2086,8 @@ svg { width: 100%; height: 100%; display: block; }
 .bl .bl-fond { fill: #151d2e; stroke: #2a3550; stroke-width: .35; }
 .bl:hover .bl-fond, .bl:focus-visible .bl-fond { stroke: #2dd4bf; }
 .bl text { text-anchor: middle; font-family: "Segoe UI", system-ui, sans-serif; pointer-events: none; }
-.bl .bl-vers { font-size: 2.9px; font-weight: 600; fill: var(--text); }
 .bl .bl-prog { font-size: 2.5px; fill: var(--gold); font-variant-numeric: tabular-nums; }
-.bl .bl-dia { fill: #3a4560; }
-.bl .bl-dia.on { fill: #7fd4ff; }
+.bl .bl-dia { fill: #7fd4ff; } /* bleu, toujours : gris il disparaissait */
 .bl .bl-piste { fill: #29344c; }
 .bl .bl-fait { fill: #2dd4bf; }
 .bl .bl-fait.r-argent { fill: #c9d4e6; }
