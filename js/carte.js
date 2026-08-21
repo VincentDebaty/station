@@ -231,7 +231,9 @@ function poserBilan() {
   if (!bulle || !jalon) { if (bulle) bulle.remove(); return; }
   const et = jalon.querySelector(".etoiles");
   const piste = jalon.parentElement;
-  const haut = (et ? et.offsetTop : jalon.offsetHeight) - 6;   // la bulle part d'ici, dans le jalon
+  // La bulle part de la hauteur des petites étoiles, plus 8 px d'air sous le
+  // nom de la gare : collée, sa flèche touchait le mot.
+  const haut = (et ? et.offsetTop : jalon.offsetHeight) + 2;
   // LE GROUPE SE CENTRE — jalons ET bulle. La piste centre ses jalons dans sa
   // hauteur ; on lui retire en bas ce que la bulle dépasse du jalon, et le
   // centre des jalons remonte d'autant : c'est l'ensemble qui se retrouve au
