@@ -2197,10 +2197,10 @@ svg { width: 100%; height: 100%; display: block; }
 /* Même règle un cran plus haut : la constellation montre les mêmes couleurs. */
 /* Une ligne ENTIÈREMENT faite doit se distinguer d'une ligne à moitié ouverte,
    qui porte déjà le teal de `.trait.ouvert` : le trait s'épaissit. */
-.c-graphe .trait.r-ouverte { stroke: #2dd4bf; stroke-width: 1.3; }
-.c-graphe .trait.r-argent  { stroke: #c9d4e6; stroke-width: 1.3; }
-.c-graphe .trait.r-or      { stroke: #e8b923; stroke-width: 1.5; }
-.c-graphe .trait.r-diamant { stroke: #7fd4ff; stroke-width: 1.7; }
+.c-graphe .trait.r-ouverte { stroke: #2dd4bf; stroke-width: calc(1.3px / var(--k, 1)); }
+.c-graphe .trait.r-argent  { stroke: #c9d4e6; stroke-width: calc(1.3px / var(--k, 1)); }
+.c-graphe .trait.r-or      { stroke: #e8b923; stroke-width: calc(1.5px / var(--k, 1)); }
+.c-graphe .trait.r-diamant { stroke: #7fd4ff; stroke-width: calc(1.7px / var(--k, 1)); }
 
 /* ------------------------------------------------------------------ */
 /* LA SÉRIE — un seul chiffre, et seulement quand elle existe.         */

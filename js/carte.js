@@ -720,7 +720,9 @@ function vueCarte() {
     const jouables = hubs.filter(h => h.gareId);
     const tenus = jouables.filter(h => tenues.has(h.gareId));
     const xs = hubs.map(h => X(h.ll[0])), ys = hubs.map(h => Y(h.ll[1]));
-    const cx = xs.reduce((a, b) => a + b, 0) / xs.length, cy = ys.reduce((a, b) => a + b, 0) / ys.length;
+    // Le centre de la BOÎTE des hubs, pas leur barycentre : des hubs denses au
+    // sud tiraient la caméra vers le bas, et le hub du nord sortait du cadre.
+    const cx = (Math.min(...xs) + Math.max(...xs)) / 2, cy = (Math.min(...ys) + Math.max(...ys)) / 2;
     const extX = Math.max(Math.max(...xs) - Math.min(...xs), 8), extY = Math.max(Math.max(...ys) - Math.min(...ys), 8);
     const k = zoomPour(extX, extY, 9, 4.5);   // la zone remplit la fenêtre, marge pour les noms
     CARTE.zonesGeo[z.id] = { cx, cy, k };
