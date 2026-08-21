@@ -476,7 +476,19 @@ function bullesDeHub(hub, X, Y, K, tenues) {
     let corps;
     if (!ecrite) corps = `<text class="bl-prog" x="0" y="1">à écrire</text>`;
     else {
-      const compo = typeof garesDeLigne === "function" ? garesDeLigne(lien, hub.id) : lien.gares;
+      // CE QU'IL RESTE À FAIRE D'ICI — donc sans la gare où l'on se tient.
+      // La bulle comptait les deux métropoles, comme le rang : les 3 étoiles
+      // de Luxembourg s'affichaient alors sur CHACUNE de ses trois lignes, et
+      // une ligne jamais prise annonçait « ★ 3 / 18 ». Le compte était juste
+      // et le message faux — on croyait avoir entamé la route.
+      //
+      // Le carrefour d'où l'on part sort donc du compte : il est partagé par
+      // toutes les sorties, et c'est le seul endroit où l'on est déjà. Reste
+      // le corridor et la métropole d'arrivée — exactement le trajet que la
+      // bulle propose. Le RANG, lui, continue de juger les deux bouts : une
+      // ligne n'est pas faite tant que ses deux villes ne le sont pas.
+      const toute = typeof garesDeLigne === "function" ? garesDeLigne(lien, hub.id) : lien.gares;
+      const compo = toute.filter(g => g !== hub.gareId);
       const etoiles = compo.reduce((n, g) => n + etoilesDe(g), 0);
       const diamants = compo.filter(g => (getProgress()[g] || {}).bestDelay === 0).length;
       const faits = typeof garesFaites === "function" ? garesFaites(compo) : 0;
@@ -670,6 +682,26 @@ function fondDePays(P, etatZone) {
 // `CARTE.vue` garde ses deux noms — « europe » pour le continent,
 // « constellation » pour une zone — parce que le reste du jeu les connaît.
 const CADRE_L = 160, CADRE_OX = 30;
+// CE QUE L'ÉCRAN VOIT, en unités du monde. Le cadre fait 160 × 100 et se
+// pose « meet » au milieu de l'écran : un écran plus large voit au-delà de
+// 160 de large, un téléphone tenu droit voit bien au-delà de 100 de haut. La
+// caméra cadre donc sur la fenêtre RÉELLE, pas sur le cadre nominal — sans
+// quoi, sur iPhone, le continent tenait dans un timbre en haut de l'écran.
+function fenetreVisible() {
+  const hote = CARTE.hote;
+  let w = 0, h = 0;
+  const svg = hote && hote.querySelector(".c-graphe");
+  if (svg) { const r = svg.getBoundingClientRect(); w = r.width; h = r.height; }
+  else if (hote) { const r = hote.getBoundingClientRect(); w = r.width; h = Math.max(1, r.height - 64); }
+  const a = w > 0 && h > 0 ? w / h : 1.6;
+  return a >= CADRE_L / 100 ? { w: 100 * a, h: 100 } : { w: CADRE_L, h: CADRE_L / a };
+}
+// Le zoom qui fait tenir une boîte (largeur, hauteur, en unités du monde)
+// dans la fenêtre, avec une marge, borné.
+function zoomPour(boxW, boxH, marge, kMax) {
+  const f = fenetreVisible();
+  return Math.min(kMax, (f.w - 2 * marge) / Math.max(boxW, 1), (f.h - 2 * marge) / Math.max(boxH, 1));
+}
 function vueCarte() {
   const tenues = carteTenues();
   const P0 = projectionDeCarte();
@@ -689,8 +721,8 @@ function vueCarte() {
     const tenus = jouables.filter(h => tenues.has(h.gareId));
     const xs = hubs.map(h => X(h.ll[0])), ys = hubs.map(h => Y(h.ll[1]));
     const cx = xs.reduce((a, b) => a + b, 0) / xs.length, cy = ys.reduce((a, b) => a + b, 0) / ys.length;
-    const etendue = Math.max(Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys), 8);
-    const k = Math.min(4.5, 84 / (etendue * 1.08));   // la zone remplit presque la hauteur : les noms respirent
+    const extX = Math.max(Math.max(...xs) - Math.min(...xs), 8), extY = Math.max(Math.max(...ys) - Math.min(...ys), 8);
+    const k = zoomPour(extX, extY, 9, 4.5);   // la zone remplit la fenêtre, marge pour les noms
     CARTE.zonesGeo[z.id] = { cx, cy, k };
     const gares = new Set();
     for (const h of hubs) {
@@ -718,12 +750,14 @@ function vueCarte() {
   let zoomHub = zone && !depart && CARTE.panneau ? hubById(CARTE.panneau) : null;
   if (zoomHub && zoomHub.zone !== zid) { zoomHub = null; CARTE.panneau = null; }
   const g = zone ? CARTE.zonesGeo[zid] : null;
-  const cam = zoomHub ? { x: X(zoomHub.ll[0]), y: Y(zoomHub.ll[1]), k: g.k * 3.2 }
-            : zone ? { x: g.cx, y: g.cy, k: g.k } : { x: CADRE_L / 2, y: 50, k: 1 };
-  CARTE.camCible = cam;
-  const K = cam.k;
+  let cam = zoomHub ? { x: X(zoomHub.ll[0]), y: Y(zoomHub.ll[1]), k: g.k * 3.2 }
+          : zone ? { x: g.cx, y: g.cy, k: g.k } : { x: CADRE_L / 2, y: 50, k: 1 };
   const niveau = zoomHub ? "hub" : zone ? "zone" : "continent";
 
+  // K sert aux symboles de la zone et du carrefour ; au continent il vaut 1
+  // pour les symboles (les bulles ont leur propre échelle), la caméra pouvant
+  // cadrer plus serré sans les grossir — voir plus bas.
+  const K = cam.k;
   // --- Le fond : les zones en aplats ; zoomé, les frontières par-dessus ------
   let corps = fondDePays(P, id => (id === zid ? " choisie" : "") + (info[id] && !info[id].ouverte ? " verrou" : ""));
   if (niveau !== "continent") corps += fondDeZone(P);
@@ -795,6 +829,15 @@ function vueCarte() {
       for (const b of bulles) { b.x = Math.max(b.w / 2 + 1, Math.min(CADRE_L - b.w / 2 - 1, b.x)); b.y = Math.max(b.h / 2 + 1, Math.min(99 - b.h / 2, b.y)); }
       if (!bouge) break;
     }
+    // LA CAMÉRA CADRE LES BULLES, pas le continent : c'est elles qu'on lit. Le
+    // nord de la Scandinavie et le sud de l'Ibérie peuvent sortir du cadre ;
+    // aucune bulle ne le peut. Sur un écran large le gain est modeste, sur un
+    // téléphone tenu droit il est décisif.
+    if (bulles.length) {
+      const x0 = Math.min(...bulles.map(b => b.x - b.w / 2)), x1 = Math.max(...bulles.map(b => b.x + b.w / 2));
+      const y0 = Math.min(...bulles.map(b => b.y - b.h / 2)), y1 = Math.max(...bulles.map(b => b.y + b.h / 2));
+      cam = { x: (x0 + x1) / 2, y: (y0 + y1) / 2, k: Math.max(1, zoomPour(x1 - x0, y1 - y0, 3, 2.4)) };
+    }
     corps += bulles.map(b => {
       const i = b.i;
       const cl = "ze" + (!i.ecrite ? " grise" : !i.ouverte ? " verrou" : "");
@@ -823,6 +866,7 @@ function vueCarte() {
     // rien en face du bouton de dézoom, le nom de la zone n'est plus au milieu.
     : `<button class="c-zoom" data-vue="europe">${flecheRetour()}${nomDeCarte()}</button>
       <div class="c-titre" style="color:${zone.couleur}">${zone.nom}</div>${bourseHTML()}`;
+  CARTE.camCible = cam;
   return `
     <div class="c-tete">${tete}</div>
     <svg class="c-graphe c-carte niveau-${niveau}${depart ? " depart" : ""}${zoomHub ? " zoom" : ""}" style="--k:${K.toFixed(3)}" viewBox="0 0 ${CADRE_L} 100" preserveAspectRatio="xMidYMid meet">
