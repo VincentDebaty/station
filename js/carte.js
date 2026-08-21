@@ -42,6 +42,16 @@ const CARTE = { hote: null, vue: "ligne", corridor: null, depuis: null, bilan: n
 // ------------------------------------------------------------------
 // OÙ EN EST LE JOUEUR ?
 // ------------------------------------------------------------------
+// LE BOUTON DE DÉZOOM EST UN RETOUR, et un retour porte sa flèche À GAUCHE,
+// devant ce qu'il ramène. Il portait un chevron « › » à droite, hérité du
+// fil d'Ariane : le signe disait « on descend là-dedans » alors que le geste
+// remonte d'une échelle. Une vraie flèche, tournée vers la gauche.
+function flecheRetour() {
+  return '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" ' +
+    'stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+    '<path d="M19 12H6M12 18l-6-6 6-6"/></svg>';
+}
+
 // Les gares tenues, au format qu'attend le graphe.
 function carteTenues() {
   const t = new Set();
@@ -232,7 +242,7 @@ function vueLigne() {
 
   return `
     <div class="c-tete">
-      <button class="c-zoom" data-vue="constellation">${hDep && zoneById(hDep.zone) ? zoneById(hDep.zone).nom : "Le réseau"} ›</button>
+      <button class="c-zoom" data-vue="constellation">${flecheRetour()}${hDep && zoneById(hDep.zone) ? zoneById(hDep.zone).nom : "Le réseau"}</button>
       <div class="c-titre"><span class="c-nom">${titre}</span>${rang
         ? `<span class="c-rang r-${rang.id}">${rang.nom}</span>`
         : `<span class="c-avance">${faits} / ${total}</span>`}</div>
@@ -438,13 +448,16 @@ function vueConstellation() {
       `<text x="${X(h.ll[0])}" y="${Y(h.ll[1]) - 4}">${h.nom}</text></g>`;
   }).join("");
 
+  // ON REDESCEND EN TOUCHANT UNE LIGNE, pas en lisant un bouton. « Ma ligne »
+  // doublait le geste que la carte demande déjà — prendre un trait ou une
+  // bulle — et occupait le seul coin où le compte des étoiles a sa place.
   const tete = depart
-    ? `<button class="c-zoom" data-vue="europe">${nomDeCarte()} ›</button>
+    ? `<button class="c-zoom" data-vue="europe">${flecheRetour()}${nomDeCarte()}</button>
       <div class="c-titre">Choisissez votre gare de départ</div>
       <span class="c-zone" style="color:${cst.couleur}">${cst.nom}</span>`
-    : `<button class="c-zoom" data-vue="europe">${nomDeCarte()} ›</button>
+    : `<button class="c-zoom" data-vue="europe">${flecheRetour()}${nomDeCarte()}</button>
       <div class="c-titre" style="color:${cst.couleur}">${cst.nom}</div>
-      <button class="c-retour" data-vue="ligne">‹ Ma ligne</button>`;
+      ${bourseHTML()}`;
   CARTE.zoomCible = zoomHub ? { x: X(zoomHub.ll[0]), y: Y(zoomHub.ll[1]), k: K } : null;
   const bulles = zoomHub ? bullesDeHub(zoomHub, X, Y, K, tenues) : "";
   return `
@@ -718,7 +731,6 @@ function vueEurope() {
   const tete = `
     <div class="c-tete">
       <div class="c-titre">${nomDeCarte()}</div>
-      ${tenues.size ? `<button class="c-retour" data-vue="ligne">‹ Ma ligne</button>` : ""}
     </div>`;
   if (!P0) return tete;
   // FORMAT LARGE : le continent au centre (100 de large), et de chaque côté
