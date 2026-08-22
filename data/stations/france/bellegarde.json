@@ -1,0 +1,30 @@
+{
+  "id": "bellegarde",
+  "name": "Bellegarde-sur-Valserine",
+  "city": "Bellegarde-sur-Valserine",
+  "tagline": "Bellegarde — la dernière avant Genève, en Y depuis 2010.",
+  "difficulty": 3,
+  "country": "🇫🇷 France",
+  "desc": "La porte française de Genève, au confluent du Rhône et de la Valserine. Trois lignes s'y rejoignent : Culoz, le Haut-Bugey vers Bourg-en-Bresse, et la voie du Bouveret vers Évian. Le Y construit en 2010 permet au TGV de bifurquer sans rebrousser.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
+  ],
+  "portals": {
+    "CULOZ":           { "side": "L", "color": "#f5b23c", "abbr": "CZ" },
+    "BOURG-EN-BRESSE": { "side": "L", "color": "#a78bfa", "abbr": "BB", "label": "BOURG" },
+    "GENÈVE":          { "side": "R", "color": "#25dede", "abbr": "GE", "label": "GENÈVE" },
+    "ÉVIAN":           { "side": "R", "color": "#4ade80", "abbr": "EV", "label": "ÉVIAN" }
+  },
+  "links": {
+    "CULOZ":           [1, 2, 3],
+    "BOURG-EN-BRESSE": [3, 4, 5],
+    "GENÈVE":          [1, 2, 3, 4, 5],
+    "ÉVIAN":           [4, 5]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 13, "nMax": 16, "gapMin": 1.7, "gapMax": 2.9,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6],
+    "quietRate": 0.15
+  }
+}

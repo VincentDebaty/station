@@ -1219,7 +1219,13 @@
     {
       "de": "lyon",
       "vers": "geneve",
-      "gares": []
+      "gares": [
+        "amberieu",
+        "culoz",
+        "bellegarde"
+      ],
+      "minGares": 3,
+      "pourquoi": "Le corridor n'offre pas de quatrième carrefour : Seyssel, Virieu-le-Grand et Meximieux n'ont que deux directions"
     },
     {
       "de": "lyon",
@@ -1260,7 +1266,13 @@
     {
       "de": "bordeaux",
       "vers": "nantes",
-      "gares": []
+      "gares": [
+        "saintes",
+        "larochelle",
+        "lalochesuryon"
+      ],
+      "minGares": 3,
+      "pourquoi": "Rochefort n'a plus que deux directions — la branche d'Aigrefeuille est déclassée depuis 1954"
     },
     {
       "de": "bordeaux",

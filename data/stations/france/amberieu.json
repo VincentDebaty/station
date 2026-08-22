@@ -1,0 +1,30 @@
+{
+  "id": "amberieu",
+  "name": "Ambérieu-en-Bugey",
+  "city": "Ambérieu-en-Bugey",
+  "tagline": "Ambérieu — quarante voies de triage au pied du Bugey.",
+  "difficulty": 4,
+  "country": "🇫🇷 France",
+  "desc": "Une ville née du rail : sous la rotonde de 1873 dormaient quarante-huit locomotives à vapeur. Trois lignes s'y séparent — Genève par Culoz, Mâcon par le nord, Montalieu à l'est — et le triage compte encore plus de quarante voies.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }, { "id": 6 }
+  ],
+  "portals": {
+    "LYON":            { "side": "L", "color": "#25dede", "abbr": "LY" },
+    "MONTALIEU":       { "side": "L", "color": "#a78bfa", "abbr": "MT" },
+    "CULOZ":           { "side": "R", "color": "#f5b23c", "abbr": "CZ" },
+    "BOURG-EN-BRESSE": { "side": "R", "color": "#4ade80", "abbr": "BB", "label": "BOURG" }
+  },
+  "links": {
+    "LYON":            [1, 2, 3, 4],
+    "MONTALIEU":       [4, 5, 6],
+    "CULOZ":           [1, 2, 3, 4, 5, 6],
+    "BOURG-EN-BRESSE": [1, 2]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 15, "nMax": 18, "gapMin": 1.6, "gapMax": 2.8,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6],
+    "quietRate": 0.12
+  }
+}

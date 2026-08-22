@@ -68,6 +68,14 @@ const GEO = {
         // l'échelle où l'on choisit une gare, et il rend les quatre cliquables.
         "paris-nord": [2.355, 48.925], "paris-lyon": [2.425, 48.815],
         "paris-montparnasse": [2.255, 48.825], "paris-est": [2.435, 48.895],
+        // Les six de la fin août : la ligne de Genève (Ambérieu – Culoz –
+        // Bellegarde) et l'arc atlantique (Bordeaux – Nantes).
+        amberieu: [5.342, 45.954],
+        culoz: [5.780, 45.845],
+        bellegarde: [5.826, 46.109],
+        saintes: [-0.618, 45.749],
+        larochelle: [-1.145, 46.153],
+        lalochesuryon: [-1.436, 46.672],
         chalons: [4.365, 48.956],
         lille: [3.070, 50.638], amiens: [2.313, 49.891], rouen: [1.094, 49.449],
         caen: [-0.348, 49.176], rennes: [-1.673, 48.104], "le-mans": [0.193, 47.996],

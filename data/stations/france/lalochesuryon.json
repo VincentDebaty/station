@@ -1,0 +1,30 @@
+{
+  "id": "lalochesuryon",
+  "name": "La Roche-sur-Yon",
+  "city": "La Roche-sur-Yon",
+  "tagline": "La Roche-sur-Yon — la Vendée bifurque vers les Sables.",
+  "difficulty": 3,
+  "country": "🇫🇷 France",
+  "desc": "Le carrefour vendéen : Nantes au nord, La Rochelle au sud, les Sables-d'Olonne à l'ouest et Saumur à l'est. La passerelle signée Bernard Tschumi et Hugh Dutton, posée à l'électrification de 2010, tient lieu de signal dans la ville.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
+  ],
+  "portals": {
+    "LA ROCHELLE":        { "side": "L", "color": "#f5b23c", "abbr": "LR", "label": "LA ROCHELLE" },
+    "LES SABLES-D'OLONNE":{ "side": "L", "color": "#4ade80", "abbr": "SO", "label": "LES SABLES" },
+    "NANTES":             { "side": "R", "color": "#25dede", "abbr": "NA" },
+    "SAUMUR":             { "side": "R", "color": "#a78bfa", "abbr": "SM" }
+  },
+  "links": {
+    "LA ROCHELLE":         [1, 2, 3],
+    "LES SABLES-D'OLONNE": [3, 4, 5],
+    "NANTES":              [1, 2, 3, 4, 5],
+    "SAUMUR":              [4, 5]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 14, "nMax": 17, "gapMin": 1.7, "gapMax": 2.9,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6],
+    "quietRate": 0.15
+  }
+}

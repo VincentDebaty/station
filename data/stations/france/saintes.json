@@ -1,0 +1,31 @@
+{
+  "id": "saintes",
+  "name": "Saintes",
+  "tagline": "Saintes — cinq directions en Saintonge, et un technicentre.",
+  "difficulty": 4,
+  "country": "🇫🇷 France",
+  "desc": "Le nœud de la Saintonge : Bordeaux au sud, Rochefort au nord, Angoulême à l'est, Royan à l'ouest, Niort par Saint-Jean-d'Angély. Le technicentre y répare les diesels et y démolit les rames en fin de vie ; depuis 2020, le Ferrocampus y forme les métiers du rail.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }, { "id": 6 }
+  ],
+  "portals": {
+    "BORDEAUX":  { "side": "L", "color": "#25dede", "abbr": "BX" },
+    "ROYAN":     { "side": "L", "color": "#4ade80", "abbr": "RY" },
+    "ROCHEFORT": { "side": "R", "color": "#f5b23c", "abbr": "RF" },
+    "ANGOULÊME": { "side": "R", "color": "#f2588f", "abbr": "AN", "label": "ANGOULÊME" },
+    "NIORT":     { "side": "R", "color": "#a78bfa", "abbr": "NI" }
+  },
+  "links": {
+    "BORDEAUX":  [1, 2, 3, 4],
+    "ROYAN":     [4, 5, 6],
+    "ROCHEFORT": [1, 2, 3, 4, 5, 6],
+    "ANGOULÊME": [1, 2],
+    "NIORT":     [5, 6]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 15, "nMax": 18, "gapMin": 1.6, "gapMax": 2.8,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6],
+    "quietRate": 0.12
+  }
+}
