@@ -19,16 +19,16 @@
     "LUCERNE":    { "side": "R", "color": "#4ade80", "abbr": "LU" }
   },
   "links": {
-    "LAUSANNE":   [3, 4, 5, 6, 7, 8],
+    "LAUSANNE":   [4, 5, 6, 7],
     "BIENNE":     [1, 2, 3, 4],
-    "NEUCHATEL":  [8, 9],
-    "ZURICH":     [2, 3, 4, 5, 6, 7],
-    "INTERLAKEN": [5, 6, 7, 8, 9],
+    "NEUCHATEL":  [7, 8, 9],
+    "ZURICH":     [2, 3, 4, 5, 6],
+    "INTERLAKEN": [6, 7, 8, 9],
     "LUCERNE":    [1, 2, 3]
   },
   "sameSidePairs": [],
   "gen": {
-    "nMin": 18, "nMax": 21, "gapMin": 1.4, "gapMax": 2.4,
+    "nMin": 18, "nMax": 20, "gapMin": 1.5, "gapMax": 2.6,
     "cars": [2, 3, 3, 4, 4, 5, 5, 6, 7],
     "quietRate": 0.1,
     "rush": "pointe"

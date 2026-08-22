@@ -7,85 +7,24 @@
   "country": "🇫🇷 France",
   "desc": "Pierre Esquié l'a voulue maritime : mosaïques, motifs de mer et un campanile de quarante-cinq mètres, inaugurés en 1922. La ligne de Nantes la traverse, celle de Poitiers s'y arrête, et l'antenne de La Pallice descend au grand port.",
   "platforms": [
-    {
-      "id": 1
-    },
-    {
-      "id": 2
-    },
-    {
-      "id": 3
-    },
-    {
-      "id": 4
-    },
-    {
-      "id": 5
-    }
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
   ],
   "portals": {
-    "ROCHEFORT": {
-      "side": "L",
-      "color": "#f5b23c",
-      "abbr": "RF"
-    },
-    "POITIERS": {
-      "side": "L",
-      "color": "#f2588f",
-      "abbr": "PO"
-    },
-    "LA ROCHE-SUR-YON": {
-      "side": "R",
-      "color": "#25dede",
-      "abbr": "RY",
-      "label": "LA ROCHE-S-YON"
-    },
-    "LA PALLICE": {
-      "side": "R",
-      "color": "#a78bfa",
-      "abbr": "PA",
-      "label": "LA PALLICE"
-    }
+    "ROCHEFORT":        { "side": "L", "color": "#f5b23c", "abbr": "RF" },
+    "POITIERS":         { "side": "L", "color": "#f2588f", "abbr": "PO" },
+    "LA ROCHE-SUR-YON": { "side": "R", "color": "#25dede", "abbr": "RY", "label": "LA ROCHE-S-YON" },
+    "LA PALLICE":       { "side": "R", "color": "#a78bfa", "abbr": "PA", "label": "LA PALLICE" }
   },
   "links": {
-    "ROCHEFORT": [
-      1,
-      2,
-      3,
-      4
-    ],
-    "POITIERS": [
-      4,
-      5
-    ],
-    "LA ROCHE-SUR-YON": [
-      1,
-      2,
-      3,
-      4,
-      5
-    ],
-    "LA PALLICE": [
-      1,
-      2
-    ]
+    "ROCHEFORT":        [1, 2, 3, 4],
+    "POITIERS":         [4, 5],
+    "LA ROCHE-SUR-YON": [1, 2, 3, 4, 5],
+    "LA PALLICE":       [1, 2]
   },
   "sameSidePairs": [],
   "gen": {
-    "nMin": 13,
-    "nMax": 16,
-    "gapMin": 1.8,
-    "gapMax": 3.0,
-    "cars": [
-      2,
-      3,
-      3,
-      4,
-      4,
-      5,
-      5,
-      6
-    ],
+    "nMin": 13, "nMax": 16, "gapMin": 1.8, "gapMax": 3.0,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6],
     "quietRate": 0.14
   }
 }

@@ -112,12 +112,10 @@ const PLACES = {
   // ligne parisiennes que le jeu n'ouvre pas (Est, Saint-Lazare, Austerlitz,
   // Bercy) en font partie : les lignes de l'Est, de Normandie et du Centre
   // passent par elles avant de rejoindre la gare jouable la plus proche.
-  parisstlazare:   [2.325, 48.876],
   parisausterlitz: [2.365, 48.842],
   parisbercy:      [2.383, 48.839],
 
   agen:         [0.621, 44.208],
-  alencon:      [0.099, 48.434],
   ales:         [4.085, 44.128],
   ancenis:      [-1.178, 47.369],
   aubrais:      [1.907, 47.927],   // Les Aubrais, la gare de passage d'Orléans
@@ -130,14 +128,12 @@ const PLACES = {
   chateauroux:  [1.700, 46.810],
   chateauthierry: [3.410, 49.038],
   culmont:      [5.443, 47.810],   // Culmont-Chalindrey
-  dol:          [-1.751, 48.544],
   dole:         [5.488, 47.096],
   etampes:      [2.159, 48.437],
   langogne:     [3.857, 44.733],
   laval:        [-0.761, 48.076],
   lecreusot:    [4.500, 46.765],
   macon:        [4.825, 46.303],
-  mantes:       [1.703, 48.990],
   moirans:      [5.582, 45.322],
   montargis:    [2.743, 48.007],
   montauban:    [1.341, 44.014],
@@ -150,7 +146,6 @@ const PLACES = {
   sable:        [-0.342, 47.842],
   saintraphael: [6.769, 43.424],
   sens:         [3.268, 48.198],
-  serquigny:    [0.719, 49.107],
   sete:         [3.697, 43.412],
   vendome:      [1.021, 47.822],
   vichy:        [3.430, 46.127],

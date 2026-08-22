@@ -122,14 +122,6 @@ const LINES = [
   { id: "L272", name: "Paris-Nord – Creil – Amiens", nodes: ["paris-nord", "creil", "amiens"] },
   { id: "L281", name: "Amiens – Arras – Douai – Lille",
     nodes: ["amiens", "arras", "douai", "lille"] },
-  { id: "L310", name: "Amiens – Rouen",              nodes: ["amiens", "rouen"] },
-
-  // ---- Normandie ---------------------------------------------------------
-  { id: "L340", name: "Paris-Saint-Lazare – Mantes – Rouen",
-    nodes: ["rouen", "mantes", "parisstlazare", "paris-nord"] },
-  { id: "L365", name: "Rouen – Serquigny – Caen",    nodes: ["rouen", "serquigny", "caen"] },
-  { id: "L390", name: "Caen – Dol – Rennes",         nodes: ["caen", "dol", "rennes"] },
-  { id: "L395", name: "Caen – Alençon – Le Mans",    nodes: ["caen", "alencon", "le-mans"] },
 
   // ---- Ouest et Bretagne -------------------------------------------------
   { id: "LGV-A", name: "Paris-Montparnasse – Chartres – Le Mans",

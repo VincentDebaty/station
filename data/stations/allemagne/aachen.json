@@ -17,11 +17,11 @@
     "DUREN":           { "side": "R", "color": "#4ade80", "abbr": "DN", "label": "DÜREN" }
   },
   "links": {
-    "LIEGE":           [3, 4, 5, 6, 7],
-    "MAASTRICHT":      [1, 2, 3, 4, 5],
-    "MONCHENGLADBACH": [1, 2, 3, 4],
+    "LIEGE":           [4, 5, 6, 7],
+    "MAASTRICHT":      [1, 2, 3],
+    "MONCHENGLADBACH": [2, 3, 4],
     "KOLN":            [1, 2, 3, 4, 5, 6, 7],
-    "DUREN":           [1, 2, 3, 4]
+    "DUREN":           [5, 6, 7]
   },
   "sameSidePairs": [],
   "gen": {

@@ -290,6 +290,23 @@ directions.
 
 ## 6. Validation (obligatoire avant commit)
 
+⚠ **Un balayage sans `--seed` ne se répète pas.** `reseed()` ne remplace
+`Math.random` QUE si la graine est passée : deux exécutions tirent alors des
+journées différentes, et « toutes les gares passent » ne vaut que pour ce
+tirage-là. Mesuré le 22 août 2026 — quatre balayages verts d'affilée, puis un
+cinquième qui sort Berne et Amersfoort à une file de 6, seuil jamais toléré.
+Berne était réellement défectueuse depuis le début (quai 3 desservi par quatre
+portails) ; les quatre premiers balayages ne l'avaient pas vue.
+
+Il en faut donc **deux, et ils ne servent pas à la même chose** :
+- `--seed=N` : le contrôle de non-régression. Reproductible, comparable d'un
+  lot à l'autre, c'est lui qui dit si on a cassé quelque chose.
+- sans graine, relancé plusieurs fois : l'exploration de la QUEUE de
+  distribution. C'est le seul qui trouve les défauts rares — et « file de 6 »
+  est précisément un événement rare qu'on ne veut jamais livrer.
+
+Ne jamais conclure « le catalogue est vert » sur un seul balayage non graîné.
+
 ```bash
 node tools/gen-check.mjs                # tout le catalogue, K=6
 node tools/gen-check.mjs <id>           # une gare, K=30

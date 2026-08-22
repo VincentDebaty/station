@@ -41,7 +41,6 @@
     "country": "france",
     "label": "🇫🇷 France",
     "stations": [
-      "caen",
       "angers",
       "vierzon",
       "narbonne",
@@ -49,7 +48,6 @@
       "chambery",
       "reims",
       "amiens",
-      "rouen",
       "le-mans",
       "orleans",
       "limoges",

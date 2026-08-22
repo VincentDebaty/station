@@ -17,14 +17,14 @@
   },
   "links": {
     "BRUXELLES":        [1, 2, 3, 4, 5],
-    "LOUVAIN":          [1, 2],
-    "NAMUR":            [2, 3, 4, 5],
-    "CHARLEROI":        [1, 4, 5],
-    "LOUVAIN-LA-NEUVE": [1, 2]
+    "LOUVAIN":          [1, 2, 3],
+    "NAMUR":            [2, 3, 4],
+    "CHARLEROI":        [1, 2],
+    "LOUVAIN-LA-NEUVE": [4, 5]
   },
   "sameSidePairs": [],
   "gen": {
-    "nMin": 13, "nMax": 16, "gapMin": 1.8, "gapMax": 3.0,
+    "nMin": 13, "nMax": 15, "gapMin": 1.9, "gapMax": 3.1,
     "cars": [2, 2, 2, 3, 3, 4, 4, 5],
     "quietRate": 0.2
   }
