@@ -1107,18 +1107,24 @@
     {
       "de": "paris",
       "vers": "nantes",
-      "gares": []
+      "gares": [
+        "chartres",
+        "le-mans",
+        "angers"
+      ],
+      "minGares": 3,
+      "pourquoi": "Ancenis n'a aucun embranchement et Sablé n'en garde qu'un, réservé au fret"
     },
     {
       "de": "paris",
       "vers": "bordeaux",
       "gares": [
-        "rouen",
-        "caen",
-        "le-mans",
         "tours",
-        "poitiers"
-      ]
+        "poitiers",
+        "angouleme"
+      ],
+      "minGares": 3,
+      "pourquoi": "Châtellerault et Vendôme n'ont que deux directions actives — leurs embranchements sont déclassés"
     },
     {
       "de": "lille",
@@ -1238,9 +1244,10 @@
       "gares": [
         "miramas",
         "tarascon",
-        "avignon",
         "nimes"
-      ]
+      ],
+      "minGares": 3,
+      "pourquoi": "Arles a perdu ses branches de Lunel et de Salon ; Rognac n'a que deux directions"
     },
     {
       "de": "montpellier",

@@ -1,0 +1,31 @@
+{
+  "id": "chartres",
+  "name": "Chartres",
+  "tagline": "Chartres — l'étoile à sept branches, en béton Art déco.",
+  "difficulty": 4,
+  "country": "🇫🇷 France",
+  "desc": "Henri Pacon l'a redessinée en 1933 face à la cathédrale ; elle porte depuis 2019 le label Architecture contemporaine remarquable. Historiquement une étoile à sept branches — il en reste Paris, Le Mans, Dreux, Orléans et Châteaudun, ce qui suffit largement à occuper un aiguilleur.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }, { "id": 6 }
+  ],
+  "portals": {
+    "LE MANS":            { "side": "L", "color": "#f5b23c", "abbr": "LM", "label": "LE MANS" },
+    "CHÂTEAUDUN":         { "side": "L", "color": "#4ade80", "abbr": "CD", "label": "CHÂTEAUDUN" },
+    "PARIS-MONTPARNASSE": { "side": "R", "color": "#25dede", "abbr": "PM", "label": "PARIS-MONTP." },
+    "DREUX":              { "side": "R", "color": "#f2588f", "abbr": "DX" },
+    "ORLÉANS":            { "side": "R", "color": "#a78bfa", "abbr": "OR", "label": "ORLÉANS" }
+  },
+  "links": {
+    "LE MANS":            [1, 2, 3, 4],
+    "CHÂTEAUDUN":         [4, 5, 6],
+    "PARIS-MONTPARNASSE": [1, 2, 3, 4, 5, 6],
+    "DREUX":              [1, 2],
+    "ORLÉANS":            [5, 6]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 15, "nMax": 18, "gapMin": 1.6, "gapMax": 2.8,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6],
+    "quietRate": 0.12
+  }
+}

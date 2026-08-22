@@ -120,7 +120,6 @@ const PLACES = {
   alencon:      [0.099, 48.434],
   ales:         [4.085, 44.128],
   ancenis:      [-1.178, 47.369],
-  angouleme:    [0.165, 45.654],
   aubrais:      [1.907, 47.927],   // Les Aubrais, la gare de passage d'Orléans
   barleduc:     [5.167, 48.773],
   belfort:      [6.854, 47.633],
@@ -128,7 +127,6 @@ const PLACES = {
   brive:        [1.529, 45.159],
   cahors:       [1.433, 44.449],
   cannes:       [7.020, 43.554],
-  chartres:     [1.481, 48.448],
   chateauroux:  [1.700, 46.810],
   chateauthierry: [3.410, 49.038],
   culmont:      [5.443, 47.810],   // Culmont-Chalindrey

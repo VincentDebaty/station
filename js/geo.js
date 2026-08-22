@@ -70,6 +70,8 @@ const GEO = {
         "paris-montparnasse": [2.255, 48.825], "paris-est": [2.435, 48.895],
         // Les six de la fin août : la ligne de Genève (Ambérieu – Culoz –
         // Bellegarde) et l'arc atlantique (Bordeaux – Nantes).
+        angouleme: [0.157, 45.649],
+        chartres: [1.489, 48.447],
         amberieu: [5.342, 45.954],
         culoz: [5.780, 45.845],
         bellegarde: [5.826, 46.109],
