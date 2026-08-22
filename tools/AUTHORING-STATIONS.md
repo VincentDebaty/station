@@ -307,6 +307,44 @@ Il en faut donc **deux, et ils ne servent pas à la même chose** :
 
 Ne jamais conclure « le catalogue est vert » sur un seul balayage non graîné.
 
+**Mais ne pas non plus extrapoler la queue.** K=6 est un estimateur bruité : sur
+226 fiches, chaque tirage libre sort une ou deux gares « limites » différentes,
+ce qui donne l'impression d'une dette sans fond. La mesure exhaustive du
+23 août 2026 — 226 fiches × 30 journées × 2 graines — dit l'inverse :
+
+| moyenne de pression | fiches |
+|---|---|
+| ≥ 4,0 | **0** |
+| 3,5 – 3,9 | 8 |
+| 3,0 – 3,4 | 79 |
+| < 3,0 | 139 |
+
+Une seule touchait 6 (Bad Kleinen, corrigée). Autrement dit : traiter les échecs
+au fil de l'eau suffit, et un « passage systématique » sur tout le catalogue ne
+se justifie pas. Quand le doute revient, refaire cette mesure
+(`node tools/gen-check.mjs 30 --seed=1`, ~1 h) plutôt que d'inférer.
+
+### Diagnostiquer une pression : la FORME ou le VOLUME
+
+Deux causes, deux leviers, et les confondre aggrave la gare (mesuré sur Horb,
+dégradée par deux tentatives sur son faisceau avant que l'enveloppe seule
+suffise) :
+
+- **La forme** — les quais centraux sont desservis par TOUS les portails, ceux
+  du bord par deux. Le trafic se tasse au milieu. Se lit d'un coup d'œil en
+  comptant les portails par quai. Vu sur Aachen (5 portails sur les quais 3-4,
+  2 sur les quais 6-7), Berne, Amersfoort, Ottignies.
+- **Le volume** — le faisceau est équilibré mais l'enveloppe trop dense pour ce
+  que la géométrie porte, typiquement quand un côté n'a qu'un seul portail
+  (tout passe par lui). Vu sur Colmar, Aarau, Roosendaal, Bingen, Horb, Harburg.
+
+Le diagnostic qui tranche : **compter les quais partagés par chaque PAIRE**
+portail-L × portail-R. Une paire à un ou deux quais est un goulet, surtout si
+c'est l'axe du corridor. Bad Kleinen sortait une file de 6 parce que
+Schwerin ↔ Rostock — l'axe même de Hambourg – Berlin — n'avait que deux quais,
+et Lübeck ↔ Wismar aucun. Élargir la paire a réglé ce que baisser le trafic
+avait empiré.
+
 ```bash
 node tools/gen-check.mjs                # tout le catalogue, K=6
 node tools/gen-check.mjs <id>           # une gare, K=30
