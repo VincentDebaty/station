@@ -18,14 +18,14 @@
   },
   "links": {
     "ANVERS":    [1, 2, 3, 4],
-    "TERMONDE":  [5, 6],
-    "TURNHOUT":  [1, 6],
-    "BRUXELLES": [1, 2, 3, 4, 5],
-    "LOUVAIN":   [4, 5, 6]
+    "TERMONDE":  [4, 5, 6],
+    "TURNHOUT":  [1, 2],
+    "BRUXELLES": [1, 2, 3, 4, 5, 6],
+    "LOUVAIN":   [3, 4, 5, 6]
   },
   "sameSidePairs": [],
   "gen": {
-    "nMin": 15, "nMax": 18, "gapMin": 1.6, "gapMax": 2.7,
+    "nMin": 14, "nMax": 17, "gapMin": 1.7, "gapMax": 2.9,
     "cars": [2, 3, 3, 4, 4, 5, 5, 6],
     "quietRate": 0.12
   }

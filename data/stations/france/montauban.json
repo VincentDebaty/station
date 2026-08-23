@@ -16,12 +16,12 @@
   },
   "links": {
     "AGEN":     [1, 2, 3, 4],
-    "BRIVE":    [4, 5],
+    "BRIVE":    [3, 4, 5],
     "TOULOUSE": [1, 2, 3, 4, 5]
   },
   "sameSidePairs": [],
   "gen": {
-    "nMin": 13, "nMax": 16, "gapMin": 1.7, "gapMax": 2.9,
+    "nMin": 12, "nMax": 15, "gapMin": 1.8, "gapMax": 3.0,
     "cars": [2, 3, 3, 4, 4, 5, 5, 6],
     "quietRate": 0.16
   }

@@ -19,11 +19,11 @@
     "LYON":            [1, 2, 3, 4],
     "MONTALIEU":       [4, 5, 6],
     "CULOZ":           [1, 2, 3, 4, 5, 6],
-    "BOURG-EN-BRESSE": [1, 2]
+    "BOURG-EN-BRESSE": [1, 2, 3]
   },
   "sameSidePairs": [],
   "gen": {
-    "nMin": 15, "nMax": 18, "gapMin": 1.6, "gapMax": 2.8,
+    "nMin": 14, "nMax": 17, "gapMin": 1.7, "gapMax": 2.9,
     "cars": [2, 3, 3, 4, 4, 5, 5, 6],
     "quietRate": 0.12
   }

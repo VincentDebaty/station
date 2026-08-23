@@ -24,7 +24,7 @@
   },
   "sameSidePairs": [],
   "gen": {
-    "nMin": 15, "nMax": 18, "gapMin": 1.6, "gapMax": 2.9,
+    "nMin": 13, "nMax": 16, "gapMin": 1.7, "gapMax": 2.9,
     "cars": [2, 3, 3, 4, 4, 5, 5, 6],
     "quietRate": 0.15,
     "rush": "pointe"

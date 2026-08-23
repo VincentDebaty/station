@@ -338,6 +338,24 @@ suffise) :
   que la géométrie porte, typiquement quand un côté n'a qu'un seul portail
   (tout passe par lui). Vu sur Colmar, Aarau, Roosendaal, Bingen, Horb, Harburg.
 
+**Le cas le plus fréquent du VOLUME : un côté à portail unique.** Quand un côté
+n'a qu'une seule destination, toutes les paires passent par elle — la gare
+devient un entonnoir, et l'enveloppe doit descendre d'un cran, quelle que soit
+la beauté du faisceau. Relevé sur Colmar (tout par Strasbourg), Aarau (par
+Olten), Agen (par Montauban), Fürth (par Nuremberg) et Potsdam (par Berlin) :
+toutes les cinq sortaient au-dessus de 4, toutes les cinq sont rentrées en
+retirant deux ou trois convois. Un profil `rush` marqué aggrave le cas, parce
+qu'il concentre le trafic dans l'entonnoir.
+
+Ce motif se balaie d'un coup sur tout le catalogue — pour chaque fiche, la
+plus petite paire portail-L × portail-R, et le `nMax` de son enveloppe. Relevé
+le 23 août 2026 : **43 fiches** ont un côté à portail unique, dont 38 avec un
+`nMax` de 15 ou plus. Elles ne sont pas toutes fautives, loin de là : c'est un
+FACTEUR DE RISQUE, pas un défaut, et les desserrer en bloc déplacerait
+l'équilibre du jeu sans raison. Ce qui se corrige, c'est la fiche qui échoue,
+et celle dont **la plus petite paire tombe à un seul quai** — Angers n'en avait
+qu'un pour Cholet, Malines quatre paires sur six.
+
 Le diagnostic qui tranche : **compter les quais partagés par chaque PAIRE**
 portail-L × portail-R. Une paire à un ou deux quais est un goulet, surtout si
 c'est l'axe du corridor. Bad Kleinen sortait une file de 6 parce que

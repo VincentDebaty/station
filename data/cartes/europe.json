@@ -270,7 +270,7 @@
           "nom": "l'Est"
         },
         {
-          "vers": "dijon",
+          "vers": "lyon",
           "gare": "Paris-Gare-de-Lyon",
           "nom": "le Sud-Est"
         },
@@ -296,17 +296,6 @@
       ],
       "rang": 1,
       "gare": "Strasbourg"
-    },
-    {
-      "id": "dijon",
-      "nom": "Dijon",
-      "zone": "nw",
-      "ll": [
-        5.04,
-        47.32
-      ],
-      "rang": 2,
-      "gare": "Dijon"
     },
     {
       "id": "luxembourg",
@@ -340,17 +329,6 @@
       ],
       "rang": 2,
       "gare": "Nantes"
-    },
-    {
-      "id": "toulouse",
-      "nom": "Toulouse",
-      "zone": "nw",
-      "ll": [
-        1.44,
-        43.6
-      ],
-      "rang": 2,
-      "gare": "Toulouse"
     },
     {
       "id": "berlin",
@@ -1101,13 +1079,6 @@
     },
     {
       "de": "paris",
-      "vers": "dijon",
-      "gares": [
-        "laroche"
-      ]
-    },
-    {
-      "de": "paris",
       "vers": "nantes",
       "gares": [
         "chartres",
@@ -1215,14 +1186,6 @@
       ]
     },
     {
-      "de": "dijon",
-      "vers": "lyon",
-      "gares": [
-        "chalon",
-        "macon"
-      ]
-    },
-    {
       "de": "lyon",
       "vers": "marseille",
       "gares": []
@@ -1256,27 +1219,8 @@
     },
     {
       "de": "montpellier",
-      "vers": "toulouse",
-      "gares": [
-        "beziers",
-        "narbonne",
-        "carcassonne"
-      ],
-      "minGares": 3,
-      "pourquoi": "Sète et Agde n'ont que deux directions réelles ; le corridor n'offre pas de quatrième carrefour"
-    },
-    {
-      "de": "montpellier",
       "vers": "barcelone",
       "gares": []
-    },
-    {
-      "de": "toulouse",
-      "vers": "bordeaux",
-      "gares": [
-        "montauban",
-        "agen"
-      ]
     },
     {
       "de": "bordeaux",
@@ -1854,6 +1798,28 @@
       "type": "mer",
       "gares": [],
       "note": "le ferry de Durrës"
+    },
+    {
+      "de": "paris",
+      "vers": "lyon",
+      "gares": [
+        "laroche",
+        "dijon",
+        "chalon",
+        "macon"
+      ]
+    },
+    {
+      "de": "montpellier",
+      "vers": "bordeaux",
+      "gares": [
+        "beziers",
+        "narbonne",
+        "carcassonne",
+        "toulouse",
+        "montauban",
+        "agen"
+      ]
     }
   ]
 }

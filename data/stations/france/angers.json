@@ -19,7 +19,7 @@
     "NANTES":  [1, 2, 3, 4, 5],
     "LE MANS": [1, 2, 3],
     "TOURS":   [3, 4],
-    "CHOLET":  [5]
+    "CHOLET":  [4, 5]
   },
   "sameSidePairs": [],
   "gen": {
