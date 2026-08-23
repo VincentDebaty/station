@@ -1288,11 +1288,6 @@
     },
     {
       "de": "strasbourg",
-      "vers": "stuttgart",
-      "gares": []
-    },
-    {
-      "de": "strasbourg",
       "vers": "zurich",
       "gares": [
         "selestat",
