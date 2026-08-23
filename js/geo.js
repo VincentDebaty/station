@@ -70,6 +70,13 @@ const GEO = {
         "paris-montparnasse": [2.255, 48.825], "paris-est": [2.435, 48.895],
         // Les six de la fin août : la ligne de Genève (Ambérieu – Culoz –
         // Bellegarde) et l'arc atlantique (Bordeaux – Nantes).
+        // Les sept du 23 août : la Bourgogne (Paris – Dijon – Lyon), la Garonne
+        // (Toulouse – Bordeaux) et la Bavière (Nuremberg – Munich).
+        chalon: [4.853, 46.780],
+        macon: [4.825, 46.303],
+        laroche: [3.517, 47.968],
+        montauban: [1.341, 44.014],
+        agen: [0.621, 44.208],
         angouleme: [0.157, 45.649],
         chartres: [1.489, 48.447],
         amberieu: [5.342, 45.954],
@@ -153,6 +160,8 @@ const GEO = {
         // sur l'IC d'Amsterdam. Coordonnées Wikidata, comme les précédentes.
         // Les cinq de la fin août : le corridor du Rhin (Strasbourg – Francfort)
         // et la Baltique (Hambourg – Berlin). Coordonnées Wikidata.
+        ingolstadt: [11.437, 48.744],
+        treuchtlingen: [10.908, 48.961],
         offenburg: [7.941, 48.471],
         rastatt: [8.212, 48.858],
         schwerin: [11.408, 53.634],

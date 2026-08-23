@@ -173,8 +173,10 @@ const LINES = [
 
   // ---- Bourgogne, Franche-Comté et Alsace --------------------------------
   { id: "LGV-SE", name: "Paris-Lyon – Le Creusot – Lyon", nodes: ["paris-lyon", "lecreusot", "lyon"] },
-  { id: "L750", name: "Paris-Lyon – Sens – Dijon",   nodes: ["paris-lyon", "sens", "dijon"] },
-  { id: "L760", name: "Dijon – Mâcon – Lyon",        nodes: ["dijon", "macon", "lyon"] },
+  { id: "L750", name: "Paris-Lyon – Sens – Laroche-Migennes – Dijon",
+    nodes: ["paris-lyon", "sens", "laroche", "dijon"] },
+  { id: "L760", name: "Dijon – Chalon-sur-Saône – Mâcon – Lyon",
+    nodes: ["dijon", "chalon", "macon", "lyon"] },
   { id: "L770", name: "Dijon – Dole – Besançon – Belfort – Mulhouse",
     nodes: ["dijon", "dole", "besancon", "belfort", "mulhouse"] },
   { id: "L780", name: "Dijon – Culmont-Chalindrey – Nancy", nodes: ["dijon", "culmont", "nancy"] },
@@ -344,6 +346,9 @@ const LINES = [
   { id: "SFS-WU", name: "Francfort – Hanau – Aschaffenbourg – Gemünden – Wurtzbourg – Fürth – Nuremberg",
     nodes: ["frankfurt", "hanau", "aschaffenburg", "gemunden", "wurzburg", "furth", "nurnberg"] },
   { id: "SFS-IN", name: "Nuremberg – Ingolstadt – Munich", nodes: ["nurnberg", "ingolstadt", "munchen"] },
+  // La ligne classique de Munich à Treuchtlingen, par Ingolstadt : c'est elle
+  // que suivaient les trains de Nuremberg avant la LGV de 2006.
+  { id: "TR-IN", name: "Treuchtlingen – Ingolstadt", nodes: ["treuchtlingen", "ingolstadt"] },
   { id: "N-R", name: "Nuremberg – Ratisbonne",   nodes: ["nurnberg", "regensburg"] },
   { id: "R-M", name: "Ratisbonne – Landshut – Munich", nodes: ["regensburg", "landshut", "munchen"] },
   { id: "A-N", name: "Augsbourg – Donauwörth – Treuchtlingen – Nuremberg",

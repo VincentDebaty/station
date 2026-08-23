@@ -1,0 +1,32 @@
+{
+  "id": "ingolstadt",
+  "name": "Ingolstadt Hbf",
+  "city": "Ingolstadt",
+  "tagline": "Ingolstadt — le nœud cadencé de la Bavière, quatre lignes à l'heure juste.",
+  "difficulty": 4,
+  "country": "🇩🇪 Allemagne",
+  "desc": "Un Taktknoten : les régionaux des quatre directions s'y retrouvent toutes les heures pour se donner correspondance. La ligne de Munich à Treuchtlingen le traverse, la Paartalbahn part vers Augsbourg, la Donautalbahn vers Ulm et la voie de Ratisbonne vers l'est. Le triage jouxte les quais, et DB Cargo y tient un atelier.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }, { "id": 6 }
+  ],
+  "portals": {
+    "NÜRNBERG":      { "side": "L", "color": "#f2588f", "abbr": "N", "label": "NÜRNBERG" },
+    "TREUCHTLINGEN": { "side": "L", "color": "#a78bfa", "abbr": "TR", "label": "TREUCHTLINGEN" },
+    "MÜNCHEN":       { "side": "R", "color": "#25dede", "abbr": "M", "label": "MÜNCHEN" },
+    "AUGSBURG":      { "side": "R", "color": "#f5b23c", "abbr": "A" },
+    "REGENSBURG":    { "side": "R", "color": "#4ade80", "abbr": "R" }
+  },
+  "links": {
+    "NÜRNBERG":      [1, 2, 3, 4],
+    "TREUCHTLINGEN": [4, 5, 6],
+    "MÜNCHEN":       [1, 2, 3, 4, 5, 6],
+    "AUGSBURG":      [5, 6],
+    "REGENSBURG":    [1, 2]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 15, "nMax": 18, "gapMin": 1.6, "gapMax": 2.8,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6],
+    "quietRate": 0.12
+  }
+}

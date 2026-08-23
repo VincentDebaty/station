@@ -1,0 +1,29 @@
+{
+  "id": "treuchtlingen",
+  "name": "Treuchtlingen",
+  "tagline": "Treuchtlingen — quatre grandes lignes pour une petite ville d'Altmühl.",
+  "difficulty": 3,
+  "country": "🇩🇪 Allemagne",
+  "desc": "Quatre lignes à double voie électrifiée s'y rejoignent — Nuremberg, Wurtzbourg, Munich par Ingolstadt et Donauwörth — pour cent dix trains par jour dans une bourgade de l'Altmühl. Sept voies à quai, un quai principal et trois quais en île, et le fret n'y fait que garer ses trains complets.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
+  ],
+  "portals": {
+    "NÜRNBERG":    { "side": "L", "color": "#f2588f", "abbr": "N", "label": "NÜRNBERG" },
+    "WÜRZBURG":    { "side": "L", "color": "#4ade80", "abbr": "WÜ", "label": "WÜRZBURG" },
+    "INGOLSTADT":  { "side": "R", "color": "#25dede", "abbr": "IN" },
+    "DONAUWÖRTH":  { "side": "R", "color": "#a78bfa", "abbr": "DW", "label": "DONAUWÖRTH" }
+  },
+  "links": {
+    "NÜRNBERG":   [1, 2, 3],
+    "WÜRZBURG":   [3, 4, 5],
+    "INGOLSTADT": [1, 2, 3, 4, 5],
+    "DONAUWÖRTH": [1, 2]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 13, "nMax": 16, "gapMin": 1.7, "gapMax": 2.9,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6],
+    "quietRate": 0.16
+  }
+}

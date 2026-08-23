@@ -115,7 +115,6 @@ const PLACES = {
   parisausterlitz: [2.365, 48.842],
   parisbercy:      [2.383, 48.839],
 
-  agen:         [0.621, 44.208],
   ales:         [4.085, 44.128],
   ancenis:      [-1.178, 47.369],
   aubrais:      [1.907, 47.927],   // Les Aubrais, la gare de passage d'Orléans
@@ -133,10 +132,8 @@ const PLACES = {
   langogne:     [3.857, 44.733],
   laval:        [-0.761, 48.076],
   lecreusot:    [4.500, 46.765],
-  macon:        [4.825, 46.303],
   moirans:      [5.582, 45.322],
   montargis:    [2.743, 48.007],
-  montauban:    [1.341, 44.014],
   montelimar:   [4.745, 44.559],
   montmelian:   [6.043, 45.503],
   nevers:       [3.151, 46.987],
@@ -164,14 +161,12 @@ const PLACES = {
   gelsenkirchen: [7.104, 51.505],
   grobers:      [12.113, 51.349],  // bifurcation de Gröbers, où la LGV se sépare vers Halle et Leipzig
   heidelberg:   [8.670, 49.404],
-  ingolstadt:   [11.437, 48.744],
   jena:         [11.586, 50.927],
   kaiserslautern: [7.769, 49.436],
   landshut:     [12.128, 48.545],
   limburg:      [8.052, 50.386],
   oberhausen:   [6.852, 51.478],
   riesa:        [13.294, 51.306],
-  treuchtlingen: [10.908, 48.961],
   unstruttal:   [11.653, 51.276],  // viaduc de l'Unstrut (Karsdorf) : le nord de la LGV Erfurt – Leipzig
   warburg:      [9.146, 51.489],
   // Weimar n'est traversée par AUCUNE ligne écrite : la LGV passe au nord par

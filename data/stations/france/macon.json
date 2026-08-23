@@ -1,0 +1,30 @@
+{
+  "id": "macon",
+  "name": "Mâcon-Ville",
+  "city": "Mâcon",
+  "tagline": "Mâcon-Ville — la Saône, l'Ain et le Bourbonnais s'y séparent.",
+  "difficulty": 3,
+  "country": "🇫🇷 France",
+  "desc": "Bifurcation entre la grande ligne du Sud, la voie d'Ambérieu vers les Alpes et celle de Moulins par Paray-le-Monial. Le bâtiment de 1854 d'Alexis Cendrier a été détruit en 1944 ; celui qui l'a remplacé est d'après-guerre, et la gare a pris le nom de Mâcon-Ville en 1981 quand la gare TGV a ouvert.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
+  ],
+  "portals": {
+    "CHALON":           { "side": "L", "color": "#25dede", "abbr": "CH" },
+    "PARAY-LE-MONIAL":  { "side": "L", "color": "#a78bfa", "abbr": "PM", "label": "PARAY" },
+    "LYON":             { "side": "R", "color": "#f5b23c", "abbr": "LY" },
+    "AMBÉRIEU":         { "side": "R", "color": "#4ade80", "abbr": "AM", "label": "AMBÉRIEU" }
+  },
+  "links": {
+    "CHALON":          [1, 2, 3, 4],
+    "PARAY-LE-MONIAL": [4, 5],
+    "LYON":            [1, 2, 3, 4, 5],
+    "AMBÉRIEU":        [1, 2]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 13, "nMax": 16, "gapMin": 1.7, "gapMax": 2.9,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6],
+    "quietRate": 0.16
+  }
+}

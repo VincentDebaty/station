@@ -1102,7 +1102,9 @@
     {
       "de": "paris",
       "vers": "dijon",
-      "gares": []
+      "gares": [
+        "laroche"
+      ]
     },
     {
       "de": "paris",
@@ -1215,7 +1217,10 @@
     {
       "de": "dijon",
       "vers": "lyon",
-      "gares": []
+      "gares": [
+        "chalon",
+        "macon"
+      ]
     },
     {
       "de": "lyon",
@@ -1268,7 +1273,10 @@
     {
       "de": "toulouse",
       "vers": "bordeaux",
-      "gares": []
+      "gares": [
+        "montauban",
+        "agen"
+      ]
     },
     {
       "de": "bordeaux",
@@ -1431,7 +1439,10 @@
     {
       "de": "nuremberg",
       "vers": "munich",
-      "gares": []
+      "gares": [
+        "treuchtlingen",
+        "ingolstadt"
+      ]
     },
     {
       "de": "munich",

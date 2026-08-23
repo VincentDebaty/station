@@ -1,0 +1,30 @@
+{
+  "id": "chalon",
+  "name": "Chalon-sur-Saône",
+  "city": "Chalon-sur-Saône",
+  "tagline": "Chalon-sur-Saône — huit voies au bord de la Saône, quatre lignes.",
+  "difficulty": 4,
+  "country": "🇫🇷 France",
+  "desc": "Le plus gros nœud entre Dijon et Mâcon : la grande ligne de Paris à Marseille la traverse, celle de Bourg-en-Bresse s'en va vers l'est et celle de Cluny vers l'ouest. Huit voies, cinq quais, et depuis 2024 un chantier de trente-trois millions pour les rendre tous accessibles.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
+  ],
+  "portals": {
+    "DIJON":           { "side": "L", "color": "#25dede", "abbr": "DJ" },
+    "CLUNY":           { "side": "L", "color": "#a78bfa", "abbr": "CL" },
+    "MÂCON":           { "side": "R", "color": "#f5b23c", "abbr": "MA", "label": "MÂCON" },
+    "BOURG-EN-BRESSE": { "side": "R", "color": "#4ade80", "abbr": "BB", "label": "BOURG" }
+  },
+  "links": {
+    "DIJON":           [1, 2, 3, 4, 5],
+    "CLUNY":           [1, 2],
+    "MÂCON":           [1, 2, 3, 4],
+    "BOURG-EN-BRESSE": [4, 5]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 14, "nMax": 17, "gapMin": 1.7, "gapMax": 2.9,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6],
+    "quietRate": 0.13
+  }
+}
