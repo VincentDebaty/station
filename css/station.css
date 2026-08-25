@@ -2338,7 +2338,8 @@ svg { width: 100%; height: 100%; display: block; }
 .cc-corps::-webkit-scrollbar { width: 4px; }
 .cc-corps::-webkit-scrollbar-thumb { background: #2a3550; border-radius: 2px; }
 .cc-pied { flex: 0 0 auto; display: flex; flex-direction: column; gap: 8px; padding-top: 14px; }
-.cc-pied .c-suite { width: 100%; justify-content: center; margin: 0; }
+.cc-pied .c-suite { width: 100%; margin: 0; }
+.cc-pied .cb-rejouer, .cc-pied .cb-payer { justify-content: center; font-size: 14px; padding: 10px 14px; }
 /* Les noms des gares se lisent toujours : il n'y a qu'un chapitre à l'écran,
    donc jamais de nuage d'étiquettes à démêler. */
 
@@ -2436,16 +2437,23 @@ svg { width: 100%; height: 100%; display: block; }
 .cf-et { color: var(--gold); font-size: 14px; letter-spacing: .08em; }
 .cf-rec { font-size: 11.5px; color: var(--muted); }
 
-/* LA FLÈCHE SE CENTRE SUR LE BOUTON, LES MOTS GARDENT LEUR LIGNE DE BASE.
-   Le bouton alignait tout sur la ligne de base : un SVG n'en a pas, et la
-   flèche montait d'un cheveu. Les deux mots vivent donc dans leur propre
-   groupe, aligné en base ; le bouton, lui, centre ce groupe et la flèche. */
-.c-appel { display: flex; align-items: center; justify-content: center; gap: 10px;
-  font-size: 16px; padding: 14px 18px; flex: 0 0 auto; width: 100%; }
-.ca-texte { display: inline-flex; align-items: baseline; gap: 9px; }
-.ca-quoi { font-weight: 700; }
-.ca-ou { opacity: .82; font-weight: 500; }
-.cb-suite .ca-ou { font-size: .92em; }
+/* LE BOUTON EST BÂTI POUR LES NOMS LONGS, il ne les subit pas.
+   « Jouer Rotterdam Centraal » sur une seule ligne débordait d'un panneau de
+   250 px : le nom passait à la ligne et le bouton se déformait d'une gare à
+   l'autre. Le verbe vit donc AU-DESSUS, en petit — c'est toujours le même — et
+   le nom de la gare en dessous, en grand : c'est lui qu'on lit. La flèche
+   garde sa place à droite, centrée sur l'ensemble, quelle que soit la hauteur.
+   Résultat : un bouton de forme stable, que la gare s'appelle Namur ou
+   Paris-Montparnasse. */
+.c-appel { display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 11px 14px 11px 16px; flex: 0 0 auto; width: 100%; text-align: left; }
+.ca-texte { display: flex; flex-direction: column; align-items: flex-start; gap: 1px;
+  min-width: 0; flex: 1 1 auto; }
+.ca-quoi { font-size: 10.5px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase;
+  opacity: .62; line-height: 1.2; }
+.ca-ou { font-size: 16.5px; font-weight: 700; line-height: 1.18; letter-spacing: -.01em;
+  text-wrap: balance; }
+.c-appel svg { flex: none; }
 .c-avenir { font-size: 13.5px; color: var(--muted); text-align: center; padding: 12px 0;
   border: 1px dashed #2a3550; border-radius: 10px; }
 /* Le saut : une transition, jamais une punition. Posé sur la scène, en haut. */
@@ -2493,6 +2501,8 @@ svg { width: 100%; height: 100%; display: block; }
 /* ÉCRAN COURT : tout se resserre, RIEN ne se coupe. C'est la hauteur qui
    commande — un panneau à trois blocs empilés se serre par le haut. */
 @media (max-height: 620px) {
+  .ca-ou { font-size: 15px; }
+  .c-appel { padding: 9px 12px 9px 14px; }
   .cc-nom { font-size: 18px; }
   .cf-nom { font-size: 21px; }
   .cf-phrase { display: none; }              /* la couleur, pas l'information */
@@ -2509,7 +2519,8 @@ svg { width: 100%; height: 100%; display: block; }
   .cc-nom { font-size: 16px; } .cf-nom { font-size: 18px; }
   .cc-zone, .cf-pays { display: none; }
   .cb-etoiles { font-size: 22px; }
-  .c-appel { font-size: 14px; padding: 9px 12px; }
+  .ca-ou { font-size: 14px; } .ca-quoi { font-size: 9.5px; }
+  .c-appel { padding: 8px 10px 8px 12px; }
   .cf-ou, .cc-compteur { font-size: 9.5px; }
 }
 /* Les pastilles de difficulté du cartouche : la MÊME jauge que partout. */
