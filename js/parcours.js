@@ -294,11 +294,14 @@ function boutonsHTML() {
       (assez ? "" : `<div class="cb-manque">Il te manque ${manque} crédit${manque > 1 ? "s" : ""} — ` +
         `rejoue une gare déjà faite pour les gagner.</div>`);
   }
+  // REPRENDRE EN HAUT, AVANCER EN BAS — dans les deux issues. Le bouton qui
+  // fait avancer le ruban tombe ainsi toujours au même endroit : celui qu'occupe
+  // « Jouer » quand aucun service ne vient de finir, au pied du panneau.
   return `<div class="cb-actions">` +
+    `<button class="c-suite cb-suite cb-rejouer" data-gare="${b.gare}">Rejouer${BOUCLE}</button>` +
     (gc ? `<button class="c-suite cb-suite cb-continuer" data-gare="${gc}">` +
       `<span class="ca-texte"><span class="ca-quoi">Jouer</span>` +
-      `<span class="ca-ou">${villeDe(gc)}</span></span>${FLECHE}</button>` : "") +
-    `<button class="c-suite cb-suite cb-rejouer" data-gare="${b.gare}">Rejouer${BOUCLE}</button></div>`;
+      `<span class="ca-ou">${villeDe(gc)}</span></span>${FLECHE}</button>` : "") + `</div>`;
 }
 
 // ------------------------------------------------------------------
