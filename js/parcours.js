@@ -209,10 +209,14 @@ function garesHTML() {
       (ici ? `<circle class="halo" cx="${cx}" cy="${cy}" r="${R(fin ? 5.2 : 4.4)}"/>` : "") +
       `<circle class="cible" cx="${cx}" cy="${cy}" r="${R(5.5)}"/>` +
       `<circle class="pt" cx="${cx}" cy="${cy}" r="${R(fin ? 2.3 : 1.5)}"/>` +
-      `<text x="${cx}" y="${(p.y - (fin ? 6 : 4.4) / k).toFixed(2)}">${nomDe(g)}</text>` +
-      (estSansFaute(g)
-        ? `<text class="et dia" x="${cx}" y="${(p.y + 6.2 / k).toFixed(2)}">◆</text>`
-        : st ? `<text class="et" x="${cx}" y="${(p.y + 6.2 / k).toFixed(2)}">${"★".repeat(st)}</text>` : "") +
+      // LE SCORE VIT DANS L'ÉTIQUETTE, À DROITE DU NOM. Il était posé SOUS le
+      // point, donc il percutait le nom de la gare d'à côté — « ★Malines ».
+      // Nom et score ne font plus qu'un bloc : ils se centrent ensemble sur le
+      // point, et il n'y a plus qu'une chose à ne pas faire se chevaucher.
+      `<text x="${cx}" y="${(p.y - (fin ? 6 : 4.4) / k).toFixed(2)}">${nomDe(g)}` +
+        (estSansFaute(g) ? `<tspan class="et dia" dx="${(1.4 / k).toFixed(2)}">◆</tspan>`
+          : st ? `<tspan class="et" dx="${(1.4 / k).toFixed(2)}">${"★".repeat(st)}</tspan>` : "") +
+      `</text>` +
       `</g>`);
   }
   return '<g class="gares">' + out.join("") + "</g>";

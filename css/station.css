@@ -2374,7 +2374,10 @@ svg { width: 100%; height: 100%; display: block; }
   text-anchor: middle; font-family: "Segoe UI", system-ui, sans-serif;
   pointer-events: none; paint-order: stroke; stroke: #0E1420;
   stroke-width: calc(1.3px / var(--k, 1)); stroke-linejoin: round; }
-.c-ruban .gare .et { font-size: calc(2.1px / var(--k, 1)); fill: var(--gold); stroke-width: 0; }
+/* Le score suit le nom : même ligne, même halo — il doit se lire par-dessus la
+   carte comme le reste de l'étiquette. */
+.c-ruban .gare .et { font-size: .82em; fill: var(--gold); }
+.c-ruban .gare .et.dia { font-size: .9em; fill: #7fd4ff; }
 .c-ruban .g-faite .pt { fill: var(--col); stroke: var(--col); }
 .c-ruban .g-faite text { fill: var(--text); }
 .c-ruban .g-payee .pt { fill: #0E1420; stroke: var(--col); stroke-dasharray: .6 .6; }
@@ -2553,7 +2556,6 @@ svg { width: 100%; height: 100%; display: block; }
 .cb-retard.sansfaute b { color: #7fd4ff; }
 .cf-dia { font-size: 11.5px; color: #7fd4ff; font-weight: 600; }
 .c-diamants { font-family: ui-monospace, Menlo, monospace; font-size: 12.5px; color: #7fd4ff; }
-.c-ruban .et.dia { fill: #7fd4ff; font-size: calc(2.8px / var(--k, 1)); }
 .cj-cran.dia { background: #7fd4ff; }
 /* Le boss s'annonce : sans cela, la bourrasque passe pour un caprice du
    générateur. Le joueur doit savoir que la journée finit en orage. */
