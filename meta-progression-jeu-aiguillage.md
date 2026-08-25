@@ -107,6 +107,14 @@ Les trois premiers niveaux décrivent *comment on avance* ; le quatrième décri
 - **Le barème s'affiche** (cartouche de la gare, « Pour 3 ★ : 12 min » ; relevé
   de fin, « à viser : 3 ★ sous 12 min »). Un cadran caché passe pour un bug :
   « neuf minutes m'ont valu trois étoiles à Arlon et deux à Bruxelles ».
+- **Le diamant se montre au moment où il se gagne** : badge ◆ DIAMANT dans le
+  relevé, ◆ sous la gare sur la carte, cran bleu dans la jauge du chapitre,
+  compteur ◆ dans la barre du haut. Il était enregistré depuis toujours
+  (`bestDelay = 0`) et ne s'affichait nulle part — on faisait un sans-faute et
+  le jeu ne disait rien.
+- **Deux symboles, deux sens, et on ne les mélange pas** : **◆ est le diamant**,
+  jamais la monnaie. Les crédits s'écrivent **« 24 cr »**. Ils s'étaient
+  disputé le losange dans la barre du haut.
 - Une fiche peut imposer ses propres seuils (champ `seuils`), mais rien ne s'en
   sert : le barème se déduit, comme tout le reste.
 - Plancher de jouabilité : **au moins 3 directions et 3-4 quais**. Une gare de

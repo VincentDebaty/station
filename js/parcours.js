@@ -37,6 +37,11 @@ const ETIREMENT_X = 1.6;   // l'Europe est plus haute que large : on l'élargit
 function nomDe(id) { const c = cardOf(id); return c ? (c.city || c.name) : id; }
 function villeDe(id) { const c = cardOf(id); return c ? (c.name || c.city) : id; }
 function etoilesDe(id) { return ((getProgress()[id] || {}).stars) || 0; }
+// UN SANS-FAUTE : zéro minute de retard, une fois. Le diamant s'empile sur les
+// trois étoiles, il ne les remplace pas — mieux jouer ne rapporte jamais moins.
+// C'est la seule mesure absolue du jeu : le barème des étoiles suit la
+// difficulté de la gare (js/ruban.js, SEUILS), zéro reste zéro partout.
+function estSansFaute(id) { return (getProgress()[id] || {}).bestDelay === 0; }
 function coordDe(id) {
   if (typeof GEO === "undefined" || !GEO.countries) return null;
   for (const p of Object.values(GEO.countries)) {
@@ -198,7 +203,9 @@ function garesHTML() {
       `<circle class="cible" cx="${cx}" cy="${cy}" r="${R(5.5)}"/>` +
       `<circle class="pt" cx="${cx}" cy="${cy}" r="${R(fin ? 2.3 : 1.5)}"/>` +
       `<text x="${cx}" y="${(p.y - (fin ? 6 : 4.4) / k).toFixed(2)}">${nomDe(g)}</text>` +
-      (st ? `<text class="et" x="${cx}" y="${(p.y + 6.2 / k).toFixed(2)}">${"★".repeat(st)}</text>` : "") +
+      (estSansFaute(g)
+        ? `<text class="et dia" x="${cx}" y="${(p.y + 6.2 / k).toFixed(2)}">◆</text>`
+        : st ? `<text class="et" x="${cx}" y="${(p.y + 6.2 / k).toFixed(2)}">${"★".repeat(st)}</text>` : "") +
       `</g>`);
   }
   return '<g class="gares">' + out.join("") + "</g>";
@@ -249,7 +256,8 @@ function cartoucheHTML(gareId) {
       <div><dt>Pour 3 ★</dt><dd class="cf-seuil">${seuils.trois}<span> min</span></dd></div>
     </dl>
     ${st ? `<p class="cf-score"><span class="cf-et">${"★".repeat(st)}</span>${
-      best != null ? `<span class="cf-rec">record ${best} min</span>` : ""}</p>` : ""}
+      estSansFaute(gareId) ? `<span class="cf-dia">◆ sans faute</span>`
+        : best != null ? `<span class="cf-rec">record ${best} min</span>` : ""}</p>` : ""}
   </section>`;
 }
 
@@ -263,7 +271,14 @@ function bilanHTML() {
   const etoiles = typeof etoilesHTML === "function" ? etoilesHTML(b.stars, b.prevStars) : "";
   const retard = b.failed
     ? `<div class="cb-retard"><b>${b.d}</b> min — plafond dépassé</div>`
+    : b.perfect
+    ? `<div class="cb-retard sansfaute"><b>0</b> min — pas une minute</div>`
     : `<div class="cb-retard"><b>${b.d}</b> min de retard</div>`;
+  // LE DIAMANT SE MONTRE AU MOMENT OÙ IL SE GAGNE. Il était enregistré depuis
+  // toujours (store, bestDelay = 0) et ne s'affichait nulle part : le joueur
+  // faisait un sans-faute et le jeu ne lui disait rien.
+  const diamant = b.perfect
+    ? `<div class="cb-diamant">◆ <span>Diamant</span></div>` : "";
   let rec = "";
   if (b.failed) rec = "";
   else if (!b.win) rec = `<div class="cb-record loin">objectif manqué</div>`;
@@ -278,7 +293,7 @@ function bilanHTML() {
     ? `<div class="cb-vise">3 ★ sous ${s.trois} min</div>` : "";
   return `<div class="${cl}" role="status">
     <div class="cb-gare">${villeDe(b.gare)}</div>
-    <div class="cb-etoiles">${etoiles}</div>${retard}${rec}${vise}${boutonsHTML()}</div>`;
+    <div class="cb-etoiles">${etoiles}</div>${diamant}${retard}${rec}${vise}${boutonsHTML()}</div>`;
 }
 
 const FLECHE = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" ' +
@@ -300,7 +315,7 @@ function boutonsHTML() {
     return `<div class="cb-actions">` +
       `<button class="c-suite cb-suite" data-gare="${b.gare}">Réessayer${BOUCLE}</button>` +
       `<button class="c-suite cb-suite cb-payer" data-payer="${b.gare}"${assez ? "" : " disabled"}>` +
-        `Passer · ◆ ${prix}</button></div>` +
+        `Passer · ${prix} cr</button></div>` +
       (assez ? "" : `<div class="cb-manque">Il te manque ${manque} crédit${manque > 1 ? "s" : ""} — ` +
         `rejoue une gare déjà faite pour les gagner.</div>`);
   }
@@ -346,11 +361,17 @@ function bourseHTML() {
   const n = etoilesTotal(), g = gradeOf(n);
   const s = typeof getSerie === "function" ? getSerie() : { n: 0 };
   const cr = typeof soldeCredits === "function" ? soldeCredits() : null;
+  // ◆ EST LE DIAMANT, PAS LA MONNAIE. Les deux se disputaient le signe dans la
+  // barre du haut ; les crédits passent donc en « cr », et le losange revient
+  // à ce qu'il désigne depuis le premier jour : un service sans la moindre
+  // minute de retard.
+  const dia = typeof etatRecompenses === "function" ? etatRecompenses().diamants : 0;
   return `<div class="c-compteurs">` +
     (s.n >= 2 ? `<span class="c-serie" title="${s.n} services d'affilée sous dix minutes">» ${s.n}</span>` : "") +
     `<span class="c-grade" title="${g.nom}"><span class="g-nom">${g.nom}</span>` +
       `<span class="g-jauge"><i style="width:${Math.round(g.part * 100)}%"></i></span></span>` +
-    (cr === null ? "" : `<span class="c-credits" title="crédits">◆ ${cr}</span>`) +
+    (cr === null ? "" : `<span class="c-credits" title="crédits, pour passer une gare">${cr} cr</span>`) +
+    (dia ? `<span class="c-diamants" title="${dia} service${dia > 1 ? "s" : ""} sans faute">◆ ${dia}</span>` : "") +
     `<span class="c-etoiles">★ ${n}</span></div>`;
 }
 
@@ -378,7 +399,8 @@ function chapitreHTML() {
     <p class="cc-zone">${zone ? zone.nom : nomDeCarte()}</p>
     <div class="cc-jauge">
       <span class="cj-piste">${ch.gares.map(g =>
-        `<i class="cj-cran${estFaite(g) ? " fait" : estPassee(g) ? " paye" : ""}${g === CARTE.prochaine ? " ici" : ""}"></i>`).join("")}</span>
+        `<i class="cj-cran${estSansFaute(g) ? " dia" : estFaite(g) ? " fait" : estPassee(g) ? " paye" : ""}${
+          g === CARTE.prochaine ? " ici" : ""}"></i>`).join("")}</span>
       ${rang ? `<span class="c-rang r-${rang.id}">${rang.nom}</span>`
              : `<span class="c-avance">${faits}<span class="cj-sur">/</span>${ch.gares.length}</span>`}
     </div>

@@ -2505,3 +2505,19 @@ svg { width: 100%; height: 100%; display: block; }
 .cf-seuil span { font-size: 11px; font-weight: 400; color: var(--muted); margin-left: 2px; }
 .cb-vise { font-size: 11.5px; color: var(--muted); margin-top: 2px; }
 .cb-vise::before { content: "à viser : "; opacity: .7; }
+
+/* ---- LE DIAMANT : un sans-faute, et il se voit -----------------------
+   Il était enregistré depuis toujours (bestDelay = 0) et ne s'affichait nulle
+   part. ◆ lui revient : les crédits, qui le lui disputaient dans la barre du
+   haut, passent en « cr ». Le bleu est celui du rang « chapitre de diamant ». */
+.cb-diamant { display: inline-flex; align-items: center; gap: 7px; margin-top: 2px;
+  color: #7fd4ff; font-size: 17px; letter-spacing: .04em;
+  border: 1px solid rgba(127, 212, 255, .45); border-radius: 999px; padding: 3px 13px;
+  background: rgba(127, 212, 255, .09); }
+.cb-diamant span { font-size: 12px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .12em; }
+.cb-retard.sansfaute b { color: #7fd4ff; }
+.cf-dia { font-size: 11.5px; color: #7fd4ff; font-weight: 600; }
+.c-diamants { font-family: ui-monospace, Menlo, monospace; font-size: 12.5px; color: #7fd4ff; }
+.c-ruban .et.dia { fill: #7fd4ff; font-size: calc(2.8px / var(--k, 1)); }
+.cj-cran.dia { background: #7fd4ff; }
