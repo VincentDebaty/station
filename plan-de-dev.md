@@ -17,15 +17,18 @@
 | **B** | Outils d'auteur — **fait le 21 août 2026**, en partie caduc (voir C) | M | A |
 | **C** | Le ruban dans les données : schéma, conversion, `carte-check` refondu | M | A |
 | **D** | Le ruban dans le moteur : `js/ruban.js`, sauvegarde schéma 7 | M | C |
-| **E** | Le ruban à l'écran : *Continuer*, fin de chapitre, saut, soupape | M | D |
-| **F** | Contenu : l'ordre du ruban d'Europe et sa rampe (~140 niveaux) | L | C, D |
-| **G** | Récompense : le chapitre remplace la ligne, la zone devient un palier | S | D |
-| **H** | L'écran des cartes et les crédits | M | D |
+| **G** | Récompense **et crédits** : chapitre, zone, solde déduit | S | D |
+| **E** | Le ruban à l'écran : *Continuer*, fin de chapitre, saut, soupape payante | M | D, **G** |
+| **F** | Contenu : l'ordre du ruban d'Europe et sa rampe (89 niveaux au départ) | L | C, D |
+| **H** | L'écran des cartes et l'achat | M | G |
 | **I** | Deuxième carte (preuve de généricité) | L | C, H |
 | **J** | Nettoyage : ce que le ruban rend mort | S | E, G |
 
 Tailles : S = une séance, M = quelques séances, L = une à deux semaines de
 contenu.
+
+**G passe avant E** (changement du 25 août) : la soupape se paie en crédits, donc
+le solde doit exister avant l'écran qui le dépense.
 
 **Le jeu doit rester jouable à chaque commit.** C et D se font dans cet ordre
 et se poussent ensemble si nécessaire : entre les deux, la carte est un ruban
@@ -163,36 +166,55 @@ rendre `null` au milieu ; aucune erreur JS sur les trois vues.
    suivant annoncé** — c'est ce qui manquait le plus au test.
 4. **Le saut** (§4 bis) : animation de trajet sur la carte + la phrase
    (« train de nuit pour Marseille »), passable d'un geste.
-5. **La soupape** (§4 ter) : au troisième échec sur la même gare, proposer de
-   la passer à 0 étoile. Formulation neutre, jamais « abandonner ». La gare
-   passée reste marquée sur la carte et se rejoue quand on veut.
-6. **Fin de zone** : célébration, la carte se colore.
+5. **La soupape payante** (§4 ter, tranché le 25 août) : il faut **réussir** la
+   gare ; au troisième échec seulement, proposer de **payer le passage en
+   crédits**. Formulation neutre, jamais « abandonner ». La gare payée reste à
+   0 étoile, marquée sur la carte, et se rejoue quand on veut — la gagner plus
+   tard **rend la mise** (rien à stocker : la dépense ne compte que les
+   `passees` encore à 0 ★). Afficher le solde et le prix au moment de l'offre,
+   et, si le solde ne suffit pas, dire **où aller le gagner** : « il te manque
+   12 crédits — trois gares de la ligne de Lorraine te les donnent ». C'est ce
+   renvoi vers le rejeu qui fait tout l'intérêt du passage payant.
+6. **Jamais de vies, jamais de minuterie.** Le rejeu reste gratuit, immédiat et
+   illimité. Le prix ne s'applique qu'à *sauter* la gare, jamais à la retenter.
+7. **Fin de zone** : célébration, la carte se colore.
 
 *Fini quand* : en headless, on ouvre le jeu, on appuie sur *Continuer*, on
 joue trois gares d'affilée sans jamais choisir quoi que ce soit, et la fin de
-chapitre annonce le suivant. Vérification visuelle (Chrome headless + CDP,
+chapitre annonce le suivant. Et : trois échecs d'affilée déclenchent l'offre de
+passage, la payer avance le ruban sans donner d'étoile, gagner la gare ensuite
+restitue les crédits. Vérification visuelle (Chrome headless + CDP,
 `tick()` pour avancer le temps).
 
 ## Lot F — Contenu : le ruban d'Europe
 
 **But** : un ruban qu'on a envie de suivre, pas une suite de chapitres.
 
-1. **Écrire l'ordre** des 26 chapitres du noyau. Contraintes : R5
-   (continuité), R6 (20 gares d'écart entre deux gares d'une même ville), R8
-   (la rampe), R9 (le début doux). Le plus long enchaînement sans repasser par
-   une grande gare fait 89 niveaux : le reste passe par des retours de ville,
-   qui doivent tomber sur une **autre gare réelle** (Paris-Nord puis
-   Paris-Gare-de-Lyon).
-2. **Placer les sauts** : Londres–Manchester, Paris–Lyon et
+1. **Écrire l'ordre** des chapitres. Contraintes : R5 (continuité), **R6 (ne
+   jamais réemprunter un tracé ; revenir dans une ville seulement par un autre
+   croisement et une autre ligne)**, R8 (la rampe), R9 (le début doux).
+   **Mesuré le 25 août : le ruban extractible du noyau plafonne à 16 chapitres
+   et 89 niveaux**, parce que 20 des 22 grandes gares n'ont qu'une fiche.
+   Chaîne maximale : Munich → Stuttgart → Zurich → Strasbourg → Luxembourg →
+   Francfort → Nuremberg → Leipzig → Berlin → Hambourg → Cologne → Hanovre →
+   Amsterdam → Bruxelles → Lille → Paris → Lyon. **À lire à l'envers** (R9 : le
+   début doux part de France, la rampe monte vers les Alpes), et à retoucher :
+   le tronçon Berlin → Hambourg → Cologne → Hanovre → Amsterdam se lit mal sur
+   une carte. Un ruban plus court mais qui ressemble à un voyage vaut mieux.
+2. **Les 10 chapitres hors ruban** partent en réserve, pas à la poubelle. Pour
+   les récupérer : écrire une **deuxième gare réelle** dans les villes qui n'en
+   ont qu'une (Hanovre, Cologne, Zurich, Bruxelles…) — c'est ce qui rouvre le
+   plus de chapitres d'un coup — ou les raccrocher par un saut.
+3. **Placer les sauts** : Londres–Manchester, Paris–Lyon et
    Montpellier–Bordeaux sont détachés du noyau continental. Soit un saut
    déclaré, soit un chapitre à écrire pour les relier.
-3. **Nommer les chapitres** (§2.2) : des noms de voyage. Question ouverte n° 7
+4. **Nommer les chapitres** (§2.2) : des noms de voyage. Question ouverte n° 7
    du document (marques déposées) — préférer les noms historiques.
-4. **Caler la rampe** : mesurer en headless la difficulté réellement jouée
+5. **Caler la rampe** : mesurer en headless la difficulté réellement jouée
    gare après gare le long du ruban, et fixer le pas du plancher (question
    ouverte n° 3). Une courbe qui monte trop vite se voit tout de suite au
    nombre de rejeux.
-5. **Allonger** ensuite, par le bout, avec les 21 lignes à compléter puis les
+6. **Allonger** ensuite, par le bout, avec les 21 lignes à compléter puis les
    94 fiches déjà écrites hors du noyau. Chaque chapitre livré = un commit
    poussé.
 
@@ -213,14 +235,29 @@ ville rapproché, et sans saut non déclaré.
    chapitres dorés, zones traversées, sauts franchis, carte terminée.
 4. **Séparer carte et compte** (reste du lot A, point 6) : le grade et les
    crédits somment toutes les cartes ; les rangs et médailles de carte non.
+5. **Le solde de crédits, déduit** — remonté ici depuis le lot H parce que la
+   soupape du lot E en dépend. `creditsGagnes()` = Σ sur toutes les cartes
+   (étoiles × 1, diamants × 5, chapitres dorés × 20, zones maîtrisées × 100,
+   cartes terminées × 500 — valeurs à caler). `creditsDepenses()` = Σ prix des
+   cartes acquises en crédits + Σ **prix des gares `passees` encore à 0 ★**.
+   `prixDePassage(ficheId)` suit la position dans le ruban (§7 du document).
+   Rien de plus n'est stocké.
+6. **Caler les trois barèmes ensemble** (question ouverte n° 4) : gain d'une
+   gare, prix d'un passage, prix d'une carte. Contrainte à vérifier en
+   headless sur le ruban réel : finir l'Europe paie la deuxième carte, même
+   après quelques passages achetés ; et un débutant bloqué au chapitre 1 peut
+   se payer un passage en rejouant deux ou trois gares.
 
 *Fini quand* : finir tous les chapitres de la zone France-Benelux la fait
-passer *traversée* avec célébration, et la vue Europe la colore.
+passer *traversée* avec célébration, la vue Europe la colore, et le solde de
+crédits affiché correspond au barème sur une sauvegarde de test.
 
-## Lot H — L'écran des cartes et les crédits
+## Lot H — L'écran des cartes et l'achat
 
-Inchangé sur le fond par rapport au plan du 21 août ; il ne dépend que du
-modèle multi-cartes (lot A), pas de la structure interne d'une carte.
+Le **calcul** des crédits est remonté au lot G (la soupape en a besoin) ; il
+reste ici la **dépense en cartes** et l'écran. Inchangé sur le fond par rapport
+au plan du 21 août : il ne dépend que du modèle multi-cartes, pas de la
+structure interne d'une carte.
 
 1. **Écran « Cartes »** : une tuile par carte de `data/cartes/index.json` —
    nom, sous-titre, nombre de chapitres et de niveaux, progression, état
@@ -230,10 +267,9 @@ modèle multi-cartes (lot A), pas de la structure interne d'une carte.
    dernière carte jouée est la carte courante au lancement.
 3. **Une seule carte gratuite** → l'écran est sauté et on tombe sur
    *Continuer*. Il n'apparaît qu'à partir de deux cartes.
-4. **Crédits déduits** (`js/recompense.js`) : Σ (étoiles × 1, diamants × 5,
-   chapitres dorés × 20, zones maîtrisées × 100, cartes terminées × 500 —
-   valeurs à caler). Solde = gagnés − Σ prix des cartes achetées en crédits.
-   Rien d'autre n'est stocké que `cartesPossedees`.
+4. **Acheter une carte** : bouton actif quand le solde (lot G) suffit ;
+   `cartesPossedees[id] = "credits"`. L'écran affiche « il te manque N
+   crédits ». Rien d'autre n'est stocké que `cartesPossedees`.
 5. **CB** : hors prototype ; seul l'état `"achat"` est prévu dans la
    sauvegarde pour que le moteur final n'ait pas à migrer.
 

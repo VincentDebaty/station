@@ -127,15 +127,21 @@ redeviennent ce qu'ils auraient toujours dû être : **les fins de chapitre**.
   que pour garantir un choix après chaque victoire. Le travail déjà fait pour
   la satisfaire n'est pas perdu : les lignes ajoutées sont des chapitres
   candidats.
-- **Les versions de trafic sont conservées, et deviennent un outil d'auteur.**
-  Quand le ruban repasse par une ville déjà jouée, il la joue **dans une autre
-  de ses gares réelles** (Paris-Nord au chapitre 3, Paris-Gare-de-Lyon au
-  chapitre 14) ou, à défaut, dans le profil de trafic suivant (`PROFILS`,
-  js/graph.js : heures creuses → pointe → double pointe → bourrasque → service
-  tendu → nocturne). C'est de la répétition espacée, exactement comme
-  Duolingo : une force, pas une redite. La différence avec la version graphe :
-  **l'auteur décide quand ça arrive**, ce n'est plus un effet de bord du
-  parcours choisi par le joueur.
+- **Revenir dans une ville se fait par un autre croisement** (R6). Le ruban peut
+  repasser par Paris, à condition d'y arriver **par une autre ligne** et d'y
+  jouer **une autre gare réelle** : Paris-Nord au chapitre 3, Paris-Gare-de-Lyon
+  au chapitre 14, Paris-Montparnasse plus loin. Ce qui est interdit, c'est de
+  refaire le même tracé — pas de revoir une ville.
+- **Conséquence dure, mesurée le 25 août** : une grande gare qui n'a **qu'une
+  fiche** ne se traverse **qu'une fois**. Sur le noyau écrit, seules Londres
+  (4 fiches) et Paris (3) échappent à la règle ; les vingt autres n'en ont
+  qu'une. C'est ce qui plafonne le ruban de lancement (§5), et c'est la
+  première chose qu'écrire une deuxième gare dans une grande ville débloque.
+- **Les profils de trafic** (`PROFILS`, js/graph.js : heures creuses → pointe →
+  double pointe → bourrasque → service tendu → nocturne) restent disponibles
+  pour durcir une arrivée, mais **ils ne rachètent pas un tracé déjà
+  parcouru** : rejouer la même ligne « en heure de pointe » reste rejouer la
+  même ligne.
 
 ### 2.3 La zone (niveau 3)
 
@@ -172,7 +178,7 @@ redeviennent ce qu'ils auraient toujours dû être : **les fins de chapitre**.
   important du ruban : ajouter un chapitre, c'est l'écrire et le mettre à la
   suite. Il n'y a plus de graphe à re-satisfaire, plus de sortie à combler,
   plus de hub à supprimer faute de troisième ligne. Le ruban d'Europe peut
-  partir à 140 niveaux et grandir indéfiniment vers l'est et le sud.
+  partir à 89 niveaux et grandir indéfiniment vers l'est et le sud.
 
 ### 2.5 La courbe de difficulté
 
@@ -201,11 +207,11 @@ règle.
 | # | Règle | Pourquoi |
 |---|---|---|
 | R1 | **La carte est un ruban unique** : une suite ordonnée de gares, sans embranchement, sans choix. Chaque gare a exactement une suivante | C'est toute la décision du 25 août : un seul bouton, *Continuer* |
-| R2 | **≥ 60 gares et ≥ 8 chapitres** par carte | En dessous, la mission se finit trop vite pour mériter d'être une carte. Cible de lancement sur l'Europe : ~140 |
+| R2 | **≥ 60 gares et ≥ 8 chapitres** par carte | En dessous, la mission se finit trop vite pour mériter d'être une carte. Le ruban de lancement de l'Europe en fait 89 sur 16 chapitres (§5) : le plancher est tenu, sans marge |
 | R3 | Un chapitre compte **5 à 10 gares**, la dernière étant une grande gare | Moins de 5 : la promesse « parcourir une ligne » n'est pas tenue. Plus de 10 : le joueur ne voit plus l'arrivée |
 | R4 | Une zone compte **3 à 6 chapitres** ; une carte a **≥ 2 zones** | Équilibre de durée entre zones ; une carte à une seule zone n'a pas de niveau 3 |
 | R5 | **Continuité réelle** : deux gares consécutives d'un même chapitre sont voisines sur une ligne réelle. Une rupture géographique n'est permise **qu'entre deux chapitres**, et elle est alors déclarée comme un **saut** (§4 bis) | Le tracé doit rester vrai. Un saut assumé est honnête ; un saut caché au milieu d'un chapitre est un bug de crédibilité |
-| R6 | **Une fiche n'apparaît qu'une fois** dans le ruban. Une ville peut revenir, mais par une **autre gare réelle** ou une **version de trafic** supérieure, et **jamais avant 20 gares d'écart** | La répétition est un outil (§2.2 bis), pas un remplissage. L'écart minimal fait la différence entre « rappel » et « redite » |
+| R6 | **Le ruban ne réemprunte jamais un tracé déjà parcouru.** Une fiche n'apparaît qu'une fois. Revenir dans une ville est permis **à condition d'y revenir par une autre gare — un autre croisement — et par une autre ligne réelle** | Tranché le 25 août 2026 : « pas de souci de revenir à une autre gare si c'est un croisement, mais pas refaire la même ligne ». Le critère n'est pas la distance parcourue depuis, c'est le **tracé** : c'est refaire la même ligne qui se sent, pas revoir une ville |
 | R7 | Un chapitre **reste sur la même ligne réelle** (sinuosité ≤ 1,5 × le vol d'oiseau entre sa première et sa dernière gare) | La vérité du tracé avant la longueur : Bruxelles–Luxembourg passe par Namur, pas par le Hainaut |
 | R8 | La difficulté portable **croît le long du chapitre**, et la grande gare finale est la plus haute du chapitre. Le plancher des chapitres croît par paliers le long du ruban | La difficulté se déduit de la position mais la géométrie a le dernier mot : une rampe ne tient que si les gares peuvent la porter |
 | R9 | **Le premier chapitre est doux** : sa première gare se joue en difficulté 1 et sa grande gare finale ne dépasse pas 3 | Le premier geste du jeu doit être facile |
@@ -226,7 +232,8 @@ règle.
 | Élément | Compte |
 |---|---|
 | Carte minimale (R2) | 8 chapitres × 5–10 gares → **60 à 80 niveaux** |
-| Europe au lancement | ~24 chapitres → **~140 niveaux** (le noyau déjà écrit) |
+| Europe au lancement | 16 chapitres → **89 niveaux** (mesuré, §5) |
+| Europe, réserve immédiate | 10 chapitres écrits mais hors ruban + 21 lignes à compléter + 94 fiches |
 | Europe à terme | le ruban s'allonge par le bout, sans plafond structurel |
 
 ---
@@ -238,9 +245,9 @@ règle.
 2. **Jouer la gare** : le service, le relevé de fin, les étoiles.
 3. **≥ 1 étoile** → la gare suivante du ruban s'ouvre. **< 1 étoile** → on
    rejoue ; le rejeu est gratuit et immédiat.
-4. **La soupape** (§4 ter) : après trois échecs sur la même gare, le jeu
-   propose de **passer** la gare à 0 étoile. Le ruban continue ; la gare
-   passée reste marquée et se rejoue quand on veut.
+4. **La soupape** (§4 ter) : il faut **réussir** la gare. Après trois échecs,
+   le jeu propose de la **payer en crédits** pour passer à la suivante — la
+   gare reste sans étoile, marquée sur la carte, et se rejoue quand on veut.
 5. **Fin de chapitre** (la grande gare est tenue) : célébration, nom du
    chapitre suivant annoncé, rang du chapitre affiché (§6.2).
 6. **Fin de zone** : célébration de zone, la carte se colore.
@@ -265,20 +272,47 @@ Le ruban doit donc, de temps en temps, se déplacer sans rail continu.
   passable d'un geste.
 - Un saut n'est jamais une punition ni une récompense : c'est une transition.
 
-### 4 ter La soupape
+### 4 ter La soupape — passer une gare se paie (tranché le 25 août 2026)
 
 Le ruban a un défaut que le graphe n'avait pas : **une gare bloquante bloque
 tout**. Dans la version graphe, un échec n'arrêtait que le boss et on pouvait
 continuer ailleurs.
 
-La parade tient en deux points, tous les deux nécessaires :
+**Règle** : *il faut réussir la gare.* On ne la contourne pas gratuitement ; on
+peut la **payer en crédits** pour passer à la suivante.
 
 1. **Le barème est déjà doux** : 1 étoile = 30 minutes de retard cumulé. La
    philosophie « réussir est facile » n'est pas décorative, c'est ce qui rend
-   le ruban praticable.
-2. **Passer après trois échecs** : le jeu le propose de lui-même, sans le
-   présenter comme un abandon. Candy Crush et Duolingo ont tous les deux une
-   soupape ; un jeu linéaire sans soupape perd le joueur au premier mur.
+   le ruban praticable. La soupape doit rester rare.
+2. **L'offre n'apparaît qu'après trois échecs** sur la même gare, jamais avant.
+   Ce n'est pas un raccourci pour l'impatient : c'est une issue pour celui qui
+   est coincé. Un joueur qui n'a pas essayé ne se voit rien proposer.
+3. **Le passage coûte des crédits** — la monnaie gagnée en jouant (§7). Le prix
+   monte avec la position dans le ruban (barème au §7).
+4. **Une gare payée reste à 0 étoile.** Elle ne compte ni pour la jauge du
+   chapitre, ni pour son rang, ni pour une médaille. Le ruban avance ; la
+   récompense, non. C'est la troisième valeur d'un état déjà à deux :
+   **faite** (≥ 1 ★) ≠ **payée** (passée, 0 ★) ≠ **à venir**.
+5. **La mise est rendue** si le joueur revient gagner la gare plus tard. C'est
+   une avance, pas une amende — et ça n'ajoute rien à stocker (§8 : la dépense
+   se déduit des gares passées **encore** sans étoile).
+
+**Pourquoi payer plutôt que passer gratuitement.** Un passage gratuit fait de
+la linéarité un décor : on traverse le mur et on oublie. Un passage payant
+transforme le mur en **raison de retourner en arrière** — le joueur à court de
+crédits va rejouer ses vieilles gares pour améliorer leurs étoiles. C'est
+exactement le pilier « réussir est facile, exceller est le vrai jeu », branché
+sur le seul endroit du ruban où l'on risquait de perdre quelqu'un.
+
+**Le risque à surveiller : le mur du débutant.** Au chapitre 1, le joueur a
+cinq étoiles, donc cinq crédits ; s'il se bloque là, il ne peut rien payer.
+Trois garde-fous, tous nécessaires :
+- R9 (le premier chapitre est doux) porte maintenant une vraie charge ;
+- le prix du passage suit la position dans le ruban : il est petit au début
+  (§7) ;
+- il reste toujours l'issue gratuite du rejeu : la gare se retente autant de
+  fois qu'on veut, sans coût ni attente. **Jamais de vies, jamais de minuterie**
+  — c'est ce qui distingue la soupape d'un mur commercial.
 
 ---
 
@@ -292,7 +326,9 @@ ruban :
 | Lignes complètes **et jouables bout en bout** (5 à 10 gares, toutes les fiches écrites) | **26** sur 128 | ce sont les 26 premiers **chapitres** du ruban, tels quels |
 | Gares intermédiaires dessus | 118 | |
 | Grandes gares à leurs bouts | 22 | |
-| **Noyau jouable immédiatement** | **140 niveaux** | c'est la carte de lancement, sans écrire une fiche |
+| Contenu écrit et jouable, en tout | **140 niveaux** | 118 gares de chapitre + 22 grandes gares |
+| **Ruban de lancement extractible sous R6** | **16 chapitres, 89 niveaux** | mesuré le 25 août : c'est la carte de lancement, sans écrire une fiche |
+| Chapitres écrits mais **hors ruban** | 10 | ils exigeraient de repasser par une grande gare déjà jouée (R6) : réserve d'extension |
 | Lignes à deux bouts jouables mais incomplètes | 21 (10 trop courtes, 11 vides) | la première réserve d'extension |
 | Fiches écrites hors du noyau | 94 | la deuxième réserve : de quoi allonger le ruban sans recherche |
 | Fiches au catalogue | 234, 7 pays (BE, FR, DE, LU, UK, NL, CH) | bibliothèque partagée, intacte |
@@ -305,11 +341,24 @@ l'axe alpin Strasbourg–Zurich–Genève / Munich–Stuttgart ; et deux morceau
 détachés (Paris–Lyon, Montpellier–Bordeaux) qui arriveront par un **saut**
 (§4 bis) ou par un chapitre à écrire.
 
-Le plus long enchaînement **sans jamais repasser par une grande gare** fait
-89 niveaux et 17 grandes gares. Passer les 140 niveaux du noyau demande donc
-de repasser par certaines villes — ce qui est précisément l'usage prévu des
-versions de gare (§2.2 bis, R6). L'ordre exact du ruban est le travail du
-lot F.
+**Le plafond du noyau, mesuré sous R6** : le plus long ruban qui ne réemprunte
+aucun tracé et ne rejoue aucune fiche fait **16 chapitres et 89 niveaux** —
+Munich → Stuttgart → Zurich → Strasbourg → Luxembourg → Francfort → Nuremberg →
+Leipzig → Berlin → Hambourg → Cologne → Hanovre → Amsterdam → Bruxelles →
+Lille → Paris → Lyon (à lire plutôt à l'envers : R9 veut un début doux, et
+cette chaîne monte bien de la France vers les Alpes).
+
+Les **dix chapitres restants ne sont pas perdus**, ils sont en réserve : ils
+demanderaient de traverser une deuxième fois une grande gare qui n'a qu'une
+fiche. Deux façons de les récupérer plus tard, dans cet ordre de préférence :
+écrire une **deuxième gare réelle** dans les villes qui en ont une (Hanovre,
+Cologne, Zurich, Bruxelles…), ou les rattacher au ruban par un **saut**.
+
+L'ordre exact du ruban, ses sauts et ses noms sont le travail du lot F. Attention
+au piège : le plus long n'est pas le meilleur — la chaîne ci-dessus fait un
+aller-retour Berlin → Hambourg → Cologne → Hanovre → Amsterdam qui se lit mal
+sur une carte. Un ruban un peu plus court mais qui ressemble à un voyage vaut
+mieux.
 
 Ce qui est déjà en place et qu'il faut **conserver** : les fiches, la carte à
 trois échelles (`js/carte.js`), la couche récompense déduite
@@ -348,7 +397,7 @@ réseau 2 400 · Légende du rail 3 500.
 Familles : *Accumulation* (paliers d'étoiles, diamants, gares, chapitres),
 *Maîtrise* (chapitres d'or, zones complètes, carte terminée), *Exploration*
 (sauts franchis, premières zones atteintes, terminus), *Style* (sans pause, du
-premier coup, séries). *Régularité* (jours consécutifs) volontairement non
+premier coup, séries, **une zone entière sans jamais payer un passage**). *Régularité* (jours consécutifs) volontairement non
 faite. Les seuils sont calés sur le contenu réel et se réécrivent sans
 migration, parce que rien n'est stocké.
 
@@ -363,16 +412,31 @@ se rééquilibre sans migration.
 
 ---
 
-## 7. Crédits et cartes payantes — inchangé
+## 7. Crédits, passages payés et cartes payantes
 
-- **Rôle des crédits** : acheter des cartes. C'est leur seul usage au
-  lancement.
+- **Rôle des crédits** — ils ont désormais **deux usages** (le second tranché
+  le 25 août 2026) :
+  1. **acheter une carte** ;
+  2. **payer le passage d'une gare** sur laquelle on bloque (§4 ter).
 - **Gain** (à caler) : les crédits se **déduisent** de la progression comme
   tout le reste — par exemple 1 crédit par étoile, 5 par diamant, 20 par
-  chapitre doré, 100 par zone maîtrisée, 500 par carte terminée. Solde =
-  gagnés − dépensés : **on ne stocke que la liste des cartes possédées et leur
-  mode d'acquisition**. Un joueur qui a fini l'Europe doit pouvoir s'offrir
-  une deuxième carte sans payer.
+  chapitre doré, 100 par zone maîtrisée, 500 par carte terminée.
+- **Prix d'un passage** (à caler, §9) : il suit la position dans le ruban, pour
+  que le débutant puisse se le payer et que la fin de carte ne s'achète pas —
+  par exemple 5 crédits dans la première zone, 15 au milieu, 40 sur une grande
+  gare de fin de ruban. Ordre de grandeur voulu : **le prix d'un passage ≈ ce
+  que rapportent trois à cinq gares bien jouées**. Assez cher pour qu'on
+  préfère réessayer, assez bon marché pour ne jamais enfermer personne.
+- **Solde = gagnés − dépensés**, et **rien de plus n'est stocké** :
+  - dépense en cartes = Σ prix des cartes acquises en crédits
+    (`cartesPossedees`) ;
+  - dépense en passages = Σ prix des gares de `passees` **qui sont encore à
+    0 étoile** — d'où la restitution de la mise (§4 ter, point 5) : gagner la
+    gare plus tard la retire du calcul, sans qu'aucune ligne de sauvegarde
+    n'ait bougé.
+- Un joueur qui a fini l'Europe doit pouvoir s'offrir une deuxième carte sans
+  payer, **même s'il a payé quelques passages en route**. C'est la contrainte
+  qui cale les deux barèmes l'un contre l'autre.
 - **Achat CB** : achat intégré (App Store / Play). Hors prototype web : le
   prototype ne modélise que l'état *possédée / verrouillée*, un prix en
   crédits, et un déblocage de débogage. Le paiement réel arrive avec le moteur
@@ -418,7 +482,10 @@ interface EtatJoueur {
   cartes: {                   // une progression PAR carte, indépendantes
     [carteId: string]: {
       resultats: { [ficheId: string]: { etoiles: 0|1|2|3; meilleurRetard: number } };
-      passees?: FicheId[];    // gares franchies par la soupape (§4 ter)
+      passees?: FicheId[];    // gares PAYÉES en crédits pour passer (§4 ter).
+                              // Seul fait nouveau du schéma 7. La dépense s'en
+                              // déduit : Σ prix des passees ENCORE à 0 étoile,
+                              // d'où la restitution de la mise sans rien stocker.
       serie: { n: number; record: number };
     }
   };
@@ -426,7 +493,10 @@ interface EtatJoueur {
   carteCourante: CarteId;
 }
 // La POSITION sur le ruban n'est pas stockée : c'est la première gare du ruban
-// qui n'est ni faite (≥ 1 ★) ni passée. Un état déduit ne peut pas désynchroniser.
+// qui n'est ni faite (≥ 1 ★) ni payée. Un état déduit ne peut pas désynchroniser.
+// Le SOLDE de crédits n'est pas stocké non plus : gagnés (déduits des étoiles,
+// diamants, chapitres, zones) − prix des cartes achetées en crédits − prix des
+// gares passées encore à 0 ★.
 // Disparaissent du schéma 6 : `acquises` (l'ordre était la progression) et
 // `versionsJouees` (le ruban dit lui-même quelle version se joue quand).
 ```
@@ -444,20 +514,27 @@ au catalogue et comptent pour le grade.
 
 1. ~~Structure~~ Tranché le 25 août 2026 : **ruban unique**, sans
    embranchement, sans choix. Fourches éventuelles remises à plus tard (§0).
-2. **L'ordre du ruban d'Europe** : quel enchaînement des 26 chapitres du
-   noyau, combien de sauts, où placer Paris–Lyon et Montpellier–Bordeaux
-   (lot F).
+2. **L'ordre du ruban d'Europe** : quel enchaînement des 16 chapitres
+   retenus, combien de sauts, où placer Londres–Manchester, Paris–Lyon et
+   Montpellier–Bordeaux (lot F).
 3. **Le pas de la courbe** : tous les combien de chapitres le plancher de
    difficulté monte-t-il d'un cran ? À mesurer en headless sur le ruban réel.
-4. **Barème des crédits** et **prix des cartes** (§7).
-5. **Deuxième carte** pour prouver que le modèle est générique : un pays
+4. **Les trois barèmes de crédits** (§7), à caler **ensemble** parce qu'ils se
+   contraignent : ce qu'une gare rapporte, ce qu'un **passage** coûte, ce
+   qu'une carte vaut. Contrainte tenante : finir l'Europe doit payer la
+   deuxième carte, même après quelques passages achetés.
+5. **Les deuxièmes gares des grandes villes** : écrire Hanovre, Cologne,
+   Zurich ou Bruxelles une seconde fois (autre gare réelle) rouvre plusieurs
+   des dix chapitres mis en réserve par R6 (§5). Lesquelles, et dans quel
+   ordre ?
+6. **Deuxième carte** pour prouver que le modèle est générique : un pays
    (échelle resserrée) ou un autre continent ? Le ruban rend l'exercice
    beaucoup moins cher qu'avec le graphe — 60 gares suffisent.
-6. **Départ localisé** : commencer le ruban près du joueur ? Contradictoire
+7. **Départ localisé** : commencer le ruban près du joueur ? Contradictoire
    avec un ruban unique ; probablement à écarter.
-7. **Habillage des noms** : marques déposées (TGV, Eurostar, Thalys,
+8. **Habillage des noms** : marques déposées (TGV, Eurostar, Thalys,
    Orient-Express) — préférer les noms historiques (L'Étoile du Nord, Le
    Rheingold, L'Oiseau Bleu, l'Express d'Orient) ou des noms maison. Devient
    plus important : chaque chapitre porte un nom (§2.2).
-8. **Chapitres légendaires** (fin de ruban) : les dix dernières gares d'une
+9. **Chapitres légendaires** (fin de ruban) : les dix dernières gares d'une
    carte, difficulté haute de bout en bout. Conservé comme intention.
