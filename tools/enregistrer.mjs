@@ -18,7 +18,7 @@
 //   data/places.js les points de passage nouveaux, en tête de PLACES
 //   europe.json   la composition de la ligne (`gares`), ou la `gare` du hub
 //
-// Il ne valide rien : c'est le travail de gen-check, net-check, graph-check et
+// Il ne valide rien : c'est le travail de gen-check, net-check et
 // carte-check, dont il imprime les commandes à la fin.
 // ------------------------------------------------------------------
 import { readFileSync, writeFileSync, existsSync, readdirSync, statSync } from "node:fs";
@@ -171,4 +171,4 @@ write("data/cartes/europe.json", out);
 console.log("\n" + journal.map(l => "  · " + l).join("\n"));
 console.log(`\n${nouveauxIds.length} fiche(s) enregistrée(s). À lancer maintenant :\n` +
   (nouveauxIds.length ? `  node tools/gen-check.mjs ${nouveauxIds.join(" ")} 20\n` : "") +
-  `  node tools/net-check.mjs\n  node tools/graph-check.mjs\n  node tools/carte-check.mjs --livrable=nw,ger\n`);
+  `  node tools/net-check.mjs\n  node tools/carte-check.mjs\n`);

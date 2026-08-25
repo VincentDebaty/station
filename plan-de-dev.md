@@ -15,8 +15,8 @@
 |---|---|---|---|
 | **A** | Le modèle multi-cartes (données + sauvegarde) — **fait le 21 août 2026** | M | — |
 | **B** | Outils d'auteur — **fait le 21 août 2026**, en partie caduc (voir C) | M | A |
-| **C** | Le ruban dans les données : schéma, conversion, `carte-check` refondu | M | A |
-| **D** | Le ruban dans le moteur : `js/ruban.js`, sauvegarde schéma 7 | M | C |
+| **C** | Le ruban dans les données — **fait le 25 août 2026** | M | A |
+| **D** | Le ruban dans le moteur — **fait le 25 août 2026** | M | C |
 | **G** | Récompense **et crédits** : chapitre, zone, solde déduit | S | D |
 | **E** | Le ruban à l'écran : *Continuer*, fin de chapitre, saut, soupape payante | M | D, **G** |
 | **F** | Contenu : écrire les 470 fiches du ruban (`ruban-europe.md`) | XL | C, D |
@@ -70,7 +70,31 @@ perdent leur raison d'être (proposer des sorties de hub) : à réévaluer au lo
 
 ---
 
-## Lot C — Le ruban dans les données
+## Lot C — Le ruban dans les données — FAIT (25 août 2026)
+
+*Livré* : `data/cartes/europe.json` au schéma `chapitres[]` (11 chapitres,
+64 gares, 2 zones, Luxembourg → Hambourg), régénérable par
+`python3 tools/ruban/export-carte.py 51 61` ; `data/cartes/README.md` réécrit
+(schéma + R1–R9 + `enChantier`) ; `tools/carte-check.mjs` **entièrement
+refondu** sur les règles du ruban — R1 ruban unique, R2 longueur, R3 chapitre
+de 5 à 10, R4 zones, R5 continuité réelle (distance à vol d'oiseau, 250 km),
+R6 retour en ville par une autre gare, R7 sinuosité, R8 rampe (avertissement),
+R9 premier chapitre doux. `enChantier: true` relâche R2 et R4 — les deux
+règles de complétude — et jamais les règles de correction.
+
+*Décidé en écrivant* : **R9 exigeait un chapitre d'ouverture arrivant à 3 au
+plus, et L'Ardenne finit sur Bruxelles-Midi qui porte un 5.** Le champ
+`arrivee` a donc été ajouté au schéma : un chapitre peut plafonner ce que sa
+dernière gare doit produire. Sans lui, le tutoriel arrivait au sommet du jeu
+six gares après l'avoir ouvert.
+
+*Retirés* : `tools/graph-check.mjs`, `tools/corridors-propose.mjs`,
+`tools/graph-propose.mjs` — ils mesuraient le graphe de hubs, qui n'existe
+plus. `carte-check` les remplace. `tools/AUTHORING-CARTES.md` est marqué
+périmé en tête (sa réécriture reste due).
+
+<details><summary>Le plan d'origine du lot C</summary>
+
 
 **But** : `data/cartes/europe.json` décrit un ruban, et un contrôle refuse
 tout ce qui n'en est pas un.
@@ -142,7 +166,38 @@ tout ce qui n'en est pas un.
 refuse (code ≠ 0) si on retire une gare d'un chapitre, si on duplique une
 fiche, ou si on casse la continuité sans déclarer de saut.
 
-## Lot D — Le ruban dans le moteur
+</details>
+
+## Lot D — Le ruban dans le moteur — FAIT (25 août 2026)
+
+*Livré* : `js/ruban.js` (254 lignes) remplace `js/graph.js` — position déduite,
+jamais stockée ; `estFaite` / `estPassee` / `estFranchie` / `estTenue` ;
+`gareCourante`, `auBoutDeLEcrit`, `chapitreTermine` ; la rampe de difficulté
+(plancher du chapitre → arrivée, rabattue par `plafondDeFlux`) ; `PROFILS`,
+`ENVELOPPES`, `enveloppeDe` repris tels quels parce qu'ils étaient mesurés.
+`js/store.js` en **schéma 7** : `bought` abandonné, `passees` créé,
+`isBought` délègue à `estTenue`. `js/recompense.js` passe aux chapitres et
+reçoit les **crédits déduits** (`soldeCredits`, `prixDePassage`, la dépense ne
+comptant que les gares passées encore à 0 ★). `js/parcours.js` (269 lignes)
+remplace `js/carte.js` : un bouton *Continuer*, la piste du chapitre, le
+relevé avec *Continuer* / *Rejouer* ou *Réessayer* / *Passer · ◆ N*.
+
+*Vérifié en headless* (Chrome + client CDP maison) :
+- Arlon se joue en **difficulté 1**, Bruxelles-Midi en 3 (plafond de chapitre) ;
+  la rampe du ruban est 1·1·2·2·3·3 puis 2·2·3·3·4·4, jusqu'à 4·4·4·5·5·5.
+- On appuie sur *Continuer* et l'on joue **six gares d'affilée sans jamais
+  rien choisir**.
+- Échec → *Réessayer* et *Passer · ◆ 5* côte à côte ; payer avance le ruban
+  sans donner d'étoile ; **regagner la gare rend la mise** (dépense 0).
+- **Migration v6 → v7 sans perte** : étoiles, diamant, série et même les
+  étoiles des gares HORS ruban conservées ; position recalculée seule.
+- Au bout des 28 gares écrites : « la suite du ruban n'est pas encore écrite ».
+
+*Reste* : `js/carte.js` et `js/hub.js` sont au dépôt mais **plus chargés** —
+le lot E doit reprendre leur projection et leur caméra avant qu'on les retire.
+
+<details><summary>Le plan d'origine du lot D</summary>
+
 
 **But** : le jeu avance d'une gare à la suivante ; plus aucun choix.
 
@@ -176,6 +231,8 @@ fiche, ou si on casse la continuité sans déclarer de saut.
 *Fini quand* : en headless, une sauvegarde v6 se migre sans perte d'étoile ;
 `gareSuivante()` avance de la première à la dernière gare du ruban sans jamais
 rendre `null` au milieu ; aucune erreur JS sur les trois vues.
+
+</details>
 
 ## Lot E — Les écrans
 

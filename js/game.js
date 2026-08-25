@@ -1349,8 +1349,8 @@ function endGame(failed) {
   const prevBest = (getProgress()[STATION.id] || {}).bestDelay;
   const noPay = failed || STATION.adhoc;
   // Un échec (ou la démo limites) ne modifie pas le record — mais il se note
-  // quand même : une gare tentée et ratée n'ouvre pas la suivante (js/graph.js,
-  // ouvreLaSuite), et il faut pouvoir la distinguer d'une gare jamais jouée.
+  // quand même : une gare tentée et ratée n'ouvre pas la suivante (js/ruban.js,
+  // estFranchie), et il faut pouvoir la distinguer d'une gare jamais jouée.
   if (!STATION.adhoc) {
     if (failed) markTentee(STATION.id);
     else saveResult(STATION.id, stars, d);

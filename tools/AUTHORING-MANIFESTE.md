@@ -24,7 +24,7 @@ Deux propriétés qui comptent :
   Rejouer un manifeste est sans danger.
 
 L'outil **ne valide rien** du contenu de jeu : c'est le travail de `gen-check`,
-`net-check`, `graph-check` et `carte-check`, dont il imprime les commandes à la
+`net-check` et `carte-check`, dont il imprime les commandes à la
 fin de son passage.
 
 ## Le format

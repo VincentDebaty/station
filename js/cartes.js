@@ -13,7 +13,7 @@
 // un prototype, le moteur final (Unity ou Godot) lira les mêmes fichiers. Une
 // carte ne doit rien devoir au navigateur.
 //
-// Ce fichier CHARGE ; il ne répond à aucune question de jeu. C'est js/graph.js
+// Ce fichier CHARGE ; il ne répond à aucune question de jeu. C'est js/ruban.js
 // qui lit CARTE_COURANTE et en déduit sorties, parcours et difficultés.
 // ------------------------------------------------------------------
 
@@ -30,7 +30,7 @@ async function loadCartes() {
 }
 
 // Charge une carte et en fait la carte courante. Le graphe se reconstruit au
-// prochain appel (js/graph.js, resetGraphe) : changer de carte, c'est changer
+// prochain appel (js/ruban.js, resetRuban) : changer de carte, c'est changer
 // de monde, et rien de l'ancien ne doit rester en mémoire.
 async function loadCarte(id) {
   const entree = CARTES.find(c => c.id === id) || CARTES[0];
@@ -38,7 +38,7 @@ async function loadCarte(id) {
   const r = await fetch("data/cartes/" + (entree.fichier || entree.id + ".json"));
   if (!r.ok) throw new Error("carte " + entree.id + " : " + r.status);
   CARTE_COURANTE = await r.json();
-  if (typeof resetGraphe === "function") resetGraphe();
+  if (typeof resetRuban === "function") resetRuban();
   return CARTE_COURANTE;
 }
 

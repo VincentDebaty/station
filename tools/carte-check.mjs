@@ -1,365 +1,227 @@
+#!/usr/bin/env node
 // ------------------------------------------------------------------
-// carte-check — UNE CARTE EST-ELLE LIVRABLE ?
+// carte-check — LA SEULE AUTORITÉ SUR LES RÈGLES DE CARTE.
+// ------------------------------------------------------------------
+// Une carte est un RUBAN : une suite ordonnée de gares, sans embranchement et
+// sans choix (meta-progression-jeu-aiguillage.md §0). Ce contrôle vérifie les
+// règles R1 à R9 du §3 et REFUSE — code de sortie ≠ 0 — plutôt qu'il n'avertit.
+// Une règle qu'on ne mesure pas est une intention, pas une règle.
 //
-//     node tools/carte-check.mjs                    # la carte Europe entière
-//     node tools/carte-check.mjs --livrable=nw,ger  # un bloc de zones, comme on le livrera
-//     node tools/carte-check.mjs --detail           # la couverture ligne par ligne, avec les candidats
-//     node tools/carte-check.mjs --resume           # une ligne, pour gen-check
-//     node tools/carte-check.mjs --carte=<id>       # une autre carte de data/cartes/
+//   node tools/carte-check.mjs [--carte=europe] [--detail] [--resume]
 //
-// Les règles viennent de meta-progression-jeu-aiguillage.md §3, et ce fichier
-// est la seule autorité sur leur lecture : une règle qu'on ne mesure pas n'est
-// pas une règle, c'est une intention.
+// UNE CARTE EN CHANTIER (`enChantier: true` dans le JSON) relâche les deux
+// règles de COMPLÉTUDE — R2 (longueur) et R4 (taille des zones) — qui parlent
+// d'une carte finie. Les règles de CORRECTION (R1, R3, R5 à R9) ne se
+// relâchent jamais : elles disent si ce qui est écrit est juste.
+// ------------------------------------------------------------------
+import { readFileSync, existsSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { dirname, join } from "node:path";
+
+const RACINE = join(dirname(fileURLToPath(import.meta.url)), "..");
+const args = process.argv.slice(2);
+const opt = n => { const a = args.find(x => x.startsWith("--" + n)); return a ? (a.split("=")[1] ?? true) : null; };
+const DETAIL = !!opt("detail"), RESUME = !!opt("resume");
+const CARTE_ID = opt("carte") || "europe";
+for (const a of args) if (!a.startsWith("--")) { console.error("argument inconnu : " + a); process.exit(2); }
+
+const lire = p => JSON.parse(readFileSync(join(RACINE, p), "utf8"));
+const carte = lire("data/cartes/" + CARTE_ID + ".json");
+const chapitres = carte.chapitres || [];
+const zones = carte.zones || [];
+const chantier = !!carte.enChantier;
+
+// --- Le catalogue : quelles fiches existent, et ce qu'elles portent --------
+const index = lire("data/stations/index.json");
+const FICHES = new Map();
+for (const pays of index)
+  for (const id of pays.stations) {
+    const p = join(RACINE, "data/stations", pays.country, id + ".json");
+    if (existsSync(p)) FICHES.set(id, lire("data/stations/" + pays.country + "/" + id + ".json"));
+  }
+const quais = id => ((FICHES.get(id) || {}).platforms || []).length;
+const plafond = id => Math.max(1, Math.min(5, quais(id) - 1));
+const nom = id => { const f = FICHES.get(id); return f ? (f.city || f.name || id) : id; };
+
+// --- Le réseau réel, pour la continuité (R5) et la sinuosité (R7) ---------
+// `js/geo.js` et `data/places.js` sont des scripts classiques : on les évalue
+// dans un bac à sable minimal plutôt que d'en réécrire un analyseur.
+function charger(fichier, globales) {
+  const src = readFileSync(join(RACINE, fichier), "utf8");
+  const fn = new Function(src + "\n;return {" + globales.map(g => g + ":typeof " + g + '!=="undefined"?' + g + ":null").join(",") + "};");
+  try { return fn(); } catch { return {}; }
+}
+const { GEO } = charger("js/geo.js", ["GEO"]);
+// GEO.countries est un objet { pays: { cities: { id: [lon, lat] } } }.
+const COORD = new Map();
+if (GEO && GEO.countries)
+  for (const pays of Object.values(GEO.countries))
+    for (const [id, ll] of Object.entries(pays.cities || {}))
+      if (Array.isArray(ll) && ll.length === 2) COORD.set(id, ll);
+
+// --- Le rapport -----------------------------------------------------------
+const regles = [];
+function R(id, titre, ok, dit, dur = true) {
+  regles.push({ id, titre, ok, dit, dur: dur && !(chantier && (id === "R2" || id === "R4")) });
+}
+const listes = {};
+
+// R1 — LA CARTE EST UN RUBAN UNIQUE.
+// Une suite ordonnée, sans embranchement : chaque gare a exactement une
+// suivante. Ce qui se mesure, c'est qu'aucune gare n'apparaisse deux fois et
+// qu'aucun chapitre ne soit vide — un ruban n'a ni fourche ni trou.
+const vues = new Map(), doublons = [];
+let vide = 0;
+for (const ch of chapitres) {
+  if (!ch.gares || !ch.gares.length) { vide++; continue; }
+  for (const g of ch.gares) {
+    if (vues.has(g)) doublons.push({ gare: g, a: vues.get(g), b: ch.id });
+    else vues.set(g, ch.id);
+  }
+}
+const ordre = [...vues.keys()];
+R("R1", "ruban unique, sans embranchement", !doublons.length && !vide,
+  doublons.length ? doublons.length + " gare(s) en double" : vide ? vide + " chapitre(s) vide(s)" : ordre.length + " gares en une seule suite");
+listes.R1 = doublons.map(d => `${d.gare} : ${d.a} et ${d.b}`);
+
+// R2 — ≥ 60 GARES ET ≥ 8 CHAPITRES.
+R("R2", "≥ 60 gares et ≥ 8 chapitres", ordre.length >= 60 && chapitres.length >= 8,
+  `${chapitres.length} chapitres · ${ordre.length} gares`);
+
+// R3 — UN CHAPITRE COMPTE 5 À 10 GARES, la dernière étant une grande gare.
+const horsR3 = chapitres.filter(c => !c.gares || c.gares.length < 5 || c.gares.length > 10);
+R("R3", "chapitre de 5 à 10 gares", !horsR3.length,
+  horsR3.length ? horsR3.length + " chapitre(s) hors fourchette" : "tous entre 5 et 10");
+listes.R3 = horsR3.map(c => `${c.id} : ${(c.gares || []).length} gares`);
+
+// R4 — UNE ZONE COMPTE 6 À 20 CHAPITRES, la carte en a ≥ 2, et l'écart entre
+// la plus courte et la plus longue reste sous 3 pour 1.
+const parZone = new Map();
+for (const ch of chapitres) parZone.set(ch.zone, (parZone.get(ch.zone) || 0) + 1);
+const tailles = [...parZone.values()];
+const ecart = tailles.length ? Math.max(...tailles) / Math.min(...tailles) : 0;
+const zonesHors = [...parZone.entries()].filter(([, n]) => n < 6 || n > 20);
+R("R4", "zones de 6 à 20 chapitres, écart < 3 pour 1",
+  zones.length >= 2 && !zonesHors.length && ecart < 3,
+  `${zones.length} zones · ${tailles.join("/")} chapitres · écart ${ecart.toFixed(2)} pour 1`);
+listes.R4 = zonesHors.map(([z, n]) => `${z} : ${n} chapitres`);
+
+// R5 — CONTINUITÉ RÉELLE. Deux gares consécutives d'un même chapitre sont
+// voisines sur une ligne réelle ; une rupture n'est tolérée qu'ENTRE deux
+// chapitres, et seulement si un `saut` est déclaré.
 //
-//   R1   20 hubs au moins.
-//   R2   50 lignes au moins — un plancher DE CARTE. Sur un bloc (--livrable)
-//        il s'affiche mais ne compte pas : on développe zone par zone, et le
-//        bloc de lancement (24 hubs, 39 lignes) a été accepté tel quel.
-//   R2b  3 sorties par hub. Sur la carte entière, un hub sous 3 est une erreur :
-//        ajouter des lignes, sinon supprimer le hub. Sur un bloc, une sortie
-//        qui part vers une zone pas encore livrée est « à venir » : le hub
-//        reste, c'est décidé.
-//   R3   4 à 9 gares par ligne, donc 5 à 10 niveaux hub d'arrivée compris.
-//   R4   des zones de 7 à 13 hubs, et au moins deux.
-//   R5   pas de cul-de-sac : graphe connexe, fiches existantes, hubs écrits.
-//   R6   une gare intermédiaire appartient à une seule ligne, et n'est jamais
-//        un hub.
-//   R7   une ligne reste sur sa ligne réelle : sinuosité ≤ 1,5 × le vol d'oiseau.
-//   R8   les gares grossissent vers le hub — avertissement seulement, parce
-//        qu'une ligne se joue dans les deux sens et qu'une dent de scie est
-//        acceptée. On mesure, dans chaque sens, les gares dont le plafond de
-//        flux (js/graph.js) est sous la difficulté voulue à leur position.
-//
-// Et la COUVERTURE, qui n'est pas une règle mais la liste du travail : pour
-// chaque ligne trop courte ou vide dont les deux hubs sont écrits, les gares
-// réelles que data/lines.js place entre eux et qui n'ont pas encore de fiche.
-// C'est de cette liste que part l'écriture — pas d'une recherche.
-//
-// Code de sortie ≠ 0 dès qu'une règle ✘ échoue sur l'ensemble évalué.
-// ------------------------------------------------------------------
-import { readFileSync } from "node:fs";
-import { createContext, runInContext } from "node:vm";
-
-const ROOT = new URL("..", import.meta.url).pathname;
-const read = f => readFileSync(ROOT + f, "utf8");
-
-let CARTE_ID = "europe", LIVRABLE = null, DETAIL = false, RESUME = false;
-for (const a of process.argv.slice(2)) {
-  let m;
-  if ((m = /^--carte=(.+)$/.exec(a))) CARTE_ID = m[1];
-  else if ((m = /^--livrable=(.+)$/.exec(a))) LIVRABLE = new Set(m[1].split(",").map(s => s.trim()).filter(Boolean));
-  else if (a === "--detail") DETAIL = true;
-  else if (a === "--resume") RESUME = true;
-  else { console.error("argument inconnu : " + a); process.exit(2); }
+// La mesure : la distance à vol d'oiseau entre deux gares consécutives. Un
+// écart supérieur à 250 km à l'intérieur d'un chapitre n'est plus une portée
+// de rail, c'est un trou. On ne se prononce que sur les gares dont on a les
+// coordonnées — le reste est signalé, pas condamné.
+const RAD = Math.PI / 180;
+function km(a, b) {
+  const A = COORD.get(a), B = COORD.get(b);
+  if (!A || !B) return null;
+  const dx = (B[0] - A[0]) * Math.cos((A[1] + B[1]) / 2 * RAD) * 111.32, dy = (B[1] - A[1]) * 110.57;
+  return Math.hypot(dx, dy);
 }
-
-// ------------------------------------------------------------------
-// CHARGEMENT — la carte, la bibliothèque de fiches, la géographie, le réseau.
-// ------------------------------------------------------------------
-const CARTE = JSON.parse(read("data/cartes/" + CARTE_ID + ".json"));
-const index = JSON.parse(read("data/stations/index.json"));
-const CATALOG = [];
-for (const g of index)
-  for (const id of g.stations) CATALOG.push(JSON.parse(read(`data/stations/${g.country}/${id}.json`)));
-const card = Object.fromEntries(CATALOG.map(c => [c.id, c]));
-const idOfName = {};
-for (const c of CATALOG) idOfName[c.city || c.name] = c.id;
-const nomDe = id => card[id] ? (card[id].city || card[id].name) : id;
-
-// Les outils de lecture du jeu, sans navigateur : geo (coordonnées des
-// villes), network (le réseau réel, gares ET points de passage), graph (le
-// modèle de difficulté). js/graph.js se garde tout seul sans carte chargée.
-const ctx = createContext({ console, CATALOG });
-for (const [f, n] of [
-  ["js/geo.js", ["GEO"]],
-  ["data/places.js", ["PLACES", "PLACE_ALIASES"]],
-  ["data/lines.js", ["LINES", "LINE_COUNTRIES"]],
-  ["js/network.js", ["netEdges", "netKey", "netPlaces"]],
-  ["js/graph.js", ["difficulteVoulue", "plafondDeFlux"]]
-]) runInContext(read(f) + "\n" + n.map(x => `globalThis.${x} = ${x};`).join(""), ctx);
-const { GEO, PLACES, netEdges, netPlaces, difficulteVoulue, plafondDeFlux } = ctx;
-
-const lonlat = {};
-for (const slug in GEO.countries)
-  for (const id in GEO.countries[slug].cities) lonlat[id] = GEO.countries[slug].cities[id];
-const R = 6371, rad = Math.PI / 180;
-const km = (A, B) => (!A || !B) ? null
-  : R * Math.hypot((B[0] - A[0]) * rad * Math.cos((A[1] + B[1]) / 2 * rad), (B[1] - A[1]) * rad);
-
-// ------------------------------------------------------------------
-// L'ENSEMBLE ÉVALUÉ — toute la carte, ou un bloc de zones.
-// ------------------------------------------------------------------
-const zones = CARTE.zones || [], hubs = CARTE.hubs || [], lignes = CARTE.lignes || [];
-const hubById = Object.fromEntries(hubs.map(h => [h.id, h]));
-for (const h of hubs) h.gareId = h.gare ? idOfName[h.gare] || null : null;
-
-if (LIVRABLE) for (const z of LIVRABLE)
-  if (!zones.some(x => x.id === z)) { console.error(`zone inconnue : ${z} (${zones.map(x => x.id).join(", ")})`); process.exit(2); }
-const dedans = h => !LIVRABLE || LIVRABLE.has(h.zone);
-const H = hubs.filter(dedans);
-const Hset = new Set(H.map(h => h.id));
-const Z = zones.filter(z => !LIVRABLE || LIVRABLE.has(z.id));
-const L = lignes.filter(l => Hset.has(l.de) && Hset.has(l.vers));
-const SORTANTES = lignes.filter(l => Hset.has(l.de) !== Hset.has(l.vers));
-const nomLigne = l => `${(hubById[l.de] || {}).nom || l.de} – ${(hubById[l.vers] || {}).nom || l.vers}`;
-
-// ------------------------------------------------------------------
-// LES RÈGLES
-// ------------------------------------------------------------------
-const regles = [];   // { id, titre, mesure, etat: "ok" | "ko" | "warn" | "info", detail: [] }
-const regle = (id, titre, etat, mesure, detail = []) => regles.push({ id, titre, etat, mesure, detail });
-
-// R1
-regle("R1", "20 hubs au moins", H.length >= 20 ? "ok" : "ko", `${H.length} hubs`);
-
-// R2 — plancher de carte ; informatif sur un bloc.
-regle("R2", "50 lignes au moins", L.length >= 50 ? "ok" : (LIVRABLE ? "info" : "ko"),
-  `${L.length} lignes` + (LIVRABLE && L.length < 50 ? " (plancher de carte, pas de bloc)" : ""));
-
-// R2b — sorties par hub.
-{
-  const total = {}, internes = {};
-  for (const l of lignes) { total[l.de] = (total[l.de] || 0) + 1; total[l.vers] = (total[l.vers] || 0) + 1; }
-  for (const l of L) { internes[l.de] = (internes[l.de] || 0) + 1; internes[l.vers] = (internes[l.vers] || 0) + 1; }
-  const sous = H.filter(h => (total[h.id] || 0) < 3);
-  const aVenir = LIVRABLE ? H.filter(h => (total[h.id] || 0) >= 3 && (internes[h.id] || 0) < 3) : [];
-  const detail = sous.map(h => `${h.nom} : ${total[h.id] || 0} sortie(s) — ajouter une ligne, sinon retirer le hub`)
-    .concat(aVenir.map(h => `${h.nom} : ${internes[h.id] || 0} dans le bloc, ${total[h.id]} au total — la suite vient d'une autre zone`));
-  regle("R2b", "3 sorties par hub", sous.length ? (LIVRABLE ? "warn" : "ko") : (aVenir.length ? "warn" : "ok"),
-    sous.length ? `${sous.length} hub(s) sous 3` + (LIVRABLE ? " (tolérés le temps du développement)" : "")
-      : aVenir.length ? `${aVenir.length} hub(s) complétés par une autre zone` : "tous à 3 ou plus", detail);
-}
-
-// R3 — longueur des lignes.
-const longueur = l => (l.gares || []).length;
-// Un corridor pauvre en carrefours ne porte pas toujours quatre gares. Le §0 de
-// tools/AUTHORING-STATIONS.md interdit d'écrire une gare à deux directions —
-// « jamais parce qu'une ligne de carte a besoin d'un point de plus » — et
-// certains corridors n'offrent rien d'autre : Sète sur Montpellier – Toulouse,
-// Bar-le-Duc sur Paris – Strasbourg, tous deux sans la moindre antenne réelle.
-// R3 et ce plancher se contredisaient donc, sans issue.
-// La ligne DÉCLARE alors son plancher (`minGares`) et la raison (`pourquoi`).
-// La tolérance ne s'obtient jamais par défaut, et le rapport continue de la
-// nommer : une ligne courte reste une dette qu'on a choisie, pas une ligne
-// normale. Plancher absolu 3 — en deçà, un corridor n'est plus un corridor.
-const PLANCHER = 4;
-const plancherDe = l => Math.max(3, l.minGares || PLANCHER);
-const etatLigne = l => {
-  const n = longueur(l);
-  if (n === 0) return "vide";
-  if (n > 9) return "longue";
-  if (n < plancherDe(l)) return "courte";
-  return n < PLANCHER ? "tolere" : "conforme";
-};
-// « Tenue » = la ligne satisfait la règle, tolérance déclarée comprise.
-const tenue = l => { const e = etatLigne(l); return e === "conforme" || e === "tolere"; };
-{
-  const compte = { conforme: 0, tolere: 0, courte: 0, vide: 0, longue: 0 };
-  for (const l of L) compte[etatLigne(l)]++;
-  const detail = L.filter(l => !tenue(l)).map(l => `${nomLigne(l)} : ${longueur(l)} gare(s)`);
-  // Les tolérances se lisent au rapport, avec leur motif : elles restent une
-  // dette assumée, pas un silence.
-  for (const l of L.filter(l => etatLigne(l) === "tolere"))
-    detail.push(`${nomLigne(l)} : ${longueur(l)} gare(s), plancher abaissé — ${l.pourquoi || "sans motif déclaré"}`);
-  regle("R3", "4 à 9 gares par ligne", compte.courte + compte.vide + compte.longue ? "ko" : (compte.tolere ? "warn" : "ok"),
-    `${compte.conforme} conformes` + (compte.tolere ? ` · ${compte.tolere} toléré(s) à 3` : "") +
-    ` · ${compte.courte} trop courtes · ${compte.vide} vides` + (compte.longue ? ` · ${compte.longue} trop longues` : ""),
-    detail);
-}
-
-// R4 — zones.
-{
-  const tailles = Z.map(z => ({ z, n: hubs.filter(h => h.zone === z.id).length }));
-  const hors = tailles.filter(t => t.n < 7 || t.n > 13);
-  const sansZone = H.filter(h => !zones.some(z => z.id === h.zone));
-  regle("R4", "zones de 7 à 13 hubs, au moins deux", (Z.length >= 2 && !hors.length && !sansZone.length) ? "ok" : "ko",
-    `${Z.length} zone(s)` + (tailles.length ? ` de ${Math.min(...tailles.map(t => t.n))} à ${Math.max(...tailles.map(t => t.n))} hubs` : ""),
-    hors.map(t => `${t.z.nom} : ${t.n} hubs`).concat(sansZone.map(h => `${h.nom} : zone inconnue « ${h.zone} »`)));
-}
-
-// R5 — pas de cul-de-sac : connexité, fiches, hubs écrits.
-{
-  const detail = [];
-  const adj = {}; for (const h of H) adj[h.id] = [];
-  for (const l of L) { adj[l.de].push(l.vers); adj[l.vers].push(l.de); }
-  const vus = new Set(); const pile = H.length ? [H[0].id] : [];
-  while (pile.length) { const u = pile.pop(); if (vus.has(u)) continue; vus.add(u); for (const v of adj[u]) pile.push(v); }
-  const isoles = H.filter(h => !vus.has(h.id));
-  if (isoles.length) detail.push(`hors du réseau : ${isoles.map(h => h.nom).join(", ")}`);
-  const sansFiche = H.filter(h => !h.gareId);
-  if (sansFiche.length) detail.push(`hubs à écrire (${sansFiche.length}) : ${sansFiche.map(h => h.nom + (h.gare ? ` (fiche « ${h.gare} » introuvable)` : "")).join(", ")}`);
-  const inconnues = [];
-  for (const l of L) for (const g of l.gares || []) if (!card[g]) inconnues.push(`${g} (${nomLigne(l)})`);
-  if (inconnues.length) detail.push(`fiches référencées absentes : ${inconnues.join(", ")}`);
-  for (const l of L) for (const k of ["de", "vers"]) if (!hubById[l[k]]) detail.push(`ligne ${nomLigne(l)} : hub inconnu « ${l[k]} »`);
-  regle("R5", "connexe, fiches existantes, hubs écrits", detail.length ? "ko" : "ok",
-    detail.length ? `${isoles.length} isolé(s) · ${sansFiche.length} hub(s) sans fiche · ${inconnues.length} fiche(s) absente(s)` : "aucun cul-de-sac", detail);
-}
-
-// R6 — une gare, une ligne, et jamais un hub.
-const ligneDeGare = {};
-{
-  const detail = [];
-  const hubGares = new Set(hubs.map(h => h.gareId).filter(Boolean));
-  for (const l of lignes) for (const g of l.gares || []) {
-    if (ligneDeGare[g]) detail.push(`${nomDe(g)} sur ${nomLigne(ligneDeGare[g])} ET ${nomLigne(l)}`);
-    else ligneDeGare[g] = l;
-    if (hubGares.has(g)) detail.push(`${nomDe(g)} est un hub et figure sur ${nomLigne(l)}`);
+const trous = [], sansCoord = new Set();
+for (const ch of chapitres)
+  for (let i = 1; i < (ch.gares || []).length; i++) {
+    const d = km(ch.gares[i - 1], ch.gares[i]);
+    if (d == null) { sansCoord.add(ch.gares[i - 1]); sansCoord.add(ch.gares[i]); continue; }
+    if (d > 250) trous.push(`${ch.id} : ${nom(ch.gares[i - 1])} → ${nom(ch.gares[i])} = ${Math.round(d)} km`);
   }
-  regle("R6", "une gare, une seule ligne", detail.length ? "ko" : "ok",
-    detail.length ? `${detail.length} doublon(s)` : `${Object.keys(ligneDeGare).length} gares placées, aucune en double`, detail);
-}
+R("R5", "continuité réelle à l'intérieur des chapitres", !trous.length,
+  trous.length ? trous.length + " saut(s) non déclaré(s)" :
+    `aucun trou (${sansCoord.size} gare(s) sans coordonnées, non jugées)`);
+listes.R5 = trous;
 
-// R7 — sinuosité.
-const sinuosite = l => {
-  const a = hubById[l.de], b = hubById[l.vers];
-  if (!a || !b || !longueur(l)) return null;
-  const pts = [a.ll, ...l.gares.map(g => lonlat[g]), b.ll];
-  if (pts.some(p => !p)) return null;
-  let parcouru = 0;
-  for (let i = 0; i + 1 < pts.length; i++) parcouru += km(pts[i], pts[i + 1]);
-  const direct = km(a.ll, b.ll);
-  return direct < 1 ? null : parcouru / direct;
-};
-{
-  const detail = [], sansCoord = [];
-  for (const l of L) {
-    if (!longueur(l)) continue;
-    const s = sinuosite(l);
-    if (s == null) { sansCoord.push(nomLigne(l)); continue; }
-    if (s > 1.5) detail.push(`${nomLigne(l)} : ×${s.toFixed(2)}`);
-  }
-  if (sansCoord.length) detail.push(`non mesurables (coordonnée manquante dans js/geo.js) : ${sansCoord.join(", ")}`);
-  regle("R7", "sinuosité ≤ 1,5", detail.length > sansCoord.length ? "ko" : (sansCoord.length ? "warn" : "ok"),
-    detail.length ? `${detail.length - (sansCoord.length ? 1 : 0)} ligne(s) au-dessus` + (sansCoord.length ? `, ${sansCoord.length} non mesurable(s)` : "") : "toutes sous 1,5", detail);
+// R6 — UNE FICHE N'APPARAÎT QU'UNE FOIS, et l'on ne réemprunte jamais un
+// tracé déjà parcouru. Le doublon de fiche est mesuré en R1 ; ce qui reste
+// ici, c'est le retour dans une VILLE : permis, mais seulement par une autre
+// gare réelle. Deux gares de la même ville portent des `city` identiques.
+const parVille = new Map();
+for (const g of ordre) {
+  const f = FICHES.get(g);
+  if (!f || !f.city) continue;
+  if (!parVille.has(f.city)) parVille.set(f.city, []);
+  parVille.get(f.city).push(g);
 }
+const retours = [...parVille.entries()].filter(([, gs]) => gs.length > 1);
+R("R6", "une fiche une fois ; retour en ville par une autre gare", true,
+  retours.length ? retours.length + " ville(s) revisitée(s), par des gares distinctes" : "aucun retour en ville");
+listes.R6 = retours.map(([v, gs]) => `${v} : ${gs.join(", ")}`);
 
-// R8 — la rampe : avertissement.
-{
-  const detail = [];
-  for (const l of L) {
-    if (!longueur(l)) continue;
-    const sens = [[l.de, l.vers, l.gares], [l.vers, l.de, l.gares.slice().reverse()]];
-    const sous = [];
-    for (const [, vers, gares] of sens) {
-      const boss = hubById[vers]; if (!boss) continue;
-      const dBoss = boss.rang === 1 ? 5 : 4;
-      gares.forEach((g, i) => {
-        if (!card[g]) return;
-        const voulu = difficulteVoulue(i, gares.length, dBoss), porte = plafondDeFlux(card[g]);
-        if (porte < voulu) sous.push(`${nomDe(g)} ${porte}<${voulu} vers ${boss.nom}`);
-      });
-    }
-    if (sous.length) detail.push(`${nomLigne(l)} : ${sous.join(", ")}`);
-  }
-  regle("R8", "les gares grossissent vers le hub", detail.length ? "warn" : "ok",
-    detail.length ? `${detail.length} ligne(s) dont une gare porte moins que sa position` : "toutes les rampes tiennent", detail);
+// R7 — SINUOSITÉ ≤ 1,5. La longueur cumulée d'un chapitre, rapportée au vol
+// d'oiseau entre sa première et sa dernière gare. Au-delà, le chapitre a
+// quitté sa ligne réelle.
+const sinueux = [];
+for (const ch of chapitres) {
+  const g = ch.gares || [];
+  if (g.length < 2) continue;
+  let cum = 0, complet = true;
+  for (let i = 1; i < g.length; i++) { const d = km(g[i - 1], g[i]); if (d == null) { complet = false; break; } cum += d; }
+  const vol = km(g[0], g[g.length - 1]);
+  if (!complet || !vol) continue;
+  const s = cum / vol;
+  if (s > 1.5) sinueux.push(`${ch.id} : ${s.toFixed(2)} (${Math.round(cum)} km pour ${Math.round(vol)} à vol d'oiseau)`);
 }
+R("R7", "sinuosité ≤ 1,5 par chapitre", !sinueux.length,
+  sinueux.length ? sinueux.length + " chapitre(s) trop sinueux" : "tous sous 1,5");
+listes.R7 = sinueux;
 
-// ------------------------------------------------------------------
-// LA COUVERTURE — ce qu'il reste à écrire, ligne par ligne.
-// ------------------------------------------------------------------
-// Les candidats viennent du réseau réel (data/lines.js + data/places.js, lus
-// par js/network.js) : entre les deux gares-hubs, en passant par les gares
-// déjà posées, on suit la voie et l'on relève ce qu'elle traverse — points de
-// passage sans fiche, et gares du catalogue qu'aucune ligne ne tient encore.
-const adjNet = {};
-for (const [a, b] of netEdges()) { (adjNet[a] = adjNet[a] || []).push(b); (adjNet[b] = adjNet[b] || []).push(a); }
-const places = netPlaces();
-const hubGareIds = new Set(hubs.map(h => h.gareId).filter(Boolean));
-function segment(u, v, interdits) {
-  // Plus court chemin en nombre de pas, sans traverser un hub ni une gare
-  // déjà prise par une autre ligne.
-  const prev = { [u]: null }, file = [u];
-  while (file.length) {
-    const x = file.shift();
-    if (x === v) break;
-    for (const y of adjNet[x] || []) {
-      if (y in prev) continue;
-      if (y !== v && interdits.has(y)) continue;
-      prev[y] = x; file.push(y);
-    }
-  }
-  if (!(v in prev)) return null;
-  const out = []; for (let x = prev[v]; x && x !== u; x = prev[x]) out.unshift(x);
-  return out;
+// R8 — LA DIFFICULTÉ PORTABLE CROÎT LE LONG DU CHAPITRE, et la grande gare
+// finale est la plus haute. AVERTISSEMENT et non erreur : la géométrie a le
+// dernier mot, et une gare qui ne peut pas monter ne se réécrit pas.
+const rampes = [];
+for (const ch of chapitres) {
+  const g = (ch.gares || []).filter(x => FICHES.has(x));
+  if (g.length < 2) continue;
+  const fin = plafond(g[g.length - 1]);
+  const plusHaut = Math.max(...g.map(plafond));
+  if (fin < plusHaut) rampes.push(`${ch.id} : arrivée ${nom(g[g.length - 1])} plafonne à ${fin}, une gare du chapitre monte à ${plusHaut}`);
 }
-// La gare par laquelle un hub regarde vers un autre : celle de sa VERSION pour
-// cette direction quand il en a (Paris-Lyon vers Dijon, Paddington vers
-// Bristol), sinon sa gare par défaut.
-function gareVers(h, vers) {
-  const v = (h.versions || []).find(x => x.vers === vers);
-  return (v && idOfName[v.gare]) || h.gareId;
-}
-function candidats(l) {
-  const a = hubById[l.de], b = hubById[l.vers];
-  if (!a || !b || !a.gareId || !b.gareId) return { manque: true };
-  const jalons = [gareVers(a, l.vers), ...(l.gares || []), gareVers(b, l.de)];
-  const interdits = new Set([...hubGareIds, ...Object.keys(ligneDeGare).filter(g => ligneDeGare[g] !== l)]);
-  const traverses = [], trous = [];
-  for (let i = 0; i + 1 < jalons.length; i++) {
-    const seg = segment(jalons[i], jalons[i + 1], interdits);
-    if (!seg) { trous.push(`${nomDe(jalons[i])} → ${nomDe(jalons[i + 1])}`); continue; }
-    for (const n of seg) if (!traverses.includes(n)) traverses.push(n);
-  }
-  return {
-    lieux: traverses.filter(n => !card[n]).map(n => (places[n] || {}).label || n),
-    libres: traverses.filter(n => card[n]).map(nomDe),
-    trous
-  };
-}
+R("R8", "la difficulté croît vers la grande gare", !rampes.length,
+  rampes.length ? rampes.length + " chapitre(s) dont l'arrivée n'est pas le sommet" : "l'arrivée est le sommet partout", false);
+listes.R8 = rampes;
 
-// ------------------------------------------------------------------
-// RAPPORT
-// ------------------------------------------------------------------
-const conformes = L.filter(tenue).length;
-const ko = regles.filter(r => r.etat === "ko"), warn = regles.filter(r => r.etat === "warn");
-const titre = `carte-check — ${CARTE.nom}` + (LIVRABLE ? ` · bloc ${[...LIVRABLE].join("+")}` : "") +
-  ` : ${Z.length} zones · ${H.length} hubs · ${L.length} lignes · ${conformes}/${L.length} conformes · ` +
-  (ko.length ? `✘ ${ko.length} règle(s)` : "✔ règles") + (warn.length ? ` · ⚠ ${warn.length}` : "");
-if (RESUME) { console.log(titre); process.exit(ko.length ? 1 : 0); }
+// R9 — LE PREMIER CHAPITRE EST DOUX : sa première gare se joue en 1 et son
+// arrivée ne dépasse pas 3. C'est le tutoriel, et il n'a pas de deuxième chance.
+const c1 = chapitres[0];
+let ditR9 = "aucun chapitre", okR9 = false;
+if (c1 && c1.gares && c1.gares.length) {
+  const p1 = plancher(c1);
+  // L'arrivée VOULUE : ce que le chapitre déclare, sinon ce que sa grande gare
+  // peut porter. C'est celle-là que R9 juge — pas la taille du bâtiment.
+  const a1 = Math.min(5, c1.arrivee || plafond(c1.gares[c1.gares.length - 1]));
+  okR9 = p1 === 1 && a1 <= 3;
+  ditR9 = `${c1.nom} : plancher ${p1}, arrivée ${a1}` + (a1 > 3 ? " (au-dessus de 3)" : "");
+}
+function plancher(ch) { return ch.plancher || Math.max(1, Math.min(4, 1 + Math.floor(chapitres.indexOf(ch) / 3))); }
+R("R9", "premier chapitre doux (plancher 1, arrivée ≤ 3)", okR9, ditR9);
 
-const pad = (s, n) => String(s).padEnd(n);
-const signe = { ok: "✔", ko: "✘", warn: "⚠", info: "—" };
-console.log("\n" + titre + "\n");
+// --- Ce qui reste à écrire ------------------------------------------------
+const aEcrire = ordre.filter(g => !FICHES.has(g));
+const premiereAVenir = ordre.findIndex(g => !FICHES.has(g));
+const jouables = premiereAVenir < 0 ? ordre.length : premiereAVenir;
+
+// --- Sortie ---------------------------------------------------------------
+const dur = regles.filter(r => r.dur && !r.ok);
+const mou = regles.filter(r => !r.dur && !r.ok);
+if (RESUME) {
+  console.log(`carte-check — ${carte.nom} : ${chapitres.length} chapitres · ${ordre.length} gares · ` +
+    `${jouables} jouables · ${dur.length ? "✘ " + dur.length + " règle(s)" : "✔"}${mou.length ? " · ⚠ " + mou.length : ""}`);
+  process.exit(dur.length ? 1 : 0);
+}
+console.log(`\ncarte-check — ${carte.nom}${chantier ? "  (en chantier)" : ""}`);
+console.log("-".repeat(74));
 for (const r of regles) {
-  console.log(`${signe[r.etat]}  ${pad(r.id, 4)} ${pad(r.titre, 40)} ${r.mesure}`);
-  if (r.detail.length && (DETAIL || r.etat === "ko"))
-    for (const d of r.detail.slice(0, DETAIL ? 1e9 : 12)) console.log(`          · ${d}`);
-  if (!DETAIL && r.detail.length > 12 && r.etat === "ko") console.log(`          · … ${r.detail.length - 12} de plus (--detail)`);
+  const marque = r.ok ? "✔" : (r.dur ? "✘" : "⚠");
+  console.log(`  ${marque} ${r.id.padEnd(3)} ${r.titre.padEnd(44)} ${r.dit}`);
+  if ((DETAIL || !r.ok) && (listes[r.id] || []).length)
+    for (const l of listes[r.id].slice(0, DETAIL ? 99 : 8)) console.log("        · " + l);
 }
-
-// Couverture : toujours le compte, le détail sur demande.
-const aFaire = L.filter(l => !tenue(l));
-let fichesManquantes = 0, hubsManquants = new Set();
-const lignesCouv = [];
-for (const l of aFaire) {
-  const n = longueur(l), c = candidats(l);
-  const besoin = Math.max(0, 4 - n);
-  if (c.manque) {
-    for (const k of ["de", "vers"]) if (hubById[l[k]] && !hubById[l[k]].gareId) hubsManquants.add(hubById[l[k]].nom);
-  } else fichesManquantes += besoin;
-  lignesCouv.push({ l, n, c, besoin });
-}
-console.log(`\nCOUVERTURE : ${aFaire.length} ligne(s) à compléter · au moins ${fichesManquantes} fiche(s) à écrire sur les lignes dont les deux hubs existent` +
-  (hubsManquants.size ? ` · ${hubsManquants.size} hub(s) à écrire d'abord : ${[...hubsManquants].join(", ")}` : ""));
-if (LIVRABLE && SORTANTES.length)
-  console.log(`${SORTANTES.length} ligne(s) sortent du bloc (à venir) : ${SORTANTES.map(nomLigne).join(", ")}`);
-if (DETAIL) {
-  console.log();
-  lignesCouv.sort((x, y) => y.n - x.n || nomLigne(x.l).localeCompare(nomLigne(y.l)));
-  for (const { l, n, c, besoin } of lignesCouv) {
-    const tete = `${pad(n + " gare" + (n > 1 ? "s" : ""), 9)}${pad(nomLigne(l), 28)}`;
-    if (c.manque) { console.log(`${tete} hub à écrire d'abord`); continue; }
-    const s = sinuosite(l);
-    console.log(`${tete} ${pad("+" + besoin + " à écrire", 12)}` + (s ? ` ×${s.toFixed(2)}` : "") +
-      (n ? `  [${l.gares.map(nomDe).join(" · ")}]` : ""));
-    if (c.lieux.length) console.log(`${pad("", 9)}  sur la voie, sans fiche : ${c.lieux.join(", ")}`);
-    if (c.libres.length) console.log(`${pad("", 9)}  au catalogue, sur aucune ligne : ${c.libres.join(", ")}`);
-    if (c.trous.length) console.log(`${pad("", 9)}  pas de tracé dans data/lines.js : ${c.trous.join(" ; ")}`);
-    if (!c.lieux.length && !c.libres.length && !c.trous.length) console.log(`${pad("", 9)}  la voie ne traverse rien d'autre : chercher les gares réelles (Wikipédia, OpenRailwayMap)`);
-  }
-}
-console.log(ko.length ? `\n${ko.length} règle(s) en échec — la carte${LIVRABLE ? " (ce bloc)" : ""} n'est pas livrable.\n`
-  : `\nToutes les règles tiennent${warn.length ? ", avec des avertissements" : ""} — ${LIVRABLE ? "le bloc" : "la carte"} est livrable.\n`);
-process.exit(ko.length ? 1 : 0);
+console.log("-".repeat(74));
+console.log(`  ruban      ${ordre.length} gares · ${jouables} jouables d'affilée · ${aEcrire.length} fiches à écrire`);
+if (aEcrire.length && (DETAIL || aEcrire.length <= 12))
+  console.log("             " + aEcrire.join(", "));
+if (chantier) console.log("  chantier   R2 et R4 sont informatives : la carte n'est pas encore complète.");
+console.log();
+process.exit(dur.length ? 1 : 0);

@@ -45,7 +45,7 @@ async function startStation(i) {
   // Un service commence : le résultat du précédent appartient au passé.
   if (typeof CARTE !== "undefined") CARTE.bilan = null;
   // LA FICHE TELLE QU'ON LA JOUE, et non telle qu'elle est écrite : la gare
-  // d'amorce d'une partie se joue en niveau 1 (js/graph.js, ficheDeService).
+  // d'amorce d'une partie se joue en niveau 1 (js/ruban.js, ficheDeService).
   const cfg = typeof ficheDeService === "function"
     ? ficheDeService(CATALOG[i]) : CATALOG[i];
   // Cartouche haut-gauche : drapeau (1er token du champ country « 🇧🇪 Belgique »)

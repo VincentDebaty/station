@@ -42,7 +42,7 @@
 const SERIE_SEUIL = 3;
 
 // ------------------------------------------------------------------
-// LES RANGS DE LIGNE
+// LES RANGS DE CHAPITRE
 // ------------------------------------------------------------------
 // Quatre crans, et ils se lisent sur la couleur du tracé : c'est là tout
 // l'intérêt. L'objectif du joueur devient visible sans être énoncé — une carte
@@ -50,10 +50,10 @@ const SERIE_SEUIL = 3;
 //
 // L'ordre compte : `null` (en cours) ‹ ouverte ‹ argent ‹ or ‹ diamant.
 const RANGS = [
-  { id: "ouverte", nom: "Ligne ouverte",  seuil: 1, couleur: "#2dd4bf" },
-  { id: "argent",  nom: "Ligne d'argent", seuil: 2, couleur: "#c9d4e6" },
-  { id: "or",      nom: "Ligne d'or",     seuil: 3, couleur: "#e8b923" },
-  { id: "diamant", nom: "Ligne de diamant", seuil: 4, couleur: "#7fd4ff" }
+  { id: "ouverte", nom: "Chapitre fait",     seuil: 1, couleur: "#2dd4bf" },
+  { id: "argent",  nom: "Chapitre d'argent", seuil: 2, couleur: "#c9d4e6" },
+  { id: "or",      nom: "Chapitre d'or",     seuil: 3, couleur: "#e8b923" },
+  { id: "diamant", nom: "Chapitre de diamant", seuil: 4, couleur: "#7fd4ff" }
 ];
 // Le « niveau » d'une gare sur l'échelle des rangs : 0 si elle n'est pas
 // tenue, sinon son nombre d'étoiles, et 4 pour un sans-faute. Le diamant vaut
@@ -92,34 +92,26 @@ function garesFaites(composition) {
 //
 // `depuis` ne décide donc plus QUOI, seulement DANS QUEL ORDRE — la vue ligne
 // s'en sert pour afficher de gauche à droite.
-function garesDeLigne(lien, depuis) {
-  if (!lien || typeof parcours !== "function") return [];
-  const p = parcours(lien, depuis === lien.b ? lien.b : lien.a);
-  const hD = typeof hubById === "function" ? hubById(p.depuis) : null;
-  const hA = typeof hubById === "function" ? hubById(p.vers) : null;
-  return [hD && hD.gareId, ...p.gares, hA && hA.gareId].filter(Boolean);
-}
-// Le rang d'une ligne, ou null tant qu'une gare manque. On prend le MINIMUM :
-// une ligne d'or est une ligne dont AUCUNE gare n'est en dessous de trois
-// étoiles. La moyenne aurait laissé une gare bâclée se cacher derrière deux
-// gares parfaites, et le rang aurait cessé de vouloir dire quelque chose.
+function garesDeChapitre(ch) { return ch && ch.gares ? ch.gares.slice() : []; }
+// Le rang d'un chapitre, ou null tant qu'une gare manque. On prend le
+// MINIMUM : un chapitre d'or est un chapitre dont AUCUNE gare n'est en dessous
+// de trois étoiles. La moyenne aurait laissé une gare bâclée se cacher
+// derrière deux gares parfaites, et le rang aurait cessé de vouloir dire
+// quelque chose.
 //
-// Le sens de lecture n'entre pas dans le calcul : `garesDeLigne` rend le même
-// ensemble des deux côtés, à l'ordre près.
-function rangDeLigne(lien, depuis) {
-  const gares = garesDeLigne(lien, depuis);
+// Sur un ruban, le piège du sens de lecture disparaît : un chapitre n'a qu'un
+// bout d'arrivée, et sa composition ne dépend d'aucun point de vue.
+function rangDeChapitre(ch) {
+  const gares = garesDeChapitre(ch);
   if (!gares.length) return null;
   let bas = 4;
   for (const g of gares) bas = Math.min(bas, niveauDeGare(g));
   if (bas < 1) return null;
   return RANGS[bas - 1];
 }
-// Tous les corridors du graphe, chacun lu depuis son extrémité `a` — le rang
-// ne dépend pas du sens de lecture, donc n'importe lequel convient.
-function toutesLesLignes() {
-  if (typeof buildGraphe !== "function") return [];
-  buildGraphe();
-  return GRAPHE.corridors.filter(l => l.gares && l.gares.length);
+// Tous les chapitres du ruban de la carte courante.
+function tousLesChapitres() {
+  return typeof chapitresDuRuban === "function" ? chapitresDuRuban() : [];
 }
 
 // ------------------------------------------------------------------
@@ -138,50 +130,37 @@ function etatRecompenses() {
     etoiles += r.stars || 0;
     if (r.bestDelay === 0) diamants++;
   }
-  // Les lignes, par rang atteint. Chaque cran compte toutes les lignes AU
-  // MOINS à ce rang : une ligne de diamant est aussi une ligne d'or, sans quoi
-  // se perfectionner ferait perdre une médaille.
-  const lignes = { ouverte: 0, argent: 0, or: 0, diamant: 0 };
-  for (const l of toutesLesLignes()) {
-    const r = rangDeLigne(l, l.a);
+  // Les chapitres, par rang atteint. Chaque cran compte tous les chapitres AU
+  // MOINS à ce rang : un chapitre de diamant est aussi un chapitre d'or, sans
+  // quoi se perfectionner ferait perdre une médaille.
+  const chapitres = { ouverte: 0, argent: 0, or: 0, diamant: 0 };
+  let chapitresFinis = 0;
+  const chs = tousLesChapitres();
+  for (const ch of chs) {
+    if (typeof chapitreTermine === "function" && chapitreTermine(ch)) chapitresFinis++;
+    const r = rangDeChapitre(ch);
     if (!r) continue;
-    for (let i = 0; i <= RANGS.indexOf(r); i++) lignes[RANGS[i].id]++;
+    for (let k = 0; k <= RANGS.indexOf(r); k++) chapitres[RANGS[k].id]++;
   }
-  // Les boss : ouverts (leur gare est tenue) et maîtrisés (toutes leurs
-  // sorties bouclées).
-  let boss = 0, bossMaitrises = 0, mer = 0;
-  const tenues = new Set();
-  for (const c of cat) if (typeof isBought === "function" && isBought(c.id)) tenues.add(c.id);
-  const hubs = typeof tousLesHubs === "function" ? tousLesHubs() : [];
-  for (const h of hubs) {
-    if (!h.gareId || !tenues.has(h.gareId)) continue;
-    boss++;
-    if (typeof bossMaitrise === "function" && bossMaitrise(h.id, tenues)) bossMaitrises++;
+  // Un SAUT FRANCHI : le chapitre qui le porte est entamé. C'est le seul geste
+  // du jeu qui ne suive pas un rail, et il mérite d'être compté.
+  let sauts = 0;
+  for (const ch of chs)
+    if (ch.saut && ch.gares.some(g => niveauDeGare(g) >= 1)) sauts++;
+  // Les zones : touchées, et entièrement traversées.
+  const touchees = new Set();
+  let zonesFinies = 0;
+  const zones = typeof zonesDeCarte === "function" ? zonesDeCarte() : [];
+  for (const z of zones) {
+    const dans = chs.filter(c => c.zone === z.id);
+    if (!dans.length) continue;
+    if (dans.some(c => c.gares.some(g => niveauDeGare(g) >= 1))) touchees.add(z.id);
+    if (dans.every(c => typeof chapitreTermine === "function" && chapitreTermine(c))) zonesFinies++;
   }
-  // Une traversée maritime FRANCHIE : les deux rives tenues. Le graphe en
-  // compte six, et c'est le seul geste du jeu qui ne suit pas un rail.
-  if (typeof tousLesLiens === "function")
-    for (const l of tousLesLiens()) {
-      if (l.type !== "mer") continue;
-      const ha = hubById(l.a), hb = hubById(l.b);
-      if (ha && hb && ha.gareId && hb.gareId && tenues.has(ha.gareId) && tenues.has(hb.gareId)) mer++;
-    }
-  // Les constellations touchées, et celles entièrement tenues.
-  const touchees = new Set(), parCst = {};
-  for (const h of hubs) {
-    parCst[h.zone] = parCst[h.zone] || { n: 0, tenus: 0 };
-    if (!h.gareId) continue;
-    parCst[h.zone].n++;
-    if (tenues.has(h.gareId)) { parCst[h.zone].tenus++; touchees.add(h.zone); }
-  }
-  let constellationsFinies = 0;
-  for (const k in parCst)
-    if (parCst[k].n > 0 && parCst[k].tenus === parCst[k].n) constellationsFinies++;
-
   const serie = typeof getSerie === "function" ? getSerie() : { n: 0, record: 0 };
   return {
-    etoiles, diamants, gares, lignes, boss, bossMaitrises, mer,
-    constellations: touchees.size, constellationsFinies,
+    etoiles, diamants, gares, chapitres, chapitresFinis, sauts,
+    zones: touchees.size, zonesFinies,
     serie: serie.n, serieRecord: serie.record
   };
 }
@@ -214,21 +193,18 @@ const MEDAILLES = [
   { id: "ga30",   fam: "Accumulation", nom: "Réseau régional",     dit: "30 gares",              si: e => e.gares >= 30 },
   { id: "ga75",   fam: "Accumulation", nom: "Réseau national",     dit: "75 gares",              si: e => e.gares >= 75 },
   // --- Maîtrise : ce qu'on a fini, et bien fini. ------------------
-  { id: "li1",    fam: "Maîtrise",     nom: "Bout en bout",        dit: "une ligne ouverte",     si: e => e.lignes.ouverte >= 1 },
-  { id: "li5",    fam: "Maîtrise",     nom: "Cinq lignes",         dit: "5 lignes ouvertes",     si: e => e.lignes.ouverte >= 5 },
-  { id: "li12",   fam: "Maîtrise",     nom: "Toile ferrée",        dit: "12 lignes ouvertes",    si: e => e.lignes.ouverte >= 12 },
-  { id: "or1",    fam: "Maîtrise",     nom: "Voie royale",         dit: "une ligne d'or",        si: e => e.lignes.or >= 1 },
-  { id: "or3",    fam: "Maîtrise",     nom: "Trois fois l'or",     dit: "3 lignes d'or",         si: e => e.lignes.or >= 3 },
-  { id: "diam1",  fam: "Maîtrise",     nom: "Pas une minute",      dit: "une ligne de diamant",  si: e => e.lignes.diamant >= 1 },
-  { id: "bm1",    fam: "Maîtrise",     nom: "Maître du carrefour", dit: "un boss maîtrisé",      si: e => e.bossMaitrises >= 1 },
-  { id: "bm5",    fam: "Maîtrise",     nom: "Grand aiguilleur",    dit: "5 boss maîtrisés",      si: e => e.bossMaitrises >= 5 },
-  { id: "cst1",   fam: "Maîtrise",     nom: "Région bouclée",      dit: "une constellation entière", si: e => e.constellationsFinies >= 1 },
+  { id: "ch1",    fam: "Maîtrise",     nom: "Bout en bout",        dit: "un chapitre fini",      si: e => e.chapitres.ouverte >= 1 },
+  { id: "ch5",    fam: "Maîtrise",     nom: "Cinq chapitres",      dit: "5 chapitres finis",     si: e => e.chapitres.ouverte >= 5 },
+  { id: "ch12",   fam: "Maîtrise",     nom: "Toile ferrée",        dit: "12 chapitres finis",    si: e => e.chapitres.ouverte >= 12 },
+  { id: "or1",    fam: "Maîtrise",     nom: "Voie royale",         dit: "un chapitre d'or",      si: e => e.chapitres.or >= 1 },
+  { id: "or3",    fam: "Maîtrise",     nom: "Trois fois l'or",     dit: "3 chapitres d'or",      si: e => e.chapitres.or >= 3 },
+  { id: "diam1",  fam: "Maîtrise",     nom: "Pas une minute",      dit: "un chapitre de diamant", si: e => e.chapitres.diamant >= 1 },
+  { id: "zo1",    fam: "Maîtrise",     nom: "Région traversée",    dit: "une zone entière",      si: e => e.zonesFinies >= 1 },
   // --- Exploration : jusqu'où l'on est allé. ----------------------
-  { id: "bo1",    fam: "Exploration",  nom: "Grande gare",         dit: "un boss ouvert",        si: e => e.boss >= 1 },
-  { id: "bo5",    fam: "Exploration",  nom: "Cinq métropoles",     dit: "5 boss ouverts",        si: e => e.boss >= 5 },
-  { id: "cst2",   fam: "Exploration",  nom: "Passeport",           dit: "2 constellations",      si: e => e.constellations >= 2 },
-  { id: "cst4",   fam: "Exploration",  nom: "Grand tour",          dit: "4 constellations",      si: e => e.constellations >= 4 },
-  { id: "mer1",   fam: "Exploration",  nom: "Par-delà la mer",     dit: "une traversée",         si: e => e.mer >= 1 },
+  { id: "av1",    fam: "Exploration",  nom: "En route",            dit: "un chapitre entamé",    si: e => e.chapitresFinis >= 1 },
+  { id: "av5",    fam: "Exploration",  nom: "Cinq étapes",         dit: "5 chapitres franchis",  si: e => e.chapitresFinis >= 5 },
+  { id: "zo2",    fam: "Exploration",  nom: "Passeport",           dit: "2 zones touchées",      si: e => e.zones >= 2 },
+  { id: "sa1",    fam: "Exploration",  nom: "Par-delà la mer",     dit: "un saut franchi",       si: e => e.sauts >= 1 },
   // --- Style : la manière. ----------------------------------------
   { id: "sf1",    fam: "Style",        nom: "Sans faute",          dit: "un service parfait",    si: e => e.diamants >= 1 },
   { id: "se3",    fam: "Style",        nom: "Trois d'affilée",     dit: "série de 3",            si: e => e.serieRecord >= 3 },
@@ -248,3 +224,37 @@ function medaillesDe(etat) {
 function medaillesNouvelles(avant, apres) {
   return MEDAILLES.filter(m => apres.has(m.id) && !avant.has(m.id));
 }
+
+// ------------------------------------------------------------------
+// LES CRÉDITS — gagnés en jouant, dépensés pour passer (§7 du document).
+// ------------------------------------------------------------------
+// Deux usages, et deux seulement : acheter une carte, et PAYER LE PASSAGE
+// d'une gare sur laquelle on bloque (§4 ter). Rien n'est stocké : le solde se
+// déduit comme tout le reste.
+//
+// La dépense en passages ne compte que les gares payées ENCORE à zéro étoile.
+// C'est ce qui REND LA MISE au joueur qui revient gagner la gare plus tard —
+// sans qu'une ligne de sauvegarde ait bougé.
+const CREDIT_PAR_ETOILE = 1, CREDIT_PAR_DIAMANT = 5, CREDIT_PAR_CHAPITRE_DOR = 20, CREDIT_PAR_ZONE = 100;
+function creditsGagnes() {
+  const e = etatRecompenses();
+  return e.etoiles * CREDIT_PAR_ETOILE + e.diamants * CREDIT_PAR_DIAMANT +
+    e.chapitres.or * CREDIT_PAR_CHAPITRE_DOR + e.zonesFinies * CREDIT_PAR_ZONE;
+}
+// LE PRIX D'UN PASSAGE SUIT LA POSITION DANS LE RUBAN. Petit au début — pour
+// que le débutant bloqué puisse se le payer en rejouant deux ou trois gares —
+// et cher en fin de carte, pour qu'on n'achète pas la fin du voyage.
+// Ordre de grandeur voulu : trois à cinq gares bien jouées.
+function prixDePassage(gareId) {
+  const ch = typeof chapitreDeGare === "function" ? chapitreDeGare(gareId) : null;
+  const rang = ch ? ch.rang : 0;
+  return 5 + rang * 3;
+}
+function creditsDepenses() {
+  let d = 0;
+  const passees = typeof getPassees === "function" ? getPassees() : [];
+  for (const g of passees) if (niveauDeGare(g) < 1) d += prixDePassage(g);
+  // Les cartes achetées en crédits (lot H) : rien à compter tant qu'il n'y en a pas.
+  return d;
+}
+function soldeCredits() { return Math.max(0, creditsGagnes() - creditsDepenses()); }

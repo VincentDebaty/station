@@ -16,7 +16,7 @@
 // place à un rendu en lignes (js/carte.js), qui n'a pas de projection. Il
 // reste au dépôt parce que les OUTILS s'en servent — les coordonnées des
 // villes mesurent les écartements entre hubs et la sinuosité des corridors
-// (tools/graph-check.mjs, tools/corridors-propose.mjs, tools/net-check.mjs).
+// (tools/carte-check.mjs, tools/net-check.mjs).
 // Les coordonnées des villes vivent ICI (pas dans les fiches de gare).
 // ------------------------------------------------------------------
 

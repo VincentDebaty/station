@@ -1,3 +1,12 @@
+> ⚠️ **PÉRIMÉ DEPUIS LE 25 AOÛT 2026.** Cette procédure décrit la construction
+> d'un GRAPHE de hubs, de sorties et de corridors. Une carte est désormais un
+> **RUBAN** — une suite ordonnée de gares, sans embranchement
+> (`meta-progression-jeu-aiguillage.md` §0). Le schéma à jour est dans
+> `data/cartes/README.md`, le tracé d'Europe dans `ruban-europe.md`, et les
+> règles sont mesurées par `tools/carte-check.mjs`. Ce fichier est conservé
+> pour mémoire ; **ne pas s'en servir pour écrire une carte**. Sa réécriture
+> est le point 5 du lot C dans `plan-de-dev.md`.
+
 # Créer une carte (procédure)
 
 Une carte est une **mission indépendante** : un territoire (continent, pays,

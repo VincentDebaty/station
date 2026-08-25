@@ -20,7 +20,7 @@
 // serie }`, la carte courante, et les cartes possédées (avec leur mode
 // d'acquisition : gratuite, crédits, achat). Tout le reste — grade, crédits,
 // rangs, médailles — se déduit.
-const SCHEMA_VERSION = 6;
+const SCHEMA_VERSION = 7;
 // La carte de tout joueur d'avant les cartes : l'Europe, et elle est gratuite.
 const CARTE_PAR_DEFAUT = "europe";
 const KEY_PROGRESS = "station-progress";
@@ -48,7 +48,13 @@ function makeBackend() {
 const _store = makeBackend();
 
 // --- Caches mémoire : lus en synchrone par le jeu, hydratés par loadStore. ---
-function carteVierge() { return { stations: {}, bought: [], serie: { n: 0, record: 0 } }; }
+// SCHÉMA 7 (25 août 2026) — LE RUBAN. `bought` disparaît : sur un ruban, une
+// gare ne s'achète pas, elle s'atteint. La POSITION ne se stocke pas non plus,
+// elle se déduit (js/ruban.js, positionCourante). Ce qui APPARAÎT, c'est
+// `passees` : les gares franchies en payant (meta-progression §4 ter) — le
+// seul fait nouveau, et il porte aussi la dépense, puisque celle-ci ne compte
+// que les gares passées ENCORE à zéro étoile.
+function carteVierge() { return { stations: {}, passees: [], serie: { n: 0, record: 0 } }; }
 function sauvegardeVierge() {
   return { version: SCHEMA_VERSION, carteCourante: CARTE_PAR_DEFAUT,
     cartes: { [CARTE_PAR_DEFAUT]: carteVierge() },
@@ -71,23 +77,32 @@ let _onboarded = false;
 
 // --- Migration : amène n'importe quel format vers le schéma courant. ---
 function migrate(raw) {
-  // v6 : déjà par carte. On relit avec des défauts, sans rien déduire.
-  if (raw && raw.version === 6 && raw.cartes && typeof raw.cartes === "object") {
+  // v6 ET v7 : déjà par carte. On relit avec des défauts, sans rien déduire.
+  //
+  // v6 → v7 : `bought` est ABANDONNÉ et rien n'est perdu. Ce que le joueur
+  // avait, ce sont ses ÉTOILES et ses RECORDS, et les deux passent intacts ;
+  // la position sur le ruban se recalcule seule à partir d'eux. Un joueur du
+  // graphe qui avait pris une autre branche garde ses étoiles sur des gares
+  // hors ruban : elles restent au catalogue et comptent pour le grade.
+  // `passees` naît vide — personne n'a encore rien payé.
+  if (raw && (raw.version === 6 || raw.version === 7) && raw.cartes && typeof raw.cartes === "object") {
     const cartes = {};
     for (const id in raw.cartes) {
       const c = raw.cartes[id] || {};
-      cartes[id] = { stations: c.stations || {}, bought: c.bought || [], serie: lireSerie(c) };
+      cartes[id] = { stations: c.stations || {},
+        passees: Array.isArray(c.passees) ? c.passees.slice() : [],
+        serie: lireSerie(c) };
     }
     const possedees = raw.possedees && typeof raw.possedees === "object" ? raw.possedees : {};
     if (!possedees[CARTE_PAR_DEFAUT]) possedees[CARTE_PAR_DEFAUT] = "gratuite";
-    return { version: 6, carteCourante: raw.carteCourante || CARTE_PAR_DEFAUT, cartes, possedees };
+    return { version: SCHEMA_VERSION, carteCourante: raw.carteCourante || CARTE_PAR_DEFAUT, cartes, possedees };
   }
   // v5 et avant : UNE seule progression, et c'était l'Europe. Elle devient la
   // progression de la carte « europe », intacte — le joueur retrouve ses gares,
   // ses records et sa série exactement où il les avait laissés.
   const v5 = migrerVersV5(raw);
-  return { version: 6, carteCourante: CARTE_PAR_DEFAUT,
-    cartes: { [CARTE_PAR_DEFAUT]: { stations: v5.stations, bought: v5.bought, serie: v5.serie } },
+  return { version: SCHEMA_VERSION, carteCourante: CARTE_PAR_DEFAUT,
+    cartes: { [CARTE_PAR_DEFAUT]: { stations: v5.stations, passees: [], serie: v5.serie } },
     possedees: { [CARTE_PAR_DEFAUT]: "gratuite" } };
 }
 // La série se lit avec un défaut : « aucune série en cours » n'a pas besoin
@@ -221,8 +236,30 @@ function acquerirCarte(id, mode) {
 // Une gare s'ouvre en la payant, sur la carte, quand le joueur le décide. Ce
 // choix ne se recalcule pas : il doit être mémorisé, sans quoi une gare payée
 // se refermerait au rechargement.
-function getBought() { const c = _carte(); return c.bought || (c.bought = []); }
-function isBought(id) { return getBought().indexOf(id) >= 0; }
+// ------------------------------------------------------------------
+// TENUE, PAYÉE — les deux seuls faits que le ruban demande au stockage.
+// ------------------------------------------------------------------
+// `isBought` garde son nom parce que tout le jeu l'appelle, mais elle ne
+// désigne plus un achat : sur un ruban, TENIR une gare c'est l'avoir atteinte.
+// La réponse se déduit donc de la position (js/ruban.js), et le stockage n'a
+// plus rien à mémoriser. Le repli sert au démarrage, avant que le ruban ne
+// soit construit.
+function isBought(id) {
+  if (typeof estTenue === "function") return estTenue(id);
+  return !!id && !!_carte().stations[id];
+}
+// LES GARES PAYÉES (soupape, meta-progression §4 ter). C'est le seul fait
+// nouveau du schéma 7 — et il porte AUSSI la dépense en crédits, puisque
+// celle-ci ne compte que les gares passées encore à zéro étoile : gagner la
+// gare plus tard rend la mise, sans qu'une ligne de sauvegarde ait bougé.
+function getPassees() { const c = _carte(); return c.passees || (c.passees = []); }
+function estGarePayee(id) { return getPassees().indexOf(id) >= 0; }
+function payerPassage(id) {
+  if (!id || estGarePayee(id)) return false;
+  getPassees().push(id);
+  persistProgress();
+  return true;
+}
 
 // ------------------------------------------------------------------
 // Solde. Une seule bourse pour tout le réseau, tous pays confondus.
@@ -233,12 +270,10 @@ function isBought(id) { return getBought().indexOf(id) >= 0; }
 // si la gare est déjà acquise — l'appelant n'a aucune vérification à refaire.
 // Ouvrir une gare n'a plus de prix : le magasin n'enregistre qu'un fait. Le
 // second argument reste accepté et ignoré, pour ne pas casser les appels.
-function buyStation(id) {
-  if (!id || isBought(id)) return false;
-  getBought().push(id);
-  persistProgress();
-  return true;
-}
+// Ouvrir une gare n'existe plus : le ruban avance seul. La fonction reste,
+// sans effet, le temps que les derniers appelants disparaissent (lot J).
+function buyStation(id) { return false; }
+function getBought() { return []; }
 // ------------------------------------------------------------------
 // PONCTUALITÉ — le compteur qui ne redescend jamais.
 // ------------------------------------------------------------------

@@ -35,15 +35,18 @@ chargées en `fetch`.
 
 ## Les contrôles sont les tests
 
-Il n'y a pas de framework de test. Il y a quatre contrôles headless, qui
+Il n'y a pas de framework de test. Il y a trois contrôles headless, qui
 **refusent** au lieu d'avertir (code de sortie ≠ 0) :
 
 | Commande | Ce qu'elle garde |
 |---|---|
 | `node tools/gen-check.mjs` | les fiches de gare : connectivité, génération d'horaire, **pression** (files d'attente sur un quai) |
-| `node tools/carte-check.mjs` | la carte est-elle livrable — règles R1…R5 |
-| `node tools/graph-check.mjs` | les invariants du graphe : intégrité, connexité, écartement |
+| `node tools/carte-check.mjs` | la carte est-elle livrable — règles **R1…R9 du ruban** |
 | `node tools/net-check.mjs` | le réseau tracé et les coordonnées (`js/geo.js`, `data/places.js`) |
+
+`graph-check`, `corridors-propose` et `graph-propose` ont été **retirés le
+25 août 2026** : ils mesuraient le graphe de hubs et de corridors, qui n'existe
+plus. `carte-check` les remplace entièrement.
 
 **`gen-check` demande DEUX balayages, et ils ne servent pas à la même chose :**
 `--seed=N` pour la non-régression (reproductible, comparable), puis au moins un
@@ -143,6 +146,7 @@ jour qui perd la partie d'un joueur est un bug bloquant, pas un détail.
 
 ## Détail connu
 
-L'en-tête de `tools/graph-check.mjs` annonce `data/graph.js` : ce fichier
-n'existe plus depuis le lot A (août 2026), le contrôle lit
-`data/cartes/<id>.json`. Commentaire périmé, script correct.
+`js/carte.js` est **encore au dépôt mais n'est plus chargé** : le ruban a pris
+la main (`js/parcours.js`). On le garde le temps que le lot E reprenne sa
+projection de carte et sa caméra — ne pas y écrire, ne pas s'y fier.
+`js/hub.js`, lui, est bien vivant : c'est lui qui porte `startStation`.

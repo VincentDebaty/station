@@ -27,7 +27,7 @@
 //   node tools/gen-check.mjs --niveau=1 ottignies   # enveloppe FORCÉE
 //
 // --niveau=N remplace le bloc `gen` de la fiche par l'enveloppe du niveau N
-// (js/graph.js, enveloppeDe) — c'est ce que fait le jeu pour la gare d'amorce
+// (js/ruban.js, enveloppeDe) — c'est ce que fait le jeu pour chaque gare
 // d'une partie, qui se joue en niveau 1 quelle que soit sa fiche. Sans ce
 // drapeau, le contrôle validerait une journée que le joueur ne verra jamais.
 //
@@ -112,10 +112,10 @@ function makeEngine() {
   vm.createContext(sandbox);
   vm.runInContext(read("js/engine.js"), sandbox, { filename: "engine.js" });
   vm.runInContext(read("js/schedule.js"), sandbox, { filename: "schedule.js" });
-  // Le modèle de difficulté vit dans js/graph.js. Ses fonctions de lecture du
+  // Le modèle de difficulté vit dans js/ruban.js. Ses fonctions de lecture du
   // réseau ne servent pas ici (HUBS n'est pas chargé, buildGraphe se garde
   // tout seul) : on ne vient chercher que les enveloppes.
-  vm.runInContext(read("js/graph.js"), sandbox, { filename: "graph.js" });
+  vm.runInContext(read("js/ruban.js"), sandbox, { filename: "ruban.js" });
   return sandbox;
 }
 
@@ -148,7 +148,7 @@ let failed = 0;
 for (const { id, country, path: chemin } of cards) {
   let cfg = JSON.parse(chemin ? fs.readFileSync(chemin, "utf8") : read(`data/stations/${country}/${id}.json`));
   // Enveloppe forcée : la fiche garde sa géométrie, sa journée change de
-  // niveau. C'est le geste exact de ficheDeService (js/graph.js).
+  // niveau. C'est le geste exact de ficheDeService (js/ruban.js).
   if (NIVEAU != null) {
     eng.__cfg = cfg;
     const gen = vm.runInContext(`enveloppeDe(this.__cfg, ${NIVEAU}, PROFILS[1])`, eng);
@@ -238,7 +238,7 @@ console.log(failed ? `\n${failed} gare(s) en échec.\n` : `\nToutes les gares pa
 // (`node tools/carte-check.mjs`), on ne fait pas échouer une fiche pour elles.
 try {
   const { execFileSync } = await import("node:child_process");
-  const bloc = process.env.CARTE_BLOC ? ["--livrable=" + process.env.CARTE_BLOC] : [];
+  const bloc = [];
   console.log(execFileSync(process.execPath, [path.join(ROOT, "tools/carte-check.mjs"), "--resume", ...bloc], { encoding: "utf8" }).trim() + "\n");
 } catch (e) { if (e.stdout) console.log(String(e.stdout).trim() + "\n"); }
 process.exit(failed ? 1 : 0);
