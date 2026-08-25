@@ -63,24 +63,6 @@ body {
 #goal-row.hidden { display: none; }
 #goal-rec { color: #5b6b8a; font-variant-numeric: tabular-nums; }
 #goal-rec:empty { display: none; }
-/* Le raccourci de reprise : rond, discret, à portée immédiate du pouce, et
-   présent seulement quand la journée est perdue — il ne peut donc pas être
-   pressé par mégarde pendant un service qui tient encore. */
-/* Posé dans la LIGNE DE L'HORLOGE, à droite du retard. `align-self` le recentre :
-   la ligne s'aligne sur la ligne de base des chiffres, ce qui ferait flotter un
-   rond au-dessus du texte. */
-#goal-redo {
-  display: flex; align-items: center; justify-content: center;
-  align-self: center;
-  width: 20px; height: 20px; padding: 0;
-  border-radius: 999px; border: 1px solid #f87171; background: rgba(248, 113, 113, .12);
-  color: #f87171; cursor: pointer; font-family: inherit;
-  -webkit-tap-highlight-color: transparent; touch-action: manipulation;
-}
-#goal-redo.hidden { display: none; }
-#goal-redo svg { display: block; }
-@media (hover: hover) { #goal-redo:hover { background: rgba(248, 113, 113, .26); } }
-
 /* Commandes flottantes haut-droite : lecture + réglages côte à côte. */
 #hud-tools {
   position: absolute; z-index: 10;

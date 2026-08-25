@@ -799,22 +799,17 @@ function updateDelay() {
 // son propre palier (js/catalog.js, stationGain). Le joueur court contre
 // lui-même, et le bandeau ne dit que cela.
 //
-// Quand la journée est perdue, le record n'a plus d'objet : la croix et le
-// raccourci de reprise prennent sa place.
+// Quand la journée est perdue, le record n'a plus d'objet : il s'efface, et le
+// retard rouge suffit à dire où l'on en est. Le service continue — on le mène
+// à son terme, et c'est le relevé qui propose de le refaire.
 function updateGoal(v) {
   const row = document.getElementById("goal-row");
   const rec = document.getElementById("goal-rec");
-  const redo = document.getElementById("goal-redo");
-  if (!row || !redo) return;
+  if (!row) return;
   const best = STATION.adhoc ? null : (getProgress()[STATION.id] || {}).bestDelay;
   // « Perdue » se lit sur le BARÈME lui-même, et sur le retard ARRONDI comme en
   // fin de service : à +29,5 min endGame arrondit à 30 et n'accorde rien.
   const perdu = !STATION.adhoc && typeof palierOf === "function" && palierOf(Math.round(v)) < 0;
-  // LE RACCOURCI DE REPRISE VIT À CÔTÉ DU RETARD, pas sur une ligne à lui. Il
-  // n'apparaît que lorsque la journée est perdue — le retard passé au rouge, à
-  // sa gauche, dit déjà pourquoi. Une croix en plus ne faisait que répéter cette
-  // couleur, et elle occupait une ligne pour ne rien ajouter.
-  redo.classList.toggle("hidden", !perdu);
   // Le record cède la place : la journée perdue, il n'a plus d'objet. Et une
   // gare jamais jouée n'affiche rien — une ligne vide sous l'horloge se lit
   // comme un défaut d'affichage.

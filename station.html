@@ -84,11 +84,12 @@
       <div id="clock-row">
         <span id="clock">07:00</span>
         <span id="delay">+0</span>
-        <!-- La journée est perdue : on la reprend d'ici, sans attendre que les
-             derniers convois sortent. Il n'apparaît que dans cet état, donc le
-             retard rouge à sa gauche dit déjà pourquoi il est là — une croix de
-             plus n'aurait fait que répéter la couleur. -->
-        <button id="goal-redo" class="hidden" aria-label="Recommencer le service"></button>
+        <!-- Il y a eu ici un raccourci de reprise, qui apparaissait quand la
+             journée était perdue. Retiré le 25 août 2026 : il proposait
+             d'abandonner au moment précis où le joueur en a le plus envie, et
+             le ruban n'a plus besoin de ce raccourci — le relevé de fin offre
+             « Réessayer » gratuitement et sans limite, et le menu réglages
+             garde un « Recommencer » pour qui le décide vraiment. -->
       </div>
       <!-- LE RECORD À BATTRE, et rien d'autre — voir js/game.js, updateGoal.
            C'est la seule chose qu'on ne puisse pas déduire du retard affiché

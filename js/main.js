@@ -205,9 +205,7 @@ document.getElementById("btn-replay").addEventListener("click", doReset);
 // Reprendre la journée sans attendre : le raccourci n'apparaît que lorsqu'elle
 // est perdue (js/game.js, updateGoal), donc il ne peut pas être pressé par
 // mégarde pendant un service qui tient encore.
-const goalRedo = document.getElementById("goal-redo");
-goalRedo.innerHTML = icon(ICON.restart, 13);
-goalRedo.addEventListener("click", ev => { ev.stopPropagation(); doReset(); });
+
 // Fermer le relevé de fin : la carte est DÉJÀ là, derrière lui. On le range et
 // on recentre le pays. Repli sur la bascule d'écran quand il n'y a pas de carte
 // dessous (démo « limites », gare hors catalogue).
