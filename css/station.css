@@ -2425,11 +2425,16 @@ svg { width: 100%; height: 100%; display: block; }
 .cf-et { color: var(--gold); font-size: 14px; letter-spacing: .08em; }
 .cf-rec { font-size: 11.5px; color: var(--muted); }
 
-.c-appel { display: flex; align-items: baseline; justify-content: center; gap: 9px;
+/* LA FLÈCHE SE CENTRE SUR LE BOUTON, LES MOTS GARDENT LEUR LIGNE DE BASE.
+   Le bouton alignait tout sur la ligne de base : un SVG n'en a pas, et la
+   flèche montait d'un cheveu. Les deux mots vivent donc dans leur propre
+   groupe, aligné en base ; le bouton, lui, centre ce groupe et la flèche. */
+.c-appel { display: flex; align-items: center; justify-content: center; gap: 10px;
   font-size: 16px; padding: 14px 18px; flex: 0 0 auto; margin: 16px 0 0; width: 100%; }
-  font-size: 16px; padding: 13px 18px; width: 100%; flex: 0 0 auto; }
-.c-appel .ca-quoi { font-weight: 700; }
-.c-appel .ca-ou { opacity: .85; }
+.ca-texte { display: inline-flex; align-items: baseline; gap: 9px; }
+.ca-quoi { font-weight: 700; }
+.ca-ou { opacity: .82; font-weight: 500; }
+.cb-suite .ca-ou { font-size: .92em; }
 .c-avenir { font-size: 13.5px; color: var(--muted); text-align: center; padding: 12px 0;
   border: 1px dashed #2a3550; border-radius: 10px; }
 /* Le saut : une transition, jamais une punition. Posé sur la scène, en haut. */

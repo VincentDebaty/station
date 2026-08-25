@@ -11,7 +11,7 @@
 // La coquille est toujours préchargée à l'installation pour un premier lancement
 // hors-ligne. Incrémenter CACHE_VERSION purge l'ancien cache à l'activation.
 // ------------------------------------------------------------------
-const CACHE_VERSION = "station-v90";
+const CACHE_VERSION = "station-v91";
 
 // Coquille de l'app préchargée à l'installation : tout le nécessaire pour un
 // premier lancement hors-ligne. Les fiches de gares non listées ici sont mises

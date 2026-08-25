@@ -295,7 +295,9 @@ function boutonsHTML() {
         `rejoue une gare déjà faite pour les gagner.</div>`);
   }
   return `<div class="cb-actions">` +
-    (gc ? `<button class="c-suite cb-suite cb-continuer" data-gare="${gc}">Continuer${FLECHE}</button>` : "") +
+    (gc ? `<button class="c-suite cb-suite cb-continuer" data-gare="${gc}">` +
+      `<span class="ca-texte"><span class="ca-quoi">Jouer</span>` +
+      `<span class="ca-ou">${villeDe(gc)}</span></span>${FLECHE}</button>` : "") +
     `<button class="c-suite cb-suite cb-rejouer" data-gare="${b.gare}">Rejouer${BOUCLE}</button></div>`;
 }
 
@@ -392,7 +394,8 @@ function vueRuban() {
   let appel = "";
   if (!CARTE.bilan && !CARTE.fete) {
     if (gc) appel = `<button class="c-suite c-appel" data-gare="${gc}">` +
-      `<span class="ca-quoi">Continuer</span><span class="ca-ou">${villeDe(gc)}</span>${FLECHE}</button>`;
+      `<span class="ca-texte"><span class="ca-quoi">Jouer</span>` +
+      `<span class="ca-ou">${villeDe(gc)}</span></span>${FLECHE}</button>`;
     else if (auBoutDeLEcrit())
       appel = `<div class="c-avenir">La suite du ruban n'est pas encore écrite.</div>`;
     else appel = `<div class="c-avenir">Le ruban est terminé. Reste à le dorer.</div>`;
