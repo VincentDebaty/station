@@ -1334,8 +1334,15 @@ function endGame(failed) {
   // en échec, on affiche le retard « vivant » (celui qui a crevé le plafond),
   // sinon le retard cumulé réellement encaissé
   const d = Math.round(failed ? liveDelay() : totalDelay);
-  // Tolérance de retard (minutes) : 3★ < 10, 2★ < 20, 1★ < 30, sinon 0.
-  const stars = failed ? 0 : (d < 10 ? 3 : d < 20 ? 2 : d < 30 ? 1 : 0);
+  // Tolérance de retard (minutes). Elle SUIT LA DIFFICULTÉ de la gare pour les
+  // trois étoiles (12 min au niveau 1, 8 au niveau 5 — js/ruban.js, SEUILS) ;
+  // une étoile reste à 30 partout, parce que c'est le plancher qui rend le
+  // ruban praticable. Le repli sert à la démo « limites », hors ruban.
+  const seuils = typeof seuilsDeService === "function"
+    ? seuilsDeService(STATION) : { trois: 10, deux: 20, une: 30 };
+  const stars = failed ? 0 : (typeof etoilesPour === "function"
+    ? etoilesPour(d, seuils)
+    : (d < seuils.trois ? 3 : d < seuils.deux ? 2 : d < seuils.une ? 1 : 0));
   // Réussite = au moins une étoile (débloque la suite). 0 étoile = échec, qu'on
   // ait terminé sans étoile OU crevé le plafond de retard : dans les deux cas il
   // faut recommencer.
@@ -1388,7 +1395,7 @@ function endGame(failed) {
   // étoiles ne disent pas : le retard, et le record. La carte fait le reste —
   // la gare suivante est à un doigt, la gare jouée aussi pour recommencer.
   if (!STATION.adhoc && typeof renderCarte === "function") {
-    CARTE.bilan = { gare: STATION.id, stars, prevStars, d, prevBest, perfect, failed, win };
+    CARTE.bilan = { gare: STATION.id, stars, prevStars, d, prevBest, perfect, failed, win, seuils };
     showHub();                   // #end rangé, la carte redessinée avec le relevé
     // LE RUBAN AVANCE, ET LA CAMÉRA SUIT. Seulement si le service est tenu :
     // sur un échec il n'y a pas de gare suivante, et voir la carte glisser

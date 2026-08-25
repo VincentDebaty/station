@@ -224,6 +224,55 @@ function enveloppeDe(cfg, niveau, profil) {
     rush: p.rush
   };
 }
+// ------------------------------------------------------------------
+// LE BARÈME D'ÉTOILES SUIT LA DIFFICULTÉ (25 août 2026).
+// ------------------------------------------------------------------
+// Deuxième cadran de difficulté, à côté du trafic — et il ne joue pas la même
+// musique : le TRAFIC récompense le débit, une TOLÉRANCE SERRÉE récompense la
+// précision. Un petit nœud à trois quais qui exige de la justesse ne se joue
+// pas comme un terminus qui exige du volume, et c'est ce qui donne du
+// caractère à des gares que le même barème rendait interchangeables.
+//
+// CE QUI REND LA CHOSE SÛRE : `gen-check` ne mesure pas seulement la file, il
+// mesure le RETARD GARANTI — celui qui subsiste en jouant le placement idéal —
+// et refuse toute fiche au-dessus de 0,30 min. Sur chaque gare du catalogue,
+// une journée à zéro retard est donc DÉMONTRÉE possible. Resserrer le seuil de
+// trois étoiles ne demande jamais l'impossible : seulement plus de précision.
+//
+// DEUX RÈGLES QU'ON NE TOUCHE PAS :
+//   · UNE ÉTOILE RESTE À 30 MINUTES, partout et pour toujours. C'est le
+//     plancher qui rend le ruban praticable — sur un fil linéaire, un plancher
+//     resserré est un mur. C'est le pendant structurel de la soupape.
+//   · LE DIAMANT RESTE ABSOLU. Zéro, c'est zéro. C'est la seule mesure
+//     comparable d'un bout à l'autre du jeu, et la vraie chasse de fin de partie.
+//
+// La courbe est DOUCE exprès (12 → 8, pas 15 → 4) : deux cadrans qui disent
+// tous les deux « difficulté » se composent, et un niveau 5 déjà à 22 convois
+// avec quatre minutes de marge serait un mur déguisé.
+const SEUILS = {
+  1: { trois: 12, deux: 20, une: 30 },
+  2: { trois: 11, deux: 20, une: 30 },
+  3: { trois: 10, deux: 20, une: 30 },
+  4: { trois:  9, deux: 20, une: 30 },
+  5: { trois:  8, deux: 20, une: 30 }
+};
+function seuilsDeNiveau(niveau) {
+  return SEUILS[Math.max(1, Math.min(5, niveau || 3))] || SEUILS[3];
+}
+// Le barème d'une gare telle qu'on la JOUE. Une fiche peut imposer les siens
+// (`seuils` dans le JSON) — la porte reste ouverte pour un cas particulier,
+// mais rien ne s'en sert : le barème se déduit, comme tout le reste.
+function seuilsDeService(cfg) {
+  if (cfg && cfg.seuils) return { ...seuilsDeNiveau(cfg.difficulty), ...cfg.seuils };
+  const d = cfg ? (difficulteDeGare(cfg.id, cfg) ?? cfg.difficulty) : null;
+  return seuilsDeNiveau(d);
+}
+// Les étoiles d'un service : le retard face au barème de la gare.
+function etoilesPour(retard, seuils) {
+  const s = seuils || seuilsDeNiveau(3);
+  return retard < s.trois ? 3 : retard < s.deux ? 2 : retard < s.une ? 1 : 0;
+}
+
 function enveloppeDeGare(gareId, cfg) {
   const d = difficulteDeGare(gareId, cfg);
   return enveloppeDe(cfg, d == null ? (cfg && cfg.difficulty) : d, PROFILS[1]);

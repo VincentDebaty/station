@@ -82,9 +82,33 @@ Les trois premiers niveaux décrivent *comment on avance* ; le quatrième décri
 
 - Une gare = un niveau = un service d'une journée à aiguiller. Acquis.
 - Condition de réussite : **ne pas cumuler plus de 30 minutes de retard**.
-  Barème : 3 ★ < 10 min · 2 ★ < 20 · 1 ★ < 30 · sans-faute = 3 ★ **+ 1 diamant**
-  (le diamant s'empile, il ne remplace jamais : mieux jouer ne rapporte jamais
-  moins). Seuils configurables par gare, défaut 30/20/10.
+  Barème : 2 ★ < 20 min · 1 ★ < 30 · sans-faute = 3 ★ **+ 1 diamant** (le
+  diamant s'empile, il ne remplace jamais : mieux jouer ne rapporte jamais
+  moins).
+- **Le seuil des trois étoiles suit la difficulté** (tranché le 25 août 2026) :
+  12 min au niveau 1, puis 11, 10, 9, et **8 au niveau 5** (`SEUILS`,
+  js/ruban.js). C'est un **second cadran de difficulté**, et il ne joue pas la
+  même musique que le premier : le trafic récompense le **débit**, une
+  tolérance serrée récompense la **précision**. Un petit nœud à trois quais qui
+  exige de la justesse ne se joue pas comme un terminus qui exige du volume —
+  c'est ce qui donne du caractère à des gares que le même barème rendait
+  interchangeables.
+- **Ce qui rend la chose sûre** : `gen-check` mesure le **retard garanti** —
+  celui qui subsiste en jouant le placement idéal — et refuse toute fiche
+  au-dessus de 0,30 min. Sur chaque gare du catalogue, une journée à zéro
+  retard est donc *démontrée* possible : resserrer le seuil ne demande jamais
+  l'impossible, seulement plus de précision.
+- **Deux seuils ne bougent pas, et c'est structurel** :
+  - **une étoile reste à 30 minutes**, partout et pour toujours. C'est le
+    plancher qui rend le ruban praticable — sur un fil linéaire, un plancher
+    resserré est un mur. C'est le pendant de la soupape (§4 ter) ;
+  - **le diamant reste absolu**. Zéro, c'est zéro : la seule mesure comparable
+    d'un bout à l'autre du jeu, et la vraie chasse de fin de partie.
+- **Le barème s'affiche** (cartouche de la gare, « Pour 3 ★ : 12 min » ; relevé
+  de fin, « à viser : 3 ★ sous 12 min »). Un cadran caché passe pour un bug :
+  « neuf minutes m'ont valu trois étoiles à Arlon et deux à Bruxelles ».
+- Une fiche peut imposer ses propres seuils (champ `seuils`), mais rien ne s'en
+  sert : le barème se déduit, comme tout le reste.
 - Plancher de jouabilité : **au moins 3 directions et 3-4 quais**. Une gare de
   passage sur une seule ligne (2 directions) n'est pas un niveau — mesuré :
   trop creux à jouer. C'est un croisement d'au moins deux lignes réelles.

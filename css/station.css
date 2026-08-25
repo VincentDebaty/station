@@ -2411,8 +2411,11 @@ svg { width: 100%; height: 100%; display: block; }
 /* Les mesures en colonnes libellées : « 4 quais » et « 3 directions » côte à
    côte se lisaient comme deux étiquettes de même poids, et la jauge de
    difficulté flottait au bout sans dire ce qu'elle mesurait. */
-.cf-mesures { display: flex; flex-wrap: wrap; gap: 8px 20px; margin: 14px 0 0;
-  padding-top: 13px; border-top: 1px solid #202b42; }
+/* Deux colonnes, deux rangs : la GÉOMÉTRIE de la gare en haut (quais,
+   directions), son BARÈME en bas (difficulté, seuil des trois étoiles). En
+   file simple, le quatrième bloc passait seul à la ligne. */
+.cf-mesures { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px 14px; margin: 14px 0 0; padding-top: 13px; border-top: 1px solid #202b42; }
 .cf-mesures > div { display: flex; flex-direction: column; gap: 3px; }
 .cf-mesures dt { font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
 .cf-mesures dd { margin: 0; font-size: 17px; font-weight: 600; font-variant-numeric: tabular-nums;
@@ -2498,3 +2501,7 @@ svg { width: 100%; height: 100%; display: block; }
 .cb-rejouer:hover { background: rgba(33, 44, 68, .95); color: var(--text); border-color: #2dd4bf; }
 .c-bilan.rate .cb-rejouer { background: #2dd4bf; border-color: #2dd4bf; color: #08111d; }
 .c-bilan.rate .cb-rejouer:hover { background: #3ee0cc; color: #08111d; }
+/* Le barème de la gare, annoncé : il suit sa difficulté, donc il se montre. */
+.cf-seuil span { font-size: 11px; font-weight: 400; color: var(--muted); margin-left: 2px; }
+.cb-vise { font-size: 11.5px; color: var(--muted); margin-top: 2px; }
+.cb-vise::before { content: "à viser : "; opacity: .7; }

@@ -226,6 +226,10 @@ function cartoucheHTML(gareId) {
   // `portals` est un OBJET { NOM: {side, color, abbr} } — une direction par clé.
   const dirs = Object.keys(cfg.portals || {}).length;
   const st = etoilesDe(gareId), best = (getProgress()[gareId] || {}).bestDelay;
+  // LE BARÈME S'AFFICHE. Il suit la difficulté de la gare (js/ruban.js,
+  // SEUILS) : caché, il passerait pour un bug — « 9 min m'a valu trois étoiles
+  // à Arlon et deux à Bruxelles ».
+  const seuils = seuilsDeService(cfg);
   const fin = ch && ch.gares[ch.gares.length - 1] === gareId;
   const drapeau = (cfg.country || "").trim().split(" ")[0];
   // LA PHRASE DE LA GARE. Elle est écrite pour chaque fiche et ne servait à
@@ -242,6 +246,7 @@ function cartoucheHTML(gareId) {
       <div><dt>Quais</dt><dd>${quais}</dd></div>
       <div><dt>Directions</dt><dd>${dirs}</dd></div>
       <div class="cf-dif"><dt>Difficulté</dt><dd>${pipsHTML(d)}</dd></div>
+      <div><dt>Pour 3 ★</dt><dd class="cf-seuil">${seuils.trois}<span> min</span></dd></div>
     </dl>
     ${st ? `<p class="cf-score"><span class="cf-et">${"★".repeat(st)}</span>${
       best != null ? `<span class="cf-rec">record ${best} min</span>` : ""}</p>` : ""}
@@ -266,9 +271,14 @@ function bilanHTML() {
   else if (b.d < b.prevBest) rec = `<div class="cb-record bat">record battu · −${b.prevBest - b.d} min</div>`;
   else if (b.d === b.prevBest) rec = `<div class="cb-record egal">record égalé</div>`;
   else rec = `<div class="cb-record loin">record : ${b.prevBest} min</div>`;
+  // CE QU'IL AURAIT FALLU. Le barème varie d'une gare à l'autre : après un
+  // service à deux étoiles, dire le seuil vaut mieux que laisser deviner.
+  const s = b.seuils;
+  const vise = (s && b.win && !b.perfect && b.stars < 3)
+    ? `<div class="cb-vise">3 ★ sous ${s.trois} min</div>` : "";
   return `<div class="${cl}" role="status">
     <div class="cb-gare">${villeDe(b.gare)}</div>
-    <div class="cb-etoiles">${etoiles}</div>${retard}${rec}${boutonsHTML()}</div>`;
+    <div class="cb-etoiles">${etoiles}</div>${retard}${rec}${vise}${boutonsHTML()}</div>`;
 }
 
 const FLECHE = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" ' +
