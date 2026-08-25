@@ -1,260 +1,288 @@
-# Plan de développement — la structure en quatre niveaux
+# Plan de développement — le ruban
 
-> Établi le 21 août 2026 à partir de `meta-progression-jeu-aiguillage.md`.
+> Établi le 21 août 2026 pour la structure en graphe ; **refondu le 25 août
+> 2026** après le test de jeu : la carte devient un **ruban unique**
+> (`meta-progression-jeu-aiguillage.md` §0).
 > Le jeu web reste un **prototype** : on n'investit rien dans une chaîne
 > graphique web, mais tout ce qui est **données et règles** (cartes, fiches,
-> contrôles) est écrit pour survivre au passage sous Unity ou Godot —
-> d'où le choix du JSON pour les cartes.
-> Les lots sont ordonnés par dépendance ; A et B conditionnent tout le reste,
-> C est le plus long et se mène en parallèle de D-E-F dès que B existe.
+> contrôles) est écrit pour survivre au passage sous Unity ou Godot.
+> Les lots sont ordonnés par dépendance. C et D sont le cœur du changement ;
+> rien d'autre ne peut avancer avant eux.
 
 ## Vue d'ensemble
 
 | Lot | Objet | Taille | Dépend de |
 |---|---|---|---|
 | **A** | Le modèle multi-cartes (données + sauvegarde) — **fait le 21 août 2026** | M | — |
-| **B** | Outils d'auteur : contrôle de carte et remplissage des lignes — **fait le 21 août 2026** | M | A |
-| **C** | Contenu Europe v1 : porter le bloc de lancement aux règles | XL | B |
-| **D** | La zone comme palier d'objectifs | S | A |
-| **E** | L'écran des cartes et la carte courante | M | A |
-| **F** | Les crédits et l'achat de cartes | S | E |
-| **G** | Deuxième carte (preuve de généricité) | L | B, E |
-| **H** | Nettoyage : ce que les lots rendent mort | S | A, E |
+| **B** | Outils d'auteur — **fait le 21 août 2026**, en partie caduc (voir C) | M | A |
+| **C** | Le ruban dans les données : schéma, conversion, `carte-check` refondu | M | A |
+| **D** | Le ruban dans le moteur : `js/ruban.js`, sauvegarde schéma 7 | M | C |
+| **E** | Le ruban à l'écran : *Continuer*, fin de chapitre, saut, soupape | M | D |
+| **F** | Contenu : l'ordre du ruban d'Europe et sa rampe (~140 niveaux) | L | C, D |
+| **G** | Récompense : le chapitre remplace la ligne, la zone devient un palier | S | D |
+| **H** | L'écran des cartes et les crédits | M | D |
+| **I** | Deuxième carte (preuve de généricité) | L | C, H |
+| **J** | Nettoyage : ce que le ruban rend mort | S | E, G |
 
 Tailles : S = une séance, M = quelques séances, L = une à deux semaines de
-contenu, XL = contenu long, parallélisable par agents.
+contenu.
+
+**Le jeu doit rester jouable à chaque commit.** C et D se font dans cet ordre
+et se poussent ensemble si nécessaire : entre les deux, la carte est un ruban
+que le moteur ne sait pas encore lire.
 
 ---
 
 ## Lot A — Le modèle multi-cartes — FAIT (21 août 2026)
 
-**But** : le code ne connaît plus « l'Europe » mais « la carte courante » ; la
-progression est rattachée à une carte.
+Toujours valable, le ruban ne le remet pas en cause.
 
-*Livré* : `data/cartes/europe.json` + `index.json` + `README.md` (schéma et
-raison d'être reprise de l'ancien `data/graph.js`, supprimé) ; `js/cartes.js`
-(`loadCartes`, `loadCarte`, `zonesDeCarte`, `hubsDeZone`, `nomDeCarte`) ;
-`js/graph.js` construit depuis `CARTE_COURANTE` et expose `tousLesHubs`,
-`tousLesLiens`, `lienEntre`, `resetGraphe` ; `js/store.js` en schéma **6**
-(`cartes[id] = { stations, bought, serie }`, `carteCourante`, `possedees`) avec
-migration v0/v5 → v6 testée ; `etoilesTotal` somme toutes les cartes ;
-`graph-check` et `corridors-propose` lisent le JSON. Vérifié en headless :
-sauvegarde v5 reprise sans perte, trois vues rendues, zéro erreur JS.
+*Livré* : `data/cartes/europe.json` + `index.json` + `README.md` ;
+`js/cartes.js` (`loadCartes`, `loadCarte`, `zonesDeCarte`, `hubsDeZone`,
+`nomDeCarte`) ; `js/graph.js` construit depuis `CARTE_COURANTE` ; `js/store.js`
+en schéma **6** (`cartes[id] = { stations, bought, serie }`, `carteCourante`,
+`possedees`) avec migration v0/v5 → v6 testée ; `etoilesTotal` somme toutes les
+cartes ; `graph-check` et `corridors-propose` lisent le JSON.
 
-*Reste du lot, reporté* : le point 5 (versions de hub) — les versions sont
-DÉCRITES (`versionsDeHub`) mais pas encore APPLIQUÉES au moment de jouer un
-boss (aucun appelant hors js/graph.js) ; à faire quand le rejeu d'un hub par
-une nouvelle ligne sera branché. Le point 6 (médailles de carte vs de compte)
-n'a bougé que pour le grade ; les médailles restent calculées sur la carte
-courante, ce qui est juste tant qu'il n'y en a qu'une.
+*Ce qui reste du lot est annulé* : le point 5 (appliquer les versions de hub au
+moment de jouer un boss) n'a plus d'objet sous cette forme — les versions
+deviennent un choix d'auteur inscrit dans le ruban (lot C, §2.2 bis du
+document). Le point 6 (médailles de carte vs de compte) passe au lot G.
 
-1. **`data/cartes/europe.json`** — déplacer `CONSTELLATIONS`, `HUBS`, `LIENS`,
-   `CORRIDORS` de `data/graph.js` vers le schéma du §8 du document (`zones`,
-   `hubs`, `lignes` avec `de/vers/gares` fusionnés — un LIEN et son CORRIDOR
-   deviennent un seul objet `Ligne`). Ajouter `id`, `nom`, `gratuite`,
-   `echelle`. Un script de conversion à usage unique, dans le scratchpad.
-2. **`data/cartes/index.json`** — la liste des cartes (id, nom, gratuite, prix
-   en crédits, sous-titre). Une seule entrée au départ.
-3. **Chargement** — `loadCarte(id)` (nouveau `js/cartes.js`) lit le JSON via
-   `fetch` comme les fiches, puis `buildGraphe()` (js/graph.js) construit le
-   graphe **à partir de la carte chargée** et non plus des globales. Le graphe
-   doit pouvoir se **reconstruire** quand on change de carte (`GRAPHE.pret`
-   remis à faux).
-4. **Sauvegarde par carte** — `js/store.js` : `SCHEMA_VERSION` 5 → **6**, avec
-   migration : `{ stations, bought, serie }` → `cartes.europe.{ resultats,
-   acquises, versionsJouees, serie }` + `cartesPossedees.europe = "gratuite"`
-   + `carteCourante = "europe"`. Les accesseurs (`getProgress`, `getBought`,
-   `isBought`, `saveResult`, `getSerie`…) gardent leur signature et lisent la
-   carte courante — personne d'autre ne change.
-5. **Versions jouées** — aujourd'hui la version d'un hub se déduit de ses
-   sorties ouvertes ; vérifier que c'est suffisant ou stocker
-   `versionsJouees` (le document le prévoit).
-6. **Grade et médailles de compte** — `etoilesTotal()` (catalog.js) somme
-   **toutes les cartes** ; les médailles *de carte* (lignes, hubs, zones)
-   restent par carte. Séparer dans `js/recompense.js` ce qui est « carte » de
-   ce qui est « compte ».
+## Lot B — Outils d'auteur — FAIT (21 août 2026), partiellement caduc
 
-*Fini quand* : le jeu se joue exactement comme avant sur `europe.json`, une
-sauvegarde v5 se migre sans perte (test headless : charger une sauvegarde
-fabriquée au schéma 5, vérifier étoiles et gares acquises), et
-`data/graph.js` a disparu.
+*Livré* : `tools/carte-check.mjs` (R1–R8 de la version graphe),
+`tools/AUTHORING-CARTES.md`, le rapport de couverture, l'affichage du résumé
+de carte dans `gen-check`.
 
-## Lot B — Outils d'auteur — FAIT (21 août 2026)
+*Ce qui survit* : la mécanique du contrôle (lecture de la carte, sortie en
+tableau, code de retour ≠ 0, option `--carte`), le rapport de couverture, le
+branchement dans `gen-check`, et R7 (sinuosité) et R8 (rampe) qui restent des
+règles du ruban.
 
-**But** : rendre les règles R1–R9 vérifiables et le remplissage des lignes
-outillé, avant d'écrire 200 fiches.
+*Ce qui meurt* : R1 (≥ 20 hubs), R2 (≥ 50 lignes), R2 bis (≥ 3 sorties par
+hub), R4 (zones de 7–13 hubs), R5 (connexité), R6 ancienne version. Elles sont
+remplacées au lot C. `tools/corridors-propose.mjs` et `tools/graph-propose.mjs`
+perdent leur raison d'être (proposer des sorties de hub) : à réévaluer au lot J.
 
-*Livré* : `tools/carte-check.mjs` (R1–R8, `--livrable=nw,ger`, `--detail`,
-`--resume`, `--carte=<id>` ; code de sortie ≠ 0 sur une règle ✘ ; sur un bloc,
-R2 est informatif et un hub sous 3 sorties un avertissement — décisions du 21
-août). La **couverture** remplace l'extension prévue de `corridors-propose` :
-pour chaque ligne à compléter, `carte-check --detail` liste les gares réelles
-que la voie traverse (points de passage de `lines.js`/`places.js` sans fiche)
-et les gares du catalogue sur aucune ligne, en partant de la gare de la
-*version* du hub (Paris-Lyon vers Dijon). `gen-check` affiche le résumé de
-carte en fin de rapport (`CARTE_BLOC=nw,ger` pour un bloc).
-`tools/AUTHORING-CARTES.md` écrit ; `AUTHORING-STATIONS.md` reçoit le plancher
-« ≥ 3 directions » et le rattachement d'une fiche à sa ligne de carte.
+---
 
-*Mesure de départ du lot C* (bloc nw+ger) : 3 hubs à écrire (Amsterdam,
-Zurich, Genève), 36 lignes à compléter, ≥ 89 fiches sur les lignes dont les
-deux hubs existent, 8 lignes sans tracé dans `data/lines.js` (Cologne–Hanovre,
-Francfort–Stuttgart, Lyon–Marseille, Paris–Nantes, Strasbourg–Stuttgart,
-Londres–Newcastle…) à décrire d'abord.
+## Lot C — Le ruban dans les données
 
-1. **`tools/carte-check.mjs <carte>`** — vérifie R1 (≥ 20 hubs), R2 (≥ 50
-   lignes), R2 bis (≥ 3 sorties par hub), R3 (4–9 gares par ligne), R4 (zones de 7–13, ≥ 2 zones),
-   R5 (connexité, aucune fiche référencée absente, aucun hub sans fiche dans
-   le sous-ensemble livré), R6 (une gare, une ligne), R7 (sinuosité ≤ 1,5
-   depuis `ll` des hubs et `geo.js`), R8 (plafond de flux croissant vers le
-   hub — avertissement, pas erreur). Sortie : un tableau par règle, et un
-   **rapport de couverture** : lignes conformes / total, fiches manquantes par
-   ligne. Option `--livrable <zone,zone>` pour évaluer un bloc de lancement.
-2. **Étendre `tools/corridors-propose.mjs`** — viser 4–9 gares par ligne au
-   lieu de « le plus long sous le plafond », et **lister les gares réelles
-   manquantes** (depuis `data/lines.js` enrichi / Wikipédia Infrabel, SNCF,
-   DB) pour que l'écriture des fiches parte d'une liste, pas d'une recherche.
-3. **`tools/AUTHORING-CARTES.md`** — la procédure « créer une carte » (choix
-   des hubs par taille de croisement, espacement, zones équilibrées, tracés
-   sur les lignes réelles, contrôle), en miroir de `AUTHORING-STATIONS.md`.
-   Y inscrire la règle « ≥ 3 directions » manquante côté gares.
-4. **Brancher `carte-check` dans `gen-check`** (ou l'inverse) pour qu'un seul
-   `node tools/gen-check.mjs` dise si une carte est livrable.
+**But** : `data/cartes/europe.json` décrit un ruban, et un contrôle refuse
+tout ce qui n'en est pas un.
 
-*Fini quand* : `node tools/carte-check.mjs europe` imprime les 4 écarts connus
-(31 hubs sous 3 sorties, 17 lignes trop courtes, 110 lignes vides, 58 hubs
-sans fiche) et un rapport « bloc nw+ger » exact (24 hubs, 39 lignes, 8 hubs
-sous 3 sorties internes).
+1. **Schéma** — `data/cartes/<id>.json` : `zones` + `chapitres[]` **dans
+   l'ordre du ruban** (§8 du document). Un chapitre = `{ id, nom, zone,
+   gares[5..10], plancher?, saut? }`, la dernière gare étant la grande gare.
+   Plus de `hubs`, plus de `lignes`, plus de `de`/`vers`. Mettre à jour
+   `data/cartes/README.md`.
+2. **Conversion** — un script à usage unique dans le scratchpad : les 26
+   lignes complètes et jouables (mesure du 25 août) deviennent 26 chapitres
+   `{ gares: [...intermédiaires, grande gare] }`. L'**ordre** entre chapitres
+   et les **sauts** sont le travail du lot F ; ici on produit un ruban
+   provisoire, cohérent mais pas encore agréable.
+3. **Ce qui sort du fichier de carte** : les coordonnées `ll` des grandes
+   gares et leurs `versions` de terminus (Paris-Nord / Paris-Gare-de-Lyon /
+   Paris-Montparnasse…). Les `ll` sont déjà dans `js/geo.js` — ne pas
+   dupliquer. Les versions deviennent **des fiches distinctes citées
+   directement** dans `gares[]` : le ruban dit lui-même quelle gare de Paris
+   se joue quand, il n'y a plus rien à déduire.
+4. **`tools/carte-check.mjs` refondu** sur les nouvelles R1–R9 (§3 du
+   document) :
+   - R1 ruban unique (une seule suite, aucune gare orpheline, aucun doublon
+     d'ordre) ;
+   - R2 ≥ 60 gares et ≥ 8 chapitres ;
+   - R3 chapitre de 5 à 10 gares, la dernière étant une grande gare ;
+   - R4 zone de 3 à 6 chapitres, ≥ 2 zones ;
+   - R5 **continuité réelle** : deux gares consécutives d'un chapitre sont
+     voisines sur une ligne réelle (`data/lines.js` / `js/geo.js`) ; une
+     rupture n'est tolérée qu'entre chapitres **et** si `saut` est déclaré ;
+   - R6 une fiche une seule fois, et ≥ 20 gares d'écart entre deux gares de
+     la même ville ;
+   - R7 sinuosité ≤ 1,5 par chapitre (repris de l'existant) ;
+   - R8 la difficulté portable croît dans le chapitre, la grande gare est la
+     plus haute, et le plancher des chapitres croît le long du ruban
+     (avertissement, pas erreur — la géométrie a le dernier mot) ;
+   - R9 premier chapitre doux (première gare jouable en 1, arrivée ≤ 3).
+5. **`tools/AUTHORING-CARTES.md` réécrit** : la procédure « écrire un ruban »
+   — choisir le fil, découper en chapitres, les nommer, placer les sauts,
+   vérifier la rampe. `AUTHORING-STATIONS.md` §4 : une fiche se rattache
+   désormais à un **chapitre**, pas à une ligne.
 
-## Lot C — Contenu Europe v1
+*Fini quand* : `node tools/carte-check.mjs europe` est vert sur le ruban
+provisoire, et refuse (code ≠ 0) si on retire une gare d'un chapitre, si on
+duplique une fiche, ou si on casse la continuité sans déclarer de saut.
 
-**But** : un bloc d'au moins 20 hubs qui passe `carte-check` sans erreur.
+## Lot D — Le ruban dans le moteur
 
-1. **Le bloc est tranché** : France-Benelux + Germanie-Alpes (24 hubs, 39
-   lignes internes, ~215 fiches). Si le bloc livré doit atteindre 50 lignes à
-   lui seul (question ouverte n° 3 du document), les Îles britanniques
-   s'ajoutent en **C bis** après ce lot, même méthode.
-2. **Corriger R2 bis dans le bloc** — règle tranchée : *ajouter des lignes,
-   sinon supprimer le hub*. Huit hubs concernés. Proposer pour chacun une
-   ligne réelle (Nantes–Rennes ; Toulouse–Narbonne ; Dijon–Belfort–Mulhouse
-   ou Dijon–Besançon ; Genève–Simplon–Milan ; Leipzig–Dresde ; Lille,
-   Marseille, Montpellier ont leur 3e sortie vers une zone grisée) et, à
-   défaut de ligne crédible à 4–9 gares, **retirer le hub** et rattacher ses
-   gares aux lignes voisines. Passer la même revue sur les 23 autres hubs de
-   l'Europe avant de livrer leurs zones.
-3. **Écrire les hubs manquants** du bloc : Amsterdam, Zurich, Genève
-   (vérifié le 21 août).
-4. **Remplir les lignes** à 4–9 gares, **ligne par ligne**, un agent par gare
-   selon `AUTHORING-STATIONS.md` (recherche réelle → fiche → `gen-check`).
-   Ordre : d'abord les lignes de départ (rampe douce), puis les lignes entre
-   hubs jouables, puis le reste. Chaque ligne livrée = un commit poussé.
-5. **Rampe de difficulté** : vérifier avec `carte-check` (R8) que les gares
-   grossissent vers le hub ; sinon réordonner ou remplacer une gare.
-6. **Le reste de l'Europe** s'affiche **grisé « à venir »** dans la vue Europe
-   (js/carte.js) ; un hub non jouable n'est jamais proposé comme sortie.
+**But** : le jeu avance d'une gare à la suivante ; plus aucun choix.
 
-*Fini quand* : `carte-check europe --livrable nw,ger` est vert ; une partie
-complète (test headless accéléré par `tick()`) parcourt une ligne de départ,
-bat un hub, ouvre une ligne, et ne tombe jamais sur une gare sans fiche.
+1. **`js/ruban.js`** remplace `js/graph.js` (même place dans l'ordre de
+   chargement de `station.html`). Ce qu'il expose :
+   `rubanDeCarte()`, `chapitreDe(ficheId)`, `indexDe(ficheId)`,
+   `gareSuivante()`, `positionCourante()`, `chapitreTermine(id)`,
+   `difficulteDeGare(ficheId)`, `enveloppeDeGare(ficheId)`.
+2. **Ce qui est repris tel quel** de `js/graph.js` : `plafondDeFlux`,
+   `enveloppeDe`, `ficheDeService`, `PROFILS`. Ce sont les seules parties
+   mesurées et calibrées ; elles ne bougent pas.
+3. **Ce qui disparaît** : `sortiesDeHub`, `parcours`, `lienEntre`,
+   `tousLesLiens`, `hubDeGare`, `corridorDeGare`, `corridorTermine`,
+   `bossMaitrise`, `versionsDeHub`, `lignesDeDepart`, `hubsDeDepart`,
+   `garesDeDepart`, `estGareDamorce`, `hubDeDepart`, `garesOuvrables`,
+   `ouvreLaSuite`. Vérifier chaque appelant avant suppression.
+4. **La difficulté** (§2.5 du document) : `difficulteVoulue(i, n, plancher)`
+   monte du plancher du chapitre à la grande gare finale, puis
+   `Math.min(..., plafondDeFlux(cfg))`. Le plancher vient du chapitre
+   (`plancher`) ou se déduit de son rang dans le ruban.
+5. **`js/store.js` schéma 6 → 7** : `resultats` et `serie` repris tels quels,
+   `acquises` et `versionsJouees` abandonnés, `passees` (soupape) créé vide.
+   **La position n'est pas stockée** : c'est la première gare du ruban ni
+   faite ni passée. Migration testée depuis une sauvegarde v6 **et** v5 : un
+   joueur du graphe ne perd aucune étoile, et retrouve sa position sur le
+   ruban recalculée. Une mise à jour qui perd la partie d'un joueur est un bug
+   bloquant.
+6. **`js/main.js` / `js/game.js`** : la fin de service enchaîne sur
+   `gareSuivante()` au lieu d'un écran de choix.
 
-## Lot D — La zone comme palier d'objectifs
+*Fini quand* : en headless, une sauvegarde v6 se migre sans perte d'étoile ;
+`gareSuivante()` avance de la première à la dernière gare du ruban sans jamais
+rendre `null` au milieu ; aucune erreur JS sur les trois vues.
 
-**But** : la constellation devient un niveau de progression lisible.
+## Lot E — Le ruban à l'écran
 
-1. **`js/recompense.js`** : `etatDeZone(zoneId)` déduit → *fermée* (aucun hub
-   battu) ‹ *entamée* ‹ *ouverte* (tous les hubs battus) ‹ *maîtrisée* (tous
-   maîtrisés) ‹ *or* ‹ *diamant* (toutes les lignes internes au rang). Même
-   esprit que les rangs de ligne : **minimum**, rien de stocké.
-2. **Vue zone** (js/carte.js, échelle « constellation ») : le rang de zone, la
-   jauge « 6 / 10 hubs », et la célébration au passage *ouverte* / *maîtrisée*
-   (réutiliser le relevé de fin de service et les pastilles `flashLabel`).
-3. **Médailles** : « Voie royale » (première zone maîtrisée), « Hub-porte
-   franchi » (première gare tenue dans une deuxième zone).
-4. **Vue carte** (échelle « Europe ») : chaque zone colorée par son rang, les
-   zones non livrées grisées.
+**But** : le geste. C'est ce lot qui répond au test de jeu.
 
-*Fini quand* : en jouant tous les hubs de la zone France-Benelux, la vue zone
-passe à *ouverte* avec célébration, et la vue Europe la colore.
+1. **Un bouton** au lancement : *Continuer* — le nom de la prochaine gare, le
+   nom du chapitre, « gare 4 sur 7 ». Rien d'autre à décider.
+2. **La carte montre, ne décide plus** (`js/carte.js`) : le ruban tracé,
+   les gares faites derrière (colorées par étoiles), la prochaine qui pulse,
+   la suite en gris. Le zoom reste libre. Une gare faite se rejoue d'un
+   toucher ; une gare pas encore atteinte ne se joue pas.
+3. **Fin de chapitre** : relevé, rang du chapitre (§6.2), **nom du chapitre
+   suivant annoncé** — c'est ce qui manquait le plus au test.
+4. **Le saut** (§4 bis) : animation de trajet sur la carte + la phrase
+   (« train de nuit pour Marseille »), passable d'un geste.
+5. **La soupape** (§4 ter) : au troisième échec sur la même gare, proposer de
+   la passer à 0 étoile. Formulation neutre, jamais « abandonner ». La gare
+   passée reste marquée sur la carte et se rejoue quand on veut.
+6. **Fin de zone** : célébration, la carte se colore.
 
-## Lot E — L'écran des cartes
+*Fini quand* : en headless, on ouvre le jeu, on appuie sur *Continuer*, on
+joue trois gares d'affilée sans jamais choisir quoi que ce soit, et la fin de
+chapitre annonce le suivant. Vérification visuelle (Chrome headless + CDP,
+`tick()` pour avancer le temps).
 
-**But** : choisir sa mission.
+## Lot F — Contenu : le ruban d'Europe
 
-1. **Écran « Cartes »** (nouvelle échelle au-dessus de la vue carte, ou
-   premier écran quand aucune carte n'est possédée) : une tuile par carte de
-   `data/cartes/index.json` — nom, sous-titre, nombre de hubs / lignes /
-   niveaux, progression du joueur (hubs battus, rang), état *possédée* /
-   *verrouillée* avec le prix en crédits et le bouton CB (inactif dans le
-   prototype, §7 du document).
-2. **Changer de carte** : `loadCarte(id)` + reconstruction du graphe + la vue
-   ligne de cette carte. La dernière carte jouée est la carte courante au
-   lancement.
-3. **Première ouverture** : une seule carte gratuite → on saute l'écran et on
-   tombe sur le choix de la ligne de départ comme aujourd'hui. L'écran
-   n'apparaît que s'il y a au moins deux cartes, ou depuis le dézoom maximal.
+**But** : un ruban qu'on a envie de suivre, pas une suite de chapitres.
 
-*Fini quand* : avec deux entrées dans `index.json` (la seconde pouvant être une
-carte de test de 20 hubs fictifs), on passe de l'une à l'autre et chaque
-progression reste intacte.
+1. **Écrire l'ordre** des 26 chapitres du noyau. Contraintes : R5
+   (continuité), R6 (20 gares d'écart entre deux gares d'une même ville), R8
+   (la rampe), R9 (le début doux). Le plus long enchaînement sans repasser par
+   une grande gare fait 89 niveaux : le reste passe par des retours de ville,
+   qui doivent tomber sur une **autre gare réelle** (Paris-Nord puis
+   Paris-Gare-de-Lyon).
+2. **Placer les sauts** : Londres–Manchester, Paris–Lyon et
+   Montpellier–Bordeaux sont détachés du noyau continental. Soit un saut
+   déclaré, soit un chapitre à écrire pour les relier.
+3. **Nommer les chapitres** (§2.2) : des noms de voyage. Question ouverte n° 7
+   du document (marques déposées) — préférer les noms historiques.
+4. **Caler la rampe** : mesurer en headless la difficulté réellement jouée
+   gare après gare le long du ruban, et fixer le pas du plancher (question
+   ouverte n° 3). Une courbe qui monte trop vite se voit tout de suite au
+   nombre de rejeux.
+5. **Allonger** ensuite, par le bout, avec les 21 lignes à compléter puis les
+   94 fiches déjà écrites hors du noyau. Chaque chapitre livré = un commit
+   poussé.
 
-## Lot F — Les crédits
+*Fini quand* : `carte-check europe` est vert, et une partie complète en
+headless va de la première à la dernière gare sans blocage, sans doublon de
+ville rapproché, et sans saut non déclaré.
 
-**But** : acheter une carte en jouant.
+## Lot G — Récompense
 
-1. **Barème déduit** (`js/recompense.js`) : `creditsGagnes()` = Σ sur toutes
-   les cartes (étoiles × 1, diamants × 5, hubs maîtrisés × 20, zones
-   maîtrisées × 100, cartes terminées × 500 — valeurs à caler). Solde =
-   gagnés − Σ prix des cartes achetées en crédits. Rien d'autre n'est stocké
-   que `cartesPossedees` (lot A).
-2. **Affichage** : le solde à côté du grade (barre du haut), l'écran des cartes
-   affiche « il te manque N crédits ».
-3. **Achat** : bouton actif quand le solde suffit ; `cartesPossedees[id] =
-   "credits"`. Déblocage de débogage via un paramètre d'URL, comme les autres
-   outils de test.
-4. **CB** : hors prototype. Prévoir seulement l'état `"achat"` dans la
+**But** : le chapitre remplace la ligne, la zone devient un palier.
+
+1. **`js/recompense.js`** : `garesDeLigne`/`rangDeLigne`/`toutesLesLignes`
+   deviennent `garesDeChapitre`/`rangDeChapitre`/`tousLesChapitres`. Le calcul
+   (minimum des gares) ne change pas — seul le vocabulaire.
+2. **`etatDeZone(zoneId)`** déduit : *fermée* ‹ *entamée* ‹ *traversée* (tous
+   ses chapitres finis) ‹ *or* ‹ *diamant*. Rien de stocké.
+3. **Médailles** : retirer celles adossées aux hubs maîtrisés ; ajouter
+   chapitres dorés, zones traversées, sauts franchis, carte terminée.
+4. **Séparer carte et compte** (reste du lot A, point 6) : le grade et les
+   crédits somment toutes les cartes ; les rangs et médailles de carte non.
+
+*Fini quand* : finir tous les chapitres de la zone France-Benelux la fait
+passer *traversée* avec célébration, et la vue Europe la colore.
+
+## Lot H — L'écran des cartes et les crédits
+
+Inchangé sur le fond par rapport au plan du 21 août ; il ne dépend que du
+modèle multi-cartes (lot A), pas de la structure interne d'une carte.
+
+1. **Écran « Cartes »** : une tuile par carte de `data/cartes/index.json` —
+   nom, sous-titre, nombre de chapitres et de niveaux, progression, état
+   *possédée* / *verrouillée* avec prix en crédits et bouton CB (inactif dans
+   le prototype).
+2. **Changer de carte** : `loadCarte(id)` + reconstruction du ruban. La
+   dernière carte jouée est la carte courante au lancement.
+3. **Une seule carte gratuite** → l'écran est sauté et on tombe sur
+   *Continuer*. Il n'apparaît qu'à partir de deux cartes.
+4. **Crédits déduits** (`js/recompense.js`) : Σ (étoiles × 1, diamants × 5,
+   chapitres dorés × 20, zones maîtrisées × 100, cartes terminées × 500 —
+   valeurs à caler). Solde = gagnés − Σ prix des cartes achetées en crédits.
+   Rien d'autre n'est stocké que `cartesPossedees`.
+5. **CB** : hors prototype ; seul l'état `"achat"` est prévu dans la
    sauvegarde pour que le moteur final n'ait pas à migrer.
 
-*Fini quand* : un joueur qui a maîtrisé le bloc de lancement a de quoi
-s'offrir la deuxième carte au prix prévu.
+*Fini quand* : avec deux entrées dans `index.json`, on passe de l'une à
+l'autre et chaque progression reste intacte ; un joueur qui a fini le ruban
+d'Europe a de quoi s'offrir la seconde.
 
-## Lot G — Deuxième carte
+## Lot I — Deuxième carte
 
-**But** : prouver que le modèle est générique avant d'industrialiser.
+**But** : prouver que le modèle est générique — bien moins cher qu'avec le
+graphe : **60 gares suffisent** (R2) au lieu de 260.
 
-1. Choisir le territoire (question ouverte n° 5) et son échelle
-   (`kmMinEntreHubs`).
-2. Suivre `AUTHORING-CARTES.md` : hubs (20+), zones (2+), tracés (3+ par hub),
-   puis les fiches. Réutiliser les fiches existantes quand la ville est déjà
-   au catalogue.
+1. Choisir le territoire (question ouverte n° 5) et son échelle.
+2. Suivre le `AUTHORING-CARTES.md` du lot C : le fil, les chapitres, les
+   noms, les sauts, puis les fiches. Réutiliser les fiches existantes quand la
+   ville est déjà au catalogue (94 fiches sont hors du ruban d'Europe).
 3. La livrer **verrouillée** derrière un prix en crédits — c'est aussi le test
-   du lot F.
+   du lot H.
 
-## Lot H — Nettoyage
+## Lot J — Nettoyage
 
-- `data/graph.js` supprimé (lot A) ; `js/catalog.js` perd les restes de la
-  progression par pays (`isUnlocked`, `countryComplete`, `JALONS`,
-  `cheapestBuyable*`, `nextMove`) s'ils ne sont plus appelés — vérifier à
-  la main, plusieurs sont déjà des coquilles (`idleStation`, `buyBlock`).
-- `js/hub.js` (89 lignes) ne fait plus que déléguer à `renderCarte` : fondre.
+- `js/graph.js` supprimé (lot D), `js/hub.js` (88 lignes, ne fait plus que
+  déléguer à `renderCarte`) fondu.
+- `js/catalog.js` perd les restes de la progression par pays (`isUnlocked`,
+  `countryComplete`, `JALONS`, `cheapestBuyable*`, `nextMove`) s'ils ne sont
+  plus appelés — plusieurs sont déjà des coquilles.
+- `tools/corridors-propose.mjs` et `tools/graph-propose.mjs` : supprimés, ou
+  refaits en « propose la suite du ruban » s'ils rendent encore service.
+- `tools/graph-check.mjs` : réévaluer (il garde les invariants du graphe des
+  voies **d'une gare**, pas de la carte — probablement à conserver tel quel,
+  seul son en-tête est périmé).
 - `README.md` : suivre l'organisation des fichiers à chaque lot.
-- Mettre à jour `tools/AUTHORING-STATIONS.md` §4 (enregistrement) quand une
-  fiche doit aussi être rattachée à une ligne de carte.
 
 ---
 
 ## Ce qu'on ne fait pas (et pourquoi)
 
-- **Pas de chaîne graphique web** nouvelle (écran des cartes en HTML/CSS
-  simple, pas d'illustrations) : le prototype sert à valider la structure, le
-  rendu final est l'affaire du moteur.
+- **Pas d'embranchement**, pas de fourche qui se rejoint : tranché le 25 août,
+  ruban strictement unique d'abord (§0 du document).
+- **Pas de chaîne graphique web** nouvelle : le prototype valide la structure,
+  le rendu final est l'affaire du moteur.
 - **Pas de paiement réel** dans le prototype.
-- **Pas de contenu hors du bloc de lancement** tant que `carte-check` n'est
-  pas vert dessus : une deuxième zone à moitié écrite n'apprend rien de plus.
-- **Pas de lignes légendaires, pas de régularité quotidienne** : intentions
+- **Pas d'allongement du ruban** tant que `carte-check` n'est pas vert sur le
+  noyau : un ruban à moitié cohérent n'apprend rien de plus.
+- **Pas de chapitres légendaires, pas de régularité quotidienne** : intentions
   conservées dans le document, hors plan.
 
 ## Prochaine action
 
-Lot A, point 1 : écrire `data/cartes/europe.json` depuis `data/graph.js`
-(conversion scriptée), puis le chargeur — en gardant le jeu jouable à chaque
-commit.
+Lot C, point 1 : le schéma `chapitres[]` dans `data/cartes/README.md`, puis la
+conversion des 26 lignes jouables en un ruban provisoire — en gardant le jeu
+jouable à chaque commit.

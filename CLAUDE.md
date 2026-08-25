@@ -62,9 +62,12 @@ Ne déduis jamais une règle du code : elle est écrite quelque part, et un
 contrôle en est l'autorité.
 
 - `meta-progression-jeu-aiguillage.md` — le design : les quatre niveaux (gare,
-  ligne, zone, carte), la construction d'une carte, les récompenses, le modèle
-  de données. La référence.
-- `plan-de-dev.md` — les lots A→H, avec ce qui est **fait** et ce qui est
+  **chapitre**, zone, carte), la construction d'une carte, les récompenses, le
+  modèle de données. La référence. **Refondu le 25 août 2026** : une carte est
+  un **ruban** — une suite ordonnée de gares, sans embranchement et sans choix
+  (§0). Les notions de hub, de sortie et de ligne à parcourir librement sont
+  abandonnées ; les grandes gares sont désormais des fins de chapitre.
+- `plan-de-dev.md` — les lots A→J, avec ce qui est **fait** et ce qui est
   reporté. À mettre à jour quand un lot avance.
 - `tools/AUTHORING-STATIONS.md` — la procédure pour écrire une gare. Obligatoire.
 - `tools/AUTHORING-CARTES.md` — la procédure pour écrire une carte.
