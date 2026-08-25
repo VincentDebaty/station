@@ -414,7 +414,12 @@ spécification du lot E.
    - **le rail du chapitre s'allume** d'un bout à l'autre, gare après gare, dans
      l'ordre du trajet qu'on vient de faire. C'est la récompense, et elle se lit
      sans un mot ;
-   - la fête pose le **rang du chapitre** et **annonce le suivant** ;
+   - la fête pose **le relevé du chapitre** : les étoiles récoltées sur le
+     maximum possible, les sans-faute, le rang s'il vaut mieux que « fait », et
+     surtout **ce qu'il reste à y prendre** — « 1 étoile à prendre ici », « il
+     reste 5 sans-faute ». C'est le seul endroit du jeu où « exceller est le
+     vrai jeu » se dit en chiffres. Elle ne répète ni le nom du chapitre (il
+     est dans l'en-tête) ni celui du suivant (il est sur le bouton) ;
    - *En route* : le panneau s'efface, **la caméra traverse jusqu'au chapitre
      suivant**, et le service ne commence qu'après. Ce voyage se jouait
      auparavant PENDANT le niveau — derrière l'écran de jeu, donc invisible.

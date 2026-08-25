@@ -399,17 +399,39 @@ function piedHTML() {
 function feteHTML() {
   const f = CARTE.fete;
   if (!f) return "";
-  const ch = f.ch, suivant = f.suivant, rang = rangDeChapitre(ch);
+  const ch = f.ch, rang = rangDeChapitre(ch);
   const zone = typeof zoneById === "function" ? zoneById(ch.zone) : null;
-  const faites = ch.gares.filter(estFaite).length, payees = ch.gares.filter(estPassee).length;
-  return `<div class="c-fete" role="status">
-    <div class="cf-quoi">Chapitre terminé</div>
-    ${rang ? `<div class="cf-rang r-${rang.id}">${rang.nom}</div>`
-           : `<div class="cf-rang r-neutre">Traversé</div>`}
-    <div class="cf-gares">${faites} gare${faites > 1 ? "s" : ""} faite${faites > 1 ? "s" : ""}${
-      payees ? ` · ${payees} passée${payees > 1 ? "s" : ""}` : ""}</div>
-    ${f.zoneFinie && zone ? `<div class="cf-zone">${zone.nom} — région traversée</div>` : ""}
-    ${suivant ? `<div class="cf-suivant">La suite<b>${suivant.nom}</b></div>` : ""}
+  // CE QU'ON A GAGNÉ, pas trois façons de dire « terminé ». La première
+  // version écrivait le même fait trois fois — une pastille dans l'en-tête,
+  // « chapitre terminé » en titre, « chapitre fait » en rang — et annonçait le
+  // chapitre suivant deux fois, dans la carte puis sur le bouton. Il reste ici
+  // le relevé du chapitre, et lui seul : le nom est dans l'en-tête, la suite
+  // est sur le bouton.
+  const n = ch.gares.length;
+  const et = ch.gares.reduce((t, g) => t + etoilesDe(g), 0), etMax = n * 3;
+  const dia = ch.gares.filter(estSansFaute).length;
+  const payees = ch.gares.filter(estPassee).length;
+  const parfait = et === etMax && dia === n;
+  // CE QUI RESTE À PRENDRE. « Réussir est facile, exceller est le vrai jeu » :
+  // un chapitre fini n'est pas un chapitre clos, et le dire ici est le seul
+  // endroit où ça compte vraiment.
+  // Un diamant vaut trois étoiles : « tous les diamants » implique « toutes les
+  // étoiles ». Il n'y a donc que trois états, pas quatre.
+  let reste = "";
+  if (parfait) reste = `<p class="cf-parfait">Pas une minute de retard, nulle part.</p>`;
+  else if (et < etMax) reste = `<p class="cf-reste"><b>${etMax - et}</b> étoile${etMax - et > 1 ? "s" : ""} ` +
+    `à prendre ici${payees ? `, dont ${payees} gare${payees > 1 ? "s" : ""} passée${payees > 1 ? "s" : ""}` : ""}.</p>`;
+  else reste = `<p class="cf-reste">Toutes les étoiles. Reste les sans-faute : <b>${n - dia}</b>.</p>`;
+
+  return `<div class="c-fete" role="status" style="--col:${couleurDeZone(ch.zone)}">
+    <p class="cf-quoi">Chapitre terminé</p>
+    <div class="cf-butin">
+      <span class="cb-et"><b>${et}</b><span>/ ${etMax} ★</span></span>
+      <span class="cb-dia${dia ? " on" : ""}"><b>${dia}</b><span>◆</span></span>
+    </div>
+    ${rang && rang.id !== "ouverte" ? `<p class="cf-rang r-${rang.id}">${rang.nom}</p>` : ""}
+    ${reste}
+    ${f.zoneFinie && zone ? `<p class="cf-zone">${zone.nom} — région traversée</p>` : ""}
   </div>`;
 }
 
@@ -461,8 +483,9 @@ function chapitreHTML() {
       <span class="cj-piste">${ch.gares.map(g =>
         `<i class="cj-cran${estSansFaute(g) ? " dia" : estFaite(g) ? " fait" : estPassee(g) ? " paye" : ""}${
           g === CARTE.prochaine ? " ici" : ""}"></i>`).join("")}</span>
-      ${rang ? `<span class="c-rang r-${rang.id}">${rang.nom}</span>`
-             : `<span class="c-avance">${faits}<span class="cj-sur">/</span>${ch.gares.length}</span>`}
+      ${rang && rang.id !== "ouverte" && !CARTE.fete
+        ? `<span class="c-rang r-${rang.id}">${rang.nom}</span>`
+        : `<span class="c-avance">${faits}<span class="cj-sur">/</span>${ch.gares.length}</span>`}
     </div>
   </header>`;
 }
@@ -488,7 +511,7 @@ function vueRuban() {
   return `
     <aside class="c-cote">
       ${chapitreHTML()}
-      <div class="cc-corps">
+      <div class="cc-corps${CARTE.fete ? " fete" : ""}">
         ${CARTE.fete ? feteHTML() : CARTE.bilan ? bilanHTML() : (gc ? cartoucheHTML(gc) : "")}
       </div>
       ${piedHTML()}
