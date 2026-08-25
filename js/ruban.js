@@ -273,6 +273,61 @@ function etoilesPour(retard, seuils) {
   return retard < s.trois ? 3 : retard < s.deux ? 2 : retard < s.une ? 1 : 0;
 }
 
+// ------------------------------------------------------------------
+// L'ENVELOPPE DE BOSS — la grande gare qui ferme un chapitre.
+// ------------------------------------------------------------------
+// MESURÉ AVANT D'ÊTRE POSÉ (25 août 2026, sept gares de fin de chapitre,
+// K=14 journées, graine fixe). La question de départ était « et si un boss
+// portait 35 convois ? ». Réponse : non, et le mur tombe entre 28 et 34.
+//
+//   n=22 (actuel)  retard 0,11–0,17 · file 3 · 0,6 à 2 s la journée
+//   n=28           retard 0,19–0,26 · file 4 · 3 à 4 s
+//   n=34           Cologne à 0,31 — AU-DESSUS du 0,30 que gen-check refuse
+//   n=40           file 5 sur Hambourg, 5 à 6 s la journée
+//
+// Deux murs, et ils tombent ensemble. Le premier est fatal : au-delà de ~30
+// convois le générateur ne garantit plus qu'une journée à ZÉRO RETARD soit
+// possible — or c'est la promesse sur laquelle reposent le barème des étoiles
+// ET le diamant. Le second est du confort : la génération tourne dans un
+// worker avant le service, donc c'est le joueur qui attend.
+//
+// Ce qui sature n'est d'ailleurs pas les quais — la file reste à 3-4 partout —
+// c'est la combinatoire de l'aiguillage. Le NOMBRE n'est donc pas le bon
+// cadran : on prend à peine plus de trafic, et surtout une COURBE D'AFFLUENCE
+// marquée et du fret en plus.
+//
+// LE PIÈGE DU BALAYAGE GRAÎNÉ, ATTRAPÉ EN CHEMIN. n24-28 passait les neuf boss
+// à graine 7 — Leipzig à 0,30 pile, sur le seuil. Deux tirages LIBRES ont
+// aussitôt sorti Leipzig à 0,31 et 0,34, et Stuttgart à 0,36 et 0,39 : refusé.
+// C'est exactement ce que dit tools/AUTHORING-STATIONS.md §6, et une gare posée
+// sur le seuil n'est pas une gare qui passe, c'est une gare qui a eu de la
+// chance. On est donc redescendu à :
+//
+//   n20-24 · rafale · fret 6   retard 0,18–0,27 · file 3-4 · trois balayages
+//                              verts (graine 7 + deux tirages libres)
+//
+// Soit DEUX convois de plus que le niveau 5 ordinaire, et c'est très bien
+// ainsi : le caractère d'un boss vient désormais de sa COURBE et de son FRET,
+// pas de son volume. « Rafale » (js/schedule.js) est un long calme puis une
+// bourrasque finale — la journée monte vers son orage, et le chapitre finit
+// dessus. La gare la plus tendue est Stuttgart : huit quais mais seulement
+// CINQ destinations, donc le moins de façons de placer un convoi. Un boss se
+// calibre sur elle, pas sur Bruxelles-Midi et ses huit directions.
+const ENVELOPPE_BOSS = { nMin: 20, nMax: 24, gapMin: 1.50, gapMax: 2.50, freightCount: 6, rush: "rafale" };
+// La dernière gare d'un chapitre — celle qui le ferme.
+function estGrandeGare(gareId) {
+  const ch = chapitreDeGare(gareId);
+  return !!ch && ch.gares.length > 0 && ch.gares[ch.gares.length - 1] === gareId;
+}
+// UN BOSS N'EST UN BOSS QU'À PLEINE DIFFICULTÉ. La grande gare des premiers
+// chapitres est plafonnée par la rampe (Bruxelles-Midi ouvre à 3, §2.5) : lui
+// donner l'enveloppe de boss ferait exploser le tutoriel. Elle ne s'applique
+// donc qu'au niveau 5 — ce qui la lie à la rampe comme tout le reste, et fait
+// que les boss arrivent d'eux-mêmes quand le ruban est assez avancé.
+function estBoss(gareId, cfg) {
+  return estGrandeGare(gareId) && difficulteDeGare(gareId, cfg) === 5;
+}
+
 function enveloppeDeGare(gareId, cfg) {
   const d = difficulteDeGare(gareId, cfg);
   return enveloppeDe(cfg, d == null ? (cfg && cfg.difficulty) : d, PROFILS[1]);
@@ -294,7 +349,10 @@ function ficheDeService(cfg) {
   if (!cfg) return cfg;
   const d = difficulteDeGare(cfg.id, cfg);
   if (d == null) return cfg;
-  return { ...cfg, difficulty: d, gen: enveloppeDe(cfg, d, PROFILS[1]) };
+  const gen = estBoss(cfg.id, cfg)
+    ? { ...cfg.gen, ...ENVELOPPE_BOSS }        // ce que la fiche impose reste prioritaire… sauf le boss
+    : enveloppeDe(cfg, d, PROFILS[1]);
+  return { ...cfg, difficulty: d, gen };
 }
 
 // --- Zones ------------------------------------------------------------

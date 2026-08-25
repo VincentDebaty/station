@@ -24,6 +24,7 @@
 //   node tools/gen-check.mjs liege           # une gare (par id), K plus élevé
 //   node tools/gen-check.mjs liege lyon 30   # gares ciblées, K=30
 //   node tools/gen-check.mjs --seed=1        # journées REPRODUCTIBLES
+//   node tools/gen-check.mjs --boss <gares>  # l'enveloppe des grandes gares
 //   node tools/gen-check.mjs --niveau=1 ottignies   # enveloppe FORCÉE
 //
 // --niveau=N remplace le bloc `gen` de la fiche par l'enveloppe du niveau N
@@ -49,7 +50,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const read = f => fs.readFileSync(path.join(ROOT, f), "utf8");
 
 // --- arguments : ids de gare (lettres) + K facultatif (nombre) + --seed=N ---
-let SEED = null, NIVEAU = null;
+let SEED = null, NIVEAU = null, BOSS = false;
 // --fiche=<chemin.json> : une fiche PAS ENCORE ENREGISTRÉE dans index.json. C'est
 // ce qui permet d'écrire des gares en parallèle sans se disputer l'index : on
 // valide le fichier, on l'enregistre ensuite.
@@ -61,6 +62,11 @@ const rawArgs = process.argv.slice(2).filter(a => {
   if (m) { SEED = parseInt(m[1], 10); return false; }
   const n = /^--niveau=([1-5])$/.exec(a);
   if (n) { NIVEAU = parseInt(n[1], 10); return false; }
+  // --boss : l'enveloppe des GRANDES GARES de fin de chapitre (js/ruban.js,
+  // ENVELOPPE_BOSS). Sans cette option, le contrôle mesurait une journée que
+  // le jeu ne joue plus sur ces gares-là — et un contrôle qui ne mesure pas ce
+  // que le jeu fait est pire que pas de contrôle.
+  if (a === "--boss") { BOSS = true; return false; }
   return true;
 });
 const kArg = rawArgs.find(a => /^\d+$/.test(a));
@@ -149,7 +155,10 @@ for (const { id, country, path: chemin } of cards) {
   let cfg = JSON.parse(chemin ? fs.readFileSync(chemin, "utf8") : read(`data/stations/${country}/${id}.json`));
   // Enveloppe forcée : la fiche garde sa géométrie, sa journée change de
   // niveau. C'est le geste exact de ficheDeService (js/ruban.js).
-  if (NIVEAU != null) {
+  if (BOSS) {
+    const boss = vm.runInContext("ENVELOPPE_BOSS", eng);
+    cfg = { ...cfg, difficulty: 5, gen: { ...cfg.gen, ...boss } };
+  } else if (NIVEAU != null) {
     eng.__cfg = cfg;
     const gen = vm.runInContext(`enveloppeDe(this.__cfg, ${NIVEAU}, PROFILS[1])`, eng);
     cfg = { ...cfg, difficulty: NIVEAU, gen };

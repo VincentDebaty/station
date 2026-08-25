@@ -237,6 +237,9 @@ function cartoucheHTML(gareId) {
   // SEUILS) : caché, il passerait pour un bug — « 9 min m'a valu trois étoiles
   // à Arlon et deux à Bruxelles ».
   const seuils = seuilsDeService(cfg);
+  // Une grande gare à pleine difficulté porte l'enveloppe de boss (js/ruban.js) :
+  // plus de convois, plus de fret, et une bourrasque en fin de journée.
+  const boss = typeof estBoss === "function" && estBoss(gareId, cfg);
   const fin = ch && ch.gares[ch.gares.length - 1] === gareId;
   const drapeau = (cfg.country || "").trim().split(" ")[0];
   // LA PHRASE DE LA GARE. Elle est écrite pour chaque fiche et ne servait à
@@ -249,6 +252,7 @@ function cartoucheHTML(gareId) {
     <h3 class="cf-nom">${villeDe(gareId)}</h3>
     <p class="cf-pays">${drapeau} ${(cfg.country || "").trim().split(" ").slice(1).join(" ")}</p>
     ${phrase ? `<p class="cf-phrase">${phrase}</p>` : ""}
+    ${boss ? `<p class="cf-boss"><b>Bourrasque</b>Le trafic se resserre en fin de service.</p>` : ""}
     <dl class="cf-mesures">
       <div><dt>Quais</dt><dd>${quais}</dd></div>
       <div><dt>Directions</dt><dd>${dirs}</dd></div>

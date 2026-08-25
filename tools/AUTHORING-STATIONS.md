@@ -429,3 +429,21 @@ redécoupées, à fiche et graine identiques).
 
 Pour explorer l'espace des structures avant d'écrire :
 `tools/PROMPT-panorama-gares.md`.
+
+## Contrôler une grande gare de fin de chapitre
+
+Une gare qui ferme un chapitre ne joue pas la journée de son niveau : elle
+porte l'**enveloppe de boss** (`ENVELOPPE_BOSS`, js/ruban.js) — 20 à 24
+convois, six trains de fret, courbe `rafale`. Le contrôle ordinaire ne la
+mesure pas. Il faut donc :
+
+```sh
+node tools/gen-check.mjs --boss --seed=7 <gare>   # non-régression
+node tools/gen-check.mjs --boss <gare>            # puis DEUX tirages libres
+```
+
+Et la règle du §6 vaut doublement ici : **un balayage graîné vert ne prouve
+rien**. Mesuré le 25 août 2026 — une enveloppe à 24-28 convois passait les neuf
+boss à graine 7 (Leipzig à 0,30 pile), et deux tirages libres l'ont aussitôt
+fait échouer sur Leipzig et Stuttgart. Une gare posée sur le seuil n'est pas
+une gare qui passe.

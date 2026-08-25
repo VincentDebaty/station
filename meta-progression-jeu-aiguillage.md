@@ -150,6 +150,27 @@ finir, et fête.
 
 ### 2.2 bis Les grandes gares (ex-hubs)
 
+**L'enveloppe de boss** (mesurée et posée le 25 août 2026). La grande gare qui
+ferme un chapitre porte une journée à part : **20 à 24 convois, six trains de
+fret, et une courbe d'affluence en `rafale`** — un long calme, puis une
+bourrasque finale. Elle ne s'applique qu'à **pleine difficulté** (niveau 5), ce
+qui la lie à la rampe : les premiers chapitres n'ont pas de boss, ils ont une
+grande gare.
+
+*Pourquoi si peu de convois ?* Parce que le mur a été mesuré. À 34, Cologne
+sort à 0,31 de retard garanti — au-dessus du 0,30 que `gen-check` refuse — et
+la génération passe à cinq secondes la journée. Or ce plafond n'est pas un
+détail de confort : au-delà, le générateur **ne garantit plus qu'une journée à
+zéro retard soit possible**, et c'est la promesse sur laquelle reposent le
+barème des étoiles *et* le diamant.
+
+*Le caractère d'un boss ne vient donc pas de son volume* — deux convois de plus
+que le niveau 5 ordinaire — **mais de sa courbe et de son fret**. Ce qui sature
+n'est pas les quais (la file reste à 3-4) mais la combinatoire de l'aiguillage.
+Le contrôle sait mesurer cette journée-là : `node tools/gen-check.mjs --boss`.
+
+
+
 Les hubs ne sont plus des nœuds de choix — il n'y a plus de choix. Ils
 redeviennent ce qu'ils auraient toujours dû être : **les fins de chapitre**.
 
