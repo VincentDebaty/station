@@ -12,11 +12,11 @@
 //
 // Clé de ville = id de gare ("namur") → lien direct getProgress()/CATALOG.
 //
-// CE FICHIER N'EST PLUS CHARGÉ PAR LE JEU. La carte géographique a laissé la
-// place à un rendu en lignes (js/carte.js), qui n'a pas de projection. Il
-// reste au dépôt parce que les OUTILS s'en servent — les coordonnées des
-// villes mesurent les écartements entre hubs et la sinuosité des corridors
-// (tools/carte-check.mjs, tools/net-check.mjs).
+// CE FICHIER EST DE NOUVEAU CHARGÉ PAR LE JEU depuis le lot E (25 août 2026) :
+// la carte du ruban (js/parcours.js) pose chaque gare à ses coordonnées, donc
+// elle les lit ici. Les OUTILS s'en servent aussi — la sinuosité des chapitres
+// et la continuité réelle se mesurent dessus (tools/carte-check.mjs,
+// tools/net-check.mjs).
 // Les coordonnées des villes vivent ICI (pas dans les fiches de gare).
 // ------------------------------------------------------------------
 
@@ -111,6 +111,12 @@ const GEO = {
       } },
     allemagne: { name: "Allemagne", flag: "🇩🇪", iso: "DEU", continent: "europe",
       cities: {
+        // Gares du ruban restant à écrire (lot F) : leurs coordonnées sont ici
+        // dès maintenant pour que le tracé se dessine sans trou — la carte les
+        // montre « à venir », le jeu ne les propose jamais.
+        wiesbaden: [8.244, 50.070], darmstadt: [8.629, 49.873], heidelberg: [8.675, 49.404],
+        bruchsal: [8.588, 49.128], vaihingen: [8.960, 48.930], dachau: [11.434, 48.253],
+        pfaffenhofen: [11.508, 48.531], kinding: [11.386, 49.000], allersberg: [11.234, 49.253],
         berlin: [13.369, 52.525], munchen: [11.555, 48.141], frankfurt: [8.663, 50.107],
         hamburg: [10.006, 53.553],
         koln: [6.958, 50.943], hannover: [9.742, 52.377], leipzig: [12.382, 51.345],

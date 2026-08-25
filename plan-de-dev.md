@@ -18,7 +18,7 @@
 | **C** | Le ruban dans les données — **fait le 25 août 2026** | M | A |
 | **D** | Le ruban dans le moteur — **fait le 25 août 2026** | M | C |
 | **G** | Récompense **et crédits** : chapitre, zone, solde déduit | S | D |
-| **E** | Le ruban à l'écran : *Continuer*, fin de chapitre, saut, soupape payante | M | D, **G** |
+| **E** | Les écrans — **fait le 25 août 2026** | M | D, G |
 | **F** | Contenu : écrire les 470 fiches du ruban (`ruban-europe.md`) | XL | C, D |
 | **H** | L'écran des cartes et l'achat | M | G |
 | **I** | Deuxième carte (preuve de généricité) | L | C, H |
@@ -234,7 +234,51 @@ rendre `null` au milieu ; aucune erreur JS sur les trois vues.
 
 </details>
 
-## Lot E — Les écrans
+## Lot E — Les écrans — FAIT (25 août 2026)
+
+*Livré* : `js/parcours.js` réécrit (487 lignes) — **la carte d'Europe posée sur
+la gare en cours**. Une seule carte, une caméra, trois niveaux qui ne sont que
+trois positions de `.monde` : **gare** (la gare et ses quatre voisines, k ≤ 4,5),
+**chapitre** (le chapitre entier), **carte** (le ruban d'un bout à l'autre). Le
+CSS fait le trajet ; changer de gare, c'est la caméra qui glisse le long du
+rail, et un **saut** dure deux fois plus longtemps.
+
+*Ce qui se voit* : le fond de pays (Natural Earth) reste neutre — **le fond est
+un fond, le ruban est le sujet** — et c'est le fil qui porte la couleur de la
+zone. Fait : plein. À faire : éteint. Pas encore écrit : pointillé, parce que
+la carte ne ment pas sur ce qui n'existe pas. La gare en cours pulse d'un cerne
+géométrique (jamais un `drop-shadow` : invisible sur iPhone, mesuré).
+
+*Le cartouche* dit ce qu'il faut savoir avant de prendre le service : la ville,
+« L'Ardenne · gare 1 sur 6 », **les quais et les directions** — c'est de là que
+vient la difficulté — et la jauge à cinq crans.
+
+*Le relevé* : **Continuer** et *Rejouer* à la réussite ; **Réessayer** et
+*Passer · ◆ N* à l'échec, avec, si le solde ne suffit pas, où aller le gagner.
+La hiérarchie s'inverse selon l'issue : à l'échec, c'est *Réessayer* qui est le
+geste principal.
+
+*La fin de chapitre* : la caméra prend du recul, le chapitre se ferme avec son
+rang, et **le suivant est nommé** — c'est ce qui manquait le plus au test de
+jeu. *En route* redescend sur la gare.
+
+*Deux réparations en chemin* : `js/geo.js` n'était plus chargé par le jeu
+depuis que la carte géographique avait disparu — la carte du ruban en a besoin,
+il est de nouveau dans `station.html` ; et les symboles se dessinaient en
+unités du monde, donc grossissaient avec le zoom (à ×7 un point de gare faisait
+une soucoupe). Rayons et décalages se divisent maintenant par k, ce qui impose
+de redessiner le calque des gares après la caméra — le seul qui en dépende.
+
+*Vérifié en headless, capture à l'appui* : les trois niveaux de caméra, six
+gares jouées d'affilée, la fête de fin de chapitre (« L'Ardenne · Chapitre d'or
+· La suite : Le Benelux »), *En route* qui relance sur Malines et redescend au
+niveau gare, l'échec avec ses deux issues et « il te manque 5 crédits ».
+
+*Reste au lot H* : l'écran des cartes proprement dit (il n'y a qu'une carte, il
+est sauté). `js/carte.js` peut maintenant être retiré (lot J).
+
+<details><summary>Le plan d'origine du lot E</summary>
+
 
 **But** : l'enchaînement décrit par Vincent le 25 août (§4 quater du document).
 C'est ce lot qui répond au test de jeu.
@@ -271,6 +315,8 @@ trois gares d'affilée sans jamais choisir quoi que ce soit, la fin de chapitre
 annonce le suivant, le premier échec fait apparaître l'offre de passage à côté
 de *Réessayer*, dix échecs de suite la laissent intacte, la payer avance le
 ruban sans donner d'étoile, et gagner la gare ensuite restitue les crédits.
+
+</details>
 
 ## Lot F — Contenu : écrire le ruban
 

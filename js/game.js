@@ -1389,10 +1389,12 @@ function endGame(failed) {
   // la gare suivante est à un doigt, la gare jouée aussi pour recommencer.
   if (!STATION.adhoc && typeof renderCarte === "function") {
     CARTE.bilan = { gare: STATION.id, stars, prevStars, d, prevBest, perfect, failed, win };
-    // Le train ne part QUE si le service est tenu : sur un échec il n'y a pas
-    // de gare suivante, et le voir rouler vers elle contredisait la bulle.
-    CARTE.voyage = win ? STATION.id : null;   // (js/carte.js, animerVoyage)
-    showHub();                   // #end rangé, la carte redessinée avec la bulle
+    showHub();                   // #end rangé, la carte redessinée avec le relevé
+    // LE RUBAN AVANCE, ET LA CAMÉRA SUIT. Seulement si le service est tenu :
+    // sur un échec il n'y a pas de gare suivante, et voir la carte glisser
+    // vers elle contredirait le relevé. finDeGare (js/parcours.js) décide au
+    // passage s'il y a une fin de chapitre à fêter.
+    if (win && typeof finDeGare === "function") finDeGare(STATION.id);
     rollRecette();
     if (perfect && typeof perfectConfetti === "function") {
       const bulle = document.querySelector("#hub .c-bilan");

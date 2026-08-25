@@ -147,6 +147,6 @@ jour qui perd la partie d'un joueur est un bug bloquant, pas un détail.
 ## Détail connu
 
 `js/carte.js` est **encore au dépôt mais n'est plus chargé** : le ruban a pris
-la main (`js/parcours.js`). On le garde le temps que le lot E reprenne sa
-projection de carte et sa caméra — ne pas y écrire, ne pas s'y fier.
+la main (`js/parcours.js`), qui a repris sa projection et sa caméra au lot E.
+Il n'a plus d'utilité — sa suppression est le lot J. Ne pas y écrire.
 `js/hub.js`, lui, est bien vivant : c'est lui qui porte `startStation`.

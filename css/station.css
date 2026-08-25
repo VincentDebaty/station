@@ -2281,3 +2281,135 @@ svg { width: 100%; height: 100%; display: block; }
   .v-constellation .c-tete .c-compteurs, .v-europe .c-tete .c-compteurs { display: none; }
   .v-constellation .c-titre, .v-europe .c-titre { font-size: 15px; }
 }
+
+/* ==================================================================
+   LE RUBAN (lot E) — la carte posée sur la gare en cours.
+   ==================================================================
+   Une seule carte, une caméra : trois niveaux (n-gare, n-chapitre, n-carte)
+   ne sont que trois positions de .monde. Le fond est un fond, le RUBAN est le
+   sujet — les pays restent neutres et c'est le fil qui porte la couleur. */
+.v-ruban { gap: 10px; }
+.v-ruban .c-graphe { flex: 1 1 auto; width: 100%; min-height: 0; }
+.c-ruban .monde { transform-box: view-box; transform-origin: 0 0;
+  transition: transform .75s cubic-bezier(.4, 0, .2, 1); }
+@media (prefers-reduced-motion: reduce) { .c-ruban .monde { transition: none; } }
+.c-ruban .pays { fill: #151d2e; stroke: #202b42; stroke-width: calc(.4px / var(--k, 1));
+  stroke-linejoin: round; pointer-events: none; }
+
+/* Le rail. Fait : la couleur de la zone, pleine. Reste à faire : la même,
+   éteinte. Pas encore écrit : pointillé — la carte ne ment pas sur ce qui
+   n'existe pas. Un saut est un pointillé plus large : il ne suit pas un rail. */
+.c-ruban .seg { fill: none; stroke-linecap: round;
+  stroke-width: calc(1.6px / var(--k, 1)); pointer-events: none; }
+.c-ruban .s-fait { stroke: var(--col); }
+.c-ruban .s-reste { stroke: var(--col); opacity: .30; }
+.c-ruban .s-avenir { stroke: #3a4560; opacity: .55;
+  stroke-dasharray: calc(1.4px / var(--k, 1)) calc(1.8px / var(--k, 1)); }
+.c-ruban .s-saut { stroke-dasharray: calc(.8px / var(--k, 1)) calc(2.4px / var(--k, 1)); opacity: .7; }
+
+/* Les gares. La cible transparente est large : un point d'une unité dans un
+   cadre de 160 ne s'attrape pas au doigt. */
+.c-ruban .gare .cible { fill: transparent; }
+.c-ruban .gare[data-gare] { cursor: pointer; }
+.c-ruban .gare .pt { fill: #29344c; stroke: #46516b; stroke-width: calc(.35px / var(--k, 1)); }
+.c-ruban .gare text { font-size: calc(2.6px / var(--k, 1)); fill: var(--muted);
+  text-anchor: middle; font-family: "Segoe UI", system-ui, sans-serif;
+  pointer-events: none; paint-order: stroke; stroke: #0E1420;
+  stroke-width: calc(1.1px / var(--k, 1)); stroke-linejoin: round; opacity: 0;
+  transition: opacity .3s ease; }
+.c-ruban .gare .et { font-size: calc(2.1px / var(--k, 1)); fill: var(--gold); stroke-width: 0; }
+/* Les noms ne se montrent qu'à l'échelle où ils se lisent : le chapitre en
+   cours toujours, le reste seulement quand on a dézoomé sur lui. */
+.n-gare .c-ruban .g-proche text, .n-chapitre .c-ruban .g-proche text { opacity: 1; }
+.n-gare .c-ruban .g-ici text, .n-chapitre .c-ruban .g-fin text, .n-carte .c-ruban .g-fin text { opacity: 1; }
+.c-ruban .g-faite .pt { fill: var(--col); stroke: var(--col); }
+.c-ruban .g-faite text { fill: var(--text); }
+.c-ruban .g-payee .pt { fill: #0E1420; stroke: var(--col); stroke-dasharray: .6 .6; }
+.c-ruban .g-payee text { fill: var(--muted); }
+.c-ruban .g-courante .pt { fill: #0E1420; stroke: #6ff0e2; stroke-width: calc(.8px / var(--k, 1)); }
+.c-ruban .g-courante text { fill: #6ff0e2; }
+.c-ruban .g-avenir .pt { fill: none; stroke: #3a4560; stroke-dasharray: .5 .5; }
+.c-ruban .g-avenir text { fill: #46516b; }
+.c-ruban .g-fin .pt { stroke-width: calc(.7px / var(--k, 1)); }
+.c-ruban .g-fin text { font-weight: 700; font-size: calc(3.1px / var(--k, 1)); }
+.c-ruban .g-fin.g-faite .pt { fill: var(--gold); stroke: var(--gold); }
+.c-ruban .g-fin.g-faite text { fill: var(--gold-hi); }
+/* LA GARE EN COURS PULSE. Sur iPhone les halos en drop-shadow sont invisibles
+   (mesuré) : c'est un cerne géométrique animé en opacité, jamais un filtre. */
+.c-ruban .halo { fill: none; stroke: #6ff0e2; stroke-width: calc(.7px / var(--k, 1));
+  animation: ruban-bat 1.9s ease-in-out infinite; pointer-events: none; }
+@keyframes ruban-bat { 0%, 100% { opacity: .85; } 50% { opacity: .18; } }
+@media (prefers-reduced-motion: reduce) { .c-ruban .halo { animation: none; opacity: .7; } }
+.c-ruban .gare:focus-visible .cible { stroke: #6ff0e2; stroke-width: calc(.5px / var(--k, 1)); }
+
+/* ---- Le panneau du bas : la fiche, le relevé, ou la fête ---- */
+.v-ruban .c-panneau { flex: 0 0 auto; display: flex; flex-direction: column;
+  align-items: center; gap: 10px; }
+.c-fiche { text-align: center; display: flex; flex-direction: column; gap: 3px; }
+.cf-ou { font-family: ui-monospace, Menlo, monospace; font-size: 11.5px; color: var(--muted);
+  letter-spacing: .02em; }
+.cf-nom { font-size: 19px; font-weight: 700; }
+.cf-ligne { display: flex; align-items: center; justify-content: center; gap: 9px; }
+.cf-tag { font-size: 11.5px; color: var(--muted); background: rgba(21, 29, 46, .7);
+  border: 1px solid #2a3550; border-radius: 7px; padding: 2px 7px; }
+.cf-score { font-size: 12px; color: var(--gold); }
+/* L'appel : le seul geste de l'écran. Il nomme la gare — « Continuer » seul
+   demanderait de chercher où. */
+.c-appel { display: inline-flex; align-items: baseline; gap: 9px; font-size: 16px;
+  padding: 12px 20px; }
+.c-appel .ca-quoi { font-weight: 700; }
+.c-appel .ca-ou { opacity: .85; }
+.c-avenir { font-size: 13.5px; color: var(--muted); text-align: center; padding: 10px 0; }
+/* Le saut : une transition, jamais une punition. */
+.c-saut { flex: 0 0 auto; text-align: center; font-size: 12.5px; color: var(--muted);
+  border-top: 1px dashed #2a3550; border-bottom: 1px dashed #2a3550; padding: 6px 10px; }
+.c-saut b { display: inline-block; text-transform: uppercase; letter-spacing: .1em;
+  font-size: 10.5px; color: #6ff0e2; margin-right: 9px; }
+/* Le relevé, posé DANS LE FLUX du panneau et non plus sous un jalon de la
+   piste : il n'a donc plus ni pointe ni décalage, et son animation d'arrivée
+   ne doit plus emporter le translateX(-50%) qui le centrait sur le jalon. */
+.v-ruban .c-bilan { position: static; transform: none; pointer-events: auto;
+  animation: ruban-bilan .45s cubic-bezier(.2, .9, .3, 1.2) both; }
+.v-ruban .c-bilan::before { display: none; }
+@keyframes ruban-bilan { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .v-ruban .c-bilan { animation: none; } }
+.v-ruban .c-bilan .c-suite { align-self: auto; margin-top: 0; }
+.cb-gare { font-size: 15px; font-weight: 700; }
+.cb-actions { display: flex; gap: 8px; margin-top: 6px; }
+.cb-payer { background: rgba(21, 29, 46, .8); border: 1px solid var(--gold-dim); color: var(--gold); }
+.cb-payer:hover:not(:disabled) { background: rgba(232, 185, 35, .16); }
+.cb-payer:disabled { opacity: .45; cursor: default; }
+.cb-manque { font-size: 11.5px; color: var(--muted); margin-top: 5px; text-align: center; }
+.c-credits { font-family: ui-monospace, Menlo, monospace; font-size: 12.5px; color: var(--gold-dim); }
+/* La fête de fin de chapitre — et le nom du suivant, annoncé. C'est ce qui
+   manquait le plus au test de jeu : savoir où l'on va. */
+.c-fete { text-align: center; display: flex; flex-direction: column; align-items: center; gap: 4px;
+  background: rgba(21, 29, 46, .82); border: 1px solid #2a3550; border-radius: 14px;
+  padding: 12px 22px; }
+.cf-quoi { font-family: ui-monospace, Menlo, monospace; font-size: 10.5px; letter-spacing: .14em;
+  text-transform: uppercase; color: var(--muted); }
+.cf-titre { font-size: 21px; font-weight: 700; }
+.cf-rang { font-size: 13px; font-weight: 600; }
+.cf-rang.r-ouverte { color: #2dd4bf; } .cf-rang.r-argent { color: #c9d4e6; }
+.cf-rang.r-or { color: var(--gold); }  .cf-rang.r-diamant { color: #7fd4ff; }
+.cf-gares { font-size: 12px; color: var(--muted); }
+.cf-zone { font-size: 12.5px; color: var(--gold-hi); margin-top: 3px; }
+.cf-suivant { font-size: 13.5px; color: var(--muted); margin-top: 7px; }
+.cf-suivant b { color: var(--text); }
+.cz-ic { font-size: 13px; opacity: .8; }
+@media (max-height: 480px) {
+  .v-ruban .c-panneau { gap: 6px; }
+  .cf-nom { font-size: 16px; } .c-appel { font-size: 14.5px; padding: 9px 16px; }
+}
+/* Les pastilles de difficulté du cartouche : la MÊME jauge que partout. */
+.cf-ligne .dif { display: flex; align-items: center; gap: 3px; }
+.cf-ligne .dif .b { width: 4px; height: 10px; border-radius: 1.5px; background: #3b465c; }
+.cf-ligne .dif .b.on { background: #f5b23c; }
+/* UNE HIÉRARCHIE, PAS DEUX BOUTONS ÉGAUX. « Continuer » est le geste du jeu ;
+   « Rejouer » est une reprise volontaire, et la proposer aussi fort ferait
+   hésiter à chaque service. À l'échec en revanche, « Réessayer » EST le geste
+   principal — c'est « Passer » qui passe au second plan. */
+.cb-rejouer { background: rgba(21, 29, 46, .85); border: 1px solid #2f3b57; color: var(--muted); }
+.cb-rejouer:hover { background: rgba(33, 44, 68, .95); color: var(--text); border-color: #2dd4bf; }
+.c-bilan.rate .cb-rejouer { background: #2dd4bf; border-color: #2dd4bf; color: #08111d; }
+.c-bilan.rate .cb-rejouer:hover { background: #3ee0cc; color: #08111d; }
