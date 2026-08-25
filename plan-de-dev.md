@@ -113,9 +113,34 @@ tout ce qui n'en est pas un.
    vérifier la rampe. `AUTHORING-STATIONS.md` §4 : une fiche se rattache
    désormais à un **chapitre**, pas à une ligne.
 
-*Fini quand* : `node tools/carte-check.mjs europe` est vert sur le ruban
-provisoire, et refuse (code ≠ 0) si on retire une gare d'un chapitre, si on
-duplique une fiche, ou si on casse la continuité sans déclarer de saut.
+6. **Le ruban v1 — quel préfixe on livre** (mesuré le 25 août). Le ruban
+   complet commence à Cork, où **rien n'est écrit** : le jeu ne peut pas
+   démarrer là. Et sur les 12 chapitres entièrement écrits, **un seul peut
+   ouvrir une carte** — *L'Ardenne* (Luxembourg → Bruxelles), dont le profil
+   est d1·2·1·3·2·5 : Arlon d1 en tutoriel, rampe jusqu'à Bruxelles-Midi d5.
+   Tous les autres ouvrent en d4 ou d5, parce qu'ils ont été écrits pour un
+   milieu de ruban.
+
+   **Décision : la v1 livre les chapitres 51 à 61 du ruban définitif** —
+   Luxembourg → Bruxelles → Amsterdam → Hanovre → Cologne → Francfort →
+   Stuttgart → Munich → Nuremberg → Leipzig → Berlin → **Hambourg**. Ce n'est
+   pas un autre ruban, c'est un **préfixe pris là où il est écrit** ; Cork →
+   Luxembourg se greffe devant plus tard sans rien casser.
+
+   | | |
+   |---|---|
+   | Jouable dès le lot D | 4 chapitres, 24 niveaux (jusqu'à Cologne) |
+   | Après 9 fiches | 11 chapitres, **63 niveaux**, jusqu'à Hambourg |
+
+   Les neuf : Wiesbaden, Darmstadt, Heidelberg, Bruchsal, Vaihingen, Dachau,
+   Pfaffenhofen, Kinding, Allersberg.
+
+   Sur la carte, la partie non écrite du ruban s'affiche **« à venir »** et ne
+   se joue pas — jamais de gare proposée sans fiche.
+
+*Fini quand* : `node tools/carte-check.mjs europe` est vert sur le ruban v1, et
+refuse (code ≠ 0) si on retire une gare d'un chapitre, si on duplique une
+fiche, ou si on casse la continuité sans déclarer de saut.
 
 ## Lot D — Le ruban dans le moteur
 
@@ -152,41 +177,43 @@ duplique une fiche, ou si on casse la continuité sans déclarer de saut.
 `gareSuivante()` avance de la première à la dernière gare du ruban sans jamais
 rendre `null` au milieu ; aucune erreur JS sur les trois vues.
 
-## Lot E — Le ruban à l'écran
+## Lot E — Les écrans
 
-**But** : le geste. C'est ce lot qui répond au test de jeu.
+**But** : l'enchaînement décrit par Vincent le 25 août (§4 quater du document).
+C'est ce lot qui répond au test de jeu.
 
-1. **Un bouton** au lancement : *Continuer* — le nom de la prochaine gare, le
+1. **L'écran des cartes** — sauté tant qu'il n'y a qu'une carte possédée ;
+   accessible au dézoom maximal. Une tuile par carte (nom, sous-titre,
+   chapitres, niveaux, progression, prix). Le gros de l'écran est au lot H ;
+   ici on ne pose que le passage.
+2. **La carte posée sur la gare en cours** (`js/carte.js`) — pas l'Europe
+   entière : la caméra cadre **la prochaine gare**, mise en évidence, avec son
+   cartouche d'infos (nom, ville, « gare 3 sur 6 · Le Rhin romantique »,
+   quais, directions). Le ruban se lit derrière : fait en couleur, à venir en
+   gris, non écrit en « à venir ». Trois crans de dézoom : gare → chapitre →
+   carte. La caméra existante (`CARTE.camCible {x,y,k}`) fait déjà ce travail,
+   il s'agit de la piloter depuis la position sur le ruban.
+3. **Un seul bouton au lancement** : *Continuer* — nom de la prochaine gare,
    nom du chapitre, « gare 4 sur 7 ». Rien d'autre à décider.
-2. **La carte montre, ne décide plus** (`js/carte.js`) : le ruban tracé,
-   les gares faites derrière (colorées par étoiles), la prochaine qui pulse,
-   la suite en gris. Le zoom reste libre. Une gare faite se rejoue d'un
-   toucher ; une gare pas encore atteinte ne se joue pas.
-3. **Fin de chapitre** : relevé, rang du chapitre (§6.2), **nom du chapitre
-   suivant annoncé** — c'est ce qui manquait le plus au test.
-4. **Le saut** (§4 bis) : animation de trajet sur la carte + la phrase
-   (« train de nuit pour Marseille »), passable d'un geste.
-5. **La soupape payante** (§4 ter, tranché le 25 août) : il faut **réussir** la
-   gare ; **à chaque échec, dès le premier**, proposer de **payer le passage en
-   crédits** — à côté de *Réessayer*, jamais à sa place, et sans aucune limite
-   au nombre d'essais. Formulation neutre, jamais « abandonner ». La gare payée reste à
-   0 étoile, marquée sur la carte, et se rejoue quand on veut — la gagner plus
-   tard **rend la mise** (rien à stocker : la dépense ne compte que les
-   `passees` encore à 0 ★). Afficher le solde et le prix au moment de l'offre,
-   et, si le solde ne suffit pas, dire **où aller le gagner** : « il te manque
-   12 crédits — trois gares de la ligne de Lorraine te les donnent ». C'est ce
-   renvoi vers le rejeu qui fait tout l'intérêt du passage payant.
-6. **Jamais de vies, jamais de minuterie.** Le rejeu reste gratuit, immédiat et
-   illimité. Le prix ne s'applique qu'à *sauter* la gare, jamais à la retenter.
-7. **Fin de zone** : célébration, la carte se colore.
+4. **La première gare est le tutoriel** : pas un écran séparé, le premier
+   niveau guidé. Réutiliser l'onboarding existant (`station-onboarded`) en le
+   rattachant à la première gare du ruban plutôt qu'au premier lancement.
+5. **Le relevé de fin.** Réussite : retard, étoiles, diamant, série, puis
+   **Continuer** et **Rejouer**. Échec : **Réessayer** (gratuit, illimité) et
+   **Payer le passage** (§4 ter) côte à côte, avec le solde et le prix, et —
+   si le solde ne suffit pas — où aller le gagner.
+6. **Le voyage vers la gare suivante** : la caméra glisse le long du rail. La
+   même animation, allongée et accompagnée de sa phrase, joue les **sauts**
+   (§4 bis). Passable d'un geste.
+7. **La fin de chapitre** s'intercale : rang du chapitre, nom du suivant
+   annoncé. **La fin de zone** colore la carte.
+8. **Jamais de vies, jamais de minuterie.**
 
-*Fini quand* : en headless, on ouvre le jeu, on appuie sur *Continuer*, on
-joue trois gares d'affilée sans jamais choisir quoi que ce soit, et la fin de
-chapitre annonce le suivant. Et : le premier échec fait apparaître l'offre de
-passage à côté de *Réessayer*, dix échecs de suite la laissent intacte, la payer
-avance le ruban sans donner d'étoile, et gagner la gare ensuite restitue les
-crédits. Vérification visuelle (Chrome headless + CDP,
-`tick()` pour avancer le temps).
+*Fini quand* : en headless, on ouvre le jeu, on appuie sur *Continuer*, on joue
+trois gares d'affilée sans jamais choisir quoi que ce soit, la fin de chapitre
+annonce le suivant, le premier échec fait apparaître l'offre de passage à côté
+de *Réessayer*, dix échecs de suite la laissent intacte, la payer avance le
+ruban sans donner d'étoile, et gagner la gare ensuite restitue les crédits.
 
 ## Lot F — Contenu : écrire le ruban
 
@@ -322,6 +349,6 @@ graphe : **60 gares suffisent** (R2) au lieu de 260.
 
 ## Prochaine action
 
-Lot C, point 1 : le schéma `chapitres[]` dans `data/cartes/README.md`, puis la
+Lot C, points 1 et 6 : le schéma `chapitres[]` dans `data/cartes/README.md`, puis la
 conversion des 26 lignes jouables en un ruban provisoire — en gardant le jeu
 jouable à chaque commit.

@@ -322,6 +322,38 @@ Trois garde-fous, tous nécessaires :
 
 ---
 
+### 4 quater Les écrans (tranché par Vincent le 25 août 2026)
+
+L'enchaînement visuel du jeu, du lancement au deuxième niveau. C'est la
+spécification du lot E.
+
+1. **L'écran des cartes.** On choisit sa mission. Une seule pour le moment,
+   l'Europe — donc l'écran est **sauté tant qu'il n'y a qu'une carte possédée**
+   (§7) et n'apparaît qu'au dézoom maximal ou dès qu'une deuxième existe.
+2. **La carte, zoomée sur la gare en cours.** Pas la carte d'Europe entière :
+   la caméra est **posée sur la prochaine gare**, mise en évidence, avec ses
+   **infos de base** — son nom, sa ville, le chapitre en cours et le rang qu'on
+   y tient (« gare 3 sur 6 · Le Rhin romantique »), ses quais et ses
+   directions. Le tracé du ruban se lit derrière : fait en couleur, à venir en
+   gris. Un dézoom montre le chapitre, puis la carte entière.
+3. **La première gare est le tutoriel.** Elle est facile par construction (R9)
+   et c'est elle qui enseigne l'aiguillage. Le tutoriel n'est pas un écran
+   séparé : c'est le premier niveau, guidé.
+4. **Le relevé de fin.** À la réussite : le retard cumulé, les étoiles, le
+   diamant s'il est gagné, la série — puis deux boutons, **Continuer** et
+   **Rejouer**. À l'échec : **Réessayer** (gratuit, illimité) et **Payer le
+   passage** (§4 ter), côte à côte, jamais l'un à la place de l'autre.
+5. **Le tracé rejoint la gare suivante.** La caméra glisse le long du rail
+   jusqu'à la gare d'après, qui devient la nouvelle gare en évidence. C'est
+   l'animation qui porte le sentiment d'avancer — et c'est aussi elle qui joue
+   les **sauts** (§4 bis), en plus long et avec sa phrase.
+6. **La fin de chapitre** s'intercale entre 4 et 5 : rang du chapitre, nom du
+   chapitre suivant annoncé.
+
+Il n'y a **aucun autre écran obligatoire**. Tout le reste — l'indicateur, les
+médailles, le rejeu volontaire, l'écran des cartes — se rejoint depuis la
+carte, jamais en travers du chemin.
+
 ## 5. Première carte : l'Europe — le ruban, mesuré le 25 août 2026
 
 **Le tracé complet est dans `ruban-europe.md`** : les 9 actes, les 95
