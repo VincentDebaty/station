@@ -111,9 +111,24 @@ function fenetreVisible() {
   const a = w > 0 && h > 0 ? w / h : CADRE_L / CADRE_H;
   return a >= CADRE_L / CADRE_H ? { w: CADRE_H * a, h: CADRE_H } : { w: CADRE_L, h: CADRE_L / a };
 }
-function zoomPour(bw, bh, marge, kMax) {
+// CE QUE LA BARRE DU HAUT MASQUE, en unités du cadre. Les compteurs (grade,
+// crédits, diamants, étoiles) flottent au-dessus de la scène : la caméra
+// cadrait sur toute la surface du SVG sans le savoir, et la dernière gare d'un
+// chapitre vertical — Amsterdam au bout du Benelux — finissait sous eux, son
+// nom illisible. On réserve donc la bande, et l'on cadre dans ce qui reste.
+function bandeauHaut() {
+  const svg = CARTE.hote && CARTE.hote.querySelector(".c-graphe");
+  const hud = CARTE.hote && CARTE.hote.querySelector(".c-scene .c-compteurs");
+  if (!svg || !hud) return 0;
+  const r = svg.getBoundingClientRect();
+  const s = Math.min(r.width / CADRE_L, r.height / CADRE_H);   // px par unité (meet)
+  if (!(s > 0)) return 0;
+  return (hud.getBoundingClientRect().height + 8) / s;
+}
+function zoomPour(bw, bh, marge, kMax, inset) {
   const f = fenetreVisible();
-  return Math.max(1, Math.min(kMax, (f.w - 2 * marge) / Math.max(bw, 1), (f.h - 2 * marge) / Math.max(bh, 1)));
+  const utile = Math.max(20, f.h - (inset || 0));
+  return Math.max(1, Math.min(kMax, (f.w - 2 * marge) / Math.max(bw, 1), (utile - 2 * marge) / Math.max(bh, 1)));
 }
 function boite(ids) {
   let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
@@ -130,9 +145,16 @@ function cameraVoulue() {
   const ch = CARTE.chapitre;
   const b = ch && boite(ch.gares);
   if (!b) return { x: CADRE_L / 2, y: CADRE_H / 2, k: 1 };
-  // Un chapitre court (Bruxelles–Amsterdam tient dans 3 unités) grossirait
-  // au point qu'on ne verrait plus le pays autour : le zoom est borné.
-  return { x: b.x, y: b.y, k: zoomPour(Math.max(b.w, 7), Math.max(b.h, 5), 13, 6) };
+  // La marge du haut porte aussi les ÉTIQUETTES : le nom d'une gare est posé
+  // au-dessus de son point, donc la dernière gare a besoin d'un peu plus de
+  // ciel que de sol.
+  const inset = bandeauHaut();
+  // Un chapitre court (Bruxelles–Amsterdam tient dans 3 unités) grossirait au
+  // point qu'on ne verrait plus le pays autour : le zoom est borné.
+  const k = zoomPour(Math.max(b.w, 7), Math.max(b.h, 5), 15, 6, inset);
+  // Le centre descend de la moitié de la bande réservée : le chapitre se pose
+  // au milieu de ce qui reste visible, pas au milieu du SVG.
+  return { x: b.x, y: b.y - inset / (2 * k), k };
 }
 
 // ------------------------------------------------------------------

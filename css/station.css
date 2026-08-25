@@ -1884,7 +1884,13 @@ svg { width: 100%; height: 100%; display: block; }
 .carte {
   position: absolute; inset: 0;
   display: flex; flex-direction: column;
-  padding: calc(14px + var(--safe-t)) 16px calc(16px + var(--safe-b));
+  /* LES ENCOCHES COMPTENT. En paysage, l'iPhone pose son île dynamique sur un
+     BORD — gauche ou droit selon le sens de rotation — et elle mange une bande
+     d'une quarantaine de points. Le panneau qui présente la gare tombait
+     dessous. Les deux côtés sont donc écartés, jamais un seul : on ne sait pas
+     dans quel sens le joueur a tourné son téléphone. */
+  padding: calc(14px + var(--safe-t)) calc(16px + var(--safe-r))
+           calc(16px + var(--safe-b)) calc(16px + var(--safe-l));
   gap: 14px; overflow: hidden;
 }
 .c-tete { display: flex; align-items: center; gap: 12px; flex: 0 0 auto; }
@@ -2289,7 +2295,8 @@ svg { width: 100%; height: 100%; display: block; }
    (la carte, qui prend tout le reste). Le premier test a tranché : les infos
    au milieu coupaient l'écran en deux, et le chapitre qu'on joue flottait au
    milieu d'un continent. Un seul chapitre est dessiné, cadré pour remplir. */
-.v-ruban { flex-direction: row; align-items: stretch; gap: 0; padding-right: 0; }
+.v-ruban { flex-direction: row; align-items: stretch; gap: 0;
+  padding-right: var(--safe-r); }
 /* UN SEUL BORD GAUCHE POUR TOUT LE PANNEAU. La gouttière vit sur le conteneur,
    pas sur chaque bloc : compteur, titre, région, jauge, fiche et bouton
    partent donc exactement du même x, et leurs bords droits coïncident aussi.
@@ -2300,6 +2307,8 @@ svg { width: 100%; height: 100%; display: block; }
   border-right: 1px solid #1b2536; }
 .c-scene { flex: 1 1 auto; position: relative; min-width: 0; display: flex; flex-direction: column; }
 .c-scene .c-compteurs { position: absolute; top: 0; right: 16px; z-index: 3; }
+/* Les compteurs sont dans la scène, donc déjà à l'intérieur du rembourrage de
+   droite : rien à ajouter. Le panneau, lui, part du bord gauche de l'écran. */
 
 /* --- LE PANNEAU DE GAUCHE ---------------------------------------
    Une seule gouttière (--pad) pour tout ce qui s'y aligne : compteur, titre,
