@@ -67,6 +67,11 @@ contrôle en est l'autorité.
   un **ruban** — une suite ordonnée de gares, sans embranchement et sans choix
   (§0). Les notions de hub, de sortie et de ligne à parcourir librement sont
   abandonnées ; les grandes gares sont désormais des fins de chapitre.
+- `ruban-europe.md` — **le tracé** : les 9 actes, les 95 chapitres, les 593
+  gares dans l'ordre du rail, les 8 sauts. C'est le contenu de la carte Europe,
+  et l'autorité sur l'itinéraire. Les listes de gares sont des points de
+  passage réels, pas des fiches validées : le §0 de `AUTHORING-STATIONS.md`
+  reste seul juge de ce qui devient un niveau.
 - `plan-de-dev.md` — les lots A→J, avec ce qui est **fait** et ce qui est
   reporté. À mettre à jour quand un lot avance.
 - `tools/AUTHORING-STATIONS.md` — la procédure pour écrire une gare. Obligatoire.

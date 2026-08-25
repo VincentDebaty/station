@@ -19,7 +19,7 @@
 | **D** | Le ruban dans le moteur : `js/ruban.js`, sauvegarde schéma 7 | M | C |
 | **G** | Récompense **et crédits** : chapitre, zone, solde déduit | S | D |
 | **E** | Le ruban à l'écran : *Continuer*, fin de chapitre, saut, soupape payante | M | D, **G** |
-| **F** | Contenu : l'ordre du ruban d'Europe et sa rampe (89 niveaux au départ) | L | C, D |
+| **F** | Contenu : écrire les 470 fiches du ruban (`ruban-europe.md`) | XL | C, D |
 | **H** | L'écran des cartes et l'achat | M | G |
 | **I** | Deuxième carte (preuve de généricité) | L | C, H |
 | **J** | Nettoyage : ce que le ruban rend mort | S | E, G |
@@ -167,8 +167,9 @@ rendre `null` au milieu ; aucune erreur JS sur les trois vues.
 4. **Le saut** (§4 bis) : animation de trajet sur la carte + la phrase
    (« train de nuit pour Marseille »), passable d'un geste.
 5. **La soupape payante** (§4 ter, tranché le 25 août) : il faut **réussir** la
-   gare ; au troisième échec seulement, proposer de **payer le passage en
-   crédits**. Formulation neutre, jamais « abandonner ». La gare payée reste à
+   gare ; **à chaque échec, dès le premier**, proposer de **payer le passage en
+   crédits** — à côté de *Réessayer*, jamais à sa place, et sans aucune limite
+   au nombre d'essais. Formulation neutre, jamais « abandonner ». La gare payée reste à
    0 étoile, marquée sur la carte, et se rejoue quand on veut — la gagner plus
    tard **rend la mise** (rien à stocker : la dépense ne compte que les
    `passees` encore à 0 ★). Afficher le solde et le prix au moment de l'offre,
@@ -181,46 +182,48 @@ rendre `null` au milieu ; aucune erreur JS sur les trois vues.
 
 *Fini quand* : en headless, on ouvre le jeu, on appuie sur *Continuer*, on
 joue trois gares d'affilée sans jamais choisir quoi que ce soit, et la fin de
-chapitre annonce le suivant. Et : trois échecs d'affilée déclenchent l'offre de
-passage, la payer avance le ruban sans donner d'étoile, gagner la gare ensuite
-restitue les crédits. Vérification visuelle (Chrome headless + CDP,
+chapitre annonce le suivant. Et : le premier échec fait apparaître l'offre de
+passage à côté de *Réessayer*, dix échecs de suite la laissent intacte, la payer
+avance le ruban sans donner d'étoile, et gagner la gare ensuite restitue les
+crédits. Vérification visuelle (Chrome headless + CDP,
 `tick()` pour avancer le temps).
 
-## Lot F — Contenu : le ruban d'Europe
+## Lot F — Contenu : écrire le ruban
 
-**But** : un ruban qu'on a envie de suivre, pas une suite de chapitres.
+**But** : donner au ruban ses gares. Le tracé n'est plus une question — il est
+écrit dans **`ruban-europe.md`** : 9 actes, 95 chapitres, 593 gares dans
+l'ordre du rail, 8 sauts, de Cork à Istanbul. Ce lot ne décide plus, il écrit.
 
-1. **Écrire l'ordre** des chapitres. Contraintes : R5 (continuité), **R6 (ne
-   jamais réemprunter un tracé ; revenir dans une ville seulement par un autre
-   croisement et une autre ligne)**, R8 (la rampe), R9 (le début doux).
-   **Mesuré le 25 août : le ruban extractible du noyau plafonne à 16 chapitres
-   et 89 niveaux**, parce que 20 des 22 grandes gares n'ont qu'une fiche.
-   Chaîne maximale : Munich → Stuttgart → Zurich → Strasbourg → Luxembourg →
-   Francfort → Nuremberg → Leipzig → Berlin → Hambourg → Cologne → Hanovre →
-   Amsterdam → Bruxelles → Lille → Paris → Lyon. **À lire à l'envers** (R9 : le
-   début doux part de France, la rampe monte vers les Alpes), et à retoucher :
-   le tronçon Berlin → Hambourg → Cologne → Hanovre → Amsterdam se lit mal sur
-   une carte. Un ruban plus court mais qui ressemble à un voyage vaut mieux.
-2. **Les 10 chapitres hors ruban** partent en réserve, pas à la poubelle. Pour
-   les récupérer : écrire une **deuxième gare réelle** dans les villes qui n'en
-   ont qu'une (Hanovre, Cologne, Zurich, Bruxelles…) — c'est ce qui rouvre le
-   plus de chapitres d'un coup — ou les raccrocher par un saut.
-3. **Placer les sauts** : Londres–Manchester, Paris–Lyon et
-   Montpellier–Bordeaux sont détachés du noyau continental. Soit un saut
-   déclaré, soit un chapitre à écrire pour les relier.
-4. **Nommer les chapitres** (§2.2) : des noms de voyage. Question ouverte n° 7
-   du document (marques déposées) — préférer les noms historiques.
-5. **Caler la rampe** : mesurer en headless la difficulté réellement jouée
-   gare après gare le long du ruban, et fixer le pas du plancher (question
-   ouverte n° 3). Une courbe qui monte trop vite se voit tout de suite au
-   nombre de rejeux.
-6. **Allonger** ensuite, par le bout, avec les 21 lignes à compléter puis les
-   94 fiches déjà écrites hors du noyau. Chaque chapitre livré = un commit
-   poussé.
+1. **123 gares sont déjà écrites** et réemployées telles quelles. **12 chapitres
+   sont jouables intégralement dès aujourd'hui** (68 niveaux : Lille–Paris, puis
+   Genève → Zurich → Strasbourg → Luxembourg → Bruxelles → Amsterdam → Hanovre →
+   Cologne, et Stuttgart → Munich, Nuremberg → Leipzig → Berlin → Hambourg).
+   Écrire **Arles** et **Wiesbaden** en porte deux de plus : 14 chapitres,
+   79 niveaux, un ruban continu de Genève à Hambourg.
+2. **470 fiches à écrire**, dans l'ordre de rentabilité (`ruban-europe.md`,
+   « par où commencer ») : acte V (25 fiches), acte II (24), acte I (96),
+   puis Ibérie, Italie, et enfin le Nord et l'Est, entièrement neufs.
+3. **Le ruban se joue dans l'ordre, mais se livre dans le désordre** : un acte
+   complet en milieu de ruban est du contenu prêt. Rien n'oblige à écrire de
+   gauche à droite.
+4. **Chaque gare passe le §0 de `AUTHORING-STATIONS.md`** — ≥ 3 directions
+   réelles, 3-4 quais. Les listes de `ruban-europe.md` sont des points de
+   passage réels, **pas des fiches validées** : il y aura des refus, et la
+   parade est de prendre la gare voisine ou de redécouper le chapitre, jamais
+   d'inventer un portail.
+5. **Caler la rampe** : le tableau des planchers par tranche de chapitres
+   (`ruban-europe.md`, « la rampe de difficulté ») est une proposition. La
+   mesurer en headless sur le ruban réel, et vérifier que `plafondDeFlux`
+   rabat proprement (question ouverte n° 3).
+6. **Trancher les collisions d'identifiants** avant d'écrire : `valence`
+   (Drôme) vs Valence d'Espagne → `valencia` ; Brest-Litovsk vs Brest ;
+   Cordoue, Naples. Une collision découverte après coup coûte un renommage
+   dans l'index, la carte et `geo.js`.
+7. **Chaque chapitre livré = un commit poussé**, avec ses contrôles.
 
 *Fini quand* : `carte-check europe` est vert, et une partie complète en
-headless va de la première à la dernière gare sans blocage, sans doublon de
-ville rapproché, et sans saut non déclaré.
+headless va de Cork à Istanbul sans blocage, sans doublon de gare, et sans
+saut non déclaré.
 
 ## Lot G — Récompense
 

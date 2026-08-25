@@ -145,7 +145,8 @@ redeviennent ce qu'ils auraient toujours dû être : **les fins de chapitre**.
 
 ### 2.3 La zone (niveau 3)
 
-- Une zone regroupe **3 à 6 chapitres** sur un territoire cohérent. Sur
+- Une zone regroupe **6 à 20 chapitres** sur un territoire cohérent — ce sont
+  les **actes** du voyage (`ruban-europe.md`). Sur
   l'Europe ce sont les zones existantes (Îles britanniques, France et Benelux,
   Germanie et Alpes…), qui gardent leur couleur sur la carte.
 - **Ce n'est pas une porte** — il n'y en a plus nulle part. C'est un **palier
@@ -209,7 +210,7 @@ règle.
 | R1 | **La carte est un ruban unique** : une suite ordonnée de gares, sans embranchement, sans choix. Chaque gare a exactement une suivante | C'est toute la décision du 25 août : un seul bouton, *Continuer* |
 | R2 | **≥ 60 gares et ≥ 8 chapitres** par carte | En dessous, la mission se finit trop vite pour mériter d'être une carte. Le ruban de lancement de l'Europe en fait 89 sur 16 chapitres (§5) : le plancher est tenu, sans marge |
 | R3 | Un chapitre compte **5 à 10 gares**, la dernière étant une grande gare | Moins de 5 : la promesse « parcourir une ligne » n'est pas tenue. Plus de 10 : le joueur ne voit plus l'arrivée |
-| R4 | Une zone compte **3 à 6 chapitres** ; une carte a **≥ 2 zones** | Équilibre de durée entre zones ; une carte à une seule zone n'a pas de niveau 3 |
+| R4 | Une zone compte **6 à 20 chapitres** ; une carte a **≥ 2 zones** ; et **l'écart entre la zone la plus courte et la plus longue reste sous 3 pour 1** | Révisée le 25 août 2026 : la fourchette 3–6 avait été écrite pour un ruban de 16 chapitres, elle est cassée par un ruban de 95. C'est l'**écart** qui compte, pas la taille absolue : une région deux fois plus longue qu'une autre se sent |
 | R5 | **Continuité réelle** : deux gares consécutives d'un même chapitre sont voisines sur une ligne réelle. Une rupture géographique n'est permise **qu'entre deux chapitres**, et elle est alors déclarée comme un **saut** (§4 bis) | Le tracé doit rester vrai. Un saut assumé est honnête ; un saut caché au milieu d'un chapitre est un bug de crédibilité |
 | R6 | **Le ruban ne réemprunte jamais un tracé déjà parcouru.** Une fiche n'apparaît qu'une fois. Revenir dans une ville est permis **à condition d'y revenir par une autre gare — un autre croisement — et par une autre ligne réelle** | Tranché le 25 août 2026 : « pas de souci de revenir à une autre gare si c'est un croisement, mais pas refaire la même ligne ». Le critère n'est pas la distance parcourue depuis, c'est le **tracé** : c'est refaire la même ligne qui se sent, pas revoir une ville |
 | R7 | Un chapitre **reste sur la même ligne réelle** (sinuosité ≤ 1,5 × le vol d'oiseau entre sa première et sa dernière gare) | La vérité du tracé avant la longueur : Bruxelles–Luxembourg passe par Namur, pas par le Hainaut |
@@ -245,9 +246,10 @@ règle.
 2. **Jouer la gare** : le service, le relevé de fin, les étoiles.
 3. **≥ 1 étoile** → la gare suivante du ruban s'ouvre. **< 1 étoile** → on
    rejoue ; le rejeu est gratuit et immédiat.
-4. **La soupape** (§4 ter) : il faut **réussir** la gare. Après trois échecs,
-   le jeu propose de la **payer en crédits** pour passer à la suivante — la
-   gare reste sans étoile, marquée sur la carte, et se rejoue quand on veut.
+4. **La soupape** (§4 ter) : il faut **réussir** la gare. À **chaque** échec,
+   le jeu propose de la **payer en crédits** pour passer à la suivante — offre
+   toujours disponible, jamais imposée. La gare payée reste sans étoile,
+   marquée sur la carte, et se rejoue quand on veut.
 5. **Fin de chapitre** (la grande gare est tenue) : célébration, nom du
    chapitre suivant annoncé, rang du chapitre affiché (§6.2).
 6. **Fin de zone** : célébration de zone, la carte se colore.
@@ -284,9 +286,11 @@ peut la **payer en crédits** pour passer à la suivante.
 1. **Le barème est déjà doux** : 1 étoile = 30 minutes de retard cumulé. La
    philosophie « réussir est facile » n'est pas décorative, c'est ce qui rend
    le ruban praticable. La soupape doit rester rare.
-2. **L'offre n'apparaît qu'après trois échecs** sur la même gare, jamais avant.
-   Ce n'est pas un raccourci pour l'impatient : c'est une issue pour celui qui
-   est coincé. Un joueur qui n'a pas essayé ne se voit rien proposer.
+2. **L'offre apparaît à chaque échec, dès le premier**, et ne disparaît
+   jamais (tranché le 25 août 2026). **Aucune limite au nombre d'essais** :
+   qui veut recommencer dix fois recommence dix fois, gratuitement, et
+   retrouve l'offre de passage intacte au onzième. Le jeu ne pousse pas, il
+   pose l'option à côté du bouton *Réessayer* et laisse le joueur choisir.
 3. **Le passage coûte des crédits** — la monnaie gagnée en jouant (§7). Le prix
    monte avec la position dans le ruban (barème au §7).
 4. **Une gare payée reste à 0 étoile.** Elle ne compte ni pour la jauge du
@@ -311,12 +315,40 @@ Trois garde-fous, tous nécessaires :
 - le prix du passage suit la position dans le ruban : il est petit au début
   (§7) ;
 - il reste toujours l'issue gratuite du rejeu : la gare se retente autant de
-  fois qu'on veut, sans coût ni attente. **Jamais de vies, jamais de minuterie**
-  — c'est ce qui distingue la soupape d'un mur commercial.
+  fois qu'on veut, sans coût, sans attente et **sans plafond**. **Jamais de
+  vies, jamais de minuterie** — c'est ce qui distingue la soupape d'un mur
+  commercial. Le joueur sans crédits n'est jamais bloqué, il est seulement
+  invité à réessayer ou à retourner dorer ce qu'il a déjà fait.
 
 ---
 
-## 5. Première carte : l'Europe — état mesuré le 25 août 2026
+## 5. Première carte : l'Europe — le ruban, mesuré le 25 août 2026
+
+**Le tracé complet est dans `ruban-europe.md`** : les 9 actes, les 95
+chapitres, les 593 gares dans l'ordre du rail, les 8 sauts. Ce §5 n'en donne
+que les comptes ; le document du ruban est l'autorité sur l'itinéraire.
+
+| Mesure | Valeur |
+|---|---|
+| Le voyage | **de Cork à Istanbul**, une spirale qui traverse chaque région une fois |
+| Actes (zones) | 9, de 6 à 18 chapitres — écart 3 pour 1 |
+| Chapitres | **95**, de 5 à 9 gares, médiane 6 |
+| Gares, c'est-à-dire niveaux | **593** |
+| Fiches déjà écrites et réemployées | **123** sur les 234 du catalogue |
+| Fiches à écrire | **470** |
+| Chapitres jouables **intégralement aujourd'hui** | **12** (68 niveaux), 14 en écrivant deux fiches |
+| Sauts déclarés | 8 (deux îles, trois culs-de-sac, trois traversées maritimes) |
+| Fiches du catalogue hors ruban | 111 — la réserve d'allongement |
+
+Vérifié par script : R3 (5 à 10 gares) tenue par les 95 chapitres, R6 (aucune
+gare deux fois) tenue, chaînage continu d'un bout à l'autre, et les 123 fiches
+annoncées comme existantes existent.
+
+**Une grande gare écartée volontairement** : Tirana. L'Albanie n'a plus de
+service voyageurs digne d'un niveau et son seul lien crédible est un ferry ;
+un jeu ancré dans la géographie ferroviaire réelle ne s'invente pas un réseau.
+
+### 5 bis Ce que contenait la carte avant le ruban
 
 Ce que contient `data/cartes/europe.json` aujourd'hui, lu avec les yeux du
 ruban :
@@ -514,9 +546,11 @@ au catalogue et comptent pour le grade.
 
 1. ~~Structure~~ Tranché le 25 août 2026 : **ruban unique**, sans
    embranchement, sans choix. Fourches éventuelles remises à plus tard (§0).
-2. **L'ordre du ruban d'Europe** : quel enchaînement des 16 chapitres
-   retenus, combien de sauts, où placer Londres–Manchester, Paris–Lyon et
-   Montpellier–Bordeaux (lot F).
+2. ~~L'ordre du ruban d'Europe~~ **Tranché le 25 août 2026** : le tracé
+   complet est écrit dans `ruban-europe.md` — 95 chapitres, 593 gares, 8 sauts,
+   de Cork à Istanbul. Restent ouvertes, à l'intérieur : la validation gare par
+   gare contre le §0 de `AUTHORING-STATIONS.md`, et les collisions
+   d'identifiants (`valence` française vs espagnole).
 3. **Le pas de la courbe** : tous les combien de chapitres le plancher de
    difficulté monte-t-il d'un cran ? À mesurer en headless sur le ruban réel.
 4. **Les trois barèmes de crédits** (§7), à caler **ensemble** parce qu'ils se
