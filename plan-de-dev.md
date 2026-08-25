@@ -280,6 +280,33 @@ de redessiner le calque des gares après la caméra — le seul qui en dépende.
 · La suite : Le Benelux »), *En route* qui relance sur Malines et redescend au
 niveau gare, l'échec avec ses deux issues et « il te manque 5 crédits ».
 
+**Reprise du panneau (25 août, après le deuxième retour)** — « arrange le cadre
+à gauche pour que ce soit plus agréable à lire, corrige les défauts
+d'alignement » :
+
+- **Une seule gouttière pour tout le panneau**, portée par le conteneur et non
+  par chaque bloc. C'était le vrai défaut : compteur, titre, région, jauge,
+  fiche et bouton avaient chacun leur marge, et le bouton se retrouvait
+  indenté deux fois. Bords gauche ET droit coïncident désormais partout.
+- **L'eyebrow ne casse plus en orphelin** (« CHAPITRE / 1 SUR 11 ») : trois
+  lignes assumées — compteur court en monospace, nom du chapitre en grand,
+  région dessous dans sa couleur.
+- **Le filet du chapitre** tient la largeur du texte au lieu de courir sous
+  tout le panneau. Un trait qui déborde de son bloc n'appartient à rien.
+- **Le corps ne flotte plus au milieu** : il est posé sous l'en-tête, le vide
+  est en bas, et le bouton tient le pied en pleine largeur.
+- **La fiche cesse de répéter le chapitre** (« L'Ardenne · gare 1 sur 6 » →
+  « Gare 1 sur 6 »), gagne le pays et **la phrase de la gare** — écrite pour
+  chaque fiche, inutilisée depuis que le toast a été désactivé, et c'est elle
+  qui rend le panneau *lisible* plutôt qu'un relevé de compteurs. Les mesures
+  passent en colonnes libellées (Quais / Directions / Difficulté) : la jauge
+  flottait au bout d'une rangée sans dire ce qu'elle mesurait.
+- **La fête reste sur le chapitre qu'on vient de finir** — en-tête, jauge
+  pleine, rang, et la carte encore allumée dessus. L'écran passait déjà au
+  suivant pendant qu'on célébrait le précédent : on félicitait le joueur d'un
+  chapitre en lui montrant l'autre. *En route* fait le pas, et c'est là que la
+  caméra voyage.
+
 *Reste au lot H* : l'écran des cartes proprement dit (il n'y a qu'une carte, il
 est sauté). `js/carte.js` peut maintenant être retiré (lot J).
 

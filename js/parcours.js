@@ -227,16 +227,25 @@ function cartoucheHTML(gareId) {
   const dirs = Object.keys(cfg.portals || {}).length;
   const st = etoilesDe(gareId), best = (getProgress()[gareId] || {}).bestDelay;
   const fin = ch && ch.gares[ch.gares.length - 1] === gareId;
-  return `<div class="c-fiche">
-    <div class="cf-ou">${ch ? ch.nom : ""} · gare ${rang} sur ${total}${fin ? " · terminus" : ""}</div>
-    <div class="cf-nom">${villeDe(gareId)}</div>
-    <div class="cf-ligne">
-      <span class="cf-tag">${quais} quais</span>
-      <span class="cf-tag">${dirs} directions</span>
-      ${pipsHTML(d)}
-    </div>
-    ${st ? `<div class="cf-score">${"★".repeat(st)}${best != null ? ` · record ${best} min` : ""}</div>` : ""}
-  </div>`;
+  const drapeau = (cfg.country || "").trim().split(" ")[0];
+  // LA PHRASE DE LA GARE. Elle est écrite pour chaque fiche et ne servait à
+  // rien depuis que le toast a été désactivé : c'est elle qui rend le panneau
+  // agréable à lire plutôt qu'un tableau de bord de chiffres. On lui retire le
+  // préfixe « Arlon — », qui répéterait le titre juste au-dessus.
+  const phrase = (cfg.tagline || "").replace(/^\s*[^—–-]{2,28}\s*[—–]\s*/, "");
+  return `<section class="c-fiche">
+    <p class="cf-ou">Gare ${rang} <span>sur ${total}</span>${fin ? ' <span class="cf-terminus">terminus</span>' : ""}</p>
+    <h3 class="cf-nom">${villeDe(gareId)}</h3>
+    <p class="cf-pays">${drapeau} ${(cfg.country || "").trim().split(" ").slice(1).join(" ")}</p>
+    ${phrase ? `<p class="cf-phrase">${phrase}</p>` : ""}
+    <dl class="cf-mesures">
+      <div><dt>Quais</dt><dd>${quais}</dd></div>
+      <div><dt>Directions</dt><dd>${dirs}</dd></div>
+      <div class="cf-dif"><dt>Difficulté</dt><dd>${pipsHTML(d)}</dd></div>
+    </dl>
+    ${st ? `<p class="cf-score"><span class="cf-et">${"★".repeat(st)}</span>${
+      best != null ? `<span class="cf-rec">record ${best} min</span>` : ""}</p>` : ""}
+  </section>`;
 }
 
 // ------------------------------------------------------------------
@@ -300,13 +309,15 @@ function feteHTML() {
   if (!f) return "";
   const ch = f.ch, suivant = f.suivant, rang = rangDeChapitre(ch);
   const zone = typeof zoneById === "function" ? zoneById(ch.zone) : null;
+  const faites = ch.gares.filter(estFaite).length, payees = ch.gares.filter(estPassee).length;
   return `<div class="c-fete" role="status">
     <div class="cf-quoi">Chapitre terminé</div>
-    <div class="cf-titre">${ch.nom}</div>
-    ${rang ? `<div class="cf-rang r-${rang.id}">${rang.nom}</div>` : ""}
-    <div class="cf-gares">${ch.gares.length} gares · ${ch.gares.filter(estFaite).length} faites</div>
+    ${rang ? `<div class="cf-rang r-${rang.id}">${rang.nom}</div>`
+           : `<div class="cf-rang r-neutre">Traversé</div>`}
+    <div class="cf-gares">${faites} gare${faites > 1 ? "s" : ""} faite${faites > 1 ? "s" : ""}${
+      payees ? ` · ${payees} passée${payees > 1 ? "s" : ""}` : ""}</div>
     ${f.zoneFinie && zone ? `<div class="cf-zone">${zone.nom} — région traversée</div>` : ""}
-    ${suivant ? `<div class="cf-suivant">La suite : <b>${suivant.nom}</b></div>
+    ${suivant ? `<div class="cf-suivant">La suite<b>${suivant.nom}</b></div>
       <button class="c-suite cb-suite cb-continuer" data-gare="${CARTE.prochaine || ""}">En route${FLECHE}</button>`
       : `<div class="cf-suivant">Le ruban s'arrête ici — pour le moment.</div>`}
   </div>`;
@@ -342,22 +353,33 @@ function chapitreHTML() {
   const rang = rangDeChapitre(ch);
   const faits = ch.gares.filter(estFaite).length;
   const chs = chapitresDuRuban();
-  return `<div class="cc-chapitre" style="--col:${couleurDeZone(ch.zone)}">
-    <div class="cc-zone">${zone ? zone.nom : nomDeCarte()} · chapitre ${ch.rang + 1} sur ${chs.length}</div>
-    <div class="cc-nom">${ch.nom}</div>
+  // TROIS LIGNES, TROIS NIVEAUX DE LECTURE, et aucune qui puisse casser en
+  // orphelin : le compteur d'abord (court, monospace), le nom du chapitre en
+  // grand, la région dessous dans sa couleur. La première version mettait tout
+  // sur une ligne d'eyebrow, qui se repliait sur « CHAPITRE / 1 SUR 11 ».
+  return `<header class="cc-chapitre" style="--col:${couleurDeZone(ch.zone)}">
+    <p class="cc-compteur">Chapitre ${ch.rang + 1} <span>/ ${chs.length}</span></p>
+    <h2 class="cc-nom">${ch.nom}</h2>
+    <p class="cc-zone">${zone ? zone.nom : nomDeCarte()}</p>
     <div class="cc-jauge">
       <span class="cj-piste">${ch.gares.map(g =>
         `<i class="cj-cran${estFaite(g) ? " fait" : estPassee(g) ? " paye" : ""}${g === CARTE.prochaine ? " ici" : ""}"></i>`).join("")}</span>
       ${rang ? `<span class="c-rang r-${rang.id}">${rang.nom}</span>`
-             : `<span class="c-avance">${faits} / ${ch.gares.length}</span>`}
+             : `<span class="c-avance">${faits}<span class="cj-sur">/</span>${ch.gares.length}</span>`}
     </div>
-  </div>`;
+  </header>`;
 }
 
 function vueRuban() {
   const gc = gareCourante();
   CARTE.prochaine = gc;
-  CARTE.chapitre = chapitreDeGare(gc) || chapitreAt(Math.min(positionCourante(), longueurDuRuban() - 1));
+  // PENDANT LA FÊTE, ON RESTE SUR LE CHAPITRE QU'ON VIENT DE FINIR — en-tête,
+  // jauge pleine, rang, et la carte encore allumée dessus. L'écran passait
+  // déjà au suivant pendant qu'on célébrait le précédent : on félicitait le
+  // joueur d'un chapitre en lui montrant l'autre. « En route » fait le pas,
+  // et c'est là que la caméra voyage.
+  CARTE.chapitre = CARTE.fete ? CARTE.fete.ch
+    : (chapitreDeGare(gc) || chapitreAt(Math.min(positionCourante(), longueurDuRuban() - 1)));
   const ch = CARTE.chapitre;
   if (!ch) return `<div class="c-cote"><div class="cc-nom">Aucun chapitre n'est encore écrit</div></div>`;
 
