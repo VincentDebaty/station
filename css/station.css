@@ -2329,8 +2329,16 @@ svg { width: 100%; height: 100%; display: block; }
 .cc-jauge .c-avance, .cc-jauge .c-rang { margin-left: auto; }
 .cj-sur { opacity: .45; margin: 0 3px; }
 
+/* LE CORPS DÉFILE, LE PIED NE BOUGE PAS. Les boutons vivaient dans la carte de
+   relevé, donc dans cette zone : sur un écran court, « Jouer » se retrouvait
+   rogné en bas. Le geste du jeu ne doit jamais pouvoir sortir de l'écran. */
 .cc-corps { flex: 1 1 auto; display: flex; flex-direction: column; justify-content: flex-start;
-  min-height: 0; overflow-y: auto; padding-top: 16px; }
+  min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding-top: 16px;
+  scrollbar-width: thin; }
+.cc-corps::-webkit-scrollbar { width: 4px; }
+.cc-corps::-webkit-scrollbar-thumb { background: #2a3550; border-radius: 2px; }
+.cc-pied { flex: 0 0 auto; display: flex; flex-direction: column; gap: 8px; padding-top: 14px; }
+.cc-pied .c-suite { width: 100%; justify-content: center; margin: 0; }
 /* Les noms des gares se lisent toujours : il n'y a qu'un chapitre à l'écran,
    donc jamais de nuage d'étiquettes à démêler. */
 
@@ -2433,7 +2441,7 @@ svg { width: 100%; height: 100%; display: block; }
    flèche montait d'un cheveu. Les deux mots vivent donc dans leur propre
    groupe, aligné en base ; le bouton, lui, centre ce groupe et la flèche. */
 .c-appel { display: flex; align-items: center; justify-content: center; gap: 10px;
-  font-size: 16px; padding: 14px 18px; flex: 0 0 auto; margin: 16px 0 0; width: 100%; }
+  font-size: 16px; padding: 14px 18px; flex: 0 0 auto; width: 100%; }
 .ca-texte { display: inline-flex; align-items: baseline; gap: 9px; }
 .ca-quoi { font-weight: 700; }
 .ca-ou { opacity: .82; font-weight: 500; }
@@ -2457,19 +2465,18 @@ svg { width: 100%; height: 100%; display: block; }
 @media (prefers-reduced-motion: reduce) { .v-ruban .c-bilan { animation: none; } }
 .v-ruban .c-bilan .c-suite { align-self: auto; margin-top: 0; }
 .cb-gare { font-size: 15px; font-weight: 700; }
-.cb-actions { display: flex; flex-direction: column; gap: 7px; margin-top: 12px; align-self: stretch; }
-.cb-actions .c-suite { width: 100%; justify-content: center; }
+
 .cb-payer { background: rgba(21, 29, 46, .8); border: 1px solid var(--gold-dim); color: var(--gold); }
 .cb-payer:hover:not(:disabled) { background: rgba(232, 185, 35, .16); }
 .cb-payer:disabled { opacity: .45; cursor: default; }
-.cb-manque { font-size: 11.5px; color: var(--muted); margin-top: 5px; text-align: center; }
+.cb-manque { font-size: 11.5px; color: var(--muted); text-align: center; line-height: 1.4; }
 .c-credits { font-family: ui-monospace, Menlo, monospace; font-size: 12.5px; color: var(--gold-dim); }
 /* La fête de fin de chapitre — et le nom du suivant, annoncé. C'est ce qui
    manquait le plus au test de jeu : savoir où l'on va. */
 .c-fete { text-align: center; display: flex; flex-direction: column; align-items: center; gap: 5px;
   background: rgba(21, 29, 46, .82); border: 1px solid #2a3550; border-radius: 14px;
   padding: 16px 18px; align-self: stretch; }
-.c-fete .c-suite { width: 100%; justify-content: center; margin-top: 10px; }
+
 .cf-quoi { font-family: ui-monospace, Menlo, monospace; font-size: 10.5px; letter-spacing: .14em;
   text-transform: uppercase; color: var(--muted); }
 .cf-rang { font-size: 17px; font-weight: 700; }
@@ -2483,11 +2490,27 @@ svg { width: 100%; height: 100%; display: block; }
   letter-spacing: .1em; text-transform: uppercase; }
 .cf-suivant b { color: var(--text); font-size: 15px; letter-spacing: 0; text-transform: none; }
 .cz-ic { font-size: 13px; opacity: .8; }
+/* ÉCRAN COURT : tout se resserre, RIEN ne se coupe. C'est la hauteur qui
+   commande — un panneau à trois blocs empilés se serre par le haut. */
+@media (max-height: 620px) {
+  .cc-nom { font-size: 18px; }
+  .cf-nom { font-size: 21px; }
+  .cf-phrase { display: none; }              /* la couleur, pas l'information */
+  .cc-corps { padding-top: 11px; }
+  .cc-pied { padding-top: 10px; gap: 6px; }
+  .c-appel { font-size: 15px; padding: 11px 16px; }
+  .cb-etoiles { font-size: 26px; }
+  .v-ruban .c-bilan { padding: 12px 14px; gap: 3px; }
+  .c-fete { padding: 12px 14px; gap: 3px; }
+  .cf-mesures { gap: 8px 14px; margin-top: 10px; padding-top: 10px; }
+}
 @media (max-height: 480px), (max-width: 820px) {
-  .c-cote { flex-basis: clamp(180px, 30vw, 230px); gap: 8px; }
-  .cc-nom { font-size: 17px; } .cf-nom { font-size: 19px; }
-  .c-appel { font-size: 14.5px; padding: 10px 14px; }
-  .cf-ou { font-size: 10.5px; }
+  .c-cote { flex-basis: clamp(180px, 30vw, 230px); }
+  .cc-nom { font-size: 16px; } .cf-nom { font-size: 18px; }
+  .cc-zone, .cf-pays { display: none; }
+  .cb-etoiles { font-size: 22px; }
+  .c-appel { font-size: 14px; padding: 9px 12px; }
+  .cf-ou, .cc-compteur { font-size: 9.5px; }
 }
 /* Les pastilles de difficulté du cartouche : la MÊME jauge que partout. */
 .cf-ligne .dif { display: flex; align-items: center; gap: 3px; }

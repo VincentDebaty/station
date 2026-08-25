@@ -297,7 +297,7 @@ function bilanHTML() {
     ? `<div class="cb-vise">3 ★ sous ${s.trois} min</div>` : "";
   return `<div class="${cl}" role="status">
     <div class="cb-gare">${villeDe(b.gare)}</div>
-    <div class="cb-etoiles">${etoiles}</div>${diamant}${retard}${rec}${vise}${boutonsHTML()}</div>`;
+    <div class="cb-etoiles">${etoiles}</div>${diamant}${retard}${rec}${vise}</div>`;
 }
 
 const FLECHE = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" ' +
@@ -307,30 +307,55 @@ const BOUCLE = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stro
   'stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
   '<path d="M20 11.5A8 8 0 1 1 17.4 6L20 8.5"/><path d="M20 4v5h-5"/></svg>';
 
-// LES DEUX ISSUES, CÔTE À CÔTE ET JAMAIS L'UNE À LA PLACE DE L'AUTRE.
-// Réussite : Continuer et Rejouer. Échec : Réessayer — gratuit, immédiat, sans
-// limite — et Payer le passage, qui coûte des crédits et ne donne pas d'étoile.
-function boutonsHTML() {
-  const b = CARTE.bilan, gc = CARTE.prochaine;
-  if (!b) return "";
-  if (!b.win) {
+// ------------------------------------------------------------------
+// LE PIED DU PANNEAU — les boutons, et ils ne bougent jamais de là.
+// ------------------------------------------------------------------
+// Ils vivaient DANS la carte de relevé, donc dans le corps qui défile : sur un
+// écran court, « Jouer » se retrouvait rogné en bas. Le geste du jeu ne doit
+// jamais pouvoir sortir de l'écran — il est désormais épinglé au pied, quel
+// que soit ce que le corps affiche.
+//
+// REPRENDRE EN HAUT, AVANCER EN BAS — dans les deux issues. Le bouton qui fait
+// avancer le ruban tombe ainsi toujours au même endroit, et le doigt n'a pas à
+// chercher selon qu'on a gagné ou perdu.
+function piedHTML() {
+  const gc = CARTE.prochaine, b = CARTE.bilan, f = CARTE.fete;
+
+  // Fin de chapitre : un seul bouton, il ouvre le suivant.
+  if (f) return `<div class="cc-pied">` + (f.suivant && gc
+    ? `<button class="c-suite c-appel" data-gare="${gc}">` +
+      `<span class="ca-texte"><span class="ca-quoi">En route</span>` +
+      `<span class="ca-ou">${f.suivant.nom}</span></span>${FLECHE}</button>`
+    : `<div class="c-avenir">Le ruban s'arrête ici — pour le moment.</div>`) + `</div>`;
+
+  // Échec : réessayer (gratuit, illimité) et payer le passage, côte à côte.
+  if (b && !b.win) {
     const prix = prixDePassage(b.gare), solde = soldeCredits(), assez = solde >= prix;
     const manque = prix - solde;
-    return `<div class="cb-actions">` +
-      `<button class="c-suite cb-suite" data-gare="${b.gare}">Réessayer${BOUCLE}</button>` +
-      `<button class="c-suite cb-suite cb-payer" data-payer="${b.gare}"${assez ? "" : " disabled"}>` +
-        `Passer · ${prix} cr</button></div>` +
+    return `<div class="cc-pied">` +
       (assez ? "" : `<div class="cb-manque">Il te manque ${manque} crédit${manque > 1 ? "s" : ""} — ` +
-        `rejoue une gare déjà faite pour les gagner.</div>`);
+        `rejoue une gare déjà faite pour les gagner.</div>`) +
+      `<button class="c-suite cb-payer" data-payer="${b.gare}"${assez ? "" : " disabled"}>` +
+        `Passer · ${prix} cr</button>` +
+      `<button class="c-suite c-appel" data-gare="${b.gare}">` +
+        `<span class="ca-texte"><span class="ca-quoi">Réessayer</span>` +
+        `<span class="ca-ou">${villeDe(b.gare)}</span></span>${BOUCLE}</button></div>`;
   }
-  // REPRENDRE EN HAUT, AVANCER EN BAS — dans les deux issues. Le bouton qui
-  // fait avancer le ruban tombe ainsi toujours au même endroit : celui qu'occupe
-  // « Jouer » quand aucun service ne vient de finir, au pied du panneau.
-  return `<div class="cb-actions">` +
-    `<button class="c-suite cb-suite cb-rejouer" data-gare="${b.gare}">Rejouer${BOUCLE}</button>` +
-    (gc ? `<button class="c-suite cb-suite cb-continuer" data-gare="${gc}">` +
+
+  // Réussite : rejouer pour mieux faire, puis avancer.
+  if (b) return `<div class="cc-pied">` +
+    `<button class="c-suite cb-rejouer" data-gare="${b.gare}">Rejouer${BOUCLE}</button>` +
+    (gc ? `<button class="c-suite c-appel" data-gare="${gc}">` +
       `<span class="ca-texte"><span class="ca-quoi">Jouer</span>` +
       `<span class="ca-ou">${villeDe(gc)}</span></span>${FLECHE}</button>` : "") + `</div>`;
+
+  // Au repos : un seul bouton, et il nomme la gare.
+  if (gc) return `<div class="cc-pied"><button class="c-suite c-appel" data-gare="${gc}">` +
+    `<span class="ca-texte"><span class="ca-quoi">Jouer</span>` +
+    `<span class="ca-ou">${villeDe(gc)}</span></span>${FLECHE}</button></div>`;
+  return `<div class="cc-pied"><div class="c-avenir">${auBoutDeLEcrit()
+    ? "La suite du ruban n'est pas encore écrite."
+    : "Le ruban est terminé. Reste à le dorer."}</div></div>`;
 }
 
 // ------------------------------------------------------------------
@@ -351,9 +376,7 @@ function feteHTML() {
     <div class="cf-gares">${faites} gare${faites > 1 ? "s" : ""} faite${faites > 1 ? "s" : ""}${
       payees ? ` · ${payees} passée${payees > 1 ? "s" : ""}` : ""}</div>
     ${f.zoneFinie && zone ? `<div class="cf-zone">${zone.nom} — région traversée</div>` : ""}
-    ${suivant ? `<div class="cf-suivant">La suite<b>${suivant.nom}</b></div>
-      <button class="c-suite cb-suite cb-continuer" data-gare="${CARTE.prochaine || ""}">En route${FLECHE}</button>`
-      : `<div class="cf-suivant">Le ruban s'arrête ici — pour le moment.</div>`}
+    ${suivant ? `<div class="cf-suivant">La suite<b>${suivant.nom}</b></div>` : ""}
   </div>`;
 }
 
@@ -429,24 +452,13 @@ function vueRuban() {
   const saut = ch.saut && ch.gares.indexOf(gc) === 0
     ? `<div class="c-saut"><b>${ch.saut.mode}</b>${ch.saut.texte}</div>` : "";
 
-  // L'APPEL — un seul bouton, et il nomme la gare. Rien d'autre à décider.
-  let appel = "";
-  if (!CARTE.bilan && !CARTE.fete) {
-    if (gc) appel = `<button class="c-suite c-appel" data-gare="${gc}">` +
-      `<span class="ca-texte"><span class="ca-quoi">Jouer</span>` +
-      `<span class="ca-ou">${villeDe(gc)}</span></span>${FLECHE}</button>`;
-    else if (auBoutDeLEcrit())
-      appel = `<div class="c-avenir">La suite du ruban n'est pas encore écrite.</div>`;
-    else appel = `<div class="c-avenir">Le ruban est terminé. Reste à le dorer.</div>`;
-  }
-
   return `
     <aside class="c-cote">
       ${chapitreHTML()}
       <div class="cc-corps">
         ${CARTE.fete ? feteHTML() : CARTE.bilan ? bilanHTML() : (gc ? cartoucheHTML(gc) : "")}
       </div>
-      ${appel}
+      ${piedHTML()}
     </aside>
     <div class="c-scene">
       ${bourseHTML()}
