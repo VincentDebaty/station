@@ -236,12 +236,19 @@ rendre `null` au milieu ; aucune erreur JS sur les trois vues.
 
 ## Lot E — Les écrans — FAIT (25 août 2026)
 
-*Livré* : `js/parcours.js` réécrit (487 lignes) — **la carte d'Europe posée sur
-la gare en cours**. Une seule carte, une caméra, trois niveaux qui ne sont que
-trois positions de `.monde` : **gare** (la gare et ses quatre voisines, k ≤ 4,5),
-**chapitre** (le chapitre entier), **carte** (le ruban d'un bout à l'autre). Le
-CSS fait le trajet ; changer de gare, c'est la caméra qui glisse le long du
-rail, et un **saut** dure deux fois plus longtemps.
+*Livré* : `js/parcours.js` réécrit — **la carte cadrée sur le chapitre en
+cours**, et sur lui seul. Deux colonnes : le **panneau à gauche** (chapitre,
+fiche de la gare, relevé, bouton) et la **scène** à droite, où la carte prend
+tout le reste.
+
+*Corrigé le jour même, après le premier test de Vincent* : la première version
+dessinait tout le ruban et zoomait sur la gare, avec trois niveaux de caméra.
+Trois retours, trois simplifications — un seul chapitre à l'écran (« cela
+paraît trop petit sinon »), les infos dans un panneau à gauche plutôt qu'au
+milieu, et **le bouton de dézoom supprimé** (« je ne suis pas certain qu'il
+soit nécessaire » — il ne l'était pas). La projection reste globale : changer
+de chapitre déplace vraiment la caméra vers le nord ou vers l'est, et un
+**saut** dure deux fois plus longtemps.
 
 *Ce qui se voit* : le fond de pays (Natural Earth) reste neutre — **le fond est
 un fond, le ruban est le sujet** — et c'est le fil qui porte la couleur de la
@@ -269,8 +276,7 @@ unités du monde, donc grossissaient avec le zoom (à ×7 un point de gare faisa
 une soucoupe). Rayons et décalages se divisent maintenant par k, ce qui impose
 de redessiner le calque des gares après la caméra — le seul qui en dépende.
 
-*Vérifié en headless, capture à l'appui* : les trois niveaux de caméra, six
-gares jouées d'affilée, la fête de fin de chapitre (« L'Ardenne · Chapitre d'or
+*Vérifié en headless, capture à l'appui* : six gares jouées d'affilée, la fête de fin de chapitre (« L'Ardenne · Chapitre d'or
 · La suite : Le Benelux »), *En route* qui relance sur Malines et redescend au
 niveau gare, l'échec avec ses deux issues et « il te manque 5 crédits ».
 

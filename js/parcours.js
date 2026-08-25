@@ -8,13 +8,16 @@
 // on joue ; le relevé tombe ; la caméra glisse le long du rail jusqu'à la
 // gare suivante. Il n'y a jamais rien à choisir.
 //
-// UNE SEULE CARTE, UNE CAMÉRA — repris de l'ancienne vue carte (js/carte.js,
-// lot 2) : tout est dessiné dans la MÊME projection, et trois niveaux ne sont
-// que trois positions de caméra. Le CSS fait le trajet (.monde, transition).
+// UN SEUL CHAPITRE À L'ÉCRAN (revu le 25 août 2026, après le premier test).
+// La première version montrait tout le ruban et cadrait sur la gare en cours :
+// le reste du fil traînait autour, et le chapitre qu'on joue se retrouvait
+// petit au milieu d'un continent. On ne dessine donc plus QUE le chapitre en
+// cours, cadré pour remplir la scène — et les trois niveaux de caméra ont
+// disparu avec lui, faute d'objet.
 //
-//   gare      k élevé   la gare en cours et ses voisines
-//   chapitre  k moyen   le chapitre entier, du départ à sa grande gare
-//   carte     k = 1     le ruban d'un bout à l'autre
+// La projection, elle, reste GLOBALE : passer d'un chapitre à l'autre déplace
+// vraiment la caméra vers le nord ou vers l'est, et le voyage se sent. Le CSS
+// fait le trajet (.monde, transition) ; un saut dure deux fois plus longtemps.
 //
 // LE FOND EST UN FOND, LE RUBAN EST LE SUJET. L'ancienne carte coloriait les
 // pays par zone : sur un ruban, c'est le FIL qui porte la couleur, et le
@@ -22,8 +25,8 @@
 // ------------------------------------------------------------------
 
 const CARTE = {
-  hote: null, vue: "gare", bilan: null, voyage: null, prochaine: null,
-  etoiles: null, cam: null, camAvant: null, fete: null
+  hote: null, bilan: null, voyage: null, prochaine: null,
+  etoiles: null, cam: null, camAvant: null, fete: null, chapitre: null
 };
 
 const RAD = Math.PI / 180;
@@ -108,30 +111,16 @@ function boite(ids) {
   return { x: (x0 + x1) / 2, y: (y0 + y1) / 2, w: x1 - x0, h: y1 - y0 };
 }
 // La caméra que la vue courante demande.
+// LE CHAPITRE EN COURS, CADRÉ POUR REMPLIR LA SCÈNE. Un seul niveau : c'est
+// ce que le premier test réclamait — le chapitre qu'on joue doit occuper
+// l'écran, pas flotter au milieu d'un continent.
 function cameraVoulue() {
-  const gc = CARTE.prochaine || gareCourante();
-  const ch = chapitreDeGare(gc) || chapitreAt(Math.min(positionCourante(), longueurDuRuban() - 1));
-  if (CARTE.vue === "carte") {
-    const b = boite(ordreDuRuban());
-    return b ? { x: b.x, y: b.y, k: zoomPour(b.w, b.h, 8, 3) } : { x: CADRE_L / 2, y: CADRE_H / 2, k: 1 };
-  }
-  if (CARTE.vue === "chapitre" && ch) {
-    const b = boite(ch.gares);
-    return b ? { x: b.x, y: b.y, k: zoomPour(b.w, b.h, 16, 3.2) } : { x: CADRE_L / 2, y: CADRE_H / 2, k: 1 };
-  }
-  // LA GARE — le niveau par défaut, celui sur lequel le jeu s'ouvre. On cadre
-  // la gare en cours ET ses deux voisines : voir d'où l'on vient et où l'on va
-  // est ce qui fait comprendre qu'on avance.
-  const i = gc ? indexDe(gc) : Math.max(0, positionCourante() - 1);
-  const autour = [gareAt(i - 2), gareAt(i - 1), gareAt(i), gareAt(i + 1), gareAt(i + 2)].filter(Boolean);
-  const b = boite(autour.length ? autour : ordreDuRuban().slice(0, 5));
+  const ch = CARTE.chapitre;
+  const b = ch && boite(ch.gares);
   if (!b) return { x: CADRE_L / 2, y: CADRE_H / 2, k: 1 };
-  const p = pos(gc) || b;
-  // Pas tout à fait sur la gare : deux tiers sur elle, un tiers sur le groupe
-  // qu'elle traverse. Centrée strictement, elle laissait la moitié de l'écran
-  // vide du côté d'où l'on vient — et le ruban ne se lisait plus.
-  return { x: p.x * 0.62 + b.x * 0.38, y: p.y * 0.62 + b.y * 0.38,
-           k: zoomPour(Math.max(b.w, 10), Math.max(b.h, 8), 20, 4.5) };
+  // Un chapitre court (Bruxelles–Amsterdam tient dans 3 unités) grossirait
+  // au point qu'on ne verrait plus le pays autour : le zoom est borné.
+  return { x: b.x, y: b.y, k: zoomPour(Math.max(b.w, 7), Math.max(b.h, 5), 13, 6) };
 }
 
 // ------------------------------------------------------------------
@@ -165,20 +154,19 @@ function couleurDeZone(zid) {
   const z = typeof zoneById === "function" ? zoneById(zid) : null;
   return (z && z.couleur) || "#2dd4bf";
 }
+// SEUL LE CHAPITRE EN COURS EST DESSINÉ. Le reste du ruban existe, il est
+// simplement hors sujet : on ne joue pas Hambourg quand on est en Ardenne.
 function railHTML() {
-  const ordre = ordreDuRuban(), P = projection();
-  if (!P || ordre.length < 2) return "";
-  const segs = [];
-  for (let i = 1; i < ordre.length; i++) {
-    const a = pos(ordre[i - 1]), b = pos(ordre[i]);
+  const ch = CARTE.chapitre, P = projection();
+  if (!P || !ch || ch.gares.length < 2) return "";
+  const g = ch.gares, col = couleurDeZone(ch.zone), segs = [];
+  for (let i = 1; i < g.length; i++) {
+    const a = pos(g[i - 1]), b = pos(g[i]);
     if (!a || !b) continue;
-    const ch = chapitreDeGare(ordre[i]);
-    const ecrit = estEcrite(ordre[i - 1]) && estEcrite(ordre[i]);
-    const fait = estFranchie(ordre[i - 1]) && estFranchie(ordre[i]);
-    const cl = "seg " + (!ecrit ? "s-avenir" : fait ? "s-fait" : "s-reste");
-    const saut = ch && ch.saut && ch.gares[0] === ordre[i] ? " s-saut" : "";
-    segs.push(`<path class="${cl}${saut}" style="--col:${couleurDeZone(ch && ch.zone)}"` +
-      ` d="M${a.x.toFixed(1)} ${a.y.toFixed(1)}L${b.x.toFixed(1)} ${b.y.toFixed(1)}"/>`);
+    const ecrit = estEcrite(g[i - 1]) && estEcrite(g[i]);
+    const fait = estFranchie(g[i - 1]) && estFranchie(g[i]);
+    segs.push(`<path class="seg ${!ecrit ? "s-avenir" : fait ? "s-fait" : "s-reste"}"` +
+      ` style="--col:${col}" d="M${a.x.toFixed(2)} ${a.y.toFixed(2)}L${b.x.toFixed(2)} ${b.y.toFixed(2)}"/>`);
   }
   return '<g class="rail">' + segs.join("") + "</g>";
 }
@@ -189,19 +177,18 @@ function railHTML() {
 function garesHTML() {
   const k = (CARTE.cam && CARTE.cam.k) || 1;
   const R = n => (n / k).toFixed(2);
-  const ordre = ordreDuRuban(), gc = CARTE.prochaine;
-  const chCourant = chapitreDeGare(gc) || chapitreAt(Math.min(positionCourante(), longueurDuRuban() - 1));
+  const ch0 = CARTE.chapitre, gc = CARTE.prochaine;
   const out = [];
-  for (const g of ordre) {
+  if (!ch0) return '<g class="gares"></g>';
+  for (const g of ch0.gares) {
     const p = pos(g); if (!p) continue;
     const etat = etatDeGare(g);
-    const ch = chapitreDeGare(g);
-    const fin = ch && ch.gares[ch.gares.length - 1] === g;   // la grande gare
+    const ch = ch0;
+    const fin = ch.gares[ch.gares.length - 1] === g;   // la grande gare
     const ici = g === gc;
-    const dansChapitre = ch === chCourant;
     const st = etoilesDe(g);
     const cl = ["gare", "g-" + etat, fin ? "g-fin" : "", ici ? "g-ici" : "",
-                dansChapitre ? "g-proche" : "", CARTE.bilan && CARTE.bilan.gare === g ? "g-bilan" : ""]
+                CARTE.bilan && CARTE.bilan.gare === g ? "g-bilan" : ""]
       .filter(Boolean).join(" ");
     const jouable = etat === "faite" || etat === "courante" || etat === "payee";
     const cx = p.x.toFixed(2), cy = p.y.toFixed(2);
@@ -344,35 +331,35 @@ function bourseHTML() {
 // ------------------------------------------------------------------
 // LA VUE, ET LE RENDU.
 // ------------------------------------------------------------------
-function enTeteHTML() {
-  const gc = CARTE.prochaine;
-  const ch = chapitreDeGare(gc) || chapitreAt(Math.min(positionCourante(), longueurDuRuban() - 1));
-  const zone = ch && typeof zoneById === "function" ? zoneById(ch.zone) : null;
-  const rang = ch ? rangDeChapitre(ch) : null;
-  const faits = ch ? ch.gares.filter(estFaite).length : 0;
-  // Le bouton de dézoom dit OÙ L'ON VA, pas « retour » : gare → chapitre →
-  // carte. Au dernier cran il porte le nom de la carte.
-  const crans = { gare: ["chapitre", ch ? ch.nom : "Le chapitre"],
-                  chapitre: ["carte", zone ? zone.nom : nomDeCarte()],
-                  carte: ["gare", "La gare en cours"] };
-  const [vers, libelle] = crans[CARTE.vue] || crans.gare;
-  return `<div class="c-tete">
-    <button class="c-zoom" data-vue="${vers}" title="Changer d'échelle">
-      <span class="cz-ic">${CARTE.vue === "carte" ? "⊕" : "⊖"}</span>${libelle}</button>
-    <div class="c-titre">
-      <span class="c-nom">${ch ? ch.nom : nomDeCarte()}</span>
+// LE PANNEAU DE GAUCHE — tout ce qui se lit, d'un seul côté.
+// Le premier test l'a demandé : les infos de la gare tenaient au milieu, sous
+// la carte, et coupaient l'écran en deux. À gauche, la carte prend toute la
+// place qui reste — et sur un écran en paysage, c'est beaucoup.
+function chapitreHTML() {
+  const ch = CARTE.chapitre;
+  if (!ch) return "";
+  const zone = typeof zoneById === "function" ? zoneById(ch.zone) : null;
+  const rang = rangDeChapitre(ch);
+  const faits = ch.gares.filter(estFaite).length;
+  const chs = chapitresDuRuban();
+  return `<div class="cc-chapitre" style="--col:${couleurDeZone(ch.zone)}">
+    <div class="cc-zone">${zone ? zone.nom : nomDeCarte()} · chapitre ${ch.rang + 1} sur ${chs.length}</div>
+    <div class="cc-nom">${ch.nom}</div>
+    <div class="cc-jauge">
+      <span class="cj-piste">${ch.gares.map(g =>
+        `<i class="cj-cran${estFaite(g) ? " fait" : estPassee(g) ? " paye" : ""}${g === CARTE.prochaine ? " ici" : ""}"></i>`).join("")}</span>
       ${rang ? `<span class="c-rang r-${rang.id}">${rang.nom}</span>`
-             : ch ? `<span class="c-avance">${faits} / ${ch.gares.length}</span>` : ""}
+             : `<span class="c-avance">${faits} / ${ch.gares.length}</span>`}
     </div>
-    ${bourseHTML()}
   </div>`;
 }
 
 function vueRuban() {
   const gc = gareCourante();
   CARTE.prochaine = gc;
-  const ch = chapitreDeGare(gc) || chapitreAt(Math.min(positionCourante(), longueurDuRuban() - 1));
-  if (!ch) return `<div class="c-tete"><div class="c-titre">Aucun chapitre n'est encore écrit</div></div>`;
+  CARTE.chapitre = chapitreDeGare(gc) || chapitreAt(Math.min(positionCourante(), longueurDuRuban() - 1));
+  const ch = CARTE.chapitre;
+  if (!ch) return `<div class="c-cote"><div class="cc-nom">Aucun chapitre n'est encore écrit</div></div>`;
 
   // Le saut se montre AVANT le chapitre qu'il ouvre : c'est une transition,
   // et elle a le droit d'être lue.
@@ -389,13 +376,20 @@ function vueRuban() {
     else appel = `<div class="c-avenir">Le ruban est terminé. Reste à le dorer.</div>`;
   }
 
-  return enTeteHTML() + saut + `
-    <svg class="c-graphe c-ruban" viewBox="0 0 ${CADRE_L} ${CADRE_H}" preserveAspectRatio="xMidYMid meet">
-      <g class="monde">${fondHTML()}${railHTML()}${garesHTML()}</g>
-    </svg>
-    <div class="c-panneau">
-      ${CARTE.fete ? feteHTML() : CARTE.bilan ? bilanHTML() : (gc ? cartoucheHTML(gc) : "")}
+  return `
+    <aside class="c-cote">
+      ${chapitreHTML()}
+      <div class="cc-corps">
+        ${CARTE.fete ? feteHTML() : CARTE.bilan ? bilanHTML() : (gc ? cartoucheHTML(gc) : "")}
+      </div>
       ${appel}
+    </aside>
+    <div class="c-scene">
+      ${bourseHTML()}
+      ${saut}
+      <svg class="c-graphe c-ruban" viewBox="0 0 ${CADRE_L} ${CADRE_H}" preserveAspectRatio="xMidYMid meet">
+        <g class="monde">${fondHTML()}${railHTML()}${garesHTML()}</g>
+      </svg>
     </div>`;
 }
 
@@ -403,7 +397,7 @@ function renderCarte() {
   const hote = document.getElementById("hub-map");
   if (!hote) return;
   CARTE.hote = hote;
-  hote.className = "carte v-ruban n-" + CARTE.vue;
+  hote.className = "carte v-ruban";
   hote.innerHTML = vueRuban();
   CARTE.etoiles = hote.querySelector(".c-etoiles");
   poserCamera();
@@ -413,8 +407,6 @@ function renderCarte() {
   const gs = hote.querySelector(".c-ruban .gares");
   if (gs) gs.outerHTML = garesHTML();
   hote.onclick = ev => {
-    const vue = ev.target.closest("[data-vue]");
-    if (vue) { CARTE.vue = vue.dataset.vue; renderCarte(); return; }
     const pay = ev.target.closest("[data-payer]");
     if (pay && !pay.disabled) { passerLaGare(pay.dataset.payer); return; }
     const g = ev.target.closest("[data-gare]");
@@ -465,10 +457,7 @@ function poserCamera() {
 function jouerGare(gareId) {
   const i = CATALOG.findIndex(c => c.id === gareId);
   if (i < 0 || !estTenue(gareId)) { renderCarte(); return; }
-  // On quitte la fête de chapitre : la caméra redescend sur la gare. Sans ça,
-  // le chapitre suivant se jouait entièrement vu de haut, parce que la fête
-  // avait pris du recul et que plus rien ne le rendait.
-  if (CARTE.fete) { CARTE.fete = null; CARTE.vue = "gare"; }
+  CARTE.fete = null;
   startStation(i);
 }
 // PASSER EN PAYANT (§4 ter). La gare reste à zéro étoile — ni jauge, ni rang,
@@ -499,7 +488,6 @@ function finDeGare(gareId) {
       zoneFinie: chs.filter(c => c.zone === zone).every(chapitreTermine)
     };
     CARTE.bilan = null;
-    CARTE.vue = "chapitre";       // on prend du recul pour voir ce qu'on a fait
   } else {
     CARTE.voyageSaut = !!(nouveauCh && nouveauCh !== ch && nouveauCh.saut);
   }

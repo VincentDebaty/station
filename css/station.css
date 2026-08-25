@@ -2283,12 +2283,41 @@ svg { width: 100%; height: 100%; display: block; }
 }
 
 /* ==================================================================
+   LE RUBAN (lot E) — le chapitre en cours, et rien d'autre.
+   ==================================================================
+   Deux colonnes : le PANNEAU à gauche (tout ce qui se lit), la SCÈNE à droite
+   (la carte, qui prend tout le reste). Le premier test a tranché : les infos
+   au milieu coupaient l'écran en deux, et le chapitre qu'on joue flottait au
+   milieu d'un continent. Un seul chapitre est dessiné, cadré pour remplir. */
+.v-ruban { flex-direction: row; align-items: stretch; gap: 16px; padding-right: 0; }
+.c-cote { flex: 0 0 clamp(210px, 24vw, 290px); display: flex; flex-direction: column;
+  gap: 12px; min-width: 0; }
+.c-scene { flex: 1 1 auto; position: relative; min-width: 0; display: flex; flex-direction: column; }
+.c-scene .c-compteurs { position: absolute; top: 0; right: 16px; z-index: 3; }
+
+/* --- Le bandeau du chapitre --- */
+.cc-chapitre { display: flex; flex-direction: column; gap: 4px; padding-bottom: 11px;
+  border-bottom: 2px solid var(--col); }
+.cc-zone { font-family: ui-monospace, Menlo, monospace; font-size: 10.5px; letter-spacing: .06em;
+  color: var(--muted); text-transform: uppercase; }
+.cc-nom { font-size: 21px; font-weight: 700; line-height: 1.15; }
+.cc-jauge { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; }
+.cj-piste { display: flex; gap: 3px; }
+.cj-cran { width: 13px; height: 5px; border-radius: 2px; background: #29344c; }
+.cj-cran.fait { background: var(--col); }
+.cj-cran.paye { background: transparent; box-shadow: inset 0 0 0 1px var(--col); }
+.cj-cran.ici { background: #6ff0e2; }
+.cc-corps { flex: 1 1 auto; display: flex; flex-direction: column; justify-content: center;
+  min-height: 0; overflow-y: auto; padding: 4px 0; }
+/* Les noms des gares se lisent toujours : il n'y a qu'un chapitre à l'écran,
+   donc jamais de nuage d'étiquettes à démêler. */
+
+/* ==================================================================
    LE RUBAN (lot E) — la carte posée sur la gare en cours.
    ==================================================================
    Une seule carte, une caméra : trois niveaux (n-gare, n-chapitre, n-carte)
    ne sont que trois positions de .monde. Le fond est un fond, le RUBAN est le
    sujet — les pays restent neutres et c'est le fil qui porte la couleur. */
-.v-ruban { gap: 10px; }
 .v-ruban .c-graphe { flex: 1 1 auto; width: 100%; min-height: 0; }
 .c-ruban .monde { transform-box: view-box; transform-origin: 0 0;
   transition: transform .75s cubic-bezier(.4, 0, .2, 1); }
@@ -2315,13 +2344,8 @@ svg { width: 100%; height: 100%; display: block; }
 .c-ruban .gare text { font-size: calc(2.6px / var(--k, 1)); fill: var(--muted);
   text-anchor: middle; font-family: "Segoe UI", system-ui, sans-serif;
   pointer-events: none; paint-order: stroke; stroke: #0E1420;
-  stroke-width: calc(1.1px / var(--k, 1)); stroke-linejoin: round; opacity: 0;
-  transition: opacity .3s ease; }
+  stroke-width: calc(1.3px / var(--k, 1)); stroke-linejoin: round; }
 .c-ruban .gare .et { font-size: calc(2.1px / var(--k, 1)); fill: var(--gold); stroke-width: 0; }
-/* Les noms ne se montrent qu'à l'échelle où ils se lisent : le chapitre en
-   cours toujours, le reste seulement quand on a dézoomé sur lui. */
-.n-gare .c-ruban .g-proche text, .n-chapitre .c-ruban .g-proche text { opacity: 1; }
-.n-gare .c-ruban .g-ici text, .n-chapitre .c-ruban .g-fin text, .n-carte .c-ruban .g-fin text { opacity: 1; }
 .c-ruban .g-faite .pt { fill: var(--col); stroke: var(--col); }
 .c-ruban .g-faite text { fill: var(--text); }
 .c-ruban .g-payee .pt { fill: #0E1420; stroke: var(--col); stroke-dasharray: .6 .6; }
@@ -2342,40 +2366,40 @@ svg { width: 100%; height: 100%; display: block; }
 @media (prefers-reduced-motion: reduce) { .c-ruban .halo { animation: none; opacity: .7; } }
 .c-ruban .gare:focus-visible .cible { stroke: #6ff0e2; stroke-width: calc(.5px / var(--k, 1)); }
 
-/* ---- Le panneau du bas : la fiche, le relevé, ou la fête ---- */
-.v-ruban .c-panneau { flex: 0 0 auto; display: flex; flex-direction: column;
-  align-items: center; gap: 10px; }
-.c-fiche { text-align: center; display: flex; flex-direction: column; gap: 3px; }
+/* ---- La fiche de la gare, dans le panneau ---- */
+.c-fiche { display: flex; flex-direction: column; gap: 5px; }
 .cf-ou { font-family: ui-monospace, Menlo, monospace; font-size: 11.5px; color: var(--muted);
   letter-spacing: .02em; }
-.cf-nom { font-size: 19px; font-weight: 700; }
-.cf-ligne { display: flex; align-items: center; justify-content: center; gap: 9px; }
+.cf-nom { font-size: 24px; font-weight: 700; line-height: 1.1; }
+.cf-ligne { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .cf-tag { font-size: 11.5px; color: var(--muted); background: rgba(21, 29, 46, .7);
   border: 1px solid #2a3550; border-radius: 7px; padding: 2px 7px; }
 .cf-score { font-size: 12px; color: var(--gold); }
 /* L'appel : le seul geste de l'écran. Il nomme la gare — « Continuer » seul
    demanderait de chercher où. */
-.c-appel { display: inline-flex; align-items: baseline; gap: 9px; font-size: 16px;
-  padding: 12px 20px; }
+.c-appel { display: flex; align-items: baseline; justify-content: center; gap: 9px;
+  font-size: 16px; padding: 13px 18px; width: 100%; flex: 0 0 auto; }
 .c-appel .ca-quoi { font-weight: 700; }
 .c-appel .ca-ou { opacity: .85; }
-.c-avenir { font-size: 13.5px; color: var(--muted); text-align: center; padding: 10px 0; }
-/* Le saut : une transition, jamais une punition. */
-.c-saut { flex: 0 0 auto; text-align: center; font-size: 12.5px; color: var(--muted);
-  border-top: 1px dashed #2a3550; border-bottom: 1px dashed #2a3550; padding: 6px 10px; }
+.c-avenir { font-size: 13.5px; color: var(--muted); text-align: center; padding: 12px 0;
+  border: 1px dashed #2a3550; border-radius: 10px; }
+/* Le saut : une transition, jamais une punition. Posé sur la scène, en haut. */
+.c-saut { position: absolute; top: 0; left: 0; z-index: 3; font-size: 12.5px; color: var(--muted);
+  background: rgba(14, 20, 32, .8); border: 1px dashed #2a3550; border-radius: 10px;
+  padding: 6px 12px; }
 .c-saut b { display: inline-block; text-transform: uppercase; letter-spacing: .1em;
   font-size: 10.5px; color: #6ff0e2; margin-right: 9px; }
 /* Le relevé, posé DANS LE FLUX du panneau et non plus sous un jalon de la
    piste : il n'a donc plus ni pointe ni décalage, et son animation d'arrivée
    ne doit plus emporter le translateX(-50%) qui le centrait sur le jalon. */
-.v-ruban .c-bilan { position: static; transform: none; pointer-events: auto;
+.v-ruban .c-bilan { position: static; transform: none; pointer-events: auto; white-space: normal;
   animation: ruban-bilan .45s cubic-bezier(.2, .9, .3, 1.2) both; }
 .v-ruban .c-bilan::before { display: none; }
 @keyframes ruban-bilan { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { .v-ruban .c-bilan { animation: none; } }
 .v-ruban .c-bilan .c-suite { align-self: auto; margin-top: 0; }
 .cb-gare { font-size: 15px; font-weight: 700; }
-.cb-actions { display: flex; gap: 8px; margin-top: 6px; }
+.cb-actions { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; justify-content: center; }
 .cb-payer { background: rgba(21, 29, 46, .8); border: 1px solid var(--gold-dim); color: var(--gold); }
 .cb-payer:hover:not(:disabled) { background: rgba(232, 185, 35, .16); }
 .cb-payer:disabled { opacity: .45; cursor: default; }
@@ -2397,9 +2421,11 @@ svg { width: 100%; height: 100%; display: block; }
 .cf-suivant { font-size: 13.5px; color: var(--muted); margin-top: 7px; }
 .cf-suivant b { color: var(--text); }
 .cz-ic { font-size: 13px; opacity: .8; }
-@media (max-height: 480px) {
-  .v-ruban .c-panneau { gap: 6px; }
-  .cf-nom { font-size: 16px; } .c-appel { font-size: 14.5px; padding: 9px 16px; }
+@media (max-height: 480px), (max-width: 820px) {
+  .c-cote { flex-basis: clamp(180px, 30vw, 230px); gap: 8px; }
+  .cc-nom { font-size: 17px; } .cf-nom { font-size: 19px; }
+  .c-appel { font-size: 14.5px; padding: 10px 14px; }
+  .cf-ou { font-size: 10.5px; }
 }
 /* Les pastilles de difficulté du cartouche : la MÊME jauge que partout. */
 .cf-ligne .dif { display: flex; align-items: center; gap: 3px; }
