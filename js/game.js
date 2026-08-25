@@ -1396,12 +1396,14 @@ function endGame(failed) {
   // la gare suivante est à un doigt, la gare jouée aussi pour recommencer.
   if (!STATION.adhoc && typeof renderCarte === "function") {
     CARTE.bilan = { gare: STATION.id, stars, prevStars, d, prevBest, perfect, failed, win, seuils };
-    showHub();                   // #end rangé, la carte redessinée avec le relevé
     // LE RUBAN AVANCE, ET LA CAMÉRA SUIT. Seulement si le service est tenu :
     // sur un échec il n'y a pas de gare suivante, et voir la carte glisser
-    // vers elle contredirait le relevé. finDeGare (js/parcours.js) décide au
-    // passage s'il y a une fin de chapitre à fêter.
-    if (win && typeof finDeGare === "function") finDeGare(STATION.id);
+    // vers elle contredirait le relevé. `preparerSuite` (js/parcours.js) décide
+    // au passage s'il y a une fin de chapitre à fêter — et il PRÉPARE sans
+    // rendre, pour que showHub ne dessine qu'une fois : deux rendus faisaient
+    // clignoter le chapitre suivant avant la fête du précédent.
+    if (win && typeof preparerSuite === "function") preparerSuite(STATION.id);
+    showHub();                   // #end rangé, la carte redessinée avec le relevé
     rollRecette();
     if (perfect && typeof perfectConfetti === "function") {
       const bulle = document.querySelector("#hub .c-bilan");

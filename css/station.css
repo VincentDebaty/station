@@ -2550,3 +2550,62 @@ svg { width: 100%; height: 100%; display: block; }
   padding: 8px 11px; font-size: 12px; line-height: 1.45; color: #97a3ba;
   background: rgba(245, 178, 60, .07); border-left: 2px solid var(--gold-dim); border-radius: 0 8px 8px 0; }
 .cf-boss b { font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: var(--gold); }
+
+/* ==================================================================
+   LA MARCHE FRANCHIE — ce qui vient de changer se voit.
+   ==================================================================
+   Un chapitre se terminait et l'écran passait au suivant sans que rien ne
+   marque le pas : ni sur la carte, ni dans le panneau. Trois moments, et
+   aucun ne dure plus qu'il ne faut. */
+
+/* 1. LE CHAPITRE SE FERME : son rail s'allume d'un bout à l'autre, gare après
+      gare. La cascade suit l'ordre du rail (--i, posé au rendu) : on relit le
+      trajet qu'on vient de faire, et c'est ça, la récompense. */
+.c-ruban.a-fete .s-fait {
+  animation: seg-allume .55s cubic-bezier(.4, 0, .2, 1) both;
+  animation-delay: calc(var(--i, 0) * .11s);
+}
+@keyframes seg-allume {
+  0%   { stroke-width: calc(1.6px / var(--k, 1)); filter: none; }
+  45%  { stroke-width: calc(3.4px / var(--k, 1)); }
+  100% { stroke-width: calc(1.6px / var(--k, 1)); }
+}
+.c-ruban.a-fete .g-faite .pt, .c-ruban.a-fete .g-fin.g-faite .pt {
+  animation: pt-allume .5s cubic-bezier(.3, 1.4, .4, 1) both;
+  animation-delay: calc(var(--i, 0) * .11s + .06s);
+  transform-box: fill-box; transform-origin: center;
+}
+@keyframes pt-allume { 0% { transform: scale(1); } 50% { transform: scale(1.75); } 100% { transform: scale(1); } }
+
+/* 2. LE VOYAGE SE REGARDE. On quitte la fête : le panneau s'efface le temps
+      que la caméra traverse, et le service ne commence qu'après. Il se jouait
+      pendant le niveau, donc personne ne le voyait. */
+.c-cote.en-route { animation: cote-part .5s ease both; pointer-events: none; }
+@keyframes cote-part { to { opacity: .12; transform: translateX(-10px); } }
+
+/* 3. LE CHAPITRE SUIVANT ARRIVE. L'en-tête entre par la gauche, le rail neuf
+      se dessine — on comprend qu'on a changé d'étape sans qu'on l'écrive. */
+.cc-chapitre.a-neuf { animation: chap-entre .55s cubic-bezier(.2, .9, .3, 1.1) both; }
+@keyframes chap-entre {
+  from { opacity: 0; transform: translateX(-14px); }
+  to   { opacity: 1; transform: none; }
+}
+.cc-chapitre.a-neuf::after { animation: chap-filet .5s cubic-bezier(.4, 0, .2, 1) .15s both; }
+@keyframes chap-filet { from { transform: scaleX(0); transform-origin: left; } to { transform: scaleX(1); } }
+.c-ruban.a-arrivee .seg { animation: seg-arrive .5s ease both; animation-delay: calc(var(--i, 0) * .07s + .1s); }
+@keyframes seg-arrive { from { opacity: 0; } to { opacity: 1; } }
+.c-ruban.a-arrivee .gare { animation: gare-arrive .4s ease both; animation-delay: calc(var(--i, 0) * .07s + .16s); }
+@keyframes gare-arrive { from { opacity: 0; } to { opacity: 1; } }
+
+/* La fête elle-même entre, elle n'apparaît pas. */
+.c-fete { animation: fete-pose .5s cubic-bezier(.2, .9, .3, 1.15) both; }
+@keyframes fete-pose { from { opacity: 0; transform: translateY(10px) scale(.96); } to { opacity: 1; transform: none; } }
+/* Le dernier cran de la jauge, celui qui vient de tomber. */
+.cj-cran { transition: background .35s ease, box-shadow .35s ease; }
+
+@media (prefers-reduced-motion: reduce) {
+  .c-ruban.a-fete .s-fait, .c-ruban.a-fete .g-faite .pt, .c-cote.en-route,
+  .cc-chapitre.a-neuf, .cc-chapitre.a-neuf::after, .c-ruban.a-arrivee .seg,
+  .c-ruban.a-arrivee .gare, .c-fete { animation: none; }
+  .c-cote.en-route { opacity: 1; }
+}

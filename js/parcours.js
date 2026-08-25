@@ -26,8 +26,15 @@
 
 const CARTE = {
   hote: null, bilan: null, voyage: null, prochaine: null,
-  etoiles: null, cam: null, camAvant: null, fete: null, chapitre: null
+  etoiles: null, cam: null, camAvant: null, fete: null, chapitre: null,
+  chapitreAvant: null, feteAvant: false
 };
+// La caméra met .75 s à traverser (1,5 s pour un saut, css/station.css). On
+// laisse le voyage se voir avant d'ouvrir le niveau — sinon il se joue derrière
+// l'écran de jeu et personne ne le regarde.
+const DUREE_VOYAGE = 1150, DUREE_SAUT = 1900;
+const sansAnimation = () =>
+  !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
 
 const RAD = Math.PI / 180;
 const CADRE_L = 160, CADRE_H = 100;
@@ -171,7 +178,7 @@ function railHTML() {
     const ecrit = estEcrite(g[i - 1]) && estEcrite(g[i]);
     const fait = estFranchie(g[i - 1]) && estFranchie(g[i]);
     segs.push(`<path class="seg ${!ecrit ? "s-avenir" : fait ? "s-fait" : "s-reste"}"` +
-      ` style="--col:${col}" d="M${a.x.toFixed(2)} ${a.y.toFixed(2)}L${b.x.toFixed(2)} ${b.y.toFixed(2)}"/>`);
+      ` style="--col:${col};--i:${i - 1}" d="M${a.x.toFixed(2)} ${a.y.toFixed(2)}L${b.x.toFixed(2)} ${b.y.toFixed(2)}"/>`);
   }
   return '<g class="rail">' + segs.join("") + "</g>";
 }
@@ -197,7 +204,7 @@ function garesHTML() {
       .filter(Boolean).join(" ");
     const jouable = etat === "faite" || etat === "courante" || etat === "payee";
     const cx = p.x.toFixed(2), cy = p.y.toFixed(2);
-    out.push(`<g class="${cl}" style="--col:${couleurDeZone(ch && ch.zone)}"` +
+    out.push(`<g class="${cl}" style="--col:${couleurDeZone(ch && ch.zone)};--i:${ch0.gares.indexOf(g)}"` +
       (jouable ? ` data-gare="${g}" tabindex="0"` : "") + `>` +
       (ici ? `<circle class="halo" cx="${cx}" cy="${cy}" r="${R(fin ? 5.2 : 4.4)}"/>` : "") +
       `<circle class="cible" cx="${cx}" cy="${cy}" r="${R(5.5)}"/>` +
@@ -477,6 +484,28 @@ function renderCarte() {
   hote.innerHTML = vueRuban();
   CARTE.etoiles = hote.querySelector(".c-etoiles");
   poserCamera();
+  // ------------------------------------------------------------------
+  // CE QUI VIENT DE CHANGER SE VOIT. Un chapitre se terminait et l'écran
+  // passait au suivant sans que rien ne marque le pas : ni sur la carte, ni
+  // dans le panneau. Trois marques, et elles ne durent qu'un instant.
+  // ------------------------------------------------------------------
+  const chId = CARTE.chapitre ? CARTE.chapitre.id : null;
+  const nouveauChapitre = chId && CARTE.chapitreAvant && chId !== CARTE.chapitreAvant;
+  const feteNeuve = !!CARTE.fete && !CARTE.feteAvant;
+  CARTE.chapitreAvant = chId; CARTE.feteAvant = !!CARTE.fete;
+  if (!sansAnimation()) {
+    const svg = hote.querySelector(".c-ruban");
+    // Le chapitre se ferme : son rail s'allume d'un bout à l'autre, gare après
+    // gare. C'est la marche franchie, et elle se lit sans un mot.
+    if (feteNeuve && svg) svg.classList.add("a-fete");
+    // Le chapitre suivant arrive : le panneau et le rail entrent ensemble.
+    // Jamais pendant une fête : là, c'est le chapitre qu'on VIENT DE FINIR qui
+    // s'allume, et une animation d'arrivée par-dessus brouillerait le geste.
+    if (nouveauChapitre && !CARTE.fete) {
+      hote.querySelector(".cc-chapitre")?.classList.add("a-neuf");
+      if (svg) svg.classList.add("a-arrivee");
+    }
+  }
   // LES GARES SE REDESSINENT AU BON ZOOM. Leur taille dépend de k, et k ne se
   // connaît qu'une fois le SVG mesuré : on refait donc ce seul calque après
   // la caméra. Le fond et le rail, eux, se mettent à l'échelle en CSS.
@@ -533,7 +562,24 @@ function poserCamera() {
 function jouerGare(gareId) {
   const i = CATALOG.findIndex(c => c.id === gareId);
   if (i < 0 || !estTenue(gareId)) { renderCarte(); return; }
-  CARTE.fete = null;
+  // ON QUITTE UNE FÊTE DE CHAPITRE : LE VOYAGE SE REGARDE.
+  // Il se jouait jusqu'ici PENDANT le niveau — la caméra glissait vers le
+  // chapitre suivant derrière l'écran de jeu, et le joueur ne voyait rien. On
+  // rend donc la carte d'abord, on laisse la caméra traverser, et le service
+  // ne commence qu'après. Un saut prend plus longtemps : il traverse une mer.
+  if (CARTE.fete) {
+    const suivant = chapitreDeGare(gareId);
+    const duree = suivant && suivant.saut ? DUREE_SAUT : DUREE_VOYAGE;
+    CARTE.fete = null;
+    CARTE.bilan = null;
+    if (suivant && suivant.saut) CARTE.voyageSaut = true;
+    renderCarte();                       // la caméra part vers le chapitre suivant
+    if (sansAnimation()) { startStation(i); return; }
+    const cote = CARTE.hote && CARTE.hote.querySelector(".c-cote");
+    if (cote) cote.classList.add("en-route");   // le panneau s'efface le temps du trajet
+    setTimeout(() => startStation(i), duree);
+    return;
+  }
   startStation(i);
 }
 // PASSER EN PAYANT (§4 ter). La gare reste à zéro étoile — ni jauge, ni rang,
@@ -550,22 +596,25 @@ function passerLaGare(gareId) {
 // ------------------------------------------------------------------
 // Appelé par le relevé de fin (js/game.js) et par le passage payé. Décide s'il
 // y a une fête de chapitre à poser, puis fait glisser la caméra.
-function finDeGare(gareId) {
+// PRÉPARE, NE REND PAS. Le relevé de fin appelait ceci APRÈS avoir rendu la
+// carte : deux rendus se suivaient, et le premier montrait une fraction de
+// seconde le chapitre SUIVANT avant que la fête ne ramène sur celui qu'on
+// vient de finir. Un clignotement, et deux animations qui se marchaient
+// dessus. On calcule donc l'état d'abord, on rend une seule fois.
+function preparerSuite(gareId) {
   const ch = chapitreDeGare(gareId);
   const gc = gareCourante();
   const nouveauCh = chapitreDeGare(gc);
   CARTE.prochaine = gc;
-  // Le chapitre vient de se fermer : on le fête, et l'on annonce le suivant.
   if (ch && chapitreTermine(ch) && nouveauCh !== ch) {
     const chs = chapitresDuRuban();
-    const zone = ch.zone;
     CARTE.fete = {
       ch, suivant: chs[ch.rang + 1] || null,
-      zoneFinie: chs.filter(c => c.zone === zone).every(chapitreTermine)
+      zoneFinie: chs.filter(c => c.zone === ch.zone).every(chapitreTermine)
     };
     CARTE.bilan = null;
   } else {
     CARTE.voyageSaut = !!(nouveauCh && nouveauCh !== ch && nouveauCh.saut);
   }
-  renderCarte();
 }
+function finDeGare(gareId) { preparerSuite(gareId); renderCarte(); }

@@ -409,8 +409,16 @@ spécification du lot E.
    est ailleurs sur le continent, et c'est là que le voyage se sent. C'est
    aussi ce mouvement qui joue les **sauts** (§4 bis), deux fois plus long et
    accompagné de sa phrase.
-6. **La fin de chapitre** s'intercale entre 4 et 5 : rang du chapitre, nom du
-   chapitre suivant annoncé.
+6. **La fin de chapitre** s'intercale entre 4 et 5, et elle se joue en trois
+   temps — sans quoi on change d'étape sans s'en apercevoir :
+   - **le rail du chapitre s'allume** d'un bout à l'autre, gare après gare, dans
+     l'ordre du trajet qu'on vient de faire. C'est la récompense, et elle se lit
+     sans un mot ;
+   - la fête pose le **rang du chapitre** et **annonce le suivant** ;
+   - *En route* : le panneau s'efface, **la caméra traverse jusqu'au chapitre
+     suivant**, et le service ne commence qu'après. Ce voyage se jouait
+     auparavant PENDANT le niveau — derrière l'écran de jeu, donc invisible.
+     Un saut prend plus longtemps : il traverse une mer.
 
 Il n'y a **aucun autre écran obligatoire**. Tout le reste — l'indicateur, les
 médailles, le rejeu volontaire, l'écran des cartes — se rejoint depuis la
