@@ -26,6 +26,11 @@
 // ------------------------------------------------------------------
 
 const PLACES = {
+  pfaffenhofen: [11.5069, 48.5311],
+  bietigheim: [9.1281, 48.9556],
+  muhlacker: [8.8386, 48.9497],
+  bretten: [8.7069, 49.0369],
+  weinheim: [8.6689, 49.55],
   // Points de passage ajoutés en août 2026, pour que les sept lignes remplies
   // ce mois-ci suivent la voie et non la corde : le Neckar de la Gäubahn, la
   // Saale et le Frankenwald entre Weimar et Bamberg, la Thüringer Bahn depuis
@@ -160,7 +165,6 @@ const PLACES = {
   elsterwerda:  [13.522, 51.463],
   gelsenkirchen: [7.104, 51.505],
   grobers:      [12.113, 51.349],  // bifurcation de Gröbers, où la LGV se sépare vers Halle et Leipzig
-  heidelberg:   [8.670, 49.404],
   jena:         [11.586, 50.927],
   kaiserslautern: [7.769, 49.436],
   landshut:     [12.128, 48.545],

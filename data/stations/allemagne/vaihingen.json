@@ -1,0 +1,30 @@
+{
+  "id": "vaihingen",
+  "name": "Vaihingen (Enz)",
+  "city": "Vaihingen an der Enz",
+  "tagline": "Vaihingen (Enz) — la ligne à grande vitesse s'arrête là où la Westbahn passe.",
+  "difficulty": 3,
+  "country": "🇩🇪 Allemagne",
+  "desc": "Une gare née en 1991 avec la ligne nouvelle Mannheim–Stuttgart, posée à l'endroit exact où elle enjambe la vieille Westbahn. Deux mondes séparés par un étage, et quatre directions à démêler.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
+  ],
+  "portals": {
+    "MANNHEIM":   { "side": "L", "color": "#f2588f", "abbr": "MA" },
+    "MUHLACKER":  { "side": "L", "color": "#a78bfa", "abbr": "MU", "label": "MÜHLACKER" },
+    "STUTTGART":  { "side": "R", "color": "#4ade80", "abbr": "S" },
+    "BIETIGHEIM": { "side": "R", "color": "#60a5fa", "abbr": "BI" }
+  },
+  "links": {
+    "MANNHEIM":   [1, 2, 3, 4],
+    "MUHLACKER":  [2, 3, 4, 5],
+    "STUTTGART":  [1, 2, 3, 4],
+    "BIETIGHEIM": [2, 3, 4, 5]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 13, "nMax": 15, "gapMin": 1.9, "gapMax": 3.2,
+    "cars": [2, 2, 3, 3, 4, 4, 5],
+    "quietRate": 0.20
+  }
+}

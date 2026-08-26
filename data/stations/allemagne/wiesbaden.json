@@ -1,0 +1,31 @@
+{
+  "id": "wiesbaden",
+  "name": "Wiesbaden Hbf",
+  "city": "Wiesbaden",
+  "tagline": "Wiesbaden Hbf — capitale thermale, et un terminus où tout rebrousse.",
+  "difficulty": 3,
+  "country": "🇩🇪 Allemagne",
+  "desc": "La capitale de la Hesse s'est offert en 1906 une gare monumentale — et un cul-de-sac. Tout ce qui vient de Mayence, du Rheingau ou du Ländchen entre ici et doit repartir par où c'est possible.",
+  "platforms": [
+    { "id": 1, "deadEnd": true }, { "id": 2, "deadEnd": true }, { "id": 3, "deadEnd": true },
+    { "id": 4, "deadEnd": true }, { "id": 5, "deadEnd": true }, { "id": 6, "deadEnd": true }
+  ],
+  "portals": {
+    "MAINZ":     { "side": "L", "color": "#25dede", "abbr": "MZ" },
+    "FRANKFURT": { "side": "L", "color": "#f5b23c", "abbr": "F" },
+    "KOBLENZ":   { "side": "L", "color": "#4ade80", "abbr": "KO" },
+    "LIMBURG":   { "side": "L", "color": "#a78bfa", "abbr": "LM" }
+  },
+  "links": {
+    "MAINZ":     [1, 2, 3, 4],
+    "FRANKFURT": [2, 3, 4, 5],
+    "KOBLENZ":   [4, 5, 6, 1],
+    "LIMBURG":   [6, 1]
+  },
+  "sameSidePairs": "all",
+  "gen": {
+    "nMin": 13, "nMax": 16, "gapMin": 1.8, "gapMax": 3.1,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6],
+    "quietRate": 0.15
+  }
+}

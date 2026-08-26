@@ -1,0 +1,28 @@
+{
+  "id": "dachau",
+  "name": "Dachau Bahnhof",
+  "city": "Dachau",
+  "tagline": "Dachau — tout converge vers Munich, et l'antenne d'Altomünster s'en détache.",
+  "difficulty": 2,
+  "country": "🇩🇪 Allemagne",
+  "desc": "La première gare au nord de Munich sur la ligne de Treuchtlingen, et le point où se détache la petite ligne d'Altomünster. Un entonnoir : presque tout ce qui passe ici va vers Munich ou en vient.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }
+  ],
+  "portals": {
+    "INGOLSTADT":  { "side": "L", "color": "#25dede", "abbr": "IN" },
+    "ALTOMUNSTER": { "side": "L", "color": "#a78bfa", "abbr": "AM", "label": "ALTOMÜNSTER" },
+    "MUNCHEN":     { "side": "R", "color": "#f5b23c", "abbr": "M", "label": "MÜNCHEN" }
+  },
+  "links": {
+    "INGOLSTADT":  [1, 2, 3],
+    "ALTOMUNSTER": [3, 4],
+    "MUNCHEN":     [1, 2, 3, 4]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 11, "nMax": 13, "gapMin": 2.0, "gapMax": 3.4,
+    "cars": [2, 2, 2, 3, 3, 4, 4],
+    "quietRate": 0.22
+  }
+}

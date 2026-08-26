@@ -486,5 +486,15 @@ const LINES = [
   { id: "Suedharz", name: "Göttingen – Northeim – Nordhausen – Sangerhausen – Halle",
     nodes: ["gottingen", "northeim", "nordhausen", "sangerhausen", "halle"] },
   { id: "BS-WOB", name: "Brunswick – Wolfsburg (Weddeler Schleife, l'ICE de Berlin)",
-    nodes: ["braunschweig", "wolfsburg"] }
+    nodes: ["braunschweig", "wolfsburg"] },
+  { id: "WI", name: "Mayence – Wiesbaden – Francfort",
+    nodes: ["mainz", "wiesbaden", "frankfurt"] },
+  { id: "Main-Neckar", name: "Francfort – Darmstadt – Weinheim – Mannheim",
+    nodes: ["frankfurt", "darmstadt", "weinheim", "mannheim"] },
+  { id: "HD-KA", name: "Heidelberg – Bruchsal – Karlsruhe",
+    nodes: ["heidelberg", "bruchsal", "karlsruhe"] },
+  { id: "Westbahn", name: "Bruchsal – Bretten – Mühlacker – Vaihingen – Bietigheim – Stuttgart",
+    nodes: ["bruchsal", "bretten", "muhlacker", "vaihingen", "bietigheim", "stuttgart"] },
+  { id: "M-IN", name: "Munich – Dachau – Pfaffenhofen – Ingolstadt",
+    nodes: ["munchen", "dachau", "pfaffenhofen", "ingolstadt"] }
 ];

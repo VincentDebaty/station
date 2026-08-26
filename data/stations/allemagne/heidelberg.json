@@ -1,0 +1,32 @@
+{
+  "id": "heidelberg",
+  "name": "Heidelberg Hbf",
+  "city": "Heidelberg",
+  "tagline": "Heidelberg Hbf — déplacée d'un kilomètre en 1955 pour cesser d'être un cul-de-sac.",
+  "difficulty": 3,
+  "country": "🇩🇪 Allemagne",
+  "desc": "L'ancienne gare était un terminus qui étranglait la ville : on l'a reconstruite un kilomètre plus à l'ouest, traversante. La vallée du Neckar s'en va vers l'est, la plaine badoise vers le sud.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }, { "id": 6 }
+  ],
+  "portals": {
+    "MANNHEIM":    { "side": "L", "color": "#f2588f", "abbr": "MA" },
+    "FRANKFURT":   { "side": "L", "color": "#f5b23c", "abbr": "F" },
+    "GERMERSHEIM": { "side": "L", "color": "#a78bfa", "abbr": "GE" },
+    "KARLSRUHE":   { "side": "R", "color": "#25dede", "abbr": "KA" },
+    "HEILBRONN":   { "side": "R", "color": "#4ade80", "abbr": "HN" }
+  },
+  "links": {
+    "MANNHEIM":    [1, 2, 3, 4],
+    "FRANKFURT":   [2, 3, 4, 5],
+    "GERMERSHEIM": [5, 6],
+    "KARLSRUHE":   [1, 2, 3, 4, 5],
+    "HEILBRONN":   [3, 4, 5, 6]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 14, "nMax": 17, "gapMin": 1.7, "gapMax": 2.9,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6],
+    "quietRate": 0.15
+  }
+}

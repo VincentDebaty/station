@@ -1,0 +1,33 @@
+{
+  "id": "bruchsal",
+  "name": "Bruchsal",
+  "city": "Bruchsal",
+  "tagline": "Bruchsal — cinq voies traversantes, et le quai 6 en impasse pour le Kraichgau.",
+  "difficulty": 3,
+  "country": "🇩🇪 Allemagne",
+  "desc": "Sous le château baroque, la ligne de Bade croise la Westbahn du Wurtemberg. Les tram-trains du Kraichgau, eux, ne traversent pas : ils rebroussent au quai 6 et repartent vers Karlsruhe.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },
+    { "id": 6, "deadEnd": true }
+  ],
+  "portals": {
+    "HEIDELBERG":  { "side": "L", "color": "#f2588f", "abbr": "HD" },
+    "GERMERSHEIM": { "side": "L", "color": "#a78bfa", "abbr": "GE" },
+    "KARLSRUHE":   { "side": "R", "color": "#25dede", "abbr": "KA" },
+    "BRETTEN":     { "side": "R", "color": "#4ade80", "abbr": "BR" },
+    "ODENHEIM":    { "side": "R", "color": "#f5b23c", "abbr": "OD" }
+  },
+  "links": {
+    "HEIDELBERG":  [1, 2, 3, 4],
+    "GERMERSHEIM": [4, 5],
+    "KARLSRUHE":   [1, 2, 3, 4, 5, 6],
+    "BRETTEN":     [2, 3, 4, 5],
+    "ODENHEIM":    [6]
+  },
+  "sameSidePairs": [["KARLSRUHE","ODENHEIM"],["ODENHEIM","KARLSRUHE"]],
+  "gen": {
+    "nMin": 14, "nMax": 16, "gapMin": 1.8, "gapMax": 3.0,
+    "cars": [2, 3, 3, 4, 4, 5, 5],
+    "quietRate": 0.16
+  }
+}

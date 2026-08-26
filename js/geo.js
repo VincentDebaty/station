@@ -187,7 +187,13 @@ const GEO = {
         horb: [8.690, 48.443],
         lindau: [9.681, 47.544],
         memmingen: [10.180, 47.985],
-        buchloe: [10.727, 48.037]
+        buchloe: [10.727, 48.037],
+        wiesbaden: [8.2417, 50.0826],
+        darmstadt: [8.6512, 49.8728],
+        heidelberg: [8.6724, 49.3988],
+        bruchsal: [8.5983, 49.1244],
+        vaihingen: [8.9581, 48.9297],
+        dachau: [11.4342, 48.26]
       } },
     luxembourg: { name: "Luxembourg", flag: "🇱🇺", iso: "LUX", continent: "europe",
       cities: {

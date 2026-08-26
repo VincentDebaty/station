@@ -1,0 +1,32 @@
+{
+  "id": "darmstadt",
+  "name": "Darmstadt Hbf",
+  "city": "Darmstadt",
+  "tagline": "Darmstadt Hbf — la Main-Neckar croise la Rhin-Main, et l'Odenwald s'en va.",
+  "difficulty": 2,
+  "country": "🇩🇪 Allemagne",
+  "desc": "Une gare Art nouveau de 1912, posée au croisement de deux axes : la Main-Neckar qui descend de Francfort vers Heidelberg, et la Rhin-Main qui file de Mayence vers Aschaffenbourg. L'Odenwald part en antenne.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }, { "id": 6 }
+  ],
+  "portals": {
+    "FRANKFURT":     { "side": "L", "color": "#f5b23c", "abbr": "F" },
+    "MAINZ":         { "side": "L", "color": "#25dede", "abbr": "MZ" },
+    "HEIDELBERG":    { "side": "R", "color": "#f2588f", "abbr": "HD" },
+    "ASCHAFFENBURG": { "side": "R", "color": "#60a5fa", "abbr": "AB" },
+    "ERBACH":        { "side": "R", "color": "#a78bfa", "abbr": "ER" }
+  },
+  "links": {
+    "FRANKFURT":     [1, 2, 3, 4],
+    "MAINZ":         [3, 4, 5, 6],
+    "HEIDELBERG":    [1, 2, 3, 4],
+    "ASCHAFFENBURG": [4, 5, 6],
+    "ERBACH":        [5, 6]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 13, "nMax": 16, "gapMin": 1.8, "gapMax": 3.0,
+    "cars": [2, 2, 2, 3, 3, 4, 4, 5],
+    "quietRate": 0.18
+  }
+}
