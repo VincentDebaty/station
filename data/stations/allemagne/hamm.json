@@ -19,7 +19,7 @@
   },
   "links": {
     "DORTMUND":  [1, 2, 3, 4, 5, 6],
-    "HAGEN":     [5, 6, 7],
+    "HAGEN":     [3, 4, 5, 6, 7],
     "BIELEFELD": [1, 2, 3, 4],
     "MUNSTER":   [5, 6, 7],
     "PADERBORN": [3, 4, 5]
