@@ -100,6 +100,36 @@ const QUEUE_RATE_MAX = 0.12;    // part de journées tolérée au-dessus du seui
 // partir de DEUX journées — en deçà, c'est du bruit d'échantillonnage, pas un
 // défaut du générateur.
 const QUEUE_MIN_DAYS = 2;
+// ------------------------------------------------------------------
+// ON COMPARAIT UNE FRÉQUENCE À UN TAUX, CE QUI N'EST PAS UN CONTRÔLE.
+// ------------------------------------------------------------------
+// La règle refusait dès que `queueDays / days` dépassait 12 %. Sur un
+// échantillon court, cette fréquence est très bruitée : mesuré le 26 août
+// 2026, une gare dont le taux RÉEL vaut 12 % — donc exactement la cible —
+// échouait 44 % du temps à K=20 et 49 % à K=30 ; une gare à 8 %, pourtant SOUS
+// la cible, échouait encore une fois sur cinq. Sur 63 gares, cela garantissait
+// une ou deux fausses alertes à chaque balayage, toujours sur des gares
+// différentes. On croyait poursuivre une dette ; on tirait au sort.
+//
+// On teste donc l'HYPOTHÈSE plutôt que la fréquence : quelle est la
+// probabilité d'observer au moins k excursions sur n journées si le taux réel
+// valait la cible ? Si ce hasard est plausible (≥ 5 %), on n'a rien prouvé et
+// on ne refuse pas. L'intention d'origine ne change pas — tolérer le rare,
+// jamais le systématique — c'est sa mesure qui devient honnête.
+const QUEUE_ALPHA = 0.05;
+function tailBinomiale(k, n, p) {
+  // P(X ≥ k) pour X ~ B(n, p). n reste petit (≤ quelques centaines) : la somme
+  // directe suffit, et les coefficients se calculent de proche en proche pour
+  // ne jamais former une factorielle.
+  if (k <= 0) return 1;
+  if (k > n) return 0;
+  let coef = 1, tot = 0;
+  for (let i = 0; i <= n; i++) {
+    if (i >= k) tot += coef * Math.pow(p, i) * Math.pow(1 - p, n - i);
+    coef = coef * (n - i) / (i + 1);
+  }
+  return Math.min(1, tot);
+}
 
 // --- tirage reproductible (--seed) --------------------------------------
 // mulberry32 : court, bien distribué, suffisant pour rejouer des journées.
@@ -220,6 +250,7 @@ for (const { id, country, path: chemin } of cards) {
     if (jouee && jouee.gen) { cfg = jouee; niveauxJoues.set(id, jouee.difficulty); }
   }
   const problems = [];
+  const avertissements = [];
   reseed();   // mêmes journées pour cette gare d'une exécution à l'autre
 
   // 1) connectivité : on interroge les PAIRS que le moteur a réellement construites
@@ -273,14 +304,22 @@ for (const { id, country, path: chemin } of cards) {
   if (worst > DELAY_MAX) problems.push("retard garanti " + worst.toFixed(2) + " > " + DELAY_MAX);
   if (queueMax >= QUEUE_HARD)
     problems.push("file de " + queueMax + " au même quai (jamais toléré)");
-  else if (queueDays >= QUEUE_MIN_DAYS && days && queueDays / days > QUEUE_RATE_MAX)
-    problems.push(queueDays + "/" + days + " journée(s) au-dessus de " +
-      QUEUE_MAX_CHECK + " au même quai (max " + queueMax + ")");
+  else if (queueDays >= QUEUE_MIN_DAYS && days && queueDays / days > QUEUE_RATE_MAX) {
+    const hasard = tailBinomiale(queueDays, days, QUEUE_RATE_MAX);
+    const texte = queueDays + "/" + days + " journée(s) au-dessus de " +
+      QUEUE_MAX_CHECK + " au même quai (max " + queueMax + ")";
+    if (hasard < QUEUE_ALPHA) problems.push(texte);
+    // SIGNALÉ SANS REFUSER. La gare dépasse la cible, mais l'échantillon ne
+    // permet pas de l'affirmer. Le taire ferait perdre la sensibilité que le
+    // test statistique coûte ; en faire un échec ramènerait le tirage au sort.
+    // Relancer la même gare à K=30 tranche.
+    else avertissements.push(texte + " — non concluant, p=" + hasard.toFixed(2));
+  }
 
   const ok = problems.length === 0;
   if (!ok) failed++;
   rows.push({ id, ok, trains: `${minN}-${maxN}`, delay: worst.toFixed(2),
-              qMax: queueMax, qMoy: days ? (queueSum / days).toFixed(1) : "—", problems });
+              qMax: queueMax, qMoy: days ? (queueSum / days).toFixed(1) : "—", problems, avertissements });
 }
 
 // --- rapport ---
@@ -297,9 +336,13 @@ for (const r of rows)
   console.log(
     pad(r.id, 18) + pad(r.ok ? "OK" : "FAIL", 6) +
     pad(r.trains, 9) + pad(r.delay, 8) +
-    pad(r.qMax, 6) + pad(r.qMoy, 6) + (r.problems.join(" ; ") || ""));
+    pad(r.qMax, 6) + pad(r.qMoy, 6) +
+    (r.problems.join(" ; ") || (r.avertissements.length ? "⚠ " + r.avertissements.join(" ; ") : "")));
 console.log("-".repeat(88));
-console.log(failed ? `\n${failed} gare(s) en échec.\n` : `\nToutes les gares passent.\n`);
+const nAvert = rows.filter(r => r.ok && r.avertissements.length).length;
+console.log(failed ? `\n${failed} gare(s) en échec.` : `\nToutes les gares passent.`);
+if (nAvert) console.log(`${nAvert} gare(s) au-dessus de la cible sans que l'échantillon le prouve — relancer à K=30 pour trancher.`);
+console.log("");
 // Et la carte : une ligne, pour qu'un seul appel dise si l'on est livrable.
 // Informatif — la carte a ses propres règles et son propre code de sortie
 // (`node tools/carte-check.mjs`), on ne fait pas échouer une fiche pour elles.
