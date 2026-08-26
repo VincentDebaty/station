@@ -337,6 +337,35 @@ function cartoucheHTML(gareId) {
 // ------------------------------------------------------------------
 // LA BULLE DU RÉSULTAT — sous la gare qu'on vient de tenir.
 // ------------------------------------------------------------------
+// ------------------------------------------------------------------
+// LES MÉDAILLES QU'ON VIENT DE DÉCROCHER.
+// ------------------------------------------------------------------
+// Elles étaient calculées depuis le lot D (js/recompense.js, 28 médailles) et
+// n'étaient MONTRÉES NULLE PART : `medaillesNouvelles` n'avait aucun appelant.
+// Le joueur franchissait des paliers sans jamais l'apprendre.
+//
+// COMBIEN ON EN MONTRE DÉPEND DE LA PLACE, et la place dit le moment. Le
+// relevé est une BULLE posée sur la gare, étroite par nature : deux médailles
+// au plus, le reste en un chiffre. La FÊTE de chapitre est un écran de
+// célébration — c'est là qu'on en décroche cinq d'un coup, et les taire pour
+// tenir une limite serait fêter à moitié. Elle les montre toutes.
+//
+// On NE TRIE PAS par rareté : le tableau de `js/recompense.js` est groupé par
+// FAMILLE (Accumulation, Maîtrise, Exploration, Style), pas par difficulté.
+// Prendre « les deux dernières » y montrait « Ponctualité suisse » en taisant
+// « Chapitre de diamant » — mesuré sur le premier chapitre joué d'affilée.
+// L'ordre du tableau est donc conservé tel quel, et c'est la FÊTE qui répond
+// au cas des grosses moissons.
+function medaillesHTML(combien) {
+  const m = CARTE.medailles;
+  if (!m || !m.length) return "";
+  const montrees = combien && m.length > combien ? m.slice(0, combien) : m;
+  const reste = m.length - montrees.length;
+  return `<div class="c-medailles">` + montrees.map(x =>
+    `<span class="cm-un"><b>${x.nom}</b><i>${x.dit}</i></span>`).join("") +
+    (reste ? `<span class="cm-plus">+${reste}</span>` : "") + `</div>`;
+}
+
 function bilanHTML() {
   const b = CARTE.bilan;
   if (!b) return "";
@@ -366,7 +395,7 @@ function bilanHTML() {
     ? `<div class="cb-vise">3 ★ sous ${s.trois} min</div>` : "";
   return `<div class="${cl}" role="status">
     <div class="cb-gare">${villeDe(b.gare)}</div>
-    <div class="cb-etoiles">${etoiles}</div>${diamant}${retard}${rec}${vise}</div>`;
+    <div class="cb-etoiles">${etoiles}</div>${diamant}${retard}${rec}${vise}${medaillesHTML(2)}</div>`;
 }
 
 const FLECHE = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" ' +
@@ -468,6 +497,7 @@ function feteHTML() {
     ${rang && rang.id !== "ouverte" ? `<p class="cf-rang r-${rang.id}">${rang.nom}</p>` : ""}
     ${reste}
     ${f.zoneFinie && zone ? `<p class="cf-zone">${zone.nom} — région traversée</p>` : ""}
+    ${medaillesHTML()}
   </div>`;
 }
 
@@ -692,6 +722,7 @@ function jouerGare(gareId) {
     const suivant = chapitreDeGare(gareId);
     CARTE.fete = null;
     CARTE.bilan = null;
+    CARTE.medailles = null;
     if (sansAnimation()) { renderCarte(); startStation(i); return; }
     // TROIS TEMPS. On cadre les deux gares, un convoi fait la route, puis la
     // caméra se pose sur le chapitre neuf. Sans le convoi, la caméra changeait
@@ -722,6 +753,7 @@ function passerLaGare(gareId) {
   const prix = prixDePassage(gareId);
   if (soldeCredits() < prix || !payerPassage(gareId)) return;
   CARTE.bilan = null;
+  CARTE.medailles = null;
   finDeGare(gareId);
 }
 

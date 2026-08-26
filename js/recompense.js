@@ -158,9 +158,17 @@ function etatRecompenses() {
     if (dans.every(c => typeof chapitreTermine === "function" && chapitreTermine(c))) zonesFinies++;
   }
   const serie = typeof getSerie === "function" ? getSerie() : { n: 0, record: 0 };
+  // LES PLAFONDS DU RUBAN COURANT. Sans eux, les médailles de fin se calent sur
+  // des nombres écrits à la main, qui vieillissent mal : celles d'avant visaient
+  // un catalogue de 145 gares alors que le ruban v1 n'en expose que 63, et
+  // quatre médailles étaient devenues INATTEIGNABLES — 250 et 435 étoiles pour
+  // un plafond de 189, 75 gares pour 63, 12 chapitres pour 11. Déduits, ils
+  // suivent le ruban quand le lot F l'allonge, et il n'y a rien à migrer.
+  const nGares = chs.reduce((t, c) => t + c.gares.length, 0);
+  const max = { etoiles: nGares * 3, gares: nGares, chapitres: chs.length, zones: zones.length };
   return {
     etoiles, diamants, gares, chapitres, chapitresFinis, sauts,
-    zones: touchees.size, zonesFinies,
+    zones: touchees.size, zonesFinies, max,
     serie: serie.n, serieRecord: serie.record
   };
 }
@@ -174,28 +182,33 @@ function etatRecompenses() {
 // et elle récompense le fait d'ouvrir l'application plutôt que celui de bien
 // jouer. Elle mérite sa propre décision, pas d'être glissée dans un lot.
 //
-// Les seuils sont calés sur le CATALOGUE RÉEL (145 gares, une vingtaine de
-// corridors), pas sur ceux du document — qui visaient un réseau européen
-// complet et donneraient ici des paliers inatteignables. Ils remonteront quand
-// les gares manquantes seront écrites : les médailles étant déduites, il n'y
-// aura rien à migrer.
+// Les seuils bas sont ABSOLUS (25, 50, 100 étoiles) : ils balisent le début de
+// partie, où le ruban est vaste quelle que soit sa longueur. Les seuils de FIN
+// sont RELATIFS au ruban courant (`e.max`), parce qu'un nombre écrit à la main
+// y vieillit mal — calés sur un catalogue de 145 gares, ils étaient devenus
+// inatteignables sur un ruban v1 qui n'en expose que 63.
+//
+// `sa1` reste au tableau bien que le ruban v1 ne déclare AUCUN saut : les huit
+// sauts sont au tracé (`ruban-europe.md`) et arriveront avec le lot F. Une
+// médaille déduite qui attend son contenu ne coûte rien ; la retirer puis la
+// réécrire coûterait deux fois.
 const MEDAILLES = [
   // --- Accumulation : la trace du temps passé. --------------------
   { id: "et25",   fam: "Accumulation", nom: "Premières étoiles",   dit: "25 étoiles",            si: e => e.etoiles >= 25 },
   { id: "et50",   fam: "Accumulation", nom: "Bon élève",           dit: "50 étoiles",            si: e => e.etoiles >= 50 },
   { id: "et100",  fam: "Accumulation", nom: "Cent étoiles",        dit: "100 étoiles",           si: e => e.etoiles >= 100 },
-  { id: "et250",  fam: "Accumulation", nom: "Ciel chargé",         dit: "250 étoiles",           si: e => e.etoiles >= 250 },
-  { id: "et435",  fam: "Accumulation", nom: "Tout le catalogue",   dit: "435 étoiles",           si: e => e.etoiles >= 435 },
+  { id: "etmoit", fam: "Accumulation", nom: "Ciel chargé",         dit: "la moitié du ruban",    si: e => e.max && e.max.etoiles > 0 && e.etoiles >= e.max.etoiles / 2 },
+  { id: "ettout", fam: "Accumulation", nom: "Tout le ruban",       dit: "toutes les étoiles",    si: e => e.max && e.max.etoiles > 0 && e.etoiles >= e.max.etoiles },
   { id: "di5",    fam: "Accumulation", nom: "Cinq diamants",       dit: "5 sans-fautes",         si: e => e.diamants >= 5 },
   { id: "di15",   fam: "Accumulation", nom: "Écrin",               dit: "15 sans-fautes",        si: e => e.diamants >= 15 },
   { id: "di40",   fam: "Accumulation", nom: "Coffre-fort",         dit: "40 sans-fautes",        si: e => e.diamants >= 40 },
   { id: "ga10",   fam: "Accumulation", nom: "Petit réseau",        dit: "10 gares",              si: e => e.gares >= 10 },
   { id: "ga30",   fam: "Accumulation", nom: "Réseau régional",     dit: "30 gares",              si: e => e.gares >= 30 },
-  { id: "ga75",   fam: "Accumulation", nom: "Réseau national",     dit: "75 gares",              si: e => e.gares >= 75 },
+  { id: "gatout", fam: "Accumulation", nom: "Réseau national",     dit: "toutes les gares",      si: e => e.max && e.max.gares > 0 && e.gares >= e.max.gares },
   // --- Maîtrise : ce qu'on a fini, et bien fini. ------------------
   { id: "ch1",    fam: "Maîtrise",     nom: "Bout en bout",        dit: "un chapitre fini",      si: e => e.chapitres.ouverte >= 1 },
   { id: "ch5",    fam: "Maîtrise",     nom: "Cinq chapitres",      dit: "5 chapitres finis",     si: e => e.chapitres.ouverte >= 5 },
-  { id: "ch12",   fam: "Maîtrise",     nom: "Toile ferrée",        dit: "12 chapitres finis",    si: e => e.chapitres.ouverte >= 12 },
+  { id: "chtout", fam: "Maîtrise",     nom: "Toile ferrée",        dit: "tous les chapitres",    si: e => e.max && e.max.chapitres > 0 && e.chapitres.ouverte >= e.max.chapitres },
   { id: "or1",    fam: "Maîtrise",     nom: "Voie royale",         dit: "un chapitre d'or",      si: e => e.chapitres.or >= 1 },
   { id: "or3",    fam: "Maîtrise",     nom: "Trois fois l'or",     dit: "3 chapitres d'or",      si: e => e.chapitres.or >= 3 },
   { id: "diam1",  fam: "Maîtrise",     nom: "Pas une minute",      dit: "un chapitre de diamant", si: e => e.chapitres.diamant >= 1 },

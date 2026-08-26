@@ -2508,6 +2508,33 @@ svg { width: 100%; height: 100%; display: block; }
 .cf-zone { margin: 2px 0 0; font-size: 12px; color: var(--gold-hi);
   padding-top: 8px; border-top: 1px solid #2a3550; align-self: stretch; }
 .cz-ic { font-size: 13px; opacity: .8; }
+
+/* LES MÉDAILLES DÉCROCHÉES — dans le relevé comme dans la fête de chapitre.
+   Un liseré doré et deux lignes par médaille : le NOM, qui se retient, et ce
+   qu'elle a demandé, plus petit. Elles se posent SOUS le reste : ce qu'on
+   vient de jouer passe avant ce qu'on vient de collectionner. */
+.c-medailles {
+  display: flex; flex-direction: column; gap: 4px; align-self: stretch;
+  margin-top: 2px; padding-top: 8px; border-top: 1px solid #2a3550;
+}
+/* PAS DE FLEX ICI. Un nom long — « Pas une minute », « Ponctualité suisse » —
+   casse sur deux lignes, et en flex les deux moitiés se centraient parce que
+   la fête est en text-align: center. Le texte coule donc normalement, avec un
+   RETRAIT NÉGATIF : la puce déborde à gauche et les lignes de retour
+   s'alignent sous le nom. Mesuré sur « Pas une minute · un chapitre de
+   diamant », le seul cas qui déborde dans le panneau. */
+.cm-un {
+  display: block; text-align: left; font-size: 11.5px;
+  padding-left: 15px; text-indent: -15px;
+  animation: med-pose .5s cubic-bezier(.2, .9, .3, 1.2) both;
+}
+.cm-un::before { content: "\25C6"; color: var(--gold-hi); font-size: 9px; opacity: .9; margin-right: 6px; }
+.cm-un b { font-weight: 700; color: var(--gold-hi); letter-spacing: -.005em; }
+.cm-un i { font-style: normal; color: var(--muted); font-size: 10.5px; margin-left: 5px; }
+.cm-un:nth-child(2) { animation-delay: .1s; }
+.cm-plus { display: block; text-align: left; font-size: 10.5px; color: var(--muted); padding-left: 15px; }
+@keyframes med-pose { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .cm-un { animation: none; } }
 /* ÉCRAN COURT : tout se resserre, RIEN ne se coupe. C'est la hauteur qui
    commande — un panneau à trois blocs empilés se serre par le haut. */
 @media (max-height: 620px) {

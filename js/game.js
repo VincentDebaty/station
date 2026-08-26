@@ -1350,6 +1350,11 @@ function endGame(failed) {
   const prevStars = (getProgress()[STATION.id] || {}).stars || 0;
   const prevBest = (getProgress()[STATION.id] || {}).bestDelay;
   const noPay = failed || STATION.adhoc;
+  // LES MÉDAILLES SE COMPARENT, elles ne se stockent pas. L'instantané d'AVANT
+  // doit être pris avant l'enregistrement du service : mesuré après, il
+  // contiendrait déjà ce qu'on vient de gagner, et rien ne paraîtrait neuf.
+  const medAvant = (!STATION.adhoc && typeof medaillesDe === "function"
+    && typeof etatRecompenses === "function") ? medaillesDe(etatRecompenses()) : null;
   // Un échec (ou la démo limites) ne modifie pas le record — mais il se note
   // quand même : une gare tentée et ratée n'ouvre pas la suivante (js/ruban.js,
   // estFranchie), et il faut pouvoir la distinguer d'une gare jamais jouée.
@@ -1361,6 +1366,16 @@ function endGame(failed) {
   // pas. Un ÉCHEC, lui, compte : il casse la série — le seul endroit du jeu où
   // rater a une conséquence, et elle est minuscule.
   if (!STATION.adhoc && typeof pushSerie === "function") pushSerie(!failed && stars >= SERIE_SEUIL);
+  // L'APRÈS SE MESURE UNE FOIS LA SÉRIE TENUE : trois médailles de Style en
+  // dépendent, et prises avant elles se déclencheraient un service trop tard.
+  // Le rang du chapitre, lui, suit déjà `saveResult` — rien à attendre de plus.
+  // Elles sont posées sur CARTE et NON sur le bilan : une fin de chapitre met
+  // le bilan à null (js/parcours.js, preparerSuite), et c'est précisément là
+  // qu'on en décroche le plus. Ce serait les perdre au moment de les montrer.
+  if (medAvant && typeof CARTE !== "undefined") {
+    const neuves = medaillesNouvelles(medAvant, medaillesDe(etatRecompenses()));
+    CARTE.medailles = neuves.length ? neuves : null;
+  }
   const etoilesGagnees = noPay ? 0 : Math.max(0, stars - prevStars);
   (perfect ? SND.perfect : win ? SND.end : SND.incident)(); // parfait → fanfare, 0 étoile → échec
 

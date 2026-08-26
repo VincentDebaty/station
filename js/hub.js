@@ -42,7 +42,7 @@ async function startStation(i) {
   currentIdx = i;
   lastPlayedId = (CATALOG[i] || {}).id || null;
   // Un service commence : le résultat du précédent appartient au passé.
-  if (typeof CARTE !== "undefined") CARTE.bilan = null;
+  if (typeof CARTE !== "undefined") { CARTE.bilan = null; CARTE.medailles = null; }
   // LA FICHE TELLE QU'ON LA JOUE, et non telle qu'elle est écrite : la gare
   // d'amorce d'une partie se joue en niveau 1 (js/ruban.js, ficheDeService).
   const cfg = typeof ficheDeService === "function"

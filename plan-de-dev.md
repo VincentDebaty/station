@@ -17,7 +17,7 @@
 | **B** | Outils d'auteur — **fait le 21 août 2026**, en partie caduc (voir C) | M | A |
 | **C** | Le ruban dans les données — **fait le 25 août 2026** | M | A |
 | **D** | Le ruban dans le moteur — **fait le 25 août 2026** | M | C |
-| **G** | Récompense **et crédits** : chapitre, zone, solde déduit | S | D |
+| **G** | Récompense **et crédits** — **en partie fait le 26 août 2026** ; reste le solde multi-cartes | S | D |
 | **E** | Les écrans — **fait le 25 août 2026** | M | D, G |
 | **F** | Contenu : écrire les 470 fiches du ruban (`ruban-europe.md`) | XL | C, D |
 | **H** | L'écran des cartes et l'achat | M | G |
@@ -388,7 +388,51 @@ l'ordre du rail, 8 sauts, de Cork à Istanbul. Ce lot ne décide plus, il écrit
 headless va de Cork à Istanbul sans blocage, sans doublon de gare, et sans
 saut non déclaré.
 
-## Lot G — Récompense
+## Lot G — Récompense — EN PARTIE FAIT (26 août 2026)
+
+*Constat d'audit* : le lot était bien plus avancé que ce plan ne le disait. Les
+points 1, 2 et 5 avaient été livrés au lot D sans être consignés —
+`garesDeChapitre` / `rangDeChapitre` / `tousLesChapitres`, `etatDeZone`
+(`js/ruban.js`), et TOUTE la couche crédits (`creditsGagnes`, `prixDePassage`,
+`creditsDepenses`, `soldeCredits`), dont `js/parcours.js` se sert réellement
+pour la soupape. La zone est fêtée elle aussi (`preparerSuite` calcule
+`zoneFinie`, `feteHTML` écrit « région traversée »).
+
+*Le vrai trou, comblé le 26 août* : **les médailles n'étaient montrées nulle
+part**. Les 28 étaient définies et `medaillesNouvelles` — écrite exprès pour
+dire ce qu'on vient de décrocher — n'avait AUCUN appelant. Le joueur
+franchissait des paliers sans jamais l'apprendre.
+
+*Livré* : l'instantané avant/après dans `endGame` (`js/game.js`), posé sur
+`CARTE` et non sur le bilan — une fin de chapitre met `CARTE.bilan` à `null`,
+et c'est précisément là qu'on décroche le plus : cinq médailles d'un coup sur
+L'Ardenne jouée d'affilée. `medaillesHTML()` (`js/parcours.js`) les rend dans
+les DEUX surfaces, avec un cap qui suit la place : deux au plus dans la bulle
+du relevé, toutes dans la fête de chapitre.
+
+*Seuils recalés* : quatre médailles étaient **inatteignables**. Elles visaient
+un catalogue de 145 gares quand le ruban v1 n'en expose que 63 — 250 et 435
+étoiles pour un plafond de 189, 75 gares pour 63, 12 chapitres pour 11.
+`etatRecompenses` expose désormais `e.max` (déduit du ruban courant) et les
+médailles de plafond sont RELATIVES : « la moitié du ruban », « toutes les
+étoiles », « toutes les gares », « tous les chapitres ». Elles suivront le lot F
+sans qu'on ait à y revenir. `sa1` reste au tableau bien que le v1 ne déclare
+aucun saut : les huit sont au tracé et arriveront avec le contenu.
+
+*Vérifié en headless* : L'Ardenne jouée d'affilée, une médaille annoncée à
+Arlon, Marloie et Ottignies, cinq à Bruxelles-Midi, et **elles survivent à la
+fête** ; plafonds lus à 189/63/11/2 ; aucune erreur. Un défaut de rendu corrigé
+au passage — un nom long se cassait en deux et se centrait, la fête étant en
+`text-align: center` ; les rangs passent en retrait négatif.
+
+*Reste au lot G* : le point 3 (retirer les médailles de hub — sans objet, il
+n'y en a plus) est clos ; le point 4 ne l'est PAS. **`creditsGagnes` compte sur
+la carte COURANTE**, alors que le plan le veut sur toutes les cartes, et le
+terme « carte terminée × 500 » n'existe pas. Invisible tant qu'il n'y a qu'une
+carte — c'est un piège armé pour le lot H. Le point 6 (caler les trois barèmes
+ensemble) attend la deuxième carte pour être mesurable.
+
+<details><summary>Le plan d'origine du lot G</summary>
 
 **But** : le chapitre remplace la ligne, la zone devient un palier.
 
@@ -417,6 +461,8 @@ saut non déclaré.
 *Fini quand* : finir tous les chapitres de la zone France-Benelux la fait
 passer *traversée* avec célébration, la vue Europe la colore, et le solde de
 crédits affiché correspond au barème sur une sauvegarde de test.
+
+</details>
 
 ## Lot H — L'écran des cartes et l'achat
 
