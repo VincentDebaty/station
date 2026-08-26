@@ -2630,3 +2630,20 @@ svg { width: 100%; height: 100%; display: block; }
   .c-ruban.a-arrivee .gare, .c-fete { animation: none; }
   .c-cote.en-route { opacity: 1; }
 }
+
+/* ---- LE CONVOI DE TRANSIT : le trajet d'un chapitre au suivant ----------
+   La caméra se déplaçait, mais rien ne PARCOURAIT la distance — on changeait
+   de cadrage, pas d'endroit. Le convoi fait la différence entre « la carte a
+   bougé » et « je suis allé quelque part ». */
+.c-ruban .c-convoi circle { fill: #6ff0e2; }
+.c-ruban .c-convoi .cv-halo { fill: #6ff0e2; opacity: .18; }
+.c-ruban .c-convoi.par-la-mer circle { fill: #7fd4ff; }
+.c-ruban .c-convoi.par-la-mer .cv-halo { fill: #7fd4ff; opacity: .16; }
+/* La liaison qu'il parcourt n'appartient à aucun des deux chapitres : elle est
+   en pointillé, dans la couleur de celui qu'on rejoint. */
+.c-ruban .s-transit { stroke: var(--col); opacity: .5;
+  stroke-dasharray: calc(1.2px / var(--k, 1)) calc(2.2px / var(--k, 1)); }
+/* La gare qu'on quitte s'estompe : elle appartient déjà au passé. */
+.c-ruban .g-quittee .pt { fill: var(--col); stroke: var(--col); opacity: .55; }
+.c-ruban .g-quittee text { fill: var(--muted); }
+@media (prefers-reduced-motion: reduce) { .c-ruban .c-convoi { display: none; } }

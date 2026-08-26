@@ -27,12 +27,12 @@
 const CARTE = {
   hote: null, bilan: null, voyage: null, prochaine: null,
   etoiles: null, cam: null, camAvant: null, fete: null, chapitre: null,
-  chapitreAvant: null, feteAvant: false
+  chapitreAvant: null, feteAvant: false, transit: null
 };
 // La caméra met .75 s à traverser (1,5 s pour un saut, css/station.css). On
 // laisse le voyage se voir avant d'ouvrir le niveau — sinon il se joue derrière
 // l'écran de jeu et personne ne le regarde.
-const DUREE_VOYAGE = 1150, DUREE_SAUT = 1900;
+const DUREE_VOYAGE = 1150, DUREE_SAUT = 1900, DUREE_POSE = 620;
 const sansAnimation = () =>
   !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
 
@@ -142,6 +142,23 @@ function boite(ids) {
 // ce que le premier test réclamait — le chapitre qu'on joue doit occuper
 // l'écran, pas flotter au milieu d'un continent.
 function cameraVoulue() {
+  // PENDANT LE TRANSIT, LA CAMÉRA RECULE. Voir d'où l'on part en même temps que
+  // là où l'on va est ce qui fait comprendre qu'on a changé de chapitre ; elle
+  // ne se posera sur le nouveau qu'une fois le convoi arrivé.
+  // On cadre donc la gare QUITTÉE avec tout le chapitre qu'on rejoint. Cadrer
+  // les deux seules gares du trajet ne marche pas : Bruxelles–Malines fait
+  // 25 km, le minimum de zoom s'appliquait et le ruban devenait un timbre-poste
+  // dans un coin.
+  if (CARTE.transit) {
+    const ch1 = CARTE.chapitre;
+    const bt = boite(ch1 ? [CARTE.transit.de].concat(ch1.gares) : [CARTE.transit.de, CARTE.transit.vers]);
+    if (bt) {
+      const inset = bandeauHaut();
+      // Un cran plus large que la pose (6) : le resserrement final se voit.
+      const k = zoomPour(Math.max(bt.w, 7), Math.max(bt.h, 5), 15, 5, inset);
+      return { x: bt.x, y: bt.y - inset / (2 * k), k };
+    }
+  }
   const ch = CARTE.chapitre;
   const b = ch && boite(ch.gares);
   if (!b) return { x: CADRE_L / 2, y: CADRE_H / 2, k: 1 };
@@ -202,6 +219,14 @@ function railHTML() {
     segs.push(`<path class="seg ${!ecrit ? "s-avenir" : fait ? "s-fait" : "s-reste"}"` +
       ` style="--col:${col};--i:${i - 1}" d="M${a.x.toFixed(2)} ${a.y.toFixed(2)}L${b.x.toFixed(2)} ${b.y.toFixed(2)}"/>`);
   }
+  // LA LIAISON DE TRANSIT — le chemin d'un chapitre au suivant. Il n'appartient
+  // à aucun des deux, d'où le pointillé : ce n'est pas une portion à jouer,
+  // c'est ce qu'on traverse entre deux étapes.
+  if (CARTE.transit) {
+    const a = pos(CARTE.transit.de), b = pos(CARTE.transit.vers);
+    if (a && b) segs.push(`<path class="seg s-transit${CARTE.transit.saut ? " s-saut" : ""}"` +
+      ` style="--col:${col}" d="M${a.x.toFixed(2)} ${a.y.toFixed(2)}L${b.x.toFixed(2)} ${b.y.toFixed(2)}"/>`);
+  }
   return '<g class="rail">' + segs.join("") + "</g>";
 }
 // LES SYMBOLES SE DESSINENT À TAILLE D'ÉCRAN. Un rayon en unités du monde
@@ -240,6 +265,17 @@ function garesHTML() {
           : st ? `<tspan class="et" dx="${(1.4 / k).toFixed(2)}">${"★".repeat(st)}</tspan>` : "") +
       `</text>` +
       `</g>`);
+  }
+  // La gare qu'on QUITTE reste dessinée le temps du transit : sans elle, le
+  // train partirait de nulle part.
+  if (CARTE.transit) {
+    const gq = CARTE.transit.de, pq = pos(gq);
+    if (pq && ch0.gares.indexOf(gq) < 0) {
+      const chq = chapitreDeGare(gq);
+      out.unshift(`<g class="gare g-faite g-fin g-quittee" style="--col:${couleurDeZone(chq && chq.zone)}">` +
+        `<circle class="pt" cx="${pq.x.toFixed(2)}" cy="${pq.y.toFixed(2)}" r="${R(2.3)}"/>` +
+        `<text x="${pq.x.toFixed(2)}" y="${(pq.y - 6 / k).toFixed(2)}">${nomDe(gq)}</text></g>`);
+    }
   }
   return '<g class="gares">' + out.join("") + "</g>";
 }
@@ -604,6 +640,41 @@ function poserCamera() {
 }
 
 // ------------------------------------------------------------------
+// LE TRAIN DE TRANSIT — le trajet d'un chapitre au suivant.
+// ------------------------------------------------------------------
+// La caméra se déplaçait, mais rien ne PARCOURAIT la distance : on changeait
+// de cadrage, pas d'endroit. Un convoi qui quitte la dernière gare d'un
+// chapitre et rejoint la première du suivant fait la différence entre « la
+// carte a bougé » et « je suis allé quelque part ».
+function lancerTrain(duree) {
+  const svg = CARTE.hote && CARTE.hote.querySelector(".c-ruban");
+  const monde = svg && svg.querySelector(".monde");
+  const t = CARTE.transit;
+  if (!svg || !monde || !t) return null;
+  const a = pos(t.de), b = pos(t.vers);
+  if (!a || !b) return null;
+  const k = (CARTE.cam && CARTE.cam.k) || 1;
+  const ns = "http://www.w3.org/2000/svg";
+  const g = document.createElementNS(ns, "g");
+  g.setAttribute("class", "c-convoi" + (t.saut ? " par-la-mer" : ""));
+  const c = document.createElementNS(ns, "circle");
+  c.setAttribute("r", (2.6 / k).toFixed(2));
+  const halo = document.createElementNS(ns, "circle");
+  halo.setAttribute("class", "cv-halo");
+  halo.setAttribute("r", (5 / k).toFixed(2));
+  g.appendChild(halo); g.appendChild(c);
+  monde.appendChild(g);
+  const anim = g.animate(
+    [{ transform: `translate(${a.x}px, ${a.y}px)`, opacity: 0 },
+     { transform: `translate(${a.x}px, ${a.y}px)`, opacity: 1, offset: 0.12 },
+     { transform: `translate(${b.x}px, ${b.y}px)`, opacity: 1, offset: 0.9 },
+     { transform: `translate(${b.x}px, ${b.y}px)`, opacity: 0 }],
+    { duration: duree, easing: "cubic-bezier(.45,.05,.3,1)", fill: "forwards" });
+  anim.onfinish = () => g.remove();
+  return anim;
+}
+
+// ------------------------------------------------------------------
 // LES GESTES.
 // ------------------------------------------------------------------
 // Un seul geste sur une gare : la jouer. Sur un ruban il n'y a rien à ouvrir —
@@ -617,16 +688,30 @@ function jouerGare(gareId) {
   // rend donc la carte d'abord, on laisse la caméra traverser, et le service
   // ne commence qu'après. Un saut prend plus longtemps : il traverse une mer.
   if (CARTE.fete) {
+    const quitte = CARTE.fete.ch.gares[CARTE.fete.ch.gares.length - 1];
     const suivant = chapitreDeGare(gareId);
-    const duree = suivant && suivant.saut ? DUREE_SAUT : DUREE_VOYAGE;
     CARTE.fete = null;
     CARTE.bilan = null;
-    if (suivant && suivant.saut) CARTE.voyageSaut = true;
-    renderCarte();                       // la caméra part vers le chapitre suivant
-    if (sansAnimation()) { startStation(i); return; }
+    if (sansAnimation()) { renderCarte(); startStation(i); return; }
+    // TROIS TEMPS. On cadre les deux gares, un convoi fait la route, puis la
+    // caméra se pose sur le chapitre neuf. Sans le convoi, la caméra changeait
+    // de cadrage sans que rien ne PARCOURE la distance : on ne voyageait pas,
+    // on coupait au montage.
+    const saut = !!(suivant && suivant.saut);
+    const route = saut ? DUREE_SAUT : DUREE_VOYAGE;
+    CARTE.transit = { de: quitte, vers: gareId, saut };
+    renderCarte();
     const cote = CARTE.hote && CARTE.hote.querySelector(".c-cote");
     if (cote) cote.classList.add("en-route");   // le panneau s'efface le temps du trajet
-    setTimeout(() => startStation(i), duree);
+    setTimeout(() => lancerTrain(route), 240);  // la caméra a le temps de s'installer
+    setTimeout(() => {                          // le convoi est arrivé : on se pose
+      CARTE.transit = null;
+      if (saut) CARTE.voyageSaut = true;
+      renderCarte();
+      const c2 = CARTE.hote && CARTE.hote.querySelector(".c-cote");
+      if (c2) c2.classList.add("en-route");
+      setTimeout(() => startStation(i), DUREE_POSE);
+    }, 240 + route);
     return;
   }
   startStation(i);
