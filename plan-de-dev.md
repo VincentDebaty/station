@@ -496,10 +496,14 @@ l'acte V qui est le plus près d'être fini — **11 fiches** le complètent, co
 
 Deux dettes connues, petites et indépendantes :
 
-- **Toulouse et Lunebourg** sont des gares « de queue » : elles passent les
-  30 journées (moyennes 3,0-3,4) mais échouent au hasard sur un balayage libre
-  à K=6. Elles rendront `gen-check` rouge de temps en temps tant qu'on n'a pas
-  desserré leur enveloppe.
+- **Toulouse, Lunebourg et Berne** sont des gares « de queue » : elles passent
+  les 30 journées mais échouent au hasard sur un balayage libre à K=6. Toulouse
+  et Lunebourg sortent sur la PRESSION (moyennes 3,0-3,4, file 5) ; Berne sort
+  sur le RETARD garanti, à 0,30 contre un seuil de 0,30 — pile sur la limite.
+  Relevé du 26 août 2026 sur trois balayages complets : graine 7 vert, un tirage
+  libre vert, un tirage libre sortant Berne seule. Elles rendront `gen-check`
+  rouge de temps en temps tant qu'on n'a pas desserré leur enveloppe, et c'est
+  un petit lot de calibrage qui vaut d'être fait avant beaucoup de contenu neuf.
 - **`enregistrer.mjs` replie `index.json` sur 90 caractères**, ce qui produit
   des centaines de lignes de diff sans contenu à chaque enregistrement. Le
   faire écrire une gare par ligne rendrait les diffs lisibles.
