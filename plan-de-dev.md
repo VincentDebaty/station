@@ -485,6 +485,23 @@ graphe : **60 gares suffisent** (R2) au lieu de 260.
 
 ## Prochaine action
 
-Lot C, points 1 et 6 : le schéma `chapitres[]` dans `data/cartes/README.md`, puis la
-conversion des 26 lignes jouables en un ruban provisoire — en gardant le jeu
-jouable à chaque commit.
+**Le ruban v1 est complet et se joue de bout en bout** — 11 chapitres,
+63 gares, d'Arlon à Hambourg, vérifié en headless le 26 août 2026.
+`carte-check` dit « 63 jouables d'affilée · 0 fiche à écrire ».
+
+La suite est donc le **lot F** hors du v1 : allonger le ruban vers les actes
+voisins. Par rentabilité (`ruban-europe.md`, « par où commencer ») c'est
+l'acte V qui est le plus près d'être fini — **11 fiches** le complètent, contre
+27 pour l'acte II et 89 pour l'acte I.
+
+Deux dettes connues, petites et indépendantes :
+
+- **Toulouse et Lunebourg** sont des gares « de queue » : elles passent les
+  30 journées (moyennes 3,0-3,4) mais échouent au hasard sur un balayage libre
+  à K=6. Elles rendront `gen-check` rouge de temps en temps tant qu'on n'a pas
+  desserré leur enveloppe.
+- **`enregistrer.mjs` replie `index.json` sur 90 caractères**, ce qui produit
+  des centaines de lignes de diff sans contenu à chaque enregistrement. Le
+  faire écrire une gare par ligne rendrait les diffs lisibles.
+
+Le **lot J** (supprimer `js/carte.js`, mort depuis le lot E) reste ouvert.

@@ -351,8 +351,8 @@ const LINES = [
   { id: "TR-IN", name: "Treuchtlingen – Ingolstadt", nodes: ["treuchtlingen", "ingolstadt"] },
   { id: "N-R", name: "Nuremberg – Ratisbonne",   nodes: ["nurnberg", "regensburg"] },
   { id: "R-M", name: "Ratisbonne – Landshut – Munich", nodes: ["regensburg", "landshut", "munchen"] },
-  { id: "A-N", name: "Augsbourg – Donauwörth – Treuchtlingen – Nuremberg",
-    nodes: ["augsburg", "donauworth", "treuchtlingen", "nurnberg"] },
+  { id: "A-N", name: "Augsbourg – Donauwörth – Treuchtlingen – Roth – Nuremberg",
+    nodes: ["augsburg", "donauworth", "treuchtlingen", "roth", "nurnberg"] },
 
   // ---- Le centre et le nord ----------------------------------------------
   { id: "SFS-GO", name: "Francfort – Hanau – Fulda – Cassel – Göttingen – Hanovre",

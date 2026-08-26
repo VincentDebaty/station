@@ -193,7 +193,8 @@ const GEO = {
         heidelberg: [8.6724, 49.3988],
         bruchsal: [8.5983, 49.1244],
         vaihingen: [8.9581, 48.9297],
-        dachau: [11.4342, 48.26]
+        dachau: [11.4342, 48.26],
+        roth: [11.0919, 49.2469]
       } },
     luxembourg: { name: "Luxembourg", flag: "🇱🇺", iso: "LUX", continent: "europe",
       cities: {

@@ -1,0 +1,29 @@
+{
+  "id": "roth",
+  "name": "Roth",
+  "city": "Roth",
+  "tagline": "Roth — trois lignes se rejoignent, et tout repart vers Nuremberg.",
+  "difficulty": 3,
+  "country": "🇩🇪 Allemagne",
+  "desc": "Sept voies pour une ville de vingt-cinq mille habitants : la ligne de Trechtlingen, celle d'Augsbourg et la petite Gredlbahn de Hilpoltstein s'y rejoignent. Tout ce qui en part va vers Nuremberg — le S-Bahn matin et soir en fait une gare de navetteurs.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }, { "id": 6 }
+  ],
+  "portals": {
+    "NURNBERG":      { "side": "L", "color": "#f5b23c", "abbr": "N", "label": "NÜRNBERG" },
+    "TREUCHTLINGEN": { "side": "R", "color": "#25dede", "abbr": "TL" },
+    "HILPOLTSTEIN":  { "side": "R", "color": "#a78bfa", "abbr": "HI" }
+  },
+  "links": {
+    "NURNBERG":      [1, 2, 3, 4, 5, 6],
+    "TREUCHTLINGEN": [1, 2, 3, 4],
+    "HILPOLTSTEIN":  [5, 6]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 13, "nMax": 15, "gapMin": 1.8, "gapMax": 3.0,
+    "cars": [2, 2, 3, 3, 4, 4, 5],
+    "quietRate": 0.18,
+    "rush": "double"
+  }
+}

@@ -23,9 +23,9 @@ Chaque région est traversée **une fois**, et on n'y revient jamais.
 |---|---|
 | Actes | **9** |
 | Chapitres | **95** |
-| Gares — c'est-à-dire **niveaux** | **593** |
-| Fiches déjà écrites, réemployées telles quelles | **123** |
-| Fiches à écrire | **470** |
+| Gares — c'est-à-dire **niveaux** | **592** |
+| Fiches déjà écrites, réemployées telles quelles | **126** |
+| Fiches à écrire | **466** |
 | Sauts déclarés (§4 bis) | **8** |
 | Longueur des chapitres | 5 à 9 gares, médiane 6 |
 
@@ -52,6 +52,14 @@ les 123 fiches annoncées comme existantes existent bien au catalogue.
 > deux directions ne s'invente pas : on prend la gare voisine, ou on redécoupe
 > le chapitre (voir [[r3-contre-plancher-trois-directions]] : Sète et Bar-le-Duc
 > ont déjà été refusées pour cette raison).
+>
+> **Refusées le 26 août 2026, chapitre 58** : Pfaffenhofen (Munich/Ingolstadt),
+> Kinding et Allersberg (Nuremberg/Ingolstadt) — deux directions chacune. Les
+> deux dernières sont des haltes de la ligne à grande vitesse de 2006, bâties
+> pour que des trains passent à 300 km/h à côté d'elles : il n'y a rien à y
+> aiguiller. Le chapitre a donc quitté la LGV pour la **ligne classique par
+> Treuchtlingen**, qui offre de vrais nœuds. Pfaffenhofen reste un point de
+> passage de la ligne M-IN dans `data/places.js`.
 
 ---
 
@@ -133,7 +141,7 @@ les 123 fiches annoncées comme existantes existent bien au catalogue.
 
 ## Acte V — Les Alpes, le Rhin et la Germanie
 
-*Du Fréjus à la Baltique, le cœur écrit du catalogue* — 16 chapitres, **93 gares** (78 déjà écrites, 15 à écrire).
+*Du Fréjus à la Baltique, le cœur écrit du catalogue* — 16 chapitres, **92 gares** (81 déjà écrites, 11 à écrire).
 
 | # | Chapitre | Gares, dans l'ordre du rail | n |
 |---|---|---|---|
@@ -149,7 +157,7 @@ les 123 fiches annoncées comme existantes existent bien au catalogue.
 | 55 | Le Rhin romantique | Bonn ✓ · Coblence ✓ · Bingen ✓ · Mayence ✓ · Wiesbaden · **Francfort Hbf** ✓ | 6 |
 | 56 | Le Neckar | Darmstadt · Mannheim ✓ · Heidelberg · Bruchsal · Vaihingen · **Stuttgart Hbf** ✓ | 6 |
 | 57 | La Souabe | Plochingen ✓ · Ulm ✓ · Günzburg ✓ · Augsbourg ✓ · **Munich Hbf** ✓ | 5 |
-| 58 | La Bavière | Dachau · Pfaffenhofen · Ingolstadt ✓ · Kinding · Allersberg · **Nuremberg Hbf** ✓ | 6 |
+| 58 | La Bavière | Dachau ✓ · Ingolstadt ✓ · Treuchtlingen ✓ · Roth ✓ · **Nuremberg Hbf** ✓ | 5 |
 | 59 | La Franconie et la Thuringe | Bamberg ✓ · Lichtenfels ✓ · Saalfeld ✓ · Erfurt ✓ · Weimar ✓ · Naumbourg ✓ · **Leipzig Hbf** ✓ | 7 |
 | 60 | La marche de Brandebourg | Halle ✓ · Bitterfeld ✓ · Wittenberg ✓ · Jüterbog ✓ · **Berlin Hbf** ✓ | 5 |
 | 61 | Le Mecklembourg | Neustrelitz ✓ · Rostock ✓ · Bad Kleinen ✓ · Schwerin ✓ · **Hambourg Hbf** ✓ | 5 |
@@ -277,15 +285,16 @@ s'étend par le bout, ou un chapitre se redécoupe pour les prendre.
 
 | Acte | Chapitres | Gares | Fiches à écrire |
 |---|---:|---:|---:|
-| I — Les Îles | 18 | 111 | 96 |
-| II — La France atlantique | 7 | 41 | 24 |
+| I — Les Îles | 18 | 111 | 89 |
+| II — La France atlantique | 7 | 41 | 27 |
 | III — L'Ibérie | 10 | 65 | 62 |
-| IV — Le Midi et l'Italie | 10 | 65 | 58 |
-| V — Les Alpes, le Rhin et la Germanie | 16 | 93 | 25 |
+| IV — Le Midi et l'Italie | 10 | 65 | 59 |
+| V — Les Alpes, le Rhin et la Germanie | 16 | 92 | 11 |
 | VI — Le Nord | 8 | 57 | 57 |
 | VII — La Baltique et la Bohême | 9 | 53 | 53 |
 | VIII — Les Alpes orientales et la Dalmatie | 6 | 38 | 38 |
 | IX — L'Est et l'Orient | 11 | 70 | 70 |
+| **Total** | **95** | **592** | **466** |
 
 L'écart entre le plus court acte (VIII, 6 chapitres) et le plus long (I, 18)
 est de **3 pour 1**. C'est la limite de l'acceptable : au-delà, une région se
@@ -321,7 +330,7 @@ position.
 
 ## Ce que ce ruban coûte, et par où commencer
 
-**470 fiches à écrire.** À raison d'une séance par gare, c'est le travail de
+**466 fiches à écrire.** À raison d'une séance par gare, c'est le travail de
 plusieurs mois — mais il est **entièrement parallélisable** (une session par
 gare, un manifeste, `tools/enregistrer.mjs`) et surtout **il n'est jamais
 bloquant** : le ruban est jouable dès que son début l'est. C'est tout
