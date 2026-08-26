@@ -2,32 +2,34 @@
   "id": "anvers",
   "name": "Anvers-Central",
   "city": "Anvers",
-  "tagline": "Anvers — terminus : tout bute sur un heurtoir, tout rebrousse.",
+  "tagline": "Anvers — trois niveaux : cinq voies butent sur un heurtoir, trois filent sous la ville.",
   "difficulty": 4,
   "country": "🇧🇪 Belgique",
-  "desc": "La cathédrale ferroviaire, sur trois niveaux : ici, dans le grand hall historique, tous les quais butent sur un heurtoir. Cinq directions — Bruxelles, Gand, Hasselt, Turnhout, Essen — et une seule gorge pour les faire entrer et sortir. La vôtre.",
+  "desc": "La cathédrale ferroviaire, sur trois niveaux. En haut et au milieu, les voies butent sur un heurtoir comme depuis 1905 ; tout en bas, depuis 2007, un tunnel traverse la ville et laisse enfin passer les trains vers les Pays-Bas sans rebrousser. Deux gares dans une, et c'est vous qui répartissez.",
   "platforms": [
-    { "id": 1, "deadEnd": true }, { "id": 2, "deadEnd": true }, { "id": 3, "deadEnd": true }, { "id": 4, "deadEnd": true }, { "id": 5, "deadEnd": true },
-    { "id": 6, "deadEnd": true }, { "id": 7, "deadEnd": true }
+    { "id": 1 }, { "id": 2 }, { "id": 3 },
+    { "id": 4, "deadEnd": true }, { "id": 5, "deadEnd": true }, { "id": 6, "deadEnd": true },
+    { "id": 7, "deadEnd": true }, { "id": 8, "deadEnd": true }
   ],
   "portals": {
     "BRUXELLES": { "side": "L", "color": "#25dede", "abbr": "B" },
     "GAND":      { "side": "L", "color": "#f5b23c", "abbr": "G" },
     "TURNHOUT":  { "side": "L", "color": "#a78bfa", "abbr": "TU" },
     "HASSELT":   { "side": "L", "color": "#60a5fa", "abbr": "H" },
-    "ESSEN":     { "side": "L", "color": "#f2588f", "abbr": "ES" }
+    "ESSEN":     { "side": "R", "color": "#f2588f", "abbr": "ES" }
   },
   "links": {
-    "BRUXELLES": [1, 2, 3, 4],
-    "GAND":      [2, 3, 4, 5],
-    "TURNHOUT":  [5, 6, 7],
-    "HASSELT":   [1, 6, 7],
-    "ESSEN":     [3, 4, 5, 6]
+    "ESSEN":     [1, 2, 3],
+    "BRUXELLES": [1, 2, 4, 5],
+    "GAND":      [2, 3, 4, 6, 8],
+    "HASSELT":   [1, 3, 5, 7, 8],
+    "TURNHOUT":  [6, 7]
   },
   "sameSidePairs": "all",
   "gen": {
     "nMin": 14, "nMax": 18, "gapMin": 1.9, "gapMax": 3.1,
     "cars": [2, 3, 3, 4, 4, 5, 6],
-    "quietRate": 0.15
+    "quietRate": 0.15,
+    "freightCount": 0
   }
 }
