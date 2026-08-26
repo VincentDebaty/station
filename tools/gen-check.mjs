@@ -50,7 +50,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const read = f => fs.readFileSync(path.join(ROOT, f), "utf8");
 
 // --- arguments : ids de gare (lettres) + K facultatif (nombre) + --seed=N ---
-let SEED = null, NIVEAU = null, BOSS = false;
+let SEED = null, NIVEAU = null, BOSS = false, ECRITE = false;
 // --fiche=<chemin.json> : une fiche PAS ENCORE ENREGISTRÉE dans index.json. C'est
 // ce qui permet d'écrire des gares en parallèle sans se disputer l'index : on
 // valide le fichier, on l'enregistre ensuite.
@@ -67,6 +67,14 @@ const rawArgs = process.argv.slice(2).filter(a => {
   // le jeu ne joue plus sur ces gares-là — et un contrôle qui ne mesure pas ce
   // que le jeu fait est pire que pas de contrôle.
   if (a === "--boss") { BOSS = true; return false; }
+  // --ecrite : l'enveloppe TELLE QU'ÉCRITE dans la fiche. C'était le défaut
+  // jusqu'au 26 août 2026, et c'était un mensonge pour toute gare du ruban :
+  // `ficheDeService` (js/ruban.js) remplace le `gen` d'une fiche par
+  // l'enveloppe de sa difficulté DÉDUITE DE SA POSITION. Mesuré ce jour-là :
+  // 60 des 63 gares du ruban jouaient autre chose que ce que le contrôle
+  // validait. L'option reste utile pour écrire une fiche avant qu'elle
+  // rejoigne un ruban — mais elle ne dit plus rien de ce que joue le joueur.
+  if (a === "--ecrite") { ECRITE = true; return false; }
   return true;
 });
 const kArg = rawArgs.find(a => /^\d+$/.test(a));
@@ -122,7 +130,38 @@ function makeEngine() {
   // réseau ne servent pas ici (HUBS n'est pas chargé, buildGraphe se garde
   // tout seul) : on ne vient chercher que les enveloppes.
   vm.runInContext(read("js/ruban.js"), sandbox, { filename: "ruban.js" });
+  // LA DIFFICULTÉ JOUÉE VIENT DU JEU, JAMAIS D'UNE COPIE. `difficulteDeGare`
+  // a besoin de deux choses que le moteur n'a pas ici : la carte courante
+  // (pour connaître le chapitre et le rang de la gare) et `cardOf` (pour lire
+  // le plafond de flux de la grande gare qui ferme le chapitre). On les lui
+  // donne plutôt que de réécrire la rampe dans l'outil — même principe que
+  // `isStartDoor` dans tools/net-check.mjs.
+  const cacheFiches = new Map();
+  sandbox.cardOf = id => {
+    if (cacheFiches.has(id)) return cacheFiches.get(id);
+    const c = cardsById.get(id);
+    let cfg = null;
+    if (c) { try { cfg = JSON.parse(c.path ? fs.readFileSync(c.path, "utf8") : read(`data/stations/${c.country}/${id}.json`)); } catch (e) { cfg = null; } }
+    cacheFiches.set(id, cfg);
+    return cfg;
+  };
   return sandbox;
+}
+
+// --- les rubans, pour savoir à quelle difficulté chaque gare se JOUE --------
+// Une gare hors ruban garde l'enveloppe de sa fiche : c'est aussi ce que fait
+// le jeu (`ficheDeService` rend la fiche telle quelle quand la gare n'est sur
+// aucun ruban).
+function chargerCartes() {
+  const m = new Map();
+  try {
+    for (const e of JSON.parse(read("data/cartes/index.json"))) {
+      const carte = JSON.parse(read("data/cartes/" + (e.fichier || e.id + ".json")));
+      for (const ch of carte.chapitres || [])
+        for (const g of ch.gares || []) if (!m.has(g)) m.set(g, carte);
+    }
+  } catch (e) { /* pas de carte : tout le monde garde son enveloppe écrite */ }
+  return m;
 }
 
 // --- catalogue ---
@@ -141,6 +180,12 @@ if (FICHES.length) {
   }
 }
 if (!cards.length) { console.error("Aucune gare ne correspond à :", filter.join(", ")); process.exit(2); }
+// L'index complet, et non `cards` : `cardOf` doit pouvoir lire la GRANDE GARE
+// qui ferme un chapitre même quand on ne contrôle qu'une gare du milieu.
+const cardsById = new Map();
+for (const group of index) for (const id of group.stations) cardsById.set(id, { id, country: group.country });
+for (const c of cards) cardsById.set(c.id, c);
+const CARTE_DE = chargerCartes();
 
 // La PRESSION sur un quai se lit dans le moteur (js/schedule.js,
 // platformPressure) — le générateur s'en sert pour filtrer, ce contrôle pour
@@ -148,6 +193,7 @@ if (!cards.length) { console.error("Aucune gare ne correspond à :", filter.join
 // que le jeu applique, et le contrôle aurait certifié un horaire qu'il ne
 // contrôlait plus.
 const eng = makeEngine();
+const niveauxJoues = new Map();   // gare -> difficulté RÉELLEMENT jouée
 const rows = [];
 let failed = 0;
 
@@ -162,6 +208,16 @@ for (const { id, country, path: chemin } of cards) {
     eng.__cfg = cfg;
     const gen = vm.runInContext(`enveloppeDe(this.__cfg, ${NIVEAU}, PROFILS[1])`, eng);
     cfg = { ...cfg, difficulty: NIVEAU, gen };
+  } else if (!ECRITE && CARTE_DE.has(id)) {
+    // L'ENVELOPPE QUE LE JOUEUR VERRA. On monte la carte de la gare dans le
+    // moteur et on laisse `ficheDeService` faire son geste : la difficulté
+    // sort de la position dans le ruban, rabattue par plafondDeFlux, et le
+    // `gen` de la fiche est remplacé. C'est le jeu qui décide, pas l'outil.
+    eng.CARTE_COURANTE = CARTE_DE.get(id);
+    vm.runInContext("resetRuban()", eng);
+    eng.__cfg = cfg;
+    const jouee = vm.runInContext("ficheDeService(this.__cfg)", eng);
+    if (jouee && jouee.gen) { cfg = jouee; niveauxJoues.set(id, jouee.difficulty); }
   }
   const problems = [];
   reseed();   // mêmes journées pour cette gare d'une exécution à l'autre
@@ -231,6 +287,8 @@ for (const { id, country, path: chemin } of cards) {
 const pad = (s, n) => String(s).padEnd(n);
 console.log(`\ngen-check — ${cards.length} gare(s), K=${K} journées chacune` +
   (NIVEAU != null ? `, enveloppe forcée au niveau ${NIVEAU}` : "") +
+  (ECRITE ? ", enveloppe ÉCRITE (pas celle que le jeu sert)" : "") +
+  (!ECRITE && NIVEAU == null && !BOSS && niveauxJoues.size ? `, dont ${niveauxJoues.size} à l'enveloppe JOUÉE du ruban` : "") +
             (SEED != null ? `, graine ${SEED} (reproductible)` : "") + "\n");
 console.log(pad("gare", 18) + pad("état", 6) + pad("trains", 9) + pad("retard", 8) +
             pad("file", 6) + pad("moy", 6) + "problèmes");

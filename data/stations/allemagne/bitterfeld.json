@@ -6,26 +6,97 @@
   "country": "🇩🇪 Allemagne",
   "desc": "C'est ici que l'Anhalter Bahn se sépare : à gauche Halle, à droite Leipzig, et l'ICE y prend la fourche à pleine vitesse sur une tranchée de six cents mètres. Quatre longues voies pour les grandes lignes, deux courtes pour la S-Bahn de Dessau et de Wittenberg — et tout autour, le parc chimique qui a fait la ville.",
   "platforms": [
-    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }, { "id": 6 }
+    {
+      "id": 1
+    },
+    {
+      "id": 2
+    },
+    {
+      "id": 3
+    },
+    {
+      "id": 4
+    },
+    {
+      "id": 5
+    },
+    {
+      "id": 6
+    }
   ],
   "portals": {
-    "BERLIN":     { "side": "L", "color": "#25dede", "abbr": "B" },
-    "WITTENBERG": { "side": "L", "color": "#60a5fa", "abbr": "WB" },
-    "DESSAU":     { "side": "L", "color": "#4ade80", "abbr": "DE" },
-    "HALLE":      { "side": "R", "color": "#f5b23c", "abbr": "HA" },
-    "LEIPZIG":    { "side": "R", "color": "#a78bfa", "abbr": "L" }
+    "BERLIN": {
+      "side": "L",
+      "color": "#25dede",
+      "abbr": "B"
+    },
+    "WITTENBERG": {
+      "side": "L",
+      "color": "#60a5fa",
+      "abbr": "WB"
+    },
+    "DESSAU": {
+      "side": "L",
+      "color": "#4ade80",
+      "abbr": "DE"
+    },
+    "HALLE": {
+      "side": "R",
+      "color": "#f5b23c",
+      "abbr": "HA"
+    },
+    "LEIPZIG": {
+      "side": "R",
+      "color": "#a78bfa",
+      "abbr": "L"
+    }
   },
   "links": {
-    "BERLIN":     [1, 2, 3, 4],
-    "WITTENBERG": [3, 4, 5],
-    "DESSAU":     [5, 6],
-    "HALLE":      [1, 2, 3, 5],
-    "LEIPZIG":    [3, 4, 5, 6]
+    "BERLIN": [
+      1,
+      2,
+      3,
+      4
+    ],
+    "WITTENBERG": [
+      2,
+      3,
+      4,
+      5
+    ],
+    "DESSAU": [
+      5,
+      6
+    ],
+    "HALLE": [
+      1,
+      2,
+      3
+    ],
+    "LEIPZIG": [
+      4,
+      5,
+      6
+    ]
   },
   "sameSidePairs": [],
   "gen": {
-    "nMin": 15, "nMax": 18, "gapMin": 1.6, "gapMax": 2.8,
-    "cars": [2, 3, 3, 4, 4, 5, 5, 6, 7],
+    "nMin": 15,
+    "nMax": 18,
+    "gapMin": 1.6,
+    "gapMax": 2.8,
+    "cars": [
+      2,
+      3,
+      3,
+      4,
+      4,
+      5,
+      5,
+      6,
+      7
+    ],
     "quietRate": 0.15,
     "rush": "double"
   }

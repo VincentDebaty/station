@@ -147,7 +147,36 @@ function rangDansChapitre(gareId) {
 function plafondDeFlux(cfg) {
   if (!cfg) return 5;
   const quais = (cfg.platforms || []).length;
-  return Math.max(1, Math.min(5, quais - 1));
+  // LES DIRECTIONS COMPTENT AUTANT QUE LES QUAIS. Le plafond ne regardait que
+  // les quais, ce qui contredisait la règle qu'il est censé appliquer : le §5
+  // bis de tools/AUTHORING-STATIONS.md mesure que « la difficulté d'une gare
+  // vient d'abord de sa géométrie — combien de DIRECTIONS à aiguiller, combien
+  // de quais pour les recevoir », et que « une gare de fin de corridor à trois
+  // directions restera facile quoi qu'on fasse de son trafic ».
+  //
+  // Sans ce terme, Roth — six quais mais TROIS directions — montait au niveau 5
+  // et recevait 18 à 22 convois : 4,0 de pression moyenne, mesuré le 26 août
+  // 2026. Il n'y avait pas de quoi aiguiller, seulement de quoi faire la file.
+  //
+  // Le terme est calé sur la table mesurée du §5 bis : Dinant 3 dir/3 quais → 2,
+  // Landen 3/4 → 3, Bruges 5/5 → 4, Liège 6/9 → 5. Les quatre sont retrouvées.
+  const directions = Object.keys(cfg.portals || {}).length;
+  // LE PALIER DE QUAIS, et non « un quai = un cran ». `quais - 1` laissait une
+  // gare de six quais monter au niveau 5, où l'enveloppe sert 18 à 22 convois
+  // — un régime que le §5 dimensionne pour HUIT à dix quais. Mesuré le 26 août
+  // 2026 sur le ruban joué : Wittenberg (6 quais) et Treuchtlingen (5) sortent
+  // au-dessus de 4 de pression, et passent toutes deux d'un cran plus bas.
+  //
+  // CINQ QUAIS PLAFONNENT À 3, et c'est le seul écart assumé avec la table du
+  // §5 bis, qui valide Bruges (5 quais) au niveau 4. La table a été mesurée sur
+  // les enveloppes ÉCRITES des fiches ; celle-ci s'applique à l'enveloppe
+  // JOUÉE, qui vient de `ENVELOPPES` et sert 16 à 20 convois au niveau 4 sans
+  // regarder la taille de la gare. Mesuré le 26 août : Treuchtlingen, cinq
+  // quais, tient 3,4 à 3,8 de pression moyenne à ce régime même après
+  // ouverture de sa paire morte, et rentre à 3,0 un cran plus bas. L'écart va
+  // vers le PLUS FACILE, jamais vers le plus dur.
+  const parQuais = quais >= 8 ? 5 : quais >= 6 ? 4 : quais >= 5 ? 3 : Math.max(1, quais - 1);
+  return Math.max(1, Math.min(5, parQuais, directions));
 }
 // Le plancher d'un chapitre : celui qu'il déclare, sinon une rampe douce
 // déduite de son rang dans le ruban (un cran tous les trois chapitres).
