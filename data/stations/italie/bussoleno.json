@@ -1,0 +1,77 @@
+{
+  "id": "bussoleno",
+  "name": "Bussoleno",
+  "tagline": "Bussoleno — la vallée se divise : le Fréjus tout droit, Suse à part.",
+  "difficulty": 2,
+  "country": "🇮🇹 Italie",
+  "desc": "Le dernier embranchement du val de Suse avant la montée vers le tunnel du Fréjus : les rapides de Turin filent vers Bardonnèche et la France, tandis que la courte antenne de Suse s'en détache et meurt trois kilomètres plus loin. La traction électrique triphasée y fut inaugurée en 1913, avant d'être convertie au continu en 1961.",
+  "platforms": [
+    {
+      "id": 1
+    },
+    {
+      "id": 2
+    },
+    {
+      "id": 3
+    },
+    {
+      "id": 4
+    }
+  ],
+  "portals": {
+    "TORINO": {
+      "side": "L",
+      "color": "#25dede",
+      "abbr": "TO",
+      "label": "TURIN"
+    },
+    "BARDONECCHIA": {
+      "side": "R",
+      "color": "#f5b23c",
+      "abbr": "BD",
+      "label": "BARDONNÈCHE"
+    },
+    "SUSA": {
+      "side": "R",
+      "color": "#a78bfa",
+      "abbr": "SU",
+      "label": "SUSE"
+    }
+  },
+  "links": {
+    "TORINO": [
+      1,
+      2,
+      3,
+      4
+    ],
+    "BARDONECCHIA": [
+      1,
+      2,
+      3,
+      4
+    ],
+    "SUSA": [
+      1,
+      2
+    ]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 12,
+    "nMax": 15,
+    "gapMin": 1.8,
+    "gapMax": 3.0,
+    "cars": [
+      2,
+      2,
+      2,
+      3,
+      3,
+      4,
+      4
+    ],
+    "quietRate": 0.2
+  }
+}

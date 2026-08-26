@@ -1,0 +1,28 @@
+{
+  "id": "aix-les-bains",
+  "name": "Aix-les-Bains-Le Revard",
+  "city": "Aix-les-Bains",
+  "tagline": "Aix-les-Bains — au bout du quai, la ligne d'Annecy s'écarte de celle de l'Italie.",
+  "difficulty": 3,
+  "country": "🇫🇷 France",
+  "desc": "La gare thermale du lac du Bourget, et une bifurcation : à la sortie nord, la voie d'Annecy et d'Annemasse quitte celle de Culoz et de la Maurienne. Les TGV de Paris y croisent les TER de Savoie sur cinq voies. Le bâtiment de 1866, un corps central encadré de deux ailes basses, a été repris en pôle multimodal en 2008.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
+  ],
+  "portals": {
+    "CHAMBÉRY": { "side": "L", "color": "#4ade80", "abbr": "CH", "label": "CHAMBÉRY" },
+    "CULOZ":    { "side": "R", "color": "#f5b23c", "abbr": "CZ" },
+    "ANNECY":   { "side": "R", "color": "#f2588f", "abbr": "AN" }
+  },
+  "links": {
+    "CHAMBÉRY": [1, 2, 3, 4, 5],
+    "CULOZ":    [1, 2, 3, 4],
+    "ANNECY":   [4, 5]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 13, "nMax": 15, "gapMin": 1.7, "gapMax": 2.9,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6],
+    "quietRate": 0.16
+  }
+}

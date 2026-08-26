@@ -39,6 +39,8 @@ les 123 fiches annoncées comme existantes existent bien au catalogue.
 - Les gares sont **dans l'ordre du rail**, de gauche à droite. La **dernière,
   en gras, est la grande gare** qui ferme le chapitre.
 - ✓ = la fiche existe déjà dans `data/stations/`. Sans marque = **à écrire**.
+- ✗ barré = **refusée par le §0** (moins de trois directions réelles).
+  ⊘ = fiche écrite et validée, mais pas encore enregistrée (isolée du réseau).
 - Un chapitre précédé d'un bandeau *Saut* commence par une rupture de
   continuité déclarée : bateau, train de nuit, ou correspondance.
 - **Après un saut, la ville d'arrivée est jouée comme première gare du
@@ -60,6 +62,35 @@ les 123 fiches annoncées comme existantes existent bien au catalogue.
 > aiguiller. Le chapitre a donc quitté la LGV pour la **ligne classique par
 > Treuchtlingen**, qui offre de vrais nœuds. Pfaffenhofen reste un point de
 > passage de la ligne M-IN dans `data/places.js`.
+>
+> **Refusées le 26 août 2026, chapitres 46 et 47** : Modane
+> (Saint-Jean-de-Maurienne / Bardonnèche), Saint-Jean-de-Maurienne (Chambéry /
+> Modane), Meximieux-Pérouges (La Valbonne / Ambérieu) et Seyssel-Corbonod
+> (Culoz / Bellegarde) — **deux directions chacune**, vérifié en source. Ce
+> sont des gares de vallée sur une ligne unique : la Maurienne pour les deux
+> premières, la ligne de Lyon à Genève pour les deux autres. Modane est même un
+> terminus de ligne prolongé par le tunnel du Fréjus — un point de passage
+> international, pas un carrefour.
+>
+> **Conséquence, à trancher.** Les deux chapitres ne tiennent plus tels quels :
+>
+> - **46 Le Fréjus** survit à cinq gares — Bussoleno · Chambéry ✓ ·
+>   Aix-les-Bains ✓ · Ambérieu ✓ · **Lyon Part-Dieu** ✓. R3 est tenue (5 gares)
+>   et R5 aussi : Bussoleno – Chambéry fait **107 km** à vol d'oiseau, sous le
+>   seuil de 250. Le trou saute toute la Maurienne, ce qui se défend — c'est un
+>   tunnel de treize kilomètres et une vallée sans nœud.
+> - **47 Le Bugey** ne survit PAS : il tombe à Culoz ✓ · Bellegarde ✓ ·
+>   **Genève** ✓, soit **trois gares** contre cinq exigées par R3. Aucune
+>   candidate de secours sur ce corridor : entre Lyon et Genève, seules
+>   Ambérieu, Culoz et Bellegarde ont trois directions, et Ambérieu est déjà
+>   prise par le chapitre 46.
+>
+> Trois issues possibles, aucune tranchée : **fondre 46 et 47** en un chapitre
+> de sept gares finissant à Genève (Lyon Part-Dieu sortirait alors du ruban) ;
+> **passer par le Haut-Bugey** en écrivant Bourg-en-Bresse, vrai carrefour à
+> quatre directions, ce qui rendrait 47 viable à cinq gares ; ou **rattacher
+> Culoz et Bellegarde au chapitre 48**, qui commence aujourd'hui à Lausanne.
+> C'est une décision de tracé, pas d'écriture.
 
 ---
 
@@ -141,12 +172,18 @@ les 123 fiches annoncées comme existantes existent bien au catalogue.
 
 ## Acte V — Les Alpes, le Rhin et la Germanie
 
-*Du Fréjus à la Baltique, le cœur écrit du catalogue* — 16 chapitres, **92 gares** (81 déjà écrites, 11 à écrire).
+*Du Fréjus à la Baltique, le cœur écrit du catalogue* — 16 chapitres, **92 gares**.
+Au 26 août 2026 : 88 écrites, **4 refusées** par le §0 (Modane,
+Saint-Jean-de-Maurienne, Meximieux, Seyssel — voir l'encadré plus haut), et
+les chapitres 46-47 restent à redécouper. Bussoleno est écrite et validée mais
+**pas enregistrée** : aucune gare jouable ne la touche tant que Turin et la
+Maurienne n'existent pas, et `net-check` refuse une gare qu'aucune porte de
+départ n'atteint.
 
 | # | Chapitre | Gares, dans l'ordre du rail | n |
 |---|---|---|---|
-| 46 | Le Fréjus | Bussoleno · Modane · Saint-Jean-de-Maurienne · Chambéry ✓ · Aix-les-Bains · Ambérieu ✓ · **Lyon Part-Dieu** ✓ | 7 |
-| 47 | Le Bugey | Meximieux · Culoz ✓ · Seyssel · Bellegarde ✓ · **Genève-Cornavin** ✓ | 5 |
+| 46 | Le Fréjus | Bussoleno ⊘ · ~~Modane~~ ✗ · ~~Saint-Jean-de-Maurienne~~ ✗ · Chambéry ✓ · Aix-les-Bains ✓ · Ambérieu ✓ · **Lyon Part-Dieu** ✓ | 5 |
+| 47 | Le Bugey | ~~Meximieux~~ ✗ · Culoz ✓ · ~~Seyssel~~ ✗ · Bellegarde ✓ · **Genève-Cornavin** ✓ | 3 ⚠ |
 | 48 | Le Plateau suisse | Lausanne ✓ · Fribourg ✓ · Berne ✓ · Olten ✓ · Aarau ✓ · **Zurich HB** ✓ | 6 |
 | 49 | Le Rhin supérieur | Bâle ✓ · Mulhouse ✓ · Colmar ✓ · Sélestat ✓ · **Strasbourg** ✓ | 5 |
 | 50 | La Lorraine | Sarrebourg ✓ · Nancy ✓ · Metz ✓ · Thionville ✓ · Bettembourg ✓ · **Luxembourg** ✓ | 6 |

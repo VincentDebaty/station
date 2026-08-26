@@ -496,5 +496,7 @@ const LINES = [
   { id: "Westbahn", name: "Bruchsal – Bretten – Mühlacker – Vaihingen – Bietigheim – Stuttgart",
     nodes: ["bruchsal", "bretten", "muhlacker", "vaihingen", "bietigheim", "stuttgart"] },
   { id: "M-IN", name: "Munich – Dachau – Pfaffenhofen – Ingolstadt",
-    nodes: ["munchen", "dachau", "pfaffenhofen", "ingolstadt"] }
+    nodes: ["munchen", "dachau", "pfaffenhofen", "ingolstadt"] },
+  { id: "L900", name: "Culoz – Aix-les-Bains – Chambéry",
+    nodes: ["culoz", "aix-les-bains", "chambery"] }
 ];
