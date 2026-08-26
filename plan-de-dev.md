@@ -22,7 +22,7 @@
 | **F** | Contenu : écrire les 470 fiches du ruban (`ruban-europe.md`) | XL | C, D |
 | **H** | L'écran des cartes et l'achat | M | G |
 | **I** | Deuxième carte (preuve de généricité) | L | C, H |
-| **J** | Nettoyage : ce que le ruban rend mort | S | E, G |
+| **J** | Nettoyage : ce que le ruban rend mort — **fait le 26 août 2026** | S | E, G |
 
 Tailles : S = une séance, M = quelques séances, L = une à deux semaines de
 contenu.
@@ -455,19 +455,45 @@ graphe : **60 gares suffisent** (R2) au lieu de 260.
 3. La livrer **verrouillée** derrière un prix en crédits — c'est aussi le test
    du lot H.
 
-## Lot J — Nettoyage
+## Lot J — Nettoyage — FAIT (26 août 2026)
 
-- `js/graph.js` supprimé (lot D), `js/hub.js` (88 lignes, ne fait plus que
-  déléguer à `renderCarte`) fondu.
-- `js/catalog.js` perd les restes de la progression par pays (`isUnlocked`,
-  `countryComplete`, `JALONS`, `cheapestBuyable*`, `nextMove`) s'ils ne sont
-  plus appelés — plusieurs sont déjà des coquilles.
-- `tools/corridors-propose.mjs` et `tools/graph-propose.mjs` : supprimés, ou
-  refaits en « propose la suite du ruban » s'ils rendent encore service.
-- `tools/graph-check.mjs` : réévaluer (il garde les invariants du graphe des
-  voies **d'une gare**, pas de la carte — probablement à conserver tel quel,
-  seul son en-tête est périmé).
-- `README.md` : suivre l'organisation des fichiers à chaque lot.
+*Livré* : `js/carte.js` **supprimé** (1065 lignes) — mort depuis le lot E, ni
+chargé par `station.html` ni dans le `PRECACHE` de `sw.js`, et sa `renderCarte`
+n'était qu'un doublon de celle de `js/parcours.js`. Vérifié avant coupe :
+aucune des 23 fonctions qu'il était seul à définir n'était appelée par du code
+vivant.
+
+`js/catalog.js` **passe de 488 à 215 lignes** : la progression par pays est
+partie entière — `isUnlocked`, les `JALONS`, l'achat de gare (`canBuy`,
+`isBuyable`, `buyStationById`, `cheapestBuyable*`), la proposition `nextMove`,
+et le palmarès de pays. Elle décrivait un jeu où l'on choisissait sa gare ; le
+ruban les ordonne.
+
+*Ce que la coupe a failli emporter* : `isStartDoor` ne semblait morte que parce
+qu'aucun fichier chargé par `station.html` ne l'appelle — mais
+`tools/net-check.mjs` charge `js/catalog.js` dans un contexte VM pour que la
+règle de la porte de départ vienne du JEU et jamais d'une copie. **Une analyse
+d'atteignabilité qui ignore `tools/` se trompe sur ce fichier.**
+
+*Vérifié en headless* (Chrome + client CDP) : le jeu se charge sans exception,
+catalogue à 241 gares, ruban sur Arlon ; un service pris puis `endGame` dans
+ses **deux** branches — réussite (3 ★, diamant, le ruban avance sur Libramont)
+et échec (« Passer · 5 cr » à côté de *Réessayer*) — sans une seule erreur, la
+progression et les crédits enregistrés. `carte-check`, `net-check` et
+`gen-check` verts.
+
+*Ce qui a été corrigé en chemin* : le bloc « organisation des fichiers » de
+`README.md` listait encore `graph.js` (supprimé au lot D) et ignorait
+`ruban.js` et `parcours.js` ; trois commentaires renvoyaient à `js/carte.js`
+pour `bilanHTML`, qui vit dans `js/parcours.js` ; `js/hub.js` citait `js/map.js`,
+qui n'existe plus.
+
+*Corrigé aussi dans ce plan* : `js/hub.js` **n'est pas** « un délégué à fondre ».
+Il porte `startStation`, `startAdhocStation` et le cartouche de gare ; seul
+`renderHub()` est une ligne de délégation. Il reste tel quel.
+
+*Sans objet* : `tools/corridors-propose.mjs`, `tools/graph-propose.mjs` et
+`tools/graph-check.mjs` avaient déjà été retirés le 25 août.
 
 ---
 
@@ -494,18 +520,26 @@ voisins. Par rentabilité (`ruban-europe.md`, « par où commencer ») c'est
 l'acte V qui est le plus près d'être fini — **11 fiches** le complètent, contre
 27 pour l'acte II et 89 pour l'acte I.
 
-Deux dettes connues, petites et indépendantes :
+Une dette connue, petite et indépendante :
 
-- **Toulouse, Lunebourg et Berne** sont des gares « de queue » : elles passent
-  les 30 journées mais échouent au hasard sur un balayage libre à K=6. Toulouse
-  et Lunebourg sortent sur la PRESSION (moyennes 3,0-3,4, file 5) ; Berne sort
-  sur le RETARD garanti, à 0,30 contre un seuil de 0,30 — pile sur la limite.
-  Relevé du 26 août 2026 sur trois balayages complets : graine 7 vert, un tirage
-  libre vert, un tirage libre sortant Berne seule. Elles rendront `gen-check`
-  rouge de temps en temps tant qu'on n'a pas desserré leur enveloppe, et c'est
-  un petit lot de calibrage qui vaut d'être fait avant beaucoup de contenu neuf.
-- **`enregistrer.mjs` replie `index.json` sur 90 caractères**, ce qui produit
-  des centaines de lignes de diff sans contenu à chaque enregistrement. Le
-  faire écrire une gare par ligne rendrait les diffs lisibles.
+- **Toulouse, Lunebourg, Berne et Louvain** sont des gares « de queue » : elles
+  passent les 30 journées mais échouent au hasard sur un balayage libre à K=6.
+  Toulouse et Lunebourg sortent sur la PRESSION (moyennes 3,0-3,4, file 5) ;
+  Berne sort sur le RETARD garanti, à 0,30 contre un seuil de 0,30 — pile sur
+  la limite. Relevé du 26 août 2026 sur trois balayages complets : graine 7
+  vert, un tirage libre vert, un tirage libre sortant Berne seule.
+  **Louvain est la plus atteinte des quatre**, mesurée le 26 août : 3 graines
+  sur 10 échouent à K=30, dont deux sur `QUEUE_HARD` (file de 6, jamais
+  tolérée), et son pic vaut 5 sur les DIX graines — y compris les vertes. Elle
+  ne frôle donc pas le plafond, elle vit au-dessus : 15 à 18 trains pour cinq
+  directions, quand LIÈGE n'a que 4 quais et ANVERS, HASSELT et OTTIGNIES 3
+  chacun. Rejouable par `node tools/gen-check.mjs louvain --seed=8 30`.
 
-Le **lot J** (supprimer `js/carte.js`, mort depuis le lot E) reste ouvert.
+  **Les quatre sont hors ruban** (vérifié le 26 août) : aucune n'est dans
+  `data/cartes/europe.json`, donc aucune n'est atteignable par un joueur du v1.
+  Elles ne coûtent qu'un `gen-check` rouge de temps en temps sur le balayage
+  complet. C'est un petit lot de calibrage, à faire avant beaucoup de contenu
+  neuf — mais qui ne bloque pas le ruban.
+
+Le **lot J est fait** (26 août 2026). La dette de repli d'`index.json` est
+réglée elle aussi : `enregistrer.mjs` écrit désormais une gare par ligne.

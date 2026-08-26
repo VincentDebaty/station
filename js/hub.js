@@ -2,11 +2,10 @@
 // ------------------------------------------------------------------
 // Navigation : carte du monde <-> gares
 // ------------------------------------------------------------------
-// La sélection des gares se fait sur une carte du monde zoomable (js/map.js) :
-// monde → continent → pays → clic sur une ville lance la partie. renderHub()
+// La gare à prendre n'est plus choisie : le ruban la désigne. renderHub()
 // reste le point d'entrée historique (appelé par showHub) mais délègue
-// désormais entièrement au renderer de la carte.
-// La carte en lignes (js/carte.js) a remplacé la carte géographique. Le
+// désormais entièrement au renderer de l'écran de parcours.
+// L'écran du ruban (js/parcours.js) a remplacé la carte géographique. Le
 // point d'entrée historique ne change pas : tout le jeu appelle showHub().
 function renderHub() { renderCarte(); }
 function showHub() {
@@ -25,7 +24,7 @@ function showHub() {
 // Pastilles de difficulté (mêmes symboles que la fiche de la carte) : le joueur
 // garde en jeu le repère qu'il avait avant de prendre le service.
 // Difficulté du cartouche : la MÊME jauge à cinq crans que la fiche de gare
-// (js/map.js) — une seule façon de montrer un niveau dans tout le jeu.
+// (js/parcours.js) — une seule façon de montrer un niveau dans tout le jeu.
 function diffPips(d) {
   const n = Math.max(1, Math.min(5, d || 1));
   return '<span class="dif">' + Array.from({ length: 5 }, (_, i) =>

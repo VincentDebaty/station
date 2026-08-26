@@ -146,7 +146,18 @@ jour qui perd la partie d'un joueur est un bug bloquant, pas un détail.
 
 ## Détail connu
 
-`js/carte.js` est **encore au dépôt mais n'est plus chargé** : le ruban a pris
-la main (`js/parcours.js`), qui a repris sa projection et sa caméra au lot E.
-Il n'a plus d'utilité — sa suppression est le lot J. Ne pas y écrire.
-`js/hub.js`, lui, est bien vivant : c'est lui qui porte `startStation`.
+`js/carte.js` a été **supprimé le 26 août 2026** (lot J) : le ruban avait pris
+la main au lot E avec `js/parcours.js`, qui a repris sa projection et sa
+caméra. C'est là qu'on écrit désormais l'écran du ruban.
+
+`js/catalog.js` a perdu au passage la **progression par pays** (déverrouillage,
+jalons, achat de gare, proposition de la gare suivante) : le ruban ordonne les
+gares, plus rien ne se choisit. Il ne reste que le chargement du catalogue, la
+carte d'une gare, les paliers et grades, le total d'étoiles — et `isStartDoor`,
+que `tools/net-check.mjs` charge pour décider d'une porte de départ. **Cette
+dernière n'est pas morte : ne la retire pas parce que le jeu ne l'appelle
+plus.**
+
+`js/hub.js` est bien vivant : c'est lui qui porte `startStation`. Le
+`plan-de-dev.md` le dit « fondu au lot J » — c'est faux, seul `renderHub()`
+est un délégué d'une ligne.

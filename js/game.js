@@ -1290,7 +1290,7 @@ function tick(dtMin) {
 // LA FICHE DE FIN TIENT DANS L'ÉCRAN — pour la seule démo « limites ».
 // ------------------------------------------------------------------
 // Une gare du catalogue ne passe plus par cette fiche : son résultat se pose
-// en BULLE sous la gare, sur la ligne (js/carte.js, bilanHTML). La fiche
+// en BULLE sous la gare, sur la ligne (js/parcours.js, bilanHTML). La fiche
 // centrée ne sert plus qu'à la démo limites, qui n'est sur aucune carte.
 //
 // `zoom` et non `transform: scale()` : zoom modifie la MISE EN PAGE, donc le
