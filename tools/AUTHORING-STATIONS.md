@@ -338,6 +338,44 @@ suffise) :
   que la géométrie porte, typiquement quand un côté n'a qu'un seul portail
   (tout passe par lui). Vu sur Colmar, Aarau, Roosendaal, Bingen, Horb, Harburg.
 
+**LE TEST QUI SÉPARE LES DEUX, à faire AVANT de choisir le levier.** Deux
+chiffres suffisent, et les lire coûte trente secondes contre un cycle de mesure
+perdu :
+
+1. **portails par quai** — si un quai en concentre nettement plus que les
+   autres, c'est la FORME ;
+2. **quais par paire portail-L × portail-R** — si la paire la plus étroite est
+   à zéro ou un quai, c'est la FORME aussi, surtout si cette paire est **l'axe
+   que le ruban emprunte**.
+
+Faisceau plat et paires larges, mais la gare sort quand même : c'est le VOLUME,
+et on descend l'enveloppe.
+
+```bash
+python3 - <<'EOF'
+import json
+d = json.load(open("data/stations/<pays>/<id>.json"))
+P, L = d["portals"], d["links"]
+print("portails/quai :", [len([k for k in P if q["id"] in L[k]]) for q in d["platforms"]])
+G = [k for k in P if P[k]["side"] == "L"]; D = [k for k in P if P[k]["side"] == "R"]
+for n, a, b in sorted((len(set(L[a]) & set(L[b])), a, b) for a in G for b in D):
+    print(f"  {a} x {b} : {n} quai(s)")
+EOF
+```
+
+**Mesuré le 26 août 2026 sur Hamm et Hengelo**, qui échouaient sur le MÊME
+symptôme (file de 6) et demandaient l'inverse l'une de l'autre :
+
+| | portails/quai | paire la plus étroite | cause | geste |
+|---|---|---|---|---|
+| Hamm | 2·2·3·3·4·3·2 | **Hagen × Bielefeld = 0** — l'axe du ruban | forme | élargir Hagen aux quais 3-7 |
+| Hengelo | 3·3·3·2 (plat) | Amsterdam × Hanovre = 2 | volume | 14-15 → 12-13 convois |
+
+Hengelo a d'abord été élargie comme Hamm : donner le quai 2 à Hanovre a mis les
+QUATRE portails sur ce quai, et la gare est passée de 1 échec sur 24 à **8 sur
+10**. Le geste a été rendu. C'est le même piège que Horb, et il se referme
+exactement là — sur une gare dont le faisceau était déjà sain.
+
 **Le cas le plus fréquent du VOLUME : un côté à portail unique.** Quand un côté
 n'a qu'une seule destination, toutes les paires passent par elle — la gare
 devient un entonnoir, et l'enveloppe doit descendre d'un cran, quelle que soit
