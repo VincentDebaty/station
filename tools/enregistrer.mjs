@@ -157,9 +157,12 @@ if (erreurs.length) {
   console.log("\nERREURS — rien n'est écrit :\n  · " + erreurs.join("\n  · ") + "\n");
   process.exit(1);
 }
-write("data/stations/index.json", JSON.stringify(index, null, 2).replace(/\[\n\s+("[^"]+",?\s*\n\s+)+\]/g, m =>
-  // Les listes de gares tiennent sur des lignes de ~90 caractères, comme avant.
-  "[" + m.slice(1, -1).trim().split(/\s*\n\s*/).join(" ").replace(/(.{80,}?,)\s/g, "$1\n      ").replace(/^/, "\n      ") + "\n    ]") + "\n");
+// UNE GARE PAR LIGNE. L'outil repliait les listes sur ~90 caractères : ajouter
+// une seule gare refluait tout le bloc de son pays, et noyait chaque
+// enregistrement sous des centaines de lignes de diff sans contenu. Le format
+// naturel de JSON.stringify fait exactement ce qu'il faut — une gare ajoutée
+// est une ligne ajoutée, et l'index redevient relisible en revue.
+write("data/stations/index.json", JSON.stringify(index, null, 2) + "\n");
 write("js/geo.js", geo);
 write("data/lines.js", lines);
 write("data/places.js", places);
