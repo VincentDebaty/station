@@ -39,6 +39,7 @@ for (const a of args) {
 
 const index = JSON.parse(read("data/stations/index.json"));
 const carte = JSON.parse(read("data/cartes/europe.json"));
+let carteTouchee = false;   // on ne réécrit la carte que si un manifeste y touche
 let geo = read("js/geo.js"), lines = read("data/lines.js"), places = read("data/places.js");
 const dejaDansIndex = new Set(index.flatMap(g => g.stations));
 const journal = [], erreurs = [];
@@ -126,25 +127,27 @@ for (const mf of manifestes) {
 
   // --- la carte ---------------------------------------------------------------
   if (m.hub) {
-    const h = carte.hubs.find(x => x.id === m.hub);
+    const h = (carte.hubs || []).find(x => x.id === m.hub);
+    if (!carte.hubs) erreurs.push(`${nom} : la carte n'a plus de hubs — c'est un ruban de chapitres depuis le 25 août 2026`);
     const f = (m.fiches || [])[0];
     if (!h) erreurs.push(`${nom} : hub inconnu « ${m.hub} »`);
     else if (!f) erreurs.push(`${nom} : hub ${m.hub} sans fiche`);
     else {
       const cfg = JSON.parse(read(`data/stations/${f.pays}/${f.id}.json`));
-      h.gare = cfg.city || cfg.name;
+      h.gare = cfg.city || cfg.name; carteTouchee = true;
       journal.push(`${nom} : hub ${m.hub} joue « ${h.gare} »`);
     }
   }
   if (m.ligne && m.ligne.de && m.ligne.vers) {
-    const l = carte.lignes.find(x => (x.de === m.ligne.de && x.vers === m.ligne.vers) || (x.de === m.ligne.vers && x.vers === m.ligne.de));
+    if (!carte.lignes) erreurs.push(`${nom} : la carte n'a plus de lignes — c'est un ruban de chapitres depuis le 25 août 2026`);
+    const l = (carte.lignes || []).find(x => (x.de === m.ligne.de && x.vers === m.ligne.vers) || (x.de === m.ligne.vers && x.vers === m.ligne.de));
     if (!l) erreurs.push(`${nom} : ligne ${m.ligne.de} – ${m.ligne.vers} inconnue sur la carte`);
     else if (!Array.isArray(m.composition) || !m.composition.length) erreurs.push(`${nom} : composition vide`);
     else {
       const comp = l.de === m.ligne.de ? m.composition.slice() : m.composition.slice().reverse();
       const inconnues = comp.filter(g => !dejaDansIndex.has(g));
       if (inconnues.length) erreurs.push(`${nom} : composition cite des gares hors index : ${inconnues.join(", ")}`);
-      else { l.gares = comp; journal.push(`${nom} : ${l.de} – ${l.vers} = [${comp.join(", ")}]`); }
+      else { l.gares = comp; carteTouchee = true; journal.push(`${nom} : ${l.de} – ${l.vers} = [${comp.join(", ")}]`); }
     }
   }
 }
@@ -160,13 +163,22 @@ write("data/stations/index.json", JSON.stringify(index, null, 2).replace(/\[\n\s
 write("js/geo.js", geo);
 write("data/lines.js", lines);
 write("data/places.js", places);
-const j = o => JSON.stringify(o);
-let out = "{\n";
-for (const k of ["id", "nom", "gratuite", "sousTitre", "echelle"]) if (k in carte) out += `  ${j(k)}: ${j(carte[k])},\n`;
-out += `  "zones": [\n` + carte.zones.map(z => "    " + j(z)).join(",\n") + "\n  ],\n";
-out += `  "hubs": [\n` + carte.hubs.map(h => { const { gareId, ...reste } = h; return "    " + j(reste); }).join(",\n") + "\n  ],\n";
-out += `  "lignes": [\n` + carte.lignes.map(l => "    " + j(l)).join(",\n") + "\n  ]\n}\n";
-write("data/cartes/europe.json", out);
+// LA CARTE NE SE RÉÉCRIT QUE SI ON Y A TOUCHÉ. L'outil la réécrivait à chaque
+// passage en supposant `hubs` et `lignes` — la refonte en ruban les a
+// remplacés par `chapitres`, et tout enregistrement plantait là, même quand le
+// manifeste ne parlait pas de carte. On sérialise donc la forme RÉELLE.
+if (carteTouchee) {
+  const j = o => JSON.stringify(o);
+  const cles = Object.keys(carte);
+  const morceaux = [];
+  for (const k of cles) {
+    const v = carte[k];
+    if (!Array.isArray(v)) { morceaux.push(`  ${j(k)}: ${j(v)}`); continue; }
+    const lignes = v.map(e => "    " + j(k === "hubs" ? (({ gareId, ...reste }) => reste)(e) : e));
+    morceaux.push(`  ${j(k)}: [\n` + lignes.join(",\n") + "\n  ]");
+  }
+  write("data/cartes/europe.json", "{\n" + morceaux.join(",\n") + "\n}\n");
+}
 
 console.log("\n" + journal.map(l => "  · " + l).join("\n"));
 console.log(`\n${nouveauxIds.length} fiche(s) enregistrée(s). À lancer maintenant :\n` +
