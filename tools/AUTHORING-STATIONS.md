@@ -20,6 +20,30 @@ directions **que dans l'enveloppe du palier** (voir §5). On ne fait PAS grandir
 une petite gare à sa taille réelle si ça casse le palier (Charleroi ≈ 11 voies
 en vrai, mais reste d1 / 4 quais, gare-tutoriel).
 
+### Le piège n° 1 du §0 : l'ANCIENNE gare de bifurcation
+
+Une carte ferroviaire, un article encyclopédique et même le plan de la ville
+montrent souvent une étoile à quatre branches là où il n'en circule plus que
+deux. **Le §0 compte les directions RÉELLEMENT desservies aujourd'hui**, pas
+celles que l'infrastructure a portées.
+
+Le vocabulaire qui doit alerter, relevé en source : « *ancienne* gare de
+bifurcation », « ligne *partiellement déclassée* », « *seul le trafic fret*
+l'utilise », « entre les gares *fermées* de X et Y ».
+
+Mesuré le 27 août 2026 sur trois candidates de l'acte II, toutes trois
+refusées pour ce motif exact :
+
+| gare | ce que la carte montre | ce qui circule |
+|---|---|---|
+| Rochefort | bifurcation vers Aigrefeuille-Le Thou | branche **déclassée en 1954** — 2 directions |
+| Marmande | origine de la ligne de Mont-de-Marsan | voyageurs arrêtés en **1938**, fret en **1971** — 2 directions |
+| Jonzac | gare de la ligne Chartres – Bordeaux | encadrée de deux gares **fermées** — 2 directions |
+
+La parade est celle du §0 : prendre la gare voisine qui est un carrefour
+ACTUEL, ou redécouper le chapitre. Jamais inventer un portail sur une voie que
+plus personne ne parcourt — le joueur y attendrait un train qui n'existe pas.
+
 ### Ce que nomme un portail : la destination AFFICHÉE sur le quai
 
 Un portail porte le nom que le voyageur lit, pas celui de la gare suivante.
