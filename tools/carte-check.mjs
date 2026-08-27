@@ -4,7 +4,8 @@
 // ------------------------------------------------------------------
 // Une carte est un RUBAN : une suite ordonnée de gares, sans embranchement et
 // sans choix (meta-progression-jeu-aiguillage.md §0). Ce contrôle vérifie les
-// règles R1 à R9 du §3 et REFUSE — code de sortie ≠ 0 — plutôt qu'il n'avertit.
+// règles R1 à R9 du §3, plus R10 — la rampe contre les brevets des fiches
+// (tools/brevet.mjs) — et REFUSE — code de sortie ≠ 0 — plutôt qu'il n'avertit.
 // Une règle qu'on ne mesure pas est une intention, pas une règle.
 //
 //   node tools/carte-check.mjs [--carte=europe] [--detail] [--resume]
@@ -17,6 +18,7 @@
 import { readFileSync, existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
+import { empreinte } from "./empreinte.mjs";
 
 const RACINE = join(dirname(fileURLToPath(import.meta.url)), "..");
 const args = process.argv.slice(2);
@@ -40,7 +42,20 @@ for (const pays of index)
     if (existsSync(p)) FICHES.set(id, lire("data/stations/" + pays.country + "/" + id + ".json"));
   }
 const quais = id => ((FICHES.get(id) || {}).platforms || []).length;
-const plafond = id => Math.max(1, Math.min(5, quais(id) - 1));
+// LE MODÈLE DE DIFFICULTÉ VIENT DU JEU, JAMAIS D'UNE COPIE. Ce fichier
+// portait sa propre formule de plafond (`quais - 1`) pendant que js/ruban.js
+// apprenait le terme des directions (26 août), le palier de quais (26 août)
+// puis l'entonnoir (27 août) : R8 et R9 jugeaient la rampe avec un plafond
+// que le jeu ne sert plus. On évalue donc js/ruban.js — un script classique,
+// comme js/geo.js plus bas — et on lui donne le `cardOf` qu'il attend, pour
+// que `arriveeDeChapitre` lise les vraies fiches au lieu de son repli.
+const RUBAN_FNS = (() => {
+  const src = readFileSync(join(RACINE, "js/ruban.js"), "utf8");
+  const fn = new Function("cardOf", src +
+    "\n;return { plafondDeFlux, plancherDeChapitre, arriveeDeChapitre, difficulteVoulue };");
+  return fn(id => FICHES.get(id) || null);
+})();
+const plafond = id => FICHES.has(id) ? RUBAN_FNS.plafondDeFlux(FICHES.get(id)) : 1;
 const nom = id => { const f = FICHES.get(id); return f ? (f.city || f.name || id) : id; };
 
 // --- Le réseau réel, pour la continuité (R5) et la sinuosité (R7) ---------
@@ -196,6 +211,57 @@ if (c1 && c1.gares && c1.gares.length) {
 }
 function plancher(ch) { return ch.plancher || Math.max(1, Math.min(4, 1 + Math.floor(chapitres.indexOf(ch) / 3))); }
 R("R9", "premier chapitre doux (plancher 1, arrivée ≤ 3)", okR9, ditR9);
+
+// R10 — LA RAMPE NE DÉPASSE LE BREVET DE PERSONNE.
+// Chaque fiche porte un brevet (tools/brevet.mjs) : le niveau maximal auquel
+// elle a été mesurée saine, une fois pour toutes, sur une batterie de graines
+// fixes. La carte, elle, décide du niveau que chaque gare JOUE — la rampe du
+// chapitre, rabattue par le plafond de la géométrie. Cette règle croise les
+// deux, et c'est elle qui rend l'extension d'une carte instantanée : plus
+// besoin de re-balayer 86 gares au tirage aléatoire pour savoir si la
+// nouvelle rampe demande à quelqu'un plus qu'il ne porte. Née le 27 août
+// 2026, quand l'acte V greffé devant le ruban a servi à Colmar une enveloppe
+// que sa correction d'août — endormie dans un `gen` que le ruban ne joue
+// plus — ne couvrait pas : une file de 6, découverte au hasard d'une graine.
+//
+// Trois verdicts : une gare qui joue AU-DESSUS de son brevet est une erreur
+// dure ; une gare sans brevet, ou dont la fiche a changé depuis le sien, est
+// un avertissement (lancer tools/brevet.mjs) ; brevets.json absent, la règle
+// s'abstient — elle avertit sans condamner une carte qu'on n'a pas mesurée.
+let brevets = null;
+try { brevets = lire("data/stations/brevets.json"); } catch { /* pas encore certifié */ }
+const depasse = [], sansBrevet = [], perime = [];
+if (brevets) {
+  chapitres.forEach((ch, rang) => {
+    const g = ch.gares || [];
+    const ch2 = { rang, plancher: ch.plancher, arrivee: ch.arrivee, gares: g };
+    const p = RUBAN_FNS.plancherDeChapitre(ch2), a = RUBAN_FNS.arriveeDeChapitre(ch2);
+    g.forEach((id, i) => {
+      const f = FICHES.get(id);
+      if (!f) return;                                    // fiche à écrire : mesurée ailleurs
+      const b = brevets[id];
+      if (!b || typeof b !== "object") { sansBrevet.push(id); return; }
+      if (b.geometrie !== empreinte(f)) { perime.push(id); return; }
+      const joue = Math.max(1, Math.min(RUBAN_FNS.difficulteVoulue(i, g.length, p, a), plafond(id)));
+      // La grande gare d'un chapitre joue le régime BOSS quand la rampe
+      // l'amène à 5 (estBoss, js/ruban.js) — c'est le brevet boss qui juge.
+      if (i === g.length - 1 && joue === 5) {
+        if (b.boss !== "OK") depasse.push(`${ch.id} : ${nom(id)} ferme en boss, brevet boss « ${b.boss || "non mesuré"} »`);
+      } else if (joue > (b.niveau || 0))
+        depasse.push(`${ch.id} : ${nom(id)} joue ${joue}, brevet ${b.niveau || 0}`);
+    });
+  });
+  const dit = depasse.length ? depasse.length + " gare(s) au-dessus de leur brevet"
+    : (sansBrevet.length || perime.length)
+      ? `${sansBrevet.length} sans brevet, ${perime.length} périmé(s) — lancer tools/brevet.mjs`
+      : "toutes les gares jouent sous leur brevet";
+  R("R10", "la rampe ne dépasse le brevet de personne", !depasse.length && !sansBrevet.length && !perime.length,
+    dit, depasse.length > 0);
+  listes.R10 = [...depasse, ...sansBrevet.map(id => nom(id) + " : sans brevet"), ...perime.map(id => nom(id) + " : brevet périmé")];
+} else {
+  R("R10", "la rampe ne dépasse le brevet de personne", false,
+    "pas de brevets.json — lancer tools/brevet.mjs pour certifier le catalogue", false);
+}
 
 // --- Ce qui reste à écrire ------------------------------------------------
 const aEcrire = ordre.filter(g => !FICHES.has(g));

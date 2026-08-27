@@ -135,11 +135,18 @@ ligne — chaque ligne livrée est un commit.
 ## 5. Valider
 
 ```bash
-node tools/carte-check.mjs --livrable=<zones>   # les règles et la couverture
-node tools/gen-check.mjs                        # chaque fiche, et le résumé de carte
-node tools/graph-check.mjs                      # intégrité et écartements
+node tools/carte-check.mjs                      # les règles R1–R10 et la couverture
+node tools/brevet.mjs                           # certifie les fiches nouvelles ou modifiées
 node tools/net-check.mjs                        # le réseau dessiné
 ```
+
+Depuis le 27 août 2026, **une modification de carte ne demande plus de
+balayage `gen-check`** : chaque fiche porte un brevet (le niveau maximal
+mesuré sain, `tools/brevet.mjs`), et `carte-check` (R10) croise la rampe de la
+carte avec ces brevets. Si R10 sort une gare au-dessus de son brevet, le geste
+est sur la carte (rampe, découpage) ou sur la fiche (géométrie, puis
+recertification) — jamais un re-balayage du catalogue. (`graph-check` a été
+retiré le 25 août 2026 avec le graphe de hubs.)
 
 `carte-check` rend un code de sortie ≠ 0 tant qu'une règle ✘ échoue sur
 l'ensemble évalué. Sur un bloc (`--livrable`), R2 (50 lignes) est informatif

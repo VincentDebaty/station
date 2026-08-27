@@ -35,14 +35,24 @@ chargées en `fetch`.
 
 ## Les contrôles sont les tests
 
-Il n'y a pas de framework de test. Il y a trois contrôles headless, qui
+Il n'y a pas de framework de test. Il y a quatre contrôles headless, qui
 **refusent** au lieu d'avertir (code de sortie ≠ 0) :
 
 | Commande | Ce qu'elle garde |
 |---|---|
 | `node tools/gen-check.mjs` | les fiches de gare : connectivité, génération d'horaire, **pression** (files d'attente sur un quai) |
-| `node tools/carte-check.mjs` | la carte est-elle livrable — règles **R1…R9 du ruban** |
+| `node tools/brevet.mjs` | le **brevet** de chaque fiche : le niveau maximal mesuré sain, une fois pour toutes, sur graines fixes |
+| `node tools/carte-check.mjs` | la carte est-elle livrable — règles **R1…R10 du ruban** |
 | `node tools/net-check.mjs` | le réseau tracé et les coordonnées (`js/geo.js`, `data/places.js`) |
+
+**Le brevet évite de re-balayer le catalogue à chaque geste de carte** (ajouté
+le 27 août 2026) : une gare du ruban ne joue que des régimes en nombre fini —
+les enveloppes de niveau et le boss — qui ne dépendent pas de la carte. On les
+certifie donc UNE FOIS par fiche (`brevet.mjs`, batterie de graines fixes,
+K=30), et `carte-check` (R10) vérifie en millisecondes que la rampe d'une
+carte ne demande à personne plus que son brevet. Modifier ou étendre une carte
+ne coûte plus aucune simulation ; écrire ou retoucher une fiche coûte SA
+certification (`node tools/brevet.mjs <id>`), pas celle des autres.
 
 `graph-check`, `corridors-propose` et `graph-propose` ont été **retirés le
 25 août 2026** : ils mesuraient le graphe de hubs et de corridors, qui n'existe

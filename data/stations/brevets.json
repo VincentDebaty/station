@@ -1,0 +1,1531 @@
+{
+ "_doc": "Généré par tools/brevet.mjs — le niveau maximal certifié par fiche, mesuré sur une batterie de graines fixes. Ne s'édite pas à la main : relancer l'outil quand une géométrie ou un gen change (l'empreinte l'impose). Lu par carte-check (R10).",
+ "aarau": {
+  "geometrie": "35971e66d1d5",
+  "date": "2026-08-27",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 2,
+  "detail": {
+   "1": "OK",
+   "2": "OK"
+  },
+  "boss": "retard garanti 0.33 > 0.3"
+ },
+ "aix-les-bains": {
+  "geometrie": "7c5e99e940ef",
+  "date": "2026-08-27",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 2,
+  "detail": {
+   "1": "OK",
+   "2": "OK"
+  },
+  "boss": "retard garanti 0.36 > 0.3"
+ },
+ "amersfoort": {
+  "geometrie": "fd7e5ff52eb8",
+  "date": "2026-08-27",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 4,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK",
+   "4": "OK"
+  },
+  "boss": "OK"
+ },
+ "amsterdam": {
+  "geometrie": "e055637c4685",
+  "date": "2026-08-27",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 5,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK",
+   "4": "OK",
+   "5": "OK"
+  },
+  "boss": "OK"
+ },
+ "anvers": {
+  "geometrie": "125e5e058842",
+  "date": "2026-08-27",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 5,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK",
+   "4": "OK",
+   "5": "OK"
+  },
+  "boss": "OK"
+ },
+ "arlon": {
+  "geometrie": "2510e20ee377",
+  "date": "2026-08-27",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 2,
+  "detail": {
+   "1": "OK",
+   "2": "OK"
+  },
+  "boss": "retard garanti 0.32 > 0.3"
+ },
+ "augsburg": {
+  "geometrie": "a13277cd5986",
+  "date": "2026-08-27",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 4,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK",
+   "4": "OK"
+  },
+  "boss": "OK"
+ },
+ "badkleinen": {
+  "geometrie": "6a95dd62cb62",
+  "date": "2026-08-27",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 3,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK"
+  },
+  "boss": "retard garanti 0.36 > 0.3"
+ },
+ "bale": {
+  "geometrie": "0938f0afae51",
+  "date": "2026-08-27",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 4,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK",
+   "4": "OK",
+   "5": "file de 6 au même quai"
+  },
+  "boss": "OK"
+ },
+ "bamberg": {
+  "geometrie": "a7ffab2b5c8d",
+  "date": "2026-08-27",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 3,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK"
+  },
+  "boss": "file de 6 au même quai"
+ },
+ "bellegarde": {
+  "geometrie": "faf8c7cfe408",
+  "date": "2026-08-27",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 3,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK"
+  },
+  "boss": "retard garanti 0.37 > 0.3"
+ },
+ "berlin": {
+  "geometrie": "4ca7c051b680",
+  "date": "2026-08-27",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 3,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK",
+   "4": "file de 6 au même quai"
+  },
+  "boss": "OK"
+ },
+ "bern": {
+  "geometrie": "712b604b9abf",
+  "date": "2026-08-27",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 5,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK",
+   "4": "OK",
+   "5": "OK"
+  },
+  "boss": "retard garanti 0.37 > 0.3"
+ },
+ "bettembourg": {
+  "geometrie": "06cd691e3d88",
+  "date": "2026-08-27",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 4,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK",
+   "4": "OK"
+  },
+  "boss": "OK"
+ },
+ "bielefeld": {
+  "geometrie": "0491eb5c3c8f",
+  "date": "2026-08-27",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 3,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK"
+  },
+  "boss": "file de 7 au même quai"
+ },
+ "bingen": {
+  "geometrie": "3ff1f351affa",
+  "date": "2026-08-27",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 3,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK"
+  },
+  "boss": "retard garanti 0.33 > 0.3"
+ },
+ "bitterfeld": {
+  "geometrie": "93624711b7dd",
+  "date": "2026-08-27",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 4,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK",
+   "4": "OK"
+  },
+  "boss": "file de 6 au même quai"
+ },
+ "bonn": {
+  "geometrie": "22ba4e6c4a65",
+  "date": "2026-08-27",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 3,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK"
+  },
+  "boss": "file de 6 au même quai"
+ },
+ "bruchsal": {
+  "geometrie": "42ee73db18d4",
+  "date": "2026-08-27",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 4,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK",
+   "4": "OK"
+  },
+  "boss": "OK"
+ },
+ "bruxelles-midi": {
+  "geometrie": "cc94c2e35dee",
+  "date": "2026-08-27",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 5,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK",
+   "4": "OK",
+   "5": "OK"
+  },
+  "boss": "OK"
+ },
+ "bussoleno": {
+  "geometrie": "9021ac2f9231",
+  "date": "2026-08-27",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 2,
+  "detail": {
+   "1": "OK",
+   "2": "OK"
+  },
+  "boss": "file de 7 au même quai"
+ },
+ "chambery": {
+  "geometrie": "d8c3ae6c29ec",
+  "date": "2026-08-27",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 3,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK"
+  },
+  "boss": "OK"
+ },
+ "colmar": {
+  "geometrie": "915a7c38e0f6",
+  "date": "2026-08-27",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 2,
+  "detail": {
+   "1": "OK",
+   "2": "OK"
+  },
+  "boss": "retard garanti 0.33 > 0.3"
+ },
+ "culoz": {
+  "geometrie": "9f037429c386",
+  "date": "2026-08-27",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 2,
+  "detail": {
+   "1": "OK",
+   "2": "OK"
+  },
+  "boss": "file de 6 au même quai"
+ },
+ "dachau": {
+  "geometrie": "712e1635461d",
+  "date": "2026-08-27",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 2,
+  "detail": {
+   "1": "OK",
+   "2": "OK"
+  },
+  "boss": "retard garanti 0.35 > 0.3"
+ },
+ "darmstadt": {
+  "geometrie": "b1c3d676ab6c",
+  "date": "2026-08-27",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 4,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK",
+   "4": "OK"
+  },
+  "boss": "OK"
+ },
+ "deventer": {
+  "geometrie": "a488aa220157",
+  "date": "2026-08-27",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 3,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK"
+  },
+  "boss": "file de 6 au même quai"
+ },
+ "dordrecht": {
+  "geometrie": "6893a4a03070",
+  "date": "2026-08-27",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 2,
+  "detail": {
+   "1": "OK",
+   "2": "OK"
+  },
+  "boss": "retard garanti 0.34 > 0.3"
+ },
+ "erfurt": {
+  "geometrie": "4a0eea4e43ec",
+  "date": "2026-08-27",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 4,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK",
+   "4": "OK"
+  },
+  "boss": "OK"
+ },
+ "frankfurt": {
+  "geometrie": "1588a98a0c5b",
+  "date": "2026-08-27",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 5,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK",
+   "4": "OK",
+   "5": "OK"
+  },
+  "boss": "OK"
+ },
+ "fribourg": {
+  "geometrie": "e652a8744954",
+  "date": "2026-08-27",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 2,
+  "detail": {
+   "1": "OK",
+   "2": "OK"
+  },
+  "boss": "retard garanti 0.32 > 0.3"
+ },
+ "geneve": {
+  "geometrie": "bf21871611a4",
+  "date": "2026-08-27",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 5,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK",
+   "4": "OK",
+   "5": "OK"
+  },
+  "boss": "retard garanti 0.31 > 0.3"
+ },
+ "gunzburg": {
+  "geometrie": "462a63152cec",
+  "date": "2026-08-27",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 2,
+  "detail": {
+   "1": "OK",
+   "2": "OK"
+  },
+  "boss": "file de 6 au même quai"
+ },
+ "hagen": {
+  "geometrie": "0b7ee57f6027",
+  "date": "2026-08-27",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 4,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK",
+   "4": "OK"
+  },
+  "boss": "retard garanti 0.31 > 0.3"
+ },
+ "halle": {
+  "geometrie": "26d7b38d7f46",
+  "date": "2026-08-27",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 4,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK",
+   "4": "OK"
+  },
+  "boss": "OK"
+ },
+ "hamburg": {
+  "geometrie": "d2bf39c45504",
+  "date": "2026-08-27",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 5,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK",
+   "4": "OK",
+   "5": "OK"
+  },
+  "boss": "OK"
+ },
+ "hamm": {
+  "geometrie": "4e77ce43f628",
+  "date": "2026-08-27",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 4,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK",
+   "4": "OK"
+  },
+  "boss": "OK"
+ },
+ "hannover": {
+  "geometrie": "24dcf8c517ed",
+  "date": "2026-08-27",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 5,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK",
+   "4": "OK",
+   "5": "OK"
+  },
+  "boss": "OK"
+ },
+ "heidelberg": {
+  "geometrie": "57fd00b938d9",
+  "date": "2026-08-27",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 4,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK",
+   "4": "OK"
+  },
+  "boss": "OK"
+ },
+ "hengelo": {
+  "geometrie": "9d59a8771ba7",
+  "date": "2026-08-27",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 3,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK"
+  },
+  "boss": "retard garanti 0.36 > 0.3"
+ },
+ "ingolstadt": {
+  "geometrie": "149b733d363b",
+  "date": "2026-08-27",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 4,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK",
+   "4": "OK"
+  },
+  "boss": "file de 6 au même quai"
+ },
+ "juterbog": {
+  "geometrie": "92f2a334a13b",
+  "date": "2026-08-27",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 3,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK"
+  },
+  "boss": "OK"
+ },
+ "koblenz": {
+  "geometrie": "417d3d8ce1ce",
+  "date": "2026-08-27",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 4,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK",
+   "4": "OK"
+  },
+  "boss": "OK"
+ },
+ "koln": {
+  "geometrie": "8f1b1053bd89",
+  "date": "2026-08-27",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 5,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK",
+   "4": "OK",
+   "5": "OK"
+  },
+  "boss": "OK"
+ },
+ "lausanne": {
+  "geometrie": "d87663a70522",
+  "date": "2026-08-27",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 4,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK",
+   "4": "OK",
+   "5": "file de 6 au même quai"
+  },
+  "boss": "OK"
+ },
+ "leipzig": {
+  "geometrie": "e5f867d2d972",
+  "date": "2026-08-27",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 5,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK",
+   "4": "OK",
+   "5": "OK"
+  },
+  "boss": "OK"
+ },
+ "libramont": {
+  "geometrie": "b957c99ddb94",
+  "date": "2026-08-27",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 3,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK"
+  },
+  "boss": "file de 6 au même quai"
+ },
+ "lichtenfels": {
+  "geometrie": "3fc2901b7961",
+  "date": "2026-08-27",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 3,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK"
+  },
+  "boss": "OK"
+ },
+ "liege": {
+  "geometrie": "c1de5ee2a119",
+  "date": "2026-08-27",
+  "graines": [
+   1
+  ],
+  "K": 6,
+  "niveau": 5,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK",
+   "4": "OK",
+   "5": "OK"
+  },
+  "boss": "OK"
+ },
+ "luxembourg": {
+  "geometrie": "f55fbd20f6b6",
+  "date": "2026-08-27",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 5,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK",
+   "4": "OK",
+   "5": "OK"
+  },
+  "boss": "OK"
+ },
+ "mainz": {
+  "geometrie": "680946855e1d",
+  "date": "2026-08-27",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 4,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK",
+   "4": "OK"
+  },
+  "boss": "OK"
+ },
+ "malines": {
+  "geometrie": "68d9be247eeb",
+  "date": "2026-08-27",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 4,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK",
+   "4": "OK"
+  },
+  "boss": "OK"
+ },
+ "mannheim": {
+  "geometrie": "8f03d5c00944",
+  "date": "2026-08-27",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 4,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK",
+   "4": "OK"
+  },
+  "boss": "OK"
+ },
+ "marloie": {
+  "geometrie": "683f0b3ab756",
+  "date": "2026-08-27",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 1,
+  "detail": {
+   "1": "OK"
+  },
+  "boss": "retard garanti 0.33 > 0.3"
+ },
+ "metz": {
+  "geometrie": "7eef8e2b0e40",
+  "date": "2026-08-27",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 4,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK",
+   "4": "OK"
+  },
+  "boss": "file de 6 au même quai"
+ },
+ "minden": {
+  "geometrie": "16152773ff4d",
+  "date": "2026-08-27",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 3,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK"
+  },
+  "boss": "24/90 journées au-dessus de 4"
+ },
+ "mulhouse": {
+  "geometrie": "5cb680075cf7",
+  "date": "2026-08-27",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 4,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK",
+   "4": "OK"
+  },
+  "boss": "retard garanti 0.31 > 0.3"
+ },
+ "munchen": {
+  "geometrie": "895d4e81a44d",
+  "date": "2026-08-27",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 5,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK",
+   "4": "OK",
+   "5": "OK"
+  },
+  "boss": "OK"
+ },
+ "namur": {
+  "geometrie": "bb0a919b956f",
+  "date": "2026-08-27",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 4,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK",
+   "4": "OK"
+  },
+  "boss": "retard garanti 0.36 > 0.3"
+ },
+ "nancy": {
+  "geometrie": "18dfaf84d0b0",
+  "date": "2026-08-27",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 3,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK",
+   "4": "file de 6 au même quai"
+  },
+  "boss": "file de 6 au même quai"
+ },
+ "naumburg": {
+  "geometrie": "5234abd73638",
+  "date": "2026-08-27",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 3,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK"
+  },
+  "boss": "OK"
+ },
+ "neustrelitz": {
+  "geometrie": "eb48820d5744",
+  "date": "2026-08-27",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 3,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK"
+  },
+  "boss": "file de 6 au même quai"
+ },
+ "nurnberg": {
+  "geometrie": "43b8de242aa9",
+  "date": "2026-08-27",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 5,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK",
+   "4": "OK",
+   "5": "OK"
+  },
+  "boss": "OK"
+ },
+ "olten": {
+  "geometrie": "974a11f5dc56",
+  "date": "2026-08-27",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 4,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK",
+   "4": "OK"
+  },
+  "boss": "retard garanti 0.30 > 0.3"
+ },
+ "osnabruck": {
+  "geometrie": "25b9350f0ab2",
+  "date": "2026-08-27",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 3,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK"
+  },
+  "boss": "file de 6 au même quai"
+ },
+ "ottignies": {
+  "geometrie": "6e355bb8f13c",
+  "date": "2026-08-27",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 3,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK"
+  },
+  "boss": "retard garanti 0.32 > 0.3"
+ },
+ "plochingen": {
+  "geometrie": "58302098797e",
+  "date": "2026-08-27",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 3,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK"
+  },
+  "boss": "OK"
+ },
+ "rheine": {
+  "geometrie": "c4d467193fd0",
+  "date": "2026-08-27",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 3,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK"
+  },
+  "boss": "file de 6 au même quai"
+ },
+ "roosendaal": {
+  "geometrie": "463a2a296a4a",
+  "date": "2026-08-27",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 3,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK"
+  },
+  "boss": "retard garanti 0.33 > 0.3"
+ },
+ "rostock": {
+  "geometrie": "7ede56e6f472",
+  "date": "2026-08-27",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 3,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK"
+  },
+  "boss": "file de 6 au même quai"
+ },
+ "roth": {
+  "geometrie": "767d23aba7e6",
+  "date": "2026-08-27",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 2,
+  "detail": {
+   "1": "OK",
+   "2": "OK"
+  },
+  "boss": "file de 7 au même quai"
+ },
+ "rotterdam": {
+  "geometrie": "8f48956290a1",
+  "date": "2026-08-27",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 5,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK",
+   "4": "OK",
+   "5": "OK"
+  },
+  "boss": "OK"
+ },
+ "saalfeld": {
+  "geometrie": "0785de2bbf0b",
+  "date": "2026-08-27",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 4,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK",
+   "4": "OK"
+  },
+  "boss": "file de 6 au même quai"
+ },
+ "sarrebourg": {
+  "geometrie": "f02f03b8d69f",
+  "date": "2026-08-27",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 2,
+  "detail": {
+   "1": "OK",
+   "2": "OK"
+  },
+  "boss": "file de 6 au même quai"
+ },
+ "schwerin": {
+  "geometrie": "08b6f200ef5a",
+  "date": "2026-08-27",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 3,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK"
+  },
+  "boss": "retard garanti 0.38 > 0.3"
+ },
+ "selestat": {
+  "geometrie": "215501c7090f",
+  "date": "2026-08-27",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 2,
+  "detail": {
+   "1": "OK",
+   "2": "OK"
+  },
+  "boss": "file de 6 au même quai"
+ },
+ "strasbourg": {
+  "geometrie": "b49aa14214b0",
+  "date": "2026-08-27",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 4,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK",
+   "4": "OK",
+   "5": "file de 6 au même quai"
+  },
+  "boss": "OK"
+ },
+ "stuttgart": {
+  "geometrie": "4be6c84ae505",
+  "date": "2026-08-27",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 4,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK",
+   "4": "OK",
+   "5": "file de 6 au même quai"
+  },
+  "boss": "OK"
+ },
+ "thionville": {
+  "geometrie": "56082b21b941",
+  "date": "2026-08-27",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 3,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK"
+  },
+  "boss": "retard garanti 0.34 > 0.3"
+ },
+ "treuchtlingen": {
+  "geometrie": "b77c849ec6fe",
+  "date": "2026-08-27",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 3,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK"
+  },
+  "boss": "file de 6 au même quai"
+ },
+ "ulm": {
+  "geometrie": "aa23c00e884b",
+  "date": "2026-08-27",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 4,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK",
+   "4": "OK"
+  },
+  "boss": "OK"
+ },
+ "vaihingen": {
+  "geometrie": "8393ba1eb013",
+  "date": "2026-08-27",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 3,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK"
+  },
+  "boss": "OK"
+ },
+ "weimar": {
+  "geometrie": "88fed771113a",
+  "date": "2026-08-27",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 3,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK"
+  },
+  "boss": "file de 6 au même quai"
+ },
+ "wiesbaden": {
+  "geometrie": "49fd5fff0647",
+  "date": "2026-08-27",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 4,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK",
+   "4": "OK"
+  },
+  "boss": "retard garanti 0.31 > 0.3"
+ },
+ "wittenberg": {
+  "geometrie": "a1327dbb34bd",
+  "date": "2026-08-27",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 4,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK",
+   "4": "OK"
+  },
+  "boss": "OK"
+ },
+ "wuppertal": {
+  "geometrie": "70991028c6e8",
+  "date": "2026-08-27",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 3,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK"
+  },
+  "boss": "retard garanti 0.31 > 0.3"
+ },
+ "zurich": {
+  "geometrie": "566b205fd8ce",
+  "date": "2026-08-27",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 5,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK",
+   "4": "OK",
+   "5": "OK"
+  },
+  "boss": "OK"
+ }
+}

@@ -352,6 +352,27 @@ Il en faut donc **deux, et ils ne servent pas à la même chose** :
 
 Ne jamais conclure « le catalogue est vert » sur un seul balayage non graîné.
 
+**LE BREVET REMPLACE LE RE-BALAYAGE DU CATALOGUE** (27 août 2026). Une gare du
+ruban ne joue que des régimes en nombre fini — les enveloppes de niveau 1 à 5,
+rabattues par `plafondDeFlux`, et le régime boss — et aucun ne dépend de la
+carte. `node tools/brevet.mjs <id>` mesure donc chaque fiche sur chacun de ses
+régimes, une fois, sur une batterie de graines fixes (3 × K=30 = 90 journées
+par régime), et inscrit le niveau maximal sain dans
+`data/stations/brevets.json`. Ensuite :
+
+- **écrire ou retoucher une fiche** coûte SA certification, pas celle des
+  autres (l'empreinte de la géométrie et du `gen` invalide le brevet au
+  moindre changement — l'outil sans argument recertifie ce qui a changé) ;
+- **modifier ou étendre une carte** ne coûte plus aucune simulation :
+  `carte-check` (R10) croise la rampe de la carte avec les brevets, en
+  millisecondes. C'est ce qui a manqué le 27 août, quand greffer l'acte V a
+  déplacé la rampe des 63 gares existantes et ressorti Colmar au hasard d'une
+  graine — un croisement de R10 l'aurait dit sans un seul tirage.
+
+Le balayage `gen-check` garde deux usages : l'exploration d'une gare qu'on
+soupçonne (tirage libre, K=30) et le contrôle de non-régression graîné d'un
+lot. Il cesse d'être le péage de chaque modification de carte.
+
 **LE CONTRÔLE DIT MAINTENANT « JE NE SAIS PAS ».** La règle de congestion
 comparait une fréquence observée à une cible de 12 %, ce qui n'est pas un test :
 mesuré le 26 août 2026, une gare dont le taux RÉEL vaut exactement 12 %
@@ -450,6 +471,14 @@ toutes les cinq sortaient au-dessus de 4, toutes les cinq sont rentrées en
 retirant deux ou trois convois. Un profil `rush` marqué aggrave le cas, parce
 qu'il concentre le trafic dans l'entonnoir.
 
+**Depuis le 27 août 2026, cette règle est dans `plafondDeFlux`** (`js/ruban.js`) :
+un côté à portail unique coûte un cran de plafond, terminus exceptés. Elle y est
+entrée quand l'acte V a mis Colmar en jeu : sa correction d'août dormait dans un
+`gen` que le ruban ne joue plus (voir §5), et la gare ressortait à graine fixe
+avec une file de 6. Sur une gare du ruban, il n'y a donc plus rien à régler à la
+main pour ce motif — la formule rabat l'enveloppe jouée. Le paragraphe reste la
+référence pour les gares HORS ruban, dont le `gen` écrit est joué tel quel.
+
 Ce motif se balaie d'un coup sur tout le catalogue — pour chaque fiche, la
 plus petite paire portail-L × portail-R, et le `nMax` de son enveloppe. Relevé
 le 23 août 2026 : **43 fiches** ont un côté à portail unique, dont 38 avec un
@@ -470,8 +499,10 @@ avait empiré.
 node tools/gen-check.mjs                # tout le catalogue, K=6
 node tools/gen-check.mjs <id>           # une gare, K=30
 node tools/gen-check.mjs <id1> <id2> 20 # gares ciblées, K=20
+node tools/brevet.mjs                   # certifie les fiches nouvelles ou modifiées
+node tools/brevet.mjs <id>              # certifie une fiche (tous ses régimes)
 node tools/net-check.mjs                # le réseau de la carte
-node tools/carte-check.mjs --livrable=nw,ger --detail   # la carte : règles R1–R8 et couverture
+node tools/carte-check.mjs --detail     # la carte : règles R1–R10 et couverture
 ```
 
 `carte-check` vérifie les règles de construction d'une carte (20 hubs, 50
