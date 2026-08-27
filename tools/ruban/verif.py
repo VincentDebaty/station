@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 import sys, json, collections
-sys.path.insert(0,"/private/tmp/claude-501/-Users-vincentdebaty-Documents-dev-games-Station/77d22f41-47a7-4fad-a3ee-cb68a8fa3043/scratchpad")
+# Le chemin pointait vers le scratchpad d'une session de août 2026, disparu
+# depuis. On lit ruban.py là où il vit : à côté de ce fichier.
+import os
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from ruban import ACTES
 EX=set()
 for pays in json.load(open('data/stations/index.json')): EX.update(pays['stations'])

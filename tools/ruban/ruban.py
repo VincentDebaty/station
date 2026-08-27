@@ -116,10 +116,17 @@ ch(D,"Le Piémont","Milan","Turin",[
 
 # =====================================================================
 E = acte("alp","Acte V — Les Alpes, le Rhin et la Germanie","Du Fréjus à la Baltique, le cœur écrit du catalogue")
-ch(E,"Le Fréjus","Turin","Lyon",[
-  g("Bussoleno"),g("Modane"),g("Saint-Jean-de-Maurienne"),g("Chambéry","chambery"),g("Aix-les-Bains"),g("Ambérieu","amberieu"),g("Lyon Part-Dieu","lyon")])
-ch(E,"Le Bugey","Lyon","Genève",[
-  g("Meximieux"),g("Culoz","culoz"),g("Seyssel"),g("Bellegarde","bellegarde"),g("Genève-Cornavin","geneve")])
+# FUSION du 27 août 2026. « Le Fréjus » et « Le Bugey » n'existent plus
+# séparément : quatre de leurs gares ont été refusées par le §0 (Modane,
+# Saint-Jean-de-Maurienne, Meximieux, Seyssel — deux directions chacune), et le
+# corridor de Turin à Genève ne compte que neuf gares qualifiées, trop peu pour
+# donner cinq gares à deux chapitres. R7 a choisi l'itinéraire : par Culoz,
+# sinuosité 1,38 ; par le Haut-Bugey et Bourg-en-Bresse, 1,95 — refusé.
+# Lyon Part-Dieu, Ambérieu et Bourg-en-Bresse sortent donc du ruban et restent
+# au catalogue. Le raisonnement complet est dans ruban-europe.md, qui fait foi.
+ch(E,"Le Fréjus et le Bugey","Turin","Genève",[
+  g("Bussoleno","bussoleno"),g("Chambéry","chambery"),g("Aix-les-Bains","aix-les-bains"),
+  g("Culoz","culoz"),g("Bellegarde","bellegarde"),g("Genève-Cornavin","geneve")])
 ch(E,"Le Plateau suisse","Genève","Zurich",[
   g("Lausanne","lausanne"),g("Fribourg","fribourg"),g("Berne","bern"),g("Olten","olten"),g("Aarau","aarau"),g("Zurich HB","zurich")])
 ch(E,"Le Rhin supérieur","Zurich","Strasbourg",[
@@ -140,8 +147,14 @@ ch(E,"Le Neckar","Francfort","Stuttgart",[
   g("Darmstadt"),g("Mannheim","mannheim"),g("Heidelberg"),g("Bruchsal"),g("Vaihingen"),g("Stuttgart Hbf","stuttgart")])
 ch(E,"La Souabe","Stuttgart","Munich",[
   g("Plochingen","plochingen"),g("Ulm","ulm"),g("Günzburg","gunzburg"),g("Augsbourg","augsburg"),g("Munich Hbf","munchen")])
+# Le chapitre a QUITTÉ LA LGV le 26 août 2026 : Pfaffenhofen, Kinding et
+# Allersberg n'ont que deux directions — les deux dernières sont des haltes de
+# la ligne à grande vitesse de 2006, bâties pour que des trains passent à
+# 300 km/h à côté d'elles. Il n'y a rien à y aiguiller. La ligne classique par
+# Treuchtlingen offre de vrais nœuds.
 ch(E,"La Bavière","Munich","Nuremberg",[
-  g("Dachau"),g("Pfaffenhofen"),g("Ingolstadt","ingolstadt"),g("Kinding"),g("Allersberg"),g("Nuremberg Hbf","nurnberg")])
+  g("Dachau","dachau"),g("Ingolstadt","ingolstadt"),g("Treuchtlingen","treuchtlingen"),
+  g("Roth","roth"),g("Nuremberg Hbf","nurnberg")])
 ch(E,"La Franconie et la Thuringe","Nuremberg","Leipzig",[
   g("Bamberg","bamberg"),g("Lichtenfels","lichtenfels"),g("Saalfeld","saalfeld"),g("Erfurt","erfurt"),g("Weimar","weimar"),g("Naumbourg","naumburg"),g("Leipzig Hbf","leipzig")])
 ch(E,"La marche de Brandebourg","Leipzig","Berlin",[
