@@ -1,0 +1,31 @@
+{
+  "id": "bourg-en-bresse",
+  "name": "Bourg-en-Bresse",
+  "tagline": "Bourg-en-Bresse — quatre lignes se croisent, et celle de Genève part par le Haut-Bugey.",
+  "difficulty": 3,
+  "country": "🇫🇷 France",
+  "desc": "Le carrefour de la Bresse : la ligne de Mâcon à Ambérieu s'y coupe avec celle de Lyon, pendant que la voie du Haut-Bugey file vers Bellegarde et Genève et que celle de Mouchard remonte vers Besançon. Sept voies pour quatre quais, et des TGV de Genève qui s'y glissent entre les TER de Bourgogne.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
+  ],
+  "portals": {
+    "LYON":       { "side": "L", "color": "#25dede", "abbr": "LY" },
+    "AMBÉRIEU":   { "side": "L", "color": "#f5b23c", "abbr": "AM", "label": "AMBÉRIEU" },
+    "MACON":      { "side": "R", "color": "#4ade80", "abbr": "MC", "label": "MÂCON" },
+    "BELLEGARDE": { "side": "R", "color": "#a78bfa", "abbr": "BG" },
+    "BESANCON":   { "side": "R", "color": "#f2588f", "abbr": "BS", "label": "BESANÇON" }
+  },
+  "links": {
+    "LYON":       [2, 3, 4, 5],
+    "AMBÉRIEU":   [1, 2, 3],
+    "MACON":      [1, 2, 3],
+    "BELLEGARDE": [4, 5],
+    "BESANCON":   [3, 4]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 11, "nMax": 14, "gapMin": 1.7, "gapMax": 2.9,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6],
+    "quietRate": 0.16
+  }
+}

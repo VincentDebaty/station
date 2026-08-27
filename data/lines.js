@@ -498,5 +498,7 @@ const LINES = [
   { id: "M-IN", name: "Munich – Dachau – Pfaffenhofen – Ingolstadt",
     nodes: ["munchen", "dachau", "pfaffenhofen", "ingolstadt"] },
   { id: "L900", name: "Culoz – Aix-les-Bains – Chambéry",
-    nodes: ["culoz", "aix-les-bains", "chambery"] }
+    nodes: ["culoz", "aix-les-bains", "chambery"] },
+  { id: "L910", name: "Lyon – Bourg-en-Bresse – Bellegarde (Haut-Bugey)",
+    nodes: ["lyon", "bourg-en-bresse", "bellegarde"] }
 ];

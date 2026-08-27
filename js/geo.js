@@ -108,7 +108,8 @@ const GEO = {
         // L'Alsace du TER 200, entre Strasbourg et Bâle.
         selestat: [7.442, 48.256],
         colmar: [7.347, 48.073],
-        "aix-les-bains": [5.9086, 45.6889]
+        "aix-les-bains": [5.9086, 45.6889],
+        "bourg-en-bresse": [5.2153, 46.2028]
       } },
     allemagne: { name: "Allemagne", flag: "🇩🇪", iso: "DEU", continent: "europe",
       cities: {

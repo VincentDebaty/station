@@ -85,12 +85,29 @@ les 123 fiches annoncées comme existantes existent bien au catalogue.
 >   Ambérieu, Culoz et Bellegarde ont trois directions, et Ambérieu est déjà
 >   prise par le chapitre 46.
 >
-> Trois issues possibles, aucune tranchée : **fondre 46 et 47** en un chapitre
-> de sept gares finissant à Genève (Lyon Part-Dieu sortirait alors du ruban) ;
-> **passer par le Haut-Bugey** en écrivant Bourg-en-Bresse, vrai carrefour à
-> quatre directions, ce qui rendrait 47 viable à cinq gares ; ou **rattacher
-> Culoz et Bellegarde au chapitre 48**, qui commence aujourd'hui à Lausanne.
-> C'est une décision de tracé, pas d'écriture.
+> **Bourg-en-Bresse a été écrite le 27 août 2026** — cinq directions réelles
+> (Lyon, Ambérieu, Mâcon, Bellegarde par le Haut-Bugey, Besançon par Mouchard),
+> enregistrée et verte. Elle ne suffit PAS à sauver le chapitre 47, contrairement
+> à ce qui était espéré ici : le corridor de Turin à Genève ne compte que
+> **neuf gares qualifiées** en tout, et aucun découpage en deux chapitres ne
+> donne cinq gares à chacun.
+>
+> | découpage | n | R3 |
+> |---|---|---|
+> | 46 = Bussoleno · Chambéry · Aix · Ambérieu · **Lyon** | 5 | ✓ |
+> | 47 = Bourg · Bellegarde · **Genève** | 3 | ✗ |
+> | 47 = Ambérieu · Bourg · Bellegarde · **Genève** (46 tombe à 4) | 4 | ✗ |
+> | 47 = Culoz · Bellegarde · **Genève** | 3 | ✗ |
+>
+> **Le seul découpage qui tienne est la FUSION**, et elle coûte Lyon Part-Dieu :
+> *Bussoleno · Chambéry · Aix-les-Bains · Ambérieu · Bourg-en-Bresse ·
+> Bellegarde · **Genève-Cornavin*** — sept gares, R3 tenue, et le tracé monte
+> régulièrement vers le nord-est sans revenir sur ses pas. Y garder Lyon
+> imposerait un aller-retour Ambérieu → Lyon → Bourg qui menace R7 (sinuosité).
+>
+> Lyon Part-Dieu n'est pas perdue pour autant : c'est une grande gare, elle a sa
+> place ailleurs dans le ruban, et sa fiche existe déjà. **Décision de tracé,
+> toujours pas tranchée** — mais il n'y a plus trois issues, il n'y en a qu'une.
 
 ---
 
@@ -183,7 +200,7 @@ départ n'atteint.
 | # | Chapitre | Gares, dans l'ordre du rail | n |
 |---|---|---|---|
 | 46 | Le Fréjus | Bussoleno ⊘ · ~~Modane~~ ✗ · ~~Saint-Jean-de-Maurienne~~ ✗ · Chambéry ✓ · Aix-les-Bains ✓ · Ambérieu ✓ · **Lyon Part-Dieu** ✓ | 5 |
-| 47 | Le Bugey | ~~Meximieux~~ ✗ · Culoz ✓ · ~~Seyssel~~ ✗ · Bellegarde ✓ · **Genève-Cornavin** ✓ | 3 ⚠ |
+| 47 | Le Bugey | ~~Meximieux~~ ✗ · Culoz ✓ · ~~Seyssel~~ ✗ · Bourg-en-Bresse ✓ · Bellegarde ✓ · **Genève-Cornavin** ✓ | 4 ⚠ à fusionner avec 46 |
 | 48 | Le Plateau suisse | Lausanne ✓ · Fribourg ✓ · Berne ✓ · Olten ✓ · Aarau ✓ · **Zurich HB** ✓ | 6 |
 | 49 | Le Rhin supérieur | Bâle ✓ · Mulhouse ✓ · Colmar ✓ · Sélestat ✓ · **Strasbourg** ✓ | 5 |
 | 50 | La Lorraine | Sarrebourg ✓ · Nancy ✓ · Metz ✓ · Thionville ✓ · Bettembourg ✓ · **Luxembourg** ✓ | 6 |
