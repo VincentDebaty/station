@@ -7,29 +7,138 @@
   "country": "🇩🇪 Allemagne",
   "desc": "Vingt-cinq voies sous trois halles de 1888, la plus fréquentée d'Allemagne : et pourtant un terminus, que tous les ICE doivent rebrousser. C'est le prix de sa position.",
   "platforms": [
-    { "id": 1, "deadEnd": true }, { "id": 2, "deadEnd": true }, { "id": 3, "deadEnd": true }, { "id": 4, "deadEnd": true }, { "id": 5, "deadEnd": true },
-    { "id": 6, "deadEnd": true }, { "id": 7, "deadEnd": true }, { "id": 8, "deadEnd": true }, { "id": 9, "deadEnd": true }
+    {
+      "id": 1,
+      "deadEnd": true
+    },
+    {
+      "id": 2,
+      "deadEnd": true
+    },
+    {
+      "id": 3,
+      "deadEnd": true
+    },
+    {
+      "id": 4,
+      "deadEnd": true
+    },
+    {
+      "id": 5,
+      "deadEnd": true
+    },
+    {
+      "id": 6,
+      "deadEnd": true
+    },
+    {
+      "id": 7,
+      "deadEnd": true
+    },
+    {
+      "id": 8,
+      "deadEnd": true
+    },
+    {
+      "id": 9,
+      "deadEnd": true
+    }
   ],
   "portals": {
-    "KOLN":     { "side": "L", "color": "#f5b23c", "abbr": "K", "label": "KÖLN" },
-    "MANNHEIM": { "side": "L", "color": "#f2588f", "abbr": "MA" },
-    "WURZBURG": { "side": "L", "color": "#a78bfa", "abbr": "WU", "label": "WÜRZBURG" },
-    "KASSEL":   { "side": "L", "color": "#60a5fa", "abbr": "KS" },
-    "MAINZ":    { "side": "L", "color": "#25dede", "abbr": "MZ" },
-    "KOBLENZ":  { "side": "L", "color": "#4ade80", "abbr": "KO" }
+    "KOLN": {
+      "side": "L",
+      "color": "#f5b23c",
+      "abbr": "K",
+      "label": "KÖLN"
+    },
+    "MANNHEIM": {
+      "side": "L",
+      "color": "#f2588f",
+      "abbr": "MA"
+    },
+    "WURZBURG": {
+      "side": "L",
+      "color": "#a78bfa",
+      "abbr": "WU",
+      "label": "WÜRZBURG"
+    },
+    "KASSEL": {
+      "side": "L",
+      "color": "#60a5fa",
+      "abbr": "KS"
+    },
+    "MAINZ": {
+      "side": "L",
+      "color": "#25dede",
+      "abbr": "MZ"
+    },
+    "KOBLENZ": {
+      "side": "L",
+      "color": "#4ade80",
+      "abbr": "KO"
+    }
   },
   "links": {
-    "KOLN":     [1, 2, 3, 4],
-    "MANNHEIM": [3, 4, 5, 6],
-    "WURZBURG": [4, 5, 6, 7],
-    "KASSEL":   [6, 7, 8, 9],
-    "MAINZ":    [1, 7, 8, 9],
-    "KOBLENZ":  [1, 2, 3, 9]
+    "KOLN": [
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "MANNHEIM": [
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "WURZBURG": [
+      4,
+      5,
+      6,
+      7,
+      8
+    ],
+    "KASSEL": [
+      6,
+      7,
+      8,
+      9,
+      1
+    ],
+    "MAINZ": [
+      7,
+      8,
+      9,
+      1,
+      2
+    ],
+    "KOBLENZ": [
+      9,
+      1,
+      2,
+      3,
+      4
+    ]
   },
   "sameSidePairs": "all",
   "gen": {
-    "nMin": 16, "nMax": 20, "gapMin": 1.7, "gapMax": 2.9,
-    "cars": [2, 3, 3, 4, 4, 5, 5, 6, 7],
+    "nMin": 16,
+    "nMax": 20,
+    "gapMin": 1.7,
+    "gapMax": 2.9,
+    "cars": [
+      2,
+      3,
+      3,
+      4,
+      4,
+      5,
+      5,
+      6,
+      7
+    ],
     "quietRate": 0.12
   }
 }
