@@ -500,5 +500,7 @@ const LINES = [
   { id: "L900", name: "Culoz – Aix-les-Bains – Chambéry",
     nodes: ["culoz", "aix-les-bains", "chambery"] },
   { id: "L910", name: "Lyon – Bourg-en-Bresse – Bellegarde (Haut-Bugey)",
-    nodes: ["lyon", "bourg-en-bresse", "bellegarde"] }
+    nodes: ["lyon", "bourg-en-bresse", "bellegarde"] },
+  { id: "L920", name: "Chambéry – Modane – Bussoleno (Fréjus)",
+    nodes: ["chambery", "bussoleno"] }
 ];

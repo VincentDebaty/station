@@ -197,21 +197,24 @@ les 123 fiches annoncées comme existantes existent bien au catalogue.
 ## Acte V — Les Alpes, le Rhin et la Germanie
 
 *Du Fréjus à la Baltique, le cœur écrit du catalogue* — 15 chapitres,
-**86 gares**, dont **85 écrites**. Il n'en manque qu'une : Bussoleno.
+**86 gares, TOUTES ÉCRITES**. C'est le premier acte complet du ruban.
 
-Au 27 août 2026 : quatre candidates **refusées** par le §0 — Modane,
-Saint-Jean-de-Maurienne, Meximieux, Seyssel, deux directions chacune (encadré
-plus haut) — et les chapitres 46 et 47 **fusionnés** en conséquence, R7
-départageant les deux itinéraires possibles.
+Achevé le 27 août 2026 par Bussoleno, qui ouvre au passage le catalogue à
+l'**Italie**. Quatre candidates ont été **refusées** en chemin par le §0 —
+Modane, Saint-Jean-de-Maurienne, Meximieux, Seyssel, deux directions chacune
+(encadré plus haut) — et les chapitres 46 et 47 ont été **fusionnés** en
+conséquence, R7 départageant les deux itinéraires possibles.
 
-Bussoleno est écrite et validée mais **pas enregistrée** : aucune gare jouable
-ne la touche tant que Turin et la Maurienne n'existent pas, et `net-check`
-refuse une gare qu'aucune porte de départ n'atteint. L'acte V sera donc complet
-le jour où Turin le sera.
+Bussoleno se raccorde **directement à Chambéry** (ligne L920) : les deux gares
+que le rail met entre elles sont justement les deux refusées, et un point de
+passage ne porte pas l'atteignabilité — `js/network.js` ne relie deux gares
+dans `.to` que si elles sont voisines directes. Modane, Bardonnèche, Suse et
+Saint-Jean-de-Maurienne restent des lieux dans `data/places.js`, pour que la
+carte dessine la vallée sans que le ruban prétende s'y arrêter.
 
 | # | Chapitre | Gares, dans l'ordre du rail | n |
 |---|---|---|---|
-| 46 | Le Fréjus et le Bugey | Bussoleno ⊘ · Chambéry ✓ · Aix-les-Bains ✓ · Culoz ✓ · Bellegarde ✓ · **Genève-Cornavin** ✓ | 6 |
+| 46 | Le Fréjus et le Bugey | Bussoleno ✓ · Chambéry ✓ · Aix-les-Bains ✓ · Culoz ✓ · Bellegarde ✓ · **Genève-Cornavin** ✓ | 6 |
 | 47 | Le Plateau suisse | Lausanne ✓ · Fribourg ✓ · Berne ✓ · Olten ✓ · Aarau ✓ · **Zurich HB** ✓ | 6 |
 | 48 | Le Rhin supérieur | Bâle ✓ · Mulhouse ✓ · Colmar ✓ · Sélestat ✓ · **Strasbourg** ✓ | 5 |
 | 49 | La Lorraine | Sarrebourg ✓ · Nancy ✓ · Metz ✓ · Thionville ✓ · Bettembourg ✓ · **Luxembourg** ✓ | 6 |
@@ -395,7 +398,7 @@ position.
 
 ## Ce que ce ruban coûte, et par où commencer
 
-**464 fiches à écrire.** À raison d'une séance par gare, c'est le travail de
+**463 fiches à écrire.** À raison d'une séance par gare, c'est le travail de
 plusieurs mois — mais il est **entièrement parallélisable** (une session par
 gare, un manifeste, `tools/enregistrer.mjs`) et surtout **il n'est jamais
 bloquant** : le ruban est jouable dès que son début l'est. C'est tout
@@ -403,9 +406,10 @@ l'intérêt d'un fil par rapport à un graphe.
 
 Ordre de livraison conseillé, du plus rentable au moins :
 
-1. **Acte V d'abord** (15 chapitres, 91 gares, **une seule à écrire** — Bussoleno,
-   déjà rédigée et validée, en attente de Turin pour être enregistrée). Les
-   Alpes, le Rhin, le Benelux et la Germanie sont déjà écrits à 73 %.
+1. **Acte V est TERMINÉ** (15 chapitres, 86 gares) — le premier acte complet
+   du ruban, achevé le 27 août 2026. Les Alpes, le Rhin, le Benelux et la
+   Germanie n'ont plus une seule fiche à écrire. La suite passe donc à
+   l'acte II.
 
 **Douze chapitres sont jouables intégralement aujourd'hui**, sans écrire une
 seule fiche — soit **68 niveaux prêts** :

@@ -237,6 +237,10 @@ const GEO = {
         schaffhausen: [8.632, 47.698],
         stgallen: [9.370, 47.423]
       } },
+    "italie": { name: "Italie", flag: "🇮🇹", iso: "IT", continent: "europe",
+      cities: {
+        bussoleno: [7.1478, 45.1367]
+      } },
     "royaume-uni": { name: "Royaume-Uni", flag: "🇬🇧", iso: "GBR", continent: "europe",
       frame: [-6.3, 49.9, 1.9, 57.6], neighbors: { belgique: [3.25, 51.22] },
       cities: {

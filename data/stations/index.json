@@ -283,5 +283,12 @@
       "schaffhausen",
       "stgallen"
     ]
+  },
+  {
+    "country": "italie",
+    "label": "🇮🇹 Italie",
+    "stations": [
+      "bussoleno"
+    ]
   }
 ]
