@@ -7,27 +7,117 @@
   "country": "🇩🇪 Allemagne",
   "desc": "Dix-huit voies en cul-de-sac au fond d'une cuvette, le chantier du siècle au-dessus : la gare que l'on démolit pour l'enterrer. Ici, elle rebrousse encore.",
   "platforms": [
-    { "id": 1, "deadEnd": true }, { "id": 2, "deadEnd": true }, { "id": 3, "deadEnd": true }, { "id": 4, "deadEnd": true }, { "id": 5, "deadEnd": true },
-    { "id": 6, "deadEnd": true }, { "id": 7, "deadEnd": true }, { "id": 8, "deadEnd": true }
+    {
+      "id": 1,
+      "deadEnd": true
+    },
+    {
+      "id": 2,
+      "deadEnd": true
+    },
+    {
+      "id": 3,
+      "deadEnd": true
+    },
+    {
+      "id": 4,
+      "deadEnd": true
+    },
+    {
+      "id": 5,
+      "deadEnd": true
+    },
+    {
+      "id": 6,
+      "deadEnd": true
+    },
+    {
+      "id": 7,
+      "deadEnd": true
+    },
+    {
+      "id": 8,
+      "deadEnd": true
+    }
   ],
   "portals": {
-    "MANNHEIM":  { "side": "L", "color": "#f2588f", "abbr": "MA" },
-    "KARLSRUHE": { "side": "L", "color": "#60a5fa", "abbr": "KA" },
-    "ULM":       { "side": "L", "color": "#f5b23c", "abbr": "UL" },
-    "NURNBERG":  { "side": "L", "color": "#25dede", "abbr": "N", "label": "NÜRNBERG" },
-    "ZURICH":    { "side": "L", "color": "#a78bfa", "abbr": "ZH", "label": "ZÜRICH" }
+    "MANNHEIM": {
+      "side": "L",
+      "color": "#f2588f",
+      "abbr": "MA"
+    },
+    "KARLSRUHE": {
+      "side": "L",
+      "color": "#60a5fa",
+      "abbr": "KA"
+    },
+    "ULM": {
+      "side": "L",
+      "color": "#f5b23c",
+      "abbr": "UL"
+    },
+    "NURNBERG": {
+      "side": "L",
+      "color": "#25dede",
+      "abbr": "N",
+      "label": "NÜRNBERG"
+    },
+    "ZURICH": {
+      "side": "L",
+      "color": "#a78bfa",
+      "abbr": "ZH",
+      "label": "ZÜRICH"
+    }
   },
   "links": {
-    "MANNHEIM":  [1, 2, 3, 4],
-    "KARLSRUHE": [3, 4, 5, 6],
-    "ULM":       [4, 5, 6, 7],
-    "NURNBERG":  [1, 6, 7, 8],
-    "ZURICH":    [1, 2, 7, 8]
+    "MANNHEIM": [
+      1,
+      2,
+      3,
+      4
+    ],
+    "KARLSRUHE": [
+      2,
+      3,
+      4,
+      5,
+      6
+    ],
+    "ULM": [
+      4,
+      5,
+      6,
+      7
+    ],
+    "NURNBERG": [
+      1,
+      6,
+      7,
+      8
+    ],
+    "ZURICH": [
+      1,
+      2,
+      7,
+      8
+    ]
   },
   "sameSidePairs": "all",
   "gen": {
-    "nMin": 15, "nMax": 18, "gapMin": 1.8, "gapMax": 3.0,
-    "cars": [2, 3, 3, 4, 4, 5, 5, 6],
+    "nMin": 15,
+    "nMax": 18,
+    "gapMin": 1.8,
+    "gapMax": 3.0,
+    "cars": [
+      2,
+      3,
+      3,
+      4,
+      4,
+      5,
+      5,
+      6
+    ],
     "quietRate": 0.15
   }
 }

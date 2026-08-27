@@ -7,24 +7,86 @@
   "country": "🇩🇪 Allemagne",
   "desc": "Terminus historique de la Köln-Mindener Eisenbahn en 1848, aujourd'hui gare-île à cinq voies sur l'axe Ruhr–Hanovre. Par l'ouest arrivent Bielefeld et, depuis Löhne, l'IC d'Amsterdam ; par l'est Hanovre, et la Weserbahn qui remonte vers Nienburg. Dernier aiguillage avant le carrefour du Nord — et des trains militaires qui passent encore à quai.",
   "platforms": [
-    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
+    {
+      "id": 1
+    },
+    {
+      "id": 2
+    },
+    {
+      "id": 3
+    },
+    {
+      "id": 4
+    },
+    {
+      "id": 5
+    }
   ],
   "portals": {
-    "BIELEFELD": { "side": "L", "color": "#4ade80", "abbr": "BI" },
-    "OSNABRUCK": { "side": "L", "color": "#f5b23c", "abbr": "OS", "label": "OSNABRÜCK" },
-    "HANNOVER":  { "side": "R", "color": "#f2588f", "abbr": "H" },
-    "NIENBURG":  { "side": "R", "color": "#60a5fa", "abbr": "NI" }
+    "BIELEFELD": {
+      "side": "L",
+      "color": "#4ade80",
+      "abbr": "BI"
+    },
+    "OSNABRUCK": {
+      "side": "L",
+      "color": "#f5b23c",
+      "abbr": "OS",
+      "label": "OSNABRÜCK"
+    },
+    "HANNOVER": {
+      "side": "R",
+      "color": "#f2588f",
+      "abbr": "H"
+    },
+    "NIENBURG": {
+      "side": "R",
+      "color": "#60a5fa",
+      "abbr": "NI"
+    }
   },
   "links": {
-    "BIELEFELD": [1, 2, 3, 4, 5],
-    "OSNABRUCK": [1, 2],
-    "HANNOVER":  [1, 2, 3, 4, 5],
-    "NIENBURG":  [4, 5]
+    "BIELEFELD": [
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "OSNABRUCK": [
+      1,
+      2,
+      3
+    ],
+    "HANNOVER": [
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "NIENBURG": [
+      4,
+      5
+    ]
   },
   "sameSidePairs": [],
   "gen": {
-    "nMin": 14, "nMax": 15, "gapMin": 1.6, "gapMax": 3.0,
-    "cars": [2, 3, 3, 4, 4, 5, 5, 6],
+    "nMin": 14,
+    "nMax": 15,
+    "gapMin": 1.6,
+    "gapMax": 3.0,
+    "cars": [
+      2,
+      3,
+      3,
+      4,
+      4,
+      5,
+      5,
+      6
+    ],
     "quietRate": 0.18
   }
 }

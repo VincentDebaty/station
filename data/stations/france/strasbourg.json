@@ -6,29 +6,113 @@
   "country": "🇫🇷 France",
   "desc": "Sous la verrière-bulle de 2007, la deuxième gare de province : depuis la LGV Est, Paris est à 1 h 46. Six directions, huit quais, et le Rhin à deux kilomètres.",
   "platforms": [
-    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },
-    { "id": 6 }, { "id": 7 }, { "id": 8 }
+    {
+      "id": 1
+    },
+    {
+      "id": 2
+    },
+    {
+      "id": 3
+    },
+    {
+      "id": 4
+    },
+    {
+      "id": 5
+    },
+    {
+      "id": 6
+    },
+    {
+      "id": 7
+    },
+    {
+      "id": 8
+    }
   ],
   "portals": {
-    "PARIS-EST": { "side": "L", "color": "#25dede", "abbr": "PE" },
-    "METZ":      { "side": "L", "color": "#f5b23c", "abbr": "MZ" },
-    "NANCY":     { "side": "L", "color": "#4ade80", "abbr": "NY" },
-    "MULHOUSE":  { "side": "R", "color": "#60a5fa", "abbr": "MU" },
-    "COLMAR":    { "side": "R", "color": "#a78bfa", "abbr": "CL" },
-    "OFFENBURG": { "side": "R", "color": "#f2588f", "abbr": "OF" }
+    "PARIS-EST": {
+      "side": "L",
+      "color": "#25dede",
+      "abbr": "PE"
+    },
+    "METZ": {
+      "side": "L",
+      "color": "#f5b23c",
+      "abbr": "MZ"
+    },
+    "NANCY": {
+      "side": "L",
+      "color": "#4ade80",
+      "abbr": "NY"
+    },
+    "MULHOUSE": {
+      "side": "R",
+      "color": "#60a5fa",
+      "abbr": "MU"
+    },
+    "COLMAR": {
+      "side": "R",
+      "color": "#a78bfa",
+      "abbr": "CL"
+    },
+    "OFFENBURG": {
+      "side": "R",
+      "color": "#f2588f",
+      "abbr": "OF"
+    }
   },
   "links": {
-    "PARIS-EST": [1, 2, 3, 4],
-    "METZ":      [4, 5, 6],
-    "NANCY":     [6, 7, 8],
-    "MULHOUSE":  [1, 2, 5, 6],
-    "COLMAR":    [3, 4, 7],
-    "OFFENBURG": [7, 8]
+    "PARIS-EST": [
+      1,
+      2,
+      3,
+      4
+    ],
+    "METZ": [
+      4,
+      5,
+      6
+    ],
+    "NANCY": [
+      6,
+      7,
+      8
+    ],
+    "MULHOUSE": [
+      1,
+      2,
+      5,
+      6
+    ],
+    "COLMAR": [
+      3,
+      4,
+      7
+    ],
+    "OFFENBURG": [
+      6,
+      7,
+      8
+    ]
   },
   "sameSidePairs": [],
   "gen": {
-    "nMin": 16, "nMax": 20, "gapMin": 1.5, "gapMax": 2.6,
-    "cars": [2, 3, 3, 4, 4, 5, 5, 6],
+    "nMin": 16,
+    "nMax": 20,
+    "gapMin": 1.5,
+    "gapMax": 2.6,
+    "cars": [
+      2,
+      3,
+      3,
+      4,
+      4,
+      5,
+      5,
+      6
+    ],
     "quietRate": 0.12
   }
 }
