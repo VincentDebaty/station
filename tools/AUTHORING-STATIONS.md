@@ -200,6 +200,27 @@ destination).
 
 ## 5. Enveloppes par palier (valeurs de référence `gen`)
 
+> ⚠️ **SUR UNE GARE DU RUBAN, LE `gen` QUE VOUS ÉCRIVEZ N'EST PAS JOUÉ.**
+> `ficheDeService` (`js/ruban.js`) le remplace par l'enveloppe de la difficulté
+> **déduite de la position** de la gare dans son chapitre, rabattue par
+> `plafondDeFlux`. Mesuré le 26 août 2026 : **60 des 63 gares** du ruban
+> jouaient autre chose que ce qui était écrit dans leur fiche — Roth écrite
+> 13-15 et jouée 18-22, Osnabrück écrite en difficulté 1 et jouée en 4.
+>
+> Ce qui reste entre vos mains sur une gare du ruban, c'est la **GÉOMÉTRIE** :
+> le nombre de quais, le nombre de directions, et les `links`. C'est elle qui
+> fixe le plafond, donc le niveau, donc l'enveloppe. Calibrer `nMax` à la main
+> sur une telle gare ne change rien à ce que voit le joueur — l'erreur a été
+> faite, et elle coûte une séance.
+>
+> Le `gen` écrit sert encore à trois choses : les gares **hors ruban**, les
+> **grandes gares** de fin de chapitre (où `ENVELOPPE_BOSS` se fond avec lui),
+> et les fiches **pas encore enregistrées**. Le tableau ci-dessous reste donc
+> la référence pour les écrire — et c'est lui qui a servi à caler `ENVELOPPES`.
+>
+> `gen-check` teste **l'enveloppe jouée** par défaut. Pour mesurer celle qui est
+> écrite — utile avant qu'une fiche rejoigne un ruban — passer `--ecrite`.
+
 `gen` = `{ nMin, nMax, gapMin, gapMax, cars[], quietRate, rush }`.
 `cars` = tirage des longueurs (pondéré), **entre 2 et 7** : une valeur 1 est
 remontée à `MIN_CARS` = 2 par le générateur (une motrice seule n'est pas un
@@ -306,6 +327,26 @@ Il en faut donc **deux, et ils ne servent pas à la même chose** :
   est précisément un événement rare qu'on ne veut jamais livrer.
 
 Ne jamais conclure « le catalogue est vert » sur un seul balayage non graîné.
+
+**LE CONTRÔLE DIT MAINTENANT « JE NE SAIS PAS ».** La règle de congestion
+comparait une fréquence observée à une cible de 12 %, ce qui n'est pas un test :
+mesuré le 26 août 2026, une gare dont le taux RÉEL vaut exactement 12 %
+échouait 44 % du temps à K=20, et une gare à 8 % — sous la cible — une fois sur
+cinq. Sur 63 gares, cela sortait une ou deux fausses alertes par balayage,
+toujours différentes, et donnait l'illusion d'une dette sans fond.
+
+`gen-check` teste désormais l'hypothèse : quelle probabilité d'observer autant
+d'excursions si le taux réel valait la cible ? Sous 5 %, il refuse. Au-dessus,
+il **avertit avec sa p-valeur sans faire échouer** — la gare dépasse peut-être,
+l'échantillon ne le prouve pas. Un `⚠ … non concluant` n'est donc **ni un
+échec ni un feu vert** : c'est une invitation à relancer cette gare seule à
+K=30, qui tranche.
+
+Les seuils de refus qui en découlent : 3 journées sur 6, 6 sur 20, 8 sur 30.
+La **file de 6** et le **retard garanti** ne changent pas — ce sont des maxima,
+pas des taux, et ils ne souffrent pas de ce biais. C'est d'ailleurs une faute
+dure qui a désigné Wittenberg le 27 août, une fois les fausses alertes
+écartées : rare (4 tirages sur 20), invisible à graine fixe, et bien réelle.
 
 **Mais ne pas non plus extrapoler la queue.** K=6 est un estimateur bruité : sur
 226 fiches, chaque tirage libre sort une ou deux gares « limites » différentes,
