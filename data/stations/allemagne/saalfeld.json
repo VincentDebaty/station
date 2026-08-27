@@ -19,8 +19,8 @@
   },
   "links": {
     "LEIPZIG":      [1, 2, 3],
-    "ERFURT":       [2, 3, 4, 5],
-    "GERA":         [5, 6],
+    "ERFURT":       [1, 2, 3, 4],
+    "GERA":         [4, 5, 6],
     "NURNBERG":     [1, 2, 3, 4, 5, 6],
     "BLANKENSTEIN": [5, 6]
   },
