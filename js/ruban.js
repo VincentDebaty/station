@@ -176,7 +176,25 @@ function plafondDeFlux(cfg) {
   // ouverture de sa paire morte, et rentre à 3,0 un cran plus bas. L'écart va
   // vers le PLUS FACILE, jamais vers le plus dur.
   const parQuais = quais >= 8 ? 5 : quais >= 6 ? 4 : quais >= 5 ? 3 : Math.max(1, quais - 1);
-  return Math.max(1, Math.min(5, parQuais, directions));
+  // L'ENTONNOIR DESCEND D'UN CRAN. Quand un côté n'a qu'une seule destination,
+  // toutes les paires passent par elle : le §6 le mesure sur cinq gares
+  // (Colmar, Aarau, Agen, Fürth, Potsdam — toutes au-dessus de 4, toutes
+  // rentrées avec deux ou trois convois de moins, soit un cran d'enveloppe).
+  // La règle vivait dans le `gen` écrit des fiches — un canal que le ruban ne
+  // joue plus. Constaté le 27 août 2026 quand l'acte V a mis Colmar en jeu :
+  // servie 14-17 par sa position, file de 6 à graine fixe, alors que sa
+  // correction d'août (nMax 13) dormait dans sa fiche. Sur les 86 du ruban,
+  // dix-sept gares ont un côté à portail unique — et les trois qui sortaient
+  // du balayage du jour (Colmar, Sélestat, Lichtenfels) en sont, jouées
+  // exactement à leur plafond. Un terminus n'est pas concerné : tous ses
+  // portails sont du même côté, la notion d'entonnoir n'y existe pas.
+  let entonnoir = 0;
+  if (cfg.sameSidePairs !== "all" && cfg.portals) {
+    let g = 0, d = 0;
+    for (const k in cfg.portals) (cfg.portals[k].side === "L" ? g++ : d++);
+    if (g === 1 || d === 1) entonnoir = 1;
+  }
+  return Math.max(1, Math.min(5, parQuais, directions) - entonnoir);
 }
 // Le plancher d'un chapitre : celui qu'il déclare, sinon une rampe douce
 // déduite de son rang dans le ruban (un cran tous les trois chapitres).
