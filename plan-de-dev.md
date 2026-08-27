@@ -145,7 +145,8 @@ tout ce qui n'en est pas un.
    Tous les autres ouvrent en d4 ou d5, parce qu'ils ont été écrits pour un
    milieu de ruban.
 
-   **Décision : la v1 livre les chapitres 51 à 61 du ruban définitif** —
+   **Décision : la v1 livre les chapitres 50 à 60 du ruban définitif** (51 à 61
+   avant la fusion des chapitres 46 et 47, le 27 août 2026) —
    Luxembourg → Bruxelles → Amsterdam → Hanovre → Cologne → Francfort →
    Stuttgart → Munich → Nuremberg → Leipzig → Berlin → **Hambourg**. Ce n'est
    pas un autre ruban, c'est un **préfixe pris là où il est écrit** ; Cork →
