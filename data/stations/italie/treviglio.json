@@ -1,0 +1,28 @@
+{
+  "id": "treviglio",
+  "name": "Treviglio",
+  "tagline": "L'entonnoir oriental de Milan",
+  "desc": "Le point exact où le quadruplement venu de Milan se referme sur la vieille double voie de Venise, et d'où rayonnent Bergame et Crémone. Les directs de Bergame évitent la gare par une courbe de 1908 : sa navette part à l'envers, côté ouest.",
+  "difficulty": 2,
+  "country": "🇮🇹 Italie",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
+  ],
+  "portals": {
+    "MILAN":   { "side": "L", "color": "#f2588f", "abbr": "MI" },
+    "BERGAME": { "side": "L", "color": "#4ade80", "abbr": "BG" },
+    "VENISE":  { "side": "R", "color": "#25dede", "abbr": "VE" },
+    "CREMONE": { "side": "R", "color": "#f5b23c", "abbr": "CR", "label": "CRÉMONE" }
+  },
+  "links": {
+    "MILAN":   [1, 2, 3, 4],
+    "BERGAME": [4, 5],
+    "VENISE":  [1, 2, 3, 4],
+    "CREMONE": [3, 4, 5]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 13, "nMax": 16, "gapMin": 1.8, "gapMax": 3.0,
+    "cars": [2, 2, 3, 3, 4, 4, 5], "quietRate": 0.18, "rush": "double"
+  }
+}

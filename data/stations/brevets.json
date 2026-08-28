@@ -678,6 +678,24 @@
   },
   "boss": "OK"
  },
+ "brescia": {
+  "geometrie": "f6471876f615",
+  "date": "2026-08-28",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 3,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK",
+   "4": "file de 6 au même quai"
+  },
+  "boss": "file de 7 au même quai"
+ },
  "brighton": {
   "geometrie": "c8f684bd9e98",
   "date": "2026-08-28",
@@ -2687,6 +2705,25 @@
   },
   "boss": "file de 6 au même quai"
  },
+ "milano": {
+  "geometrie": "f9b747565840",
+  "date": "2026-08-28",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 5,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK",
+   "4": "OK",
+   "5": "OK"
+  },
+  "boss": "OK"
+ },
  "minden": {
   "geometrie": "16152773ff4d",
   "date": "2026-08-27",
@@ -4037,6 +4074,23 @@
   },
   "boss": "file de 6 au même quai"
  },
+ "treviglio": {
+  "geometrie": "e292355c7854",
+  "date": "2026-08-28",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 3,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK"
+  },
+  "boss": "file de 6 au même quai"
+ },
  "trier": {
   "geometrie": "74c3fcaf062f",
   "date": "2026-08-28",
@@ -4157,6 +4211,25 @@
   },
   "boss": "file de 6 au même quai"
  },
+ "verona": {
+  "geometrie": "b534b1b3d6a2",
+  "date": "2026-08-28",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 5,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK",
+   "4": "OK",
+   "5": "OK"
+  },
+  "boss": "OK"
+ },
  "verviers": {
   "geometrie": "1fc9a65dbcdd",
   "date": "2026-08-28",
@@ -4173,6 +4246,24 @@
    "3": "file de 6 au même quai"
   },
   "boss": "retard garanti 0.33 > 0.3"
+ },
+ "vicenza": {
+  "geometrie": "108464f87616",
+  "date": "2026-08-28",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 3,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK",
+   "4": "file de 6 au même quai"
+  },
+  "boss": "file de 7 au même quai"
  },
  "vierzon": {
   "geometrie": "cdb966292a65",

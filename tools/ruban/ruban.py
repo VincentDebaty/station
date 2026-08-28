@@ -109,8 +109,14 @@ ch(D,"L'Adriatique","Bari","Bologne",[
   g("Barletta"),g("Foggia"),g("Termoli"),g("Pescara"),g("Ancône"),g("Rimini"),g("Bologne Centrale")])
 ch(D,"La Vénétie","Bologne","Venise",[
   g("Ferrare"),g("Rovigo"),g("Padoue"),g("Mestre"),g("Venise Santa Lucia")])
+# PESCHIERA ET DESENZANO REFUSÉES le 28 août 2026 (§0) : gares de passage à
+# deux directions sur le tronc Milan–Venise — leurs seuls embranchements sont
+# morts en 1967 (Mantoue) et 1969 (le port). Aucune bifurcation voyageurs ne
+# survit entre Brescia et Vérone (Rezzato–Vobarno déposée en 1976) : le lac de
+# Garde ne fournit aucun niveau, le chapitre tient à cinq.
 ch(D,"La plaine lombarde","Venise","Milan",[
-  g("Vicence"),g("Vérone"),g("Peschiera"),g("Desenzano"),g("Brescia"),g("Treviglio"),g("Milan Centrale")])
+  g("Vicence","vicenza"),g("Vérone","verona"),g("Brescia","brescia"),
+  g("Treviglio","treviglio"),g("Milan Centrale","milano")])
 # MAGENTA REFUSÉE le 28 août 2026 (§0) : pure gare de passage à deux directions
 # et deux voies sur la ligne Turin–Milan, jamais été une bifurcation — la seule
 # desserte disparue était un tramway routier (1957). Le chapitre tient à cinq.

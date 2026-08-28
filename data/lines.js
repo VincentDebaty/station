@@ -506,5 +506,9 @@ const LINES = [
   { id: "L921", name: "Turin – Milan (ligne historique)",
     nodes: ["torino", "chivasso", "vercelli", "novara", "rho"] },
   { id: "L922", name: "Turin – Bussoleno (val de Suse)",
-    nodes: ["torino", "bussoleno"] }
+    nodes: ["torino", "bussoleno"] },
+  { id: "L923", name: "Milan – Venise (plaine lombarde)",
+    nodes: ["milano", "treviglio", "brescia", "verona", "vicenza"] },
+  { id: "L924", name: "Milan – Rho",
+    nodes: ["milano", "rho"] }
 ];

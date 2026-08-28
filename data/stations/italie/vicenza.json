@@ -1,0 +1,28 @@
+{
+  "id": "vicenza",
+  "name": "Vicence",
+  "tagline": "Deux mondes sur le même faisceau",
+  "desc": "La grande artère Milan–Venise traverse, pendant que les navettes diesel de Schio rebroussent sur leurs voies en impasse. Bâtiment de 1845, aujourd'hui en plein chantier de la grande vitesse qui passera en surface.",
+  "difficulty": 3,
+  "country": "🇮🇹 Italie",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }, { "id": 6 }
+  ],
+  "portals": {
+    "VERONE":  { "side": "L", "color": "#25dede", "abbr": "VR", "label": "VÉRONE" },
+    "SCHIO":   { "side": "L", "color": "#4ade80", "abbr": "SC" },
+    "VENISE":  { "side": "R", "color": "#f2588f", "abbr": "VE" },
+    "TREVISE": { "side": "R", "color": "#f5b23c", "abbr": "TV", "label": "TRÉVISE" }
+  },
+  "links": {
+    "VERONE":  [1, 2, 3, 4],
+    "SCHIO":   [5, 6],
+    "VENISE":  [1, 2, 3, 4, 5],
+    "TREVISE": [3, 4, 5, 6]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 14, "nMax": 17, "gapMin": 1.7, "gapMax": 2.9,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6], "quietRate": 0.16, "rush": "pointe"
+  }
+}

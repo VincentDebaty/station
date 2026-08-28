@@ -244,7 +244,12 @@ const GEO = {
         novara: [8.6253, 45.4508],
         vercelli: [8.4164, 45.3298],
         chivasso: [7.89, 45.1933],
-        torino: [7.6789, 45.0625]
+        torino: [7.6789, 45.0625],
+        vicenza: [11.5404, 45.5411],
+        verona: [10.9822, 45.4292],
+        brescia: [10.2128, 45.5324],
+        treviglio: [9.5887, 45.5154],
+        milano: [9.204, 45.4857]
       } },
     "royaume-uni": { name: "Royaume-Uni", flag: "🇬🇧", iso: "GBR", continent: "europe",
       frame: [-6.3, 49.9, 1.9, 57.6], neighbors: { belgique: [3.25, 51.22] },

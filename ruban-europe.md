@@ -203,7 +203,7 @@ les 123 fiches annoncées comme existantes existent bien au catalogue.
 | 41 | La Lucanie | Battipaglia · Potenza · Metaponto · Tarente · Gioia del Colle · **Bari Centrale** | 6 |
 | 42 | L'Adriatique | Barletta · Foggia · Termoli · Pescara · Ancône · Rimini · **Bologne Centrale** | 7 |
 | 43 | La Vénétie | Ferrare · Rovigo · Padoue · Mestre · **Venise Santa Lucia** | 5 |
-| 44 | La plaine lombarde | Vicence · Vérone · Peschiera · Desenzano · Brescia · Treviglio · **Milan Centrale** | 7 |
+| 44 | La plaine lombarde | Vicence ✓ · Vérone ✓ · ~~Peschiera~~ · ~~Desenzano~~ · Brescia ✓ · Treviglio ✓ · **Milan Centrale** ✓ | 5 |
 | 45 | Le Piémont | Rho ✓ · ~~Magenta~~ · Novare ✓ · Verceil ✓ · Chivasso ✓ · **Turin Porta Nuova** ✓ | 5 |
 
 ## Acte V — Les Alpes, le Rhin et la Germanie

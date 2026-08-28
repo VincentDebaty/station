@@ -3,14 +3,14 @@
  "nom": "L'Europe",
  "gratuite": true,
  "enChantier": true,
- "note": "Tranche livree du ruban : chapitres 45 a 60 de ruban-europe.md (Bussoleno vers Hambourg) — l'acte V en entier. Le ruban complet va de Cork a Istanbul ; les actes I a IV se greffent DEVANT celui-ci quand ils seront ecrits.",
+ "note": "Tranche livree du ruban : chapitres 44 a 60 de ruban-europe.md (Bussoleno vers Hambourg) — l'acte V en entier. Le ruban complet va de Cork a Istanbul ; les actes I a IV se greffent DEVANT celui-ci quand ils seront ecrits.",
  "echelle": {
   "kmMinEntreHubs": 110
  },
  "zones": [
   {
    "id": "alpes",
-   "nom": "Le Piémont, les Alpes et la Lorraine",
+   "nom": "L'Italie du Nord, les Alpes et la Lorraine",
    "couleur": "#c084fc"
   },
   {
@@ -26,6 +26,20 @@
  ],
  "chapitres": [
   {
+   "id": "la-plaine-lombarde",
+   "nom": "La plaine lombarde",
+   "zone": "alpes",
+   "gares": [
+    "vicenza",
+    "verona",
+    "brescia",
+    "treviglio",
+    "milano"
+   ],
+   "plancher": 1,
+   "arrivee": 3
+  },
+  {
    "id": "le-piemont",
    "nom": "Le Piémont",
    "zone": "alpes",
@@ -36,8 +50,8 @@
     "chivasso",
     "torino"
    ],
-   "plancher": 1,
-   "arrivee": 3
+   "plancher": 2,
+   "arrivee": 4
   },
   {
    "id": "le-frejus-et-le-bugey",

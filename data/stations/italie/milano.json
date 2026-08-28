@@ -1,0 +1,36 @@
+{
+  "id": "milano",
+  "name": "Milan Centrale",
+  "city": "Milan",
+  "tagline": "La cathédrale de 1931, cinq cents trains par jour",
+  "desc": "Sous les verrières de 72 mètres d'Ulisse Stacchini, vingt-quatre voies en impasse et plus de cinq cents trains par jour. Tout sort par un unique faisceau nord-est qui se divise aussitôt en trois : vers Turin et le Simplon, vers le Gothard, vers Venise et Bologne.",
+  "difficulty": 5,
+  "country": "🇮🇹 Italie",
+  "platforms": [
+    { "id": 1, "deadEnd": true }, { "id": 2, "deadEnd": true }, { "id": 3, "deadEnd": true },
+    { "id": 4, "deadEnd": true }, { "id": 5, "deadEnd": true }, { "id": 6, "deadEnd": true },
+    { "id": 7, "deadEnd": true }, { "id": 8, "deadEnd": true }, { "id": 9, "deadEnd": true },
+    { "id": 10, "deadEnd": true }
+  ],
+  "portals": {
+    "TURIN":       { "side": "L", "color": "#25dede", "abbr": "TO" },
+    "DOMODOSSOLA": { "side": "L", "color": "#f5b23c", "abbr": "DO" },
+    "COME":        { "side": "L", "color": "#4ade80", "abbr": "CO", "label": "CÔME" },
+    "VENISE":      { "side": "L", "color": "#f2588f", "abbr": "VE" },
+    "BOLOGNE":     { "side": "L", "color": "#60a5fa", "abbr": "BO" },
+    "GENES":       { "side": "L", "color": "#a78bfa", "abbr": "GE", "label": "GÊNES" }
+  },
+  "links": {
+    "TURIN":       [1, 2, 3, 4, 5],
+    "DOMODOSSOLA": [3, 4, 5, 6, 7],
+    "COME":        [4, 5, 6, 7, 8],
+    "VENISE":      [5, 6, 7, 8, 9],
+    "BOLOGNE":     [7, 8, 9, 10, 1],
+    "GENES":       [9, 10, 1, 2, 3]
+  },
+  "sameSidePairs": "all",
+  "gen": {
+    "nMin": 18, "nMax": 22, "gapMin": 1.5, "gapMax": 2.5,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6], "quietRate": 0.12, "rush": "pointe"
+  }
+}

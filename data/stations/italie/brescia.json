@@ -1,0 +1,30 @@
+{
+  "id": "brescia",
+  "name": "Brescia",
+  "tagline": "Deux gares en une",
+  "desc": "Une grande traversante où les Frecciarossa partagent la ligne classique avec quatre corridors régionaux — et, collé à son flanc ouest, un mini-terminus de trois voies non raccordées d'où partent les diesels et les premiers trains à hydrogène d'Italie, vers la Valcamonica.",
+  "difficulty": 3,
+  "country": "🇮🇹 Italie",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }, { "id": 6 }
+  ],
+  "portals": {
+    "MILAN":   { "side": "L", "color": "#f2588f", "abbr": "MI" },
+    "BERGAME": { "side": "L", "color": "#4ade80", "abbr": "BG" },
+    "VERONE":  { "side": "R", "color": "#25dede", "abbr": "VR", "label": "VÉRONE" },
+    "CREMONE": { "side": "R", "color": "#f5b23c", "abbr": "CR", "label": "CRÉMONE" },
+    "PARME":   { "side": "R", "color": "#a78bfa", "abbr": "PR" }
+  },
+  "links": {
+    "MILAN":   [2, 3, 4, 5, 6],
+    "BERGAME": [1, 2, 3],
+    "VERONE":  [1, 2, 3, 4],
+    "CREMONE": [3, 4, 5, 6],
+    "PARME":   [5, 6]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 14, "nMax": 17, "gapMin": 1.7, "gapMax": 2.9,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6], "quietRate": 0.16, "rush": "pointe"
+  }
+}
