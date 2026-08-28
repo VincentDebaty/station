@@ -125,10 +125,26 @@ function bandeauHaut() {
   if (!(s > 0)) return 0;
   return (hud.getBoundingClientRect().height + 8) / s;
 }
+// LE PLAFOND DE ZOOM SE MESURE EN PIXELS, PAS EN UNITÉS. Le plafond fixe
+// (6) avait été calé sur desktop pour « voir le pays autour » — mais une
+// unité du cadre y fait ~41 px, contre ~20 sur un iPhone : au même k, le
+// téléphone montre un timbre-poste. Mesuré le 28 août 2026 au simulateur,
+// après le correctif du voisinage qui n'avait rien changé : le chapitre
+// n'occupait que 36 % de la largeur, borné par kMax bien avant de remplir.
+// Le plafond se relève donc jusqu'à garantir ~32 px par unité de cadre —
+// sans effet sur desktop (déjà au-dessus), et borné par le remplissage.
+const PX_PAR_UNITE_MIN = 32;
+function plafondZoom(base) {
+  const svg = CARTE.hote && CARTE.hote.querySelector(".c-graphe");
+  const px = svg ? svg.getBoundingClientRect().width : 0;
+  if (!(px > 0)) return base;
+  const parUnite = px / fenetreVisible().w;     // px par unité à k = 1
+  return Math.max(base, PX_PAR_UNITE_MIN / parUnite);
+}
 function zoomPour(bw, bh, marge, kMax, inset) {
   const f = fenetreVisible();
   const utile = Math.max(20, f.h - (inset || 0));
-  return Math.max(1, Math.min(kMax, (f.w - 2 * marge) / Math.max(bw, 1), (utile - 2 * marge) / Math.max(bh, 1)));
+  return Math.max(1, Math.min(plafondZoom(kMax), (f.w - 2 * marge) / Math.max(bw, 1), (utile - 2 * marge) / Math.max(bh, 1)));
 }
 function boite(ids) {
   let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
