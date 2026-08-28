@@ -249,7 +249,12 @@ const GEO = {
         verona: [10.9822, 45.4292],
         brescia: [10.2128, 45.5324],
         treviglio: [9.5887, 45.5154],
-        milano: [9.204, 45.4857]
+        milano: [9.204, 45.4857],
+        ferrara: [11.6039, 44.8428],
+        rovigo: [11.7814, 45.0775],
+        padova: [11.8803, 45.4175],
+        mestre: [12.232, 45.4825],
+        venezia: [12.321, 45.441]
       } },
     "royaume-uni": { name: "Royaume-Uni", flag: "🇬🇧", iso: "GBR", continent: "europe",
       frame: [-6.3, 49.9, 1.9, 57.6], neighbors: { belgique: [3.25, 51.22] },

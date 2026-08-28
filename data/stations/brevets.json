@@ -1525,6 +1525,24 @@
   },
   "boss": "OK"
  },
+ "ferrara": {
+  "geometrie": "31ec81b7b419",
+  "date": "2026-08-28",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 3,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK",
+   "4": "file de 6 au même quai"
+  },
+  "boss": "file de 7 au même quai"
+ },
  "frankfurt": {
   "geometrie": "1588a98a0c5b",
   "date": "2026-08-27",
@@ -2687,6 +2705,25 @@
   },
   "boss": "OK"
  },
+ "mestre": {
+  "geometrie": "5fcf4910496f",
+  "date": "2026-08-28",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 5,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK",
+   "4": "OK",
+   "5": "OK"
+  },
+  "boss": "OK"
+ },
  "metz": {
   "geometrie": "7eef8e2b0e40",
   "date": "2026-08-27",
@@ -3236,6 +3273,24 @@
   },
   "boss": "OK"
  },
+ "padova": {
+  "geometrie": "a43b6ecb27cc",
+  "date": "2026-08-28",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 4,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK",
+   "4": "OK"
+  },
+  "boss": "retard garanti 0.33 > 0.3"
+ },
  "paris-est": {
   "geometrie": "cdf7b7718977",
   "date": "2026-08-28",
@@ -3652,6 +3707,23 @@
    "5": "OK"
   },
   "boss": "OK"
+ },
+ "rovigo": {
+  "geometrie": "bcec2b692ce4",
+  "date": "2026-08-28",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 3,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK"
+  },
+  "boss": "file de 6 au même quai"
  },
  "saalfeld": {
   "geometrie": "0785de2bbf0b",
@@ -4194,6 +4266,25 @@
    "3": "OK"
   },
   "boss": "file de 6 au même quai"
+ },
+ "venezia": {
+  "geometrie": "1f5e453bb0f2",
+  "date": "2026-08-28",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 5,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK",
+   "4": "OK",
+   "5": "OK"
+  },
+  "boss": "OK"
  },
  "vercelli": {
   "geometrie": "c155f38bff2b",

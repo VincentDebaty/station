@@ -108,7 +108,8 @@ ch(D,"La Lucanie","Palerme","Bari",[
 ch(D,"L'Adriatique","Bari","Bologne",[
   g("Barletta"),g("Foggia"),g("Termoli"),g("Pescara"),g("Ancône"),g("Rimini"),g("Bologne Centrale")])
 ch(D,"La Vénétie","Bologne","Venise",[
-  g("Ferrare"),g("Rovigo"),g("Padoue"),g("Mestre"),g("Venise Santa Lucia")])
+  g("Ferrare","ferrara"),g("Rovigo","rovigo"),g("Padoue","padova"),
+  g("Mestre","mestre"),g("Venise Santa Lucia","venezia")])
 # PESCHIERA ET DESENZANO REFUSÉES le 28 août 2026 (§0) : gares de passage à
 # deux directions sur le tronc Milan–Venise — leurs seuls embranchements sont
 # morts en 1967 (Mantoue) et 1969 (le port). Aucune bifurcation voyageurs ne

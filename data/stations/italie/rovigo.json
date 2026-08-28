@@ -1,0 +1,28 @@
+{
+  "id": "rovigo",
+  "name": "Rovigo",
+  "tagline": "Les rapides et les navettes du Polesine",
+  "desc": "Un axe grande-ligne électrifié croise ici deux antennes diesel à voie unique, vers Chioggia et vers Vérone par Legnago — les Frecciarossa passent, les navettes hybrides rebroussent.",
+  "difficulty": 2,
+  "country": "🇮🇹 Italie",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
+  ],
+  "portals": {
+    "FERRARE":  { "side": "L", "color": "#f5b23c", "abbr": "FE" },
+    "VERONE":   { "side": "L", "color": "#a78bfa", "abbr": "VR", "label": "VÉRONE" },
+    "PADOUE":   { "side": "R", "color": "#25dede", "abbr": "PD" },
+    "CHIOGGIA": { "side": "R", "color": "#4ade80", "abbr": "CH" }
+  },
+  "links": {
+    "FERRARE":  [1, 2, 3, 4, 5],
+    "VERONE":   [1, 2],
+    "PADOUE":   [1, 2, 3, 4],
+    "CHIOGGIA": [4, 5]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 13, "nMax": 16, "gapMin": 1.8, "gapMax": 3.0,
+    "cars": [2, 2, 3, 3, 4, 4, 5], "quietRate": 0.18, "rush": "pointe"
+  }
+}

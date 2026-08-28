@@ -510,5 +510,9 @@ const LINES = [
   { id: "L923", name: "Milan – Venise (plaine lombarde)",
     nodes: ["milano", "treviglio", "brescia", "verona", "vicenza"] },
   { id: "L924", name: "Milan – Rho",
-    nodes: ["milano", "rho"] }
+    nodes: ["milano", "rho"] },
+  { id: "L925", name: "Bologne – Venise (par le Polesine)",
+    nodes: ["ferrara", "rovigo", "padova", "mestre", "venezia"] },
+  { id: "L926", name: "Vicence – Padoue",
+    nodes: ["vicenza", "padova"] }
 ];

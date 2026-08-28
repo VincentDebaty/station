@@ -1,0 +1,34 @@
+{
+  "id": "mestre",
+  "name": "Venise Mestre",
+  "city": "Mestre",
+  "tagline": "L'entonnoir de Venise",
+  "desc": "Six lignes venues de tout le Nord-Est se rabattent ici sur les quatre voies du pont de la Liberté, unique accès ferroviaire à la ville insulaire. Chaque train pour Santa Lucia doit y trouver son créneau.",
+  "difficulty": 4,
+  "country": "🇮🇹 Italie",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 },
+    { "id": 5 }, { "id": 6 }, { "id": 7 }, { "id": 8 }
+  ],
+  "portals": {
+    "MILAN":   { "side": "L", "color": "#f2588f", "abbr": "MI" },
+    "BASSANO": { "side": "L", "color": "#4ade80", "abbr": "BA" },
+    "UDINE":   { "side": "L", "color": "#a78bfa", "abbr": "UD" },
+    "ADRIA":   { "side": "L", "color": "#f5b23c", "abbr": "AD" },
+    "VENISE":  { "side": "R", "color": "#25dede", "abbr": "VE" },
+    "TRIESTE": { "side": "R", "color": "#60a5fa", "abbr": "TS" }
+  },
+  "links": {
+    "MILAN":   [3, 4, 5, 6],
+    "BASSANO": [6, 7, 8],
+    "UDINE":   [1, 2, 3],
+    "ADRIA":   [7, 8],
+    "VENISE":  [2, 3, 4, 5, 6, 7, 8],
+    "TRIESTE": [1, 2, 3, 4]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 16, "nMax": 19, "gapMin": 1.6, "gapMax": 2.7,
+    "cars": [2, 3, 3, 4, 4, 5, 5], "quietRate": 0.14, "rush": "pointe"
+  }
+}
