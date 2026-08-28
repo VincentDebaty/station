@@ -131,9 +131,11 @@ function bandeauHaut() {
 // téléphone montre un timbre-poste. Mesuré le 28 août 2026 au simulateur,
 // après le correctif du voisinage qui n'avait rien changé : le chapitre
 // n'occupait que 36 % de la largeur, borné par kMax bien avant de remplir.
-// Le plafond se relève donc jusqu'à garantir ~32 px par unité de cadre —
+// Le plafond se relève donc jusqu'à garantir un plancher de lisibilité en
+// pixels par unité de cadre — 48, relevé de 32 après le second retour (« ça
+// reste petit, quitte à ne pas voir toute la ligne ») —
 // sans effet sur desktop (déjà au-dessus), et borné par le remplissage.
-const PX_PAR_UNITE_MIN = 32;
+const PX_PAR_UNITE_MIN = 48;
 function plafondZoom(base) {
   const svg = CARTE.hote && CARTE.hote.querySelector(".c-graphe");
   const px = svg ? svg.getBoundingClientRect().width : 0;
@@ -184,10 +186,10 @@ function cameraVoulue() {
   // un vrai zoom, et la caméra voyage le long du rail à mesure qu'on avance —
   // ce qui est l'intention d'origine de ce fichier.
   let vues = ch && ch.gares;
-  if (ch && ch.gares.length > 5) {
+  if (ch && ch.gares.length > 4) {
     const i = Math.max(0, ch.gares.indexOf(gareCourante()));
-    const d = Math.max(0, Math.min(i - 1, ch.gares.length - 5));
-    vues = ch.gares.slice(d, d + 5);
+    const d = Math.max(0, Math.min(i - 1, ch.gares.length - 4));
+    vues = ch.gares.slice(d, d + 4);
   }
   const b = ch && boite(vues);
   if (!b) return { x: CADRE_L / 2, y: CADRE_H / 2, k: 1 };
@@ -676,14 +678,68 @@ function renderHub() { renderCarte(); }
 // les deux, le joueur devrait faire lui-même le lien entre un mot et un point.
 // La caméra le fait à sa place : le trajet EST la phrase. Un SAUT dure plus
 // longtemps — c'est ce qui le distingue d'un rail continu.
+// LA CARTE SE DÉPLACE AU DOIGT (28 août 2026, retour du simulateur iPhone :
+// « quitte à ne pas voir toute la ligne, qu'on puisse bouger la carte »). Le
+// glisser décale le centre de la caméra, en unités du monde ; la dérive
+// appartient à la vue en cours et se remet à zéro dès que la caméra change de
+// sujet — nouvelle gare, nouveau chapitre — pour que la pose reste la sienne.
+function transfoCamera(c) {
+  const d = CARTE.derive || { x: 0, y: 0 };
+  const x = c.x + d.x, y = c.y + d.y;
+  return `translate(${(CADRE_L / 2 - c.k * x).toFixed(2)}px, ${(CADRE_H / 2 - c.k * y).toFixed(2)}px) scale(${c.k.toFixed(3)})`;
+}
+function brancherDerive() {
+  const h = CARTE.hote;
+  if (!h || h._deriveOK) return;
+  h._deriveOK = true;
+  let suivi = null;
+  h.addEventListener("pointerdown", e => {
+    const svg = e.target.closest ? e.target.closest(".c-graphe") : null;
+    if (!svg || CARTE.transit || !CARTE.cam) return;
+    const r = svg.getBoundingClientRect();
+    const s = Math.min(r.width / CADRE_L, r.height / CADRE_H);
+    if (!(s > 0)) return;
+    suivi = { x0: e.clientX, y0: e.clientY, d0: { ...(CARTE.derive || { x: 0, y: 0 }) },
+              s, svg, actif: false, id: e.pointerId };
+  });
+  h.addEventListener("pointermove", e => {
+    if (!suivi || e.pointerId !== suivi.id) return;
+    const dx = e.clientX - suivi.x0, dy = e.clientY - suivi.y0;
+    if (!suivi.actif && Math.hypot(dx, dy) < 6) return;   // un tap reste un tap
+    suivi.actif = true;
+    e.preventDefault();
+    const monde = suivi.svg.querySelector(".monde");
+    const c = CARTE.cam;
+    if (!monde || !c) return;
+    CARTE.derive = { x: suivi.d0.x - dx / (suivi.s * c.k),
+                     y: suivi.d0.y - dy / (suivi.s * c.k) };
+    monde.style.transitionDuration = "0s";
+    monde.style.transform = transfoCamera(c);
+  });
+  const lacher = e => {
+    if (!suivi || (e.pointerId !== undefined && e.pointerId !== suivi.id)) return;
+    const monde = suivi.svg.querySelector(".monde");
+    if (monde && suivi.actif) {
+      monde.style.transitionDuration = "";
+      CARTE.camAvant = monde.style.transform;   // la prochaine pose repart d'ici
+    }
+    suivi = null;
+  };
+  h.addEventListener("pointerup", lacher);
+  h.addEventListener("pointercancel", lacher);
+}
 function poserCamera() {
   const svg = CARTE.hote && CARTE.hote.querySelector(".c-graphe");
   const monde = svg && svg.querySelector(".monde");
   if (!svg || !monde) { CARTE.camAvant = null; return; }
+  brancherDerive();
+  // La dérive est propre au sujet cadré : elle meurt avec lui.
+  const sujet = (CARTE.chapitre ? CARTE.chapitre.id : "-") + ":" + (gareCourante() || "-");
+  if (CARTE.deriveSujet !== sujet) { CARTE.derive = { x: 0, y: 0 }; CARTE.deriveSujet = sujet; }
   const c = cameraVoulue();
   CARTE.cam = c;
   svg.style.setProperty("--k", c.k.toFixed(3));
-  const t = `translate(${(CADRE_L / 2 - c.k * c.x).toFixed(2)}px, ${(CADRE_H / 2 - c.k * c.y).toFixed(2)}px) scale(${c.k.toFixed(3)})`;
+  const t = transfoCamera(c);
   // Le zoom SE JOUE, il ne se pose pas : le SVG est refait à chaque rendu, donc
   // le monde repart de sa transformation d'avant et reçoit la nouvelle — c'est
   // le CSS qui fait le trajet.
