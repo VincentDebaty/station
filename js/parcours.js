@@ -160,7 +160,20 @@ function cameraVoulue() {
     }
   }
   const ch = CARTE.chapitre;
-  const b = ch && boite(ch.gares);
+  // LE VOISINAGE, PAS LE CHAPITRE ENTIER. Cadrer les neuf gares du Roussillon
+  // réduisait le tracé à un timbre-poste sur un téléphone — mesuré le 28 août
+  // 2026, premier essai au simulateur iPhone : « tout est petit ». On cadre
+  // donc la gare courante avec sa précédente et ses trois suivantes : un
+  // chapitre court (≤ 5 gares) cadre exactement comme avant, un long retrouve
+  // un vrai zoom, et la caméra voyage le long du rail à mesure qu'on avance —
+  // ce qui est l'intention d'origine de ce fichier.
+  let vues = ch && ch.gares;
+  if (ch && ch.gares.length > 5) {
+    const i = Math.max(0, ch.gares.indexOf(gareCourante()));
+    const d = Math.max(0, Math.min(i - 1, ch.gares.length - 5));
+    vues = ch.gares.slice(d, d + 5);
+  }
+  const b = ch && boite(vues);
   if (!b) return { x: CADRE_L / 2, y: CADRE_H / 2, k: 1 };
   // La marge du haut porte aussi les ÉTIQUETTES : le nom d'une gare est posé
   // au-dessus de son point, donc la dernière gare a besoin d'un peu plus de
