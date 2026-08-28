@@ -4288,6 +4288,22 @@
   },
   "boss": "OK"
  },
+ "sagunto": {
+  "geometrie": "b645a59f167a",
+  "date": "2026-08-28",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 2,
+  "detail": {
+   "1": "OK",
+   "2": "OK"
+  },
+  "boss": "file de 6 au même quai"
+ },
  "saintes": {
   "geometrie": "4cb2eb50a48b",
   "date": "2026-08-28",
@@ -5211,6 +5227,25 @@
    "4": "file de 6 au même quai"
   },
   "boss": "file de 6 au même quai"
+ },
+ "zaragoza": {
+  "geometrie": "a9b0900ad83d",
+  "date": "2026-08-28",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 5,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK",
+   "4": "OK",
+   "5": "OK"
+  },
+  "boss": "OK"
  },
  "zurich": {
   "geometrie": "566b205fd8ce",

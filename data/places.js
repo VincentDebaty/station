@@ -132,7 +132,6 @@ const PLACES = {
   besancon:     [6.022, 47.247],
   brive:        [1.529, 45.159],
   cahors:       [1.433, 44.449],
-  cannes:       [7.020, 43.554],
   chateauroux:  [1.700, 46.810],
   chateauthierry: [3.410, 49.038],
   culmont:      [5.443, 47.810],   // Culmont-Chalindrey

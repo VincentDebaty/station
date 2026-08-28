@@ -550,5 +550,9 @@ const LINES = [
   { id: "L943", name: "L'Èbre (Lérida – Barcelone)",
     nodes: ["lleida", "reus", "tarragona", "santvicenc", "barcelona"] },
   { id: "L944", name: "Le Perthus (LGV Barcelone – Perpignan)",
-    nodes: ["barcelona", "perpignan"] }
+    nodes: ["barcelona", "perpignan"] },
+  { id: "L945", name: "La ligne de Teruel (Sagonte – Saragosse)",
+    nodes: ["sagunto", "zaragoza"] },
+  { id: "L946", name: "L'Aragon (Saragosse – Lérida)",
+    nodes: ["zaragoza", "lleida"] }
 ];

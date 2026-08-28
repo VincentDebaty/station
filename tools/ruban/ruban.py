@@ -98,10 +98,21 @@ ch(C,"L'Andalousie","Madrid","Séville",[
   g("Aranjuez"),g("Alcázar de San Juan"),g("Ciudad Real"),g("Puertollano"),g("Cordoue"),g("Séville Santa Justa")])
 ch(C,"La Bétique","Séville","Malaga",[
   g("Utrera"),g("Marchena"),g("Osuna"),g("Bobadilla"),g("Antequera"),g("Malaga María Zambrano")])
-ch(C,"Le Levant","Malaga","Valence",[
-  g("Grenade"),g("Guadix"),g("Almería"),g("Lorca"),g("Murcie"),g("Alicante"),g("Valence-Nord")])
-ch(C,"La ligne de Teruel","Valence","Saragosse",[
-  g("Sagonte"),g("Segorbe"),g("Caudiel"),g("Teruel"),g("Calamocha"),g("Saragosse-Delicias")])
+# LA LIGNE DE TERUEL EST FONDUE DANS LE LEVANT (décision de Vincent, 28 août
+# 2026, option B). Le chapitre 33 ne pouvait pas exister : la ligne 610
+# Saragosse–Sagonte est une voie unique non électrifiée SANS UNE SEULE
+# bifurcation voyageurs vivante — Segorbe, Caudiel, Calamocha et même TERUEL
+# (2 quais, 13 voies de croisement fret) sont des passantes à deux bouts, et
+# Caminreal, l'ancienne étoile du secteur, a perdu sa branche de Calatayud le
+# 1er janvier 1985 (démantelée en 2011). Quatre refus §0 d'un coup, mesurés
+# le 28 août 2026. Ne restaient que SAGONTE (la vraie bifurcation de la
+# Central de Aragón : Valence, Castellón, Teruel) et SARAGOSSE-DELICIAS —
+# deux gares, R3 en exige cinq. Le Levant s'étend donc jusqu'à Saragosse :
+# le boss passe à Delicias, Valence-Nord se joue en cours de chapitre, et la
+# ligne de Teruel devient le dernier tronçon du récit, pas un chapitre.
+ch(C,"Le Levant et l'Aragon","Malaga","Saragosse",[
+  g("Grenade"),g("Guadix"),g("Almería"),g("Lorca"),g("Murcie"),g("Alicante"),
+  g("Valence-Nord"),g("Sagonte","sagunto"),g("Saragosse-Delicias","zaragoza")])
 # VILANOVA I LA GELTRÚ REFUSÉE le 28 août 2026 (§0) : passante à deux bouts
 # sur la côte, malgré son musée du rail dans la rotonde. SANT VICENÇ DE
 # CALDERS la remplace : le Y du Penedès, deux itinéraires vers Barcelone qui

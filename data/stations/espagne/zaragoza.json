@@ -1,0 +1,36 @@
+{
+  "id": "zaragoza",
+  "name": "Saragosse-Delicias",
+  "city": "Saragosse",
+  "tagline": "Deux écartements sous les tétraèdres",
+  "desc": "Sous une couverture de tétraèdres de 110 mètres de portée, cinq voies européennes croisent cinq voies ibériques : l'AVE de Madrid y dépasse les diesels de Teruel, et les Alvia de Barcelone changent d'écartement en gare avant de filer vers la Navarre.",
+  "difficulty": 5,
+  "country": "🇪🇸 Espagne",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },
+    { "id": 6 }, { "id": 7 }, { "id": 8 }, { "id": 9 }, { "id": 10 }
+  ],
+  "portals": {
+    "MADRID":    { "side": "L", "color": "#f2588f", "abbr": "MD" },
+    "TERUEL":    { "side": "L", "color": "#4ade80", "abbr": "TE" },
+    "LOGRONO":   { "side": "L", "color": "#a78bfa", "abbr": "LO", "label": "LOGROÑO" },
+    "PAMPELUNE": { "side": "L", "color": "#60a5fa", "abbr": "PA" },
+    "BARCELONE": { "side": "R", "color": "#25dede", "abbr": "BA" },
+    "HUESCA":    { "side": "R", "color": "#f5b23c", "abbr": "HU" },
+    "CASPE":     { "side": "R", "color": "#fb923c", "abbr": "CA" }
+  },
+  "links": {
+    "MADRID":    [1, 2, 3, 4, 5],
+    "TERUEL":    [5, 6, 7, 8],
+    "LOGRONO":   [8, 9, 10],
+    "PAMPELUNE": [6, 7],
+    "BARCELONE": [1, 2, 3, 4, 10],
+    "HUESCA":    [4, 5, 6],
+    "CASPE":     [7, 8, 9]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 18, "nMax": 22, "gapMin": 1.5, "gapMax": 2.5,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6], "quietRate": 0.12, "rush": "pointe"
+  }
+}

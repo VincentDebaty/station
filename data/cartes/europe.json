@@ -3,7 +3,7 @@
  "nom": "L'Europe",
  "gratuite": true,
  "enChantier": true,
- "note": "Tranche livree du ruban : chapitres 34 a 59 de ruban-europe.md (Bussoleno vers Hambourg) — l'acte V en entier. Le ruban complet va de Cork a Istanbul ; les actes I a IV se greffent DEVANT celui-ci quand ils seront ecrits.",
+ "note": "Tranche livree du ruban : chapitres 33 a 58 de ruban-europe.md (Bussoleno vers Hambourg) — l'acte V en entier. Le ruban complet va de Cork a Istanbul ; les actes I a IV se greffent DEVANT celui-ci quand ils seront ecrits.",
  "echelle": {
   "kmMinEntreHubs": 110
  },
@@ -257,7 +257,7 @@
   {
    "id": "l-ardenne",
    "nom": "L'Ardenne",
-   "zone": "rhin",
+   "zone": "alpes",
    "gares": [
     "arlon",
     "libramont",
@@ -327,7 +327,7 @@
   {
    "id": "le-neckar",
    "nom": "Le Neckar",
-   "zone": "ger",
+   "zone": "rhin",
    "gares": [
     "darmstadt",
     "mannheim",

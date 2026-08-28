@@ -17,8 +17,8 @@ import sys, os, json, unicodedata
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from ruban import ACTES
 
-PREMIER = int(sys.argv[1]) if len(sys.argv) > 1 else 34
-DERNIER = int(sys.argv[2]) if len(sys.argv) > 2 else 59
+PREMIER = int(sys.argv[1]) if len(sys.argv) > 1 else 33
+DERNIER = int(sys.argv[2]) if len(sys.argv) > 2 else 58
 
 # Les zones de la carte livrée. Elles ne sont PAS les actes du ruban complet :
 # une tranche de onze chapitres se recoupe en deux régions cohérentes, et le
@@ -34,20 +34,20 @@ ZONES = [
 # Renumérotés le 27 août 2026 après la fusion des chapitres 46 et 47, et
 # ÉTENDUS : la carte livrée commence désormais au Fréjus et non plus à
 # L'Ardenne, l'acte V étant complet. Quinze chapitres au lieu de onze.
-PLANCHER = {34:1, 35:2, 36:2, 37:2, 38:2, 39:2, 40:2, 41:2, 42:2, 43:2, 44:2, 45:2, 46:2, 47:2, 48:2, 49:3, 50:3, 51:3, 52:3, 53:3,
-            54:4, 55:4, 56:4, 57:4, 58:4, 59:4}
+PLANCHER = {33:1, 34:2, 35:2, 36:2, 37:2, 38:2, 39:2, 40:2, 41:2, 42:2, 43:2, 44:2, 45:2, 46:2, 47:2, 48:3, 49:3, 50:3, 51:3, 52:3,
+            53:4, 54:4, 55:4, 56:4, 57:4, 58:4}
 # R9 : le premier chapitre est le tutoriel. Il finit sur Bruxelles-Midi, qui
 # porterait un niveau 5 — on le plafonne à 3. La regle est ecrite au §3 du
 # document ; sans ce plafond, le tutoriel arriverait au sommet du jeu six gares
 # apres l'avoir ouvert.
-ARRIVEE = {34: 3, 35: 4, 36: 4, 37: 4, 38: 4, 39: 4, 40: 4, 41: 4, 42: 4, 43: 4, 44: 4, 45: 4, 46: 4}
+ARRIVEE = {33: 3, 34: 4, 35: 4, 36: 4, 37: 4, 38: 4, 39: 4, 40: 4, 41: 4, 42: 4, 43: 4, 44: 4, 45: 4}
 # R7 : deux chapitres du Mezzogiorno ASSUMENT une sinuosité au-dessus de 1,5 —
 # le rail y fait réellement le tour de la botte avant le détroit (mesuré 1,73)
 # et la diagonale de Lucanie plonge par la côte ionienne (1,62). Décision du
 # 28 août 2026 : l'exception se DÉCLARE, chapitre par chapitre, et carte-check
 # vérifie contre la valeur déclarée — le seuil de 1,5 reste la règle partout
 # ailleurs. Une exception non déclarée reste un refus.
-SINUOSITE = {39: 1.75, 40: 1.65}
+SINUOSITE = {38: 1.75, 39: 1.65}
 
 def slug(s):
     s = unicodedata.normalize("NFKD", s).encode("ascii", "ignore").decode()
