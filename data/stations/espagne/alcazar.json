@@ -1,0 +1,29 @@
+{
+  "id": "alcazar",
+  "name": "Alcázar de San Juan",
+  "city": "Alcázar de San Juan",
+  "tagline": "L'aiguillage de la Manche",
+  "desc": "Au milieu des moulins de la Manche, la ville-cheminote trie depuis 1854 tout ce que Madrid envoie vers l'Andalousie et le Levant. Les Intercity de Barcelone à Cadix y rebroussent encore, le temps que la machine change de bout.",
+  "difficulty": 3,
+  "country": "🇪🇸 Espagne",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }, { "id": 6 }
+  ],
+  "portals": {
+    "MADRID":     { "side": "L", "color": "#f2588f", "abbr": "MD" },
+    "JAEN":       { "side": "R", "color": "#f5b23c", "abbr": "JA", "label": "JAÉN" },
+    "CIUDADREAL": { "side": "R", "color": "#4ade80", "abbr": "CR", "label": "CIUDAD REAL" },
+    "ALBACETE":   { "side": "R", "color": "#25dede", "abbr": "AB" }
+  },
+  "links": {
+    "MADRID":     [1, 2, 3, 4, 5, 6],
+    "JAEN":       [1, 2, 3, 4],
+    "CIUDADREAL": [1, 2, 3],
+    "ALBACETE":   [3, 4, 5, 6]
+  },
+  "sameSidePairs": [["ALBACETE", "JAEN"], ["JAEN", "ALBACETE"]],
+  "gen": {
+    "nMin": 14, "nMax": 16, "gapMin": 1.7, "gapMax": 3.0,
+    "cars": [2, 2, 3, 3, 4, 4, 5, 6], "quietRate": 0.15, "rush": "pointe"
+  }
+}

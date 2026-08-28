@@ -23,16 +23,16 @@ Chaque région est traversée **une fois**, et on n'y revient jamais.
 |---|---|
 | Actes | **9** |
 | Chapitres | **91** |
-| Gares — c'est-à-dire **niveaux** | **560** |
-| Fiches déjà écrites, réemployées telles quelles | **194** |
-| Fiches à écrire | **366** |
+| Gares — c'est-à-dire **niveaux** | **559** |
+| Fiches déjà écrites, réemployées telles quelles | **199** |
+| Fiches à écrire | **360** |
 | Sauts déclarés (§4 bis) | **10** |
 | Longueur des chapitres | 5 à 9 gares, médiane 6 |
 
 **Vérifié par script** (`scratchpad/verif.py`, à porter dans `carte-check` au
 lot C) : les 91 chapitres tiennent tous R3 (5 à 10 gares), aucune gare
 n'apparaît deux fois (R6), le chaînage est continu d'un bout à l'autre, et
-les 194 fiches annoncées comme existantes existent bien au catalogue.
+les 199 fiches annoncées comme existantes existent bien au catalogue.
 
 ## Comment lire les tableaux
 
@@ -176,7 +176,7 @@ les 194 fiches annoncées comme existantes existent bien au catalogue.
 
 ## Acte III — L'Ibérie
 
-*La grande boucle de la péninsule* — 8 chapitres, **55 gares** (14 déjà écrites, 41 à écrire).
+*La grande boucle de la péninsule* — 8 chapitres, **54 gares** (19 déjà écrites, 35 à écrire).
 
 > ⚠️ **La ligne de Teruel est fondue dans le Levant** (28 août 2026, option B,
 > décision de Vincent). Quatre refus §0 d'un coup, mesurés le jour même :
@@ -212,6 +212,14 @@ les 194 fiches annoncées comme existantes existent bien au catalogue.
 > le boss passe à Málaga-María Zambrano, premier boss-terminus du ruban ;
 > Séville Santa Justa se joue en cours de chapitre. À Bobadilla, jamais de
 > portail CORDOUE (fret seul depuis 2013) ; Antequera-Ciudad fermée en 2015.
+>
+> ⚠️ **Aranjuez est tombée à l'instruction** (28 août 2026, piège n° 1) :
+> Cuenca morte le 20 juillet 2022, Tolède en novembre 2005 — deux directions
+> restantes. Aucun remplaçant sur Madrid–Alcázar (Castillejo-Añover et
+> Villacañas sont deux pièges n° 1 de plus). Le chapitre s'ouvre sur Alcázar
+> de San Juan, neuf gares. Le maillon Alcázar → Ciudad Real est VIVANT (5-6
+> MD/jour via Manzanares, horaire Renfe du 17/07/2026) ; Manzanares, vrai
+> carrefour à trois directions, reste en réserve documentée.
 
 | # | Chapitre | Gares, dans l'ordre du rail | n |
 |---|---|---|---|
@@ -219,7 +227,7 @@ les 194 fiches annoncées comme existantes existent bien au catalogue.
 | 27 | L'Estrémadure | Talavera de la Reina · Navalmoral · Cáceres · Mérida · Badajoz · Elvas · Entroncamento · **Lisbonne Santa Apolónia** | 8 |
 | 28 | La côte d'Argent | Azambuja · Santarém · Pombal · Coimbra · Aveiro · Espinho · **Porto Campanhã** | 7 |
 | 29 | La Galice | Nine · Valença · Vigo · Ourense · Zamora · Medina del Campo · **Madrid-Atocha** | 7 |
-| 30 | L'Andalousie et la Bétique | Aranjuez · Alcázar de San Juan · Ciudad Real · Puertollano · Cordoue · Séville Santa Justa · ~~Utrera~~ ~~Marchena~~ ~~Osuna~~ Dos Hermanas ✓ · Bobadilla ✓ · Antequera-Santa Ana ✓ · **Málaga-María Zambrano** ✓ | 10 |
+| 30 | L'Andalousie et la Bétique | ~~Aranjuez~~ Alcázar de San Juan ✓ · Ciudad Real ✓ · Puertollano ✓ · Córdoba Central ✓ · Séville Santa Justa ✓ · ~~Utrera~~ ~~Marchena~~ ~~Osuna~~ Dos Hermanas ✓ · Bobadilla ✓ · Antequera-Santa Ana ✓ · **Málaga-María Zambrano** ✓ | 9 |
 | | ⤳ **Saut (lgv)** | *Le Corredor Mediterráneo — de Malaga à Murcie par la côte d'Almería* | |
 | 31 | Le Levant et l'Aragon | ~~Grenade~~ ~~Guadix~~ ~~Almería~~ ~~Lorca~~ Murcie ✓ · Alicante ✓ · Valence-Nord ✓ · ~~Segorbe~~ ~~Caudiel~~ ~~Teruel~~ ~~Calamocha~~ Sagonte ✓ · **Saragosse-Delicias** ✓ | 5 |
 | 32 | L'Èbre | Lérida ✓ · Reus ✓ · Tarragone ✓ · ~~Vilanova i la Geltrú~~ Sant Vicenç de Calders ✓ · **Barcelone-Sants** ✓ | 5 |

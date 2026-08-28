@@ -1,0 +1,35 @@
+{
+  "id": "cordoba",
+  "name": "Córdoba Central",
+  "city": "Cordoue",
+  "tagline": "La gare où l'Andalousie rebrousse",
+  "desc": "Quatre voies européennes et quatre ibériques traversent la tranchée couverte de la plaza de las Tres Culturas. La bifurcation de Malaga étant à quatorze kilomètres côté Séville, les Avant de Malaga et de Grenade entrent ici puis repartent par où ils sont venus.",
+  "difficulty": 4,
+  "country": "🇪🇸 Espagne",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 },
+    { "id": 5 }, { "id": 6 }, { "id": 7 }, { "id": 8 }
+  ],
+  "portals": {
+    "MADRID":  { "side": "L", "color": "#f2588f", "abbr": "MD" },
+    "JAEN":    { "side": "L", "color": "#f5b23c", "abbr": "JA", "label": "JAÉN" },
+    "SEVILLE": { "side": "R", "color": "#25dede", "abbr": "SE", "label": "SÉVILLE" },
+    "MALAGA":  { "side": "R", "color": "#60a5fa", "abbr": "MA", "label": "MÁLAGA" },
+    "GRENADE": { "side": "R", "color": "#4ade80", "abbr": "GR" }
+  },
+  "links": {
+    "MADRID":  [1, 2, 3, 4, 5],
+    "JAEN":    [5, 6, 7, 8],
+    "SEVILLE": [3, 4, 5, 6, 7, 8],
+    "MALAGA":  [1, 2, 3, 4],
+    "GRENADE": [3, 4, 5]
+  },
+  "sameSidePairs": [
+    ["SEVILLE", "MALAGA"], ["MALAGA", "SEVILLE"],
+    ["SEVILLE", "GRENADE"], ["GRENADE", "SEVILLE"]
+  ],
+  "gen": {
+    "nMin": 16, "nMax": 19, "gapMin": 1.5, "gapMax": 2.7,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6], "quietRate": 0.13, "rush": "pointe"
+  }
+}

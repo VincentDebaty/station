@@ -558,5 +558,9 @@ const LINES = [
   { id: "L947", name: "Le Levant (Murcie – Sagonte)",
     nodes: ["murcia", "alicante", "valencia", "sagunto"] },
   { id: "L948", name: "La Bétique (Dos Hermanas – Malaga)",
-    nodes: ["dos-hermanas", "bobadilla", "antequera", "malaga"] }
+    nodes: ["dos-hermanas", "bobadilla", "antequera", "malaga"] },
+  { id: "L949", name: "L'Andalousie (Alcázar – Séville)",
+    nodes: ["alcazar", "ciudad-real", "puertollano", "cordoba", "sevilla"] },
+  { id: "L950", name: "La porte du Sud (Séville – Dos Hermanas)",
+    nodes: ["sevilla", "dos-hermanas"] }
 ];

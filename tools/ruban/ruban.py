@@ -109,10 +109,19 @@ ch(C,"La Galice","Porto","Madrid",[
 # boss-terminus du ruban — et Séville Santa Justa se joue en cours de
 # chapitre. À Bobadilla, ne jamais écrire de portail CORDOUE (voyageurs
 # supprimés en 2013, fret seul) ; Antequera-Ciudad est fermée depuis 2015.
+# ARANJUEZ REFUSÉE le 28 août 2026 (§0, piège n° 1) : l'étoile a porté quatre
+# branches, il n'en circule plus que deux — Cuenca morte le 20 juillet 2022
+# (le même jour que pour Valence-Nord), Tolède morte en novembre 2005 à
+# l'ouverture de la LGV. Le corridor Madrid–Alcázar n'offre AUCUN remplaçant :
+# Castillejo-Añover a perdu Tolède en 2005, Villacañas sa ligne de Quintanar
+# vers 1990. Le chapitre s'ouvre donc sur Alcázar de San Juan, le carrefour
+# ACTUEL de la Manche — neuf gares, toujours dans R3.
 ch(C,"L'Andalousie et la Bétique","Madrid","Malaga",[
-  g("Aranjuez"),g("Alcázar de San Juan"),g("Ciudad Real"),g("Puertollano"),g("Cordoue"),
-  g("Séville Santa Justa"),g("Dos Hermanas","dos-hermanas"),g("Bobadilla","bobadilla"),
-  g("Antequera-Santa Ana","antequera"),g("Málaga-María Zambrano","malaga")])
+  g("Alcázar de San Juan","alcazar"),g("Ciudad Real","ciudad-real"),
+  g("Puertollano","puertollano"),g("Córdoba Central","cordoba"),
+  g("Séville Santa Justa","sevilla"),g("Dos Hermanas","dos-hermanas"),
+  g("Bobadilla","bobadilla"),g("Antequera-Santa Ana","antequera"),
+  g("Málaga-María Zambrano","malaga")])
 # LA LIGNE DE TERUEL EST FONDUE DANS LE LEVANT (décision de Vincent, 28 août
 # 2026, option B). Le chapitre 33 ne pouvait pas exister : la ligne 610
 # Saragosse–Sagonte est une voie unique non électrifiée SANS UNE SEULE

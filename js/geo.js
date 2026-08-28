@@ -307,7 +307,12 @@ const GEO = {
         "dos-hermanas": [-5.93, 37.28],
         bobadilla: [-4.7126, 37.0396],
         antequera: [-4.5613, 37.0194],
-        malaga: [-4.4214, 36.7202]
+        malaga: [-4.4214, 36.7202],
+        alcazar: [-3.211, 39.39],
+        "ciudad-real": [-3.927, 38.986],
+        puertollano: [-4.107, 38.687],
+        cordoba: [-4.7896, 37.8885],
+        sevilla: [-5.9748, 37.3925]
       } },
     "royaume-uni": { name: "Royaume-Uni", flag: "🇬🇧", iso: "GBR", continent: "europe",
       frame: [-6.3, 49.9, 1.9, 57.6], neighbors: { belgique: [3.25, 51.22] },

@@ -98,6 +98,23 @@
   },
   "boss": "retard garanti 0.36 > 0.3"
  },
+ "alcazar": {
+  "geometrie": "47745f9ea550",
+  "date": "2026-08-28",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 3,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK"
+  },
+  "boss": "file de 6 au même quai"
+ },
  "alicante": {
   "geometrie": "d4f41a70d8bd",
   "date": "2026-08-28",
@@ -1250,6 +1267,24 @@
   },
   "boss": "file de 6 au même quai"
  },
+ "ciudad-real": {
+  "geometrie": "34f9c44dd165",
+  "date": "2026-08-28",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 4,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK",
+   "4": "OK"
+  },
+  "boss": "OK"
+ },
  "clermont-ferrand": {
   "geometrie": "845470b1e946",
   "date": "2026-08-28",
@@ -1283,6 +1318,25 @@
    "2": "OK"
   },
   "boss": "retard garanti 0.33 > 0.3"
+ },
+ "cordoba": {
+  "geometrie": "dae94c8ac405",
+  "date": "2026-08-28",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 4,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK",
+   "4": "OK",
+   "5": "file de 6 au même quai"
+  },
+  "boss": "OK"
  },
  "courtrai": {
   "geometrie": "b63d20102d81",
@@ -4086,6 +4140,22 @@
   },
   "boss": "OK"
  },
+ "puertollano": {
+  "geometrie": "646d7ce7203b",
+  "date": "2026-08-28",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 2,
+  "detail": {
+   "1": "OK",
+   "2": "OK"
+  },
+  "boss": "file de 7 au même quai"
+ },
  "rastatt": {
   "geometrie": "16018ec7c454",
   "date": "2026-08-28",
@@ -4578,6 +4648,25 @@
    "2": "OK"
   },
   "boss": "file de 6 au même quai"
+ },
+ "sevilla": {
+  "geometrie": "7f68b9a7e65b",
+  "date": "2026-08-28",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 5,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK",
+   "4": "OK",
+   "5": "OK"
+  },
+  "boss": "OK"
  },
  "sheffield": {
   "geometrie": "d0a2657ab15e",

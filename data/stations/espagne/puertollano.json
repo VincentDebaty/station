@@ -1,0 +1,26 @@
+{
+  "id": "puertollano",
+  "name": "Puertollano",
+  "tagline": "La raffinerie sur la ligne du premier AVE",
+  "desc": "Ville du charbon devenue ville de la pétrochimie, Puertollano doit à la ligne Madrid–Séville de garder ses express : les AVE d'Andalousie s'y arrêtent entre deux navettes Avant, au pied des torchères. À l'ouest, le régional de Badajoz s'en va seul sur la voie unique de l'Estrémadure.",
+  "difficulty": 2,
+  "country": "🇪🇸 Espagne",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }
+  ],
+  "portals": {
+    "MADRID":  { "side": "L", "color": "#f2588f", "abbr": "MD" },
+    "SEVILLE": { "side": "R", "color": "#25dede", "abbr": "SV", "label": "SÉVILLE" },
+    "BADAJOZ": { "side": "R", "color": "#4ade80", "abbr": "BA" }
+  },
+  "links": {
+    "MADRID":  [1, 2, 3, 4],
+    "SEVILLE": [1, 2, 3],
+    "BADAJOZ": [3, 4]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 12, "nMax": 15, "gapMin": 1.8, "gapMax": 3.0,
+    "cars": [2, 2, 3, 3, 4, 4, 5], "quietRate": 0.18, "rush": "pointe"
+  }
+}
