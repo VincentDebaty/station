@@ -1,0 +1,26 @@
+{
+  "id": "rho",
+  "name": "Rho",
+  "tagline": "La fourche où Turin et le Simplon se séparent",
+  "desc": "Aux portes de Milan depuis 1858, Rho est la bifurcation vivante où la ligne de Turin et celle du Simplon divergent. Les banlieues S5 et S6 s'y croisent au-dessus d'un vrai trafic de fret chimique.",
+  "difficulty": 1,
+  "country": "🇮🇹 Italie",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }
+  ],
+  "portals": {
+    "NOVARE":    { "side": "L", "color": "#25dede", "abbr": "NO" },
+    "GALLARATE": { "side": "L", "color": "#4ade80", "abbr": "GA" },
+    "MILAN":     { "side": "R", "color": "#f2588f", "abbr": "MI" }
+  },
+  "links": {
+    "NOVARE":    [1, 2, 3],
+    "GALLARATE": [2, 3, 4],
+    "MILAN":     [1, 2, 3, 4]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 12, "nMax": 15, "gapMin": 1.6, "gapMax": 2.8,
+    "cars": [2, 2, 2, 2, 3, 3, 4], "quietRate": 0.2, "rush": "double"
+  }
+}

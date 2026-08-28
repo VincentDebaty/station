@@ -111,8 +111,12 @@ ch(D,"La Vénétie","Bologne","Venise",[
   g("Ferrare"),g("Rovigo"),g("Padoue"),g("Mestre"),g("Venise Santa Lucia")])
 ch(D,"La plaine lombarde","Venise","Milan",[
   g("Vicence"),g("Vérone"),g("Peschiera"),g("Desenzano"),g("Brescia"),g("Treviglio"),g("Milan Centrale")])
+# MAGENTA REFUSÉE le 28 août 2026 (§0) : pure gare de passage à deux directions
+# et deux voies sur la ligne Turin–Milan, jamais été une bifurcation — la seule
+# desserte disparue était un tramway routier (1957). Le chapitre tient à cinq.
 ch(D,"Le Piémont","Milan","Turin",[
-  g("Rho"),g("Magenta"),g("Novare"),g("Verceil"),g("Chivasso"),g("Turin Porta Nuova")])
+  g("Rho","rho"),g("Novare","novara"),g("Verceil","vercelli"),
+  g("Chivasso","chivasso"),g("Turin Porta Nuova","torino")])
 
 # =====================================================================
 E = acte("alp","Acte V — Les Alpes, le Rhin et la Germanie","Du Fréjus à la Baltique, le cœur écrit du catalogue")

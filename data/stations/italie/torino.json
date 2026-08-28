@@ -1,0 +1,33 @@
+{
+  "id": "torino",
+  "name": "Turin Porta Nuova",
+  "city": "Turin",
+  "tagline": "Les heurtoirs monumentaux de la troisième gare d'Italie",
+  "desc": "Derrière la façade-arc de 1868 qui referme la via Roma, vingt voies en impasse reçoivent 350 trains par jour. Tout sort par une gorge unique au sud-ouest, qui se dédouble aussitôt : vers Milan et les Alpes d'un côté, vers Gênes et la mer de l'autre.",
+  "difficulty": 5,
+  "country": "🇮🇹 Italie",
+  "platforms": [
+    { "id": 1, "deadEnd": true }, { "id": 2, "deadEnd": true }, { "id": 3, "deadEnd": true },
+    { "id": 4, "deadEnd": true }, { "id": 5, "deadEnd": true }, { "id": 6, "deadEnd": true },
+    { "id": 7, "deadEnd": true }, { "id": 8, "deadEnd": true }, { "id": 9, "deadEnd": true }
+  ],
+  "portals": {
+    "MILAN":  { "side": "L", "color": "#f2588f", "abbr": "MI" },
+    "SUSE":   { "side": "L", "color": "#25dede", "abbr": "SU" },
+    "GENES":  { "side": "L", "color": "#60a5fa", "abbr": "GE", "label": "GÊNES" },
+    "SAVONE": { "side": "L", "color": "#4ade80", "abbr": "SA" },
+    "IVREE":  { "side": "L", "color": "#f5b23c", "abbr": "IV", "label": "IVRÉE" }
+  },
+  "links": {
+    "MILAN":  [1, 2, 3, 4, 5],
+    "SUSE":   [3, 4, 5, 6, 7],
+    "GENES":  [5, 6, 7, 8, 9],
+    "SAVONE": [7, 8, 9, 1, 2],
+    "IVREE":  [9, 1, 2, 3, 4]
+  },
+  "sameSidePairs": "all",
+  "gen": {
+    "nMin": 18, "nMax": 22, "gapMin": 1.5, "gapMax": 2.5,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6, 7], "quietRate": 0.12, "rush": "pointe"
+  }
+}

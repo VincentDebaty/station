@@ -502,5 +502,9 @@ const LINES = [
   { id: "L910", name: "Lyon – Bourg-en-Bresse – Bellegarde (Haut-Bugey)",
     nodes: ["lyon", "bourg-en-bresse", "bellegarde"] },
   { id: "L920", name: "Chambéry – Modane – Bussoleno (Fréjus)",
-    nodes: ["chambery", "bussoleno"] }
+    nodes: ["chambery", "bussoleno"] },
+  { id: "L921", name: "Turin – Milan (ligne historique)",
+    nodes: ["torino", "chivasso", "vercelli", "novara", "rho"] },
+  { id: "L922", name: "Turin – Bussoleno (val de Suse)",
+    nodes: ["torino", "bussoleno"] }
 ];

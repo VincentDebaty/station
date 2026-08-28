@@ -1,0 +1,26 @@
+{
+  "id": "vercelli",
+  "name": "Verceil",
+  "tagline": "La capitale du riz, entre deux vies ferroviaires",
+  "desc": "Au milieu des rizières, Verceil est une bifurcation amputée d'une branche : la ligne de Casale ne voit plus un train depuis 2013, mais la navette diesel de Mortara et Pavie rebrousse toujours à quai, à côté du flot Turin–Milan.",
+  "difficulty": 2,
+  "country": "🇮🇹 Italie",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
+  ],
+  "portals": {
+    "TURIN":   { "side": "L", "color": "#25dede", "abbr": "TO" },
+    "MILAN":   { "side": "R", "color": "#f2588f", "abbr": "MI" },
+    "MORTARA": { "side": "R", "color": "#a78bfa", "abbr": "MO" }
+  },
+  "links": {
+    "TURIN":   [1, 2, 3, 4, 5],
+    "MILAN":   [1, 2, 3, 4],
+    "MORTARA": [4, 5]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 13, "nMax": 16, "gapMin": 1.8, "gapMax": 3.0,
+    "cars": [2, 2, 2, 3, 3, 4, 4, 5], "quietRate": 0.18, "rush": "pointe"
+  }
+}

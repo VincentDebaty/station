@@ -991,6 +991,23 @@
   },
   "boss": "OK"
  },
+ "chivasso": {
+  "geometrie": "8390368ca994",
+  "date": "2026-08-28",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 3,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK"
+  },
+  "boss": "OK"
+ },
  "clermont-ferrand": {
   "geometrie": "845470b1e946",
   "date": "2026-08-28",
@@ -3021,6 +3038,24 @@
   },
   "boss": "OK"
  },
+ "novara": {
+  "geometrie": "d7ae1d5bdbad",
+  "date": "2026-08-28",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 4,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK",
+   "4": "OK"
+  },
+  "boss": "OK"
+ },
  "nurnberg": {
   "geometrie": "43b8de242aa9",
   "date": "2026-08-27",
@@ -3479,6 +3514,22 @@
   },
   "boss": "file de 6 au même quai"
  },
+ "rho": {
+  "geometrie": "d2108a0df7d9",
+  "date": "2026-08-28",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 2,
+  "detail": {
+   "1": "OK",
+   "2": "OK"
+  },
+  "boss": "file de 6 au même quai"
+ },
  "rodange": {
   "geometrie": "d3ae9a23c819",
   "date": "2026-08-28",
@@ -3879,6 +3930,25 @@
   },
   "boss": "retard garanti 0.34 > 0.3"
  },
+ "torino": {
+  "geometrie": "759b5ea6004a",
+  "date": "2026-08-28",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 5,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK",
+   "4": "OK",
+   "5": "OK"
+  },
+  "boss": "OK"
+ },
  "toulon": {
   "geometrie": "5a2680b971c9",
   "date": "2026-08-28",
@@ -4068,6 +4138,22 @@
    "1": "OK",
    "2": "OK",
    "3": "OK"
+  },
+  "boss": "file de 6 au même quai"
+ },
+ "vercelli": {
+  "geometrie": "c155f38bff2b",
+  "date": "2026-08-28",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 2,
+  "detail": {
+   "1": "OK",
+   "2": "OK"
   },
   "boss": "file de 6 au même quai"
  },

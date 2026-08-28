@@ -239,7 +239,12 @@ const GEO = {
       } },
     "italie": { name: "Italie", flag: "🇮🇹", iso: "IT", continent: "europe",
       cities: {
-        bussoleno: [7.1478, 45.1367]
+        bussoleno: [7.1478, 45.1367],
+        rho: [9.0433, 45.5242],
+        novara: [8.6253, 45.4508],
+        vercelli: [8.4164, 45.3298],
+        chivasso: [7.89, 45.1933],
+        torino: [7.6789, 45.0625]
       } },
     "royaume-uni": { name: "Royaume-Uni", flag: "🇬🇧", iso: "GBR", continent: "europe",
       frame: [-6.3, 49.9, 1.9, 57.6], neighbors: { belgique: [3.25, 51.22] },

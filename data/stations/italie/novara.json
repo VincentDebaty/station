@@ -1,0 +1,33 @@
+{
+  "id": "novara",
+  "name": "Novare",
+  "tagline": "L'étoile aux six branches entre Turin et Milan",
+  "desc": "Étoile ferroviaire à huit branches historiques dont six encore vivantes : les Frecce filent sur l'axe Turin–Milan pendant que les régionaux de Biella, Domodossola, Arona et Alexandrie viennent tous finir ici, à côté d'un des plus grands nœuds de fret d'Italie du Nord.",
+  "difficulty": 4,
+  "country": "🇮🇹 Italie",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 },
+    { "id": 5 }, { "id": 6 }, { "id": 7 }
+  ],
+  "portals": {
+    "BIELLA":      { "side": "L", "color": "#4ade80", "abbr": "BI" },
+    "TURIN":       { "side": "L", "color": "#25dede", "abbr": "TO" },
+    "ALEXANDRIE":  { "side": "L", "color": "#a78bfa", "abbr": "AL" },
+    "DOMODOSSOLA": { "side": "R", "color": "#f5b23c", "abbr": "DO" },
+    "MILAN":       { "side": "R", "color": "#f2588f", "abbr": "MI" },
+    "ARONA":       { "side": "R", "color": "#60a5fa", "abbr": "AR" }
+  },
+  "links": {
+    "BIELLA":      [1, 2, 3],
+    "TURIN":       [2, 3, 4, 5],
+    "ALEXANDRIE":  [5, 6, 7],
+    "DOMODOSSOLA": [1, 2, 3],
+    "MILAN":       [3, 4, 5, 6],
+    "ARONA":       [5, 6, 7]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 15, "nMax": 18, "gapMin": 1.6, "gapMax": 2.7,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6], "quietRate": 0.15, "rush": "pointe"
+  }
+}

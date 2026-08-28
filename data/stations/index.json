@@ -288,7 +288,12 @@
     "country": "italie",
     "label": "🇮🇹 Italie",
     "stations": [
-      "bussoleno"
+      "bussoleno",
+      "rho",
+      "novara",
+      "vercelli",
+      "chivasso",
+      "torino"
     ]
   }
 ]

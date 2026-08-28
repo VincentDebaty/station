@@ -1,0 +1,28 @@
+{
+  "id": "chivasso",
+  "name": "Chivasso",
+  "tagline": "Le verrou de la vallée d'Aoste",
+  "desc": "Tous les trains d'Aoste viennent se greffer ici sur l'artère Turin–Milan, en travers du flot rapide est-ouest. Les navettes de Casale, elles, repartent d'un tronchino en impasse collé au premier quai.",
+  "difficulty": 3,
+  "country": "🇮🇹 Italie",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }, { "id": 6 }
+  ],
+  "portals": {
+    "TURIN":  { "side": "L", "color": "#25dede", "abbr": "TO" },
+    "MILAN":  { "side": "R", "color": "#f2588f", "abbr": "MI" },
+    "AOSTE":  { "side": "R", "color": "#4ade80", "abbr": "AO" },
+    "CASALE": { "side": "R", "color": "#f5b23c", "abbr": "CA" }
+  },
+  "links": {
+    "TURIN":  [1, 2, 3, 4, 5, 6],
+    "MILAN":  [1, 2, 3, 4],
+    "AOSTE":  [3, 4, 5, 6],
+    "CASALE": [5, 6]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 14, "nMax": 17, "gapMin": 1.7, "gapMax": 2.9,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6], "quietRate": 0.16, "rush": "pointe"
+  }
+}
