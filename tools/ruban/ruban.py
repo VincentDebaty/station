@@ -94,10 +94,25 @@ ch(C,"La côte d'Argent","Lisbonne","Porto",[
   g("Azambuja"),g("Santarém"),g("Pombal"),g("Coimbra"),g("Aveiro"),g("Espinho"),g("Porto Campanhã")])
 ch(C,"La Galice","Porto","Madrid",[
   g("Nine"),g("Valença"),g("Vigo"),g("Ourense"),g("Zamora"),g("Medina del Campo"),g("Madrid-Atocha")])
-ch(C,"L'Andalousie","Madrid","Séville",[
-  g("Aranjuez"),g("Alcázar de San Juan"),g("Ciudad Real"),g("Puertollano"),g("Cordoue"),g("Séville Santa Justa")])
-ch(C,"La Bétique","Séville","Malaga",[
-  g("Utrera"),g("Marchena"),g("Osuna"),g("Bobadilla"),g("Antequera"),g("Malaga María Zambrano")])
+# LA BÉTIQUE A FONDU DANS L'ANDALOUSIE (décision de Vincent, 28 août 2026).
+# Trois refus §0 sur la ligne unique de Bobadilla : MARCHENA est le piège n° 1
+# au sens littéral (sa ligne de Cordoue est la Vía Verde de la Campiña depuis
+# le 1er janvier 1971), OSUNA une passante simple, et UTRERA la variante la
+# plus sournoise — la bifurcation de Malaga est VIVANTE mais passe à 1,5 km au
+# nord de la gare : les MD de Malaga ne s'arrêtent pas à ses quais (les trains
+# sans le nœud, ou le nœud sans les trains). La Roda de Andalucía, jonction
+# déviée en 1992, sans voyageurs depuis 2013, ne repêche rien. Restaient
+# quatre gares — R3 en veut cinq : fusion, dix gares, le maximum exact de R3.
+# DOS HERMANAS est admise au standard Lausanne : tronc commun à deux quais,
+# mais les trois flux (C-1, Cadix, Malaga) s'y arrêtent chaque jour, et le tri
+# est réel en service. Le boss passe à Málaga-María Zambrano — le premier
+# boss-terminus du ruban — et Séville Santa Justa se joue en cours de
+# chapitre. À Bobadilla, ne jamais écrire de portail CORDOUE (voyageurs
+# supprimés en 2013, fret seul) ; Antequera-Ciudad est fermée depuis 2015.
+ch(C,"L'Andalousie et la Bétique","Madrid","Malaga",[
+  g("Aranjuez"),g("Alcázar de San Juan"),g("Ciudad Real"),g("Puertollano"),g("Cordoue"),
+  g("Séville Santa Justa"),g("Dos Hermanas","dos-hermanas"),g("Bobadilla","bobadilla"),
+  g("Antequera-Santa Ana","antequera"),g("Málaga-María Zambrano","malaga")])
 # LA LIGNE DE TERUEL EST FONDUE DANS LE LEVANT (décision de Vincent, 28 août
 # 2026, option B). Le chapitre 33 ne pouvait pas exister : la ligne 610
 # Saragosse–Sagonte est une voie unique non électrifiée SANS UNE SEULE

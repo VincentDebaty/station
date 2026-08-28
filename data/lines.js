@@ -556,5 +556,7 @@ const LINES = [
   { id: "L946", name: "L'Aragon (Saragosse – Lérida)",
     nodes: ["zaragoza", "lleida"] },
   { id: "L947", name: "Le Levant (Murcie – Sagonte)",
-    nodes: ["murcia", "alicante", "valencia", "sagunto"] }
+    nodes: ["murcia", "alicante", "valencia", "sagunto"] },
+  { id: "L948", name: "La Bétique (Dos Hermanas – Malaga)",
+    nodes: ["dos-hermanas", "bobadilla", "antequera", "malaga"] }
 ];

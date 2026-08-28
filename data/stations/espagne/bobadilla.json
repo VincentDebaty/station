@@ -1,0 +1,28 @@
+{
+  "id": "bobadilla",
+  "name": "Bobadilla",
+  "tagline": "L'étoile déchue de l'Andalousie",
+  "desc": "Cinq lignes convergeaient sur ce village-gare planté au milieu de nulle part, plaque tournante de toute l'Andalousie. La grande vitesse lui a pris ses express, mais les régionaux de Séville, Malaga, Ronda et Antequera s'y croisent toujours entre les convois du port d'Algeciras.",
+  "difficulty": 2,
+  "country": "🇪🇸 Espagne",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }
+  ],
+  "portals": {
+    "SEVILLE":   { "side": "L", "color": "#25dede", "abbr": "SV", "label": "SÉVILLE" },
+    "ALGECIRAS": { "side": "L", "color": "#4ade80", "abbr": "AL" },
+    "MALAGA":    { "side": "R", "color": "#f2588f", "abbr": "MA" },
+    "ANTEQUERA": { "side": "R", "color": "#f5b23c", "abbr": "AN" }
+  },
+  "links": {
+    "SEVILLE":   [1, 2, 3],
+    "ALGECIRAS": [3, 4],
+    "MALAGA":    [1, 2],
+    "ANTEQUERA": [2, 3, 4]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 13, "nMax": 16, "gapMin": 1.8, "gapMax": 3.0,
+    "cars": [2, 2, 2, 3, 3, 4, 4, 5], "quietRate": 0.18, "rush": "pointe"
+  }
+}

@@ -303,7 +303,11 @@ const GEO = {
         zaragoza: [-0.9112, 41.6587],
         murcia: [-1.13, 37.975],
         alicante: [-0.493, 38.344],
-        valencia: [-0.3771, 39.467]
+        valencia: [-0.3771, 39.467],
+        "dos-hermanas": [-5.93, 37.28],
+        bobadilla: [-4.7126, 37.0396],
+        antequera: [-4.5613, 37.0194],
+        malaga: [-4.4214, 36.7202]
       } },
     "royaume-uni": { name: "Royaume-Uni", flag: "🇬🇧", iso: "GBR", continent: "europe",
       frame: [-6.3, 49.9, 1.9, 57.6], neighbors: { belgique: [3.25, 51.22] },

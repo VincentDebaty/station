@@ -22,17 +22,17 @@ Chaque région est traversée **une fois**, et on n'y revient jamais.
 | | |
 |---|---|
 | Actes | **9** |
-| Chapitres | **92** |
-| Gares — c'est-à-dire **niveaux** | **562** |
-| Fiches déjà écrites, réemployées telles quelles | **190** |
-| Fiches à écrire | **372** |
+| Chapitres | **91** |
+| Gares — c'est-à-dire **niveaux** | **560** |
+| Fiches déjà écrites, réemployées telles quelles | **194** |
+| Fiches à écrire | **366** |
 | Sauts déclarés (§4 bis) | **10** |
 | Longueur des chapitres | 5 à 9 gares, médiane 6 |
 
 **Vérifié par script** (`scratchpad/verif.py`, à porter dans `carte-check` au
-lot C) : les 92 chapitres tiennent tous R3 (5 à 10 gares), aucune gare
+lot C) : les 91 chapitres tiennent tous R3 (5 à 10 gares), aucune gare
 n'apparaît deux fois (R6), le chaînage est continu d'un bout à l'autre, et
-les 185 fiches annoncées comme existantes existent bien au catalogue.
+les 194 fiches annoncées comme existantes existent bien au catalogue.
 
 ## Comment lire les tableaux
 
@@ -176,7 +176,7 @@ les 185 fiches annoncées comme existantes existent bien au catalogue.
 
 ## Acte III — L'Ibérie
 
-*La grande boucle de la péninsule* — 9 chapitres, **57 gares** (10 déjà écrites, 47 à écrire).
+*La grande boucle de la péninsule* — 8 chapitres, **55 gares** (14 déjà écrites, 41 à écrire).
 
 > ⚠️ **La ligne de Teruel est fondue dans le Levant** (28 août 2026, option B,
 > décision de Vincent). Quatre refus §0 d'un coup, mesurés le jour même :
@@ -202,6 +202,16 @@ les 185 fiches annoncées comme existantes existent bien au catalogue.
 > C-2 de Lorca 2027) ; deux pièges de plus au passage : la ligne Madrid–Cuenca–
 > Utiel est morte depuis juillet 2022, celle de Murcie vers Albacete est
 > fret-seul depuis février 2022.
+>
+> ⚠️ **La Bétique a fondu dans l'Andalousie** (28 août 2026, décision de
+> Vincent) : Marchena (ligne de Cordoue devenue voie verte, 1971), Osuna
+> (passante) et Utrera refusées — Utrera est la variante sournoise du piège
+> n° 1 : sa bifurcation de Malaga est vivante mais passe à 1,5 km au nord, les
+> MD de Malaga ne touchent pas ses quais. Dos Hermanas la remplace (standard
+> Lausanne : les trois flux s'y arrêtent). Fusion à dix gares, le maximum R3 ;
+> le boss passe à Málaga-María Zambrano, premier boss-terminus du ruban ;
+> Séville Santa Justa se joue en cours de chapitre. À Bobadilla, jamais de
+> portail CORDOUE (fret seul depuis 2013) ; Antequera-Ciudad fermée en 2015.
 
 | # | Chapitre | Gares, dans l'ordre du rail | n |
 |---|---|---|---|
@@ -209,11 +219,10 @@ les 185 fiches annoncées comme existantes existent bien au catalogue.
 | 27 | L'Estrémadure | Talavera de la Reina · Navalmoral · Cáceres · Mérida · Badajoz · Elvas · Entroncamento · **Lisbonne Santa Apolónia** | 8 |
 | 28 | La côte d'Argent | Azambuja · Santarém · Pombal · Coimbra · Aveiro · Espinho · **Porto Campanhã** | 7 |
 | 29 | La Galice | Nine · Valença · Vigo · Ourense · Zamora · Medina del Campo · **Madrid-Atocha** | 7 |
-| 30 | L'Andalousie | Aranjuez · Alcázar de San Juan · Ciudad Real · Puertollano · Cordoue · **Séville Santa Justa** | 6 |
-| 31 | La Bétique | Utrera · Marchena · Osuna · Bobadilla · Antequera · **Malaga María Zambrano** | 6 |
+| 30 | L'Andalousie et la Bétique | Aranjuez · Alcázar de San Juan · Ciudad Real · Puertollano · Cordoue · Séville Santa Justa · ~~Utrera~~ ~~Marchena~~ ~~Osuna~~ Dos Hermanas ✓ · Bobadilla ✓ · Antequera-Santa Ana ✓ · **Málaga-María Zambrano** ✓ | 10 |
 | | ⤳ **Saut (lgv)** | *Le Corredor Mediterráneo — de Malaga à Murcie par la côte d'Almería* | |
-| 32 | Le Levant et l'Aragon | ~~Grenade~~ ~~Guadix~~ ~~Almería~~ ~~Lorca~~ Murcie ✓ · Alicante ✓ · Valence-Nord ✓ · ~~Segorbe~~ ~~Caudiel~~ ~~Teruel~~ ~~Calamocha~~ Sagonte ✓ · **Saragosse-Delicias** ✓ | 5 |
-| 33 | L'Èbre | Lérida ✓ · Reus ✓ · Tarragone ✓ · ~~Vilanova i la Geltrú~~ Sant Vicenç de Calders ✓ · **Barcelone-Sants** ✓ | 5 |
+| 31 | Le Levant et l'Aragon | ~~Grenade~~ ~~Guadix~~ ~~Almería~~ ~~Lorca~~ Murcie ✓ · Alicante ✓ · Valence-Nord ✓ · ~~Segorbe~~ ~~Caudiel~~ ~~Teruel~~ ~~Calamocha~~ Sagonte ✓ · **Saragosse-Delicias** ✓ | 5 |
+| 32 | L'Èbre | Lérida ✓ · Reus ✓ · Tarragone ✓ · ~~Vilanova i la Geltrú~~ Sant Vicenç de Calders ✓ · **Barcelone-Sants** ✓ | 5 |
 
 ## Acte IV — Le Midi et l'Italie
 
@@ -221,18 +230,18 @@ les 185 fiches annoncées comme existantes existent bien au catalogue.
 
 | # | Chapitre | Gares, dans l'ordre du rail | n |
 |---|---|---|---|
-| 34 | Le Roussillon et la Camargue | ~~Gérone~~ · ~~Figueres~~ · ~~Portbou~~ · Perpignan ✓ · Narbonne ✓ · Béziers ✓ · Montpellier-Saint-Roch ✓ · Nîmes ✓ · Tarascon ✓ · Avignon ✓ · Miramas ✓ · **Marseille Saint-Charles** ✓ | 9 |
+| 33 | Le Roussillon et la Camargue | ~~Gérone~~ · ~~Figueres~~ · ~~Portbou~~ · Perpignan ✓ · Narbonne ✓ · Béziers ✓ · Montpellier-Saint-Roch ✓ · Nîmes ✓ · Tarascon ✓ · Avignon ✓ · Miramas ✓ · **Marseille Saint-Charles** ✓ | 9 |
 | | ⤳ **Saut (lgv)** | *Le tunnel du Perthus — de Barcelone à Perpignan par la grande vitesse* | |
-| 35 | La Riviera | Toulon ✓ · ~~Saint-Raphaël~~ · Cannes ✓ · Nice ✓ · ~~Monaco~~ · Vintimille ✓ · ~~San Remo~~ · Savone ✓ · **Gênes Piazza Principe** ✓ | 6 |
-| 36 | La Tyrrhénienne | La Spezia ✓ · Pise ✓ · ~~Livourne~~ Campiglia Marittima ✓ · Grosseto ✓ · ~~Civitavecchia~~ · **Rome Termini** ✓ | 5 |
-| 37 | La Campanie | ~~Latina~~ Ciampino ✓ · ~~Fondi~~ Campoleone ✓ · ~~Formia~~ · ~~Minturno~~ · Villa Literno ✓ · Caserte ✓ · **Naples Centrale** ✓ | 5 |
-| 38 | Le train qui prend le bateau | Salerne ✓ · ~~Sapri~~ · Paola ✓ · Lamezia Terme ✓ · Villa San Giovanni ✓ · Messine ✓ · ~~Cefalù~~ Termini Imerese ✓ · **Palerme Centrale** ✓ | 7 |
+| 34 | La Riviera | Toulon ✓ · ~~Saint-Raphaël~~ · Cannes ✓ · Nice ✓ · ~~Monaco~~ · Vintimille ✓ · ~~San Remo~~ · Savone ✓ · **Gênes Piazza Principe** ✓ | 6 |
+| 35 | La Tyrrhénienne | La Spezia ✓ · Pise ✓ · ~~Livourne~~ Campiglia Marittima ✓ · Grosseto ✓ · ~~Civitavecchia~~ · **Rome Termini** ✓ | 5 |
+| 36 | La Campanie | ~~Latina~~ Ciampino ✓ · ~~Fondi~~ Campoleone ✓ · ~~Formia~~ · ~~Minturno~~ · Villa Literno ✓ · Caserte ✓ · **Naples Centrale** ✓ | 5 |
+| 37 | Le train qui prend le bateau | Salerne ✓ · ~~Sapri~~ · Paola ✓ · Lamezia Terme ✓ · Villa San Giovanni ✓ · Messine ✓ · ~~Cefalù~~ Termini Imerese ✓ · **Palerme Centrale** ✓ | 7 |
 | | ⤳ **Saut (nuit)** | *Le Palerme–Naples de nuit — le ferry de Messine dans l'autre sens* | |
-| 39 | La Lucanie | Battipaglia ✓ · Potenza ✓ · Metaponto ✓ · Tarente ✓ · ~~Gioia del Colle~~ · **Bari Centrale** ✓ | 5 |
-| 40 | L'Adriatique | ~~Barletta~~ · Foggia ✓ · ~~Termoli~~ San Severo ✓ · Pescara ✓ · Ancône ✓ · Rimini ✓ · **Bologne Centrale** ✓ | 6 |
-| 41 | La Vénétie | Ferrare ✓ · Rovigo ✓ · Padoue ✓ · Mestre ✓ · **Venise Santa Lucia** ✓ | 5 |
-| 42 | La plaine lombarde | Vicence ✓ · Vérone ✓ · ~~Peschiera~~ · ~~Desenzano~~ · Brescia ✓ · Treviglio ✓ · **Milan Centrale** ✓ | 5 |
-| 43 | Le Piémont | Rho ✓ · ~~Magenta~~ · Novare ✓ · Verceil ✓ · Chivasso ✓ · **Turin Porta Nuova** ✓ | 5 |
+| 38 | La Lucanie | Battipaglia ✓ · Potenza ✓ · Metaponto ✓ · Tarente ✓ · ~~Gioia del Colle~~ · **Bari Centrale** ✓ | 5 |
+| 39 | L'Adriatique | ~~Barletta~~ · Foggia ✓ · ~~Termoli~~ San Severo ✓ · Pescara ✓ · Ancône ✓ · Rimini ✓ · **Bologne Centrale** ✓ | 6 |
+| 40 | La Vénétie | Ferrare ✓ · Rovigo ✓ · Padoue ✓ · Mestre ✓ · **Venise Santa Lucia** ✓ | 5 |
+| 41 | La plaine lombarde | Vicence ✓ · Vérone ✓ · ~~Peschiera~~ · ~~Desenzano~~ · Brescia ✓ · Treviglio ✓ · **Milan Centrale** ✓ | 5 |
+| 42 | Le Piémont | Rho ✓ · ~~Magenta~~ · Novare ✓ · Verceil ✓ · Chivasso ✓ · **Turin Porta Nuova** ✓ | 5 |
 
 ## Acte V — Les Alpes, le Rhin et la Germanie
 
@@ -254,21 +263,21 @@ carte dessine la vallée sans que le ruban prétende s'y arrêter.
 
 | # | Chapitre | Gares, dans l'ordre du rail | n |
 |---|---|---|---|
-| 44 | Le Fréjus et le Bugey | Bussoleno ✓ · Chambéry ✓ · Aix-les-Bains ✓ · Culoz ✓ · Bellegarde ✓ · **Genève-Cornavin** ✓ | 6 |
-| 45 | Le Plateau suisse | Lausanne ✓ · Fribourg ✓ · Berne ✓ · Olten ✓ · Aarau ✓ · **Zurich HB** ✓ | 6 |
-| 46 | Le Rhin supérieur | Bâle ✓ · Mulhouse ✓ · Colmar ✓ · Sélestat ✓ · **Strasbourg** ✓ | 5 |
-| 47 | La Lorraine | Sarrebourg ✓ · Nancy ✓ · Metz ✓ · Thionville ✓ · Bettembourg ✓ · **Luxembourg** ✓ | 6 |
-| 48 | L'Ardenne | Arlon ✓ · Libramont ✓ · Marloie ✓ · Namur ✓ · Ottignies ✓ · **Bruxelles-Midi** ✓ | 6 |
-| 49 | Le Benelux | Malines ✓ · Anvers ✓ · Roosendaal ✓ · Dordrecht ✓ · Rotterdam ✓ · **Amsterdam Centraal** ✓ | 6 |
-| 50 | La Basse-Saxe | Amersfoort ✓ · Deventer ✓ · Hengelo ✓ · Rheine ✓ · Osnabrück ✓ · **Hanovre Hbf** ✓ | 6 |
-| 51 | La Ruhr | Minden ✓ · Bielefeld ✓ · Hamm ✓ · Hagen ✓ · Wuppertal ✓ · **Cologne Hbf** ✓ | 6 |
-| 52 | Le Rhin romantique | Bonn ✓ · Coblence ✓ · Bingen ✓ · Mayence ✓ · Wiesbaden · **Francfort Hbf** ✓ | 6 |
-| 53 | Le Neckar | Darmstadt · Mannheim ✓ · Heidelberg · Bruchsal · Vaihingen · **Stuttgart Hbf** ✓ | 6 |
-| 54 | La Souabe | Plochingen ✓ · Ulm ✓ · Günzburg ✓ · Augsbourg ✓ · **Munich Hbf** ✓ | 5 |
-| 55 | La Bavière | Dachau ✓ · Ingolstadt ✓ · Treuchtlingen ✓ · Roth ✓ · **Nuremberg Hbf** ✓ | 5 |
-| 56 | La Franconie et la Thuringe | Bamberg ✓ · Lichtenfels ✓ · Saalfeld ✓ · Erfurt ✓ · Weimar ✓ · Naumbourg ✓ · **Leipzig Hbf** ✓ | 7 |
-| 57 | La marche de Brandebourg | Halle ✓ · Bitterfeld ✓ · Wittenberg ✓ · Jüterbog ✓ · **Berlin Hbf** ✓ | 5 |
-| 58 | Le Mecklembourg | Neustrelitz ✓ · Rostock ✓ · Bad Kleinen ✓ · Schwerin ✓ · **Hambourg Hbf** ✓ | 5 |
+| 43 | Le Fréjus et le Bugey | Bussoleno ✓ · Chambéry ✓ · Aix-les-Bains ✓ · Culoz ✓ · Bellegarde ✓ · **Genève-Cornavin** ✓ | 6 |
+| 44 | Le Plateau suisse | Lausanne ✓ · Fribourg ✓ · Berne ✓ · Olten ✓ · Aarau ✓ · **Zurich HB** ✓ | 6 |
+| 45 | Le Rhin supérieur | Bâle ✓ · Mulhouse ✓ · Colmar ✓ · Sélestat ✓ · **Strasbourg** ✓ | 5 |
+| 46 | La Lorraine | Sarrebourg ✓ · Nancy ✓ · Metz ✓ · Thionville ✓ · Bettembourg ✓ · **Luxembourg** ✓ | 6 |
+| 47 | L'Ardenne | Arlon ✓ · Libramont ✓ · Marloie ✓ · Namur ✓ · Ottignies ✓ · **Bruxelles-Midi** ✓ | 6 |
+| 48 | Le Benelux | Malines ✓ · Anvers ✓ · Roosendaal ✓ · Dordrecht ✓ · Rotterdam ✓ · **Amsterdam Centraal** ✓ | 6 |
+| 49 | La Basse-Saxe | Amersfoort ✓ · Deventer ✓ · Hengelo ✓ · Rheine ✓ · Osnabrück ✓ · **Hanovre Hbf** ✓ | 6 |
+| 50 | La Ruhr | Minden ✓ · Bielefeld ✓ · Hamm ✓ · Hagen ✓ · Wuppertal ✓ · **Cologne Hbf** ✓ | 6 |
+| 51 | Le Rhin romantique | Bonn ✓ · Coblence ✓ · Bingen ✓ · Mayence ✓ · Wiesbaden · **Francfort Hbf** ✓ | 6 |
+| 52 | Le Neckar | Darmstadt · Mannheim ✓ · Heidelberg · Bruchsal · Vaihingen · **Stuttgart Hbf** ✓ | 6 |
+| 53 | La Souabe | Plochingen ✓ · Ulm ✓ · Günzburg ✓ · Augsbourg ✓ · **Munich Hbf** ✓ | 5 |
+| 54 | La Bavière | Dachau ✓ · Ingolstadt ✓ · Treuchtlingen ✓ · Roth ✓ · **Nuremberg Hbf** ✓ | 5 |
+| 55 | La Franconie et la Thuringe | Bamberg ✓ · Lichtenfels ✓ · Saalfeld ✓ · Erfurt ✓ · Weimar ✓ · Naumbourg ✓ · **Leipzig Hbf** ✓ | 7 |
+| 56 | La marche de Brandebourg | Halle ✓ · Bitterfeld ✓ · Wittenberg ✓ · Jüterbog ✓ · **Berlin Hbf** ✓ | 5 |
+| 57 | Le Mecklembourg | Neustrelitz ✓ · Rostock ✓ · Bad Kleinen ✓ · Schwerin ✓ · **Hambourg Hbf** ✓ | 5 |
 
 ## Acte VI — Le Nord
 
@@ -276,17 +285,17 @@ carte dessine la vallée sans que le ruban prétende s'y arrêter.
 
 | # | Chapitre | Gares, dans l'ordre du rail | n |
 |---|---|---|---|
-| 59 | Le Jutland | Neumünster · Rendsburg · Flensbourg · Padborg · Kolding · Odense · **Copenhague H** | 7 |
-| 60 | L'Øresund | Malmö · Lund · Helsingborg · Halmstad · Varberg · Kungsbacka · **Göteborg Central** | 7 |
-| 61 | Le Bohuslän | Trollhättan · Öxnered · Ed · Halden · Sarpsborg · Moss · **Oslo Sentralstasjon** | 7 |
-| 62 | Le Bergensbanen | Hønefoss · Ål · Geilo · Finse · Myrdal · Voss · **Bergen** | 7 |
+| 58 | Le Jutland | Neumünster · Rendsburg · Flensbourg · Padborg · Kolding · Odense · **Copenhague H** | 7 |
+| 59 | L'Øresund | Malmö · Lund · Helsingborg · Halmstad · Varberg · Kungsbacka · **Göteborg Central** | 7 |
+| 60 | Le Bohuslän | Trollhättan · Öxnered · Ed · Halden · Sarpsborg · Moss · **Oslo Sentralstasjon** | 7 |
+| 61 | Le Bergensbanen | Hønefoss · Ål · Geilo · Finse · Myrdal · Voss · **Bergen** | 7 |
 | | ⤳ **Saut (nuit)** | *Le train de nuit du Bergensbanen — Bergen redescend sur Oslo* | |
-| 63 | Le Värmland | Lillestrøm · Kongsvinger · Arvika · Karlstad · Kristinehamn · Örebro · Västerås · **Stockholm Central** | 8 |
+| 62 | Le Värmland | Lillestrøm · Kongsvinger · Arvika · Karlstad · Kristinehamn · Örebro · Västerås · **Stockholm Central** | 8 |
 | | ⤳ **Saut (mer)** | *Le ferry de l'archipel — Stockholm à Turku, une nuit entre vingt mille îles* | |
-| 64 | La Finlande du Sud | Turku · Salo · Karjaa · Lohja · Espoo · Pasila · **Helsinki** | 7 |
+| 63 | La Finlande du Sud | Turku · Salo · Karjaa · Lohja · Espoo · Pasila · **Helsinki** | 7 |
 | | ⤳ **Saut (mer)** | *Le golfe de Finlande — Helsinki à Tallinn, deux heures de mer* | |
-| 65 | La Livonie | Tallinn · Tapa · Tartu · Valga · Valmiera · Cēsis · Sigulda · **Riga** | 8 |
-| 66 | La Sémigalie | Jelgava · Joniškis · Šiauliai · Radviliškis · Kaunas · **Vilnius** | 6 |
+| 64 | La Livonie | Tallinn · Tapa · Tartu · Valga · Valmiera · Cēsis · Sigulda · **Riga** | 8 |
+| 65 | La Sémigalie | Jelgava · Joniškis · Šiauliai · Radviliškis · Kaunas · **Vilnius** | 6 |
 
 ## Acte VII — La Baltique et la Bohême
 
@@ -294,15 +303,15 @@ carte dessine la vallée sans que le ruban prétende s'y arrêter.
 
 | # | Chapitre | Gares, dans l'ordre du rail | n |
 |---|---|---|---|
-| 67 | La Ruthénie blanche | Kena · Gudogaï · Maladzetchna · Smaliavitchy · **Minsk-Pasajyrski** | 5 |
-| 68 | La Polésie | Stoubtsy · Baranavitchy · Ivatsevitchy · Biaroza · **Brest-Tsentralny** | 5 |
-| 69 | La Mazovie | Terespol · Biała Podlaska · Łuków · Siedlce · Mińsk Mazowiecki · **Varsovie Centrale** | 6 |
-| 70 | La Vistule | Nasielsk · Ciechanów · Działdowo · Iława · Malbork · Tczew · **Gdańsk Główny** | 7 |
-| 71 | La Cujavie | Laskowice · Bydgoszcz · Inowrocław · Gniezno · **Poznań Główny** | 5 |
-| 72 | La Grande-Pologne | Kościan · Leszno · Rawicz · Żmigród · Oborniki Śląskie · **Wrocław Główny** | 6 |
-| 73 | La Silésie | Oława · Brzeg · Opole · Gliwice · Katowice · **Cracovie Główny** | 6 |
-| 74 | La Moravie | Oświęcim · Bohumín · Ostrava · Olomouc · Pardubice · Kolín · **Prague hlavní nádraží** | 7 |
-| 75 | La Bohême | Benešov · Havlíčkův Brod · Brno · Břeclav · Hohenau · **Vienne Hbf** | 6 |
+| 66 | La Ruthénie blanche | Kena · Gudogaï · Maladzetchna · Smaliavitchy · **Minsk-Pasajyrski** | 5 |
+| 67 | La Polésie | Stoubtsy · Baranavitchy · Ivatsevitchy · Biaroza · **Brest-Tsentralny** | 5 |
+| 68 | La Mazovie | Terespol · Biała Podlaska · Łuków · Siedlce · Mińsk Mazowiecki · **Varsovie Centrale** | 6 |
+| 69 | La Vistule | Nasielsk · Ciechanów · Działdowo · Iława · Malbork · Tczew · **Gdańsk Główny** | 7 |
+| 70 | La Cujavie | Laskowice · Bydgoszcz · Inowrocław · Gniezno · **Poznań Główny** | 5 |
+| 71 | La Grande-Pologne | Kościan · Leszno · Rawicz · Żmigród · Oborniki Śląskie · **Wrocław Główny** | 6 |
+| 72 | La Silésie | Oława · Brzeg · Opole · Gliwice · Katowice · **Cracovie Główny** | 6 |
+| 73 | La Moravie | Oświęcim · Bohumín · Ostrava · Olomouc · Pardubice · Kolín · **Prague hlavní nádraží** | 7 |
+| 74 | La Bohême | Benešov · Havlíčkův Brod · Brno · Břeclav · Hohenau · **Vienne Hbf** | 6 |
 
 ## Acte VIII — Les Alpes orientales et la Dalmatie
 
@@ -310,13 +319,13 @@ carte dessine la vallée sans que le ruban prétende s'y arrêter.
 
 | # | Chapitre | Gares, dans l'ordre du rail | n |
 |---|---|---|---|
-| 76 | Le Semmering | Wiener Neustadt · Semmering · Bruck an der Mur · Graz · Maribor · Celje · **Ljubljana** | 7 |
-| 77 | La Save | Zidani Most · Sevnica · Brežice · Dobova · Zaprešić · **Zagreb Glavni** | 6 |
-| 78 | La Dalmatie | Karlovac · Ogulin · Gospić · Knin · Perković · **Split** | 6 |
+| 75 | Le Semmering | Wiener Neustadt · Semmering · Bruck an der Mur · Graz · Maribor · Celje · **Ljubljana** | 7 |
+| 76 | La Save | Zidani Most · Sevnica · Brežice · Dobova · Zaprešić · **Zagreb Glavni** | 6 |
+| 77 | La Dalmatie | Karlovac · Ogulin · Gospić · Knin · Perković · **Split** | 6 |
 | | ⤳ **Saut (mer)** | *Le littoral dalmate — le bateau côtier de Split à Ploče* | |
-| 79 | La Neretva | Ploče · Metković · Čapljina · Mostar · Konjic · Pazarić · **Sarajevo** | 7 |
-| 80 | La Bosnie | Zenica · Doboj · Šamac · Vinkovci · Šid · **Belgrade Centar** | 6 |
-| 81 | La Pannonie | Novi Sad · Subotica · Kelebia · Kiskunhalas · Kecskemét · **Budapest Keleti** | 6 |
+| 78 | La Neretva | Ploče · Metković · Čapljina · Mostar · Konjic · Pazarić · **Sarajevo** | 7 |
+| 79 | La Bosnie | Zenica · Doboj · Šamac · Vinkovci · Šid · **Belgrade Centar** | 6 |
+| 80 | La Pannonie | Novi Sad · Subotica · Kelebia · Kiskunhalas · Kecskemét · **Budapest Keleti** | 6 |
 
 ## Acte IX — L'Est et l'Orient
 
@@ -324,18 +333,18 @@ carte dessine la vallée sans que le ruban prétende s'y arrêter.
 
 | # | Chapitre | Gares, dans l'ordre du rail | n |
 |---|---|---|---|
-| 82 | Les Carpates | Szolnok · Debrecen · Nyíregyháza · Záhony · Tchop · Moukatchevo · Stryï · **Lviv** | 8 |
-| 83 | La Volhynie | Ternopil · Khmelnytskyï · Vinnytsia · Kazatyn · Fastiv · **Kyiv-Passajyrskyï** | 6 |
-| 84 | La Sloboda | Yagotyn · Poltava · Krasnohrad · Merefa · **Kharkiv-Passajyrskyï** | 5 |
-| 85 | Le Donets | Lozova · Pavlohrad · Synelnykove · Novomoskovsk · **Dnipro-Holovnyï** | 5 |
-| 86 | La steppe | Piatykhatky · Znamianka · Pomichna · Podilsk · Rozdilna · **Odessa-Holovna** | 6 |
-| 87 | La Bessarabie | Koutchourhan · Tiraspol · Bender · Căinari · **Chișinău** | 5 |
-| 88 | La Moldavie | Ungheni · Iași · Roman · Bacău · Adjud · Buzău · Ploiești · **Bucarest Nord** | 8 |
-| 89 | Le Danube | Giurgiu · Roussé · Gorna Oriakhovitsa · Pleven · Mezdra · **Sofia** | 6 |
-| 90 | La Macédoine | Pernik · Blagoevgrad · Sandanski · Koulata · Sidirokastro · **Thessalonique** | 6 |
-| 91 | La Thessalie | Katerini · Larissa · Palaiofarsalos · Lianokladi · Livadiá · **Athènes** | 6 |
+| 81 | Les Carpates | Szolnok · Debrecen · Nyíregyháza · Záhony · Tchop · Moukatchevo · Stryï · **Lviv** | 8 |
+| 82 | La Volhynie | Ternopil · Khmelnytskyï · Vinnytsia · Kazatyn · Fastiv · **Kyiv-Passajyrskyï** | 6 |
+| 83 | La Sloboda | Yagotyn · Poltava · Krasnohrad · Merefa · **Kharkiv-Passajyrskyï** | 5 |
+| 84 | Le Donets | Lozova · Pavlohrad · Synelnykove · Novomoskovsk · **Dnipro-Holovnyï** | 5 |
+| 85 | La steppe | Piatykhatky · Znamianka · Pomichna · Podilsk · Rozdilna · **Odessa-Holovna** | 6 |
+| 86 | La Bessarabie | Koutchourhan · Tiraspol · Bender · Căinari · **Chișinău** | 5 |
+| 87 | La Moldavie | Ungheni · Iași · Roman · Bacău · Adjud · Buzău · Ploiești · **Bucarest Nord** | 8 |
+| 88 | Le Danube | Giurgiu · Roussé · Gorna Oriakhovitsa · Pleven · Mezdra · **Sofia** | 6 |
+| 89 | La Macédoine | Pernik · Blagoevgrad · Sandanski · Koulata · Sidirokastro · **Thessalonique** | 6 |
+| 90 | La Thessalie | Katerini · Larissa · Palaiofarsalos · Lianokladi · Livadiá · **Athènes** | 6 |
 | | ⤳ **Saut (nuit)** | *Le train de nuit de Thessalie — Athènes remonte sur Thessalonique* | |
-| 92 | L'Express d'Orient | Serrès · Drama · Xanthi · Komotini · Alexandroúpoli · Pythio · Edirne · Çerkezköy · **Istanbul Sirkeci** | 9 |
+| 91 | L'Express d'Orient | Serrès · Drama · Xanthi · Komotini · Alexandroúpoli · Pythio · Edirne · Çerkezköy · **Istanbul Sirkeci** | 9 |
 
 ---
 

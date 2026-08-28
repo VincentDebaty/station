@@ -1,0 +1,29 @@
+{
+  "id": "antequera",
+  "name": "Antequera-Santa Ana",
+  "city": "Antequera",
+  "tagline": "Le cambiador au milieu des oliviers",
+  "desc": "Posée en rase campagne à 17 kilomètres de la ville, la gare noue trois lignes à grande vitesse et l'antenne ibérique d'Algeciras. Les Talgo de Madrid y changent d'écartement pendant que les Avant de Grenade, Séville et Malaga s'échangent leurs voyageurs.",
+  "difficulty": 3,
+  "country": "🇪🇸 Espagne",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }, { "id": 6 }
+  ],
+  "portals": {
+    "MADRID":    { "side": "L", "color": "#f2588f", "abbr": "MD" },
+    "ALGECIRAS": { "side": "L", "color": "#4ade80", "abbr": "AL" },
+    "MALAGA":    { "side": "R", "color": "#25dede", "abbr": "MA" },
+    "GRENADE":   { "side": "R", "color": "#f5b23c", "abbr": "GR" }
+  },
+  "links": {
+    "MADRID":    [1, 2, 3, 4],
+    "ALGECIRAS": [5, 6],
+    "MALAGA":    [1, 2, 3],
+    "GRENADE":   [3, 4, 5, 6]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 14, "nMax": 17, "gapMin": 1.6, "gapMax": 2.9,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6], "quietRate": 0.15, "rush": "pointe"
+  }
+}

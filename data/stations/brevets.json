@@ -239,6 +239,24 @@
   },
   "boss": "OK"
  },
+ "antequera": {
+  "geometrie": "ccd20c94a11b",
+  "date": "2026-08-28",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 4,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK",
+   "4": "OK"
+  },
+  "boss": "OK"
+ },
  "anvers": {
   "geometrie": "125e5e058842",
   "date": "2026-08-27",
@@ -658,6 +676,23 @@
    "2": "OK",
    "3": "OK",
    "4": "OK"
+  },
+  "boss": "file de 6 au même quai"
+ },
+ "bobadilla": {
+  "geometrie": "ac0bdb83a724",
+  "date": "2026-08-28",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 3,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK"
   },
   "boss": "file de 6 au même quai"
  },
@@ -1502,6 +1537,22 @@
    "4": "OK"
   },
   "boss": "retard garanti 0.30 > 0.3"
+ },
+ "dos-hermanas": {
+  "geometrie": "d1113c033d5a",
+  "date": "2026-08-28",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 2,
+  "detail": {
+   "1": "OK",
+   "2": "OK"
+  },
+  "boss": "retard garanti 0.35 > 0.3"
  },
  "douai": {
   "geometrie": "43385337011f",
@@ -2905,6 +2956,25 @@
    "2": "OK",
    "3": "OK",
    "4": "OK"
+  },
+  "boss": "OK"
+ },
+ "malaga": {
+  "geometrie": "8b95503d3d96",
+  "date": "2026-08-28",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 5,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK",
+   "4": "OK",
+   "5": "OK"
   },
   "boss": "OK"
  },
