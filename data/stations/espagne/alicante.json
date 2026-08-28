@@ -1,0 +1,33 @@
+{
+  "id": "alicante",
+  "name": "Alacant Terminal",
+  "city": "Alicante",
+  "tagline": "La marquise Polonceau face au Levant",
+  "desc": "Terminus MZA de 1858 sous sa grande halle métallique : tout rebrousse, de l'AVE de Madrid aux navettes de San Vicente. L'Euromed de Barcelone y change d'écartement avant de repartir vers le nord.",
+  "difficulty": 4,
+  "country": "🇪🇸 Espagne",
+  "platforms": [
+    { "id": 1, "deadEnd": true }, { "id": 2, "deadEnd": true }, { "id": 3, "deadEnd": true },
+    { "id": 4, "deadEnd": true }, { "id": 5, "deadEnd": true }, { "id": 6, "deadEnd": true },
+    { "id": 7, "deadEnd": true }
+  ],
+  "portals": {
+    "MADRID":      { "side": "L", "color": "#f2588f", "abbr": "MD" },
+    "BARCELONE":   { "side": "L", "color": "#a78bfa", "abbr": "BA" },
+    "VALENCE":     { "side": "L", "color": "#25dede", "abbr": "VA" },
+    "MURCIE":      { "side": "L", "color": "#4ade80", "abbr": "MU" },
+    "SAN VICENTE": { "side": "L", "color": "#f5b23c", "abbr": "SV" }
+  },
+  "links": {
+    "MADRID":      [1, 2, 3],
+    "BARCELONE":   [2, 3, 4],
+    "VALENCE":     [4, 5, 6],
+    "MURCIE":      [5, 6, 7],
+    "SAN VICENTE": [1, 7]
+  },
+  "sameSidePairs": "all",
+  "gen": {
+    "nMin": 16, "nMax": 20, "gapMin": 1.7, "gapMax": 2.9,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6, 7], "quietRate": 0.12
+  }
+}

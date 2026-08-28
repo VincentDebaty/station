@@ -1,0 +1,33 @@
+{
+  "id": "valencia",
+  "name": "Valence-Nord",
+  "city": "Valence",
+  "tagline": "Les orangers en trencadís",
+  "desc": "Le terminus moderniste de Demetrio Ribes (1917) porte la huerta jusque sur ses murs : mosaïques d'orangers et de fleurs d'oranger au-dessus des heurtoirs. Cinq lignes de banlieue s'y engouffrent entre les régionaux de Teruel et les grandes lignes d'Alicante.",
+  "difficulty": 4,
+  "country": "🇪🇸 Espagne",
+  "platforms": [
+    { "id": 1, "deadEnd": true }, { "id": 2, "deadEnd": true }, { "id": 3, "deadEnd": true },
+    { "id": 4, "deadEnd": true }, { "id": 5, "deadEnd": true }, { "id": 6, "deadEnd": true },
+    { "id": 7, "deadEnd": true }, { "id": 8, "deadEnd": true }, { "id": 9, "deadEnd": true }
+  ],
+  "portals": {
+    "CASTELLON": { "side": "L", "color": "#f2588f", "abbr": "CS", "label": "CASTELLÓN" },
+    "ALICANTE":  { "side": "L", "color": "#4ade80", "abbr": "AL" },
+    "TERUEL":    { "side": "L", "color": "#f5b23c", "abbr": "TE" },
+    "GANDIA":    { "side": "L", "color": "#60a5fa", "abbr": "GA" },
+    "UTIEL":     { "side": "L", "color": "#a78bfa", "abbr": "UT" }
+  },
+  "links": {
+    "CASTELLON": [1, 2, 3, 4],
+    "ALICANTE":  [2, 3, 4, 5, 6],
+    "TERUEL":    [5, 6, 7, 8],
+    "GANDIA":    [7, 8, 9],
+    "UTIEL":     [9, 1]
+  },
+  "sameSidePairs": "all",
+  "gen": {
+    "nMin": 16, "nMax": 19, "gapMin": 1.6, "gapMax": 2.8,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6, 7], "quietRate": 0.12, "rush": "double"
+  }
+}

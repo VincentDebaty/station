@@ -3,7 +3,7 @@
  "nom": "L'Europe",
  "gratuite": true,
  "enChantier": true,
- "note": "Tranche livree du ruban : chapitres 33 a 58 de ruban-europe.md (Bussoleno vers Hambourg) — l'acte V en entier. Le ruban complet va de Cork a Istanbul ; les actes I a IV se greffent DEVANT celui-ci quand ils seront ecrits.",
+ "note": "Tranche livree du ruban : chapitres 32 a 58 de ruban-europe.md (Bussoleno vers Hambourg) — l'acte V en entier. Le ruban complet va de Cork a Istanbul ; les actes I a IV se greffent DEVANT celui-ci quand ils seront ecrits.",
  "echelle": {
   "kmMinEntreHubs": 110
  },
@@ -26,6 +26,24 @@
  ],
  "chapitres": [
   {
+   "id": "le-levant-et-l-aragon",
+   "nom": "Le Levant et l'Aragon",
+   "zone": "alpes",
+   "gares": [
+    "murcia",
+    "alicante",
+    "valencia",
+    "sagunto",
+    "zaragoza"
+   ],
+   "plancher": 1,
+   "arrivee": 3,
+   "saut": {
+    "mode": "lgv",
+    "texte": "Le Corredor Mediterráneo — de Malaga à Murcie par la côte d'Almería"
+   }
+  },
+  {
    "id": "l-ebre",
    "nom": "L'Èbre",
    "zone": "alpes",
@@ -36,8 +54,8 @@
     "santvicenc",
     "barcelona"
    ],
-   "plancher": 1,
-   "arrivee": 3
+   "plancher": 2,
+   "arrivee": 4
   },
   {
    "id": "le-roussillon-et-la-camargue",

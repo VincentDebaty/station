@@ -110,9 +110,24 @@ ch(C,"La Bétique","Séville","Malaga",[
 # deux gares, R3 en exige cinq. Le Levant s'étend donc jusqu'à Saragosse :
 # le boss passe à Delicias, Valence-Nord se joue en cours de chapitre, et la
 # ligne de Teruel devient le dernier tronçon du récit, pas un chapitre.
+# LE MAILLON ANDALOU EST TOMBÉ le 28 août 2026 (décision de Vincent, saut).
+# GUADIX et LORCA : le piège n° 1 des deux côtés du même trou — l'itinéraire
+# historique Andalousie–Levant (Guadix–Baza–Almendricos) est fermé depuis le
+# 1er janvier 1985, chacune n'a gardé que sa ligne de passage à deux bouts.
+# ALMERÍA : terminus à ligne physique unique (~4 trains/jour dans le même
+# goulet), et gare fermée depuis mars 2024 pour l'enfouissement. Entre Almería
+# et Lorca, AUCUNE ligne n'a jamais existé — la LGV Murcie–Almería du Corredor
+# Mediterráneo n'ouvre pas avant 2028-2029. GRENADE, elle, est ADMISE (§0 :
+# cinq directions voyageurs sur un terminus à changeur d'écartement, fiche
+# instruite le 28 août 2026) mais ISOLÉE : aucun rail vivant vers Murcie, et
+# un saut ne vit qu'entre deux chapitres — elle reste EN RÉSERVE documentée,
+# prête si le modèle évolue ou si la LGV d'Almería ouvre un jour le passage.
+# Le chapitre assume l'état cible du corridor (gare souterraine de Murcie
+# 2026, C-2 de Lorca 2027), comme ses fiches.
 ch(C,"Le Levant et l'Aragon","Malaga","Saragosse",[
-  g("Grenade"),g("Guadix"),g("Almería"),g("Lorca"),g("Murcie"),g("Alicante"),
-  g("Valence-Nord"),g("Sagonte","sagunto"),g("Saragosse-Delicias","zaragoza")])
+  g("Murcie","murcia"),g("Alicante","alicante"),g("Valence-Nord","valencia"),
+  g("Sagonte","sagunto"),g("Saragosse-Delicias","zaragoza")],
+  saut=("lgv","Le Corredor Mediterráneo — de Malaga à Murcie par la côte d'Almería"))
 # VILANOVA I LA GELTRÚ REFUSÉE le 28 août 2026 (§0) : passante à deux bouts
 # sur la côte, malgré son musée du rail dans la rotonde. SANT VICENÇ DE
 # CALDERS la remplace : le Y du Penedès, deux itinéraires vers Barcelone qui

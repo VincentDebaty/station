@@ -23,10 +23,10 @@ Chaque région est traversée **une fois**, et on n'y revient jamais.
 |---|---|
 | Actes | **9** |
 | Chapitres | **92** |
-| Gares — c'est-à-dire **niveaux** | **566** |
-| Fiches déjà écrites, réemployées telles quelles | **185** |
-| Fiches à écrire | **381** |
-| Sauts déclarés (§4 bis) | **9** |
+| Gares — c'est-à-dire **niveaux** | **562** |
+| Fiches déjà écrites, réemployées telles quelles | **190** |
+| Fiches à écrire | **372** |
+| Sauts déclarés (§4 bis) | **10** |
 | Longueur des chapitres | 5 à 9 gares, médiane 6 |
 
 **Vérifié par script** (`scratchpad/verif.py`, à porter dans `carte-check` au
@@ -176,7 +176,7 @@ les 185 fiches annoncées comme existantes existent bien au catalogue.
 
 ## Acte III — L'Ibérie
 
-*La grande boucle de la péninsule* — 9 chapitres, **61 gares** (7 déjà écrites, 54 à écrire).
+*La grande boucle de la péninsule* — 9 chapitres, **57 gares** (10 déjà écrites, 47 à écrire).
 
 > ⚠️ **La ligne de Teruel est fondue dans le Levant** (28 août 2026, option B,
 > décision de Vincent). Quatre refus §0 d'un coup, mesurés le jour même :
@@ -189,6 +189,19 @@ les 185 fiches annoncées comme existantes existent bien au catalogue.
 > exige cinq gares. Le Levant s'étend donc jusqu'à Saragosse : Sagonte (la
 > bifurcation vivante de la Central de Aragón) entre au ruban, le boss passe à
 > **Saragosse-Delicias**, et Valence-Nord se joue en cours de chapitre.
+>
+> ⚠️ **Le maillon andalou est tombé le même jour** (saut, décision de Vincent) :
+> Guadix et Lorca sont le piège n° 1 des deux côtés du même trou (l'itinéraire
+> Guadix–Baza–Almendricos est fermé depuis le 1ᵉʳ janvier 1985), Almería est un
+> terminus à ligne unique fermé depuis mars 2024 pour l'enfouissement, et entre
+> Almería et Lorca aucune ligne n'a jamais existé — la LGV du Corredor
+> Mediterráneo n'ouvre pas avant 2028-2029. Le ruban saute de Malaga à Murcie.
+> **Grenade est ADMISE mais isolée** (cinq directions sur un terminus à
+> changeur d'écartement) : elle reste en réserve documentée, fiche instruite.
+> Le chapitre assume l'état cible du corridor (gare souterraine de Murcie 2026,
+> C-2 de Lorca 2027) ; deux pièges de plus au passage : la ligne Madrid–Cuenca–
+> Utiel est morte depuis juillet 2022, celle de Murcie vers Albacete est
+> fret-seul depuis février 2022.
 
 | # | Chapitre | Gares, dans l'ordre du rail | n |
 |---|---|---|---|
@@ -198,7 +211,8 @@ les 185 fiches annoncées comme existantes existent bien au catalogue.
 | 29 | La Galice | Nine · Valença · Vigo · Ourense · Zamora · Medina del Campo · **Madrid-Atocha** | 7 |
 | 30 | L'Andalousie | Aranjuez · Alcázar de San Juan · Ciudad Real · Puertollano · Cordoue · **Séville Santa Justa** | 6 |
 | 31 | La Bétique | Utrera · Marchena · Osuna · Bobadilla · Antequera · **Malaga María Zambrano** | 6 |
-| 32 | Le Levant et l'Aragon | Grenade · Guadix · Almería · Lorca · Murcie · Alicante · Valence-Nord · ~~Segorbe~~ ~~Caudiel~~ ~~Teruel~~ ~~Calamocha~~ Sagonte ✓ · **Saragosse-Delicias** ✓ | 9 |
+| | ⤳ **Saut (lgv)** | *Le Corredor Mediterráneo — de Malaga à Murcie par la côte d'Almería* | |
+| 32 | Le Levant et l'Aragon | ~~Grenade~~ ~~Guadix~~ ~~Almería~~ ~~Lorca~~ Murcie ✓ · Alicante ✓ · Valence-Nord ✓ · ~~Segorbe~~ ~~Caudiel~~ ~~Teruel~~ ~~Calamocha~~ Sagonte ✓ · **Saragosse-Delicias** ✓ | 5 |
 | 33 | L'Èbre | Lérida ✓ · Reus ✓ · Tarragone ✓ · ~~Vilanova i la Geltrú~~ Sant Vicenç de Calders ✓ · **Barcelone-Sants** ✓ | 5 |
 
 ## Acte IV — Le Midi et l'Italie

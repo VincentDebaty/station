@@ -554,5 +554,7 @@ const LINES = [
   { id: "L945", name: "La ligne de Teruel (Sagonte – Saragosse)",
     nodes: ["sagunto", "zaragoza"] },
   { id: "L946", name: "L'Aragon (Saragosse – Lérida)",
-    nodes: ["zaragoza", "lleida"] }
+    nodes: ["zaragoza", "lleida"] },
+  { id: "L947", name: "Le Levant (Murcie – Sagonte)",
+    nodes: ["murcia", "alicante", "valencia", "sagunto"] }
 ];

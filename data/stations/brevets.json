@@ -98,6 +98,24 @@
   },
   "boss": "retard garanti 0.36 > 0.3"
  },
+ "alicante": {
+  "geometrie": "d4f41a70d8bd",
+  "date": "2026-08-28",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 4,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK",
+   "4": "OK"
+  },
+  "boss": "OK"
+ },
  "amberieu": {
   "geometrie": "dd40f97b9af7",
   "date": "2026-08-28",
@@ -3240,6 +3258,23 @@
   },
   "boss": "retard garanti 0.32 > 0.3"
  },
+ "murcia": {
+  "geometrie": "4b131d2446cd",
+  "date": "2026-08-28",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 3,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK"
+  },
+  "boss": "OK"
+ },
  "namur": {
   "geometrie": "bb0a919b956f",
   "date": "2026-08-27",
@@ -4929,6 +4964,25 @@
    "3": "OK"
   },
   "boss": "file de 6 au même quai"
+ },
+ "valencia": {
+  "geometrie": "b4adef37e013",
+  "date": "2026-08-28",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 5,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK",
+   "4": "OK",
+   "5": "OK"
+  },
+  "boss": "OK"
  },
  "venezia": {
   "geometrie": "1f5e453bb0f2",

@@ -1,0 +1,29 @@
+{
+  "id": "murcia",
+  "name": "Murcia del Carmen",
+  "city": "Murcie",
+  "tagline": "Le carrefour enterré du Levant",
+  "desc": "Le temps du chantier, neuf voies en surface ; à l'arrivée, huit voies sous la ville pour laisser passer le corridor méditerranéen. L'AVE de Madrid y entre par l'est, et le fret contourne par Nonduermas.",
+  "difficulty": 3,
+  "country": "🇪🇸 Espagne",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }, { "id": 6 }
+  ],
+  "portals": {
+    "LORCA":      { "side": "L", "color": "#4ade80", "abbr": "LO" },
+    "MADRID":     { "side": "R", "color": "#f2588f", "abbr": "MD" },
+    "ALICANTE":   { "side": "R", "color": "#25dede", "abbr": "AL" },
+    "CARTHAGENE": { "side": "R", "color": "#f5b23c", "abbr": "CT", "label": "CARTHAGÈNE" }
+  },
+  "links": {
+    "LORCA":      [1, 2, 3, 4, 5, 6],
+    "MADRID":     [1, 2, 3],
+    "ALICANTE":   [2, 3, 4, 5],
+    "CARTHAGENE": [5, 6]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 13, "nMax": 15, "gapMin": 1.7, "gapMax": 2.9,
+    "cars": [2, 2, 3, 3, 4, 4, 5], "quietRate": 0.16, "rush": "pointe"
+  }
+}
