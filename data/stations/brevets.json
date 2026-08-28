@@ -171,6 +171,22 @@
   },
   "boss": "OK"
  },
+ "ancona": {
+  "geometrie": "eb86cf650b26",
+  "date": "2026-08-28",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 2,
+  "detail": {
+   "1": "OK",
+   "2": "OK"
+  },
+  "boss": "OK"
+ },
  "angers": {
   "geometrie": "e7e565c81b75",
   "date": "2026-08-28",
@@ -572,6 +588,25 @@
    "4": "OK"
   },
   "boss": "file de 6 au même quai"
+ },
+ "bologna": {
+  "geometrie": "e35e87ce1f1d",
+  "date": "2026-08-28",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 5,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK",
+   "4": "OK",
+   "5": "OK"
+  },
+  "boss": "OK"
  },
  "bonn": {
   "geometrie": "22ba4e6c4a65",
@@ -1542,6 +1577,24 @@
    "4": "file de 6 au même quai"
   },
   "boss": "file de 7 au même quai"
+ },
+ "foggia": {
+  "geometrie": "ea0adb830af7",
+  "date": "2026-08-28",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 4,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK",
+   "4": "OK"
+  },
+  "boss": "OK"
  },
  "frankfurt": {
   "geometrie": "1588a98a0c5b",
@@ -3384,6 +3437,22 @@
   },
   "boss": "OK"
  },
+ "pescara": {
+  "geometrie": "97f445851228",
+  "date": "2026-08-28",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 2,
+  "detail": {
+   "1": "OK",
+   "2": "OK"
+  },
+  "boss": "file de 6 au même quai"
+ },
  "petange": {
   "geometrie": "20ac48fe5022",
   "date": "2026-08-28",
@@ -3622,6 +3691,22 @@
   },
   "boss": "file de 6 au même quai"
  },
+ "rimini": {
+  "geometrie": "2522843316c0",
+  "date": "2026-08-28",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 2,
+  "detail": {
+   "1": "OK",
+   "2": "OK"
+  },
+  "boss": "file de 6 au même quai"
+ },
  "rodange": {
   "geometrie": "d3ae9a23c819",
   "date": "2026-08-28",
@@ -3794,6 +3879,22 @@
    "3": "OK"
   },
   "boss": "OK"
+ },
+ "sansevero": {
+  "geometrie": "60b4878d6a32",
+  "date": "2026-08-28",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 2,
+  "detail": {
+   "1": "OK",
+   "2": "OK"
+  },
+  "boss": "file de 7 au même quai"
  },
  "sarrebourg": {
   "geometrie": "f02f03b8d69f",

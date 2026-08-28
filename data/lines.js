@@ -514,5 +514,9 @@ const LINES = [
   { id: "L925", name: "Bologne – Venise (par le Polesine)",
     nodes: ["ferrara", "rovigo", "padova", "mestre", "venezia"] },
   { id: "L926", name: "Vicence – Padoue",
-    nodes: ["vicenza", "padova"] }
+    nodes: ["vicenza", "padova"] },
+  { id: "L927", name: "L'Adriatique (Foggia – Bologne)",
+    nodes: ["foggia", "sansevero", "pescara", "ancona", "rimini", "bologna"] },
+  { id: "L928", name: "Bologne – Ferrare",
+    nodes: ["bologna", "ferrara"] }
 ];

@@ -1,0 +1,34 @@
+{
+  "id": "bologna",
+  "name": "Bologne Centrale",
+  "city": "Bologne",
+  "tagline": "Le carrefour de l'Italie, l'horloge arrêtée à 10 h 25",
+  "desc": "Tout ce qui relie le nord de l'Italie au centre et au sud se croise sur ce plateau — la grande vitesse, elle, passe à vingt-trois mètres sous terre. Sur la façade, l'horloge est arrêtée à 10 h 25, l'heure de l'attentat du 2 août 1980.",
+  "difficulty": 5,
+  "country": "🇮🇹 Italie",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },
+    { "id": 6 }, { "id": 7 }, { "id": 8 }, { "id": 9 }
+  ],
+  "portals": {
+    "MILAN":    { "side": "L", "color": "#f2588f", "abbr": "MI" },
+    "VERONE":   { "side": "L", "color": "#f5b23c", "abbr": "VR", "label": "VÉRONE" },
+    "PORRETTA": { "side": "L", "color": "#4ade80", "abbr": "PO" },
+    "VENISE":   { "side": "R", "color": "#25dede", "abbr": "VE" },
+    "ANCONE":   { "side": "R", "color": "#60a5fa", "abbr": "AN", "label": "ANCÔNE" },
+    "FLORENCE": { "side": "R", "color": "#a78bfa", "abbr": "FI" }
+  },
+  "links": {
+    "MILAN":    [3, 4, 5, 6, 7],
+    "VERONE":   [1, 2, 3, 4],
+    "PORRETTA": [8, 9],
+    "VENISE":   [1, 2, 3, 4],
+    "ANCONE":   [4, 5, 6, 7, 8],
+    "FLORENCE": [7, 8, 9]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 18, "nMax": 22, "gapMin": 1.5, "gapMax": 2.5,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6], "quietRate": 0.12, "rush": "pointe"
+  }
+}

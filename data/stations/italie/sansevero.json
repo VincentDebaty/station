@@ -1,0 +1,26 @@
+{
+  "id": "sansevero",
+  "name": "San Severo",
+  "tagline": "Là où le Gargano rejoint l'Adriatique",
+  "desc": "La petite ligne privée du promontoire du Gargano se greffe ici sur la grande dorsale de la côte : deux exploitants cohabitent sur le même faisceau, et les trains de Peschici continuent vers Foggia sur les voies nationales.",
+  "difficulty": 2,
+  "country": "🇮🇹 Italie",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }
+  ],
+  "portals": {
+    "PESCARA":  { "side": "L", "color": "#25dede", "abbr": "PE" },
+    "FOGGIA":   { "side": "R", "color": "#f2588f", "abbr": "FG" },
+    "PESCHICI": { "side": "R", "color": "#4ade80", "abbr": "PC" }
+  },
+  "links": {
+    "PESCARA":  [1, 2, 3, 4],
+    "FOGGIA":   [1, 2, 3],
+    "PESCHICI": [3, 4]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 13, "nMax": 16, "gapMin": 1.8, "gapMax": 3.0,
+    "cars": [2, 2, 3, 3, 4, 4, 5], "quietRate": 0.18, "rush": "pointe"
+  }
+}

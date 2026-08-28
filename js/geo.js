@@ -254,7 +254,13 @@ const GEO = {
         rovigo: [11.7814, 45.0775],
         padova: [11.8803, 45.4175],
         mestre: [12.232, 45.4825],
-        venezia: [12.321, 45.441]
+        venezia: [12.321, 45.441],
+        foggia: [15.5561, 41.4656],
+        sansevero: [15.3922, 41.6846],
+        pescara: [14.2042, 42.4678],
+        ancona: [13.4978, 43.6074],
+        rimini: [12.574, 44.0639],
+        bologna: [11.3417, 44.5058]
       } },
     "royaume-uni": { name: "Royaume-Uni", flag: "🇬🇧", iso: "GBR", continent: "europe",
       frame: [-6.3, 49.9, 1.9, 57.6], neighbors: { belgique: [3.25, 51.22] },

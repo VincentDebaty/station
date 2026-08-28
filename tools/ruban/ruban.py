@@ -105,8 +105,19 @@ ch(D,"Le train qui prend le bateau","Naples","Palerme",[
 ch(D,"La Lucanie","Palerme","Bari",[
   g("Battipaglia"),g("Potenza"),g("Metaponto"),g("Tarente"),g("Gioia del Colle"),g("Bari Centrale")],
   saut=("nuit","Le Palerme–Naples de nuit — le ferry de Messine dans l'autre sens"))
+# BARLETTA ET TERMOLI REFUSÉES le 28 août 2026 (§0) : deux nœuds amputés.
+# Barletta n'a plus que la côte — Spinazzola est sans trains malgré des travaux
+# finis, la Ferrotramviaria est coupée à Andria Sud jusqu'en 2027. Termoli a
+# perdu Campobasso en 2023 (glissement de terrain, aucune date de retour).
+# SAN SEVERO les remplace : la ligne privée du Gargano (Peschici) s'y greffe
+# sur l'Adriatique, bien vivante — le carrefour ACTUEL du tronçon, comme le
+# veut la parade du §0. Ancône reste : Bologne, Rome et Lecce y sont trois
+# axes de service vivants, même si Rome ne diverge qu'à Falconara — le
+# standard est celui de Lausanne, dont les trois portails ouest convergent à
+# Renens. Falconara et Santhià restent en réserve documentée.
 ch(D,"L'Adriatique","Bari","Bologne",[
-  g("Barletta"),g("Foggia"),g("Termoli"),g("Pescara"),g("Ancône"),g("Rimini"),g("Bologne Centrale")])
+  g("Foggia","foggia"),g("San Severo","sansevero"),g("Pescara","pescara"),
+  g("Ancône","ancona"),g("Rimini","rimini"),g("Bologne Centrale","bologna")])
 ch(D,"La Vénétie","Bologne","Venise",[
   g("Ferrare","ferrara"),g("Rovigo","rovigo"),g("Padoue","padova"),
   g("Mestre","mestre"),g("Venise Santa Lucia","venezia")])

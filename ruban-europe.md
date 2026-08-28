@@ -201,7 +201,7 @@ les 123 fiches annoncées comme existantes existent bien au catalogue.
 | 40 | Le train qui prend le bateau | Salerne · Sapri · Paola · Lamezia Terme · Villa San Giovanni · Messine · Cefalù · **Palerme Centrale** | 8 |
 | | ⤳ **Saut (nuit)** | *Le Palerme–Naples de nuit — le ferry de Messine dans l'autre sens* | |
 | 41 | La Lucanie | Battipaglia · Potenza · Metaponto · Tarente · Gioia del Colle · **Bari Centrale** | 6 |
-| 42 | L'Adriatique | Barletta · Foggia · Termoli · Pescara · Ancône · Rimini · **Bologne Centrale** | 7 |
+| 42 | L'Adriatique | ~~Barletta~~ · Foggia ✓ · ~~Termoli~~ San Severo ✓ · Pescara ✓ · Ancône ✓ · Rimini ✓ · **Bologne Centrale** ✓ | 6 |
 | 43 | La Vénétie | Ferrare ✓ · Rovigo ✓ · Padoue ✓ · Mestre ✓ · **Venise Santa Lucia** ✓ | 5 |
 | 44 | La plaine lombarde | Vicence ✓ · Vérone ✓ · ~~Peschiera~~ · ~~Desenzano~~ · Brescia ✓ · Treviglio ✓ · **Milan Centrale** ✓ | 5 |
 | 45 | Le Piémont | Rho ✓ · ~~Magenta~~ · Novare ✓ · Verceil ✓ · Chivasso ✓ · **Turin Porta Nuova** ✓ | 5 |

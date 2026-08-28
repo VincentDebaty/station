@@ -1,0 +1,29 @@
+{
+  "id": "foggia",
+  "name": "Foggia",
+  "tagline": "Le verrou où Rome rebrousse vers Bari",
+  "desc": "Tout ce qui vient de Rome et de Naples doit rebrousser ici pour continuer vers Bari : trois lignes s'entonnent dans le même corridor jusqu'à la bifurcation de Cervaro. À l'ouest, la navette électrique de Lucera part de ses voies tronquées.",
+  "difficulty": 3,
+  "country": "🇮🇹 Italie",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 },
+    { "id": 5 }, { "id": 6 }, { "id": 7 }
+  ],
+  "portals": {
+    "PESCARA": { "side": "L", "color": "#25dede", "abbr": "PE" },
+    "LUCERA":  { "side": "L", "color": "#4ade80", "abbr": "LU" },
+    "BARI":    { "side": "R", "color": "#f2588f", "abbr": "BA" },
+    "NAPLES":  { "side": "R", "color": "#f5b23c", "abbr": "NA" }
+  },
+  "links": {
+    "PESCARA": [1, 2, 3, 4, 5],
+    "LUCERA":  [6, 7],
+    "BARI":    [1, 2, 3, 4],
+    "NAPLES":  [3, 4, 5, 6, 7]
+  },
+  "sameSidePairs": [["NAPLES", "BARI"], ["BARI", "NAPLES"]],
+  "gen": {
+    "nMin": 14, "nMax": 17, "gapMin": 1.7, "gapMax": 2.9,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6], "quietRate": 0.16, "rush": "pointe"
+  }
+}

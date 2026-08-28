@@ -17,7 +17,7 @@ import sys, os, json, unicodedata
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from ruban import ACTES
 
-PREMIER = int(sys.argv[1]) if len(sys.argv) > 1 else 43
+PREMIER = int(sys.argv[1]) if len(sys.argv) > 1 else 42
 DERNIER = int(sys.argv[2]) if len(sys.argv) > 2 else 60
 
 # Les zones de la carte livrée. Elles ne sont PAS les actes du ruban complet :
@@ -34,13 +34,13 @@ ZONES = [
 # Renumérotés le 27 août 2026 après la fusion des chapitres 46 et 47, et
 # ÉTENDUS : la carte livrée commence désormais au Fréjus et non plus à
 # L'Ardenne, l'acte V étant complet. Quinze chapitres au lieu de onze.
-PLANCHER = {43:1, 44:2, 45:2, 46:2, 47:2, 48:2, 49:2, 50:3, 51:3, 52:3, 53:3, 54:3,
+PLANCHER = {42:1, 43:2, 44:2, 45:2, 46:2, 47:2, 48:2, 49:2, 50:3, 51:3, 52:3, 53:3, 54:3,
             55:4, 56:4, 57:4, 58:4, 59:4, 60:4}
 # R9 : le premier chapitre est le tutoriel. Il finit sur Bruxelles-Midi, qui
 # porterait un niveau 5 — on le plafonne à 3. La regle est ecrite au §3 du
 # document ; sans ce plafond, le tutoriel arriverait au sommet du jeu six gares
 # apres l'avoir ouvert.
-ARRIVEE = {43: 3, 44: 4, 45: 4, 46: 4, 47: 4}
+ARRIVEE = {42: 3, 43: 4, 44: 4, 45: 4, 46: 4, 47: 4}
 
 def slug(s):
     s = unicodedata.normalize("NFKD", s).encode("ascii", "ignore").decode()

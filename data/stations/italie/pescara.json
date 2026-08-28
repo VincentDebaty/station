@@ -1,0 +1,27 @@
+{
+  "id": "pescara",
+  "name": "Pescara Centrale",
+  "city": "Pescara",
+  "tagline": "La gare sur viaduc des Abruzzes",
+  "desc": "Reconstruite en 1988 au-dessus de la ville, entre deux façades de verre : la dorsale adriatique la traverse en hauteur, et la ligne de Rome par Sulmona s'en détache deux kilomètres plus loin. Le poste de commande y télécommande trois régions.",
+  "difficulty": 2,
+  "country": "🇮🇹 Italie",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
+  ],
+  "portals": {
+    "ANCONE": { "side": "L", "color": "#25dede", "abbr": "AN", "label": "ANCÔNE" },
+    "FOGGIA": { "side": "R", "color": "#f2588f", "abbr": "FG" },
+    "ROME":   { "side": "R", "color": "#f5b23c", "abbr": "RO" }
+  },
+  "links": {
+    "ANCONE": [1, 2, 3, 4, 5],
+    "FOGGIA": [1, 2, 3, 4],
+    "ROME":   [4, 5]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 13, "nMax": 16, "gapMin": 1.8, "gapMax": 3.0,
+    "cars": [2, 2, 3, 3, 4, 4, 5], "quietRate": 0.18, "rush": "pointe"
+  }
+}
