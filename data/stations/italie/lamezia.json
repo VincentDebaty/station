@@ -1,0 +1,26 @@
+{
+  "id": "lamezia",
+  "name": "Lamezia Terme",
+  "tagline": "Née « Bifurcation » en 1894",
+  "desc": "Son nom de baptême était Sant'Eufemia Biforcazione : deux branches en double voie électrifiée à trafic lourd, contre une transversale diesel à voie unique qui traverse la Calabre jusqu'à la mer Ionienne.",
+  "difficulty": 2,
+  "country": "🇮🇹 Italie",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }, { "id": 6 }
+  ],
+  "portals": {
+    "NAPLES":    { "side": "L", "color": "#f2588f", "abbr": "NA" },
+    "REGGIO":    { "side": "R", "color": "#25dede", "abbr": "RC" },
+    "CATANZARO": { "side": "R", "color": "#f5b23c", "abbr": "CZ" }
+  },
+  "links": {
+    "NAPLES":    [1, 2, 3, 4, 5, 6],
+    "REGGIO":    [1, 2, 3, 4],
+    "CATANZARO": [4, 5, 6]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 13, "nMax": 16, "gapMin": 1.8, "gapMax": 3.0,
+    "cars": [2, 2, 3, 3, 4, 4, 5], "quietRate": 0.18, "rush": "pointe"
+  }
+}

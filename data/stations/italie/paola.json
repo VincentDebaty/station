@@ -1,0 +1,26 @@
+{
+  "id": "paola",
+  "name": "Paola",
+  "tagline": "La gare du remblai, porte de Cosenza",
+  "desc": "Bâtie sur un remblai à quelques dizaines de mètres du rivage tyrrhénien, Paola voit tout train pour Cosenza basculer de la côte vers la montagne dans un tunnel de quinze kilomètres — avec un croisement en pleine galerie.",
+  "difficulty": 2,
+  "country": "🇮🇹 Italie",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
+  ],
+  "portals": {
+    "NAPLES":  { "side": "L", "color": "#f2588f", "abbr": "NA" },
+    "REGGIO":  { "side": "R", "color": "#25dede", "abbr": "RC" },
+    "COSENZA": { "side": "R", "color": "#4ade80", "abbr": "CS" }
+  },
+  "links": {
+    "NAPLES":  [1, 2, 3, 4, 5],
+    "REGGIO":  [1, 2, 3],
+    "COSENZA": [3, 4, 5]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 13, "nMax": 16, "gapMin": 1.8, "gapMax": 3.0,
+    "cars": [2, 2, 3, 3, 4, 4, 5], "quietRate": 0.18, "rush": "pointe"
+  }
+}

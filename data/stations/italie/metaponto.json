@@ -1,0 +1,26 @@
+{
+  "id": "metaponto",
+  "name": "Metaponto",
+  "tagline": "La bifurcation des temples grecs",
+  "desc": "Trois voies uniques électrifiées convergent dans une gare balnéaire minuscule, posée à côté des temples de l'antique Métaponte — un Frecciarossa de Bolzano y croise les régionaux de Basilicate.",
+  "difficulty": 1,
+  "country": "🇮🇹 Italie",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }
+  ],
+  "portals": {
+    "POTENZA": { "side": "L", "color": "#f5b23c", "abbr": "PZ" },
+    "TARENTE": { "side": "R", "color": "#25dede", "abbr": "TA" },
+    "SIBARI":  { "side": "R", "color": "#4ade80", "abbr": "SI" }
+  },
+  "links": {
+    "POTENZA": [1, 2, 3],
+    "TARENTE": [1, 2],
+    "SIBARI":  [2, 3]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 11, "nMax": 13, "gapMin": 1.9, "gapMax": 3.2,
+    "cars": [2, 2, 2, 3, 3, 4], "quietRate": 0.22, "rush": "plat"
+  }
+}

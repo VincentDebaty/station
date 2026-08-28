@@ -100,10 +100,24 @@ ch(D,"La Tyrrhénienne","Gênes","Rome",[
   g("La Spezia"),g("Pise"),g("Livourne"),g("Grosseto"),g("Civitavecchia"),g("Rome Termini")])
 ch(D,"La Campanie","Rome","Naples",[
   g("Latina"),g("Fondi"),g("Formia"),g("Minturno"),g("Villa Literno"),g("Naples Centrale")])
+# SAPRI ET CEFALÙ REFUSÉES le 28 août 2026 (§0) : gares de passage à deux
+# directions — Sapri n'a jamais eu de branche, Cefalù sera même déclassée en
+# halte souterraine par le doublement. TERMINI IMERESE remplace Cefalù :
+# dernière gare commune aux trois flux de Messine, d'Agrigente et de Catane
+# (bifurcation à Fiumetorto, 5 km — le standard Lausanne s'applique). Sapri
+# n'a pas de remplaçante : sa seule candidate, Battipaglia, ouvre le chapitre
+# suivant. Le chapitre tient à sept.
 ch(D,"Le train qui prend le bateau","Naples","Palerme",[
-  g("Salerne"),g("Sapri"),g("Paola"),g("Lamezia Terme"),g("Villa San Giovanni"),g("Messine"),g("Cefalù"),g("Palerme Centrale")])
+  g("Salerne","salerno"),g("Paola","paola"),g("Lamezia Terme","lamezia"),
+  g("Villa San Giovanni","villasg"),g("Messine","messina"),
+  g("Termini Imerese","termini"),g("Palerme Centrale","palermo")])
+# GIOIA DEL COLLE REFUSÉE le 28 août 2026 (§0) : sa transversale de
+# Rocchetta est morte en voyageurs depuis 2016, ressuscitée seulement pour un
+# train touristique de luxe. Aucune bifurcation vivante entre Bari et Tarente
+# — le chapitre tient à cinq.
 ch(D,"La Lucanie","Palerme","Bari",[
-  g("Battipaglia"),g("Potenza"),g("Metaponto"),g("Tarente"),g("Gioia del Colle"),g("Bari Centrale")],
+  g("Battipaglia","battipaglia"),g("Potenza","potenza"),g("Metaponto","metaponto"),
+  g("Tarente","taranto"),g("Bari Centrale","bari")],
   saut=("nuit","Le Palerme–Naples de nuit — le ferry de Messine dans l'autre sens"))
 # BARLETTA ET TERMOLI REFUSÉES le 28 août 2026 (§0) : deux nœuds amputés.
 # Barletta n'a plus que la côte — Spinazzola est sans trains malgré des travaux

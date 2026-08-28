@@ -1,0 +1,32 @@
+{
+  "id": "bari",
+  "name": "Bari Centrale",
+  "city": "Bari",
+  "tagline": "Quatre réseaux, trois écartements, un seul nom",
+  "desc": "La porte sud de la dorsale Adriatique : dix voies traversantes que tout Milan–Lecce emprunte, neuf culs-de-sac dont deux réservés aux diesels du Sud-Est, et deux gares terminus indépendantes accolées aux flancs — dont une à voie métrique vers Matera.",
+  "difficulty": 5,
+  "country": "🇮🇹 Italie",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },
+    { "id": 6 }, { "id": 7 }, { "id": 8 }, { "id": 9 }
+  ],
+  "portals": {
+    "FOGGIA":   { "side": "L", "color": "#25dede", "abbr": "FG" },
+    "TARENTE":  { "side": "L", "color": "#f5b23c", "abbr": "TA" },
+    "BITRITTO": { "side": "L", "color": "#a78bfa", "abbr": "BI" },
+    "LECCE":    { "side": "R", "color": "#f2588f", "abbr": "LE" },
+    "MARTINA":  { "side": "R", "color": "#4ade80", "abbr": "MF" }
+  },
+  "links": {
+    "FOGGIA":   [1, 2, 3, 4, 5, 6],
+    "TARENTE":  [5, 6, 7],
+    "BITRITTO": [8, 9],
+    "LECCE":    [1, 2, 3, 4, 5, 6, 7],
+    "MARTINA":  [6, 7, 8, 9]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 18, "nMax": 22, "gapMin": 1.5, "gapMax": 2.5,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6], "quietRate": 0.12, "rush": "pointe"
+  }
+}

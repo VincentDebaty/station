@@ -198,9 +198,9 @@ les 123 fiches annoncées comme existantes existent bien au catalogue.
 | 37 | La Riviera | Toulon ✓ · Saint-Raphaël · Cannes · Nice ✓ · Monaco · Vintimille · San Remo · Savone · **Gênes Piazza Principe** | 9 |
 | 38 | La Tyrrhénienne | La Spezia · Pise · Livourne · Grosseto · Civitavecchia · **Rome Termini** | 6 |
 | 39 | La Campanie | Latina · Fondi · Formia · Minturno · Villa Literno · **Naples Centrale** | 6 |
-| 40 | Le train qui prend le bateau | Salerne · Sapri · Paola · Lamezia Terme · Villa San Giovanni · Messine · Cefalù · **Palerme Centrale** | 8 |
+| 40 | Le train qui prend le bateau | Salerne ✓ · ~~Sapri~~ · Paola ✓ · Lamezia Terme ✓ · Villa San Giovanni ✓ · Messine ✓ · ~~Cefalù~~ Termini Imerese ✓ · **Palerme Centrale** ✓ | 7 |
 | | ⤳ **Saut (nuit)** | *Le Palerme–Naples de nuit — le ferry de Messine dans l'autre sens* | |
-| 41 | La Lucanie | Battipaglia · Potenza · Metaponto · Tarente · Gioia del Colle · **Bari Centrale** | 6 |
+| 41 | La Lucanie | Battipaglia ✓ · Potenza ✓ · Metaponto ✓ · Tarente ✓ · ~~Gioia del Colle~~ · **Bari Centrale** ✓ | 5 |
 | 42 | L'Adriatique | ~~Barletta~~ · Foggia ✓ · ~~Termoli~~ San Severo ✓ · Pescara ✓ · Ancône ✓ · Rimini ✓ · **Bologne Centrale** ✓ | 6 |
 | 43 | La Vénétie | Ferrare ✓ · Rovigo ✓ · Padoue ✓ · Mestre ✓ · **Venise Santa Lucia** ✓ | 5 |
 | 44 | La plaine lombarde | Vicence ✓ · Vérone ✓ · ~~Peschiera~~ · ~~Desenzano~~ · Brescia ✓ · Treviglio ✓ · **Milan Centrale** ✓ | 5 |

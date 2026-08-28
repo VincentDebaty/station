@@ -414,6 +414,41 @@
   },
   "boss": "file de 6 au même quai"
  },
+ "bari": {
+  "geometrie": "83e38fafa08c",
+  "date": "2026-08-28",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 5,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK",
+   "4": "OK",
+   "5": "OK"
+  },
+  "boss": "OK"
+ },
+ "battipaglia": {
+  "geometrie": "8891f61f6576",
+  "date": "2026-08-28",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 2,
+  "detail": {
+   "1": "OK",
+   "2": "OK"
+  },
+  "boss": "file de 7 au même quai"
+ },
  "bebra": {
   "geometrie": "d2228ada413f",
   "date": "2026-08-28",
@@ -2231,6 +2266,22 @@
   },
   "boss": "file de 7 au même quai"
  },
+ "lamezia": {
+  "geometrie": "3732506b3271",
+  "date": "2026-08-28",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 2,
+  "detail": {
+   "1": "OK",
+   "2": "OK"
+  },
+  "boss": "file de 6 au même quai"
+ },
  "landen": {
   "geometrie": "9f2cc1dab344",
   "date": "2026-08-28",
@@ -2758,6 +2809,23 @@
   },
   "boss": "OK"
  },
+ "messina": {
+  "geometrie": "8dff0df7e3c4",
+  "date": "2026-08-28",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 3,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK"
+  },
+  "boss": "retard garanti 0.36 > 0.3"
+ },
  "mestre": {
   "geometrie": "5fcf4910496f",
   "date": "2026-08-28",
@@ -2776,6 +2844,21 @@
    "5": "OK"
   },
   "boss": "OK"
+ },
+ "metaponto": {
+  "geometrie": "24010f92a3d0",
+  "date": "2026-08-28",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 1,
+  "detail": {
+   "1": "OK"
+  },
+  "boss": "file de 9 au même quai"
  },
  "metz": {
   "geometrie": "7eef8e2b0e40",
@@ -3344,6 +3427,40 @@
   },
   "boss": "retard garanti 0.33 > 0.3"
  },
+ "palermo": {
+  "geometrie": "2a2fa9c198bc",
+  "date": "2026-08-28",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 4,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK",
+   "4": "OK"
+  },
+  "boss": "OK"
+ },
+ "paola": {
+  "geometrie": "cba2d3aa194d",
+  "date": "2026-08-28",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 2,
+  "detail": {
+   "1": "OK",
+   "2": "OK"
+  },
+  "boss": "file de 7 au même quai"
+ },
  "paris-est": {
   "geometrie": "cdf7b7718977",
   "date": "2026-08-28",
@@ -3537,6 +3654,22 @@
    "3": "OK"
   },
   "boss": "file de 6 au même quai"
+ },
+ "potenza": {
+  "geometrie": "dbfbb9114599",
+  "date": "2026-08-28",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 2,
+  "detail": {
+   "1": "OK",
+   "2": "OK"
+  },
+  "boss": "file de 7 au même quai"
  },
  "potsdam": {
   "geometrie": "78d1b0526bc4",
@@ -3863,6 +3996,24 @@
   },
   "boss": "OK"
  },
+ "salerno": {
+  "geometrie": "0378e54a2896",
+  "date": "2026-08-28",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 3,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK",
+   "4": "file de 6 au même quai"
+  },
+  "boss": "file de 8 au même quai"
+ },
  "salisbury": {
   "geometrie": "a4a6af5a556f",
   "date": "2026-08-28",
@@ -4089,6 +4240,24 @@
   },
   "boss": "OK"
  },
+ "taranto": {
+  "geometrie": "e4a43c998004",
+  "date": "2026-08-28",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 4,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK",
+   "4": "OK"
+  },
+  "boss": "OK"
+ },
  "tarascon": {
   "geometrie": "7335ab8a1bd0",
   "date": "2026-08-28",
@@ -4104,6 +4273,22 @@
    "2": "OK"
   },
   "boss": "retard garanti 0.31 > 0.3"
+ },
+ "termini": {
+  "geometrie": "dc6dbfe39adc",
+  "date": "2026-08-28",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 2,
+  "detail": {
+   "1": "OK",
+   "2": "OK"
+  },
+  "boss": "file de 7 au même quai"
  },
  "termonde": {
   "geometrie": "29ae40b9ee8a",
@@ -4473,6 +4658,22 @@
    "3": "OK"
   },
   "boss": "OK"
+ },
+ "villasg": {
+  "geometrie": "fb9161d18331",
+  "date": "2026-08-28",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 2,
+  "detail": {
+   "1": "OK",
+   "2": "OK"
+  },
+  "boss": "file de 7 au même quai"
  },
  "waterloo": {
   "geometrie": "fc5e9abf9344",

@@ -3,7 +3,7 @@
  "nom": "L'Europe",
  "gratuite": true,
  "enChantier": true,
- "note": "Tranche livree du ruban : chapitres 42 a 60 de ruban-europe.md (Bussoleno vers Hambourg) — l'acte V en entier. Le ruban complet va de Cork a Istanbul ; les actes I a IV se greffent DEVANT celui-ci quand ils seront ecrits.",
+ "note": "Tranche livree du ruban : chapitres 40 a 60 de ruban-europe.md (Bussoleno vers Hambourg) — l'acte V en entier. Le ruban complet va de Cork a Istanbul ; les actes I a IV se greffent DEVANT celui-ci quand ils seront ecrits.",
  "echelle": {
   "kmMinEntreHubs": 110
  },
@@ -26,6 +26,42 @@
  ],
  "chapitres": [
   {
+   "id": "le-train-qui-prend-le-bateau",
+   "nom": "Le train qui prend le bateau",
+   "zone": "alpes",
+   "gares": [
+    "salerno",
+    "paola",
+    "lamezia",
+    "villasg",
+    "messina",
+    "termini",
+    "palermo"
+   ],
+   "plancher": 1,
+   "arrivee": 3,
+   "sinuosite": 1.75
+  },
+  {
+   "id": "la-lucanie",
+   "nom": "La Lucanie",
+   "zone": "alpes",
+   "gares": [
+    "battipaglia",
+    "potenza",
+    "metaponto",
+    "taranto",
+    "bari"
+   ],
+   "plancher": 2,
+   "arrivee": 4,
+   "sinuosite": 1.65,
+   "saut": {
+    "mode": "nuit",
+    "texte": "Le Palerme–Naples de nuit — le ferry de Messine dans l'autre sens"
+   }
+  },
+  {
    "id": "l-adriatique",
    "nom": "L'Adriatique",
    "zone": "alpes",
@@ -37,8 +73,8 @@
     "rimini",
     "bologna"
    ],
-   "plancher": 1,
-   "arrivee": 3
+   "plancher": 2,
+   "arrivee": 4
   },
   {
    "id": "la-venetie",

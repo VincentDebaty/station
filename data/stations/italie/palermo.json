@@ -1,0 +1,31 @@
+{
+  "id": "palermo",
+  "name": "Palerme Centrale",
+  "city": "Palerme",
+  "tagline": "L'entonnoir, pas l'éventail",
+  "desc": "Le grand terminus néoclassique de 1886 vide ses dix voies à heurtoirs dans deux corridors seulement : le passante urbain cadencé vers l'aéroport, et la ligne côtière qui porte à elle seule Messine, Agrigente et Catane.",
+  "difficulty": 4,
+  "country": "🇮🇹 Italie",
+  "platforms": [
+    { "id": 1, "deadEnd": true }, { "id": 2, "deadEnd": true }, { "id": 3, "deadEnd": true },
+    { "id": 4, "deadEnd": true }, { "id": 5, "deadEnd": true }, { "id": 6, "deadEnd": true },
+    { "id": 7, "deadEnd": true }, { "id": 8, "deadEnd": true }, { "id": 9, "deadEnd": true }
+  ],
+  "portals": {
+    "AEROPORT":  { "side": "L", "color": "#60a5fa", "abbr": "AP", "label": "AÉROPORT" },
+    "MESSINE":   { "side": "L", "color": "#25dede", "abbr": "ME" },
+    "AGRIGENTE": { "side": "L", "color": "#4ade80", "abbr": "AG" },
+    "CATANE":    { "side": "L", "color": "#f5b23c", "abbr": "CT" }
+  },
+  "links": {
+    "AEROPORT":  [1, 2, 3, 4, 5],
+    "MESSINE":   [4, 5, 6, 7],
+    "AGRIGENTE": [5, 6, 7, 8, 9],
+    "CATANE":    [8, 9, 1, 2, 3]
+  },
+  "sameSidePairs": "all",
+  "gen": {
+    "nMin": 16, "nMax": 19, "gapMin": 1.6, "gapMax": 2.7,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6], "quietRate": 0.14, "rush": "pointe"
+  }
+}

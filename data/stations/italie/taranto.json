@@ -1,0 +1,29 @@
+{
+  "id": "taranto",
+  "name": "Tarente",
+  "tagline": "Le carrefour de l'acier",
+  "desc": "Quatre branches, deux réseaux qui partagent les voies 6 et 7, et le fret de la plus grande aciérie d'Europe en toile de fond. La grande vitesse l'a déclassée — Tarente vit de ses régionaux, entre le golfe et les Murge.",
+  "difficulty": 3,
+  "country": "🇮🇹 Italie",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 },
+    { "id": 5 }, { "id": 6 }, { "id": 7 }
+  ],
+  "portals": {
+    "BARI":      { "side": "L", "color": "#f2588f", "abbr": "BA" },
+    "MARTINA":   { "side": "L", "color": "#4ade80", "abbr": "MF" },
+    "METAPONTO": { "side": "R", "color": "#f5b23c", "abbr": "MP" },
+    "BRINDISI":  { "side": "R", "color": "#60a5fa", "abbr": "BR" }
+  },
+  "links": {
+    "BARI":      [1, 2, 3, 4, 5],
+    "MARTINA":   [6, 7],
+    "METAPONTO": [1, 2, 3],
+    "BRINDISI":  [3, 4, 5, 6, 7]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 14, "nMax": 17, "gapMin": 1.7, "gapMax": 2.9,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6], "quietRate": 0.16, "rush": "pointe"
+  }
+}

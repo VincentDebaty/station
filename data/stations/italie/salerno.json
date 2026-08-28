@@ -1,0 +1,29 @@
+{
+  "id": "salerno",
+  "name": "Salerne",
+  "tagline": "La porte sud de la grande vitesse",
+  "desc": "Les Frecciarossa venus de Milan y meurent au sortir du tunnel du Vésuve, pendant que trois voies tronquées font tourner les navettes du métro léger. Une gare passante qui joue au terminus sur les deux échelles à la fois.",
+  "difficulty": 3,
+  "country": "🇮🇹 Italie",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 },
+    { "id": 5 }, { "id": 6 }, { "id": 7 }
+  ],
+  "portals": {
+    "NAPLES":       { "side": "L", "color": "#f2588f", "abbr": "NA" },
+    "SANSEVERINO":  { "side": "L", "color": "#4ade80", "abbr": "SS", "label": "S. SEVERINO" },
+    "REGGIO":       { "side": "R", "color": "#25dede", "abbr": "RC" },
+    "ARECHI":       { "side": "R", "color": "#f5b23c", "abbr": "AR" }
+  },
+  "links": {
+    "NAPLES":      [1, 2, 3, 4, 5],
+    "SANSEVERINO": [6, 7],
+    "REGGIO":      [1, 2, 3, 4, 5, 6],
+    "ARECHI":      [6, 7]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 14, "nMax": 17, "gapMin": 1.7, "gapMax": 2.9,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6], "quietRate": 0.16, "rush": "pointe"
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "id": "termini",
+  "name": "Termini Imerese",
+  "tagline": "La dernière gare commune des trois Sicile",
+  "desc": "Dernière gare que partagent les flux de Messine, d'Agrigente et de Catane avant leur séparation à Fiumetorto : tout ce qui quitte Palerme vers l'est passe par ses quatre voies, au pied de l'ancienne usine Fiat.",
+  "difficulty": 2,
+  "country": "🇮🇹 Italie",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }
+  ],
+  "portals": {
+    "PALERME":   { "side": "L", "color": "#f5b23c", "abbr": "PA" },
+    "MESSINE":   { "side": "R", "color": "#25dede", "abbr": "ME" },
+    "AGRIGENTE": { "side": "R", "color": "#4ade80", "abbr": "AG" }
+  },
+  "links": {
+    "PALERME":   [1, 2, 3, 4],
+    "MESSINE":   [1, 2, 3],
+    "AGRIGENTE": [3, 4]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 12, "nMax": 15, "gapMin": 1.8, "gapMax": 3.0,
+    "cars": [2, 2, 2, 3, 3, 4], "quietRate": 0.2, "rush": "double"
+  }
+}

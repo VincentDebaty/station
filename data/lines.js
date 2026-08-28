@@ -518,5 +518,15 @@ const LINES = [
   { id: "L927", name: "L'Adriatique (Foggia – Bologne)",
     nodes: ["foggia", "sansevero", "pescara", "ancona", "rimini", "bologna"] },
   { id: "L928", name: "Bologne – Ferrare",
-    nodes: ["bologna", "ferrara"] }
+    nodes: ["bologna", "ferrara"] },
+  { id: "L929", name: "La Lucanie (Battipaglia – Bari)",
+    nodes: ["battipaglia", "potenza", "metaponto", "taranto", "bari"] },
+  { id: "L930", name: "La Tyrrhénienne du Sud",
+    nodes: ["salerno", "battipaglia", "paola", "lamezia", "villasg"] },
+  { id: "L931", name: "Le ferry du détroit de Messine",
+    nodes: ["villasg", "messina"] },
+  { id: "L932", name: "La côte nord sicilienne",
+    nodes: ["messina", "termini", "palermo"] },
+  { id: "L933", name: "Bari – Foggia",
+    nodes: ["bari", "foggia"] }
 ];

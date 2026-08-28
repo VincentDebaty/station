@@ -1,0 +1,26 @@
+{
+  "id": "potenza",
+  "name": "Potenza",
+  "tagline": "La capitale perchée à 673 mètres",
+  "desc": "Quatre voies à quai, un bâtiment amputé par les séismes de 1980 et 1990, et un Frecciarossa quotidien Milan–Tarente qui se faufile entre les régionaux de montagne. La branche de Foggia revient tout juste de travaux, en traction diesel.",
+  "difficulty": 2,
+  "country": "🇮🇹 Italie",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }
+  ],
+  "portals": {
+    "BATTIPAGLIA": { "side": "L", "color": "#25dede", "abbr": "BT" },
+    "METAPONTO":   { "side": "R", "color": "#f5b23c", "abbr": "MP" },
+    "FOGGIA":      { "side": "R", "color": "#4ade80", "abbr": "FG" }
+  },
+  "links": {
+    "BATTIPAGLIA": [1, 2, 3, 4],
+    "METAPONTO":   [1, 2, 3],
+    "FOGGIA":      [3, 4]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 12, "nMax": 15, "gapMin": 1.8, "gapMax": 3.0,
+    "cars": [2, 2, 2, 3, 3, 4], "quietRate": 0.2, "rush": "pointe"
+  }
+}

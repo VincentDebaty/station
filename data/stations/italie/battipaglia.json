@@ -1,0 +1,26 @@
+{
+  "id": "battipaglia",
+  "name": "Battipaglia",
+  "tagline": "La Porta del Sud",
+  "desc": "Dernier grand nœud avant le Mezzogiorno profond : l'artère tyrrhénienne vers Reggio et la Sicile s'y sépare de la diagonale de montagne vers Potenza et Tarente, à voie unique et régulièrement en chantier.",
+  "difficulty": 2,
+  "country": "🇮🇹 Italie",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
+  ],
+  "portals": {
+    "SALERNE": { "side": "L", "color": "#25dede", "abbr": "SA" },
+    "REGGIO":  { "side": "R", "color": "#f2588f", "abbr": "RC" },
+    "POTENZA": { "side": "R", "color": "#f5b23c", "abbr": "PZ" }
+  },
+  "links": {
+    "SALERNE": [1, 2, 3, 4, 5],
+    "REGGIO":  [1, 2, 3],
+    "POTENZA": [3, 4, 5]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 13, "nMax": 16, "gapMin": 1.8, "gapMax": 3.0,
+    "cars": [2, 2, 3, 3, 4, 4, 5], "quietRate": 0.18, "rush": "pointe"
+  }
+}
