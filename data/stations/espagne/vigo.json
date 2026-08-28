@@ -1,0 +1,28 @@
+{
+  "id": "vigo",
+  "name": "Vigo-Guixar",
+  "city": "Vigo",
+  "tagline": "Le terminus du port",
+  "desc": "Cinq voies à heurtoir entre les conteneurs du port et la ría : le Celta de Porto y débarque face aux régionaux qui remontent le Miño vers Ourense et à ceux de Saint-Jacques. La grande vitesse est partie à Urzáiz, cinq cents mètres plus haut — ici, c'est le rail classique de la Galice.",
+  "difficulty": 2,
+  "country": "🇪🇸 Espagne",
+  "platforms": [
+    { "id": 1, "deadEnd": true }, { "id": 2, "deadEnd": true }, { "id": 3, "deadEnd": true },
+    { "id": 4, "deadEnd": true }, { "id": 5, "deadEnd": true }
+  ],
+  "portals": {
+    "PORTO":   { "side": "L", "color": "#25dede", "abbr": "P" },
+    "OURENSE": { "side": "L", "color": "#f5b23c", "abbr": "OU" },
+    "CORUNA":  { "side": "L", "color": "#a78bfa", "abbr": "C", "label": "A CORUÑA" }
+  },
+  "links": {
+    "PORTO":   [1, 2, 3, 4],
+    "OURENSE": [2, 3, 4, 5],
+    "CORUNA":  [1, 4, 5]
+  },
+  "sameSidePairs": "all",
+  "gen": {
+    "nMin": 12, "nMax": 14, "gapMin": 2.0, "gapMax": 3.3,
+    "cars": [2, 2, 3, 3, 4, 4, 5], "quietRate": 0.18, "rush": "pointe"
+  }
+}

@@ -23,16 +23,16 @@ Chaque région est traversée **une fois**, et on n'y revient jamais.
 |---|---|
 | Actes | **9** |
 | Chapitres | **91** |
-| Gares — c'est-à-dire **niveaux** | **559** |
-| Fiches déjà écrites, réemployées telles quelles | **199** |
-| Fiches à écrire | **360** |
+| Gares — c'est-à-dire **niveaux** | **557** |
+| Fiches déjà écrites, réemployées telles quelles | **204** |
+| Fiches à écrire | **353** |
 | Sauts déclarés (§4 bis) | **10** |
 | Longueur des chapitres | 5 à 9 gares, médiane 6 |
 
 **Vérifié par script** (`scratchpad/verif.py`, à porter dans `carte-check` au
 lot C) : les 91 chapitres tiennent tous R3 (5 à 10 gares), aucune gare
 n'apparaît deux fois (R6), le chaînage est continu d'un bout à l'autre, et
-les 199 fiches annoncées comme existantes existent bien au catalogue.
+les 204 fiches annoncées comme existantes existent bien au catalogue.
 
 ## Comment lire les tableaux
 
@@ -176,7 +176,7 @@ les 199 fiches annoncées comme existantes existent bien au catalogue.
 
 ## Acte III — L'Ibérie
 
-*La grande boucle de la péninsule* — 8 chapitres, **54 gares** (19 déjà écrites, 35 à écrire).
+*La grande boucle de la péninsule* — 8 chapitres, **52 gares** (24 déjà écrites, 28 à écrire).
 
 > ⚠️ **La ligne de Teruel est fondue dans le Levant** (28 août 2026, option B,
 > décision de Vincent). Quatre refus §0 d'un coup, mesurés le jour même :
@@ -220,13 +220,22 @@ les 199 fiches annoncées comme existantes existent bien au catalogue.
 > de San Juan, neuf gares. Le maillon Alcázar → Ciudad Real est VIVANT (5-6
 > MD/jour via Manzanares, horaire Renfe du 17/07/2026) ; Manzanares, vrai
 > carrefour à trois directions, reste en réserve documentée.
+>
+> ⚠️ **La Galice joue cinq gares** (28 août 2026) : Valença (ligne de Monção
+> morte le 2 janvier 1990) et Zamora (Ruta de la Plata morte en 1985) refusées,
+> sans remplaçant sur le corridor. Vigo = **Guixar** (le Celta y arrive et les
+> régionaux du Miño en partent — Urzáiz ne rejoint Ourense que par
+> Saint-Jacques). La fin à Atocha est réelle depuis le tunnel Chamartín–Atocha
+> de juillet 2022. Nine ouvre le **Portugal** au catalogue. Redondela reste en
+> réserve documentée. La ligne du Minho est coupée pour rénovation
+> (avril 2026 → 2027) : des travaux, pas un déclin.
 
 | # | Chapitre | Gares, dans l'ordre du rail | n |
 |---|---|---|---|
 | 26 | La Castille | Miranda de Ebro · Burgos · Palencia · Valladolid · Ávila · **Madrid-Chamartín** | 6 |
 | 27 | L'Estrémadure | Talavera de la Reina · Navalmoral · Cáceres · Mérida · Badajoz · Elvas · Entroncamento · **Lisbonne Santa Apolónia** | 8 |
 | 28 | La côte d'Argent | Azambuja · Santarém · Pombal · Coimbra · Aveiro · Espinho · **Porto Campanhã** | 7 |
-| 29 | La Galice | Nine · Valença · Vigo · Ourense · Zamora · Medina del Campo · **Madrid-Atocha** | 7 |
+| 29 | La Galice | Nine ✓ · ~~Valença~~ Vigo-Guixar ✓ · Ourense-Empalme ✓ · ~~Zamora~~ Medina del Campo ✓ · **Madrid-Atocha** ✓ | 5 |
 | 30 | L'Andalousie et la Bétique | ~~Aranjuez~~ Alcázar de San Juan ✓ · Ciudad Real ✓ · Puertollano ✓ · Córdoba Central ✓ · Séville Santa Justa ✓ · ~~Utrera~~ ~~Marchena~~ ~~Osuna~~ Dos Hermanas ✓ · Bobadilla ✓ · Antequera-Santa Ana ✓ · **Málaga-María Zambrano** ✓ | 9 |
 | | ⤳ **Saut (lgv)** | *Le Corredor Mediterráneo — de Malaga à Murcie par la côte d'Almería* | |
 | 31 | Le Levant et l'Aragon | ~~Grenade~~ ~~Guadix~~ ~~Almería~~ ~~Lorca~~ Murcie ✓ · Alicante ✓ · Valence-Nord ✓ · ~~Segorbe~~ ~~Caudiel~~ ~~Teruel~~ ~~Calamocha~~ Sagonte ✓ · **Saragosse-Delicias** ✓ | 5 |

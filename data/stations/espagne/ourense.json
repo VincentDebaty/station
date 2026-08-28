@@ -1,0 +1,29 @@
+{
+  "id": "ourense",
+  "name": "Ourense-Empalme",
+  "city": "Ourense",
+  "tagline": "Le rond-point du Nord-Ouest",
+  "desc": "Depuis 2021, tout ce que Madrid envoie vers la Galice débouche ici, au bord du Miño, avant de se répartir entre Vigo, Saint-Jacques et La Corogne. Les Alvia de Lugo entrent par l'est et rebroussent à quai, le temps que la variante qui doit les en dispenser sorte de terre.",
+  "difficulty": 3,
+  "country": "🇪🇸 Espagne",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
+  ],
+  "portals": {
+    "VIGO":     { "side": "L", "color": "#25dede", "abbr": "VG" },
+    "SANTIAGO": { "side": "L", "color": "#4ade80", "abbr": "SC" },
+    "MADRID":   { "side": "R", "color": "#f2588f", "abbr": "MD" },
+    "LEON":     { "side": "R", "color": "#f5b23c", "abbr": "LE", "label": "LEÓN" }
+  },
+  "links": {
+    "VIGO":     [1, 2, 3, 4],
+    "SANTIAGO": [3, 4, 5],
+    "MADRID":   [2, 3, 4, 5],
+    "LEON":     [1, 2]
+  },
+  "sameSidePairs": [["MADRID", "LEON"], ["LEON", "MADRID"]],
+  "gen": {
+    "nMin": 14, "nMax": 16, "gapMin": 1.7, "gapMax": 3.0,
+    "cars": [2, 2, 3, 3, 4, 4, 5, 6], "quietRate": 0.15, "rush": "pointe"
+  }
+}

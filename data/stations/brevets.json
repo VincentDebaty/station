@@ -2978,6 +2978,25 @@
   },
   "boss": "retard garanti 0.32 > 0.3"
  },
+ "madrid-atocha": {
+  "geometrie": "5e35636dd6d0",
+  "date": "2026-08-28",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 5,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK",
+   "4": "OK",
+   "5": "OK"
+  },
+  "boss": "OK"
+ },
  "magdeburg": {
   "geometrie": "3aea0323eae1",
   "date": "2026-08-28",
@@ -3118,6 +3137,23 @@
    "3": "OK",
    "4": "OK",
    "5": "OK"
+  },
+  "boss": "OK"
+ },
+ "medina": {
+  "geometrie": "6f01149b7696",
+  "date": "2026-08-28",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 3,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK"
   },
   "boss": "OK"
  },
@@ -3577,6 +3613,22 @@
   },
   "boss": "retard garanti 0.33 > 0.3"
  },
+ "nine": {
+  "geometrie": "0f238704d251",
+  "date": "2026-08-28",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 2,
+  "detail": {
+   "1": "OK",
+   "2": "OK"
+  },
+  "boss": "retard garanti 0.31 > 0.3"
+ },
  "niort": {
   "geometrie": "c94f8d592f94",
   "date": "2026-08-28",
@@ -3754,6 +3806,23 @@
    "3": "OK"
   },
   "boss": "retard garanti 0.32 > 0.3"
+ },
+ "ourense": {
+  "geometrie": "9eac129720f4",
+  "date": "2026-08-28",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 3,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK"
+  },
+  "boss": "retard garanti 0.36 > 0.3"
  },
  "oxford": {
   "geometrie": "b584731778bd",
@@ -5250,6 +5319,23 @@
  },
  "vierzon": {
   "geometrie": "cdb966292a65",
+  "date": "2026-08-28",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 3,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK"
+  },
+  "boss": "OK"
+ },
+ "vigo": {
+  "geometrie": "2182dfb6369d",
   "date": "2026-08-28",
   "graines": [
    1,

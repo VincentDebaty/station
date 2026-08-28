@@ -364,7 +364,18 @@
       "ciudad-real",
       "puertollano",
       "cordoba",
-      "sevilla"
+      "sevilla",
+      "vigo",
+      "ourense",
+      "medina",
+      "madrid-atocha"
+    ]
+  },
+  {
+    "country": "portugal",
+    "label": "🇵🇹 Portugal",
+    "stations": [
+      "nine"
     ]
   }
 ]

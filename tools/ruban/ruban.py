@@ -92,8 +92,23 @@ ch(C,"L'Estrémadure","Madrid","Lisbonne",[
   g("Talavera de la Reina"),g("Navalmoral"),g("Cáceres"),g("Mérida"),g("Badajoz"),g("Elvas"),g("Entroncamento"),g("Lisbonne Santa Apolónia")])
 ch(C,"La côte d'Argent","Lisbonne","Porto",[
   g("Azambuja"),g("Santarém"),g("Pombal"),g("Coimbra"),g("Aveiro"),g("Espinho"),g("Porto Campanhã")])
+# VALENÇA ET ZAMORA REFUSÉES le 28 août 2026 (§0, piège n° 1 deux fois) :
+# Valença a perdu sa ligne de Monção le 2 janvier 1990 (une écopiste
+# aujourd'hui) ; Zamora n'a jamais été aussi desservie (huit Alvia par jour)
+# mais tout roule sur un seul axe — sa ligne de Salamanque, la Ruta de la
+# Plata, est morte en 1985, déclassée en 1996. Aucun remplaçant sur le
+# corridor : le chapitre joue cinq gares, le plancher exact de R3. VIGO, c'est
+# GUIXAR, pas Urzáiz : le Celta de Porto y arrive ET les régionaux du Miño
+# vers Ourense en partent — le ruban est continu dans une seule gare, quand
+# Urzáiz ne rejoint Ourense que par le détour de Saint-Jacques. Et le chapitre
+# finit bien à ATOCHA : les trains de Galice touchent Chamartín, mais le
+# tunnel de grande vitesse Chamartín–Atocha (juillet 2022) prolonge l'axe
+# jusqu'à elle — la fiche le porte par son portail CHAMARTÍN. La ligne du
+# Minho côté espagnol est en rénovation intégrale (coupure avril 2026 → 2027,
+# 265 M d'euros) : des travaux, pas un déclin.
 ch(C,"La Galice","Porto","Madrid",[
-  g("Nine"),g("Valença"),g("Vigo"),g("Ourense"),g("Zamora"),g("Medina del Campo"),g("Madrid-Atocha")])
+  g("Nine","nine"),g("Vigo-Guixar","vigo"),g("Ourense-Empalme","ourense"),
+  g("Medina del Campo","medina"),g("Madrid-Atocha","madrid-atocha")])
 # LA BÉTIQUE A FONDU DANS L'ANDALOUSIE (décision de Vincent, 28 août 2026).
 # Trois refus §0 sur la ligne unique de Bobadilla : MARCHENA est le piège n° 1
 # au sens littéral (sa ligne de Cordoue est la Vía Verde de la Campiña depuis

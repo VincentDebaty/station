@@ -136,17 +136,33 @@ function km(a, b) {
   const dx = (B[0] - A[0]) * Math.cos((A[1] + B[1]) / 2 * RAD) * 111.32, dy = (B[1] - A[1]) * 110.57;
   return Math.hypot(dx, dy);
 }
-const trous = [], sansCoord = new Set();
+// SAUF PORTÉE DÉCLARÉE (28 août 2026, sur le modèle de la sinuosité de R7) :
+// certains rails réels franchissent plus de 250 km sans une seule gare que le
+// §0 accepte — la LAV de Galice survole la Sanabria (Ourense → Medina del
+// Campo, 270 km mesurés), ses arrêts n'ayant que deux directions. Un chapitre
+// peut donc ASSUMER une portée en la déclarant (`portees`, liste de
+// `[de, vers, km]`), et la règle vérifie contre la valeur déclarée. Une
+// portée non déclarée reste un trou, une déclaration devenue inutile
+// (mesure repassée sous 250) est signalée pour être retirée.
+const trous = [], porteesInutiles = [], sansCoord = new Set();
+let nPortees = 0;
 for (const ch of chapitres)
   for (let i = 1; i < (ch.gares || []).length; i++) {
     const d = km(ch.gares[i - 1], ch.gares[i]);
     if (d == null) { sansCoord.add(ch.gares[i - 1]); sansCoord.add(ch.gares[i]); continue; }
+    const decl = (ch.portees || []).find(p => p[0] === ch.gares[i - 1] && p[1] === ch.gares[i]);
+    if (decl) {
+      nPortees++;
+      if (d > decl[2]) trous.push(`${ch.id} : ${nom(ch.gares[i - 1])} → ${nom(ch.gares[i])} = ${Math.round(d)} km (déclarée ${decl[2]})`);
+      else if (d <= 250) porteesInutiles.push(`${ch.id} : ${nom(ch.gares[i - 1])} → ${nom(ch.gares[i])} mesurée ${Math.round(d)} km — retirer la déclaration`);
+      continue;
+    }
     if (d > 250) trous.push(`${ch.id} : ${nom(ch.gares[i - 1])} → ${nom(ch.gares[i])} = ${Math.round(d)} km`);
   }
 R("R5", "continuité réelle à l'intérieur des chapitres", !trous.length,
   trous.length ? trous.length + " saut(s) non déclaré(s)" :
-    `aucun trou (${sansCoord.size} gare(s) sans coordonnées, non jugées)`);
-listes.R5 = trous;
+    `aucun trou (${nPortees ? nPortees + " portée(s) déclarée(s), " : ""}${sansCoord.size} gare(s) sans coordonnées, non jugées)`);
+listes.R5 = [...trous, ...porteesInutiles];
 
 // R6 — UNE FICHE N'APPARAÎT QU'UNE FOIS, et l'on ne réemprunte jamais un
 // tracé déjà parcouru. Le doublon de fiche est mesuré en R1 ; ce qui reste

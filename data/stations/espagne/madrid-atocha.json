@@ -1,0 +1,41 @@
+{
+  "id": "madrid-atocha",
+  "name": "Madrid-Atocha",
+  "tagline": "La palmeraie face aux heurtoirs",
+  "desc": "Sous la halle de 1892 devenue serre tropicale, les AVE de Séville, Valence et Barcelone rebroussent face aux heurtoirs, pendant qu'en sous-sol les Cercanías d'Aranjuez filent vers Chamartín sans jamais s'arrêter. La plus grande gare d'Espagne porte le nom de la romancière Almudena Grandes et le mémorial du 11 mars 2004.",
+  "difficulty": 5,
+  "country": "🇪🇸 Espagne",
+  "platforms": [
+    { "id": 1, "deadEnd": true }, { "id": 2, "deadEnd": true }, { "id": 3, "deadEnd": true },
+    { "id": 4, "deadEnd": true }, { "id": 5, "deadEnd": true }, { "id": 6, "deadEnd": true },
+    { "id": 7 }, { "id": 8 }, { "id": 9 }, { "id": 10 }
+  ],
+  "portals": {
+    "SEVILLE":   { "side": "L", "color": "#25dede", "abbr": "SE", "label": "SÉVILLE" },
+    "BARCELONE": { "side": "L", "color": "#a78bfa", "abbr": "BA" },
+    "VALENCE":   { "side": "L", "color": "#4ade80", "abbr": "VA" },
+    "TOLEDE":    { "side": "L", "color": "#f5b23c", "abbr": "TO", "label": "TOLÈDE" },
+    "ARANJUEZ":  { "side": "L", "color": "#fb923c", "abbr": "AR" },
+    "CHAMARTIN": { "side": "R", "color": "#f2588f", "abbr": "CH", "label": "CHAMARTÍN" },
+    "ESCORIAL":  { "side": "R", "color": "#60a5fa", "abbr": "ES" }
+  },
+  "links": {
+    "SEVILLE":   [1, 2, 3],
+    "BARCELONE": [2, 3, 4, 5],
+    "VALENCE":   [4, 5, 6, 7, 8],
+    "TOLEDE":    [1, 6],
+    "ARANJUEZ":  [7, 8, 9, 10],
+    "CHAMARTIN": [7, 8, 9],
+    "ESCORIAL":  [9, 10]
+  },
+  "sameSidePairs": [
+    ["SEVILLE", "BARCELONE"], ["BARCELONE", "SEVILLE"],
+    ["BARCELONE", "VALENCE"], ["VALENCE", "BARCELONE"],
+    ["TOLEDE", "SEVILLE"],    ["SEVILLE", "TOLEDE"],
+    ["TOLEDE", "VALENCE"],    ["VALENCE", "TOLEDE"]
+  ],
+  "gen": {
+    "nMin": 18, "nMax": 22, "gapMin": 1.5, "gapMax": 2.5,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6], "quietRate": 0.12, "rush": "double"
+  }
+}

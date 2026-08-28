@@ -1,0 +1,28 @@
+{
+  "id": "medina",
+  "name": "Medina del Campo",
+  "tagline": "Le carrefour de la Meseta",
+  "desc": "Sous la marquise de fer et de verre de 1902, la ville des foires de Castille trie ce qui va d'Ávila à Valladolid, de Salamanque à la Galice. Le régional de Sanabria y rebrousse encore, pendant que les AVE filent sur la voie neuve, à un kilomètre des quais centenaires.",
+  "difficulty": 3,
+  "country": "🇪🇸 Espagne",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }, { "id": 6 }
+  ],
+  "portals": {
+    "MADRID":     { "side": "L", "color": "#f2588f", "abbr": "MD" },
+    "OURENSE":    { "side": "R", "color": "#25dede", "abbr": "OU" },
+    "VALLADOLID": { "side": "R", "color": "#60a5fa", "abbr": "VL" },
+    "SALAMANQUE": { "side": "R", "color": "#f5b23c", "abbr": "SA" }
+  },
+  "links": {
+    "MADRID":     [1, 2, 3, 4, 5, 6],
+    "OURENSE":    [1, 2, 3],
+    "VALLADOLID": [3, 4, 5],
+    "SALAMANQUE": [5, 6]
+  },
+  "sameSidePairs": [["VALLADOLID", "OURENSE"], ["OURENSE", "VALLADOLID"]],
+  "gen": {
+    "nMin": 13, "nMax": 15, "gapMin": 1.7, "gapMax": 3.0,
+    "cars": [2, 2, 3, 3, 4, 4, 5, 6], "quietRate": 0.15, "rush": "double"
+  }
+}

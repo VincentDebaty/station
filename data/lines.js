@@ -562,5 +562,9 @@ const LINES = [
   { id: "L949", name: "L'Andalousie (Alcázar – Séville)",
     nodes: ["alcazar", "ciudad-real", "puertollano", "cordoba", "sevilla"] },
   { id: "L950", name: "La porte du Sud (Séville – Dos Hermanas)",
-    nodes: ["sevilla", "dos-hermanas"] }
+    nodes: ["sevilla", "dos-hermanas"] },
+  { id: "L951", name: "La Galice (Nine – Madrid)",
+    nodes: ["nine", "vigo", "ourense", "medina", "madrid-atocha"] },
+  { id: "L952", name: "La Meseta (Madrid – Alcázar)",
+    nodes: ["madrid-atocha", "alcazar"] }
 ];

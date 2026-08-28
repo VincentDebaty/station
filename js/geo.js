@@ -312,7 +312,15 @@ const GEO = {
         "ciudad-real": [-3.927, 38.986],
         puertollano: [-4.107, 38.687],
         cordoba: [-4.7896, 37.8885],
-        sevilla: [-5.9748, 37.3925]
+        sevilla: [-5.9748, 37.3925],
+        vigo: [-8.712, 42.235],
+        ourense: [-7.864, 42.336],
+        medina: [-4.916, 41.313],
+        "madrid-atocha": [-3.6906, 40.4068]
+      } },
+    "portugal": { name: "Portugal", flag: "🇵🇹", iso: "PT", continent: "europe",
+      cities: {
+        nine: [-8.542, 41.469]
       } },
     "royaume-uni": { name: "Royaume-Uni", flag: "🇬🇧", iso: "GBR", continent: "europe",
       frame: [-6.3, 49.9, 1.9, 57.6], neighbors: { belgique: [3.25, 51.22] },

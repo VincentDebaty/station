@@ -1,0 +1,26 @@
+{
+  "id": "nine",
+  "name": "Nine",
+  "tagline": "La ligne du Minho lâche la branche de Braga",
+  "desc": "Depuis 1875, tout le nord-ouest portugais pivote sur ce village de Famalicão : les urbains de Braga y quittent la ligne du Minho, que remontent les régionaux de Viana et le Celta de Vigo. La concordance a disparu — de Viana vers Braga, on rebrousse ici.",
+  "difficulty": 2,
+  "country": "🇵🇹 Portugal",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
+  ],
+  "portals": {
+    "PORTO": { "side": "L", "color": "#25dede", "abbr": "P" },
+    "VIANA": { "side": "R", "color": "#60a5fa", "abbr": "VC" },
+    "BRAGA": { "side": "R", "color": "#4ade80", "abbr": "BR" }
+  },
+  "links": {
+    "PORTO": [1, 2, 3, 4, 5],
+    "VIANA": [1, 2, 3, 4],
+    "BRAGA": [4, 5]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 12, "nMax": 15, "gapMin": 1.8, "gapMax": 3.0,
+    "cars": [2, 2, 2, 3, 3, 4, 4, 5], "quietRate": 0.2, "rush": "double"
+  }
+}

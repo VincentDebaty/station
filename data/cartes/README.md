@@ -39,6 +39,9 @@ navigateur.
       "arrivee": 3,              // plafond de la difficulté à l'arrivée (facultatif)
       "sinuosite": 1.75,         // sinuosité ASSUMÉE au-dessus de 1,5 (facultatif, R7) —
                                  // pour les rails réels qui serpentent (tour de la botte)
+      "portees": [               // portées ASSUMÉES au-dessus de 250 km (facultatif, R5) —
+        ["ourense", "medina", 275] // [de, vers, km] : rail réel continu dont aucun arrêt
+      ],                         // ne passe le §0 (la LAV de Galice sur la Sanabria)
       "saut": {                  // rupture géographique AVANT ce chapitre (§4 bis)
         "mode": "nuit",          // "nuit" | "correspondance" | "mer"
         "texte": "Le train de nuit pour Marseille"
