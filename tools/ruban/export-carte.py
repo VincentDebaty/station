@@ -17,16 +17,16 @@ import sys, os, json, unicodedata
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from ruban import ACTES
 
-PREMIER = int(sys.argv[1]) if len(sys.argv) > 1 else 36
-DERNIER = int(sys.argv[2]) if len(sys.argv) > 2 else 60
+PREMIER = int(sys.argv[1]) if len(sys.argv) > 1 else 35
+DERNIER = int(sys.argv[2]) if len(sys.argv) > 2 else 59
 
 # Les zones de la carte livrée. Elles ne sont PAS les actes du ruban complet :
 # une tranche de onze chapitres se recoupe en deux régions cohérentes, et le
 # découpage se refera quand le ruban s'allongera par le bout.
 ZONES = [
-  {"id": "alpes", "nom": "L'Italie du Nord, les Alpes et la Lorraine", "couleur": "#c084fc", "jusqua": 49},
-  {"id": "rhin",  "nom": "Le Benelux et le Rhin",    "couleur": "#5b8def", "jusqua": 54},
-  {"id": "ger",   "nom": "La Germanie",              "couleur": "#3fa87a", "jusqua": 60},
+  {"id": "alpes", "nom": "L'Italie du Nord, les Alpes et la Lorraine", "couleur": "#c084fc", "jusqua": 48},
+  {"id": "rhin",  "nom": "Le Benelux et le Rhin",    "couleur": "#5b8def", "jusqua": 53},
+  {"id": "ger",   "nom": "La Germanie",              "couleur": "#3fa87a", "jusqua": 59},
 ]
 # Le plancher de difficulté par chapitre (§2.5) : une rampe qui monte par
 # paliers le long du ruban. La difficulté voulue se calcule depuis lui, puis se
@@ -34,20 +34,20 @@ ZONES = [
 # Renumérotés le 27 août 2026 après la fusion des chapitres 46 et 47, et
 # ÉTENDUS : la carte livrée commence désormais au Fréjus et non plus à
 # L'Ardenne, l'acte V étant complet. Quinze chapitres au lieu de onze.
-PLANCHER = {36:1, 37:2, 38:2, 39:2, 40:2, 41:2, 42:2, 43:2, 44:2, 45:2, 46:2, 47:2, 48:2, 49:2, 50:3, 51:3, 52:3, 53:3, 54:3,
-            55:4, 56:4, 57:4, 58:4, 59:4, 60:4}
+PLANCHER = {35:1, 36:2, 37:2, 38:2, 39:2, 40:2, 41:2, 42:2, 43:2, 44:2, 45:2, 46:2, 47:2, 48:2, 49:3, 50:3, 51:3, 52:3, 53:3,
+            54:4, 55:4, 56:4, 57:4, 58:4, 59:4}
 # R9 : le premier chapitre est le tutoriel. Il finit sur Bruxelles-Midi, qui
 # porterait un niveau 5 — on le plafonne à 3. La regle est ecrite au §3 du
 # document ; sans ce plafond, le tutoriel arriverait au sommet du jeu six gares
 # apres l'avoir ouvert.
-ARRIVEE = {36: 3, 37: 4, 38: 4, 39: 4, 40: 4, 41: 4, 42: 4, 43: 4, 44: 4, 45: 4, 46: 4, 47: 4}
+ARRIVEE = {35: 3, 36: 4, 37: 4, 38: 4, 39: 4, 40: 4, 41: 4, 42: 4, 43: 4, 44: 4, 45: 4, 46: 4}
 # R7 : deux chapitres du Mezzogiorno ASSUMENT une sinuosité au-dessus de 1,5 —
 # le rail y fait réellement le tour de la botte avant le détroit (mesuré 1,73)
 # et la diagonale de Lucanie plonge par la côte ionienne (1,62). Décision du
 # 28 août 2026 : l'exception se DÉCLARE, chapitre par chapitre, et carte-check
 # vérifie contre la valeur déclarée — le seuil de 1,5 reste la règle partout
 # ailleurs. Une exception non déclarée reste un refus.
-SINUOSITE = {40: 1.75, 41: 1.65}
+SINUOSITE = {39: 1.75, 40: 1.65}
 
 def slug(s):
     s = unicodedata.normalize("NFKD", s).encode("ascii", "ignore").decode()

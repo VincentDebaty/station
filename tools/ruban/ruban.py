@@ -104,8 +104,14 @@ ch(C,"La ligne de Teruel","Valence","Saragosse",[
   g("Sagonte"),g("Segorbe"),g("Caudiel"),g("Teruel"),g("Calamocha"),g("Saragosse-Delicias")])
 ch(C,"L'Èbre","Saragosse","Barcelone",[
   g("Lérida"),g("Reus"),g("Tarragone"),g("Vilanova i la Geltrú"),g("Barcelone-Sants")])
-ch(C,"Le Roussillon","Barcelone","Montpellier",[
-  g("Gérone"),g("Figueres"),g("Portbou"),g("Perpignan"),g("Narbonne","narbonne"),g("Béziers","beziers"),g("Montpellier-Saint-Roch","montpellier")])
+# LE ROUSSILLON A FUSIONNÉ AVEC LA CAMARGUE le 28 août 2026 (décision de
+# Vincent, option A) : sa moitié espagnole est morte au §0 — Gérone et
+# Figueres sont des passantes depuis la fermeture des lignes d'Olot et de
+# Sant Feliu en 1969, et Portbou, deux terminus dos à dos sur deux
+# écartements que plus aucun train ne relie depuis la fin des Talgo (2013),
+# n'offre AUCUNE paire à aiguiller. Le ruban franchit désormais la frontière
+# par le SAUT DU PERTHUS, comme le vrai TGV. Le chapitre fusionné vit au
+# début de l'acte IV.
 
 # =====================================================================
 D = acte("it","Acte IV — Le Midi et l'Italie","De la Camargue à la Sicile, et retour par le Pô")
@@ -116,9 +122,15 @@ D = acte("it","Acte IV — Le Midi et l'Italie","De la Camargue à la Sicile, et
 # monte par Tarascon, marque Avignon sous les remparts, et redescend sur
 # Miramas par la ligne de Cavaillon, vivante à quatorze allers-retours par
 # jour. Sinuosité mesurée sous 1,5 — pas d'exception à déclarer.
-ch(D,"La Camargue","Montpellier","Marseille",[
-  g("Nîmes","nimes"),g("Tarascon","tarascon"),g("Avignon","avignon"),
-  g("Miramas","miramas"),g("Marseille Saint-Charles","marseille")])
+# FUSION ROUSSILLON + CAMARGUE (28 août 2026, option A) : neuf gares de
+# Perpignan à Marseille, ouvertes par le saut du Perthus. Montpellier, grande
+# gare, vit en milieu de chapitre — c'est le compromis assumé de l'option A,
+# préféré à une exception au plancher de R3. Sinuosité mesurée sous 1,5.
+ch(D,"Le Roussillon et la Camargue","Barcelone","Marseille",[
+  g("Perpignan","perpignan"),g("Narbonne","narbonne"),g("Béziers","beziers"),
+  g("Montpellier-Saint-Roch","montpellier"),g("Nîmes","nimes"),g("Tarascon","tarascon"),
+  g("Avignon","avignon"),g("Miramas","miramas"),g("Marseille Saint-Charles","marseille")],
+  saut=("lgv","Le tunnel du Perthus — de Barcelone à Perpignan par la grande vitesse"))
 # SAINT-RAPHAËL, MONACO ET SAN REMO REFUSÉES le 28 août 2026 (§0) : trois
 # gares de passage à deux directions — Saint-Raphaël a perdu son littoral
 # varois en 1948 (le piège exact de l'ancienne bifurcation), Monaco et San

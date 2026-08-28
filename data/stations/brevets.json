@@ -3739,6 +3739,23 @@
   },
   "boss": "file de 6 au même quai"
  },
+ "perpignan": {
+  "geometrie": "680d16c340f2",
+  "date": "2026-08-28",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 3,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK"
+  },
+  "boss": "OK"
+ },
  "perth": {
   "geometrie": "e5e535230b48",
   "date": "2026-08-28",

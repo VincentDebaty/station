@@ -544,5 +544,7 @@ const LINES = [
   { id: "L940", name: "La Rochelle – Saintes par Niort",
     nodes: ["larochelle", "niort", "saintes"] },
   { id: "L941", name: "Le Périgord (Bordeaux – Agen par Périgueux)",
-    nodes: ["bordeaux", "libourne", "perigueux", "agen"] }
+    nodes: ["bordeaux", "libourne", "perigueux", "agen"] },
+  { id: "L942", name: "Le golfe du Lion (Perpignan – Montpellier)",
+    nodes: ["perpignan", "narbonne", "beziers", "montpellier"] }
 ];

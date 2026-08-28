@@ -113,7 +113,8 @@ const GEO = {
         cannes: [7.0197, 43.5542],
         niort: [-0.4542, 46.3194],
         libourne: [-0.2364, 44.9158],
-        perigueux: [0.7078, 45.1872]
+        perigueux: [0.7078, 45.1872],
+        perpignan: [2.8794, 42.6961]
       } },
     allemagne: { name: "Allemagne", flag: "🇩🇪", iso: "DEU", continent: "europe",
       cities: {
