@@ -540,5 +540,9 @@ const LINES = [
   { id: "L938", name: "Tarascon – Miramas par Avignon et Cavaillon",
     nodes: ["tarascon", "avignon", "miramas"] },
   { id: "L939", name: "Gênes – La Spezia",
-    nodes: ["genova", "laspezia"] }
+    nodes: ["genova", "laspezia"] },
+  { id: "L940", name: "La Rochelle – Saintes par Niort",
+    nodes: ["larochelle", "niort", "saintes"] },
+  { id: "L941", name: "Le Périgord (Bordeaux – Agen par Périgueux)",
+    nodes: ["bordeaux", "libourne", "perigueux", "agen"] }
 ];

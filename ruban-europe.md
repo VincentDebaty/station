@@ -155,11 +155,14 @@ les 123 fiches annoncées comme existantes existent bien au catalogue.
 > que deux directions. Le motif est désormais décrit au §0 de
 > `tools/AUTHORING-STATIONS.md` (« le piège n° 1 »).
 >
-> Conséquence : le chapitre **23 tombe à 4 gares**, sous le plancher de R3, et
-> le **24 à 5**, tout juste tenu — mais La Réole et Moissac n'ont pas encore
-> été testées et sont du même gabarit. **L'acte II demande le même travail de
-> redécoupage que l'acte V**, et il faut le faire AVANT d'écrire des fiches :
-> les trois chapitres les moins chers étaient précisément ceux-là.
+> **Redécoupage tranché le 28 août 2026** (option A, décision de Vincent),
+> après vérification de sept candidates. La Réole, Moissac et Royan sont
+> tombées au même §0 ; le corridor Bordeaux–Toulouse n'a aucune bifurcation
+> vivante. Le chapitre 23 passe par **Niort** (l'intérieur), et le 24 devient
+> **« Le Périgord et la Garonne »** : Libourne · Périgueux · Agen · Montauban
+> · Toulouse, par la ligne de l'Agenais. Angoulême et Coutras restent en
+> réserve documentée. Trois fiches nouvelles (Niort, Libourne, Périgueux),
+> écrites et brevetées le jour même.
 
 | # | Chapitre | Gares, dans l'ordre du rail | n |
 |---|---|---|---|
@@ -167,8 +170,8 @@ les 123 fiches annoncées comme existantes existent bien au catalogue.
 | 20 | La Normandie | Mantes-la-Jolie · Évreux · Bernay · Lisieux · **Caen** | 5 |
 | 21 | Le Cotentin et la baie | Bayeux · Saint-Lô · Avranches · Pontorson · Dol-de-Bretagne · **Rennes** ✓ | 6 |
 | 22 | La Bretagne intérieure | Bruz · Messac · Redon · Savenay · **Nantes** ✓ | 5 |
-| 23 | Le littoral atlantique | La Roche-sur-Yon ✓ · La Rochelle ✓ · ~~Rochefort~~ ✗ · Saintes ✓ · ~~Jonzac~~ ✗ · **Bordeaux Saint-Jean** ✓ | 4 ⚠ |
-| 24 | Le canal des Deux-Mers | La Réole · ~~Marmande~~ ✗ · Agen ✓ · Moissac · Montauban ✓ · **Toulouse Matabiau** ✓ | 5 ⚠ |
+| 23 | Le littoral atlantique | La Roche-sur-Yon ✓ · La Rochelle ✓ · ~~Rochefort~~ Niort ✓ · Saintes ✓ · ~~Jonzac~~ · **Bordeaux Saint-Jean** ✓ | 5 |
+| 24 | Le Périgord et la Garonne | ~~La Réole~~ Libourne ✓ · ~~Marmande~~ Périgueux ✓ · Agen ✓ · ~~Moissac~~ · Montauban ✓ · **Toulouse Matabiau** ✓ | 5 |
 | 25 | Le piémont pyrénéen | Saint-Gaudens · Tarbes · Pau · Orthez · Bayonne · Hendaye · Irún · **Bilbao Abando** | 8 |
 
 ## Acte III — L'Ibérie

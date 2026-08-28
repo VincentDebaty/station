@@ -1,0 +1,28 @@
+{
+  "id": "perigueux",
+  "name": "Périgueux",
+  "tagline": "La gare-atelier",
+  "desc": "Le trafic marquant n'y est pas le voyageur mais le matériel : les rames de toute la région viennent se faire refaire au Technicentre, cent soixante ans d'ateliers. Au sud-est, Brive et Agen se disputent la même sortie jusqu'à Niversac.",
+  "difficulty": 2,
+  "country": "🇫🇷 France",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
+  ],
+  "portals": {
+    "BORDEAUX": { "side": "L", "color": "#f2588f", "abbr": "BX" },
+    "LIMOGES":  { "side": "L", "color": "#25dede", "abbr": "LI" },
+    "BRIVE":    { "side": "R", "color": "#f5b23c", "abbr": "BR" },
+    "AGEN":     { "side": "R", "color": "#4ade80", "abbr": "AG" }
+  },
+  "links": {
+    "BORDEAUX": [1, 2, 3],
+    "LIMOGES":  [3, 4, 5],
+    "BRIVE":    [1, 2, 3, 4],
+    "AGEN":     [4, 5]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 13, "nMax": 16, "gapMin": 1.8, "gapMax": 3.0,
+    "cars": [2, 2, 3, 3, 4, 4, 5], "quietRate": 0.18, "rush": "pointe"
+  }
+}

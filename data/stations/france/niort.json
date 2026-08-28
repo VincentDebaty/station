@@ -1,0 +1,28 @@
+{
+  "id": "niort",
+  "name": "Niort",
+  "tagline": "La bifurcation aux quatre vies",
+  "desc": "L'axe venu de Paris s'y dédouble vers La Rochelle et vers Saintes — sur une ligne toute juste rénovée. Au nord, la branche de Thouars ne voit plus passer que les céréaliers : une direction entière rendue au fret.",
+  "difficulty": 2,
+  "country": "🇫🇷 France",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
+  ],
+  "portals": {
+    "POITIERS":    { "side": "L", "color": "#25dede", "abbr": "PO" },
+    "THOUARS":     { "side": "L", "color": "#a78bfa", "abbr": "TH" },
+    "LA ROCHELLE": { "side": "R", "color": "#f2588f", "abbr": "LR" },
+    "SAINTES":     { "side": "R", "color": "#4ade80", "abbr": "SA" }
+  },
+  "links": {
+    "POITIERS":    [1, 2, 3, 4],
+    "THOUARS":     [4, 5],
+    "LA ROCHELLE": [1, 2, 3],
+    "SAINTES":     [3, 4, 5]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 13, "nMax": 16, "gapMin": 1.8, "gapMax": 3.0,
+    "cars": [2, 2, 3, 3, 4, 4, 5], "quietRate": 0.18, "rush": "pointe"
+  }
+}

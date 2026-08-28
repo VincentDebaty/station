@@ -2556,6 +2556,22 @@
   },
   "boss": "OK"
  },
+ "libourne": {
+  "geometrie": "274b424e235d",
+  "date": "2026-08-28",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 2,
+  "detail": {
+   "1": "OK",
+   "2": "OK"
+  },
+  "boss": "file de 7 au même quai"
+ },
  "libramont": {
   "geometrie": "b957c99ddb94",
   "date": "2026-08-27",
@@ -3364,6 +3380,23 @@
   },
   "boss": "retard garanti 0.33 > 0.3"
  },
+ "niort": {
+  "geometrie": "c94f8d592f94",
+  "date": "2026-08-28",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 3,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK"
+  },
+  "boss": "OK"
+ },
  "norwich": {
   "geometrie": "988d4944d346",
   "date": "2026-08-28",
@@ -3688,6 +3721,23 @@
    "5": "OK"
   },
   "boss": "OK"
+ },
+ "perigueux": {
+  "geometrie": "5910237971bd",
+  "date": "2026-08-28",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 3,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK"
+  },
+  "boss": "file de 6 au même quai"
  },
  "perth": {
   "geometrie": "e5e535230b48",

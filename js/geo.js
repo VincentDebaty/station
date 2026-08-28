@@ -110,7 +110,10 @@ const GEO = {
         colmar: [7.347, 48.073],
         "aix-les-bains": [5.9086, 45.6889],
         "bourg-en-bresse": [5.2153, 46.2028],
-        cannes: [7.0197, 43.5542]
+        cannes: [7.0197, 43.5542],
+        niort: [-0.4542, 46.3194],
+        libourne: [-0.2364, 44.9158],
+        perigueux: [0.7078, 45.1872]
       } },
     allemagne: { name: "Allemagne", flag: "🇩🇪", iso: "DEU", continent: "europe",
       cities: {

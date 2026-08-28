@@ -60,10 +60,27 @@ ch(B,"Le Cotentin et la baie","Caen","Rennes",[
   g("Bayeux"),g("Saint-Lô"),g("Avranches"),g("Pontorson"),g("Dol-de-Bretagne"),g("Rennes","rennes")])
 ch(B,"La Bretagne intérieure","Rennes","Nantes",[
   g("Bruz"),g("Messac"),g("Redon"),g("Savenay"),g("Nantes","nantes")])
+# REDÉCOUPAGE DU 28 AOÛT 2026 (décision de Vincent). Rochefort et Jonzac,
+# refusées la veille (anciennes bifurcations, branches mortes en 1954 et par
+# gares voisines closes), sont remplacées par NIORT : trois directions
+# voyageurs, une ligne vers Saintes rénovée en 2025, et une quatrième branche
+# rendue au fret (Thouars) — le chapitre passe par l'intérieur, comme la
+# Campanie par Ciampino.
 ch(B,"Le littoral atlantique","Nantes","Bordeaux",[
-  g("La Roche-sur-Yon","lalochesuryon"),g("La Rochelle","larochelle"),g("Rochefort"),g("Saintes","saintes"),g("Jonzac"),g("Bordeaux Saint-Jean","bordeaux")])
-ch(B,"Le canal des Deux-Mers","Bordeaux","Toulouse",[
-  g("La Réole"),g("Marmande"),g("Agen","agen"),g("Moissac"),g("Montauban","montauban"),g("Toulouse Matabiau","toulouse")])
+  g("La Roche-sur-Yon","lalochesuryon"),g("La Rochelle","larochelle"),g("Niort","niort"),
+  g("Saintes","saintes"),g("Bordeaux Saint-Jean","bordeaux")])
+# LE CANAL DEVIENT LE PÉRIGORD (décision de Vincent, 28 août 2026). Marmande
+# avait été refusée la veille ; La Réole et Moissac sont tombées au même
+# balayage — la « ligne » de Moissac vers Cahors n'a même jamais ouvert,
+# chantier abandonné en 1934. Le corridor Bordeaux–Toulouse n'a AUCUNE gare
+# intermédiaire à trois directions vivantes : toutes ses bifurcations sont
+# mortes avant ou juste après la guerre. Le chapitre est donc RE-ROUTÉ par
+# les seules bifurcations vivantes du secteur : Libourne (Bergerac), la
+# gare-atelier de Périgueux, et la ligne de l'Agenais — quatre allers-retours
+# par jour, fragile mais vivante, et le §0 juge aujourd'hui.
+ch(B,"Le Périgord et la Garonne","Bordeaux","Toulouse",[
+  g("Libourne","libourne"),g("Périgueux","perigueux"),g("Agen","agen"),
+  g("Montauban","montauban"),g("Toulouse Matabiau","toulouse")])
 ch(B,"Le piémont pyrénéen","Toulouse","Bilbao",[
   g("Saint-Gaudens"),g("Tarbes"),g("Pau"),g("Orthez"),g("Bayonne"),g("Hendaye"),g("Irún"),g("Bilbao Abando")])
 
