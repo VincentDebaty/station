@@ -1,0 +1,28 @@
+{
+  "id": "villaliterno",
+  "name": "Villa Literno",
+  "tagline": "L'éclatement des Champs Phlégréens",
+  "desc": "Grande gare d'éclatement en rase campagne où la Direttissima de Rome se dédouble : l'itinéraire d'Aversa vers Naples, le passante côtier des Champs Phlégréens qui naît ici, et la rocade de Cancello qui porte le fret de l'interporto.",
+  "difficulty": 3,
+  "country": "🇮🇹 Italie",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }, { "id": 6 }
+  ],
+  "portals": {
+    "ROME":     { "side": "L", "color": "#f2588f", "abbr": "RO" },
+    "NAPLES":   { "side": "R", "color": "#25dede", "abbr": "NA" },
+    "POZZUOLI": { "side": "R", "color": "#4ade80", "abbr": "PZ" },
+    "CANCELLO": { "side": "R", "color": "#f5b23c", "abbr": "CN" }
+  },
+  "links": {
+    "ROME":     [1, 2, 3, 4, 5, 6],
+    "NAPLES":   [1, 2, 3],
+    "POZZUOLI": [3, 4, 5],
+    "CANCELLO": [5, 6]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 14, "nMax": 17, "gapMin": 1.7, "gapMax": 2.9,
+    "cars": [2, 2, 3, 3, 4, 4, 5], "quietRate": 0.16, "rush": "pointe"
+  }
+}

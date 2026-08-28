@@ -1,0 +1,26 @@
+{
+  "id": "ventimiglia",
+  "name": "Vintimille",
+  "tagline": "La frontière où tout le monde rebrousse",
+  "desc": "Trois systèmes électriques cohabitent dans une seule gare, et presque aucun train ne la traverse : les TER français, les régionaux italiens et les autorails de la vallée de la Roya viennent tous y faire tête avant de repartir.",
+  "difficulty": 2,
+  "country": "🇮🇹 Italie",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }, { "id": 6 }
+  ],
+  "portals": {
+    "NICE":  { "side": "L", "color": "#25dede", "abbr": "NI" },
+    "GENES": { "side": "R", "color": "#f2588f", "abbr": "GE", "label": "GÊNES" },
+    "CUNEO": { "side": "R", "color": "#4ade80", "abbr": "CN" }
+  },
+  "links": {
+    "NICE":  [1, 2, 3, 4, 5, 6],
+    "GENES": [1, 2, 3, 4],
+    "CUNEO": [5, 6]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 13, "nMax": 16, "gapMin": 1.8, "gapMax": 3.0,
+    "cars": [2, 2, 3, 3, 4, 4, 5], "quietRate": 0.18, "rush": "pointe"
+  }
+}

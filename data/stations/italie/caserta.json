@@ -1,0 +1,28 @@
+{
+  "id": "caserta",
+  "name": "Caserte",
+  "tagline": "La gare du palais royal",
+  "desc": "Ouverte en 1843 face à la Reggia des Bourbons — le voyageur qui sort du hall a le palais devant lui. Quatre axes s'y croisent : Rome par Cassino, Naples par deux itinéraires, et la ligne de Bénévent que remontent les Frecce des Pouilles.",
+  "difficulty": 3,
+  "country": "🇮🇹 Italie",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }, { "id": 6 }
+  ],
+  "portals": {
+    "ROME":     { "side": "L", "color": "#f2588f", "abbr": "RO" },
+    "AVERSA":   { "side": "L", "color": "#4ade80", "abbr": "AV" },
+    "CANCELLO": { "side": "R", "color": "#f5b23c", "abbr": "CN" },
+    "BENEVENT": { "side": "R", "color": "#a78bfa", "abbr": "BN", "label": "BÉNÉVENT" }
+  },
+  "links": {
+    "ROME":     [1, 2, 3, 4],
+    "AVERSA":   [4, 5, 6],
+    "CANCELLO": [1, 2, 3],
+    "BENEVENT": [3, 4, 5, 6]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 14, "nMax": 17, "gapMin": 1.7, "gapMax": 2.9,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6], "quietRate": 0.16, "rush": "pointe"
+  }
+}

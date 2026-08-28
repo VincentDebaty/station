@@ -1,0 +1,26 @@
+{
+  "id": "grosseto",
+  "name": "Grosseto",
+  "tagline": "L'électrique et le diesel de la Maremme",
+  "desc": "Sur la Tyrrhénienne électrifiée, Grosseto fait aussi terminus pour les autorails diesel de Sienne, qui montent par Monte Antico — tout ce qui part vers l'intérieur est thermique et s'arrête là.",
+  "difficulty": 2,
+  "country": "🇮🇹 Italie",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
+  ],
+  "portals": {
+    "PISE":   { "side": "L", "color": "#f2588f", "abbr": "PI" },
+    "SIENNE": { "side": "L", "color": "#4ade80", "abbr": "SI" },
+    "ROME":   { "side": "R", "color": "#25dede", "abbr": "RO" }
+  },
+  "links": {
+    "PISE":   [1, 2, 3],
+    "SIENNE": [4, 5],
+    "ROME":   [1, 2, 3, 4, 5]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 13, "nMax": 16, "gapMin": 1.8, "gapMax": 3.0,
+    "cars": [2, 2, 3, 3, 4, 4, 5], "quietRate": 0.18, "rush": "pointe"
+  }
+}

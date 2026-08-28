@@ -3,7 +3,7 @@
  "nom": "L'Europe",
  "gratuite": true,
  "enChantier": true,
- "note": "Tranche livree du ruban : chapitres 40 a 60 de ruban-europe.md (Bussoleno vers Hambourg) — l'acte V en entier. Le ruban complet va de Cork a Istanbul ; les actes I a IV se greffent DEVANT celui-ci quand ils seront ecrits.",
+ "note": "Tranche livree du ruban : chapitres 36 a 60 de ruban-europe.md (Bussoleno vers Hambourg) — l'acte V en entier. Le ruban complet va de Cork a Istanbul ; les actes I a IV se greffent DEVANT celui-ci quand ils seront ecrits.",
  "echelle": {
   "kmMinEntreHubs": 110
  },
@@ -26,6 +26,63 @@
  ],
  "chapitres": [
   {
+   "id": "la-camargue",
+   "nom": "La Camargue",
+   "zone": "alpes",
+   "gares": [
+    "nimes",
+    "tarascon",
+    "avignon",
+    "miramas",
+    "marseille"
+   ],
+   "plancher": 1,
+   "arrivee": 3
+  },
+  {
+   "id": "la-riviera",
+   "nom": "La Riviera",
+   "zone": "alpes",
+   "gares": [
+    "toulon",
+    "cannes",
+    "nice",
+    "ventimiglia",
+    "savona",
+    "genova"
+   ],
+   "plancher": 2,
+   "arrivee": 4
+  },
+  {
+   "id": "la-tyrrhenienne",
+   "nom": "La Tyrrhénienne",
+   "zone": "alpes",
+   "gares": [
+    "laspezia",
+    "pisa",
+    "campiglia",
+    "grosseto",
+    "roma"
+   ],
+   "plancher": 2,
+   "arrivee": 4
+  },
+  {
+   "id": "la-campanie",
+   "nom": "La Campanie",
+   "zone": "alpes",
+   "gares": [
+    "ciampino",
+    "campoleone",
+    "villaliterno",
+    "caserta",
+    "napoli"
+   ],
+   "plancher": 2,
+   "arrivee": 4
+  },
+  {
    "id": "le-train-qui-prend-le-bateau",
    "nom": "Le train qui prend le bateau",
    "zone": "alpes",
@@ -38,8 +95,8 @@
     "termini",
     "palermo"
    ],
-   "plancher": 1,
-   "arrivee": 3,
+   "plancher": 2,
+   "arrivee": 4,
    "sinuosite": 1.75
   },
   {

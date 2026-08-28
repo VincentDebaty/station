@@ -908,6 +908,53 @@
   },
   "boss": "OK"
  },
+ "campiglia": {
+  "geometrie": "d14411523567",
+  "date": "2026-08-28",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 2,
+  "detail": {
+   "1": "OK",
+   "2": "OK"
+  },
+  "boss": "retard garanti 0.34 > 0.3"
+ },
+ "campoleone": {
+  "geometrie": "bdf50e3c90e7",
+  "date": "2026-08-28",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 2,
+  "detail": {
+   "1": "OK",
+   "2": "OK"
+  },
+  "boss": "retard garanti 0.34 > 0.3"
+ },
+ "cannes": {
+  "geometrie": "70b035b0eacc",
+  "date": "2026-08-28",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 1,
+  "detail": {
+   "1": "OK"
+  },
+  "boss": "file de 8 au même quai"
+ },
  "carcassonne": {
   "geometrie": "77ded9a3b8ea",
   "date": "2026-08-28",
@@ -956,6 +1003,24 @@
    "1": "OK",
    "2": "OK",
    "3": "OK"
+  },
+  "boss": "OK"
+ },
+ "caserta": {
+  "geometrie": "2a1610c41898",
+  "date": "2026-08-28",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 4,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK",
+   "4": "OK"
   },
   "boss": "OK"
  },
@@ -1095,6 +1160,23 @@
    "3": "OK"
   },
   "boss": "OK"
+ },
+ "ciampino": {
+  "geometrie": "6e3cbda8766e",
+  "date": "2026-08-28",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 3,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK"
+  },
+  "boss": "file de 6 au même quai"
  },
  "clermont-ferrand": {
   "geometrie": "845470b1e946",
@@ -1772,6 +1854,25 @@
   },
   "boss": "retard garanti 0.31 > 0.3"
  },
+ "genova": {
+  "geometrie": "b28e6cb2786d",
+  "date": "2026-08-28",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 5,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK",
+   "4": "OK",
+   "5": "OK"
+  },
+  "boss": "OK"
+ },
  "glasgow": {
   "geometrie": "d1e6b76a67e5",
   "date": "2026-08-28",
@@ -1826,6 +1927,22 @@
    "4": "OK"
   },
   "boss": "OK"
+ },
+ "grosseto": {
+  "geometrie": "08c6d8a2a73c",
+  "date": "2026-08-28",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 2,
+  "detail": {
+   "1": "OK",
+   "2": "OK"
+  },
+  "boss": "file de 7 au même quai"
  },
  "gunzburg": {
   "geometrie": "462a63152cec",
@@ -2330,6 +2447,22 @@
    "3": "OK"
   },
   "boss": "file de 6 au même quai"
+ },
+ "laspezia": {
+  "geometrie": "592370f33f7e",
+  "date": "2026-08-28",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 2,
+  "detail": {
+   "1": "OK",
+   "2": "OK"
+  },
+  "boss": "OK"
  },
  "lausanne": {
   "geometrie": "d87663a70522",
@@ -3107,6 +3240,25 @@
   },
   "boss": "OK"
  },
+ "napoli": {
+  "geometrie": "88b407a22d17",
+  "date": "2026-08-28",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 5,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK",
+   "4": "OK",
+   "5": "OK"
+  },
+  "boss": "OK"
+ },
  "narbonne": {
   "geometrie": "c525bc4dc473",
   "date": "2026-08-28",
@@ -3604,6 +3756,24 @@
   },
   "boss": "OK"
  },
+ "pisa": {
+  "geometrie": "628af8b20873",
+  "date": "2026-08-28",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 4,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK",
+   "4": "OK"
+  },
+  "boss": "OK"
+ },
  "plochingen": {
   "geometrie": "58302098797e",
   "date": "2026-08-27",
@@ -3857,6 +4027,25 @@
   },
   "boss": "file de 8 au même quai"
  },
+ "roma": {
+  "geometrie": "0c520c96fff4",
+  "date": "2026-08-28",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 5,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK",
+   "4": "OK",
+   "5": "OK"
+  },
+  "boss": "OK"
+ },
  "roosendaal": {
   "geometrie": "463a2a296a4a",
   "date": "2026-08-27",
@@ -4062,6 +4251,24 @@
    "2": "OK"
   },
   "boss": "file de 6 au même quai"
+ },
+ "savona": {
+  "geometrie": "19eeb8534e37",
+  "date": "2026-08-28",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 4,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK",
+   "4": "OK"
+  },
+  "boss": "retard garanti 0.31 > 0.3"
  },
  "schaffhausen": {
   "geometrie": "0037e6f895cd",
@@ -4572,6 +4779,22 @@
   },
   "boss": "OK"
  },
+ "ventimiglia": {
+  "geometrie": "b46a4f360de1",
+  "date": "2026-08-28",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 2,
+  "detail": {
+   "1": "OK",
+   "2": "OK"
+  },
+  "boss": "file de 7 au même quai"
+ },
  "vercelli": {
   "geometrie": "c155f38bff2b",
   "date": "2026-08-28",
@@ -4644,6 +4867,23 @@
  },
  "vierzon": {
   "geometrie": "cdb966292a65",
+  "date": "2026-08-28",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 3,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK"
+  },
+  "boss": "OK"
+ },
+ "villaliterno": {
+  "geometrie": "bcff3e3ac078",
   "date": "2026-08-28",
   "graines": [
    1,

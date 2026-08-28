@@ -1,0 +1,26 @@
+{
+  "id": "laspezia",
+  "name": "La Spezia",
+  "tagline": "Le verrou des Cinque Terre, entre deux tunnels",
+  "desc": "Gare de 1887 coincée entre deux tunnels au pied des collines : la porte d'accès unique des Cinque Terre, où les pointes saisonnières se superposent aux Intercity de la côte et aux régionaux du col de la Cisa vers Parme.",
+  "difficulty": 3,
+  "country": "🇮🇹 Italie",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }, { "id": 6 }
+  ],
+  "portals": {
+    "GENES": { "side": "L", "color": "#25dede", "abbr": "GE", "label": "GÊNES" },
+    "PISE":  { "side": "R", "color": "#f2588f", "abbr": "PI" },
+    "PARME": { "side": "R", "color": "#4ade80", "abbr": "PR" }
+  },
+  "links": {
+    "GENES": [1, 2, 3, 4, 5, 6],
+    "PISE":  [1, 2, 3, 4],
+    "PARME": [4, 5, 6]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 14, "nMax": 17, "gapMin": 1.7, "gapMax": 2.9,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6], "quietRate": 0.16, "rush": "pointe"
+  }
+}

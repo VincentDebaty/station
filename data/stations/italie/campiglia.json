@@ -1,0 +1,26 @@
+{
+  "id": "campiglia",
+  "name": "Campiglia Marittima",
+  "tagline": "La gare-portier de l'île d'Elbe",
+  "desc": "Tout le flux de l'Elbe change de train ici, dans une gare posée en plaine loin du bourg perché qui lui donne son nom : la branche électrifiée de Piombino part vers les ferries, le fret sidérurgique en toile de fond.",
+  "difficulty": 2,
+  "country": "🇮🇹 Italie",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
+  ],
+  "portals": {
+    "PISE":     { "side": "L", "color": "#f2588f", "abbr": "PI" },
+    "ROME":     { "side": "R", "color": "#25dede", "abbr": "RO" },
+    "PIOMBINO": { "side": "R", "color": "#4ade80", "abbr": "PB" }
+  },
+  "links": {
+    "PISE":     [1, 2, 3, 4, 5],
+    "ROME":     [1, 2, 3],
+    "PIOMBINO": [4, 5]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 13, "nMax": 16, "gapMin": 1.8, "gapMax": 3.0,
+    "cars": [2, 2, 3, 3, 4, 4, 5], "quietRate": 0.18, "rush": "pointe"
+  }
+}

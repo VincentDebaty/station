@@ -1,0 +1,26 @@
+{
+  "id": "campoleone",
+  "name": "Campoleone",
+  "tagline": "Le Y de la campagne romaine",
+  "desc": "Le plus important nœud ferroviaire au sud de Rome est une bifurcation pure en rase campagne : la ligne de Nettuno quitte ici la Direttissima de Naples, dans un Y que se partagent les navettes des deux lignes du littoral.",
+  "difficulty": 2,
+  "country": "🇮🇹 Italie",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
+  ],
+  "portals": {
+    "ROME":    { "side": "L", "color": "#f2588f", "abbr": "RO" },
+    "NAPLES":  { "side": "R", "color": "#25dede", "abbr": "NA" },
+    "NETTUNO": { "side": "R", "color": "#4ade80", "abbr": "NE" }
+  },
+  "links": {
+    "ROME":    [1, 2, 3, 4, 5],
+    "NAPLES":  [1, 2, 3],
+    "NETTUNO": [4, 5]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 13, "nMax": 16, "gapMin": 1.8, "gapMax": 3.0,
+    "cars": [2, 2, 3, 3, 4, 4, 5], "quietRate": 0.18, "rush": "double"
+  }
+}

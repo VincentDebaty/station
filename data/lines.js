@@ -528,5 +528,17 @@ const LINES = [
   { id: "L932", name: "La côte nord sicilienne",
     nodes: ["messina", "termini", "palermo"] },
   { id: "L933", name: "Bari – Foggia",
-    nodes: ["bari", "foggia"] }
+    nodes: ["bari", "foggia"] },
+  { id: "L934", name: "La Tyrrhénienne du Nord",
+    nodes: ["laspezia", "pisa", "campiglia", "grosseto", "roma"] },
+  { id: "L935", name: "Rome – Naples (par les Castelli et Caserte)",
+    nodes: ["roma", "ciampino", "campoleone", "villaliterno", "caserta", "napoli"] },
+  { id: "L936", name: "Naples – Salerne",
+    nodes: ["napoli", "salerno"] },
+  { id: "L937", name: "La Riviera (Toulon – Gênes)",
+    nodes: ["toulon", "cannes", "nice", "ventimiglia", "savona", "genova"] },
+  { id: "L938", name: "Tarascon – Miramas par Avignon et Cavaillon",
+    nodes: ["tarascon", "avignon", "miramas"] },
+  { id: "L939", name: "Gênes – La Spezia",
+    nodes: ["genova", "laspezia"] }
 ];

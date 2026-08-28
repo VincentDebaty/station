@@ -1,0 +1,29 @@
+{
+  "id": "savona",
+  "name": "Savone",
+  "tagline": "Le plus bas col des Alpes, en double exemplaire",
+  "desc": "La gare-monument de Nervi tourne le dos à la mer et regarde son port de fret. Vers le Piémont, deux voies uniques parallèles franchissent le col de Cadibona — l'une pour les directs, l'autre pour l'omnibus, une pseudo-double voie unique en son genre.",
+  "difficulty": 3,
+  "country": "🇮🇹 Italie",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 },
+    { "id": 5 }, { "id": 6 }, { "id": 7 }, { "id": 8 }
+  ],
+  "portals": {
+    "GENES":       { "side": "L", "color": "#f2588f", "abbr": "GE", "label": "GÊNES" },
+    "ALESSANDRIA": { "side": "L", "color": "#a78bfa", "abbr": "AL" },
+    "VINTIMILLE":  { "side": "R", "color": "#25dede", "abbr": "XX", "label": "VINTIMILLE" },
+    "TURIN":       { "side": "R", "color": "#f5b23c", "abbr": "TO" }
+  },
+  "links": {
+    "GENES":       [1, 2, 3, 4, 5],
+    "ALESSANDRIA": [6, 7, 8],
+    "VINTIMILLE":  [1, 2, 3, 4],
+    "TURIN":       [4, 5, 6, 7, 8]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 14, "nMax": 17, "gapMin": 1.7, "gapMax": 2.9,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6], "quietRate": 0.16, "rush": "pointe"
+  }
+}

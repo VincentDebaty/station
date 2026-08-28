@@ -92,14 +92,47 @@ ch(C,"Le Roussillon","Barcelone","Montpellier",[
 
 # =====================================================================
 D = acte("it","Acte IV — Le Midi et l'Italie","De la Camargue à la Sicile, et retour par le Pô")
+# ARLES REFUSÉE le 28 août 2026 (§0) : l'ancienne étoile à cinq branches est
+# réduite à un couloir — Port-Saint-Louis morte en voyageurs en 1932 et
+# déclassée en 2019, Lunel et Salon fermées. AVIGNON-CENTRE la remplace
+# (quatre sorties physiques, fiche de juillet déjà brevetée) : le chapitre
+# monte par Tarascon, marque Avignon sous les remparts, et redescend sur
+# Miramas par la ligne de Cavaillon, vivante à quatorze allers-retours par
+# jour. Sinuosité mesurée sous 1,5 — pas d'exception à déclarer.
 ch(D,"La Camargue","Montpellier","Marseille",[
-  g("Nîmes","nimes"),g("Tarascon","tarascon"),g("Arles"),g("Miramas","miramas"),g("Marseille Saint-Charles","marseille")])
+  g("Nîmes","nimes"),g("Tarascon","tarascon"),g("Avignon","avignon"),
+  g("Miramas","miramas"),g("Marseille Saint-Charles","marseille")])
+# SAINT-RAPHAËL, MONACO ET SAN REMO REFUSÉES le 28 août 2026 (§0) : trois
+# gares de passage à deux directions — Saint-Raphaël a perdu son littoral
+# varois en 1948 (le piège exact de l'ancienne bifurcation), Monaco et San
+# Remo sont des cavernes souterraines sur le seul fil de la côte. Cannes
+# tient par la ligne de Grasse (standard Lausanne, bifurcation à La Bocca),
+# Vintimille par la vallée de la Roya, bien vivante. Le chapitre tient à six.
 ch(D,"La Riviera","Marseille","Gênes",[
-  g("Toulon","toulon"),g("Saint-Raphaël"),g("Cannes"),g("Nice","nice"),g("Monaco"),g("Vintimille"),g("San Remo"),g("Savone"),g("Gênes Piazza Principe")])
+  g("Toulon","toulon"),g("Cannes","cannes"),g("Nice","nice"),
+  g("Vintimille","ventimiglia"),g("Savone","savona"),g("Gênes Piazza Principe","genova")])
+# LIVOURNE ET CIVITAVECCHIA REFUSÉES le 28 août 2026 (§0). Livourne : sa
+# troisième branche (Collesalvetti) est fret-seul depuis 1966, à 262 trains
+# PAR AN — il n'y a rien à y aiguiller. Civitavecchia : la branche du port est
+# suspendue depuis 2009, la ligne d'Orte déclassée en 2011. CAMPIGLIA
+# MARITTIMA les remplace : la gare-portier de l'île d'Elbe, trois directions
+# franches qui divergent EN GARE. Grosseto tient par sa ligne de Sienne
+# (diesel, terminus de fait — standard Lausanne, bifurcation à Montepescali).
 ch(D,"La Tyrrhénienne","Gênes","Rome",[
-  g("La Spezia"),g("Pise"),g("Livourne"),g("Grosseto"),g("Civitavecchia"),g("Rome Termini")])
+  g("La Spezia","laspezia"),g("Pise","pisa"),g("Campiglia Marittima","campiglia"),
+  g("Grosseto","grosseto"),g("Rome Termini","roma")])
+# LA DIRETTISSIMA EST UNE HÉCATOMBE (§0, 28 août 2026) : Latina, Fondi,
+# Minturno et Formia n'ont que deux directions — la branche de Gaeta est morte
+# en 1966, celle de Minturno détruite en 1944. Une seule survivante sur le
+# tronçon : Campoleone (le Y de Nettuno). Le chapitre est donc RE-ROUTÉ aux
+# deux bouts, sur du rail entièrement réel : entrée par Ciampino (l'éventail
+# des Castelli, première ligne des États pontificaux) et sortie par la rocade
+# Villa Literno – Cancello – Caserte (fret quotidien, voyageurs depuis
+# juillet 2026), qui ramène sur Naples par la gare du palais royal. C'est le
+# précédent du Fréjus : la route choisie par les règles, pas par la carte.
 ch(D,"La Campanie","Rome","Naples",[
-  g("Latina"),g("Fondi"),g("Formia"),g("Minturno"),g("Villa Literno"),g("Naples Centrale")])
+  g("Ciampino","ciampino"),g("Campoleone","campoleone"),g("Villa Literno","villaliterno"),
+  g("Caserte","caserta"),g("Naples Centrale","napoli")])
 # SAPRI ET CEFALÙ REFUSÉES le 28 août 2026 (§0) : gares de passage à deux
 # directions — Sapri n'a jamais eu de branche, Cefalù sera même déclassée en
 # halte souterraine par le doublement. TERMINI IMERESE remplace Cefalù :

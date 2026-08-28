@@ -1,0 +1,26 @@
+{
+  "id": "cannes",
+  "name": "Cannes",
+  "tagline": "Trois voies sous la Croisette",
+  "desc": "La ville est construite au-dessus des voies : une dalle urbaine de deux kilomètres couvre la gare. Trois voies seulement pour les TGV, les TER de la côte et la navette de Grasse — tout se joue au chausse-pied.",
+  "difficulty": 1,
+  "country": "🇫🇷 France",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }
+  ],
+  "portals": {
+    "MARSEILLE": { "side": "L", "color": "#25dede", "abbr": "MA" },
+    "GRASSE":    { "side": "L", "color": "#4ade80", "abbr": "GR" },
+    "NICE":      { "side": "R", "color": "#f2588f", "abbr": "NI" }
+  },
+  "links": {
+    "MARSEILLE": [1, 2],
+    "GRASSE":    [2, 3],
+    "NICE":      [1, 2, 3]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 11, "nMax": 13, "gapMin": 1.9, "gapMax": 3.2,
+    "cars": [2, 2, 2, 3, 3, 4], "quietRate": 0.2, "rush": "double"
+  }
+}

@@ -109,7 +109,8 @@ const GEO = {
         selestat: [7.442, 48.256],
         colmar: [7.347, 48.073],
         "aix-les-bains": [5.9086, 45.6889],
-        "bourg-en-bresse": [5.2153, 46.2028]
+        "bourg-en-bresse": [5.2153, 46.2028],
+        cannes: [7.0197, 43.5542]
       } },
     allemagne: { name: "Allemagne", flag: "🇩🇪", iso: "DEU", continent: "europe",
       cities: {
@@ -272,7 +273,20 @@ const GEO = {
         villasg: [15.6344, 38.2166],
         messina: [15.5609, 38.1851],
         termini: [13.7034, 37.9801],
-        palermo: [13.3669, 38.11]
+        palermo: [13.3669, 38.11],
+        laspezia: [9.8137, 44.1116],
+        pisa: [10.3983, 43.7083],
+        campiglia: [10.5868, 43.0173],
+        grosseto: [11.1067, 42.7675],
+        roma: [12.5019, 41.9008],
+        ciampino: [12.5995, 41.804],
+        campoleone: [12.6484, 41.6425],
+        villaliterno: [14.0678, 41.0049],
+        caserta: [14.3278, 41.0689],
+        napoli: [14.2721, 40.8525],
+        ventimiglia: [7.6101, 43.7927],
+        savona: [8.4703, 44.3069],
+        genova: [8.9214, 44.4172]
       } },
     "royaume-uni": { name: "Royaume-Uni", flag: "🇬🇧", iso: "GBR", continent: "europe",
       frame: [-6.3, 49.9, 1.9, 57.6], neighbors: { belgique: [3.25, 51.22] },

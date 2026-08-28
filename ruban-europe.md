@@ -194,10 +194,10 @@ les 123 fiches annoncées comme existantes existent bien au catalogue.
 
 | # | Chapitre | Gares, dans l'ordre du rail | n |
 |---|---|---|---|
-| 36 | La Camargue | Nîmes ✓ · Tarascon ✓ · Arles · Miramas ✓ · **Marseille Saint-Charles** ✓ | 5 |
-| 37 | La Riviera | Toulon ✓ · Saint-Raphaël · Cannes · Nice ✓ · Monaco · Vintimille · San Remo · Savone · **Gênes Piazza Principe** | 9 |
-| 38 | La Tyrrhénienne | La Spezia · Pise · Livourne · Grosseto · Civitavecchia · **Rome Termini** | 6 |
-| 39 | La Campanie | Latina · Fondi · Formia · Minturno · Villa Literno · **Naples Centrale** | 6 |
+| 36 | La Camargue | Nîmes ✓ · Tarascon ✓ · ~~Arles~~ Avignon ✓ · Miramas ✓ · **Marseille Saint-Charles** ✓ | 5 |
+| 37 | La Riviera | Toulon ✓ · ~~Saint-Raphaël~~ · Cannes ✓ · Nice ✓ · ~~Monaco~~ · Vintimille ✓ · ~~San Remo~~ · Savone ✓ · **Gênes Piazza Principe** ✓ | 6 |
+| 38 | La Tyrrhénienne | La Spezia ✓ · Pise ✓ · ~~Livourne~~ Campiglia Marittima ✓ · Grosseto ✓ · ~~Civitavecchia~~ · **Rome Termini** ✓ | 5 |
+| 39 | La Campanie | ~~Latina~~ Ciampino ✓ · ~~Fondi~~ Campoleone ✓ · ~~Formia~~ · ~~Minturno~~ · Villa Literno ✓ · Caserte ✓ · **Naples Centrale** ✓ | 5 |
 | 40 | Le train qui prend le bateau | Salerne ✓ · ~~Sapri~~ · Paola ✓ · Lamezia Terme ✓ · Villa San Giovanni ✓ · Messine ✓ · ~~Cefalù~~ Termini Imerese ✓ · **Palerme Centrale** ✓ | 7 |
 | | ⤳ **Saut (nuit)** | *Le Palerme–Naples de nuit — le ferry de Messine dans l'autre sens* | |
 | 41 | La Lucanie | Battipaglia ✓ · Potenza ✓ · Metaponto ✓ · Tarente ✓ · ~~Gioia del Colle~~ · **Bari Centrale** ✓ | 5 |

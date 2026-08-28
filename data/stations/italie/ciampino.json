@@ -1,0 +1,30 @@
+{
+  "id": "ciampino",
+  "name": "Ciampino",
+  "tagline": "L'éventail des Castelli Romani",
+  "desc": "Héritière de la première ligne des États pontificaux (1856) : trois branches à voie unique — Frascati, Albano, Velletri — et la grande ligne de Naples se disputent un unique tronc à double voie vers Termini. Tout retard sur une branche se propage à l'éventail.",
+  "difficulty": 3,
+  "country": "🇮🇹 Italie",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }, { "id": 6 }
+  ],
+  "portals": {
+    "ROME":     { "side": "L", "color": "#f2588f", "abbr": "RO" },
+    "FRASCATI": { "side": "R", "color": "#4ade80", "abbr": "FR" },
+    "ALBANO":   { "side": "R", "color": "#f5b23c", "abbr": "AL" },
+    "VELLETRI": { "side": "R", "color": "#a78bfa", "abbr": "VL" },
+    "CASSINO":  { "side": "R", "color": "#25dede", "abbr": "CA" }
+  },
+  "links": {
+    "ROME":     [1, 2, 3, 4, 5, 6],
+    "FRASCATI": [1, 2],
+    "ALBANO":   [2, 3],
+    "VELLETRI": [3, 4],
+    "CASSINO":  [5, 6]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 14, "nMax": 17, "gapMin": 1.7, "gapMax": 2.9,
+    "cars": [2, 2, 3, 3, 4, 4, 5], "quietRate": 0.16, "rush": "double"
+  }
+}
