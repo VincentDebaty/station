@@ -37,6 +37,8 @@ navigateur.
       "gares": ["arlon", "libramont", "marloie", "namur", "ottignies", "bruxelles-midi"],
       "plancher": 1,             // difficulté de départ du chapitre (§2.5)
       "arrivee": 3,              // plafond de la difficulté à l'arrivée (facultatif)
+      "sinuosite": 1.75,         // sinuosité ASSUMÉE au-dessus de 1,5 (facultatif, R7) —
+                                 // pour les rails réels qui serpentent (tour de la botte)
       "saut": {                  // rupture géographique AVANT ce chapitre (§4 bis)
         "mode": "nuit",          // "nuit" | "correspondance" | "mer"
         "texte": "Le train de nuit pour Marseille"

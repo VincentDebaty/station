@@ -167,7 +167,16 @@ listes.R6 = retours.map(([v, gs]) => `${v} : ${gs.join(", ")}`);
 // R7 — SINUOSITÉ ≤ 1,5. La longueur cumulée d'un chapitre, rapportée au vol
 // d'oiseau entre sa première et sa dernière gare. Au-delà, le chapitre a
 // quitté sa ligne réelle.
-const sinueux = [];
+//
+// SAUF SINUOSITÉ DÉCLARÉE (28 août 2026) : certains rails réels serpentent —
+// le tour de la botte avant le détroit de Messine mesure 1,73, la diagonale
+// ionienne de Lucanie 1,62, et ce sont bien les lignes réelles. Un chapitre
+// peut donc ASSUMER sa sinuosité en la déclarant (`sinuosite`), sur le modèle
+// de `arrivee` pour R9 : la règle vérifie alors contre la valeur déclarée.
+// L'exception est écrite dans la carte, visible ici, et bornée — une
+// sinuosité non déclarée au-dessus de 1,5 reste un refus, et une déclaration
+// devenue inutile (mesure repassée sous 1,5) est signalée pour être retirée.
+const sinueux = [], declarationsInutiles = [];
 for (const ch of chapitres) {
   const g = ch.gares || [];
   if (g.length < 2) continue;
@@ -176,11 +185,15 @@ for (const ch of chapitres) {
   const vol = km(g[0], g[g.length - 1]);
   if (!complet || !vol) continue;
   const s = cum / vol;
-  if (s > 1.5) sinueux.push(`${ch.id} : ${s.toFixed(2)} (${Math.round(cum)} km pour ${Math.round(vol)} à vol d'oiseau)`);
+  const tolere = ch.sinuosite || 1.5;
+  if (s > tolere) sinueux.push(`${ch.id} : ${s.toFixed(2)} (${Math.round(cum)} km pour ${Math.round(vol)} à vol d'oiseau${ch.sinuosite ? `, déclarée ${ch.sinuosite}` : ""})`);
+  else if (ch.sinuosite && s <= 1.5) declarationsInutiles.push(`${ch.id} : déclarée ${ch.sinuosite}, mesurée ${s.toFixed(2)} — retirer la déclaration`);
 }
-R("R7", "sinuosité ≤ 1,5 par chapitre", !sinueux.length,
-  sinueux.length ? sinueux.length + " chapitre(s) trop sinueux" : "tous sous 1,5");
-listes.R7 = sinueux;
+const nDeclares = chapitres.filter(c => c.sinuosite).length;
+R("R7", "sinuosité ≤ 1,5 par chapitre (sauf déclarée)", !sinueux.length,
+  sinueux.length ? sinueux.length + " chapitre(s) trop sinueux" :
+    nDeclares ? `tous dans leur borne (${nDeclares} déclarée(s))` : "tous sous 1,5");
+listes.R7 = [...sinueux, ...declarationsInutiles];
 
 // R8 — LA DIFFICULTÉ PORTABLE CROÎT LE LONG DU CHAPITRE, et la grande gare
 // finale est la plus haute. AVERTISSEMENT et non erreur : la géométrie a le
