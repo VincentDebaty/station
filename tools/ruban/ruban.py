@@ -102,8 +102,15 @@ ch(C,"Le Levant","Malaga","Valence",[
   g("Grenade"),g("Guadix"),g("Almería"),g("Lorca"),g("Murcie"),g("Alicante"),g("Valence-Nord")])
 ch(C,"La ligne de Teruel","Valence","Saragosse",[
   g("Sagonte"),g("Segorbe"),g("Caudiel"),g("Teruel"),g("Calamocha"),g("Saragosse-Delicias")])
+# VILANOVA I LA GELTRÚ REFUSÉE le 28 août 2026 (§0) : passante à deux bouts
+# sur la côte, malgré son musée du rail dans la rotonde. SANT VICENÇ DE
+# CALDERS la remplace : le Y du Penedès, deux itinéraires vers Barcelone qui
+# s'y séparent et trois terminus de banlieue — la vraie bifurcation du
+# tronçon. Tarragone tient par ses trois directions de trafic (la bifurcation
+# de Vila-seca est à 5 km — standard Lausanne), Lérida par ses cinq sorties.
 ch(C,"L'Èbre","Saragosse","Barcelone",[
-  g("Lérida"),g("Reus"),g("Tarragone"),g("Vilanova i la Geltrú"),g("Barcelone-Sants")])
+  g("Lérida","lleida"),g("Reus","reus"),g("Tarragone","tarragona"),
+  g("Sant Vicenç de Calders","santvicenc"),g("Barcelone-Sants","barcelona")])
 # LE ROUSSILLON A FUSIONNÉ AVEC LA CAMARGUE le 28 août 2026 (décision de
 # Vincent, option A) : sa moitié espagnole est morte au §0 — Gérone et
 # Figueres sont des passantes depuis la fermeture des lignes d'Olot et de

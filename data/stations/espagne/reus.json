@@ -1,0 +1,26 @@
+{
+  "id": "reus",
+  "name": "Reus",
+  "tagline": "L'étoile de 1856",
+  "desc": "Une des plus anciennes gares de Catalogne, et la vraie bifurcation du Camp de Tarragone : la ligne directe de Lérida et celle de l'Èbre divergent au ras des quais, pendant que l'antenne de la pétrochimie part vers le nord.",
+  "difficulty": 2,
+  "country": "🇪🇸 Espagne",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
+  ],
+  "portals": {
+    "TARRAGONE": { "side": "L", "color": "#25dede", "abbr": "TA" },
+    "LERIDA":    { "side": "R", "color": "#f5b23c", "abbr": "LL", "label": "LÉRIDA" },
+    "MORA":      { "side": "R", "color": "#4ade80", "abbr": "MO", "label": "MÓRA" }
+  },
+  "links": {
+    "TARRAGONE": [1, 2, 3, 4, 5],
+    "LERIDA":    [1, 2, 3],
+    "MORA":      [3, 4, 5]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 13, "nMax": 16, "gapMin": 1.8, "gapMax": 3.0,
+    "cars": [2, 2, 3, 3, 4, 4, 5], "quietRate": 0.18, "rush": "pointe"
+  }
+}

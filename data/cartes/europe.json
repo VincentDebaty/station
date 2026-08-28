@@ -3,14 +3,14 @@
  "nom": "L'Europe",
  "gratuite": true,
  "enChantier": true,
- "note": "Tranche livree du ruban : chapitres 35 a 59 de ruban-europe.md (Bussoleno vers Hambourg) — l'acte V en entier. Le ruban complet va de Cork a Istanbul ; les actes I a IV se greffent DEVANT celui-ci quand ils seront ecrits.",
+ "note": "Tranche livree du ruban : chapitres 34 a 59 de ruban-europe.md (Bussoleno vers Hambourg) — l'acte V en entier. Le ruban complet va de Cork a Istanbul ; les actes I a IV se greffent DEVANT celui-ci quand ils seront ecrits.",
  "echelle": {
   "kmMinEntreHubs": 110
  },
  "zones": [
   {
    "id": "alpes",
-   "nom": "L'Italie du Nord, les Alpes et la Lorraine",
+   "nom": "L'arc méditerranéen et les Alpes",
    "couleur": "#c084fc"
   },
   {
@@ -26,6 +26,20 @@
  ],
  "chapitres": [
   {
+   "id": "l-ebre",
+   "nom": "L'Èbre",
+   "zone": "alpes",
+   "gares": [
+    "lleida",
+    "reus",
+    "tarragona",
+    "santvicenc",
+    "barcelona"
+   ],
+   "plancher": 1,
+   "arrivee": 3
+  },
+  {
    "id": "le-roussillon-et-la-camargue",
    "nom": "Le Roussillon et la Camargue",
    "zone": "alpes",
@@ -40,8 +54,8 @@
     "miramas",
     "marseille"
    ],
-   "plancher": 1,
-   "arrivee": 3,
+   "plancher": 2,
+   "arrivee": 4,
    "saut": {
     "mode": "lgv",
     "texte": "Le tunnel du Perthus — de Barcelone à Perpignan par la grande vitesse"

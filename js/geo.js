@@ -292,6 +292,14 @@ const GEO = {
         savona: [8.4703, 44.3069],
         genova: [8.9214, 44.4172]
       } },
+    "espagne": { name: "Espagne", flag: "🇪🇸", iso: "ES", continent: "europe",
+      cities: {
+        lleida: [0.6328, 41.6208],
+        reus: [1.1003, 41.1606],
+        tarragona: [1.2531, 41.1114],
+        santvicenc: [1.525, 41.1861],
+        barcelona: [2.14, 41.3789]
+      } },
     "royaume-uni": { name: "Royaume-Uni", flag: "🇬🇧", iso: "GBR", continent: "europe",
       frame: [-6.3, 49.9, 1.9, 57.6], neighbors: { belgique: [3.25, 51.22] },
       cities: {

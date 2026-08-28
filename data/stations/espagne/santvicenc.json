@@ -1,0 +1,26 @@
+{
+  "id": "santvicenc",
+  "name": "Sant Vicenç de Calders",
+  "tagline": "Le Y du Penedès",
+  "desc": "Une gare-carrefour posée en zone balnéaire qui ne dessert presque aucune ville : deux itinéraires vers Barcelone — la côte et l'intérieur — s'y séparent, et trois lignes de banlieue viennent y mourir en terminus.",
+  "difficulty": 2,
+  "country": "🇪🇸 Espagne",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
+  ],
+  "portals": {
+    "TARRAGONE":  { "side": "L", "color": "#25dede", "abbr": "TA" },
+    "BARCELONE":  { "side": "R", "color": "#f2588f", "abbr": "BC" },
+    "VILAFRANCA": { "side": "R", "color": "#4ade80", "abbr": "VF" }
+  },
+  "links": {
+    "TARRAGONE":  [1, 2, 3, 4, 5],
+    "BARCELONE":  [1, 2, 3],
+    "VILAFRANCA": [3, 4, 5]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 13, "nMax": 16, "gapMin": 1.8, "gapMax": 3.0,
+    "cars": [2, 2, 3, 3, 4, 4, 5], "quietRate": 0.18, "rush": "double"
+  }
+}

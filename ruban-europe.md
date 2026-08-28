@@ -188,7 +188,7 @@ les 123 fiches annoncées comme existantes existent bien au catalogue.
 | 31 | La Bétique | Utrera · Marchena · Osuna · Bobadilla · Antequera · **Malaga María Zambrano** | 6 |
 | 32 | Le Levant | Grenade · Guadix · Almería · Lorca · Murcie · Alicante · **Valence-Nord** | 7 |
 | 33 | La ligne de Teruel | Sagonte · Segorbe · Caudiel · Teruel · Calamocha · **Saragosse-Delicias** | 6 |
-| 34 | L'Èbre | Lérida · Reus · Tarragone · Vilanova i la Geltrú · **Barcelone-Sants** | 5 |
+| 34 | L'Èbre | Lérida ✓ · Reus ✓ · Tarragone ✓ · ~~Vilanova i la Geltrú~~ Sant Vicenç de Calders ✓ · **Barcelone-Sants** ✓ | 5 |
 
 ## Acte IV — Le Midi et l'Italie
 

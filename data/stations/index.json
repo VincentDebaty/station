@@ -341,5 +341,16 @@
       "savona",
       "genova"
     ]
+  },
+  {
+    "country": "espagne",
+    "label": "🇪🇸 Espagne",
+    "stations": [
+      "lleida",
+      "reus",
+      "tarragona",
+      "santvicenc",
+      "barcelona"
+    ]
   }
 ]

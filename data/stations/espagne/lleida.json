@@ -1,0 +1,109 @@
+{
+  "id": "lleida",
+  "name": "Lérida",
+  "tagline": "Deux écartements sous une même halle",
+  "desc": "Cinq sorties, deux réseaux : les voies larges ibériques et la grande vitesse européenne cohabitent sous la verrière de 2003, accolée au palais de 1920 — pendant que les autorails de La Pobla de Segur partent de leur quai à part.",
+  "difficulty": 4,
+  "country": "🇪🇸 Espagne",
+  "platforms": [
+    {
+      "id": 1
+    },
+    {
+      "id": 2
+    },
+    {
+      "id": 3
+    },
+    {
+      "id": 4
+    },
+    {
+      "id": 5
+    },
+    {
+      "id": 6
+    },
+    {
+      "id": 7
+    },
+    {
+      "id": 8
+    }
+  ],
+  "portals": {
+    "MADRID": {
+      "side": "L",
+      "color": "#f2588f",
+      "abbr": "MD"
+    },
+    "SARAGOSSE": {
+      "side": "L",
+      "color": "#f5b23c",
+      "abbr": "ZA"
+    },
+    "TARRAGONE": {
+      "side": "R",
+      "color": "#25dede",
+      "abbr": "TA"
+    },
+    "MANRESA": {
+      "side": "R",
+      "color": "#4ade80",
+      "abbr": "MN"
+    },
+    "LA POBLA": {
+      "side": "R",
+      "color": "#a78bfa",
+      "abbr": "LP"
+    }
+  },
+  "links": {
+    "MADRID": [
+      1,
+      2,
+      3,
+      4
+    ],
+    "SARAGOSSE": [
+      5,
+      6,
+      7,
+      8
+    ],
+    "TARRAGONE": [
+      2,
+      3,
+      4,
+      5,
+      6
+    ],
+    "MANRESA": [
+      6,
+      7,
+      8
+    ],
+    "LA POBLA": [
+      1,
+      2
+    ]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 16,
+    "nMax": 19,
+    "gapMin": 1.6,
+    "gapMax": 2.7,
+    "cars": [
+      2,
+      3,
+      3,
+      4,
+      4,
+      5,
+      5
+    ],
+    "quietRate": 0.14,
+    "rush": "pointe"
+  }
+}

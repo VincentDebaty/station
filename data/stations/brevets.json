@@ -414,6 +414,25 @@
   },
   "boss": "file de 6 au même quai"
  },
+ "barcelona": {
+  "geometrie": "39d079c9e62e",
+  "date": "2026-08-28",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 5,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK",
+   "4": "OK",
+   "5": "OK"
+  },
+  "boss": "OK"
+ },
  "bari": {
   "geometrie": "83e38fafa08c",
   "date": "2026-08-28",
@@ -2694,6 +2713,25 @@
   },
   "boss": "OK"
  },
+ "lleida": {
+  "geometrie": "ae148b853d61",
+  "date": "2026-08-28",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 5,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK",
+   "4": "OK",
+   "5": "OK"
+  },
+  "boss": "OK"
+ },
  "lokeren": {
   "geometrie": "a64d387a2de4",
   "date": "2026-08-28",
@@ -4028,6 +4066,22 @@
   },
   "boss": "OK"
  },
+ "reus": {
+  "geometrie": "0706db378c2d",
+  "date": "2026-08-28",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 2,
+  "detail": {
+   "1": "OK",
+   "2": "OK"
+  },
+  "boss": "file de 7 au même quai"
+ },
  "rheine": {
   "geometrie": "c4d467193fd0",
   "date": "2026-08-27",
@@ -4303,6 +4357,22 @@
   },
   "boss": "file de 7 au même quai"
  },
+ "santvicenc": {
+  "geometrie": "af442b4899bc",
+  "date": "2026-08-28",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 2,
+  "detail": {
+   "1": "OK",
+   "2": "OK"
+  },
+  "boss": "file de 7 au même quai"
+ },
  "sarrebourg": {
   "geometrie": "f02f03b8d69f",
   "date": "2026-08-27",
@@ -4547,6 +4617,23 @@
    "2": "OK"
   },
   "boss": "retard garanti 0.31 > 0.3"
+ },
+ "tarragona": {
+  "geometrie": "fa485eb57abd",
+  "date": "2026-08-28",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 3,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK"
+  },
+  "boss": "OK"
  },
  "termini": {
   "geometrie": "dc6dbfe39adc",
