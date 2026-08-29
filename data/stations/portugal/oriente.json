@@ -1,0 +1,30 @@
+{
+  "id": "oriente",
+  "name": "Lisboa Oriente",
+  "tagline": "Les palmiers d'acier de Calatrava",
+  "desc": "Huit voies en viaduc sous la canopée dressée pour l'Expo 98 : les urbains d'Azambuja et de Sintra y croisent les Intercidades de l'Algarve et l'Alfa de Porto. Santa Apolónia n'est qu'à deux kilomètres, mais c'est ici que la capitale s'aiguille.",
+  "difficulty": 3,
+  "country": "🇵🇹 Portugal",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }, { "id": 6 }
+  ],
+  "portals": {
+    "STA APOLONIA": { "side": "L", "color": "#f5b23c", "abbr": "SA", "label": "SANTA APOLÓNIA" },
+    "SINTRA":       { "side": "L", "color": "#a78bfa", "abbr": "SI" },
+    "FARO":         { "side": "L", "color": "#4ade80", "abbr": "FA" },
+    "PORTO":        { "side": "R", "color": "#25dede", "abbr": "P" },
+    "AZAMBUJA":     { "side": "R", "color": "#60a5fa", "abbr": "AZ" }
+  },
+  "links": {
+    "STA APOLONIA": [1, 2, 3, 4],
+    "SINTRA":       [4, 5, 6],
+    "FARO":         [5, 6],
+    "PORTO":        [1, 2, 3, 4, 5, 6],
+    "AZAMBUJA":     [3, 4, 5, 6]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 15, "nMax": 18, "gapMin": 1.6, "gapMax": 2.9,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6, 7], "quietRate": 0.14, "rush": "double"
+  }
+}

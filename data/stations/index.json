@@ -375,7 +375,12 @@
     "country": "portugal",
     "label": "🇵🇹 Portugal",
     "stations": [
-      "nine"
+      "nine",
+      "oriente",
+      "alfarelos",
+      "pampilhosa",
+      "aveiro",
+      "porto"
     ]
   }
 ]

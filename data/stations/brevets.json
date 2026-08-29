@@ -115,6 +115,23 @@
   },
   "boss": "file de 6 au même quai"
  },
+ "alfarelos": {
+  "geometrie": "5ddb4e363c40",
+  "date": "2026-08-29",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 3,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK"
+  },
+  "boss": "OK"
+ },
  "alicante": {
   "geometrie": "d4f41a70d8bd",
   "date": "2026-08-28",
@@ -396,6 +413,22 @@
    "4": "OK"
   },
   "boss": "OK"
+ },
+ "aveiro": {
+  "geometrie": "7ef06f785a7c",
+  "date": "2026-08-29",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 2,
+  "detail": {
+   "1": "OK",
+   "2": "OK"
+  },
+  "boss": "retard garanti 0.30 > 0.3"
  },
  "avignon": {
   "geometrie": "7e6b525ab8db",
@@ -3755,6 +3788,24 @@
   },
   "boss": "retard garanti 0.30 > 0.3"
  },
+ "oriente": {
+  "geometrie": "1711c3b2e3e3",
+  "date": "2026-08-29",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 4,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK",
+   "4": "OK"
+  },
+  "boss": "OK"
+ },
  "orleans": {
   "geometrie": "18d48c5e2603",
   "date": "2026-08-28",
@@ -3881,6 +3932,24 @@
  "palermo": {
   "geometrie": "2a2fa9c198bc",
   "date": "2026-08-28",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 4,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK",
+   "4": "OK"
+  },
+  "boss": "OK"
+ },
+ "pampilhosa": {
+  "geometrie": "e1bedb24b454",
+  "date": "2026-08-29",
   "graines": [
    1,
    2,
@@ -4157,6 +4226,25 @@
    "3": "OK"
   },
   "boss": "file de 6 au même quai"
+ },
+ "porto": {
+  "geometrie": "cd561cd31be6",
+  "date": "2026-08-29",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 5,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK",
+   "4": "OK",
+   "5": "OK"
+  },
+  "boss": "OK"
  },
  "potenza": {
   "geometrie": "dbfbb9114599",

@@ -1,0 +1,38 @@
+{
+  "id": "porto",
+  "name": "Porto-Campanhã",
+  "city": "Porto",
+  "tagline": "Les azulejos sont à São Bento, les trains sont ici",
+  "desc": "Pendant que São Bento reçoit les touristes sous ses azulejos, Campanhã fait le travail : Alfa Pendular de Lisbonne, Celta de Vigo, urbains de Braga, de Guimarães et du Douro s'y croisent avant de plonger vers la gare historique. Le chantier de la grande vitesse Porto–Lisbonne s'ouvre à ses portes.",
+  "difficulty": 5,
+  "country": "🇵🇹 Portugal",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },
+    { "id": 6 }, { "id": 7 }, { "id": 8 }, { "id": 9 }, { "id": 10 }
+  ],
+  "portals": {
+    "SAO BENTO": { "side": "L", "color": "#fb923c", "abbr": "SB", "label": "SÃO BENTO" },
+    "AVEIRO":    { "side": "L", "color": "#f5b23c", "abbr": "AV" },
+    "LISBONNE":  { "side": "L", "color": "#25dede", "abbr": "LI" },
+    "BRAGA":     { "side": "R", "color": "#4ade80", "abbr": "BR" },
+    "GUIMARAES": { "side": "R", "color": "#a78bfa", "abbr": "GU", "label": "GUIMARÃES" },
+    "VIANA":     { "side": "R", "color": "#60a5fa", "abbr": "VC" },
+    "REGUA":     { "side": "R", "color": "#f2588f", "abbr": "RE", "label": "RÉGUA" }
+  },
+  "links": {
+    "SAO BENTO": [1, 2],
+    "AVEIRO":    [1, 2, 3, 4],
+    "LISBONNE":  [4, 5, 6, 7, 8, 9, 10],
+    "BRAGA":     [1, 2, 3, 4, 5, 6],
+    "GUIMARAES": [6, 7, 8],
+    "VIANA":     [7, 8, 9],
+    "REGUA":     [9, 10]
+  },
+  "sameSidePairs": [
+    ["AVEIRO", "SAO BENTO"], ["SAO BENTO", "AVEIRO"]
+  ],
+  "gen": {
+    "nMin": 18, "nMax": 22, "gapMin": 1.5, "gapMax": 2.5,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6], "quietRate": 0.12, "rush": "double"
+  }
+}

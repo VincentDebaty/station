@@ -3,7 +3,7 @@
  "nom": "L'Europe",
  "gratuite": true,
  "enChantier": true,
- "note": "Tranche livree du ruban : chapitres 29 a 57 de ruban-europe.md (Bussoleno vers Hambourg) — l'acte V en entier. Le ruban complet va de Cork a Istanbul ; les actes I a IV se greffent DEVANT celui-ci quand ils seront ecrits.",
+ "note": "Tranche livree du ruban : chapitres 28 a 57 de ruban-europe.md (Bussoleno vers Hambourg) — l'acte V en entier. Le ruban complet va de Cork a Istanbul ; les actes I a IV se greffent DEVANT celui-ci quand ils seront ecrits.",
  "echelle": {
   "kmMinEntreHubs": 110
  },
@@ -26,6 +26,20 @@
  ],
  "chapitres": [
   {
+   "id": "la-cote-d-argent",
+   "nom": "La côte d'Argent",
+   "zone": "alpes",
+   "gares": [
+    "oriente",
+    "alfarelos",
+    "pampilhosa",
+    "aveiro",
+    "porto"
+   ],
+   "plancher": 1,
+   "arrivee": 3
+  },
+  {
    "id": "la-galice",
    "nom": "La Galice",
    "zone": "alpes",
@@ -36,8 +50,8 @@
     "medina",
     "madrid-atocha"
    ],
-   "plancher": 1,
-   "arrivee": 3,
+   "plancher": 2,
+   "arrivee": 4,
    "portees": [
     [
      "ourense",

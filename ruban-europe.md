@@ -23,16 +23,16 @@ Chaque région est traversée **une fois**, et on n'y revient jamais.
 |---|---|
 | Actes | **9** |
 | Chapitres | **91** |
-| Gares — c'est-à-dire **niveaux** | **557** |
-| Fiches déjà écrites, réemployées telles quelles | **204** |
-| Fiches à écrire | **353** |
+| Gares — c'est-à-dire **niveaux** | **555** |
+| Fiches déjà écrites, réemployées telles quelles | **209** |
+| Fiches à écrire | **346** |
 | Sauts déclarés (§4 bis) | **10** |
 | Longueur des chapitres | 5 à 9 gares, médiane 6 |
 
 **Vérifié par script** (`scratchpad/verif.py`, à porter dans `carte-check` au
 lot C) : les 91 chapitres tiennent tous R3 (5 à 10 gares), aucune gare
 n'apparaît deux fois (R6), le chaînage est continu d'un bout à l'autre, et
-les 204 fiches annoncées comme existantes existent bien au catalogue.
+les 209 fiches annoncées comme existantes existent bien au catalogue.
 
 ## Comment lire les tableaux
 
@@ -176,7 +176,7 @@ les 204 fiches annoncées comme existantes existent bien au catalogue.
 
 ## Acte III — L'Ibérie
 
-*La grande boucle de la péninsule* — 8 chapitres, **52 gares** (24 déjà écrites, 28 à écrire).
+*La grande boucle de la péninsule* — 8 chapitres, **50 gares** (29 déjà écrites, 21 à écrire).
 
 > ⚠️ **La ligne de Teruel est fondue dans le Levant** (28 août 2026, option B,
 > décision de Vincent). Quatre refus §0 d'un coup, mesurés le jour même :
@@ -229,12 +229,22 @@ les 204 fiches annoncées comme existantes existent bien au catalogue.
 > de juillet 2022. Nine ouvre le **Portugal** au catalogue. Redondela reste en
 > réserve documentée. La ligne du Minho est coupée pour rénovation
 > (avril 2026 → 2027) : des travaux, pas un déclin.
+>
+> ⚠️ **La côte d'Argent se recompose** (29 août 2026, cinq refus §0) :
+> Azambuja, Santarém, Pombal sont des passantes pures, Espinho a perdu le
+> Vouga au profit d'Espinho-Vouga (halte séparée, règle Lille-Flandres), et
+> **Coimbra-B est le piège n° 1 le plus frais du catalogue** — son ramal vers
+> la ville est mort le 12 janvier 2025, converti en Metrobus. Les
+> bifurcations vivantes prennent le relais : Lisboa Oriente, Alfarelos,
+> Pampilhosa (Beira Alta rouverte le 28 septembre 2025), Aveiro (la voie
+> métrique du Vouga, CP). Entroncamento reste à l'Estrémadure ; Braço de
+> Prata en réserve documentée.
 
 | # | Chapitre | Gares, dans l'ordre du rail | n |
 |---|---|---|---|
 | 26 | La Castille | Miranda de Ebro · Burgos · Palencia · Valladolid · Ávila · **Madrid-Chamartín** | 6 |
 | 27 | L'Estrémadure | Talavera de la Reina · Navalmoral · Cáceres · Mérida · Badajoz · Elvas · Entroncamento · **Lisbonne Santa Apolónia** | 8 |
-| 28 | La côte d'Argent | Azambuja · Santarém · Pombal · Coimbra · Aveiro · Espinho · **Porto Campanhã** | 7 |
+| 28 | La côte d'Argent | ~~Azambuja~~ ~~Santarém~~ ~~Pombal~~ Lisboa Oriente ✓ · Alfarelos ✓ · ~~Coimbra~~ Pampilhosa ✓ · Aveiro ✓ · ~~Espinho~~ · **Porto Campanhã** ✓ | 5 |
 | 29 | La Galice | Nine ✓ · ~~Valença~~ Vigo-Guixar ✓ · Ourense-Empalme ✓ · ~~Zamora~~ Medina del Campo ✓ · **Madrid-Atocha** ✓ | 5 |
 | 30 | L'Andalousie et la Bétique | ~~Aranjuez~~ Alcázar de San Juan ✓ · Ciudad Real ✓ · Puertollano ✓ · Córdoba Central ✓ · Séville Santa Justa ✓ · ~~Utrera~~ ~~Marchena~~ ~~Osuna~~ Dos Hermanas ✓ · Bobadilla ✓ · Antequera-Santa Ana ✓ · **Málaga-María Zambrano** ✓ | 9 |
 | | ⤳ **Saut (lgv)** | *Le Corredor Mediterráneo — de Malaga à Murcie par la côte d'Almería* | |

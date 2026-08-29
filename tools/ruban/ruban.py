@@ -90,8 +90,24 @@ ch(C,"La Castille","Bilbao","Madrid",[
   g("Miranda de Ebro"),g("Burgos"),g("Palencia"),g("Valladolid"),g("Ávila"),g("Madrid-Chamartín")])
 ch(C,"L'Estrémadure","Madrid","Lisbonne",[
   g("Talavera de la Reina"),g("Navalmoral"),g("Cáceres"),g("Mérida"),g("Badajoz"),g("Elvas"),g("Entroncamento"),g("Lisbonne Santa Apolónia")])
+# CINQ REFUS §0 SUR LA LINHA DO NORTE, mesurés le 29 août 2026. Azambuja,
+# Santarém et Pombal sont des passantes pures (la « Linha da Azambuja » est un
+# nom de service, la bifurcation de Vendas Novas est à Setil ET fret-seul
+# depuis 2005, Pombal n'a jamais eu de ramal — même ses correspondances de
+# 1913 étaient des diligences). ESPINHO : le Vouga part d'Espinho-Vouga, une
+# halte séparée depuis l'enfouissement de 2008 — la règle Lille-Flandres.
+# Et COIMBRA-B est le piège n° 1 dans sa version la plus fraîche : le ramal
+# vers Coimbra-ville est mort le 12 JANVIER 2025, converti en Metrobus — la
+# Beira Alta bifurque à Pampilhosa, Figueira à Alfarelos, il ne reste que
+# deux bouts. Le chapitre se recompose sur les bifurcations VIVANTES :
+# Lisboa Oriente (la nef de Calatrava — gare distincte de Santa Apolónia,
+# §4), Alfarelos (le seul aiguillage voyageurs entre Setil et Pampilhosa),
+# Pampilhosa (la Beira Alta a rouvert en entier le 28 septembre 2025),
+# Aveiro (la dernière voie métrique de CP, ~10 trains/jour vers Águeda).
+# Cinq gares, le plancher de R3 — Entroncamento reste à l'Estrémadure.
 ch(C,"La côte d'Argent","Lisbonne","Porto",[
-  g("Azambuja"),g("Santarém"),g("Pombal"),g("Coimbra"),g("Aveiro"),g("Espinho"),g("Porto Campanhã")])
+  g("Lisboa Oriente","oriente"),g("Alfarelos","alfarelos"),g("Pampilhosa","pampilhosa"),
+  g("Aveiro","aveiro"),g("Porto Campanhã","porto")])
 # VALENÇA ET ZAMORA REFUSÉES le 28 août 2026 (§0, piège n° 1 deux fois) :
 # Valença a perdu sa ligne de Monção le 2 janvier 1990 (une écopiste
 # aujourd'hui) ; Zamora n'a jamais été aussi desservie (huit Alvia par jour)

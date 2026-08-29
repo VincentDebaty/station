@@ -566,5 +566,9 @@ const LINES = [
   { id: "L951", name: "La Galice (Nine – Madrid)",
     nodes: ["nine", "vigo", "ourense", "medina", "madrid-atocha"] },
   { id: "L952", name: "La Meseta (Madrid – Alcázar)",
-    nodes: ["madrid-atocha", "alcazar"] }
+    nodes: ["madrid-atocha", "alcazar"] },
+  { id: "L953", name: "La côte d'Argent (Lisboa Oriente – Porto)",
+    nodes: ["oriente", "alfarelos", "pampilhosa", "aveiro", "porto"] },
+  { id: "L954", name: "La ligne du Minho (Porto – Nine)",
+    nodes: ["porto", "nine"] }
 ];

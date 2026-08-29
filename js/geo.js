@@ -320,7 +320,12 @@ const GEO = {
       } },
     "portugal": { name: "Portugal", flag: "🇵🇹", iso: "PT", continent: "europe",
       cities: {
-        nine: [-8.542, 41.469]
+        nine: [-8.542, 41.469],
+        oriente: [-9.099, 38.767],
+        alfarelos: [-8.657, 40.147],
+        pampilhosa: [-8.428, 40.339],
+        aveiro: [-8.643, 40.643],
+        porto: [-8.5854, 41.1488]
       } },
     "royaume-uni": { name: "Royaume-Uni", flag: "🇬🇧", iso: "GBR", continent: "europe",
       frame: [-6.3, 49.9, 1.9, 57.6], neighbors: { belgique: [3.25, 51.22] },

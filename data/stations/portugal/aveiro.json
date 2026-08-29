@@ -1,0 +1,26 @@
+{
+  "id": "aveiro",
+  "name": "Aveiro",
+  "tagline": "La voie métrique du Vouga s'amarre au Norte",
+  "desc": "Entre Porto et Coimbra, la lagune d'Aveiro garde la dernière ligne à voie métrique de CP : les autorails du Vouga partent d'un quai à part vers Águeda, raccordé en 1911. À côté, la ligne du Nord déroule Alfa Pendular, Intercidades et les urbains de Porto.",
+  "difficulty": 2,
+  "country": "🇵🇹 Portugal",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
+  ],
+  "portals": {
+    "LISBONNE": { "side": "L", "color": "#f5b23c", "abbr": "LX" },
+    "AGUEDA":   { "side": "L", "color": "#4ade80", "abbr": "AG", "label": "ÁGUEDA" },
+    "PORTO":    { "side": "R", "color": "#25dede", "abbr": "P" }
+  },
+  "links": {
+    "LISBONNE": [1, 2, 3, 4],
+    "AGUEDA":   [4, 5],
+    "PORTO":    [1, 2, 3, 4, 5]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 13, "nMax": 16, "gapMin": 1.8, "gapMax": 3.0,
+    "cars": [2, 2, 3, 3, 4, 4, 5, 6], "quietRate": 0.2, "rush": "double"
+  }
+}
