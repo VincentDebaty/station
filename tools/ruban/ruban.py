@@ -81,8 +81,26 @@ ch(B,"Le littoral atlantique","Nantes","Bordeaux",[
 ch(B,"Le Périgord et la Garonne","Bordeaux","Toulouse",[
   g("Libourne","libourne"),g("Périgueux","perigueux"),g("Agen","agen"),
   g("Montauban","montauban"),g("Toulouse Matabiau","toulouse")])
-ch(B,"Le piémont pyrénéen","Toulouse","Bilbao",[
-  g("Saint-Gaudens"),g("Tarbes"),g("Pau"),g("Orthez"),g("Bayonne"),g("Hendaye"),g("Irún"),g("Bilbao Abando")])
+# LE PIÉMONT S'ARRÊTE À BAYONNE (décision de Vincent, 29 août 2026). Six
+# refus §0 : Saint-Gaudens et Orthez (passantes pures), Tarbes (piège n° 1 —
+# son étoile est morte en 1970, et Lourdes n'est pas une direction : elle est
+# SUR la ligne de Pau), Lourdes elle-même (sa ligne de Pierrefitte est une
+# voie verte depuis 1997), et surtout HENDAYE et IRÚN, à UNE direction
+# chacune : plus aucun train de voyageurs ne franchit la Bidassoa côté
+# grandes lignes depuis 2020 — seul le Topo d'Euskotren passe, depuis ses
+# propres gares (règle Lille-Flandres). Le maillon Irún → Bilbao n'existe pas
+# en écartement ibérique : trois heures de voie métrique Euskotren avec
+# changement à Amara, arrivant à Matiko — pas à Abando. Entrent : MONTRÉJEAU
+# (la branche de Luchon rouverte le 22 juin 2025, Régiolis hybrides), PUYOÔ
+# (la bifurcation des Gaves — trois directions vivantes ; le standard
+# Lausanne n'est pas un plancher de fréquentation, précédents Monfragüe et
+# Sant Vicenç) et DAX (le reroutage Puyoô → Dax → Bayonne est le rail réel
+# des TGV). Bayonne ferme le chapitre en d3 — précédent Lisbonne — et le
+# ruban franchit le Pays basque par le SAUT DE LA CÔTE BASQUE : Bilbao
+# Abando ouvre la Castille.
+ch(B,"Le piémont pyrénéen","Toulouse","Bayonne",[
+  g("Montréjeau","montrejeau"),g("Pau","pau"),g("Puyoô","puyoo"),
+  g("Dax","dax"),g("Bayonne","bayonne")])
 
 # =====================================================================
 C = acte("ib","Acte III — L'Ibérie","La grande boucle de la péninsule")
@@ -103,10 +121,17 @@ C = acte("ib","Acte III — L'Ibérie","La grande boucle de la péninsule")
 # le tronc Valladolid×León sur 1-3 et met chaque antenne face à son vrai
 # partenaire (Burgos×León = le transversal Barcelone–Galice ; Burgos×
 # Santander = rien, comme en vrai).
-ch(C,"La Castille","Bilbao","Madrid",[
-  g("Miranda de Ebro","miranda"),g("Burgos Rosa Manzano","burgos"),
-  g("Palencia","palencia"),g("Valladolid-Campo Grande","valladolid"),
-  g("Ávila","avila"),g("Madrid-Chamartín","madrid-chamartin")])
+# BILBAO ABANDO OUVRE LA CASTILLE depuis le 29 août 2026 (saut de la côte
+# basque) : huit heurtoirs sous le vitrail de 1948, six directions
+# commerciales — l'Intercity de Vigo fournit la sixième — et la Concordia
+# voisine, métrique, ne donne aucun portail (règle Lille-Flandres). Le
+# maillon Bilbao → Miranda est la ligne d'Orduña, réelle (C-3 + Alvia).
+ch(C,"La Castille","Bayonne","Madrid",[
+  g("Bilbao Abando","bilbao"),g("Miranda de Ebro","miranda"),
+  g("Burgos Rosa Manzano","burgos"),g("Palencia","palencia"),
+  g("Valladolid-Campo Grande","valladolid"),g("Ávila","avila"),
+  g("Madrid-Chamartín","madrid-chamartin")],
+  saut=("correspondance","La côte basque — le Topo franchit la Bidassoa, puis trois heures d'Euskotren jusqu'à Bilbao"))
 # SEPT REFUS §0 SUR L'ESTRÉMADURE, mesurés le 29 août 2026. Talavera et
 # Navalmoral sont des passantes pures de la ligne 500 (aucune branche, jamais).
 # Plasencia est le piège n° 1 le plus pur : terminus d'une antenne de 16,7 km

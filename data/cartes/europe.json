@@ -3,11 +3,16 @@
  "nom": "L'Europe",
  "gratuite": true,
  "enChantier": true,
- "note": "Tranche livree du ruban : chapitres 26 a 57 de ruban-europe.md (Bussoleno vers Hambourg) — l'acte V en entier. Le ruban complet va de Cork a Istanbul ; les actes I a IV se greffent DEVANT celui-ci quand ils seront ecrits.",
+ "note": "Tranche livree du ruban : chapitres 23 a 57 de ruban-europe.md (Bussoleno vers Hambourg) — l'acte V en entier. Le ruban complet va de Cork a Istanbul ; les actes I a IV se greffent DEVANT celui-ci quand ils seront ecrits.",
  "echelle": {
   "kmMinEntreHubs": 110
  },
  "zones": [
+  {
+   "id": "atl",
+   "nom": "L'Atlantique et l'Ibérie",
+   "couleur": "#e8875a"
+  },
   {
    "id": "alpes",
    "nom": "L'arc méditerranéen et les Alpes",
@@ -26,10 +31,53 @@
  ],
  "chapitres": [
   {
+   "id": "le-littoral-atlantique",
+   "nom": "Le littoral atlantique",
+   "zone": "atl",
+   "gares": [
+    "lalochesuryon",
+    "larochelle",
+    "niort",
+    "saintes",
+    "bordeaux"
+   ],
+   "plancher": 1,
+   "arrivee": 3
+  },
+  {
+   "id": "le-perigord-et-la-garonne",
+   "nom": "Le Périgord et la Garonne",
+   "zone": "atl",
+   "gares": [
+    "libourne",
+    "perigueux",
+    "agen",
+    "montauban",
+    "toulouse"
+   ],
+   "plancher": 2,
+   "arrivee": 4
+  },
+  {
+   "id": "le-piemont-pyreneen",
+   "nom": "Le piémont pyrénéen",
+   "zone": "atl",
+   "gares": [
+    "montrejeau",
+    "pau",
+    "puyoo",
+    "dax",
+    "bayonne"
+   ],
+   "plancher": 2,
+   "arrivee": 3
+  },
+  {
    "id": "la-castille",
    "nom": "La Castille",
-   "zone": "alpes",
+   "zone": "atl",
    "gares": [
+    "bilbao",
     "miranda",
     "burgos",
     "palencia",
@@ -37,14 +85,18 @@
     "avila",
     "madrid-chamartin"
    ],
-   "plancher": 1,
-   "arrivee": 3,
-   "sinuosite": 1.55
+   "plancher": 2,
+   "arrivee": 4,
+   "sinuosite": 1.55,
+   "saut": {
+    "mode": "correspondance",
+    "texte": "La côte basque — le Topo franchit la Bidassoa, puis trois heures d'Euskotren jusqu'à Bilbao"
+   }
   },
   {
    "id": "l-estremadure",
    "nom": "L'Estrémadure",
-   "zone": "alpes",
+   "zone": "atl",
    "gares": [
     "monfrague",
     "caceres",
@@ -59,7 +111,7 @@
   {
    "id": "la-cote-d-argent",
    "nom": "La côte d'Argent",
-   "zone": "alpes",
+   "zone": "atl",
    "gares": [
     "oriente",
     "alfarelos",
@@ -73,7 +125,7 @@
   {
    "id": "la-galice",
    "nom": "La Galice",
-   "zone": "alpes",
+   "zone": "atl",
    "gares": [
     "nine",
     "vigo",
@@ -94,7 +146,7 @@
   {
    "id": "l-andalousie-et-la-betique",
    "nom": "L'Andalousie et la Bétique",
-   "zone": "alpes",
+   "zone": "atl",
    "gares": [
     "alcazar",
     "ciudad-real",
@@ -113,7 +165,7 @@
   {
    "id": "le-levant-et-l-aragon",
    "nom": "Le Levant et l'Aragon",
-   "zone": "alpes",
+   "zone": "atl",
    "gares": [
     "murcia",
     "alicante",
@@ -131,7 +183,7 @@
   {
    "id": "l-ebre",
    "nom": "L'Èbre",
-   "zone": "alpes",
+   "zone": "atl",
    "gares": [
     "lleida",
     "reus",
@@ -145,7 +197,7 @@
   {
    "id": "le-roussillon-et-la-camargue",
    "nom": "Le Roussillon et la Camargue",
-   "zone": "alpes",
+   "zone": "atl",
    "gares": [
     "perpignan",
     "narbonne",

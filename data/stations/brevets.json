@@ -586,6 +586,23 @@
   },
   "boss": "file de 7 au même quai"
  },
+ "bayonne": {
+  "geometrie": "c30623912f8a",
+  "date": "2026-08-29",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 3,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK"
+  },
+  "boss": "retard garanti 0.34 > 0.3"
+ },
  "bebra": {
   "geometrie": "d2228ada413f",
   "date": "2026-08-28",
@@ -706,6 +723,25 @@
    "3": "OK"
   },
   "boss": "file de 7 au même quai"
+ },
+ "bilbao": {
+  "geometrie": "c46d3177371f",
+  "date": "2026-08-29",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 5,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK",
+   "4": "OK",
+   "5": "OK"
+  },
+  "boss": "OK"
  },
  "bingen": {
   "geometrie": "3ff1f351affa",
@@ -1542,6 +1578,22 @@
    "4": "OK"
   },
   "boss": "OK"
+ },
+ "dax": {
+  "geometrie": "878240bf2fd7",
+  "date": "2026-08-29",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 2,
+  "detail": {
+   "1": "OK",
+   "2": "OK"
+  },
+  "boss": "retard garanti 0.39 > 0.3"
  },
  "deinze": {
   "geometrie": "f38f38aeb201",
@@ -3555,6 +3607,22 @@
   },
   "boss": "retard garanti 0.31 > 0.3"
  },
+ "montrejeau": {
+  "geometrie": "6f4eb423dc41",
+  "date": "2026-08-29",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 2,
+  "detail": {
+   "1": "OK",
+   "2": "OK"
+  },
+  "boss": "file de 7 au même quai"
+ },
  "mouscron": {
   "geometrie": "1a09b58fd5f6",
   "date": "2026-08-28",
@@ -4248,6 +4316,23 @@
   },
   "boss": "OK"
  },
+ "pau": {
+  "geometrie": "4b2358ec110d",
+  "date": "2026-08-29",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 3,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK"
+  },
+  "boss": "file de 6 au même quai"
+ },
  "perigueux": {
   "geometrie": "5910237971bd",
   "date": "2026-08-28",
@@ -4491,6 +4576,22 @@
  "puertollano": {
   "geometrie": "646d7ce7203b",
   "date": "2026-08-28",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 2,
+  "detail": {
+   "1": "OK",
+   "2": "OK"
+  },
+  "boss": "file de 7 au même quai"
+ },
+ "puyoo": {
+  "geometrie": "c7727c2fee6b",
+  "date": "2026-08-29",
   "graines": [
    1,
    2,

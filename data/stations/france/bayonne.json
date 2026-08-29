@@ -1,0 +1,28 @@
+{
+  "id": "bayonne",
+  "name": "Bayonne",
+  "tagline": "La porte du Pays basque",
+  "desc": "Entre Adour et Nive, la gare de la rive droite trie toute la côte basque : les TGV de Paris filent vers Hendaye, les Intercités remontent vers Pau et Toulouse, et les autorails de la Nive s'en vont seuls vers Saint-Jean-Pied-de-Port.",
+  "difficulty": 3,
+  "country": "🇫🇷 France",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
+  ],
+  "portals": {
+    "BORDEAUX": { "side": "L", "color": "#25dede", "abbr": "BX" },
+    "PAU":      { "side": "L", "color": "#f5b23c", "abbr": "PA" },
+    "HENDAYE":  { "side": "R", "color": "#4ade80", "abbr": "HE" },
+    "ST-JEAN":  { "side": "R", "color": "#a78bfa", "abbr": "SJ", "label": "ST-JEAN-P-DE-P" }
+  },
+  "links": {
+    "BORDEAUX": [1, 2, 3, 4],
+    "PAU":      [3, 4, 5],
+    "HENDAYE":  [2, 3, 4, 5],
+    "ST-JEAN":  [1, 2]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 14, "nMax": 16, "gapMin": 1.6, "gapMax": 3.0,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6], "quietRate": 0.15, "rush": "double"
+  }
+}

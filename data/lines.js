@@ -578,5 +578,11 @@ const LINES = [
   { id: "L957", name: "La Castille (Miranda – Madrid)",
     nodes: ["miranda", "burgos", "palencia", "valladolid", "avila", "madrid-chamartin"] },
   { id: "L958", name: "Le tunnel de la Castellana (Chamartín – Atocha)",
-    nodes: ["madrid-chamartin", "madrid-atocha"] }
+    nodes: ["madrid-chamartin", "madrid-atocha"] },
+  { id: "L959", name: "Le piémont pyrénéen (Montréjeau – Bayonne)",
+    nodes: ["montrejeau", "pau", "puyoo", "dax", "bayonne"] },
+  { id: "L960", name: "La ligne des Pyrénées (Toulouse – Montréjeau)",
+    nodes: ["toulouse", "montrejeau"] },
+  { id: "L961", name: "L'Orduña (Bilbao – Miranda)",
+    nodes: ["bilbao", "miranda"] }
 ];

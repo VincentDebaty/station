@@ -1,0 +1,27 @@
+{
+  "id": "montrejeau",
+  "name": "Montréjeau - Gourdan-Polignan",
+  "city": "Montréjeau",
+  "tagline": "La porte rouverte de la vallée",
+  "desc": "Dix ans sans un train, et la branche de Luchon est revenue en 2025, Régiolis hybrides en tête. Sur le tronc, les Intercités de Bayonne croisent les navettes qui montent vers les thermes.",
+  "difficulty": 1,
+  "country": "🇫🇷 France",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }
+  ],
+  "portals": {
+    "PAU":      { "side": "L", "color": "#f5b23c", "abbr": "PA" },
+    "LUCHON":   { "side": "L", "color": "#a78bfa", "abbr": "LU" },
+    "TOULOUSE": { "side": "R", "color": "#25dede", "abbr": "TL" }
+  },
+  "links": {
+    "PAU":      [1, 2, 3],
+    "LUCHON":   [3, 4],
+    "TOULOUSE": [1, 2, 3, 4]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 12, "nMax": 14, "gapMin": 1.6, "gapMax": 2.8,
+    "cars": [2, 2, 2, 2, 3, 3, 4], "quietRate": 0.18, "rush": "pointe"
+  }
+}

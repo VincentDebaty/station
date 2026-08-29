@@ -1,0 +1,35 @@
+{
+  "id": "bilbao",
+  "name": "Bilbao Abando (Indalecio Prieto)",
+  "city": "Bilbao",
+  "tagline": "Huit heurtoirs sous le grand vitrail basque",
+  "desc": "Sous la verrière en arc de 1948, un vitrail de 301 pièces domine les heurtoirs : l'Alvia de Madrid et les Cercanías de la ría rebroussent ensemble. La Concordia, sa voisine à voie métrique, garde ses trains pour elle.",
+  "difficulty": 5,
+  "country": "🇪🇸 Espagne",
+  "platforms": [
+    { "id": 1, "deadEnd": true }, { "id": 2, "deadEnd": true }, { "id": 3, "deadEnd": true },
+    { "id": 4, "deadEnd": true }, { "id": 5, "deadEnd": true }, { "id": 6, "deadEnd": true },
+    { "id": 7, "deadEnd": true }, { "id": 8, "deadEnd": true }
+  ],
+  "portals": {
+    "MADRID":    { "side": "L", "color": "#f2588f", "abbr": "MD" },
+    "BARCELONE": { "side": "L", "color": "#a78bfa", "abbr": "BA" },
+    "VIGO":      { "side": "L", "color": "#4ade80", "abbr": "VI" },
+    "ORDUNA":    { "side": "L", "color": "#f5b23c", "abbr": "OR", "label": "ORDUÑA" },
+    "MUSKIZ":    { "side": "L", "color": "#60a5fa", "abbr": "MU" },
+    "SANTURTZI": { "side": "L", "color": "#25dede", "abbr": "ST" }
+  },
+  "links": {
+    "MADRID":    [1, 2, 3],
+    "BARCELONE": [2, 3, 4],
+    "VIGO":      [4, 5],
+    "ORDUNA":    [5, 6],
+    "MUSKIZ":    [6, 7, 8],
+    "SANTURTZI": [7, 8, 1]
+  },
+  "sameSidePairs": "all",
+  "gen": {
+    "nMin": 18, "nMax": 22, "gapMin": 1.5, "gapMax": 2.5,
+    "cars": [2, 2, 3, 3, 4, 4, 5, 6], "quietRate": 0.12, "rush": "double"
+  }
+}

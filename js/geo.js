@@ -114,7 +114,12 @@ const GEO = {
         niort: [-0.4542, 46.3194],
         libourne: [-0.2364, 44.9158],
         perigueux: [0.7078, 45.1872],
-        perpignan: [2.8794, 42.6961]
+        perpignan: [2.8794, 42.6961],
+        montrejeau: [0.566, 43.086],
+        pau: [-0.3708, 43.2951],
+        puyoo: [-0.911, 43.527],
+        dax: [-1.053, 43.708],
+        bayonne: [-1.478, 43.492]
       } },
     allemagne: { name: "Allemagne", flag: "🇩🇪", iso: "DEU", continent: "europe",
       cities: {
@@ -325,7 +330,8 @@ const GEO = {
         palencia: [-4.524, 42.01],
         valladolid: [-4.729, 41.641],
         avila: [-4.682, 40.657],
-        "madrid-chamartin": [-3.6825, 40.472]
+        "madrid-chamartin": [-3.6825, 40.472],
+        bilbao: [-2.9278, 43.2614]
       } },
     "portugal": { name: "Portugal", flag: "🇵🇹", iso: "PT", continent: "europe",
       cities: {

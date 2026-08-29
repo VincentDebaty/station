@@ -1,0 +1,26 @@
+{
+  "id": "puyoo",
+  "name": "Puyoô",
+  "tagline": "L'aiguille des Gaves",
+  "desc": "C'est ici, entre les gaves, que l'axe de Bayonne et la branche de Dax se séparent. Une petite gare de bifurcation qui voit passer tout ce que le Béarn envoie vers la côte et vers Bordeaux.",
+  "difficulty": 1,
+  "country": "🇫🇷 France",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }
+  ],
+  "portals": {
+    "BAYONNE": { "side": "L", "color": "#f2588f", "abbr": "BY" },
+    "DAX":     { "side": "L", "color": "#4ade80", "abbr": "DX" },
+    "PAU":     { "side": "R", "color": "#f5b23c", "abbr": "PA" }
+  },
+  "links": {
+    "BAYONNE": [1, 2, 3],
+    "DAX":     [2, 3, 4],
+    "PAU":     [1, 2, 3, 4]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 12, "nMax": 14, "gapMin": 1.6, "gapMax": 2.8,
+    "cars": [2, 2, 2, 2, 3, 3, 4], "quietRate": 0.18, "rush": "pointe"
+  }
+}

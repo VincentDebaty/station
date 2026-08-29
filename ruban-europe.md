@@ -23,16 +23,16 @@ Chaque région est traversée **une fois**, et on n'y revient jamais.
 |---|---|
 | Actes | **9** |
 | Chapitres | **91** |
-| Gares — c'est-à-dire **niveaux** | **553** |
-| Fiches déjà écrites, réemployées telles quelles | **221** |
-| Fiches à écrire | **332** |
-| Sauts déclarés (§4 bis) | **10** |
+| Gares — c'est-à-dire **niveaux** | **551** |
+| Fiches déjà écrites, réemployées telles quelles | **227** |
+| Fiches à écrire | **324** |
+| Sauts déclarés (§4 bis) | **11** |
 | Longueur des chapitres | 5 à 9 gares, médiane 6 |
 
 **Vérifié par script** (`scratchpad/verif.py`, à porter dans `carte-check` au
 lot C) : les 91 chapitres tiennent tous R3 (5 à 10 gares), aucune gare
 n'apparaît deux fois (R6), le chaînage est continu d'un bout à l'autre, et
-les 221 fiches annoncées comme existantes existent bien au catalogue.
+les 227 fiches annoncées comme existantes existent bien au catalogue.
 
 ## Comment lire les tableaux
 
@@ -147,7 +147,7 @@ les 221 fiches annoncées comme existantes existent bien au catalogue.
 
 ## Acte II — La France atlantique
 
-*De la Manche aux Pyrénées* — 7 chapitres, **41 gares** (14 déjà écrites, 27 à écrire).
+*De la Manche aux Pyrénées* — 7 chapitres, **38 gares** (19 déjà écrites, 19 à écrire).
 
 > ⚠️ **Trois candidates refusées le 27 août 2026**, toutes pour le même motif :
 > Rochefort, Marmande et Jonzac sont d'ANCIENNES gares de bifurcation dont la
@@ -163,6 +163,16 @@ les 221 fiches annoncées comme existantes existent bien au catalogue.
 > · Toulouse, par la ligne de l'Agenais. Angoulême et Coutras restent en
 > réserve documentée. Trois fiches nouvelles (Niort, Libourne, Périgueux),
 > écrites et brevetées le jour même.
+>
+> ⚠️ **Le piémont s'arrête à Bayonne** (29 août 2026, décision de Vincent) :
+> six refus §0 — Saint-Gaudens, Orthez (passantes), Tarbes (étoile morte en
+> 1970), Lourdes (voie verte depuis 1997), et **Hendaye et Irún à UNE
+> direction chacune** : plus aucun train de voyageurs ne franchit la Bidassoa
+> côté grandes lignes depuis 2020, seul le Topo d'Euskotren passe, depuis ses
+> propres gares. Entrent : Montréjeau (Luchon rouverte le 22 juin 2025),
+> Puyoô, Dax. Bayonne ferme en d3, et le **saut de la côte basque** (trois
+> heures d'Euskotren métrique) porte le ruban à Bilbao Abando, qui ouvre la
+> Castille. Onzième saut du ruban.
 
 | # | Chapitre | Gares, dans l'ordre du rail | n |
 |---|---|---|---|
@@ -172,11 +182,11 @@ les 221 fiches annoncées comme existantes existent bien au catalogue.
 | 22 | La Bretagne intérieure | Bruz · Messac · Redon · Savenay · **Nantes** ✓ | 5 |
 | 23 | Le littoral atlantique | La Roche-sur-Yon ✓ · La Rochelle ✓ · ~~Rochefort~~ Niort ✓ · Saintes ✓ · ~~Jonzac~~ · **Bordeaux Saint-Jean** ✓ | 5 |
 | 24 | Le Périgord et la Garonne | ~~La Réole~~ Libourne ✓ · ~~Marmande~~ Périgueux ✓ · Agen ✓ · ~~Moissac~~ · Montauban ✓ · **Toulouse Matabiau** ✓ | 5 |
-| 25 | Le piémont pyrénéen | Saint-Gaudens · Tarbes · Pau · Orthez · Bayonne · Hendaye · Irún · **Bilbao Abando** | 8 |
+| 25 | Le piémont pyrénéen | ~~Saint-Gaudens~~ ~~Tarbes~~ Montréjeau ✓ · Pau ✓ · ~~Orthez~~ Puyoô ✓ · Dax ✓ · **Bayonne** ✓ ~~Hendaye~~ ~~Irún~~ | 5 |
 
 ## Acte III — L'Ibérie
 
-*La grande boucle de la péninsule* — 8 chapitres, **48 gares** (41 déjà écrites, 7 à écrire).
+*La grande boucle de la péninsule* — 8 chapitres, **49 gares** (49 déjà écrites, 0 à écrire).
 
 > ⚠️ **La ligne de Teruel est fondue dans le Levant** (28 août 2026, option B,
 > décision de Vincent). Quatre refus §0 d'un coup, mesurés le jour même :
@@ -260,7 +270,8 @@ les 221 fiches annoncées comme existantes existent bien au catalogue.
 
 | # | Chapitre | Gares, dans l'ordre du rail | n |
 |---|---|---|---|
-| 26 | La Castille | Miranda de Ebro ✓ · Burgos Rosa Manzano ✓ · Palencia ✓ · Valladolid-Campo Grande ✓ · Ávila ✓ · **Madrid-Chamartín** ✓ | 6 |
+| | ⤳ **Saut (correspondance)** | *La côte basque — le Topo franchit la Bidassoa, puis trois heures d'Euskotren jusqu'à Bilbao* | |
+| 26 | La Castille | Bilbao Abando ✓ · Miranda de Ebro ✓ · Burgos Rosa Manzano ✓ · Palencia ✓ · Valladolid-Campo Grande ✓ · Ávila ✓ · **Madrid-Chamartín** ✓ | 7 |
 | 27 | L'Estrémadure | ~~Talavera de la Reina~~ ~~Navalmoral~~ Monfragüe ✓ · Cáceres ✓ · Mérida ✓ · ~~Badajoz~~ ~~Elvas~~ Abrantes ✓ · Entroncamento ✓ · **Lisbonne Santa Apolónia** ✓ | 6 |
 | 28 | La côte d'Argent | ~~Azambuja~~ ~~Santarém~~ ~~Pombal~~ Lisboa Oriente ✓ · Alfarelos ✓ · ~~Coimbra~~ Pampilhosa ✓ · Aveiro ✓ · ~~Espinho~~ · **Porto Campanhã** ✓ | 5 |
 | 29 | La Galice | Nine ✓ · ~~Valença~~ Vigo-Guixar ✓ · Ourense-Empalme ✓ · ~~Zamora~~ Medina del Campo ✓ · **Madrid-Atocha** ✓ | 5 |

@@ -1,0 +1,28 @@
+{
+  "id": "pau",
+  "name": "Pau",
+  "tagline": "Le balcon des Pyrénées",
+  "desc": "Sous le boulevard des Pyrénées, le funiculaire descend jusqu'aux quais où l'axe de Bayonne croise les TGV de Bordeaux. Au sud part la ligne du Somport, rescapée : les navettes d'Oloron remontent la vallée d'Aspe jusqu'à Bedous.",
+  "difficulty": 2,
+  "country": "🇫🇷 France",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
+  ],
+  "portals": {
+    "BAYONNE":  { "side": "L", "color": "#f2588f", "abbr": "BY" },
+    "BORDEAUX": { "side": "L", "color": "#60a5fa", "abbr": "BX" },
+    "TOULOUSE": { "side": "R", "color": "#25dede", "abbr": "TL" },
+    "OLORON":   { "side": "R", "color": "#4ade80", "abbr": "OL" }
+  },
+  "links": {
+    "BAYONNE":  [1, 2, 3],
+    "BORDEAUX": [3, 4, 5],
+    "TOULOUSE": [1, 2, 3, 4],
+    "OLORON":   [4, 5]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 13, "nMax": 16, "gapMin": 1.8, "gapMax": 3.0,
+    "cars": [2, 2, 3, 3, 4, 4, 5], "quietRate": 0.18, "rush": "pointe"
+  }
+}
