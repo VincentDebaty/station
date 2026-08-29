@@ -3,7 +3,7 @@
  "nom": "L'Europe",
  "gratuite": true,
  "enChantier": true,
- "note": "Tranche livree du ruban : chapitres 27 a 57 de ruban-europe.md (Bussoleno vers Hambourg) — l'acte V en entier. Le ruban complet va de Cork a Istanbul ; les actes I a IV se greffent DEVANT celui-ci quand ils seront ecrits.",
+ "note": "Tranche livree du ruban : chapitres 26 a 57 de ruban-europe.md (Bussoleno vers Hambourg) — l'acte V en entier. Le ruban complet va de Cork a Istanbul ; les actes I a IV se greffent DEVANT celui-ci quand ils seront ecrits.",
  "echelle": {
   "kmMinEntreHubs": 110
  },
@@ -26,6 +26,22 @@
  ],
  "chapitres": [
   {
+   "id": "la-castille",
+   "nom": "La Castille",
+   "zone": "alpes",
+   "gares": [
+    "miranda",
+    "burgos",
+    "palencia",
+    "valladolid",
+    "avila",
+    "madrid-chamartin"
+   ],
+   "plancher": 1,
+   "arrivee": 3,
+   "sinuosite": 1.55
+  },
+  {
    "id": "l-estremadure",
    "nom": "L'Estrémadure",
    "zone": "alpes",
@@ -37,8 +53,8 @@
     "entroncamento",
     "lisbonne"
    ],
-   "plancher": 1,
-   "arrivee": 3
+   "plancher": 2,
+   "arrivee": 4
   },
   {
    "id": "la-cote-d-argent",

@@ -574,5 +574,9 @@ const LINES = [
   { id: "L955", name: "L'Estrémadure (Monfragüe – Lisbonne)",
     nodes: ["monfrague", "caceres", "merida", "abrantes", "entroncamento", "lisbonne"] },
   { id: "L956", name: "La ligne 500 (Madrid – Monfragüe)",
-    nodes: ["madrid-atocha", "monfrague"] }
+    nodes: ["madrid-atocha", "monfrague"] },
+  { id: "L957", name: "La Castille (Miranda – Madrid)",
+    nodes: ["miranda", "burgos", "palencia", "valladolid", "avila", "madrid-chamartin"] },
+  { id: "L958", name: "Le tunnel de la Castellana (Chamartín – Atocha)",
+    nodes: ["madrid-chamartin", "madrid-atocha"] }
 ];

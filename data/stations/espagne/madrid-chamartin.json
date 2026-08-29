@@ -1,0 +1,36 @@
+{
+  "id": "madrid-chamartin",
+  "name": "Madrid-Chamartín",
+  "tagline": "La porte du nord et son tunnel sous la ville",
+  "desc": "Vingt et une voies ouvertes vers la sierra : les Alvia de Galice et des Asturies y rebroussent face aux heurtoirs, pendant que les AVE du Levant plongent sous Madrid vers Atocha sans s'arrêter. Rebaptisée Clara Campoamor, la gare de 1967 est devenue le vrai cœur ferroviaire de la capitale.",
+  "difficulty": 5,
+  "country": "🇪🇸 Espagne",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 },
+    { "id": 5 }, { "id": 6 }, { "id": 7 }, { "id": 8 },
+    { "id": 9, "deadEnd": true }, { "id": 10, "deadEnd": true }, { "id": 11, "deadEnd": true }
+  ],
+  "portals": {
+    "AVILA":      { "side": "L", "color": "#f5b23c", "abbr": "AV", "label": "ÁVILA" },
+    "COLMENAR":   { "side": "L", "color": "#4ade80", "abbr": "CM" },
+    "VIGO":       { "side": "L", "color": "#25dede", "abbr": "VI" },
+    "VALLADOLID": { "side": "L", "color": "#a78bfa", "abbr": "VD" },
+    "ATOCHA":     { "side": "R", "color": "#f2588f", "abbr": "AT" },
+    "ALICANTE":   { "side": "R", "color": "#60a5fa", "abbr": "AL" }
+  },
+  "links": {
+    "AVILA":      [1, 2, 3],
+    "COLMENAR":   [3, 4],
+    "VIGO":       [4, 5, 6, 9, 10, 11],
+    "VALLADOLID": [6, 7, 8, 9, 10, 11],
+    "ATOCHA":     [1, 2, 3, 4, 5],
+    "ALICANTE":   [5, 6, 7, 8]
+  },
+  "sameSidePairs": [
+    ["VALLADOLID", "VIGO"], ["VIGO", "VALLADOLID"]
+  ],
+  "gen": {
+    "nMin": 18, "nMax": 22, "gapMin": 1.5, "gapMax": 2.5,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6], "quietRate": 0.12, "rush": "double"
+  }
+}

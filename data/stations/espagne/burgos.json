@@ -1,0 +1,31 @@
+{
+  "id": "burgos",
+  "name": "Burgos Rosa Manzano",
+  "city": "Burgos",
+  "tagline": "La gare neuve de la variante",
+  "desc": "Ouverte en 2008 sur la variante nord qui a sorti le rail de la ville, elle a reçu la grande vitesse en 2022 : au changeur d'écartement, les Alvia de Madrid passent de la LAV à la voie classique du Pays basque. Côté ouest, le triangle de Venta de Baños distribue Palencia et Valladolid.",
+  "difficulty": 3,
+  "country": "🇪🇸 Espagne",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }, { "id": 6 }
+  ],
+  "portals": {
+    "MADRID":     { "side": "L", "color": "#f2588f", "abbr": "MD" },
+    "PALENCIA":   { "side": "L", "color": "#4ade80", "abbr": "PA" },
+    "VALLADOLID": { "side": "L", "color": "#60a5fa", "abbr": "VL" },
+    "BILBAO":     { "side": "R", "color": "#a78bfa", "abbr": "BI" },
+    "IRUN":       { "side": "R", "color": "#25dede", "abbr": "IR", "label": "IRÚN" }
+  },
+  "links": {
+    "MADRID":     [3, 4, 5, 6],
+    "PALENCIA":   [1, 2, 3],
+    "VALLADOLID": [1, 2],
+    "BILBAO":     [1, 2, 3, 4],
+    "IRUN":       [3, 4, 5, 6]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 14, "nMax": 16, "gapMin": 1.7, "gapMax": 3.0,
+    "cars": [2, 2, 3, 3, 4, 4, 5, 6], "quietRate": 0.15, "rush": "pointe"
+  }
+}

@@ -463,6 +463,22 @@
   },
   "boss": "file de 6 au même quai"
  },
+ "avila": {
+  "geometrie": "d8a8ee154104",
+  "date": "2026-08-29",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 2,
+  "detail": {
+   "1": "OK",
+   "2": "OK"
+  },
+  "boss": "file de 6 au même quai"
+ },
  "badkleinen": {
   "geometrie": "6a95dd62cb62",
   "date": "2026-08-27",
@@ -1011,6 +1027,24 @@
    "3": "file de 6 au même quai"
   },
   "boss": "retard garanti 0.32 > 0.3"
+ },
+ "burgos": {
+  "geometrie": "5c8ba0568b38",
+  "date": "2026-08-29",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 3,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK",
+   "4": "file de 6 au même quai"
+  },
+  "boss": "file de 7 au même quai"
  },
  "bussoleno": {
   "geometrie": "9021ac2f9231",
@@ -3100,6 +3134,25 @@
   },
   "boss": "OK"
  },
+ "madrid-chamartin": {
+  "geometrie": "c366d629e298",
+  "date": "2026-08-29",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 5,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK",
+   "4": "OK",
+   "5": "OK"
+  },
+  "boss": "OK"
+ },
  "magdeburg": {
   "geometrie": "3aea0323eae1",
   "date": "2026-08-28",
@@ -3415,6 +3468,24 @@
    "3": "OK"
   },
   "boss": "retard garanti 0.37 > 0.3"
+ },
+ "miranda": {
+  "geometrie": "66ad57638a9a",
+  "date": "2026-08-29",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 4,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK",
+   "4": "OK"
+  },
+  "boss": "OK"
  },
  "monfrague": {
   "geometrie": "fc0be5653a20",
@@ -4031,6 +4102,23 @@
    "4": "OK"
   },
   "boss": "retard garanti 0.33 > 0.3"
+ },
+ "palencia": {
+  "geometrie": "354429e20143",
+  "date": "2026-08-29",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 3,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK"
+  },
+  "boss": "file de 7 au même quai"
  },
  "palermo": {
   "geometrie": "2a2fa9c198bc",
@@ -5402,6 +5490,24 @@
    "5": "OK"
   },
   "boss": "OK"
+ },
+ "valladolid": {
+  "geometrie": "3205ee473e46",
+  "date": "2026-08-29",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 4,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK",
+   "4": "OK"
+  },
+  "boss": "retard garanti 0.32 > 0.3"
  },
  "venezia": {
   "geometrie": "1f5e453bb0f2",

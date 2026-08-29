@@ -86,8 +86,27 @@ ch(B,"Le piémont pyrénéen","Toulouse","Bilbao",[
 
 # =====================================================================
 C = acte("ib","Acte III — L'Ibérie","La grande boucle de la péninsule")
+# LA CASTILLE EST LE PREMIER CHAPITRE SANS UN SEUL REFUS §0 (instruit le
+# 29 août 2026) : ses six gares d'origine passent toutes. Miranda de Ebro est
+# un des rares croisements « en aspa » d'Espagne (deux lignes en X, plans de
+# 1894 vérifiés — pas de rebroussement) ; Ávila est le CONTRE-EXEMPLE du
+# piège n° 1 : sa ligne de Salamanque par Peñaranda est bien vivante (jusqu'à
+# six MD par jour, accélérés en avril 2025). Refus périphériques documentés :
+# Segovia-Guiomar (passante pure de la LAV), la ligne Valladolid–Ariza (morte
+# en 1985 — jamais de portail SORIA). Réserve datée : la branche Miranda–
+# Logroño tient à 1-2 régionaux par jour, rognés en 2025 — si elle meurt, le
+# portail SARAGOSSE de Miranda tombe (la gare reste admissible à 3
+# directions). Le tracé Valladolid→Ávila TRAVERSE Medina del Campo sans s'y
+# arrêter (R6 ne mesure que les fiches et les villes — permis). Palencia a
+# coûté trois grils : quatre directions sur cinq quais ne pardonnent ni le
+# quai à quatre portails, ni le quai sans paire L×R — le pavage final partage
+# le tronc Valladolid×León sur 1-3 et met chaque antenne face à son vrai
+# partenaire (Burgos×León = le transversal Barcelone–Galice ; Burgos×
+# Santander = rien, comme en vrai).
 ch(C,"La Castille","Bilbao","Madrid",[
-  g("Miranda de Ebro"),g("Burgos"),g("Palencia"),g("Valladolid"),g("Ávila"),g("Madrid-Chamartín")])
+  g("Miranda de Ebro","miranda"),g("Burgos Rosa Manzano","burgos"),
+  g("Palencia","palencia"),g("Valladolid-Campo Grande","valladolid"),
+  g("Ávila","avila"),g("Madrid-Chamartín","madrid-chamartin")])
 # SEPT REFUS §0 SUR L'ESTRÉMADURE, mesurés le 29 août 2026. Talavera et
 # Navalmoral sont des passantes pures de la ligne 500 (aucune branche, jamais).
 # Plasencia est le piège n° 1 le plus pur : terminus d'une antenne de 16,7 km

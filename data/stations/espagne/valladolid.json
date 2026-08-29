@@ -1,0 +1,30 @@
+{
+  "id": "valladolid",
+  "name": "Valladolid-Campo Grande",
+  "city": "Valladolid",
+  "tagline": "Le double gril de la Meseta",
+  "desc": "Face au parc du Campo Grande, les voies européennes et ibériques se côtoient sous la même verrière de 1895 : tout ce que Madrid envoie au nord-ouest — León, la Cantabrie, le Pays basque — passe par ici. Les MD de Salamanque et d'Ávila s'y glissent entre deux AVE.",
+  "difficulty": 4,
+  "country": "🇪🇸 Espagne",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 },
+    { "id": 5 }, { "id": 6 }, { "id": 7 }, { "id": 8 }
+  ],
+  "portals": {
+    "MADRID":     { "side": "L", "color": "#f2588f", "abbr": "MD" },
+    "SALAMANQUE": { "side": "L", "color": "#f5b23c", "abbr": "SA" },
+    "PALENCIA":   { "side": "R", "color": "#4ade80", "abbr": "PA" },
+    "BURGOS":     { "side": "R", "color": "#25dede", "abbr": "BU" }
+  },
+  "links": {
+    "MADRID":     [1, 2, 3, 4, 5, 6],
+    "SALAMANQUE": [5, 6, 7, 8],
+    "PALENCIA":   [3, 4, 5, 6, 7, 8],
+    "BURGOS":     [1, 2, 3, 4]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 16, "nMax": 19, "gapMin": 1.5, "gapMax": 2.7,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6], "quietRate": 0.13, "rush": "pointe"
+  }
+}

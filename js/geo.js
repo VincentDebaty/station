@@ -319,7 +319,13 @@ const GEO = {
         "madrid-atocha": [-3.6906, 40.4068],
         monfrague: [-6.1011, 39.9374],
         caceres: [-6.3856, 39.4603],
-        merida: [-6.3437, 38.916]
+        merida: [-6.3437, 38.916],
+        miranda: [-2.947, 42.686],
+        burgos: [-3.7, 42.344],
+        palencia: [-4.524, 42.01],
+        valladolid: [-4.729, 41.641],
+        avila: [-4.682, 40.657],
+        "madrid-chamartin": [-3.6825, 40.472]
       } },
     "portugal": { name: "Portugal", flag: "🇵🇹", iso: "PT", continent: "europe",
       cities: {

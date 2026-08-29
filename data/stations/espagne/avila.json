@@ -1,0 +1,26 @@
+{
+  "id": "avila",
+  "name": "Ávila",
+  "tagline": "Les remparts au bout de la rampe",
+  "desc": "À 1 130 mètres, après la longue rampe de la sierra de Guadarrama, la doyenne des capitales hautes d'Espagne trie les MD entre Madrid, Valladolid et la ligne de Peñaranda vers Salamanque. Les grandes lignes l'ont quittée en 2010 ; les remparts, eux, n'ont pas bougé.",
+  "difficulty": 2,
+  "country": "🇪🇸 Espagne",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
+  ],
+  "portals": {
+    "VALLADOLID": { "side": "L", "color": "#60a5fa", "abbr": "VL" },
+    "SALAMANQUE": { "side": "L", "color": "#f5b23c", "abbr": "SA" },
+    "MADRID":     { "side": "R", "color": "#f2588f", "abbr": "MD" }
+  },
+  "links": {
+    "VALLADOLID": [1, 2, 3, 4],
+    "SALAMANQUE": [4, 5],
+    "MADRID":     [1, 2, 3, 4, 5]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 13, "nMax": 16, "gapMin": 1.8, "gapMax": 3.0,
+    "cars": [2, 2, 2, 3, 3, 4, 4, 5], "quietRate": 0.15, "rush": "double"
+  }
+}

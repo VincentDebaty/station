@@ -1,0 +1,89 @@
+{
+  "id": "palencia",
+  "name": "Palencia",
+  "tagline": "La porte de la Cantabrie",
+  "desc": "C'est ici, au bord de la Tierra de Campos, que la ligne de Santander quitte l'axe de León pour monter vers la montagne. Les Alvia y changent d'écartement à Villamuriel, et le Barcelone–Galice y fait halte entre Burgos et León.",
+  "difficulty": 3,
+  "country": "🇪🇸 Espagne",
+  "platforms": [
+    {
+      "id": 1
+    },
+    {
+      "id": 2
+    },
+    {
+      "id": 3
+    },
+    {
+      "id": 4
+    },
+    {
+      "id": 5
+    }
+  ],
+  "portals": {
+    "VALLADOLID": {
+      "side": "L",
+      "color": "#60a5fa",
+      "abbr": "VL"
+    },
+    "BURGOS": {
+      "side": "L",
+      "color": "#25dede",
+      "abbr": "BU"
+    },
+    "LEON": {
+      "side": "R",
+      "color": "#f5b23c",
+      "abbr": "LE",
+      "label": "LEÓN"
+    },
+    "SANTANDER": {
+      "side": "R",
+      "color": "#4ade80",
+      "abbr": "SN"
+    }
+  },
+  "links": {
+    "VALLADOLID": [
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "BURGOS": [
+      1,
+      2
+    ],
+    "LEON": [
+      1,
+      2,
+      3
+    ],
+    "SANTANDER": [
+      3,
+      4,
+      5
+    ]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 12,
+    "nMax": 14,
+    "gapMin": 1.8,
+    "gapMax": 3.0,
+    "cars": [
+      2,
+      2,
+      3,
+      3,
+      4,
+      4,
+      5
+    ],
+    "quietRate": 0.16,
+    "rush": "double"
+  }
+}

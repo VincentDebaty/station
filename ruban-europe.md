@@ -24,15 +24,15 @@ Chaque région est traversée **une fois**, et on n'y revient jamais.
 | Actes | **9** |
 | Chapitres | **91** |
 | Gares — c'est-à-dire **niveaux** | **553** |
-| Fiches déjà écrites, réemployées telles quelles | **215** |
-| Fiches à écrire | **338** |
+| Fiches déjà écrites, réemployées telles quelles | **221** |
+| Fiches à écrire | **332** |
 | Sauts déclarés (§4 bis) | **10** |
 | Longueur des chapitres | 5 à 9 gares, médiane 6 |
 
 **Vérifié par script** (`scratchpad/verif.py`, à porter dans `carte-check` au
 lot C) : les 91 chapitres tiennent tous R3 (5 à 10 gares), aucune gare
 n'apparaît deux fois (R6), le chaînage est continu d'un bout à l'autre, et
-les 215 fiches annoncées comme existantes existent bien au catalogue.
+les 221 fiches annoncées comme existantes existent bien au catalogue.
 
 ## Comment lire les tableaux
 
@@ -176,7 +176,7 @@ les 215 fiches annoncées comme existantes existent bien au catalogue.
 
 ## Acte III — L'Ibérie
 
-*La grande boucle de la péninsule* — 8 chapitres, **48 gares** (35 déjà écrites, 13 à écrire).
+*La grande boucle de la péninsule* — 8 chapitres, **48 gares** (41 déjà écrites, 7 à écrire).
 
 > ⚠️ **La ligne de Teruel est fondue dans le Levant** (28 août 2026, option B,
 > décision de Vincent). Quatre refus §0 d'un coup, mesurés le jour même :
@@ -250,10 +250,17 @@ les 215 fiches annoncées comme existantes existent bien au catalogue.
 > semaine). Et **Lisbonne Santa Apolónia est un boss d4 assumé** — six voies
 > en service, la première fin de chapitre non-d5 du ruban, prévue par le
 > moteur ; gonfler la doyenne de 1865 serait le mensonge inverse de Charleroi.
+>
+> ✅ **La Castille est le premier chapitre sans un seul refus** (29 août
+> 2026) : ses six gares d'origine passent toutes le §0 — Miranda est un
+> croisement « en aspa », Ávila le contre-exemple du piège n° 1 (sa ligne de
+> Salamanque vit encore). Refus périphériques : Segovia-Guiomar, la ligne
+> d'Ariza (1985). Réserve datée sur la branche Miranda–Logroño (1-2 régionaux
+> par jour). Le tracé traverse Medina del Campo sans s'y arrêter.
 
 | # | Chapitre | Gares, dans l'ordre du rail | n |
 |---|---|---|---|
-| 26 | La Castille | Miranda de Ebro · Burgos · Palencia · Valladolid · Ávila · **Madrid-Chamartín** | 6 |
+| 26 | La Castille | Miranda de Ebro ✓ · Burgos Rosa Manzano ✓ · Palencia ✓ · Valladolid-Campo Grande ✓ · Ávila ✓ · **Madrid-Chamartín** ✓ | 6 |
 | 27 | L'Estrémadure | ~~Talavera de la Reina~~ ~~Navalmoral~~ Monfragüe ✓ · Cáceres ✓ · Mérida ✓ · ~~Badajoz~~ ~~Elvas~~ Abrantes ✓ · Entroncamento ✓ · **Lisbonne Santa Apolónia** ✓ | 6 |
 | 28 | La côte d'Argent | ~~Azambuja~~ ~~Santarém~~ ~~Pombal~~ Lisboa Oriente ✓ · Alfarelos ✓ · ~~Coimbra~~ Pampilhosa ✓ · Aveiro ✓ · ~~Espinho~~ · **Porto Campanhã** ✓ | 5 |
 | 29 | La Galice | Nine ✓ · ~~Valença~~ Vigo-Guixar ✓ · Ourense-Empalme ✓ · ~~Zamora~~ Medina del Campo ✓ · **Madrid-Atocha** ✓ | 5 |
