@@ -1,0 +1,31 @@
+{
+  "id": "entroncamento",
+  "name": "Entroncamento",
+  "tagline": "La ville qui porte le nom de son aiguillage",
+  "desc": "Née en 1864 de la rencontre des lignes du Nord et de l'Est, la ville-cheminote loge les ateliers, le triage et le musée ferroviaire national. Tout le Portugal s'y trie encore : les Alfa de Porto, les navettes de Tomar, la Beira Baixa vers Castelo Branco, et l'unique régional international de Badajoz.",
+  "difficulty": 4,
+  "country": "🇵🇹 Portugal",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 },
+    { "id": 5 }, { "id": 6 }, { "id": 7 }, { "id": 8 }
+  ],
+  "portals": {
+    "LISBONNE": { "side": "L", "color": "#f5b23c", "abbr": "LX" },
+    "PORTO":    { "side": "R", "color": "#25dede", "abbr": "P" },
+    "TOMAR":    { "side": "R", "color": "#4ade80", "abbr": "TM" },
+    "CASTELO":  { "side": "R", "color": "#a78bfa", "abbr": "CB", "label": "C. BRANCO" },
+    "BADAJOZ":  { "side": "R", "color": "#f2588f", "abbr": "BJ" }
+  },
+  "links": {
+    "LISBONNE": [1, 2, 3, 4, 5, 6, 7, 8],
+    "PORTO":    [1, 2, 3, 4, 5],
+    "TOMAR":    [1, 2],
+    "CASTELO":  [4, 5, 6, 7],
+    "BADAJOZ":  [7, 8]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 15, "nMax": 18, "gapMin": 1.5, "gapMax": 2.6,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6, 7], "quietRate": 0.12, "rush": "pointe"
+  }
+}

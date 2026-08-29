@@ -23,16 +23,16 @@ Chaque région est traversée **une fois**, et on n'y revient jamais.
 |---|---|
 | Actes | **9** |
 | Chapitres | **91** |
-| Gares — c'est-à-dire **niveaux** | **555** |
-| Fiches déjà écrites, réemployées telles quelles | **209** |
-| Fiches à écrire | **346** |
+| Gares — c'est-à-dire **niveaux** | **553** |
+| Fiches déjà écrites, réemployées telles quelles | **215** |
+| Fiches à écrire | **338** |
 | Sauts déclarés (§4 bis) | **10** |
 | Longueur des chapitres | 5 à 9 gares, médiane 6 |
 
 **Vérifié par script** (`scratchpad/verif.py`, à porter dans `carte-check` au
 lot C) : les 91 chapitres tiennent tous R3 (5 à 10 gares), aucune gare
 n'apparaît deux fois (R6), le chaînage est continu d'un bout à l'autre, et
-les 209 fiches annoncées comme existantes existent bien au catalogue.
+les 215 fiches annoncées comme existantes existent bien au catalogue.
 
 ## Comment lire les tableaux
 
@@ -176,7 +176,7 @@ les 209 fiches annoncées comme existantes existent bien au catalogue.
 
 ## Acte III — L'Ibérie
 
-*La grande boucle de la péninsule* — 8 chapitres, **50 gares** (29 déjà écrites, 21 à écrire).
+*La grande boucle de la péninsule* — 8 chapitres, **48 gares** (35 déjà écrites, 13 à écrire).
 
 > ⚠️ **La ligne de Teruel est fondue dans le Levant** (28 août 2026, option B,
 > décision de Vincent). Quatre refus §0 d'un coup, mesurés le jour même :
@@ -239,11 +239,22 @@ les 209 fiches annoncées comme existantes existent bien au catalogue.
 > Pampilhosa (Beira Alta rouverte le 28 septembre 2025), Aveiro (la voie
 > métrique du Vouga, CP). Entroncamento reste à l'Estrémadure ; Braço de
 > Prata en réserve documentée.
+>
+> ⚠️ **L'Estrémadure se recompose** (29 août 2026, sept refus §0) : Talavera
+> et Navalmoral (passantes de la ligne 500), Plasencia (terminus d'antenne
+> depuis 1985, les Alvia y rebroussent), Aljucén (gril démonté en 2002),
+> **Badajoz** (deux directions — le nœud régional, c'est Mérida), Elvas
+> (passante du Leste) et Torre das Vargens (ramal de Marvão mort en 2012).
+> Entrent : Monfragüe, Abrantes. Réserve consignée sur Cáceres (sa troisième
+> direction tient au régional de Valencia de Alcántara, trois matins par
+> semaine). Et **Lisbonne Santa Apolónia est un boss d4 assumé** — six voies
+> en service, la première fin de chapitre non-d5 du ruban, prévue par le
+> moteur ; gonfler la doyenne de 1865 serait le mensonge inverse de Charleroi.
 
 | # | Chapitre | Gares, dans l'ordre du rail | n |
 |---|---|---|---|
 | 26 | La Castille | Miranda de Ebro · Burgos · Palencia · Valladolid · Ávila · **Madrid-Chamartín** | 6 |
-| 27 | L'Estrémadure | Talavera de la Reina · Navalmoral · Cáceres · Mérida · Badajoz · Elvas · Entroncamento · **Lisbonne Santa Apolónia** | 8 |
+| 27 | L'Estrémadure | ~~Talavera de la Reina~~ ~~Navalmoral~~ Monfragüe ✓ · Cáceres ✓ · Mérida ✓ · ~~Badajoz~~ ~~Elvas~~ Abrantes ✓ · Entroncamento ✓ · **Lisbonne Santa Apolónia** ✓ | 6 |
 | 28 | La côte d'Argent | ~~Azambuja~~ ~~Santarém~~ ~~Pombal~~ Lisboa Oriente ✓ · Alfarelos ✓ · ~~Coimbra~~ Pampilhosa ✓ · Aveiro ✓ · ~~Espinho~~ · **Porto Campanhã** ✓ | 5 |
 | 29 | La Galice | Nine ✓ · ~~Valença~~ Vigo-Guixar ✓ · Ourense-Empalme ✓ · ~~Zamora~~ Medina del Campo ✓ · **Madrid-Atocha** ✓ | 5 |
 | 30 | L'Andalousie et la Bétique | ~~Aranjuez~~ Alcázar de San Juan ✓ · Ciudad Real ✓ · Puertollano ✓ · Córdoba Central ✓ · Séville Santa Justa ✓ · ~~Utrera~~ ~~Marchena~~ ~~Osuna~~ Dos Hermanas ✓ · Bobadilla ✓ · Antequera-Santa Ana ✓ · **Málaga-María Zambrano** ✓ | 9 |

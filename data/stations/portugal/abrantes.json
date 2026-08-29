@@ -1,0 +1,26 @@
+{
+  "id": "abrantes",
+  "name": "Abrantes",
+  "tagline": "Le Leste quitte la Beira Baixa sur la rive du Tage",
+  "desc": "Sur la rive sud du Tage, à Rossio, la ligne de l'Est se détache de la Beira Baixa : les Intercidades de Covilhã filent vers le nord-est pendant que l'unique régional de Badajoz s'en va vers la frontière. C'est le dernier aiguillage du Portugal avant l'Espagne.",
+  "difficulty": 2,
+  "country": "🇵🇹 Portugal",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }
+  ],
+  "portals": {
+    "ENTRONCAMENTO": { "side": "L", "color": "#f5b23c", "abbr": "EN" },
+    "CASTELO":       { "side": "R", "color": "#a78bfa", "abbr": "CB", "label": "C. BRANCO" },
+    "BADAJOZ":       { "side": "R", "color": "#f2588f", "abbr": "BJ" }
+  },
+  "links": {
+    "ENTRONCAMENTO": [1, 2, 3, 4],
+    "CASTELO":       [1, 2, 3],
+    "BADAJOZ":       [3, 4]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 12, "nMax": 15, "gapMin": 1.8, "gapMax": 3.0,
+    "cars": [2, 2, 3, 3, 4, 4, 5], "quietRate": 0.2, "rush": "pointe"
+  }
+}

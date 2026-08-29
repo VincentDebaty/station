@@ -66,6 +66,22 @@
   },
   "boss": "file de 6 au même quai"
  },
+ "abrantes": {
+  "geometrie": "6986f299bf82",
+  "date": "2026-08-29",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 2,
+  "detail": {
+   "1": "OK",
+   "2": "OK"
+  },
+  "boss": "file de 6 au même quai"
+ },
  "agen": {
   "geometrie": "e8b5cdf6ccb6",
   "date": "2026-08-28",
@@ -1012,6 +1028,24 @@
   },
   "boss": "file de 7 au même quai"
  },
+ "caceres": {
+  "geometrie": "7c9b519ed36f",
+  "date": "2026-08-29",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 4,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK",
+   "4": "OK"
+  },
+  "boss": "retard garanti 0.31 > 0.3"
+ },
  "cambridge": {
   "geometrie": "72bfaf327c18",
   "date": "2026-08-28",
@@ -1746,6 +1780,24 @@
    "2": "OK"
   },
   "boss": "file de 6 au même quai"
+ },
+ "entroncamento": {
+  "geometrie": "b49cadd6dfed",
+  "date": "2026-08-29",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 4,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK",
+   "4": "OK"
+  },
+  "boss": "retard garanti 0.34 > 0.3"
  },
  "erfurt": {
   "geometrie": "4a0eea4e43ec",
@@ -2851,6 +2903,24 @@
   },
   "boss": "retard garanti 0.37 > 0.3"
  },
+ "lisbonne": {
+  "geometrie": "bdc3787ba27b",
+  "date": "2026-08-29",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 4,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK",
+   "4": "OK"
+  },
+  "boss": "file de 6 au même quai"
+ },
  "liverpool": {
   "geometrie": "58d2c111773c",
   "date": "2026-08-28",
@@ -3207,6 +3277,23 @@
   },
   "boss": "OK"
  },
+ "merida": {
+  "geometrie": "04c0ae83bb29",
+  "date": "2026-08-29",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 3,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK"
+  },
+  "boss": "retard garanti 0.33 > 0.3"
+ },
  "messina": {
   "geometrie": "8dff0df7e3c4",
   "date": "2026-08-28",
@@ -3328,6 +3415,22 @@
    "3": "OK"
   },
   "boss": "retard garanti 0.37 > 0.3"
+ },
+ "monfrague": {
+  "geometrie": "fc0be5653a20",
+  "date": "2026-08-29",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 2,
+  "detail": {
+   "1": "OK",
+   "2": "OK"
+  },
+  "boss": "file de 7 au même quai"
  },
  "mons": {
   "geometrie": "2ab3044acf8f",

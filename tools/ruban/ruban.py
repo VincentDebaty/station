@@ -88,8 +88,30 @@ ch(B,"Le piémont pyrénéen","Toulouse","Bilbao",[
 C = acte("ib","Acte III — L'Ibérie","La grande boucle de la péninsule")
 ch(C,"La Castille","Bilbao","Madrid",[
   g("Miranda de Ebro"),g("Burgos"),g("Palencia"),g("Valladolid"),g("Ávila"),g("Madrid-Chamartín")])
+# SEPT REFUS §0 SUR L'ESTRÉMADURE, mesurés le 29 août 2026. Talavera et
+# Navalmoral sont des passantes pures de la ligne 500 (aucune branche, jamais).
+# Plasencia est le piège n° 1 le plus pur : terminus d'une antenne de 16,7 km
+# depuis que la Ruta de la Plata est morte en 1985 — les Alvia y rebroussent.
+# Aljucén : vraie bifurcation, mais le gril a été démonté en 2002 (2 voies).
+# BADAJOZ, la capitale, n'a que deux directions : aucune ligne directe vers
+# Cáceres ni Zafra, tout passe par Mérida — le nœud, c'est elle. ELVAS est
+# une passante du Leste (2 A/R par jour) ; la Nova Linha d'Évora ouvrira au
+# fret d'abord. Torre das Vargens a perdu son ramal de Cáceres (frontière de
+# Marvão morte en 2012). Le chapitre se recompose sur les nœuds vivants :
+# MONFRAGÜE (l'ancienne Palazuelo-Empalme, trois lignes dans le parc
+# national), Cáceres (réserve consignée : sa troisième direction tient au
+# régional de Valencia de Alcántara, trois matins par semaine), Mérida (la
+# croix de l'Estrémadure, vérifiée sur OSM : trois branches au col ouest, les
+# Alvia rebroussent), ABRANTES (le Leste quitte la Beira Baixa à Rossio),
+# Entroncamento. Et LISBONNE SANTA APOLÓNIA est un boss d4 ASSUMÉ — six voies
+# à quai en service (pas de voie 4), la première fin de chapitre non-d5 du
+# ruban : le moteur le prévoit (« une fin de chapitre sur une gare de six
+# quais ne vaut pas une fin sur Bruxelles-Midi »), et gonfler la doyenne de
+# 1865 de deux voies inventées serait le mensonge inverse de Charleroi.
 ch(C,"L'Estrémadure","Madrid","Lisbonne",[
-  g("Talavera de la Reina"),g("Navalmoral"),g("Cáceres"),g("Mérida"),g("Badajoz"),g("Elvas"),g("Entroncamento"),g("Lisbonne Santa Apolónia")])
+  g("Monfragüe","monfrague"),g("Cáceres","caceres"),g("Mérida","merida"),
+  g("Abrantes","abrantes"),g("Entroncamento","entroncamento"),
+  g("Lisbonne Santa Apolónia","lisbonne")])
 # CINQ REFUS §0 SUR LA LINHA DO NORTE, mesurés le 29 août 2026. Azambuja,
 # Santarém et Pombal sont des passantes pures (la « Linha da Azambuja » est un
 # nom de service, la bifurcation de Vendas Novas est à Setil ET fret-seul

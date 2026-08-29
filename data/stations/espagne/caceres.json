@@ -1,0 +1,30 @@
+{
+  "id": "caceres",
+  "name": "Cáceres",
+  "tagline": "La belle endormie réveillée par l'Alvia",
+  "desc": "Depuis 2022, la voie neuve de l'Estrémadure a rendu à la ville aux remparts ses express de Madrid, électrifiés fin 2023. Vers l'ouest, un régional s'obstine trois matins par semaine sur la ligne de Valencia de Alcántara, fantôme du Lusitania qui filait vers Lisbonne.",
+  "difficulty": 3,
+  "country": "🇪🇸 Espagne",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }, { "id": 6 }
+  ],
+  "portals": {
+    "MADRID":    { "side": "L", "color": "#f2588f", "abbr": "MD" },
+    "PLASENCIA": { "side": "L", "color": "#f5b23c", "abbr": "PL" },
+    "MERIDA":    { "side": "R", "color": "#25dede", "abbr": "ME", "label": "MÉRIDA" },
+    "SEVILLE":   { "side": "R", "color": "#4ade80", "abbr": "SV", "label": "SÉVILLE" },
+    "ALCANTARA": { "side": "R", "color": "#a78bfa", "abbr": "VA", "label": "V. DE ALCÁNTARA" }
+  },
+  "links": {
+    "MADRID":    [1, 2, 3, 4, 5, 6],
+    "PLASENCIA": [4, 5, 6],
+    "MERIDA":    [1, 2, 3, 4, 5],
+    "SEVILLE":   [4, 5, 6],
+    "ALCANTARA": [1, 2]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 14, "nMax": 16, "gapMin": 1.7, "gapMax": 3.0,
+    "cars": [2, 2, 3, 3, 4, 4, 5, 6], "quietRate": 0.15, "rush": "pointe"
+  }
+}

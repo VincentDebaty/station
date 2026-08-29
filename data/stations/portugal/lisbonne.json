@@ -1,0 +1,34 @@
+{
+  "id": "lisbonne",
+  "name": "Lisbonne Santa Apolónia",
+  "tagline": "La doyenne, les pieds dans le Tage",
+  "desc": "Le plus vieux terminus du Portugal (1865) aligne ses heurtoirs sur le quai du Tage, sous l'Alfama. Le Sud-Express y partait pour Paris ; restent les Alfa de Porto et de Braga, les IC des deux Beiras et les urbains d'Azambuja, tous par le même goulet vers le nord.",
+  "difficulty": 4,
+  "country": "🇵🇹 Portugal",
+  "platforms": [
+    { "id": 1, "deadEnd": true }, { "id": 2, "deadEnd": true }, { "id": 3, "deadEnd": true },
+    { "id": 4, "deadEnd": true }, { "id": 5, "deadEnd": true }, { "id": 6, "deadEnd": true },
+    { "id": 7, "deadEnd": true }
+  ],
+  "portals": {
+    "PORTO":    { "side": "L", "color": "#25dede", "abbr": "P" },
+    "BRAGA":    { "side": "L", "color": "#4ade80", "abbr": "BR" },
+    "GUARDA":   { "side": "L", "color": "#f2588f", "abbr": "GU" },
+    "COVILHA":  { "side": "L", "color": "#f5b23c", "abbr": "CO", "label": "COVILHÃ" },
+    "TOMAR":    { "side": "L", "color": "#a78bfa", "abbr": "TO" },
+    "AZAMBUJA": { "side": "L", "color": "#60a5fa", "abbr": "AZ" }
+  },
+  "links": {
+    "PORTO":    [1, 2, 3, 4],
+    "BRAGA":    [2, 3, 4],
+    "GUARDA":   [4, 5, 6],
+    "COVILHA":  [5, 6],
+    "TOMAR":    [6, 7],
+    "AZAMBUJA": [7, 1]
+  },
+  "sameSidePairs": "all",
+  "gen": {
+    "nMin": 15, "nMax": 18, "gapMin": 1.6, "gapMax": 2.8,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6, 7], "quietRate": 0.12, "rush": "double"
+  }
+}

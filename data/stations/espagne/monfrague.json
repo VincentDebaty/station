@@ -1,0 +1,26 @@
+{
+  "id": "monfrague",
+  "name": "Monfragüe",
+  "tagline": "L'empalme du parc national",
+  "desc": "Perdue entre les chênes du parc de Monfragüe, l'ancienne Palazuelo-Empalme n'a jamais desservi que des fermes — mais trois lignes s'y nouent. La navette de Plasencia s'y détache de l'axe de l'Estrémadure, sur le seul tronçon que la Ruta de la Plata, morte en 1985, ait laissé vivant.",
+  "difficulty": 2,
+  "country": "🇪🇸 Espagne",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }
+  ],
+  "portals": {
+    "MADRID":    { "side": "L", "color": "#f2588f", "abbr": "MD" },
+    "CACERES":   { "side": "R", "color": "#25dede", "abbr": "CC", "label": "CÁCERES" },
+    "PLASENCIA": { "side": "R", "color": "#f5b23c", "abbr": "PL" }
+  },
+  "links": {
+    "MADRID":    [1, 2, 3, 4],
+    "CACERES":   [1, 2, 3],
+    "PLASENCIA": [3, 4]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 12, "nMax": 15, "gapMin": 1.8, "gapMax": 3.0,
+    "cars": [2, 2, 3, 3, 4, 4, 5], "quietRate": 0.18, "rush": "pointe"
+  }
+}

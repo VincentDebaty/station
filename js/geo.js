@@ -316,7 +316,10 @@ const GEO = {
         vigo: [-8.712, 42.235],
         ourense: [-7.864, 42.336],
         medina: [-4.916, 41.313],
-        "madrid-atocha": [-3.6906, 40.4068]
+        "madrid-atocha": [-3.6906, 40.4068],
+        monfrague: [-6.1011, 39.9374],
+        caceres: [-6.3856, 39.4603],
+        merida: [-6.3437, 38.916]
       } },
     "portugal": { name: "Portugal", flag: "🇵🇹", iso: "PT", continent: "europe",
       cities: {
@@ -325,7 +328,10 @@ const GEO = {
         alfarelos: [-8.657, 40.147],
         pampilhosa: [-8.428, 40.339],
         aveiro: [-8.643, 40.643],
-        porto: [-8.5854, 41.1488]
+        porto: [-8.5854, 41.1488],
+        abrantes: [-8.197, 39.444],
+        entroncamento: [-8.468, 39.4633],
+        lisbonne: [-9.123, 38.714]
       } },
     "royaume-uni": { name: "Royaume-Uni", flag: "🇬🇧", iso: "GBR", continent: "europe",
       frame: [-6.3, 49.9, 1.9, 57.6], neighbors: { belgique: [3.25, 51.22] },

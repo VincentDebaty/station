@@ -570,5 +570,9 @@ const LINES = [
   { id: "L953", name: "La côte d'Argent (Lisboa Oriente – Porto)",
     nodes: ["oriente", "alfarelos", "pampilhosa", "aveiro", "porto"] },
   { id: "L954", name: "La ligne du Minho (Porto – Nine)",
-    nodes: ["porto", "nine"] }
+    nodes: ["porto", "nine"] },
+  { id: "L955", name: "L'Estrémadure (Monfragüe – Lisbonne)",
+    nodes: ["monfrague", "caceres", "merida", "abrantes", "entroncamento", "lisbonne"] },
+  { id: "L956", name: "La ligne 500 (Madrid – Monfragüe)",
+    nodes: ["madrid-atocha", "monfrague"] }
 ];
