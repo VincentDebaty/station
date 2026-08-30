@@ -404,7 +404,15 @@ const GEO = {
         "barnt-green": [-2, 52.36],
         droitwich: [-2.15, 52.27],
         worcester: [-2.209, 52.195],
-        hereford: [-2.712, 52.061]
+        hereford: [-2.712, 52.061],
+        chinley: [-1.943, 53.3416],
+        romiley: [-2.0894, 53.4157],
+        "guide-bridge": [-2.1135, 53.4735],
+        stockport: [-2.1629, 53.4055],
+        "salford-crescent": [-2.2757, 53.4877],
+        earlestown: [-2.6363, 53.4517],
+        wigan: [-2.6332, 53.5443],
+        huyton: [-2.841, 53.411]
       } }
   }
 };

@@ -1,0 +1,29 @@
+{
+  "id": "earlestown",
+  "name": "Earlestown",
+  "city": "Newton-le-Willows",
+  "tagline": "Le triangle de 1830, la plus vieille jonction du monde",
+  "desc": "Là où la première ligne du monde reçut sa première branche, dès 1831. Le triangle joue toujours sur ses trois côtés : Liverpool, Manchester, et la courbe de Warrington par où passent les trains du pays de Galles.",
+  "difficulty": 2,
+  "country": "🇬🇧 Royaume-Uni",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
+  ],
+  "portals": {
+    "LIVERPOOL":  { "side": "L", "color": "#4ade80", "abbr": "LV" },
+    "CHESTER":    { "side": "L", "color": "#60a5fa", "abbr": "CH" },
+    "WIGAN":      { "side": "L", "color": "#f2588f", "abbr": "WG" },
+    "MANCHESTER": { "side": "R", "color": "#f5b23c", "abbr": "MR" }
+  },
+  "links": {
+    "LIVERPOOL":  [1, 2, 3],
+    "CHESTER":    [3, 4, 5],
+    "WIGAN":      [4, 5],
+    "MANCHESTER": [1, 2, 3, 4, 5]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 12, "nMax": 15, "gapMin": 1.8, "gapMax": 3.0,
+    "cars": [2, 2, 2, 3, 3, 4, 4, 5], "quietRate": 0.18, "rush": "pointe"
+  }
+}

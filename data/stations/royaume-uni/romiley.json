@@ -1,0 +1,28 @@
+{
+  "id": "romiley",
+  "name": "Romiley",
+  "tagline": "La fourche des deux routes de Manchester",
+  "desc": "Les quais enjambent la rue, et la jonction est au bout : deux routes vers Manchester — par Bredbury ou par la boucle de Hyde — la vallée vers Marple et Sheffield, et l'antenne de Rose Hill.",
+  "difficulty": 2,
+  "country": "🇬🇧 Royaume-Uni",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
+  ],
+  "portals": {
+    "MANCHESTER":   { "side": "L", "color": "#f5b23c", "abbr": "MR" },
+    "GUIDE BRIDGE": { "side": "L", "color": "#4ade80", "abbr": "GB" },
+    "SHEFFIELD":    { "side": "R", "color": "#a78bfa", "abbr": "SH" },
+    "ROSE HILL":    { "side": "R", "color": "#f2588f", "abbr": "RH" }
+  },
+  "links": {
+    "MANCHESTER":   [1, 2, 3],
+    "GUIDE BRIDGE": [3, 4, 5],
+    "SHEFFIELD":    [1, 2, 3, 4],
+    "ROSE HILL":    [4, 5]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 13, "nMax": 16, "gapMin": 1.8, "gapMax": 3.0,
+    "cars": [2, 2, 2, 3, 3, 4, 4, 5], "quietRate": 0.18, "rush": "double"
+  }
+}

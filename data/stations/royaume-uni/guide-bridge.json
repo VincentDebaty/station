@@ -1,0 +1,26 @@
+{
+  "id": "guide-bridge",
+  "name": "Guide Bridge",
+  "tagline": "La cathédrale déchue du Woodhead",
+  "desc": "Tête de la ligne électrique du Woodhead en 1954, réduite à deux quais vivants. Restent la navette de Glossop, la boucle de Hyde vers Romiley — et, un samedi matin par semaine, le train fantôme de Stalybridge qui garde la ligne ouverte.",
+  "difficulty": 2,
+  "country": "🇬🇧 Royaume-Uni",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
+  ],
+  "portals": {
+    "MANCHESTER": { "side": "L", "color": "#f5b23c", "abbr": "MR" },
+    "GLOSSOP":    { "side": "R", "color": "#25dede", "abbr": "GL" },
+    "ROMILEY":    { "side": "R", "color": "#4ade80", "abbr": "RM" }
+  },
+  "links": {
+    "MANCHESTER": [1, 2, 3, 4, 5],
+    "GLOSSOP":    [1, 2, 3],
+    "ROMILEY":    [3, 4, 5]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 12, "nMax": 14, "gapMin": 1.8, "gapMax": 3.0,
+    "cars": [2, 2, 2, 3, 3, 4], "quietRate": 0.2, "rush": "pointe"
+  }
+}

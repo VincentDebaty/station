@@ -1,0 +1,116 @@
+{
+  "id": "stockport",
+  "name": "Stockport",
+  "tagline": "Six directions sur le grand viaduc de briques",
+  "desc": "Sur son viaduc de vingt-sept arches, tout le sud de Manchester s'entonne ici : les express de Londres par Stoke ou par Crewe, ceux de Sheffield par le tunnel de Disley, la montée de Buxton, le Cheshire vers Chester — et un train fantôme par semaine vers Stalybridge.",
+  "difficulty": 4,
+  "country": "🇬🇧 Royaume-Uni",
+  "platforms": [
+    {
+      "id": 1
+    },
+    {
+      "id": 2
+    },
+    {
+      "id": 3
+    },
+    {
+      "id": 4
+    },
+    {
+      "id": 5
+    },
+    {
+      "id": 6
+    },
+    {
+      "id": 7
+    }
+  ],
+  "portals": {
+    "MANCHESTER": {
+      "side": "L",
+      "color": "#f5b23c",
+      "abbr": "MR"
+    },
+    "EUSTON": {
+      "side": "R",
+      "color": "#25dede",
+      "abbr": "EU"
+    },
+    "CREWE": {
+      "side": "R",
+      "color": "#60a5fa",
+      "abbr": "CW"
+    },
+    "SHEFFIELD": {
+      "side": "R",
+      "color": "#a78bfa",
+      "abbr": "SH"
+    },
+    "BUXTON": {
+      "side": "R",
+      "color": "#4ade80",
+      "abbr": "BX"
+    },
+    "CHESTER": {
+      "side": "R",
+      "color": "#f2588f",
+      "abbr": "CH"
+    }
+  },
+  "links": {
+    "MANCHESTER": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "EUSTON": [
+      1,
+      2,
+      3
+    ],
+    "CREWE": [
+      3,
+      4,
+      5
+    ],
+    "SHEFFIELD": [
+      5,
+      6,
+      7
+    ],
+    "BUXTON": [
+      6,
+      7
+    ],
+    "CHESTER": [
+      1,
+      2
+    ]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 14,
+    "nMax": 17,
+    "gapMin": 1.5,
+    "gapMax": 2.6,
+    "cars": [
+      2,
+      3,
+      3,
+      4,
+      4,
+      5,
+      5,
+      6
+    ],
+    "quietRate": 0.14,
+    "rush": "double"
+  }
+}

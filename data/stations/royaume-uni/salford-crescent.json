@@ -1,0 +1,29 @@
+{
+  "id": "salford-crescent",
+  "name": "Salford Crescent",
+  "city": "Salford",
+  "tagline": "Le point où Manchester se déchire en deux",
+  "desc": "Deux quais serrés sur un talus, et pourtant tout l'ouest de Manchester s'y décide : vers Victoria ou vers Piccadilly au sud, vers Bolton ou vers Atherton au nord. La moitié des navetteurs de la ville y change de train.",
+  "difficulty": 1,
+  "country": "🇬🇧 Royaume-Uni",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }
+  ],
+  "portals": {
+    "MANCHESTER": { "side": "L", "color": "#f5b23c", "abbr": "MR" },
+    "VICTORIA":   { "side": "L", "color": "#a78bfa", "abbr": "VC" },
+    "PRESTON":    { "side": "R", "color": "#f2588f", "abbr": "PR" },
+    "SOUTHPORT":  { "side": "R", "color": "#25dede", "abbr": "SO" }
+  },
+  "links": {
+    "MANCHESTER": [1, 2],
+    "VICTORIA":   [3, 4],
+    "PRESTON":    [1, 2, 3],
+    "SOUTHPORT":  [2, 3, 4]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 12, "nMax": 15, "gapMin": 1.6, "gapMax": 2.8,
+    "cars": [2, 2, 2, 2, 3, 3, 4], "quietRate": 0.2, "rush": "double"
+  }
+}

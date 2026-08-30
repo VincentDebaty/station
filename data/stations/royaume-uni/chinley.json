@@ -1,0 +1,26 @@
+{
+  "id": "chinley",
+  "name": "Chinley",
+  "tagline": "Cinq quais en 1904, deux aujourd'hui",
+  "desc": "L'ancienne grande jonction du Midland, réduite à deux quais au pied du Peak District. Les trains de pierre de Peak Forest la traversent sans s'arrêter, l'omnibus de la vallée s'y croise, et l'express de Liverpool s'y glisse matin et soir par le tunnel de Disley.",
+  "difficulty": 1,
+  "country": "🇬🇧 Royaume-Uni",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }
+  ],
+  "portals": {
+    "MANCHESTER": { "side": "L", "color": "#f5b23c", "abbr": "MR" },
+    "STOCKPORT":  { "side": "L", "color": "#60a5fa", "abbr": "SK" },
+    "SHEFFIELD":  { "side": "R", "color": "#a78bfa", "abbr": "SH" }
+  },
+  "links": {
+    "MANCHESTER": [1, 2, 3],
+    "STOCKPORT":  [3, 4],
+    "SHEFFIELD":  [1, 2, 3, 4]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 12, "nMax": 15, "gapMin": 1.6, "gapMax": 2.8,
+    "cars": [2, 2, 2, 2, 3, 3, 4], "quietRate": 0.2, "rush": "pointe"
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "id": "huyton",
+  "name": "Huyton",
+  "tagline": "Quatre voies neuves sur la bifurcation de 1830",
+  "desc": "Juste à l'est de la gare, la ligne de Wigan quitte le tracé de 1830 vers Manchester. Réélargie à quatre voies pour l'électrification de 2015, c'est la dernière bifurcation avant la tranchée de Lime Street.",
+  "difficulty": 2,
+  "country": "🇬🇧 Royaume-Uni",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }
+  ],
+  "portals": {
+    "LIVERPOOL":  { "side": "L", "color": "#4ade80", "abbr": "LV" },
+    "MANCHESTER": { "side": "R", "color": "#f5b23c", "abbr": "MR" },
+    "WIGAN":      { "side": "R", "color": "#f2588f", "abbr": "WG" }
+  },
+  "links": {
+    "LIVERPOOL":  [1, 2, 3, 4],
+    "MANCHESTER": [1, 2, 3],
+    "WIGAN":      [3, 4]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 12, "nMax": 14, "gapMin": 1.8, "gapMax": 3.0,
+    "cars": [2, 2, 3, 3, 3, 4, 4], "quietRate": 0.2, "rush": "double"
+  }
+}

@@ -30,10 +30,39 @@ ch(A,"La côte Est","Newcastle","Leeds",[
   g("Durham"),g("Darlington"),g("Northallerton"),g("York","york"),g("Leeds","leeds")])
 ch(A,"Le Yorkshire noir","Leeds","Sheffield",[
   g("Wakefield"),g("Pontefract"),g("Doncaster","doncaster"),g("Rotherham"),g("Sheffield","sheffield")])
+# HUIT REFUS SUR LA VALLÉE DE HOPE (30 août 2026) : Dore & Totley a sa
+# jonction EN GARE mais son trafic sur un seul axe (le quai rendu en avril
+# 2024 sert le même Sheffield↔Manchester — aucun arrêt vers Chesterfield) ;
+# Hathersage, Edale, les deux New Mills (la jonction South est en pleine
+# voie, dans aucune gare), Marple, Rose Hill et même Hazel Grove (un seul
+# train par jour vers Sheffield) tombent. Restent CHINLEY — l'ancienne
+# grande jonction du Midland, cinq quais en 1904, deux aujourd'hui, admise
+# de justesse sur ses trois flux (l'express de Liverpool y passe trois fois
+# par jour, bien au-dessus du précédent Valencia de Alcántara) — ROMILEY,
+# GUIDE BRIDGE (la cathédrale déchue du Woodhead, et le train fantôme de
+# Stalybridge, un aller-retour par semaine, vit dans sa desc, pas sur son
+# gril) et STOCKPORT, l'avant-boss à six directions sur son viaduc. Le
+# tronçon Guide Bridge → Stockport est la ligne du train fantôme : réelle,
+# ouverte, traversée en points de passage — l'anecdote est assumée.
 ch(A,"La vallée de Hope","Sheffield","Manchester",[
-  g("Dore"),g("Hathersage"),g("Edale"),g("Chinley"),g("New Mills"),g("Stockport"),g("Manchester Piccadilly","manchester")])
+  g("Chinley","chinley"),g("Romiley","romiley"),g("Guide Bridge","guide-bridge"),
+  g("Stockport","stockport"),g("Manchester Piccadilly","manchester")])
+# SEPT REFUS SUR LA LIGNE DE 1830 (30 août 2026) : les haltes de Chat Moss
+# (Eccles, Patricroft), Salford Central (ses quais de Liverpool sont
+# désaffectés — un Runcorn inverse en puissance, à surveiller), Newton-le-
+# Willows (la bifurcation est chez sa voisine), et les deux St Helens (leur
+# branche commune est morte en juin 1965, la hache Beeching). Le chapitre se
+# recompose sur les jonctions vivantes : SALFORD CRESCENT (le point où
+# Manchester se déchire en deux), EARLESTOWN — le triangle de 1831, la plus
+# vieille jonction du monde, qui joue encore sur ses trois côtés —, WIGAN
+# NORTH WESTERN (le détour suit la courbe de Winwick, le rail où Huskisson
+# fut tué le jour de l'inauguration) et HUYTON. Warrington Bank Quay,
+# admissible mais en impasse pour ce ruban (plus de direct Liverpool depuis
+# 1962), reste en réserve documentée.
 ch(A,"La première ligne du monde","Manchester","Liverpool",[
-  g("Salford"),g("Eccles"),g("Newton-le-Willows"),g("St Helens"),g("Huyton"),g("Liverpool Lime Street","liverpool")])
+  g("Salford Crescent","salford-crescent"),g("Earlestown","earlestown"),
+  g("Wigan North Western","wigan"),g("Huyton","huyton"),
+  g("Liverpool Lime Street","liverpool")])
 # LE WEST COAST PASSE ENTIER (30 août 2026), avec le piège n° 1 À L'ENVERS :
 # RUNCORN n'est pas une ancienne bifurcation que la carte montre encore,
 # c'est une bifurcation RESSUSCITÉE que les vieilles cartes ignorent — la

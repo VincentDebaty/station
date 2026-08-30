@@ -1,0 +1,29 @@
+{
+  "id": "wigan",
+  "name": "Wigan North Western",
+  "city": "Wigan",
+  "tagline": "Le palier de la West Coast",
+  "desc": "Sur la West Coast Main Line, tous les express de Londres vers Glasgow y marquent le pas. À l'ouest, la ligne de Liverpool par St Helens ; à l'est, la desserte de Manchester par Walkden.",
+  "difficulty": 3,
+  "country": "🇬🇧 Royaume-Uni",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }, { "id": 6 }
+  ],
+  "portals": {
+    "EUSTON":     { "side": "L", "color": "#25dede", "abbr": "EU" },
+    "LIVERPOOL":  { "side": "L", "color": "#4ade80", "abbr": "LV" },
+    "PRESTON":    { "side": "R", "color": "#f2588f", "abbr": "PR" },
+    "MANCHESTER": { "side": "R", "color": "#f5b23c", "abbr": "MR" }
+  },
+  "links": {
+    "EUSTON":     [1, 2, 3, 4],
+    "LIVERPOOL":  [3, 4, 5, 6],
+    "PRESTON":    [1, 2, 3, 4],
+    "MANCHESTER": [5, 6]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 14, "nMax": 17, "gapMin": 1.6, "gapMax": 2.9,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6], "quietRate": 0.15, "rush": "pointe"
+  }
+}

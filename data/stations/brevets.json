@@ -1504,6 +1504,22 @@
   },
   "boss": "OK"
  },
+ "chinley": {
+  "geometrie": "17ba99e33ed7",
+  "date": "2026-08-30",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 2,
+  "detail": {
+   "1": "OK",
+   "2": "OK"
+  },
+  "boss": "file de 7 au même quai"
+ },
  "chivasso": {
   "geometrie": "8390368ca994",
   "date": "2026-08-28",
@@ -2017,6 +2033,22 @@
   },
   "boss": "retard garanti 0.30 > 0.3"
  },
+ "earlestown": {
+  "geometrie": "a4731f257416",
+  "date": "2026-08-30",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 2,
+  "detail": {
+   "1": "OK",
+   "2": "OK"
+  },
+  "boss": "17/90 journées au-dessus de 4"
+ },
  "eastleigh": {
   "geometrie": "f0325be63b8f",
   "date": "2026-08-30",
@@ -2510,6 +2542,22 @@
   },
   "boss": "file de 7 au même quai"
  },
+ "guide-bridge": {
+  "geometrie": "4ba9d3e6a1ce",
+  "date": "2026-08-30",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 2,
+  "detail": {
+   "1": "OK",
+   "2": "OK"
+  },
+  "boss": "file de 6 au même quai"
+ },
  "gunzburg": {
   "geometrie": "462a63152cec",
   "date": "2026-08-27",
@@ -2789,6 +2837,22 @@
    "3": "OK"
   },
   "boss": "retard garanti 0.34 > 0.3"
+ },
+ "huyton": {
+  "geometrie": "4fee3ea44993",
+  "date": "2026-08-30",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 2,
+  "detail": {
+   "1": "OK",
+   "2": "OK"
+  },
+  "boss": "file de 7 au même quai"
  },
  "ingolstadt": {
   "geometrie": "149b733d363b",
@@ -5210,6 +5274,23 @@
   },
   "boss": "OK"
  },
+ "romiley": {
+  "geometrie": "13ee8da6e4e1",
+  "date": "2026-08-30",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 3,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK"
+  },
+  "boss": "OK"
+ },
  "romsey": {
   "geometrie": "6388ed8d63d7",
   "date": "2026-08-30",
@@ -5414,6 +5495,23 @@
    "4": "file de 6 au même quai"
   },
   "boss": "file de 8 au même quai"
+ },
+ "salford-crescent": {
+  "geometrie": "6e64e035036f",
+  "date": "2026-08-30",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 3,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK"
+  },
+  "boss": "retard garanti 0.32 > 0.3"
  },
  "salisbury": {
   "geometrie": "a4a6af5a556f",
@@ -5720,6 +5818,23 @@
    "3": "OK"
   },
   "boss": "OK"
+ },
+ "stockport": {
+  "geometrie": "d8f20ab8d2ea",
+  "date": "2026-08-30",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 3,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK"
+  },
+  "boss": "retard garanti 0.34 > 0.3"
  },
  "strasbourg": {
   "geometrie": "b49aa14214b0",
@@ -6434,6 +6549,24 @@
    "4": "OK"
   },
   "boss": "retard garanti 0.31 > 0.3"
+ },
+ "wigan": {
+  "geometrie": "9ad6bf41a62f",
+  "date": "2026-08-30",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 4,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK",
+   "4": "OK"
+  },
+  "boss": "OK"
  },
  "winterthur": {
   "geometrie": "36fb13106c18",

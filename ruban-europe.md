@@ -23,16 +23,16 @@ Chaque région est traversée **une fois**, et on n'y revient jamais.
 |---|---|
 | Actes | **9** |
 | Chapitres | **90** |
-| Gares — c'est-à-dire **niveaux** | **545** |
-| Fiches déjà écrites, réemployées telles quelles | **266** |
-| Fiches à écrire | **279** |
+| Gares — c'est-à-dire **niveaux** | **542** |
+| Fiches déjà écrites, réemployées telles quelles | **274** |
+| Fiches à écrire | **268** |
 | Sauts déclarés (§4 bis) | **11** |
 | Longueur des chapitres | 5 à 9 gares, médiane 6 |
 
 **Vérifié par script** (`scratchpad/verif.py`, à porter dans `carte-check` au
 lot C) : les 90 chapitres tiennent tous R3 (5 à 10 gares), aucune gare
 n'apparaît deux fois (R6), le chaînage est continu d'un bout à l'autre, et
-les 266 fiches annoncées comme existantes existent bien au catalogue.
+les 274 fiches annoncées comme existantes existent bien au catalogue.
 
 ## Comment lire les tableaux
 
@@ -120,7 +120,7 @@ les 266 fiches annoncées comme existantes existent bien au catalogue.
 
 ## Acte I — Les Îles
 
-*De Cork au tunnel sous la Manche* — 18 chapitres, **108 gares** (50 déjà écrites, 58 à écrire).
+*De Cork au tunnel sous la Manche* — 18 chapitres, **105 gares** (58 déjà écrites, 47 à écrire).
 
 | # | Chapitre | Gares, dans l'ordre du rail | n |
 |---|---|---|---|
@@ -134,8 +134,8 @@ les 266 fiches annoncées comme existantes existent bien au catalogue.
 | 7 | La côte de Northumbrie | Dunbar · Berwick-upon-Tweed · Alnmouth · Morpeth · **Newcastle** ✓ | 5 |
 | 8 | La côte Est | Durham · Darlington · Northallerton · York ✓ · **Leeds** ✓ | 5 |
 | 9 | Le Yorkshire noir | Wakefield · Pontefract · Doncaster ✓ · Rotherham · **Sheffield** ✓ | 5 |
-| 10 | La vallée de Hope | Dore · Hathersage · Edale · Chinley · New Mills · Stockport · **Manchester Piccadilly** ✓ | 7 |
-| 11 | La première ligne du monde | Salford · Eccles · Newton-le-Willows · St Helens · Huyton · **Liverpool Lime Street** ✓ | 6 |
+| 10 | La vallée de Hope | ~~Dore~~ ~~Hathersage~~ ~~Edale~~ Chinley ✓ · ~~New Mills~~ Romiley ✓ · Guide Bridge ✓ · Stockport ✓ · **Manchester Piccadilly** ✓ | 5 |
+| 11 | La première ligne du monde | Salford Crescent ✓ · ~~Eccles~~ ~~Newton-le-Willows~~ Earlestown ✓ · Wigan North Western ✓ · ~~St Helens~~ Huyton ✓ · **Liverpool Lime Street** ✓ | 5 |
 | 12 | Le West Coast | Runcorn ✓ · Crewe ✓ · Stafford ✓ · Wolverhampton ✓ · **Birmingham New Street** ✓ | 5 |
 | 13 | Les Marches galloises | ~~Bromsgrove~~ Barnt Green ✓ · Droitwich Spa ✓ · Worcester Shrub Hill ✓ · Hereford ✓ · ~~Abergavenny~~ ~~Pontypool~~ · **Cardiff Central** ✓ | 5 |
 | 14 | Le tunnel de la Severn | Newport ✓ · ~~Caldicot~~ Severn Tunnel Junction ✓ · ~~Pilning~~ Bristol Parkway ✓ · Filton Abbey Wood ✓ · **Bristol Temple Meads** ✓ | 5 |
@@ -204,6 +204,15 @@ les 266 fiches annoncées comme existantes existent bien au catalogue.
 > gare) et Droitwich Spa. Worcester = Shrub Hill (Foregate Street a un quai
 > par route). Le segment Hereford → Cardiff n'offre rien : couloir sans
 > carrefour, assumé.
+>
+> ⚠️ **Les Pennines recomposées** (30 août 2026, quinze refus sur deux
+> chapitres) : la vallée de Hope garde Chinley (admise de justesse),
+> Romiley, Guide Bridge (le train fantôme de Stalybridge vit dans sa desc)
+> et Stockport. La ligne de 1830 garde Salford Crescent, EARLESTOWN — le
+> triangle de 1831, la plus vieille jonction du monde —, Wigan (par la
+> courbe de Winwick, le rail de Huskisson) et Huyton. Salford Central est un
+> Runcorn inverse en puissance (quais de Liverpool désaffectés, réouverture
+> en projet).
 >
 > ⚠️ **La Normandie, le Cotentin et la Bretagne recomposés** (30 août 2026) :
 > Évreux (Rouen morte en 1969), Bayeux, Saint-Lô (Vire morte en 1938),

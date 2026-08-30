@@ -3,7 +3,7 @@
  "nom": "L'Europe",
  "gratuite": true,
  "enChantier": true,
- "note": "Tranche livree du ruban : chapitres 12 a 56 de ruban-europe.md (Bussoleno vers Hambourg) — l'acte V en entier. Le ruban complet va de Cork a Istanbul ; les actes I a IV se greffent DEVANT celui-ci quand ils seront ecrits.",
+ "note": "Tranche livree du ruban : chapitres 10 a 56 de ruban-europe.md (Bussoleno vers Hambourg) — l'acte V en entier. Le ruban complet va de Cork a Istanbul ; les actes I a IV se greffent DEVANT celui-ci quand ils seront ecrits.",
  "echelle": {
   "kmMinEntreHubs": 110
  },
@@ -30,6 +30,35 @@
   }
  ],
  "chapitres": [
+  {
+   "id": "la-vallee-de-hope",
+   "nom": "La vallée de Hope",
+   "zone": "atl",
+   "gares": [
+    "chinley",
+    "romiley",
+    "guide-bridge",
+    "stockport",
+    "manchester"
+   ],
+   "plancher": 1,
+   "arrivee": 3,
+   "sinuosite": 1.55
+  },
+  {
+   "id": "la-premiere-ligne-du-monde",
+   "nom": "La première ligne du monde",
+   "zone": "atl",
+   "gares": [
+    "salford-crescent",
+    "earlestown",
+    "wigan",
+    "huyton",
+    "liverpool"
+   ],
+   "plancher": 2,
+   "arrivee": 3
+  },
   {
    "id": "le-west-coast",
    "nom": "Le West Coast",
@@ -237,7 +266,6 @@
    ],
    "plancher": 2,
    "arrivee": 4,
-   "sinuosite": 1.55,
    "saut": {
     "mode": "correspondance",
     "texte": "La côte basque — le Topo franchit la Bidassoa, puis trois heures d'Euskotren jusqu'à Bilbao"

@@ -610,5 +610,9 @@ const LINES = [
   { id: "L974", name: "Le West Coast (Liverpool – Birmingham)",
     nodes: ["liverpool", "runcorn", "crewe", "stafford", "wolverhampton", "birmingham"] },
   { id: "L975", name: "Les Marches galloises (Birmingham – Cardiff)",
-    nodes: ["birmingham", "barnt-green", "droitwich", "worcester", "hereford", "cardiff"] }
+    nodes: ["birmingham", "barnt-green", "droitwich", "worcester", "hereford", "cardiff"] },
+  { id: "L976", name: "La vallée de Hope (Sheffield – Manchester)",
+    nodes: ["sheffield", "chinley", "romiley", "guide-bridge", "stockport", "manchester"] },
+  { id: "L977", name: "La première ligne du monde (Manchester – Liverpool)",
+    nodes: ["manchester", "salford-crescent", "earlestown", "wigan", "huyton", "liverpool"] }
 ];
