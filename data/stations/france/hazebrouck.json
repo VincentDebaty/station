@@ -1,0 +1,28 @@
+{
+  "id": "hazebrouck",
+  "name": "Hazebrouck",
+  "tagline": "Le X flamand",
+  "desc": "Au croisement de la ligne de Lille aux Fontinettes et de l'artère d'Arras à Dunkerque, la gare de 1848 aiguille les TER de tout le triangle Lille–Calais–Dunkerque, et le TGV de Paris y marque l'arrêt en montant vers le port. Six voies, un bâtiment reconstruit après-guerre, et le fret qui traverse encore.",
+  "difficulty": 3,
+  "country": "🇫🇷 France",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
+  ],
+  "portals": {
+    "LILLE":     { "side": "L", "color": "#f5b23c", "abbr": "LI" },
+    "ARRAS":     { "side": "L", "color": "#25dede", "abbr": "AR" },
+    "DUNKERQUE": { "side": "R", "color": "#60a5fa", "abbr": "DK" },
+    "CALAIS":    { "side": "R", "color": "#f2588f", "abbr": "CA" }
+  },
+  "links": {
+    "LILLE":     [1, 2, 3, 4],
+    "ARRAS":     [3, 4, 5],
+    "DUNKERQUE": [1, 2, 3],
+    "CALAIS":    [3, 4, 5]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 14, "nMax": 15, "gapMin": 1.6, "gapMax": 2.8,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6], "quietRate": 0.15, "rush": "pointe"
+  }
+}

@@ -1,0 +1,104 @@
+{
+  "id": "ashford",
+  "name": "Ashford International",
+  "city": "Ashford",
+  "tagline": "Six branches vivantes, l'Eurostar passe sans s'arrêter",
+  "desc": "Le nœud du Kent : deux routes vers Londres — la HS1 et la ligne classique de Tonbridge — plus Canterbury, Douvres et la Marshlink de Hastings, seule ligne non électrifiée du Sud-Est. Les quais internationaux dorment depuis 2020 : l'Eurostar traverse par la voie d'évitement, sans un arrêt.",
+  "difficulty": 4,
+  "country": "🇬🇧 Royaume-Uni",
+  "platforms": [
+    {
+      "id": 1
+    },
+    {
+      "id": 2
+    },
+    {
+      "id": 3
+    },
+    {
+      "id": 4
+    },
+    {
+      "id": 5
+    },
+    {
+      "id": 6
+    }
+  ],
+  "portals": {
+    "ST PANCRAS": {
+      "side": "L",
+      "color": "#25dede",
+      "abbr": "SP"
+    },
+    "CHARING CROSS": {
+      "side": "L",
+      "color": "#f5b23c",
+      "abbr": "CX"
+    },
+    "CANTERBURY": {
+      "side": "R",
+      "color": "#4ade80",
+      "abbr": "CT"
+    },
+    "DOVER": {
+      "side": "R",
+      "color": "#60a5fa",
+      "abbr": "DV"
+    },
+    "HASTINGS": {
+      "side": "R",
+      "color": "#f2588f",
+      "abbr": "HS"
+    }
+  },
+  "links": {
+    "ST PANCRAS": [
+      4,
+      5,
+      6
+    ],
+    "CHARING CROSS": [
+      1,
+      2,
+      3
+    ],
+    "CANTERBURY": [
+      2,
+      3,
+      4,
+      5
+    ],
+    "DOVER": [
+      4,
+      5,
+      6
+    ],
+    "HASTINGS": [
+      1,
+      2,
+      3
+    ]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 13,
+    "nMax": 15,
+    "gapMin": 1.5,
+    "gapMax": 2.6,
+    "cars": [
+      2,
+      3,
+      3,
+      4,
+      4,
+      5,
+      5,
+      6,
+      7
+    ],
+    "quietRate": 0.14,
+    "rush": "double"
+  }
+}

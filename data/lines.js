@@ -592,5 +592,9 @@ const LINES = [
   { id: "L965", name: "La Bretagne intérieure (Rennes – Nantes)",
     nodes: ["rennes", "redon", "savenay", "nantes"] },
   { id: "L966", name: "La vallée de la Seine (Paris – Mantes)",
-    nodes: ["paris-nord", "mantes-la-jolie"] }
+    nodes: ["paris-nord", "mantes-la-jolie"] },
+  { id: "L967", name: "Le tunnel (Tonbridge – Lille)",
+    nodes: ["tonbridge", "ashford", "calais-frethun", "hazebrouck", "lille"] },
+  { id: "L968", name: "La South Eastern Main Line (Londres – Tonbridge)",
+    nodes: ["waterloo", "tonbridge"] }
 ];

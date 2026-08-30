@@ -23,16 +23,16 @@ Chaque région est traversée **une fois**, et on n'y revient jamais.
 |---|---|
 | Actes | **9** |
 | Chapitres | **90** |
-| Gares — c'est-à-dire **niveaux** | **548** |
-| Fiches déjà écrites, réemployées telles quelles | **238** |
-| Fiches à écrire | **310** |
+| Gares — c'est-à-dire **niveaux** | **547** |
+| Fiches déjà écrites, réemployées telles quelles | **242** |
+| Fiches à écrire | **305** |
 | Sauts déclarés (§4 bis) | **11** |
 | Longueur des chapitres | 5 à 9 gares, médiane 6 |
 
 **Vérifié par script** (`scratchpad/verif.py`, à porter dans `carte-check` au
 lot C) : les 90 chapitres tiennent tous R3 (5 à 10 gares), aucune gare
 n'apparaît deux fois (R6), le chaînage est continu d'un bout à l'autre, et
-les 238 fiches annoncées comme existantes existent bien au catalogue.
+les 242 fiches annoncées comme existantes existent bien au catalogue.
 
 ## Comment lire les tableaux
 
@@ -120,7 +120,7 @@ les 238 fiches annoncées comme existantes existent bien au catalogue.
 
 ## Acte I — Les Îles
 
-*De Cork au tunnel sous la Manche* — 18 chapitres, **111 gares** (22 déjà écrites, 89 à écrire).
+*De Cork au tunnel sous la Manche* — 18 chapitres, **110 gares** (26 déjà écrites, 84 à écrire).
 
 | # | Chapitre | Gares, dans l'ordre du rail | n |
 |---|---|---|---|
@@ -143,7 +143,7 @@ les 238 fiches annoncées comme existantes existent bien au catalogue.
 | | ⤳ **Saut (nuit)** | *Le Night Riviera — le train de nuit de Penzance remonte à Bristol* | |
 | 16 | Le Wessex | Bath Spa · Trowbridge · Westbury · Salisbury ✓ · Romsey · **Southampton Central** ✓ | 6 |
 | 17 | Le South Western | Winchester · Basingstoke · Woking · Clapham Junction · **London Waterloo** ✓ | 5 |
-| 18 | Le tunnel | Stratford International · Ebbsfleet · Ashford · Calais-Fréthun · Hazebrouck · **Lille-Europe** ✓ | 6 |
+| 18 | Le tunnel | ~~Stratford International~~ ~~Ebbsfleet~~ Tonbridge ✓ · Ashford International ✓ · Calais-Fréthun ✓ · Hazebrouck ✓ · **Lille-Flandres** ✓ | 5 |
 
 ## Acte II — La France atlantique
 
@@ -173,6 +173,15 @@ les 238 fiches annoncées comme existantes existent bien au catalogue.
 > Puyoô, Dax. Bayonne ferme en d3, et le **saut de la côte basque** (trois
 > heures d'Euskotren métrique) porte le ruban à Bilbao Abando, qui ouvre la
 > Castille. Onzième saut du ruban.
+>
+> ⚠️ **Le tunnel prend le tracé Eurostar de 1994** (30 août 2026) : le tracé
+> écrit était rompu (aucun rail de Waterloo à la HS1), et Stratford
+> International n'a jamais vu un train international. Le chapitre suit
+> l'itinéraire historique Waterloo → Tonbridge → Ashford (1994-2003),
+> continuité réelle sans saut. Ebbsfleet reste hors tracé, Maidstone hors
+> gril d'Ashford (six directions sur six quais ne se jouent pas). Le boss est
+> **Lille-Flandres** — le tableau écrivait Lille-Europe, la fiche et le rail
+> d'Hazebrouck donnent Flandres.
 >
 > ⚠️ **La Normandie, le Cotentin et la Bretagne recomposés** (30 août 2026) :
 > Évreux (Rouen morte en 1969), Bayeux, Saint-Lô (Vire morte en 1938),

@@ -1,0 +1,28 @@
+{
+  "id": "tonbridge",
+  "name": "Tonbridge",
+  "tagline": "Le carrefour du Kent classique",
+  "desc": "C'est par ici que l'Eurostar de Waterloo filait vers le tunnel, de 1994 à 2003, sur la vieille South Eastern Main Line. Restent quatre branches bien vivantes : Charing Cross, la ligne de Hastings, la navette de Redhill et l'axe d'Ashford.",
+  "difficulty": 2,
+  "country": "🇬🇧 Royaume-Uni",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }
+  ],
+  "portals": {
+    "CHARING CROSS": { "side": "L", "color": "#25dede", "abbr": "CX" },
+    "REDHILL":       { "side": "L", "color": "#a78bfa", "abbr": "RH" },
+    "ASHFORD":       { "side": "R", "color": "#f5b23c", "abbr": "AF" },
+    "HASTINGS":      { "side": "R", "color": "#f2588f", "abbr": "HS" }
+  },
+  "links": {
+    "CHARING CROSS": [1, 2, 3, 4],
+    "REDHILL":       [3, 4],
+    "ASHFORD":       [2, 3, 4],
+    "HASTINGS":      [1, 2]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 13, "nMax": 15, "gapMin": 1.8, "gapMax": 3.0,
+    "cars": [2, 2, 3, 3, 4, 4, 5], "quietRate": 0.15, "rush": "double"
+  }
+}

@@ -130,7 +130,9 @@ const GEO = {
         folligny: [-1.418, 48.833],
         dol: [-1.747, 48.547],
         redon: [-2.085, 47.652],
-        savenay: [-1.942, 47.362]
+        savenay: [-1.942, 47.362],
+        "calais-frethun": [1.812, 50.923],
+        hazebrouck: [2.541, 50.725]
       } },
     allemagne: { name: "Allemagne", flag: "🇩🇪", iso: "DEU", continent: "europe",
       cities: {
@@ -376,7 +378,9 @@ const GEO = {
         doncaster: [-1.139, 53.523], york: [-1.093, 53.958], newcastle: [-1.617, 54.969],
         norwich: [1.306, 52.627], cambridge: [0.138, 52.194], peterborough: [-0.250, 52.575],
         edinburgh: [-3.188, 55.952], glasgow: [-4.257, 55.860], stirling: [-3.936, 56.119],
-        perth: [-3.439, 56.393], aberdeen: [-2.098, 57.144]
+        perth: [-3.439, 56.393], aberdeen: [-2.098, 57.144],
+        tonbridge: [0.2716, 51.1913],
+        ashford: [0.876, 51.143]
       } }
   }
 };

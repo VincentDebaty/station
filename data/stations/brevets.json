@@ -378,6 +378,24 @@
   },
   "boss": "OK"
  },
+ "ashford": {
+  "geometrie": "284d80177a42",
+  "date": "2026-08-30",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 3,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK",
+   "4": "file de 6 au même quai"
+  },
+  "boss": "file de 6 au même quai"
+ },
  "ath": {
   "geometrie": "0a0209465bdb",
   "date": "2026-08-28",
@@ -1149,6 +1167,22 @@
    "4": "file de 6 au même quai"
   },
   "boss": "OK"
+ },
+ "calais-frethun": {
+  "geometrie": "e3ae50a09973",
+  "date": "2026-08-30",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 2,
+  "detail": {
+   "1": "OK",
+   "2": "OK"
+  },
+  "boss": "file de 7 au même quai"
  },
  "cambridge": {
   "geometrie": "72bfaf327c18",
@@ -2519,6 +2553,23 @@
    "3": "OK"
   },
   "boss": "retard garanti 0.40 > 0.3"
+ },
+ "hazebrouck": {
+  "geometrie": "0dfd304cb3ae",
+  "date": "2026-08-30",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 3,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK"
+  },
+  "boss": "file de 7 au même quai"
  },
  "heidelberg": {
   "geometrie": "57fd00b938d9",
@@ -5528,6 +5579,23 @@
    "3": "OK"
   },
   "boss": "retard garanti 0.34 > 0.3"
+ },
+ "tonbridge": {
+  "geometrie": "62a9f0768e6a",
+  "date": "2026-08-30",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 3,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK"
+  },
+  "boss": "file de 7 au même quai"
  },
  "torino": {
   "geometrie": "759b5ea6004a",

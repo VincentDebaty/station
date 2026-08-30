@@ -47,8 +47,26 @@ ch(A,"Le Wessex","Penzance","Southampton",[
   saut=("nuit","Le Night Riviera — le train de nuit de Penzance remonte à Bristol"))
 ch(A,"Le South Western","Southampton","Londres",[
   g("Winchester"),g("Basingstoke"),g("Woking"),g("Clapham Junction"),g("London Waterloo","waterloo")])
+# LE TUNNEL PREND LE TRACÉ EUROSTAR DE 1994 (décision de Vincent, 30 août
+# 2026). Le tracé écrit était ROMPU : aucun rail ne relie Waterloo à la HS1,
+# et STRATFORD INTERNATIONAL n'a jamais vu un train international (« no
+# international services stop » — l'éléphant blanc). Le chapitre suit donc
+# l'itinéraire historique de l'Eurostar au départ de Waterloo (1994-2003) :
+# la South Eastern Main Line via TONBRIDGE (quatre directions vivantes) puis
+# Ashford — continuité réelle, sans saut. Ebbsfleet (admise mais limite, ses
+# quais internationaux morts depuis 2020) reste hors tracé. À Ashford, la
+# branche de MAIDSTONE (un train par heure) est restée hors gril : six
+# directions sur six quais ne se jouent pas, cinq oui — elle reviendra si la
+# géométrie grossit. Calais-Fréthun est admise en limite basse (l'Eurostar
+# traverse sans s'arrêter depuis 2020 ; la navette de Calais-Ville compte,
+# le standard n'est pas un plancher de fréquentation). Et le boss est bien
+# LILLE-FLANDRES — le tableau du ruban écrivait Lille-Europe, mais la fiche
+# ET le rail classique d'Hazebrouck donnent Flandres : l'inverse exact de
+# l'erreur Lille-Flandres/Lille-Europe que le §1 documente déjà.
 ch(A,"Le tunnel","Londres","Lille",[
-  g("Stratford International"),g("Ebbsfleet"),g("Ashford"),g("Calais-Fréthun"),g("Hazebrouck"),g("Lille-Europe","lille")])
+  g("Tonbridge","tonbridge"),g("Ashford International","ashford"),
+  g("Calais-Fréthun","calais-frethun"),g("Hazebrouck","hazebrouck"),
+  g("Lille-Flandres","lille")])
 
 # =====================================================================
 B = acte("nw","Acte II — La France atlantique","De la Manche aux Pyrénées")

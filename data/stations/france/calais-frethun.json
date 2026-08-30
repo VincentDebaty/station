@@ -1,0 +1,27 @@
+{
+  "id": "calais-frethun",
+  "name": "Calais-Fréthun",
+  "city": "Calais",
+  "tagline": "La LGV touche la côte, le tunnel passe",
+  "desc": "Là où la LGV Nord rejoint la ligne du littoral : les Krono+ GV de Lille y terminent ou filent vers Boulogne, la navette recueille Calais-Ville, et l'Eurostar traverse sans un arrêt depuis 2020. Une gare de correspondance posée dans les champs, à cinq minutes du tunnel.",
+  "difficulty": 1,
+  "country": "🇫🇷 France",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }
+  ],
+  "portals": {
+    "LILLE":        { "side": "L", "color": "#f5b23c", "abbr": "LI" },
+    "CALAIS-VILLE": { "side": "L", "color": "#25dede", "abbr": "CV" },
+    "BOULOGNE":     { "side": "R", "color": "#4ade80", "abbr": "BO" }
+  },
+  "links": {
+    "LILLE":        [1, 2, 3],
+    "CALAIS-VILLE": [3, 4],
+    "BOULOGNE":     [1, 2, 3, 4]
+  },
+  "sameSidePairs": [["LILLE", "CALAIS-VILLE"], ["CALAIS-VILLE", "LILLE"]],
+  "gen": {
+    "nMin": 12, "nMax": 14, "gapMin": 1.8, "gapMax": 3.0,
+    "cars": [2, 2, 2, 2, 3, 3, 4], "quietRate": 0.2, "rush": "pointe"
+  }
+}
