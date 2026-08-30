@@ -1,0 +1,29 @@
+{
+  "id": "worcester",
+  "name": "Worcester Shrub Hill",
+  "city": "Worcester",
+  "tagline": "La rotonde GWR au bord de la Severn",
+  "desc": "Le nœud de Worcester : Birmingham par Droitwich, Londres par la Cotswold Line, Bristol par Cheltenham, et les Hereford qui filent vers Malvern. Sa jumelle urbaine, Foregate Street, est à quatre cents mètres — mais c'est ici qu'est le gril.",
+  "difficulty": 2,
+  "country": "🇬🇧 Royaume-Uni",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }
+  ],
+  "portals": {
+    "BIRMINGHAM": { "side": "L", "color": "#25dede", "abbr": "BM" },
+    "LONDRES":    { "side": "L", "color": "#f5b23c", "abbr": "LO" },
+    "BRISTOL":    { "side": "L", "color": "#4ade80", "abbr": "BS" },
+    "HEREFORD":   { "side": "R", "color": "#f2588f", "abbr": "HF" }
+  },
+  "links": {
+    "BIRMINGHAM": [1, 2],
+    "LONDRES":    [2, 3],
+    "BRISTOL":    [3, 4],
+    "HEREFORD":   [1, 2, 3, 4]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 13, "nMax": 15, "gapMin": 1.8, "gapMax": 3.0,
+    "cars": [2, 2, 3, 3, 4, 4, 5], "quietRate": 0.2, "rush": "pointe"
+  }
+}

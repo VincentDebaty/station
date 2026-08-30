@@ -606,5 +606,9 @@ const LINES = [
   { id: "L972", name: "Le tunnel de la Severn (Cardiff – Bristol)",
     nodes: ["cardiff", "newport", "severn-tunnel", "bristol-parkway", "filton", "bristol"] },
   { id: "L973", name: "La Riviera anglaise (Bristol – Penzance)",
-    nodes: ["bristol", "taunton", "exeter", "newton-abbot", "plymouth", "liskeard", "truro", "penzance"] }
+    nodes: ["bristol", "taunton", "exeter", "newton-abbot", "plymouth", "liskeard", "truro", "penzance"] },
+  { id: "L974", name: "Le West Coast (Liverpool – Birmingham)",
+    nodes: ["liverpool", "runcorn", "crewe", "stafford", "wolverhampton", "birmingham"] },
+  { id: "L975", name: "Les Marches galloises (Birmingham – Cardiff)",
+    nodes: ["birmingham", "barnt-green", "droitwich", "worcester", "hereford", "cardiff"] }
 ];

@@ -588,6 +588,22 @@
   },
   "boss": "OK"
  },
+ "barnt-green": {
+  "geometrie": "07eff2329de1",
+  "date": "2026-08-30",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 2,
+  "detail": {
+   "1": "OK",
+   "2": "OK"
+  },
+  "boss": "file de 6 au même quai"
+ },
  "basingstoke": {
   "geometrie": "7ceae02d08ff",
   "date": "2026-08-30",
@@ -1951,6 +1967,21 @@
   },
   "boss": "OK"
  },
+ "droitwich": {
+  "geometrie": "15da2ac06b56",
+  "date": "2026-08-30",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 1,
+  "detail": {
+   "1": "OK"
+  },
+  "boss": "file de 8 au même quai"
+ },
  "duisburg": {
   "geometrie": "354db10893af",
   "date": "2026-08-28",
@@ -2708,6 +2739,22 @@
    "3": "OK"
   },
   "boss": "retard garanti 0.36 > 0.3"
+ },
+ "hereford": {
+  "geometrie": "69843b372b25",
+  "date": "2026-08-30",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 2,
+  "detail": {
+   "1": "OK",
+   "2": "OK"
+  },
+  "boss": "retard garanti 0.32 > 0.3"
  },
  "herentals": {
   "geometrie": "54e4b0a55c63",
@@ -5265,6 +5312,22 @@
   },
   "boss": "file de 6 au même quai"
  },
+ "runcorn": {
+  "geometrie": "1c160a0289f8",
+  "date": "2026-08-30",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 2,
+  "detail": {
+   "1": "OK",
+   "2": "OK"
+  },
+  "boss": "retard garanti 0.34 > 0.3"
+ },
  "saalfeld": {
   "geometrie": "0785de2bbf0b",
   "date": "2026-08-27",
@@ -5605,6 +5668,23 @@
    "3": "OK"
   },
   "boss": "file de 6 au même quai"
+ },
+ "stafford": {
+  "geometrie": "406dcca8cbe4",
+  "date": "2026-08-30",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 2,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "file de 6 au même quai"
+  },
+  "boss": "retard garanti 0.31 > 0.3"
  },
  "stgallen": {
   "geometrie": "86dd921f151b",
@@ -6406,6 +6486,40 @@
    "2": "OK"
   },
   "boss": "retard garanti 0.31 > 0.3"
+ },
+ "wolverhampton": {
+  "geometrie": "02d3a56b7561",
+  "date": "2026-08-30",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 3,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK",
+   "4": "file de 6 au même quai"
+  },
+  "boss": "file de 6 au même quai"
+ },
+ "worcester": {
+  "geometrie": "79dcddad2920",
+  "date": "2026-08-30",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 2,
+  "detail": {
+   "1": "OK",
+   "2": "OK"
+  },
+  "boss": "file de 7 au même quai"
  },
  "wuppertal": {
   "geometrie": "70991028c6e8",

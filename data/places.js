@@ -257,7 +257,6 @@ const PLACES = {
   wakefield:    [-1.506, 53.682],
   warrington:   [-2.603, 53.386],
   wigan:        [-2.632, 53.543],
-  wolverhampton: [-2.129, 52.588]
 };
 
 // Noms de portail qui désignent en réalité une gare JOUABLE sous un autre nom :

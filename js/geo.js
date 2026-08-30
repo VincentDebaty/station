@@ -397,7 +397,14 @@ const GEO = {
         "newton-abbot": [-3.601, 50.53],
         liskeard: [-4.464, 50.4525],
         truro: [-5.051, 50.264],
-        penzance: [-5.532, 50.121]
+        penzance: [-5.532, 50.121],
+        runcorn: [-2.74, 53.338],
+        stafford: [-2.122, 52.804],
+        wolverhampton: [-2.119, 52.588],
+        "barnt-green": [-2, 52.36],
+        droitwich: [-2.15, 52.27],
+        worcester: [-2.209, 52.195],
+        hereford: [-2.712, 52.061]
       } }
   }
 };

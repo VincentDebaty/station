@@ -1,0 +1,28 @@
+{
+  "id": "wolverhampton",
+  "name": "Wolverhampton",
+  "tagline": "La porte du Pays de Galles, en noir et or",
+  "desc": "Tout ce qui vient du sud converge de Birmingham, puis se partage entre le nord et la ligne de Shrewsbury qui file vers le Pays de Galles. La gare, reconstruite en 2021, porte le noir et or du club de football local.",
+  "difficulty": 3,
+  "country": "🇬🇧 Royaume-Uni",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }, { "id": 6 }
+  ],
+  "portals": {
+    "BIRMINGHAM": { "side": "L", "color": "#f2588f", "abbr": "BM" },
+    "EUSTON":     { "side": "L", "color": "#25dede", "abbr": "EU" },
+    "LIVERPOOL":  { "side": "R", "color": "#4ade80", "abbr": "LV" },
+    "SHREWSBURY": { "side": "R", "color": "#a78bfa", "abbr": "SH" }
+  },
+  "links": {
+    "BIRMINGHAM": [1, 2, 3, 4, 5],
+    "EUSTON":     [5, 6],
+    "LIVERPOOL":  [3, 4, 5, 6],
+    "SHREWSBURY": [1, 2, 3]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 14, "nMax": 17, "gapMin": 1.6, "gapMax": 2.8,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6], "quietRate": 0.15, "rush": "pointe"
+  }
+}

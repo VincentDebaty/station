@@ -1,0 +1,28 @@
+{
+  "id": "stafford",
+  "name": "Stafford",
+  "tagline": "La West Coast se dédouble, dans les deux sens",
+  "desc": "Au sud, la ligne se sépare entre la Trent Valley vers Londres et la boucle de Birmingham ; au nord, entre Crewe et la branche de Stoke vers Manchester. Quatre flux qui se croisent tous, sous un bâtiment brutaliste de 1962.",
+  "difficulty": 3,
+  "country": "🇬🇧 Royaume-Uni",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }, { "id": 6 }
+  ],
+  "portals": {
+    "EUSTON":     { "side": "L", "color": "#25dede", "abbr": "EU" },
+    "BIRMINGHAM": { "side": "L", "color": "#f2588f", "abbr": "BM" },
+    "LIVERPOOL":  { "side": "R", "color": "#4ade80", "abbr": "LV" },
+    "MANCHESTER": { "side": "R", "color": "#f5b23c", "abbr": "MR" }
+  },
+  "links": {
+    "EUSTON":     [1, 2, 3, 4],
+    "BIRMINGHAM": [3, 4, 5, 6],
+    "LIVERPOOL":  [3, 4, 5, 6],
+    "MANCHESTER": [1, 2, 3, 4]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 14, "nMax": 17, "gapMin": 1.6, "gapMax": 2.8,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6], "quietRate": 0.15, "rush": "pointe"
+  }
+}

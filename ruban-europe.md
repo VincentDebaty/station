@@ -23,16 +23,16 @@ Chaque région est traversée **une fois**, et on n'y revient jamais.
 |---|---|
 | Actes | **9** |
 | Chapitres | **90** |
-| Gares — c'est-à-dire **niveaux** | **546** |
-| Fiches déjà écrites, réemployées telles quelles | **259** |
-| Fiches à écrire | **287** |
+| Gares — c'est-à-dire **niveaux** | **545** |
+| Fiches déjà écrites, réemployées telles quelles | **266** |
+| Fiches à écrire | **279** |
 | Sauts déclarés (§4 bis) | **11** |
 | Longueur des chapitres | 5 à 9 gares, médiane 6 |
 
 **Vérifié par script** (`scratchpad/verif.py`, à porter dans `carte-check` au
 lot C) : les 90 chapitres tiennent tous R3 (5 à 10 gares), aucune gare
 n'apparaît deux fois (R6), le chaînage est continu d'un bout à l'autre, et
-les 259 fiches annoncées comme existantes existent bien au catalogue.
+les 266 fiches annoncées comme existantes existent bien au catalogue.
 
 ## Comment lire les tableaux
 
@@ -120,7 +120,7 @@ les 259 fiches annoncées comme existantes existent bien au catalogue.
 
 ## Acte I — Les Îles
 
-*De Cork au tunnel sous la Manche* — 18 chapitres, **109 gares** (43 déjà écrites, 66 à écrire).
+*De Cork au tunnel sous la Manche* — 18 chapitres, **108 gares** (50 déjà écrites, 58 à écrire).
 
 | # | Chapitre | Gares, dans l'ordre du rail | n |
 |---|---|---|---|
@@ -136,8 +136,8 @@ les 259 fiches annoncées comme existantes existent bien au catalogue.
 | 9 | Le Yorkshire noir | Wakefield · Pontefract · Doncaster ✓ · Rotherham · **Sheffield** ✓ | 5 |
 | 10 | La vallée de Hope | Dore · Hathersage · Edale · Chinley · New Mills · Stockport · **Manchester Piccadilly** ✓ | 7 |
 | 11 | La première ligne du monde | Salford · Eccles · Newton-le-Willows · St Helens · Huyton · **Liverpool Lime Street** ✓ | 6 |
-| 12 | Le West Coast | Runcorn · Crewe ✓ · Stafford · Wolverhampton · **Birmingham New Street** ✓ | 5 |
-| 13 | Les Marches galloises | Bromsgrove · Worcester · Hereford · Abergavenny · Pontypool · **Cardiff Central** ✓ | 6 |
+| 12 | Le West Coast | Runcorn ✓ · Crewe ✓ · Stafford ✓ · Wolverhampton ✓ · **Birmingham New Street** ✓ | 5 |
+| 13 | Les Marches galloises | ~~Bromsgrove~~ Barnt Green ✓ · Droitwich Spa ✓ · Worcester Shrub Hill ✓ · Hereford ✓ · ~~Abergavenny~~ ~~Pontypool~~ · **Cardiff Central** ✓ | 5 |
 | 14 | Le tunnel de la Severn | Newport ✓ · ~~Caldicot~~ Severn Tunnel Junction ✓ · ~~Pilning~~ Bristol Parkway ✓ · Filton Abbey Wood ✓ · **Bristol Temple Meads** ✓ | 5 |
 | 15 | La Riviera anglaise | Taunton ✓ · Exeter St Davids ✓ · Newton Abbot ✓ · ~~Totnes~~ Plymouth ✓ · Liskeard ✓ · Truro ✓ · **Penzance** ✓ | 7 |
 | | ⤳ **Saut (nuit)** | *Le Night Riviera — le train de nuit de Penzance remonte à Bristol* | |
@@ -196,6 +196,14 @@ les 259 fiches annoncées comme existantes existent bien au catalogue.
 > Looe Valley et son quai perpendiculaire). Penzance ferme en d3 — trois
 > axes commerciaux sur une voie unique, le précédent Lisbonne, et le Night
 > Riviera part réellement de ses heurtoirs.
+>
+> ⚠️ **West Coast et Marches recomposés** (30 août 2026) : Runcorn est le
+> piège n° 1 À L'ENVERS — la Halton Curve ressuscitée en 2019. Aux Marches,
+> trois refus (Bromsgrove sans CrossCountry depuis 2018, Abergavenny,
+> Pontypool l'étoile-cimetière) ; entrent Barnt Green (la jonction en Y en
+> gare) et Droitwich Spa. Worcester = Shrub Hill (Foregate Street a un quai
+> par route). Le segment Hereford → Cardiff n'offre rien : couloir sans
+> carrefour, assumé.
 >
 > ⚠️ **La Normandie, le Cotentin et la Bretagne recomposés** (30 août 2026) :
 > Évreux (Rouen morte en 1969), Bayeux, Saint-Lô (Vire morte en 1938),

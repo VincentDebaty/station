@@ -34,10 +34,31 @@ ch(A,"La vallée de Hope","Sheffield","Manchester",[
   g("Dore"),g("Hathersage"),g("Edale"),g("Chinley"),g("New Mills"),g("Stockport"),g("Manchester Piccadilly","manchester")])
 ch(A,"La première ligne du monde","Manchester","Liverpool",[
   g("Salford"),g("Eccles"),g("Newton-le-Willows"),g("St Helens"),g("Huyton"),g("Liverpool Lime Street","liverpool")])
+# LE WEST COAST PASSE ENTIER (30 août 2026), avec le piège n° 1 À L'ENVERS :
+# RUNCORN n'est pas une ancienne bifurcation que la carte montre encore,
+# c'est une bifurcation RESSUSCITÉE que les vieilles cartes ignorent — la
+# Halton Curve rouverte en mai 2019 (18 M£), les trains de Chester revenus.
+# Stafford a ses quatre paires toutes réelles (cas rare), Wolverhampton
+# prend un portail EUSTON d'auteur (destination réellement affichée, et il
+# évite l'entonnoir avant le boss).
 ch(A,"Le West Coast","Liverpool","Birmingham",[
-  g("Runcorn"),g("Crewe","crewe"),g("Stafford"),g("Wolverhampton"),g("Birmingham New Street","birmingham")])
+  g("Runcorn","runcorn"),g("Crewe","crewe"),g("Stafford","stafford"),
+  g("Wolverhampton","wolverhampton"),g("Birmingham New Street","birmingham")])
+# TROIS REFUS AUX MARCHES le 30 août 2026 : Bromsgrove (gare neuve de 2016,
+# l'incline de Lickey — mais le CrossCountry est parti le 30 juillet 2018,
+# deux directions), Abergavenny (Brynmawr fermée en 1958) et Pontypool,
+# l'étoile-cimetière (Usk 1955, Blaenavon 1962, Neath 1964, le triage de
+# cinquante voies disparu). Le segment Hereford → Cardiff n'offre RIEN — le
+# chapitre se renforce côté Birmingham : BARNT GREEN (la jonction en Y est
+# en gare même) et DROITWICH SPA (standard Lausanne, les trois flux touchent
+# ses deux quais — remontés au plancher). WORCESTER, c'est SHRUB HILL : sa
+# jumelle Foregate Street a un quai par route, rien à aiguiller — le
+# discernement Lille-Flandres au niveau ville. Hereford garde son impasse
+# réelle (quai 4) et le rebroussement des trains de Birmingham.
 ch(A,"Les Marches galloises","Birmingham","Cardiff",[
-  g("Bromsgrove"),g("Worcester"),g("Hereford"),g("Abergavenny"),g("Pontypool"),g("Cardiff Central","cardiff")])
+  g("Barnt Green","barnt-green"),g("Droitwich Spa","droitwich"),
+  g("Worcester Shrub Hill","worcester"),g("Hereford","hereford"),
+  g("Cardiff Central","cardiff")])
 # CALDICOT ET PILNING REFUSÉES le 30 août 2026. Caldicot : halte à deux
 # quais de la seule ligne Gloucester–Newport — rien à aiguiller. PILNING est
 # la pièce du musée : DEUX TRAINS PAR SEMAINE (le samedi), un seul quai
