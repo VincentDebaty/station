@@ -1,0 +1,33 @@
+{
+  "id": "clapham-junction",
+  "name": "Clapham Junction",
+  "tagline": "La gare la plus traversée d'Europe",
+  "desc": "Tout ce qui sort de Waterloo et de Victoria passe ici, sur deux faisceaux côte à côte qui ne se mélangent presque jamais. Dix-sept quais en vrai, cent quatre-vingts trains par heure, et plus de correspondances que d'entrées.",
+  "difficulty": 5,
+  "country": "🇬🇧 Royaume-Uni",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },
+    { "id": 6 }, { "id": 7 }, { "id": 8 }, { "id": 9 }, { "id": 10 }
+  ],
+  "portals": {
+    "WATERLOO":    { "side": "L", "color": "#25dede", "abbr": "WL" },
+    "VICTORIA":    { "side": "L", "color": "#a78bfa", "abbr": "VI" },
+    "KENSINGTON":  { "side": "L", "color": "#f2588f", "abbr": "KN" },
+    "READING":     { "side": "R", "color": "#f5b23c", "abbr": "RD" },
+    "SOUTHAMPTON": { "side": "R", "color": "#4ade80", "abbr": "SO" },
+    "BRIGHTON":    { "side": "R", "color": "#60a5fa", "abbr": "BR" }
+  },
+  "links": {
+    "WATERLOO":    [1, 2, 3, 4, 5, 6],
+    "READING":     [1, 2, 3],
+    "SOUTHAMPTON": [3, 4, 5, 6],
+    "VICTORIA":    [7, 8, 9, 10],
+    "BRIGHTON":    [7, 8, 9, 10],
+    "KENSINGTON":  [9, 10]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 17, "nMax": 20, "gapMin": 1.5, "gapMax": 2.6,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6, 7], "quietRate": 0.1, "rush": "double"
+  }
+}

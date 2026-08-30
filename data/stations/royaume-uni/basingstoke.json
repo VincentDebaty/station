@@ -1,0 +1,28 @@
+{
+  "id": "basingstoke",
+  "name": "Basingstoke",
+  "tagline": "Le premier grand tri du South Western",
+  "desc": "La ligne d'Exeter quitte la main line à Worting Junction, celle de Reading amène les CrossCountry du Nord. Quatre axes, cinq quais, et du fret sur les voies du bord.",
+  "difficulty": 3,
+  "country": "🇬🇧 Royaume-Uni",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
+  ],
+  "portals": {
+    "WATERLOO":    { "side": "L", "color": "#25dede", "abbr": "WL" },
+    "READING":     { "side": "L", "color": "#f5b23c", "abbr": "RD" },
+    "SOUTHAMPTON": { "side": "R", "color": "#4ade80", "abbr": "SO" },
+    "SALISBURY":   { "side": "R", "color": "#60a5fa", "abbr": "SA" }
+  },
+  "links": {
+    "WATERLOO":    [1, 2, 3, 4, 5],
+    "READING":     [2, 3],
+    "SOUTHAMPTON": [1, 2, 3, 4],
+    "SALISBURY":   [4, 5]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 14, "nMax": 16, "gapMin": 1.6, "gapMax": 3.0,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6], "quietRate": 0.15, "rush": "double"
+  }
+}

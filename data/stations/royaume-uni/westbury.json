@@ -1,0 +1,30 @@
+{
+  "id": "westbury",
+  "name": "Westbury",
+  "tagline": "Le triage sous le Cheval blanc",
+  "desc": "Sous le cheval de craie, tout l'Ouest se trie : l'express de Cornouailles par la Berks and Hants, le régional du Wessex vers Salisbury, la Heart of Wessex qui descend à Weymouth — et les trains de calcaire de Merehead qui remplissent les boucles de fret. Deux îlots de 1901, trois faces en service.",
+  "difficulty": 3,
+  "country": "🇬🇧 Royaume-Uni",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }, { "id": 6 }
+  ],
+  "portals": {
+    "BATH":      { "side": "L", "color": "#25dede", "abbr": "BA" },
+    "LONDRES":   { "side": "L", "color": "#f5b23c", "abbr": "LO" },
+    "SALISBURY": { "side": "R", "color": "#60a5fa", "abbr": "SA" },
+    "WEYMOUTH":  { "side": "R", "color": "#4ade80", "abbr": "WY" },
+    "EXETER":    { "side": "R", "color": "#f2588f", "abbr": "EX" }
+  },
+  "links": {
+    "BATH":      [1, 2, 3, 4],
+    "LONDRES":   [4, 5, 6],
+    "SALISBURY": [1, 2, 3],
+    "WEYMOUTH":  [3, 4],
+    "EXETER":    [5, 6]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 13, "nMax": 15, "gapMin": 1.7, "gapMax": 2.9,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6], "quietRate": 0.2, "rush": "pointe"
+  }
+}

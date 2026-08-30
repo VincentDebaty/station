@@ -1,0 +1,27 @@
+{
+  "id": "bath",
+  "name": "Bath Spa",
+  "city": "Bath",
+  "tagline": "La courbe géorgienne de Brunel",
+  "desc": "Deux quais en courbe entre deux ponts sur l'Avon, au cœur de la ville classée : la gare de Brunel voit passer les express de Paddington, les Cardiff–Portsmouth et les régionaux de Salisbury qui s'échappent à Bathampton. La pierre du Mendip traverse sans s'arrêter.",
+  "difficulty": 1,
+  "country": "🇬🇧 Royaume-Uni",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }
+  ],
+  "portals": {
+    "BRISTOL":   { "side": "L", "color": "#25dede", "abbr": "BL" },
+    "LONDRES":   { "side": "R", "color": "#f5b23c", "abbr": "LO" },
+    "SALISBURY": { "side": "R", "color": "#60a5fa", "abbr": "SA" }
+  },
+  "links": {
+    "BRISTOL":   [1, 2, 3, 4],
+    "LONDRES":   [1, 2, 3],
+    "SALISBURY": [2, 3, 4]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 11, "nMax": 14, "gapMin": 1.7, "gapMax": 2.9,
+    "cars": [2, 2, 2, 3, 3, 3, 4], "quietRate": 0.25, "rush": "pointe"
+  }
+}

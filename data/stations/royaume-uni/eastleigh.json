@@ -1,0 +1,28 @@
+{
+  "id": "eastleigh",
+  "name": "Eastleigh",
+  "tagline": "La ville que le rail a bâtie",
+  "desc": "Née Bishopstoke Junction en 1839, la ville s'est construite autour de ses ateliers ferroviaires. Trois lignes s'y séparent : la main line de Londres, la branche de Fareham vers Portsmouth, et la boucle de Romsey rouverte en 2003.",
+  "difficulty": 2,
+  "country": "🇬🇧 Royaume-Uni",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }
+  ],
+  "portals": {
+    "WATERLOO":    { "side": "L", "color": "#25dede", "abbr": "WL" },
+    "ROMSEY":      { "side": "L", "color": "#f5b23c", "abbr": "RM" },
+    "SOUTHAMPTON": { "side": "R", "color": "#4ade80", "abbr": "SO" },
+    "PORTSMOUTH":  { "side": "R", "color": "#f2588f", "abbr": "PO" }
+  },
+  "links": {
+    "WATERLOO":    [1, 2, 3],
+    "ROMSEY":      [3, 4],
+    "SOUTHAMPTON": [1, 2, 3, 4],
+    "PORTSMOUTH":  [1, 2]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 13, "nMax": 15, "gapMin": 1.8, "gapMax": 3.0,
+    "cars": [2, 2, 2, 3, 3, 4, 4, 5], "quietRate": 0.2, "rush": "pointe"
+  }
+}

@@ -24,15 +24,15 @@ Chaque région est traversée **une fois**, et on n'y revient jamais.
 | Actes | **9** |
 | Chapitres | **90** |
 | Gares — c'est-à-dire **niveaux** | **547** |
-| Fiches déjà écrites, réemployées telles quelles | **242** |
-| Fiches à écrire | **305** |
+| Fiches déjà écrites, réemployées telles quelles | **250** |
+| Fiches à écrire | **297** |
 | Sauts déclarés (§4 bis) | **11** |
 | Longueur des chapitres | 5 à 9 gares, médiane 6 |
 
 **Vérifié par script** (`scratchpad/verif.py`, à porter dans `carte-check` au
 lot C) : les 90 chapitres tiennent tous R3 (5 à 10 gares), aucune gare
 n'apparaît deux fois (R6), le chaînage est continu d'un bout à l'autre, et
-les 242 fiches annoncées comme existantes existent bien au catalogue.
+les 250 fiches annoncées comme existantes existent bien au catalogue.
 
 ## Comment lire les tableaux
 
@@ -120,7 +120,7 @@ les 242 fiches annoncées comme existantes existent bien au catalogue.
 
 ## Acte I — Les Îles
 
-*De Cork au tunnel sous la Manche* — 18 chapitres, **110 gares** (26 déjà écrites, 84 à écrire).
+*De Cork au tunnel sous la Manche* — 18 chapitres, **110 gares** (34 déjà écrites, 76 à écrire).
 
 | # | Chapitre | Gares, dans l'ordre du rail | n |
 |---|---|---|---|
@@ -141,8 +141,8 @@ les 242 fiches annoncées comme existantes existent bien au catalogue.
 | 14 | Le tunnel de la Severn | Newport · Caldicot · Severn Tunnel Junction · Pilning · Filton Abbey Wood · **Bristol Temple Meads** ✓ | 6 |
 | 15 | La Riviera anglaise | Taunton · Exeter St Davids ✓ · Newton Abbot · Totnes · Plymouth ✓ · Truro · **Penzance** | 7 |
 | | ⤳ **Saut (nuit)** | *Le Night Riviera — le train de nuit de Penzance remonte à Bristol* | |
-| 16 | Le Wessex | Bath Spa · Trowbridge · Westbury · Salisbury ✓ · Romsey · **Southampton Central** ✓ | 6 |
-| 17 | Le South Western | Winchester · Basingstoke · Woking · Clapham Junction · **London Waterloo** ✓ | 5 |
+| 16 | Le Wessex | Bath Spa ✓ · Trowbridge ✓ · Westbury ✓ · Salisbury ✓ · Romsey ✓ · **Southampton Central** ✓ | 6 |
+| 17 | Le South Western | ~~Winchester~~ Eastleigh ✓ · Basingstoke ✓ · Woking ✓ · Clapham Junction ✓ · **London Waterloo** ✓ | 5 |
 | 18 | Le tunnel | ~~Stratford International~~ ~~Ebbsfleet~~ Tonbridge ✓ · Ashford International ✓ · Calais-Fréthun ✓ · Hazebrouck ✓ · **Lille-Flandres** ✓ | 5 |
 
 ## Acte II — La France atlantique
@@ -182,6 +182,12 @@ les 242 fiches annoncées comme existantes existent bien au catalogue.
 > gril d'Ashford (six directions sur six quais ne se jouent pas). Le boss est
 > **Lille-Flandres** — le tableau écrivait Lille-Europe, la fiche et le rail
 > d'Hazebrouck donnent Flandres.
+>
+> ✅ **Le Wessex passe intact** (30 août 2026) — Trowbridge tient contre le
+> pronostic (la TransWilts, 2013). **Winchester refusée** (sa ligne d'Alton
+> est la Watercress touristique depuis 1973), remplacée par Eastleigh dont le
+> portail ROMSEY recoud le Wessex. Clapham Junction réduite à dix quais en
+> deux faisceaux disjoints, comme en vrai.
 >
 > ⚠️ **La Normandie, le Cotentin et la Bretagne recomposés** (30 août 2026) :
 > Évreux (Rouen morte en 1969), Bayeux, Saint-Lô (Vire morte en 1938),

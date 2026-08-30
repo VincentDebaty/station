@@ -42,11 +42,33 @@ ch(A,"Le tunnel de la Severn","Cardiff","Bristol",[
   g("Newport"),g("Caldicot"),g("Severn Tunnel Junction"),g("Pilning"),g("Filton Abbey Wood"),g("Bristol Temple Meads","bristol")])
 ch(A,"La Riviera anglaise","Bristol","Penzance",[
   g("Taunton"),g("Exeter St Davids","exeter"),g("Newton Abbot"),g("Totnes"),g("Plymouth","plymouth"),g("Truro"),g("Penzance")])
+# LE WESSEX PASSE INTACT (instruit le 30 août 2026) : ses quatre candidates
+# tiennent toutes le §0 — dont TROWBRIDGE, contre le pronostic : la
+# TransWilts relancée en 2013 lui donne sa troisième direction (neuf A/R par
+# jour vers Melksham et Swindon). Bath Spa tient au standard Lausanne (la
+# bifurcation est à Bathampton, les trois flux touchent ses deux quais —
+# remontés au plancher de jouabilité). Romsey a sa jonction EN GARE (la
+# boucle de Chandler's Ford, rouverte en 2003) ; sa Sprat and Winkle vers
+# Andover est morte en 1964, jamais de portail de ce côté. Westbury laisse
+# SWINDON hors gril (leçon Ashford, le flux le plus mince, déjà servi à
+# Trowbridge).
 ch(A,"Le Wessex","Penzance","Southampton",[
-  g("Bath Spa"),g("Trowbridge"),g("Westbury"),g("Salisbury","salisbury"),g("Romsey"),g("Southampton Central","southampton")],
+  g("Bath Spa","bath"),g("Trowbridge","trowbridge"),g("Westbury","westbury"),
+  g("Salisbury","salisbury"),g("Romsey","romsey"),g("Southampton Central","southampton")],
   saut=("nuit","Le Night Riviera — le train de nuit de Penzance remonte à Bristol"))
+# WINCHESTER REFUSÉE le 30 août 2026 (piège n° 1 au carré) : deux quais sur
+# la seule main line — sa ligne d'Alton est un train TOURISTIQUE depuis la
+# fermeture du 5 février 1973 (la Watercress Line), et la gare de Chesil de
+# la ligne de Didcot est fermée. Southampton Airport Parkway refusée aussi
+# (deux quais, même ligne). EASTLEIGH la remplace : la ville que le rail a
+# bâtie — quatre directions vivantes, et son portail ROMSEY recoud le
+# chapitre précédent gratuitement. Clapham Junction, la gare la plus
+# traversée d'Europe (17 quais réels), est réduite à dix quais en DEUX
+# faisceaux disjoints (Waterloo × Victoria) qui ne partagent aucun quai,
+# comme en vrai — la sobriété d'Ashford appliquée d'avance.
 ch(A,"Le South Western","Southampton","Londres",[
-  g("Winchester"),g("Basingstoke"),g("Woking"),g("Clapham Junction"),g("London Waterloo","waterloo")])
+  g("Eastleigh","eastleigh"),g("Basingstoke","basingstoke"),g("Woking","woking"),
+  g("Clapham Junction","clapham-junction"),g("London Waterloo","waterloo")])
 # LE TUNNEL PREND LE TRACÉ EUROSTAR DE 1994 (décision de Vincent, 30 août
 # 2026). Le tracé écrit était ROMPU : aucun rail ne relie Waterloo à la HS1,
 # et STRATFORD INTERNATIONAL n'a jamais vu un train international (« no

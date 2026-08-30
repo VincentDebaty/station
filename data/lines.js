@@ -596,5 +596,11 @@ const LINES = [
   { id: "L967", name: "Le tunnel (Tonbridge – Lille)",
     nodes: ["tonbridge", "ashford", "calais-frethun", "hazebrouck", "lille"] },
   { id: "L968", name: "La South Eastern Main Line (Londres – Tonbridge)",
-    nodes: ["waterloo", "tonbridge"] }
+    nodes: ["waterloo", "tonbridge"] },
+  { id: "L969", name: "Le Wessex (Bath – Southampton)",
+    nodes: ["bath", "trowbridge", "westbury", "salisbury", "romsey", "southampton"] },
+  { id: "L970", name: "La South Western Main Line (Southampton – Londres)",
+    nodes: ["southampton", "eastleigh", "basingstoke", "woking", "clapham-junction", "waterloo"] },
+  { id: "L971", name: "La Great Western (Bristol – Bath)",
+    nodes: ["bristol", "bath"] }
 ];

@@ -1,0 +1,26 @@
+{
+  "id": "romsey",
+  "name": "Romsey",
+  "tagline": "La figure de six de l'abbaye",
+  "desc": "Au pied de l'abbaye normande, la branche de Chandler's Ford, rouverte en 2003, rejoint la grande ligne en gare même : le circulaire de Salisbury y tourne sa figure de six par Southampton et Eastleigh. La Sprat and Winkle vers Andover, elle, est morte en 1964 — n'attendez aucun train de ce côté.",
+  "difficulty": 2,
+  "country": "🇬🇧 Royaume-Uni",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }
+  ],
+  "portals": {
+    "SALISBURY":   { "side": "L", "color": "#60a5fa", "abbr": "SA" },
+    "SOUTHAMPTON": { "side": "R", "color": "#4ade80", "abbr": "SO" },
+    "EASTLEIGH":   { "side": "R", "color": "#f5b23c", "abbr": "EA" }
+  },
+  "links": {
+    "SALISBURY":   [1, 2, 3, 4],
+    "SOUTHAMPTON": [1, 2, 3],
+    "EASTLEIGH":   [3, 4]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 12, "nMax": 14, "gapMin": 1.8, "gapMax": 3.0,
+    "cars": [2, 2, 2, 3, 3, 4], "quietRate": 0.25, "rush": "double"
+  }
+}

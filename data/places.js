@@ -230,8 +230,6 @@ const PLACES = {
   victoria:     [-0.144, 51.495],
 
   banbury:      [-1.328, 52.060],
-  basingstoke:  [-1.088, 51.268],
-  bath:         [-2.356, 51.377],
   berwick:      [-2.011, 55.775],
   carstairs:    [-3.669, 55.693],
   cheltenham:   [-2.100, 51.897],
@@ -261,7 +259,6 @@ const PLACES = {
   taunton:      [-3.103, 51.023],
   wakefield:    [-1.506, 53.682],
   warrington:   [-2.603, 53.386],
-  westbury:     [-2.200, 51.267],
   wigan:        [-2.632, 53.543],
   wolverhampton: [-2.129, 52.588]
 };

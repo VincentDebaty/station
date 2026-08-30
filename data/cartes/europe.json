@@ -3,7 +3,7 @@
  "nom": "L'Europe",
  "gratuite": true,
  "enChantier": true,
- "note": "Tranche livree du ruban : chapitres 18 a 56 de ruban-europe.md (Bussoleno vers Hambourg) — l'acte V en entier. Le ruban complet va de Cork a Istanbul ; les actes I a IV se greffent DEVANT celui-ci quand ils seront ecrits.",
+ "note": "Tranche livree du ruban : chapitres 16 a 56 de ruban-europe.md (Bussoleno vers Hambourg) — l'acte V en entier. Le ruban complet va de Cork a Istanbul ; les actes I a IV se greffent DEVANT celui-ci quand ils seront ecrits.",
  "echelle": {
   "kmMinEntreHubs": 110
  },
@@ -31,6 +31,39 @@
  ],
  "chapitres": [
   {
+   "id": "le-wessex",
+   "nom": "Le Wessex",
+   "zone": "atl",
+   "gares": [
+    "bath",
+    "trowbridge",
+    "westbury",
+    "salisbury",
+    "romsey",
+    "southampton"
+   ],
+   "plancher": 1,
+   "arrivee": 3,
+   "saut": {
+    "mode": "nuit",
+    "texte": "Le Night Riviera — le train de nuit de Penzance remonte à Bristol"
+   }
+  },
+  {
+   "id": "le-south-western",
+   "nom": "Le South Western",
+   "zone": "atl",
+   "gares": [
+    "eastleigh",
+    "basingstoke",
+    "woking",
+    "clapham-junction",
+    "waterloo"
+   ],
+   "plancher": 2,
+   "arrivee": 4
+  },
+  {
    "id": "le-tunnel",
    "nom": "Le tunnel",
    "zone": "atl",
@@ -41,8 +74,8 @@
     "hazebrouck",
     "lille"
    ],
-   "plancher": 1,
-   "arrivee": 3
+   "plancher": 2,
+   "arrivee": 4
   },
   {
    "id": "l-etoile-du-nord",

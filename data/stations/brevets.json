@@ -588,6 +588,39 @@
   },
   "boss": "OK"
  },
+ "basingstoke": {
+  "geometrie": "7ceae02d08ff",
+  "date": "2026-08-30",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 3,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK"
+  },
+  "boss": "file de 6 au même quai"
+ },
+ "bath": {
+  "geometrie": "1635b83aeeec",
+  "date": "2026-08-30",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 2,
+  "detail": {
+   "1": "OK",
+   "2": "OK"
+  },
+  "boss": "file de 7 au même quai"
+ },
  "battipaglia": {
   "geometrie": "8891f61f6576",
   "date": "2026-08-28",
@@ -1490,6 +1523,25 @@
   },
   "boss": "OK"
  },
+ "clapham-junction": {
+  "geometrie": "b331ea0da5d8",
+  "date": "2026-08-30",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 5,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK",
+   "4": "OK",
+   "5": "OK"
+  },
+  "boss": "OK"
+ },
  "clermont-ferrand": {
   "geometrie": "845470b1e946",
   "date": "2026-08-28",
@@ -1916,6 +1968,23 @@
    "4": "OK"
   },
   "boss": "retard garanti 0.30 > 0.3"
+ },
+ "eastleigh": {
+  "geometrie": "f0325be63b8f",
+  "date": "2026-08-30",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 3,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK"
+  },
+  "boss": "file de 7 au même quai"
  },
  "edinburgh": {
   "geometrie": "9e46af4354e8",
@@ -4994,6 +5063,22 @@
   },
   "boss": "OK"
  },
+ "romsey": {
+  "geometrie": "6388ed8d63d7",
+  "date": "2026-08-30",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 2,
+  "detail": {
+   "1": "OK",
+   "2": "OK"
+  },
+  "boss": "file de 7 au même quai"
+ },
  "roosendaal": {
   "geometrie": "463a2a296a4a",
   "date": "2026-08-27",
@@ -5738,6 +5823,22 @@
   },
   "boss": "retard garanti 0.34 > 0.3"
  },
+ "trowbridge": {
+  "geometrie": "cce111aedfbe",
+  "date": "2026-08-30",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 2,
+  "detail": {
+   "1": "OK",
+   "2": "OK"
+  },
+  "boss": "retard garanti 0.35 > 0.3"
+ },
  "tuttlingen": {
   "geometrie": "0a27124df059",
   "date": "2026-08-28",
@@ -6070,6 +6171,24 @@
   },
   "boss": "file de 6 au même quai"
  },
+ "westbury": {
+  "geometrie": "910642da152d",
+  "date": "2026-08-30",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 4,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK",
+   "4": "OK"
+  },
+  "boss": "file de 6 au même quai"
+ },
  "wiesbaden": {
   "geometrie": "49fd5fff0647",
   "date": "2026-08-27",
@@ -6123,6 +6242,22 @@
    "4": "OK"
   },
   "boss": "OK"
+ },
+ "woking": {
+  "geometrie": "357453fa74b1",
+  "date": "2026-08-30",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 2,
+  "detail": {
+   "1": "OK",
+   "2": "OK"
+  },
+  "boss": "retard garanti 0.31 > 0.3"
  },
  "wuppertal": {
   "geometrie": "70991028c6e8",

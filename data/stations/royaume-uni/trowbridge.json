@@ -1,0 +1,26 @@
+{
+  "id": "trowbridge",
+  "name": "Trowbridge",
+  "tagline": "Le chef-lieu et sa TransWilts",
+  "desc": "La demi-horaire Cardiff–Portsmouth y croise la petite TransWilts, ressuscitée en 2013 par sa communauté : neuf allers-retours par jour vers Melksham et Swindon, qui se détachent de la ligne de Bath au nord de la ville. Le chef-lieu du Wiltshire a regagné son aiguillage.",
+  "difficulty": 2,
+  "country": "🇬🇧 Royaume-Uni",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }
+  ],
+  "portals": {
+    "BATH":     { "side": "L", "color": "#25dede", "abbr": "BA" },
+    "SWINDON":  { "side": "L", "color": "#a78bfa", "abbr": "SW" },
+    "WESTBURY": { "side": "R", "color": "#f5b23c", "abbr": "WB" }
+  },
+  "links": {
+    "BATH":     [1, 2, 3],
+    "SWINDON":  [3, 4],
+    "WESTBURY": [1, 2, 3, 4]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 12, "nMax": 14, "gapMin": 1.8, "gapMax": 3.0,
+    "cars": [2, 2, 2, 3, 3, 4, 4], "quietRate": 0.22, "rush": "double"
+  }
+}

@@ -380,7 +380,15 @@ const GEO = {
         edinburgh: [-3.188, 55.952], glasgow: [-4.257, 55.860], stirling: [-3.936, 56.119],
         perth: [-3.439, 56.393], aberdeen: [-2.098, 57.144],
         tonbridge: [0.2716, 51.1913],
-        ashford: [0.876, 51.143]
+        ashford: [0.876, 51.143],
+        bath: [-2.357, 51.3775],
+        trowbridge: [-2.213, 51.32],
+        westbury: [-2.178, 51.267],
+        romsey: [-1.492, 50.991],
+        eastleigh: [-1.35, 50.969],
+        basingstoke: [-1.087, 51.268],
+        woking: [-0.556, 51.319],
+        "clapham-junction": [-0.17, 51.464]
       } }
   }
 };
