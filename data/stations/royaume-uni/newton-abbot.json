@@ -1,0 +1,26 @@
+{
+  "id": "newton-abbot",
+  "name": "Newton Abbot",
+  "tagline": "La porte de la Riviera anglaise",
+  "desc": "À Aller Junction, la ligne de la mer quitte la grande voie : d'un côté Plymouth et la Cornouailles, de l'autre Torquay et Paignton. Tout ce qui va au bout de l'Angleterre passe par ces quais.",
+  "difficulty": 2,
+  "country": "🇬🇧 Royaume-Uni",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }
+  ],
+  "portals": {
+    "EXETER":   { "side": "L", "color": "#60a5fa", "abbr": "EX" },
+    "PLYMOUTH": { "side": "R", "color": "#f2588f", "abbr": "PL" },
+    "PAIGNTON": { "side": "R", "color": "#f5b23c", "abbr": "PA" }
+  },
+  "links": {
+    "EXETER":   [1, 2, 3, 4],
+    "PLYMOUTH": [1, 2, 3],
+    "PAIGNTON": [3, 4]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 12, "nMax": 14, "gapMin": 1.8, "gapMax": 3.0,
+    "cars": [2, 2, 2, 3, 3, 4, 5], "quietRate": 0.2, "rush": "double"
+  }
+}

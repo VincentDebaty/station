@@ -1060,6 +1060,23 @@
   },
   "boss": "OK"
  },
+ "bristol-parkway": {
+  "geometrie": "37a7e498a331",
+  "date": "2026-08-30",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 2,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "file de 6 au même quai"
+  },
+  "boss": "retard garanti 0.37 > 0.3"
+ },
  "bruchsal": {
   "geometrie": "42ee73db18d4",
   "date": "2026-08-27",
@@ -2162,6 +2179,23 @@
   },
   "boss": "file de 7 au même quai"
  },
+ "filton": {
+  "geometrie": "6faaf722f1e9",
+  "date": "2026-08-30",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 3,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK"
+  },
+  "boss": "file de 7 au même quai"
+ },
  "foggia": {
   "geometrie": "ea0adb830af7",
   "date": "2026-08-28",
@@ -3230,6 +3264,22 @@
   },
   "boss": "retard garanti 0.31 > 0.3"
  },
+ "liskeard": {
+  "geometrie": "894d55e03885",
+  "date": "2026-08-30",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 2,
+  "detail": {
+   "1": "OK",
+   "2": "OK"
+  },
+  "boss": "file de 7 au même quai"
+ },
  "lison": {
   "geometrie": "d75d639b23ee",
   "date": "2026-08-29",
@@ -4108,6 +4158,39 @@
   },
   "boss": "OK"
  },
+ "newport": {
+  "geometrie": "e5cf3b9f4185",
+  "date": "2026-08-30",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 3,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK"
+  },
+  "boss": "file de 6 au même quai"
+ },
+ "newton-abbot": {
+  "geometrie": "acfc07b20a21",
+  "date": "2026-08-30",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 2,
+  "detail": {
+   "1": "OK",
+   "2": "OK"
+  },
+  "boss": "file de 7 au même quai"
+ },
  "nice": {
   "geometrie": "a5d906c2ff3e",
   "date": "2026-08-28",
@@ -4588,6 +4671,23 @@
    "3": "OK"
   },
   "boss": "file de 6 au même quai"
+ },
+ "penzance": {
+  "geometrie": "d9081b3a16ce",
+  "date": "2026-08-30",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 3,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK"
+  },
+  "boss": "retard garanti 0.32 > 0.3"
  },
  "perigueux": {
   "geometrie": "5910237971bd",
@@ -5418,6 +5518,22 @@
   },
   "boss": "file de 6 au même quai"
  },
+ "severn-tunnel": {
+  "geometrie": "2de26d37d1f3",
+  "date": "2026-08-30",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 2,
+  "detail": {
+   "1": "OK",
+   "2": "OK"
+  },
+  "boss": "file de 7 au même quai"
+ },
  "sevilla": {
   "geometrie": "7f68b9a7e65b",
   "date": "2026-08-28",
@@ -5613,6 +5729,22 @@
    "3": "OK"
   },
   "boss": "OK"
+ },
+ "taunton": {
+  "geometrie": "0d0a3f1ed70a",
+  "date": "2026-08-30",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 2,
+  "detail": {
+   "1": "OK",
+   "2": "OK"
+  },
+  "boss": "file de 6 au même quai"
  },
  "termini": {
   "geometrie": "dc6dbfe39adc",
@@ -5838,6 +5970,22 @@
    "2": "OK"
   },
   "boss": "retard garanti 0.35 > 0.3"
+ },
+ "truro": {
+  "geometrie": "416972febe3d",
+  "date": "2026-08-30",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 2,
+  "detail": {
+   "1": "OK",
+   "2": "OK"
+  },
+  "boss": "retard garanti 0.33 > 0.3"
  },
  "tuttlingen": {
   "geometrie": "0a27124df059",

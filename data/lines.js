@@ -602,5 +602,9 @@ const LINES = [
   { id: "L970", name: "La South Western Main Line (Southampton – Londres)",
     nodes: ["southampton", "eastleigh", "basingstoke", "woking", "clapham-junction", "waterloo"] },
   { id: "L971", name: "La Great Western (Bristol – Bath)",
-    nodes: ["bristol", "bath"] }
+    nodes: ["bristol", "bath"] },
+  { id: "L972", name: "Le tunnel de la Severn (Cardiff – Bristol)",
+    nodes: ["cardiff", "newport", "severn-tunnel", "bristol-parkway", "filton", "bristol"] },
+  { id: "L973", name: "La Riviera anglaise (Bristol – Penzance)",
+    nodes: ["bristol", "taunton", "exeter", "newton-abbot", "plymouth", "liskeard", "truro", "penzance"] }
 ];

@@ -38,10 +38,33 @@ ch(A,"Le West Coast","Liverpool","Birmingham",[
   g("Runcorn"),g("Crewe","crewe"),g("Stafford"),g("Wolverhampton"),g("Birmingham New Street","birmingham")])
 ch(A,"Les Marches galloises","Birmingham","Cardiff",[
   g("Bromsgrove"),g("Worcester"),g("Hereford"),g("Abergavenny"),g("Pontypool"),g("Cardiff Central","cardiff")])
+# CALDICOT ET PILNING REFUSÉES le 30 août 2026. Caldicot : halte à deux
+# quais de la seule ligne Gloucester–Newport — rien à aiguiller. PILNING est
+# la pièce du musée : DEUX TRAINS PAR SEMAINE (le samedi), un seul quai
+# accessible depuis que Network Rail a démoli la passerelle le 5 novembre
+# 2016 pour passer les caténaires, et un taxi officiel vers Severn Tunnel
+# Junction pour rentrer au pays de Galles. BRISTOL PARKWAY la remplace : la
+# première « Parkway » du royaume (1972), quatre directions vivantes — sa
+# paire Cardiff×Birmingham reste VIDE exprès, les CrossCountry passent par
+# Gloucester. Newport a retrouvé sa quatrième direction en 2024 (Ebbw Vale,
+# fermée aux voyageurs depuis 1962).
 ch(A,"Le tunnel de la Severn","Cardiff","Bristol",[
-  g("Newport"),g("Caldicot"),g("Severn Tunnel Junction"),g("Pilning"),g("Filton Abbey Wood"),g("Bristol Temple Meads","bristol")])
+  g("Newport","newport"),g("Severn Tunnel Junction","severn-tunnel"),
+  g("Bristol Parkway","bristol-parkway"),g("Filton Abbey Wood","filton"),
+  g("Bristol Temple Meads","bristol")])
+# TOTNES REFUSÉE le 30 août 2026 : deux quais sur l'axe, et sa South Devon
+# vers Buckfastleigh est TOURISTIQUE et part d'une gare séparée (Totnes
+# Riverside, une passerelle de 1993) — doublement disqualifiée, le motif
+# Winchester. LISKEARD la remplace, plus à l'ouest : la Looe Valley vivante,
+# et le seul quai perpendiculaire du royaume (les trains de Looe partent à
+# angle droit et rebroussent à Coombe Junction). PENZANCE ferme le chapitre
+# en d3 : terminus à voie unique mais TROIS axes commerciaux réels (les IC
+# de Paddington, les locaux de Plymouth, le CrossCountry du nord — et le
+# Night Riviera chaque nuit) — le précédent Lisbonne, l'entonnoir assumé.
 ch(A,"La Riviera anglaise","Bristol","Penzance",[
-  g("Taunton"),g("Exeter St Davids","exeter"),g("Newton Abbot"),g("Totnes"),g("Plymouth","plymouth"),g("Truro"),g("Penzance")])
+  g("Taunton","taunton"),g("Exeter St Davids","exeter"),
+  g("Newton Abbot","newton-abbot"),g("Plymouth","plymouth"),
+  g("Liskeard","liskeard"),g("Truro","truro"),g("Penzance","penzance")])
 # LE WESSEX PASSE INTACT (instruit le 30 août 2026) : ses quatre candidates
 # tiennent toutes le §0 — dont TROWBRIDGE, contre le pronostic : la
 # TransWilts relancée en 2013 lui donne sa troisième direction (neuf A/R par

@@ -1,0 +1,26 @@
+{
+  "id": "taunton",
+  "name": "Taunton",
+  "tagline": "Deux chemins vers Londres",
+  "desc": "À Cogload Junction, juste à l'est, la voie se dédouble : par Bristol ou par les collines du Berks and Hants, deux chemins vers Londres. La capitale du Somerset trie les deux flux, plus les express du nord.",
+  "difficulty": 2,
+  "country": "🇬🇧 Royaume-Uni",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
+  ],
+  "portals": {
+    "PADDINGTON": { "side": "L", "color": "#25dede", "abbr": "PD" },
+    "BRISTOL":    { "side": "L", "color": "#4ade80", "abbr": "BS" },
+    "EXETER":     { "side": "R", "color": "#f5b23c", "abbr": "EX" }
+  },
+  "links": {
+    "PADDINGTON": [1, 2, 3],
+    "BRISTOL":    [3, 4, 5],
+    "EXETER":     [1, 2, 3, 4, 5]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 12, "nMax": 14, "gapMin": 1.8, "gapMax": 3.0,
+    "cars": [2, 2, 3, 3, 4, 4, 5], "quietRate": 0.2, "rush": "pointe"
+  }
+}

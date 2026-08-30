@@ -1,0 +1,28 @@
+{
+  "id": "filton",
+  "name": "Filton Abbey Wood",
+  "tagline": "Le tunnel ou Gloucester",
+  "desc": "Le Filton Bank, remis à quatre voies en 2018 comme au temps de la vapeur, grimpe de Temple Meads jusqu'ici. Juste au nord des quais, la ligne se fend : Cardiff sous la Severn, ou Gloucester par Parkway.",
+  "difficulty": 2,
+  "country": "🇬🇧 Royaume-Uni",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }
+  ],
+  "portals": {
+    "BRISTOL":    { "side": "L", "color": "#4ade80", "abbr": "BS" },
+    "PORTSMOUTH": { "side": "L", "color": "#f5b23c", "abbr": "PM" },
+    "CARDIFF":    { "side": "R", "color": "#f2588f", "abbr": "CF" },
+    "GLOUCESTER": { "side": "R", "color": "#a78bfa", "abbr": "GL" }
+  },
+  "links": {
+    "BRISTOL":    [1, 2, 3],
+    "PORTSMOUTH": [3, 4],
+    "CARDIFF":    [2, 3, 4],
+    "GLOUCESTER": [1, 2]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 12, "nMax": 15, "gapMin": 1.9, "gapMax": 3.1,
+    "cars": [2, 2, 3, 3, 4, 4], "quietRate": 0.2, "rush": "double"
+  }
+}

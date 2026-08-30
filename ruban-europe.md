@@ -23,16 +23,16 @@ Chaque région est traversée **une fois**, et on n'y revient jamais.
 |---|---|
 | Actes | **9** |
 | Chapitres | **90** |
-| Gares — c'est-à-dire **niveaux** | **547** |
-| Fiches déjà écrites, réemployées telles quelles | **250** |
-| Fiches à écrire | **297** |
+| Gares — c'est-à-dire **niveaux** | **546** |
+| Fiches déjà écrites, réemployées telles quelles | **259** |
+| Fiches à écrire | **287** |
 | Sauts déclarés (§4 bis) | **11** |
 | Longueur des chapitres | 5 à 9 gares, médiane 6 |
 
 **Vérifié par script** (`scratchpad/verif.py`, à porter dans `carte-check` au
 lot C) : les 90 chapitres tiennent tous R3 (5 à 10 gares), aucune gare
 n'apparaît deux fois (R6), le chaînage est continu d'un bout à l'autre, et
-les 250 fiches annoncées comme existantes existent bien au catalogue.
+les 259 fiches annoncées comme existantes existent bien au catalogue.
 
 ## Comment lire les tableaux
 
@@ -120,7 +120,7 @@ les 250 fiches annoncées comme existantes existent bien au catalogue.
 
 ## Acte I — Les Îles
 
-*De Cork au tunnel sous la Manche* — 18 chapitres, **110 gares** (34 déjà écrites, 76 à écrire).
+*De Cork au tunnel sous la Manche* — 18 chapitres, **109 gares** (43 déjà écrites, 66 à écrire).
 
 | # | Chapitre | Gares, dans l'ordre du rail | n |
 |---|---|---|---|
@@ -138,8 +138,8 @@ les 250 fiches annoncées comme existantes existent bien au catalogue.
 | 11 | La première ligne du monde | Salford · Eccles · Newton-le-Willows · St Helens · Huyton · **Liverpool Lime Street** ✓ | 6 |
 | 12 | Le West Coast | Runcorn · Crewe ✓ · Stafford · Wolverhampton · **Birmingham New Street** ✓ | 5 |
 | 13 | Les Marches galloises | Bromsgrove · Worcester · Hereford · Abergavenny · Pontypool · **Cardiff Central** ✓ | 6 |
-| 14 | Le tunnel de la Severn | Newport · Caldicot · Severn Tunnel Junction · Pilning · Filton Abbey Wood · **Bristol Temple Meads** ✓ | 6 |
-| 15 | La Riviera anglaise | Taunton · Exeter St Davids ✓ · Newton Abbot · Totnes · Plymouth ✓ · Truro · **Penzance** | 7 |
+| 14 | Le tunnel de la Severn | Newport ✓ · ~~Caldicot~~ Severn Tunnel Junction ✓ · ~~Pilning~~ Bristol Parkway ✓ · Filton Abbey Wood ✓ · **Bristol Temple Meads** ✓ | 5 |
+| 15 | La Riviera anglaise | Taunton ✓ · Exeter St Davids ✓ · Newton Abbot ✓ · ~~Totnes~~ Plymouth ✓ · Liskeard ✓ · Truro ✓ · **Penzance** ✓ | 7 |
 | | ⤳ **Saut (nuit)** | *Le Night Riviera — le train de nuit de Penzance remonte à Bristol* | |
 | 16 | Le Wessex | Bath Spa ✓ · Trowbridge ✓ · Westbury ✓ · Salisbury ✓ · Romsey ✓ · **Southampton Central** ✓ | 6 |
 | 17 | Le South Western | ~~Winchester~~ Eastleigh ✓ · Basingstoke ✓ · Woking ✓ · Clapham Junction ✓ · **London Waterloo** ✓ | 5 |
@@ -188,6 +188,14 @@ les 250 fiches annoncées comme existantes existent bien au catalogue.
 > est la Watercress touristique depuis 1973), remplacée par Eastleigh dont le
 > portail ROMSEY recoud le Wessex. Clapham Junction réduite à dix quais en
 > deux faisceaux disjoints, comme en vrai.
+>
+> ⚠️ **La Severn et la Riviera recomposées** (30 août 2026) : Caldicot,
+> Totnes refusées, et **Pilning** — la gare fantôme à deux trains par
+> semaine, un seul quai accessible depuis la démolition de la passerelle en
+> 2016. Entrent : Bristol Parkway (1972, quatre directions) et Liskeard (la
+> Looe Valley et son quai perpendiculaire). Penzance ferme en d3 — trois
+> axes commerciaux sur une voie unique, le précédent Lisbonne, et le Night
+> Riviera part réellement de ses heurtoirs.
 >
 > ⚠️ **La Normandie, le Cotentin et la Bretagne recomposés** (30 août 2026) :
 > Évreux (Rouen morte en 1969), Bayeux, Saint-Lô (Vire morte en 1938),

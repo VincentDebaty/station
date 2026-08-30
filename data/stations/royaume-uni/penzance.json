@@ -1,0 +1,85 @@
+{
+  "id": "penzance",
+  "name": "Penzance",
+  "tagline": "Les heurtoirs du bout de l'Angleterre",
+  "desc": "Le rail anglais finit ici, sur quatre voies à heurtoirs posées contre la baie du mont St Michael. Une seule voie en sort, et trois services se la partagent : les express de Londres, les locaux de Plymouth, les grands trains du nord — et chaque nuit, le Night Riviera.",
+  "difficulty": 3,
+  "country": "🇬🇧 Royaume-Uni",
+  "platforms": [
+    {
+      "id": 1,
+      "deadEnd": true
+    },
+    {
+      "id": 2,
+      "deadEnd": true
+    },
+    {
+      "id": 3,
+      "deadEnd": true
+    },
+    {
+      "id": 4,
+      "deadEnd": true
+    },
+    {
+      "id": 5,
+      "deadEnd": true
+    }
+  ],
+  "portals": {
+    "PADDINGTON": {
+      "side": "L",
+      "color": "#25dede",
+      "abbr": "PD"
+    },
+    "PLYMOUTH": {
+      "side": "L",
+      "color": "#f2588f",
+      "abbr": "PL"
+    },
+    "BRISTOL": {
+      "side": "L",
+      "color": "#4ade80",
+      "abbr": "BS"
+    }
+  },
+  "links": {
+    "PADDINGTON": [
+      1,
+      2,
+      3,
+      4
+    ],
+    "PLYMOUTH": [
+      2,
+      3,
+      4,
+      5
+    ],
+    "BRISTOL": [
+      1,
+      2,
+      5
+    ]
+  },
+  "sameSidePairs": "all",
+  "gen": {
+    "nMin": 13,
+    "nMax": 15,
+    "gapMin": 1.9,
+    "gapMax": 3.2,
+    "cars": [
+      2,
+      2,
+      3,
+      3,
+      4,
+      4,
+      5,
+      6
+    ],
+    "quietRate": 0.15,
+    "rush": "double"
+  }
+}

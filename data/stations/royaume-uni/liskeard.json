@@ -1,0 +1,26 @@
+{
+  "id": "liskeard",
+  "name": "Liskeard",
+  "tagline": "Le quai perpendiculaire de la vallée de Looe",
+  "desc": "Le seul quai à angle droit du royaume : la Looe Valley Line part plein nord depuis sa propre courette, avant de rebrousser à Coombe Junction pour descendre la vallée jusqu'à la mer. Sur la grande ligne, les express de Cornouailles filent au-dessus du viaduc.",
+  "difficulty": 2,
+  "country": "🇬🇧 Royaume-Uni",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }
+  ],
+  "portals": {
+    "PLYMOUTH": { "side": "L", "color": "#f2588f", "abbr": "PL" },
+    "PENZANCE": { "side": "R", "color": "#a78bfa", "abbr": "PZ" },
+    "LOOE":     { "side": "R", "color": "#4ade80", "abbr": "LO" }
+  },
+  "links": {
+    "PLYMOUTH": [1, 2, 3, 4],
+    "PENZANCE": [1, 2, 3],
+    "LOOE":     [3, 4]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 12, "nMax": 14, "gapMin": 1.8, "gapMax": 3.0,
+    "cars": [2, 2, 2, 3, 3, 4], "quietRate": 0.22, "rush": "pointe"
+  }
+}

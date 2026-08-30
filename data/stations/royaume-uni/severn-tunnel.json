@@ -1,0 +1,26 @@
+{
+  "id": "severn-tunnel",
+  "name": "Severn Tunnel Junction",
+  "tagline": "L'aiguillage qui garde l'entrée du tunnel",
+  "desc": "Trois directions au bord de l'estuaire : Cardiff, Gloucester par Chepstow, et les sept kilomètres sous la Severn vers Bristol. L'immense triage à charbon s'est éteint en 1987 — il reste la bifurcation, toute nue.",
+  "difficulty": 2,
+  "country": "🇬🇧 Royaume-Uni",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }
+  ],
+  "portals": {
+    "CARDIFF":    { "side": "L", "color": "#f2588f", "abbr": "CF" },
+    "BRISTOL":    { "side": "R", "color": "#4ade80", "abbr": "BS" },
+    "GLOUCESTER": { "side": "R", "color": "#f5b23c", "abbr": "GL" }
+  },
+  "links": {
+    "CARDIFF":    [1, 2, 3, 4],
+    "BRISTOL":    [3, 4],
+    "GLOUCESTER": [1, 2]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 12, "nMax": 15, "gapMin": 1.9, "gapMax": 3.1,
+    "cars": [2, 2, 2, 3, 3, 4, 4], "quietRate": 0.2, "rush": "pointe"
+  }
+}

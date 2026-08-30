@@ -1,0 +1,30 @@
+{
+  "id": "newport",
+  "name": "Newport",
+  "tagline": "La porte des vallées et des Marches",
+  "desc": "Deuxième gare du pays de Galles : quatre longues voies où l'express de Londres double le train des Marches. Depuis 2024, la navette d'Ebbw Vale a rendu à la ville sa quatrième direction, fermée aux voyageurs depuis 1962.",
+  "difficulty": 2,
+  "country": "🇬🇧 Royaume-Uni",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }
+  ],
+  "portals": {
+    "PADDINGTON": { "side": "L", "color": "#25dede", "abbr": "PD" },
+    "BRISTOL":    { "side": "L", "color": "#4ade80", "abbr": "BS" },
+    "HEREFORD":   { "side": "L", "color": "#f5b23c", "abbr": "HF" },
+    "CARDIFF":    { "side": "R", "color": "#f2588f", "abbr": "CF" },
+    "EBBW VALE":  { "side": "R", "color": "#a78bfa", "abbr": "EV" }
+  },
+  "links": {
+    "PADDINGTON": [1, 2, 3],
+    "BRISTOL":    [2, 3, 4],
+    "HEREFORD":   [3, 4],
+    "CARDIFF":    [1, 2, 3, 4],
+    "EBBW VALE":  [1, 2]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 13, "nMax": 16, "gapMin": 1.8, "gapMax": 3.0,
+    "cars": [2, 2, 2, 3, 3, 4, 4, 5], "quietRate": 0.15, "rush": "pointe"
+  }
+}

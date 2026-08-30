@@ -388,7 +388,16 @@ const GEO = {
         eastleigh: [-1.35, 50.969],
         basingstoke: [-1.087, 51.268],
         woking: [-0.556, 51.319],
-        "clapham-junction": [-0.17, 51.464]
+        "clapham-junction": [-0.17, 51.464],
+        newport: [-2.998, 51.589],
+        "severn-tunnel": [-2.778, 51.581],
+        "bristol-parkway": [-2.535, 51.52],
+        filton: [-2.57, 51.5],
+        taunton: [-3.103, 51.023],
+        "newton-abbot": [-3.601, 50.53],
+        liskeard: [-4.464, 50.4525],
+        truro: [-5.051, 50.264],
+        penzance: [-5.532, 50.121]
       } }
   }
 };

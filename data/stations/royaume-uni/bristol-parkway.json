@@ -1,0 +1,83 @@
+{
+  "id": "bristol-parkway",
+  "name": "Bristol Parkway",
+  "tagline": "La gare de 1972 au croisement des grands axes",
+  "desc": "La première « Parkway » du royaume, ouverte en 1972 au milieu d'un parking. Londres par Badminton, Cardiff par le tunnel, Birmingham par Yate : les grandes lignes s'y croisent sans jamais descendre dans Bristol.",
+  "difficulty": 3,
+  "country": "🇬🇧 Royaume-Uni",
+  "platforms": [
+    {
+      "id": 1
+    },
+    {
+      "id": 2
+    },
+    {
+      "id": 3
+    },
+    {
+      "id": 4
+    }
+  ],
+  "portals": {
+    "CARDIFF": {
+      "side": "L",
+      "color": "#f2588f",
+      "abbr": "CF"
+    },
+    "BRISTOL": {
+      "side": "L",
+      "color": "#4ade80",
+      "abbr": "BS"
+    },
+    "PADDINGTON": {
+      "side": "R",
+      "color": "#25dede",
+      "abbr": "PD"
+    },
+    "BIRMINGHAM": {
+      "side": "R",
+      "color": "#a78bfa",
+      "abbr": "BM"
+    }
+  },
+  "links": {
+    "CARDIFF": [
+      1,
+      2
+    ],
+    "BRISTOL": [
+      3,
+      4
+    ],
+    "PADDINGTON": [
+      1,
+      2,
+      3,
+      4
+    ],
+    "BIRMINGHAM": [
+      3,
+      4
+    ]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 13,
+    "nMax": 15,
+    "gapMin": 1.7,
+    "gapMax": 3.0,
+    "cars": [
+      2,
+      3,
+      3,
+      4,
+      4,
+      5,
+      5,
+      6
+    ],
+    "quietRate": 0.15,
+    "rush": "pointe"
+  }
+}
