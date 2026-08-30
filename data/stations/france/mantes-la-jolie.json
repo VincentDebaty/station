@@ -1,0 +1,28 @@
+{
+  "id": "mantes-la-jolie",
+  "name": "Mantes-la-Jolie",
+  "tagline": "Là où la Normandie quitte Paris",
+  "desc": "Aux portes de l'Île-de-France, la gare trie tout ce que Saint-Lazare envoie vers la mer : les trains du Havre filent par la Seine, ceux de Caen prennent à gauche vers Évreux. Et par le plateau, les Transilien de Montparnasse viennent y finir leur course.",
+  "difficulty": 3,
+  "country": "🇫🇷 France",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }, { "id": 6 }
+  ],
+  "portals": {
+    "PARIS-ST-LAZARE": { "side": "L", "color": "#25dede", "abbr": "PL", "label": "PARIS-ST-LAZ." },
+    "PARIS-MONTP":     { "side": "L", "color": "#a78bfa", "abbr": "PM", "label": "PARIS-MONTP." },
+    "ROUEN":           { "side": "R", "color": "#60a5fa", "abbr": "RO" },
+    "CAEN":            { "side": "R", "color": "#f5b23c", "abbr": "CN" }
+  },
+  "links": {
+    "PARIS-ST-LAZARE": [1, 2, 3, 4],
+    "PARIS-MONTP":     [5, 6],
+    "ROUEN":           [2, 3, 4, 5, 6],
+    "CAEN":            [1, 2, 3]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 14, "nMax": 16, "gapMin": 1.6, "gapMax": 2.9,
+    "cars": [2, 2, 3, 3, 4, 4, 5, 6], "quietRate": 0.15, "rush": "double"
+  }
+}

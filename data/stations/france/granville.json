@@ -1,0 +1,27 @@
+{
+  "id": "granville",
+  "name": "Granville",
+  "tagline": "Le terminus de la mer",
+  "desc": "Quatre voies à heurtoirs au-dessus du port, où trois dessertes se partagent une seule ligne : Paris par Argentan, Caen par Coutances, Rennes par la baie. Même le train de Rennes vient toucher la mer avant de repartir.",
+  "difficulty": 2,
+  "country": "🇫🇷 France",
+  "platforms": [
+    { "id": 1, "deadEnd": true }, { "id": 2, "deadEnd": true },
+    { "id": 3, "deadEnd": true }, { "id": 4, "deadEnd": true }, { "id": 5, "deadEnd": true }
+  ],
+  "portals": {
+    "PARIS": { "side": "L", "color": "#25dede", "abbr": "PM", "label": "PARIS-MONTP." },
+    "CAEN":   { "side": "L", "color": "#f5b23c", "abbr": "CA" },
+    "RENNES": { "side": "L", "color": "#f2588f", "abbr": "RE" }
+  },
+  "links": {
+    "PARIS":  [1, 2, 3, 4],
+    "CAEN":   [2, 3, 4, 5],
+    "RENNES": [1, 2, 4, 5]
+  },
+  "sameSidePairs": "all",
+  "gen": {
+    "nMin": 12, "nMax": 15, "gapMin": 1.9, "gapMax": 3.2,
+    "cars": [2, 3, 3, 4, 4, 5, 5], "quietRate": 0.18, "rush": "double"
+  }
+}

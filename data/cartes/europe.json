@@ -3,7 +3,7 @@
  "nom": "L'Europe",
  "gratuite": true,
  "enChantier": true,
- "note": "Tranche livree du ruban : chapitres 23 a 57 de ruban-europe.md (Bussoleno vers Hambourg) — l'acte V en entier. Le ruban complet va de Cork a Istanbul ; les actes I a IV se greffent DEVANT celui-ci quand ils seront ecrits.",
+ "note": "Tranche livree du ruban : chapitres 20 a 56 de ruban-europe.md (Bussoleno vers Hambourg) — l'acte V en entier. Le ruban complet va de Cork a Istanbul ; les actes I a IV se greffent DEVANT celui-ci quand ils seront ecrits.",
  "echelle": {
   "kmMinEntreHubs": 110
  },
@@ -31,6 +31,37 @@
  ],
  "chapitres": [
   {
+   "id": "la-normandie",
+   "nom": "La Normandie",
+   "zone": "atl",
+   "gares": [
+    "mantes-la-jolie",
+    "serquigny",
+    "bernay",
+    "lisieux",
+    "caen"
+   ],
+   "plancher": 1,
+   "arrivee": 3
+  },
+  {
+   "id": "le-cotentin-et-la-bretagne",
+   "nom": "Le Cotentin et la Bretagne",
+   "zone": "atl",
+   "gares": [
+    "lison",
+    "granville",
+    "folligny",
+    "dol",
+    "rennes",
+    "redon",
+    "savenay",
+    "nantes"
+   ],
+   "plancher": 2,
+   "arrivee": 4
+  },
+  {
    "id": "le-littoral-atlantique",
    "nom": "Le littoral atlantique",
    "zone": "atl",
@@ -41,8 +72,8 @@
     "saintes",
     "bordeaux"
    ],
-   "plancher": 1,
-   "arrivee": 3
+   "plancher": 2,
+   "arrivee": 4
   },
   {
    "id": "le-perigord-et-la-garonne",
@@ -219,7 +250,7 @@
   {
    "id": "la-riviera",
    "nom": "La Riviera",
-   "zone": "alpes",
+   "zone": "atl",
    "gares": [
     "toulon",
     "cannes",
@@ -412,7 +443,7 @@
   {
    "id": "l-ardenne",
    "nom": "L'Ardenne",
-   "zone": "rhin",
+   "zone": "alpes",
    "gares": [
     "arlon",
     "libramont",
@@ -482,7 +513,7 @@
   {
    "id": "le-neckar",
    "nom": "Le Neckar",
-   "zone": "ger",
+   "zone": "rhin",
    "gares": [
     "darmstadt",
     "mannheim",

@@ -1,0 +1,28 @@
+{
+  "id": "folligny",
+  "name": "Folligny",
+  "tagline": "La croix de la Manche",
+  "desc": "Trois cents habitants autour d'une gare de bifurcation où le Paris–Granville croise la ligne de Caen à Rennes. Tout ce qui circule entre la baie, le Cotentin et la capitale se donne rendez-vous sur ses cinq voies.",
+  "difficulty": 2,
+  "country": "🇫🇷 France",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
+  ],
+  "portals": {
+    "PARIS":     { "side": "L", "color": "#25dede", "abbr": "PM", "label": "PARIS-MONTP." },
+    "CAEN":      { "side": "L", "color": "#f5b23c", "abbr": "CA" },
+    "GRANVILLE": { "side": "R", "color": "#60a5fa", "abbr": "GR" },
+    "RENNES":    { "side": "R", "color": "#f2588f", "abbr": "RE" }
+  },
+  "links": {
+    "PARIS":     [1, 2, 3],
+    "CAEN":      [3, 4, 5],
+    "GRANVILLE": [1, 2, 3, 4],
+    "RENNES":    [2, 3, 4, 5]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 13, "nMax": 16, "gapMin": 1.8, "gapMax": 3.0,
+    "cars": [2, 2, 2, 3, 3, 4, 4, 5], "quietRate": 0.18, "rush": "pointe"
+  }
+}

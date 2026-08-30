@@ -54,12 +54,37 @@ ch(A,"Le tunnel","Londres","Lille",[
 B = acte("nw","Acte II — La France atlantique","De la Manche aux Pyrénées")
 ch(B,"L'Étoile du Nord","Lille","Paris",[
   g("Douai","douai"),g("Arras","arras"),g("Amiens","amiens"),g("Creil","creil"),g("Paris-Nord","paris-nord")])
+# ÉVREUX REFUSÉE le 29 août 2026 (piège n° 1) : sa ligne de Rouen par
+# Louviers est morte en 1969 — le lien Rouen–Évreux d'aujourd'hui est un car.
+# SERQUIGNY la remplace : la bifurcation réelle de la ligne de Rouen, où tous
+# les Caen–Rouen s'arrêtent depuis le renfort Nomad — le précédent Puyoô, le
+# §0 juge le croisement, pas la fréquentation. Bernay tient au standard
+# Lausanne (trois axes de service à quai), Lisieux révèle quatre directions
+# (la branche de Deauville ne rebrousse plus depuis 1894), et CAEN est un
+# boss d4 honnête : sept voies réelles sous la verrière de 1934, cinq
+# directions — précédent Lisbonne, on ne gonfle pas.
 ch(B,"La Normandie","Paris","Caen",[
-  g("Mantes-la-Jolie"),g("Évreux"),g("Bernay"),g("Lisieux"),g("Caen")])
-ch(B,"Le Cotentin et la baie","Caen","Rennes",[
-  g("Bayeux"),g("Saint-Lô"),g("Avranches"),g("Pontorson"),g("Dol-de-Bretagne"),g("Rennes","rennes")])
-ch(B,"La Bretagne intérieure","Rennes","Nantes",[
-  g("Bruz"),g("Messac"),g("Redon"),g("Savenay"),g("Nantes","nantes")])
+  g("Mantes-la-Jolie","mantes-la-jolie"),g("Serquigny","serquigny"),
+  g("Bernay","bernay"),g("Lisieux","lisieux"),g("Caen","caen")])
+# LE COTENTIN ET LA BRETAGNE ONT FUSIONNÉ (décision de Vincent, 30 août
+# 2026). Six refus §0 sur les deux chapitres : Bayeux et Avranches
+# (passantes), Saint-Lô (sa branche de Vire a perdu ses voyageurs le
+# 10 octobre 1938 — un vélo-rail aujourd'hui), Pontorson (la ligne du Mont
+# est déposée depuis 1945, le Mont se fait en bus), Bruz (halte périurbaine)
+# et Messac (sa ligne de Châteaubriant est fermée). L'alternative
+# Châteaubriant a été vérifiée : impasse — la gare elle-même est un refus,
+# deux terminus séparés par un passage piéton. Entrent : LISON (l'aiguille
+# du Cotentin), GRANVILLE — le tracé RÉEL du ruban : la fiche horaire 2026
+# montre les Caen–Rennes entrant au terminus et y rebroussant —, FOLLIGNY
+# (la croix de la Manche, quatre directions pour trois cents habitants) et
+# DOL (quatre directions, Dinan renforcée en septembre 2025). Rennes se joue
+# en cours de chapitre, comme Valence-Nord et Séville avant elle. Redon
+# garde son rebroussement réel en Y (les Nantes–Rennes arrêtés rebroussent
+# à quai, seul le triangle sauve les directs).
+ch(B,"Le Cotentin et la Bretagne","Caen","Nantes",[
+  g("Lison","lison"),g("Granville","granville"),g("Folligny","folligny"),
+  g("Dol-de-Bretagne","dol"),g("Rennes","rennes"),g("Redon","redon"),
+  g("Savenay","savenay"),g("Nantes","nantes")])
 # REDÉCOUPAGE DU 28 AOÛT 2026 (décision de Vincent). Rochefort et Jonzac,
 # refusées la veille (anciennes bifurcations, branches mortes en 1954 et par
 # gares voisines closes), sont remplacées par NIORT : trois directions

@@ -146,7 +146,6 @@ const PLACES = {
   montmelian:   [6.043, 45.503],
   nevers:       [3.151, 46.987],
   pontamousson: [6.051, 48.901],
-  redon:        [-2.088, 47.652],
   roanne:       [4.063, 46.039],
   sable:        [-0.342, 47.842],
   saintraphael: [6.769, 43.424],

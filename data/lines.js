@@ -584,5 +584,13 @@ const LINES = [
   { id: "L960", name: "La ligne des Pyrénées (Toulouse – Montréjeau)",
     nodes: ["toulouse", "montrejeau"] },
   { id: "L961", name: "L'Orduña (Bilbao – Miranda)",
-    nodes: ["bilbao", "miranda"] }
+    nodes: ["bilbao", "miranda"] },
+  { id: "L963", name: "La Normandie (Mantes – Caen)",
+    nodes: ["mantes-la-jolie", "serquigny", "bernay", "lisieux", "caen"] },
+  { id: "L964", name: "Le Cotentin et la baie (Caen – Rennes)",
+    nodes: ["caen", "lison", "granville", "folligny", "dol", "rennes"] },
+  { id: "L965", name: "La Bretagne intérieure (Rennes – Nantes)",
+    nodes: ["rennes", "redon", "savenay", "nantes"] },
+  { id: "L966", name: "La vallée de la Seine (Paris – Mantes)",
+    nodes: ["paris-nord", "mantes-la-jolie"] }
 ];

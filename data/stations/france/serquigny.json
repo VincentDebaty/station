@@ -1,0 +1,26 @@
+{
+  "id": "serquigny",
+  "name": "Serquigny",
+  "tagline": "La bifurcation de Rouen, en pleine campagne",
+  "desc": "Quatre voies au creux de la vallée de la Risle, et deux lignes qui s'y séparent : Paris tout droit, Rouen par la branche. Depuis que tous les Caen–Rouen s'y arrêtent, la petite gare trie bien plus grand qu'elle.",
+  "difficulty": 2,
+  "country": "🇫🇷 France",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }
+  ],
+  "portals": {
+    "PARIS": { "side": "L", "color": "#25dede", "abbr": "PA", "label": "PARIS-ST-LAZ." },
+    "ROUEN": { "side": "L", "color": "#60a5fa", "abbr": "RO" },
+    "CAEN":  { "side": "R", "color": "#f5b23c", "abbr": "CN" }
+  },
+  "links": {
+    "PARIS": [1, 2, 3, 4],
+    "ROUEN": [2, 3],
+    "CAEN":  [1, 2, 3, 4]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 12, "nMax": 14, "gapMin": 1.9, "gapMax": 3.2,
+    "cars": [2, 2, 2, 3, 3, 4, 4], "quietRate": 0.2
+  }
+}

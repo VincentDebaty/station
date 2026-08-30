@@ -1,0 +1,28 @@
+{
+  "id": "dol",
+  "name": "Dol-de-Bretagne",
+  "tagline": "La porte de la Bretagne",
+  "desc": "Au pied de la cathédrale, le nœud où la ligne de Saint-Malo croise celle de la baie : TGV de la côte, TER de Dinan, trains de Caen — tout converge ici avant Rennes.",
+  "difficulty": 3,
+  "country": "🇫🇷 France",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }, { "id": 6 }
+  ],
+  "portals": {
+    "SAINT-MALO": { "side": "L", "color": "#25dede", "abbr": "SM" },
+    "CAEN":       { "side": "L", "color": "#f5b23c", "abbr": "CA" },
+    "DINAN":      { "side": "L", "color": "#a78bfa", "abbr": "DI" },
+    "RENNES":     { "side": "R", "color": "#f2588f", "abbr": "RE" }
+  },
+  "links": {
+    "SAINT-MALO": [1, 2, 3, 4],
+    "CAEN":       [3, 4, 5, 6],
+    "DINAN":      [5, 6],
+    "RENNES":     [1, 2, 3, 4, 5, 6]
+  },
+  "sameSidePairs": [["CAEN", "SAINT-MALO"], ["SAINT-MALO", "CAEN"]],
+  "gen": {
+    "nMin": 14, "nMax": 16, "gapMin": 1.6, "gapMax": 3.0,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6], "quietRate": 0.18, "rush": "pointe"
+  }
+}

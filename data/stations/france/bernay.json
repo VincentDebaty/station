@@ -1,0 +1,26 @@
+{
+  "id": "bernay",
+  "name": "Bernay",
+  "tagline": "L'arrêt de tous les trains du Lieuvin",
+  "desc": "Deux voies en vrai, mais tout le monde s'y arrête : les Krono+ de Cherbourg, les Paris–Deauville et les TER de Rouen. La ville aux mille navetteurs guette le premier train pour Saint-Lazare.",
+  "difficulty": 2,
+  "country": "🇫🇷 France",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }
+  ],
+  "portals": {
+    "PARIS":   { "side": "L", "color": "#25dede", "abbr": "PA", "label": "PARIS-ST-LAZ." },
+    "ROUEN":   { "side": "L", "color": "#60a5fa", "abbr": "RO" },
+    "LISIEUX": { "side": "R", "color": "#4ade80", "abbr": "LX" }
+  },
+  "links": {
+    "PARIS":   [2, 3, 4],
+    "ROUEN":   [1, 2],
+    "LISIEUX": [1, 2, 3, 4]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 13, "nMax": 15, "gapMin": 1.8, "gapMax": 3.0,
+    "cars": [2, 2, 3, 3, 4, 4, 5], "quietRate": 0.15, "rush": "double"
+  }
+}

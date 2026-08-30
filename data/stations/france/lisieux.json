@@ -1,0 +1,28 @@
+{
+  "id": "lisieux",
+  "name": "Lisieux",
+  "tagline": "L'aiguillage des plages fleuries",
+  "desc": "Dans la gare en Y du pays d'Auge, les trains de Normandie se départagent : Caen tout droit, la côte fleurie par la branche de Deauville. L'été, les week-ends parisiens déferlent d'un coup vers la mer.",
+  "difficulty": 3,
+  "country": "🇫🇷 France",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }, { "id": 6 }
+  ],
+  "portals": {
+    "PARIS":     { "side": "L", "color": "#25dede", "abbr": "PA", "label": "PARIS-ST-LAZ." },
+    "ROUEN":     { "side": "L", "color": "#60a5fa", "abbr": "RO" },
+    "CAEN":      { "side": "R", "color": "#f5b23c", "abbr": "CN" },
+    "DEAUVILLE": { "side": "R", "color": "#f2588f", "abbr": "DV", "label": "TROUVILLE-DEAUV." }
+  },
+  "links": {
+    "PARIS":     [1, 2, 3, 4],
+    "ROUEN":     [4, 5, 6],
+    "CAEN":      [2, 3, 4, 5, 6],
+    "DEAUVILLE": [1, 2]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 14, "nMax": 16, "gapMin": 1.6, "gapMax": 2.8,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6], "quietRate": 0.15, "rush": "rafale"
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "id": "savenay",
+  "name": "Savenay",
+  "tagline": "La bifurcation de l'estuaire",
+  "desc": "C'est ici que la ligne de Bretagne quitte l'axe du Croisic, à la porte de l'estuaire de la Loire. Les navetteurs de Nantes y croisent les convois de la raffinerie de Donges et du port de Montoir.",
+  "difficulty": 2,
+  "country": "🇫🇷 France",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }
+  ],
+  "portals": {
+    "REDON":         { "side": "L", "color": "#4ade80", "abbr": "RD" },
+    "SAINT-NAZAIRE": { "side": "L", "color": "#60a5fa", "abbr": "SN", "label": "ST-NAZAIRE" },
+    "NANTES":        { "side": "R", "color": "#f2588f", "abbr": "N" }
+  },
+  "links": {
+    "REDON":         [1, 2, 3],
+    "SAINT-NAZAIRE": [2, 3, 4],
+    "NANTES":        [1, 2, 3, 4]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 12, "nMax": 14, "gapMin": 1.8, "gapMax": 3.0,
+    "cars": [2, 2, 3, 3, 4, 4, 5], "quietRate": 0.18, "rush": "double"
+  }
+}

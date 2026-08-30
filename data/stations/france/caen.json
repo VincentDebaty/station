@@ -1,0 +1,106 @@
+{
+  "id": "caen",
+  "name": "Caen",
+  "tagline": "Cinq directions sous la verrière Art déco",
+  "desc": "Sous la grande halle de 1934, la Normandie entière se donne rendez-vous : Paris et Rouen par l'est, Le Mans par la plaine, Cherbourg et Rennes par l'ouest. Sept voies, le port en embranchement, et pas une minute de creux.",
+  "difficulty": 4,
+  "country": "🇫🇷 France",
+  "platforms": [
+    {
+      "id": 1
+    },
+    {
+      "id": 2
+    },
+    {
+      "id": 3
+    },
+    {
+      "id": 4
+    },
+    {
+      "id": 5
+    },
+    {
+      "id": 6
+    },
+    {
+      "id": 7
+    }
+  ],
+  "portals": {
+    "PARIS": {
+      "side": "L",
+      "color": "#25dede",
+      "abbr": "PA",
+      "label": "PARIS-ST-LAZ."
+    },
+    "ROUEN": {
+      "side": "L",
+      "color": "#60a5fa",
+      "abbr": "RO"
+    },
+    "LE MANS": {
+      "side": "L",
+      "color": "#a78bfa",
+      "abbr": "LM"
+    },
+    "CHERBOURG": {
+      "side": "R",
+      "color": "#4ade80",
+      "abbr": "CH"
+    },
+    "RENNES": {
+      "side": "R",
+      "color": "#f2588f",
+      "abbr": "RN"
+    }
+  },
+  "links": {
+    "PARIS": [
+      2,
+      3,
+      4,
+      5,
+      6
+    ],
+    "ROUEN": [
+      6,
+      7
+    ],
+    "LE MANS": [
+      1,
+      2
+    ],
+    "CHERBOURG": [
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "RENNES": [
+      1,
+      2,
+      3
+    ]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 15,
+    "nMax": 18,
+    "gapMin": 1.5,
+    "gapMax": 2.6,
+    "cars": [
+      2,
+      3,
+      3,
+      4,
+      4,
+      5,
+      5,
+      6
+    ],
+    "quietRate": 0.12
+  }
+}

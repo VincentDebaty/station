@@ -1,0 +1,26 @@
+{
+  "id": "redon",
+  "name": "Redon",
+  "tagline": "Le carrefour de la Vilaine",
+  "desc": "La ligne de Rennes vient mourir ici sur l'axe de la Bretagne Sud, et les trains de Nantes pour Rennes rebroussent à quai — seul un triangle en amont sauve les directs. Trois pays ferroviaires se croisent sur trois quais, TGV de Quimper compris.",
+  "difficulty": 2,
+  "country": "🇫🇷 France",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }
+  ],
+  "portals": {
+    "VANNES": { "side": "L", "color": "#25dede", "abbr": "V" },
+    "RENNES": { "side": "R", "color": "#f5b23c", "abbr": "RE" },
+    "NANTES": { "side": "R", "color": "#f2588f", "abbr": "N" }
+  },
+  "links": {
+    "VANNES": [1, 2, 3, 4],
+    "RENNES": [1, 2, 3],
+    "NANTES": [2, 3, 4]
+  },
+  "sameSidePairs": [["RENNES", "NANTES"], ["NANTES", "RENNES"]],
+  "gen": {
+    "nMin": 12, "nMax": 15, "gapMin": 1.8, "gapMax": 3.0,
+    "cars": [2, 2, 3, 3, 4, 4, 5], "quietRate": 0.18, "rush": "pointe"
+  }
+}

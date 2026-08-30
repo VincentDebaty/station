@@ -119,7 +119,18 @@ const GEO = {
         pau: [-0.3708, 43.2951],
         puyoo: [-0.911, 43.527],
         dax: [-1.053, 43.708],
-        bayonne: [-1.478, 43.492]
+        bayonne: [-1.478, 43.492],
+        "mantes-la-jolie": [1.703, 48.99],
+        serquigny: [0.708, 49.079],
+        bernay: [0.594, 49.088],
+        lisieux: [0.231, 49.142],
+        caen: [-0.349, 49.176],
+        lison: [-1.048, 49.228],
+        granville: [-1.594, 48.838],
+        folligny: [-1.418, 48.833],
+        dol: [-1.747, 48.547],
+        redon: [-2.085, 47.652],
+        savenay: [-1.942, 47.362]
       } },
     allemagne: { name: "Allemagne", flag: "🇩🇪", iso: "DEU", continent: "europe",
       cities: {

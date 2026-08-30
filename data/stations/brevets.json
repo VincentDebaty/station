@@ -673,6 +673,22 @@
   },
   "boss": "retard garanti 0.37 > 0.3"
  },
+ "bernay": {
+  "geometrie": "db759e79e32e",
+  "date": "2026-08-29",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 2,
+  "detail": {
+   "1": "OK",
+   "2": "OK"
+  },
+  "boss": "retard garanti 0.31 > 0.3"
+ },
  "bettembourg": {
   "geometrie": "06cd691e3d88",
   "date": "2026-08-27",
@@ -1115,6 +1131,24 @@
    "4": "OK"
   },
   "boss": "retard garanti 0.31 > 0.3"
+ },
+ "caen": {
+  "geometrie": "168f719e9514",
+  "date": "2026-08-29",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 3,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK",
+   "4": "file de 6 au même quai"
+  },
+  "boss": "OK"
  },
  "cambridge": {
   "geometrie": "72bfaf327c18",
@@ -1694,6 +1728,23 @@
   },
   "boss": "file de 8 au même quai"
  },
+ "dol": {
+  "geometrie": "e56575f3f01a",
+  "date": "2026-08-29",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 3,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK"
+  },
+  "boss": "file de 6 au même quai"
+ },
  "doncaster": {
   "geometrie": "464ab88635c7",
   "date": "2026-08-28",
@@ -2026,6 +2077,23 @@
   },
   "boss": "OK"
  },
+ "folligny": {
+  "geometrie": "b39ceae056da",
+  "date": "2026-08-29",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 3,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK"
+  },
+  "boss": "OK"
+ },
  "frankfurt": {
   "geometrie": "1588a98a0c5b",
   "date": "2026-08-27",
@@ -2222,6 +2290,23 @@
    "4": "OK"
   },
   "boss": "file de 6 au même quai"
+ },
+ "granville": {
+  "geometrie": "ae3081434274",
+  "date": "2026-08-29",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 3,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK"
+  },
+  "boss": "retard garanti 0.39 > 0.3"
  },
  "grenoble": {
   "geometrie": "652d39f02e31",
@@ -3007,6 +3092,39 @@
   },
   "boss": "file de 6 au même quai"
  },
+ "lisieux": {
+  "geometrie": "81e186d91fce",
+  "date": "2026-08-29",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 3,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK",
+   "4": "retard garanti 0.30 > 0.3"
+  },
+  "boss": "retard garanti 0.31 > 0.3"
+ },
+ "lison": {
+  "geometrie": "d75d639b23ee",
+  "date": "2026-08-29",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 1,
+  "detail": {
+   "1": "OK"
+  },
+  "boss": "file de 8 au même quai"
+ },
  "liverpool": {
   "geometrie": "58d2c111773c",
   "date": "2026-08-28",
@@ -3313,6 +3431,24 @@
    "4": "OK"
   },
   "boss": "OK"
+ },
+ "mantes-la-jolie": {
+  "geometrie": "9b4fa7555edc",
+  "date": "2026-08-29",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 4,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK",
+   "4": "OK"
+  },
+  "boss": "file de 6 au même quai"
  },
  "marloie": {
   "geometrie": "683f0b3ab756",
@@ -4639,6 +4775,22 @@
   },
   "boss": "OK"
  },
+ "redon": {
+  "geometrie": "83a9291eb8f2",
+  "date": "2026-08-29",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 2,
+  "detail": {
+   "1": "OK",
+   "2": "OK"
+  },
+  "boss": "file de 6 au même quai"
+ },
  "regensburg": {
   "geometrie": "417d52c4882c",
   "date": "2026-08-28",
@@ -5029,6 +5181,22 @@
   },
   "boss": "file de 6 au même quai"
  },
+ "savenay": {
+  "geometrie": "90d2cfb6c8d1",
+  "date": "2026-08-29",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 2,
+  "detail": {
+   "1": "OK",
+   "2": "OK"
+  },
+  "boss": "file de 6 au même quai"
+ },
  "savona": {
   "geometrie": "19eeb8534e37",
   "date": "2026-08-28",
@@ -5085,6 +5253,22 @@
  "selestat": {
   "geometrie": "215501c7090f",
   "date": "2026-08-27",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 2,
+  "detail": {
+   "1": "OK",
+   "2": "OK"
+  },
+  "boss": "file de 6 au même quai"
+ },
+ "serquigny": {
+  "geometrie": "d2bf69c075c9",
+  "date": "2026-08-29",
   "graines": [
    1,
    2,
