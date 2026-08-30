@@ -614,5 +614,9 @@ const LINES = [
   { id: "L976", name: "La vallée de Hope (Sheffield – Manchester)",
     nodes: ["sheffield", "chinley", "romiley", "guide-bridge", "stockport", "manchester"] },
   { id: "L977", name: "La première ligne du monde (Manchester – Liverpool)",
-    nodes: ["manchester", "salford-crescent", "earlestown", "wigan", "huyton", "liverpool"] }
+    nodes: ["manchester", "salford-crescent", "earlestown", "wigan", "huyton", "liverpool"] },
+  { id: "L978", name: "Le Yorkshire noir (Leeds – Sheffield)",
+    nodes: ["leeds", "wakefield", "pontefract", "doncaster", "rotherham", "sheffield"] },
+  { id: "L979", name: "La côte Est (Newcastle – Leeds)",
+    nodes: ["newcastle", "darlington", "middlesbrough", "northallerton", "york", "leeds"] }
 ];

@@ -1,0 +1,30 @@
+{
+  "id": "pontefract",
+  "name": "Pontefract Monkhill",
+  "city": "Pontefract",
+  "tagline": "Pontefract Monkhill — trois gares pour une ville, une seule est un carrefour.",
+  "difficulty": 2,
+  "country": "🇬🇧 Royaume-Uni",
+  "desc": "La ville de la réglisse a trois gares ; Monkhill est la seule où les lignes se croisent encore. Juste à l'ouest du quai, la ligne de Leeds par Castleford et celle de Wakefield par Featherstone se séparent ; vers l'est, Knottingley, Goole et le train de Londres.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
+  ],
+  "portals": {
+    "LEEDS":       { "side": "L", "color": "#4ade80", "abbr": "LD" },
+    "WAKEFIELD":   { "side": "L", "color": "#f5b23c", "abbr": "WK" },
+    "KNOTTINGLEY": { "side": "R", "color": "#a78bfa", "abbr": "KN" },
+    "DONCASTER":   { "side": "R", "color": "#25dede", "abbr": "DN" }
+  },
+  "links": {
+    "LEEDS":       [1, 2, 3],
+    "WAKEFIELD":   [2, 3, 4, 5],
+    "KNOTTINGLEY": [1, 2, 3],
+    "DONCASTER":   [4, 5]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 12, "nMax": 15, "gapMin": 1.8, "gapMax": 3.0,
+    "cars": [2, 2, 2, 2, 3, 3, 4],
+    "quietRate": 0.25, "rush": "double"
+  }
+}

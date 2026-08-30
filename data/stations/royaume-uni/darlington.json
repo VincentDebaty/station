@@ -1,0 +1,30 @@
+{
+  "id": "darlington",
+  "name": "Darlington",
+  "tagline": "Darlington — le berceau du chemin de fer, 1825, et la halle à trois nefs de 1887.",
+  "difficulty": 3,
+  "country": "🇬🇧 Royaume-Uni",
+  "desc": "Le berceau du chemin de fer : le Stockton & Darlington de 1825 est passé ici, et la branche de Bishop Auckland en suit toujours le tracé. Sous la halle à trois nefs de William Bell (1887), l'île centrale de la grande ligne ; sur les voies d'évitement, deux quais neufs ouverts en 2026.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },
+    { "id": 6 }
+  ],
+  "portals": {
+    "YORK":           { "side": "L", "color": "#f5b23c", "abbr": "YK" },
+    "BISHOP AUCKLAND": { "side": "L", "color": "#4ade80", "abbr": "BA", "label": "BISHOP AUCKLAND" },
+    "NEWCASTLE":      { "side": "R", "color": "#60a5fa", "abbr": "NC" },
+    "MIDDLESBROUGH":  { "side": "R", "color": "#f2588f", "abbr": "MI" }
+  },
+  "links": {
+    "YORK":            [1, 2, 3, 4],
+    "BISHOP AUCKLAND": [5, 6],
+    "NEWCASTLE":       [1, 2, 3, 4],
+    "MIDDLESBROUGH":   [4, 5, 6]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 14, "nMax": 16, "gapMin": 1.6, "gapMax": 2.9,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6],
+    "quietRate": 0.15
+  }
+}

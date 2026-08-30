@@ -1730,6 +1730,24 @@
   },
   "boss": "retard garanti 0.35 > 0.3"
  },
+ "darlington": {
+  "geometrie": "28dc8457f68a",
+  "date": "2026-08-30",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 3,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK",
+   "4": "file de 7 au même quai"
+  },
+  "boss": "file de 7 au même quai"
+ },
  "darmstadt": {
   "geometrie": "b1c3d676ab6c",
   "date": "2026-08-27",
@@ -3885,6 +3903,23 @@
   },
   "boss": "file de 6 au même quai"
  },
+ "middlesbrough": {
+  "geometrie": "d50e8b1c3cfb",
+  "date": "2026-08-30",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 3,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK"
+  },
+  "boss": "OK"
+ },
  "milano": {
   "geometrie": "f9b747565840",
   "date": "2026-08-28",
@@ -4370,6 +4405,22 @@
    "3": "OK"
   },
   "boss": "OK"
+ },
+ "northallerton": {
+  "geometrie": "be9dcc59db3b",
+  "date": "2026-08-30",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 2,
+  "detail": {
+   "1": "OK",
+   "2": "OK"
+  },
+  "boss": "retard garanti 0.38 > 0.3"
  },
  "norwich": {
   "geometrie": "988d4944d346",
@@ -4970,6 +5021,23 @@
   },
   "boss": "file de 6 au même quai"
  },
+ "pontefract": {
+  "geometrie": "52206eb6d463",
+  "date": "2026-08-30",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 3,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK"
+  },
+  "boss": "OK"
+ },
  "porto": {
   "geometrie": "cd561cd31be6",
   "date": "2026-08-29",
@@ -5356,6 +5424,22 @@
    "2": "OK"
   },
   "boss": "file de 7 au même quai"
+ },
+ "rotherham": {
+  "geometrie": "b310999560f5",
+  "date": "2026-08-30",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 2,
+  "detail": {
+   "1": "OK",
+   "2": "OK"
+  },
+  "boss": "file de 6 au même quai"
  },
  "rotterdam": {
   "geometrie": "8f48956290a1",
@@ -6477,6 +6561,23 @@
    "2": "OK"
   },
   "boss": "file de 7 au même quai"
+ },
+ "wakefield": {
+  "geometrie": "943bdbae25c5",
+  "date": "2026-08-30",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 3,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK"
+  },
+  "boss": "file de 6 au même quai"
  },
  "waterloo": {
   "geometrie": "fc5e9abf9344",

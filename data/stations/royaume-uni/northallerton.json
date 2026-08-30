@@ -1,0 +1,27 @@
+{
+  "id": "northallerton",
+  "name": "Northallerton",
+  "tagline": "Northallerton — les quais décalés de 1841, et la bifurcation de Middlesbrough.",
+  "difficulty": 2,
+  "country": "🇬🇧 Royaume-Uni",
+  "desc": "Sur la grande ligne de la côte Est depuis 1841, avec ses quais décalés d'origine. C'est ici que les trains transpennins quittent la grande ligne pour Middlesbrough — et à côté, le chemin de fer du Wensleydale ne roule plus que pour les touristes.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }
+  ],
+  "portals": {
+    "YORK":          { "side": "L", "color": "#f5b23c", "abbr": "YK" },
+    "NEWCASTLE":     { "side": "R", "color": "#60a5fa", "abbr": "NC" },
+    "MIDDLESBROUGH": { "side": "R", "color": "#f2588f", "abbr": "MI" }
+  },
+  "links": {
+    "YORK":          [1, 2, 3, 4],
+    "NEWCASTLE":     [2, 3, 4],
+    "MIDDLESBROUGH": [1, 2]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 12, "nMax": 14, "gapMin": 1.8, "gapMax": 3.0,
+    "cars": [2, 2, 2, 3, 3, 4, 4, 5],
+    "quietRate": 0.15
+  }
+}

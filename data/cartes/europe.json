@@ -3,7 +3,7 @@
  "nom": "L'Europe",
  "gratuite": true,
  "enChantier": true,
- "note": "Tranche livree du ruban : chapitres 10 a 56 de ruban-europe.md (Bussoleno vers Hambourg) — l'acte V en entier. Le ruban complet va de Cork a Istanbul ; les actes I a IV se greffent DEVANT celui-ci quand ils seront ecrits.",
+ "note": "Tranche livree du ruban : chapitres 8 a 56 de ruban-europe.md (Bussoleno vers Hambourg) — l'acte V en entier. Le ruban complet va de Cork a Istanbul ; les actes I a IV se greffent DEVANT celui-ci quand ils seront ecrits.",
  "echelle": {
   "kmMinEntreHubs": 110
  },
@@ -31,6 +31,36 @@
  ],
  "chapitres": [
   {
+   "id": "la-cote-est",
+   "nom": "La côte Est",
+   "zone": "atl",
+   "gares": [
+    "darlington",
+    "middlesbrough",
+    "northallerton",
+    "york",
+    "leeds"
+   ],
+   "plancher": 1,
+   "arrivee": 3,
+   "sinuosite": 1.7
+  },
+  {
+   "id": "le-yorkshire-noir",
+   "nom": "Le Yorkshire noir",
+   "zone": "atl",
+   "gares": [
+    "wakefield",
+    "pontefract",
+    "doncaster",
+    "rotherham",
+    "sheffield"
+   ],
+   "plancher": 2,
+   "arrivee": 4,
+   "sinuosite": 1.85
+  },
+  {
    "id": "la-vallee-de-hope",
    "nom": "La vallée de Hope",
    "zone": "atl",
@@ -41,7 +71,7 @@
     "stockport",
     "manchester"
    ],
-   "plancher": 1,
+   "plancher": 2,
    "arrivee": 3,
    "sinuosite": 1.55
   },

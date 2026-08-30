@@ -235,7 +235,6 @@ const PLACES = {
   cheltenham:   [-2.100, 51.897],
   chesterfield: [-1.420, 53.238],
   colchester:   [0.893, 51.901],
-  darlington:   [-1.547, 54.521],
   dundee:       [-2.971, 56.457],
   durham:       [-1.581, 54.780],
   ely:          [0.266, 52.390],
@@ -254,7 +253,6 @@ const PLACES = {
   shrewsbury:   [-2.750, 52.711],
   stoke:        [-2.181, 53.008],
   swindon:      [-1.785, 51.566],
-  wakefield:    [-1.506, 53.682],
   warrington:   [-2.603, 53.386],
 };
 

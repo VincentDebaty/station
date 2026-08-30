@@ -1,0 +1,31 @@
+{
+  "id": "middlesbrough",
+  "name": "Middlesbrough",
+  "tagline": "Middlesbrough — la gare gothique de l'acier, cinq directions en éventail sur la Tees.",
+  "difficulty": 3,
+  "country": "🇬🇧 Royaume-Uni",
+  "desc": "La gare gothique de la ville de l'acier, décapitée par une bombe en 1942 et toujours sans sa grande verrière. Tout l'éventail de la Tees s'y croise : la vallée vers Darlington, la côte vers Newcastle, Saltburn et la lande de Whitby.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
+  ],
+  "portals": {
+    "DARLINGTON": { "side": "L", "color": "#4ade80", "abbr": "DA" },
+    "YORK":       { "side": "L", "color": "#f5b23c", "abbr": "YK" },
+    "NEWCASTLE":  { "side": "L", "color": "#60a5fa", "abbr": "NC" },
+    "SALTBURN":   { "side": "R", "color": "#25dede", "abbr": "SB" },
+    "WHITBY":     { "side": "R", "color": "#a78bfa", "abbr": "WH" }
+  },
+  "links": {
+    "DARLINGTON": [1, 2, 3],
+    "YORK":       [2, 3, 4],
+    "NEWCASTLE":  [4, 5],
+    "SALTBURN":   [1, 2, 3],
+    "WHITBY":     [4, 5]
+  },
+  "sameSidePairs": [["DARLINGTON", "YORK"], ["YORK", "DARLINGTON"]],
+  "gen": {
+    "nMin": 14, "nMax": 15, "gapMin": 1.7, "gapMax": 2.9,
+    "cars": [2, 2, 3, 3, 4, 4, 5],
+    "quietRate": 0.15
+  }
+}

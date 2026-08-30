@@ -412,7 +412,13 @@ const GEO = {
         "salford-crescent": [-2.2757, 53.4877],
         earlestown: [-2.6363, 53.4517],
         wigan: [-2.6332, 53.5443],
-        huyton: [-2.841, 53.411]
+        huyton: [-2.841, 53.411],
+        wakefield: [-1.49, 53.68],
+        pontefract: [-1.31, 53.69],
+        rotherham: [-1.36, 53.43],
+        darlington: [-1.5475, 54.5203],
+        northallerton: [-1.4419, 54.3339],
+        middlesbrough: [-1.2346, 54.5793]
       } }
   }
 };

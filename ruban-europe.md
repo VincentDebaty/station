@@ -24,15 +24,15 @@ Chaque région est traversée **une fois**, et on n'y revient jamais.
 | Actes | **9** |
 | Chapitres | **90** |
 | Gares — c'est-à-dire **niveaux** | **542** |
-| Fiches déjà écrites, réemployées telles quelles | **274** |
-| Fiches à écrire | **268** |
+| Fiches déjà écrites, réemployées telles quelles | **280** |
+| Fiches à écrire | **262** |
 | Sauts déclarés (§4 bis) | **11** |
 | Longueur des chapitres | 5 à 9 gares, médiane 6 |
 
 **Vérifié par script** (`scratchpad/verif.py`, à porter dans `carte-check` au
 lot C) : les 90 chapitres tiennent tous R3 (5 à 10 gares), aucune gare
 n'apparaît deux fois (R6), le chaînage est continu d'un bout à l'autre, et
-les 274 fiches annoncées comme existantes existent bien au catalogue.
+les 280 fiches annoncées comme existantes existent bien au catalogue.
 
 ## Comment lire les tableaux
 
@@ -120,7 +120,7 @@ les 274 fiches annoncées comme existantes existent bien au catalogue.
 
 ## Acte I — Les Îles
 
-*De Cork au tunnel sous la Manche* — 18 chapitres, **105 gares** (58 déjà écrites, 47 à écrire).
+*De Cork au tunnel sous la Manche* — 18 chapitres, **105 gares** (64 déjà écrites, 41 à écrire).
 
 | # | Chapitre | Gares, dans l'ordre du rail | n |
 |---|---|---|---|
@@ -132,8 +132,8 @@ les 274 fiches annoncées comme existantes existent bien au catalogue.
 | 5 | Le Moray Firth | Nairn · Forres · Elgin · Keith · Huntly · Inverurie · Dyce · **Aberdeen** ✓ | 8 |
 | 6 | La côte des Grampians | Stonehaven · Montrose · Arbroath · Dundee · Leuchars · Kirkcaldy · Inverkeithing · **Edinburgh Waverley** ✓ | 8 |
 | 7 | La côte de Northumbrie | Dunbar · Berwick-upon-Tweed · Alnmouth · Morpeth · **Newcastle** ✓ | 5 |
-| 8 | La côte Est | Durham · Darlington · Northallerton · York ✓ · **Leeds** ✓ | 5 |
-| 9 | Le Yorkshire noir | Wakefield · Pontefract · Doncaster ✓ · Rotherham · **Sheffield** ✓ | 5 |
+| 8 | La côte Est | ~~Durham~~ Darlington ✓ · Middlesbrough ✓ · Northallerton ✓ · York ✓ · **Leeds** ✓ | 5 |
+| 9 | Le Yorkshire noir | Wakefield Kirkgate ✓ · Pontefract Monkhill ✓ · Doncaster ✓ · Rotherham Central ✓ · **Sheffield** ✓ | 5 |
 | 10 | La vallée de Hope | ~~Dore~~ ~~Hathersage~~ ~~Edale~~ Chinley ✓ · ~~New Mills~~ Romiley ✓ · Guide Bridge ✓ · Stockport ✓ · **Manchester Piccadilly** ✓ | 5 |
 | 11 | La première ligne du monde | Salford Crescent ✓ · ~~Eccles~~ ~~Newton-le-Willows~~ Earlestown ✓ · Wigan North Western ✓ · ~~St Helens~~ Huyton ✓ · **Liverpool Lime Street** ✓ | 5 |
 | 12 | Le West Coast | Runcorn ✓ · Crewe ✓ · Stafford ✓ · Wolverhampton ✓ · **Birmingham New Street** ✓ | 5 |
@@ -213,6 +213,14 @@ les 274 fiches annoncées comme existantes existent bien au catalogue.
 > courbe de Winwick, le rail de Huskisson) et Huyton. Salford Central est un
 > Runcorn inverse en puissance (quais de Liverpool désaffectés, réouverture
 > en projet).
+>
+> ⚠️ **La côte Est et le Yorkshire noir** (30 août 2026) : Durham refusée
+> (Bishop Auckland morte le 4 mai 1964), remplacée par le crochet de la Tees
+> — Middlesbrough, cinq directions dont Whitby, sinuosité déclarée 1,7.
+> Wakefield = Kirkgate, Pontefract = Monkhill ; Normanton est le piège n° 1
+> au carré (le plus long quai du monde, express arrêtés en 1968). Castleford
+> et Swinton en réserve. L'espace des grils 3 directions / 4 quais est
+> épuisé au catalogue.
 >
 > ⚠️ **La Normandie, le Cotentin et la Bretagne recomposés** (30 août 2026) :
 > Évreux (Rouen morte en 1969), Bayeux, Saint-Lô (Vire morte en 1938),

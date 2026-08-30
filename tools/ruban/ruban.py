@@ -26,10 +26,36 @@ ch(A,"La côte des Grampians","Aberdeen","Édimbourg",[
   g("Stonehaven"),g("Montrose"),g("Arbroath"),g("Dundee"),g("Leuchars"),g("Kirkcaldy"),g("Inverkeithing"),g("Edinburgh Waverley","edinburgh")])
 ch(A,"La côte de Northumbrie","Édimbourg","Newcastle",[
   g("Dunbar"),g("Berwick-upon-Tweed"),g("Alnmouth"),g("Morpeth"),g("Newcastle","newcastle")])
+# DURHAM REFUSÉE le 30 août 2026 (piège n° 1 exactement) : son viaduc fut
+# construit pour la ligne de Bishop Auckland, morte en voyageurs le 4 mai
+# 1964 — reste l'ECML seule, deux directions sous la cathédrale. Le corridor
+# n'offre rien (Chester-le-Street, Thirsk : passantes) : la cinquième gare
+# vient du CROCHET DE LA TEES — MIDDLESBROUGH, cinq directions vivantes dont
+# la vallée de l'Esk vers Whitby (six allers-retours réguliers à l'année),
+# avec son rebroussement réel (tout passe par Thornaby) et la sinuosité du
+# chapitre déclarée à 1,7, le précédent du tour de la botte. Darlington
+# garde son berceau de 1825 et ses deux quais neufs de mai 2026 ;
+# Northallerton, ses quais décalés de 1841 (le Wensleydale est touristique
+# depuis 1954 — jamais de portail).
 ch(A,"La côte Est","Newcastle","Leeds",[
-  g("Durham"),g("Darlington"),g("Northallerton"),g("York","york"),g("Leeds","leeds")])
+  g("Darlington","darlington"),g("Middlesbrough","middlesbrough"),
+  g("Northallerton","northallerton"),g("York","york"),g("Leeds","leeds")])
+# LE YORKSHIRE NOIR PASSE PAR LA LIGNE DU CHARBON (30 août 2026), pas par
+# l'ECML : WAKEFIELD, c'est KIRKGATE (cinq directions, le bâtiment de 1854
+# laissé pour mort en 2009 et restauré) — Westgate est admissible mais
+# appartient à la côte Est. PONTEFRACT, c'est MONKHILL, la seule des trois
+# gares de la ville où des lignes se croisent encore (Baghill est un service
+# fantôme à trois trains par jour, Tanshelf une halte). Normanton, l'ancien
+# grand nœud victorien au plus long quai du monde, est le piège n° 1 au
+# carré (express arrêtés en 1968, York en 1970). Castleford et Swinton en
+# réserve documentée. Note de catalogue : l'espace des grils 3 directions /
+# 4 quais est ÉPUISÉ (25 jumelles au pire essai) — le portail YORK de
+# Rotherham (trois trains par jour réels) et le cinquième quai de Monkhill
+# différencient les empreintes.
 ch(A,"Le Yorkshire noir","Leeds","Sheffield",[
-  g("Wakefield"),g("Pontefract"),g("Doncaster","doncaster"),g("Rotherham"),g("Sheffield","sheffield")])
+  g("Wakefield Kirkgate","wakefield"),g("Pontefract Monkhill","pontefract"),
+  g("Doncaster","doncaster"),g("Rotherham Central","rotherham"),
+  g("Sheffield","sheffield")])
 # HUIT REFUS SUR LA VALLÉE DE HOPE (30 août 2026) : Dore & Totley a sa
 # jonction EN GARE mais son trafic sur un seul axe (le quai rendu en avril
 # 2024 sert le même Sheffield↔Manchester — aucun arrêt vers Chesterfield) ;

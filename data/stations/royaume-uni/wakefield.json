@@ -1,0 +1,32 @@
+{
+  "id": "wakefield",
+  "name": "Wakefield Kirkgate",
+  "city": "Wakefield",
+  "tagline": "Wakefield Kirkgate — la gare du charbon, cinq directions sous la verrière de 1854.",
+  "difficulty": 2,
+  "country": "🇬🇧 Royaume-Uni",
+  "desc": "La vieille gare du Lancashire & Yorkshire, laissée pour morte en 2009 puis restaurée : deux faisceaux sous le même toit. D'un côté la ligne de Barnsley vers Sheffield, de l'autre l'axe traversant — York par Normanton, Doncaster et Londres par Pontefract, la ligne du charbon.",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
+  ],
+  "portals": {
+    "LEEDS":      { "side": "L", "color": "#4ade80", "abbr": "LD" },
+    "MANCHESTER": { "side": "L", "color": "#f5b23c", "abbr": "MR" },
+    "SHEFFIELD":  { "side": "R", "color": "#60a5fa", "abbr": "SH" },
+    "YORK":       { "side": "R", "color": "#f2588f", "abbr": "YK" },
+    "DONCASTER":  { "side": "R", "color": "#25dede", "abbr": "DN" }
+  },
+  "links": {
+    "LEEDS":      [1, 2, 3],
+    "MANCHESTER": [4, 5],
+    "SHEFFIELD":  [1, 2, 3],
+    "YORK":       [4, 5],
+    "DONCASTER":  [4, 5]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 13, "nMax": 15, "gapMin": 1.8, "gapMax": 3.0,
+    "cars": [2, 2, 2, 3, 3, 4, 4, 5],
+    "quietRate": 0.2, "rush": "double"
+  }
+}
