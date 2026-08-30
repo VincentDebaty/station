@@ -3,7 +3,7 @@
  "nom": "L'Europe",
  "gratuite": true,
  "enChantier": true,
- "note": "Tranche livree du ruban : chapitres 20 a 56 de ruban-europe.md (Bussoleno vers Hambourg) — l'acte V en entier. Le ruban complet va de Cork a Istanbul ; les actes I a IV se greffent DEVANT celui-ci quand ils seront ecrits.",
+ "note": "Tranche livree du ruban : chapitres 19 a 56 de ruban-europe.md (Bussoleno vers Hambourg) — l'acte V en entier. Le ruban complet va de Cork a Istanbul ; les actes I a IV se greffent DEVANT celui-ci quand ils seront ecrits.",
  "echelle": {
   "kmMinEntreHubs": 110
  },
@@ -31,6 +31,20 @@
  ],
  "chapitres": [
   {
+   "id": "l-etoile-du-nord",
+   "nom": "L'Étoile du Nord",
+   "zone": "atl",
+   "gares": [
+    "douai",
+    "arras",
+    "amiens",
+    "creil",
+    "paris-nord"
+   ],
+   "plancher": 1,
+   "arrivee": 3
+  },
+  {
    "id": "la-normandie",
    "nom": "La Normandie",
    "zone": "atl",
@@ -41,7 +55,7 @@
     "lisieux",
     "caen"
    ],
-   "plancher": 1,
+   "plancher": 2,
    "arrivee": 3
   },
   {
