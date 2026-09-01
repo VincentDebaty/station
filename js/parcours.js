@@ -276,11 +276,14 @@ function railHTML() {
     if (!a || !b) continue;
     const ecrit = estEcrite(g[i - 1]) && estEcrite(g[i]);
     const fait = estFranchie(g[i - 1]) && estFranchie(g[i]);
-    // LE SEGMENT QUI AVANCE : celui qui part de la gare qu'on vient de tenir,
-    // vers la suivante. `pathLength=1` rend le tracé indépendant de la longueur
-    // réelle, sinon un segment de 200 km se dessinerait dix fois plus vite
-    // qu'un autre de 20.
-    const avance = CARTE.bilan && CARTE.bilan.win && g[i - 1] === CARTE.bilan.gare;
+    // LE RAIL OÙ L'ON VA : le segment qui ABOUTIT à la gare courante. Il reste
+    // allumé tant qu'on ne l'a pas parcourue — c'est le chemin qu'on s'apprête
+    // à faire, et il ne doit pas s'éteindre une fois l'animation finie.
+    // Déduit de la position sur le ruban, et non du relevé : sinon il
+    // redeviendrait terne au moindre rechargement de la page.
+    // `pathLength=1` rend le tracé indépendant de la longueur réelle, sinon un
+    // segment de 200 km se dessinerait dix fois plus vite qu'un autre de 20.
+    const avance = ecrit && !fait && g[i] === gareCourante();
     segs.push(`<path class="seg ${!ecrit ? "s-avenir" : fait ? "s-fait" : "s-reste"}${
       avance ? " s-avance" : ""}"${avance ? ' pathLength="1"' : ""}` +
       ` style="--col:${col};--i:${i - 1}" d="M${a.x.toFixed(2)} ${a.y.toFixed(2)}L${b.x.toFixed(2)} ${b.y.toFixed(2)}"/>`);

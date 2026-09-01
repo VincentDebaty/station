@@ -2777,15 +2777,22 @@ svg { width: 100%; height: 100%; display: block; }
 }
 
 /* 2. LE RAIL AVANCE vers la gare suivante — après les étoiles, jamais pendant.
-      Trois étoiles occupent .1 + 2×.13 + .42 ≈ .78 s : le trait part à .8. */
+      Trois étoiles occupent .1 + 2×.13 + .42 ≈ .78 s : le trait part à .8.
+      ET IL RESTE ALLUMÉ. Il retombait à l'opacité du rail non parcouru (.30)
+      dès l'animation finie : le trajet s'annonçait puis s'effaçait, alors que
+      c'est justement le chemin qu'on s'apprête à faire. Il garde donc la
+      couleur de la zone, à .72 — franchement lu, mais toujours distinct du
+      rail PARCOURU, qui est plein. La carte ne doit pas laisser croire qu'on a
+      déjà fait la portion qu'on va faire. */
+.c-ruban .s-avance { opacity: .72; }
 .c-ruban.a-service .s-avance {
   animation: seg-avance .62s cubic-bezier(.35, 0, .2, 1) .8s both;
 }
 @keyframes seg-avance {
   0%   { stroke-dasharray: 0 1; opacity: .30; }
-  15%  { opacity: .85; }
-  85%  { opacity: .85; stroke-width: calc(2.6px / var(--k, 1)); }
-  100% { stroke-dasharray: 1 0; opacity: .30; }
+  15%  { opacity: .9; }
+  85%  { opacity: .9; stroke-width: calc(2.6px / var(--k, 1)); }
+  100% { stroke-dasharray: 1 0; opacity: .72; }
 }
 
 @media (prefers-reduced-motion: reduce) {
