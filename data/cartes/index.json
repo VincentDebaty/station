@@ -5,5 +5,12 @@
     "gratuite": true,
     "fichier": "europe.json",
     "sousTitre": "Le continent, de Lisbonne à Kyiv — la première carte, et la seule gratuite."
+  },
+  {
+    "id": "germanie",
+    "nom": "Le grand tour du Rhin",
+    "gratuite": false,
+    "fichier": "germanie.json",
+    "sousTitre": "Soixante et onze gares du Hainaut à la Baltique et retour — et pas une qu'on ait déjà jouée."
   }
 ]

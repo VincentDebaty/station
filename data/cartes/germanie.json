@@ -1,0 +1,204 @@
+{
+ "id": "germanie",
+ "nom": "Le grand tour du Rhin",
+ "gratuite": false,
+ "prixCredits": 1500,
+ "enChantier": false,
+ "note": "Deuxieme carte, lot I — la preuve que le modele est generique. 71 gares DEJA ECRITES et brevetees, prises hors du ruban d'Europe : 40 allemandes, 23 belges, 5 luxembourgeoises, 3 suisses. AUCUNE fiche ecrite, aucune gare rejouee d'Europe. Louvain est ecartee volontairement (gare de queue, 3 graines sur 10 en echec a K=30). Ruban et decoupage issus d'une optimisation conjointe chemin+coupures sous R3/R5/R7/R8/R10. C'est une BOUCLE : le bassin disponible est un long corridor allemand accroche a une grappe belge, et tout chemin ouvert propre y revient. D'ou l'aller/retour en deux zones. LIMITE CONNUE : les chapitres 10, 11 et 12 ont une rampe 1-2, donc la difficulte RETOMBE a la fin — les gares belges disponibles ont des brevets bas et la boucle les met aux deux bouts. Aucune regle ne l'interdit (R8 est par chapitre) mais c'est un defaut de rythme. prixCredits est PROVISOIRE : il se cale au lot G point 6.",
+ "echelle": {
+  "kmMinEntreHubs": 110
+ },
+ "zones": [
+  {
+   "id": "aller",
+   "nom": "Du Hainaut aux Alpes",
+   "couleur": "#d97757"
+  },
+  {
+   "id": "retour",
+   "nom": "De la Saxe à la Campine",
+   "couleur": "#5b8def"
+  }
+ ],
+ "chapitres": [
+  {
+   "id": "l-escaut-et-le-hainaut",
+   "nom": "L'Escaut et le Hainaut",
+   "zone": "aller",
+   "gares": [
+    "mouscron",
+    "courtrai",
+    "tournai",
+    "ath",
+    "mons"
+   ],
+   "plancher": 1,
+   "arrivee": 2
+  },
+  {
+   "id": "la-sambre-et-l-ardenne",
+   "nom": "La Sambre et l'Ardenne",
+   "zone": "aller",
+   "gares": [
+    "lalouviere",
+    "charleroi",
+    "dinant",
+    "kautenbach",
+    "ettelbruck",
+    "petange",
+    "rodange"
+   ],
+   "plancher": 1,
+   "arrivee": 2
+  },
+  {
+   "id": "la-moselle-et-la-hesse",
+   "nom": "La Moselle et la Hesse",
+   "zone": "aller",
+   "gares": [
+    "esch-sur-alzette",
+    "trier",
+    "saarbrucken",
+    "aschaffenburg",
+    "hanau",
+    "kassel",
+    "gottingen"
+   ],
+   "plancher": 1,
+   "arrivee": 3
+  },
+  {
+   "id": "la-franconie-et-le-rhin-superieur",
+   "nom": "La Franconie et le Rhin supérieur",
+   "zone": "aller",
+   "gares": [
+    "bebra",
+    "fulda",
+    "gemunden",
+    "wurzburg",
+    "karlsruhe",
+    "rastatt",
+    "offenburg",
+    "freiburg"
+   ],
+   "plancher": 1,
+   "arrivee": 3
+  },
+  {
+   "id": "la-souabe-et-le-lac-de-constance",
+   "nom": "La Souabe et le lac de Constance",
+   "zone": "aller",
+   "gares": [
+    "horb",
+    "tuttlingen",
+    "singen",
+    "schaffhausen",
+    "winterthur",
+    "stgallen"
+   ],
+   "plancher": 3,
+   "arrivee": 4
+  },
+  {
+   "id": "l-allgau-et-la-baviere",
+   "nom": "L'Allgäu et la Bavière",
+   "zone": "aller",
+   "gares": [
+    "lindau",
+    "memmingen",
+    "buchloe",
+    "regensburg",
+    "furth"
+   ],
+   "plancher": 1,
+   "arrivee": 3
+  },
+  {
+   "id": "la-saxe-et-la-marche",
+   "nom": "La Saxe et la Marche",
+   "zone": "retour",
+   "gares": [
+    "dresden",
+    "potsdam",
+    "brandenburg",
+    "magdeburg",
+    "braunschweig"
+   ],
+   "plancher": 1,
+   "arrivee": 3
+  },
+  {
+   "id": "la-lande-et-la-baltique",
+   "nom": "La Lande et la Baltique",
+   "zone": "retour",
+   "gares": [
+    "celle",
+    "uelzen",
+    "luneburg",
+    "lubeck",
+    "kiel"
+   ],
+   "plancher": 2,
+   "arrivee": 3
+  },
+  {
+   "id": "la-weser-et-la-westphalie",
+   "nom": "La Weser et la Westphalie",
+   "zone": "retour",
+   "gares": [
+    "harburg",
+    "bremen",
+    "munster",
+    "dortmund",
+    "essen"
+   ],
+   "plancher": 2,
+   "arrivee": 4
+  },
+  {
+   "id": "le-rhin-et-la-meuse",
+   "nom": "Le Rhin et la Meuse",
+   "zone": "retour",
+   "gares": [
+    "duisburg",
+    "dusseldorf",
+    "aachen",
+    "verviers",
+    "liege"
+   ],
+   "plancher": 1,
+   "arrivee": 2
+  },
+  {
+   "id": "le-brabant-et-la-flandre",
+   "nom": "Le Brabant et la Flandre",
+   "zone": "retour",
+   "gares": [
+    "landen",
+    "hal",
+    "enghien",
+    "denderleeuw",
+    "audenarde",
+    "deinze",
+    "bruges"
+   ],
+   "plancher": 1,
+   "arrivee": 2
+  },
+  {
+   "id": "l-escaut-et-la-campine",
+   "nom": "L'Escaut et la Campine",
+   "zone": "retour",
+   "gares": [
+    "gand",
+    "lokeren",
+    "termonde",
+    "herentals",
+    "aarschot",
+    "hasselt"
+   ],
+   "plancher": 1,
+   "arrivee": 2
+  }
+ ]
+}
