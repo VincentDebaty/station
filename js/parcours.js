@@ -32,7 +32,7 @@ const CARTE = {
   // de chapitre : on lit le bilan de celui qu'on ferme (`chapitre`) pendant que
   // la carte, elle, a déjà rejoint le suivant (`voyageFait`). `minuteries` tient
   // les temps du voyage, pour pouvoir le couper net si le joueur clique avant.
-  voyageFait: null, minuteries: null
+  voyageFait: null, minuteries: null, bilanAvant: null
 };
 // La caméra met .75 s à traverser (1,5 s pour un saut, css/station.css). On
 // laisse le voyage se voir avant d'ouvrir le niveau — sinon il se joue derrière
@@ -276,7 +276,13 @@ function railHTML() {
     if (!a || !b) continue;
     const ecrit = estEcrite(g[i - 1]) && estEcrite(g[i]);
     const fait = estFranchie(g[i - 1]) && estFranchie(g[i]);
-    segs.push(`<path class="seg ${!ecrit ? "s-avenir" : fait ? "s-fait" : "s-reste"}"` +
+    // LE SEGMENT QUI AVANCE : celui qui part de la gare qu'on vient de tenir,
+    // vers la suivante. `pathLength=1` rend le tracé indépendant de la longueur
+    // réelle, sinon un segment de 200 km se dessinerait dix fois plus vite
+    // qu'un autre de 20.
+    const avance = CARTE.bilan && CARTE.bilan.win && g[i - 1] === CARTE.bilan.gare;
+    segs.push(`<path class="seg ${!ecrit ? "s-avenir" : fait ? "s-fait" : "s-reste"}${
+      avance ? " s-avance" : ""}"${avance ? ' pathLength="1"' : ""}` +
       ` style="--col:${col};--i:${i - 1}" d="M${a.x.toFixed(2)} ${a.y.toFixed(2)}L${b.x.toFixed(2)} ${b.y.toFixed(2)}"/>`);
   }
   // LA LIAISON DE TRANSIT — le chemin d'un chapitre au suivant. Il n'appartient
@@ -320,9 +326,14 @@ function garesHTML() {
       // point, donc il percutait le nom de la gare d'à côté — « ★Malines ».
       // Nom et score ne font plus qu'un bloc : ils se centrent ensemble sur le
       // point, et il n'y a plus qu'une chose à ne pas faire se chevaucher.
+      // UNE ÉTOILE = UN TSPAN. Elles étaient rendues d'un bloc (« ★★★ ») ; il
+      // en faut une par élément pour qu'elles se posent l'une après l'autre
+      // quand le service vient de se solder (css, .a-service).
       `<text x="${cx}" y="${(p.y - (fin ? 6 : 4.4) / k).toFixed(2)}">${nomDe(g)}` +
-        (estSansFaute(g) ? `<tspan class="et dia" dx="${(1.4 / k).toFixed(2)}">◆</tspan>`
-          : st ? `<tspan class="et" dx="${(1.4 / k).toFixed(2)}">${"★".repeat(st)}</tspan>` : "") +
+        (estSansFaute(g) ? `<tspan class="et dia" style="--s:0" dx="${(1.4 / k).toFixed(2)}">◆</tspan>`
+          : st ? Array.from({ length: st }, (_, n) =>
+              `<tspan class="et" style="--s:${n}" dx="${(n ? 0 : 1.4 / k).toFixed(2)}">★</tspan>`).join("")
+            : "") +
       `</text>` +
       `</g>`);
   }
@@ -787,9 +798,20 @@ function renderCarte() {
   const chId = CARTE.chapitre ? CARTE.chapitre.id : null;
   const nouveauChapitre = chId && CARTE.chapitreAvant && chId !== CARTE.chapitreAvant;
   const feteNeuve = !!CARTE.fete && !CARTE.feteAvant;
-  CARTE.chapitreAvant = chId; CARTE.feteAvant = !!CARTE.fete;
+  // UN SERVICE VIENT DE SE SOLDER. On ne le joue qu'une fois : le relevé se
+  // rend à chaque retour sur l'écran, l'animation, non. On compare l'OBJET et
+  // non l'id de la gare — sans quoi REJOUER une gare déjà tenue ne rejouerait
+  // pas l'animation, alors que c'est bien un service neuf. js/game.js construit
+  // un relevé neuf à chaque fin de service : la référence suffit.
+  const b = CARTE.bilan && CARTE.bilan.win ? CARTE.bilan : null;
+  const bilanNeuf = !!b && b !== CARTE.bilanAvant;
+  CARTE.chapitreAvant = chId; CARTE.feteAvant = !!CARTE.fete; CARTE.bilanAvant = b;
   if (!sansAnimation()) {
     const svg = hote.querySelector(".c-ruban");
+    // Le service se solde SUR LA CARTE : les étoiles se posent sur la gare
+    // qu'on vient de tenir, puis le rail avance vers la suivante. C'est le
+    // seul endroit où le résultat et la destination se rejoignent.
+    if (bilanNeuf && svg) svg.classList.add("a-service");
     // Le chapitre se ferme : son rail s'allume d'un bout à l'autre, gare après
     // gare. C'est la marche franchie, et elle se lit sans un mot.
     if (feteNeuve && svg) svg.classList.add("a-fete");

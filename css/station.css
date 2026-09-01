@@ -2749,3 +2749,46 @@ svg { width: 100%; height: 100%; display: block; }
 /* Fin de chapitre : le bilan du chapitre et le relevé de la gare cohabitent.
    Ils se suivent du haut, sans se centrer — sinon la paire déborde. */
 .cc-corps .c-fete + .c-bilan { margin-top: 10px; }
+
+/* ------------------------------------------------------------------
+   LE SERVICE SE SOLDE SUR LA CARTE (1er septembre 2026).
+   ------------------------------------------------------------------
+   Demandé au test : « quand je passe à une autre gare, il faudrait une
+   animation qui affiche les étoiles dans la gare réussie puis la ligne qui se
+   dirige vers la gare suivante ». Deux temps, et dans cet ordre — le résultat
+   d'abord, la destination ensuite. Rien ne bloque : c'est du CSS, le bouton
+   répond pendant que ça joue. */
+
+/* 1. LES ÉTOILES SE POSENT, une par une, sur la gare qu'on vient de tenir. */
+.c-ruban.a-service .g-bilan .et {
+  animation: et-pose .42s cubic-bezier(.3, 1.5, .4, 1) both;
+  animation-delay: calc(var(--s, 0) * .13s + .1s);
+  transform-box: fill-box; transform-origin: center;
+}
+@keyframes et-pose {
+  0%   { opacity: 0; transform: scale(2.6); }
+  55%  { opacity: 1; transform: scale(.86); }
+  100% { opacity: 1; transform: none; }
+}
+/* Le point de la gare accuse le coup en même temps que la première étoile. */
+.c-ruban.a-service .g-bilan .pt {
+  animation: pt-allume .5s cubic-bezier(.3, 1.4, .4, 1) .04s both;
+  transform-box: fill-box; transform-origin: center;
+}
+
+/* 2. LE RAIL AVANCE vers la gare suivante — après les étoiles, jamais pendant.
+      Trois étoiles occupent .1 + 2×.13 + .42 ≈ .78 s : le trait part à .8. */
+.c-ruban.a-service .s-avance {
+  animation: seg-avance .62s cubic-bezier(.35, 0, .2, 1) .8s both;
+}
+@keyframes seg-avance {
+  0%   { stroke-dasharray: 0 1; opacity: .30; }
+  15%  { opacity: .85; }
+  85%  { opacity: .85; stroke-width: calc(2.6px / var(--k, 1)); }
+  100% { stroke-dasharray: 1 0; opacity: .30; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .c-ruban.a-service .g-bilan .et, .c-ruban.a-service .g-bilan .pt,
+  .c-ruban.a-service .s-avance { animation: none; }
+}
