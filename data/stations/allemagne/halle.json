@@ -4,7 +4,7 @@
   "city": "Halle",
   "tagline": "Halle Hbf — 13 voies à vingt minutes de Leipzig, sa rivale depuis 1840.",
   "difficulty": 3,
-  "country": "🇩🇪 Allemagne",
+  "country": "allemagne",
   "desc": "Treize voies à vingt minutes de Leipzig, et deux villes qui se disputent le même nœud depuis 1840. Celle-ci a gardé le trafic de l'ouest et du nord.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },

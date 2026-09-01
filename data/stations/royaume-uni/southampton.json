@@ -4,7 +4,7 @@
   "city": "Southampton",
   "tagline": "Southampton Central — le port de l'Atlantique, entre le tunnel et les docks.",
   "difficulty": 2,
-  "country": "🇬🇧 Royaume-Uni",
+  "country": "royaume-uni",
   "desc": "Le port de l'Atlantique, d'où partaient les paquebots : cinq quais entre le tunnel et les docks. La ligne de la côte ouest file vers Bournemouth, celle du Wessex remonte vers Salisbury.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }

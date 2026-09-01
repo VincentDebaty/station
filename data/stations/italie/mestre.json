@@ -5,7 +5,7 @@
   "tagline": "L'entonnoir de Venise",
   "desc": "Six lignes venues de tout le Nord-Est se rabattent ici sur les quatre voies du pont de la Liberté, unique accès ferroviaire à la ville insulaire. Chaque train pour Santa Lucia doit y trouver son créneau.",
   "difficulty": 4,
-  "country": "🇮🇹 Italie",
+  "country": "italie",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 },
     { "id": 5 }, { "id": 6 }, { "id": 7 }, { "id": 8 }

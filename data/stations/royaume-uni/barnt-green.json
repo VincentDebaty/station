@@ -4,7 +4,7 @@
   "tagline": "La fourche en Y de la Cross-City",
   "desc": "La jonction est en gare même : quatre quais posés sur le Y où la branche de Redditch quitte l'axe de Lickey. Les navettes de la Cross-City y tournent toutes les demi-heures, entre deux trains de Worcester.",
   "difficulty": 1,
-  "country": "🇬🇧 Royaume-Uni",
+  "country": "royaume-uni",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }
   ],

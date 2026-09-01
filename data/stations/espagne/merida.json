@@ -4,7 +4,7 @@
   "tagline": "La croix de l'Estrémadure",
   "desc": "Tout ce qui roule en Estrémadure passe ici : les Alvia de Madrid rebroussent entre Cáceres et Badajoz, les régionaux de Puertollano débouchent de la Serena, et la ligne de Séville plonge vers Zafra en franchissant le Guadiana. Quatre branches vivantes au pied du pont romain.",
   "difficulty": 3,
-  "country": "🇪🇸 Espagne",
+  "country": "espagne",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
   ],

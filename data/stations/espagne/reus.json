@@ -4,7 +4,7 @@
   "tagline": "L'étoile de 1856",
   "desc": "Une des plus anciennes gares de Catalogne, et la vraie bifurcation du Camp de Tarragone : la ligne directe de Lérida et celle de l'Èbre divergent au ras des quais, pendant que l'antenne de la pétrochimie part vers le nord.",
   "difficulty": 2,
-  "country": "🇪🇸 Espagne",
+  "country": "espagne",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
   ],

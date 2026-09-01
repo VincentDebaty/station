@@ -4,7 +4,7 @@
   "city": "Liège",
   "tagline": "Liège-Guillemins — 9 voies sous la voûte Calatrava, 6 directions, flux dense.",
   "difficulty": 4,
-  "country": "🇧🇪 Belgique",
+  "country": "belgique",
   "desc": "Cinq quais îlots, neuf voies : la grande artère de Bruxelles file de part en part vers Cologne par Aachen, tandis que Namur, le Luxembourg, Maastricht et la ligne de Tongres vers Hasselt se greffent au passage. Grandes vitesses internationales et dessertes wallonnes s'entrecroisent — le carrefour le plus chargé de Wallonie.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },

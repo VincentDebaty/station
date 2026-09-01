@@ -5,7 +5,7 @@
   "tagline": "Le carrefour enterré du Levant",
   "desc": "Le temps du chantier, neuf voies en surface ; à l'arrivée, huit voies sous la ville pour laisser passer le corridor méditerranéen. L'AVE de Madrid y entre par l'est, et le fret contourne par Nonduermas.",
   "difficulty": 3,
-  "country": "🇪🇸 Espagne",
+  "country": "espagne",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }, { "id": 6 }
   ],

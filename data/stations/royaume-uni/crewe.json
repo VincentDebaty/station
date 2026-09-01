@@ -3,7 +3,7 @@
   "name": "Crewe",
   "tagline": "Crewe — sept directions pour 70 000 habitants : la gare la plus reliée du catalogue.",
   "difficulty": 3,
-  "country": "🇬🇧 Royaume-Uni",
+  "country": "royaume-uni",
   "desc": "Sept directions pour soixante-dix mille habitants : une ville née d'un nœud ferroviaire et de rien d'autre, en 1837. C'est la gare la plus reliée de tout le catalogue — devant Bruxelles, devant Paris.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },

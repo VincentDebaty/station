@@ -4,7 +4,7 @@
   "tagline": "L'étoile aux six branches entre Turin et Milan",
   "desc": "Étoile ferroviaire à huit branches historiques dont six encore vivantes : les Frecce filent sur l'axe Turin–Milan pendant que les régionaux de Biella, Domodossola, Arona et Alexandrie viennent tous finir ici, à côté d'un des plus grands nœuds de fret d'Italie du Nord.",
   "difficulty": 4,
-  "country": "🇮🇹 Italie",
+  "country": "italie",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 },
     { "id": 5 }, { "id": 6 }, { "id": 7 }

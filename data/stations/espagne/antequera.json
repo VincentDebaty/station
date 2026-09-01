@@ -5,7 +5,7 @@
   "tagline": "Le cambiador au milieu des oliviers",
   "desc": "Posée en rase campagne à 17 kilomètres de la ville, la gare noue trois lignes à grande vitesse et l'antenne ibérique d'Algeciras. Les Talgo de Madrid y changent d'écartement pendant que les Avant de Grenade, Séville et Malaga s'échangent leurs voyageurs.",
   "difficulty": 3,
-  "country": "🇪🇸 Espagne",
+  "country": "espagne",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }, { "id": 6 }
   ],

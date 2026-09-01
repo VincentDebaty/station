@@ -4,7 +4,7 @@
   "tagline": "Là où le Gargano rejoint l'Adriatique",
   "desc": "La petite ligne privée du promontoire du Gargano se greffe ici sur la grande dorsale de la côte : deux exploitants cohabitent sur le même faisceau, et les trains de Peschici continuent vers Foggia sur les voies nationales.",
   "difficulty": 2,
-  "country": "🇮🇹 Italie",
+  "country": "italie",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }
   ],

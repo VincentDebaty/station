@@ -4,7 +4,7 @@
   "tagline": "La porte sud de la grande vitesse",
   "desc": "Les Frecciarossa venus de Milan y meurent au sortir du tunnel du Vésuve, pendant que trois voies tronquées font tourner les navettes du métro léger. Une gare passante qui joue au terminus sur les deux échelles à la fois.",
   "difficulty": 3,
-  "country": "🇮🇹 Italie",
+  "country": "italie",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 },
     { "id": 5 }, { "id": 6 }, { "id": 7 }

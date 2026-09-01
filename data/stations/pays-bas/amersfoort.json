@@ -4,7 +4,7 @@
   "city": "Amersfoort",
   "tagline": "Amersfoort Centraal — le carrefour du centre : l'est et le nord des Pays-Bas se croisent sur trois quais.",
   "difficulty": 4,
-  "country": "🇳🇱 Pays-Bas",
+  "country": "pays-bas",
   "desc": "Six voies à quai sur trois îlots, et presque tout ce qui roule vers l'est et le nord du pays y change de file : l'IC de Berlin et l'IC d'Enschede arrivent d'Amsterdam par Hilversum, ceux de Groningue et de Leeuwarden montent d'Utrecht ou d'Amsterdam vers Zwolle, et la Valleilijn d'Ede-Wageningen vient mourir à quai. Correspondances quai à quai, 45 000 voyageurs par jour — et le premier escalier mécanique d'une gare néerlandaise, en 1962.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }, { "id": 6 }

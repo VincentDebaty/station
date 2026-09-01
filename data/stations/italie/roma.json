@@ -5,7 +5,7 @@
   "tagline": "Huit axes, un seul goulot",
   "desc": "La plus grande gare d'Italie est un cul-de-sac absolu : 850 trains par jour qui s'échappent tous par le même faisceau sud-est avant de s'éventailler — la grande vitesse de Florence sort du même côté que les omnibus des Castelli et la navette de l'aéroport.",
   "difficulty": 5,
-  "country": "🇮🇹 Italie",
+  "country": "italie",
   "platforms": [
     { "id": 1, "deadEnd": true }, { "id": 2, "deadEnd": true }, { "id": 3, "deadEnd": true },
     { "id": 4, "deadEnd": true }, { "id": 5, "deadEnd": true }, { "id": 6, "deadEnd": true },

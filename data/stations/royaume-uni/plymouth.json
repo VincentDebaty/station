@@ -3,7 +3,7 @@
   "name": "Plymouth",
   "tagline": "Plymouth — le bout de la ligne, avant la Cornouailles et le pont sur le Tamar.",
   "difficulty": 1,
-  "country": "🇬🇧 Royaume-Uni",
+  "country": "royaume-uni",
   "desc": "Le bout de la ligne, ou presque : après Plymouth il n'y a plus que la Cornouailles et le pont de Brunel sur le Tamar. Deux entrées, deux sorties, cinq quais dans une cuvette.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }

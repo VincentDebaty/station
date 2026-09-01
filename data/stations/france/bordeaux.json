@@ -4,7 +4,7 @@
   "city": "Bordeaux",
   "tagline": "Bordeaux-Saint-Jean — sous la plus longue halle d'Europe, 8 quais sans répit.",
   "difficulty": 4,
-  "country": "🇫🇷 France",
+  "country": "france",
   "desc": "Sous la plus longue halle métallique d'Europe : depuis la LGV, Paris est à deux heures et la gare ne désemplit plus. Cinq directions, huit quais, et le flux d'été vers Arcachon en prime.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },

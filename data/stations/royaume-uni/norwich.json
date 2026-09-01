@@ -3,7 +3,7 @@
   "name": "Norwich",
   "tagline": "Norwich — le terminus de l'East Anglia, au bout de la ligne droite.",
   "difficulty": 2,
-  "country": "🇬🇧 Royaume-Uni",
+  "country": "royaume-uni",
   "desc": "Le terminus de l'East Anglia, au bout de cent quatre-vingts kilomètres de ligne droite depuis Londres : six quais à heurtoir, les Broads d'un côté, les Fens de l'autre.",
   "platforms": [
     { "id": 1, "deadEnd": true }, { "id": 2, "deadEnd": true }, { "id": 3, "deadEnd": true }, { "id": 4, "deadEnd": true }, { "id": 5, "deadEnd": true },

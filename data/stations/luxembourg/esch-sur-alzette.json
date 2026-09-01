@@ -3,7 +3,7 @@
   "name": "Esch-sur-Alzette",
   "tagline": "Esch-sur-Alzette — la capitale du Minett, et la navette qui passe en France en trois minutes.",
   "difficulty": 3,
-  "country": "🇱🇺 Luxembourg",
+  "country": "luxembourg",
   "desc": "Deuxième ville du pays et capitale des terres rouges : tout remonte sur Luxembourg par Bettembourg, sauf ce qui file vers Pétange en desservant Belval et son université posée sur les hauts fourneaux. Au bord du faisceau, la navette d'Audun-le-Tiche franchit la frontière en trois minutes.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },

@@ -4,7 +4,7 @@
   "tagline": "Le plus bas col des Alpes, en double exemplaire",
   "desc": "La gare-monument de Nervi tourne le dos à la mer et regarde son port de fret. Vers le Piémont, deux voies uniques parallèles franchissent le col de Cadibona — l'une pour les directs, l'autre pour l'omnibus, une pseudo-double voie unique en son genre.",
   "difficulty": 3,
-  "country": "🇮🇹 Italie",
+  "country": "italie",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 },
     { "id": 5 }, { "id": 6 }, { "id": 7 }, { "id": 8 }

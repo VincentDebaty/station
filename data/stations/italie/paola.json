@@ -4,7 +4,7 @@
   "tagline": "La gare du remblai, porte de Cosenza",
   "desc": "Bâtie sur un remblai à quelques dizaines de mètres du rivage tyrrhénien, Paola voit tout train pour Cosenza basculer de la côte vers la montagne dans un tunnel de quinze kilomètres — avec un croisement en pleine galerie.",
   "difficulty": 2,
-  "country": "🇮🇹 Italie",
+  "country": "italie",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
   ],

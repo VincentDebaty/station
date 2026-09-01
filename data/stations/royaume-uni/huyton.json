@@ -4,7 +4,7 @@
   "tagline": "Quatre voies neuves sur la bifurcation de 1830",
   "desc": "Juste à l'est de la gare, la ligne de Wigan quitte le tracé de 1830 vers Manchester. Réélargie à quatre voies pour l'électrification de 2015, c'est la dernière bifurcation avant la tranchée de Lime Street.",
   "difficulty": 2,
-  "country": "🇬🇧 Royaume-Uni",
+  "country": "royaume-uni",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }
   ],

@@ -4,7 +4,7 @@
   "city": "Bonn",
   "tagline": "Bonn Hbf — cinq voies pour l'ancienne capitale fédérale.",
   "difficulty": 2,
-  "country": "🇩🇪 Allemagne",
+  "country": "allemagne",
   "desc": "Cinq voies pour l'ancienne capitale fédérale : la gare est restée celle d'une ville moyenne, quand les ministères étaient à dix minutes à pied.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }

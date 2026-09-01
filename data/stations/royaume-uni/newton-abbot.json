@@ -4,7 +4,7 @@
   "tagline": "La porte de la Riviera anglaise",
   "desc": "À Aller Junction, la ligne de la mer quitte la grande voie : d'un côté Plymouth et la Cornouailles, de l'autre Torquay et Paignton. Tout ce qui va au bout de l'Angleterre passe par ces quais.",
   "difficulty": 2,
-  "country": "🇬🇧 Royaume-Uni",
+  "country": "royaume-uni",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }
   ],

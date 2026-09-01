@@ -4,7 +4,7 @@
   "tagline": "La porte du Pays de Galles, en noir et or",
   "desc": "Tout ce qui vient du sud converge de Birmingham, puis se partage entre le nord et la ligne de Shrewsbury qui file vers le Pays de Galles. La gare, reconstruite en 2021, porte le noir et or du club de football local.",
   "difficulty": 3,
-  "country": "🇬🇧 Royaume-Uni",
+  "country": "royaume-uni",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }, { "id": 6 }
   ],

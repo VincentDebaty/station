@@ -4,7 +4,7 @@
   "city": "Avignon",
   "tagline": "Avignon-Centre — sous les remparts, 5 quais et l'antenne de Carpentras.",
   "difficulty": 2,
-  "country": "🇫🇷 France",
+  "country": "france",
   "desc": "La gare intra-muros, sous les remparts : quatre directions et l'antenne de Carpentras rouverte en 2015. Le TGV, lui, passe à quatre kilomètres — ici on prend le temps.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }

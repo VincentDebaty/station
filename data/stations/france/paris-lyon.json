@@ -3,7 +3,7 @@
   "name": "Paris-Gare-de-Lyon",
   "tagline": "Paris-Gare-de-Lyon — le hall du Sud-Est : 9 quais, tout rebrousse.",
   "difficulty": 4,
-  "country": "🇫🇷 France",
+  "country": "france",
   "desc": "Le hall du Sud-Est, Bercy compris : tout ce qui descend le Rhône ou traverse le Massif part d'ici. Neuf quais, six directions, aucune ne partage la sortie d'une autre plus de trois quais.",
   "platforms": [
     { "id": 1, "deadEnd": true }, { "id": 2, "deadEnd": true }, { "id": 3, "deadEnd": true }, { "id": 4, "deadEnd": true }, { "id": 5, "deadEnd": true },

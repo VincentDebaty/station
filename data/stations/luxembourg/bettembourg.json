@@ -3,7 +3,7 @@
   "name": "Bettembourg",
   "tagline": "Bettembourg — l'autoroute ferroviaire de Perpignan part d'ici, entre deux trains de frontaliers.",
   "difficulty": 4,
-  "country": "🇱🇺 Luxembourg",
+  "country": "luxembourg",
   "desc": "Le nœud du sud et le port sec du pays : trente-trois hectares de terminal rail-route contre les quais, l'autoroute ferroviaire de Perpignan à un bout, la ligne de Thionville et Metz à l'autre. Ici le fret n'est pas un décor, c'est le fond du trafic — et il traverse pendant que les frontaliers montent.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },

@@ -4,7 +4,7 @@
   "city": "Montpellier",
   "tagline": "Montpellier-Saint-Roch — la gare du centre, celle où s'arrêtent les trains qui comptent.",
   "difficulty": 3,
-  "country": "🇫🇷 France",
+  "country": "france",
   "desc": "La gare du centre, celle où s'arrêtent les trains qui comptent — la gare TGV de Sud-de-France est à sept kilomètres et n'intéresse personne. Cinq directions sur six quais.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },

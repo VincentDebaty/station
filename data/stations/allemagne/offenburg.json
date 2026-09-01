@@ -3,7 +3,7 @@
   "name": "Offenburg",
   "tagline": "Offenburg — le Rhin, la Forêt-Noire et Strasbourg, sur le même quai.",
   "difficulty": 4,
-  "country": "🇩🇪 Allemagne",
+  "country": "allemagne",
   "desc": "Le nœud le plus important du pays de Bade : la grande ligne du Rhin la traverse du nord au sud, la Schwarzwaldbahn s'en va vers Constance par la Forêt-Noire, et la voie de Kehl franchit le fleuve vers Strasbourg. Ville de cheminots — l'atelier a fermé, le triage sert encore au fret.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }, { "id": 6 }

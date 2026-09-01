@@ -5,7 +5,7 @@
   "tagline": "Huit heurtoirs au bout de l'Andalousie",
   "desc": "L'ancienne Málaga-Término n'a rien perdu de son nom : tout rebrousse face aux heurtoirs, l'AVE de Madrid sur cinq voies européennes, les MD de Ronda sur trois voies ibériques. Sous la dalle, les navettes de Fuengirola filent vers la mer, et le fret glisse au port par la voie 9, sans toucher un quai.",
   "difficulty": 5,
-  "country": "🇪🇸 Espagne",
+  "country": "espagne",
   "platforms": [
     { "id": 1, "deadEnd": true }, { "id": 2, "deadEnd": true }, { "id": 3, "deadEnd": true },
     { "id": 4, "deadEnd": true }, { "id": 5, "deadEnd": true }, { "id": 6, "deadEnd": true },

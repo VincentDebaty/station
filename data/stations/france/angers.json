@@ -4,7 +4,7 @@
   "city": "Angers",
   "tagline": "Angers-Saint-Laud — une entrée à l'ouest, trois sorties à l'est.",
   "difficulty": 1,
-  "country": "🇫🇷 France",
+  "country": "france",
   "desc": "Sur la Maine, entre le Val de Loire et la Bretagne : une entrée à l'ouest, trois sorties à l'est. L'antenne de Cholet ne dessert que le quai 5 — c'est l'antenne, pas le tronc.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }

@@ -4,7 +4,7 @@
   "tagline": "Le tunnel ou Gloucester",
   "desc": "Le Filton Bank, remis à quatre voies en 2018 comme au temps de la vapeur, grimpe de Temple Meads jusqu'ici. Juste au nord des quais, la ligne se fend : Cardiff sous la Severn, ou Gloucester par Parkway.",
   "difficulty": 2,
-  "country": "🇬🇧 Royaume-Uni",
+  "country": "royaume-uni",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }
   ],

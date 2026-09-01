@@ -4,7 +4,7 @@
   "tagline": "Le chef-lieu et sa TransWilts",
   "desc": "La demi-horaire Cardiff–Portsmouth y croise la petite TransWilts, ressuscitée en 2013 par sa communauté : neuf allers-retours par jour vers Melksham et Swindon, qui se détachent de la ligne de Bath au nord de la ville. Le chef-lieu du Wiltshire a regagné son aiguillage.",
   "difficulty": 2,
-  "country": "🇬🇧 Royaume-Uni",
+  "country": "royaume-uni",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }
   ],

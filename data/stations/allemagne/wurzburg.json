@@ -4,7 +4,7 @@
   "city": "Wurtzbourg",
   "tagline": "Würzburg Hbf — sur la première ligne à grande vitesse allemande, celle de 1988.",
   "difficulty": 2,
-  "country": "🇩🇪 Allemagne",
+  "country": "allemagne",
   "desc": "Onze voies au pied de la Résidence, sur la première ligne à grande vitesse allemande (1988) : Hanovre–Wurtzbourg, celle qui a tout commencé.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },

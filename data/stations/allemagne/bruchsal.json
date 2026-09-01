@@ -4,7 +4,7 @@
   "city": "Bruchsal",
   "tagline": "Bruchsal — cinq voies traversantes, et le quai 6 en impasse pour le Kraichgau.",
   "difficulty": 3,
-  "country": "🇩🇪 Allemagne",
+  "country": "allemagne",
   "desc": "Sous le château baroque, la ligne de Bade croise la Westbahn du Wurtemberg. Les tram-trains du Kraichgau, eux, ne traversent pas : ils rebroussent au quai 6 et repartent vers Karlsruhe.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },

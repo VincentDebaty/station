@@ -5,7 +5,7 @@
   "tagline": "La marquise Polonceau face au Levant",
   "desc": "Terminus MZA de 1858 sous sa grande halle métallique : tout rebrousse, de l'AVE de Madrid aux navettes de San Vicente. L'Euromed de Barcelone y change d'écartement avant de repartir vers le nord.",
   "difficulty": 4,
-  "country": "🇪🇸 Espagne",
+  "country": "espagne",
   "platforms": [
     { "id": 1, "deadEnd": true }, { "id": 2, "deadEnd": true }, { "id": 3, "deadEnd": true },
     { "id": 4, "deadEnd": true }, { "id": 5, "deadEnd": true }, { "id": 6, "deadEnd": true },

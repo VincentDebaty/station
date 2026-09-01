@@ -3,7 +3,7 @@
   "name": "London Euston",
   "tagline": "London Euston — la tête de la West Coast : Birmingham, Manchester, Glasgow.",
   "difficulty": 4,
-  "country": "🇬🇧 Royaume-Uni",
+  "country": "royaume-uni",
   "desc": "La tête de la West Coast Main Line, la ligne des grandes villes industrielles : Birmingham, Manchester, Liverpool, Glasgow. Neuf quais, six directions, et pas une seule qui parte vers l'est.",
   "platforms": [
     { "id": 1, "deadEnd": true }, { "id": 2, "deadEnd": true }, { "id": 3, "deadEnd": true }, { "id": 4, "deadEnd": true }, { "id": 5, "deadEnd": true },

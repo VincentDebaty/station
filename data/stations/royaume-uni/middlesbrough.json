@@ -3,7 +3,7 @@
   "name": "Middlesbrough",
   "tagline": "Middlesbrough — la gare gothique de l'acier, cinq directions en éventail sur la Tees.",
   "difficulty": 3,
-  "country": "🇬🇧 Royaume-Uni",
+  "country": "royaume-uni",
   "desc": "La gare gothique de la ville de l'acier, décapitée par une bombe en 1942 et toujours sans sa grande verrière. Tout l'éventail de la Tees s'y croise : la vallée vers Darlington, la côte vers Newcastle, Saltburn et la lande de Whitby.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }

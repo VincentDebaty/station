@@ -3,7 +3,7 @@
   "name": "Carlisle",
   "tagline": "Carlisle — la dernière gare anglaise, et la ligne de Settle qui en descend.",
   "difficulty": 1,
-  "country": "🇬🇧 Royaume-Uni",
+  "country": "royaume-uni",
   "desc": "La dernière gare anglaise avant l'Écosse, et le point où sept compagnies se rejoignaient au XIXᵉ. La ligne de Settle en descend par les tourbières — la plus belle du pays, et la plus fragile.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }

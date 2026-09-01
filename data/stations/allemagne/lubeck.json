@@ -4,7 +4,7 @@
   "city": "Lübeck",
   "tagline": "Lübeck Hbf — la reine de la Hanse et la ligne des oiseaux migrateurs.",
   "difficulty": 2,
-  "country": "🇩🇪 Allemagne",
+  "country": "allemagne",
   "desc": "La reine de la Hanse et sa gare Art nouveau : quatre directions dont la ligne des oiseaux migrateurs, qui file vers le Danemark par le ferry de Puttgarden.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }

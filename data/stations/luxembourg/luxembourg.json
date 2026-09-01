@@ -3,7 +3,7 @@
   "name": "Luxembourg",
   "tagline": "Luxembourg — quatorze voies à quai, six directions, trois frontières à moins d'une heure.",
   "difficulty": 5,
-  "country": "🇱🇺 Luxembourg",
+  "country": "luxembourg",
   "desc": "L'étoile du Grand-Duché : six quais et quatorze voies depuis l'agrandissement de 2021, et tout le pays qui converge là. Bruxelles par Arlon et Liège par les Ardennes d'un côté, Metz par Bettembourg et Trèves par la Moselle de l'autre, plus les deux lignes du bassin minier. Deux cent mille frontaliers en font le réseau le plus chargé d'Europe au kilomètre.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },

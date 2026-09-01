@@ -4,7 +4,7 @@
   "city": "Gemünden",
   "tagline": "Gemünden (Main) — trois vallées, trois lignes, une petite ville qui n'est qu'un nœud.",
   "difficulty": 3,
-  "country": "🇩🇪 Allemagne",
+  "country": "allemagne",
   "desc": "Là où la Sinn et la Saale franconienne rejoignent le Main, huit voies à quai pour dix mille habitants : la Main-Spessart-Bahn y reçoit la ligne de Jossa et du Kinzigtal (vers Schlüchtern et Fulda) et la navette de la vallée de la Saale vers Bad Kissingen. Plus d'ICE depuis 2014, mais un fret incessant — la courbe de Nantenbach, juste au sud, raccorde la grande vitesse Hanovre–Wurtzbourg à la ligne du Spessart.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }

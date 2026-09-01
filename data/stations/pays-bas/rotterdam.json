@@ -4,7 +4,7 @@
   "city": "Rotterdam",
   "tagline": "Rotterdam Centraal — 13 voies sous une seule verrière, la HSL et la vieille ligne : la dernière marche avant Amsterdam.",
   "difficulty": 4,
-  "country": "🇳🇱 Pays-Bas",
+  "country": "pays-bas",
   "desc": "Reconstruite en 2014 sous un auvent unique qui couvre tous les quais, la gare voit passer plus de cent mille voyageurs par jour sur treize voies à quai. Au sud, l'Eurostar et l'IC de Bruxelles arrivent par la HSL, les trains de Dordrecht et du Brabant par la vieille ligne ; au nord, la HSL file vers Schiphol et Amsterdam, la ligne ancienne vers La Haye, et l'IC de Gouda et Utrecht bifurque dès la sortie. Hoek van Holland est devenu une ligne de métro en 2019. Le fret contourne la gare par Kijfhoek et la ligne portuaire — ici, rien que des voyageurs, et beaucoup.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },

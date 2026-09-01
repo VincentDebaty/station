@@ -4,7 +4,7 @@
   "city": "Fribourg",
   "tagline": "Fribourg — une entrée depuis Berne, trois sorties vers la Romandie.",
   "difficulty": 3,
-  "country": "🇨🇭 Suisse",
+  "country": "suisse",
   "desc": "La gare bilingue sur la Sarine, à mi-chemin de Berne et de Lausanne. Côté Berne, un seul couloir, celui des InterCity ; côté ouest, tout se sépare : la grande ligne vers Lausanne et Genève, la Broye vers Payerne et Yverdon, et depuis 2021 le RegioExpress direct de Bulle par Romont. Cinq voies à quai rallongées pour les rames de 400 mètres, un RER qui déborde des deux côtés de la frontière des langues.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }

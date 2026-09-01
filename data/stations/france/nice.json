@@ -4,7 +4,7 @@
   "city": "Nice",
   "tagline": "Nice-Ville — 12 millions de voyageurs sur 6 quais, et la ligne de Tende.",
   "difficulty": 3,
-  "country": "🇫🇷 France",
+  "country": "france",
   "desc": "Douze millions de voyageurs sur six quais, et la ligne de Tende qui grimpe vers le Piémont par trente-quatre tunnels. La gare la plus chargée de France par rapport à sa taille.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },

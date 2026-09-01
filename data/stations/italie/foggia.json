@@ -4,7 +4,7 @@
   "tagline": "Le verrou où Rome rebrousse vers Bari",
   "desc": "Tout ce qui vient de Rome et de Naples doit rebrousser ici pour continuer vers Bari : trois lignes s'entonnent dans le même corridor jusqu'à la bifurcation de Cervaro. À l'ouest, la navette électrique de Lucera part de ses voies tronquées.",
   "difficulty": 3,
-  "country": "🇮🇹 Italie",
+  "country": "italie",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 },
     { "id": 5 }, { "id": 6 }, { "id": 7 }

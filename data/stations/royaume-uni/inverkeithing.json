@@ -4,7 +4,7 @@
   "tagline": "La première fourche après le Forth Bridge",
   "desc": "Sitôt le Forth Bridge franchi, le Fife se partage : la côte file vers Kirkcaldy et Dundee, l'intérieur monte sur Dunfermline. Expresses d'Aberdeen, navettes du Fife Circle et trains de Leven se croisent dans une tranchée étroite — rush de navetteurs matin et soir.",
   "difficulty": 2,
-  "country": "🇬🇧 Royaume-Uni",
+  "country": "royaume-uni",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }
   ],

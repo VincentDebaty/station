@@ -4,7 +4,7 @@
   "tagline": "Le fret manœuvre sur le front de mer",
   "desc": "Coincée entre la vieille ville sur sa falaise et la Méditerranée, désertée par la grande vitesse en 2020 — mais les convois du port et de la pétrochimie manœuvrent toujours devant ses quais, face à la mer.",
   "difficulty": 3,
-  "country": "🇪🇸 Espagne",
+  "country": "espagne",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }, { "id": 6 }
   ],

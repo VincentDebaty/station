@@ -4,7 +4,7 @@
   "tagline": "La ville qui porte le nom de son aiguillage",
   "desc": "Née en 1864 de la rencontre des lignes du Nord et de l'Est, la ville-cheminote loge les ateliers, le triage et le musée ferroviaire national. Tout le Portugal s'y trie encore : les Alfa de Porto, les navettes de Tomar, la Beira Baixa vers Castelo Branco, et l'unique régional international de Badajoz.",
   "difficulty": 4,
-  "country": "🇵🇹 Portugal",
+  "country": "portugal",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 },
     { "id": 5 }, { "id": 6 }, { "id": 7 }, { "id": 8 }

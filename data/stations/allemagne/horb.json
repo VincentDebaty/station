@@ -4,7 +4,7 @@
   "city": "Horb am Neckar",
   "tagline": "Horb — trois lignes arrivent par le nord, une seule repart vers le sud : la Kulturbahn s'y brise.",
   "difficulty": 3,
-  "country": "🇩🇪 Allemagne",
+  "country": "allemagne",
   "desc": "Sur la rive droite du Neckar, la dernière bifurcation de la Gäubahn avant la montée vers Böblingen et Stuttgart. La ligne de Tübingen et celle de Pforzheim rejoignent la Gäubahn par le nord : les rames de la Kulturbahn y sont « brisées » et repartent en sens inverse, pendant que l'InterCity de Zurich et le RE de Singen filent vers Rottweil par la vallée. Cinq voies à quai, un poste d'aiguillage électromécanique de 1927 remplacé seulement en 2024.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }

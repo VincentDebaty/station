@@ -4,7 +4,7 @@
   "tagline": "La dernière bifurcation avant la banlieue",
   "desc": "La Portsmouth Direct quitte la main line à Woking Junction, la navette d'Alton s'y glisse aussi. Tout le reste file vers Waterloo — douze trains par heure.",
   "difficulty": 3,
-  "country": "🇬🇧 Royaume-Uni",
+  "country": "royaume-uni",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
   ],

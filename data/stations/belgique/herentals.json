@@ -3,7 +3,7 @@
   "name": "Herentals",
   "tagline": "Herentals — la Campine : tout arrive par Lierre, tout repart vers Turnhout ou Mol.",
   "difficulty": 1,
-  "country": "🇧🇪 Belgique",
+  "country": "belgique",
   "desc": "Trois quais îlots au cœur de la Campine : Anvers et Bruxelles arrivent tous deux par Lierre, donc par le même côté, et repartent vers les deux bouts du réseau campinois — Turnhout au nord, Mol à l'est. Sans ces deux culs-de-sac, aucun train ne traverserait.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }

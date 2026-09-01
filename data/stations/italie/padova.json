@@ -4,7 +4,7 @@
   "tagline": "Le nœud aux quatre branches de la Vénétie",
   "desc": "Sur l'artère saturée de Milan à Venise, Padoue reçoit la ligne de Bologne et le tronc commun du nord, qui porte à la fois Bassano et les Dolomites. Quatre cent cinquante trains par jour, et deux voies en tiroir où naissent les régionaux vénitiens.",
   "difficulty": 4,
-  "country": "🇮🇹 Italie",
+  "country": "italie",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 },
     { "id": 5 }, { "id": 6 }, { "id": 7 }

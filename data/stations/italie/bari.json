@@ -5,7 +5,7 @@
   "tagline": "Quatre réseaux, trois écartements, un seul nom",
   "desc": "La porte sud de la dorsale Adriatique : dix voies traversantes que tout Milan–Lecce emprunte, neuf culs-de-sac dont deux réservés aux diesels du Sud-Est, et deux gares terminus indépendantes accolées aux flancs — dont une à voie métrique vers Matera.",
   "difficulty": 5,
-  "country": "🇮🇹 Italie",
+  "country": "italie",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },
     { "id": 6 }, { "id": 7 }, { "id": 8 }, { "id": 9 }

@@ -3,7 +3,7 @@
   "name": "Clermont-Ferrand",
   "tagline": "Clermont-Ferrand — la gare la plus isolée du catalogue : aucune LGV, et les Cévennes.",
   "difficulty": 2,
-  "country": "🇫🇷 France",
+  "country": "france",
   "desc": "Au pied du puy de Dôme, la gare la plus isolée du catalogue : aucune LGV, aucune électrification vers le sud, et sept heures de Cévennes pour rejoindre Nîmes. C'est ce qui fait son caractère.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },

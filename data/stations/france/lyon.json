@@ -4,7 +4,7 @@
   "city": "Lyon",
   "tagline": "Lyon Part-Dieu — première gare de province : 9 quais, 6 directions, chantier permanent.",
   "difficulty": 4,
-  "country": "🇫🇷 France",
+  "country": "france",
   "desc": "La première gare de province, 42 millions de voyageurs sur un site qui n'était qu'une caserne en 1978 : neuf quais, six directions, et le chantier permanent qui va avec.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },

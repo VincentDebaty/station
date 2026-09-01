@@ -3,7 +3,7 @@
   "name": "Douai",
   "tagline": "Douai — neuf voies à quai, la dernière bifurcation avant Lille.",
   "difficulty": 4,
-  "country": "🇫🇷 France",
+  "country": "france",
   "desc": "La porte sud du bassin minier, à vingt minutes de Lille : la grande ligne du Nord y croise la ligne de Valenciennes, qui part vers l'est par Somain, et la ligne directe de Cambrai, qui arrive du sud par Aubigny-au-Bac. Neuf voies à quai, cinq quais, une passerelle de trois cents mètres ouverte en 2025 par-dessus tout le faisceau — et le fret de l'Escaut qui traverse la gare.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },

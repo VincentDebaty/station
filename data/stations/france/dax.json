@@ -4,7 +4,7 @@
   "tagline": "La ville d'eaux sur l'axe d'Espagne",
   "desc": "Première ville thermale de France, Dax garde sa place sur la grande ligne de l'Espagne : les TGV de Paris y marquent l'arrêt avant la côte basque, l'Intercités de nuit y débarque ses curistes à l'aube, et la branche de Puyoô ramène le Béarn vers Bordeaux.",
   "difficulty": 2,
-  "country": "🇫🇷 France",
+  "country": "france",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
   ],

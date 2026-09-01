@@ -4,7 +4,7 @@
   "city": "Saalfeld",
   "tagline": "Saalfeld — six voies au pied de la rampe du Frankenwald, cinq lignes qui s'y nouent.",
   "difficulty": 3,
-  "country": "🇩🇪 Allemagne",
+  "country": "allemagne",
   "desc": "Le nœud du sud de la Thuringe : la Saalbahn arrive d'Iéna, la ligne d'Arnstadt d'Erfurt, celle de Gera par Pößneck, et vers le sud la Frankenwaldbahn attaque quatre cents mètres de dénivelé jusqu'à Lichtenfels. Le dépôt a abrité soixante-dix locomotives à vapeur ; le triage est fermé, les ICE sont partis en 2017, mais le Franken-Thüringen-Express et les autorails de l'Erfurter Bahn s'y croisent toute la journée.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },

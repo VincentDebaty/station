@@ -3,7 +3,7 @@
   "name": "London King's Cross",
   "tagline": "London King's Cross — l'East Coast et l'Écosse en quatre heures vingt.",
   "difficulty": 4,
-  "country": "🇬🇧 Royaume-Uni",
+  "country": "royaume-uni",
   "desc": "La tête de l'East Coast Main Line et la seule des quatre à ne desservir qu'un axe — mais quel axe : Édimbourg en quatre heures vingt, par York et Newcastle. C'est aussi là qu'aboutit l'Eurostar, deux cents mètres plus loin.",
   "platforms": [
     { "id": 1, "deadEnd": true }, { "id": 2, "deadEnd": true }, { "id": 3, "deadEnd": true }, { "id": 4, "deadEnd": true }, { "id": 5, "deadEnd": true },

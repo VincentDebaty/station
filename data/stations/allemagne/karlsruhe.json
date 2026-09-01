@@ -4,7 +4,7 @@
   "city": "Karlsruhe",
   "tagline": "Karlsruhe Hbf — 16 voies au débouché de la vallée du Rhin, la ville du tram-train.",
   "difficulty": 3,
-  "country": "🇩🇪 Allemagne",
+  "country": "allemagne",
   "desc": "Seize voies au débouché de la vallée du Rhin : la ville du tram-train, où le réseau régional roule sur les rails des grandes lignes. Cinq directions vers le sud et l'est.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },

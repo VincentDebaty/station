@@ -4,7 +4,7 @@
   "tagline": "Née « Bifurcation » en 1894",
   "desc": "Son nom de baptême était Sant'Eufemia Biforcazione : deux branches en double voie électrifiée à trafic lourd, contre une transversale diesel à voie unique qui traverse la Calabre jusqu'à la mer Ionienne.",
   "difficulty": 2,
-  "country": "🇮🇹 Italie",
+  "country": "italie",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }, { "id": 6 }
   ],

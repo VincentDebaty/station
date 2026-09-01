@@ -4,7 +4,7 @@
   "city": "Cologne",
   "tagline": "Köln Hbf — 11 voies collées à la cathédrale : la porte belge du réseau.",
   "difficulty": 4,
-  "country": "🇩🇪 Allemagne",
+  "country": "allemagne",
   "desc": "Onze voies collées à la cathédrale, sur le pont Hohenzollern : mille trains par jour sur la gare la plus saturée du pays. Les grandes vitesses vers Bruxelles filent par Aachen et Liège — c'est cette porte-là qui relie le réseau allemand au reste de l'Europe.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },

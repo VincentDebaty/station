@@ -4,7 +4,7 @@
   "tagline": "La West Coast se dédouble, dans les deux sens",
   "desc": "Au sud, la ligne se sépare entre la Trent Valley vers Londres et la boucle de Birmingham ; au nord, entre Crewe et la branche de Stoke vers Manchester. Quatre flux qui se croisent tous, sous un bâtiment brutaliste de 1962.",
   "difficulty": 3,
-  "country": "🇬🇧 Royaume-Uni",
+  "country": "royaume-uni",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }, { "id": 6 }
   ],

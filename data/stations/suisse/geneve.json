@@ -4,7 +4,7 @@
   "city": "Genève",
   "tagline": "Genève-Cornavin — huit voies entre le Léman et la frontière, deux d'entre elles sous douane.",
   "difficulty": 4,
-  "country": "🇨🇭 Suisse",
+  "country": "suisse",
   "desc": "Une gare traversante coincée entre la ville et le lac : 720 trains par jour sur huit voies, dont deux réservées aux trains français, derrière la douane. Tout arrive par Lausanne — les InterCity de Zurich et de Berne, les IR du Valais, le Léman Express — et repart vers l'aéroport, vers Annemasse par le CEVA ou vers Lyon par Bellegarde. Trop étroite pour ce qu'elle porte : deux voies souterraines sont en projet sous la place.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 },

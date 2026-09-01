@@ -4,7 +4,7 @@
   "city": "Hagen",
   "tagline": "Hagen Hbf — la halle d'acier de 1910 où le Sauerland rebrousse vers la Ruhr.",
   "difficulty": 4,
-  "country": "🇩🇪 Allemagne",
+  "country": "allemagne",
   "desc": "Dix voies sous la dernière halle d'acier de Rhénanie-du-Nord-Westphalie, derrière une façade néo-baroque de 1910. Par l'ouest arrive tout le Bergisches Land ; à l'est la ligne éclate vers Dortmund par Witten, vers Hamm par Schwerte et Unna, et vers Cassel par la haute vallée de la Ruhr — tandis que les trains de Siegen, montés de la Ruhr-Sieg, rebroussent ici vers la Ruhr. Le fret, lui, trie à Hagen-Vorhalle.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },

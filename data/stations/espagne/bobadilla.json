@@ -4,7 +4,7 @@
   "tagline": "L'étoile déchue de l'Andalousie",
   "desc": "Cinq lignes convergeaient sur ce village-gare planté au milieu de nulle part, plaque tournante de toute l'Andalousie. La grande vitesse lui a pris ses express, mais les régionaux de Séville, Malaga, Ronda et Antequera s'y croisent toujours entre les convois du port d'Algeciras.",
   "difficulty": 2,
-  "country": "🇪🇸 Espagne",
+  "country": "espagne",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }
   ],

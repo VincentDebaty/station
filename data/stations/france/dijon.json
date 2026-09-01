@@ -4,7 +4,7 @@
   "city": "Dijon",
   "tagline": "Dijon-Ville — là où l'axe Paris–Lyon croise la transversale de Nancy.",
   "difficulty": 3,
-  "country": "🇫🇷 France",
+  "country": "france",
   "desc": "Le carrefour de la Bourgogne, là où l'axe Paris–Lyon croise la transversale Nancy–Méditerranée. Sept quais, cinq directions, et le TGV qui passe sans s'arrêter juste à côté.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },

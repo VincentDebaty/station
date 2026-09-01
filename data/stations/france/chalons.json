@@ -4,7 +4,7 @@
   "city": "Châlons-en-Champagne",
   "tagline": "Châlons-en-Champagne — la Marne, et l'embranchement de Reims.",
   "difficulty": 3,
-  "country": "🇫🇷 France",
+  "country": "france",
   "desc": "Sur la grande ligne de Paris à Strasbourg, là où se détache la voie de Reims. Sous le quai dort un bunker de béton de 1937, creusé contre les gaz et rouvert en 2021 : la gare a traversé deux guerres sans changer de place.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }

@@ -3,7 +3,7 @@
   "name": "Uelzen",
   "tagline": "Uelzen — la gare Hundertwasser, là où l'Amerikalinie coupe l'axe de Hambourg.",
   "difficulty": 3,
-  "country": "🇩🇪 Allemagne",
+  "country": "allemagne",
   "desc": "Colonnes de céramique et toits bombés : Hundertwasser a redessiné la gare pour l'Expo 2000, et quatre cent cinquante mille curieux viennent la voir chaque année. Sous la couleur, un vrai carrefour : l'axe Hanovre–Hambourg croise l'Amerikalinie, la ligne de fret Brême–Stendal qui évite Hambourg, et une antenne file sur Brunswick par Wieren.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }, { "id": 6 }

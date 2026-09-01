@@ -3,7 +3,7 @@
   "name": "Brighton",
   "tagline": "Brighton — terminus face à la mer : tout vient de Londres et y retourne.",
   "difficulty": 2,
-  "country": "🇬🇧 Royaume-Uni",
+  "country": "royaume-uni",
   "desc": "Un terminus sous une verrière courbe de 1840, face à la mer : tout arrive de Londres et repart vers Londres, sauf la ligne de la côte qui longe la Manche jusqu'à Southampton.",
   "platforms": [
     { "id": 1, "deadEnd": true }, { "id": 2, "deadEnd": true }, { "id": 3, "deadEnd": true }, { "id": 4, "deadEnd": true }, { "id": 5, "deadEnd": true },

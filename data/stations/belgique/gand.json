@@ -4,7 +4,7 @@
   "city": "Gand",
   "tagline": "Gand — six directions, huit quais : le grand carrefour du Nord.",
   "difficulty": 4,
-  "country": "🇧🇪 Belgique",
+  "country": "belgique",
   "desc": "Le carrefour flamand, douze voies sous une marquise de 1912 : Bruges et la côte à l'ouest, Courtrai et Audenarde au sud, Bruxelles, Anvers et Termonde à l'est. Le flux ne retombe jamais — à vous de démêler.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },

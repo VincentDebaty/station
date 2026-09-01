@@ -3,7 +3,7 @@
   "name": "Béziers",
   "tagline": "Béziers — le Languedoc et sa porte vers l'Aubrac.",
   "difficulty": 2,
-  "country": "🇫🇷 France",
+  "country": "france",
   "desc": "Gare de bifurcation au bord de l'Orb : la grande ligne de la Méditerranée y file droit, et la voie de l'Aubrac s'en détache vers Bédarieux et les Causses. Un vrai chantier de marchandises, encore en service.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }

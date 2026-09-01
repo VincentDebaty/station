@@ -4,7 +4,7 @@
   "tagline": "Le terminus dont un portail est la mer",
   "desc": "Sous la halle rationaliste de 1939, tous les trains rebroussent — y compris ceux qui viennent de traverser le détroit sur le ferry. Les Intercity du continent entrent par la gare maritime, font tête à Centrale, et repartent vers Palerme ou Syracuse.",
   "difficulty": 3,
-  "country": "🇮🇹 Italie",
+  "country": "italie",
   "platforms": [
     { "id": 1, "deadEnd": true }, { "id": 2, "deadEnd": true }, { "id": 3, "deadEnd": true },
     { "id": 4, "deadEnd": true }, { "id": 5, "deadEnd": true }, { "id": 6, "deadEnd": true },

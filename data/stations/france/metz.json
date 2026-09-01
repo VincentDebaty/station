@@ -4,7 +4,7 @@
   "city": "Metz",
   "tagline": "Metz-Ville — un palais de grès jaune bâti pour débarquer 20 000 soldats.",
   "difficulty": 3,
-  "country": "🇫🇷 France",
+  "country": "france",
   "desc": "Un palais néo-roman de grès jaune, construit par l'Empire allemand pour débarquer vingt mille soldats en vingt-quatre heures. Aujourd'hui, le flux des frontaliers du Luxembourg.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },

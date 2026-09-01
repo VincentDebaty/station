@@ -3,7 +3,7 @@
   "name": "Aarschot",
   "tagline": "Aarschot — deux origines à l'ouest, un seul débouché vers Hasselt.",
   "difficulty": 1,
-  "country": "🇧🇪 Belgique",
+  "country": "belgique",
   "desc": "Le point de rencontre de la ligne 35 (Louvain–Hasselt) et de la ligne 16, venue de Lierre et d'Anvers. Quatre quais dans la vallée du Démer, un flux d'omnibus régulier — et tout ce qui entre repart vers l'est.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }

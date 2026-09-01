@@ -4,7 +4,7 @@
   "city": "Manchester",
   "tagline": "Manchester Piccadilly — 14 voies sur la plus vieille ligne du monde.",
   "difficulty": 4,
-  "country": "🇬🇧 Royaume-Uni",
+  "country": "royaume-uni",
   "desc": "Quatorze voies dont quatre en surplomb, sur la ligne la plus ancienne du monde encore en service — Liverpool 1830. Six directions, et le goulet de Castlefield qui bloque la moitié du nord de l'Angleterre.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },

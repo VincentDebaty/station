@@ -4,7 +4,7 @@
   "tagline": "Cinq quais en 1904, deux aujourd'hui",
   "desc": "L'ancienne grande jonction du Midland, réduite à deux quais au pied du Peak District. Les trains de pierre de Peak Forest la traversent sans s'arrêter, l'omnibus de la vallée s'y croise, et l'express de Liverpool s'y glisse matin et soir par le tunnel de Disley.",
   "difficulty": 1,
-  "country": "🇬🇧 Royaume-Uni",
+  "country": "royaume-uni",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }
   ],

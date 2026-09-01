@@ -4,7 +4,7 @@
   "tagline": "Le nœud en aspa de l'Èbre",
   "desc": "Ville-cheminote née en 1863 du croisement en X de la ligne de Madrid à Irún et de celle de Castejón à Bilbao, avec dépôt, triage et ateliers à l'échelle nationale. Les Alvia de Bilbao et d'Irún s'y séparent encore, pendant que le régional de Logroño remonte l'Èbre par Haro.",
   "difficulty": 3,
-  "country": "🇪🇸 Espagne",
+  "country": "espagne",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }, { "id": 6 }
   ],

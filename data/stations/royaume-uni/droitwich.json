@@ -4,7 +4,7 @@
   "tagline": "Les deux routes de Birmingham se rejoignent",
   "desc": "La gare thermale où les deux chemins de Birmingham retombent sur la même voie : celui de Bromsgrove et l'incline de Lickey, celui de Kidderminster et de Snow Hill. La jonction est à deux cent cinquante mètres, mais tous les flux touchent les quais.",
   "difficulty": 1,
-  "country": "🇬🇧 Royaume-Uni",
+  "country": "royaume-uni",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }
   ],

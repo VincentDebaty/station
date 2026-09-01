@@ -5,7 +5,7 @@
   "tagline": "Le point où Manchester se déchire en deux",
   "desc": "Deux quais serrés sur un talus, et pourtant tout l'ouest de Manchester s'y décide : vers Victoria ou vers Piccadilly au sud, vers Bolton ou vers Atherton au nord. La moitié des navetteurs de la ville y change de train.",
   "difficulty": 1,
-  "country": "🇬🇧 Royaume-Uni",
+  "country": "royaume-uni",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }
   ],

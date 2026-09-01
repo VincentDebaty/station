@@ -26,6 +26,17 @@ async function loadCatalog() {
   // démarre par une gare facile et monte globalement en difficulté (compromis).
   // Le champ « difficulty » ne sert plus au tri — seulement aux pastilles de la
   // fiche de gare. Promise.all préserve l'ordre du tableau.
+  // LE LIBELLÉ D'UN PAYS VIT UNE FOIS, DANS L'INDEX. Il était recopié dans les
+  // 401 fiches (« 🇬🇧 Royaume-Uni ») et redécoupé à la ficelle partout où il
+  // fallait le drapeau : `cfg.country.split(" ")[0]`. Une fiche dit désormais
+  // DE QUEL pays elle est — son slug — et l'affichage se déduit ici, en un
+  // seul endroit. Traduire le nom d'un pays ne touche plus qu'une ligne.
+  for (const group of index) {
+    const l = (group.label || "").trim(), i = l.indexOf(" ");
+    PAYS[group.country] = i > 0
+      ? { label: l, drapeau: l.slice(0, i), nom: l.slice(i + 1) }
+      : { label: l, drapeau: "", nom: l || group.country };
+  }
   const blocks = await Promise.all(index.map(group =>
     Promise.all(group.stations.map(id => {
       const f = base + group.country + "/" + id + ".json";
@@ -38,6 +49,10 @@ async function loadCatalog() {
   CATALOG.length = 0;
   for (const cards of blocks) CATALOG.push(...cards);
 }
+
+// Les pays, par slug : { label, drapeau, nom }. Rempli par loadCatalog.
+const PAYS = {};
+function paysDe(slug) { return PAYS[slug] || { label: "", drapeau: "", nom: slug || "" }; }
 
 // ------------------------------------------------------------------
 // CE QU'UN SERVICE RAPPORTE — des étoiles, et rien d'autre.

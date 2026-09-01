@@ -4,7 +4,7 @@
   "city": "Liverpool",
   "tagline": "Liverpool Lime Street — le plus vieux terminus de grande ligne encore en usage.",
   "difficulty": 3,
-  "country": "🇬🇧 Royaume-Uni",
+  "country": "royaume-uni",
   "desc": "Le plus vieux terminus de grande ligne au monde encore en usage (1836), taillé dans le grès rouge : neuf voies à heurtoir au fond d'une tranchée. De là part la transversale la plus longue du pays, jusqu'à Norwich.",
   "platforms": [
     { "id": 1, "deadEnd": true }, { "id": 2, "deadEnd": true }, { "id": 3, "deadEnd": true }, { "id": 4, "deadEnd": true }, { "id": 5, "deadEnd": true },

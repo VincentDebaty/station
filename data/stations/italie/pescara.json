@@ -5,7 +5,7 @@
   "tagline": "La gare sur viaduc des Abruzzes",
   "desc": "Reconstruite en 1988 au-dessus de la ville, entre deux façades de verre : la dorsale adriatique la traverse en hauteur, et la ligne de Rome par Sulmona s'en détache deux kilomètres plus loin. Le poste de commande y télécommande trois régions.",
   "difficulty": 2,
-  "country": "🇮🇹 Italie",
+  "country": "italie",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
   ],

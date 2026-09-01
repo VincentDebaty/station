@@ -4,7 +4,7 @@
   "tagline": "Le terminus de la mer",
   "desc": "Quatre voies à heurtoirs au-dessus du port, où trois dessertes se partagent une seule ligne : Paris par Argentan, Caen par Coutances, Rennes par la baie. Même le train de Rennes vient toucher la mer avant de repartir.",
   "difficulty": 2,
-  "country": "🇫🇷 France",
+  "country": "france",
   "platforms": [
     { "id": 1, "deadEnd": true }, { "id": 2, "deadEnd": true },
     { "id": 3, "deadEnd": true }, { "id": 4, "deadEnd": true }, { "id": 5, "deadEnd": true }

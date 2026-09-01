@@ -3,7 +3,7 @@
   "name": "Mulhouse",
   "tagline": "Mulhouse — le dernier nœud avant la Suisse : deux frontières à 30 km.",
   "difficulty": 2,
-  "country": "🇫🇷 France",
+  "country": "france",
   "desc": "Le dernier nœud avant la Suisse : quatre directions, dont deux qui franchissent une frontière à moins de trente kilomètres. La gare la plus internationale du catalogue français après Paris-Nord.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },

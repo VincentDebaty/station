@@ -4,7 +4,7 @@
   "tagline": "L'éventail des Castelli Romani",
   "desc": "Héritière de la première ligne des États pontificaux (1856) : trois branches à voie unique — Frascati, Albano, Velletri — et la grande ligne de Naples se disputent un unique tronc à double voie vers Termini. Tout retard sur une branche se propage à l'éventail.",
   "difficulty": 3,
-  "country": "🇮🇹 Italie",
+  "country": "italie",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }, { "id": 6 }
   ],

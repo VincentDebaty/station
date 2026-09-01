@@ -3,7 +3,7 @@
   "name": "Mons",
   "tagline": "Mons — porte de la France : 6 directions, dont deux frontières.",
   "difficulty": 3,
-  "country": "🇧🇪 Belgique",
+  "country": "belgique",
   "desc": "La porte du Borinage, sous la passerelle Calatrava : l'axe de Bruxelles y croise la dorsale wallonne, et quatre sorties partent vers l'ouest — Tournai, Ath par Jurbise, et les deux frontalières de Quévy et Quiévrain. Un éventail volontairement déséquilibré : anticipez les croisements.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },

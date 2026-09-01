@@ -4,7 +4,7 @@
   "tagline": "Le poste des Marches",
   "desc": "Sous la cathédrale, la ligne des Marches croise la Cotswold Line venue de Worcester : les Manchester de TfW descendent vers Cardiff, et les trains de Birmingham viennent mourir dans l'impasse du quai 4 avant de repartir. Le fret du délestage de la Severn traverse sur les voies du milieu.",
   "difficulty": 3,
-  "country": "🇬🇧 Royaume-Uni",
+  "country": "royaume-uni",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4, "deadEnd": true }
   ],

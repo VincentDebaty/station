@@ -4,7 +4,7 @@
   "city": "Marseille",
   "tagline": "Marseille-Saint-Charles — terminus méditerranéen : 8 quais, tout rebrousse.",
   "difficulty": 4,
-  "country": "🇫🇷 France",
+  "country": "france",
   "desc": "En haut de l'escalier monumental, un terminus de 1848 que la Méditerranée a rendu obligatoire : tout rebrousse, six directions, huit quais. Aucun fret — il file par la Côte Bleue.",
   "platforms": [
     { "id": 1, "deadEnd": true }, { "id": 2, "deadEnd": true }, { "id": 3, "deadEnd": true }, { "id": 4, "deadEnd": true }, { "id": 5, "deadEnd": true },

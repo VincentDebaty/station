@@ -3,7 +3,7 @@
   "name": "Doncaster",
   "tagline": "Doncaster — la ville de la Mallard : cinq directions où l'East Coast se sépare.",
   "difficulty": 1,
-  "country": "🇬🇧 Royaume-Uni",
+  "country": "royaume-uni",
   "desc": "C'est ici que se sont construites les locomotives les plus rapides du monde, la Mallard comprise. Aujourd'hui, un carrefour à cinq directions où l'East Coast se sépare pour Leeds et pour York.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }

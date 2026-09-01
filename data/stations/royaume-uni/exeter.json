@@ -4,7 +4,7 @@
   "city": "Exeter",
   "tagline": "Exeter St Davids — trois façons d'arriver de Londres, une seule d'en repartir.",
   "difficulty": 2,
-  "country": "🇬🇧 Royaume-Uni",
+  "country": "royaume-uni",
   "desc": "Trois façons d'arriver de Londres — par Bristol, par Taunton, par Salisbury — et une seule d'en repartir vers la Cornouailles. La gare où deux compagnies rivales se sont partagé la voie au XIXᵉ.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },

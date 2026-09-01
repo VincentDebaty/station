@@ -3,7 +3,7 @@
   "name": "Rodange",
   "tagline": "Rodange — deux frontières à deux kilomètres, et deux lignes qui ne se croisent qu'au milieu.",
   "difficulty": 2,
-  "country": "🇱🇺 Luxembourg",
+  "country": "luxembourg",
   "desc": "La pointe sud-ouest du pays : la France à un kilomètre par Longwy, la Belgique à deux par Athus. Les deux lignes frontalières restent séparées d'un bout à l'autre du faisceau et ne partagent qu'un seul quai — celui du milieu, où tout se décide.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }

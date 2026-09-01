@@ -4,7 +4,7 @@
   "city": "Bruxelles",
   "tagline": "Bruxelles-Midi — 10 quais, 8 directions dont Paris. Le boss du pays.",
   "difficulty": 5,
-  "country": "🇧🇪 Belgique",
+  "country": "belgique",
   "desc": "La plus grande gare de Belgique, posée sur la jonction Nord-Midi que tout traverse : dix quais, huit directions. Gand, Mons, Charleroi et Paris filent au sud-ouest ; Anvers, Liège, Namur et Termonde repartent au nord-est. Unique gare Eurostar de la capitale — et rien n'y attend son tour deux fois. Bonne chance, aiguilleur.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },

@@ -3,7 +3,7 @@
   "name": "Orléans",
   "tagline": "Orléans — 6 quais à heurtoir : la ville a exigé sa gare au centre, les trains rebroussent.",
   "difficulty": 2,
-  "country": "🇫🇷 France",
+  "country": "france",
   "desc": "La ville a exigé sa gare au centre : les trains quittent la ligne aux Aubrais, entrent en cul-de-sac et rebroussent. Six quais à heurtoir pour une préfecture — la rançon d'un caprice de 1843.",
   "platforms": [
     { "id": 1, "deadEnd": true }, { "id": 2, "deadEnd": true }, { "id": 3, "deadEnd": true }, { "id": 4, "deadEnd": true }, { "id": 5, "deadEnd": true },

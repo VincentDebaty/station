@@ -4,7 +4,7 @@
   "tagline": "La gare la plus traversée d'Europe",
   "desc": "Tout ce qui sort de Waterloo et de Victoria passe ici, sur deux faisceaux côte à côte qui ne se mélangent presque jamais. Dix-sept quais en vrai, cent quatre-vingts trains par heure, et plus de correspondances que d'entrées.",
   "difficulty": 5,
-  "country": "🇬🇧 Royaume-Uni",
+  "country": "royaume-uni",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },
     { "id": 6 }, { "id": 7 }, { "id": 8 }, { "id": 9 }, { "id": 10 }

@@ -4,7 +4,7 @@
   "city": "Hanovre",
   "tagline": "Hannover Hbf — le carrefour du Nord, six directions, aucune marge.",
   "difficulty": 4,
-  "country": "🇩🇪 Allemagne",
+  "country": "allemagne",
   "desc": "Le carrefour du Nord : six directions, et la seule gare allemande où l'axe est-ouest et l'axe nord-sud portent le même trafic. Douze voies, aucune marge.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },

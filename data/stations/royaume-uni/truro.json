@@ -4,7 +4,7 @@
   "tagline": "La cathédrale et la navette de la mer",
   "desc": "Sous les trois flèches de la cathédrale, la seule cité de Cornouailles trie la grande ligne et sa navette maritime : toutes les demi-heures, un train descend seul vers Falmouth et ses docks.",
   "difficulty": 2,
-  "country": "🇬🇧 Royaume-Uni",
+  "country": "royaume-uni",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }
   ],

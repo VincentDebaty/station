@@ -4,7 +4,7 @@
   "tagline": "La grande gare des plages",
   "desc": "Le trafic de la Riviera romagnole explose l'été, quand la ligne côtière de Ravenne, à voie unique, vient se fondre dans la double voie de l'Adriatique. Ancien nœud à quatre branches — Saint-Marin et la Marecchia ont disparu.",
   "difficulty": 2,
-  "country": "🇮🇹 Italie",
+  "country": "italie",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }, { "id": 6 }
   ],

@@ -5,7 +5,7 @@
   "tagline": "La gare qui ouvre sur le Grand Canal",
   "desc": "La seule grande gare d'Europe dont on sort sur les marches d'un canal, face à San Simeone Piccolo. Terminus mythique de l'Orient-Express : tout entre et repart par le pont de la Liberté, au-dessus de la lagune.",
   "difficulty": 5,
-  "country": "🇮🇹 Italie",
+  "country": "italie",
   "platforms": [
     { "id": 1, "deadEnd": true }, { "id": 2, "deadEnd": true }, { "id": 3, "deadEnd": true },
     { "id": 4, "deadEnd": true }, { "id": 5, "deadEnd": true }, { "id": 6, "deadEnd": true },

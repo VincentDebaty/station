@@ -5,7 +5,7 @@
   "tagline": "La gare où l'Andalousie rebrousse",
   "desc": "Quatre voies européennes et quatre ibériques traversent la tranchée couverte de la plaza de las Tres Culturas. La bifurcation de Malaga étant à quatorze kilomètres côté Séville, les Avant de Malaga et de Grenade entrent ici puis repartent par où ils sont venus.",
   "difficulty": 4,
-  "country": "🇪🇸 Espagne",
+  "country": "espagne",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 },
     { "id": 5 }, { "id": 6 }, { "id": 7 }, { "id": 8 }

@@ -3,7 +3,7 @@
   "name": "Louvain",
   "tagline": "Louvain — 7 quais sur l'artère Bruxelles–Liège : le flux ne faiblit pas.",
   "difficulty": 4,
-  "country": "🇧🇪 Belgique",
+  "country": "belgique",
   "desc": "Treize voies sous une verrière refaite à neuf, deuxième gare de Flandre : le tronc Bruxelles–Liège occupe le milieu du gril, pendant qu'Anvers s'en va par Malines, Hasselt par Aarschot et Ottignies vers le Brabant wallon. Cinq directions, aucun trou dans la cadence.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },

@@ -4,7 +4,7 @@
   "tagline": "Le premier grand tri du South Western",
   "desc": "La ligne d'Exeter quitte la main line à Worting Junction, celle de Reading amène les CrossCountry du Nord. Quatre axes, cinq quais, et du fret sur les voies du bord.",
   "difficulty": 3,
-  "country": "🇬🇧 Royaume-Uni",
+  "country": "royaume-uni",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
   ],

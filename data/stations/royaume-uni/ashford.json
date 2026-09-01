@@ -5,7 +5,7 @@
   "tagline": "Six branches vivantes, l'Eurostar passe sans s'arrêter",
   "desc": "Le nœud du Kent : deux routes vers Londres — la HS1 et la ligne classique de Tonbridge — plus Canterbury, Douvres et la Marshlink de Hastings, seule ligne non électrifiée du Sud-Est. Les quais internationaux dorment depuis 2020 : l'Eurostar traverse par la voie d'évitement, sans un arrêt.",
   "difficulty": 4,
-  "country": "🇬🇧 Royaume-Uni",
+  "country": "royaume-uni",
   "platforms": [
     {
       "id": 1

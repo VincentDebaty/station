@@ -4,7 +4,7 @@
   "tagline": "Là où la Normandie quitte Paris",
   "desc": "Aux portes de l'Île-de-France, la gare trie tout ce que Saint-Lazare envoie vers la mer : les trains du Havre filent par la Seine, ceux de Caen prennent à gauche vers Évreux. Et par le plateau, les Transilien de Montparnasse viennent y finir leur course.",
   "difficulty": 3,
-  "country": "🇫🇷 France",
+  "country": "france",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }, { "id": 6 }
   ],

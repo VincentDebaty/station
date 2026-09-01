@@ -3,7 +3,7 @@
   "name": "Reims",
   "tagline": "Reims — une seule sortie à gauche, trois à droite : tout passe par Paris.",
   "difficulty": 1,
-  "country": "🇫🇷 France",
+  "country": "france",
   "desc": "Une seule sortie à gauche, trois à droite : tout Reims passe par la gorge de Paris. Quarante-cinq minutes de LGV d'un côté, la Champagne au pas de l'omnibus de l'autre.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }

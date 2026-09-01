@@ -4,7 +4,7 @@
   "tagline": "Le tronc commun de la Bétique",
   "desc": "Aux portes de Séville, les navettes du C-1 défilent toutes les vingt minutes entre les trains de Cadix et ceux de Málaga, qui rouleront ensemble jusqu'à la bifurcation d'Utrera. C'est ici que se trie tout ce que l'Andalousie envoie vers le sud.",
   "difficulty": 2,
-  "country": "🇪🇸 Espagne",
+  "country": "espagne",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }
   ],

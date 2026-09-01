@@ -3,7 +3,7 @@
   "name": "Termonde",
   "tagline": "Termonde — l'étoile de la Dendre : cinq lignes, aucun tronc.",
   "difficulty": 3,
-  "country": "🇧🇪 Belgique",
+  "country": "belgique",
   "desc": "Au confluent de la Dendre et de l'Escaut, quatre lignes se croisent sans qu'aucune ne domine : Gand à l'ouest, Lokeren au nord-ouest, Anvers par Puurs, Louvain par Malines, Bruxelles par Opwijk. Aucune direction ne dépasse trois quais — ici, il n'y a que des antennes.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },

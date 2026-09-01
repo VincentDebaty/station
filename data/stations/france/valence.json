@@ -4,7 +4,7 @@
   "city": "Valence",
   "tagline": "Valence-Ville — le pivot du couloir rhodanien : les Alpes s'y détachent.",
   "difficulty": 2,
-  "country": "🇫🇷 France",
+  "country": "france",
   "desc": "Le pivot du couloir rhodanien : c'est ici que la ligne des Alpes se détache de celle de la Méditerranée. La gare TGV est à dix kilomètres — deux gares pour une ville, comme souvent.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }

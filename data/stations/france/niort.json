@@ -4,7 +4,7 @@
   "tagline": "La bifurcation aux quatre vies",
   "desc": "L'axe venu de Paris s'y dédouble vers La Rochelle et vers Saintes — sur une ligne toute juste rénovée. Au nord, la branche de Thouars ne voit plus passer que les céréaliers : une direction entière rendue au fret.",
   "difficulty": 2,
-  "country": "🇫🇷 France",
+  "country": "france",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
   ],

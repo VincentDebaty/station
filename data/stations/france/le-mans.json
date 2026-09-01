@@ -3,7 +3,7 @@
   "name": "Le Mans",
   "tagline": "Le Mans — là où la LGV Atlantique se coupe en deux : moitié Rennes, moitié Nantes.",
   "difficulty": 2,
-  "country": "🇫🇷 France",
+  "country": "france",
   "desc": "Le premier embranchement de la LGV Atlantique : ici les rames se séparent, moitié Rennes, moitié Nantes. Cinq directions sur six quais — la gare la plus dense de sa catégorie.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },

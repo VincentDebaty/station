@@ -4,7 +4,7 @@
   "city": "Toulouse",
   "tagline": "Toulouse-Matabiau — 6 directions au bord du canal du Midi, Cerdagne comprise.",
   "difficulty": 4,
-  "country": "🇫🇷 France",
+  "country": "france",
   "desc": "Au bord du canal du Midi, la gare de tout le Sud-Ouest : six directions, dont la ligne de Cerdagne qui grimpe à 1 600 m. Huit quais, et pas une minute de battement en pointe.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },

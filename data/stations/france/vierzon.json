@@ -3,7 +3,7 @@
   "name": "Vierzon",
   "tagline": "Vierzon — 25 000 habitants, 5 directions : la meilleure gare-école de France.",
   "difficulty": 1,
-  "country": "🇫🇷 France",
+  "country": "france",
   "desc": "Vingt-cinq mille habitants, cinq directions : c'est ici que le Paris–Toulouse croise le Nantes–Lyon. La gare la plus disproportionnée de France — et pour cette raison, la meilleure gare-école.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }

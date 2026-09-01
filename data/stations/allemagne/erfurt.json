@@ -4,7 +4,7 @@
   "city": "Erfurt",
   "tagline": "Erfurt Hbf — refaite en 2017 pour la LGV Berlin–Munich : le pari le plus cher du réseau.",
   "difficulty": 3,
-  "country": "🇩🇪 Allemagne",
+  "country": "allemagne",
   "desc": "Refaite en 2017 pour la ligne à grande vitesse de Berlin à Munich : dix voies sur deux niveaux, dans une ville de deux cent mille habitants. Le pari le plus cher du réseau allemand.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },

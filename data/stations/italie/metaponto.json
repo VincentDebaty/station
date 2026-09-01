@@ -4,7 +4,7 @@
   "tagline": "La bifurcation des temples grecs",
   "desc": "Trois voies uniques électrifiées convergent dans une gare balnéaire minuscule, posée à côté des temples de l'antique Métaponte — un Frecciarossa de Bolzano y croise les régionaux de Basilicate.",
   "difficulty": 1,
-  "country": "🇮🇹 Italie",
+  "country": "italie",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }
   ],

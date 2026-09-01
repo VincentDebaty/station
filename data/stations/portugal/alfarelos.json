@@ -4,7 +4,7 @@
   "tagline": "Le carrefour des rizières",
   "desc": "Au milieu du Baixo Mondego, ce village de Soure voit les régionaux de Figueira da Foz et des Caldas quitter la grande ligne par le ramal de 1889. Depuis que Coimbra a perdu son propre ramal en janvier 2025, c'est le seul aiguillage voyageurs entre Setil et Pampilhosa.",
   "difficulty": 2,
-  "country": "🇵🇹 Portugal",
+  "country": "portugal",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
   ],

@@ -4,7 +4,7 @@
   "city": "Angoulême",
   "tagline": "Angoulême — quatre directions sous l'ancien Collège royal de la Marine.",
   "difficulty": 4,
-  "country": "🇫🇷 France",
+  "country": "france",
   "desc": "Le bâtiment a repris une partie de l'ancien Collège royal de la Marine, et garde dans son hall un panneau d'émail. Quatre directions s'y croisent : Bordeaux et Poitiers sur la grande ligne, Limoges à l'est, Saintes par Beillant. Sept voies, et le fret y a toujours ses embranchements.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }, { "id": 6 }

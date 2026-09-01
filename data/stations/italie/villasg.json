@@ -4,7 +4,7 @@
   "tagline": "Le train qui prend le bateau",
   "desc": "La dernière gare d'Europe occidentale où un train de voyageurs monte à bord d'un navire : l'Intercity de Palerme y perd sa locomotive, se découpe en tronçons, et roule sur le pont ferré du ferry par les invasature — un rituel de 1899, toujours vivant.",
   "difficulty": 2,
-  "country": "🇮🇹 Italie",
+  "country": "italie",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }, { "id": 6 }
   ],

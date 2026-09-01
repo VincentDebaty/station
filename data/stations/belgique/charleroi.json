@@ -4,7 +4,7 @@
   "city": "Charleroi",
   "tagline": "Charleroi-Central — la dorsale wallonne croise l'axe nord-sud : 6 quais.",
   "difficulty": 3,
-  "country": "🇧🇪 Belgique",
+  "country": "belgique",
   "desc": "Le grand nœud du Pays Noir, onze voies au-dessus de la Sambre : la dorsale Mons–Namur y croise l'axe Bruxelles–Couvin, et la ligne 140 remonte vers Ottignies. Cinq directions, un enchaînement serré — le Hainaut industriel n'attend pas.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },

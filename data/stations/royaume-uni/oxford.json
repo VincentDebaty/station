@@ -3,7 +3,7 @@
   "name": "Oxford",
   "tagline": "Oxford — quatre voies, deux Londres au bout : Paddington et Marylebone.",
   "difficulty": 2,
-  "country": "🇬🇧 Royaume-Uni",
+  "country": "royaume-uni",
   "desc": "Quatre voies seulement, et deux Londres au bout : Paddington par Didcot, Marylebone par Bicester depuis 2016. La gare la plus contrainte du catalogue par rapport à son trafic.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }

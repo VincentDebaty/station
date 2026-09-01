@@ -4,7 +4,7 @@
   "city": "Lichtenfels",
   "tagline": "Lichtenfels — la ville du panier en osier, trois lignes qui convergent sur six voies.",
   "difficulty": 3,
-  "country": "🇩🇪 Allemagne",
+  "country": "allemagne",
   "desc": "Au sud, une seule ligne vers Bamberg ; au nord, trois : la Frankenwaldbahn vers Saalfeld, la ligne de Hof par Kulmbach, la Werrabahn vers Cobourg. Les ICE l'évitent depuis 2017 par le tunnel de Cobourg, mais le fret de la Frankenwaldbahn — citernes, chaux, combiné Rostock–Vérone — passe encore sous le bâtiment néo-Renaissance de 1862, à côté de la rotonde classée.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },

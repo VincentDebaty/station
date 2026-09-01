@@ -4,7 +4,7 @@
   "tagline": "La porte du nord et son tunnel sous la ville",
   "desc": "Vingt et une voies ouvertes vers la sierra : les Alvia de Galice et des Asturies y rebroussent face aux heurtoirs, pendant que les AVE du Levant plongent sous Madrid vers Atocha sans s'arrêter. Rebaptisée Clara Campoamor, la gare de 1967 est devenue le vrai cœur ferroviaire de la capitale.",
   "difficulty": 5,
-  "country": "🇪🇸 Espagne",
+  "country": "espagne",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 },
     { "id": 5 }, { "id": 6 }, { "id": 7 }, { "id": 8 },

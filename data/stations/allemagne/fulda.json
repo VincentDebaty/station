@@ -3,7 +3,7 @@
   "name": "Fulda",
   "tagline": "Fulda — dix voies au milieu de l'Allemagne, où l'axe Nord-Sud croise l'ICE de Berlin.",
   "difficulty": 4,
-  "country": "🇩🇪 Allemagne",
+  "country": "allemagne",
   "desc": "Dix voies à quai au centre géographique du pays : la ligne à grande vitesse Hanovre–Wurtzbourg y croise la vallée de la Kinzig vers Francfort et l'ancienne Nord-Süd-Strecke vers Bebra et Erfurt. Sept lignes ICE s'y arrêtent ; la Vogelsbergbahn de Gießen et la Rhönbahn de Gersfeld y terminent. Le fret, lui, n'y passe presque plus.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },

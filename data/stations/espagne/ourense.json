@@ -5,7 +5,7 @@
   "tagline": "Le rond-point du Nord-Ouest",
   "desc": "Depuis 2021, tout ce que Madrid envoie vers la Galice débouche ici, au bord du Miño, avant de se répartir entre Vigo, Saint-Jacques et La Corogne. Les Alvia de Lugo entrent par l'est et rebroussent à quai, le temps que la variante qui doit les en dispenser sorte de terre.",
   "difficulty": 3,
-  "country": "🇪🇸 Espagne",
+  "country": "espagne",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
   ],

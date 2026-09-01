@@ -5,7 +5,7 @@
   "tagline": "Le carrefour de l'Italie, l'horloge arrêtée à 10 h 25",
   "desc": "Tout ce qui relie le nord de l'Italie au centre et au sud se croise sur ce plateau — la grande vitesse, elle, passe à vingt-trois mètres sous terre. Sur la façade, l'horloge est arrêtée à 10 h 25, l'heure de l'attentat du 2 août 1980.",
   "difficulty": 5,
-  "country": "🇮🇹 Italie",
+  "country": "italie",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },
     { "id": 6 }, { "id": 7 }, { "id": 8 }, { "id": 9 }

@@ -4,7 +4,7 @@
   "tagline": "La fourche des deux routes de Manchester",
   "desc": "Les quais enjambent la rue, et la jonction est au bout : deux routes vers Manchester — par Bredbury ou par la boucle de Hyde — la vallée vers Marple et Sheffield, et l'antenne de Rose Hill.",
   "difficulty": 2,
-  "country": "🇬🇧 Royaume-Uni",
+  "country": "royaume-uni",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
   ],

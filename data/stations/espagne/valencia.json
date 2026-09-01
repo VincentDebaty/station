@@ -5,7 +5,7 @@
   "tagline": "Les orangers en trencadís",
   "desc": "Le terminus moderniste de Demetrio Ribes (1917) porte la huerta jusque sur ses murs : mosaïques d'orangers et de fleurs d'oranger au-dessus des heurtoirs. Cinq lignes de banlieue s'y engouffrent entre les régionaux de Teruel et les grandes lignes d'Alicante.",
   "difficulty": 4,
-  "country": "🇪🇸 Espagne",
+  "country": "espagne",
   "platforms": [
     { "id": 1, "deadEnd": true }, { "id": 2, "deadEnd": true }, { "id": 3, "deadEnd": true },
     { "id": 4, "deadEnd": true }, { "id": 5, "deadEnd": true }, { "id": 6, "deadEnd": true },

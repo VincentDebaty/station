@@ -3,7 +3,7 @@
   "name": "Kautenbach",
   "tagline": "Kautenbach — deux cents habitants, et la ligne du Nord qui s'y dédouble.",
   "difficulty": 1,
-  "country": "🇱🇺 Luxembourg",
+  "country": "luxembourg",
   "desc": "Au fond de la gorge où la Wiltz rejoint la Sûre, une gare sans ville : deux cents habitants, et la bifurcation de la ligne 10. Les rames de Wiltz s'y détachent de celles qui montent vers Troisvierges et la Belgique. Tout le reste redescend sur Luxembourg.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }

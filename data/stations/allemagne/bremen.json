@@ -4,7 +4,7 @@
   "city": "Brême",
   "tagline": "Bremen Hbf — la gare de la Hanse, entre la mer du Nord et la lande.",
   "difficulty": 2,
-  "country": "🇩🇪 Allemagne",
+  "country": "allemagne",
   "desc": "Sous une façade de brique rouge de 1889 : la gare de la Hanse, entre la mer du Nord et la lande. Cinq directions, neuf voies, et le port à trente kilomètres.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },

@@ -4,7 +4,7 @@
   "city": "Nuremberg",
   "tagline": "Nürnberg Hbf — la plus grande gare de passage d'Allemagne : 22 voies.",
   "difficulty": 4,
-  "country": "🇩🇪 Allemagne",
+  "country": "allemagne",
   "desc": "Vingt-deux voies dans la plus grande gare de passage d'Allemagne : quatre lignes à grande vitesse s'y croisent, dont celle de Berlin par la forêt de Thuringe.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },

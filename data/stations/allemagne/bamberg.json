@@ -4,7 +4,7 @@
   "city": "Bamberg",
   "tagline": "Bamberg — sept voies en grès de 1846, une ligne au sud, quatre au nord.",
   "difficulty": 4,
-  "country": "🇩🇪 Allemagne",
+  "country": "allemagne",
   "desc": "La fourche de la Haute-Franconie : du sud n'arrive que la ligne de Nuremberg, élargie à quatre voies, et tout s'éparpille au nord — Lichtenfels et Hof, Cobourg et la ligne nouvelle de Berlin, Schweinfurt et Wurtzbourg, la petite Baunachbahn d'Ebern. Le S-Bahn de Nuremberg y fait terminus, le port du canal Main-Danube y envoie ses conteneurs, et le chantier du nœud est le plus gros de l'histoire de la ville classée.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },

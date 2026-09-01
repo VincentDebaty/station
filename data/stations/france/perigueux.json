@@ -4,7 +4,7 @@
   "tagline": "La gare-atelier",
   "desc": "Le trafic marquant n'y est pas le voyageur mais le matériel : les rames de toute la région viennent se faire refaire au Technicentre, cent soixante ans d'ateliers. Au sud-est, Brive et Agen se disputent la même sortie jusqu'à Niversac.",
   "difficulty": 2,
-  "country": "🇫🇷 France",
+  "country": "france",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
   ],

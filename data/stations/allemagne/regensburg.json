@@ -4,7 +4,7 @@
   "city": "Ratisbonne",
   "tagline": "Regensburg Hbf — sur le Danube, dans la seule grande ville jamais bombardée.",
   "difficulty": 1,
-  "country": "🇩🇪 Allemagne",
+  "country": "allemagne",
   "desc": "Sur le Danube, dans la seule grande ville allemande jamais bombardée : huit voies, quatre directions, et le pont de pierre du XIIᵉ à deux pas.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }

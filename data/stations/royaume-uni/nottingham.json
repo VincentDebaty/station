@@ -3,7 +3,7 @@
   "name": "Nottingham",
   "tagline": "Nottingham — là où la plus longue transversale du pays croise la Midland.",
   "difficulty": 2,
-  "country": "🇬🇧 Royaume-Uni",
+  "country": "royaume-uni",
   "desc": "Huit voies dans un tranchée, sous une gare édouardienne en terre cuite : c'est ici que la ligne Liverpool–Norwich, la plus longue transversale du pays, croise celle de Saint-Pancras.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },

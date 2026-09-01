@@ -3,7 +3,7 @@
   "name": "London Waterloo",
   "tagline": "London Waterloo — 10 quais à heurtoir, 22 voies en vrai : le boss du pays.",
   "difficulty": 5,
-  "country": "🇬🇧 Royaume-Uni",
+  "country": "royaume-uni",
   "desc": "Vingt-deux voies, soixante-dix millions de voyageurs : la plus grande gare de Grande-Bretagne, et un terminus intégral. Tout s'engouffre sur le viaduc de Nine Elms puis rebrousse. Le boss du pays.",
   "platforms": [
     { "id": 1, "deadEnd": true }, { "id": 2, "deadEnd": true }, { "id": 3, "deadEnd": true }, { "id": 4, "deadEnd": true }, { "id": 5, "deadEnd": true },

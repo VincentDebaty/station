@@ -4,7 +4,7 @@
   "city": "Plochingen",
   "tagline": "Plochingen — là où la ligne d'Ulm et celle de Tübingen se rejoignent avant Stuttgart.",
   "difficulty": 3,
-  "country": "🇩🇪 Allemagne",
+  "country": "allemagne",
   "desc": "Dernière bifurcation avant la cuvette de Stuttgart : la Filstalbahn venue d'Ulm et la Neckar-Alb-Bahn venue de Tübingen s'y rejoignent, la S-Bahn S1 y fait demi-tour une fois sur deux. Huit voies à quai sous un bâtiment Jugendstil de 1907, un port sur le Neckar et son embranchement de fret.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },

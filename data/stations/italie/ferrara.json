@@ -4,7 +4,7 @@
   "tagline": "Deux réseaux dans la même gare",
   "desc": "Sur le grand axe de Venise à Bologne, Ferrare abrite aussi les lignes régionales de Ravenne et de Suzzara — et le fret du port de Ravenne vers le Brenner rebrousse dans le nœud, au milieu des Frecce.",
   "difficulty": 3,
-  "country": "🇮🇹 Italie",
+  "country": "italie",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }, { "id": 6 }
   ],

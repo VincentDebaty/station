@@ -5,7 +5,7 @@
   "tagline": "La charnière du Brenner",
   "desc": "Plus grand nœud du nord-est italien : cinq lignes en étoile, dont l'unique axe transalpin du Brenner — la charnière entre le flot est-ouest de Milan à Venise et le flot nord-sud de Munich à Bologne. Le fret du corridor file par le Quadrante Europa, premier interport d'Italie.",
   "difficulty": 4,
-  "country": "🇮🇹 Italie",
+  "country": "italie",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 },
     { "id": 5 }, { "id": 6 }, { "id": 7 }, { "id": 8 }

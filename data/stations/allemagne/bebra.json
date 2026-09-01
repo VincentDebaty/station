@@ -3,7 +3,7 @@
   "name": "Bebra",
   "tagline": "Bebra — l'ancienne gare-frontière : une seule sortie vers Cassel, trois vers le sud et l'est.",
   "difficulty": 3,
-  "country": "🇩🇪 Allemagne",
+  "country": "allemagne",
   "desc": "Gare-frontière du temps de la division, où les trains interzones changeaient de locomotive ; aujourd'hui un nœud régional à cinq voies et un grand triage du sel de potasse. Cassel sort par un bout, Fulda et Eisenach entrent par l'autre : les trains de Fulda vers Erfurt ou Göttingen rebroussent à quai, la courbe de Berlin qui les en dispensait contournant la gare.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }

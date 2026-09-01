@@ -4,7 +4,7 @@
   "tagline": "La capitale du riz, entre deux vies ferroviaires",
   "desc": "Au milieu des rizières, Verceil est une bifurcation amputée d'une branche : la ligne de Casale ne voit plus un train depuis 2013, mais la navette diesel de Mortara et Pavie rebrousse toujours à quai, à côté du flot Turin–Milan.",
   "difficulty": 2,
-  "country": "🇮🇹 Italie",
+  "country": "italie",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
   ],

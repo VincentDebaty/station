@@ -4,7 +4,7 @@
   "city": "Osnabrück",
   "tagline": "Osnabrück Hbf — deux gares superposées à angle droit, le seul croisement à deux niveaux.",
   "difficulty": 1,
-  "country": "🇩🇪 Allemagne",
+  "country": "allemagne",
   "desc": "Deux gares superposées à angle droit : celle du Nord-Sud en bas, celle de l'Ouest-Est en haut. Le seul croisement à deux niveaux du catalogue — ici, c'est une gare à quatre directions.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }

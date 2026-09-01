@@ -4,7 +4,7 @@
   "city": "Hambourg",
   "tagline": "Hamburg Hbf — 12 voies, 250 000 voyageurs par jour : tout le Nord y converge.",
   "difficulty": 4,
-  "country": "🇩🇪 Allemagne",
+  "country": "allemagne",
   "desc": "Douze voies dans une halle de fer de 1906, et deux cent cinquante mille voyageurs par jour : la gare la plus fréquentée d'Allemagne par rapport à sa taille. Tout le Nord y converge.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },

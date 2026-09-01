@@ -4,7 +4,7 @@
   "city": "Dresde",
   "tagline": "Dresden Hbf — sous la voûte de Foster, la dernière grande gare avant Prague.",
   "difficulty": 3,
-  "country": "🇩🇪 Allemagne",
+  "country": "allemagne",
   "desc": "Sous la voûte de verre refaite par Norman Foster : la gare de la vallée de l'Elbe, dernière grande gare allemande avant Prague. Trois culs-de-sac sur six directions.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },

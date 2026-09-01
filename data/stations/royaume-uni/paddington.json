@@ -3,7 +3,7 @@
   "name": "London Paddington",
   "tagline": "London Paddington — la gare de Brunel : le Grand Ouest et le pays de Galles.",
   "difficulty": 4,
-  "country": "🇬🇧 Royaume-Uni",
+  "country": "royaume-uni",
   "desc": "La gare de Brunel, sous la verrière de 1854 : le Grand Ouest, le pays de Galles et la Cornouailles. Six directions, et le train de nuit de Penzance qui part du quai 6 à minuit passé.",
   "platforms": [
     { "id": 1, "deadEnd": true }, { "id": 2, "deadEnd": true }, { "id": 3, "deadEnd": true }, { "id": 4, "deadEnd": true }, { "id": 5, "deadEnd": true },

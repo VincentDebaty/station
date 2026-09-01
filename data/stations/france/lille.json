@@ -4,7 +4,7 @@
   "city": "Lille",
   "tagline": "Lille-Flandres — l'étoile du Nord rebrousse : 8 quais à heurtoir.",
   "difficulty": 3,
-  "country": "🇫🇷 France",
+  "country": "france",
   "desc": "L'étoile du Nord rebrousse : huit quais à heurtoir pour le TER de tout le bassin minier, plus la navette de Paris. Tournai est à vingt minutes — c'est la porte belge du catalogue.",
   "platforms": [
     { "id": 1, "deadEnd": true }, { "id": 2, "deadEnd": true }, { "id": 3, "deadEnd": true }, { "id": 4, "deadEnd": true }, { "id": 5, "deadEnd": true },

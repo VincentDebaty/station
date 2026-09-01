@@ -4,7 +4,7 @@
   "tagline": "L'aiguillage qui garde l'entrée du tunnel",
   "desc": "Trois directions au bord de l'estuaire : Cardiff, Gloucester par Chepstow, et les sept kilomètres sous la Severn vers Bristol. L'immense triage à charbon s'est éteint en 1987 — il reste la bifurcation, toute nue.",
   "difficulty": 2,
-  "country": "🇬🇧 Royaume-Uni",
+  "country": "royaume-uni",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }
   ],

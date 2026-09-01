@@ -3,7 +3,7 @@
   "name": "Denderleeuw",
   "tagline": "Denderleeuw — l'entonnoir : quatre directions à l'ouest, une seule à l'est.",
   "difficulty": 3,
-  "country": "🇧🇪 Belgique",
+  "country": "belgique",
   "desc": "Neuf voies dans un village de dix mille habitants : c'est ici que tout ce qui vient de Flandre orientale se rassemble avant d'entrer dans Bruxelles. Gand, Courtrai, Termonde et Grammont d'un côté ; de l'autre, une seule gorge, et dix relations cadencées par heure qui doivent y passer.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }

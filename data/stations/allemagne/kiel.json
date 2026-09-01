@@ -4,7 +4,7 @@
   "city": "Kiel",
   "tagline": "Kiel Hbf — 8 voies à heurtoir face à la Baltique, à cent mètres des ferries.",
   "difficulty": 2,
-  "country": "🇩🇪 Allemagne",
+  "country": "allemagne",
   "desc": "Le terminus de la Baltique, à cent mètres des quais des ferries : huit voies à heurtoir face à la mer. Tout ce qui entre en Schleswig-Holstein finit ici ou à Flensbourg.",
   "platforms": [
     { "id": 1, "deadEnd": true }, { "id": 2, "deadEnd": true }, { "id": 3, "deadEnd": true }, { "id": 4, "deadEnd": true }, { "id": 5, "deadEnd": true }

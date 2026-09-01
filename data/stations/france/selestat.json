@@ -3,7 +3,7 @@
   "name": "Sélestat",
   "tagline": "Sélestat — la plaine file tout droit, le piémont se détache sur voie unique.",
   "difficulty": 2,
-  "country": "🇫🇷 France",
+  "country": "france",
   "desc": "Entre Strasbourg et Colmar, la gare où le TER 200 et le TGV de Paris marquent l'arrêt sur la grande ligne de la plaine, pendant que l'autorail de la route des vins repart seul vers Barr et Molsheim sur sa voie unique non électrifiée. Deux autres antennes, vers Sainte-Marie-aux-Mines et vers Sundhouse, ont disparu : il reste le tronc à quatre voies et cette bifurcation du piémont, pour apprendre à trier un express d'un omnibus.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }

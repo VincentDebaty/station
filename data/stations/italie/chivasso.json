@@ -4,7 +4,7 @@
   "tagline": "Le verrou de la vallée d'Aoste",
   "desc": "Tous les trains d'Aoste viennent se greffer ici sur l'artère Turin–Milan, en travers du flot rapide est-ouest. Les navettes de Casale, elles, repartent d'un tronchino en impasse collé au premier quai.",
   "difficulty": 3,
-  "country": "🇮🇹 Italie",
+  "country": "italie",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }, { "id": 6 }
   ],

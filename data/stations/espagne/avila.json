@@ -4,7 +4,7 @@
   "tagline": "Les remparts au bout de la rampe",
   "desc": "À 1 130 mètres, après la longue rampe de la sierra de Guadarrama, la doyenne des capitales hautes d'Espagne trie les MD entre Madrid, Valladolid et la ligne de Peñaranda vers Salamanque. Les grandes lignes l'ont quittée en 2010 ; les remparts, eux, n'ont pas bougé.",
   "difficulty": 2,
-  "country": "🇪🇸 Espagne",
+  "country": "espagne",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
   ],

@@ -3,7 +3,7 @@
   "name": "Nantes",
   "tagline": "Nantes — 7 quais tournés vers l'océan, la transversale de La Rochelle en prime.",
   "difficulty": 3,
-  "country": "🇫🇷 France",
+  "country": "france",
   "desc": "La sixième gare de province, tournée vers l'océan : trois directions vers l'intérieur, trois vers la côte. La ligne de Bordeaux par La Rochelle est la seule transversale de l'Atlantique.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },

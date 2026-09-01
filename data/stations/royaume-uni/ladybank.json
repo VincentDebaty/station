@@ -4,7 +4,7 @@
   "tagline": "La fourche du Fife",
   "desc": "Un village, deux quais victoriens classés, et la fourche où la ligne d'Édimbourg se partage depuis 1847 : Perth par Glenfarg, Dundee par Cupar. La branche de Perth, fermée en 1955, a rouvert en 1975 — les deux dents de la fourche sont vivantes.",
   "difficulty": 1,
-  "country": "🇬🇧 Royaume-Uni",
+  "country": "royaume-uni",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }
   ],

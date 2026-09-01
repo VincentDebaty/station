@@ -4,7 +4,7 @@
   "tagline": "Le balcon des Pyrénées",
   "desc": "Sous le boulevard des Pyrénées, le funiculaire descend jusqu'aux quais où l'axe de Bayonne croise les TGV de Bordeaux. Au sud part la ligne du Somport, rescapée : les navettes d'Oloron remontent la vallée d'Aspe jusqu'à Bedous.",
   "difficulty": 2,
-  "country": "🇫🇷 France",
+  "country": "france",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
   ],

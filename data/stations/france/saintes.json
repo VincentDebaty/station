@@ -3,7 +3,7 @@
   "name": "Saintes",
   "tagline": "Saintes — cinq directions en Saintonge, et un technicentre.",
   "difficulty": 4,
-  "country": "🇫🇷 France",
+  "country": "france",
   "desc": "Le nœud de la Saintonge : Bordeaux au sud, Rochefort au nord, Angoulême à l'est, Royan à l'ouest, Niort par Saint-Jean-d'Angély. Le technicentre y répare les diesels et y démolit les rames en fin de vie ; depuis 2020, le Ferrocampus y forme les métiers du rail.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }, { "id": 6 }

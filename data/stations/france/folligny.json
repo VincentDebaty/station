@@ -4,7 +4,7 @@
   "tagline": "La croix de la Manche",
   "desc": "Trois cents habitants autour d'une gare de bifurcation où le Paris–Granville croise la ligne de Caen à Rennes. Tout ce qui circule entre la baie, le Cotentin et la capitale se donne rendez-vous sur ses cinq voies.",
   "difficulty": 2,
-  "country": "🇫🇷 France",
+  "country": "france",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
   ],

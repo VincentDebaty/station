@@ -3,7 +3,7 @@
   "name": "Derby",
   "tagline": "Derby — la ville qui a construit les locomotives de la moitié du pays.",
   "difficulty": 2,
-  "country": "🇬🇧 Royaume-Uni",
+  "country": "royaume-uni",
   "desc": "La ville qui a construit les locomotives de la moitié du pays : cinq directions, dont la ligne du Staffordshire qui file vers Crewe par les poteries de Stoke.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }

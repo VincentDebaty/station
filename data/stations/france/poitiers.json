@@ -3,7 +3,7 @@
   "name": "Poitiers",
   "tagline": "Poitiers — dans la tranchée sous la ville haute : un tronc, deux antennes.",
   "difficulty": 2,
-  "country": "🇫🇷 France",
+  "country": "france",
   "desc": "Dans la tranchée sous la ville haute : le tronc Paris–Bordeaux tient les quatre premiers quais, La Rochelle et Limoges se partagent le reste. Deux antennes, un tronc — la géométrie classique.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }

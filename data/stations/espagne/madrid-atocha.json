@@ -4,7 +4,7 @@
   "tagline": "La palmeraie face aux heurtoirs",
   "desc": "Sous la halle de 1892 devenue serre tropicale, les AVE de Séville, Valence et Barcelone rebroussent face aux heurtoirs, pendant qu'en sous-sol les Cercanías d'Aranjuez filent vers Chamartín sans jamais s'arrêter. La plus grande gare d'Espagne porte le nom de la romancière Almudena Grandes et le mémorial du 11 mars 2004.",
   "difficulty": 5,
-  "country": "🇪🇸 Espagne",
+  "country": "espagne",
   "platforms": [
     { "id": 1, "deadEnd": true }, { "id": 2, "deadEnd": true }, { "id": 3, "deadEnd": true },
     { "id": 4, "deadEnd": true }, { "id": 5, "deadEnd": true }, { "id": 6, "deadEnd": true },

@@ -4,7 +4,7 @@
   "tagline": "La porte de la Bretagne",
   "desc": "Au pied de la cathédrale, le nœud où la ligne de Saint-Malo croise celle de la baie : TGV de la côte, TER de Dinan, trains de Caen — tout converge ici avant Rennes.",
   "difficulty": 3,
-  "country": "🇫🇷 France",
+  "country": "france",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }, { "id": 6 }
   ],

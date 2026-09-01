@@ -4,7 +4,7 @@
   "tagline": "Le triage sous le Cheval blanc",
   "desc": "Sous le cheval de craie, tout l'Ouest se trie : l'express de Cornouailles par la Berks and Hants, le régional du Wessex vers Salisbury, la Heart of Wessex qui descend à Weymouth — et les trains de calcaire de Merehead qui remplissent les boucles de fret. Deux îlots de 1901, trois faces en service.",
   "difficulty": 3,
-  "country": "🇬🇧 Royaume-Uni",
+  "country": "royaume-uni",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }, { "id": 6 }
   ],

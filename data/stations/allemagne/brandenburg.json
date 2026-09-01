@@ -4,7 +4,7 @@
   "city": "Brandebourg",
   "tagline": "Brandenburg Hbf — le RE1 file vers Berlin, la Städtebahn part seule vers Rathenow.",
   "difficulty": 2,
-  "country": "🇩🇪 Allemagne",
+  "country": "allemagne",
   "desc": "Sur la Havel, à une heure de Berlin : cinq voies à quai où le RE1 Magdebourg – Berlin et les IC de Hanovre croisent la petite navette de Rathenow, dernier tronçon vivant de la Brandenburgische Städtebahn. Le château d'eau de l'ancien triage, désaffecté, surveille encore le faisceau.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }

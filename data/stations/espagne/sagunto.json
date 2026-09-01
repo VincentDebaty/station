@@ -4,7 +4,7 @@
   "tagline": "Le nœud de la Central de Aragón",
   "desc": "Sous le château qui fit trembler Rome, la ligne côtière de Castellón croise la vieille Central de Aragón, qui s'arrache de la mer pour grimper vers Teruel. Les convois du port sidérurgique traversent le faisceau au milieu des navettes de Valence.",
   "difficulty": 2,
-  "country": "🇪🇸 Espagne",
+  "country": "espagne",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
   ],

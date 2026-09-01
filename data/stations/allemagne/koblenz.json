@@ -4,7 +4,7 @@
   "city": "Coblence",
   "tagline": "Koblenz Hbf — au Deutsches Eck, dix voies entre deux vallées encaissées.",
   "difficulty": 2,
-  "country": "🇩🇪 Allemagne",
+  "country": "allemagne",
   "desc": "Au Deutsches Eck, là où la Moselle se jette dans le Rhin : dix voies entre deux vallées encaissées, et les péniches en contrebas. Cinq directions dans un couloir de six cents mètres.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },

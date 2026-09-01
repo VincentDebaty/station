@@ -4,7 +4,7 @@
   "tagline": "Les heurtoirs du bout de l'Angleterre",
   "desc": "Le rail anglais finit ici, sur quatre voies à heurtoirs posées contre la baie du mont St Michael. Une seule voie en sort, et trois services se la partagent : les express de Londres, les locaux de Plymouth, les grands trains du nord — et chaque nuit, le Night Riviera.",
   "difficulty": 3,
-  "country": "🇬🇧 Royaume-Uni",
+  "country": "royaume-uni",
   "platforms": [
     {
       "id": 1,

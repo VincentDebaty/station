@@ -4,7 +4,7 @@
   "tagline": "Le Y de la campagne romaine",
   "desc": "Le plus important nœud ferroviaire au sud de Rome est une bifurcation pure en rase campagne : la ligne de Nettuno quitte ici la Direttissima de Naples, dans un Y que se partagent les navettes des deux lignes du littoral.",
   "difficulty": 2,
-  "country": "🇮🇹 Italie",
+  "country": "italie",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
   ],

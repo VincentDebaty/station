@@ -4,7 +4,7 @@
   "tagline": "Deux chemins vers Londres",
   "desc": "À Cogload Junction, juste à l'est, la voie se dédouble : par Bristol ou par les collines du Berks and Hants, deux chemins vers Londres. La capitale du Somerset trie les deux flux, plus les express du nord.",
   "difficulty": 2,
-  "country": "🇬🇧 Royaume-Uni",
+  "country": "royaume-uni",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
   ],

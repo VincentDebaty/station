@@ -5,7 +5,7 @@
   "tagline": "Le palier de la West Coast",
   "desc": "Sur la West Coast Main Line, tous les express de Londres vers Glasgow y marquent le pas. À l'ouest, la ligne de Liverpool par St Helens ; à l'est, la desserte de Manchester par Walkden.",
   "difficulty": 3,
-  "country": "🇬🇧 Royaume-Uni",
+  "country": "royaume-uni",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }, { "id": 6 }
   ],

@@ -4,7 +4,7 @@
   "tagline": "La halle de pierre au bord de la Dordogne",
   "desc": "Bâtiment néo-classique de 1852 avec sa grande halle couvrant les quais — rare pour une gare de cette taille. Sur la radiale de Paris, c'est ici que bifurque la ligne de Bergerac et de Sarlat, sauvée et modernisée.",
   "difficulty": 2,
-  "country": "🇫🇷 France",
+  "country": "france",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }
   ],

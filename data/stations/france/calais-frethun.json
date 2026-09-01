@@ -5,7 +5,7 @@
   "tagline": "La LGV touche la côte, le tunnel passe",
   "desc": "Là où la LGV Nord rejoint la ligne du littoral : les Krono+ GV de Lille y terminent ou filent vers Boulogne, la navette recueille Calais-Ville, et l'Eurostar traverse sans un arrêt depuis 2020. Une gare de correspondance posée dans les champs, à cinq minutes du tunnel.",
   "difficulty": 1,
-  "country": "🇫🇷 France",
+  "country": "france",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }
   ],

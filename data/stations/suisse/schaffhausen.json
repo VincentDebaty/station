@@ -4,7 +4,7 @@
   "city": "Schaffhouse",
   "tagline": "Schaffhouse — une gare, deux compagnies, deux pantographes : la frontière passe entre les quais.",
   "difficulty": 3,
-  "country": "🇨🇭 Suisse",
+  "country": "suisse",
   "desc": "Gare en copropriété, 65 % aux CFF et 35 % à la Deutsche Bahn, équipée des deux signalisations et des deux largeurs de pantographe ; la douane y est restée après Schengen. À l'ouest, trois routes se séparent à Neuhausen, au-dessus des chutes du Rhin : Winterthur par Andelfingen, Zurich par Bülach et la Hochrheinbahn allemande vers Bâle. À l'est, Singen et l'Allemagne, et la ligne du lac qui franchit le Rhin vers Stein am Rhein et Kreuzlingen. Six voies, et le fret germano-suisse qui y change de compagnie.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }, { "id": 6 }

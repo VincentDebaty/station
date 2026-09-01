@@ -4,7 +4,7 @@
   "tagline": "La doyenne, les pieds dans le Tage",
   "desc": "Le plus vieux terminus du Portugal (1865) aligne ses heurtoirs sur le quai du Tage, sous l'Alfama. Le Sud-Express y partait pour Paris ; restent les Alfa de Porto et de Braga, les IC des deux Beiras et les urbains d'Azambuja, tous par le même goulet vers le nord.",
   "difficulty": 4,
-  "country": "🇵🇹 Portugal",
+  "country": "portugal",
   "platforms": [
     { "id": 1, "deadEnd": true }, { "id": 2, "deadEnd": true }, { "id": 3, "deadEnd": true },
     { "id": 4, "deadEnd": true }, { "id": 5, "deadEnd": true }, { "id": 6, "deadEnd": true },

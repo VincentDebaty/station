@@ -3,7 +3,7 @@
   "name": "Pétange",
   "tagline": "Pétange — les deux lignes du sud s'y retrouvent, et repartent ensemble sur Rodange.",
   "difficulty": 3,
-  "country": "🇱🇺 Luxembourg",
+  "country": "luxembourg",
   "desc": "Le nœud du bassin minier : celle qui vient de Luxembourg par Bascharage et celle qui vient d'Esch par Differdange se rejoignent ici, puis n'en font plus qu'une jusqu'à Rodange. Un faisceau bien plus grand que le bourg, hérité du temps du minerai.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },

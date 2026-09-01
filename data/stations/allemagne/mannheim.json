@@ -4,7 +4,7 @@
   "city": "Mannheim",
   "tagline": "Mannheim Hbf — le carrefour du Sud-Ouest : plus d'ICE à l'heure qu'ailleurs.",
   "difficulty": 3,
-  "country": "🇩🇪 Allemagne",
+  "country": "allemagne",
   "desc": "Le carrefour du Sud-Ouest : six directions, onze voies, et plus d'ICE à l'heure qu'aucune autre gare allemande. Tout ce qui va de la Ruhr à Munich ou à Bâle passe ici.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },

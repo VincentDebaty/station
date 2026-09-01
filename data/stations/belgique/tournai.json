@@ -3,7 +3,7 @@
   "name": "Tournai",
   "tagline": "Tournai — porte de Lille : 5 quais au carrefour Bruxelles–France.",
   "difficulty": 2,
-  "country": "🇧🇪 Belgique",
+  "country": "belgique",
   "desc": "Le grand carrefour du Hainaut occidental, à vingt kilomètres de Lille : sur l'une des plus vieilles lignes du continent (Bruxelles–Tournai, 1842), là où l'axe de la France croise la ligne de Mons. Bruxelles et Mons partent vers l'est, Courtrai et Lille vers l'ouest — l'international à portée de quai.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }

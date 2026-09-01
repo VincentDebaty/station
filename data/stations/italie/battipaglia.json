@@ -4,7 +4,7 @@
   "tagline": "La Porta del Sud",
   "desc": "Dernier grand nœud avant le Mezzogiorno profond : l'artère tyrrhénienne vers Reggio et la Sicile s'y sépare de la diagonale de montagne vers Potenza et Tarente, à voie unique et régulièrement en chantier.",
   "difficulty": 2,
-  "country": "🇮🇹 Italie",
+  "country": "italie",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
   ],

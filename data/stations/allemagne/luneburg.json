@@ -3,7 +3,7 @@
   "name": "Lüneburg",
   "tagline": "Lüneburg — deux bâtiments face à face, la Hanse du sel et l'antenne de Lübeck.",
   "difficulty": 3,
-  "country": "🇩🇪 Allemagne",
+  "country": "allemagne",
   "desc": "Deux gares se regardent de part et d'autre du parvis : Lüneburg Ost, sur le grand axe de Hambourg, et Lüneburg West de 1874, d'où partent les trains de Lübeck par Büchen et la Wendlandbahn de Dannenberg. Les ICE traversent sans s'arrêter plus d'une minute ; le metronom d'Uelzen et l'erixx du Wendland, eux, y rebroussent.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }

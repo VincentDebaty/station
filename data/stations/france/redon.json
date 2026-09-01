@@ -4,7 +4,7 @@
   "tagline": "Le carrefour de la Vilaine",
   "desc": "La ligne de Rennes vient mourir ici sur l'axe de la Bretagne Sud, et les trains de Nantes pour Rennes rebroussent à quai — seul un triangle en amont sauve les directs. Trois pays ferroviaires se croisent sur trois quais, TGV de Quimper compris.",
   "difficulty": 2,
-  "country": "🇫🇷 France",
+  "country": "france",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }
   ],

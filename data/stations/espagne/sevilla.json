@@ -5,7 +5,7 @@
   "tagline": "Le faux terminus du premier AVE",
   "desc": "Bâtie pour l'Expo 92 avec la première grande vitesse d'Espagne, Santa Justa cache douze voies traversantes sous six nefs qui lui donnent un air de cul-de-sac. Les trains de Cadix la percent de part en part, pendant que Huelva et l'Estrémadure s'échappent par le nord.",
   "difficulty": 5,
-  "country": "🇪🇸 Espagne",
+  "country": "espagne",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },
     { "id": 6 }, { "id": 7 }, { "id": 8 }, { "id": 9 }, { "id": 10 }

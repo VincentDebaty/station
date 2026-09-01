@@ -4,7 +4,7 @@
   "tagline": "Le centre cosmique de l'univers",
   "desc": "Dalí l'a proclamée centre du monde et lui a consacré une toile. Quatre directions s'y croisent : la côte Vermeille vers Cerbère, le Conflent tout juste rouvert avec son Train Jaune, la grande vitesse du Perthus vers Barcelone — et les primeurs de Saint-Charles en fond de gare.",
   "difficulty": 3,
-  "country": "🇫🇷 France",
+  "country": "france",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }, { "id": 6 }
   ],

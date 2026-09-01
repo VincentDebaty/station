@@ -4,7 +4,7 @@
   "city": "Berlin",
   "tagline": "Berlin Hbf — la gare-tour de 2006, deux niveaux perpendiculaires.",
   "difficulty": 4,
-  "country": "🇩🇪 Allemagne",
+  "country": "allemagne",
   "desc": "La gare-tour de 2006, posée en travers de la Spree : deux niveaux, seize voies perpendiculaires. Le pays n'a pas de centre, mais tout ce qui va vers l'est passe ici.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },

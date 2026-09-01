@@ -4,7 +4,7 @@
   "tagline": "L'arrêt de tous les trains du Lieuvin",
   "desc": "Deux voies en vrai, mais tout le monde s'y arrête : les Krono+ de Cherbourg, les Paris–Deauville et les TER de Rouen. La ville aux mille navetteurs guette le premier train pour Saint-Lazare.",
   "difficulty": 2,
-  "country": "🇫🇷 France",
+  "country": "france",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }
   ],

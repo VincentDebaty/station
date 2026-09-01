@@ -4,7 +4,7 @@
   "city": "Amsterdam",
   "tagline": "Amsterdam Centraal — posée sur l'IJ, dix quais, huit directions dont Londres et Berlin. Le boss des Pays-Bas.",
   "difficulty": 5,
-  "country": "🇳🇱 Pays-Bas",
+  "country": "pays-bas",
   "desc": "Bâtie par Cuypers en 1889 sur trois îles artificielles gagnées sur l'IJ, la gare est traversante de bout en bout : onze voies à quai, le tout coupé en moitiés a/b, et 170 000 voyageurs par jour. À l'ouest, tout passe par Sloterdijk — l'Eurostar vers Bruxelles et Londres par Schiphol et Rotterdam, l'IC de La Haye par Haarlem, la Zaanlijn vers Alkmaar. À l'est, Utrecht emporte l'ICE de Cologne, Amersfoort l'IC de Berlin, Weesp la Flevolijn d'Almere. Le peu de fret qui reste longe l'IJ sur la voie 15.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },

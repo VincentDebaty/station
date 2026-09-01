@@ -4,7 +4,7 @@
   "tagline": "La porte des vallées et des Marches",
   "desc": "Deuxième gare du pays de Galles : quatre longues voies où l'express de Londres double le train des Marches. Depuis 2024, la navette d'Ebbw Vale a rendu à la ville sa quatrième direction, fermée aux voyageurs depuis 1962.",
   "difficulty": 2,
-  "country": "🇬🇧 Royaume-Uni",
+  "country": "royaume-uni",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }
   ],

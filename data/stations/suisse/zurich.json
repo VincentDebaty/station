@@ -4,7 +4,7 @@
   "city": "Zurich",
   "tagline": "Zürich HB — la halle rebrousse, le souterrain traverse : le boss des Alpes.",
   "difficulty": 5,
-  "country": "🇨🇭 Suisse",
+  "country": "suisse",
   "desc": "Trois mille mouvements par jour, quatre cent mille voyageurs : la plus grande gare de Suisse est deux gares superposées. En haut, la grande halle en cul-de-sac (voies 3 à 18) où les trains de Bâle, de Coire et du Gothard entrent par l'ouest et rebroussent ; en dessous, les gares traversantes de la Museumstrasse (1990) et de la Löwenstrasse (2014), par où Genève et Lucerne filent vers Saint-Gall et Schaffhouse sans changer de sens. Sept directions, deux étages, et pas une minute de marge.",
   "platforms": [
     { "id": 1, "deadEnd": true }, { "id": 2, "deadEnd": true }, { "id": 3, "deadEnd": true },

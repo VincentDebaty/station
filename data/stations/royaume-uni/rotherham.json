@@ -4,7 +4,7 @@
   "city": "Rotherham",
   "tagline": "Rotherham Central — l'entonnoir de la vallée du Don, et le premier tram-train du pays.",
   "difficulty": 2,
-  "country": "🇬🇧 Royaume-Uni",
+  "country": "royaume-uni",
   "desc": "Tout ce qui quitte Sheffield par la vallée du Don passe ici, puis se partage à Swinton : Doncaster par Mexborough, Leeds par Moorthorpe, York par la vallée de la Dearne. Depuis 2018, les premiers tram-trains de Grande-Bretagne s'y glissent entre les trains, sur leurs propres quais.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }

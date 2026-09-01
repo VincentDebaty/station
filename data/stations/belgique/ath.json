@@ -3,7 +3,7 @@
   "name": "Ath",
   "tagline": "Ath — la petite croix parfaite : deux lignes, quatre directions, quatre quais.",
   "difficulty": 2,
-  "country": "🇧🇪 Belgique",
+  "country": "belgique",
   "desc": "Le croisement exact de la ligne 94 (Bruxelles–Tournai) et de la ligne 90 (Grammont–Jurbise) : deux directions par côté, sur quatre quais. La cité des Géants regarde passer les IC de Tournai et les omnibus qui descendent vers Mons.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }

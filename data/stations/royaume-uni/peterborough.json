@@ -3,7 +3,7 @@
   "name": "Peterborough",
   "tagline": "Peterborough — au milieu des Fens, le croisement de l'Est et de la transversale.",
   "difficulty": 2,
-  "country": "🇬🇧 Royaume-Uni",
+  "country": "royaume-uni",
   "desc": "Au milieu des Fens, là où la ligne de l'Est croise la transversale Birmingham–Norwich : sept voies, six directions, et pas une colline à l'horizon.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },

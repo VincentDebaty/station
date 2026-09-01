@@ -4,7 +4,7 @@
   "tagline": "Trois voies sous la Croisette",
   "desc": "La ville est construite au-dessus des voies : une dalle urbaine de deux kilomètres couvre la gare. Trois voies seulement pour les TGV, les TER de la côte et la navette de Grasse — tout se joue au chausse-pied.",
   "difficulty": 1,
-  "country": "🇫🇷 France",
+  "country": "france",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }
   ],

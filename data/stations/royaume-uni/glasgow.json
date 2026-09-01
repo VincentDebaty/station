@@ -4,7 +4,7 @@
   "city": "Glasgow",
   "tagline": "Glasgow Central — 17 voies à heurtoir sous la plus grande verrière d'Écosse.",
   "difficulty": 4,
-  "country": "🇬🇧 Royaume-Uni",
+  "country": "royaume-uni",
   "desc": "Dix-sept voies à heurtoir sous la plus grande verrière d'Écosse : tout le sud-ouest y aboutit, la côte d'Ayrshire comprise. La fiche absorbe Queen Street, à cinq cents mètres, d'où partent les trains d'Édimbourg et du nord.",
   "platforms": [
     { "id": 1, "deadEnd": true }, { "id": 2, "deadEnd": true }, { "id": 3, "deadEnd": true }, { "id": 4, "deadEnd": true }, { "id": 5, "deadEnd": true },

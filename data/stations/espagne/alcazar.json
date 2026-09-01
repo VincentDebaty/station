@@ -5,7 +5,7 @@
   "tagline": "L'aiguillage de la Manche",
   "desc": "Au milieu des moulins de la Manche, la ville-cheminote trie depuis 1854 tout ce que Madrid envoie vers l'Andalousie et le Levant. Les Intercity de Barcelone à Cadix y rebroussent encore, le temps que la machine change de bout.",
   "difficulty": 3,
-  "country": "🇪🇸 Espagne",
+  "country": "espagne",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }, { "id": 6 }
   ],

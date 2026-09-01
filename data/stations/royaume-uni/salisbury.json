@@ -3,7 +3,7 @@
   "name": "Salisbury",
   "tagline": "Salisbury — sous la flèche, le croisement de l'Ouest et du Wessex.",
   "difficulty": 1,
-  "country": "🇬🇧 Royaume-Uni",
+  "country": "royaume-uni",
   "desc": "Sous la flèche de la cathédrale, le croisement de la ligne de l'Ouest et de celle du Wessex : deux entrées, deux sorties, cinq quais. La bifurcation à l'état pur.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }

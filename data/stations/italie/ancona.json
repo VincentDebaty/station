@@ -4,7 +4,7 @@
   "tagline": "Les tiroirs de Rome face aux darses",
   "desc": "Adossée au port, traversée par les rapides de l'Adriatique, Ancône fait aussi terminus pour les trains de Rome sur ses trois voies en tiroir — Bologne et Rome partagent la même gorge jusqu'à Falconara.",
   "difficulty": 2,
-  "country": "🇮🇹 Italie",
+  "country": "italie",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 },
     { "id": 5 }, { "id": 6 }, { "id": 7 }

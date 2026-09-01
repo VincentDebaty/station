@@ -4,7 +4,7 @@
   "city": "Leipzig",
   "tagline": "Leipzig Hbf — la plus grande gare d'Europe par la surface, et tout y rebrousse.",
   "difficulty": 4,
-  "country": "🇩🇪 Allemagne",
+  "country": "allemagne",
   "desc": "La plus grande gare d'Europe par la surface : vingt-et-une voies à heurtoir sous deux halles jumelles, une par ancienne compagnie. Six directions, et tout rebrousse.",
   "platforms": [
     { "id": 1, "deadEnd": true }, { "id": 2, "deadEnd": true }, { "id": 3, "deadEnd": true }, { "id": 4, "deadEnd": true }, { "id": 5, "deadEnd": true },

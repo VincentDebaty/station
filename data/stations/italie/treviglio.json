@@ -4,7 +4,7 @@
   "tagline": "L'entonnoir oriental de Milan",
   "desc": "Le point exact où le quadruplement venu de Milan se referme sur la vieille double voie de Venise, et d'où rayonnent Bergame et Crémone. Les directs de Bergame évitent la gare par une courbe de 1908 : sa navette part à l'envers, côté ouest.",
   "difficulty": 2,
-  "country": "🇮🇹 Italie",
+  "country": "italie",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
   ],

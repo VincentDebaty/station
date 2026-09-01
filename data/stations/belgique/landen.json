@@ -3,7 +3,7 @@
   "name": "Landen",
   "tagline": "Landen — la bifurcation à l'état pur : une entrée, deux sorties.",
   "difficulty": 1,
-  "country": "🇧🇪 Belgique",
+  "country": "belgique",
   "desc": "Là où la grande artère Bruxelles–Liège lâche son antenne vers le Limbourg. Une entrée à l'ouest, deux sorties à l'est, quatre quais et des rames courtes : le poste le plus lisible du pays pour se faire la main.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }

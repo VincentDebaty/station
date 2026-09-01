@@ -3,7 +3,7 @@
   "name": "Amiens",
   "tagline": "Amiens — le seul point où la Normandie touche le Nord sans passer par Paris.",
   "difficulty": 2,
-  "country": "🇫🇷 France",
+  "country": "france",
   "desc": "Le carrefour picard, seul point du réseau où la Normandie touche le Nord sans passer par Paris. Quatre directions, six quais, et une cathédrale au bout du quai 1.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },

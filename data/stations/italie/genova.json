@@ -5,7 +5,7 @@
   "tagline": "Beaucoup de destinations, très peu de géographie",
   "desc": "Une gare terminus monumentale devenue traversante malgré elle, serrée entre deux tunnels de la corniche : chaque train entre et sort sous la montagne, et quatre des cinq destinations s'entonnent dans le même goulet ouest vers Sampierdarena.",
   "difficulty": 5,
-  "country": "🇮🇹 Italie",
+  "country": "italie",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },
     { "id": 6 }, { "id": 7 }, { "id": 8 }, { "id": 9 }

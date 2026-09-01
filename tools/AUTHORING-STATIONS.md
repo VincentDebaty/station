@@ -111,7 +111,11 @@ Strasbourg), mauvaise gare (Lille-Flandres≠Lille-Europe pour Bruxelles/Eurosta
   "tagline": "…",                   // une ligne, accroche de la carte
   "desc": "…",                      // 2-3 phrases, caractère réel
   "difficulty": 4,                  // 1..5, définit le palier (§5)
-  "country": "🇧🇪 Belgique",
+  "country": "belgique",
+  // ^ LE SLUG DU PAYS, pas son libellé (1er septembre 2026). C'est le nom du
+  //   dossier, et la clé du bloc dans index.json. Le libellé affichable
+  //   (« 🇧🇪 Belgique ») vit UNE fois, dans `label` de index.json, et se lit
+  //   par paysDe(slug) — js/catalog.js. Il était recopié dans les 401 fiches.
   "platforms": [                    // impasse : "deadEnd": true (heurtoir)
     { "id": 1 }, { "id": 2 }, …
   ],

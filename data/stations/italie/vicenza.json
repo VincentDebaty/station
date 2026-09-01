@@ -4,7 +4,7 @@
   "tagline": "Deux mondes sur le même faisceau",
   "desc": "La grande artère Milan–Venise traverse, pendant que les navettes diesel de Schio rebroussent sur leurs voies en impasse. Bâtiment de 1845, aujourd'hui en plein chantier de la grande vitesse qui passera en surface.",
   "difficulty": 3,
-  "country": "🇮🇹 Italie",
+  "country": "italie",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }, { "id": 6 }
   ],

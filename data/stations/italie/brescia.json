@@ -4,7 +4,7 @@
   "tagline": "Deux gares en une",
   "desc": "Une grande traversante où les Frecciarossa partagent la ligne classique avec quatre corridors régionaux — et, collé à son flanc ouest, un mini-terminus de trois voies non raccordées d'où partent les diesels et les premiers trains à hydrogène d'Italie, vers la Valcamonica.",
   "difficulty": 3,
-  "country": "🇮🇹 Italie",
+  "country": "italie",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }, { "id": 6 }
   ],

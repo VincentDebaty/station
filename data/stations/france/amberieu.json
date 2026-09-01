@@ -4,7 +4,7 @@
   "city": "Ambérieu-en-Bugey",
   "tagline": "Ambérieu — quarante voies de triage au pied du Bugey.",
   "difficulty": 4,
-  "country": "🇫🇷 France",
+  "country": "france",
   "desc": "Une ville née du rail : sous la rotonde de 1873 dormaient quarante-huit locomotives à vapeur. Trois lignes s'y séparent — Genève par Culoz, Mâcon par le nord, Montalieu à l'est — et le triage compte encore plus de quarante voies.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }, { "id": 6 }

@@ -3,7 +3,7 @@
   "name": "Deventer",
   "tagline": "Deventer — le pont sur l'IJssel, où l'IC de Berlin coupe la ligne Arnhem–Zwolle.",
   "difficulty": 3,
-  "country": "🇳🇱 Pays-Bas",
+  "country": "pays-bas",
   "desc": "La ligne d'Amsterdam franchit l'IJssel juste avant les quais et y coupe à angle droit la Staatslijn A, qui file d'Arnhem et de Zutphen vers Zwolle sans rebrousser. Trois voies seulement sous le bâtiment de 1914 de Menalda van Schouwenburg, resté presque intact avec ses tableaux de faïence : l'IC de Berlin, celui d'Enschede et les Intercity de l'IJssel s'y partagent le peu de place.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }

@@ -4,7 +4,7 @@
   "tagline": "Le carrefour de la Meseta",
   "desc": "Sous la marquise de fer et de verre de 1902, la ville des foires de Castille trie ce qui va d'Ávila à Valladolid, de Salamanque à la Galice. Le régional de Sanabria y rebrousse encore, pendant que les AVE filent sur la voie neuve, à un kilomètre des quais centenaires.",
   "difficulty": 3,
-  "country": "🇪🇸 Espagne",
+  "country": "espagne",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }, { "id": 6 }
   ],

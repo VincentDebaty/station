@@ -4,7 +4,7 @@
   "city": "Augsbourg",
   "tagline": "Augsburg Hbf — 15 voies dans la plus vieille gare-terminus reconvertie du monde.",
   "difficulty": 2,
-  "country": "🇩🇪 Allemagne",
+  "country": "allemagne",
   "desc": "Quinze voies dans la plus vieille gare-terminus reconvertie du monde (1846) : la porte de la Bavière, à quarante minutes de Munich.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },

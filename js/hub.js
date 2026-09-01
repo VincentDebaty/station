@@ -47,9 +47,9 @@ async function startStation(i) {
   // d'amorce d'une partie se joue en niveau 1 (js/ruban.js, ficheDeService).
   const cfg = typeof ficheDeService === "function"
     ? ficheDeService(CATALOG[i]) : CATALOG[i];
-  // Cartouche haut-gauche : drapeau (1er token du champ country « 🇧🇪 Belgique »)
+  // Cartouche haut-gauche : drapeau du pays (déduit du slug, js/catalog.js)
   // + nom de la gare.
-  const flag = (cfg.country || "").trim().split(" ")[0];
+  const flag = paysDe(cfg.country).drapeau;
   // Cartouche = bouton RETOUR (même logique que « ‹ France » sur la carte) :
   // flèche + drapeau + nom + difficulté, cliquable pour revenir à la carte.
   document.getElementById("station-tag").innerHTML =

@@ -4,7 +4,7 @@
   "city": "Fürth",
   "tagline": "Fürth Hbf — au bout de la toute première ligne allemande, la fourche de Bamberg et de Wurtzbourg.",
   "difficulty": 4,
-  "country": "🇩🇪 Allemagne",
+  "country": "allemagne",
   "desc": "Nuremberg–Fürth, 1835 : la première ligne de chemin de fer d'Allemagne. La gare actuelle (1864) est la fourche où le trafic venu de Nuremberg se partage entre la ligne de Bamberg par Erlangen et celle de Wurtzbourg par Neustadt (Aisch), avec la Rangaubahn de Cadolzburg toutes les demi-heures. Huit voies à quai, deux S-Bahn, et le fret de Bamberg qui passe sur sa voie de dépassement ; plus d'ICE régulier depuis 2009.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },

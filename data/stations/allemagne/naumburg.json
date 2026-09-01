@@ -4,7 +4,7 @@
   "city": "Naumburg",
   "tagline": "Naumburg Hbf — cinq voies au confluent de la Saale et de l'Unstrut, et le tram qui attend devant.",
   "difficulty": 3,
-  "country": "🇩🇪 Allemagne",
+  "country": "allemagne",
   "desc": "Là où la Thüringer Bahn de Halle et de Leipzig lâche la Saalbahn vers Iéna et Saalfeld : trois voies de grand passage, deux petites en baie pour l'autorail de l'Unstrut. Les ICE ont filé sur la ligne nouvelle en 2017 ; il reste les IC de Nuremberg, un régional toutes les quelques minutes et le fret qui descend vers Bad Kösen.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }

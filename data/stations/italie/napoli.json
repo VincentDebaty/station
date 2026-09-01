@@ -5,7 +5,7 @@
   "tagline": "Le grand terminus du Mezzogiorno",
   "desc": "Vingt-trois voies à heurtoirs derrière une gorge unique orientée à l'est, reconstruite par Pier Luigi Nervi : même les Frecciarossa de Milan pour Salerne doivent y rebrousser, pendant que trois étages de rail superposés ne se touchent jamais.",
   "difficulty": 5,
-  "country": "🇮🇹 Italie",
+  "country": "italie",
   "platforms": [
     { "id": 1, "deadEnd": true }, { "id": 2, "deadEnd": true }, { "id": 3, "deadEnd": true },
     { "id": 4, "deadEnd": true }, { "id": 5, "deadEnd": true }, { "id": 6, "deadEnd": true },

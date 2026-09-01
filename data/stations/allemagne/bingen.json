@@ -4,7 +4,7 @@
   "city": "Bingen",
   "tagline": "Bingen Hbf — à l'entrée des gorges du Rhin, l'île où la Nahe quitte le fleuve.",
   "difficulty": 3,
-  "country": "🇩🇪 Allemagne",
+  "country": "allemagne",
   "desc": "Bingerbrück jusqu'en 1993 : une gare-île coincée entre le Rhin et l'embouchure de la Nahe, à l'entrée des gorges. Les ICE et la MittelrheinBahn filent tout droit sur la rive gauche entre Coblence et Mayence ; côté Mayence, la Nahetalbahn se détache vers Bad Kreuznach et le Palatinat. Le poste de commandement de 1936, classé, veille encore sur l'ancien triage rasé pour l'exposition horticole de 2008.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }

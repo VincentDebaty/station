@@ -4,7 +4,7 @@
   "tagline": "La sortie nord du pont du Tay",
   "desc": "Au débouché du pont du Tay, deux kilomètres de fer au-dessus de l'estuaire : les trains d'Édimbourg y rejoignent ceux de Glasgow et de Perth avant de filer sur la côte vers Aberdeen. Deux voies traversantes, deux tiroirs tournés vers l'ouest.",
   "difficulty": 2,
-  "country": "🇬🇧 Royaume-Uni",
+  "country": "royaume-uni",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }
   ],

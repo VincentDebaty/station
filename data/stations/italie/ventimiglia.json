@@ -4,7 +4,7 @@
   "tagline": "La frontière où tout le monde rebrousse",
   "desc": "Trois systèmes électriques cohabitent dans une seule gare, et presque aucun train ne la traverse : les TER français, les régionaux italiens et les autorails de la vallée de la Roya viennent tous y faire tête avant de repartir.",
   "difficulty": 2,
-  "country": "🇮🇹 Italie",
+  "country": "italie",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }, { "id": 6 }
   ],

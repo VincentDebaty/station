@@ -4,7 +4,7 @@
   "tagline": "La ville que le rail a bâtie",
   "desc": "Née Bishopstoke Junction en 1839, la ville s'est construite autour de ses ateliers ferroviaires. Trois lignes s'y séparent : la main line de Londres, la branche de Fareham vers Portsmouth, et la boucle de Romsey rouverte en 2003.",
   "difficulty": 2,
-  "country": "🇬🇧 Royaume-Uni",
+  "country": "royaume-uni",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }
   ],

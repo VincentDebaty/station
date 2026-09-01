@@ -4,7 +4,7 @@
   "city": "Limoges",
   "tagline": "Limoges-Bénédictins — sous le dôme, le milieu du POLT.",
   "difficulty": 2,
-  "country": "🇫🇷 France",
+  "country": "france",
   "desc": "Sous le dôme de béton le plus photographié du réseau, la gare tient le milieu du POLT — Paris–Orléans–Limoges–Toulouse, la ligne que le TGV n'a jamais remplacée.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },

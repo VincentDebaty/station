@@ -4,7 +4,7 @@
   "city": "Buchloe",
   "tagline": "Buchloe — le carrefour de l'Allgäu : Munich et Augsbourg d'un côté, Memmingen et Kempten de l'autre.",
   "difficulty": 3,
-  "country": "🇩🇪 Allemagne",
+  "country": "allemagne",
   "desc": "Quatre lignes se nouent dans cette petite ville de Souabe bavaroise depuis 1847 : Munich et Augsbourg arrivent de l'est, Memmingen et Kempten repartent vers l'ouest. Cinq voies à quai, cent cinquante trains régionaux par jour et seize paires d'EuroCity-Express München–Zürich qui filent par Memmingen. Vers 1970, le deuxième triage de Bavière ; il reste trois embranchements de fret et la fierté du nœud.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }

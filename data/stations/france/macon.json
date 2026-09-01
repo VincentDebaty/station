@@ -4,7 +4,7 @@
   "city": "Mâcon",
   "tagline": "Mâcon-Ville — la Saône, l'Ain et le Bourbonnais s'y séparent.",
   "difficulty": 3,
-  "country": "🇫🇷 France",
+  "country": "france",
   "desc": "Bifurcation entre la grande ligne du Sud, la voie d'Ambérieu vers les Alpes et celle de Moulins par Paray-le-Monial. Le bâtiment de 1854 d'Alexis Cendrier a été détruit en 1944 ; celui qui l'a remplacé est d'après-guerre, et la gare a pris le nom de Mâcon-Ville en 1981 quand la gare TGV a ouvert.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }

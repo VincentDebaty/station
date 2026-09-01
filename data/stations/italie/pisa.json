@@ -4,7 +4,7 @@
   "tagline": "Quatre lignes, un entonnoir à San Rossore",
   "desc": "Le verrou entre Ligurie et Toscane : Gênes et Lucques se disputent l'entonnoir nord, Florence et Rome se partagent le sud. Première gare d'Italie reliée à un aéroport — elle l'a perdu pour un funiculaire à câble.",
   "difficulty": 4,
-  "country": "🇮🇹 Italie",
+  "country": "italie",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 },
     { "id": 5 }, { "id": 6 }, { "id": 7 }, { "id": 8 }

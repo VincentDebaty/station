@@ -3,7 +3,7 @@
   "name": "Chester",
   "tagline": "Chester — dans les murailles romaines, la porte du pays de Galles.",
   "difficulty": 1,
-  "country": "🇬🇧 Royaume-Uni",
+  "country": "royaume-uni",
   "desc": "Dans les murailles romaines, la porte du pays de Galles : la côte nord vers Holyhead et les ferries d'Irlande, les Marches vers Cardiff par la frontière. Cinq quais en courbe.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }

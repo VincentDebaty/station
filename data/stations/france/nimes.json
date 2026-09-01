@@ -3,7 +3,7 @@
   "name": "Nîmes",
   "tagline": "Nîmes — au pied des arènes, le départ de la ligne des Cévennes.",
   "difficulty": 2,
-  "country": "🇫🇷 France",
+  "country": "france",
   "desc": "Au pied des arènes, le départ de la ligne des Cévennes : sept heures de viaducs et de tunnels jusqu'à Clermont, à travers le plus beau désert ferroviaire du pays.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },

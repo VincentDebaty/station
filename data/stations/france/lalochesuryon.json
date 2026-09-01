@@ -4,7 +4,7 @@
   "city": "La Roche-sur-Yon",
   "tagline": "La Roche-sur-Yon — la Vendée bifurque vers les Sables.",
   "difficulty": 3,
-  "country": "🇫🇷 France",
+  "country": "france",
   "desc": "Le carrefour vendéen : Nantes au nord, La Rochelle au sud, les Sables-d'Olonne à l'ouest et Saumur à l'est. La passerelle signée Bernard Tschumi et Hugh Dutton, posée à l'électrification de 2010, tient lieu de signal dans la ville.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }

@@ -3,7 +3,7 @@
   "name": "Rheine",
   "tagline": "Rheine — le croisement de l'Emsland : l'IC de Berlin coupe la ligne du fret d'Emden.",
   "difficulty": 3,
-  "country": "🇩🇪 Allemagne",
+  "country": "allemagne",
   "desc": "Le nœud du nord du Münsterland : la ligne d'Amsterdam arrive de Salzbergen et repart vers Osnabrück, tandis que l'Emslandstrecke descend d'Emden vers Münster. Cinq voies à quai — dont la voie 8, rouverte en 2015 pour que le RE de Krefeld ne gêne plus l'Intercity — et, sur la ligne de l'Ems, un fret lourd qui ne s'arrête jamais. Le dépôt de Rheine fut le dernier foyer de la vapeur en Allemagne de l'Ouest, en 1977.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }

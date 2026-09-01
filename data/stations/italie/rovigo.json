@@ -4,7 +4,7 @@
   "tagline": "Les rapides et les navettes du Polesine",
   "desc": "Un axe grande-ligne électrifié croise ici deux antennes diesel à voie unique, vers Chioggia et vers Vérone par Legnago — les Frecciarossa passent, les navettes hybrides rebroussent.",
   "difficulty": 2,
-  "country": "🇮🇹 Italie",
+  "country": "italie",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
   ],

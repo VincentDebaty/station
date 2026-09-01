@@ -37,8 +37,10 @@
 // Pays dont la topologie vient des LIGNES. Ajouter un pays ici en même temps
 // que ses lignes, jamais avant : sans elles, ses gares n'auraient plus aucune
 // arête.
-const LINE_COUNTRIES = ["🇧🇪 Belgique", "🇫🇷 France", "🇬🇧 Royaume-Uni", "🇩🇪 Allemagne",
-  "🇱🇺 Luxembourg", "🇳🇱 Pays-Bas", "🇨🇭 Suisse"];
+// Des SLUGS depuis le 1er septembre 2026, plus des libellés d'affichage : une
+// fiche dit de quel pays elle est (« royaume-uni »), pas comment l'afficher.
+const LINE_COUNTRIES = ["belgique", "france", "royaume-uni", "allemagne",
+  "luxembourg", "pays-bas", "suisse"];
 
 const LINES = [
   // ---- Flandre occidentale et orientale --------------------------------

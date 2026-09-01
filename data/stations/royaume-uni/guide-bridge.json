@@ -4,7 +4,7 @@
   "tagline": "La cathédrale déchue du Woodhead",
   "desc": "Tête de la ligne électrique du Woodhead en 1954, réduite à deux quais vivants. Restent la navette de Glossop, la boucle de Hyde vers Romiley — et, un samedi matin par semaine, le train fantôme de Stalybridge qui garde la ligne ouverte.",
   "difficulty": 2,
-  "country": "🇬🇧 Royaume-Uni",
+  "country": "royaume-uni",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
   ],

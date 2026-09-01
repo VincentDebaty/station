@@ -3,7 +3,7 @@
   "name": "Winterthur",
   "tagline": "Winterthur — une seule porte vers Zurich, quatre sorties vers l'est : le carrefour de la Suisse orientale.",
   "difficulty": 4,
-  "country": "🇨🇭 Suisse",
+  "country": "suisse",
   "desc": "Quatrième gare du pays, cent trente mille voyageurs par jour sous les coupoles néo-Renaissance de 1896 copiées sur le Palais fédéral. Tout ce qui vient de Zurich passe par le même goulet à l'ouest, puis se déploie : Saint-Gall par Wil, Schaffhouse par Andelfingen, Romanshorn et le lac par Frauenfeld, sans compter la navette de Bülach qui se glisse par Embrach. Neuf voies réelles, dont deux en impasse pour le Tösstal, et un chantier de 110 millions qui vient d'élargir les quais.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 },

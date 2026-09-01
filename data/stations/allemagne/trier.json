@@ -4,7 +4,7 @@
   "city": "Trèves",
   "tagline": "Trier Hbf — la plus vieille ville d'Allemagne, et la porte du Luxembourg.",
   "difficulty": 3,
-  "country": "🇩🇪 Allemagne",
+  "country": "allemagne",
   "desc": "Augusta Treverorum, la plus vieille ville d'Allemagne, adossée à la Moselle. Quatre directions et deux sorties seulement : tout ce qui va vers Coblence et Cologne part au nord par Ehrang, tout ce qui va vers la Sarre et le Luxembourg part au sud par Konz. L'Eifel a rouvert au printemps 2026 après cinq ans de chantier.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }

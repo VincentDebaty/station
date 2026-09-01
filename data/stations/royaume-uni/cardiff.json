@@ -4,7 +4,7 @@
   "city": "Cardiff",
   "tagline": "Cardiff Central — la capitale galloise et son étoile de vallées.",
   "difficulty": 3,
-  "country": "🇬🇧 Royaume-Uni",
+  "country": "royaume-uni",
   "desc": "La capitale galloise et son étoile de vallées : huit voies dont deux réservées aux trains des mines, devenus ceux des banlieues. La ligne des Marches remonte vers Chester par la frontière.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },

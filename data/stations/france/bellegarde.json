@@ -4,7 +4,7 @@
   "city": "Bellegarde-sur-Valserine",
   "tagline": "Bellegarde — la dernière avant Genève, en Y depuis 2010.",
   "difficulty": 3,
-  "country": "🇫🇷 France",
+  "country": "france",
   "desc": "La porte française de Genève, au confluent du Rhône et de la Valserine. Trois lignes s'y rejoignent : Culoz, le Haut-Bugey vers Bourg-en-Bresse, et la voie du Bouveret vers Évian. Le Y construit en 2010 permet au TGV de bifurquer sans rebrousser.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }

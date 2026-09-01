@@ -4,7 +4,7 @@
   "tagline": "Le quai perpendiculaire de la vallée de Looe",
   "desc": "Le seul quai à angle droit du royaume : la Looe Valley Line part plein nord depuis sa propre courette, avant de rebrousser à Coombe Junction pour descendre la vallée jusqu'à la mer. Sur la grande ligne, les express de Cornouailles filent au-dessus du viaduc.",
   "difficulty": 2,
-  "country": "🇬🇧 Royaume-Uni",
+  "country": "royaume-uni",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }
   ],

@@ -4,7 +4,7 @@
   "tagline": "Le verrou des Cinque Terre, entre deux tunnels",
   "desc": "Gare de 1887 coincée entre deux tunnels au pied des collines : la porte d'accès unique des Cinque Terre, où les pointes saisonnières se superposent aux Intercity de la côte et aux régionaux du col de la Cisa vers Parme.",
   "difficulty": 3,
-  "country": "🇮🇹 Italie",
+  "country": "italie",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }, { "id": 6 }
   ],

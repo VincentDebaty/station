@@ -4,7 +4,7 @@
   "tagline": "L'aiguillage des plages fleuries",
   "desc": "Dans la gare en Y du pays d'Auge, les trains de Normandie se départagent : Caen tout droit, la côte fleurie par la branche de Deauville. L'été, les week-ends parisiens déferlent d'un coup vers la mer.",
   "difficulty": 3,
-  "country": "🇫🇷 France",
+  "country": "france",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }, { "id": 6 }
   ],

@@ -4,7 +4,7 @@
   "city": "Montauban",
   "tagline": "Montauban-Ville-Bourbon — le Tarn-et-Garonne, et la montée vers Brive.",
   "difficulty": 3,
-  "country": "🇫🇷 France",
+  "country": "france",
   "desc": "Bifurcation entre la grande ligne de Bordeaux à Sète et celle qui remonte vers Brive et Limoges — c'est par là que Paris s'atteignait avant la ligne d'Aquitaine. Le triage compte trente-quatre voies d'embranchement et deux locotracteurs.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }

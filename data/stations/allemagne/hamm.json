@@ -4,7 +4,7 @@
   "city": "Hamm",
   "tagline": "Hamm (Westf) Hbf — douze voies où les ICE de Berlin se coupent en deux.",
   "difficulty": 4,
-  "country": "🇩🇪 Allemagne",
+  "country": "allemagne",
   "desc": "Le nœud de l'est westphalien : douze voies à quai où six lignes convergent — la Ruhr et Hagen par l'ouest, Bielefeld, Münster et Paderborn par l'est. Les ICE de Berlin s'y coupent en deux, une moitié vers Düsseldorf par la Ruhr, l'autre vers Cologne par le Bergisches Land. Derrière la gare, ce qui reste du plus grand triage d'Europe.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },

@@ -4,7 +4,7 @@
   "city": "Edinburgh",
   "tagline": "Edinburgh Waverley — 20 voies au fond d'un ravin, deux gorges et rien d'autre.",
   "difficulty": 4,
-  "country": "🇬🇧 Royaume-Uni",
+  "country": "royaume-uni",
   "desc": "Vingt voies au fond d'un ravin, entre la vieille ville et les jardins de Princes Street : la deuxième gare d'Écosse par la taille, la première par le nombre de directions. Deux gorges, est et ouest, et rien d'autre.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },

@@ -4,7 +4,7 @@
   "tagline": "La porte de la Beira Alta",
   "desc": "C'est ici, et non à Coimbra, que la Beira Alta bifurque vers Guarda et la frontière de Vilar Formoso. Rouverte en septembre 2025 après trois ans et demi de chantier du corridor international, elle ramène Intercidades, régionaux et le fret ibérique dans ce village de la Bairrada.",
   "difficulty": 3,
-  "country": "🇵🇹 Portugal",
+  "country": "portugal",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }, { "id": 6 }
   ],

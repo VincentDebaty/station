@@ -5,7 +5,7 @@
   "tagline": "Le triangle de 1830, la plus vieille jonction du monde",
   "desc": "Là où la première ligne du monde reçut sa première branche, dès 1831. Le triangle joue toujours sur ses trois côtés : Liverpool, Manchester, et la courbe de Warrington par où passent les trains du pays de Galles.",
   "difficulty": 2,
-  "country": "🇬🇧 Royaume-Uni",
+  "country": "royaume-uni",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
   ],

@@ -5,7 +5,7 @@
   "tagline": "Le terminus du port",
   "desc": "Cinq voies à heurtoir entre les conteneurs du port et la ría : le Celta de Porto y débarque face aux régionaux qui remontent le Miño vers Ourense et à ceux de Saint-Jacques. La grande vitesse est partie à Urzáiz, cinq cents mètres plus haut — ici, c'est le rail classique de la Galice.",
   "difficulty": 2,
-  "country": "🇪🇸 Espagne",
+  "country": "espagne",
   "platforms": [
     { "id": 1, "deadEnd": true }, { "id": 2, "deadEnd": true }, { "id": 3, "deadEnd": true },
     { "id": 4, "deadEnd": true }, { "id": 5, "deadEnd": true }

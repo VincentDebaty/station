@@ -4,7 +4,7 @@
   "city": "Cassel",
   "tagline": "Kassel-Wilhelmshöhe — 4 voies, et tous les ICE de l'axe Nord-Sud qui s'y arrêtent.",
   "difficulty": 1,
-  "country": "🇩🇪 Allemagne",
+  "country": "allemagne",
   "desc": "Quatre voies seulement, et pourtant tous les ICE de l'axe Nord-Sud s'y arrêtent : c'est le prix payé par la ville pour que la ligne à grande vitesse passe chez elle.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }

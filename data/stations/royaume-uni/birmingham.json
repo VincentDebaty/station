@@ -4,7 +4,7 @@
   "city": "Birmingham",
   "tagline": "Birmingham New Street — 37 M de voyageurs sous une dalle : le vrai carrefour.",
   "difficulty": 4,
-  "country": "🇬🇧 Royaume-Uni",
+  "country": "royaume-uni",
   "desc": "Trente-sept millions de voyageurs sous une dalle de béton : la gare la plus fréquentée hors de Londres, et la seule où toutes les lignes du pays se croisent vraiment. Six directions, aucune lumière du jour.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },

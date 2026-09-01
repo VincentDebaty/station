@@ -4,7 +4,7 @@
   "city": "Düsseldorf",
   "tagline": "Düsseldorf Hbf — 16 voies au cœur du Rhin-Ruhr, la plus ponctuelle du pays.",
   "difficulty": 3,
-  "country": "🇩🇪 Allemagne",
+  "country": "allemagne",
   "desc": "Seize voies au cœur du Rhin-Ruhr, la région la plus dense d'Europe : trois cents trains par jour, et la gare la plus ponctuelle du pays — parce qu'ici rien n'a le droit de traîner.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },

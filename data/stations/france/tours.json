@@ -4,7 +4,7 @@
   "city": "Tours",
   "tagline": "Saint-Pierre-des-Corps — le vrai carrefour du Centre, à 2 km d'une gare en impasse.",
   "difficulty": 3,
-  "country": "🇫🇷 France",
+  "country": "france",
   "desc": "La gare de Tours ne traverse pas : c'est un cul-de-sac en ville, et tout ce qui passe s'arrête ici, à Saint-Pierre-des-Corps. Cinq lignes s'y croisent au milieu des betteraves — le vrai carrefour du Centre.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },

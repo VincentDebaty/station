@@ -4,7 +4,7 @@
   "tagline": "L'éclatement des Champs Phlégréens",
   "desc": "Grande gare d'éclatement en rase campagne où la Direttissima de Rome se dédouble : l'itinéraire d'Aversa vers Naples, le passante côtier des Champs Phlégréens qui naît ici, et la rocade de Cancello qui porte le fret de l'interporto.",
   "difficulty": 3,
-  "country": "🇮🇹 Italie",
+  "country": "italie",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }, { "id": 6 }
   ],

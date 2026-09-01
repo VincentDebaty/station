@@ -3,7 +3,7 @@
   "name": "Cambridge",
   "tagline": "Cambridge — un quai unique de 400 m jusqu'en 2011 ; huit voies aujourd'hui.",
   "difficulty": 2,
-  "country": "🇬🇧 Royaume-Uni",
+  "country": "royaume-uni",
   "desc": "Un quai unique de quatre cents mètres jusqu'en 2011 — les trains s'y garaient à deux par voie. Aujourd'hui huit voies, et deux Londres au sud : King's Cross et Liverpool Street.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },

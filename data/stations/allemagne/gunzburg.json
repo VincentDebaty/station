@@ -4,7 +4,7 @@
   "city": "Günzburg",
   "tagline": "Günzburg — sur le corridor Ulm–Augsbourg, la petite ligne de Mindelheim se détache.",
   "difficulty": 2,
-  "country": "🇩🇪 Allemagne",
+  "country": "allemagne",
   "desc": "Sur la grande ligne Ulm–Augsbourg, où les ICE passent sans s'arrêter ou presque, Günzburg lâche vers le sud la Mittelschwabenbahn, une voie unique non électrifiée jusqu'à Mindelheim. Cinq voies à quai, cent trente trains par jour, et le fret du corridor qui file au milieu.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }

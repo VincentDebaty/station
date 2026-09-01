@@ -3,7 +3,7 @@
   "name": "Creil",
   "tagline": "Creil — la première bifurcation au nord de Paris : cinq directions et le triage à côté.",
   "difficulty": 3,
-  "country": "🇫🇷 France",
+  "country": "france",
   "desc": "À cinquante kilomètres de Paris-Nord, l'artère du Nord se sépare en trois : Amiens tout droit, Compiègne et Saint-Quentin vers l'est, l'autorail de Beauvais vers l'ouest — et, par la rive de l'Oise, le Transilien de Pontoise qui arrive côté Paris. Huit voies à quai reconstruites en 1955, vingt mille navetteurs par jour, et le grand triage de Creil juste à côté : le fret du Nord traverse sans s'arrêter.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },

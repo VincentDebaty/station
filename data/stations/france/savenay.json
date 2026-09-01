@@ -4,7 +4,7 @@
   "tagline": "La bifurcation de l'estuaire",
   "desc": "C'est ici que la ligne de Bretagne quitte l'axe du Croisic, à la porte de l'estuaire de la Loire. Les navetteurs de Nantes y croisent les convois de la raffinerie de Donges et du port de Montoir.",
   "difficulty": 2,
-  "country": "🇫🇷 France",
+  "country": "france",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }
   ],

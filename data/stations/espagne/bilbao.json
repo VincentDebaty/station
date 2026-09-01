@@ -5,7 +5,7 @@
   "tagline": "Huit heurtoirs sous le grand vitrail basque",
   "desc": "Sous la verrière en arc de 1948, un vitrail de 301 pièces domine les heurtoirs : l'Alvia de Madrid et les Cercanías de la ría rebroussent ensemble. La Concordia, sa voisine à voie métrique, garde ses trains pour elle.",
   "difficulty": 5,
-  "country": "🇪🇸 Espagne",
+  "country": "espagne",
   "platforms": [
     { "id": 1, "deadEnd": true }, { "id": 2, "deadEnd": true }, { "id": 3, "deadEnd": true },
     { "id": 4, "deadEnd": true }, { "id": 5, "deadEnd": true }, { "id": 6, "deadEnd": true },

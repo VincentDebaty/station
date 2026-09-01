@@ -3,7 +3,7 @@
   "name": "Potsdam Hbf",
   "tagline": "Potsdam Hbf — la dernière gare avant Berlin, où trois lignes de Brandebourg rejoignent la grande.",
   "difficulty": 4,
-  "country": "🇩🇪 Allemagne",
+  "country": "allemagne",
   "desc": "Gare-pont sur la ligne de Magdebourg, à vingt-six kilomètres de Berlin : quatre voies grandes lignes et deux voies où la S-Bahn de Wannsee vient rebrousser. Tout ce qui vient de l'ouest converge ici — le RE1 et les IC de Magdebourg, la ligne de Golm vers Oranienburg, celle de Pirschheide vers Jüterbog — pour s'engouffrer d'un seul côté vers la capitale.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }, { "id": 6 }

@@ -4,7 +4,7 @@
   "city": "Bielefeld",
   "tagline": "Bielefeld Hbf — sur la ligne Cologne–Minden : tout passe, presque rien ne s'arrête.",
   "difficulty": 1,
-  "country": "🇩🇪 Allemagne",
+  "country": "allemagne",
   "desc": "Sept voies sur la ligne Cologne–Minden, l'une des plus anciennes du pays : tout ce qui va de la Ruhr à Berlin passe ici, et presque rien ne s'y arrête.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }

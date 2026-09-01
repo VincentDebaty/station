@@ -4,7 +4,7 @@
   "city": "Essen",
   "tagline": "Essen Hbf — 14 voies au milieu du bassin, un trafic de banlieue continu.",
   "difficulty": 3,
-  "country": "🇩🇪 Allemagne",
+  "country": "allemagne",
   "desc": "Quatorze voies au milieu du bassin, entre le Zollverein et la Ruhr : quatre directions seulement, mais un trafic de banlieue continu du matin au soir.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },

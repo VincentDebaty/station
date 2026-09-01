@@ -3,7 +3,7 @@
   "name": "Bitterfeld",
   "tagline": "Bitterfeld — la fourche : ici les trains de Berlin choisissent entre Halle et Leipzig.",
   "difficulty": 3,
-  "country": "🇩🇪 Allemagne",
+  "country": "allemagne",
   "desc": "C'est ici que l'Anhalter Bahn se sépare : à gauche Halle, à droite Leipzig, et l'ICE y prend la fourche à pleine vitesse sur une tranchée de six cents mètres. Quatre longues voies pour les grandes lignes, deux courtes pour la S-Bahn de Dessau et de Wittenberg — et tout autour, le parc chimique qui a fait la ville.",
   "platforms": [
     {

@@ -4,7 +4,7 @@
   "tagline": "Le carrefour de l'acier",
   "desc": "Quatre branches, deux réseaux qui partagent les voies 6 et 7, et le fret de la plus grande aciérie d'Europe en toile de fond. La grande vitesse l'a déclassée — Tarente vit de ses régionaux, entre le golfe et les Murge.",
   "difficulty": 3,
-  "country": "🇮🇹 Italie",
+  "country": "italie",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 },
     { "id": 5 }, { "id": 6 }, { "id": 7 }

@@ -5,7 +5,7 @@
   "tagline": "La gare neuve de la variante",
   "desc": "Ouverte en 2008 sur la variante nord qui a sorti le rail de la ville, elle a reçu la grande vitesse en 2022 : au changeur d'écartement, les Alvia de Madrid passent de la LAV à la voie classique du Pays basque. Côté ouest, le triangle de Venta de Baños distribue Palencia et Valladolid.",
   "difficulty": 3,
-  "country": "🇪🇸 Espagne",
+  "country": "espagne",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }, { "id": 6 }
   ],

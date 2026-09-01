@@ -3,7 +3,7 @@
   "name": "Reading",
   "tagline": "Reading — 15 voies pour une ville moyenne : le carrefour du sud de l'Angleterre.",
   "difficulty": 3,
-  "country": "🇬🇧 Royaume-Uni",
+  "country": "royaume-uni",
   "desc": "Quinze voies pour une ville moyenne : refaite à neuf en 2015, c'est le carrefour de tout le sud de l'Angleterre. Deux Londres différents s'y rejoignent, Paddington et Waterloo, sans jamais se croiser.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },

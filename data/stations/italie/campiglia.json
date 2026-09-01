@@ -4,7 +4,7 @@
   "tagline": "La gare-portier de l'île d'Elbe",
   "desc": "Tout le flux de l'Elbe change de train ici, dans une gare posée en plaine loin du bourg perché qui lui donne son nom : la branche électrifiée de Piombino part vers les ferries, le fret sidérurgique en toile de fond.",
   "difficulty": 2,
-  "country": "🇮🇹 Italie",
+  "country": "italie",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
   ],

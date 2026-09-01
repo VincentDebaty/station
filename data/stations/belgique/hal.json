@@ -3,7 +3,7 @@
   "name": "Hal",
   "tagline": "Hal — le dernier nœud avant Bruxelles : Tournai et Mons convergent, Malines s'échappe par la ligne 26.",
   "difficulty": 3,
-  "country": "🇧🇪 Belgique",
+  "country": "belgique",
   "desc": "Aux portes de la capitale, là où la ligne de Tournai rejoint celle de Mons et où la ligne 26 s'en va contourner Bruxelles par l'est vers Malines. Cinq voies à quai sous la grande verrière bleue de 1993, bâtie quand la LGV vers Paris a rasé la gare néo-Renaissance — les TGV passent dessous, en tranchée couverte, sans s'arrêter. Le fret de la rocade et les IC du Hainaut se croisent ici toute la journée.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }

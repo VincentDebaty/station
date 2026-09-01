@@ -3,7 +3,7 @@
   "name": "Miramas",
   "tagline": "Miramas — cinq voies à quai et un triage à la gravité : le nœud de l'étang de Berre.",
   "difficulty": 3,
-  "country": "🇫🇷 France",
+  "country": "france",
   "desc": "Quatre routes se nouent ici : la grande ligne vers Marseille par Rognac, la Côte Bleue par Martigues et ses viaducs sur la mer, Arles et Tarascon vers Avignon, Salon et Cavaillon de l'autre côté de la Crau. Derrière les cinq voies à quai, l'un des quatre triages à la gravité du pays trie encore les wagons de Fos.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }

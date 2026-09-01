@@ -5,7 +5,7 @@
   "tagline": "L'entonnoir, pas l'éventail",
   "desc": "Le grand terminus néoclassique de 1886 vide ses dix voies à heurtoirs dans deux corridors seulement : le passante urbain cadencé vers l'aéroport, et la ligne côtière qui porte à elle seule Messine, Agrigente et Catane.",
   "difficulty": 4,
-  "country": "🇮🇹 Italie",
+  "country": "italie",
   "platforms": [
     { "id": 1, "deadEnd": true }, { "id": 2, "deadEnd": true }, { "id": 3, "deadEnd": true },
     { "id": 4, "deadEnd": true }, { "id": 5, "deadEnd": true }, { "id": 6, "deadEnd": true },

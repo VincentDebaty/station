@@ -3,7 +3,7 @@
   "name": "Carcassonne",
   "tagline": "Carcassonne — entre le canal du Midi et la Cité, l'antenne de Quillan.",
   "difficulty": 3,
-  "country": "🇫🇷 France",
+  "country": "france",
   "desc": "Un bâtiment de 1857 à fronton et horloge, posé entre le canal du Midi et la ville basse. La grande ligne Bordeaux–Sète la traverse ; la voie de la haute vallée de l'Aude s'en va vers Limoux et Quillan.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }

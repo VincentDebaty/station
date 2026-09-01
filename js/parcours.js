@@ -391,7 +391,7 @@ function cartoucheHTML(gareId) {
   // plus de convois, plus de fret, et une bourrasque en fin de journée.
   const boss = typeof estBoss === "function" && estBoss(gareId, cfg);
   const fin = ch && ch.gares[ch.gares.length - 1] === gareId;
-  const drapeau = (cfg.country || "").trim().split(" ")[0];
+  const pays = paysDe(cfg.country), drapeau = pays.drapeau;
   // LA PHRASE DE LA GARE. Elle est écrite pour chaque fiche et ne servait à
   // rien depuis que le toast a été désactivé : c'est elle qui rend le panneau
   // agréable à lire plutôt qu'un tableau de bord de chiffres. On lui retire le
@@ -400,7 +400,7 @@ function cartoucheHTML(gareId) {
   return `<section class="c-fiche">
     <p class="cf-ou">Gare ${rang} <span>sur ${total}</span>${fin ? ' <span class="cf-terminus">terminus</span>' : ""}</p>
     <h3 class="cf-nom">${villeDe(gareId)}</h3>
-    <p class="cf-pays">${drapeau} ${(cfg.country || "").trim().split(" ").slice(1).join(" ")}</p>
+    <p class="cf-pays">${drapeau} ${pays.nom}</p>
     ${phrase ? `<p class="cf-phrase">${phrase}</p>` : ""}
     ${boss ? `<p class="cf-boss"><b>Bourrasque</b>Le trafic se resserre en fin de service.</p>` : ""}
     <dl class="cf-mesures">

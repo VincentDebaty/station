@@ -4,7 +4,7 @@
   "city": "Aschaffenbourg",
   "tagline": "Aschaffenburg Hbf — la porte bavaroise de Francfort, au pied de la rampe du Spessart.",
   "difficulty": 4,
-  "country": "🇩🇪 Allemagne",
+  "country": "allemagne",
   "desc": "Huit voies à quai pour les voyageurs et six de plus pour le fret : c'est ici que l'axe de Francfort se sépare entre la Main-Spessart-Bahn vers Wurtzbourg et la vallée du Main vers Miltenberg, tandis que la Rhein-Main-Bahn de Darmstadt y termine. L'ICE 41 de la Ruhr à Munich s'y arrête toutes les heures, et le corridor de fret du Spessart défile sans s'arrêter. Gare reconstruite de 2004 à 2012, avec son bâtiment de 2011.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },

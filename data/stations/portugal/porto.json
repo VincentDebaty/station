@@ -5,7 +5,7 @@
   "tagline": "Les azulejos sont à São Bento, les trains sont ici",
   "desc": "Pendant que São Bento reçoit les touristes sous ses azulejos, Campanhã fait le travail : Alfa Pendular de Lisbonne, Celta de Vigo, urbains de Braga, de Guimarães et du Douro s'y croisent avant de plonger vers la gare historique. Le chantier de la grande vitesse Porto–Lisbonne s'ouvre à ses portes.",
   "difficulty": 5,
-  "country": "🇵🇹 Portugal",
+  "country": "portugal",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },
     { "id": 6 }, { "id": 7 }, { "id": 8 }, { "id": 9 }, { "id": 10 }

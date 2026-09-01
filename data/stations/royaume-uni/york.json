@@ -3,7 +3,7 @@
   "name": "York",
   "tagline": "York — la halle courbe de 1877, la plus longue du monde à son ouverture.",
   "difficulty": 3,
-  "country": "🇬🇧 Royaume-Uni",
+  "country": "royaume-uni",
   "desc": "La halle courbe de 1877, la plus longue du monde à son ouverture : onze voies qui épousent le virage. Tout ce qui monte vers l'Écosse par l'est y passe, et le musée du rail est en face.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },

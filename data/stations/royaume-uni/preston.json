@@ -3,7 +3,7 @@
   "name": "Preston",
   "tagline": "Preston — le verrou du nord-ouest : tout ce qui monte en Écosse passe ici.",
   "difficulty": 3,
-  "country": "🇬🇧 Royaume-Uni",
+  "country": "royaume-uni",
   "desc": "Le verrou du nord-ouest : tout ce qui monte vers l'Écosse par la côte ouest passe ici, et rien d'autre ne le peut. Neuf voies, six directions, et les trains de Blackpool en été.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },

@@ -3,7 +3,7 @@
   "name": "Dordrecht",
   "tagline": "Dordrecht — trois branches au sud, un seul tronc vers Rotterdam au nord : le trident de la Hollande-Méridionale.",
   "difficulty": 3,
-  "country": "🇳🇱 Pays-Bas",
+  "country": "pays-bas",
   "desc": "La plus vieille ville de Hollande a une gare de 1872, l'une des deux « Waterstaatstations » de première classe du pays. Au nord, tout file vers Rotterdam par le pont sur la Vieille Meuse ; au sud, la voie se dédouble vers Roosendaal et vers Breda par le pont du Moerdijk, tandis que la MerwedeLingelijn de Geldermalsen vient y rebrousser. Le triage de Kijfhoek est à deux pas : une troisième voie, posée en 1995, laisse les trains de fret attendre sans bloquer les voyageurs. Sept voies à quai en vrai, cinq pour vous.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }

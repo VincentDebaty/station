@@ -4,7 +4,7 @@
   "city": "Nancy",
   "tagline": "Nancy-Ville — à vingt minutes de Metz, sa rivale de toujours.",
   "difficulty": 3,
-  "country": "🇫🇷 France",
+  "country": "france",
   "desc": "À vingt minutes de Metz, sa rivale de toujours : même taille, même trafic, deux gares que tout oppose. Ici, cinq directions et la transversale de Dijon que personne n'emprunte.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },

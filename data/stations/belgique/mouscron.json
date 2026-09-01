@@ -3,7 +3,7 @@
   "name": "Mouscron",
   "tagline": "Mouscron — la bifurcation frontalière : Tournai d'un côté, Lille de l'autre.",
   "difficulty": 1,
-  "country": "🇧🇪 Belgique",
+  "country": "belgique",
   "desc": "Tout ce qui descend de Courtrai repart soit vers Tournai, soit vers Lille par Tourcoing. Quatre quais collés à la frontière, des rames courtes, un seul choix à faire par train — la gare d'entraînement idéale.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }

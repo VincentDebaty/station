@@ -3,7 +3,7 @@
   "name": "Courtrai",
   "tagline": "Courtrai — l'épine dorsale de Flandre occidentale : 5 directions, 6 quais.",
   "difficulty": 3,
-  "country": "🇧🇪 Belgique",
+  "country": "belgique",
   "desc": "Neuf voies au bord de la Lys : Bruges descend du nord par Roulers, Lille remonte du sud par Mouscron, Gand et Bruxelles arrivent de l'est. Reste l'antenne du Westhoek vers Poperinge, cantonnée aux deux derniers quais — c'est l'antenne, pas le tronc.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },

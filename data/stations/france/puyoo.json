@@ -4,7 +4,7 @@
   "tagline": "L'aiguille des Gaves",
   "desc": "C'est ici, entre les gaves, que l'axe de Bayonne et la branche de Dax se séparent. Une petite gare de bifurcation qui voit passer tout ce que le Béarn envoie vers la côte et vers Bordeaux.",
   "difficulty": 1,
-  "country": "🇫🇷 France",
+  "country": "france",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }
   ],

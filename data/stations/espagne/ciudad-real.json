@@ -4,7 +4,7 @@
   "tagline": "La Manche à cinquante minutes de Madrid",
   "desc": "Quand le premier AVE d'Espagne a ouvert en 1992, la ville a fermé sa vieille gare MZA pour celle-ci, posée sur la ligne nouvelle. Les Avant y déversent les navetteurs de Madrid entre deux AVE d'Andalousie, pendant que les régionaux de la Manche rebroussent sur leurs voies en impasse, vers Alcázar d'un côté, Badajoz de l'autre.",
   "difficulty": 3,
-  "country": "🇪🇸 Espagne",
+  "country": "espagne",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }, { "id": 6 }
   ],

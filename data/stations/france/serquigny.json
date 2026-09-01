@@ -4,7 +4,7 @@
   "tagline": "La bifurcation de Rouen, en pleine campagne",
   "desc": "Quatre voies au creux de la vallée de la Risle, et deux lignes qui s'y séparent : Paris tout droit, Rouen par la branche. Depuis que tous les Caen–Rouen s'y arrêtent, la petite gare trie bien plus grand qu'elle.",
   "difficulty": 2,
-  "country": "🇫🇷 France",
+  "country": "france",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }
   ],

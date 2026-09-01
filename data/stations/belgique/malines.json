@@ -3,7 +3,7 @@
   "name": "Malines",
   "tagline": "Malines — le croisement fondateur du réseau belge : 5 directions, 6 quais.",
   "difficulty": 4,
-  "country": "🇧🇪 Belgique",
+  "country": "belgique",
   "desc": "C'est d'ici qu'est parti le premier train du continent, en 1835, et le réseau s'est construit autour : l'axe Bruxelles–Anvers tient les quais du milieu, la vieille ligne 53 les traverse en biais de Termonde à Louvain, et l'IC de Turnhout s'échappe par Lierre. Onze voies en vrai, six quais pour vous — aucune marge.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },

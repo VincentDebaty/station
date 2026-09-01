@@ -4,7 +4,7 @@
   "city": "Migennes",
   "tagline": "Laroche-Migennes — à mi-chemin de Paris et de Dijon, le troisième dépôt de France.",
   "difficulty": 3,
-  "country": "🇫🇷 France",
+  "country": "france",
   "desc": "Sa position à mi-chemin exact entre Paris et Dijon en a fait un relais de vapeur : avant guerre, le troisième dépôt du pays, quinze cents cheminots. Il en reste huit voies et quatre quais, et la bifurcation d'Auxerre qui s'en détache vers le sud.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }

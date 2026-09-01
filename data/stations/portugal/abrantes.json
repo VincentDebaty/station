@@ -4,7 +4,7 @@
   "tagline": "Le Leste quitte la Beira Baixa sur la rive du Tage",
   "desc": "Sur la rive sud du Tage, à Rossio, la ligne de l'Est se détache de la Beira Baixa : les Intercidades de Covilhã filent vers le nord-est pendant que l'unique régional de Badajoz s'en va vers la frontière. C'est le dernier aiguillage du Portugal avant l'Espagne.",
   "difficulty": 2,
-  "country": "🇵🇹 Portugal",
+  "country": "portugal",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }
   ],

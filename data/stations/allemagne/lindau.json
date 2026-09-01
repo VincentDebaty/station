@@ -4,7 +4,7 @@
   "city": "Lindau",
   "tagline": "Lindau-Reutin — la gare de terre ferme qui a pris le relais de l'île : l'express passe sans rebrousser.",
   "difficulty": 3,
-  "country": "🇩🇪 Allemagne",
+  "country": "allemagne",
   "desc": "Jusqu'en 2020, tout rebroussait dans la gare en île de Lindau ; depuis, les EuroCity-Express München–Zürich filent par Reutin, sur la terre ferme, et passent en Autriche sans changer de sens. Quatre voies à quai (21 à 24), une courbe d'Aeschach qui évite l'île, et trois routes côté allemand : Munich par Hergatz, Friedrichshafen par le lac, et la navette vers la vieille gare de l'île. À l'est, une seule porte : Bregenz, puis Saint-Gall et Zurich.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }

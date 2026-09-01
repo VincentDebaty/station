@@ -4,7 +4,7 @@
   "tagline": "La porte du Pays basque",
   "desc": "Entre Adour et Nive, la gare de la rive droite trie toute la côte basque : les TGV de Paris filent vers Hendaye, les Intercités remontent vers Pau et Toulouse, et les autorails de la Nive s'en vont seuls vers Saint-Jean-Pied-de-Port.",
   "difficulty": 3,
-  "country": "🇫🇷 France",
+  "country": "france",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
   ],

@@ -4,7 +4,7 @@
   "city": "Ingolstadt",
   "tagline": "Ingolstadt — le nœud cadencé de la Bavière, quatre lignes à l'heure juste.",
   "difficulty": 4,
-  "country": "🇩🇪 Allemagne",
+  "country": "allemagne",
   "desc": "Un Taktknoten : les régionaux des quatre directions s'y retrouvent toutes les heures pour se donner correspondance. La ligne de Munich à Treuchtlingen le traverse, la Paartalbahn part vers Augsbourg, la Donautalbahn vers Ulm et la voie de Ratisbonne vers l'est. Le triage jouxte les quais, et DB Cargo y tient un atelier.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }, { "id": 6 }

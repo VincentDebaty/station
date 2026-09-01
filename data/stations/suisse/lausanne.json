@@ -3,7 +3,7 @@
   "name": "Lausanne",
   "tagline": "Lausanne — la gare du Léman où les trains du Jura font demi-tour.",
   "difficulty": 4,
-  "country": "🇨🇭 Suisse",
+  "country": "suisse",
   "desc": "Neuf voies sur la pente, 650 trains par jour, et la première gare de Suisse romande. Vers l'est, les InterCity de Berne et Zurich grimpent par Puidoux pendant que ceux du Simplon longent le lac vers Vevey, Sion et Brigue ; vers l'ouest, tout passe par Renens — Genève, mais aussi Yverdon et Neuchâtel par le pied du Jura, et Vallorbe vers Paris. Les trains du Jura venant de Genève rebroussent ici : c'est le casse-tête des aiguilleurs lausannois. La voie 2, sans quai, ne sert qu'au transit.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 },

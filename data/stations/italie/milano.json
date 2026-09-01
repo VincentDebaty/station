@@ -5,7 +5,7 @@
   "tagline": "La cathédrale de 1931, cinq cents trains par jour",
   "desc": "Sous les verrières de 72 mètres d'Ulisse Stacchini, vingt-quatre voies en impasse et plus de cinq cents trains par jour. Tout sort par un unique faisceau nord-est qui se divise aussitôt en trois : vers Turin et le Simplon, vers le Gothard, vers Venise et Bologne.",
   "difficulty": 5,
-  "country": "🇮🇹 Italie",
+  "country": "italie",
   "platforms": [
     { "id": 1, "deadEnd": true }, { "id": 2, "deadEnd": true }, { "id": 3, "deadEnd": true },
     { "id": 4, "deadEnd": true }, { "id": 5, "deadEnd": true }, { "id": 6, "deadEnd": true },

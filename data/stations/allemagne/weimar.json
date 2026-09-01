@@ -4,7 +4,7 @@
   "city": "Weimar",
   "tagline": "Weimar Hbf — un palais néoclassique de 1922 pour cinq voies, élu gare de l'année.",
   "difficulty": 3,
-  "country": "🇩🇪 Allemagne",
+  "country": "allemagne",
   "desc": "Cinq voies sous un bâtiment néoclassique commencé en 1914 et fini en 1922, la guerre au milieu. La Thüringer Bahn la traverse d'est en ouest ; à l'est s'en détache la ligne de Gera par Iéna, et l'autorail de l'Ilmtal file vers Kranichfeld. Plus de fret depuis longtemps : la gare marchandises est un lieu de mémoire.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }

@@ -4,7 +4,7 @@
   "city": "Aix-la-Chapelle",
   "tagline": "Aachen Hbf — la gare-frontière où le courant change : sept voies entre Liège et Cologne.",
   "difficulty": 4,
-  "country": "🇩🇪 Allemagne",
+  "country": "allemagne",
   "desc": "Un bâtiment Jugendstil de 1905 et sept voies à quai, dont quatre à caténaire commutable : c'est ici que les ICE et Eurostar de Bruxelles passent du 3 kV belge au 15 kV allemand avant de filer sur Cologne par Düren. À l'ouest se détachent aussi la ligne de Mönchengladbach et, par Herzogenrath, celle de Heerlen et Maastricht. Faute de rocade, le fret de Montzen se faufile lui aussi par les voies de la gare.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }, { "id": 6 }, { "id": 7 }

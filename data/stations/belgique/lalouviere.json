@@ -4,7 +4,7 @@
   "city": "La Louvière",
   "tagline": "La Louvière — le maillon central de la dorsale wallonne.",
   "difficulty": 2,
-  "country": "🇧🇪 Belgique",
+  "country": "belgique",
   "desc": "C'est ici, et non à Charleroi, que la ligne de Mons rencontre celle de Bruxelles, montée par Manage et Braine-le-Comte. Quatre quais au pied des ascenseurs du canal du Centre, plus l'antenne de Binche qui vient s'y greffer.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }

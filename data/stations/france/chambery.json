@@ -3,7 +3,7 @@
   "name": "Chambéry",
   "tagline": "Chambéry — la porte des Alpes : d'un côté la plaine, de l'autre la Maurienne.",
   "difficulty": 1,
-  "country": "🇫🇷 France",
+  "country": "france",
   "desc": "La porte des Alpes : d'un côté la plaine, de l'autre la Maurienne et le tunnel du Fréjus. Quatre directions, cinq quais, et tout le trafic des sports d'hiver en janvier.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }

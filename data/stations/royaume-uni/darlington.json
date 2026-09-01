@@ -3,7 +3,7 @@
   "name": "Darlington",
   "tagline": "Darlington — le berceau du chemin de fer, 1825, et la halle à trois nefs de 1887.",
   "difficulty": 3,
-  "country": "🇬🇧 Royaume-Uni",
+  "country": "royaume-uni",
   "desc": "Le berceau du chemin de fer : le Stockton & Darlington de 1825 est passé ici, et la branche de Bishop Auckland en suit toujours le tracé. Sous la halle à trois nefs de William Bell (1887), l'île centrale de la grande ligne ; sur les voies d'évitement, deux quais neufs ouverts en 2026.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },

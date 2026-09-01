@@ -4,7 +4,7 @@
   "city": "Saint-Gall",
   "tagline": "St. Gallen — la porte orientale : Zurich d'un côté, le Rhin, le lac et Munich de l'autre.",
   "difficulty": 4,
-  "country": "🇨🇭 Suisse",
+  "country": "suisse",
   "desc": "Le nœud de la Suisse orientale, sous un bâtiment néobaroque de 1913 et une horloge binaire au bout de la place : trois à quatre trains grandes lignes par heure vers Zurich, l'EuroCity-Express de Munich par St. Margrethen et Bregenz, le Voralpen-Express qui grimpe vers Herisau et Lucerne, les RER de Romanshorn. Sept voies à quai CFF — les deux voies étroites des Appenzeller Bahnen ont leur propre gare, à côté — et deux douzaines de trains de fret par jour.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }, { "id": 6 }

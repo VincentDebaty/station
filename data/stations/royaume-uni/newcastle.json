@@ -3,7 +3,7 @@
   "name": "Newcastle",
   "tagline": "Newcastle — sur le pont de Stephenson, les courbes les plus serrées du réseau.",
   "difficulty": 3,
-  "country": "🇬🇧 Royaume-Uni",
+  "country": "royaume-uni",
   "desc": "Sur le pont de Stephenson au-dessus de la Tyne, la gare aux courbes les plus serrées du réseau : douze voies en éventail, et la ligne de la vallée de la Tyne qui part vers Carlisle par le mur d'Hadrien.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },

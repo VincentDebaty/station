@@ -4,7 +4,7 @@
   "tagline": "La gare du palais royal",
   "desc": "Ouverte en 1843 face à la Reggia des Bourbons — le voyageur qui sort du hall a le palais devant lui. Quatre axes s'y croisent : Rome par Cassino, Naples par deux itinéraires, et la ligne de Bénévent que remontent les Frecce des Pouilles.",
   "difficulty": 3,
-  "country": "🇮🇹 Italie",
+  "country": "italie",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }, { "id": 6 }
   ],

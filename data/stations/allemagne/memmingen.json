@@ -4,7 +4,7 @@
   "city": "Memmingen",
   "tagline": "Memmingen — depuis 2020, c'est ici que l'express de Zurich quitte la route d'Ulm pour le lac de Constance.",
   "difficulty": 3,
-  "country": "🇩🇪 Allemagne",
+  "country": "allemagne",
   "desc": "Sur l'Illertalbahn Ulm–Kempten, la gare où la ligne électrifiée en 2020 entre Munich et Lindau bifurque vers Leutkirch et le lac de Constance : les EuroCity-Express München–Zürich y marquent l'arrêt et en ont fait le vrai carrefour de l'Allgäu. Cinq voies à quai sous un bâtiment modulaire de 2001 — le seul du genre en Allemagne — et un faisceau de fret côté Kempten.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }

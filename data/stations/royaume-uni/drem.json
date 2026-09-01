@@ -4,7 +4,7 @@
   "tagline": "La jonction de North Berwick",
   "desc": "Un village de cent habitants, et la gare où la branche électrifiée de North Berwick quitte la grande ligne d'Édimbourg. Les express de Londres passent en trombe ; le joueur, lui, trie la navette du bord de mer et les rares locaux de Dunbar.",
   "difficulty": 1,
-  "country": "🇬🇧 Royaume-Uni",
+  "country": "royaume-uni",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }
   ],

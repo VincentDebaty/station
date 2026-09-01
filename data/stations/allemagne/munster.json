@@ -4,7 +4,7 @@
   "city": "Münster",
   "tagline": "Münster Hbf — la ville aux 50 000 vélos, au bout de la Rollbahn.",
   "difficulty": 2,
-  "country": "🇩🇪 Allemagne",
+  "country": "allemagne",
   "desc": "La ville aux cinquante mille vélos, et sa gare au bout de la Rollbahn : quatre directions, huit voies, un flux d'étudiants qui ne retombe qu'en août.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }

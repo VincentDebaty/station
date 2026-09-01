@@ -3,7 +3,7 @@
   "name": "Bad Kleinen",
   "tagline": "Bad Kleinen — une gare bien plus grande que son village.",
   "difficulty": 3,
-  "country": "🇩🇪 Allemagne",
+  "country": "allemagne",
   "desc": "L'une des plus vieilles stations du Mecklembourg, ouverte en 1848, et l'un de ses carrefours les plus utiles : Lübeck, Wismar, Schwerin et Rostock s'y rejoignent. Deux quais en île refaits en 2017, pour un bourg que la gare dépasse largement.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }

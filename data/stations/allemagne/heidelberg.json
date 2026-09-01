@@ -4,7 +4,7 @@
   "city": "Heidelberg",
   "tagline": "Heidelberg Hbf — déplacée d'un kilomètre en 1955 pour cesser d'être un cul-de-sac.",
   "difficulty": 3,
-  "country": "🇩🇪 Allemagne",
+  "country": "allemagne",
   "desc": "L'ancienne gare était un terminus qui étranglait la ville : on l'a reconstruite un kilomètre plus à l'ouest, traversante. La vallée du Neckar s'en va vers l'est, la plaine badoise vers le sud.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }, { "id": 6 }

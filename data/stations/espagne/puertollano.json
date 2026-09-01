@@ -4,7 +4,7 @@
   "tagline": "La raffinerie sur la ligne du premier AVE",
   "desc": "Ville du charbon devenue ville de la pétrochimie, Puertollano doit à la ligne Madrid–Séville de garder ses express : les AVE d'Andalousie s'y arrêtent entre deux navettes Avant, au pied des torchères. À l'ouest, le régional de Badajoz s'en va seul sur la voie unique de l'Estrémadure.",
   "difficulty": 2,
-  "country": "🇪🇸 Espagne",
+  "country": "espagne",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }
   ],

@@ -4,7 +4,7 @@
   "city": "Magdebourg",
   "tagline": "Magdeburg Hbf — sur l'Elbe, à mi-chemin de Hanovre et de Berlin.",
   "difficulty": 2,
-  "country": "🇩🇪 Allemagne",
+  "country": "allemagne",
   "desc": "Sur l'Elbe, à mi-chemin de Hanovre et de Berlin : la gare la plus détruite d'Allemagne en 1945, rebâtie à l'identique. Quatre directions, neuf voies.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }

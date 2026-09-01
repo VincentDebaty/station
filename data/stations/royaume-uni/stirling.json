@@ -3,7 +3,7 @@
   "name": "Stirling",
   "tagline": "Stirling — sous le château, le verrou des Highlands depuis huit cents ans.",
   "difficulty": 1,
-  "country": "🇬🇧 Royaume-Uni",
+  "country": "royaume-uni",
   "desc": "Sous le château, le verrou de l'Écosse : depuis huit cents ans, tout ce qui monte vers les Highlands passe par ce goulet. Cinq quais dans une gare victorienne intacte.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }

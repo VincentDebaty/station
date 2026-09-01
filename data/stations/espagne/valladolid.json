@@ -5,7 +5,7 @@
   "tagline": "Le double gril de la Meseta",
   "desc": "Face au parc du Campo Grande, les voies européennes et ibériques se côtoient sous la même verrière de 1895 : tout ce que Madrid envoie au nord-ouest — León, la Cantabrie, le Pays basque — passe par ici. Les MD de Salamanque et d'Ávila s'y glissent entre deux AVE.",
   "difficulty": 4,
-  "country": "🇪🇸 Espagne",
+  "country": "espagne",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 },
     { "id": 5 }, { "id": 6 }, { "id": 7 }, { "id": 8 }

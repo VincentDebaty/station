@@ -4,7 +4,7 @@
   "tagline": "Le X flamand",
   "desc": "Au croisement de la ligne de Lille aux Fontinettes et de l'artère d'Arras à Dunkerque, la gare de 1848 aiguille les TER de tout le triangle Lille–Calais–Dunkerque, et le TGV de Paris y marque l'arrêt en montant vers le port. Six voies, un bâtiment reconstruit après-guerre, et le fret qui traverse encore.",
   "difficulty": 3,
-  "country": "🇫🇷 France",
+  "country": "france",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
   ],

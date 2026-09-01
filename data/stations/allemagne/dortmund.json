@@ -4,7 +4,7 @@
   "city": "Dortmund",
   "tagline": "Dortmund Hbf — 16 voies au bout de la Ruhr, pivot de l'est du bassin.",
   "difficulty": 3,
-  "country": "🇩🇪 Allemagne",
+  "country": "allemagne",
   "desc": "Seize voies au bout de la Ruhr : la gare qui devait devenir la plus moderne d'Europe en 2000, et qui attend encore. Elle n'en reste pas moins le pivot de l'est du bassin.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },

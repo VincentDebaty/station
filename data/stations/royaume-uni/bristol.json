@@ -4,7 +4,7 @@
   "city": "Bristol",
   "tagline": "Bristol Temple Meads — la première grande gare du monde encore debout.",
   "difficulty": 3,
-  "country": "🇬🇧 Royaume-Uni",
+  "country": "royaume-uni",
   "desc": "La première grande gare du monde encore debout, bâtie par Brunel en 1840 : treize voies sous une charpente de bois. Cinq directions, et le pays de Galles à vingt minutes sous l'estuaire.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },

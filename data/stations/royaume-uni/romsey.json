@@ -4,7 +4,7 @@
   "tagline": "La figure de six de l'abbaye",
   "desc": "Au pied de l'abbaye normande, la branche de Chandler's Ford, rouverte en 2003, rejoint la grande ligne en gare même : le circulaire de Salisbury y tourne sa figure de six par Southampton et Eastleigh. La Sprat and Winkle vers Andover, elle, est morte en 1964 — n'attendez aucun train de ce côté.",
   "difficulty": 2,
-  "country": "🇬🇧 Royaume-Uni",
+  "country": "royaume-uni",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }
   ],

@@ -3,7 +3,7 @@
   "name": "Culoz",
   "tagline": "Culoz — le Y du Rhône : Genève d'un côté, la Savoie de l'autre.",
   "difficulty": 3,
-  "country": "🇫🇷 France",
+  "country": "france",
   "desc": "Une gare en Y au bord du Rhône, où la ligne de Genève se sépare de celle de Modane et de la Savoie. Depuis le raccordement direct de 1979, un train peut passer de l'une à l'autre sans rebrousser — c'est ce qui fait tenir l'horaire.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }

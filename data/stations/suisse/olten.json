@@ -3,7 +3,7 @@
   "name": "Olten",
   "tagline": "Olten — le kilomètre zéro du rail suisse : cinq lignes, et pas de voies 5 ni 6.",
   "difficulty": 4,
-  "country": "🇨🇭 Suisse",
+  "country": "suisse",
   "desc": "La gare d'où l'on mesure toutes les distances du réseau : la plaque du kilomètre zéro est scellée sous la marquise. Tout le Plateau s'y noue — Zurich par Aarau et Bâle par le Hauenstein entrent au nord, Berne, Bienne et Lucerne repartent au sud ; seuls les rapides Bâle–Zurich filent par la courbe de contournement sans s'arrêter. Dix voies à quai numérotées de 1 à 12, les 5 et 6 ayant disparu dans un remaniement, et un trafic de fret permanent vers le Gothard et le Lötschberg.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 },

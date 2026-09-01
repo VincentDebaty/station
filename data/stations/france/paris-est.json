@@ -3,7 +3,7 @@
   "name": "Paris-Est",
   "tagline": "Paris-Est — sous la statue de Strasbourg, tout rebrousse.",
   "difficulty": 4,
-  "country": "🇫🇷 France",
+  "country": "france",
   "desc": "Le terminus néo-classique de 1849, que couronne la Strasbourg allégorique d'Henri Lemaire. D'ici partent l'Alsace, la Lorraine, la Champagne et le Luxembourg — et rien ne traverse : chaque train entre, s'arrête au heurtoir et repart par où il est venu.",
   "platforms": [
     { "id": 1, "deadEnd": true }, { "id": 2, "deadEnd": true }, { "id": 3, "deadEnd": true },

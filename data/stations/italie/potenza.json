@@ -4,7 +4,7 @@
   "tagline": "La capitale perchée à 673 mètres",
   "desc": "Quatre voies à quai, un bâtiment amputé par les séismes de 1980 et 1990, et un Frecciarossa quotidien Milan–Tarente qui se faufile entre les régionaux de montagne. La branche de Foggia revient tout juste de travaux, en traction diesel.",
   "difficulty": 2,
-  "country": "🇮🇹 Italie",
+  "country": "italie",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }
   ],

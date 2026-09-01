@@ -4,7 +4,7 @@
   "tagline": "La dernière gare commune des trois Sicile",
   "desc": "Dernière gare que partagent les flux de Messine, d'Agrigente et de Catane avant leur séparation à Fiumetorto : tout ce qui quitte Palerme vers l'est passe par ses quatre voies, au pied de l'ancienne usine Fiat.",
   "difficulty": 2,
-  "country": "🇮🇹 Italie",
+  "country": "italie",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }
   ],

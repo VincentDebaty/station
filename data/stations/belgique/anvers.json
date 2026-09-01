@@ -4,7 +4,7 @@
   "city": "Anvers",
   "tagline": "Anvers — trois niveaux : cinq voies butent sur un heurtoir, trois filent sous la ville.",
   "difficulty": 4,
-  "country": "🇧🇪 Belgique",
+  "country": "belgique",
   "desc": "La cathédrale ferroviaire, sur trois niveaux. En haut et au milieu, les voies butent sur un heurtoir comme depuis 1905 ; tout en bas, depuis 2007, un tunnel traverse la ville et laisse enfin passer les trains vers les Pays-Bas sans rebrousser. Deux gares dans une, et c'est vous qui répartissez.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 },

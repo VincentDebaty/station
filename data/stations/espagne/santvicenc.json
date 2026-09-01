@@ -4,7 +4,7 @@
   "tagline": "Le Y du Penedès",
   "desc": "Une gare-carrefour posée en zone balnéaire qui ne dessert presque aucune ville : deux itinéraires vers Barcelone — la côte et l'intérieur — s'y séparent, et trois lignes de banlieue viennent y mourir en terminus.",
   "difficulty": 2,
-  "country": "🇪🇸 Espagne",
+  "country": "espagne",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }
   ],

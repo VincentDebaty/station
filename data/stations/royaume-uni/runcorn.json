@@ -4,7 +4,7 @@
   "tagline": "Une bifurcation ressuscitée en 2019",
   "desc": "Le grand pont de 1868 fait franchir la Mersey à toute la branche de Liverpool, cinq trains par heure. Et depuis 2019, la Halton Curve rouverte y ramène les trains de Chester — une bifurcation morte revenue à la vie.",
   "difficulty": 2,
-  "country": "🇬🇧 Royaume-Uni",
+  "country": "royaume-uni",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }
   ],

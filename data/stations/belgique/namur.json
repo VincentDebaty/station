@@ -3,7 +3,7 @@
   "name": "Namur",
   "tagline": "Namur — six directions au croisement de deux axes, onze voies sous dalle.",
   "difficulty": 3,
-  "country": "🇧🇪 Belgique",
+  "country": "belgique",
   "desc": "Le carrefour wallon, à l'intersection de l'axe Bruxelles–Luxembourg et de l'axe Liège–Charleroi. Onze voies sous une dalle de béton, dont les deux premières, isolées phoniquement, ne prennent que le fret.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },

@@ -4,7 +4,7 @@
   "city": "Ulm",
   "tagline": "Ulm Hbf — sur le Danube, là où la ligne de Stuttgart bascule vers la Bavière.",
   "difficulty": 2,
-  "country": "🇩🇪 Allemagne",
+  "country": "allemagne",
   "desc": "Au pied de la plus haute flèche d'église du monde, sur le Danube : douze voies là où la ligne de Stuttgart bascule vers la Bavière. La rampe de Geislingen commence juste après.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },

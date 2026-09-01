@@ -3,7 +3,7 @@
   "name": "Dinant",
   "tagline": "Dinant — trois voies au pied de la citadelle, entre Meuse et Ardenne.",
   "difficulty": 1,
-  "country": "🇧🇪 Belgique",
+  "country": "belgique",
   "desc": "La plus petite gare traversante du catalogue : la vallée de la Meuse au nord vers Namur, la remontée de la Lesse au sud vers Bertrix puis Libramont. Trois quais sous la falaise, des rames courtes, et l'été qui gonfle le trafic des kayaks.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }

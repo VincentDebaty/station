@@ -4,7 +4,7 @@
   "city": "Darmstadt",
   "tagline": "Darmstadt Hbf — la Main-Neckar croise la Rhin-Main, et l'Odenwald s'en va.",
   "difficulty": 2,
-  "country": "🇩🇪 Allemagne",
+  "country": "allemagne",
   "desc": "Une gare Art nouveau de 1912, posée au croisement de deux axes : la Main-Neckar qui descend de Francfort vers Heidelberg, et la Rhin-Main qui file de Mayence vers Aschaffenbourg. L'Odenwald part en antenne.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }, { "id": 6 }

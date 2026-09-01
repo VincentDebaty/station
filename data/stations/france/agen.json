@@ -3,7 +3,7 @@
   "name": "Agen",
   "tagline": "Agen — une halle d'Eiffel entre la Garonne et le Périgord.",
   "difficulty": 3,
-  "country": "🇫🇷 France",
+  "country": "france",
   "desc": "La halle métallique sort du bureau d'études de Gustave Eiffel, montée entre 1864 et 1866 et remise à neuf en 2023. Sur la grande ligne de Bordeaux à Sète, avec la voie de Niversac qui remonte vers Périgueux depuis 1863.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }

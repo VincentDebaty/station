@@ -3,7 +3,7 @@
   "name": "Bourg-en-Bresse",
   "tagline": "Bourg-en-Bresse — quatre lignes se croisent, et celle de Genève part par le Haut-Bugey.",
   "difficulty": 3,
-  "country": "🇫🇷 France",
+  "country": "france",
   "desc": "Le carrefour de la Bresse : la ligne de Mâcon à Ambérieu s'y coupe avec celle de Lyon, pendant que la voie du Haut-Bugey file vers Bellegarde et Genève et que celle de Mouchard remonte vers Besançon. Sept voies pour quatre quais, et des TGV de Genève qui s'y glissent entre les TER de Bourgogne.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }

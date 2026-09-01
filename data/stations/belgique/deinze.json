@@ -3,7 +3,7 @@
   "name": "Deinze",
   "tagline": "Deinze — là où la ligne de la côte quitte celle de Courtrai.",
   "difficulty": 1,
-  "country": "🇧🇪 Belgique",
+  "country": "belgique",
   "desc": "Au bord de la Lys, le point où la ligne 73 s'échappe vers La Panne et les dunes pendant que la 75 continue sur Courtrai. Une entrée, deux sorties, quatre quais : le premier poste du pays.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }

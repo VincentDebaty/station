@@ -3,7 +3,7 @@
   "name": "Bruges",
   "tagline": "Bruges — porte de la côte : 5 quais, l'intérieur d'un côté, l'éventail du littoral de l'autre.",
   "difficulty": 2,
-  "country": "🇧🇪 Belgique",
+  "country": "belgique",
   "desc": "La porte de la côte flamande : d'un côté l'intérieur vers Gand, Bruxelles et Courtrai ; de l'autre, l'éventail du littoral où les IC se scindent vers Ostende, Blankenberge et Knokke. Un flux régulier que l'été gonfle — sans temps mort.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }

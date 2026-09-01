@@ -3,7 +3,7 @@
   "name": "Paris-Montparnasse",
   "tagline": "Paris-Montparnasse — 9 quais pour l'Ouest et le Sud-Ouest, Granville compris.",
   "difficulty": 4,
-  "country": "🇫🇷 France",
+  "country": "france",
   "desc": "La gare de l'Ouest et du Sud-Ouest : Rennes, Nantes et Bordeaux à trois heures, plus l'omnibus de Granville qui met six heures pour la moitié du chemin. Deux mondes sur le même gril.",
   "platforms": [
     { "id": 1, "deadEnd": true }, { "id": 2, "deadEnd": true }, { "id": 3, "deadEnd": true }, { "id": 4, "deadEnd": true }, { "id": 5, "deadEnd": true },

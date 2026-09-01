@@ -4,7 +4,7 @@
   "city": "Wiesbaden",
   "tagline": "Wiesbaden Hbf — capitale thermale, et un terminus où tout rebrousse.",
   "difficulty": 3,
-  "country": "🇩🇪 Allemagne",
+  "country": "allemagne",
   "desc": "La capitale de la Hesse s'est offert en 1906 une gare monumentale — et un cul-de-sac. Tout ce qui vient de Mayence, du Rheingau ou du Ländchen entre ici et doit repartir par où c'est possible.",
   "platforms": [
     { "id": 1, "deadEnd": true }, { "id": 2, "deadEnd": true }, { "id": 3, "deadEnd": true },

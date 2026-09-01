@@ -4,7 +4,7 @@
   "city": "Singen",
   "tagline": "Singen — l'InterCity de Zurich y rebrousse, la Schwarzwaldbahn y file tout droit.",
   "difficulty": 3,
-  "country": "🇩🇪 Allemagne",
+  "country": "allemagne",
   "desc": "Au pied du volcan du Hohentwiel, la gare où la Gäubahn de Stuttgart et la Hochrheinbahn de Schaffhouse arrivent par le même côté : l'InterCity Stuttgart–Zurich doit y changer de sens, et une courbe d'évitement est à l'étude depuis vingt ans. La Schwarzwaldbahn venue de Karlsruhe, elle, traverse sans s'arrêter de réfléchir vers Radolfzell et Constance. Huit voies, un terminal à conteneurs qui envoie le fret vers l'Italie, et une nuit d'avril 1917 où le train plombé de Lénine a dormi à quai.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }, { "id": 6 }

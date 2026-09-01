@@ -4,7 +4,7 @@
   "city": "Hanau",
   "tagline": "Hanau Hbf — la première bifurcation à l'est de Francfort : Fulda, le Spessart, l'Odenwald.",
   "difficulty": 4,
-  "country": "🇩🇪 Allemagne",
+  "country": "allemagne",
   "desc": "Onze voies à quai bâties au croisement de deux lignes, loin du centre-ville : c'est ici que le trafic de Francfort se sépare entre la vallée de la Kinzig vers Fulda et le Spessart vers Aschaffenbourg et Wurtzbourg. S'y ajoutent la Rhein-Main-Bahn de Darmstadt, la navette de Friedberg et deux S-Bahn qui y terminent.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },

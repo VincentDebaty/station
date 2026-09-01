@@ -3,7 +3,7 @@
   "name": "Rennes",
   "tagline": "Rennes — depuis la LGV, Paris à 1 h 25 : le pivot de toute la Bretagne.",
   "difficulty": 3,
-  "country": "🇫🇷 France",
+  "country": "france",
   "desc": "Depuis la LGV, Paris est à 1 h 25 : la gare a doublé de taille et sert de pivot à toute la Bretagne. Brest et Quimper repartent vers la pointe, Nantes descend par Redon.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },

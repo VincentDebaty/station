@@ -4,7 +4,7 @@
   "city": "Berne",
   "tagline": "Bern — six directions sous le plus long quai de Suisse : la capitale aiguille tout le pays.",
   "difficulty": 5,
-  "country": "🇨🇭 Suisse",
+  "country": "suisse",
   "desc": "Deuxième gare du pays, 270 000 voyageurs par jour, et une gare traversante où presque tout le monde change : à l'ouest, Fribourg et Lausanne, Bienne par Lyss, Neuchâtel par le BLS ; à l'est, Olten et Zurich, Lucerne par l'Emmental, Thoune et le Lötschberg vers Interlaken et Brigue. Quatorze voies normales, un quai de 420 mètres, le plus long du réseau, et les trains du Lötschberg qui croisent ceux de Zurich dans le même goulet. La gare de la capitale ne commande rien, mais tout passe par elle.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },

@@ -4,7 +4,7 @@
   "tagline": "Tout l'ouest d'Édimbourg passe ici",
   "desc": "Le second poste d'Édimbourg, à un mile de Waverley : le Fife par le Forth Bridge, Glasgow par Falkirk, Stirling et la West Coast s'y rabattent sur une seule paire de gorges vers la capitale. Cinquième gare d'Écosse par le trafic — et un rush de navetteurs à chaque bout de journée.",
   "difficulty": 3,
-  "country": "🇬🇧 Royaume-Uni",
+  "country": "royaume-uni",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }, { "id": 6 }
   ],

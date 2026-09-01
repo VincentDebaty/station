@@ -3,7 +3,7 @@
   "name": "Perth",
   "tagline": "Perth — sept voies pour 50 000 habitants : la gare des Highlands, presque vide.",
   "difficulty": 1,
-  "country": "🇬🇧 Royaume-Uni",
+  "country": "royaume-uni",
   "desc": "Sept voies pour une ville de cinquante mille habitants : la gare des Highlands, bâtie quand Perth était le pivot de tout le nord. Aujourd'hui presque vide, et magnifique.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }

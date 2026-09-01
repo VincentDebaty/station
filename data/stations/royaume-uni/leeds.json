@@ -3,7 +3,7 @@
   "name": "Leeds",
   "tagline": "Leeds — 17 voies, la plus grande gare du nord de l'Angleterre.",
   "difficulty": 4,
-  "country": "🇬🇧 Royaume-Uni",
+  "country": "royaume-uni",
   "desc": "Dix-sept voies, la plus grande gare du nord de l'Angleterre : elle a doublé de taille en vingt ans sans jamais cesser de saturer. Six directions dont l'antenne de Harrogate, qui ne dessert que deux quais.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },

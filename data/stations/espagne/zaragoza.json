@@ -5,7 +5,7 @@
   "tagline": "Deux écartements sous les tétraèdres",
   "desc": "Sous une couverture de tétraèdres de 110 mètres de portée, cinq voies européennes croisent cinq voies ibériques : l'AVE de Madrid y dépasse les diesels de Teruel, et les Alvia de Barcelone changent d'écartement en gare avant de filer vers la Navarre.",
   "difficulty": 5,
-  "country": "🇪🇸 Espagne",
+  "country": "espagne",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },
     { "id": 6 }, { "id": 7 }, { "id": 8 }, { "id": 9 }, { "id": 10 }

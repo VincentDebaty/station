@@ -4,7 +4,7 @@
   "city": "La Rochelle",
   "tagline": "La Rochelle — un campanile de 45 mètres au-dessus des quais.",
   "difficulty": 3,
-  "country": "🇫🇷 France",
+  "country": "france",
   "desc": "Pierre Esquié l'a voulue maritime : mosaïques, motifs de mer et un campanile de quarante-cinq mètres, inaugurés en 1922. La ligne de Nantes la traverse, celle de Poitiers s'y arrête, et l'antenne de La Pallice descend au grand port.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }

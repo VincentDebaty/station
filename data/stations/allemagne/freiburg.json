@@ -4,7 +4,7 @@
   "city": "Fribourg",
   "tagline": "Freiburg Hbf — au pied de la Forêt-Noire, la porte suisse du réseau.",
   "difficulty": 1,
-  "country": "🇩🇪 Allemagne",
+  "country": "allemagne",
   "desc": "Au pied de la Forêt-Noire, la porte suisse du réseau : c'est par Fribourg — et par Strasbourg, en face — que l'Allemagne rejoint enfin le reste de l'Europe jouable.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }

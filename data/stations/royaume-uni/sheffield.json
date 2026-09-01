@@ -3,7 +3,7 @@
   "name": "Sheffield",
   "tagline": "Sheffield — entre la rivière et la colline, la porte du Peak District.",
   "difficulty": 3,
-  "country": "🇬🇧 Royaume-Uni",
+  "country": "royaume-uni",
   "desc": "Neuf voies coincées entre la rivière et la colline, dans la ville de l'acier : la ligne de la Hope Valley traverse le Peak District par un tunnel de cinq kilomètres pour rejoindre Manchester.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },

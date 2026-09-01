@@ -3,7 +3,7 @@
   "name": "Paris-Nord",
   "tagline": "Paris-Nord — 10 quais à heurtoir, 6 directions dont Londres. Le boss du pays.",
   "difficulty": 5,
-  "country": "🇫🇷 France",
+  "country": "france",
   "desc": "La première gare d'Europe, 257 millions de voyageurs : dix quais à heurtoir et six directions dont trois internationales. Le boss du pays — et la seule gare du catalogue à toucher trois pays jouables.",
   "platforms": [
     { "id": 1, "deadEnd": true }, { "id": 2, "deadEnd": true }, { "id": 3, "deadEnd": true }, { "id": 4, "deadEnd": true }, { "id": 5, "deadEnd": true },

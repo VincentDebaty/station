@@ -4,7 +4,7 @@
   "city": "Duisbourg",
   "tagline": "Duisbourg Hbf — le plus grand port fluvial du monde, et 12 voies pour le servir.",
   "difficulty": 1,
-  "country": "🇩🇪 Allemagne",
+  "country": "allemagne",
   "desc": "Le plus grand port fluvial du monde, et douze voies pour le desservir : c'est ici que le fret du Rhin rencontre le rail. Quatre directions, cinq quais — la porte d'entrée du bassin.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }

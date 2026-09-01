@@ -4,7 +4,7 @@
   "city": "Sarrebruck",
   "tagline": "Saarbrücken Hbf — la seconde porte française : l'ICE de Paris entre ici.",
   "difficulty": 1,
-  "country": "🇩🇪 Allemagne",
+  "country": "allemagne",
   "desc": "La seconde porte française : à dix kilomètres de la frontière, c'est ici que l'ICE de Paris entre en Allemagne. Dix voies, quatre directions, et deux langues sur les afficheurs.",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }

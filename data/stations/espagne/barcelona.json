@@ -5,7 +5,7 @@
   "tagline": "Deux gares en une, sous une dalle",
   "desc": "La deuxième gare d'Espagne n'a pas une seule voie en surface : six voies européennes où quatre opérateurs à grande vitesse se disputent Madrid, huit voies ibériques saturées par trois tunnels urbains — tout cela sous une dalle de béton.",
   "difficulty": 5,
-  "country": "🇪🇸 Espagne",
+  "country": "espagne",
   "platforms": [
     { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 },
     { "id": 6 }, { "id": 7 }, { "id": 8 }, { "id": 9 }, { "id": 10 }
