@@ -144,6 +144,16 @@ function bandeauHaut() {
 // reste petit, quitte à ne pas voir toute la ligne ») —
 // sans effet sur desktop (déjà au-dessus), et borné par le remplissage.
 const PX_PAR_UNITE_MIN = 48;
+// LE ZOOM N'EST PLUS BRIDÉ (1er septembre 2026). Le cadrage forçait une boîte
+// d'au moins 7 × 5 unités et un zoom d'au plus 6 : « La côte Est » tient dans
+// 1,5 × 2,32, donc ses cinq gares occupaient 54 px de large dans une scène de
+// 964 — 5,6 % — et Darlington se retrouvait à 24 px de Northallerton avec des
+// étiquettes de 132 et 155 px. Aucune règle de placement ne rattrape ça : les
+// noms étaient six fois plus larges que l'écart entre les points qu'ils
+// nomment. Mesuré sur les 49 chapitres du ruban, le cadrage naturel demande un
+// zoom de 10 à 179 : le plafond de 6 les sous-cadrait TOUS. Le seul plafond qui
+// reste est un garde-fou contre une boîte dégénérée.
+const K_MAX_CHAPITRE = 200;
 function plafondZoom(base) {
   const svg = CARTE.hote && CARTE.hote.querySelector(".c-graphe");
   const px = svg ? svg.getBoundingClientRect().width : 0;
@@ -163,6 +173,14 @@ function boite(ids) {
   if (!isFinite(x0)) return null;
   return { x: (x0 + x1) / 2, y: (y0 + y1) / 2, w: x1 - x0, h: y1 - y0 };
 }
+// CE QUE LA CARTE MONTRE — pas forcément ce que le PANNEAU raconte. En fin de
+// chapitre, le panneau tient le bilan de celui qu'on ferme (`CARTE.chapitre`)
+// pendant que le convoi rejoint le suivant : une fois arrivé, c'est le nouveau
+// qu'il faut dessiner ET cadrer. Rail, gares et caméra lisent donc tous les
+// trois cette fonction — les séparer avait donné une carte vide, la caméra
+// posée sur un chapitre que le rail ne dessinait pas.
+function chapitreVu() { return CARTE.voyageFait || CARTE.chapitre; }
+
 // La caméra que la vue courante demande.
 // LE CHAPITRE EN COURS, CADRÉ POUR REMPLIR LA SCÈNE. Un seul niveau : c'est
 // ce que le premier test réclamait — le chapitre qu'on joue doit occuper
@@ -180,15 +198,14 @@ function cameraVoulue() {
     const bt = boite(ch1 ? [CARTE.transit.de].concat(ch1.gares) : [CARTE.transit.de, CARTE.transit.vers]);
     if (bt) {
       const inset = bandeauHaut();
-      // Un cran plus large que la pose (6) : le resserrement final se voit.
-      const k = zoomPour(Math.max(bt.w, 7), Math.max(bt.h, 5), 15, 5, inset);
+      // Plus large que la pose sans qu'on ait à le forcer : la boîte contient la
+      // gare quittée EN PLUS de tout le chapitre rejoint. Le resserrement final
+      // se voit donc tout seul, et il suit le même barème.
+      const k = zoomPour(bt.w, bt.h, 15, K_MAX_CHAPITRE, inset);
       return { x: bt.x, y: bt.y - inset / (2 * k), k };
     }
   }
-  // Le voyage est fait, mais le panneau raconte encore le chapitre qu'on vient
-  // de fermer : la caméra, elle, reste sur le nouveau. Sans ça elle revenait en
-  // arrière dès la fin du convoi.
-  const ch = CARTE.voyageFait || CARTE.chapitre;
+  const ch = chapitreVu();
   // LE VOISINAGE, PAS LE CHAPITRE ENTIER. Cadrer les neuf gares du Roussillon
   // réduisait le tracé à un timbre-poste sur un téléphone — mesuré le 28 août
   // 2026, premier essai au simulateur iPhone : « tout est petit ». On cadre
@@ -208,9 +225,10 @@ function cameraVoulue() {
   // au-dessus de son point, donc la dernière gare a besoin d'un peu plus de
   // ciel que de sol.
   const inset = bandeauHaut();
-  // Un chapitre court (Bruxelles–Amsterdam tient dans 3 unités) grossirait au
-  // point qu'on ne verrait plus le pays autour : le zoom est borné.
-  const k = zoomPour(Math.max(b.w, 7), Math.max(b.h, 5), 15, 6, inset);
+  // ON CADRE LE CHAPITRE, PAS LE PAYS. La borne d'avant protégeait le décor —
+  // « voir le pays autour » — au prix de la seule chose qu'on doit pouvoir
+  // lire : où l'on est sur le rail, et comment s'appellent ces gares.
+  const k = zoomPour(b.w, b.h, 15, K_MAX_CHAPITRE, inset);
   // Le centre descend de la moitié de la bande réservée : le chapitre se pose
   // au milieu de ce qui reste visible, pas au milieu du SVG.
   return { x: b.x, y: b.y - inset / (2 * k), k };
@@ -250,7 +268,7 @@ function couleurDeZone(zid) {
 // SEUL LE CHAPITRE EN COURS EST DESSINÉ. Le reste du ruban existe, il est
 // simplement hors sujet : on ne joue pas Hambourg quand on est en Ardenne.
 function railHTML() {
-  const ch = CARTE.chapitre, P = projection();
+  const ch = chapitreVu(), P = projection();
   if (!P || !ch || ch.gares.length < 2) return "";
   const g = ch.gares, col = couleurDeZone(ch.zone), segs = [];
   for (let i = 1; i < g.length; i++) {
@@ -278,7 +296,7 @@ function railHTML() {
 function garesHTML() {
   const k = (CARTE.cam && CARTE.cam.k) || 1;
   const R = n => (n / k).toFixed(2);
-  const ch0 = CARTE.chapitre, gc = CARTE.prochaine;
+  const ch0 = chapitreVu(), gc = CARTE.prochaine;
   const out = [];
   if (!ch0) return '<g class="gares"></g>';
   for (const g of ch0.gares) {
@@ -879,7 +897,7 @@ function poserCamera() {
   if (!svg || !monde) { CARTE.camAvant = null; return; }
   brancherDerive();
   // La dérive est propre au sujet cadré : elle meurt avec lui.
-  const sujet = (CARTE.chapitre ? CARTE.chapitre.id : "-") + ":" + (gareCourante() || "-");
+  const sujet = (chapitreVu() ? chapitreVu().id : "-") + ":" + (gareCourante() || "-");
   if (CARTE.deriveSujet !== sujet) { CARTE.derive = { x: 0, y: 0 }; CARTE.deriveSujet = sujet; }
   const c = cameraVoulue();
   CARTE.cam = c;
