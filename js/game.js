@@ -1414,6 +1414,10 @@ function endGame(failed) {
     // clignoter le chapitre suivant avant la fête du précédent.
     if (win && typeof preparerSuite === "function") preparerSuite(STATION.id);
     showHub();                   // #end rangé, la carte redessinée avec le relevé
+    // LE VOYAGE DE FIN DE CHAPITRE PART ICI, une fois la carte à l'écran : il
+    // se joue PENDANT qu'on lit le bilan, et non plus après le clic (voir
+    // js/parcours.js). Sans fête à fêter, l'appel ne fait rien.
+    if (typeof lancerVoyageDeChapitre === "function") lancerVoyageDeChapitre();
     rollRecette();
     if (perfect && typeof perfectConfetti === "function") {
       const bulle = document.querySelector("#hub .c-bilan");

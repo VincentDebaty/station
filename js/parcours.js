@@ -27,12 +27,20 @@
 const CARTE = {
   hote: null, bilan: null, voyage: null, prochaine: null,
   etoiles: null, cam: null, camAvant: null, fete: null, chapitre: null,
-  chapitreAvant: null, feteAvant: false, transit: null
+  chapitreAvant: null, feteAvant: false, transit: null,
+  // LE PANNEAU ET LA CAMÉRA NE REGARDENT PLUS LE MÊME CHAPITRE pendant une fin
+  // de chapitre : on lit le bilan de celui qu'on ferme (`chapitre`) pendant que
+  // la carte, elle, a déjà rejoint le suivant (`voyageFait`). `minuteries` tient
+  // les temps du voyage, pour pouvoir le couper net si le joueur clique avant.
+  voyageFait: null, minuteries: null
 };
 // La caméra met .75 s à traverser (1,5 s pour un saut, css/station.css). On
 // laisse le voyage se voir avant d'ouvrir le niveau — sinon il se joue derrière
 // l'écran de jeu et personne ne le regarde.
-const DUREE_VOYAGE = 1150, DUREE_SAUT = 1900, DUREE_POSE = 620;
+// DUREE_POSE (620 ms) est retirée le 1er septembre 2026 : c'était le temps
+// mort entre l'arrivée du convoi et l'ouverture du niveau, et il n'y a plus de
+// niveau à ouvrir au bout du voyage — le voyage se joue avant le clic.
+const DUREE_VOYAGE = 1150, DUREE_SAUT = 1900;
 const sansAnimation = () =>
   !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
 
@@ -168,7 +176,7 @@ function cameraVoulue() {
   // 25 km, le minimum de zoom s'appliquait et le ruban devenait un timbre-poste
   // dans un coin.
   if (CARTE.transit) {
-    const ch1 = CARTE.chapitre;
+    const ch1 = CARTE.transit.chapitre || CARTE.chapitre;
     const bt = boite(ch1 ? [CARTE.transit.de].concat(ch1.gares) : [CARTE.transit.de, CARTE.transit.vers]);
     if (bt) {
       const inset = bandeauHaut();
@@ -177,7 +185,10 @@ function cameraVoulue() {
       return { x: bt.x, y: bt.y - inset / (2 * k), k };
     }
   }
-  const ch = CARTE.chapitre;
+  // Le voyage est fait, mais le panneau raconte encore le chapitre qu'on vient
+  // de fermer : la caméra, elle, reste sur le nouveau. Sans ça elle revenait en
+  // arrière dès la fin du convoi.
+  const ch = CARTE.voyageFait || CARTE.chapitre;
   // LE VOISINAGE, PAS LE CHAPITRE ENTIER. Cadrer les neuf gares du Roussillon
   // réduisait le tracé à un timbre-poste sur un téléphone — mesuré le 28 août
   // 2026, premier essai au simulateur iPhone : « tout est petit ». On cadre
@@ -397,9 +408,10 @@ function medaillesHTML(combien) {
     (reste ? `<span class="cm-plus">+${reste}</span>` : "") + `</div>`;
 }
 
-function bilanHTML() {
+function bilanHTML(avecMedailles) {
   const b = CARTE.bilan;
   if (!b) return "";
+  if (avecMedailles === undefined) avecMedailles = true;
   const cl = "c-bilan" + (b.perfect ? " parfait" : "") + (b.win ? "" : " rate");
   const etoiles = typeof etoilesHTML === "function" ? etoilesHTML(b.stars, b.prevStars) : "";
   const retard = b.failed
@@ -426,7 +438,8 @@ function bilanHTML() {
     ? `<div class="cb-vise">3 ★ sous ${s.trois} min</div>` : "";
   return `<div class="${cl}" role="status">
     <div class="cb-gare">${villeDe(b.gare)}</div>
-    <div class="cb-etoiles">${etoiles}</div>${diamant}${retard}${rec}${vise}${medaillesHTML(2)}</div>`;
+    <div class="cb-etoiles">${etoiles}</div>${diamant}${retard}${rec}${vise}${
+      avecMedailles ? medaillesHTML(2) : ""}</div>`;
 }
 
 const FLECHE = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" ' +
@@ -450,11 +463,16 @@ const BOUCLE = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stro
 function piedHTML() {
   const gc = CARTE.prochaine, b = CARTE.bilan, f = CARTE.fete;
 
-  // Fin de chapitre : un seul bouton, il ouvre le suivant.
+  // Fin de chapitre : LE BOUTON NOMME LA GARE, exactement comme entre deux
+  // gares du même chapitre. Il annonçait le CHAPITRE suivant (« En route · Le
+  // Yorkshire noir ») : on savait où l'on allait en gros, plus où l'on allait
+  // vraiment, et le geste changeait de nature au pire moment. Le chapitre garde
+  // son annonce, en surtitre, où elle ne coûte pas le nom de la destination.
   if (f) return `<div class="cc-pied">` + (f.suivant && gc
-    ? `<button class="c-suite c-appel" data-gare="${gc}">` +
-      `<span class="ca-texte"><span class="ca-quoi">En route</span>` +
-      `<span class="ca-ou">${f.suivant.nom}</span></span>${FLECHE}</button>`
+    ? `<p class="cp-chapitre">Chapitre suivant · <b>${f.suivant.nom}</b></p>` +
+      `<button class="c-suite c-appel" data-gare="${gc}">` +
+      `<span class="ca-texte"><span class="ca-quoi">Jouer</span>` +
+      `<span class="ca-ou">${villeDe(gc)}</span></span>${FLECHE}</button>`
     : `<div class="c-avenir">Le ruban s'arrête ici — pour le moment.</div>`) + `</div>`;
 
   // Échec : réessayer (gratuit, illimité) et payer le passage, côte à côte.
@@ -674,6 +692,7 @@ function fermerCartes() { CARTE.vue = "ruban"; renderCarte(); }
 // de l'ancien affiché à côté.
 async function choisirCarte(id) {
   if (typeof possedeCarte === "function" && !possedeCarte(id)) return;
+  annulerVoyage();
   if (typeof getCarteCourante === "function" && getCarteCourante() === id) { fermerCartes(); return; }
   if (typeof setCarteCourante === "function") setCarteCourante(id);
   if (typeof loadCarte === "function") await loadCarte(id);
@@ -681,6 +700,7 @@ async function choisirCarte(id) {
   CARTE.bilan = null; CARTE.fete = null; CARTE.medailles = null; CARTE.voyage = null;
   CARTE.cam = null; CARTE.camAvant = null; CARTE.derive = null;
   CARTE.chapitre = null; CARTE.chapitreAvant = null; CARTE.feteAvant = false;
+  CARTE.transit = null; CARTE.voyageFait = null;
   renderCarte();
 }
 // Acheter : le seul FAIT que l'économie des cartes écrive. Le solde, lui, se
@@ -716,8 +736,10 @@ function vueRuban() {
         `<span class="ccc-nom">${nomDeCarte()}</span>` +
         `<span class="ccc-quoi">Changer de carte</span></button>` : ""}
       ${chapitreHTML()}
-      <div class="cc-corps${CARTE.fete ? " fete" : ""}">
-        ${CARTE.fete ? feteHTML() : CARTE.bilan ? bilanHTML() : (gc ? cartoucheHTML(gc) : "")}
+      <div class="cc-corps${CARTE.fete && !CARTE.bilan ? " fete" : ""}">
+        ${CARTE.fete
+          ? feteHTML() + (CARTE.bilan ? bilanHTML(false) : "")
+          : CARTE.bilan ? bilanHTML() : (gc ? cartoucheHTML(gc) : "")}
       </div>
       ${piedHTML()}
     </aside>
@@ -920,40 +942,74 @@ function lancerTrain(duree) {
 function jouerGare(gareId) {
   const i = CATALOG.findIndex(c => c.id === gareId);
   if (i < 0 || !estTenue(gareId)) { renderCarte(); return; }
-  // ON QUITTE UNE FÊTE DE CHAPITRE : LE VOYAGE SE REGARDE.
-  // Il se jouait jusqu'ici PENDANT le niveau — la caméra glissait vers le
-  // chapitre suivant derrière l'écran de jeu, et le joueur ne voyait rien. On
-  // rend donc la carte d'abord, on laisse la caméra traverser, et le service
-  // ne commence qu'après. Un saut prend plus longtemps : il traverse une mer.
+  // ON QUITTE UNE FÊTE DE CHAPITRE. Le voyage a DÉJÀ eu lieu, pendant qu'on
+  // lisait le bilan (voir lancerVoyageDeChapitre) : cliquer ouvre donc le
+  // niveau tout de suite, exactement comme entre deux gares du même chapitre.
+  // S'il roule encore, on le coupe net — jamais d'attente imposée.
   if (CARTE.fete) {
-    const quitte = CARTE.fete.ch.gares[CARTE.fete.ch.gares.length - 1];
-    const suivant = chapitreDeGare(gareId);
+    annulerVoyage();
+    if (CARTE.transit) {
+      const suivant = chapitreDeGare(gareId);
+      CARTE.transit = null;
+      if (suivant && suivant.saut) CARTE.voyageSaut = true;
+    }
     CARTE.fete = null;
     CARTE.bilan = null;
     CARTE.medailles = null;
-    if (sansAnimation()) { renderCarte(); startStation(i); return; }
-    // TROIS TEMPS. On cadre les deux gares, un convoi fait la route, puis la
-    // caméra se pose sur le chapitre neuf. Sans le convoi, la caméra changeait
-    // de cadrage sans que rien ne PARCOURE la distance : on ne voyageait pas,
-    // on coupait au montage.
-    const saut = !!(suivant && suivant.saut);
-    const route = saut ? DUREE_SAUT : DUREE_VOYAGE;
-    CARTE.transit = { de: quitte, vers: gareId, saut };
+    CARTE.voyageFait = null;
     renderCarte();
-    const cote = CARTE.hote && CARTE.hote.querySelector(".c-cote");
-    if (cote) cote.classList.add("en-route");   // le panneau s'efface le temps du trajet
-    setTimeout(() => lancerTrain(route), 240);  // la caméra a le temps de s'installer
-    setTimeout(() => {                          // le convoi est arrivé : on se pose
-      CARTE.transit = null;
-      if (saut) CARTE.voyageSaut = true;
-      renderCarte();
-      const c2 = CARTE.hote && CARTE.hote.querySelector(".c-cote");
-      if (c2) c2.classList.add("en-route");
-      setTimeout(() => startStation(i), DUREE_POSE);
-    }, 240 + route);
-    return;
   }
   startStation(i);
+}
+
+// ------------------------------------------------------------------
+// LE VOYAGE DE FIN DE CHAPITRE — joué PENDANT la lecture, plus après le clic.
+// ------------------------------------------------------------------
+// Mesuré le 1er septembre 2026, retour de test de Vincent : deux gares du même
+// chapitre s'enchaînent en 0 ms, un changement de chapitre en 2027 ms — et
+// 2760 avec un saut. Trois ruptures d'un coup : l'attente, le panneau qui
+// changeait de sujet, et le bouton qui nommait un chapitre au lieu d'une gare.
+//
+// Le convoi n'était pas le problème : il avait été ajouté exprès, parce que la
+// caméra glissait auparavant DERRIÈRE l'écran de jeu et que personne ne le
+// voyait. Il était au mauvais moment. Il occupe désormais le temps mort qui
+// existait déjà — celui où l'on lit son bilan de chapitre — au lieu d'en créer
+// un entre le geste et le jeu. Même spectacle, mieux vu, et zéro attente.
+const DELAI_LECTURE = 700;                 // le temps de poser les yeux sur le bilan
+function annulerVoyage() {
+  for (const m of (CARTE.minuteries || [])) clearTimeout(m);
+  CARTE.minuteries = null;
+}
+// DEUX TEMPS, ET DEUX FONCTIONS. `preparerVoyage` pose les DONNÉES du transit
+// sans rendre — parce que la fin de service prépare puis dessine UNE fois
+// (js/game.js : deux rendus faisaient clignoter le chapitre suivant avant la
+// fête du précédent). `lancerVoyageDeChapitre` ne fait donc que partir les
+// minuteries, une fois la carte déjà à l'écran.
+function preparerVoyage() {
+  annulerVoyage();
+  CARTE.transit = null; CARTE.voyageFait = null;
+  const f = CARTE.fete, gc = gareCourante();
+  if (!f || !gc) return;
+  const suivant = chapitreDeGare(gc);
+  if (!suivant || suivant === f.ch) return;
+  // Mouvement réduit : on se pose sur le nouveau chapitre, sans convoi.
+  if (sansAnimation()) { CARTE.voyageFait = suivant; return; }
+  CARTE.transit = { de: f.ch.gares[f.ch.gares.length - 1], vers: gc,
+                    chapitre: suivant, saut: !!suivant.saut };
+}
+function lancerVoyageDeChapitre() {
+  const t = CARTE.transit;
+  if (!t || CARTE.minuteries) return;
+  const route = t.saut ? DUREE_SAUT : DUREE_VOYAGE;
+  CARTE.minuteries = [
+    setTimeout(() => lancerTrain(route), DELAI_LECTURE),
+    setTimeout(() => {
+      CARTE.transit = null;
+      CARTE.voyageFait = t.chapitre;   // la caméra reste sur le chapitre rejoint
+      if (t.saut) CARTE.voyageSaut = true;
+      renderCarte();
+    }, DELAI_LECTURE + route)
+  ];
 }
 // PASSER EN PAYANT (§4 ter). La gare reste à zéro étoile — ni jauge, ni rang,
 // ni médaille — et se rejoue quand on veut : la gagner plus tard rend la mise.
@@ -986,9 +1042,16 @@ function preparerSuite(gareId) {
       ch, suivant: chs[ch.rang + 1] || null,
       zoneFinie: chs.filter(c => c.zone === ch.zone).every(chapitreTermine)
     };
-    CARTE.bilan = null;
+    // LE RELEVÉ DE LA GARE RESTE. Il était effacé par le bilan du chapitre :
+    // on perdait de vue les étoiles qu'on venait de décrocher, au seul moment
+    // du jeu où deux récompenses tombent ensemble.
+    preparerVoyage();               // le cadrage du transit, sans rendre
   } else {
     CARTE.voyageSaut = !!(nouveauCh && nouveauCh !== ch && nouveauCh.saut);
   }
 }
-function finDeGare(gareId) { preparerSuite(gareId); renderCarte(); }
+function finDeGare(gareId) {
+  preparerSuite(gareId);
+  renderCarte();
+  lancerVoyageDeChapitre();
+}
