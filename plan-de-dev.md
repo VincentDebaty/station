@@ -599,6 +599,13 @@ Il porte `startStation`, `startAdhocStation` et le cartouche de gare ; seul
   `ruban-europe.md` ne s'écriront que sous le moteur, si elles s'écrivent.
 - **Pas de chapitres légendaires, pas de régularité quotidienne** : intentions
   conservées dans le document, hors plan.
+- **Pas de nouvelle direction artistique** (1er septembre 2026). Trois planches
+  ont été explorées — poste d'aiguillage réel en laiton, diagramme technique,
+  abstrait coloré — puis quatre déclinaisons de la deuxième, sur la géométrie
+  réelle de Darlington. Toutes ont été jugées moins belles que l'existant.
+  L'esthétique du prototype est donc CONSERVÉE, et l'embellissement reporté au
+  moteur. Une trouvaille de l'exercice reste acquise : en paysage sur téléphone
+  (844 × 390), six quais imposent des noms de directions **abrégés**.
 
 ## Prochaine action
 
