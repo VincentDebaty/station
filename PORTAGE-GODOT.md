@@ -1,0 +1,343 @@
+# Le portage sous Godot
+
+Écrit le 1er septembre 2026, quand le prototype web a été jugé assez complet
+pour être porté. Ce document dit **ce qui traverse, ce qui se jette, ce qui se
+réécrit, et ce qui ne doit surtout pas dériver au passage**.
+
+Il ne décide rien sur l'esthétique : elle est conservée telle quelle, et
+l'embellissement viendra sous le moteur (`plan-de-dev.md`, « Ce qu'on ne fait
+pas »).
+
+---
+
+## 0. Le principe qui a guidé tout le prototype
+
+> Le jeu web est un **prototype**. On n'investit rien dans une chaîne graphique
+> web, mais tout ce qui est **données et règles** est écrit pour survivre au
+> portage.
+
+C'est pour ça que les cartes et les fiches sont du JSON et non du JS, que les
+règles de jeu ne sont jamais dans `render.js`, et que les quatre contrôles sont
+des scripts Node indépendants du navigateur. Le portage encaisse aujourd'hui ce
+qui a été payé pendant six mois.
+
+**Le rapport est d'environ 2 pour 1** : sur 8 610 lignes de JS, ~2 300 sont du
+rendu jetable et ~4 000 sont de la règle à transposer — le reste étant des
+outils qui ne bougent pas.
+
+---
+
+## 1. Ce qui passe TEL QUEL — aucune réécriture
+
+### Les données
+
+| | volume | ce que c'est |
+|---|---|---|
+| `data/stations/<pays>/*.json` | **401 fiches** | la gare : quais, portails, liens, enveloppe de génération |
+| `data/stations/index.json` | 10 pays | l'ordre curé, et le libellé de pays (une fois) |
+| `data/stations/brevets.json` | 401 entrées | le niveau maximal certifié sain par fiche |
+| `data/cartes/*.json` | 2 cartes | le ruban : chapitres, zones, rampe, sauts |
+| `js/geo.js` | 404 villes | `id: [lon, lat]` — coordonnées, pas géométrie de gare |
+| `data/lines.js` | ~200 lignes | la topologie réelle du réseau, pour le tracé |
+| `data/places.js` | points de passage | ce qui donne sa forme au trait sans être jouable |
+| `data/worldmap.js` | Natural Earth | **généré, jamais édité à la main** |
+
+Godot lit du JSON nativement (`JSON.parse_string`). `geo.js`, `lines.js` et
+`places.js` sont du JS déclaratif — trois fichiers à convertir en JSON une fois,
+mécaniquement, ou à charger via un petit transpileur d'import. **Aucune décision
+à prendre**, aucune donnée à re-saisir.
+
+### Les quatre contrôles
+
+`gen-check`, `brevet`, `carte-check`, `net-check` sont de l'ESM Node lancé
+directement, sans dépendance ni installation. Ils ne connaissent pas le
+navigateur.
+
+**Ils ne se portent pas : ils restent.** Un contrôle qui tourne hors moteur est
+un contrôle qu'on peut lancer en CI, sur une machine sans Godot, et qui ne ment
+pas parce qu'il partagerait un bug avec le jeu. Il y a **une** exception à
+surveiller : `carte-check` **évalue `js/ruban.js`** pour ne pas dupliquer le
+modèle de difficulté (`tools/carte-check.mjs`, commentaire « LE MODÈLE DE
+DIFFICULTÉ VIENT DU JEU, JAMAIS D'UNE COPIE »). Au portage, ce fichier devient
+la source qui n'est plus jouée — il faudra soit le garder comme référence
+exécutable, soit faire lire à `carte-check` le GDScript. La première option est
+la moins chère et la plus honnête.
+
+### La sauvegarde
+
+`js/store.js` est le **seul** fichier qui connaît le support de stockage.
+Schéma courant : **7**. La migration (`migrate()`) sait remonter depuis les
+schémas 5, 6 et 7. Le modèle — cache mémoire lu en synchrone, backend
+échangeable — a été écrit d'avance pour ça : sous Godot, seul `makeBackend()`
+change (`user://` au lieu de localStorage).
+
+**La règle ne change pas** : toute modification du format impose d'incrémenter
+`SCHEMA_VERSION` et d'écrire la migration, testée depuis une sauvegarde
+ancienne. Une mise à jour qui perd la partie d'un joueur est un bug bloquant.
+
+---
+
+## 2. Ce qui se JETTE
+
+- **`js/render.js`** (1 175 lignes) — toute la chaîne SVG du plan de voies.
+- **`js/parcours.js`** (1 107 lignes) — l'écran du ruban, son panneau, sa caméra.
+- **`css/station.css`** (2 700 lignes) — l'habillage entier.
+- **`station.html`**, `js/main.js` — l'assemblage DOM, la boucle
+  `requestAnimationFrame`, les contrôles HUD.
+- **`js/network.js` / `js/mapnet.js`** — le tracé du réseau à l'écran (les
+  DONNÉES qu'ils consomment restent, eux non).
+
+Soit ~2 300 lignes de rendu, plus le CSS. C'était le plan depuis le début.
+
+---
+
+## 3. Ce qui se RÉÉCRIT — et ce que ça pèse
+
+C'est le vrai travail. Par ordre de difficulté décroissante :
+
+### `js/game.js` — 1 455 lignes, le cœur
+
+L'enclenchement : états des convois, aiguillage, files d'approche, occupation
+des quais, refoulement, retards, score. **C'est le fichier le plus dense du
+projet et celui qui contient le plus de règles mesurées.** Les états d'un
+convoi : `scheduled` → `approaching` → `waiting` → `movingIn` → `dwell` →
+(`movingThrough` | `movingBack`) → `movingOut` → `done` → `gone`.
+
+### `js/engine.js` — 271 lignes, la géométrie GÉNÉRÉE
+
+Il construit le plan de voies **à partir de la fiche** : quais, portails,
+courbes d'approche et de sortie, points d'entrée. **Aucune gare n'est dessinée à
+la main, et il y en a 401.** C'est la contrainte structurante du portage : sous
+Godot il faut un **kit modulaire** — quai, voie, aiguille, portail, convoi — et
+jamais un décor peint par gare.
+
+Le rendu actuel place les convois par abscisse curviligne sur un chemin
+(`pathPoint`), ce qui correspond **directement** à `Path2D` / `PathFollow2D`.
+C'est la meilleure nouvelle du portage : la primitive existe déjà côté moteur.
+
+### `js/schedule.js` — 580 lignes, la journée
+
+La génération d'un service : qui arrive, d'où, vers où, à quelle heure, avec
+combien de voitures. Tourne dans un **Web Worker** (`js/gen-worker.js`) parce
+que c'est coûteux. Sous Godot : un `Thread`, ou du GDScript synchrone si les
+mesures le permettent.
+
+### `js/ruban.js` — 414 lignes, la difficulté
+
+La rampe, les enveloppes de génération par palier, le plafond de flux, la
+position sur le ruban. **Tout est déduit, rien n'est stocké.**
+
+### `js/recompense.js` — 352 lignes, la récompense
+
+Étoiles, rangs de chapitre, **26 médailles**, crédits. Déduit également.
+
+### `js/catalog.js`, `js/cartes.js`, `js/hub.js` — ~400 lignes
+
+Chargement, libellés de pays, grades. Mécanique.
+
+---
+
+## 4. LES INVARIANTS QUI NE DOIVENT PAS DÉRIVER
+
+Ce sont des nombres qui ont coûté des mesures. Les changer au portage, même de
+peu, change le jeu sans que personne s'en aperçoive avant longtemps.
+
+### Le gabarit, en unités monde (`js/engine.js`)
+
+```
+viewBox           1400 × 760          axe horizontal  CENTER_Y = 400
+voiture           CAR_LEN 30 × CAR_H 20,  CAR_GAP 5  →  CAR_SPACING 35
+convoi            MIN_CARS 2 … MAX_CARS 7
+quai              PLAT_H 42,  PLAT_LEN 262  (x de 569 à 831, centré en 700)
+marge de quai     PLAT_MARGIN = (PLAT_H − CAR_H) / 2 = 11
+fuite des voies   EXIT_RUN 700,  EDGE_RUN 360   (au-delà du viewBox, exprès)
+dégagement        PORTAL_CLEAR 130
+```
+
+`PLAT_LEN` n'est **pas** une constante libre : elle découle du convoi le plus
+long — `MAX_CARS × CAR_SPACING − CAR_GAP + 2 × PLAT_MARGIN` = 262. Si
+`MAX_CARS` bouge, le quai bouge.
+
+⚠ Le commentaire de `js/engine.js` annonce « 240 + 60 » à côté de ce calcul :
+**il est périmé**, la valeur réelle vaut 262. Vérifié le 1er septembre 2026 en
+évaluant la formule. Ne pas reprendre le commentaire au portage.
+
+### Le temps (`js/engine.js`)
+
+```
+SEC_PER_GAMEMIN   4.0     1 minute de jeu = 4 secondes réelles à ×1
+TRAVEL            1.6     minutes de jeu pour traverser un gril
+MIN_DWELL         2       arrêt minimum au quai
+DEPART_GRACE      0.15    tolérance de départ, en minutes de jeu
+```
+
+**`DEPART_GRACE` est un piège documenté.** Le retard d'un convoi a **UNE seule
+définition**, partagée par la pastille au-dessus du train, le compteur du HUD et
+le score. La dupliquer — ne serait-ce qu'en oubliant la tolérance — fait
+diverger deux affichages d'une fraction de minute, et le joueur voit le jeu se
+contredire.
+
+### Le barème (`js/ruban.js`, `SEUILS`)
+
+Minutes de retard tolérées pour trois étoiles, **par palier de difficulté** :
+
+| palier | 3 ★ | 2 ★ | 1 ★ |
+|---|---|---|---|
+| 1 | 12 | 20 | 30 |
+| 2 | 11 | 20 | 30 |
+| 3 | 10 | 20 | 30 |
+| 4 | 9 | 20 | 30 |
+| 5 | 8 | 20 | 30 |
+
+Une étoile reste à **30 partout** : c'est le plancher qui rend le ruban
+praticable.
+
+### La rampe (`js/ruban.js`)
+
+```
+difficulteVoulue(i, n, plancher, arrivee)
+  = round(plancher + (arrivee − plancher) × i / (n − 1))
+```
+
+**`round` est l'arrondi de JavaScript**, qui monte à la moitié : `round(2.5) = 3`.
+Python descend au pair (`2`), GDScript monte comme JS. Cette différence m'a fait
+publier une carte fausse le 1er septembre — trois gares jouaient un cran
+au-dessus de leur brevet. **À vérifier explicitement au portage.**
+
+### Le contrat couleur
+
+`DEST_COLOR[destination]` — **la couleur dit la destination, et rien d'autre**.
+Toute la lisibilité du jeu repose dessus, et ça contraint la palette entière :
+un décor coloré entre en concurrence directe avec l'information. C'est ce qui a
+disqualifié une des trois directions artistiques explorées.
+
+### Le brevet (R10)
+
+Chaque fiche porte un **brevet** : le niveau maximal auquel elle a été mesurée
+saine, sur graines fixes, une fois pour toutes. `carte-check` croise la rampe
+d'une carte avec les brevets. C'est ce qui rend l'extension d'une carte
+instantanée — plus besoin de re-balayer le catalogue.
+
+**Le brevet dépend d'une empreinte de géométrie.** Si le portage change la
+génération, ne serait-ce qu'au bruit de tirage près, **tous les brevets sont à
+refaire** (`tools/brevet.mjs`, ~430 s pour 6 fiches en parallèle — compter
+plusieurs heures pour 401).
+
+---
+
+## 5. LES PIÈGES — mesurés, et silencieux si on les casse
+
+Chacun a coûté un bug et une session. Ils ne sont pas déductibles du code : ils
+sont écrits ici parce qu'ils ne se voient qu'en jouant longtemps.
+
+1. **FIFO sur la voie d'approche.** Les convois entrent dans l'ordre où ils se
+   sont présentés, sans dépassement (`t.queuedAt`, `js/game.js:418`). Un
+   terminus dense a demandé une calibration plus forte.
+
+2. **Relâchement d'itinéraire au portail.** Une sortie ne se relâche qu'une fois
+   le convoi entièrement dégagé (`PORTAL_CLEAR`). Sinon : collisions frontales.
+
+3. **Fermeture de quai.** Une fermeture ne tombe **jamais** sur un quai occupé —
+   génération différée dans les fenêtres libres, plus un garde à l'exécution.
+
+4. **Un quai occupé reste choisissable.** Le convoi patiente dehors et entre dès
+   qu'il se libère. Attendre à l'extérieur ne coûte rien ; seule compte l'heure
+   de départ. **C'est le cœur du jeu** : la ressource rare est le quai. Refuser
+   ce geste obligerait à revenir tapoter plus tard — de la charge mécanique, pas
+   une décision.
+
+5. **On ne dit pas au joueur quel quai dessert sa destination.** Tous les quais
+   accessibles depuis l'origine s'allument à l'identique. Le mauvais choix reste
+   possible, et se paie d'un refoulement. Le révéler avant le choix supprimerait
+   l'erreur — donc le jeu.
+
+6. **Le fret est un train normal.** Il fait la file et s'aiguille comme les
+   autres ; il ne s'arrête simplement pas au quai.
+
+7. **La position sur le ruban ne se stocke pas**, elle se déduit : première gare
+   ni faite ni payée. Un état déduit ne peut pas se désynchroniser.
+
+8. **Une gare payée reste à zéro étoile.** Ni rang, ni médaille. On ne s'achète
+   pas un chapitre d'or.
+
+---
+
+## 6. Ce que Godot offre, et que le prototype simule
+
+- **`Path2D` / `PathFollow2D`** — le placement par abscisse curviligne existe
+  nativement. C'est déjà la façon dont le prototype pense les convois.
+- **Un vrai fil d'exécution** pour la génération, au lieu d'un Web Worker.
+- **Le son**, qui est aujourd'hui minimal.
+- **La sauvegarde native** (`user://`), sans les pièges de cache du web.
+- **Et surtout : plus de piège de cache.** La source de bug la plus fréquente du
+  prototype — un iPhone servant un mélange de versions — disparaît avec le
+  navigateur.
+
+---
+
+## 7. Ce qui n'est PAS tranché
+
+- **L'esthétique.** Conservée telle quelle ; l'embellissement viendra sous le
+  moteur. Trois directions ont été explorées le 1er septembre et rejetées.
+- **Le multi-langue.** Sous Godot, avec `tr()` et des fichiers CSV/PO. Coût
+  mesuré d'une deuxième langue : **22 122 mots** de prose sur les 401 fiches,
+  plus 67 noms de chapitres et de zones. Coût éditorial, pas technique.
+- **Cinq gares de calibrage** — Toulouse, Lunebourg, Berne, Louvain (hors ruban)
+  et **Stuttgart** (sur le ruban, chapitre `le-neckar`) sortent au hasard sur un
+  balayage libre. À traiter ou à assumer.
+- **Deux avertissements de `carte-check`** acceptés : R4 (zones déséquilibrées
+  sur l'Europe) et R8 (deux chapitres dont l'arrivée n'est pas le sommet).
+- **Trois coordonnées orphelines** dans `js/geo.js` — `allersberg`, `kinding`,
+  `pfaffenhofen` : les haltes de LGV retirées du ruban le 26 août 2026, dont
+  l'entrée géo est restée. Sans effet (aucune fiche, aucun contrôle ne les
+  voit), mais à ne pas porter.
+- **Le barème des crédits** (lot G, point 6). Finir l'Europe rapporte 2 711,
+  la deuxième carte coûte 1 500, finir la deuxième n'en rapporte que 1 153.
+  La pente est à valider si d'autres cartes payantes suivent.
+- **Abréviation des directions en paysage sur téléphone.** Mesuré : à
+  844 × 390, six quais avec leurs numéros, quatre directions et le compteur ne
+  tiennent qu'avec des noms abrégés (YK, BA, NC, MI). Contrainte de lisibilité.
+
+---
+
+## 8. Un ordre de portage
+
+Il suit une règle : **ce qui se vérifie tout seul d'abord**.
+
+1. **Charger les données et les afficher.** Les 401 fiches, les 2 cartes,
+   `geo.js`. Rien de jouable — mais si le catalogue s'affiche, la moitié du
+   risque de portage est levée, et les quatre contrôles continuent de tourner à
+   côté sans rien savoir de Godot.
+2. **La géométrie générée** (`engine.js`) : une gare qui se dessine à partir de
+   sa fiche, avec le kit modulaire. C'est là qu'on découvre si le kit tient pour
+   401 gares.
+3. **La journée** (`schedule.js`) : les convois arrivent aux bonnes heures, sans
+   qu'on puisse encore les aiguiller. Comparable au prototype **chiffre par
+   chiffre**, sur graine fixe.
+4. **L'enclenchement** (`game.js`) : le jeu devient jouable. C'est le gros
+   morceau, et les huit pièges du §5 se vérifient ici, un par un.
+5. **La rampe et la récompense** (`ruban.js`, `recompense.js`) : étoiles, rangs,
+   crédits. `carte-check` doit rendre le même verdict qu'aujourd'hui.
+6. **La sauvegarde** (`store.js`) : `makeBackend()` seul change. Tester une
+   migration depuis une sauvegarde du prototype.
+7. **Les écrans** : ruban, cartes, relevé, tutoriel. En dernier, parce que c'est
+   la partie qu'on jette et refait le plus volontiers.
+
+À l'étape 3 et à l'étape 5, il existe une **oracle** : le prototype. Faire
+tourner les deux sur la même graine et comparer les sorties est le meilleur test
+de non-régression disponible, et il ne coûte rien à écrire.
+
+---
+
+## Où sont les règles
+
+Ce document ne les remplace pas :
+
+- `meta-progression-jeu-aiguillage.md` — le design (les quatre niveaux, la
+  construction d'une carte, les récompenses, le modèle de données).
+- `ruban-europe.md` — le tracé : 9 actes, 95 chapitres, 593 gares. Autorité sur
+  l'itinéraire, y compris pour les 316 gares que le prototype n'écrira pas.
+- `tools/AUTHORING-STATIONS.md` — écrire une gare. Obligatoire.
+- `tools/AUTHORING-CARTES.md` — écrire une carte.
+- `data/cartes/README.md` — le schéma d'une carte.
+- `plan-de-dev.md` — les lots, ce qui est fait et ce qui est reporté.
