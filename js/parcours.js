@@ -175,11 +175,18 @@ function boite(ids) {
 }
 // CE QUE LA CARTE MONTRE — pas forcément ce que le PANNEAU raconte. En fin de
 // chapitre, le panneau tient le bilan de celui qu'on ferme (`CARTE.chapitre`)
-// pendant que le convoi rejoint le suivant : une fois arrivé, c'est le nouveau
-// qu'il faut dessiner ET cadrer. Rail, gares et caméra lisent donc tous les
-// trois cette fonction — les séparer avait donné une carte vide, la caméra
-// posée sur un chapitre que le rail ne dessinait pas.
-function chapitreVu() { return CARTE.voyageFait || CARTE.chapitre; }
+// pendant que le convoi rejoint le suivant : c'est le NOUVEAU qu'il faut
+// dessiner et cadrer, dès le départ du convoi et pas seulement à son arrivée.
+// Sinon le train roule vers une gare qui n'est pas tracée — relevé au test :
+// « on ne voit pas la gare suivante dans l'animation ». La gare QUITTÉE, elle,
+// reste dessinée le temps du transit (voir garesHTML), pour que le convoi ne
+// parte pas de nulle part.
+// Rail, gares et caméra lisent tous les trois cette fonction — les séparer
+// avait donné une carte vide, la caméra posée sur un chapitre que le rail ne
+// dessinait pas.
+function chapitreVu() {
+  return (CARTE.transit && CARTE.transit.chapitre) || CARTE.voyageFait || CARTE.chapitre;
+}
 
 // La caméra que la vue courante demande.
 // LE CHAPITRE EN COURS, CADRÉ POUR REMPLIR LA SCÈNE. Un seul niveau : c'est
@@ -194,7 +201,7 @@ function cameraVoulue() {
   // 25 km, le minimum de zoom s'appliquait et le ruban devenait un timbre-poste
   // dans un coin.
   if (CARTE.transit) {
-    const ch1 = CARTE.transit.chapitre || CARTE.chapitre;
+    const ch1 = chapitreVu();
     const bt = boite(ch1 ? [CARTE.transit.de].concat(ch1.gares) : [CARTE.transit.de, CARTE.transit.vers]);
     if (bt) {
       const inset = bandeauHaut();
