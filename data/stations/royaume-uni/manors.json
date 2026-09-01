@@ -1,0 +1,26 @@
+{
+  "id": "manors",
+  "name": "Manors",
+  "tagline": "La gare fantôme ressuscitée",
+  "desc": "Pendant des décennies, une poignée de trains par jour s'arrêtaient encore dans cette gare oubliée à cinq minutes de Newcastle. Depuis décembre 2024, la Northumberland Line rouverte y croise les locaux de Morpeth — deux services à l'heure, et Manors revit.",
+  "difficulty": 2,
+  "country": "🇬🇧 Royaume-Uni",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }
+  ],
+  "portals": {
+    "NEWCASTLE": { "side": "L", "color": "#25dede", "abbr": "NC" },
+    "MORPETH":   { "side": "R", "color": "#60a5fa", "abbr": "MP" },
+    "ASHINGTON": { "side": "R", "color": "#f2588f", "abbr": "AS" }
+  },
+  "links": {
+    "NEWCASTLE": [1, 2, 3, 4],
+    "MORPETH":   [2, 3, 4],
+    "ASHINGTON": [1, 2]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 12, "nMax": 14, "gapMin": 1.8, "gapMax": 3.0,
+    "cars": [2, 2, 2, 3, 3, 4], "quietRate": 0.2, "rush": "double"
+  }
+}

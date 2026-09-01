@@ -1,0 +1,26 @@
+{
+  "id": "inverkeithing",
+  "name": "Inverkeithing",
+  "tagline": "La première fourche après le Forth Bridge",
+  "desc": "Sitôt le Forth Bridge franchi, le Fife se partage : la côte file vers Kirkcaldy et Dundee, l'intérieur monte sur Dunfermline. Expresses d'Aberdeen, navettes du Fife Circle et trains de Leven se croisent dans une tranchée étroite — rush de navetteurs matin et soir.",
+  "difficulty": 2,
+  "country": "🇬🇧 Royaume-Uni",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }
+  ],
+  "portals": {
+    "EDINBURGH":   { "side": "L", "color": "#a78bfa", "abbr": "ED" },
+    "DUNDEE":      { "side": "R", "color": "#25dede", "abbr": "DU" },
+    "DUNFERMLINE": { "side": "R", "color": "#4ade80", "abbr": "DF" }
+  },
+  "links": {
+    "EDINBURGH":   [1, 2, 3, 4],
+    "DUNDEE":      [1, 2, 3, 4],
+    "DUNFERMLINE": [3, 4]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 12, "nMax": 15, "gapMin": 1.8, "gapMax": 3.0,
+    "cars": [2, 2, 2, 3, 3, 4, 4], "quietRate": 0.2, "rush": "double"
+  }
+}

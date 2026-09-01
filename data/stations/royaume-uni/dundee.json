@@ -1,0 +1,26 @@
+{
+  "id": "dundee",
+  "name": "Dundee",
+  "tagline": "La sortie nord du pont du Tay",
+  "desc": "Au débouché du pont du Tay, deux kilomètres de fer au-dessus de l'estuaire : les trains d'Édimbourg y rejoignent ceux de Glasgow et de Perth avant de filer sur la côte vers Aberdeen. Deux voies traversantes, deux tiroirs tournés vers l'ouest.",
+  "difficulty": 2,
+  "country": "🇬🇧 Royaume-Uni",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }
+  ],
+  "portals": {
+    "EDINBURGH": { "side": "L", "color": "#a78bfa", "abbr": "ED" },
+    "GLASGOW":   { "side": "L", "color": "#f5b23c", "abbr": "GW" },
+    "ABERDEEN":  { "side": "R", "color": "#f2588f", "abbr": "AB" }
+  },
+  "links": {
+    "EDINBURGH": [1, 2, 3],
+    "GLASGOW":   [2, 3, 4],
+    "ABERDEEN":  [1, 2, 3, 4]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 12, "nMax": 15, "gapMin": 1.8, "gapMax": 3.0,
+    "cars": [2, 2, 2, 3, 3, 4, 4, 5], "quietRate": 0.2, "rush": "pointe"
+  }
+}

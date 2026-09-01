@@ -418,7 +418,13 @@ const GEO = {
         rotherham: [-1.36, 53.43],
         darlington: [-1.5475, 54.5203],
         northallerton: [-1.4419, 54.3339],
-        middlesbrough: [-1.2346, 54.5793]
+        middlesbrough: [-1.2346, 54.5793],
+        manors: [-1.606, 54.974],
+        drem: [-2.7861, 55.9986],
+        haymarket: [-3.2182, 55.9457],
+        inverkeithing: [-3.397, 56.0339],
+        ladybank: [-3.1289, 56.274],
+        dundee: [-2.9713, 56.4568]
       } }
   }
 };

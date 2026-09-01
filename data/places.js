@@ -235,7 +235,6 @@ const PLACES = {
   cheltenham:   [-2.100, 51.897],
   chesterfield: [-1.420, 53.238],
   colchester:   [0.893, 51.901],
-  dundee:       [-2.971, 56.457],
   durham:       [-1.581, 54.780],
   ely:          [0.266, 52.390],
   falkirk:      [-3.786, 56.002],

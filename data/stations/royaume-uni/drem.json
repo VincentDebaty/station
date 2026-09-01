@@ -1,0 +1,26 @@
+{
+  "id": "drem",
+  "name": "Drem",
+  "tagline": "La jonction de North Berwick",
+  "desc": "Un village de cent habitants, et la gare où la branche électrifiée de North Berwick quitte la grande ligne d'Édimbourg. Les express de Londres passent en trombe ; le joueur, lui, trie la navette du bord de mer et les rares locaux de Dunbar.",
+  "difficulty": 1,
+  "country": "🇬🇧 Royaume-Uni",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }
+  ],
+  "portals": {
+    "EDINBURGH":     { "side": "L", "color": "#a78bfa", "abbr": "ED" },
+    "NORTH BERWICK": { "side": "R", "color": "#4ade80", "abbr": "NB" },
+    "DUNBAR":        { "side": "R", "color": "#f5b23c", "abbr": "DB" }
+  },
+  "links": {
+    "EDINBURGH":     [1, 2, 3],
+    "NORTH BERWICK": [1, 2],
+    "DUNBAR":        [2, 3]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 11, "nMax": 13, "gapMin": 1.8, "gapMax": 3.0,
+    "cars": [2, 2, 2, 3, 3, 4], "quietRate": 0.22, "rush": "pointe"
+  }
+}

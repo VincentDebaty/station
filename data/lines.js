@@ -241,7 +241,7 @@ const LINES = [
   { id: "ECML-B", name: "York – Darlington – Durham – Newcastle",
     nodes: ["york", "darlington", "durham", "newcastle"] },
   { id: "ECML-C", name: "Newcastle – Berwick – Edinburgh",
-    nodes: ["newcastle", "berwick", "edinburgh"] },
+    nodes: ["newcastle", "manors", "berwick", "drem", "edinburgh"] },
   { id: "KX-SP", name: "King's Cross – St Pancras (deux cents mètres)",
     nodes: ["kings-cross", "stpancras"] },
   { id: "WAKE", name: "Doncaster – Wakefield – Leeds", nodes: ["doncaster", "wakefield", "leeds"] },
@@ -298,12 +298,14 @@ const LINES = [
   { id: "FEN", name: "Cambridge – Ely – Peterborough", nodes: ["cambridge", "ely", "peterborough"] },
 
   // ---- Écosse -------------------------------------------------------------
-  { id: "E&G", name: "Glasgow – Edinburgh",      nodes: ["glasgow", "edinburgh"] },
+  { id: "E&G", name: "Glasgow – Edinburgh",
+    nodes: ["glasgow", "haymarket", "edinburgh"] },
   { id: "CUMB", name: "Glasgow – Falkirk – Stirling", nodes: ["glasgow", "falkirk", "stirling"] },
   { id: "FIFE", name: "Edinburgh – Stirling",    nodes: ["edinburgh", "stirling"] },
   { id: "HIGH", name: "Stirling – Perth",        nodes: ["stirling", "perth"] },
   { id: "DUND", name: "Perth – Dundee – Aberdeen", nodes: ["perth", "dundee", "aberdeen"] },
-  { id: "FIFE-B", name: "Edinburgh – Dundee – Aberdeen", nodes: ["edinburgh", "dundee", "aberdeen"] },
+  { id: "FIFE-B", name: "Edinburgh – Dundee – Aberdeen",
+    nodes: ["edinburgh", "inverkeithing", "ladybank", "dundee", "aberdeen"] },
   // ==================== ALLEMAGNE ====================
   // Un maillage, pas une étoile : aucune gare n'est le centre, et l'on traverse
   // le pays d'un bout à l'autre sans repasser deux fois par le même nœud.
@@ -618,5 +620,7 @@ const LINES = [
   { id: "L978", name: "Le Yorkshire noir (Leeds – Sheffield)",
     nodes: ["leeds", "wakefield", "pontefract", "doncaster", "rotherham", "sheffield"] },
   { id: "L979", name: "La côte Est (Newcastle – Leeds)",
-    nodes: ["newcastle", "darlington", "middlesbrough", "northallerton", "york", "leeds"] }
+    nodes: ["newcastle", "darlington", "middlesbrough", "northallerton", "york", "leeds"] },
+  { id: "LADY-P", name: "Ladybank – Perth",
+    nodes: ["ladybank", "perth"] }
 ];

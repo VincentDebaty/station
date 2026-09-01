@@ -1,0 +1,26 @@
+{
+  "id": "ladybank",
+  "name": "Ladybank",
+  "tagline": "La fourche du Fife",
+  "desc": "Un village, deux quais victoriens classés, et la fourche où la ligne d'Édimbourg se partage depuis 1847 : Perth par Glenfarg, Dundee par Cupar. La branche de Perth, fermée en 1955, a rouvert en 1975 — les deux dents de la fourche sont vivantes.",
+  "difficulty": 1,
+  "country": "🇬🇧 Royaume-Uni",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }
+  ],
+  "portals": {
+    "EDINBURGH": { "side": "L", "color": "#a78bfa", "abbr": "ED" },
+    "PERTH":     { "side": "R", "color": "#f5b23c", "abbr": "PH" },
+    "DUNDEE":    { "side": "R", "color": "#25dede", "abbr": "DU" }
+  },
+  "links": {
+    "EDINBURGH": [1, 2, 3, 4],
+    "PERTH":     [1, 2],
+    "DUNDEE":    [2, 3, 4]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 11, "nMax": 14, "gapMin": 1.6, "gapMax": 2.8,
+    "cars": [2, 2, 2, 2, 3, 3, 4], "quietRate": 0.25, "rush": "pointe"
+  }
+}

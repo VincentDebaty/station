@@ -1983,6 +1983,21 @@
   },
   "boss": "OK"
  },
+ "drem": {
+  "geometrie": "310dcea19859",
+  "date": "2026-09-01",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 1,
+  "detail": {
+   "1": "OK"
+  },
+  "boss": "file de 9 au même quai"
+ },
  "dresden": {
   "geometrie": "5d96049db995",
   "date": "2026-08-28",
@@ -2032,6 +2047,22 @@
    "3": "OK"
   },
   "boss": "file de 6 au même quai"
+ },
+ "dundee": {
+  "geometrie": "93cca5aa71b1",
+  "date": "2026-09-01",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 2,
+  "detail": {
+   "1": "OK",
+   "2": "OK"
+  },
+  "boss": "file de 7 au même quai"
  },
  "dusseldorf": {
   "geometrie": "74c49bc3ee9f",
@@ -2754,6 +2785,23 @@
   },
   "boss": "retard garanti 0.40 > 0.3"
  },
+ "haymarket": {
+  "geometrie": "305f2f34c29e",
+  "date": "2026-09-01",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 3,
+  "detail": {
+   "1": "OK",
+   "2": "OK",
+   "3": "OK"
+  },
+  "boss": "file de 6 au même quai"
+ },
  "hazebrouck": {
   "geometrie": "0dfd304cb3ae",
   "date": "2026-08-30",
@@ -2889,6 +2937,22 @@
    "4": "OK"
   },
   "boss": "file de 6 au même quai"
+ },
+ "inverkeithing": {
+  "geometrie": "b76c71133eca",
+  "date": "2026-09-01",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 2,
+  "detail": {
+   "1": "OK",
+   "2": "OK"
+  },
+  "boss": "retard garanti 0.31 > 0.3"
  },
  "juterbog": {
   "geometrie": "92f2a334a13b",
@@ -3030,6 +3094,22 @@
    "5": "OK"
   },
   "boss": "OK"
+ },
+ "ladybank": {
+  "geometrie": "12834b5bfb1a",
+  "date": "2026-09-01",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 2,
+  "detail": {
+   "1": "OK",
+   "2": "OK"
+  },
+  "boss": "file de 7 au même quai"
  },
  "lalochesuryon": {
   "geometrie": "ad5e499d5510",
@@ -3730,6 +3810,22 @@
    "4": "OK"
   },
   "boss": "OK"
+ },
+ "manors": {
+  "geometrie": "3b49f32a63a5",
+  "date": "2026-09-01",
+  "graines": [
+   1,
+   2,
+   3
+  ],
+  "K": 30,
+  "niveau": 2,
+  "detail": {
+   "1": "OK",
+   "2": "OK"
+  },
+  "boss": "retard garanti 0.33 > 0.3"
  },
  "mantes-la-jolie": {
   "geometrie": "9b4fa7555edc",

@@ -19,7 +19,7 @@
 | **D** | Le ruban dans le moteur — **fait le 25 août 2026** | M | C |
 | **G** | Récompense **et crédits** — **en partie fait le 26 août 2026** ; reste le solde multi-cartes | S | D |
 | **E** | Les écrans — **fait le 25 août 2026** | M | D, G |
-| **F** | Contenu : écrire les 470 fiches du ruban (`ruban-europe.md`) | XL | C, D |
+| **F** | Contenu : écrire le ruban — **clos le 1er septembre 2026 à 49 chapitres / 277 gares** | XL | C, D |
 | **H** | L'écran des cartes et l'achat | M | G |
 | **I** | Deuxième carte (preuve de généricité) | L | C, H |
 | **J** | Nettoyage : ce que le ruban rend mort — **fait le 26 août 2026** | S | E, G |
@@ -352,7 +352,12 @@ ruban sans donner d'étoile, et gagner la gare ensuite restitue les crédits.
 
 </details>
 
-## Lot F — Contenu : écrire le ruban
+## Lot F — Contenu : écrire le ruban — CLOS (1er septembre 2026)
+
+**Arrêté à 49 chapitres et 277 gares**, sur décision de Vincent : le prototype
+a assez de ruban pour être jugé (voir « Prochaine action »). Les 316 gares
+restantes de `ruban-europe.md` ne s'écriront pas ici. Ce qui suit décrit le lot
+tel qu'il a été mené, et reste la procédure si le contenu reprend sous Godot.
 
 **But** : donner au ruban ses gares. Le tracé n'est plus une question — il est
 écrit dans **`ruban-europe.md`** : 9 actes, 95 chapitres, 593 gares dans
@@ -551,42 +556,94 @@ Il porte `startStation`, `startAdhocStation` et le cartouche de gare ; seul
 - **Pas de chaîne graphique web** nouvelle : le prototype valide la structure,
   le rendu final est l'affaire du moteur.
 - **Pas de paiement réel** dans le prototype.
-- **Pas d'allongement du ruban** tant que `carte-check` n'est pas vert sur le
-  noyau : un ruban à moitié cohérent n'apprend rien de plus.
+- **Pas d'allongement du ruban**, définitivement depuis le 1er septembre 2026 :
+  277 gares suffisent à juger le prototype, et les 316 restantes de
+  `ruban-europe.md` ne s'écriront que sous le moteur, si elles s'écrivent.
 - **Pas de chapitres légendaires, pas de régularité quotidienne** : intentions
   conservées dans le document, hors plan.
 
 ## Prochaine action
 
-**Le ruban v1 est complet et se joue de bout en bout** — 11 chapitres,
-63 gares, d'Arlon à Hambourg, vérifié en headless le 26 août 2026.
-`carte-check` dit « 63 jouables d'affilée · 0 fiche à écrire ».
+### Le ruban ne s'allonge plus — décision de Vincent, 1er septembre 2026
 
-La suite est donc le **lot F** hors du v1 : allonger le ruban vers les actes
-voisins. Par rentabilité (`ruban-europe.md`, « par où commencer ») c'est
-l'acte V qui est le plus près d'être fini — **11 fiches** le complètent, contre
-27 pour l'acte II et 89 pour l'acte I.
+**Le contenu de la carte est arrêté là où il est.** Ce n'est pas une pause dans
+le lot F, c'est sa fin : le prototype a assez de ruban pour être jugé, et
+chaque chapitre supplémentaire coûte cher pour ne rien apprendre de neuf.
 
-Une dette connue, petite et indépendante :
+Ce que la carte contient au moment de la décision :
 
-- **Toulouse, Lunebourg, Berne et Louvain** sont des gares « de queue » : elles
-  passent les 30 journées mais échouent au hasard sur un balayage libre à K=6.
-  Toulouse et Lunebourg sortent sur la PRESSION (moyennes 3,0-3,4, file 5) ;
-  Berne sort sur le RETARD garanti, à 0,30 contre un seuil de 0,30 — pile sur
-  la limite. Relevé du 26 août 2026 sur trois balayages complets : graine 7
-  vert, un tirage libre vert, un tirage libre sortant Berne seule.
-  **Louvain est la plus atteinte des quatre**, mesurée le 26 août : 3 graines
-  sur 10 échouent à K=30, dont deux sur `QUEUE_HARD` (file de 6, jamais
-  tolérée), et son pic vaut 5 sur les DIX graines — y compris les vertes. Elle
-  ne frôle donc pas le plafond, elle vit au-dessus : 15 à 18 trains pour cinq
-  directions, quand LIÈGE n'a que 4 quais et ANVERS, HASSELT et OTTIGNIES 3
-  chacun. Rejouable par `node tools/gen-check.mjs louvain --seed=8 30`.
+| | |
+|---|---|
+| chapitres | **49** |
+| gares sur le ruban | **277**, toutes jouables d'affilée |
+| fiches écrites | **401** (401 indexées, 401 atteignables) |
+| étendue | *La côte Est* (Darlington) → *Le Mecklembourg* |
 
-  **Les quatre sont hors ruban** (vérifié le 26 août) : aucune n'est dans
-  `data/cartes/europe.json`, donc aucune n'est atteignable par un joueur du v1.
-  Elles ne coûtent qu'un `gen-check` rouge de temps en temps sur le balayage
-  complet. C'est un petit lot de calibrage, à faire avant beaucoup de contenu
-  neuf — mais qui ne bloque pas le ruban.
+Contre les 593 gares de `ruban-europe.md`, c'est **47 %**. Le document du tracé
+reste l'autorité sur l'itinéraire et n'est pas raccourci : il décrit ce que la
+carte serait sous un vrai moteur, pas ce que le prototype doit contenir. Les
+actes VI à IX (le Nord, la Baltique, les Alpes orientales, l'Est jusqu'à
+Istanbul) ne seront **pas** écrits ici.
+
+**Pourquoi.** Le prototype existe pour valider le jeu avant de le produire sous
+Godot (voir « Ce qu'on ne fait pas »). Écrire une gare de plus, c'est mesurer
+une fois de plus une boucle déjà mesurée 277 fois — sans rien apprendre sur la
+question qui reste ouverte, qui est de savoir si l'enchaînement du ruban tient
+sur la durée. Le coût d'écriture est réel, et il se paie deux fois : à
+l'écriture, puis à chaque balayage complet.
+
+**Ce que ça change dans le plan.** Le lot F n'est plus XL et n'est plus le
+chemin critique : il est **clos à 277 gares**. Ce qui reste devant est court et
+tient à la validation, pas au contenu :
+
+1. **Jouer le ruban en entier**, en vrai, et noter où l'intérêt retombe. C'est
+   la mesure qui manque, et aucune ligne de `carte-check` ne la remplace.
+2. **Solder le lot G** (le solde de crédits multi-cartes) et **le lot H**
+   (l'écran des cartes) — sans quoi la deuxième carte n'a pas d'entrée.
+3. **Le lot I** — la deuxième carte — reste la seule preuve que la structure
+   est générique. Elle se fait **petite** : une dizaine de chapitres suffisent
+   à le prouver, et rien n'oblige à la remplir davantage que le ruban d'Europe.
+4. **Tirer le bilan pour Godot** : ce que le portage reprend (les JSON de
+   cartes et de fiches, les quatre contrôles, `store.js`) et ce qu'il jette
+   (tout le rendu SVG).
+
+Les deux avertissements de `carte-check` restent, et **restent acceptés** :
+R4 (zones à 26/13/5/5, écart 5,2 pour 1) et R8 (`la-riviera-anglaise` et
+`le-wessex`, dont l'arrivée n'est pas le sommet — les termini du Sud-Ouest
+anglais sont plus simples que leurs gares de passage). Les deux ne se
+règleraient qu'en écrivant du contenu, ce qui est précisément ce qu'on arrête
+de faire. Ils sont informatifs tant que la carte est `enChantier`.
+
+### La dette de calibrage, elle, reste ouverte
+
+**Toulouse, Lunebourg, Berne et Louvain** sont des gares « de queue » : elles
+passent les 30 journées mais échouent au hasard sur un balayage libre à K=6.
+Toulouse et Lunebourg sortent sur la PRESSION (moyennes 3,0-3,4, file 5) ;
+Berne sort sur le RETARD garanti, à 0,30 contre un seuil de 0,30 — pile sur la
+limite. Relevé du 26 août 2026 sur trois balayages complets : graine 7 vert, un
+tirage libre vert, un tirage libre sortant Berne seule.
+**Louvain est la plus atteinte des quatre**, mesurée le 26 août : 3 graines sur
+10 échouent à K=30, dont deux sur `QUEUE_HARD` (file de 6, jamais tolérée), et
+son pic vaut 5 sur les DIX graines — y compris les vertes. Elle ne frôle donc
+pas le plafond, elle vit au-dessus : 15 à 18 trains pour cinq directions, quand
+LIÈGE n'a que 4 quais et ANVERS, HASSELT et OTTIGNIES 3 chacun. Rejouable par
+`node tools/gen-check.mjs louvain --seed=8 30`.
+
+**Les quatre sont hors ruban** (vérifié le 26 août, toujours vrai le
+1er septembre) : aucune n'est dans `data/cartes/europe.json`, donc aucune n'est
+atteignable par un joueur. Elles ne coûtent qu'un `gen-check` rouge de temps en
+temps sur le balayage complet. Maintenant que le contenu est clos, c'est le
+seul lot de calibrage qui reste — et il ne bloque toujours rien.
+
+### Journal
 
 Le **lot J est fait** (26 août 2026). La dette de repli d'`index.json` est
 réglée elle aussi : `enregistrer.mjs` écrit désormais une gare par ligne.
+
+**1er septembre 2026** — les six dernières fiches écossaises (Manors, Drem,
+Haymarket, Inverkeithing, Ladybank, Dundee) sont enregistrées : index, `geo.js`
+et quatre lignes de `data/lines.js` (ECML-C, E&G et FIFE-B rallongées, LADY-P
+créée ; le point de passage `dundee` devient une gare). Elles portent le
+catalogue à 401 fiches. **Elles ne sont pas posées sur le ruban** — la carte
+reste à 277 gares, conformément à la décision ci-dessus. Elles restent au
+dépôt, écrites et certifiées, prêtes pour le moteur.

@@ -1,0 +1,30 @@
+{
+  "id": "haymarket",
+  "name": "Haymarket",
+  "tagline": "Tout l'ouest d'Édimbourg passe ici",
+  "desc": "Le second poste d'Édimbourg, à un mile de Waverley : le Fife par le Forth Bridge, Glasgow par Falkirk, Stirling et la West Coast s'y rabattent sur une seule paire de gorges vers la capitale. Cinquième gare d'Écosse par le trafic — et un rush de navetteurs à chaque bout de journée.",
+  "difficulty": 3,
+  "country": "🇬🇧 Royaume-Uni",
+  "platforms": [
+    { "id": 1 }, { "id": 2 }, { "id": 3 }, { "id": 4 }, { "id": 5 }, { "id": 6 }
+  ],
+  "portals": {
+    "DUNDEE":    { "side": "L", "color": "#25dede", "abbr": "DU" },
+    "STIRLING":  { "side": "L", "color": "#4ade80", "abbr": "ST" },
+    "GLASGOW":   { "side": "L", "color": "#f5b23c", "abbr": "GW" },
+    "CARLISLE":  { "side": "L", "color": "#60a5fa", "abbr": "CA" },
+    "EDINBURGH": { "side": "R", "color": "#f2588f", "abbr": "ED" }
+  },
+  "links": {
+    "DUNDEE":    [1, 2, 3],
+    "STIRLING":  [3, 4],
+    "GLASGOW":   [4, 5],
+    "CARLISLE":  [5, 6],
+    "EDINBURGH": [1, 2, 3, 4, 5, 6]
+  },
+  "sameSidePairs": [],
+  "gen": {
+    "nMin": 14, "nMax": 17, "gapMin": 1.6, "gapMax": 3.0,
+    "cars": [2, 3, 3, 4, 4, 5, 5, 6], "quietRate": 0.15, "rush": "double"
+  }
+}
