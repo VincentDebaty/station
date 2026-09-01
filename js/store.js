@@ -205,6 +205,19 @@ function getProgressToutesCartes() {
   for (const id in _progress.cartes) out.push((_progress.cartes[id] || {}).stations || {});
   return out;
 }
+// Les cartes enregistrées, AVEC leur id et leurs gares payées. Le grade se
+// contente des étoiles (getProgressToutesCartes ci-dessus) ; les crédits, non :
+// compter les chapitres d'or et les zones d'une carte demande de savoir DE
+// QUELLE carte il s'agit, pour aller lire sa composition (js/cartes.js).
+// Lecture seule — on rend des copies de `passees`, pas la liste vivante.
+function getCartesEnregistrees() {
+  const out = [];
+  for (const id in _progress.cartes) {
+    const c = _progress.cartes[id] || {};
+    out.push({ id, stations: c.stations || {}, passees: (c.passees || []).slice() });
+  }
+  return out;
+}
 
 // ------------------------------------------------------------------
 // LES CARTES — laquelle on joue, lesquelles on possède.

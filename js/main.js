@@ -351,7 +351,7 @@ started = false;
 // la carte lit la progression, l'icône son lit la préférence hydratée.
 // Puis la CARTE COURANTE : elle se lit dans la sauvegarde, donc après le
 // magasin. Son index se charge en même temps que le reste.
-Promise.all([loadStore(), loadCatalog(), loadCartes()])
+Promise.all([loadStore(), loadCatalog(), precargerCartes()])
   .then(() => loadCarte(getCarteCourante()))
   .then(() => {
     // Le magasin et le catalogue sont là : la ponctualité d'une sauvegarde

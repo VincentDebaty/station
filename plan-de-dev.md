@@ -431,12 +431,30 @@ fête** ; plafonds lus à 189/63/11/2 ; aucune erreur. Un défaut de rendu corri
 au passage — un nom long se cassait en deux et se centrait, la fête étant en
 `text-align: center` ; les rangs passent en retrait négatif.
 
-*Reste au lot G* : le point 3 (retirer les médailles de hub — sans objet, il
-n'y en a plus) est clos ; le point 4 ne l'est PAS. **`creditsGagnes` compte sur
-la carte COURANTE**, alors que le plan le veut sur toutes les cartes, et le
-terme « carte terminée × 500 » n'existe pas. Invisible tant qu'il n'y a qu'une
-carte — c'est un piège armé pour le lot H. Le point 6 (caler les trois barèmes
-ensemble) attend la deuxième carte pour être mesurable.
+*Point 4 — FAIT le 1er septembre 2026.* `creditsGagnes` comptait sur la carte
+COURANTE : invisible tant qu'il n'y avait qu'une carte, faux dès la seconde, où
+le joueur perdait en changeant de monde tout ce qu'il avait gagné. Le terme
+« carte terminée × 500 » manquait par-dessus. Corrigé par `creditsDUneCarte`
+(`js/recompense.js`), qui calcule ce qu'UNE carte rapporte sans qu'elle soit la
+carte courante — on ne lui donne que sa définition et la progression
+enregistrée pour elle. `js/cartes.js` garde en mémoire la définition de toutes
+les cartes (`precargerCartes`, appelée au démarrage depuis `js/main.js`), et
+`js/store.js` sait les énumérer (`getCartesEnregistrees`). La dépense somme
+elle aussi sur toutes les cartes, et compte enfin le prix des cartes acquises
+en crédits. Rien de plus n'est stocké : `SCHEMA_VERSION` ne bouge pas.
+
+*Mesuré* (banc synthétique, six cas) : un premier chapitre d'Europe en or vaut
+35 crédits ; la même partie AVEC un premier chapitre du Rhin en or en vaut 70,
+là où l'ancien code en rendait 35. L'Europe entière en or vaut 2711 — 831
+étoiles, 980 pour 49 chapitres d'or, 400 pour 4 zones, et les 500 de la carte
+terminée, qui apparaissent pour la première fois.
+
+*Reste au lot G* : le point 3 est clos (les médailles de hub sont sans objet).
+Le point 6 (caler les trois barèmes ensemble) est maintenant MESURABLE, la
+deuxième carte existant : premier relevé, finir l'Europe rapporte 2711 et
+Le grand tour du Rhin coûte 1500, donc la contrainte « finir l'Europe paie la
+deuxième carte, même après quelques passages achetés » est tenue avec de la
+marge. Reste à décider si cette marge est la bonne.
 
 <details><summary>Le plan d'origine du lot G</summary>
 

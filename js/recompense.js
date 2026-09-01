@@ -248,26 +248,105 @@ function medaillesNouvelles(avant, apres) {
 // La dépense en passages ne compte que les gares payées ENCORE à zéro étoile.
 // C'est ce qui REND LA MISE au joueur qui revient gagner la gare plus tard —
 // sans qu'une ligne de sauvegarde ait bougé.
-const CREDIT_PAR_ETOILE = 1, CREDIT_PAR_DIAMANT = 5, CREDIT_PAR_CHAPITRE_DOR = 20, CREDIT_PAR_ZONE = 100;
+const CREDIT_PAR_ETOILE = 1, CREDIT_PAR_DIAMANT = 5, CREDIT_PAR_CHAPITRE_DOR = 20,
+      CREDIT_PAR_ZONE = 100, CREDIT_PAR_CARTE = 500;
+const SEUIL_OR = (RANGS.find(r => r.id === "or") || { seuil: 3 }).seuil;
+
+// LE SOLDE EST UN FAIT DE COMPTE, PAS DE CARTE (lot G, point 4 — 1er septembre
+// 2026). `creditsGagnes` ne comptait que la carte COURANTE : invisible tant
+// qu'il n'y en avait qu'une, et faux dès la deuxième, où le joueur perdait tout
+// ce qu'il avait gagné sur la première en changeant de monde. Le terme « carte
+// terminée » manquait par-dessus le marché.
+//
+// D'où cette fonction : ce qu'UNE carte rapporte, calculé sans qu'elle soit la
+// carte courante. On ne lui donne que sa définition (js/cartes.js la garde en
+// mémoire pour toutes les cartes) et la progression enregistrée pour elle. Rien
+// n'est stocké de plus — le solde reste entièrement déduit.
+function creditsDUneCarte(def, stations, passees) {
+  const st = stations || {}, paye = passees || [];
+  let etoiles = 0, diamants = 0;
+  for (const id in st) {
+    const r = st[id] || {};
+    etoiles += r.stars || 0;
+    if (r.bestDelay === 0) diamants++;
+  }
+  // Mêmes crans que niveauDeGare, mais lus dans la table qu'on nous donne.
+  // Une gare PAYÉE reste à zéro : elle est franchie, pas tenue, et le rang de
+  // chapitre exige une étoile partout — c'est ce qui empêche d'acheter un
+  // chapitre d'or.
+  const niv = id => { const r = st[id]; if (!r) return 0; return r.bestDelay === 0 ? 4 : (r.stars || 0); };
+  const franchie = id => niv(id) >= 1 || paye.indexOf(id) >= 0;
+  const chs = (def && def.chapitres) || [];
+  let or = 0, finis = 0;
+  for (const ch of chs) {
+    const g = ch.gares || [];
+    if (!g.length) continue;
+    let bas = 4;
+    for (const x of g) bas = Math.min(bas, niv(x));
+    if (bas >= SEUIL_OR) or++;
+    if (g.every(franchie)) finis++;
+  }
+  let zones = 0;
+  for (const z of (def && def.zones) || []) {
+    const dans = chs.filter(c => c.zone === z.id);
+    if (dans.length && dans.every(c => (c.gares || []).every(franchie))) zones++;
+  }
+  const carteFinie = chs.length && finis === chs.length ? 1 : 0;
+  return etoiles * CREDIT_PAR_ETOILE + diamants * CREDIT_PAR_DIAMANT +
+    or * CREDIT_PAR_CHAPITRE_DOR + zones * CREDIT_PAR_ZONE + carteFinie * CREDIT_PAR_CARTE;
+}
+// La somme sur TOUTES les cartes jouées. Une carte dont la définition n'a pas
+// pu être lue ne rapporte que ses étoiles et ses diamants : on préfère un solde
+// un peu bas à un plantage, et `precargerCartes` rend le cas improbable.
 function creditsGagnes() {
-  const e = etatRecompenses();
-  return e.etoiles * CREDIT_PAR_ETOILE + e.diamants * CREDIT_PAR_DIAMANT +
-    e.chapitres.or * CREDIT_PAR_CHAPITRE_DOR + e.zonesFinies * CREDIT_PAR_ZONE;
+  const cartes = typeof getCartesEnregistrees === "function" ? getCartesEnregistrees() : [];
+  if (!cartes.length) {
+    const def = typeof carteCourante === "function" ? carteCourante() : null;
+    return creditsDUneCarte(def, typeof getProgress === "function" ? getProgress() : {},
+      typeof getPassees === "function" ? getPassees() : []);
+  }
+  let t = 0;
+  for (const c of cartes) {
+    const def = typeof defDeCarte === "function" ? defDeCarte(c.id) : null;
+    t += creditsDUneCarte(def, c.stations, c.passees);
+  }
+  return t;
 }
 // LE PRIX D'UN PASSAGE SUIT LA POSITION DANS LE RUBAN. Petit au début — pour
 // que le débutant bloqué puisse se le payer en rejouant deux ou trois gares —
 // et cher en fin de carte, pour qu'on n'achète pas la fin du voyage.
 // Ordre de grandeur voulu : trois à cinq gares bien jouées.
+function prixDePassageDans(def, gareId) {
+  const chs = (def && def.chapitres) || [];
+  for (let i = 0; i < chs.length; i++)
+    if ((chs[i].gares || []).indexOf(gareId) >= 0) return 5 + i * 3;
+  return 5;
+}
 function prixDePassage(gareId) {
   const ch = typeof chapitreDeGare === "function" ? chapitreDeGare(gareId) : null;
-  const rang = ch ? ch.rang : 0;
-  return 5 + rang * 3;
+  if (ch) return 5 + ch.rang * 3;
+  return prixDePassageDans(typeof carteCourante === "function" ? carteCourante() : null, gareId);
 }
+// La dépense, elle aussi sur toutes les cartes : les passages payés dont la
+// gare est ENCORE à zéro étoile (gagner la gare plus tard rend la mise), plus
+// le prix des cartes acquises EN CRÉDITS — une carte reçue gratuitement ou
+// payée en argent réel ne coûte rien à la bourse.
 function creditsDepenses() {
   let d = 0;
-  const passees = typeof getPassees === "function" ? getPassees() : [];
-  for (const g of passees) if (niveauDeGare(g) < 1) d += prixDePassage(g);
-  // Les cartes achetées en crédits (lot H) : rien à compter tant qu'il n'y en a pas.
+  const cartes = typeof getCartesEnregistrees === "function" ? getCartesEnregistrees() : [];
+  const liste = cartes.length ? cartes : [{
+    id: typeof getCarteCourante === "function" ? getCarteCourante() : null,
+    stations: typeof getProgress === "function" ? getProgress() : {},
+    passees: typeof getPassees === "function" ? getPassees() : []
+  }];
+  for (const c of liste) {
+    const def = typeof defDeCarte === "function" ? defDeCarte(c.id) : null;
+    for (const g of c.passees || [])
+      if (!((((c.stations || {})[g]) || {}).stars >= 1)) d += prixDePassageDans(def, g);
+  }
+  const poss = typeof cartesPossedees === "function" ? cartesPossedees() : {};
+  for (const id in poss)
+    if (poss[id] === "credits" && typeof prixDeCarte === "function") d += prixDeCarte(id);
   return d;
 }
 function soldeCredits() { return Math.max(0, creditsGagnes() - creditsDepenses()); }

@@ -38,8 +38,42 @@ async function loadCarte(id) {
   const r = await fetch("data/cartes/" + (entree.fichier || entree.id + ".json"));
   if (!r.ok) throw new Error("carte " + entree.id + " : " + r.status);
   CARTE_COURANTE = await r.json();
+  DEFS[CARTE_COURANTE.id || entree.id] = CARTE_COURANTE;
   if (typeof resetRuban === "function") resetRuban();
   return CARTE_COURANTE;
+}
+
+// --- LES DÉFINITIONS DE TOUTES LES CARTES, gardées en mémoire ---------
+// Pourquoi : les crédits sont un fait de COMPTE et non de carte (lot G,
+// point 4). Le solde somme les étoiles, les chapitres d'or et les zones de
+// TOUTES les cartes jouées — et compter les chapitres d'or d'une carte qu'on
+// ne joue pas demande sa composition, alors que `creditsGagnes()` est
+// synchrone. On charge donc tout l'index une fois, au démarrage : quelques
+// kilo-octets de JSON, et plus aucune question de crédit n'est asynchrone.
+const DEFS = Object.create(null);
+async function precargerCartes() {
+  if (!CARTES.length) await loadCartes();
+  await Promise.all(CARTES.map(async e => {
+    if (DEFS[e.id]) return;
+    try {
+      const r = await fetch("data/cartes/" + (e.fichier || e.id + ".json"));
+      if (r.ok) DEFS[e.id] = await r.json();
+    } catch (err) { /* une carte illisible ne doit jamais empêcher de jouer */ }
+  }));
+  return DEFS;
+}
+// La définition d'une carte par son id, ou null si elle n'a pas pu être lue.
+function defDeCarte(id) {
+  if (DEFS[id]) return DEFS[id];
+  return CARTE_COURANTE && CARTE_COURANTE.id === id ? CARTE_COURANTE : null;
+}
+// Le prix en crédits d'une carte — porté par sa définition, à défaut par son
+// entrée d'index. Une carte gratuite vaut zéro.
+function prixDeCarte(id) {
+  const d = defDeCarte(id);
+  if (d && typeof d.prixCredits === "number") return d.prixCredits;
+  const e = CARTES.find(c => c.id === id);
+  return (e && typeof e.prixCredits === "number") ? e.prixCredits : 0;
 }
 
 // --- Lecture ---------------------------------------------------------
