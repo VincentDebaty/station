@@ -587,6 +587,111 @@ function chapitreHTML() {
   </header>`;
 }
 
+// ------------------------------------------------------------------
+// L'ÉCRAN DES CARTES (lot H) — choisir son territoire, et l'acheter.
+// ------------------------------------------------------------------
+// IL N'APPARAÎT QU'À PARTIR DE DEUX CARTES. Avec une seule, il n'y a rien à
+// choisir : un écran qui ne pose pas de question est un écran de trop, et le
+// joueur tombe directement sur son ruban.
+function plusieursCartes() { return typeof CARTES !== "undefined" && CARTES.length >= 2; }
+
+// Ce qu'une carte montre d'elle-même AVANT d'être ouverte : sa taille et, si
+// on y a déjà joué, où l'on en est. Tout se déduit de sa définition et de la
+// progression enregistrée — rien n'est stocké pour l'affichage.
+function resumeDeCarte(id) {
+  const def = typeof defDeCarte === "function" ? defDeCarte(id) : null;
+  const chs = (def && def.chapitres) || [];
+  const gares = chs.reduce((n, c) => n + ((c.gares || []).length), 0);
+  let stations = {}, passees = [];
+  if (typeof getCartesEnregistrees === "function")
+    for (const c of getCartesEnregistrees()) if (c.id === id) { stations = c.stations || {}; passees = c.passees || []; }
+  let faites = 0, etoiles = 0;
+  for (const g of chs.flatMap(c => c.gares || [])) {
+    const r = stations[g] || {};
+    if ((r.stars || 0) >= 1) faites++;
+    etoiles += r.stars || 0;
+  }
+  return { def, chapitres: chs.length, gares, faites, etoiles, entamee: faites > 0 || passees.length > 0 };
+}
+
+function vueCartes() {
+  const liste = typeof CARTES !== "undefined" ? CARTES : [];
+  const cour = typeof getCarteCourante === "function" ? getCarteCourante() : null;
+  const solde = typeof soldeCredits === "function" ? soldeCredits() : 0;
+  const tuiles = liste.map(e => {
+    const r = resumeDeCarte(e.id);
+    const possede = typeof possedeCarte === "function" ? possedeCarte(e.id) : !!e.gratuite;
+    const prix = typeof prixDeCarte === "function" ? prixDeCarte(e.id) : 0;
+    const manque = prix - solde;
+    const courante = e.id === cour;
+    // L'AVANCEMENT NE SE MONTRE QUE S'IL EXISTE. Une carte jamais ouverte
+    // afficherait « 0 / 71 », ce qui ressemble à un échec plutôt qu'à une
+    // invitation.
+    const avance = r.entamee
+      ? `<span class="ct-avance">${r.faites}<span class="ct-sur">/</span>${r.gares} gares · ★ ${r.etoiles}</span>` : "";
+    let action;
+    if (courante) action = `<button class="c-suite ct-action" disabled>Carte en cours</button>`;
+    else if (possede) action = `<button class="c-suite ct-action" data-carte="${e.id}">` +
+      (r.entamee ? "Reprendre" : "Commencer") + `</button>`;
+    else if (solde >= prix) action = `<button class="c-suite ct-action" data-acheter="${e.id}">Ouvrir · ${prix} cr</button>`;
+    else action = `<div class="cb-manque">Il te manque ${manque} crédit${manque > 1 ? "s" : ""} — ` +
+      `gagne des étoiles sur ta carte en cours.</div>` +
+      `<button class="c-suite ct-action" disabled>Ouvrir · ${prix} cr</button>`;
+    // LA CARTE BANCAIRE EST HORS PROTOTYPE. Le bouton existe pour que la place
+    // soit prise et que le geste se voie, mais il ne fait rien : seul l'état
+    // « achat » est prévu dans la sauvegarde, pour que le moteur final n'ait
+    // pas à migrer le jour où le paiement existera.
+    const cb = possede ? "" :
+      `<button class="ct-cb" disabled title="Le paiement n'existe pas dans le prototype">Carte bancaire — bientôt</button>`;
+    return `<article class="ct-tuile${courante ? " ici" : ""}${possede ? "" : " verrou"}">
+      <header class="ct-tete">
+        <h3 class="ct-nom">${e.nom || (r.def && r.def.nom) || e.id}</h3>
+        ${courante ? `<span class="ct-fanion">ici</span>` : possede ? "" : `<span class="ct-cadenas">verrouillée</span>`}
+      </header>
+      <p class="ct-sous">${e.sousTitre || ""}</p>
+      <p class="ct-taille">${r.chapitres} chapitre${r.chapitres > 1 ? "s" : ""} · ${r.gares} gares</p>
+      ${avance}
+      <div class="ct-pied">${action}${cb}</div>
+    </article>`;
+  }).join("");
+  return `<div class="cv-entete">
+      <button class="cv-retour" data-fermer-cartes><span class="arw">‹</span>Revenir au ruban</button>
+      <h2 class="cv-titre">Les cartes</h2>
+      <span class="c-credits" title="crédits">${solde} cr</span>
+    </div>
+    <div class="cv-tuiles">${tuiles}</div>`;
+}
+
+// Ouvrir, fermer. La vue est un simple état de l'écran : rien ne se stocke, et
+// revenir au ruban ne coûte pas un rechargement.
+function ouvrirCartes() { CARTE.vue = "cartes"; renderCarte(); }
+function fermerCartes() { CARTE.vue = "ruban"; renderCarte(); }
+
+// CHANGER DE CARTE, C'EST CHANGER DE MONDE. La progression de l'ancienne reste
+// intacte — chaque carte a la sienne (js/store.js) — mais tout ce que l'écran
+// gardait de la précédente doit tomber : le relevé, la fête, la caméra et le
+// chapitre de référence. Sans ça, on arrive sur le nouveau ruban avec le bilan
+// de l'ancien affiché à côté.
+async function choisirCarte(id) {
+  if (typeof possedeCarte === "function" && !possedeCarte(id)) return;
+  if (typeof getCarteCourante === "function" && getCarteCourante() === id) { fermerCartes(); return; }
+  if (typeof setCarteCourante === "function") setCarteCourante(id);
+  if (typeof loadCarte === "function") await loadCarte(id);
+  CARTE.vue = "ruban";
+  CARTE.bilan = null; CARTE.fete = null; CARTE.medailles = null; CARTE.voyage = null;
+  CARTE.cam = null; CARTE.camAvant = null; CARTE.derive = null;
+  CARTE.chapitre = null; CARTE.chapitreAvant = null; CARTE.feteAvant = false;
+  renderCarte();
+}
+// Acheter : le seul FAIT que l'économie des cartes écrive. Le solde, lui, se
+// déduit — et il retombe tout seul du prix de la carte (js/recompense.js).
+function acheterCarte(id) {
+  const prix = typeof prixDeCarte === "function" ? prixDeCarte(id) : 0;
+  if (typeof soldeCredits === "function" && soldeCredits() < prix) return;
+  if (typeof acquerirCarte !== "function" || !acquerirCarte(id, "credits")) return;
+  renderCarte();
+}
+
 function vueRuban() {
   const gc = gareCourante();
   CARTE.prochaine = gc;
@@ -607,6 +712,9 @@ function vueRuban() {
 
   return `
     <aside class="c-cote">
+      ${plusieursCartes() ? `<button class="cc-carte" data-ouvrir-cartes>` +
+        `<span class="ccc-nom">${nomDeCarte()}</span>` +
+        `<span class="ccc-quoi">Changer de carte</span></button>` : ""}
       ${chapitreHTML()}
       <div class="cc-corps${CARTE.fete ? " fete" : ""}">
         ${CARTE.fete ? feteHTML() : CARTE.bilan ? bilanHTML() : (gc ? cartoucheHTML(gc) : "")}
@@ -626,6 +734,7 @@ function renderCarte() {
   const hote = document.getElementById("hub-map");
   if (!hote) return;
   CARTE.hote = hote;
+  if (CARTE.vue === "cartes") { renderChoixDeCarte(hote); return; }
   hote.className = "carte v-ruban";
   hote.innerHTML = vueRuban();
   CARTE.etoiles = hote.querySelector(".c-etoiles");
@@ -658,6 +767,7 @@ function renderCarte() {
   const gs = hote.querySelector(".c-ruban .gares");
   if (gs) gs.outerHTML = garesHTML();
   hote.onclick = ev => {
+    if (ev.target.closest("[data-ouvrir-cartes]")) { ouvrirCartes(); return; }
     const pay = ev.target.closest("[data-payer]");
     if (pay && !pay.disabled) { passerLaGare(pay.dataset.payer); return; }
     const g = ev.target.closest("[data-gare]");
@@ -667,6 +777,19 @@ function renderCarte() {
     if (ev.key !== "Enter" && ev.key !== " ") return;
     const g = ev.target.closest("[data-gare]");
     if (g && g.dataset.gare) { ev.preventDefault(); jouerGare(g.dataset.gare); }
+  };
+}
+// L'écran des cartes ne dessine ni rail ni caméra : il n'a rien à poser.
+function renderChoixDeCarte(hote) {
+  hote.className = "carte v-cartes";
+  hote.innerHTML = vueCartes();
+  hote.onkeydown = null;
+  hote.onclick = ev => {
+    if (ev.target.closest("[data-fermer-cartes]")) { fermerCartes(); return; }
+    const a = ev.target.closest("[data-acheter]");
+    if (a && !a.disabled) { acheterCarte(a.dataset.acheter); return; }
+    const c = ev.target.closest("[data-carte]");
+    if (c && !c.disabled) { choisirCarte(c.dataset.carte); return; }
   };
 }
 function renderHub() { renderCarte(); }

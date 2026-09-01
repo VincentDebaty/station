@@ -2674,3 +2674,69 @@ svg { width: 100%; height: 100%; display: block; }
 .c-ruban .g-quittee .pt { fill: var(--col); stroke: var(--col); opacity: .55; }
 .c-ruban .g-quittee text { fill: var(--muted); }
 @media (prefers-reduced-motion: reduce) { .c-ruban .c-convoi { display: none; } }
+
+/* ------------------------------------------------------------------
+   L'ÉCRAN DES CARTES (lot H) — une tuile par territoire.
+   ------------------------------------------------------------------
+   Il n'existe qu'à partir de deux cartes (js/parcours.js, plusieursCartes).
+   Pas de rail, pas de caméra : une grille qui respire, parce que c'est un
+   écran où l'on choisit, pas un écran où l'on joue. */
+.v-cartes { gap: 18px; overflow-y: auto; }
+.cv-entete { flex: 0 0 auto; display: flex; align-items: center; gap: 14px; }
+.cv-titre { flex: 1 1 auto; margin: 0; font-size: 17px; font-weight: 600; letter-spacing: -.01em; }
+.cv-retour {
+  flex: 0 0 auto; background: none; border: 0; color: var(--muted); font: inherit;
+  font-size: 13px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 4px;
+}
+.cv-retour:hover { color: var(--text); }
+.cv-retour .arw { font-size: 20px; line-height: 1; margin-top: -2px; }
+.cv-tuiles {
+  flex: 1 1 auto; display: grid; gap: 14px; align-content: start;
+  grid-template-columns: repeat(auto-fill, minmax(248px, 1fr));
+}
+.ct-tuile {
+  display: flex; flex-direction: column; gap: 7px; min-width: 0;
+  background: var(--panel); border: 1px solid #2a3550; border-radius: 16px;
+  padding: 16px 16px 14px;
+}
+/* La carte en cours se signale par sa bordure, pas par un fond : elle ne doit
+   pas paraître plus « pleine » que les autres, seulement là où l'on est. */
+.ct-tuile.ici { border-color: #2dd4bf; }
+.ct-tuile.verrou { border-style: dashed; }
+.ct-tete { display: flex; align-items: baseline; gap: 8px; }
+.ct-nom { flex: 1 1 auto; margin: 0; font-size: 16px; font-weight: 700; line-height: 1.2; min-width: 0; }
+.ct-fanion {
+  flex: none; font-size: 10px; letter-spacing: .04em; text-transform: uppercase;
+  color: #0b1a1f; background: #2dd4bf; border-radius: 5px; padding: 2px 6px;
+}
+.ct-cadenas { flex: none; font-size: 10.5px; letter-spacing: .03em; color: var(--muted); }
+.ct-sous { margin: 0; font-size: 12.5px; line-height: 1.5; color: var(--muted); }
+.ct-taille, .ct-avance {
+  margin: 0; font-family: ui-monospace, Menlo, monospace; font-size: 11.5px;
+  color: var(--muted); font-variant-numeric: tabular-nums;
+}
+.ct-avance { color: var(--gold-dim); }
+.ct-avance .ct-sur { opacity: .5; margin: 0 2px; }
+.ct-pied { margin-top: auto; padding-top: 10px; display: flex; flex-direction: column; gap: 8px; }
+.ct-pied .ct-action { width: 100%; align-self: stretch; justify-content: center; font-size: 14px; padding: 9px 14px; }
+.ct-pied .c-suite[disabled] { background: #223049; color: var(--muted); box-shadow: none; cursor: default; }
+.ct-cb {
+  background: none; border: 1px solid #2a3550; border-radius: 10px; color: var(--muted);
+  font: inherit; font-size: 12px; padding: 7px 10px; cursor: default;
+}
+/* L'ENTRÉE, DANS LE PANNEAU DU RUBAN. Au-dessus du chapitre, parce que la
+   hiérarchie de lecture est carte › zone › chapitre — et qu'on ne change pas
+   de carte par accident : le nom est le sujet, l'action est en petit dessous. */
+.cc-carte {
+  flex: 0 0 auto; background: none; border: 0; padding: 0 0 12px; margin: 0;
+  font: inherit; color: inherit; text-align: left; cursor: pointer;
+  display: flex; flex-direction: column; gap: 1px;
+}
+.cc-carte .ccc-nom { font-size: 13px; font-weight: 600; color: var(--text); }
+.cc-carte .ccc-quoi { font-size: 10.5px; letter-spacing: .02em; color: var(--muted); }
+.cc-carte:hover .ccc-quoi { color: var(--text); }
+@media (max-width: 700px) {
+  .cv-tuiles { grid-template-columns: 1fr; }
+  .ct-tuile { padding: 14px; }
+}

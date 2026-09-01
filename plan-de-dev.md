@@ -20,8 +20,8 @@
 | **G** | Récompense **et crédits** — **en partie fait le 26 août 2026** ; reste le solde multi-cartes | S | D |
 | **E** | Les écrans — **fait le 25 août 2026** | M | D, G |
 | **F** | Contenu : écrire le ruban — **clos le 1er septembre 2026 à 49 chapitres / 277 gares** | XL | C, D |
-| **H** | L'écran des cartes et l'achat | M | G |
-| **I** | Deuxième carte (preuve de généricité) | L | C, H |
+| **H** | L'écran des cartes et l'achat — **fait le 1er septembre 2026** | M | G |
+| **I** | Deuxième carte — **faite le 1er septembre 2026** (Le grand tour du Rhin) | L | C, H |
 | **J** | Nettoyage : ce que le ruban rend mort — **fait le 26 août 2026** | S | E, G |
 
 Tailles : S = une séance, M = quelques séances, L = une à deux semaines de
@@ -488,7 +488,7 @@ crédits affiché correspond au barème sur une sauvegarde de test.
 
 </details>
 
-## Lot H — L'écran des cartes et l'achat
+## Lot H — L'écran des cartes et l'achat — FAIT (1er septembre 2026)
 
 Le **calcul** des crédits est remonté au lot G (la soupape en a besoin) ; il
 reste ici la **dépense en cartes** et l'écran. Inchangé sur le fond par rapport
@@ -513,7 +513,27 @@ structure interne d'une carte.
 l'autre et chaque progression reste intacte ; un joueur qui a fini le ruban
 d'Europe a de quoi s'offrir la seconde.
 
-## Lot I — Deuxième carte
+*Livré le 1er septembre 2026.* L'écran est une VUE de l'écran du ruban
+(`CARTE.vue`, `js/parcours.js`) et non un écran de plus : `vueCartes()` rend
+une tuile par entrée de `data/cartes/index.json`, `renderChoixDeCarte` la pose,
+et revenir au ruban ne coûte pas un rechargement. L'entrée est un bouton en
+tête du panneau de gauche — carte › zone › chapitre, dans cet ordre de lecture
+— et il n'existe qu'à partir de deux cartes (`plusieursCartes`). Une tuile
+montre nom, sous-titre, chapitres, gares, et l'avancement SEULEMENT s'il y en a
+un : « 0 / 71 » sur une carte jamais ouverte ressemble à un échec, pas à une
+invitation. `choisirCarte` remet à null tout ce que l'écran gardait de la carte
+précédente — relevé, fête, caméra, chapitre de référence — sans quoi on arrive
+sur le nouveau ruban avec le bilan de l'ancien affiché à côté.
+
+*Vérifié dans le jeu* (navigateur, serveur local) : partie dopée à 277 gares en
+or sur l'Europe, solde 2711 ; Le grand tour du Rhin passe de « Il te manque
+1500 crédits » à « Ouvrir · 1500 cr » ; l'achat descend le solde à 1211 et
+inscrit `cartesPossedees.germanie = "credits"` ; la bascule charge le ruban de
+12 chapitres sur Mouscron ; le retour montre l'Europe intacte à 277/277 · ★ 831
+et la sauvegarde porte bien deux progressions séparées (277 gares / 0 gare).
+Le grade et les étoiles, eux, restent de compte : ★ 831 des deux côtés.
+
+## Lot I — Deuxième carte — FAITE (1er septembre 2026)
 
 **But** : prouver que le modèle est générique — bien moins cher qu'avec le
 graphe : **60 gares suffisent** (R2) au lieu de 260.
