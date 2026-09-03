@@ -361,19 +361,47 @@ Il suit une règle : **ce qui se vérifie tout seul d'abord**.
    | Liège | 941 ms | 13 941 ms |
    | Bruxelles-Midi, graine 3 | 1 528 ms | **22 969 ms** |
 
-   GDScript est **14 fois plus lent** sur cette boucle. Le prototype avait déjà
-   dû reléguer la génération dans un Web Worker à 2 s ; à 23 s, un niveau ne
-   démarre pas. Ce n'est pas un bug, c'est un interprète : la simulation du
-   joueur parfait tourne des dizaines de fois par journée, à pas de 0,005 à
-   0,03 minute, sur des dictionnaires à clés texte. Options, à trancher :
-   (a) optimiser le chemin chaud sans changer le résultat — l'oracle garantit
-   qu'on ne casse rien ; probablement ×3 à ×5, pas ×14 ; (b) un fil
-   d'exécution pour ne pas geler l'écran — ça cache l'attente, ça ne la
-   supprime pas ; (c) sortir le générateur de GDScript (C#, ou GDExtension en
-   C++) — ×10 à ×50, au prix d'une chaîne de compilation que le projet n'a
-   jamais eue ; (d) pré-tirer les journées hors ligne avec le prototype (V8,
-   déterministe sur graine) et les livrer en JSON — ça change une propriété du
-   jeu, « regénérée à chaque partie ».
+   GDScript était **14 fois plus lent** sur cette boucle. Le prototype avait
+   déjà dû reléguer la génération dans un Web Worker à 2 s ; à 23 s, un niveau
+   ne démarre pas. Quatre options ont été posées : (a) optimiser sans changer
+   le résultat, (b) un fil d'exécution, (c) sortir le générateur de GDScript,
+   (d) pré-tirer les journées avec le prototype. **Vincent a choisi (a).**
+
+   **Résultat de (a), le 3 septembre 2026 — ×3,9, sans qu'un bit ne bouge :**
+
+   | gare | V8 | GDScript avant | GDScript après |
+   |---|---|---|---|
+   | Arlon | 46 ms | 548 ms | **164 ms** |
+   | Darlington | 395 ms | 4 828 ms | **1 327 ms** |
+   | Liège | 941 ms | 13 941 ms | **3 617 ms** |
+   | Bruxelles-Midi, graine 3 | 1 528 ms | 22 969 ms | **5 572 ms** |
+
+   Les 18 journées de l'oracle restent identiques. Deux leçons de méthode, à
+   retenir pour game.js qui vient ensuite :
+
+   - **La première optimisation « évidente » n'a rendu que ×1,5.** Objets
+     typés au lieu de dictionnaires, indices entiers au lieu de clés texte,
+     identifiants calculés une fois par convoi, FIFO limitée au portail. Bien,
+     mais à côté de la cible.
+   - **Le banc a montré la vraie cible.** `jeu/bench_journee.gd` compte : une
+     journée de Bruxelles-Midi, c'est 626 simulations, 1,3 million de pas, et
+     **35 millions d'itérations convoi × pas à 425 ns** — alors que 3 à 6
+     convois seulement peuvent agir à un pas donné, les autres n'étant pas
+     encore arrivés ou déjà partis. Ne passer que sur les vivants, en gardant
+     leur ORDRE de passage (un dormant rejoint les vivants à son rang, juste
+     avant le pas où il arrive), ramène à 8 millions d'itérations : ×2,5 d'un
+     coup, et c'est exact — un convoi programmé n'a d'effet qu'à partir du pas
+     où il arrive, un convoi fini n'en a plus jamais.
+
+   **Ce qui reste, et pourquoi on s'arrête là.** GDScript est encore ~3,7 fois
+   V8. Le coût restant est le pas de temps lui-même — 1,3 million de pas, on
+   ne saute pas un pas sans changer une somme flottante, donc sans casser
+   l'oracle. 5,6 s au pire, 0,2 à 1,8 s sur une gare ordinaire. C'est jouable
+   à deux conditions, qui relèvent de l'écran et non du générateur : (b) un
+   fil d'exécution pour ne rien geler, et **pré-tirer la journée de la gare
+   suivante pendant que le joueur lit son relevé** — les secondes d'attente
+   sont déjà là, il suffit de s'en servir. Si ça ne suffit pas au test, (c) et
+   (d) restent sur la table, avec un chiffre et non une crainte.
 4. **L'enclenchement** (`game.js`) : le jeu devient jouable. C'est le gros
    morceau, et les huit pièges du §5 se vérifient ici, un par un.
 5. **La rampe et la récompense** (`ruban.js`, `recompense.js`) : étoiles, rangs,

@@ -19,6 +19,17 @@ class_name Journee
 ##      par heure d'arrivée, une fois le fret ajouté, tranche donc les
 ##      égalités par l'indice d'origine (voir _trier_stable).
 ##
+## LE CHEMIN CHAUD EST SIMULATE_DAY, et il est écrit pour la vitesse SANS
+## changer une formule (3 septembre 2026). La première version, fidèle au JS
+## dictionnaire pour dictionnaire, tournait 14 fois plus lentement que V8 —
+## 23 s pour Bruxelles-Midi. Ce qui coûtait : les dictionnaires à clés texte
+## lus des milliers de fois par pas, les identifiants de chemin reformatés à
+## chaque pas, la file FIFO qui balayait tous les convois, et le test « tous
+## finis » à chaque pas. D'où : des objets `Sim` à champs typés, les chemins
+## et quais indexés par entier, les identifiants calculés une fois par convoi,
+## la FIFO limitée au portail, un compteur de finis. Chaque expression
+## arithmétique est restée la même, dans le même ordre : l'oracle en est juge.
+##
 ## Les valeurs numériques d'un JSON arrivent en float : les identifiants de
 ## quai sont manipulés tels quels (1.0) et ne deviennent « 1 » que dans les
 ## identifiants de chemin, par int() — même leçon qu'en géométrie.
@@ -38,10 +49,80 @@ const RUSH_DEFAULT := "pointe"
 # 7 wagons ≈ 2,3× plus lent qu'une rame seule ; le fret roule comme un 3 wagons.
 const FREIGHT_SLOWNESS := 1 + (3 - 1) * 0.22
 
+# Les états d'un convoi dans la simulation — des entiers, pour que le `match`
+# ne compare pas des chaînes des milliers de fois par pas.
+const S_SCHEDULED := 0
+const S_WAITING := 1
+const S_MOVING_IN := 2
+const S_DWELL := 3
+const S_MOVING_THROUGH := 4
+const S_MOVING_OUT := 5
+const S_DONE := 6
+
 var G: Dictionary          # la géométrie (Geometrie.construire)
 var cfg: Dictionary        # la fiche
 var GEN: Dictionary        # cfg.gen
 var hasard: Has
+
+# --- la géométrie, indexée par entier pour le chemin chaud -----------------
+var _path_index: Dictionary = {}       # "in:YORK:1" -> int
+var _path_len: PackedFloat64Array = []
+var _path_dur: PackedFloat64Array = []
+var _conf_lo: Array = []               # par chemin : Dictionary[int -> lo]
+var _conf_hi: Array = []               # par chemin : Dictionary[int -> hi]
+var _plat_index: Dictionary = {}       # id de quai (float) -> int
+var _n_plats: int = 0
+
+# Compteurs de mesure (jeu/bench_journee.gd) : combien de simulations, de pas,
+# d'itérations convoi×pas et de tests de voie libre coûte une journée.
+static var n_sim := 0
+static var n_ticks := 0
+static var n_iter := 0
+static var n_free := 0
+
+# Le résultat de _span, écrit dans des champs plutôt qu'alloué à chaque appel.
+var _sp_lo: float
+var _sp_hi: float
+var _sp_dir: int
+
+
+## Un convoi en cours de simulation. Des champs typés : l'accès à un champ
+## d'objet est résolu à la compilation, celui d'un dictionnaire est un hachage
+## de chaîne à chaque lecture — et il y en a des millions par journée.
+class Sim:
+	var idx: int                 # rang dans schedule : l'ORDRE DE PASSAGE du pas
+	var from: String
+	var to: String
+	var cars: float
+	var freight: bool
+	var ae: float                # arrEff ?? arr
+	var dep: float
+	var plat: Variant            # l'id de quai tel quel (le float du JSON)
+	var plat_i: int
+	var pin: int                 # index de "in:from:plat"
+	var pout: int                # index de "out:to:plat"
+	var tail: float              # (cars - 1) * CAR_SPACING
+	var slow: float              # slowness()
+	var state: int = S_SCHEDULED
+	var elapsed: float = 0.0
+	var actual_arr: float = 0.0
+	var stop_p: float = 1.0
+	var entry_path: int = -1
+	var exit_path: int = -1
+	var dep_real: float = 0.0
+	var has_dep_real: bool = false
+	var occ_start: float = 0.0
+	var has_occ_start: bool = false
+	var occ_end: float = 0.0
+	var has_occ_end: bool = false
+	# Les seuils d'un mouvement ne dépendent que du chemin et du convoi : on les
+	# calcule UNE fois, à la transition, avec la même expression que schedule.js
+	# évalue à chaque pas — même double, comparaison identique.
+	var seuil_in: float = 0.0
+	var seuil_out: float = 0.0
+	var pin_len: float = 0.0
+	var total_arc: float = 0.0
+	var dur_tot: float = 0.0
 
 
 func _init(geometrie: Dictionary, fiche: Dictionary, h: Has) -> void:
@@ -49,6 +130,37 @@ func _init(geometrie: Dictionary, fiche: Dictionary, h: Has) -> void:
 	cfg = fiche
 	GEN = fiche.get("gen", {})
 	hasard = h
+	_indexer()
+
+
+## Les chemins et les quais reçoivent un entier, une fois pour toutes.
+func _indexer() -> void:
+	var paths: Dictionary = G["paths"]
+	var ids: Array = paths.keys()
+	for i in range(ids.size()):
+		_path_index[ids[i]] = i
+	_path_len.resize(ids.size())
+	_path_dur.resize(ids.size())
+	_conf_lo.resize(ids.size())
+	_conf_hi.resize(ids.size())
+	var conflicts: Dictionary = G["conflicts"]
+	for i in range(ids.size()):
+		var p: Dictionary = paths[ids[i]]
+		_path_len[i] = p["len"]
+		_path_dur[i] = p["dur"]
+		var lo := {}
+		var hi := {}
+		var zones: Dictionary = conflicts.get(ids[i], {})
+		for autre in zones.keys():
+			var j: int = _path_index[autre]
+			lo[j] = float(zones[autre]["lo"])
+			hi[j] = float(zones[autre]["hi"])
+		_conf_lo[i] = lo
+		_conf_hi[i] = hi
+	var platforms: Array = G["platforms"]
+	_n_plats = platforms.size()
+	for i in range(_n_plats):
+		_plat_index[platforms[i]["id"]] = i
 
 
 # ------------------------------------------------------------------
@@ -60,8 +172,8 @@ static func arr_eff(s: Dictionary) -> float:
 	return float(s["arrEff"]) if s.has("arrEff") and s["arrEff"] != null else float(s["arr"])
 
 
-static func slowness(t: Dictionary) -> float:
-	return FREIGHT_SLOWNESS if t.get("freight", false) else 1 + (float(t["cars"]) - 1) * 0.22
+static func slowness_de(cars: float, freight: bool) -> float:
+	return FREIGHT_SLOWNESS if freight else 1 + (cars - 1) * 0.22
 
 
 static func bell(u: float, c: float, w: float) -> float:
@@ -111,174 +223,238 @@ func _opts(a: String, b: String) -> Array:
 # Simulation headless de la journée : mêmes règles que le jeu
 # ------------------------------------------------------------------
 func simulate_day(schedule: Array, assign: Array, dt: float, events: Array) -> Array:
-	var paths: Dictionary = G["paths"]
-	var conflicts: Dictionary = G["conflicts"]
-	var closures: Array = []
+	# les fermetures, indexées par quai
+	var cl_plat: PackedInt32Array = []
+	var cl_start: PackedFloat64Array = []
+	var cl_end: PackedFloat64Array = []
 	for ev in events:
 		if ev.get("type") == "closure":
-			closures.append(ev)
+			cl_plat.append(_plat_index[ev["plat"]])
+			cl_start.append(float(ev["start"]))
+			cl_end.append(float(ev["end"]))
+	var n_cl := cl_plat.size()
+
+	var n := schedule.size()
+	n_sim += 1
 	var sims: Array = []
-	for i in range(schedule.size()):
-		var s: Dictionary = schedule[i].duplicate()
-		s["plat"] = assign[i]
-		s["state"] = "scheduled"
-		s["elapsed"] = 0.0
-		s["actualArr"] = null
-		s["stopP"] = 1.0
-		s["entryPath"] = null
-		s["exitPath"] = null
-		s["depReal"] = null
-		s["occStart"] = null
-		s["occEnd"] = null
-		sims.append(s)
-	var active := {}
+	var par_portail := {}                 # portail -> Array[Sim], pour la FIFO
+	for i in range(n):
+		var s: Dictionary = schedule[i]
+		var t := Sim.new()
+		t.idx = i
+		t.from = s["from"]
+		t.to = s["to"]
+		t.cars = float(s["cars"])
+		t.freight = s.get("freight", false)
+		t.ae = arr_eff(s)
+		t.dep = float(s["dep"])
+		t.plat = assign[i]
+		t.plat_i = _plat_index[t.plat]
+		# Les identifiants de chemin ne dépendent que du convoi et de son quai :
+		# calculés ici une fois, plus jamais dans la boucle de temps.
+		t.pin = _path_index["in:%s:%d" % [t.from, int(t.plat)]]
+		t.pout = _path_index["out:%s:%d" % [t.to, int(t.plat)]]
+		t.tail = (t.cars - 1) * Geo.CAR_SPACING
+		t.slow = slowness_de(t.cars, t.freight)
+		sims.append(t)
+		if not par_portail.has(t.from):
+			par_portail[t.from] = []
+		par_portail[t.from].append(t)
+	var active := {}                      # index de chemin -> Sim
+	var held: Array = []
+	held.resize(_n_plats)
+
+	# ON NE PASSE QUE SUR CEUX QUI PEUVENT AGIR. schedule.js balaie les n
+	# convois à chaque pas ; mesuré sur Bruxelles-Midi, 35 millions
+	# d'itérations dont l'immense majorité sur des convois pas encore arrivés
+	# ou déjà partis. Un convoi programmé n'a d'effet sur personne avant le pas
+	# où `now` atteint son arrivée ; un convoi fini n'en a plus jamais. Les
+	# `dormants` (triés par arrivée) rejoignent les `vivants` À LEUR RANG
+	# d'origine juste avant le pas où ils arrivent, et y basculent en
+	# « waiting » à leur tour de passage, comme dans le JS — les convois
+	# traités avant eux dans ce pas les voient encore programmés, ceux d'après
+	# les voient en attente. Les finis sont retirés après le pas. L'ordre de
+	# passage, seule chose qui compte, est donc conservé ; l'oracle en juge.
+	var vivants: Array = []
+	var dormants: Array = sims.duplicate()
+	dormants.sort_custom(func(x, y): return x.ae < y.ae if x.ae != y.ae else x.idx < y.idx)
 
 	var now := 0.0
 	var horizon := -INF
 	for s in schedule:
 		horizon = max(horizon, max(float(s["arr"]), float(s["dep"])))
 	horizon += 60
+	var finis := 0
 	while now < horizon:
 		now += dt
-		var held := {}
-		for t in sims:
-			if t["state"] == "movingIn" or t["state"] == "dwell" or t["state"] == "movingThrough":
-				held[t["plat"]] = true
-		for t in sims:
-			match t["state"]:
-				"scheduled":
-					if now >= arr_eff(t):
-						t["state"] = "waiting"
-				"waiting":
-					# FIFO sur la voie d'approche : pas de dépassement.
+		n_ticks += 1
+		while not dormants.is_empty() and dormants[0].ae <= now:
+			var t: Sim = dormants.pop_front()
+			var k := vivants.size()
+			while k > 0 and vivants[k - 1].idx > t.idx:
+				k -= 1
+			vivants.insert(k, t)
+		held.fill(false)
+		for t in vivants:
+			if t.state == S_MOVING_IN or t.state == S_DWELL or t.state == S_MOVING_THROUGH:
+				held[t.plat_i] = true
+		var fini_ce_pas := false
+		for t in vivants:
+			n_iter += 1
+			match t.state:
+				S_SCHEDULED:
+					if now >= t.ae:
+						t.state = S_WAITING
+				S_WAITING:
+					# FIFO sur la voie d'approche : pas de dépassement. On ne
+					# regarde que les convois du même portail — le résultat est
+					# le même, le balayage dix fois plus court.
 					var derriere := false
-					for o in sims:
-						if o != t and o["from"] == t["from"] and o["state"] == "waiting" \
-								and arr_eff(o) < arr_eff(t):
+					for o in par_portail[t.from]:
+						if o != t and o.state == S_WAITING and o.ae < t.ae:
 							derriere = true
 							break
 					if derriere:
 						continue
-					if held.has(t["plat"]):
+					if held[t.plat_i]:
 						continue
 					var ferme := false
-					for c in closures:
-						if c["plat"] == t["plat"] and now >= float(c["start"]) and now < float(c["end"]):
+					for c in range(n_cl):
+						if cl_plat[c] == t.plat_i and now >= cl_start[c] and now < cl_end[c]:
 							ferme = true
 							break
 					if ferme:
 						continue
-					held[t["plat"]] = true
-					var pid := "in:%s:%d" % [t["from"], int(t["plat"])]
-					if not _free(pid, active, conflicts):
+					held[t.plat_i] = true
+					if not _free(t.pin, active):
 						continue
-					if t.get("freight", false):
-						var pout := "out:%s:%d" % [t["to"], int(t["plat"])]
-						t["depReal"] = now
-						if _free(pout, active, conflicts):
-							active[pid] = t
-							active[pout] = t
-							t["entryPath"] = pid
-							t["exitPath"] = pout
-							t["state"] = "movingThrough"
-							t["elapsed"] = 0.0
-							t["occStart"] = now
+					if t.freight:
+						t.dep_real = now
+						t.has_dep_real = true
+						if _free(t.pout, active):
+							active[t.pin] = t
+							active[t.pout] = t
+							t.entry_path = t.pin
+							t.exit_path = t.pout
+							t.pin_len = _path_len[t.pin]
+							t.total_arc = t.pin_len + _path_len[t.pout]
+							t.dur_tot = Geo.TRAVEL * t.total_arc / 700 * FREIGHT_SLOWNESS
+							t.state = S_MOVING_THROUGH
+							t.elapsed = 0.0
+							t.occ_start = now
+							t.has_occ_start = true
 							continue
-					active[pid] = t
-					t["entryPath"] = pid
-					t["stopP"] = 1.0
-					t["state"] = "movingIn"
-					t["elapsed"] = 0.0
-					t["occStart"] = now
-				"movingThrough":
-					var pin: Dictionary = paths[t["entryPath"]]
-					var pout: Dictionary = paths[t["exitPath"]]
-					var total_arc: float = pin["len"] + pout["len"]
-					var dur_tot: float = Geo.TRAVEL * total_arc / 700 * FREIGHT_SLOWNESS
-					t["elapsed"] += dt
-					var h: float = total_arc * t["elapsed"] / dur_tot
-					var tail: float = (float(t["cars"]) - 1) * Geo.CAR_SPACING
-					if h - tail > pin["len"] and active.get(t["entryPath"]) == t:
-						active.erase(t["entryPath"])
-					if h - tail > total_arc:
-						t["state"] = "done"
-						active.erase(t["exitPath"])
-						t["occEnd"] = now
-				"movingIn":
-					t["elapsed"] += dt
-					if t["elapsed"] >= paths[t["entryPath"]]["dur"] * slowness(t) * t["stopP"]:
-						t["state"] = "dwell"
-						t["actualArr"] = now
-						active.erase(t["entryPath"])
-				"dwell":
+					active[t.pin] = t
+					t.entry_path = t.pin
+					t.stop_p = 1.0
+					t.seuil_in = _path_dur[t.pin] * t.slow * t.stop_p
+					t.state = S_MOVING_IN
+					t.elapsed = 0.0
+					t.occ_start = now
+					t.has_occ_start = true
+				S_MOVING_THROUGH:
+					t.elapsed += dt
+					var h: float = t.total_arc * t.elapsed / t.dur_tot
+					if h - t.tail > t.pin_len and active.get(t.entry_path) == t:
+						active.erase(t.entry_path)
+					if h - t.tail > t.total_arc:
+						t.state = S_DONE
+						finis += 1
+						fini_ce_pas = true
+						active.erase(t.exit_path)
+						t.occ_end = now
+						t.has_occ_end = true
+				S_MOVING_IN:
+					t.elapsed += dt
+					if t.elapsed >= t.seuil_in:
+						t.state = S_DWELL
+						t.actual_arr = now
+						active.erase(t.entry_path)
+				S_DWELL:
 					# le fret ne stationne pas : il repart dès que sa sortie se libère
-					if not t.get("freight", false) \
-							and now < max(float(t["dep"]), float(t["actualArr"]) + Geo.MIN_DWELL):
+					if not t.freight and now < max(t.dep, t.actual_arr + Geo.MIN_DWELL):
 						continue
-					var pid := "out:%s:%d" % [t["to"], int(t["plat"])]
-					if _free(pid, active, conflicts):
-						active[pid] = t
-						t["exitPath"] = pid
-						t["state"] = "movingOut"
-						t["elapsed"] = 0.0
-						if not t.get("freight", false):
-							t["depReal"] = now
-				"movingOut":
-					t["elapsed"] += dt
-					var path: Dictionary = paths[t["exitPath"]]
-					var end_p: float = 1 + ((float(t["cars"]) - 1) * Geo.CAR_SPACING) / path["len"]
-					if t["elapsed"] >= path["dur"] * slowness(t) * end_p:
-						t["state"] = "done"
-						active.erase(t["exitPath"])
-						t["occEnd"] = now
-		var tous_finis := true
-		for t in sims:
-			if t["state"] != "done":
-				tous_finis = false
-				break
-		if tous_finis:
+					if _free(t.pout, active):
+						active[t.pout] = t
+						t.exit_path = t.pout
+						var end_p: float = 1 + ((t.cars - 1) * Geo.CAR_SPACING) / _path_len[t.pout]
+						t.seuil_out = _path_dur[t.pout] * t.slow * end_p
+						t.state = S_MOVING_OUT
+						t.elapsed = 0.0
+						if not t.freight:
+							t.dep_real = now
+							t.has_dep_real = true
+				S_MOVING_OUT:
+					t.elapsed += dt
+					if t.elapsed >= t.seuil_out:
+						t.state = S_DONE
+						finis += 1
+						fini_ce_pas = true
+						active.erase(t.exit_path)
+						t.occ_end = now
+						t.has_occ_end = true
+		if fini_ce_pas:
+			var restants: Array = []
+			for t in vivants:
+				if t.state != S_DONE:
+					restants.append(t)
+			vivants = restants
+		if finis == n:
 			break
 	return sims
 
 
-## L'intervalle d'abscisse qu'un convoi occupe sur un chemin, ou null s'il
-## n'y est pas encore (fret en transit, avant la sortie).
-func _span(t: Dictionary, path_id: String) -> Variant:
-	var paths: Dictionary = G["paths"]
-	var tail: float = (float(t["cars"]) - 1) * Geo.CAR_SPACING
-	if t["state"] == "movingThrough":
-		var pin: Dictionary = paths[t["entryPath"]]
-		var pout: Dictionary = paths[t["exitPath"]]
-		var total_arc: float = pin["len"] + pout["len"]
+## L'intervalle d'abscisse qu'un convoi occupe sur un chemin, dans _sp_lo /
+## _sp_hi / _sp_dir. Rend false s'il n'y est pas encore (fret en transit,
+## avant la sortie) — le `null` de schedule.js.
+func _span(t: Sim, path: int) -> bool:
+	var tail := t.tail
+	if t.state == S_MOVING_THROUGH:
+		var pin_len: float = _path_len[t.entry_path]
+		var pout_len: float = _path_len[t.exit_path]
+		var total_arc: float = pin_len + pout_len
 		var dur_tot: float = Geo.TRAVEL * total_arc / 700 * FREIGHT_SLOWNESS
-		var h: float = total_arc * t["elapsed"] / dur_tot
-		if path_id == t["entryPath"]:
-			return {"lo": h - tail, "hi": min(h, pin["len"]), "dir": 1}
-		if h <= pin["len"]:
-			return null
-		var head_out: float = pout["len"] - (h - pin["len"])
-		return {"lo": head_out, "hi": min(pout["len"], head_out + tail), "dir": -1}
-	var on_entry: bool = t["state"] == "movingIn"
-	var path: Dictionary = paths[t["entryPath"] if on_entry else t["exitPath"]]
-	var dur: float = path["dur"] * slowness(t)
+		var h: float = total_arc * t.elapsed / dur_tot
+		if path == t.entry_path:
+			_sp_lo = h - tail
+			_sp_hi = min(h, pin_len)
+			_sp_dir = 1
+			return true
+		if h <= pin_len:
+			return false
+		var head_out: float = pout_len - (h - pin_len)
+		_sp_lo = head_out
+		_sp_hi = min(pout_len, head_out + tail)
+		_sp_dir = -1
+		return true
+	var on_entry: bool = t.state == S_MOVING_IN
+	var p: int = t.entry_path if on_entry else t.exit_path
+	var dur: float = _path_dur[p] * t.slow
+	var plen: float = _path_len[p]
 	if on_entry:
-		var head_s: float = min(t["elapsed"] / dur, t["stopP"]) * path["len"]
-		return {"lo": head_s - tail, "hi": head_s, "dir": 1}
-	var head_s2: float = (1 - t["elapsed"] / dur) * path["len"]
-	return {"lo": head_s2, "hi": head_s2 + tail, "dir": -1}
+		var head_s: float = min(t.elapsed / dur, t.stop_p) * plen
+		_sp_lo = head_s - tail
+		_sp_hi = head_s
+		_sp_dir = 1
+		return true
+	var head_s2: float = (1 - t.elapsed / dur) * plen
+	_sp_lo = head_s2
+	_sp_hi = head_s2 + tail
+	_sp_dir = -1
+	return true
 
 
-func _free(pid: String, active: Dictionary, conflicts: Dictionary) -> bool:
+func _free(pid: int, active: Dictionary) -> bool:
+	n_free += 1
 	if active.has(pid):
 		return false
-	for a in active.keys():
-		var zone: Variant = conflicts[a].get(pid)
-		if zone == null:
+	for a in active:                      # les clés, sans en copier le tableau
+		var lo: Dictionary = _conf_lo[a]
+		if not lo.has(pid):
 			continue
-		var occ: Variant = _span(active[a], a)
-		if occ == null:
+		if not _span(active[a], a):
 			return false
-		var degage: bool = occ["lo"] > zone["hi"] if occ["dir"] == 1 else occ["hi"] < zone["lo"]
+		var degage: bool = _sp_lo > _conf_hi[a][pid] if _sp_dir == 1 else _sp_hi < lo[pid]
 		if not degage:
 			return false
 	return true
@@ -292,14 +468,15 @@ func platform_pressure(schedule: Array, res: Array) -> int:
 	for q in G["platforms"]:
 		var evs: Array = []
 		for i in range(schedule.size()):
-			if res[i]["plat"] != q["id"]:
+			var r: Sim = res[i]
+			if r.plat != q["id"]:
 				continue
 			var a := arr_eff(schedule[i])
 			var b: float = a
-			if res[i]["occEnd"] != null:
-				b = res[i]["occEnd"]
-			elif res[i]["depReal"] != null:
-				b = res[i]["depReal"]
+			if r.has_occ_end:
+				b = r.occ_end
+			elif r.has_dep_real:
+				b = r.dep_real
 			evs.append([a, 1])
 			evs.append([b, -1])
 		# à instant égal, les fins (-1) passent avant les débuts (+1)
@@ -337,15 +514,16 @@ func generate_schedule() -> Dictionary:
 		var tot := 0.0
 		var ok := true
 		for i in range(sched.size()):
+			var r: Sim = res[i]
 			if sched[i].get("freight", false):
-				if res[i]["exitPath"] == null:
+				if r.exit_path == -1:
 					ok = false
 					break
 				continue
-			if res[i]["depReal"] == null:
+			if not r.has_dep_real:
 				ok = false
 				break
-			tot += max(0.0, float(res[i]["depReal"]) - float(sched[i]["dep"]))
+			tot += max(0.0, r.dep_real - float(sched[i]["dep"]))
 		if not ok or tot > 0.15:
 			continue
 		seen += 1
@@ -523,8 +701,8 @@ func generate_once() -> Dictionary:
 		var best_t := INF
 		for q in opts[i]:
 			assign[i] = q
-			var r := simulate_day(draft, assign, 0.03, events)
-			var d: float = float(r[i]["depReal"]) if r[i]["depReal"] != null else INF
+			var r: Sim = simulate_day(draft, assign, 0.03, events)[i]
+			var d: float = r.dep_real if r.has_dep_real else INF
 			cands.append([q, d])
 			if d < best_t:
 				best_t = d
@@ -550,7 +728,8 @@ func generate_once() -> Dictionary:
 	for i in range(draft.size()):
 		if not draft[i].get("freight", false):
 			# `Math.ceil(null + 1.5)` vaut 2 en JS : null y compte pour 0.
-			var dr: float = float(res[i]["depReal"]) if res[i]["depReal"] != null else 0.0
+			var r: Sim = res[i]
+			var dr: float = r.dep_real if r.has_dep_real else 0.0
 			draft[i]["dep"] = ceil(dr + REACTION_MARGIN)
 	for k in range(45):
 		res = simulate_day(draft, assign, 0.01, events)
@@ -558,9 +737,9 @@ func generate_once() -> Dictionary:
 		for i in range(draft.size()):
 			if draft[i].get("freight", false):
 				continue
-			var dr: Variant = res[i]["depReal"]
-			if dr == null or float(dr) - float(draft[i]["dep"]) > 0.08:
-				var base: float = float(dr) if dr != null else float(draft[i]["dep"]) + 1
+			var r: Sim = res[i]
+			if not r.has_dep_real or r.dep_real - float(draft[i]["dep"]) > 0.08:
+				var base: float = r.dep_real if r.has_dep_real else float(draft[i]["dep"]) + 1
 				draft[i]["dep"] = ceil(base + 0.3)
 				bumped = true
 		if not bumped:
@@ -579,11 +758,11 @@ func generate_once() -> Dictionary:
 		for q in platforms:
 			busy[q["id"]] = []
 		var M := 0.5
-		for s in res:
-			if s["occStart"] == null:
+		for r in res:
+			if not r.has_occ_start:
 				continue
-			var fin: float = horizon if s["occEnd"] == null else float(s["occEnd"])
-			busy[s["plat"]].append([float(s["occStart"]) - M, fin + M])
+			var fin: float = r.occ_end if r.has_occ_end else horizon
+			busy[r.plat].append([r.occ_start - M, fin + M])
 		var lo := 6.0
 		var hi: float = max(10.0, last_arr - 10)
 		var placed: Array = []
