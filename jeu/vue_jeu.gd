@@ -64,6 +64,7 @@ var tuto_premier := ""               # l'id du premier train guidé
 var tuto_feu_vu := false
 var tuto_vitesse_vu := false
 var coach_cible: Dictionary = {}     # {train: id} | {quai: pid} | {hud: "retard"|"vitesse"}
+var zones_hud: Dictionary = {}       # les rectangles du bandeau, pour le doigt
 var bulle: PanelContainer
 var bulle_texte: Label
 var bulle_bouton: Button
@@ -71,6 +72,9 @@ var accueil: Control
 
 
 func _ready() -> void:
+	# Les deux facteurs d'échelle se lisent sur l'écran réel (jeu/style.gd) :
+	# le tactile grossit les cibles du plan, le bandeau garde sa taille physique.
+	Sty.calibrer(get_viewport())
 	_construire_coach()
 	if not autonome:
 		return
@@ -500,8 +504,10 @@ func _dessiner_convois(sel, t: float) -> void:
 		var plein := _embarquement(tr)
 		for i in range(n):
 			var p: Dictionary = pos[i]
-			var h: float = Geo.CAR_H if i == 0 else Geo.CAR_H - 4.0
-			var rayon: float = 8.0 if i == 0 else 5.0
+			# La HAUTEUR grossit au doigt, la LONGUEUR jamais : CAR_LEN tient à
+			# l'espacement du gril, l'étirer ferait se chevaucher les convois.
+			var h: float = (Geo.CAR_H if i == 0 else Geo.CAR_H - 4.0) * Sty.UIK
+			var rayon: float = (8.0 if i == 0 else 5.0) * Sty.UIK
 			var r := Rect2(-Geo.CAR_LEN / 2.0, -h / 2.0, Geo.CAR_LEN, h)
 			draw_set_transform(Vector2(p["x"], p["y"]), deg_to_rad(p["ang"]), Vector2.ONE)
 
@@ -513,7 +519,7 @@ func _dessiner_convois(sel, t: float) -> void:
 				var opac: float = anneau if choisi else anneau * 0.9
 				var b := _boucle(Sty.rect_arrondi(r, rayon))
 				for couche in [[16.0, 0.10], [10.0, 0.18], [5.5, 0.34], [2.5, 0.75]]:
-					draw_polyline(b, Color(teinte, float(couche[1]) * opac), float(couche[0]), true)
+					draw_polyline(b, Color(teinte, float(couche[1]) * opac), float(couche[0]) * Sty.UIK, true)
 
 			# LA CAISSE, et son halo à la couleur de la DESTINATION — y compris
 			# pour un fret, dont la caisse est grise mais le halo coloré.
@@ -540,11 +546,11 @@ func _dessiner_convois(sel, t: float) -> void:
 			# LE CONTOUR : la silhouette reste lisible, wagon plein ou vide. Sur
 			# un fret il est épais et opaque : c'est LUI le signe distinctif.
 			draw_polyline(_boucle(Sty.rect_arrondi(r, rayon)),
-				Color(col, 1.0 if tr.freight else 0.85), 2.6 if tr.freight else 1.4, true)
+				Color(col, 1.0 if tr.freight else 0.85), (2.6 if tr.freight else 1.4) * Sty.UIK, true)
 
 			# La loco porte l'initiale de sa destination, fret compris.
 			if i == 0:
-				Sty.texte_centre(self, Sty.sans(700), 12, Vector2.ZERO,
+				Sty.texte_centre(self, Sty.sans(700), int(round(12 * Sty.UIK)), Vector2.ZERO,
 					String(G["dest_abbr"].get(tr.to, "")), Sty.ETIQUETTE_TRAIN)
 		draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 
@@ -564,23 +570,24 @@ func _dessiner_signaux(t: float) -> void:
 			continue
 		var tete := Vector2(float(pos[0]["x"]), float(pos[0]["y"]))
 		var dir: float = 1.0 if tete.x >= float(pos[1]["x"]) else -1.0
-		var o := tete + Vector2(dir * (Geo.CAR_LEN / 2.0 + 14.0), 2.0)
-		draw_style_box(Sty.boite(Color("#55617a"), Color("#55617a"), 1.3, 0),
-			Rect2(o.x - 1.3, o.y - 2, 2.6, 16))                                  # le mât
-		draw_style_box(Sty.boite(Color("#0e1420"), Color("#55617a"), 4, 1.2),
-			Rect2(o.x - 7, o.y - 22, 14, 21))                                    # la cible
-		draw_circle(o + Vector2(0, -16), 3.6, Color(Sty.ROUGE, lampe))           # le rouge
-		draw_circle(o + Vector2(0, -6.5), 3.6, Color("#1c2740"))                 # le vert, éteint
+		var k := Sty.UIK
+		var o := tete + Vector2(dir * (Geo.CAR_LEN / 2.0 + 14.0 * k), 2.0 * k)
+		draw_style_box(Sty.boite(Color("#55617a"), Color("#55617a"), 1.3 * k, 0),
+			Rect2(o.x - 1.3 * k, o.y - 2 * k, 2.6 * k, 16 * k))                       # le mât
+		draw_style_box(Sty.boite(Color("#0e1420"), Color("#55617a"), 4 * k, 1.2 * k),
+			Rect2(o.x - 7 * k, o.y - 22 * k, 14 * k, 21 * k))                         # la cible
+		draw_circle(o + Vector2(0, -16 * k), 3.6 * k, Color(Sty.ROUGE, lampe))        # le rouge
+		draw_circle(o + Vector2(0, -6.5 * k), 3.6 * k, Color("#1c2740"))              # le vert, éteint
 
 
 # --- les badges d'heure -----------------------------------------------------
 ## Le cadran de l'horloge, aiguilles figées sur 10 h 10 : la pose qui se lit le
 ## mieux en tout petit. Il dit « heure de départ » sans mot à lire, et s'efface
 ## quand le badge bascule sur le retard — « +3 min » n'est plus une heure.
-func _cadran(centre: Vector2, col: Color) -> void:
-	draw_arc(centre, 5.4, 0.0, TAU, 24, col, 1.4, true)
-	draw_line(centre, centre + Vector2(0, -3.2), col, 1.4, true)
-	draw_line(centre, centre + Vector2(2.6, 1.6), col, 1.4, true)
+func _cadran(centre: Vector2, col: Color, k: float = 1.0) -> void:
+	draw_arc(centre, 5.4 * k, 0.0, TAU, 24, col, 1.4 * k, true)
+	draw_line(centre, centre + Vector2(0, -3.2 * k), col, 1.4 * k, true)
+	draw_line(centre, centre + Vector2(2.6 * k, 1.6 * k), col, 1.4 * k, true)
 
 
 func _dessiner_badges(t: float) -> void:
@@ -599,36 +606,51 @@ func _dessiner_badges(t: float) -> void:
 		var en_retard: bool = late >= 1
 		var txt: String = ("+%d min" % int(floor(late))) if en_retard else fmt(tr.dep)
 		var col: Color = Sty.ROUGE if en_retard else (Sty.AMBRE if late > -3 else Sty.VERT)
+		var k := Sty.UIK
 		var police := Sty.mono(700 if en_retard else 600)
-		var w := police.get_string_size(txt, HORIZONTAL_ALIGNMENT_LEFT, -1, 12).x
+		var taille := int(round(12 * k))
+		var w := police.get_string_size(txt, HORIZONTAL_ALIGNMENT_LEFT, -1, taille).x
 		var cadran: bool = not en_retard
-		var large: float = w + 24.0 + (14.0 if cadran else 0.0)
+		var large: float = w + 24.0 * k + (14.0 * k if cadran else 0.0)
 		var tete: Dictionary = positions[tr.id][0]
-		var centre := Vector2(float(tete["x"]), float(tete["y"]) - 40.0)
-		var r := Rect2(centre.x - large / 2.0, centre.y - 10.0, large, 20.0)
+		var centre := Vector2(float(tete["x"]), float(tete["y"]) - 40.0 * k)
+		var r := Rect2(centre.x - large / 2.0, centre.y - 10.0 * k, large, 20.0 * k)
 		# un convoi encore à l'arrêt dont le retard court réclame un aiguillage :
 		# le badge clignote (en opacité seule).
 		var a: float = clign if (en_retard and not tr.settled) else 1.0
-		draw_style_box(Sty.boite(Color(Sty.BADGE_FOND, Sty.BADGE_FOND.a * a), Color(col, a), 6, 1.2), r)
-		var x := r.position.x + 12.0
+		draw_style_box(Sty.boite(Color(Sty.BADGE_FOND, Sty.BADGE_FOND.a * a), Color(col, a), 6 * k, 1.2 * k), r)
+		var x := r.position.x + 12.0 * k
 		if cadran:
-			_cadran(Vector2(x, centre.y), Color(col, a))
-			x += 14.0
-		Sty.texte_centre(self, police, 12, Vector2(x + w / 2.0, centre.y), txt, Color(col, a))
+			_cadran(Vector2(x, centre.y), Color(col, a), k)
+			x += 14.0 * k
+		Sty.texte_centre(self, police, taille, Vector2(x + w / 2.0, centre.y), txt, Color(col, a))
 
 
 # --- le bandeau -------------------------------------------------------------
+## La taille RÉELLE de la scène. 1400 × 760 n'est que la base : le viewport
+## s'étire (stretch « expand »), et sur un téléphone il est plus large. Le
+## bandeau s'ancre donc sur les bords réels, pas sur la base.
+func size_ecran() -> Vector2:
+	return get_viewport_rect().size
+
+
 ## Une chip de verre dépoli : le gabarit commun du bandeau (#hud-clock,
 ## #station-tag, les trois boutons) — fond rgba(21,29,46,.55), liseré #2a3550,
 ## coins de 12. Le flou du web n'existe pas ici : le fond translucide seul
 ## suffit, les voies restent lisibles dessous.
-func _chip(r: Rect2, bord: Color = Sty.BORD) -> void:
-	draw_style_box(Sty.boite(Sty.VERRE, bord, 12, 1), r)
+func _chip(r: Rect2, bord: Color = Sty.BORD, k: float = 1.0) -> void:
+	draw_style_box(Sty.boite(Sty.VERRE, bord, 12 * k, max(1.0, k)), r)
 
 
 func _dessiner_hud(t: float) -> void:
 	var sans := Sty.sans()
 	var gras := Sty.sans(600)
+	# Le bandeau garde sa TAILLE PHYSIQUE d'un écran à l'autre : au bureau
+	# k vaut 1 et rien ne change ; sur un téléphone il grossit d'autant que le
+	# viewport a été étiré (jeu/style.gd, calibrer).
+	var k := Sty.HUD_K
+	var ti := func(v: float) -> int: return int(round(v * k))
+	zones_hud.clear()
 
 	# --- le cartouche de gare, en haut à gauche : c'est le bouton RETOUR ------
 	var pays := Donnees.pays_de(String(fiche.get("country", "")))
@@ -638,97 +660,104 @@ func _dessiner_hud(t: float) -> void:
 	# Un drapeau est une paire de caractères combinés : la police système en
 	# rend un glyphe unique dont la largeur mesurée ment (mesuré le 3 septembre
 	# 2026 : le nom débordait de la chip). On lui réserve sa place.
-	var w_fl: float = max(20.0, sans.get_string_size(drapeau, HORIZONTAL_ALIGNMENT_LEFT, -1, 15).x)
-	var w_nm := gras.get_string_size(nom, HORIZONTAL_ALIGNMENT_LEFT, -1, 13).x
-	var w_pips := 5.0 * 4.0 + 4.0 * 3.0
-	var large := 10.0 + 14.0 + 6.0 + w_fl + 6.0 + w_nm + 3.0 + w_pips + 13.0
-	var chip := Rect2(4, 10, large, 34)
-	_chip(chip)
+	var w_fl: float = max(20.0 * k, sans.get_string_size(drapeau, HORIZONTAL_ALIGNMENT_LEFT, -1, ti.call(15)).x)
+	var w_nm := gras.get_string_size(nom, HORIZONTAL_ALIGNMENT_LEFT, -1, ti.call(13)).x
+	var w_pips := (5.0 * 4.0 + 4.0 * 3.0) * k
+	var large := (10.0 + 14.0 + 6.0) * k + w_fl + 6.0 * k + w_nm + 3.0 * k + w_pips + 13.0 * k
+	var chip := Rect2(4 * k, 10 * k, large, 34 * k)
+	zones_hud["carte"] = chip
+	_chip(chip, Sty.BORD, k)
 	var cy := chip.position.y + chip.size.y / 2.0
-	var x := chip.position.x + 10.0
-	Sty.texte_centre(self, sans, 22, Vector2(x + 7, cy - 1), "‹", Sty.MUET)
-	x += 14.0 + 6.0
-	Sty.texte_centre(self, sans, 15, Vector2(x + w_fl / 2.0, cy), drapeau, Sty.TEXTE)
-	x += w_fl + 6.0
-	Sty.texte_centre(self, gras, 13, Vector2(x + w_nm / 2.0, cy), nom, Sty.TEXTE)
-	x += w_nm + 3.0
+	var x := chip.position.x + 10.0 * k
+	Sty.texte_centre(self, sans, ti.call(22), Vector2(x + 7 * k, cy - 1 * k), "‹", Sty.MUET)
+	x += (14.0 + 6.0) * k
+	Sty.texte_centre(self, sans, ti.call(15), Vector2(x + w_fl / 2.0, cy), drapeau, Sty.TEXTE)
+	x += w_fl + 6.0 * k
+	Sty.texte_centre(self, gras, ti.call(13), Vector2(x + w_nm / 2.0, cy), nom, Sty.TEXTE)
+	x += w_nm + 3.0 * k
 	# la difficulté : la MÊME jauge à cinq crans que partout dans le jeu
 	for i in range(5):
-		draw_style_box(Sty.boite(Sty.AMBRE if i < d else Sty.PIP_ETEINT, Color.TRANSPARENT, 1.5, 0),
-			Rect2(x + i * 7.0, cy - 5.0, 4.0, 10.0))
+		draw_style_box(Sty.boite(Sty.AMBRE if i < d else Sty.PIP_ETEINT, Color.TRANSPARENT, 1.5 * k, 0),
+			Rect2(x + i * 7.0 * k, cy - 5.0 * k, 4.0 * k, 10.0 * k))
 
 	# --- l'horloge, centrée : heure, retard, et la jauge du service ----------
 	var mono := Sty.mono(600)
 	var horloge := fmt(enc.game_min)
 	var retard := enc.live_delay()
 	var txt_r := "+%d" % int(retard)
-	var w_h := Sty.largeur_espacee(mono, 21, horloge, 1.0)
-	var w_r := mono.get_string_size(txt_r, HORIZONTAL_ALIGNMENT_LEFT, -1, 14).x
-	var w_chip := 13.0 + w_h + 8.0 + w_r + 13.0
-	var ch := Rect2(700 - w_chip / 2.0, 10, w_chip, 38)
-	_chip(ch, Sty.ACCENT if (pause or gel) else Sty.BORD)
-	var base := ch.position.y + 5.0 + mono.get_ascent(21)
-	Sty.texte_espace(self, mono, 21, Vector2(ch.position.x + 13.0, base), horloge, Sty.TEXTE, 1.0)
+	var w_h := Sty.largeur_espacee(mono, ti.call(21), horloge, 1.0 * k)
+	var w_r := mono.get_string_size(txt_r, HORIZONTAL_ALIGNMENT_LEFT, -1, ti.call(14)).x
+	var w_chip := 13.0 * k + w_h + 8.0 * k + w_r + 13.0 * k
+	var milieu := size_ecran().x / 2.0
+	var ch := Rect2(milieu - w_chip / 2.0, 10 * k, w_chip, 38 * k)
+	zones_hud["horloge"] = ch
+	_chip(ch, Sty.ACCENT if (pause or gel) else Sty.BORD, k)
+	var base := ch.position.y + 5.0 * k + mono.get_ascent(ti.call(21))
+	Sty.texte_espace(self, mono, ti.call(21), Vector2(ch.position.x + 13.0 * k, base), horloge, Sty.TEXTE, 1.0 * k)
 	var col_r: Color = Sty.VERT if retard < 10 else (Sty.AMBRE if retard < 30 else Sty.ROUGE)
-	draw_string(mono, Vector2(ch.position.x + 13.0 + w_h + 8.0, base), txt_r,
-		HORIZONTAL_ALIGNMENT_LEFT, -1, 14, col_r)
+	draw_string(mono, Vector2(ch.position.x + 13.0 * k + w_h + 8.0 * k, base), txt_r,
+		HORIZONTAL_ALIGNMENT_LEFT, -1, ti.call(14), col_r)
 	# la jauge : l'horloge se remplit à mesure que les convois quittent le quai
 	var partis := 0
 	for tr in enc.trains:
 		if tr.state == Enc.S_DONE:
 			partis += 1
 	var part: float = float(partis) / float(max(1, enc.trains.size()))
-	var jauge := Rect2(ch.position.x + 10.0, ch.end.y - 7.0, ch.size.x - 20.0, 3.0)
-	draw_style_box(Sty.boite(Color(Sty.ACCENT, 0.14), Color.TRANSPARENT, 2, 0), jauge)
+	var jauge := Rect2(ch.position.x + 10.0 * k, ch.end.y - 7.0 * k, ch.size.x - 20.0 * k, 3.0 * k)
+	draw_style_box(Sty.boite(Color(Sty.ACCENT, 0.14), Color.TRANSPARENT, 2 * k, 0), jauge)
 	if part > 0.0:
-		draw_style_box(Sty.boite(Sty.ACCENT, Color.TRANSPARENT, 2, 0),
+		draw_style_box(Sty.boite(Sty.ACCENT, Color.TRANSPARENT, 2 * k, 0),
 			Rect2(jauge.position, Vector2(jauge.size.x * part, jauge.size.y)))
-	# « EN PAUSE », sous l'horloge
+	# « EN PAUSE », sous l'horloge — et c'est une cible : on la touche pour
+	# reprendre, comme la pilule du prototype.
 	if pause or gel:
 		var etiq := "EN PAUSE"
-		var w_e := Sty.largeur_espacee(Sty.sans(700), 12, etiq, 1.5)
-		var re := Rect2(700 - (w_e + 24.0) / 2.0, ch.end.y + 5.0, w_e + 24.0, 22)
-		draw_style_box(Sty.boite(Color(Sty.ACCENT, 0.14), Sty.ACCENT, 8, 1), re)
-		Sty.texte_espace(self, Sty.sans(700), 12,
-			Vector2(re.position.x + 12.0, re.position.y + 11.0 + Sty.sans(700).get_ascent(12) / 2.0 - 1),
-			etiq, Sty.ACCENT, 1.5)
+		var w_e := Sty.largeur_espacee(Sty.sans(700), ti.call(12), etiq, 1.5 * k)
+		var re := Rect2(milieu - (w_e + 24.0 * k) / 2.0, ch.end.y + 5.0 * k, w_e + 24.0 * k, 22 * k)
+		if not gel:
+			zones_hud["pause"] = re
+		draw_style_box(Sty.boite(Color(Sty.ACCENT, 0.14), Sty.ACCENT, 8 * k, 1 * k), re)
+		Sty.texte_espace(self, Sty.sans(700), ti.call(12),
+			Vector2(re.position.x + 12.0 * k, re.get_center().y + Sty.sans(700).get_ascent(ti.call(12)) / 2.0 - 1 * k),
+			etiq, Sty.ACCENT, 1.5 * k)
 
 	# --- les trois boutons, en haut à droite ---------------------------------
-	var bx := 1400.0 - 4.0 - 34.0
+	var bx := size_ecran().x - 4.0 * k - 34.0 * k
 	for bouton in [["gear", ""], ["speed", "%dx" % int(vitesse)], ["play", ""]]:
-		var r := Rect2(bx, 10, 34, 34)
+		var r := Rect2(bx, 10 * k, 34 * k, 34 * k)
+		zones_hud[bouton[0]] = r
 		var actif: bool = bouton[0] == "speed" and vitesse > 1.0
-		_chip(r, Sty.ACCENT if actif else Sty.BORD)
+		_chip(r, Sty.ACCENT if actif else Sty.BORD, k)
 		var c := r.get_center()
 		match bouton[0]:
 			"speed":
-				Sty.texte_espace(self, Sty.mono(700), 13,
-					Vector2(c.x - Sty.largeur_espacee(Sty.mono(700), 13, bouton[1], 0.5) / 2.0,
-						c.y + Sty.mono(700).get_ascent(13) / 2.0 - 1),
-					bouton[1], Sty.ACCENT if actif else Sty.TEXTE, 0.5)
+				Sty.texte_espace(self, Sty.mono(700), ti.call(13),
+					Vector2(c.x - Sty.largeur_espacee(Sty.mono(700), ti.call(13), bouton[1], 0.5 * k) / 2.0,
+						c.y + Sty.mono(700).get_ascent(ti.call(13)) / 2.0 - 1 * k),
+					bouton[1], Sty.ACCENT if actif else Sty.TEXTE, 0.5 * k)
 			"play":
 				if pause:
 					draw_colored_polygon(PackedVector2Array([
-						c + Vector2(-4, -6), c + Vector2(7, 0), c + Vector2(-4, 6)]), Sty.TEXTE)
+						c + Vector2(-4, -6) * k, c + Vector2(7, 0) * k, c + Vector2(-4, 6) * k]), Sty.TEXTE)
 				else:
-					draw_rect(Rect2(c.x - 5, c.y - 6, 3.5, 12), Sty.TEXTE, true)
-					draw_rect(Rect2(c.x + 1.5, c.y - 6, 3.5, 12), Sty.TEXTE, true)
+					draw_rect(Rect2(c.x - 5 * k, c.y - 6 * k, 3.5 * k, 12 * k), Sty.TEXTE, true)
+					draw_rect(Rect2(c.x + 1.5 * k, c.y - 6 * k, 3.5 * k, 12 * k), Sty.TEXTE, true)
 			"gear":
-				draw_arc(c, 6.0, 0.0, TAU, 24, Sty.TEXTE, 1.8, true)
-				for k in range(6):
-					var a: float = TAU * float(k) / 6.0
+				draw_arc(c, 6.0 * k, 0.0, TAU, 24, Sty.TEXTE, 1.8 * k, true)
+				for i in range(6):
+					var a: float = TAU * float(i) / 6.0
 					var u := Vector2(cos(a), sin(a))
-					draw_line(c + u * 6.5, c + u * 9.0, Sty.TEXTE, 1.8, true)
-		bx -= 34.0 + 8.0
+					draw_line(c + u * 6.5 * k, c + u * 9.0 * k, Sty.TEXTE, 1.8 * k, true)
+		bx -= (34.0 + 8.0) * k
 
 	# --- la ligne d'aide, en bas : hors prototype, elle porte la graine ------
 	# Le jeu web est « 100 % visuel » et n'a aucune bande de texte. Celle-ci est
 	# un outil de mise au point — c'est elle qui donne la graine à citer dans un
 	# retour de test. Volontairement discrète, et elle partira au moteur final.
-	draw_string(sans, Vector2(28, 760 - 20),
+	draw_string(sans, Vector2(28 * k, size_ecran().y - 20 * k),
 		"clic convoi → clic quai   ·   espace pause   ·   1 2 4 vitesse   ·   R rejouer   ·   graine %d, journée en %d ms   ·   %s"
 			% [graine, duree_generation_ms, _niveau_texte()],
-		HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color(Sty.MUET, 0.55))
+		HORIZONTAL_ALIGNMENT_LEFT, -1, ti.call(11), Color(Sty.MUET, 0.55))
 
 
 # --- le repère du tutoriel --------------------------------------------------
@@ -742,10 +771,11 @@ func _dessiner_coach(t: float) -> void:
 	if rc == Rect2():
 		return
 	var trou := rc.grow(8)
-	draw_rect(Rect2(0, 0, 1400, trou.position.y), Sty.VOILE, true)
-	draw_rect(Rect2(0, trou.end.y, 1400, 760 - trou.end.y), Sty.VOILE, true)
+	var e := size_ecran()
+	draw_rect(Rect2(0, 0, e.x, trou.position.y), Sty.VOILE, true)
+	draw_rect(Rect2(0, trou.end.y, e.x, e.y - trou.end.y), Sty.VOILE, true)
 	draw_rect(Rect2(0, trou.position.y, trou.position.x, trou.size.y), Sty.VOILE, true)
-	draw_rect(Rect2(trou.end.x, trou.position.y, 1400 - trou.end.x, trou.size.y), Sty.VOILE, true)
+	draw_rect(Rect2(trou.end.x, trou.position.y, e.x - trou.end.x, trou.size.y), Sty.VOILE, true)
 	var pulse := 0.5 + 0.5 * sin(t * TAU / 1.2)
 	var b := _boucle(Sty.rect_arrondi(trou, 12))
 	draw_polyline(b, Color(Sty.ACCENT, 0.10 + 0.15 * pulse), 14.0, true)
@@ -767,15 +797,17 @@ func _dessiner_coach(t: float) -> void:
 func _dessiner_fin() -> void:
 	if not enc.ended or app != null:
 		return
-	draw_rect(Rect2(0, 0, 1400, 760), Color(Sty.FOND, 0.82), true)
+	var e := size_ecran()
+	draw_rect(Rect2(Vector2.ZERO, e), Color(Sty.FOND, 0.82), true)
 	var r: Dictionary = enc.resultat
 	var titre: String = "Service interrompu" if r.get("failed", false) \
 		else ("Sans faute !" if r.get("perfect", false) else ("Fin du service" if r.get("win", false) else "Objectif manqué"))
 	var etoiles := "★".repeat(int(r.get("stars", 0))) + "☆".repeat(3 - int(r.get("stars", 0)))
-	Sty.texte_centre(self, Sty.sans(600), 34, Vector2(700, 360), titre, Sty.TEXTE)
-	Sty.texte_centre(self, Sty.sans(), 18, Vector2(700, 400),
+	var c := e / 2.0
+	Sty.texte_centre(self, Sty.sans(600), 34, c - Vector2(0, 20), titre, Sty.TEXTE)
+	Sty.texte_centre(self, Sty.sans(), 18, c + Vector2(0, 20),
 		"%s   ·   retard cumulé %d min" % [etoiles, int(r.get("d", 0))], Sty.AMBRE)
-	Sty.texte_centre(self, Sty.sans(), 14, Vector2(700, 440), "R pour rejouer", Sty.MUET)
+	Sty.texte_centre(self, Sty.sans(), 14, c + Vector2(0, 60), "R pour rejouer", Sty.MUET)
 
 
 # ------------------------------------------------------------------
@@ -806,8 +838,10 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		var m: Vector2 = event.position
-		if app != null and Rect2(20, 20, 260, 72).has_point(m):
-			app.abandonner_service()
+		# LE BANDEAU D'ABORD. Sans clavier — sur un téléphone — la pause, la
+		# vitesse et le retour à la carte ne sont atteignables que par ces
+		# boutons ; ils étaient dessinés sans être cliquables.
+		if _clic_bandeau(m):
 			return
 		if enc.ended or tuto == "accueil":
 			return
@@ -816,7 +850,8 @@ func _unhandled_input(event: InputEvent) -> void:
 			if not positions.has(t.id):
 				continue
 			for p in positions[t.id]:
-				if Vector2(p["x"], p["y"]).distance_to(m) <= Geo.CAR_LEN / 2.0 + 10:
+				# la zone de clic grossit avec le doigt (js/render.js, hitH × UIK)
+				if Vector2(p["x"], p["y"]).distance_to(m) <= (Geo.CAR_LEN / 2.0 + 10.0) * Sty.UIK:
 					var dit := enc.clic_train(t)
 					if dit != "":
 						print(t.id + " — " + dit)
@@ -881,14 +916,18 @@ func _construire_coach() -> void:
 	# gelé derrière un voile sans bouton. Vu par Vincent au premier lancement,
 	# le 3 septembre 2026 ; le lancement direct (STATION_JOUER) le masquait.
 	accueil = Control.new()
-	accueil.size = Vector2(1400, 760)
 	var voile := ColorRect.new()
 	voile.color = VOILE
-	voile.size = Vector2(1400, 760)
 	accueil.add_child(voile)
 	var centre := CenterContainer.new()
-	centre.size = Vector2(1400, 760)
 	accueil.add_child(centre)
+	# La taille suit l'écran réel : le viewport s'étire, et la carte doit rester
+	# centrée dessus, pas sur la base de 1400 × 760.
+	for n in [accueil, voile, centre]:
+		n.size = get_viewport_rect().size
+	get_viewport().size_changed.connect(func() -> void:
+		for n in [accueil, voile, centre]:
+			n.size = get_viewport_rect().size)
 	var carte := PanelContainer.new()
 	var sc := Sty.boite(Sty.PANNEAU, Sty.ACCENT, 16, 1, 30, Color(0, 0, 0, 0.5))
 	sc.set_content_margin_all(30)
@@ -1131,7 +1170,10 @@ func _rect_cible() -> Rect2:
 				return Rect2(Geo.PLAT_X1, float(q["cy"]) - Geo.PLAT_H / 2.0, Geo.PLAT_LEN, Geo.PLAT_H)
 		return Rect2()
 	if coach_cible.has("hud"):
-		return Rect2(700 + 18, 18, 70, 34) if coach_cible["hud"] == "retard" else Rect2(1400 - 28 - 90, 20, 90, 28)
+		# les vraies zones du bandeau, telles que le dernier rendu les a posées
+		if coach_cible["hud"] == "vitesse":
+			return zones_hud.get("speed", Rect2())
+		return zones_hud.get("horloge", Rect2())
 	return Rect2()
 
 
@@ -1145,12 +1187,38 @@ func _placer_bulle() -> void:
 	if bulle.size != taille:
 		bulle.size = taille
 	if rc == Rect2():
-		bulle.position = Vector2(700 - taille.x / 2, 760 - taille.y - 26)
+		var e0 := size_ecran()
+		bulle.position = Vector2(e0.x / 2 - taille.x / 2, e0.y - taille.y - 26)
 		return
-	var dessous: bool = rc.get_center().y < 760 * 0.5
-	var x: float = clamp(rc.get_center().x - taille.x / 2, 8.0, 1400.0 - taille.x - 8.0)
+	var e := size_ecran()
+	var dessous: bool = rc.get_center().y < e.y * 0.5
+	var x: float = clamp(rc.get_center().x - taille.x / 2, 8.0, e.x - taille.x - 8.0)
 	var y: float = rc.end.y + 22 if dessous else rc.position.y - 22 - taille.y
 	bulle.position = Vector2(x, y)
+
+
+## Un geste sur le bandeau. Rend vrai s'il a été pris.
+func _clic_bandeau(m: Vector2) -> bool:
+	if zones_hud.get("carte", Rect2()).has_point(m):
+		if app != null:
+			app.abandonner_service()
+		return true
+	if zones_hud.get("play", Rect2()).has_point(m) or zones_hud.get("pause", Rect2()).has_point(m):
+		if not gel:
+			pause = not pause
+		return true
+	if zones_hud.get("speed", Rect2()).has_point(m):
+		# 1 → 2 → 4 → 1, comme le bouton du prototype
+		vitesse = 1.0 if vitesse >= 4.0 else vitesse * 2.0
+		return true
+	if zones_hud.get("gear", Rect2()).has_point(m):
+		# Le menu des réglages n'existe pas encore (son, aide, recommencer) :
+		# le bouton tient sa place et rejoue la journée, ce que fait « R ».
+		graine = (graine * 7 + 13) % 100000
+		pause = false
+		_nouvelle_journee()
+		return true
+	return false
 
 
 ## Le joueur scripté de l'oracle, pour une démonstration sans personne devant.

@@ -40,6 +40,46 @@ const ETIQUETTE_TRAIN := Color("#08141a")
 const PIP_ETEINT := Color("#3b465c")
 const VOILE := Color(10.0 / 255, 14.0 / 255, 24.0 / 255, 0.58)  # le projecteur du repère
 
+# --- LES DEUX FACTEURS D'ÉCHELLE ---------------------------------------------
+# LE FACTEUR TACTILE, celui du prototype (js/render.js, UIK) : sur un pointeur
+# grossier, tout ce qu'on touche et tout ce qu'on lit sur le plan grossit d'une
+# moitié — hauteur des caisses, zones de clic, badges, libellés de portail,
+# signal d'arrêt. La LONGUEUR d'une voiture, elle, ne bouge jamais : elle tient
+# à la physique du gril (CAR_SPACING), et l'étirer ferait se chevaucher les
+# convois. C'est la valeur que Vincent a validée sur son iPhone avec le
+# prototype web ; on la reprend telle quelle.
+static var UIK := 1.0
+
+# LE FACTEUR DU BANDEAU, qui n'existait pas sur le web — et c'est justement
+# pour cela qu'il faut l'écrire ici. Le prototype tient son bandeau en PIXELS
+# CSS, qui valent un point d'écran sur l'appareil : une chip de 34 px fait
+# 34 points sur un iPhone comme sur un Mac. Ici le bandeau vit dans le viewport
+# de 1400 unités, étiré à la taille de l'écran : sur un téléphone, la même chip
+# tomberait à trois millimètres. On garde donc au bandeau sa TAILLE PHYSIQUE —
+# celle qu'il a au bureau, mesurée à 127 unités par pouce le 3 septembre 2026.
+const UNITES_PAR_POUCE_BUREAU := 127.5
+static var HUD_K := 1.0
+
+
+## À appeler une fois l'écran connu. Sans elle, les deux facteurs valent 1 et
+## le jeu s'affiche comme au bureau — ce qui est le bon repli.
+static func calibrer(viewport: Viewport) -> void:
+	UIK = 1.5 if DisplayServer.is_touchscreen_available() else 1.0
+	var dpi := DisplayServer.screen_get_dpi()
+	var large := float(DisplayServer.window_get_size().x)
+	var unites := viewport.get_visible_rect().size.x
+	if dpi <= 0 or large <= 0 or unites <= 0:
+		HUD_K = UIK
+		return
+	# window_get_size() est en points sur macOS et sur iOS ; les pixels
+	# physiques en découlent par l'échelle de l'écran, et le pouce par le dpi.
+	var pouces := large * DisplayServer.screen_get_max_scale() / dpi
+	if pouces <= 0.0:
+		HUD_K = UIK
+		return
+	HUD_K = clampf((unites / pouces) / UNITES_PAR_POUCE_BUREAU, 1.0, 3.0)
+
+
 # --- les polices, en cache --------------------------------------------------------
 static var _sans: Dictionary = {}
 static var _mono: Dictionary = {}
