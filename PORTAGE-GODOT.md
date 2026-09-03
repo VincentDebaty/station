@@ -314,9 +314,30 @@ Il suit une règle : **ce qui se vérifie tout seul d'abord**.
    portent un `.gdignore`, et les quatre contrôles continuent de tourner à côté
    sans rien savoir de Godot. Scène : `jeu/catalogue.tscn`, autoload
    `jeu/donnees.gd`.
-2. **La géométrie générée** (`engine.js`) : une gare qui se dessine à partir de
-   sa fiche, avec le kit modulaire. C'est là qu'on découvre si le kit tient pour
-   401 gares.
+2. **La géométrie générée** (`engine.js`) — ✅ **FAIT le 3 septembre 2026.**
+   `jeu/geometrie.gd` transpose `loadStation()` ligne à ligne, en flottants
+   64 bits. **L'oracle a le dernier mot** : `tools/oracle-geometrie.mjs` fait
+   calculer chaque fiche par `engine.js` (dans un `node:vm`) et par Godot
+   (`jeu/oracle_geometrie.gd`, sans fenêtre, les 401 en un seul démarrage), puis
+   compare quais, portails, les 2 210 points de Darlington, abscisses cumulées,
+   longueurs, durées, voies d'approche et de départ, zones de conflit et
+   liaisons autorisées. **401 fiches identiques, pire écart 2,3 × 10⁻¹³** — le
+   dernier bit de `Math.hypot` contre `sqrt`, comme prévu. `jeu/gare.tscn`
+   dessine n'importe quelle fiche (`STATION_GARE=<id>`) ; vérifié sur
+   Darlington (6 quais, 4 directions) et Bruxelles-Midi (10 quais, 8
+   directions, 437 conflits) : le kit tient.
+
+   Trois pièges Godot appris là, à ne pas réapprendre :
+   - **le cache des `class_name` n'est construit que par l'éditeur.** Un projet
+     cloné et lancé en ligne de commande ne connaît pas `Geometrie`. Tout ce
+     qui doit tourner sans éditeur passe par `preload("res://…")`.
+   - **en mode `--script`, Godot rend 0 sur une erreur de parsing.** Un outil
+     qui se fie au code de sortie croit que tout va bien ; l'oracle lit la
+     sortie et refuse sur `SCRIPT ERROR`.
+   - **les nombres d'un JSON arrivent en `float`** : `str(1.0)` donne « 1.0 »,
+     et un identifiant construit dessus (`in:YORK:1.0`) ne correspond plus à
+     celui du prototype. L'oracle l'a attrapé — 104 clés absentes, écart
+     numérique nul.
 3. **La journée** (`schedule.js`) : les convois arrivent aux bonnes heures, sans
    qu'on puisse encore les aiguiller. Comparable au prototype **chiffre par
    chiffre**, sur graine fixe.

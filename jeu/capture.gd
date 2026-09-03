@@ -1,0 +1,27 @@
+class_name Capture
+## VÉRIFICATION VISUELLE SANS ŒIL HUMAIN.
+##
+##   STATION_CAPTURE=/chemin/image.png godot --path . [scène]
+##
+## Rend deux images (le temps que tout soit peint), enregistre la seconde, et
+## quitte. C'est ce qui permet de contrôler un écran depuis un script, sans
+## dépendre de quelqu'un qui regarde — et c'est déjà comme ça qu'on a attrapé
+## le premier défaut du portage : une liste invisible faute d'avoir réclamé sa
+## place dans sa colonne.
+##
+## Appeler `Capture.eventuelle(self)` en fin de `_ready()` ; sans la variable
+## d'environnement, ça ne fait rien.
+
+
+static func eventuelle(depuis: Node) -> void:
+	var vers := OS.get_environment("STATION_CAPTURE")
+	if vers == "":
+		return
+	await RenderingServer.frame_post_draw
+	await RenderingServer.frame_post_draw
+	var img := depuis.get_viewport().get_texture().get_image()
+	if img.save_png(vers) == OK:
+		print("capture : " + vers)
+	else:
+		push_error("capture impossible : " + vers)
+	depuis.get_tree().quit()
