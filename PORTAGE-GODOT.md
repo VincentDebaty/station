@@ -402,8 +402,38 @@ Il suit une règle : **ce qui se vérifie tout seul d'abord**.
    suivante pendant que le joueur lit son relevé** — les secondes d'attente
    sont déjà là, il suffit de s'en servir. Si ça ne suffit pas au test, (c) et
    (d) restent sur la table, avec un chiffre et non une crainte.
-4. **L'enclenchement** (`game.js`) : le jeu devient jouable. C'est le gros
-   morceau, et les huit pièges du §5 se vérifient ici, un par un.
+4. **L'enclenchement** (`game.js`) — ✅ **transposé et vérifié le 3 septembre
+   2026.** `jeu/enclenchement.gd` porte la partie RÈGLE de `game.js` : la
+   machine à états d'un convoi, la file d'approche en accordéon (`placeQueue`
+   de `render.js` fixe `qs`, donc `startS`, donc l'enclenchement — c'est de la
+   règle malgré son fichier), `occupiedSpan` avec `easeRun`, le FIFO, les
+   itinéraires et leurs zones de conflit, les quatre prédicats de quai, le fret
+   qui s'aiguille seul, les imprévus révélés en partie, le retard vivant, la fin
+   de service. Tout ce qui est écran est resté dans le prototype.
+
+   **L'oracle fait tourner `game.js` dans Node, derrière un DOM inerte** — un
+   Proxy qui rend un objet inerte à tout accès, accepte toute écriture, absorbe
+   tout appel. Les règles s'exécutent, le rendu tombe dans le vide, et aucun
+   navigateur n'est nécessaire. `tools/oracle-enclenchement.mjs` tire la
+   journée avec `schedule.js` sur graine, la fait jouer des deux côtés au pas
+   de 1/240 min par le MÊME joueur scripté — volontairement naïf : il envoie
+   sur un mauvais quai quand rien ne dessert, donc refoulements, feux rouges et
+   coupure au plafond sont exercés — et compare chaque transition d'état à
+   l'instant près, chaque choix, et la fin de service. **18 journées sur 18
+   identiques** (Darlington, Namur, Liège, Arlon, Stuttgart, Bruxelles-Midi ×
+   graines 1-3), sur toute la palette : un sans-faute, des zéro-étoile, cinq
+   services interrompus au plafond. Puis **les 401 fiches, graine 1 : 401
+   identiques**, en 305 s de Godot — moins d'une seconde par journée.
+
+   Pas de problème de vitesse ici : l'enclenchement est du travail par image,
+   pas une boucle serrée — Godot est au niveau de V8 (Bruxelles-Midi : 1,0 s
+   contre 0,7 s pour toute une journée à 240 pas par minute).
+
+   Un piège de l'oracle, pas du jeu, consigné pour la prochaine fois qu'on fait
+   tourner du code navigateur en aveugle : un Proxy qui rend toujours quelque
+   chose de vrai fait boucler sans fin `while (el.firstChild) el.removeChild(…)`
+   (`render.js`, la file en réduction). Dix minutes à 99 % avant de le voir.
+   Les liens de parenté d'un nœud inerte rendent `null`.
 5. **La rampe et la récompense** (`ruban.js`, `recompense.js`) : étoiles, rangs,
    crédits. `carte-check` doit rendre le même verdict qu'aujourd'hui.
 6. **La sauvegarde** (`store.js`) : `makeBackend()` seul change. Tester une
