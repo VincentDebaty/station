@@ -617,6 +617,10 @@ func _coach(cible: Dictionary, texte: String, bouton: String = "") -> void:
 	bulle_bouton.text = bouton if bouton != "" else "Suivant"
 	bulle_bouton.visible = bouton != ""
 	bulle.visible = true
+	# UN CONTROL NE RÉTRÉCIT PAS DE LUI-MÊME : après un long message avec
+	# bouton, une phrase courte gardait le cadre de la précédente — « le cadre
+	# du message est fort grand », Vincent, 3 septembre 2026.
+	bulle.reset_size()
 	_placer_bulle()
 
 
@@ -807,6 +811,8 @@ func _placer_bulle() -> void:
 		return
 	var rc := _rect_cible()
 	var taille := bulle.get_combined_minimum_size()
+	if bulle.size != taille:
+		bulle.size = taille
 	if rc == Rect2():
 		bulle.position = Vector2(700 - taille.x / 2, 760 - taille.y - 26)
 		return
