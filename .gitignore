@@ -11,4 +11,3 @@ __pycache__/
 # identités de signature) : ils sont propres à la machine, pas au projet.
 # La procédure, elle, est dans PORTAGE-GODOT.md.
 export_presets.cfg
-build/

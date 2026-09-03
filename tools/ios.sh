@@ -24,7 +24,13 @@
 set -u
 cd "$(dirname "$0")/.."
 RACINE="$PWD"
-PROJET="$RACINE/build/ios/Station.xcodeproj"
+# LA FABRICATION SORT DU DÉPÔT. Exporté dans le projet, Godot se prend les
+# pieds dans ses propres fichiers : il relit les icônes qu'il vient d'écrire
+# par un chemin `res://build/...` que son système de fichiers ne connaît pas
+# encore, et l'export échoue (mesuré le 3 septembre 2026). Le cache de macOS
+# est l'endroit prévu pour ça.
+SORTIE="$HOME/Library/Caches/Station-ios"
+PROJET="$SORTIE/Station.xcodeproj"
 BUNDLE=$(grep -E '^application/bundle_identifier' export_presets.cfg 2>/dev/null | cut -d'"' -f2)
 EQUIPE=$(grep -E '^application/app_store_team_id' export_presets.cfg 2>/dev/null | cut -d'"' -f2)
 
@@ -59,12 +65,16 @@ if [ "${1:-}" = "--etat" ]; then etat; exit 0; fi
 
 # --- l'export : Godot pose le projet Xcode, le compile et le signe ----------
 echo "→ export du projet Xcode…"
-mkdir -p build/ios
-if ! godot --headless --path . --export-debug "iOS" "$PROJET" 2>&1 | tee /tmp/station-ios-export.log | grep -qi "error"; then
+mkdir -p "$SORTIE"
+# « error » TOUT COURT NE MARCHE PAS : la ligne de commande d'ibtool contient
+# `--errors --warnings --notices`, et l'export réussi passait pour un échec
+# (mesuré le 3 septembre 2026). On cherche donc « error: » ou « ERROR: ».
+godot --headless --path . --export-debug "iOS" "$PROJET" > /tmp/station-ios-export.log 2>&1
+if ! grep -qE "error:|^ERROR:|BUILD FAILED" /tmp/station-ios-export.log; then
   vert "  projet exporté et signé"
 else
   rouge "  l'export a rendu une erreur :"
-  grep -i "error" /tmp/station-ios-export.log | grep -v "^\[" | head -5 | sed 's/^/    /'
+  grep -E "error:|^ERROR:|BUILD FAILED" /tmp/station-ios-export.log | head -5 | sed 's/^/    /'
   echo
   echo "  Si elle parle de compte ou de profil, c'est l'étape humaine :"
   echo "  Xcode → Réglages → Comptes, puis ouvrir $PROJET une fois."
@@ -73,12 +83,25 @@ fi
 [ "${1:-}" = "--export" ] && exit 0
 
 # --- l'installation, puis le lancement -------------------------------------
-APP=$(find build/ios -name "Station.app" -maxdepth 4 2>/dev/null | head -1)
+APP=$(find "$SORTIE" -name "Station.app" -maxdepth 5 2>/dev/null | head -1)
 if [ -z "$APP" ]; then
   rouge "aucune Station.app produite — voir /tmp/station-ios-export.log"
   exit 1
 fi
-ID=$(xcrun devicectl list devices 2>/dev/null | grep "connected" | head -1 | awk '{print $(NF-2)}')
+# L'IDENTIFIANT SE LIT EN JSON. Découpé à la colonne dans le tableau de
+# devicectl, on récoltait « 16 » (un morceau d'« iPhone 16 Pro »).
+xcrun devicectl list devices --json-output /tmp/station-ios-dev.json >/dev/null 2>&1
+ID=$(python3 -c "
+import json
+try:
+    d = json.load(open('/tmp/station-ios-dev.json'))
+except Exception:
+    raise SystemExit
+for x in d['result']['devices']:
+    if x.get('connectionProperties', {}).get('pairingState') == 'paired':
+        print(x['identifier'])
+        break
+" 2>/dev/null)
 if [ -z "$ID" ]; then
   rouge "aucun appareil connecté"
   exit 1
