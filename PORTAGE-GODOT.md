@@ -338,9 +338,42 @@ Il suit une règle : **ce qui se vérifie tout seul d'abord**.
      et un identifiant construit dessus (`in:YORK:1.0`) ne correspond plus à
      celui du prototype. L'oracle l'a attrapé — 104 clés absentes, écart
      numérique nul.
-3. **La journée** (`schedule.js`) : les convois arrivent aux bonnes heures, sans
-   qu'on puisse encore les aiguiller. Comparable au prototype **chiffre par
-   chiffre**, sur graine fixe.
+3. **La journée** (`schedule.js`) — ✅ **transposée et vérifiée le 3 septembre
+   2026 ; ⚠ trop lente pour être jouée telle quelle.**
+   `jeu/journee.gd` transpose `generateSchedule()` en entier — tirage sous
+   pression, simulation du joueur parfait, affectation gloutonne, calibrage
+   itéré, fermetures sur quai libre — avec `jeu/hasard.gd`, le mulberry32 de
+   `gen-check` en entiers 32 bits masqués. `tools/oracle-journee.mjs` tire la
+   même journée des deux côtés avec la même graine : **18 journées sur 18
+   identiques** (Darlington, Namur, Liège, Arlon, Stuttgart, Bruxelles-Midi ×
+   graines 1-3), convoi par convoi, événements compris. Deux choses invisibles
+   y sont vitales : l'ORDRE des cinq tirages, et la STABILITÉ du tri des
+   convois par arrivée (`Array.sort` est stable en JS, `sort_custom` ne le
+   garantit pas — on tranche par l'indice d'origine).
+
+   **Le chiffre qui décide de la suite** — génération d'une journée, même
+   algorithme, même résultat :
+
+   | gare | V8 (prototype) | GDScript |
+   |---|---|---|
+   | Arlon | 46 ms | 548 ms |
+   | Darlington | 395 ms | 4 828 ms |
+   | Liège | 941 ms | 13 941 ms |
+   | Bruxelles-Midi, graine 3 | 1 528 ms | **22 969 ms** |
+
+   GDScript est **14 fois plus lent** sur cette boucle. Le prototype avait déjà
+   dû reléguer la génération dans un Web Worker à 2 s ; à 23 s, un niveau ne
+   démarre pas. Ce n'est pas un bug, c'est un interprète : la simulation du
+   joueur parfait tourne des dizaines de fois par journée, à pas de 0,005 à
+   0,03 minute, sur des dictionnaires à clés texte. Options, à trancher :
+   (a) optimiser le chemin chaud sans changer le résultat — l'oracle garantit
+   qu'on ne casse rien ; probablement ×3 à ×5, pas ×14 ; (b) un fil
+   d'exécution pour ne pas geler l'écran — ça cache l'attente, ça ne la
+   supprime pas ; (c) sortir le générateur de GDScript (C#, ou GDExtension en
+   C++) — ×10 à ×50, au prix d'une chaîne de compilation que le projet n'a
+   jamais eue ; (d) pré-tirer les journées hors ligne avec le prototype (V8,
+   déterministe sur graine) et les livrer en JSON — ça change une propriété du
+   jeu, « regénérée à chaque partie ».
 4. **L'enclenchement** (`game.js`) : le jeu devient jouable. C'est le gros
    morceau, et les huit pièges du §5 se vérifient ici, un par un.
 5. **La rampe et la récompense** (`ruban.js`, `recompense.js`) : étoiles, rangs,
