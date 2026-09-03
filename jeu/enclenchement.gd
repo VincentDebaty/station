@@ -41,14 +41,8 @@ const S_DONE := 8
 const NOMS_ETAT := ["scheduled", "approaching", "waiting", "movingIn", "dwell",
 	"movingOut", "movingBack", "movingThrough", "done"]
 
-# --- le barème (js/ruban.js, SEUILS) ----------------------------------------
-const SEUILS := {
-	1: {"trois": 12, "deux": 20, "une": 30},
-	2: {"trois": 11, "deux": 20, "une": 30},
-	3: {"trois": 10, "deux": 20, "une": 30},
-	4: {"trois": 9, "deux": 20, "une": 30},
-	5: {"trois": 8, "deux": 20, "une": 30},
-}
+# --- le barème vient du ruban (jeu/ruban.gd), jamais d'une copie ------------
+const Rub := preload("res://jeu/ruban.gd")
 
 
 ## Un convoi. Les champs « nullables » de game.js (platform, target, qs,
@@ -614,15 +608,15 @@ func tick(dt: float) -> void:
 			fin_de_service(false)
 
 
-## Le barème d'une gare telle qu'on la joue. Ici : celui de sa difficulté de
-## fiche — la rampe du ruban (js/ruban.js, difficulteDeGare) est l'étape 5.
+## Le barème IMPOSÉ par l'écran de jeu : celui de la position sur le ruban
+## (Ruban.seuils_de_service, étape 5). Vide : le barème de la fiche seule —
+## ce que le prototype rend sans carte chargée, et ce que l'oracle
+## d'enclenchement mesure.
+var seuils: Dictionary = {}
+
+
 func seuils_de_service() -> Dictionary:
-	var d := int(cfg.get("difficulty", 0))
-	var s: Dictionary = SEUILS[max(1, min(5, d if d else 3))]
-	if cfg.has("seuils") and cfg["seuils"] is Dictionary:
-		s = s.duplicate()
-		s.merge(cfg["seuils"], true)
-	return s
+	return seuils if not seuils.is_empty() else Rub.seuils_de_fiche(cfg)
 
 
 func fin_de_service(failed: bool) -> Dictionary:

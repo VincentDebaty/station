@@ -23,6 +23,7 @@ const Has := preload("res://jeu/hasard.gd")
 const Enc := preload("res://jeu/enclenchement.gd")
 const Plan := preload("res://jeu/gare.gd")
 const Cap := preload("res://jeu/capture.gd")
+const Rub := preload("res://jeu/ruban.gd")
 
 # Les couleurs du prototype (css/station.css) : l'esthétique est conservée.
 const TEXTE := Color("#dbe2ee")
@@ -44,6 +45,9 @@ var auto: bool = false
 var duree_generation_ms: int = 0
 var positions: Dictionary = {}       # id -> Array[{x, y, ang}], recalculé à chaque image
 var plan: Node2D
+var ruban = null                     # le ruban de la carte qui porte la gare ; null hors carte
+var carte_id := ""
+var fiche_jouee: Dictionary          # la fiche telle que le ruban la sert (difficulty, gen recalculés)
 
 
 func _ready() -> void:
@@ -54,6 +58,12 @@ func _ready() -> void:
 	if fiche.is_empty():
 		push_error("gare inconnue : " + id)
 		return
+	# LA FICHE TELLE QU'ON LA JOUE (étape 5). La carte qui porte la gare décide
+	# de son niveau — la rampe du ruban — et donc de son enveloppe et de son
+	# barème. Hors carte : la fiche telle quelle, comme le prototype sans
+	# CARTE_COURANTE. STATION_CARTE=<id> force la carte quand deux la portent.
+	_choisir_ruban(id)
+	fiche_jouee = ruban.fiche_de_service(fiche) if ruban != null else fiche
 	var g := OS.get_environment("STATION_GRAINE")
 	graine = int(g) if g != "" else int(Time.get_unix_time_from_system()) % 100000
 	var v := OS.get_environment("STATION_VITESSE")
@@ -74,14 +84,41 @@ func _ready() -> void:
 	Cap.eventuelle(self)
 
 
+func _choisir_ruban(id: String) -> void:
+	var voulu := OS.get_environment("STATION_CARTE")
+	for e in Donnees.cartes_index:
+		var cid := String(e.get("id", ""))
+		if (voulu != "" and cid != voulu) or not Donnees.cartes.has(cid):
+			continue
+		var r = Rub.new(Donnees.cartes[cid], Donnees.fiches)
+		if r.sur_le_ruban(id):
+			ruban = r
+			carte_id = cid
+			return
+
+
+## « europe, niveau 3 (fiche 4), 3 étoiles sous 10 min » — ce que le service
+## demande vraiment, pour le journal et le bandeau.
+func _niveau_texte() -> String:
+	if ruban == null:
+		return "hors carte, niveau de fiche %d" % int(fiche.get("difficulty", 0))
+	var s: Dictionary = enc.seuils_de_service() if enc != null else {}
+	return "%s, niveau %d%s (fiche %d), 3 étoiles sous %s min" % [
+		carte_id, int(fiche_jouee.get("difficulty", 0)),
+		" BOSS" if ruban.est_boss(String(fiche.get("id", "")), fiche) else "",
+		int(fiche.get("difficulty", 0)), str(s.get("trois", "?"))]
+
+
 func _nouvelle_journee() -> void:
 	var t0 := Time.get_ticks_msec()
-	var day: Dictionary = Jour.new(G, fiche, Has.new(graine)).generate_schedule()
+	var day: Dictionary = Jour.new(G, fiche_jouee, Has.new(graine)).generate_schedule()
 	duree_generation_ms = Time.get_ticks_msec() - t0
-	enc = Enc.new(G, fiche)
+	enc = Enc.new(G, fiche_jouee)
+	if ruban != null:
+		enc.seuils = ruban.seuils_de_service(fiche)
 	enc.charger(day)
-	print("%s · graine %d — %d convois, journée tirée en %d ms"
-		% [fiche.get("id", "?"), graine, enc.trains.size(), duree_generation_ms])
+	print("%s · graine %d — %d convois, journée tirée en %d ms · %s"
+		% [fiche.get("id", "?"), graine, enc.trains.size(), duree_generation_ms, _niveau_texte()])
 
 
 func _process(delta: float) -> void:
@@ -280,7 +317,7 @@ func _draw() -> void:
 	var we := police.get_string_size(etat, HORIZONTAL_ALIGNMENT_LEFT, -1, 14).x
 	draw_string(police, Vector2(1400 - 28 - we, 40), etat, HORIZONTAL_ALIGNMENT_LEFT, -1, 14, MUET)
 	draw_string(police, Vector2(28, 760 - 22),
-		"clic convoi → clic quai   ·   espace pause   ·   1 2 4 vitesse   ·   R rejouer   ·   graine %d, journée en %d ms" % [graine, duree_generation_ms],
+		"clic convoi → clic quai   ·   espace pause   ·   1 2 4 vitesse   ·   R rejouer   ·   graine %d, journée en %d ms   ·   %s" % [graine, duree_generation_ms, _niveau_texte()],
 		HORIZONTAL_ALIGNMENT_LEFT, -1, 12, MUET)
 
 	# --- la fin de service ----------------------------------------------------

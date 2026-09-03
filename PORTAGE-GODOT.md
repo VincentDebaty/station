@@ -128,11 +128,13 @@ mesures le permettent.
 ### `js/ruban.js` — 414 lignes, la difficulté
 
 La rampe, les enveloppes de génération par palier, le plafond de flux, la
-position sur le ruban. **Tout est déduit, rien n'est stocké.**
+position sur le ruban. **Tout est déduit, rien n'est stocké.** Transposé le
+3 septembre 2026 en `jeu/ruban.gd` — voir l'étape 5 du §8.
 
 ### `js/recompense.js` — 352 lignes, la récompense
 
 Étoiles, rangs de chapitre, **26 médailles**, crédits. Déduit également.
+Transposé le même jour en `jeu/recompense.gd`.
 
 ### `js/catalog.js`, `js/cartes.js`, `js/hub.js` — ~400 lignes
 
@@ -262,6 +264,15 @@ sont écrits ici parce qu'ils ne se voient qu'en jouant longtemps.
 
 8. **Une gare payée reste à zéro étoile.** Ni rang, ni médaille. On ne s'achète
    pas un chapitre d'or.
+
+9. **Comparer deux Variants de types différents est une ERREUR en GDScript, pas
+   un `false`.** `cfg.sameSidePairs !== "all"` passe en JavaScript quel que soit
+   le contenu ; en GDScript, `[] != "all"` lève « Invalid operands 'Array' and
+   'String' » — et `sameSidePairs` est tantôt `"all"`, tantôt une liste de
+   paires. Mesuré le 3 septembre 2026 sur `plafond_de_flux` : 401 erreurs,
+   aucune valeur fausse. Tester le type avant de comparer
+   (`ssp is String and ssp == "all"`). Seule la comparaison à `null` est
+   tolérante.
 
 ---
 
@@ -436,6 +447,39 @@ Il suit une règle : **ce qui se vérifie tout seul d'abord**.
    Les liens de parenté d'un nœud inerte rendent `null`.
 5. **La rampe et la récompense** (`ruban.js`, `recompense.js`) : étoiles, rangs,
    crédits. `carte-check` doit rendre le même verdict qu'aujourd'hui.
+
+   ✅ **Fait le 3 septembre 2026.** `jeu/ruban.gd` (la carte, le catalogue et
+   la progression sont INJECTÉS — pas d'autoload, pas de sauvegarde : un
+   `Ruban.new(carte, fiches)` avec `stations` et `passees` posés dessus) et
+   `jeu/recompense.gd` (tout statique, prend le ruban en paramètre ; la série,
+   les cartes enregistrées et les cartes possédées viennent de l'appelant,
+   c'est-à-dire de l'étape 6). L'oracle `tools/oracle-ruban.mjs` +
+   `jeu/oracle_ruban.gd` évalue `ruban.js` et `recompense.js` dans un
+   `node:vm` avec une fausse sauvegarde, et compare sur **les deux cartes ×
+   six progressions** (vierge, début, complète, trois tirages mixtes à graine
+   fixe avec trous, gares payées, et une gare hors ruban enregistrée) : par
+   chapitre le plancher, l'arrivée, le rang ; pour chacune des **348 gares** la
+   difficulté jouée, le plafond, le barème, la fiche de service
+   (`difficulty` + `gen`), le boss, les cinq états, le niveau, le prix de
+   passage et le verdict R10 ; puis position, zones, état des récompenses, les
+   26 médailles, les crédits, une grille de 130 retards et 36 enveloppes.
+   **12 scénarios sur 12 identiques**, Godot en 619 ms.
+
+   `carte-check` continue d'évaluer `js/ruban.js` — c'est la référence
+   exécutable, et R10 rend le même verdict sur les deux cartes après l'étape
+   (« toutes les gares jouent sous leur brevet »). L'oracle prouve que
+   `jeu/ruban.gd` calcule la même rampe gare par gare, y compris le régime
+   boss ; le contrôle n'a donc pas à lire du GDScript.
+
+   L'enclenchement a perdu sa copie du barème : `Enclenchement.seuils` est
+   posé par l'écran de jeu depuis `Ruban.seuils_de_service`, et vide il
+   retombe sur `Ruban.seuils_de_fiche` — le chemin sans carte du prototype,
+   toujours mesuré identique par `oracle-enclenchement` (Darlington, Namur,
+   Stuttgart, graine 1). L'écran de jeu choisit la carte qui porte la gare
+   (`STATION_CARTE=<id>` pour forcer) et joue `fiche_de_service` : Darlington
+   ouvre au niveau 1 avec une fiche écrite à 3, Namur joue 4 (fiche 3), et
+   une gare qu'aucune carte ne porte (Louvain) joue sa fiche telle quelle. Le
+   bandeau dit désormais « europe, niveau 4 (fiche 3), 3 étoiles sous 9 min ».
 6. **La sauvegarde** (`store.js`) : `makeBackend()` seul change. Tester une
    migration depuis une sauvegarde du prototype.
 7. **Les écrans** : ruban, cartes, relevé, tutoriel. En dernier, parce que c'est
