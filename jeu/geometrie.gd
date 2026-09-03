@@ -290,6 +290,36 @@ static func _lo(v: float, M: float) -> float:
 	return -float(PORTAL_CLEAR) if v - M <= 0 else v - M
 
 
+## Position et angle (en degrés) à l'abscisse curviligne s d'un chemin —
+## `pathPoint` de render.js. Au-delà des deux bouts, on EXTRAPOLE le long du
+## segment de bord : c'est ce qui fait glisser un convoi le long du quai au
+## demi-tour, et surgir hors carte sur la voie d'approche.
+static func path_point(chemin: Dictionary, s: float) -> Dictionary:
+	var xs: PackedFloat64Array = chemin["xs"]
+	var ys: PackedFloat64Array = chemin["ys"]
+	var cum: PackedFloat64Array = chemin["cum"]
+	var L: float = chemin["len"]
+	var sc: float = min(max(s, 0.0), L)
+	var i := 0
+	while i < cum.size() - 2 and cum[i + 1] < sc:
+		i += 1
+	var seg_len: float = cum[i + 1] - cum[i]
+	if seg_len == 0:
+		seg_len = 1
+	var f: float = (sc - cum[i]) / seg_len
+	var dx: float = (xs[i + 1] - xs[i]) / seg_len
+	var dy: float = (ys[i + 1] - ys[i]) / seg_len
+	var over: float = s - sc
+	var x: float = xs[i] + (xs[i + 1] - xs[i]) * f + dx * over
+	var y: float = ys[i] + (ys[i + 1] - ys[i]) * f + dy * over
+	var ang: float = atan2(dy, dx) * 180 / PI
+	if ang > 90:
+		ang -= 180
+	if ang < -90:
+		ang += 180
+	return {"x": x, "y": y, "ang": ang}
+
+
 ## Les points d'un chemin en Vector2, pour le rendu seulement.
 static func vers_vector2(xs: PackedFloat64Array, ys: PackedFloat64Array) -> PackedVector2Array:
 	var out := PackedVector2Array()

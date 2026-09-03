@@ -13,10 +13,15 @@ class_name Capture
 ## d'environnement, ça ne fait rien.
 
 
+## `STATION_CAPTURE_APRES=<secondes>` laisse d'abord tourner la scène : c'est
+## ainsi qu'on photographie un convoi EN MOUVEMENT, pas un plan vide.
 static func eventuelle(depuis: Node) -> void:
 	var vers := OS.get_environment("STATION_CAPTURE")
 	if vers == "":
 		return
+	var apres := OS.get_environment("STATION_CAPTURE_APRES")
+	if apres != "":
+		await depuis.get_tree().create_timer(float(apres)).timeout
 	await RenderingServer.frame_post_draw
 	await RenderingServer.frame_post_draw
 	var img := depuis.get_viewport().get_texture().get_image()

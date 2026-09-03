@@ -441,6 +441,28 @@ Il suit une règle : **ce qui se vérifie tout seul d'abord**.
 7. **Les écrans** : ruban, cartes, relevé, tutoriel. En dernier, parce que c'est
    la partie qu'on jette et refait le plus volontiers.
 
+   **Pris hors d'ordre le 3 septembre 2026, à la demande de Vincent : l'écran de
+   jeu.** `jeu/jeu.tscn` (`jeu/vue_jeu.gd`) est la scène principale. Il ne
+   décide de rien : la journée vient de `Journee`, chaque position vient de
+   l'état d'`Enclenchement`, et l'écran traduit en pixels avec les formules de
+   placement de `render.js` — `path_point` (qui extrapole au-delà du chemin,
+   c'est ce qui fait glisser un convoi le long du quai au demi-tour),
+   `placeEntry` qui compte les voitures vers l'arrière, `placeExit` vers
+   l'avant, le transit de fret. Convois, badges (heure de départ en ambre,
+   « +N min » en rouge), itinéraires accordés et promis, quais éligibles,
+   fermés, promis, feu rouge, horloge, retard vivant, fin de service.
+   Commandes : clic convoi puis clic quai, espace, 1/2/4, R, Échap.
+   `STATION_AUTO=1` laisse jouer le joueur scripté de l'oracle ;
+   `STATION_CAPTURE_APRES=<s>` photographie un service en cours. Vérifié sur
+   Darlington graine 1 à 07:09 et 07:20 : tout ce que montre l'image se déduit
+   de l'état, y compris la loco à gauche d'un convoi entré par la droite.
+
+   Ce qu'il n'a pas encore, et que le prototype a : les sons, le tutoriel, la
+   chronologie et la barre de service, les pilules de retour au geste, le
+   glissement de l'embarquement, la file en réduction. Et la journée se tire
+   au démarrage, en synchrone — 1,3 s sur Darlington, 5,6 s sur Bruxelles-Midi
+   — là où il faudra un fil d'exécution et le pré-tirage pendant le relevé.
+
 À l'étape 3 et à l'étape 5, il existe une **oracle** : le prototype. Faire
 tourner les deux sur la même graine et comparer les sorties est le meilleur test
 de non-régression disponible, et il ne coûte rien à écrire.

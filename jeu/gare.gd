@@ -34,19 +34,31 @@ const MUET := Color("#7a8699")
 
 var G: Dictionary = {}
 var fiche: Dictionary = {}
+## Seul à l'écran (lancé comme scène) : il choisit sa gare d'après
+## l'environnement et se photographie. Posé par l'écran de jeu (jeu.tscn) : il
+## dessine le plan qu'on lui donne, et rien d'autre.
+var autonome := true
 
 
 func _ready() -> void:
+	if not autonome:
+		return
 	var id := OS.get_environment("STATION_GARE")
 	if id == "":
 		id = "darlington"
-	fiche = Donnees.fiche(id)
-	if fiche.is_empty():
+	var f := Donnees.fiche(id)
+	if f.is_empty():
 		push_error("gare inconnue : " + id)
 		return
-	G = Geo.construire(fiche)
-	queue_redraw()
+	poser(f, Geo.construire(f))
 	Cap.eventuelle(self)
+
+
+## Le plan d'une fiche, avec sa géométrie déjà construite.
+func poser(f: Dictionary, geometrie: Dictionary) -> void:
+	fiche = f
+	G = geometrie
+	queue_redraw()
 
 
 func _draw() -> void:

@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://jeu/vue_jeu.gd" id="1_jeu"]
+
+[node name="Jeu" type="Node2D"]
+script = ExtResource("1_jeu")
