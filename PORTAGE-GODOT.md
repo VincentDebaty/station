@@ -621,6 +621,81 @@ Il suit une règle : **ce qui se vérifie tout seul d'abord**.
    sortie et de remise à zéro, la démo « limites » (`station.html?fin=`). Ce
    sont les finitions du moteur, et le prototype les garde en référence.
 
+   **L'HABILLAGE, passe du 3 septembre 2026.** Les écrans transposaient la mise
+   en page et les règles, pas la feuille de style : primitives brutes, police de
+   secours du moteur. Vincent, capture à l'appui : « on est quand même loin du
+   design de la version web ». C'était vrai, et c'était trop tôt pour le
+   remettre aux finitions — la lisibilité d'un quai éclairé ou d'un badge change
+   la façon de jouer, donc elle fait partie de ce qu'on teste.
+
+   `jeu/style.gd` porte désormais `css/station.css`, valeur pour valeur, avec la
+   source en commentaire : les couleurs de `:root`, le verre dépoli des chips
+   (rgba(21,29,46,.55), liseré #2a3550, coins de 12), le dégradé des quais
+   (#243049 → #161f30, coins de 10), les rayons des caisses (8 pour la loco, 5
+   pour un wagon), les quatre couches du halo d'état ([16, .10], [10, .18],
+   [5.5, .34], [2.5, .75]), le badge (72 × 20, coins de 6, fond
+   rgba(14,20,32,.88)), et les deux piles de polices du web — SF Pro / Segoe UI
+   pour l'interface, SF Mono / Menlo pour l'horloge et les badges, chargées par
+   `SystemFont`.
+
+   Ce que Godot n'a pas, et comment on le rend : le `filter: drop-shadow`
+   devient l'ombre d'un `StyleBoxFlat` (une boîte) ou deux passes larges et
+   translucides sous le trait (une ligne) ; le `letter-spacing` devient
+   `Sty.texte_espace`, qui pose les caractères un par un ; les
+   `stroke-dasharray` deviennent `Sty.pointille`, qui suit un contour arrondi en
+   abscisse curviligne et sait défiler (le liseré du quai promis avance de 12 px
+   par 1,1 s, comme `claim-march`).
+
+   Sont revenus avec la passe, et se jouent : le gril qui s'éclaircit sur la
+   ville d'origine du convoi choisi (.beam-lit), les quais éligibles en
+   pointillé pulsé et teinté à 14 % (le souffle plus lent quand le quai est
+   encore occupé — « oui, mais pas tout de suite »), le liseré intérieur du quai
+   promis, le liseré rouge du quai en défaut, les hachures et l'heure de
+   réouverture d'un quai fermé, le halo d'état blanc ou ambre autour d'un convoi
+   choisi ou retenu, la jauge d'embarquement qui remplit les voitures de la tête
+   vers la queue, le signal d'arrêt planté devant une motrice retenue, le badge
+   à cadran d'horloge (10 h 10, la pose qui se lit le mieux en tout petit) qui
+   clignote quand un convoi à l'arrêt prend du retard, l'horloge et sa jauge de
+   service, « EN PAUSE », les trois boutons du bandeau, le cartouche de gare
+   avec son drapeau et ses cinq crans de difficulté, et le PROJECTEUR du
+   tutoriel — tout l'écran s'assombrit sauf la cible, ce que l'ombre de 9 999 px
+   de `#coach-ring` fait sur le web.
+
+   Aucune règle n'a bougé : les quatre contrôles et les deux oracles rendent le
+   même verdict qu'avant la passe.
+
+   **LE DOIGT, passe du 3 septembre 2026**, avant le premier essai sur iPhone.
+   Deux facteurs, et ils ne disent pas la même chose (`jeu/style.gd`,
+   `calibrer`) :
+
+   · `UIK` reprend le facteur du prototype (`js/render.js`) : **1,5 sur écran
+   tactile**, appliqué à la hauteur des caisses, aux rayons, au halo d'état, aux
+   badges, au signal d'arrêt et aux zones de clic. `CAR_LEN` ne bouge JAMAIS :
+   la longueur d'une voiture tient à `CAR_SPACING`, et l'étirer ferait se
+   chevaucher les convois. C'est la valeur que Vincent a validée sur son iPhone
+   avec la version web ; on la reprend telle quelle.
+
+   · `HUD_K` n'a pas d'équivalent web, et c'est justement pourquoi il faut
+   l'écrire : le prototype tient son bandeau en **pixels CSS**, qui valent un
+   point d'écran sur l'appareil — une chip de 34 px fait 34 points sur un iPhone
+   comme sur un Mac. Sous Godot le bandeau vit dans le viewport étiré : la même
+   chip tomberait à trois millimètres sur un téléphone. `HUD_K` garde donc au
+   bandeau sa **taille physique**, celle qu'il a au bureau — mesurée à 127,5
+   unités par pouce le 3 septembre 2026 (fenêtre 1400 points, échelle 2,
+   255 dpi). Au bureau il vaut 1, et rien ne change.
+
+   Trois choses ne s'ancrent plus sur 1400 × 760 mais sur le viewport RÉEL : le
+   bandeau, le projecteur du tutoriel et la carte d'accueil. Avec
+   `stretch: expand`, un écran plus allongé qu'un 16/9 donne un viewport plus
+   LARGE que la base — les boutons de droite seraient sortis de l'écran.
+
+   Et surtout : **les boutons du bandeau sont devenus des cibles.** Ils étaient
+   dessinés sans être cliquables, ce qui ne se voyait pas au bureau (tout passe
+   par le clavier) mais rendait la pause, la vitesse et le retour à la carte
+   INATTEIGNABLES sur un téléphone. La pilule « EN PAUSE » reprend aussi le
+   service, comme dans le prototype. L'engrenage rejoue la journée en attendant
+   son menu de réglages.
+
    **Pris hors d'ordre le 3 septembre 2026, à la demande de Vincent : l'écran de
    jeu.** `jeu/jeu.tscn` (`jeu/vue_jeu.gd`) est la scène principale. Il ne
    décide de rien : la journée vient de `Journee`, chaque position vient de
