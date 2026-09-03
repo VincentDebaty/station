@@ -58,7 +58,11 @@ static var UIK := 1.0
 # tomberait à trois millimètres. On garde donc au bandeau sa TAILLE PHYSIQUE —
 # celle qu'il a au bureau, mesurée à 127 unités par pouce le 3 septembre 2026.
 const UNITES_PAR_POUCE_BUREAU := 127.5
+const PLANCHER_TACTILE := 1.9
 static var HUD_K := 1.0
+## Ce que la calibration a vu, pour la ligne de mise au point : sur un
+## téléphone, c'est le seul journal qu'on puisse lire.
+static var mesure := ""
 
 
 ## À appeler une fois l'écran connu. Sans elle, les deux facteurs valent 1 et
@@ -75,21 +79,38 @@ static func calibrer(viewport: Viewport) -> void:
 		# Au bureau, la fenêtre est déjà à l'échelle du viewport : sans cela le
 		# bandeau ne bougerait pas, et l'essai ne montrerait que la moitié de la
 		# passe. 1,93 est ce que la mesure donne sur un iPhone 17 en paysage.
-		HUD_K = 1.93
+		HUD_K = PLANCHER_TACTILE
+		mesure = "régime tactile forcé · HUD_K %.2f" % HUD_K
 		return
 	var dpi := DisplayServer.screen_get_dpi()
 	var large := float(DisplayServer.window_get_size().x)
 	var unites := viewport.get_visible_rect().size.x
 	if dpi <= 0 or large <= 0 or unites <= 0:
-		HUD_K = UIK
+		HUD_K = max(PLANCHER_TACTILE, UIK) if UIK > 1.0 else 1.0
+		mesure = "mesure impossible · HUD_K %.2f" % HUD_K
 		return
 	# window_get_size() est en points sur macOS et sur iOS ; les pixels
 	# physiques en découlent par l'échelle de l'écran, et le pouce par le dpi.
 	var pouces := large * DisplayServer.screen_get_max_scale() / dpi
 	if pouces <= 0.0:
-		HUD_K = UIK
+		HUD_K = max(PLANCHER_TACTILE, UIK) if UIK > 1.0 else 1.0
+		mesure = "pouces inconnus · HUD_K %.2f" % HUD_K
 		return
-	HUD_K = clampf((unites / pouces) / UNITES_PAR_POUCE_BUREAU, 1.0, 3.0)
+	var calcule := clampf((unites / pouces) / UNITES_PAR_POUCE_BUREAU, 1.0, 3.0)
+	# LE CALCUL NE SUFFIT PAS, ET C'EST MESURÉ. `window_get_size()` ne rend pas
+	# la même unité d'une plateforme à l'autre — des points sur macOS, autre
+	# chose sur iOS — si bien que le facteur retombait à 1 sur l'iPhone et que
+	# tout le bandeau y paraissait minuscule (Vincent, 3 septembre 2026). Un
+	# écran tactile a de toute façon besoin d'un bandeau plus grand qu'un
+	# bureau : on pose donc un PLANCHER, et le calcul ne peut que le relever.
+	# 1,9 est le rapport mesuré sur un iPhone en paysage entre les unités du
+	# viewport (1652) et les points de l'écran (874) — de quoi rendre à une
+	# chip de 34 unités les 34 points qu'elle a sur le web.
+	HUD_K = max(PLANCHER_TACTILE, calcule) if UIK > 1.0 else 1.0
+	mesure = "tactile %s · fenêtre %s · échelle %.1f · dpi %d · écran %s · viewport %s · calcul %.2f · HUD_K %.2f" % [
+		DisplayServer.is_touchscreen_available(), DisplayServer.window_get_size(),
+		DisplayServer.screen_get_max_scale(), dpi, DisplayServer.screen_get_size(),
+		viewport.get_visible_rect().size, calcule, HUD_K]
 
 
 # --- les polices, en cache --------------------------------------------------------

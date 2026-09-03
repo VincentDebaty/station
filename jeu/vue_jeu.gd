@@ -773,8 +773,9 @@ func _dessiner_hud(t: float) -> void:
 	# d'un téléphone (mesuré le 3 septembre 2026). Petite, elle reste lisible
 	# quand on la cherche et invisible quand on joue — ce qu'on veut d'elle.
 	draw_string(sans, Vector2(18, size_ecran().y - 14),
-		"clic convoi → clic quai   ·   espace pause   ·   1 2 4 vitesse   ·   R rejouer   ·   graine %d, journée en %d ms   ·   %s"
-			% [graine, duree_generation_ms, _niveau_texte()],
+		"graine %d · journée en %d ms · %s%s"
+			% [graine, duree_generation_ms, _niveau_texte(),
+				("   ·   " + Sty.mesure) if Sty.mesure != "" else ""],
 		HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color(Sty.MUET, 0.55))
 
 
