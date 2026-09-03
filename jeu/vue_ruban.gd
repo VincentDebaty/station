@@ -14,6 +14,7 @@ extends Node2D
 
 const Rub := preload("res://jeu/ruban.gd")
 const Rec := preload("res://jeu/recompense.gd")
+const Sty := preload("res://jeu/style.gd")
 
 # Le cadre de la projection, en unités du prototype (160 × 100), et son
 # étirement : l'Europe est plus haute que large.
@@ -77,7 +78,7 @@ var police: Font
 
 
 func _ready() -> void:
-	police = ThemeDB.fallback_font
+	police = Sty.sans(600)
 	fond = Node2D.new()
 	fond.show_behind_parent = true
 	add_child(fond)
@@ -597,6 +598,7 @@ func _construire_panneau() -> void:
 	style.content_margin_right = 22
 	style.content_margin_top = 18
 	style.content_margin_bottom = 18
+	style.anti_aliasing = true
 	panneau.add_theme_stylebox_override("panel", style)
 	add_child(panneau)
 	var defil := ScrollContainer.new()
@@ -615,43 +617,29 @@ func _construire_panneau() -> void:
 func _label(texte: String, taille: int, couleur: Color, gras: bool = false, replie: bool = true) -> Label:
 	var l := Label.new()
 	l.text = texte
+	l.add_theme_font_override("font", Sty.sans(600 if gras else 400))
 	l.add_theme_font_size_override("font_size", taille)
 	l.add_theme_color_override("font_color", couleur)
+	l.add_theme_constant_override("line_spacing", 5)
 	if replie:
 		l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	if gras:
-		l.add_theme_font_override("font", ThemeDB.fallback_font)
 	return l
 
 
 func _bouton(texte: String, principal: bool, actif: bool, sur: Callable) -> Button:
-	var b := Button.new()
-	b.text = texte
+	var b := Sty.bouton(texte, principal, 16 if principal else 14)
 	b.disabled = not actif
 	b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	b.add_theme_font_size_override("font_size", 16 if principal else 14)
-	var st := StyleBoxFlat.new()
-	st.bg_color = ACCENT if principal else Color("#1f2a40")
-	st.corner_radius_top_left = 8
-	st.corner_radius_top_right = 8
-	st.corner_radius_bottom_left = 8
-	st.corner_radius_bottom_right = 8
-	st.content_margin_top = 10
-	st.content_margin_bottom = 10
-	st.content_margin_left = 14
-	st.content_margin_right = 14
-	b.add_theme_stylebox_override("normal", st)
-	var sh := st.duplicate()
-	sh.bg_color = st.bg_color.lightened(0.12)
-	b.add_theme_stylebox_override("hover", sh)
-	b.add_theme_stylebox_override("pressed", sh)
-	var sd := st.duplicate()
-	sd.bg_color = Color("#1a2234")
+	var sd := Sty.boite(Color("#1a2234"), Sty.BORD, 10, 1)
+	sd.content_margin_top = 8
+	sd.content_margin_bottom = 8
+	sd.content_margin_left = 14
+	sd.content_margin_right = 14
 	b.add_theme_stylebox_override("disabled", sd)
-	b.add_theme_color_override("font_color", Color("#0E1420") if principal else TEXTE)
-	b.add_theme_color_override("font_disabled_color", MUET)
-	b.pressed.connect(sur)
+	b.add_theme_color_override("font_disabled_color", Sty.MUET)
+	if sur.is_valid():
+		b.pressed.connect(sur)
 	return b
 
 

@@ -320,6 +320,17 @@ sont écrits ici parce qu'ils ne se voient qu'en jouant longtemps.
     passe par le chemin du joueur (`STATION_PILOTE`, un clic sur « Jouer »),
     pas par un raccourci.
 
+14. **`max()` rend un Variant dès qu'on mélange les types, et l'inférence
+    `:=` échoue en cascade.** `var w := max(20.0, police.get_string_size(…).x)`
+    refuse de compiler, et toute variable qui en dépend refuse à son tour —
+    l'erreur signalée est trois lignes plus bas que la cause. Annoter
+    (`var w: float = max(…)`) suffit.
+
+15. **La largeur d'un drapeau ne se mesure pas.** Un drapeau est une paire de
+    caractères combinés, que la police système rend en un glyphe unique dont
+    `get_string_size` rapporte une largeur fausse : le nom de la gare
+    débordait de sa chip. On lui réserve une largeur fixe.
+
 ---
 
 ## 6. Ce que Godot offre, et que le prototype simule

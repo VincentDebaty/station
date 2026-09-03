@@ -1,43 +1,38 @@
 extends Node2D
-## UNE GARE QUI SE DESSINE DEPUIS SA FICHE — deuxième jalon du portage.
+## LE PLAN D'UNE GARE, DESSINÉ DEPUIS SA FICHE.
 ##
 ##   godot --path . res://jeu/gare.tscn                (Darlington)
 ##   STATION_GARE=namur godot --path . res://jeu/gare.tscn
 ##
-## Rien n'est jouable : pas de convoi, pas de temps. Ce que cet écran prouve,
-## c'est que Geo.construire() produit, pour n'importe laquelle des 401
-## fiches, un plan qui se lit — et que le KIT tient : un quai, une voie, un
-## portail, et rien qui soit peint pour une gare en particulier.
+## Le décor immobile de l'écran de jeu : les voies d'approche, le gril teinté à
+## la couleur de chaque destination, les quais en pilule, les heurtoirs, les
+## points de convergence et les noms des portails. Ce qui bouge — convois,
+## itinéraires, états des quais, badges — est peint par-dessus par vue_jeu.gd.
 ##
-## Le dessin se fait dans _draw(), pas avec des nœuds : à ce stade il n'y a
-## aucune interaction, et un Line2D par chemin ferait 30 nœuds pour dire ce
-## que dix lignes disent. Le vrai écran de jeu choisira ses nœuds quand il
-## saura ce qu'il doit faire bouger.
-##
-## LES COULEURS SONT CELLES DU PROTOTYPE (css/station.css, :root), parce que
-## l'esthétique est conservée telle quelle (plan-de-dev.md, « Ce qu'on ne fait
-## pas ») — et surtout parce que la couleur d'une voie est la DESTINATION,
-## contrat qui ne se rediscute pas (PORTAGE-GODOT.md §4).
+## L'HABILLAGE EST CELUI DU PROTOTYPE, valeur pour valeur (jeu/style.gd,
+## d'après css/station.css et js/render.js) : voie sombre #323d4f à 3,5,
+## gril à 50 % de la couleur de sa ville, quai en dégradé #243049 → #161f30
+## aux coins de 10, numéro à 24, nom de portail à 15 détouré de fond.
 
-# PRELOAD, PAS class_name : le cache des classes globales n'est construit que
-# par l'éditeur. Un projet cloné et lancé en ligne de commande ne connaîtrait
-# jamais « Geometrie ». Le chemin, lui, existe toujours.
 const Geo := preload("res://jeu/geometrie.gd")
 const Cap := preload("res://jeu/capture.gd")
-
-const FOND := Color("#0E1420")
-const PANNEAU := Color("#151d2e")
-const BORD := Color("#2a3550")
-const VOIE_SOMBRE := Color("#323d4f")
-const TEXTE := Color("#dbe2ee")
-const MUET := Color("#7a8699")
+const Sty := preload("res://jeu/style.gd")
 
 var G: Dictionary = {}
 var fiche: Dictionary = {}
 ## Seul à l'écran (lancé comme scène) : il choisit sa gare d'après
-## l'environnement et se photographie. Posé par l'écran de jeu (jeu.tscn) : il
-## dessine le plan qu'on lui donne, et rien d'autre.
+## l'environnement et se photographie. Posé par l'écran de jeu : il dessine le
+## plan qu'on lui donne, et rien d'autre.
 var autonome := true
+## Le cartouche de diagnostic (nom, quais, directions…) : seul à l'écran
+## seulement — l'écran de jeu a le sien.
+var cartouche := true
+## Le faisceau mis en avant : la ville d'origine du train choisi ressort un
+## peu (.mesh.beam-lit, opacité .82 au lieu de .5). "" au repos.
+var faisceau := ""
+## Les portails « validés » : un convoi glisse sous leur nom, qui s'allume à
+## pleine couleur avec un halo (.portal-name.valid).
+var noms_allumes: Array = []
 
 
 func _ready() -> void:
@@ -61,54 +56,82 @@ func poser(f: Dictionary, geometrie: Dictionary) -> void:
 	queue_redraw()
 
 
+## Où se pose le nom d'un portail : au-dessus de l'aiguillage, à 34 px au
+## plus, borné à 40 % de l'écart au voisin du même côté (js/render.js).
+func position_nom(pname: String) -> Vector2:
+	var p: Dictionary = G["portals"][pname]
+	var cy := float(p["cy"])
+	var gap := INF
+	for autre in G["portals"]:
+		var q: Dictionary = G["portals"][autre]
+		if autre != pname and q["side"] == p["side"]:
+			gap = min(gap, absf(float(q["cy"]) - cy))
+	return Vector2(float(p["x"]), cy - min(34.0, gap * 0.40))
+
+
 func _draw() -> void:
 	if G.is_empty():
 		return
-	var police := ThemeDB.fallback_font
+	var sans_g := Sty.sans(600)
 
 	# --- voies d'approche et de départ : la fuite vers le bord ---------------
 	for pname in G["approach"]:
 		var a: Dictionary = G["approach"][pname]
-		draw_polyline(Geo.vers_vector2(a["xs"], a["ys"]), VOIE_SOMBRE, 3.0, true)
+		draw_polyline(Geo.vers_vector2(a["xs"], a["ys"]), Sty.VOIE_SOMBRE, 3.5, true)
 		var d: Dictionary = G["depart"][pname]
-		draw_polyline(Geo.vers_vector2(d["xs"], d["ys"]), VOIE_SOMBRE, 3.0, true)
+		draw_polyline(Geo.vers_vector2(d["xs"], d["ys"]), Sty.VOIE_SOMBRE, 3.5, true)
 
-	# --- le gril : une bézier par liaison, à la couleur de sa destination ----
+	# --- le gril : une bézier par liaison, teintée à sa destination -----------
 	for m in G["mesh"]:
 		var col := Color(String(G["dest_color"].get(m["portal"], "#ffffff")))
-		col.a = 0.55
-		draw_polyline(Geo.vers_vector2(m["xs"], m["ys"]), col, 3.0, true)
+		col.a = 0.82 if (faisceau != "" and m["portal"] == faisceau) else 0.5
+		draw_polyline(Geo.vers_vector2(m["xs"], m["ys"]), col, 3.5, true)
 
-	# --- les quais -----------------------------------------------------------
+	# --- les quais : la pilule en dégradé, son liseré, son numéro -------------
+	var dead_ends := {}
+	for q in fiche.get("platforms", []):
+		if q is Dictionary and q.get("deadEnd", false):
+			dead_ends[int(q["id"])] = true
 	for q in G["platforms"]:
 		var cy := float(q["cy"])
 		var r := Rect2(Geo.PLAT_X1, cy - Geo.PLAT_H / 2.0, Geo.PLAT_LEN, Geo.PLAT_H)
-		draw_rect(r, PANNEAU, true)
-		draw_rect(r, BORD, false, 1.5)
-		var num := str(int(q["id"]))     # le JSON livre 1.0, le quai s'appelle 1
-		var larg := police.get_string_size(num, HORIZONTAL_ALIGNMENT_LEFT, -1, 20).x
-		draw_string(police, Vector2(Geo.PLAT_MID - larg / 2.0, cy + 7), num,
-			HORIZONTAL_ALIGNMENT_LEFT, -1, 20, MUET)
+		var contour := Sty.rect_arrondi(r, 10)
+		var couleurs := PackedColorArray()
+		for pt in contour:
+			couleurs.append(Sty.QUAI_HAUT.lerp(Sty.QUAI_BAS, (pt.y - r.position.y) / r.size.y))
+		draw_polygon(contour, couleurs)
+		var ferme := contour.duplicate()
+		ferme.append(contour[0])
+		draw_polyline(ferme, Sty.BORD_QUAI, 1.5, true)
+		Sty.texte_centre(self, sans_g, 24, r.get_center(), str(int(q["id"])), Sty.TEXTE)
+		# le heurtoir du quai en impasse : rouge, avec son halo
+		if dead_ends.has(int(q["id"])):
+			var h := Rect2(Geo.PLAT_X2 + 4, cy - 13, 7, 26)
+			draw_style_box(Sty.boite(Sty.ROUGE, Sty.ROUGE, 2, 0, 4, Color(Sty.ROUGE, 0.45)), h)
 
-	# --- les portails : un point et un nom, à la couleur de la destination ---
+	# --- les portails : le point de convergence, et le nom au-dessus ----------
 	for pname in G["portals"]:
 		var p: Dictionary = G["portals"][pname]
 		var col := Color(String(G["dest_color"].get(pname, "#ffffff")))
-		var centre := Vector2(float(p["x"]), float(p["cy"]))
-		draw_circle(centre, 5.0, col)
+		draw_circle(Vector2(float(p["x"]), float(p["cy"])), 5.0, Color(col, 0.85))
 		var nom := String(p["label"])
-		var larg := police.get_string_size(nom, HORIZONTAL_ALIGNMENT_LEFT, -1, 15).x
-		var x := centre.x - larg / 2.0
-		draw_string(police, Vector2(x, centre.y - 16), nom, HORIZONTAL_ALIGNMENT_LEFT, -1, 15, col)
+		var pos := position_nom(pname)
+		if noms_allumes.has(pname):
+			# « validé » : pleine couleur, halo à sa teinte
+			Sty.texte_centre(self, sans_g, 15, pos, nom, Color(col, 0.35), 7, Color(col, 0.35))
+			Sty.texte_centre(self, sans_g, 15, pos, nom, col, 3, Sty.FOND)
+		else:
+			Sty.texte_centre(self, sans_g, 15, pos, nom, Color(col, 0.62), 3, Sty.FOND)
 
-	# --- le cartouche, comme dans le prototype -------------------------------
-	var pays := Donnees.pays_de(String(fiche.get("country", "")))
-	draw_string(police, Vector2(28, 40), "%s  %s" % [pays["drapeau"], String(fiche.get("name", ""))],
-		HORIZONTAL_ALIGNMENT_LEFT, -1, 18, TEXTE)
-	draw_string(police, Vector2(28, 62),
-		"%d quais · %d directions · %d chemins · %d conflits" % [
-			G["platforms"].size(), G["portals"].size(), G["paths"].size(), _nb_conflits()],
-		HORIZONTAL_ALIGNMENT_LEFT, -1, 12, MUET)
+	# --- le cartouche de diagnostic, seul à l'écran --------------------------
+	if cartouche:
+		var pays := Donnees.pays_de(String(fiche.get("country", "")))
+		draw_string(sans_g, Vector2(28, 40), "%s  %s" % [pays["drapeau"], String(fiche.get("name", ""))],
+			HORIZONTAL_ALIGNMENT_LEFT, -1, 18, Sty.TEXTE)
+		draw_string(Sty.sans(), Vector2(28, 62),
+			"%d quais · %d directions · %d chemins · %d conflits" % [
+				G["platforms"].size(), G["portals"].size(), G["paths"].size(), _nb_conflits()],
+			HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Sty.MUET)
 
 
 func _nb_conflits() -> int:

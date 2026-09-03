@@ -9,6 +9,7 @@ extends Control
 
 const Rub := preload("res://jeu/ruban.gd")
 const Rec := preload("res://jeu/recompense.gd")
+const Sty := preload("res://jeu/style.gd")
 
 const FOND := Color("#0E1420")
 const TUILE := Color("#151d2e")
@@ -41,7 +42,9 @@ func _ready() -> void:
 func _label(texte: String, taille: int, couleur: Color) -> Label:
 	var l := Label.new()
 	l.text = texte
+	l.add_theme_font_override("font", Sty.sans(600 if taille >= 20 else 400))
 	l.add_theme_font_size_override("font_size", taille)
+	l.add_theme_constant_override("line_spacing", 5)
 	l.add_theme_color_override("font_color", couleur)
 	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -49,28 +52,15 @@ func _label(texte: String, taille: int, couleur: Color) -> Label:
 
 
 func _bouton(texte: String, principal: bool, actif: bool, sur: Callable) -> Button:
-	var b := Button.new()
-	b.text = texte
+	var b := Sty.bouton(texte, principal, 15)
 	b.disabled = not actif
-	b.add_theme_font_size_override("font_size", 15)
-	var st := StyleBoxFlat.new()
-	st.bg_color = ACCENT if principal else Color("#1f2a40")
-	for coin in ["top_left", "top_right", "bottom_left", "bottom_right"]:
-		st.set("corner_radius_" + coin, 8)
-	st.content_margin_top = 9
-	st.content_margin_bottom = 9
-	st.content_margin_left = 14
-	st.content_margin_right = 14
-	b.add_theme_stylebox_override("normal", st)
-	var sh := st.duplicate()
-	sh.bg_color = st.bg_color.lightened(0.12)
-	b.add_theme_stylebox_override("hover", sh)
-	b.add_theme_stylebox_override("pressed", sh)
-	var sd := st.duplicate()
-	sd.bg_color = Color("#1a2234")
+	var sd := Sty.boite(Color("#1a2234"), Sty.BORD, 10, 1)
+	sd.content_margin_top = 9
+	sd.content_margin_bottom = 9
+	sd.content_margin_left = 14
+	sd.content_margin_right = 14
 	b.add_theme_stylebox_override("disabled", sd)
-	b.add_theme_color_override("font_color", Color("#0E1420") if principal else TEXTE)
-	b.add_theme_color_override("font_disabled_color", MUET)
+	b.add_theme_color_override("font_disabled_color", Sty.MUET)
 	if sur.is_valid():
 		b.pressed.connect(sur)
 	return b

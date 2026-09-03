@@ -25,6 +25,7 @@ const Plan := preload("res://jeu/gare.gd")
 const Cap := preload("res://jeu/capture.gd")
 const Rub := preload("res://jeu/ruban.gd")
 const Rec := preload("res://jeu/recompense.gd")
+const Sty := preload("res://jeu/style.gd")
 
 # Les couleurs du prototype (css/station.css) : l'esthétique est conservée.
 const TEXTE := Color("#dbe2ee")
@@ -98,6 +99,7 @@ func _ready() -> void:
 	G = Geo.construire(fiche)
 	plan = Plan.new()
 	plan.autonome = false
+	plan.cartouche = false
 	# Un enfant se dessine APRÈS son parent : sans ceci, les quais recouvraient
 	# les convois à l'arrêt — deux badges au-dessus de quais vides, à la première
 	# capture. Le plan passe dessous, les convois roulent dessus.
@@ -127,6 +129,7 @@ func demarrer(f: Dictionary, r, cid: String) -> void:
 		plan.queue_free()
 	plan = Plan.new()
 	plan.autonome = false
+	plan.cartouche = false
 	plan.show_behind_parent = true
 	add_child(plan)
 	plan.poser(fiche, G)
@@ -312,8 +315,14 @@ func _positions_de(t) -> Array:
 
 
 # ------------------------------------------------------------------
-# Le dessin
+# LE DESSIN — l'habillage du prototype, valeur pour valeur.
 # ------------------------------------------------------------------
+# Chaque rayon, épaisseur, couleur et durée vient de css/station.css ou de
+# js/render.js, par jeu/style.gd. Ce qui était un `filter: drop-shadow` du web
+# devient ici une ombre de StyleBoxFlat (pour une boîte) ou des passes larges
+# et translucides sous le trait (pour une ligne) : Godot n'a pas de filtre de
+# flou en 2D, et le prototype lui-même évitait les filtres animés — ils ne
+# s'affichent pas de façon fiable sur iOS (voir .state-ring, css/station.css).
 static func fmt(minute: float) -> String:
 	var m := int(max(0.0, floor(minute)))
 	return "%02d:%02d" % [7 + m / 60, m % 60]
@@ -322,134 +331,451 @@ static func fmt(minute: float) -> String:
 func _draw() -> void:
 	if enc == null:
 		return
-	var police := ThemeDB.fallback_font
 	var sel = enc.selected
+	# La ville d'origine du convoi choisi ressort dans le gril (.beam-lit) ;
+	# c'est le plan, dessous, qui porte le faisceau.
+	if plan != null:
+		var f: String = String(sel.from) if sel != null else ""
+		if plan.faisceau != f:
+			plan.faisceau = f
+			plan.queue_redraw()
+	var t := Time.get_ticks_msec() / 1000.0
+	_dessiner_quais(sel, t)
+	_dessiner_itineraires()
+	_dessiner_convois(sel, t)
+	_dessiner_signaux(t)
+	_dessiner_badges(t)
+	_dessiner_hud(t)
+	_dessiner_coach(t)
+	_dessiner_fin()
 
-	# --- les quais éligibles, fermés, promis ---------------------------------
+
+# --- les quais : les états, peints sur la pilule du plan ---------------------
+func _train_a_quai(pid) -> Variant:
+	for t in enc.trains:
+		if t.platform == pid and (t.state == Enc.S_DWELL or t.state == Enc.S_MOVING_IN):
+			return t
+	return null
+
+
+func _quai_en_defaut(pid) -> bool:
+	for t in enc.trains:
+		if t.platform == pid and t.wrong_platform and t.state == Enc.S_DWELL:
+			return true
+	return false
+
+
+func _train_promis(pid) -> Variant:
+	for t in enc.trains:
+		if t.target == pid and (t.state == Enc.S_WAITING or t.state == Enc.S_APPROACHING):
+			return t
+	return null
+
+
+func _boucle(contour: PackedVector2Array) -> PackedVector2Array:
+	var b := contour.duplicate()
+	b.append(contour[0])
+	return b
+
+
+## Les hachures du quai fermé : le motif 8 × 8 de js/render.js, une barre
+## verticale toutes les huit unités.
+func _hachures(r: Rect2, col: Color) -> void:
+	var inner := r.grow(-4)
+	var x := inner.position.x
+	while x < inner.end.x:
+		draw_line(Vector2(x, inner.position.y), Vector2(x, inner.end.y), col, 2.0)
+		x += 8.0
+
+
+func _dessiner_quais(sel, t: float) -> void:
+	var pulse := 0.5 + 0.5 * sin(t * TAU / 1.2)        # elig-pulse : 1,2 s
+	var pulse_lent := 0.5 + 0.5 * sin(t * TAU / 2.2)   # .eligible.busy : 2,2 s
+	var pulse_faute := 0.5 + 0.5 * sin(t * TAU / 1.0)  # wrong-pulse : 1 s
 	for q in G["platforms"]:
 		var pid = q["id"]
 		var r := Rect2(Geo.PLAT_X1, float(q["cy"]) - Geo.PLAT_H / 2.0, Geo.PLAT_LEN, Geo.PLAT_H)
+		var contour := Sty.rect_arrondi(r, 10)
+
+		# FERMÉ : pilule éteinte, hachures, numéro estompé, heure de réouverture
 		if enc.platform_closed(pid):
-			draw_rect(r, Color(ROUGE, 0.12), true)
-			draw_rect(r, ROUGE, false, 1.5)
+			draw_colored_polygon(contour, Sty.QUAI_FERME)
+			_hachures(r, Color(Sty.ROUGE, 0.5))
+			draw_polyline(_boucle(contour), Sty.QUAI_FERME_BORD, 1.5, true)
+			Sty.texte_centre(self, Sty.sans(600), 24, r.get_center(), str(int(pid)), Color(Sty.TEXTE, 0.28))
 			var fin := ""
 			for ev in enc.events:
 				if ev.get("type") == "closure" and ev["plat"] == pid and ev["revealed"] and not ev["cleared"]:
 					fin = "fermé jusqu'à " + fmt(float(ev["end"]))
-			var w := police.get_string_size(fin, HORIZONTAL_ALIGNMENT_LEFT, -1, 12).x
-			draw_string(police, Vector2(Geo.PLAT_MID - w / 2, r.position.y - 6), fin, HORIZONTAL_ALIGNMENT_LEFT, -1, 12, ROUGE)
-		elif sel != null and sel.target == null and enc.links.get(sel.from, []).has(pid) \
-				and not enc.platform_claimed(pid):
-			var col := Color(String(G["dest_color"][sel.to]))
-			col.a = 0.45 if enc.platform_occupied(pid) else 1.0
-			draw_rect(r.grow(2), col, false, 2.5)
-		else:
-			for t in enc.trains:
-				if t.target == pid and (t.state == Enc.S_WAITING or t.state == Enc.S_APPROACHING):
-					draw_rect(r.grow(1), Color(String(G["dest_color"][t.to]), 0.55), false, 1.5)
-					break
+			if fin != "":
+				var haut := Vector2(Geo.PLAT_MID, r.position.y - 13)
+				Sty.texte_centre(self, Sty.mono(600), 13, haut, fin, Color(Sty.ROUGE, 0.30), 7, Color(Sty.ROUGE, 0.30))
+				Sty.texte_centre(self, Sty.mono(600), 13, haut, fin, Sty.ROUGE)
+			continue
 
-	# --- les itinéraires accordés, à la couleur de la destination ------------
+		# ÉLIGIBLE : tous les quais atteignables depuis l'origine du convoi
+		# choisi, au même titre — on n'indique PAS lequel dessert vraiment.
+		var eligible: bool = sel != null and sel.target == null \
+			and enc.links.get(sel.from, []).has(pid) and not enc.platform_claimed(pid)
+		if eligible:
+			var col := Color(String(G["dest_color"][sel.to]))
+			var occupe: bool = enc.platform_occupied(pid)
+			var p: float = pulse_lent if occupe else pulse
+			# le quai libre se teinte (color-mix 14 %) ; l'occupé garde son
+			# dégradé et souffle plus lentement : « oui, mais pas tout de suite »
+			if not occupe:
+				draw_colored_polygon(contour, Sty.QUAI_ELIGIBLE_FOND.lerp(col, 0.14))
+				# la teinte recouvre le numéro peint par le plan : on le repose
+				Sty.texte_centre(self, Sty.sans(600), 24, r.get_center(), str(int(pid)), Sty.TEXTE)
+			var larg: float = 2.5 + 0.9 * p
+			Sty.pointille(self, contour, Color(col, 0.08 + 0.20 * p), larg + 8.0, 7, 5)
+			Sty.pointille(self, contour, col, larg, 7, 5)
+		else:
+			# OCCUPÉ : liseré à la couleur du convoi présent
+			var occupant = _train_a_quai(pid)
+			if occupant != null:
+				draw_polyline(_boucle(contour), Color(String(G["dest_color"][occupant.to])), 2.5, true)
+			# EN DÉFAUT : un convoi y stationne sans pouvoir repartir
+			if _quai_en_defaut(pid):
+				draw_polyline(_boucle(contour), Sty.ROUGE, 2.5 + 1.1 * pulse_faute, true)
+
+		# PROMIS : un convoi encore dehors l'a choisi. Liseré INTÉRIEUR, à SA
+		# couleur, qui défile vers le quai — le quai est pris même s'il paraît
+		# libre. Il se lit en même temps que le liseré d'occupation.
+		var promis = _train_promis(pid)
+		if promis != null:
+			var interieur := Sty.rect_arrondi(Rect2(r.position + Vector2(5, 5), r.size - Vector2(10, 10)), 6)
+			Sty.pointille(self, interieur, Color(String(G["dest_color"][promis.to])), 2.4, 6, 6, t * 10.9)
+
+
+# --- les itinéraires --------------------------------------------------------
+func _dessiner_itineraires() -> void:
 	for pid in enc.active_routes:
 		var t = enc.active_routes[pid]
 		var p: Dictionary = enc.paths[pid]
-		var col := Color(String(G["dest_color"][t.to]))
-		draw_polyline(Geo.vers_vector2(p["xs"], p["ys"]), col, 3.5, true)
-	# --- l'itinéraire promis, en attente d'entrée ----------------------------
+		Sty.trait_halo(self, Geo.vers_vector2(p["xs"], p["ys"]), Color(String(G["dest_color"][t.to])), 5.0, 4.0)
+	# l'itinéraire PROMIS, en attente d'entrée : pointillé 10 8 à 55 %
 	for t in enc.trains:
 		if t.target != null and (t.state == Enc.S_WAITING or t.state == Enc.S_APPROACHING):
 			var pid := "in:%s:%d" % [t.from, int(t.target)]
 			if enc.paths.has(pid) and not enc.active_routes.has(pid):
 				var p: Dictionary = enc.paths[pid]
-				draw_polyline(Geo.vers_vector2(p["xs"], p["ys"]), Color(String(G["dest_color"][t.to]), 0.35), 2.0, true)
+				Sty.pointille(self, Geo.vers_vector2(p["xs"], p["ys"]),
+					Color(String(G["dest_color"][t.to]), 0.55), 5.0, 10, 8, 0.0, false)
 
-	# --- les convois ----------------------------------------------------------
-	for t in enc.trains:
-		if not positions.has(t.id):
+
+# --- les convois ------------------------------------------------------------
+## L'embarquement : la part REMPLIE du convoi, de 0 à 1. Les voyageurs montent
+## de la tête vers la queue entre l'arrivée réelle et l'heure de départ
+## (js/render.js, updateBoarding). Hors arrêt, ou sur un mauvais quai, le
+## convoi reste plein : il repartira sans que personne ne descende.
+func _embarquement(t) -> float:
+	if t.freight or t.state != Enc.S_DWELL or t.actual_arr == null:
+		return 1.0
+	if not enc.paths.has("out:%s:%d" % [t.to, int(t.platform)]):
+		return 1.0
+	var arr: float = float(t.actual_arr)
+	var fin: float = max(t.dep, arr + Geo.MIN_DWELL)
+	var denom: float = fin - arr
+	return 1.0 if denom <= 0.0 else clampf((enc.game_min - arr) / denom, 0.0, 1.0)
+
+
+func _dessiner_convois(sel, t: float) -> void:
+	var anneau := 0.65 + 0.35 * sin(t * TAU / 1.1)      # ring-pulse : 1 → .3
+	var pret := 0.5 + 0.5 * sin(t * TAU / 1.1)          # .train.ready
+	for tr in enc.trains:
+		if not positions.has(tr.id):
 			continue
-		var pos: Array = positions[t.id]
-		var col := Color(String(G["dest_color"][t.to]))
-		for i in range(pos.size()):
+		var pos: Array = positions[tr.id]
+		var n := pos.size()
+		if n == 0:
+			continue
+		var col := Color(String(G["dest_color"][tr.to]))
+		var choisi: bool = tr == sel
+		var attend: bool = tr.state == Enc.S_WAITING or tr.state == Enc.S_APPROACHING
+		# la rotation est bridée à l'endroit (Geo.path_point) : le +x local
+		# pointe toujours à droite de l'écran, la tête peut donc être d'un côté
+		# ou de l'autre — c'est ce qui décide du côté « vide » des voitures.
+		var tete_a_droite: bool = n < 2 or float(pos[0]["x"]) >= float(pos[1]["x"])
+		var plein := _embarquement(tr)
+		for i in range(n):
 			var p: Dictionary = pos[i]
-			var h: float = Geo.CAR_H if i == 0 else Geo.CAR_H - 4
-			draw_set_transform(Vector2(p["x"], p["y"]), deg_to_rad(p["ang"]), Vector2.ONE)
+			var h: float = Geo.CAR_H if i == 0 else Geo.CAR_H - 4.0
+			var rayon: float = 8.0 if i == 0 else 5.0
 			var r := Rect2(-Geo.CAR_LEN / 2.0, -h / 2.0, Geo.CAR_LEN, h)
-			var caisse: Color = FRET if (t.freight and i > 0) else col
-			if i > 0:
+			draw_set_transform(Vector2(p["x"], p["y"]), deg_to_rad(p["ang"]), Vector2.ONE)
+
+			# LE HALO D'ÉTAT, sous la caisse : quatre couches concentriques de
+			# plus en plus larges et transparentes. C'est le signal PRINCIPAL de
+			# sélection, et il ne dépend d'aucun filtre.
+			if choisi or tr.holding:
+				var teinte: Color = Color.WHITE if choisi else Sty.AMBRE
+				var opac: float = anneau if choisi else anneau * 0.9
+				var b := _boucle(Sty.rect_arrondi(r, rayon))
+				for couche in [[16.0, 0.10], [10.0, 0.18], [5.5, 0.34], [2.5, 0.75]]:
+					draw_polyline(b, Color(teinte, float(couche[1]) * opac), float(couche[0]), true)
+
+			# LA CAISSE, et son halo à la couleur de la DESTINATION — y compris
+			# pour un fret, dont la caisse est grise mais le halo coloré.
+			var caisse: Color = Sty.FRET if (tr.freight and i > 0) else col
+			if i > 0 and not tr.freight:
 				caisse.a = 0.72
-			if t == sel:
-				draw_rect(r.grow(4), Color(ACCENT, 0.9), false, 2.0)
-			if t.holding and i == 0:
-				draw_circle(Vector2(Geo.CAR_LEN / 2.0 + 8, 0), 4, ROUGE)
-			draw_rect(r, caisse, true)
-			draw_rect(r, col, false, 1.2)
+			var halo := 7.0
+			if choisi:
+				halo = 14.0
+			elif attend and not tr.freight:
+				halo = 7.0 + 6.0 * pret
+			draw_style_box(Sty.boite(caisse, caisse, rayon, 0, halo, Color(col, 0.30)), r)
+
+			# LE MASQUE D'EMBARQUEMENT : la portion vide, côté queue, qui recule
+			# à mesure qu'on approche du départ.
+			if plein < 1.0:
+				var frac: float = clampf(plein * n - i, 0.0, 1.0)
+				var w: float = (1.0 - frac) * Geo.CAR_LEN
+				if w > 0.5:
+					var x: float = -Geo.CAR_LEN / 2.0 if tete_a_droite else Geo.CAR_LEN / 2.0 - w
+					draw_style_box(Sty.boite(Sty.MASQUE, Sty.MASQUE, rayon, 0),
+						Rect2(x, -h / 2.0, w, h))
+
+			# LE CONTOUR : la silhouette reste lisible, wagon plein ou vide. Sur
+			# un fret il est épais et opaque : c'est LUI le signe distinctif.
+			draw_polyline(_boucle(Sty.rect_arrondi(r, rayon)),
+				Color(col, 1.0 if tr.freight else 0.85), 2.6 if tr.freight else 1.4, true)
+
+			# La loco porte l'initiale de sa destination, fret compris.
 			if i == 0:
-				var ab := String(G["dest_abbr"].get(t.to, ""))
-				var w := police.get_string_size(ab, HORIZONTAL_ALIGNMENT_LEFT, -1, 11).x
-				draw_string(police, Vector2(-w / 2, 4), ab, HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color("#0E1420"))
+				Sty.texte_centre(self, Sty.sans(700), 12, Vector2.ZERO,
+					String(G["dest_abbr"].get(tr.to, "")), Sty.ETIQUETTE_TRAIN)
 		draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
-		# le badge : l'heure de départ, puis le retard — jamais pour le fret
-		var montre: bool = not t.freight and not t.wrong_platform \
-			and t.state != Enc.S_MOVING_OUT and t.state != Enc.S_DONE \
-			and not (t.state == Enc.S_APPROACHING and not t.settled)
-		if montre:
-			var late: float = Enc.lateness(t, enc.game_min)
-			var txt: String
-			var c: Color
-			if late >= 1:
-				txt = "+%d min" % int(floor(late))
-				c = ROUGE
-			elif late > -3:
-				txt = fmt(t.dep)
-				c = OR
-			else:
-				txt = fmt(t.dep)
-				c = VERT
-			var tete: Dictionary = pos[0]
-			var w := police.get_string_size(txt, HORIZONTAL_ALIGNMENT_LEFT, -1, 12).x
-			var bx := Vector2(tete["x"] - w / 2 - 6, tete["y"] - 30 - 10)
-			draw_rect(Rect2(bx, Vector2(w + 12, 20)), Color(0.055, 0.078, 0.125, 0.88), true)
-			draw_rect(Rect2(bx, Vector2(w + 12, 20)), c, false, 1.0)
-			draw_string(police, Vector2(bx.x + 6, bx.y + 14), txt, HORIZONTAL_ALIGNMENT_LEFT, -1, 12, c)
 
-	# --- le HUD ---------------------------------------------------------------
+
+# --- le signal d'arrêt ------------------------------------------------------
+## Un convoi prêt dont la voie de sortie est prise ne doit pas rester muet,
+## sinon son immobilité se lit comme un bug. On plante un vrai signal devant sa
+## motrice : mât, cible à deux feux, le rouge allumé et pulsé (js/render.js,
+## signalNode). Il reste tant que le convoi est retenu.
+func _dessiner_signaux(t: float) -> void:
+	var lampe := 0.45 + 0.55 * (0.5 + 0.5 * sin(t * TAU / 1.1))   # sig-pulse
+	for tr in enc.trains:
+		if not tr.holding or tr.state != Enc.S_DWELL or not positions.has(tr.id):
+			continue
+		var pos: Array = positions[tr.id]
+		if pos.size() < 2:
+			continue
+		var tete := Vector2(float(pos[0]["x"]), float(pos[0]["y"]))
+		var dir: float = 1.0 if tete.x >= float(pos[1]["x"]) else -1.0
+		var o := tete + Vector2(dir * (Geo.CAR_LEN / 2.0 + 14.0), 2.0)
+		draw_style_box(Sty.boite(Color("#55617a"), Color("#55617a"), 1.3, 0),
+			Rect2(o.x - 1.3, o.y - 2, 2.6, 16))                                  # le mât
+		draw_style_box(Sty.boite(Color("#0e1420"), Color("#55617a"), 4, 1.2),
+			Rect2(o.x - 7, o.y - 22, 14, 21))                                    # la cible
+		draw_circle(o + Vector2(0, -16), 3.6, Color(Sty.ROUGE, lampe))           # le rouge
+		draw_circle(o + Vector2(0, -6.5), 3.6, Color("#1c2740"))                 # le vert, éteint
+
+
+# --- les badges d'heure -----------------------------------------------------
+## Le cadran de l'horloge, aiguilles figées sur 10 h 10 : la pose qui se lit le
+## mieux en tout petit. Il dit « heure de départ » sans mot à lire, et s'efface
+## quand le badge bascule sur le retard — « +3 min » n'est plus une heure.
+func _cadran(centre: Vector2, col: Color) -> void:
+	draw_arc(centre, 5.4, 0.0, TAU, 24, col, 1.4, true)
+	draw_line(centre, centre + Vector2(0, -3.2), col, 1.4, true)
+	draw_line(centre, centre + Vector2(2.6, 1.6), col, 1.4, true)
+
+
+func _dessiner_badges(t: float) -> void:
+	var clign := 0.22 + 0.78 * (0.5 + 0.5 * sin(t * TAU / 0.9))   # badge-blink
+	for tr in enc.trains:
+		if not positions.has(tr.id):
+			continue
+		# jamais pour le fret : ce qui le distingue, c'est justement l'absence
+		# d'heure de départ.
+		var montre: bool = not tr.freight and not tr.wrong_platform \
+			and tr.state != Enc.S_MOVING_OUT and tr.state != Enc.S_DONE \
+			and not (tr.state == Enc.S_APPROACHING and not tr.settled)
+		if not montre:
+			continue
+		var late: float = Enc.lateness(tr, enc.game_min)
+		var en_retard: bool = late >= 1
+		var txt: String = ("+%d min" % int(floor(late))) if en_retard else fmt(tr.dep)
+		var col: Color = Sty.ROUGE if en_retard else (Sty.AMBRE if late > -3 else Sty.VERT)
+		var police := Sty.mono(700 if en_retard else 600)
+		var w := police.get_string_size(txt, HORIZONTAL_ALIGNMENT_LEFT, -1, 12).x
+		var cadran: bool = not en_retard
+		var large: float = w + 24.0 + (14.0 if cadran else 0.0)
+		var tete: Dictionary = positions[tr.id][0]
+		var centre := Vector2(float(tete["x"]), float(tete["y"]) - 40.0)
+		var r := Rect2(centre.x - large / 2.0, centre.y - 10.0, large, 20.0)
+		# un convoi encore à l'arrêt dont le retard court réclame un aiguillage :
+		# le badge clignote (en opacité seule).
+		var a: float = clign if (en_retard and not tr.settled) else 1.0
+		draw_style_box(Sty.boite(Color(Sty.BADGE_FOND, Sty.BADGE_FOND.a * a), Color(col, a), 6, 1.2), r)
+		var x := r.position.x + 12.0
+		if cadran:
+			_cadran(Vector2(x, centre.y), Color(col, a))
+			x += 14.0
+		Sty.texte_centre(self, police, 12, Vector2(x + w / 2.0, centre.y), txt, Color(col, a))
+
+
+# --- le bandeau -------------------------------------------------------------
+## Une chip de verre dépoli : le gabarit commun du bandeau (#hud-clock,
+## #station-tag, les trois boutons) — fond rgba(21,29,46,.55), liseré #2a3550,
+## coins de 12. Le flou du web n'existe pas ici : le fond translucide seul
+## suffit, les voies restent lisibles dessous.
+func _chip(r: Rect2, bord: Color = Sty.BORD) -> void:
+	draw_style_box(Sty.boite(Sty.VERRE, bord, 12, 1), r)
+
+
+func _dessiner_hud(t: float) -> void:
+	var sans := Sty.sans()
+	var gras := Sty.sans(600)
+
+	# --- le cartouche de gare, en haut à gauche : c'est le bouton RETOUR ------
+	var pays := Donnees.pays_de(String(fiche.get("country", "")))
+	var drapeau := String(pays.get("drapeau", ""))
+	var nom := String(fiche.get("name", ""))
+	var d := int(fiche_jouee.get("difficulty", fiche.get("difficulty", 1)))
+	# Un drapeau est une paire de caractères combinés : la police système en
+	# rend un glyphe unique dont la largeur mesurée ment (mesuré le 3 septembre
+	# 2026 : le nom débordait de la chip). On lui réserve sa place.
+	var w_fl: float = max(20.0, sans.get_string_size(drapeau, HORIZONTAL_ALIGNMENT_LEFT, -1, 15).x)
+	var w_nm := gras.get_string_size(nom, HORIZONTAL_ALIGNMENT_LEFT, -1, 13).x
+	var w_pips := 5.0 * 4.0 + 4.0 * 3.0
+	var large := 10.0 + 14.0 + 6.0 + w_fl + 6.0 + w_nm + 3.0 + w_pips + 13.0
+	var chip := Rect2(4, 10, large, 34)
+	_chip(chip)
+	var cy := chip.position.y + chip.size.y / 2.0
+	var x := chip.position.x + 10.0
+	Sty.texte_centre(self, sans, 22, Vector2(x + 7, cy - 1), "‹", Sty.MUET)
+	x += 14.0 + 6.0
+	Sty.texte_centre(self, sans, 15, Vector2(x + w_fl / 2.0, cy), drapeau, Sty.TEXTE)
+	x += w_fl + 6.0
+	Sty.texte_centre(self, gras, 13, Vector2(x + w_nm / 2.0, cy), nom, Sty.TEXTE)
+	x += w_nm + 3.0
+	# la difficulté : la MÊME jauge à cinq crans que partout dans le jeu
+	for i in range(5):
+		draw_style_box(Sty.boite(Sty.AMBRE if i < d else Sty.PIP_ETEINT, Color.TRANSPARENT, 1.5, 0),
+			Rect2(x + i * 7.0, cy - 5.0, 4.0, 10.0))
+
+	# --- l'horloge, centrée : heure, retard, et la jauge du service ----------
+	var mono := Sty.mono(600)
 	var horloge := fmt(enc.game_min)
-	var wh := police.get_string_size(horloge, HORIZONTAL_ALIGNMENT_LEFT, -1, 30).x
-	draw_string(police, Vector2(700 - wh / 2 - 24, 44), horloge, HORIZONTAL_ALIGNMENT_LEFT, -1, 30, TEXTE)
-	var d := enc.live_delay()
-	var cd: Color = VERT if d < 10 else (OR if d < 30 else ROUGE)
-	draw_string(police, Vector2(700 + wh / 2 - 12, 44), "+%d" % int(d), HORIZONTAL_ALIGNMENT_LEFT, -1, 22, cd)
-	if app != null:
-		draw_string(police, Vector2(28, 86), "‹ Carte", HORIZONTAL_ALIGNMENT_LEFT, -1, 13, MUET)
-	var etat := ("pause" if pause else "x%d" % int(vitesse)) + ("  ·  auto" if auto else "")
-	var we := police.get_string_size(etat, HORIZONTAL_ALIGNMENT_LEFT, -1, 14).x
-	draw_string(police, Vector2(1400 - 28 - we, 40), etat, HORIZONTAL_ALIGNMENT_LEFT, -1, 14, MUET)
-	draw_string(police, Vector2(28, 760 - 22),
-		"clic convoi → clic quai   ·   espace pause   ·   1 2 4 vitesse   ·   R rejouer   ·   graine %d, journée en %d ms   ·   %s" % [graine, duree_generation_ms, _niveau_texte()],
-		HORIZONTAL_ALIGNMENT_LEFT, -1, 12, MUET)
+	var retard := enc.live_delay()
+	var txt_r := "+%d" % int(retard)
+	var w_h := Sty.largeur_espacee(mono, 21, horloge, 1.0)
+	var w_r := mono.get_string_size(txt_r, HORIZONTAL_ALIGNMENT_LEFT, -1, 14).x
+	var w_chip := 13.0 + w_h + 8.0 + w_r + 13.0
+	var ch := Rect2(700 - w_chip / 2.0, 10, w_chip, 38)
+	_chip(ch, Sty.ACCENT if (pause or gel) else Sty.BORD)
+	var base := ch.position.y + 5.0 + mono.get_ascent(21)
+	Sty.texte_espace(self, mono, 21, Vector2(ch.position.x + 13.0, base), horloge, Sty.TEXTE, 1.0)
+	var col_r: Color = Sty.VERT if retard < 10 else (Sty.AMBRE if retard < 30 else Sty.ROUGE)
+	draw_string(mono, Vector2(ch.position.x + 13.0 + w_h + 8.0, base), txt_r,
+		HORIZONTAL_ALIGNMENT_LEFT, -1, 14, col_r)
+	# la jauge : l'horloge se remplit à mesure que les convois quittent le quai
+	var partis := 0
+	for tr in enc.trains:
+		if tr.state == Enc.S_DONE:
+			partis += 1
+	var part: float = float(partis) / float(max(1, enc.trains.size()))
+	var jauge := Rect2(ch.position.x + 10.0, ch.end.y - 7.0, ch.size.x - 20.0, 3.0)
+	draw_style_box(Sty.boite(Color(Sty.ACCENT, 0.14), Color.TRANSPARENT, 2, 0), jauge)
+	if part > 0.0:
+		draw_style_box(Sty.boite(Sty.ACCENT, Color.TRANSPARENT, 2, 0),
+			Rect2(jauge.position, Vector2(jauge.size.x * part, jauge.size.y)))
+	# « EN PAUSE », sous l'horloge
+	if pause or gel:
+		var etiq := "EN PAUSE"
+		var w_e := Sty.largeur_espacee(Sty.sans(700), 12, etiq, 1.5)
+		var re := Rect2(700 - (w_e + 24.0) / 2.0, ch.end.y + 5.0, w_e + 24.0, 22)
+		draw_style_box(Sty.boite(Color(Sty.ACCENT, 0.14), Sty.ACCENT, 8, 1), re)
+		Sty.texte_espace(self, Sty.sans(700), 12,
+			Vector2(re.position.x + 12.0, re.position.y + 11.0 + Sty.sans(700).get_ascent(12) / 2.0 - 1),
+			etiq, Sty.ACCENT, 1.5)
 
-	# --- le repère du tutoriel : un cerne pulsé sur la cible ----------------------
-	if not coach_cible.is_empty():
-		var rc := _rect_cible()
-		if rc != Rect2():
-			var pulse := 0.5 + 0.5 * sin(Time.get_ticks_msec() / 180.0)
-			draw_rect(rc.grow(8 + 4 * pulse), Color(ACCENT, 0.9), false, 2.5)
-			draw_rect(rc.grow(14 + 6 * pulse), Color(ACCENT, 0.25), false, 1.5)
+	# --- les trois boutons, en haut à droite ---------------------------------
+	var bx := 1400.0 - 4.0 - 34.0
+	for bouton in [["gear", ""], ["speed", "%dx" % int(vitesse)], ["play", ""]]:
+		var r := Rect2(bx, 10, 34, 34)
+		var actif: bool = bouton[0] == "speed" and vitesse > 1.0
+		_chip(r, Sty.ACCENT if actif else Sty.BORD)
+		var c := r.get_center()
+		match bouton[0]:
+			"speed":
+				Sty.texte_espace(self, Sty.mono(700), 13,
+					Vector2(c.x - Sty.largeur_espacee(Sty.mono(700), 13, bouton[1], 0.5) / 2.0,
+						c.y + Sty.mono(700).get_ascent(13) / 2.0 - 1),
+					bouton[1], Sty.ACCENT if actif else Sty.TEXTE, 0.5)
+			"play":
+				if pause:
+					draw_colored_polygon(PackedVector2Array([
+						c + Vector2(-4, -6), c + Vector2(7, 0), c + Vector2(-4, 6)]), Sty.TEXTE)
+				else:
+					draw_rect(Rect2(c.x - 5, c.y - 6, 3.5, 12), Sty.TEXTE, true)
+					draw_rect(Rect2(c.x + 1.5, c.y - 6, 3.5, 12), Sty.TEXTE, true)
+			"gear":
+				draw_arc(c, 6.0, 0.0, TAU, 24, Sty.TEXTE, 1.8, true)
+				for k in range(6):
+					var a: float = TAU * float(k) / 6.0
+					var u := Vector2(cos(a), sin(a))
+					draw_line(c + u * 6.5, c + u * 9.0, Sty.TEXTE, 1.8, true)
+		bx -= 34.0 + 8.0
 
-	# --- la fin de service, seul à l'écran (l'application lit le relevé sur la carte)
-	if enc.ended and app == null:
-		draw_rect(Rect2(0, 0, 1400, 760), VOILE, true)
-		var r: Dictionary = enc.resultat
-		var titre: String = "Service interrompu" if r.get("failed", false) \
-			else ("Sans faute !" if r.get("perfect", false) else ("Fin du service" if r.get("win", false) else "Objectif manqué"))
-		var etoiles := "★".repeat(int(r.get("stars", 0))) + "☆".repeat(3 - int(r.get("stars", 0)))
-		var ligne := "%s   ·   retard cumulé %d min" % [etoiles, int(r.get("d", 0))]
-		var wt := police.get_string_size(titre, HORIZONTAL_ALIGNMENT_LEFT, -1, 34).x
-		var wl := police.get_string_size(ligne, HORIZONTAL_ALIGNMENT_LEFT, -1, 18).x
-		draw_string(police, Vector2(700 - wt / 2, 360), titre, HORIZONTAL_ALIGNMENT_LEFT, -1, 34, TEXTE)
-		draw_string(police, Vector2(700 - wl / 2, 400), ligne, HORIZONTAL_ALIGNMENT_LEFT, -1, 18, OR)
-		var wr := police.get_string_size("R pour rejouer", HORIZONTAL_ALIGNMENT_LEFT, -1, 14).x
-		draw_string(police, Vector2(700 - wr / 2, 440), "R pour rejouer", HORIZONTAL_ALIGNMENT_LEFT, -1, 14, MUET)
+	# --- la ligne d'aide, en bas : hors prototype, elle porte la graine ------
+	# Le jeu web est « 100 % visuel » et n'a aucune bande de texte. Celle-ci est
+	# un outil de mise au point — c'est elle qui donne la graine à citer dans un
+	# retour de test. Volontairement discrète, et elle partira au moteur final.
+	draw_string(sans, Vector2(28, 760 - 20),
+		"clic convoi → clic quai   ·   espace pause   ·   1 2 4 vitesse   ·   R rejouer   ·   graine %d, journée en %d ms   ·   %s"
+			% [graine, duree_generation_ms, _niveau_texte()],
+		HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color(Sty.MUET, 0.55))
+
+
+# --- le repère du tutoriel --------------------------------------------------
+## Le PROJECTEUR : tout l'écran s'assombrit sauf la cible (#coach-ring, dont
+## l'ombre de 9999 px fait exactement cela sur le web). Sans lui, le repère
+## désigne sans isoler, et l'œil continue de partir ailleurs.
+func _dessiner_coach(t: float) -> void:
+	if coach_cible.is_empty():
+		return
+	var rc := _rect_cible()
+	if rc == Rect2():
+		return
+	var trou := rc.grow(8)
+	draw_rect(Rect2(0, 0, 1400, trou.position.y), Sty.VOILE, true)
+	draw_rect(Rect2(0, trou.end.y, 1400, 760 - trou.end.y), Sty.VOILE, true)
+	draw_rect(Rect2(0, trou.position.y, trou.position.x, trou.size.y), Sty.VOILE, true)
+	draw_rect(Rect2(trou.end.x, trou.position.y, 1400 - trou.end.x, trou.size.y), Sty.VOILE, true)
+	var pulse := 0.5 + 0.5 * sin(t * TAU / 1.2)
+	var b := _boucle(Sty.rect_arrondi(trou, 12))
+	draw_polyline(b, Color(Sty.ACCENT, 0.10 + 0.15 * pulse), 14.0, true)
+	draw_polyline(b, Color(Sty.ACCENT, 0.25 + 0.25 * pulse), 7.0, true)
+	draw_polyline(b, Sty.ACCENT.lerp(Sty.ACCENT_CLAIR, pulse), 2.5, true)
+	# l'ergot de la bulle, pointé vers la cible
+	if bulle != null and bulle.visible:
+		var br := Rect2(bulle.position, bulle.size)
+		var dessous: bool = br.position.y > trou.end.y
+		var cx: float = clampf(trou.get_center().x, br.position.x + 14.0, br.end.x - 14.0)
+		var y: float = br.position.y if dessous else br.end.y
+		var s: float = 1.0 if dessous else -1.0
+		draw_colored_polygon(PackedVector2Array([
+			Vector2(cx - 8, y), Vector2(cx + 8, y), Vector2(cx, y - s * 8)]), Sty.ACCENT)
+
+
+# --- la fin de service, seul à l'écran --------------------------------------
+# L'application, elle, lit le relevé sur la carte du ruban.
+func _dessiner_fin() -> void:
+	if not enc.ended or app != null:
+		return
+	draw_rect(Rect2(0, 0, 1400, 760), Color(Sty.FOND, 0.82), true)
+	var r: Dictionary = enc.resultat
+	var titre: String = "Service interrompu" if r.get("failed", false) \
+		else ("Sans faute !" if r.get("perfect", false) else ("Fin du service" if r.get("win", false) else "Objectif manqué"))
+	var etoiles := "★".repeat(int(r.get("stars", 0))) + "☆".repeat(3 - int(r.get("stars", 0)))
+	Sty.texte_centre(self, Sty.sans(600), 34, Vector2(700, 360), titre, Sty.TEXTE)
+	Sty.texte_centre(self, Sty.sans(), 18, Vector2(700, 400),
+		"%s   ·   retard cumulé %d min" % [etoiles, int(r.get("d", 0))], Sty.AMBRE)
+	Sty.texte_centre(self, Sty.sans(), 14, Vector2(700, 440), "R pour rejouer", Sty.MUET)
 
 
 # ------------------------------------------------------------------
@@ -520,28 +846,28 @@ func _unhandled_input(event: InputEvent) -> void:
 # accueilli). Deux étapes sont opportunistes : le premier feu rouge, et le
 # moment où il n'y a plus rien à aiguiller.
 func _construire_coach() -> void:
+	# #coach-bubble : panneau, liseré teal, coins de 12, ombre portée,
+	# texte centré à 15 px. Sa largeur ne dépend que de son texte (le
+	# `width: max-content` du web), plafonnée à 400 px comme la feuille.
 	bulle = PanelContainer.new()
-	var st := StyleBoxFlat.new()
-	st.bg_color = Color("#151d2e")
-	st.border_color = ACCENT
-	st.set_border_width_all(1)
-	for coin in ["top_left", "top_right", "bottom_left", "bottom_right"]:
-		st.set("corner_radius_" + coin, 10)
+	var st := Sty.boite(Sty.PANNEAU, Sty.ACCENT, 12, 1, 22, Color(0, 0, 0, 0.55))
 	st.set_content_margin_all(14)
+	st.content_margin_left = 18
+	st.content_margin_right = 18
 	bulle.add_theme_stylebox_override("panel", st)
-	bulle.custom_minimum_size = Vector2(340, 0)
-	bulle.size = Vector2(340, 0)
 	var v := VBoxContainer.new()
-	v.add_theme_constant_override("separation", 10)
+	v.add_theme_constant_override("separation", 12)
 	bulle.add_child(v)
 	bulle_texte = Label.new()
 	bulle_texte.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	bulle_texte.custom_minimum_size = Vector2(312, 0)
-	bulle_texte.add_theme_font_size_override("font_size", 14)
-	bulle_texte.add_theme_color_override("font_color", TEXTE)
+	bulle_texte.custom_minimum_size = Vector2(364, 0)
+	bulle_texte.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	bulle_texte.add_theme_font_override("font", Sty.sans())
+	bulle_texte.add_theme_font_size_override("font_size", 15)
+	bulle_texte.add_theme_color_override("font_color", Sty.TEXTE)
+	bulle_texte.add_theme_constant_override("line_spacing", 6)
 	v.add_child(bulle_texte)
-	bulle_bouton = Button.new()
-	bulle_bouton.text = "Suivant"
+	bulle_bouton = Sty.bouton("Suivant", false, 15)
 	bulle_bouton.pressed.connect(_coach_suivant)
 	v.add_child(bulle_bouton)
 	bulle.visible = false
@@ -564,22 +890,27 @@ func _construire_coach() -> void:
 	centre.size = Vector2(1400, 760)
 	accueil.add_child(centre)
 	var carte := PanelContainer.new()
-	carte.add_theme_stylebox_override("panel", st.duplicate())
+	var sc := Sty.boite(Sty.PANNEAU, Sty.ACCENT, 16, 1, 30, Color(0, 0, 0, 0.5))
+	sc.set_content_margin_all(30)
+	carte.add_theme_stylebox_override("panel", sc)
 	carte.custom_minimum_size = Vector2(520, 0)
 	var cv := VBoxContainer.new()
 	cv.add_theme_constant_override("separation", 12)
 	carte.add_child(cv)
-	for ligne in [["Bienvenue", 12, ACCENT], ["Le poste d'aiguillage", 26, TEXTE],
-			["Vous dirigez la gare : faites entrer et repartir chaque train à l'heure.", 15, TEXTE],
-			["Je vous montre, pas à pas, avec deux trains — les repères indiquent quoi toucher. Rien ne presse.", 13, MUET]]:
+	# .wc-badge, h1, .wc-lead, .wc-tip — les quatre lignes du prototype
+	for ligne in [["Bienvenue", 12, Sty.ACCENT, 600],
+			["Le poste d'aiguillage", 26, Sty.TEXTE, 600],
+			["Vous dirigez la gare : faites entrer et repartir chaque train à l'heure.", 15, Sty.TEXTE, 400],
+			["Je vous montre, pas à pas, avec deux trains — les repères indiquent quoi toucher. Rien ne presse.", 13, Sty.MUET, 400]]:
 		var l := Label.new()
 		l.text = ligne[0]
 		l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		l.add_theme_font_override("font", Sty.sans(ligne[3]))
 		l.add_theme_font_size_override("font_size", ligne[1])
 		l.add_theme_color_override("font_color", ligne[2])
+		l.add_theme_constant_override("line_spacing", 7)
 		cv.add_child(l)
-	var b := Button.new()
-	b.text = "Commencer"
+	var b := Sty.bouton("Commencer", true, 17)
 	b.pressed.connect(_accueil_ferme)
 	cv.add_child(b)
 	centre.add_child(carte)
