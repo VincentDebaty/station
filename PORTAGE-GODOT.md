@@ -72,7 +72,8 @@ la moins chère et la plus honnête.
 Schéma courant : **7**. La migration (`migrate()`) sait remonter depuis les
 schémas 5, 6 et 7. Le modèle — cache mémoire lu en synchrone, backend
 échangeable — a été écrit d'avance pour ça : sous Godot, seul `makeBackend()`
-change (`user://` au lieu de localStorage).
+change (`user://` au lieu de localStorage). Fait le 3 septembre 2026 :
+`jeu/sauvegarde.gd`, étape 6 du §8.
 
 **La règle ne change pas** : toute modification du format impose d'incrémenter
 `SCHEMA_VERSION` et d'écrire la migration, testée depuis une sauvegarde
@@ -273,6 +274,23 @@ sont écrits ici parce qu'ils ne se voient qu'en jouant longtemps.
    aucune valeur fausse. Tester le type avant de comparer
    (`ssp is String and ssp == "all"`). Seule la comparaison à `null` est
    tolérante.
+
+10. **`JSON.stringify` de Godot TRIE les clés d'un dictionnaire ; son
+    analyseur, lui, conserve l'ordre du document.** Mesuré le 3 septembre 2026 :
+    `{"germanie": 1, "europe": 2}` sort `{"europe":2,"germanie":1}`. Une
+    sauvegarde relue avait donc ses cartes dans un autre ordre que le
+    prototype — rien de faux, mais plus la même sauvegarde, et l'oracle l'a
+    vu au premier rechargement. Tout ce qui doit se relire à l'identique
+    s'écrit avec `Sauvegarde.vers_json` (ordre d'insertion, entiers sans
+    décimale, comme JavaScript). Au passage, mesuré le même jour : les
+    autoloads se chargent bien sous `--script` en 4.7, mais APRÈS `_init()`
+    du SceneTree — dans `_init`, `root.has_node("Donnees")` est faux — et leur
+    `_ready` s'exécute même quand `_init` a déjà appelé `quit()`. C'est ainsi
+    que l'autoload `Sauvegarde` a laissé une v7 vierge dans le vrai `user://`
+    à chaque oracle : sans conséquence (il n'écrit que ce qui n'est pas au
+    schéma courant), mais un oracle qui veut un support à lui l'instancie à
+    la main, sur son dossier. `--check-only`, lui, ne les charge pas du tout
+    (piège 6 du §8).
 
 ---
 
@@ -482,6 +500,42 @@ Il suit une règle : **ce qui se vérifie tout seul d'abord**.
    bandeau dit désormais « europe, niveau 4 (fiche 3), 3 étoiles sous 9 min ».
 6. **La sauvegarde** (`store.js`) : `makeBackend()` seul change. Tester une
    migration depuis une sauvegarde du prototype.
+
+   ✅ **Fait le 3 septembre 2026.** `jeu/sauvegarde.gd`, autoload
+   `Sauvegarde` : le support est `user://`, un fichier par clé, la MÊME chaîne
+   JSON sous la MÊME clé que localStorage (`station-progress.json`) — seuls
+   `_lire` et `_ecrire` connaissent le disque, comme `makeBackend()` le
+   promettait. `migrer()` transpose `migrate()` schéma par schéma, y compris
+   la vérité JavaScript (`x | 0`, `||`, `typeof "object"` qui accepte un
+   tableau). `STATION_SAUVEGARDE=<dossier>` détourne le support pour un essai,
+   `STATION_SANS_TRACE=1` n'écrit rien.
+
+   L'oracle `tools/oracle-sauvegarde.mjs` + `jeu/oracle_sauvegarde.gd` fait
+   jouer `store.js` dans un `node:vm` avec un localStorage en mémoire, et la
+   sauvegarde Godot dans un dossier de travail, sur **18 sauvegardes de
+   départ** — une par schéma de v0 (objet plat) à v7, et les cas tordus :
+   absente, vide, `null`, JSON invalide, un nombre, une série en chaînes, une
+   version en chaîne, une version future, des cartes en tableau — puis **29
+   écritures identiques** des deux côtés (tentée, résultat amélioré puis non,
+   série qui monte, bat, casse, passage payé deux fois, changement de carte,
+   acquisition, préférences), en notant chaque valeur rendue, l'état lu, le
+   FICHIER écrit, et l'état après rechargement à neuf. **18 sur 18
+   identiques**, Godot en 245 ms. Le premier passage en avait 17 : le piège 10
+   du §5, attrapé au rechargement.
+
+   La vraie sauvegarde de Vincent n'a pas pu servir : elle est dans son
+   navigateur, hors de portée d'ici (le navigateur intégré n'a qu'une v7
+   vierge). Les dix-huit sauvegardes forgées couvrent chaque branche de
+   `migrate()` ; le jour où une vraie sauvegarde ancienne se présente,
+   `--fixture=<fichier>` l'ajoute à la batterie.
+
+   L'écran de jeu écrit sa fin de service comme `endGame` : échec → gare
+   tentée sans record, réussite → meilleur score et meilleur retard, puis la
+   série ; les médailles se comparent avant/après et se disent au journal.
+   Jouer une gare, c'est jouer SA carte : le ruban lit la progression vivante
+   de la carte courante. Mesuré : Darlington joué deux fois sur un dossier de
+   travail — « 1★, retard 28, position 1/277 », puis au redémarrage « 1★,
+   retard 25 » : le record s'améliore, l'étoile reste, la position tient.
 7. **Les écrans** : ruban, cartes, relevé, tutoriel. En dernier, parce que c'est
    la partie qu'on jette et refait le plus volontiers.
 

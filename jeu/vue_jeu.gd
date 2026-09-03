@@ -24,6 +24,7 @@ const Enc := preload("res://jeu/enclenchement.gd")
 const Plan := preload("res://jeu/gare.gd")
 const Cap := preload("res://jeu/capture.gd")
 const Rub := preload("res://jeu/ruban.gd")
+const Rec := preload("res://jeu/recompense.gd")
 
 # Les couleurs du prototype (css/station.css) : l'esthétique est conservée.
 const TEXTE := Color("#dbe2ee")
@@ -48,6 +49,7 @@ var plan: Node2D
 var ruban = null                     # le ruban de la carte qui porte la gare ; null hors carte
 var carte_id := ""
 var fiche_jouee: Dictionary          # la fiche telle que le ruban la sert (difficulty, gen recalculés)
+var fin_enregistree := false         # la fin de service est écrite une fois
 
 
 func _ready() -> void:
@@ -62,6 +64,8 @@ func _ready() -> void:
 	# de son niveau — la rampe du ruban — et donc de son enveloppe et de son
 	# barème. Hors carte : la fiche telle quelle, comme le prototype sans
 	# CARTE_COURANTE. STATION_CARTE=<id> force la carte quand deux la portent.
+	# STATION_SANS_TRACE=1 : rien n'est écrit (l'aperçu sans trace du prototype).
+	Sauvegarde.apercu_sans_trace = OS.get_environment("STATION_SANS_TRACE") != ""
 	_choisir_ruban(id)
 	fiche_jouee = ruban.fiche_de_service(fiche) if ruban != null else fiche
 	var g := OS.get_environment("STATION_GRAINE")
@@ -94,6 +98,11 @@ func _choisir_ruban(id: String) -> void:
 		if r.sur_le_ruban(id):
 			ruban = r
 			carte_id = cid
+			# Jouer une gare, c'est jouer SA carte : la progression lue et écrite
+			# est celle-là, vivante — le ruban voit chaque résultat enregistré.
+			Sauvegarde.set_carte_courante(cid)
+			r.stations = Sauvegarde.get_progression()
+			r.passees = Sauvegarde.get_passees()
 			return
 
 
@@ -110,6 +119,7 @@ func _niveau_texte() -> String:
 
 
 func _nouvelle_journee() -> void:
+	fin_enregistree = false
 	var t0 := Time.get_ticks_msec()
 	var day: Dictionary = Jour.new(G, fiche_jouee, Has.new(graine)).generate_schedule()
 	duree_generation_ms = Time.get_ticks_msec() - t0
@@ -121,6 +131,34 @@ func _nouvelle_journee() -> void:
 		% [fiche.get("id", "?"), graine, enc.trains.size(), duree_generation_ms, _niveau_texte()])
 
 
+## LA FIN DE SERVICE S'ÉCRIT COMME DANS LE PROTOTYPE (js/game.js, endGame) :
+## un échec se note sans toucher au record, une réussite garde le meilleur ;
+## la série se tient après, et casse sur un échec. Les médailles se comparent
+## avant/après, elles ne se stockent pas.
+func _enregistrer_fin() -> void:
+	fin_enregistree = true
+	var r: Dictionary = enc.resultat
+	var id := String(fiche.get("id", ""))
+	var stars := int(r["stars"])
+	var avant: Array = Rec.medailles_de(Rec.etat_recompenses(ruban, Sauvegarde.get_serie())) if ruban != null else []
+	if r["failed"]:
+		Sauvegarde.marquer_tentee(id)
+	else:
+		Sauvegarde.enregistrer_resultat(id, stars, r["d"])
+	var serie: Dictionary = Sauvegarde.pousser_serie((not r["failed"]) and stars >= Rec.SERIE_SEUIL)
+	var texte := "enregistré : %s %d★, retard %d, série %d (record %d)" % [id, stars, int(r["d"]), serie["n"], serie["record"]]
+	if ruban != null:
+		var noms: PackedStringArray = []
+		for m in Rec.medailles_nouvelles(avant, Rec.medailles_de(Rec.etat_recompenses(ruban, Sauvegarde.get_serie()))):
+			noms.append(m["nom"])
+		if not noms.is_empty():
+			texte += " · médailles : " + ", ".join(noms)
+		texte += " · position %d/%d" % [ruban.position_courante(), ruban.longueur()]
+	if Sauvegarde.apercu_sans_trace:
+		texte += " (sans trace)"
+	print(texte)
+
+
 func _process(delta: float) -> void:
 	if enc == null:
 		return
@@ -130,6 +168,8 @@ func _process(delta: float) -> void:
 		enc.tick(dt_min)
 		if auto and not enc.ended:
 			_joueur_scripte()
+	if enc.ended and not fin_enregistree:
+		_enregistrer_fin()
 	_calculer_positions()
 	queue_redraw()
 

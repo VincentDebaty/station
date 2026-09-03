@@ -21,6 +21,7 @@ config/features=PackedStringArray("4.7", "Mobile")
 [autoload]
 
 Donnees="*res://jeu/donnees.gd"
+Sauvegarde="*res://jeu/sauvegarde.gd"
 
 [display]
 

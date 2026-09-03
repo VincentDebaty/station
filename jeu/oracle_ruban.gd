@@ -4,7 +4,8 @@ extends SceneTree
 ##   godot --headless --path . --script res://jeu/oracle_ruban.gd -- <dossier_sortie> <scenarios.json>
 ##
 ## Charge le catalogue, les brevets et les cartes (jeu/donnees.gd, instancié à
-## la main : un script sans scène n'a pas d'autoload), puis pour chaque
+## la main — les autoloads existent bien sous --script, mais on veut un
+## chargement dont on lit les erreurs, pas un global), puis pour chaque
 ## scénario {carte, nom, stations, passees, serie, cartes, possedees} écrit
 ## <dossier_sortie>/<carte>-<nom>.json — le même relevé que __exporter côté
 ## prototype. C'est tools/oracle-ruban.mjs qui écrit les scénarios, lance,
