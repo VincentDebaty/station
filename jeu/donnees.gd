@@ -31,6 +31,10 @@ var cartes: Dictionary = {}           ## id -> carte complète
 var geo: Dictionary = {}
 var lignes: Array = []
 var lieux: Dictionary = {}
+## Le fond de carte : les pays d'Europe, en anneaux [lon, lat, lon, lat, …],
+## filtrés au chargement comme le prototype (js/parcours.js, fondHTML).
+var fond_europe: Array = []
+const PAYS_HORS_CARTE := ["ISL", "SJM", "FRO", "GRL"]
 
 var erreurs: PackedStringArray = []
 var duree_ms: int = 0
@@ -148,3 +152,24 @@ func _charger_derive() -> void:
 	var p: Variant = _lire_json(RACINE + "derive/places.json")
 	if p is Dictionary:
 		lieux = p
+	var w: Variant = _lire_json(RACINE + "derive/worldmap.json")
+	if w is Dictionary and w.get("countries") is Array:
+		for c in w["countries"]:
+			if c.get("cont") != "europe" or PAYS_HORS_CARTE.has(c.get("iso")):
+				continue
+			for r in (c["r"] if c.get("r") is Array else []):
+				if r.size() >= 8:
+					fond_europe.append(r)
+
+
+## [lon, lat] d'une gare, ou [] — les coordonnées vivent dans geo.json, par
+## pays, jamais dans la fiche (js/parcours.js, coordDe).
+func coord_de(id: String) -> Array:
+	var pays_: Variant = geo.get("countries")
+	if not (pays_ is Dictionary):
+		return []
+	for k in pays_:
+		var villes: Variant = pays_[k].get("cities") if pays_[k] is Dictionary else null
+		if villes is Dictionary and villes.get(id) is Array and villes[id].size() == 2:
+			return villes[id]
+	return []

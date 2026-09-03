@@ -1,0 +1,169 @@
+extends Control
+## L'ÉCRAN DES CARTES — choisir son territoire, et l'acheter.
+##
+## Transposition de js/parcours.js (vueCartes, lot H). Il n'apparaît qu'à
+## partir de deux cartes : avec une seule, il n'y a rien à choisir. Tout ce
+## qu'une tuile montre se déduit de la définition de la carte et de la
+## progression enregistrée — rien n'est stocké pour l'affichage. La carte
+## bancaire est hors prototype : le bouton prend la place, et ne fait rien.
+
+const Rub := preload("res://jeu/ruban.gd")
+const Rec := preload("res://jeu/recompense.gd")
+
+const FOND := Color("#0E1420")
+const TUILE := Color("#151d2e")
+const BORD := Color("#2a3550")
+const TEXTE := Color("#dbe2ee")
+const MUET := Color("#7a8699")
+const ACCENT := Color("#2dd4bf")
+const OR := Color("#f5b23c")
+
+var app = null
+var colonne: VBoxContainer
+
+
+func _ready() -> void:
+	set_anchors_preset(Control.PRESET_FULL_RECT)
+	var fond := ColorRect.new()
+	fond.color = FOND
+	fond.set_anchors_preset(Control.PRESET_FULL_RECT)
+	add_child(fond)
+	var marge := MarginContainer.new()
+	marge.set_anchors_preset(Control.PRESET_FULL_RECT)
+	for cote in ["left", "right", "top", "bottom"]:
+		marge.add_theme_constant_override("margin_" + cote, 28)
+	add_child(marge)
+	colonne = VBoxContainer.new()
+	colonne.add_theme_constant_override("separation", 14)
+	marge.add_child(colonne)
+
+
+func _label(texte: String, taille: int, couleur: Color) -> Label:
+	var l := Label.new()
+	l.text = texte
+	l.add_theme_font_size_override("font_size", taille)
+	l.add_theme_color_override("font_color", couleur)
+	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	return l
+
+
+func _bouton(texte: String, principal: bool, actif: bool, sur: Callable) -> Button:
+	var b := Button.new()
+	b.text = texte
+	b.disabled = not actif
+	b.add_theme_font_size_override("font_size", 15)
+	var st := StyleBoxFlat.new()
+	st.bg_color = ACCENT if principal else Color("#1f2a40")
+	for coin in ["top_left", "top_right", "bottom_left", "bottom_right"]:
+		st.set("corner_radius_" + coin, 8)
+	st.content_margin_top = 9
+	st.content_margin_bottom = 9
+	st.content_margin_left = 14
+	st.content_margin_right = 14
+	b.add_theme_stylebox_override("normal", st)
+	var sh := st.duplicate()
+	sh.bg_color = st.bg_color.lightened(0.12)
+	b.add_theme_stylebox_override("hover", sh)
+	b.add_theme_stylebox_override("pressed", sh)
+	var sd := st.duplicate()
+	sd.bg_color = Color("#1a2234")
+	b.add_theme_stylebox_override("disabled", sd)
+	b.add_theme_color_override("font_color", Color("#0E1420") if principal else TEXTE)
+	b.add_theme_color_override("font_disabled_color", MUET)
+	if sur.is_valid():
+		b.pressed.connect(sur)
+	return b
+
+
+## Ce qu'une carte montre d'elle-même avant d'être ouverte.
+func resume_de_carte(id: String) -> Dictionary:
+	var def: Dictionary = Donnees.cartes.get(id, {})
+	var chs: Array = def["chapitres"] if def.get("chapitres") is Array else []
+	var stations := {}
+	var passees: Array = []
+	for c in Sauvegarde.cartes_enregistrees():
+		if c["id"] == id:
+			stations = c["stations"]
+			passees = c["passees"]
+	var gares := 0
+	var faites := 0
+	var etoiles := 0
+	for ch in chs:
+		for g in (ch["gares"] if ch.get("gares") is Array else []):
+			gares += 1
+			var r: Variant = stations.get(g)
+			var st: int = Rub.etoiles_de(r) if r is Dictionary else 0
+			if st >= 1:
+				faites += 1
+			etoiles += st
+	return {"def": def, "chapitres": chs.size(), "gares": gares, "faites": faites, "etoiles": etoiles,
+		"entamee": faites > 0 or not passees.is_empty()}
+
+
+func rebatir() -> void:
+	for c in colonne.get_children():
+		colonne.remove_child(c)
+		c.queue_free()
+	var solde: int = app.solde() if app != null else 0
+	var entete := HBoxContainer.new()
+	entete.add_theme_constant_override("separation", 16)
+	entete.add_child(_bouton("‹  Revenir au ruban", false, true, app.fermer_cartes if app != null else Callable()))
+	var titre := _label("Les cartes", 24, TEXTE)
+	titre.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	entete.add_child(titre)
+	entete.add_child(_label("%d cr" % solde, 15, MUET))
+	colonne.add_child(entete)
+	var rangee := HBoxContainer.new()
+	rangee.add_theme_constant_override("separation", 18)
+	colonne.add_child(rangee)
+	var courante: Variant = Sauvegarde.get_carte_courante()
+	for e in Donnees.cartes_index:
+		var id := String(e.get("id", ""))
+		var r := resume_de_carte(id)
+		var possede: bool = Sauvegarde.possede_carte(id) or bool(e.get("gratuite", false))
+		var prix: int = Rec.prix_de_carte(r["def"], e)
+		var est_courante: bool = id == courante
+		var tuile := PanelContainer.new()
+		var st := StyleBoxFlat.new()
+		st.bg_color = TUILE
+		st.border_color = ACCENT if est_courante else BORD
+		st.set_border_width_all(1)
+		for coin in ["top_left", "top_right", "bottom_left", "bottom_right"]:
+			st.set("corner_radius_" + coin, 12)
+		st.set_content_margin_all(18)
+		tuile.add_theme_stylebox_override("panel", st)
+		tuile.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		tuile.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+		tuile.custom_minimum_size = Vector2(420, 0)
+		var v := VBoxContainer.new()
+		v.add_theme_constant_override("separation", 6)
+		tuile.add_child(v)
+		var tete := HBoxContainer.new()
+		var nom := _label(String(e.get("nom", r["def"].get("nom", id))), 20, TEXTE)
+		nom.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		tete.add_child(nom)
+		if est_courante:
+			tete.add_child(_label("ici", 12, ACCENT))
+		elif not possede:
+			tete.add_child(_label("verrouillée", 12, MUET))
+		v.add_child(tete)
+		v.add_child(_label(String(e.get("sousTitre", "")), 13, MUET))
+		v.add_child(_label("%d chapitre%s · %d gares" % [r["chapitres"], "s" if r["chapitres"] > 1 else "", r["gares"]], 13, TEXTE))
+		if r["entamee"]:
+			v.add_child(_label("%d / %d gares · ★ %d" % [r["faites"], r["gares"], r["etoiles"]], 13, OR))
+		if est_courante:
+			v.add_child(_bouton("Carte en cours", false, false, Callable()))
+		elif possede:
+			v.add_child(_bouton("Reprendre" if r["entamee"] else "Commencer", true, true,
+				app.choisir_carte.bind(id) if app != null else Callable()))
+		elif solde >= prix:
+			v.add_child(_bouton("Ouvrir · %d cr" % prix, true, true,
+				app.acheter_carte.bind(id) if app != null else Callable()))
+		else:
+			var manque := prix - solde
+			v.add_child(_label("Il te manque %d crédit%s — gagne des étoiles sur ta carte en cours." % [manque, "s" if manque > 1 else ""], 12, MUET))
+			v.add_child(_bouton("Ouvrir · %d cr" % prix, true, false, Callable()))
+		if not possede:
+			v.add_child(_bouton("Carte bancaire — bientôt", false, false, Callable()))
+		rangee.add_child(tuile)

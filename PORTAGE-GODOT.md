@@ -292,6 +292,22 @@ sont écrits ici parce qu'ils ne se voient qu'en jouant longtemps.
     la main, sur son dossier. `--check-only`, lui, ne les charge pas du tout
     (piège 6 du §8).
 
+11. **Un Label qui se replie n'a plus de largeur minimale.** Dans une rangée
+    (HBoxContainer), un Label en `AUTOWRAP_WORD_SMART` sans expansion se
+    réduit à zéro et s'écrit LETTRE PAR LETTRE, en colonne — les compteurs
+    « 0 cr » et « ★ 0 » du ruban, à la première capture. Un texte long se
+    replie ; un compteur ou une mesure, jamais (`_label(…, replie = false)`).
+
+12. **Un anneau de Natural Earth se ferme sur son premier point répété, et
+    le triangulateur en fait un dernier triangle dégénéré** — un par anneau,
+    mesuré sur les 68 anneaux d'Europe. Et une oreille peut encore traverser
+    le polygone sans s'inverser : la Grande-Bretagne (781 points) gardait un
+    triangle dont le centre tombe hors de l'anneau. Retirer le point répété,
+    puis passer l'anneau par Clipper (`Geometry2D.merge_polygons` avec rien)
+    : zéro triangle hors anneau après. Au passage, une lecture trop rapide de
+    la capture zoomée avait pris la mer du Nord pour un défaut de rendu ; ce
+    qui a tranché, c'est la mesure du centre des triangles, pas l'œil.
+
 ---
 
 ## 6. Ce que Godot offre, et que le prototype simule
@@ -538,6 +554,49 @@ Il suit une règle : **ce qui se vérifie tout seul d'abord**.
    retard 25 » : le record s'améliore, l'étoile reste, la position tient.
 7. **Les écrans** : ruban, cartes, relevé, tutoriel. En dernier, parce que c'est
    la partie qu'on jette et refait le plus volontiers.
+
+   ✅ **Fait le 3 septembre 2026.** `jeu/app.tscn` est la scène principale :
+   `jeu/app.gd` tient le ruban de la carte courante et sa progression vivante,
+   et passe la parole à trois écrans. `jeu/vue_ruban.gd` transpose
+   `js/parcours.js` — la projection cadrée sur le ruban (160 × 100, étirement
+   1,6), la caméra sur le voisinage de quatre gares (zoom log-interpolé,
+   0,75 s, 1,5 s pour un saut), le rail du seul chapitre vu avec ses quatre
+   états, les gares et leurs étoiles, le fond des pays en Polygon2D sous la
+   caméra ; le panneau de gauche porte les compteurs (série, grade et jauge,
+   crédits, diamants, étoiles), le chapitre et sa jauge à crans, le cartouche
+   de la gare qui vient (quais, directions, difficulté, barème, phrase), le
+   relevé du service (étoiles, retard, record, seuil visé, deux médailles), la
+   fête de chapitre (butin, rang, ce qui reste, zone, toutes les médailles), et
+   les boutons du prototype mot pour mot : Jouer · <ville>, Rejouer, Réessayer,
+   Passer · N cr avec le manque dit. Le voyage de fin de chapitre se joue
+   PENDANT la lecture du bilan, comme le prototype depuis le 1er septembre.
+   `jeu/vue_cartes.gd` transpose `vueCartes` (tuiles, avancement, Reprendre /
+   Commencer / Ouvrir · prix / manque, carte bancaire inerte). L'écran de jeu
+   s'emboîte (`demarrer`, `‹ Carte`, Échap) et rend la main avec son relevé
+   1,2 s après la fin, comme `endGame → showHub`.
+
+   **Le tutoriel** transpose l'accueil de `js/game.js` : la carte de
+   bienvenue, puis le repère (cerne pulsé + bulle, service gelé) sur le premier
+   train, son quai desservant (avec le piège des quais éclairés qui ne
+   desservent pas tous), le retard, l'arrêt à quai, le deuxième train, son
+   quai, l'objectif — puis deux repères opportunistes, le feu rouge et
+   l'accélération. Ne s'affiche qu'une fois (`Sauvegarde.set_accueilli`).
+
+   **Vérifié sans personne devant** grâce à `jeu/pilote.gd`
+   (`STATION_PILOTE="1.5 clic 700 461 | 9 clic 70 645 | 10 capture …"`) : sur
+   la graine 37162, Commencer → le repère sur le train de Bishop Auckland →
+   le quai 5 désigné, les deux quais éligibles allumés → le retard pointé avec
+   « Suivant ». Le relevé d'un échec revient sur la carte (☆☆☆, 30 min,
+   objectif manqué, « Il te manque 5 crédits », Passer grisé, Réessayer) ; une
+   sauvegarde forgée à quatre gares sur cinq puis Leeds gagné à trois étoiles
+   par le joueur scripté (graine 2) donne la fête : 12 / 15 ★, 1 ◆, trois
+   médailles, « Chapitre suivant · Le Yorkshire noir », et la caméra posée sur
+   Wakefield. `STATION_ZOOM=1` photographie le continent entier.
+
+   Ce qui n'est PAS repris, volontairement : les sons, les confettis, la
+   remontée animée du compteur d'étoiles, l'aide « ? », les confirmations de
+   sortie et de remise à zéro, la démo « limites » (`station.html?fin=`). Ce
+   sont les finitions du moteur, et le prototype les garde en référence.
 
    **Pris hors d'ordre le 3 septembre 2026, à la demande de Vincent : l'écran de
    jeu.** `jeu/jeu.tscn` (`jeu/vue_jeu.gd`) est la scène principale. Il ne

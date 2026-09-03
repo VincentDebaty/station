@@ -650,7 +650,12 @@ tient à la validation, pas au contenu :
    à le prouver, et rien n'oblige à la remplir davantage que le ruban d'Europe.
 4. **Tirer le bilan pour Godot** : ce que le portage reprend (les JSON de
    cartes et de fiches, les quatre contrôles, `store.js`) et ce qu'il jette
-   (tout le rendu SVG).
+   (tout le rendu SVG). **Fait, puis exécuté** (`PORTAGE-GODOT.md`) : le 3
+   septembre 2026, les sept étapes du portage sont passées — géométrie,
+   journée, enclenchement, rampe et récompense, sauvegarde, écrans — chacune
+   sous un oracle où le prototype juge Godot à l'identique. Le prototype web
+   reste la référence exécutable des règles ; le jeu se joue désormais sous
+   `godot --path .`.
 
 Les deux avertissements de `carte-check` restent, et **restent acceptés** :
 R4 (zones à 26/13/5/5, écart 5,2 pour 1) et R8 (`la-riviera-anglaise` et

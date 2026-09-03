@@ -15,7 +15,7 @@ config_version=5
 
 config/name="Station"
 config/description="Jeu d'aiguillage ferroviaire. Le poste d'aiguillage."
-run/main_scene="res://jeu/jeu.tscn"
+run/main_scene="res://jeu/app.tscn"
 config/features=PackedStringArray("4.7", "Mobile")
 
 [autoload]

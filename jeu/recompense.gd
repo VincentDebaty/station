@@ -69,6 +69,46 @@ const MEDAILLES := [
 ]
 
 
+## Les grades (js/catalog.js, GRADES) : ils nomment, ils ne paient plus.
+const GRADES := [
+	{"at": 0,    "nom": "Aiguilleur stagiaire"},
+	{"at": 25,   "nom": "Aiguilleur"},
+	{"at": 75,   "nom": "Chef de quai"},
+	{"at": 150,  "nom": "Chef de gare"},
+	{"at": 300,  "nom": "Chef de ligne"},
+	{"at": 600,  "nom": "Régulateur"},
+	{"at": 1000, "nom": "Inspecteur"},
+	{"at": 1600, "nom": "Directeur régional"},
+	{"at": 2400, "nom": "Directeur de réseau"},
+	{"at": 3500, "nom": "Légende du rail"},
+]
+
+
+## Le total d'étoiles, toutes gares et TOUTES cartes confondues : un fait de
+## compte. `tables` : les tables de progression (Sauvegarde.progression_toutes_cartes).
+static func etoiles_total(tables: Array) -> int:
+	var n := 0
+	for t in tables:
+		if t is Dictionary:
+			for id in t:
+				if t[id] is Dictionary:
+					n += Rub.etoiles_de(t[id])
+	return n
+
+
+## Le grade courant et la part du chemin vers le suivant (0..1 ; 1 au dernier).
+static func grade_de(points: int) -> Dictionary:
+	var i := 0
+	for k in GRADES.size():
+		if points >= int(GRADES[k]["at"]):
+			i = k
+	var suivant: Dictionary = GRADES[i + 1] if i + 1 < GRADES.size() else {}
+	var part := 1.0
+	if not suivant.is_empty():
+		part = float(points - int(GRADES[i]["at"])) / float(int(suivant["at"]) - int(GRADES[i]["at"]))
+	return {"i": i, "nom": GRADES[i]["nom"], "from": GRADES[i]["at"], "next": suivant, "part": part}
+
+
 ## `r.bestDelay === 0` : un sans-faute, et rien d'autre (null, absent : non).
 static func est_diamant(r: Dictionary) -> bool:
 	var bd: Variant = r.get("bestDelay")

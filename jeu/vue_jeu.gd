@@ -50,9 +50,29 @@ var ruban = null                     # le ruban de la carte qui porte la gare ; 
 var carte_id := ""
 var fiche_jouee: Dictionary          # la fiche telle que le ruban la sert (difficulty, gen recalculés)
 var fin_enregistree := false         # la fin de service est écrite une fois
+var app = null                       # l'application qui enchaîne les écrans ; null seul à l'écran
+var autonome := true                 # lancé comme scène : la gare vient de l'environnement
+var retour_lance := false            # la main est rendue une fois
+var bilan_final := {}                # le relevé pour le ruban (endGame → CARTE.bilan)
+var medailles_final: Array = []
+
+# --- le tutoriel : le premier service, guidé pas à pas (js/game.js, onboarding)
+var gel := false                     # le service est gelé par un repère
+var tuto := ""                       # la phase ; "" quand il n'y a rien à enseigner
+var tuto_premier := ""               # l'id du premier train guidé
+var tuto_feu_vu := false
+var tuto_vitesse_vu := false
+var coach_cible: Dictionary = {}     # {train: id} | {quai: pid} | {hud: "retard"|"vitesse"}
+var bulle: PanelContainer
+var bulle_texte: Label
+var bulle_bouton: Button
+var accueil: Control
 
 
 func _ready() -> void:
+	_construire_coach()
+	if not autonome:
+		return
 	var id := OS.get_environment("STATION_GARE")
 	if id == "":
 		id = "darlington"
@@ -86,6 +106,32 @@ func _ready() -> void:
 	plan.poser(fiche, G)
 	_nouvelle_journee()
 	Cap.eventuelle(self)
+
+
+## Un service commandé par l'application : la fiche, le ruban et sa carte.
+func demarrer(f: Dictionary, r, cid: String) -> void:
+	fiche = f
+	ruban = r
+	carte_id = cid
+	fiche_jouee = ruban.fiche_de_service(fiche) if ruban != null else fiche
+	var g := OS.get_environment("STATION_GRAINE")
+	graine = int(g) if g != "" else int(Time.get_unix_time_from_system()) % 100000
+	var v := OS.get_environment("STATION_VITESSE")
+	vitesse = float(v) if v != "" else 1.0
+	auto = OS.get_environment("STATION_AUTO") != ""
+	pause = false
+	retour_lance = false
+	G = Geo.construire(fiche)
+	if plan != null:
+		remove_child(plan)
+		plan.queue_free()
+	plan = Plan.new()
+	plan.autonome = false
+	plan.show_behind_parent = true
+	add_child(plan)
+	plan.poser(fiche, G)
+	_nouvelle_journee()
+	_tuto_demarrer()
 
 
 func _choisir_ruban(id: String) -> void:
@@ -141,6 +187,13 @@ func _enregistrer_fin() -> void:
 	var id := String(fiche.get("id", ""))
 	var stars := int(r["stars"])
 	var avant: Array = Rec.medailles_de(Rec.etat_recompenses(ruban, Sauvegarde.get_serie())) if ruban != null else []
+	# Étoiles et record de CETTE gare AVANT enregistrement : c'est la
+	# différence qui dit ce que le service a rapporté.
+	var prev: Dictionary = ruban.progression_de(id) if ruban != null else {}
+	bilan_final = {"gare": id, "stars": stars, "prevStars": Rub.etoiles_de(prev), "d": r["d"],
+		"prevBest": prev.get("bestDelay"), "perfect": r["perfect"], "failed": r["failed"], "win": r["win"],
+		"seuils": enc.seuils_de_service()}
+	medailles_final = []
 	if r["failed"]:
 		Sauvegarde.marquer_tentee(id)
 	else:
@@ -149,7 +202,8 @@ func _enregistrer_fin() -> void:
 	var texte := "enregistré : %s %d★, retard %d, série %d (record %d)" % [id, stars, int(r["d"]), serie["n"], serie["record"]]
 	if ruban != null:
 		var noms: PackedStringArray = []
-		for m in Rec.medailles_nouvelles(avant, Rec.medailles_de(Rec.etat_recompenses(ruban, Sauvegarde.get_serie()))):
+		medailles_final = Rec.medailles_nouvelles(avant, Rec.medailles_de(Rec.etat_recompenses(ruban, Sauvegarde.get_serie())))
+		for m in medailles_final:
 			noms.append(m["nom"])
 		if not noms.is_empty():
 			texte += " · médailles : " + ", ".join(noms)
@@ -162,7 +216,7 @@ func _enregistrer_fin() -> void:
 func _process(delta: float) -> void:
 	if enc == null:
 		return
-	if not pause and not enc.ended:
+	if not pause and not gel and not enc.ended:
 		var dt_min: float = delta * vitesse / Geo.SEC_PER_GAMEMIN
 		enc.game_min += dt_min
 		enc.tick(dt_min)
@@ -170,8 +224,20 @@ func _process(delta: float) -> void:
 			_joueur_scripte()
 	if enc.ended and not fin_enregistree:
 		_enregistrer_fin()
+		# Le relevé se lit sur la carte, sous la gare qu'on vient de tenir — le
+		# temps de voir le dernier convoi s'arrêter, puis la main est rendue.
+		if app != null and not retour_lance:
+			retour_lance = true
+			get_tree().create_timer(1.2).timeout.connect(_rendre_la_main)
 	_calculer_positions()
+	_tuto_tick()
+	_placer_bulle()
 	queue_redraw()
+
+
+func _rendre_la_main() -> void:
+	if app != null and enc != null and enc.ended:
+		app.fin_de_service(bilan_final, medailles_final)
 
 
 # ------------------------------------------------------------------
@@ -353,6 +419,8 @@ func _draw() -> void:
 	var d := enc.live_delay()
 	var cd: Color = VERT if d < 10 else (OR if d < 30 else ROUGE)
 	draw_string(police, Vector2(700 + wh / 2 - 12, 44), "+%d" % int(d), HORIZONTAL_ALIGNMENT_LEFT, -1, 22, cd)
+	if app != null:
+		draw_string(police, Vector2(28, 86), "‹ Carte", HORIZONTAL_ALIGNMENT_LEFT, -1, 13, MUET)
 	var etat := ("pause" if pause else "x%d" % int(vitesse)) + ("  ·  auto" if auto else "")
 	var we := police.get_string_size(etat, HORIZONTAL_ALIGNMENT_LEFT, -1, 14).x
 	draw_string(police, Vector2(1400 - 28 - we, 40), etat, HORIZONTAL_ALIGNMENT_LEFT, -1, 14, MUET)
@@ -360,8 +428,16 @@ func _draw() -> void:
 		"clic convoi → clic quai   ·   espace pause   ·   1 2 4 vitesse   ·   R rejouer   ·   graine %d, journée en %d ms   ·   %s" % [graine, duree_generation_ms, _niveau_texte()],
 		HORIZONTAL_ALIGNMENT_LEFT, -1, 12, MUET)
 
-	# --- la fin de service ----------------------------------------------------
-	if enc.ended:
+	# --- le repère du tutoriel : un cerne pulsé sur la cible ----------------------
+	if not coach_cible.is_empty():
+		var rc := _rect_cible()
+		if rc != Rect2():
+			var pulse := 0.5 + 0.5 * sin(Time.get_ticks_msec() / 180.0)
+			draw_rect(rc.grow(8 + 4 * pulse), Color(ACCENT, 0.9), false, 2.5)
+			draw_rect(rc.grow(14 + 6 * pulse), Color(ACCENT, 0.25), false, 1.5)
+
+	# --- la fin de service, seul à l'écran (l'application lit le relevé sur la carte)
+	if enc.ended and app == null:
 		draw_rect(Rect2(0, 0, 1400, 760), VOILE, true)
 		var r: Dictionary = enc.resultat
 		var titre: String = "Service interrompu" if r.get("failed", false) \
@@ -397,12 +473,18 @@ func _unhandled_input(event: InputEvent) -> void:
 				pause = false
 				_nouvelle_journee()
 			KEY_ESCAPE:
-				enc.selected = null
+				if app != null and enc.selected == null:
+					app.abandonner_service()
+				else:
+					enc.selected = null
 		return
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-		if enc.ended:
+		var m: Vector2 = event.position
+		if app != null and Rect2(20, 20, 260, 72).has_point(m):
+			app.abandonner_service()
 			return
-		var m: Vector2 = get_global_mouse_position()
+		if enc.ended or tuto == "accueil":
+			return
 		# un convoi ?
 		for t in enc.trains:
 			if not positions.has(t.id):
@@ -412,16 +494,325 @@ func _unhandled_input(event: InputEvent) -> void:
 					var dit := enc.clic_train(t)
 					if dit != "":
 						print(t.id + " — " + dit)
+					if enc.selected == t:
+						_tuto_train_touche(t)
 					return
 		# un quai ?
 		for q in G["platforms"]:
 			var r := Rect2(Geo.PLAT_X1, float(q["cy"]) - Geo.PLAT_H / 2.0, Geo.PLAT_LEN, Geo.PLAT_H)
 			if r.has_point(m):
+				var choisi = enc.selected
 				var dit := enc.clic_quai(q["id"])
 				if dit != "":
 					print("quai %d — %s" % [int(q["id"]), dit])
+				if choisi != null and choisi.target != null:
+					_tuto_quai_choisi()
 				return
 		enc.selected = null
+
+
+# ------------------------------------------------------------------
+# Le tutoriel — le premier service, guidé avec deux trains
+# ------------------------------------------------------------------
+# Transposition de l'accueil de js/game.js : un repère visuel (cerne pulsé +
+# bulle) dit EXACTEMENT quoi toucher, le service se gèle pendant chaque repère
+# et reprend quand le joueur agit. Ne s'affiche qu'une fois (Sauvegarde,
+# accueilli). Deux étapes sont opportunistes : le premier feu rouge, et le
+# moment où il n'y a plus rien à aiguiller.
+func _construire_coach() -> void:
+	bulle = PanelContainer.new()
+	var st := StyleBoxFlat.new()
+	st.bg_color = Color("#151d2e")
+	st.border_color = ACCENT
+	st.set_border_width_all(1)
+	for coin in ["top_left", "top_right", "bottom_left", "bottom_right"]:
+		st.set("corner_radius_" + coin, 10)
+	st.set_content_margin_all(14)
+	bulle.add_theme_stylebox_override("panel", st)
+	bulle.custom_minimum_size = Vector2(340, 0)
+	bulle.size = Vector2(340, 0)
+	var v := VBoxContainer.new()
+	v.add_theme_constant_override("separation", 10)
+	bulle.add_child(v)
+	bulle_texte = Label.new()
+	bulle_texte.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	bulle_texte.custom_minimum_size = Vector2(312, 0)
+	bulle_texte.add_theme_font_size_override("font_size", 14)
+	bulle_texte.add_theme_color_override("font_color", TEXTE)
+	v.add_child(bulle_texte)
+	bulle_bouton = Button.new()
+	bulle_bouton.text = "Suivant"
+	bulle_bouton.pressed.connect(_coach_suivant)
+	v.add_child(bulle_bouton)
+	bulle.visible = false
+	add_child(bulle)
+
+	# L'accueil : un voile sur toute la scène, et la carte au centre. Le voile
+	# est un enfant direct — dans un CenterContainer il serait réduit à rien.
+	accueil = Control.new()
+	accueil.set_anchors_preset(Control.PRESET_FULL_RECT)
+	var voile := ColorRect.new()
+	voile.color = VOILE
+	voile.set_anchors_preset(Control.PRESET_FULL_RECT)
+	accueil.add_child(voile)
+	var centre := CenterContainer.new()
+	centre.set_anchors_preset(Control.PRESET_FULL_RECT)
+	accueil.add_child(centre)
+	var carte := PanelContainer.new()
+	carte.add_theme_stylebox_override("panel", st.duplicate())
+	carte.custom_minimum_size = Vector2(520, 0)
+	var cv := VBoxContainer.new()
+	cv.add_theme_constant_override("separation", 12)
+	carte.add_child(cv)
+	for ligne in [["Bienvenue", 12, ACCENT], ["Le poste d'aiguillage", 26, TEXTE],
+			["Vous dirigez la gare : faites entrer et repartir chaque train à l'heure.", 15, TEXTE],
+			["Je vous montre, pas à pas, avec deux trains — les repères indiquent quoi toucher. Rien ne presse.", 13, MUET]]:
+		var l := Label.new()
+		l.text = ligne[0]
+		l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		l.add_theme_font_size_override("font_size", ligne[1])
+		l.add_theme_color_override("font_color", ligne[2])
+		cv.add_child(l)
+	var b := Button.new()
+	b.text = "Commencer"
+	b.pressed.connect(_accueil_ferme)
+	cv.add_child(b)
+	centre.add_child(carte)
+	accueil.visible = false
+	add_child(accueil)
+	# Les ancres pleines ne prennent leur taille qu'une fois dans l'arbre.
+	accueil.set_deferred("size", Vector2(1400, 760))
+	voile.set_deferred("size", Vector2(1400, 760))
+	centre.set_deferred("size", Vector2(1400, 760))
+
+
+func _tuto_demarrer() -> void:
+	tuto = ""
+	coach_cible = {}
+	bulle.visible = false
+	accueil.visible = false
+	gel = false
+	if app == null or auto or Sauvegarde.get_accueilli():
+		return
+	tuto_premier = ""
+	tuto_feu_vu = false
+	tuto_vitesse_vu = false
+	tuto = "accueil"
+	gel = true
+	accueil.visible = true
+
+
+func _accueil_ferme() -> void:
+	if tuto != "accueil":
+		return
+	accueil.visible = false
+	tuto = "attente1"
+	gel = false
+
+
+func _coach(cible: Dictionary, texte: String, bouton: String = "") -> void:
+	coach_cible = cible
+	bulle_texte.text = texte
+	bulle_bouton.text = bouton if bouton != "" else "Suivant"
+	bulle_bouton.visible = bouton != ""
+	bulle.visible = true
+	_placer_bulle()
+
+
+func _cacher_coach() -> void:
+	coach_cible = {}
+	bulle.visible = false
+
+
+## Un quai qui dessert la destination du train ET libre : le bon choix.
+func _quai_desservant(t) -> Variant:
+	var links: Array = enc.links.get(t.from, [])
+	var bons: Array = []
+	var avec_chemin: Array = []
+	for pid in links:
+		if enc.paths.has("out:%s:%d" % [t.to, int(pid)]):
+			avec_chemin.append(pid)
+			if not enc.platform_reserved(pid) and not enc.platform_closed(pid):
+				bons.append(pid)
+	if not bons.is_empty():
+		return bons[0]
+	if not avec_chemin.is_empty():
+		return avec_chemin[0]
+	return links[0] if not links.is_empty() else null
+
+
+## Combien de quais s'allument, et combien desservent vraiment la destination.
+func _comptes_quais(t) -> Dictionary:
+	var lit := 0
+	var sert := 0
+	for pid in enc.links.get(t.from, []):
+		if not enc.platform_claimed(pid) and not enc.platform_closed(pid):
+			lit += 1
+			if enc.paths.has("out:%s:%d" % [t.to, int(pid)]):
+				sert += 1
+	return {"lit": lit, "sert": sert}
+
+
+func _train_pret(exclure: String) -> Variant:
+	for o in enc.trains:
+		if o.freight or o.target != null or not o.settled or o.id == exclure:
+			continue
+		if o.state == Enc.S_WAITING or o.state == Enc.S_APPROACHING:
+			return o
+	return null
+
+
+func _train(id: String) -> Variant:
+	for o in enc.trains:
+		if o.id == id:
+			return o
+	return null
+
+
+func _tuto_tick() -> void:
+	if tuto == "" or enc.ended:
+		return
+	match tuto:
+		"attente1":
+			var choisi = null
+			for o in enc.trains:
+				if o.freight or o.target != null or not o.settled:
+					continue
+				if o.state != Enc.S_WAITING and o.state != Enc.S_APPROACHING:
+					continue
+				var n := _comptes_quais(o)
+				if n["lit"] > 1 and n["sert"] < n["lit"]:
+					choisi = o
+					break
+				if choisi == null:
+					choisi = o
+			if choisi == null:
+				return
+			tuto_premier = choisi.id
+			gel = true
+			tuto = "touche1"
+			_coach({"train": choisi.id}, "Voici un train qui s'annonce. Touchez-le pour le choisir.")
+		"quai1":
+			var t = _train(tuto_premier)
+			if t == null or t.wrong_platform or t.state == Enc.S_DONE or t.state == Enc.S_MOVING_BACK or t.state == Enc.S_MOVING_OUT:
+				tuto = "attente2"
+				return
+			if t.state != Enc.S_DWELL:
+				return
+			gel = true
+			tuto = "aquai"
+			_coach({"train": t.id}, "Il est à quai. Les voyageurs montent et descendent : deux minutes au minimum. Et il ne repartira jamais avant son heure de départ, celle du cadran — même prêt, il attend l'heure. Tout cela se fait seul, vous n'avez rien à faire.", "Compris")
+		"attente2":
+			var t = _train_pret(tuto_premier)
+			if t == null:
+				return
+			gel = true
+			tuto = "touche2"
+			_coach({"train": t.id}, "Un autre train arrive. Touchez-le à son tour.")
+		"libre":
+			_tuto_veille()
+
+
+func _tuto_veille() -> void:
+	if not tuto_feu_vu:
+		for o in enc.trains:
+			if o.holding and o.state == Enc.S_DWELL:
+				tuto_feu_vu = true
+				gel = true
+				tuto = "feu"
+				_coach({"train": o.id}, "Feu rouge : ce train est prêt, mais sa voie de sortie est occupée. Il repartira seul dès qu'elle se libère — vous n'avez rien à faire, et le retard court pendant ce temps.", "Compris")
+				return
+	if not tuto_vitesse_vu and not enc.trains.is_empty():
+		var occupe := false
+		for o in enc.trains:
+			if not o.freight and (o.state == Enc.S_WAITING or o.state == Enc.S_APPROACHING or o.state == Enc.S_MOVING_IN):
+				occupe = true
+				break
+		if not occupe:
+			tuto_vitesse_vu = true
+			gel = true
+			tuto = "vitesse"
+			_coach({"hud": "vitesse"}, "Tous les trains présents sont à quai : plus rien à décider pour l'instant. Accélérez (touches 2 et 4) pour ne pas attendre — vous pourrez ralentir dès qu'un train s'annonce.", "Compris")
+
+
+func _tuto_train_touche(t) -> void:
+	if tuto != "touche1" and tuto != "touche2":
+		return
+	var premier := tuto == "touche1"
+	var pid: Variant = _quai_desservant(t)
+	var n := _comptes_quais(t)
+	var piege: bool = n["lit"] > 1 and n["sert"] < n["lit"]
+	tuto = "choix1" if premier else "choix2"
+	var texte: String
+	if premier:
+		texte = "Plusieurs quais s'allument : le train peut entrer sur chacun. Mais tous ne repartent pas vers sa destination — celui-ci, oui." if piege 			else "Envoyez-le sur ce quai éclairé : il dessert sa destination."
+	else:
+		texte = "À nouveau plusieurs quais possibles. Celui-ci dessert sa destination." if piege 			else "Envoyez-le sur ce quai éclairé."
+	_coach({"quai": pid} if pid != null else {}, texte)
+
+
+func _tuto_quai_choisi() -> void:
+	if tuto == "choix1":
+		tuto = "retard"
+		_coach({"hud": "retard"}, "Il entre et s'arrête. Ici s'affiche le retard cumulé du service — gardez-le au plus bas.", "Suivant")
+	elif tuto == "choix2":
+		tuto = "objectif"
+		_coach({"hud": "retard"}, "Un quai occupé peut quand même être choisi : le convoi attend dehors, sans pénalité — seule compte l'heure de départ. À vous ! Terminez le service avec moins de 30 min de retard pour décrocher une étoile.", "Continuer")
+
+
+func _coach_suivant() -> void:
+	match tuto:
+		"retard":
+			tuto = "quai1"
+			_cacher_coach()
+			gel = false
+		"aquai":
+			tuto = "attente2"
+			_cacher_coach()
+			gel = false
+		"objectif":
+			tuto = "libre"
+			_cacher_coach()
+			Sauvegarde.set_accueilli(true)
+			gel = false
+		"feu", "vitesse":
+			tuto = "libre"
+			_cacher_coach()
+			gel = false
+
+
+## Le rectangle d'écran de la cible du repère, ou Rect2() sans cible visible.
+func _rect_cible() -> Rect2:
+	if coach_cible.has("train"):
+		var id: String = coach_cible["train"]
+		if not positions.has(id) or positions[id].is_empty():
+			return Rect2()
+		var tete: Dictionary = positions[id][0]
+		return Rect2(tete["x"] - Geo.CAR_LEN / 2.0, tete["y"] - Geo.CAR_H / 2.0, Geo.CAR_LEN, Geo.CAR_H)
+	if coach_cible.has("quai"):
+		for q in G["platforms"]:
+			if q["id"] == coach_cible["quai"]:
+				return Rect2(Geo.PLAT_X1, float(q["cy"]) - Geo.PLAT_H / 2.0, Geo.PLAT_LEN, Geo.PLAT_H)
+		return Rect2()
+	if coach_cible.has("hud"):
+		return Rect2(700 + 18, 18, 70, 34) if coach_cible["hud"] == "retard" else Rect2(1400 - 28 - 90, 20, 90, 28)
+	return Rect2()
+
+
+## La bulle se pose sous la cible si elle est haute, au-dessus sinon, et
+## reste entièrement à l'écran.
+func _placer_bulle() -> void:
+	if not bulle.visible:
+		return
+	var rc := _rect_cible()
+	var taille := bulle.get_combined_minimum_size()
+	if rc == Rect2():
+		bulle.position = Vector2(700 - taille.x / 2, 760 - taille.y - 26)
+		return
+	var dessous: bool = rc.get_center().y < 760 * 0.5
+	var x: float = clamp(rc.get_center().x - taille.x / 2, 8.0, 1400.0 - taille.x - 8.0)
+	var y: float = rc.end.y + 22 if dessous else rc.position.y - 22 - taille.y
+	bulle.position = Vector2(x, y)
 
 
 ## Le joueur scripté de l'oracle, pour une démonstration sans personne devant.
