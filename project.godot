@@ -27,7 +27,13 @@ window/size/viewport_width=1400
 window/size/viewport_height=760
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
-window/handheld/orientation=1
+; PAYSAGE, DANS LES DEUX SENS. L'énumération de Godot est trompeuse : 0 est le
+; paysage, 1 le PORTRAIT — et c'était 1. L'app s'ouvrait donc debout, le gril
+; tassé en haut d'un écran de 3 045 unités de haut (mesuré sur l'iPhone de
+; Vincent le 3 septembre 2026). 4 est le paysage libre, dans les deux sens :
+; un poste d'aiguillage se lit en largeur, et le prototype web bloquait déjà
+; le portrait.
+window/handheld/orientation=4
 
 [rendering]
 

@@ -344,11 +344,16 @@ func _draw() -> void:
 			plan.faisceau = f
 			plan.queue_redraw()
 	var t := Time.get_ticks_msec() / 1000.0
+	var d := decalage()
+	if plan != null and plan.position != d:
+		plan.position = d
+	draw_set_transform(d)
 	_dessiner_quais(sel, t)
 	_dessiner_itineraires()
 	_dessiner_convois(sel, t)
 	_dessiner_signaux(t)
 	_dessiner_badges(t)
+	draw_set_transform(Vector2.ZERO)
 	_dessiner_hud(t)
 	_dessiner_coach(t)
 	_dessiner_fin()
@@ -509,7 +514,7 @@ func _dessiner_convois(sel, t: float) -> void:
 			var h: float = (Geo.CAR_H if i == 0 else Geo.CAR_H - 4.0) * Sty.UIK
 			var rayon: float = (8.0 if i == 0 else 5.0) * Sty.UIK
 			var r := Rect2(-Geo.CAR_LEN / 2.0, -h / 2.0, Geo.CAR_LEN, h)
-			draw_set_transform(Vector2(p["x"], p["y"]), deg_to_rad(p["ang"]), Vector2.ONE)
+			draw_set_transform(Vector2(p["x"], p["y"]) + decalage(), deg_to_rad(p["ang"]), Vector2.ONE)
 
 			# LE HALO D'ÉTAT, sous la caisse : quatre couches concentriques de
 			# plus en plus larges et transparentes. C'est le signal PRINCIPAL de
@@ -552,7 +557,7 @@ func _dessiner_convois(sel, t: float) -> void:
 			if i == 0:
 				Sty.texte_centre(self, Sty.sans(700), int(round(12 * Sty.UIK)), Vector2.ZERO,
 					String(G["dest_abbr"].get(tr.to, "")), Sty.ETIQUETTE_TRAIN)
-		draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+		draw_set_transform(decalage())      # on rend la main au décalage du monde
 
 
 # --- le signal d'arrêt ------------------------------------------------------
@@ -632,6 +637,16 @@ func _dessiner_badges(t: float) -> void:
 ## bandeau s'ancre donc sur les bords réels, pas sur la base.
 func size_ecran() -> Vector2:
 	return get_viewport_rect().size
+
+
+## LE PLAN SE RECENTRE. Avec `stretch: expand`, un écran plus allongé que la
+## base donne un viewport plus large, et Godot ajoute la place À DROITE :
+## le gril se retrouvait décalé de 6 % vers la gauche sur un iPhone (mesuré
+## le 3 septembre 2026 — ni `expand` ni `keep_height` ne recentrent). Le
+## BANDEAU, lui, garde les vrais bords : c'est là qu'on va le chercher.
+func decalage() -> Vector2:
+	var d := (size_ecran() - Vector2(1400.0, 760.0)) / 2.0
+	return Vector2(max(0.0, d.x), max(0.0, d.y))
 
 
 ## Une chip de verre dépoli : le gabarit commun du bandeau (#hud-clock,
@@ -848,6 +863,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			return
 		if enc.ended or tuto == "accueil":
 			return
+		m -= decalage()          # du geste à l'écran au plan de la gare
 		# un convoi ?
 		for t in enc.trains:
 			if not positions.has(t.id):
@@ -1161,16 +1177,21 @@ func _coach_suivant() -> void:
 
 ## Le rectangle d'écran de la cible du repère, ou Rect2() sans cible visible.
 func _rect_cible() -> Rect2:
+	# Le projecteur et la bulle se posent à l'ÉCRAN : une cible du monde y
+	# arrive décalée comme le reste du plan.
+	var d := decalage()
 	if coach_cible.has("train"):
 		var id: String = coach_cible["train"]
 		if not positions.has(id) or positions[id].is_empty():
 			return Rect2()
 		var tete: Dictionary = positions[id][0]
-		return Rect2(tete["x"] - Geo.CAR_LEN / 2.0, tete["y"] - Geo.CAR_H / 2.0, Geo.CAR_LEN, Geo.CAR_H)
+		return Rect2(Vector2(tete["x"] - Geo.CAR_LEN / 2.0, tete["y"] - Geo.CAR_H * Sty.UIK / 2.0) + d,
+			Vector2(Geo.CAR_LEN, Geo.CAR_H * Sty.UIK))
 	if coach_cible.has("quai"):
 		for q in G["platforms"]:
 			if q["id"] == coach_cible["quai"]:
-				return Rect2(Geo.PLAT_X1, float(q["cy"]) - Geo.PLAT_H / 2.0, Geo.PLAT_LEN, Geo.PLAT_H)
+				return Rect2(Vector2(Geo.PLAT_X1, float(q["cy"]) - Geo.PLAT_H / 2.0) + d,
+					Vector2(Geo.PLAT_LEN, Geo.PLAT_H))
 		return Rect2()
 	if coach_cible.has("hud"):
 		# les vraies zones du bandeau, telles que le dernier rendu les a posées
