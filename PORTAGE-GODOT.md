@@ -308,6 +308,18 @@ sont écrits ici parce qu'ils ne se voient qu'en jouant longtemps.
     la capture zoomée avait pris la mer du Nord pour un défaut de rendu ; ce
     qui a tranché, c'est la mesure du centre des triangles, pas l'œil.
 
+13. **Un Control aux ancres pleines sous un Node2D n'a aucun parent à
+    remplir : sa taille est zéro.** La carte d'accueil du tutoriel, centrée
+    dans un CenterContainer ancré plein sous l'écran de jeu (un Node2D), se
+    centrait sur l'origine, hors écran — et le service restait gelé derrière
+    un voile sans bouton. Trouvé par Vincent au premier lancement, le 3
+    septembre 2026 ; mes captures ne l'avaient pas vu parce que le lancement
+    direct (`STATION_JOUER`) construisait et montrait la carte dans la même
+    image, avant que la mise en page ne retombe. Sous un Node2D, les Controls
+    reçoivent une `size` explicite, pas des ancres — et une vérification
+    passe par le chemin du joueur (`STATION_PILOTE`, un clic sur « Jouer »),
+    pas par un raccourci.
+
 ---
 
 ## 6. Ce que Godot offre, et que le prototype simule

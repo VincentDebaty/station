@@ -549,14 +549,19 @@ func _construire_coach() -> void:
 
 	# L'accueil : un voile sur toute la scène, et la carte au centre. Le voile
 	# est un enfant direct — dans un CenterContainer il serait réduit à rien.
+	# TAILLES EXPLICITES, PAS D'ANCRES : sous un Node2D, un Control aux ancres
+	# pleines n'a aucun parent à remplir, et sa taille retombe à zéro — la
+	# carte se centrait alors sur l'origine, hors écran, et le service restait
+	# gelé derrière un voile sans bouton. Vu par Vincent au premier lancement,
+	# le 3 septembre 2026 ; le lancement direct (STATION_JOUER) le masquait.
 	accueil = Control.new()
-	accueil.set_anchors_preset(Control.PRESET_FULL_RECT)
+	accueil.size = Vector2(1400, 760)
 	var voile := ColorRect.new()
 	voile.color = VOILE
-	voile.set_anchors_preset(Control.PRESET_FULL_RECT)
+	voile.size = Vector2(1400, 760)
 	accueil.add_child(voile)
 	var centre := CenterContainer.new()
-	centre.set_anchors_preset(Control.PRESET_FULL_RECT)
+	centre.size = Vector2(1400, 760)
 	accueil.add_child(centre)
 	var carte := PanelContainer.new()
 	carte.add_theme_stylebox_override("panel", st.duplicate())
@@ -580,10 +585,6 @@ func _construire_coach() -> void:
 	centre.add_child(carte)
 	accueil.visible = false
 	add_child(accueil)
-	# Les ancres pleines ne prennent leur taille qu'une fois dans l'arbre.
-	accueil.set_deferred("size", Vector2(1400, 760))
-	voile.set_deferred("size", Vector2(1400, 760))
-	centre.set_deferred("size", Vector2(1400, 760))
 
 
 func _tuto_demarrer() -> void:
