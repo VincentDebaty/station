@@ -17,6 +17,10 @@ config/name="Station"
 config/description="Jeu d'aiguillage ferroviaire. Le poste d'aiguillage."
 run/main_scene="res://jeu/app.tscn"
 config/features=PackedStringArray("4.7", "Mobile")
+; L'icône de l'application. Le prototype a les siennes (icons/), mais ce dossier
+; porte un .gdignore : Godot ne le voit pas. D'où cette copie, la seule du
+; projet — une icône est un asset du moteur, pas une donnée de jeu.
+config/icon="res://jeu/icone.png"
 
 [autoload]
 

@@ -6,3 +6,9 @@ __pycache__/
 .godot/
 .import/
 *.translation
+
+# Le préréglage d'export porte des réglages de COMPTE (équipe Apple,
+# identités de signature) : ils sont propres à la machine, pas au projet.
+# La procédure, elle, est dans PORTAGE-GODOT.md.
+export_presets.cfg
+build/
