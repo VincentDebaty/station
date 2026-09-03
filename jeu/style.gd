@@ -63,8 +63,20 @@ static var HUD_K := 1.0
 
 ## À appeler une fois l'écran connu. Sans elle, les deux facteurs valent 1 et
 ## le jeu s'affiche comme au bureau — ce qui est le bon repli.
+## STATION_TACTILE=1 force le régime du téléphone au bureau : c'est le seul
+## moyen de VOIR la passe tactile sans appareil, l'exportateur iOS de Godot 4.7
+## ne produisant que l'architecture de l'appareil (pas de simulateur).
+## STATION_TACTILE=0 force l'inverse, pour comparer.
 static func calibrer(viewport: Viewport) -> void:
-	UIK = 1.5 if DisplayServer.is_touchscreen_available() else 1.0
+	var force := OS.get_environment("STATION_TACTILE")
+	var tactile: bool = force == "1" if force != "" else DisplayServer.is_touchscreen_available()
+	UIK = 1.5 if tactile else 1.0
+	if force == "1":
+		# Au bureau, la fenêtre est déjà à l'échelle du viewport : sans cela le
+		# bandeau ne bougerait pas, et l'essai ne montrerait que la moitié de la
+		# passe. 1,93 est ce que la mesure donne sur un iPhone 17 en paysage.
+		HUD_K = 1.93
+		return
 	var dpi := DisplayServer.screen_get_dpi()
 	var large := float(DisplayServer.window_get_size().x)
 	var unites := viewport.get_visible_rect().size.x

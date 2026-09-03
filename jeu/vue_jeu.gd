@@ -754,10 +754,13 @@ func _dessiner_hud(t: float) -> void:
 	# Le jeu web est « 100 % visuel » et n'a aucune bande de texte. Celle-ci est
 	# un outil de mise au point — c'est elle qui donne la graine à citer dans un
 	# retour de test. Volontairement discrète, et elle partira au moteur final.
-	draw_string(sans, Vector2(28 * k, size_ecran().y - 20 * k),
+	# Elle ne suit PAS le facteur du bandeau : grossie, elle déborde de l'écran
+	# d'un téléphone (mesuré le 3 septembre 2026). Petite, elle reste lisible
+	# quand on la cherche et invisible quand on joue — ce qu'on veut d'elle.
+	draw_string(sans, Vector2(18, size_ecran().y - 14),
 		"clic convoi → clic quai   ·   espace pause   ·   1 2 4 vitesse   ·   R rejouer   ·   graine %d, journée en %d ms   ·   %s"
 			% [graine, duree_generation_ms, _niveau_texte()],
-		HORIZONTAL_ALIGNMENT_LEFT, -1, ti.call(11), Color(Sty.MUET, 0.55))
+		HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color(Sty.MUET, 0.55))
 
 
 # --- le repère du tutoriel --------------------------------------------------
