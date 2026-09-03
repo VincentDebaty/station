@@ -1,0 +1,17 @@
+{
+ "derive_le": "2026-09-03",
+ "depuis": [
+  "js/geo.js",
+  "data/lines.js",
+  "data/places.js",
+  "data/worldmap.js"
+ ],
+ "fichiers": [
+  "geo.json",
+  "lines.json",
+  "line-countries.json",
+  "places.json",
+  "place-aliases.json",
+  "worldmap.json"
+ ]
+}

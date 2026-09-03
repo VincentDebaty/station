@@ -42,10 +42,13 @@ outils qui ne bougent pas.
 | `data/places.js` | points de passage | ce qui donne sa forme au trait sans être jouable |
 | `data/worldmap.js` | Natural Earth | **généré, jamais édité à la main** |
 
-Godot lit du JSON nativement (`JSON.parse_string`). `geo.js`, `lines.js` et
-`places.js` sont du JS déclaratif — trois fichiers à convertir en JSON une fois,
-mécaniquement, ou à charger via un petit transpileur d'import. **Aucune décision
-à prendre**, aucune donnée à re-saisir.
+Godot lit du JSON nativement. `js/geo.js`, `data/lines.js`, `data/places.js` et
+`data/worldmap.js` sont du JS déclaratif : **`tools/vers-json.mjs` en DÉRIVE**
+`data/derive/*.json`, en les évaluant dans un `node:vm` comme le fait déjà
+`net-check`. Le JS reste la source, le JSON en découle, le prototype n'est pas
+touché — convertir une fois aurait créé une deuxième source qui dérive au
+premier changement. Relancer l'outil après avoir touché un de ces quatre
+fichiers.
 
 ### Les quatre contrôles
 
@@ -304,10 +307,13 @@ sont écrits ici parce qu'ils ne se voient qu'en jouant longtemps.
 
 Il suit une règle : **ce qui se vérifie tout seul d'abord**.
 
-1. **Charger les données et les afficher.** Les 401 fiches, les 2 cartes,
-   `geo.js`. Rien de jouable — mais si le catalogue s'affiche, la moitié du
-   risque de portage est levée, et les quatre contrôles continuent de tourner à
-   côté sans rien savoir de Godot.
+1. **Charger les données et les afficher.** — ✅ **FAIT le 1er septembre 2026.**
+   Les 401 fiches, les 401 brevets, les 2 cartes, le réseau dérivé : chargés en
+   **23 ms**, affichés, sans une erreur. Les libellés accentués et les drapeaux
+   passent intacts. `project.godot` est à la racine, les dossiers du prototype
+   portent un `.gdignore`, et les quatre contrôles continuent de tourner à côté
+   sans rien savoir de Godot. Scène : `jeu/catalogue.tscn`, autoload
+   `jeu/donnees.gd`.
 2. **La géométrie générée** (`engine.js`) : une gare qui se dessine à partir de
    sa fiche, avec le kit modulaire. C'est là qu'on découvre si le kit tient pour
    401 gares.

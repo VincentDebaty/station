@@ -1,0 +1,41 @@
+; Projet Godot de Station — POSÉ À LA RACINE DU DÉPÔT, volontairement.
+;
+; La raison est celle qui a guidé six mois de travail : UNE SEULE COPIE des
+; données. `res://data/stations/...` pointe directement sur les 401 fiches que
+; lisent aussi les quatre contrôles Node et le prototype web. Un sous-dossier
+; `godot/` aurait imposé de dupliquer `data/` ou d'ajouter une étape de copie —
+; exactement le risque de désynchronisation que le projet évite.
+;
+; Les dossiers du prototype (js, css, tools, prototypes, icons, assets) portent
+; un `.gdignore` : Godot ne les voit pas. Voir PORTAGE-GODOT.md.
+
+config_version=5
+
+[application]
+
+config/name="Station"
+config/description="Jeu d'aiguillage ferroviaire. Le poste d'aiguillage."
+run/main_scene="res://jeu/catalogue.tscn"
+config/features=PackedStringArray("4.7", "Mobile")
+
+[autoload]
+
+Donnees="*res://jeu/donnees.gd"
+
+[display]
+
+; LE VIEWPORT REPREND LE GABARIT DU PROTOTYPE — 1400 x 760, axe à y=400.
+; Une unité monde du prototype vaut donc UN pixel Godot : CAR_LEN 30 reste 30,
+; PLAT_H 42 reste 42, PLAT_LEN 262 reste 262. Le gabarit se transpose
+; littéralement, sans facteur d'échelle à retenir (PORTAGE-GODOT.md §4).
+window/size/viewport_width=1400
+window/size/viewport_height=760
+window/stretch/mode="canvas_items"
+window/stretch/aspect="expand"
+window/handheld/orientation=1
+
+[rendering]
+
+renderer/rendering_method="mobile"
+renderer/rendering_method.mobile="mobile"
+environment/defaults/default_clear_color=Color(0.0549, 0.0784, 0.1255, 1)
