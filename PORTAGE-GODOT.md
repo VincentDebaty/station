@@ -333,6 +333,44 @@ sont écrits ici parce qu'ils ne se voient qu'en jouant longtemps.
 
 ---
 
+## 5 bis. POSER LE JEU SUR UN iPHONE
+
+`tools/ios.sh` fait tout — export, signature, installation, lancement — et
+`tools/ios.sh --etat` dit ce qui manque. Il y a **une seule chose qu'aucun
+script ne peut faire** : ajouter un compte Apple à Xcode. Il y faut un mot de
+passe et une double authentification, donc une main humaine, une fois pour
+toutes (Xcode → Réglages → Comptes → + → Apple ID). Un compte GRATUIT suffit
+pour son propre téléphone ; l'app expire alors au bout de sept jours et se
+réinstalle en relançant le script.
+
+La première fois seulement, il faut aussi ouvrir `build/ios/Station.xcodeproj`
+et cocher « Automatically manage signing » avec son équipe : Xcode crée le
+profil et enregistre l'appareil. Ensuite le script se débrouille seul.
+
+**Le choix de l'équipe n'est pas neutre.** La seule équipe présente sur la
+machine de Vincent est celle de sa société ; l'utiliser enregistrerait un
+identifiant d'app dans un compte développeur d'entreprise, pour un projet
+personnel. Un Apple ID personnel l'évite.
+
+**Deux pièges mesurés le 3 septembre 2026 :**
+
+· **L'export iOS refuse avec un message VIDE en ligne de commande** quand le
+projet n'active pas la compression de texture ETC2/ASTC — l'avertissement ne
+vit que dans le bandeau de la fenêtre d'export de l'éditeur. Une heure de
+suppositions à l'aveugle, puis l'éditeur ouvert a tout dit en une ligne rouge.
+**Quand la ligne de commande se tait, ouvrir l'éditeur.** Le réglage est
+désormais dans `project.godot` (`textures/vram_compression/import_etc2_astc`).
+
+· **Le simulateur iOS est une impasse** : l'exportateur de Godot 4.7 ne produit
+que l'architecture de l'appareil (`arm64`), et l'édition de liens pour le
+simulateur échoue sur un `_main` introuvable. D'où `STATION_TACTILE=1`, qui
+force au bureau le régime du téléphone (UIK 1,5, facteur de bandeau 1,93 —
+ce que la mesure donne sur un iPhone en paysage). C'est le seul moyen de voir
+la passe tactile sans appareil, et il a servi tout de suite : la ligne de mise
+au point débordait de l'écran une fois grossie.
+
+---
+
 ## 6. Ce que Godot offre, et que le prototype simule
 
 - **`Path2D` / `PathFollow2D`** — le placement par abscisse curviligne existe
