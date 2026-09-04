@@ -831,8 +831,16 @@ func rebatir() -> void:
 		colonne.add_child(_bloc_bilan(fete.is_empty()))
 	if not fete.is_empty():
 		colonne.add_child(_bloc_fete())
+	# APRÈS UN SERVICE, LA FICHE COMPLÈTE CÈDE LA PLACE AU RELEVÉ. Les deux
+	# ensemble ne tiennent pas sur un téléphone, et elles ne se lisent pas au
+	# même moment : le relevé dit ce qu'on vient de faire, la fiche prépare le
+	# geste suivant — que le bouton nomme déjà. Elle se réduit donc à sa seule
+	# ligne utile tant que le relevé est là.
 	if prochaine != "" and fete.is_empty():
-		colonne.add_child(_cartouche(prochaine))
+		if bilan.is_empty():
+			colonne.add_child(_cartouche(prochaine))
+		else:
+			colonne.add_child(_ligne_suivante(prochaine))
 	_vider(pied)
 	pied.add_child(_pied())
 
@@ -1033,38 +1041,95 @@ func _cartouche(id: String) -> Control:
 	return carte_gare
 
 
+## La gare qui vient, en une ligne : son nom, sa taille, son barème. C'est
+## tout ce qui aide à décider, et c'est ce qui reste quand le relevé occupe
+## la place.
+func _ligne_suivante(id: String) -> Control:
+	var cfg := ruban.fiche_de(id)
+	var v := VBoxContainer.new()
+	v.add_theme_constant_override("separation", int(round(2 * Sty.HUD_K)))
+	if cfg.is_empty():
+		return v
+	var quais: int = Array(cfg.get("platforms", [])).size()
+	var dirs: int = (cfg["portals"] as Dictionary).size() if cfg.get("portals") is Dictionary else 0
+	var seuils := ruban.seuils_de_service(cfg)
+	v.add_child(_label("SUIVANTE", 11, MUET, true, false))
+	var h := HBoxContainer.new()
+	h.add_theme_constant_override("separation", int(round(10 * Sty.HUD_K)))
+	var nom := _label(ville_de(id), 16, Sty.PAPIER, true, false)
+	nom.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	nom.clip_text = true
+	h.add_child(nom)
+	h.add_child(_label("%d quais · %d dir. · 3 ★ sous %d min" % [quais, dirs, int(seuils["trois"])],
+		12, MUET, false, false))
+	v.add_child(h)
+	return v
+
+
 ## Le relevé du service, sous la gare qu'on vient de tenir.
+## LE RELEVÉ DU SERVICE, EN QUATRE LIGNES AU PLUS. Il en tenait six, et la
+## gare suivante passait sous le bord de l'écran : les étoiles et le retard
+## se lisent d'un même regard, le record et l'objectif aussi. Ce qui compte
+## ici, c'est ce qu'on vient de faire — le reste attend son tour.
 func _bloc_bilan(avec_medailles: bool = true) -> Control:
 	var v := VBoxContainer.new()
 	v.add_theme_constant_override("separation", int(round(3 * Sty.HUD_K)))
 	var b := bilan
 	var st := int(b["stars"])
-	v.add_child(_label(ville_de(String(b["gare"])), 13, MUET))
-	v.add_child(_label("★".repeat(st) + "☆".repeat(3 - st), 26, OR if b["win"] else MUET))
-	if b.get("perfect", false):
-		v.add_child(_label("◆ Diamant", 15, DIAMANT))
+	v.add_child(_label(ville_de(String(b["gare"])), 12, MUET, false, false))
+
+	# les étoiles, et à leur droite ce que le service a coûté
+	var h := HBoxContainer.new()
+	h.add_theme_constant_override("separation", int(round(10 * Sty.HUD_K)))
+	h.add_child(_label("★".repeat(st) + "☆".repeat(3 - st), 22, OR if b["win"] else MUET, false, false))
+	var retard: String
+	var couleur: Color = TEXTE
 	if b.get("failed", false):
-		v.add_child(_label("%d min — plafond dépassé" % int(b["d"]), 14, ROUGE))
+		retard = "%d min — plafond dépassé" % int(b["d"])
+		couleur = ROUGE
 	elif b.get("perfect", false):
-		v.add_child(_label("0 min — pas une minute", 14, TEXTE))
+		retard = "◆ Diamant — pas une minute"
+		couleur = DIAMANT
 	else:
-		v.add_child(_label("%d min de retard" % int(b["d"]), 14, TEXTE))
+		retard = "%d min de retard" % int(b["d"])
+	var lr := _label(retard, 14, couleur, false, false)
+	lr.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	h.add_child(lr)
+	v.add_child(h)
+
+	# le record d'un côté, l'objectif de l'autre — sur la même ligne
 	var pb: Variant = b.get("prevBest")
+	var dit := ""
+	var teinte: Color = MUET
 	if b.get("failed", false):
-		pass
+		dit = ""
 	elif not b["win"]:
-		v.add_child(_label("objectif manqué", 12, MUET))
+		dit = "objectif manqué"
 	elif pb == null:
-		v.add_child(_label("premier service", 12, ACCENT))
+		dit = "premier service"
+		teinte = ACCENT
 	elif float(b["d"]) < float(pb):
-		v.add_child(_label("record battu · −%d min" % int(float(pb) - float(b["d"])), 12, ACCENT))
+		dit = "record battu · −%d min" % int(float(pb) - float(b["d"]))
+		teinte = ACCENT
 	elif float(b["d"]) == float(pb):
-		v.add_child(_label("record égalé", 12, MUET))
+		dit = "record égalé"
 	else:
-		v.add_child(_label("record : %d min" % int(pb), 12, MUET))
-	var s: Dictionary = b.get("seuils", {})
-	if not s.is_empty() and b["win"] and not b.get("perfect", false) and st < 3:
-		v.add_child(_label("3 ★ sous %d min" % int(s["trois"]), 12, MUET))
+		dit = "record : %d min" % int(pb)
+	var seuils: Dictionary = b.get("seuils", {})
+	var vise := ""
+	if not seuils.is_empty() and b["win"] and not b.get("perfect", false) and st < 3:
+		vise = "3 ★ sous %d min" % int(seuils["trois"])
+	if dit != "" or vise != "":
+		var h2 := HBoxContainer.new()
+		h2.add_theme_constant_override("separation", int(round(10 * Sty.HUD_K)))
+		if dit != "":
+			var ld := _label(dit, 12, teinte, false, false)
+			ld.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			h2.add_child(ld)
+		if vise != "":
+			h2.add_child(_label(vise, 12, MUET, false, false))
+		v.add_child(h2)
+
 	if avec_medailles:
 		_ajouter_medailles(v, 2)
 	v.add_child(_separateur())
@@ -1074,10 +1139,12 @@ func _bloc_bilan(avec_medailles: bool = true) -> Control:
 func _ajouter_medailles(v: VBoxContainer, combien: int) -> void:
 	if medailles.is_empty():
 		return
-	var montrees: Array = medailles.slice(0, combien) if combien > 0 and medailles.size() > combien else medailles
+	# la médaille du sans-faute doublerait la ligne du diamant, juste au-dessus
+	var utiles: Array = medailles.filter(func(m): return not (m["id"] == "sf1" and not bilan.is_empty() and bilan.get("perfect", false)))
+	var montrees: Array = utiles.slice(0, combien) if combien > 0 and utiles.size() > combien else utiles
 	for m in montrees:
 		v.add_child(_label("%s — %s" % [m["nom"], m["dit"]], 13, OR))
-	var reste := medailles.size() - montrees.size()
+	var reste := utiles.size() - montrees.size()
 	if reste > 0:
 		v.add_child(_label("+%d" % reste, 12, MUET))
 
