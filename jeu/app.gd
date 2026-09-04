@@ -21,6 +21,7 @@ const VueCartes := preload("res://jeu/vue_cartes.gd")
 const VueJeu := preload("res://jeu/vue_jeu.gd")
 const Pilote := preload("res://jeu/pilote.gd")
 const Cap := preload("res://jeu/capture.gd")
+const Sty := preload("res://jeu/style.gd")
 
 var ruban = null
 var carte_id := ""
@@ -69,6 +70,10 @@ func charger_carte(id: String) -> void:
 
 func montrer(nom: String) -> void:
 	vue = nom
+	# CHAQUE ÉCRAN SA COULEUR DE FOND. Le ruban est une carte sur un bureau de
+	# cuir ; le poste d'aiguillage garde son bleu nuit, où la couleur d'une
+	# voie est sa destination et ne se rediscute pas.
+	RenderingServer.set_default_clear_color(Sty.FOND if nom == "jeu" else Sty.MER)
 	for paire in [[vue_ruban, "ruban"], [vue_jeu, "jeu"], [vue_cartes, "cartes"]]:
 		var n: Node = paire[0]
 		var actif: bool = paire[1] == nom

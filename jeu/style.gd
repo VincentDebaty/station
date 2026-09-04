@@ -40,6 +40,39 @@ const ETIQUETTE_TRAIN := Color("#08141a")
 const PIP_ETEINT := Color("#3b465c")
 const VOILE := Color(10.0 / 255, 14.0 / 255, 24.0 / 255, 0.58)  # le projecteur du repère
 
+# --- LA PALETTE DE PARCHEMIN (direction artistique du 4 septembre 2026) ------
+# Vincent a fait produire une maquette du ruban dans un style de carte
+# ferroviaire ancienne — parchemin, laiton, sarcelle profonde, encre brune —
+# et l'a choisie contre l'esthétique du prototype, qu'il avait pourtant
+# décidé de garder le 1er septembre. Elle ne remplace PAS la palette du
+# poste d'aiguillage : la couleur d'une voie y est sa DESTINATION, contrat
+# qui ne se rediscute pas. Elle habille ce qui l'entoure.
+const PAPIER := Color("#efe3c8")          # le parchemin d'une fiche
+const PAPIER_OMBRE := Color("#ddcfae")    # son creux, et la ligne de pliure
+const ENCRE := Color("#33251a")           # ce qui s'écrit dessus
+const ENCRE_MUET := Color("#7d6a52")
+const BOIS := Color("#241a12")            # le cuir du bureau, derrière tout
+const BOIS_CLAIR := Color("#33261a")
+const LAITON := Color("#d9a441")          # les ferrures, les étoiles, le rail
+const LAITON_CLAIR := Color("#f0c96b")
+const SARCELLE := Color("#1d6b66")        # les plaques, le bouton d'appel
+const SARCELLE_CLAIR := Color("#2dd4bf")
+const TERRE := Color("#6d5a3f")           # la terre de la carte
+const TERRE_OMBRE := Color("#5a4933")
+const MER := Color("#2b2118")             # l'eau, plus sombre que la terre
+
+
+## Une fiche de parchemin : fond clair, liseré de laiton, ombre chaude.
+static func parchemin(rayon: float = 10.0, k: float = 1.0) -> StyleBoxFlat:
+	var b := boite(PAPIER, Color(ENCRE, 0.45), rayon * k, max(1.0, k), 10.0 * k, Color(0, 0, 0, 0.45))
+	return b
+
+
+## Une plaque de laiton sur bois : les pastilles de la barre, les cartouches.
+static func plaque(fond: Color, bord: Color, rayon: float = 8.0, k: float = 1.0) -> StyleBoxFlat:
+	return boite(fond, bord, rayon * k, max(1.0, k), 6.0 * k, Color(0, 0, 0, 0.35))
+
+
 # --- LES DEUX FACTEURS D'ÉCHELLE ---------------------------------------------
 # LE FACTEUR TACTILE, celui du prototype (js/render.js, UIK) : sur un pointeur
 # grossier, tout ce qu'on touche et tout ce qu'on lit sur le plan grossit d'une

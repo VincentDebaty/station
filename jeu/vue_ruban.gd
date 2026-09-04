@@ -32,16 +32,19 @@ const DUREE_VOYAGE := 1.15
 const DUREE_SAUT := 1.9
 const DELAI_LECTURE := 0.7
 
-const FOND := Color("#0E1420")
-const PAYS := Color("#151d2e")
-const PANNEAU := Color("#111827")
-const BORD := Color("#2a3550")
-const TEXTE := Color("#dbe2ee")
-const MUET := Color("#7a8699")
-const ACCENT := Color("#2dd4bf")
-const OR := Color("#f5b23c")
-const DIAMANT := Color("#7fd4ff")
-const ROUGE := Color("#ef4444")
+# LA CARTE EST UN PARCHEMIN (4 septembre 2026). L'écran du ruban passe à la
+# palette de jeu.style.gd : cuir, laiton, encre. Le poste d'aiguillage, lui,
+# garde la sienne — la couleur d'une voie y est sa destination.
+const FOND := Sty.MER
+const PAYS := Sty.TERRE
+const PANNEAU := Sty.BOIS
+const BORD := Sty.LAITON
+const TEXTE := Sty.PAPIER
+const MUET := Color("#a28f74")
+const ACCENT := Sty.SARCELLE_CLAIR
+const OR := Sty.LAITON
+const DIAMANT := Color("#9fdcd6")
+const ROUGE := Color("#c4553d")
 
 var app = null
 var ruban: Rub = null
@@ -81,6 +84,9 @@ var police: Font
 
 func _ready() -> void:
 	Sty.calibrer(get_viewport())
+	# la mer sous la carte : c'est la couleur d'effacement qui la porte, et
+	# l'écran de jeu remet la sienne en reprenant la main (app.gd, montrer).
+	RenderingServer.set_default_clear_color(Sty.MER)
 	police = Sty.sans(600)
 	fond = Node2D.new()
 	fond.show_behind_parent = true
@@ -218,6 +224,14 @@ func _construire_fond() -> void:
 				poly.polygon = anneau
 				poly.color = PAYS
 				fond.add_child(poly)
+				# le trait de côte, à l'encre pâle : c'est lui qui fait la carte
+				var cote := Line2D.new()
+				cote.points = anneau
+				cote.closed = true
+				cote.default_color = Color(Sty.TERRE_OMBRE, 0.9)
+				cote.width = 0.35
+				fond.add_child(cote)
+				contours.append(cote)
 			else:
 				rates += 1
 				var ligne := Line2D.new()
@@ -354,7 +368,7 @@ func _process(delta: float) -> void:
 	var k: float = cam["k"] * f["px"]
 	fond.transform = Transform2D(0.0, Vector2(k, k), 0.0, _centre_carte() - Vector2(cam["x"], cam["y"]) * k)
 	for l in contours:
-		l.width = 1.2 / k
+		l.width = 1.6 * Sty.HUD_K / k
 	queue_redraw()
 
 
@@ -416,14 +430,20 @@ func _draw() -> void:
 			var avance: bool = ecrit and not fait and g[i] == gc
 			var pa := ecran(a)
 			var pb := ecran(b)
+			# Le rail est en LAITON, comme les ferrures : la couleur de zone
+			# revient sur le tracé déjà parcouru, en surbrillance dessus.
+			var k := Sty.HUD_K
 			if not ecrit:
-				_pointille(pa, pb, Color(MUET, 0.5), 2.0, 6.0)
+				_pointille(pa, pb, Color(Sty.LAITON, 0.28), 2.0 * k, 7.0 * k)
 			elif fait:
-				draw_line(pa, pb, col, 3.5, true)
+				draw_line(pa, pb, Color(Sty.BOIS, 0.8), 6.0 * k, true)
+				draw_line(pa, pb, Color(Sty.LAITON_CLAIR, 0.95), 3.0 * k, true)
+				draw_line(pa, pb, Color(col, 0.55), 1.4 * k, true)
 			elif avance:
-				draw_line(pa, pb, Color(col, 0.72 + 0.28 * pulse), 4.0, true)
+				draw_line(pa, pb, Color(Sty.BOIS, 0.8), 6.0 * k, true)
+				draw_line(pa, pb, Color(Sty.LAITON_CLAIR, 0.6 + 0.4 * pulse), 3.4 * k, true)
 			else:
-				draw_line(pa, pb, Color(col, 0.3), 2.5, true)
+				draw_line(pa, pb, Color(Sty.LAITON, 0.35), 2.2 * k, true)
 	# --- la liaison de transit, et le convoi ------------------------------------
 	if not transit.is_empty():
 		var a := pos(transit["de"])
@@ -458,36 +478,55 @@ func _draw() -> void:
 		var teinte: Color
 		match etat:
 			"avenir":
-				teinte = Color(MUET, 0.5)
+				teinte = Color(Sty.LAITON, 0.30)
 			"fermee":
-				teinte = Color(col, 0.35)
+				teinte = Color(Sty.LAITON, 0.45)
 			"payee":
-				teinte = Color(MUET, 0.9)
+				teinte = Color(Sty.PAPIER_OMBRE, 0.85)
 			_:
-				teinte = col
+				teinte = Sty.LAITON
+		var kk := Sty.HUD_K
 		if ici:
-			draw_circle(e, r + 6.0 + 3.0 * pulse, Color(col, 0.18 + 0.12 * pulse))
-			draw_arc(e, r + 4.0, 0.0, TAU, 40, Color(col, 0.9), 1.5, true)
+			# la gare qui vient : un halo d'ambre, comme une lampe posée dessus
+			draw_circle(e, r + (7.0 + 4.0 * pulse) * kk, Color(Sty.LAITON, 0.16 + 0.12 * pulse))
+			draw_circle(e, r + 3.0 * kk, Color(Sty.LAITON_CLAIR, 0.55 + 0.25 * pulse))
+			draw_arc(e, r + 5.0 * kk, 0.0, TAU, 40, Color(Sty.LAITON_CLAIR, 0.95), 2.0 * kk, true)
 		if not bilan.is_empty() and bilan.get("gare") == id:
-			draw_arc(e, r + 9.0, 0.0, TAU, 48, Color(OR, 0.8), 1.5, true)
-		draw_circle(e, r, teinte)
-		if etat == "payee":
-			draw_arc(e, r, 0.0, TAU, 24, col, 1.0, true)
-		# le nom, au-dessus ; les étoiles ou le diamant à sa droite
+			draw_arc(e, r + 9.0 * kk, 0.0, TAU, 48, Color(Sty.LAITON, 0.8), 1.6 * kk, true)
+		draw_circle(e, r + 1.5 * kk, Color(Sty.BOIS, 0.85))
+		draw_circle(e, r, Sty.LAITON_CLAIR if ici else teinte)
+		draw_arc(e, r, 0.0, TAU, 28, Color(Sty.BOIS, 0.55), 1.2 * kk, true)
+		# LE NOM SUR UNE PLAQUE, comme sur une vraie carte ferroviaire : une
+		# étiquette posée à côté du point, et non un texte flottant que le
+		# relief traverse. Sarcelle et laiton quand la gare est tenue, papier
+		# fané quand elle attend son tour.
 		var nom := nom_de(id)
 		var taille := int(round((15 if fin else 13) * Sty.HUD_K))
 		var w := police.get_string_size(nom, HORIZONTAL_ALIGNMENT_LEFT, -1, taille).x
-		var st: int = Rub.etoiles_de(ruban.progression_de(id))
-		var dia: bool = Rec.est_diamant(ruban.progression_de(id))
+		var prog := ruban.progression_de(id)
+		var st: int = Rub.etoiles_de(prog)
+		var dia: bool = Rec.est_diamant(prog)
 		var suffixe := "◆" if dia else ("★".repeat(st) if st > 0 else "")
 		var ws := police.get_string_size(suffixe, HORIZONTAL_ALIGNMENT_LEFT, -1, taille).x if suffixe != "" else 0.0
-		var x0 := e.x - (w + (ws + 4.0 if ws > 0 else 0.0)) / 2
-		var y0 := e.y - r - 8
-		draw_string(police, Vector2(x0, y0), nom, HORIZONTAL_ALIGNMENT_LEFT, -1, taille,
-			TEXTE if etat != "avenir" and etat != "fermee" else MUET)
+		var ouverte: bool = etat == "faite" or etat == "courante" or etat == "payee"
+		var pad := 7.0 * Sty.HUD_K
+		var large := w + (ws + 5.0 * Sty.HUD_K if ws > 0 else 0.0) + 2 * pad
+		var haute := taille + 8.0 * Sty.HUD_K
+		var plaque := Rect2(e.x + r + 6 * Sty.HUD_K, e.y - haute / 2, large, haute)
+		draw_style_box(Sty.plaque(Sty.SARCELLE if ouverte else Color(Sty.BOIS_CLAIR, 0.9),
+			Color(Sty.LAITON, 0.9 if ouverte else 0.45), 5, Sty.HUD_K), plaque)
+		var encre: Color = Sty.PAPIER if ouverte else MUET
+		var xt := plaque.position.x + pad
+		Sty.texte_centre(self, police, taille, Vector2(xt + w / 2, e.y), nom, encre)
 		if suffixe != "":
-			draw_string(police, Vector2(x0 + w + 4, y0), suffixe, HORIZONTAL_ALIGNMENT_LEFT, -1, taille,
-				DIAMANT if dia else OR)
+			Sty.texte_centre(self, police, taille,
+				Vector2(xt + w + 5 * Sty.HUD_K + ws / 2, e.y), suffixe, DIAMANT if dia else Sty.LAITON_CLAIR)
+		# une gare qu'on ne peut pas encore jouer porte son cadenas
+		if not ouverte:
+			var c := Vector2(plaque.end.x + 9 * Sty.HUD_K, e.y)
+			draw_style_box(Sty.boite(Color(Sty.BOIS_CLAIR, 0.95), Color(Sty.LAITON, 0.5), 3 * kk, max(1.0, kk)),
+				Rect2(c.x - 5 * kk, c.y - 4 * kk, 10 * kk, 8 * kk))
+			draw_arc(Vector2(c.x, c.y - 4 * kk), 3.2 * kk, PI, TAU, 12, Color(Sty.LAITON, 0.7), 1.4 * kk, true)
 
 
 func _pointille(a: Vector2, b: Vector2, col: Color, larg: float, pas: float) -> void:
@@ -620,9 +659,9 @@ func _construire_panneau() -> void:
 	barre = PanelContainer.new()
 	barre.position = Vector2.ZERO
 	var sb := StyleBoxFlat.new()
-	sb.bg_color = PANNEAU
-	sb.border_color = BORD
-	sb.border_width_bottom = 1
+	sb.bg_color = Sty.BOIS_CLAIR
+	sb.border_color = Color(Sty.LAITON, 0.55)
+	sb.border_width_bottom = int(max(1.0, 2 * k))
 	sb.content_margin_left = 18 * k + Sty.marges["gauche"]
 	sb.content_margin_right = 18 * k + Sty.marges["droite"]
 	sb.content_margin_top = 7 * k + Sty.marges["haut"]
@@ -636,8 +675,8 @@ func _construire_panneau() -> void:
 	panneau = PanelContainer.new()
 	var style := StyleBoxFlat.new()
 	style.bg_color = PANNEAU
-	style.border_color = BORD
-	style.border_width_right = 1
+	style.border_color = Color(Sty.LAITON, 0.55)
+	style.border_width_right = int(max(1.0, 2 * k))
 	style.content_margin_left = 22 * k + Sty.marges["gauche"]
 	style.content_margin_right = 22 * k
 	style.content_margin_top = 16 * k
@@ -696,13 +735,27 @@ func _bouton(texte: String, principal: bool, actif: bool, sur: Callable) -> Butt
 	var b := Sty.bouton(texte, principal, 16 if principal else 14, k)
 	b.disabled = not actif
 	b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	var sd := Sty.boite(Color("#1a2234"), Sty.BORD, 10 * k, max(1.0, k))
-	sd.content_margin_top = 8 * k
-	sd.content_margin_bottom = 8 * k
-	sd.content_margin_left = 14 * k
-	sd.content_margin_right = 14 * k
-	b.add_theme_stylebox_override("disabled", sd)
-	b.add_theme_color_override("font_disabled_color", Sty.MUET)
+	# LE BOUTON EST UNE PLAQUE VISSÉE : sarcelle profonde et liseré de laiton
+	# pour l'appel, bois pour le reste. Le texte s'y écrit sur le papier.
+	var fond: Color = Sty.SARCELLE if principal else Sty.BOIS_CLAIR
+	var normal := Sty.plaque(fond, Sty.LAITON, 8, k)
+	normal.content_margin_top = 10 * k
+	normal.content_margin_bottom = 10 * k
+	normal.content_margin_left = 16 * k
+	normal.content_margin_right = 16 * k
+	b.add_theme_stylebox_override("normal", normal)
+	var survol := normal.duplicate()
+	survol.bg_color = fond.lightened(0.10)
+	survol.border_color = Sty.LAITON_CLAIR
+	b.add_theme_stylebox_override("hover", survol)
+	b.add_theme_stylebox_override("pressed", survol)
+	var eteint := normal.duplicate()
+	eteint.bg_color = Color(Sty.BOIS, 0.9)
+	eteint.border_color = Color(Sty.LAITON, 0.35)
+	b.add_theme_stylebox_override("disabled", eteint)
+	for quoi in ["font_color", "font_hover_color", "font_pressed_color"]:
+		b.add_theme_color_override(quoi, Sty.PAPIER)
+	b.add_theme_color_override("font_disabled_color", Color(Sty.PAPIER, 0.4))
 	if sur.is_valid():
 		b.pressed.connect(sur)
 	return b
@@ -811,7 +864,7 @@ func _entete_chapitre() -> Control:
 	# téléphone la hauteur est la ressource rare, et le rang du chapitre ne
 	# sert à rien pour décider du geste suivant. La jauge à crans, elle, dit
 	# déjà où l'on en est DANS le chapitre — la seule position qui compte.
-	v.add_child(_label(String(ch["nom"]), 22, TEXTE, true))
+	v.add_child(_label(String(ch["nom"]), 22, Sty.PAPIER, true))
 	var zone_nom := String(ruban.carte.get("nom", ""))
 	for z in ruban.zones():
 		if z.get("id") == ch["zone"]:
@@ -877,7 +930,7 @@ func _cartouche(id: String) -> Control:
 
 	# la carte de la gare : un fond légèrement relevé, un liseré discret
 	var carte_gare := PanelContainer.new()
-	var st := Sty.boite(Color("#1a2334"), BORD, 12 * k, max(1.0, k))
+	var st := Sty.parchemin(10, k)
 	st.set_content_margin_all(14 * k)
 	carte_gare.add_theme_stylebox_override("panel", st)
 	var v := VBoxContainer.new()
@@ -887,27 +940,27 @@ func _cartouche(id: String) -> Control:
 	# le nom, le drapeau, et le terminus s'il y a lieu — sur une ligne
 	var tete := HBoxContainer.new()
 	tete.add_theme_constant_override("separation", int(round(8 * k)))
-	var nom := _label(ville_de(id), 20, TEXTE, true, false)
+	var nom := _label(ville_de(id), 20, Sty.ENCRE, true, false)
 	nom.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	nom.clip_text = true
 	tete.add_child(nom)
 	if fin:
 		tete.add_child(_pastille("terminus", OR))
 	v.add_child(tete)
-	v.add_child(_label("%s %s" % [pays.get("drapeau", ""), pays.get("nom", "")], 12, MUET))
+	v.add_child(_label("%s %s" % [pays.get("drapeau", ""), pays.get("nom", "")], 12, Sty.SARCELLE))
 
 	var phrase := String(cfg.get("tagline", ""))
 	var re := RegEx.new()
 	re.compile("^\\s*[^—–-]{2,28}\\s*[—–]\\s*")
 	phrase = re.sub(phrase, "", false)
 	if phrase != "":
-		v.add_child(_label(phrase, 13, TEXTE))
+		v.add_child(_label(phrase, 13, Sty.ENCRE))
 	if ruban.est_boss(id, cfg):
 		v.add_child(_label("Bourrasque — le trafic se resserre en fin de service.", 13, OR))
 
 	# les quatre mesures, séparées du reste par un filet
 	var filet := HSeparator.new()
-	filet.add_theme_stylebox_override("separator", Sty.boite(Color(BORD, 0.7), Color.TRANSPARENT, 0, 0))
+	filet.add_theme_stylebox_override("separator", Sty.boite(Sty.PAPIER_OMBRE, Color.TRANSPARENT, 0, 0))
 	filet.add_theme_constant_override("separation", int(round(10 * k)))
 	v.add_child(filet)
 	var grille := GridContainer.new()
@@ -917,8 +970,8 @@ func _cartouche(id: String) -> Control:
 			["Difficulté", _pips(d)], ["Pour 3 ★", "%d min" % int(seuils["trois"])]]:
 		var cell := VBoxContainer.new()
 		cell.add_theme_constant_override("separation", 0)
-		cell.add_child(_label(paire[0], 11, MUET, false, false))
-		cell.add_child(_label(paire[1], 16, OR if paire[0] == "Difficulté" else TEXTE, false, false))
+		cell.add_child(_label(paire[0], 11, Sty.ENCRE_MUET, false, false))
+		cell.add_child(_label(paire[1], 16, OR if paire[0] == "Difficulté" else Sty.ENCRE, false, false))
 		grille.add_child(cell)
 	v.add_child(grille)
 
