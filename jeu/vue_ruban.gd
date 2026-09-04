@@ -72,6 +72,8 @@ var transit_t := -1.0         # < 0 : pas parti ; 0..1 : en route
 var voyage_saut := false
 
 # --- le panneau ---------------------------------------------------------------------
+var barre: PanelContainer      # la barre du haut, sur toute la largeur
+var rangee_barre: HBoxContainer
 var panneau: PanelContainer
 var colonne: VBoxContainer
 var police: Font
@@ -236,7 +238,7 @@ func _construire_fond() -> void:
 func fenetre() -> Dictionary:
 	var e := get_viewport_rect().size
 	var w: float = max(50.0, e.x - panneau_l() - Sty.marges["gauche"] - Sty.marges["droite"])
-	var h: float = max(50.0, e.y - Sty.marges["haut"] - Sty.marges["bas"])
+	var h: float = max(50.0, e.y - hauteur_barre() - Sty.marges["bas"])
 	var a := w / h
 	if a >= CADRE_L / CADRE_H:
 		return {"w": CADRE_H * a, "h": CADRE_H, "px": w / (CADRE_H * a)}
@@ -254,7 +256,7 @@ func _centre_carte() -> Vector2:
 	var e := get_viewport_rect().size
 	var g: float = panneau_l() + Sty.marges["gauche"]
 	return Vector2(g + (e.x - g - Sty.marges["droite"]) / 2.0,
-		Sty.marges["haut"] + (e.y - Sty.marges["haut"] - Sty.marges["bas"]) / 2.0)
+		hauteur_barre() + (e.y - hauteur_barre() - Sty.marges["bas"]) / 2.0)
 
 
 func zoom_pour(bw: float, bh: float, marge: float, k_max: float) -> float:
@@ -603,31 +605,74 @@ func _unhandled_input(event: InputEvent) -> void:
 # ------------------------------------------------------------------
 # Le panneau de gauche — tout ce qui se lit, d'un seul côté
 # ------------------------------------------------------------------
+## LA BARRE DU HAUT PREND TOUTE LA LARGEUR (demandé le 3 septembre 2026).
+## Les compteurs — grade, jauge, crédits, diamants, étoiles — sont un fait de
+## COMPTE, pas de carte : ils ne dépendent ni du chapitre ni de la gare, et
+## n'avaient rien à faire dans la colonne du ruban, où ils volaient la hauteur
+## qui manquait au reste. Sortis là-haut, la colonne respire et la barre de
+## défilement disparaît.
+func hauteur_barre() -> float:
+	return 34.0 * Sty.HUD_K + Sty.marges["haut"]
+
+
 func _construire_panneau() -> void:
+	var k := Sty.HUD_K
+	barre = PanelContainer.new()
+	barre.position = Vector2.ZERO
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = PANNEAU
+	sb.border_color = BORD
+	sb.border_width_bottom = 1
+	sb.content_margin_left = 18 * k + Sty.marges["gauche"]
+	sb.content_margin_right = 18 * k + Sty.marges["droite"]
+	sb.content_margin_top = 7 * k + Sty.marges["haut"]
+	sb.content_margin_bottom = 7 * k
+	barre.add_theme_stylebox_override("panel", sb)
+	add_child(barre)
+	rangee_barre = HBoxContainer.new()
+	rangee_barre.add_theme_constant_override("separation", int(round(14 * k)))
+	barre.add_child(rangee_barre)
+
 	panneau = PanelContainer.new()
-	panneau.position = Vector2.ZERO
-	panneau.size = Vector2(panneau_l() + Sty.marges["gauche"], get_viewport_rect().size.y)
-	# la zone sûre s'ajoute au rembourrage du panneau, elle ne le remplace pas
 	var style := StyleBoxFlat.new()
 	style.bg_color = PANNEAU
 	style.border_color = BORD
 	style.border_width_right = 1
-	var k := Sty.HUD_K
 	style.content_margin_left = 22 * k + Sty.marges["gauche"]
 	style.content_margin_right = 22 * k
-	style.content_margin_top = 18 * k + Sty.marges["haut"]
-	style.content_margin_bottom = 18 * k + Sty.marges["bas"]
+	style.content_margin_top = 16 * k
+	style.content_margin_bottom = 16 * k + Sty.marges["bas"]
 	style.anti_aliasing = true
 	panneau.add_theme_stylebox_override("panel", style)
 	add_child(panneau)
 	var defil := ScrollContainer.new()
 	defil.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	# LA BARRE DE DÉFILEMENT NE S'AFFICHE PLUS. Elle disait « il y a autre
+	# chose plus bas » sur un écran où tout doit se voir d'un coup ; le
+	# glissement au doigt reste possible si le contenu déborde quand même.
+	# Il faut habiller le RAIL et les trois états du curseur : n'en oublier
+	# qu'un laisse un trait clair sur le bord du panneau.
 	panneau.add_child(defil)
+	var bar := defil.get_v_scroll_bar()
+	for quoi in ["scroll", "scroll_focus", "grabber", "grabber_highlight", "grabber_pressed"]:
+		bar.add_theme_stylebox_override(quoi, StyleBoxEmpty.new())
+	bar.custom_minimum_size = Vector2.ZERO
 	colonne = VBoxContainer.new()
 	colonne.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	colonne.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	colonne.add_theme_constant_override("separation", int(round(10 * Sty.HUD_K)))
+	colonne.add_theme_constant_override("separation", int(round(10 * k)))
 	defil.add_child(colonne)
+	_poser_cadre()
+	get_viewport().size_changed.connect(_poser_cadre)
+
+
+## La barre en haut sur toute la largeur, le panneau dessous.
+func _poser_cadre() -> void:
+	var e := get_viewport_rect().size
+	barre.position = Vector2.ZERO
+	barre.size = Vector2(e.x, 0)
+	panneau.position = Vector2(0, hauteur_barre())
+	panneau.size = Vector2(panneau_l() + Sty.marges["gauche"], e.y - hauteur_barre())
 
 
 ## `replie` : un texte long se replie sur la largeur du panneau ; un compteur
@@ -680,7 +725,7 @@ func rebatir() -> void:
 	_vider(colonne)
 	if ruban == null:
 		return
-	colonne.add_child(_compteurs())
+	_remplir_barre()
 	colonne.add_child(_entete_chapitre())
 	# LE RELEVÉ DE LA GARE RESTE pendant la fête : au seul moment du jeu où
 	# deux récompenses tombent ensemble, on ne perd pas de vue les étoiles
@@ -692,47 +737,66 @@ func rebatir() -> void:
 	if prochaine != "" and fete.is_empty():
 		colonne.add_child(_cartouche(prochaine))
 	colonne.add_child(_pied())
-	if app != null and app.plusieurs_cartes():
-		colonne.add_child(_bouton("Les cartes", false, true, app.ouvrir_cartes))
 
 
-func _compteurs() -> Control:
-	var h := HBoxContainer.new()
-	h.add_theme_constant_override("separation", int(round(12 * Sty.HUD_K)))
+## LA BARRE DU HAUT : le grade et sa jauge à gauche, les compteurs à droite,
+## sur toute la largeur de l'écran. Ce sont des faits de COMPTE — ils ne
+## bougent pas quand on change de chapitre.
+func _remplir_barre() -> void:
+	_vider(rangee_barre)
+	var k := Sty.HUD_K
 	var n: int = Rec.etoiles_total(Sauvegarde.progression_toutes_cartes())
 	var g: Dictionary = Rec.grade_de(n)
 	var serie: Dictionary = Sauvegarde.get_serie()
 	var e: Dictionary = Rec.etat_recompenses(ruban, serie)
-	if int(serie["n"]) >= 2:
-		h.add_child(_label("» %d" % int(serie["n"]), 13, ACCENT, false, false))
-	# LE GRADE CÈDE LA PLACE, PAS LES COMPTEURS. C'est le seul texte long de la
-	# rangée : grossi par le facteur du bandeau, il poussait « ★ 0 » hors du
-	# panneau (mesuré le 3 septembre 2026). Il se tronque, eux restent entiers.
-	var grade := _label(String(g["nom"]), 13, TEXTE, false, false)
-	grade.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	grade.clip_text = true
-	grade.custom_minimum_size = Vector2(40, 0)
-	h.add_child(grade)
-	if app != null:
-		h.add_child(_label("%d cr" % app.solde(), 13, MUET, false, false))
-	if int(e["diamants"]) > 0:
-		h.add_child(_label("◆ %d" % int(e["diamants"]), 13, DIAMANT, false, false))
-	h.add_child(_label("★ %d" % n, 13, OR, false, false))
-	var v := VBoxContainer.new()
-	v.add_child(h)
+
+	# le grade, avec sa jauge de progression juste dessous
+	var bloc := VBoxContainer.new()
+	bloc.add_theme_constant_override("separation", int(round(4 * k)))
+	bloc.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	bloc.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	var nom := _label(String(g["nom"]), 13, TEXTE, false, false)
+	nom.clip_text = true
+	bloc.add_child(nom)
 	var jauge := ProgressBar.new()
 	jauge.show_percentage = false
-	jauge.custom_minimum_size = Vector2(0, 4 * Sty.HUD_K)
+	jauge.custom_minimum_size = Vector2(90 * k, 3 * k)
 	jauge.value = 100.0 * float(g["part"])
-	var fondj := StyleBoxFlat.new()
-	fondj.bg_color = Color("#1f2a40")
-	var plein := StyleBoxFlat.new()
-	plein.bg_color = ACCENT
-	jauge.add_theme_stylebox_override("background", fondj)
-	jauge.add_theme_stylebox_override("fill", plein)
-	v.add_child(jauge)
-	v.add_child(_separateur())
-	return v
+	jauge.add_theme_stylebox_override("background", Sty.boite(Color("#1f2a40"), Color.TRANSPARENT, 2 * k, 0))
+	jauge.add_theme_stylebox_override("fill", Sty.boite(ACCENT, Color.TRANSPARENT, 2 * k, 0))
+	bloc.add_child(jauge)
+	rangee_barre.add_child(bloc)
+
+	# la série, puis la monnaie du jeu — chacune dans sa pastille
+	if int(serie["n"]) >= 2:
+		rangee_barre.add_child(_pastille("» %d" % int(serie["n"]), ACCENT))
+	if app != null:
+		rangee_barre.add_child(_pastille("%d cr" % app.solde(), MUET))
+	if int(e["diamants"]) > 0:
+		rangee_barre.add_child(_pastille("◆ %d" % int(e["diamants"]), DIAMANT))
+	rangee_barre.add_child(_pastille("★ %d" % n, OR))
+	# « Les cartes » vit dans la barre, pas dans la colonne : c'est un geste de
+	# navigation, pas une étape du ruban, et il libère la hauteur qui manquait.
+	if app != null and app.plusieurs_cartes():
+		var b := Sty.bouton("Les cartes", false, 12, k)
+		b.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		b.pressed.connect(app.ouvrir_cartes)
+		rangee_barre.add_child(b)
+
+
+## Une pastille de compteur : le verre dépoli du bandeau de jeu, en plus petit.
+func _pastille(texte: String, couleur: Color) -> Control:
+	var k := Sty.HUD_K
+	var p := PanelContainer.new()
+	p.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	var st := Sty.boite(Color(couleur, 0.10), Color(couleur, 0.35), 8 * k, max(1.0, k))
+	st.content_margin_left = 9 * k
+	st.content_margin_right = 9 * k
+	st.content_margin_top = 3 * k
+	st.content_margin_bottom = 3 * k
+	p.add_theme_stylebox_override("panel", st)
+	p.add_child(_label(texte, 13, couleur, false, false))
+	return p
 
 
 func _entete_chapitre() -> Control:
@@ -743,7 +807,10 @@ func _entete_chapitre() -> Control:
 		v.add_child(_label(String(ruban.carte.get("nom", "La carte")), 22, TEXTE, true))
 		return v
 	var col := couleur_de_zone(ch["zone"])
-	v.add_child(_label("Chapitre %d / %d" % [int(ch["rang"]) + 1, ruban.chapitres.size()], 12, MUET))
+	# « Chapitre 1 / 49 » RETIRÉ (demandé le 3 septembre 2026) : sur un
+	# téléphone la hauteur est la ressource rare, et le rang du chapitre ne
+	# sert à rien pour décider du geste suivant. La jauge à crans, elle, dit
+	# déjà où l'on en est DANS le chapitre — la seule position qui compte.
 	v.add_child(_label(String(ch["nom"]), 22, TEXTE, true))
 	var zone_nom := String(ruban.carte.get("nom", ""))
 	for z in ruban.zones():
@@ -789,24 +856,46 @@ func _pips(d: int) -> String:
 
 ## La gare en cours, et ce qu'il faut en savoir : quais, directions,
 ## difficulté, barème.
+## LA GARE QUI VIENT, dans sa propre carte. Elle porte ce qu'il faut savoir
+## AVANT de prendre le service : quais et directions — d'où vient la
+## difficulté — le niveau, et le barème. « Gare 2 sur 5 » a été RETIRÉ le
+## 3 septembre 2026 : la jauge à crans du chapitre, juste au-dessus, dit déjà
+## la même chose et le dit mieux, en montrant ce qui est fait.
 func _cartouche(id: String) -> Control:
-	var v := VBoxContainer.new()
-	v.add_theme_constant_override("separation", int(round(3 * Sty.HUD_K)))
+	var k := Sty.HUD_K
 	var cfg := ruban.fiche_de(id)
 	if cfg.is_empty():
-		return v
+		return VBoxContainer.new()
 	var ch := ruban.chapitre_de_gare(id)
-	var rang := ruban.rang_dans_chapitre(id)
 	var total: int = ch["gares"].size() if not ch.is_empty() else 0
-	var fin: bool = not ch.is_empty() and ch["gares"][total - 1] == id
+	var fin: bool = not ch.is_empty() and total > 0 and ch["gares"][total - 1] == id
 	var d := ruban.difficulte_de_gare(id, cfg)
 	var quais: int = Array(cfg.get("platforms", [])).size()
 	var dirs: int = (cfg["portals"] as Dictionary).size() if cfg.get("portals") is Dictionary else 0
 	var seuils := ruban.seuils_de_service(cfg)
 	var pays := Donnees.pays_de(String(cfg.get("country", "")))
-	v.add_child(_label("Gare %d sur %d%s" % [rang, total, "  ·  terminus" if fin else ""], 12, MUET))
-	v.add_child(_label(ville_de(id), 20, TEXTE, true))
-	v.add_child(_label("%s %s" % [pays.get("drapeau", ""), pays.get("nom", "")], 13, MUET))
+
+	# la carte de la gare : un fond légèrement relevé, un liseré discret
+	var carte_gare := PanelContainer.new()
+	var st := Sty.boite(Color("#1a2334"), BORD, 12 * k, max(1.0, k))
+	st.set_content_margin_all(14 * k)
+	carte_gare.add_theme_stylebox_override("panel", st)
+	var v := VBoxContainer.new()
+	v.add_theme_constant_override("separation", int(round(4 * k)))
+	carte_gare.add_child(v)
+
+	# le nom, le drapeau, et le terminus s'il y a lieu — sur une ligne
+	var tete := HBoxContainer.new()
+	tete.add_theme_constant_override("separation", int(round(8 * k)))
+	var nom := _label(ville_de(id), 20, TEXTE, true, false)
+	nom.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	nom.clip_text = true
+	tete.add_child(nom)
+	if fin:
+		tete.add_child(_pastille("terminus", OR))
+	v.add_child(tete)
+	v.add_child(_label("%s %s" % [pays.get("drapeau", ""), pays.get("nom", "")], 12, MUET))
+
 	var phrase := String(cfg.get("tagline", ""))
 	var re := RegEx.new()
 	re.compile("^\\s*[^—–-]{2,28}\\s*[—–]\\s*")
@@ -815,27 +904,35 @@ func _cartouche(id: String) -> Control:
 		v.add_child(_label(phrase, 13, TEXTE))
 	if ruban.est_boss(id, cfg):
 		v.add_child(_label("Bourrasque — le trafic se resserre en fin de service.", 13, OR))
+
+	# les quatre mesures, séparées du reste par un filet
+	var filet := HSeparator.new()
+	filet.add_theme_stylebox_override("separator", Sty.boite(Color(BORD, 0.7), Color.TRANSPARENT, 0, 0))
+	filet.add_theme_constant_override("separation", int(round(10 * k)))
+	v.add_child(filet)
 	var grille := GridContainer.new()
 	grille.columns = 4
-	grille.add_theme_constant_override("h_separation", 14)
-	for paire in [["Quais", str(quais)], ["Directions", str(dirs)], ["Difficulté", _pips(d)], ["Pour 3 ★", "%d min" % int(seuils["trois"])]]:
+	grille.add_theme_constant_override("h_separation", int(round(16 * k)))
+	for paire in [["Quais", str(quais)], ["Directions", str(dirs)],
+			["Difficulté", _pips(d)], ["Pour 3 ★", "%d min" % int(seuils["trois"])]]:
 		var cell := VBoxContainer.new()
-		cell.add_theme_constant_override("separation", int(round(0 * Sty.HUD_K)))
+		cell.add_theme_constant_override("separation", 0)
 		cell.add_child(_label(paire[0], 11, MUET, false, false))
 		cell.add_child(_label(paire[1], 16, OR if paire[0] == "Difficulté" else TEXTE, false, false))
 		grille.add_child(cell)
 	v.add_child(grille)
+
+	# ce qu'on y a déjà fait
 	var p: Dictionary = ruban.progression_de(id)
-	var st := Rub.etoiles_de(p)
-	if st > 0:
-		var score := "★".repeat(st)
+	var stars := Rub.etoiles_de(p)
+	if stars > 0:
+		var score := "★".repeat(stars)
 		if Rec.est_diamant(p):
 			score += "   ◆ sans faute"
 		elif p.get("bestDelay") != null:
 			score += "   record %d min" % int(p["bestDelay"])
 		v.add_child(_label(score, 14, OR))
-	v.add_child(_separateur())
-	return v
+	return carte_gare
 
 
 ## Le relevé du service, sous la gare qu'on vient de tenir.
