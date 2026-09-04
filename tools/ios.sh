@@ -88,8 +88,12 @@ if [ -z "$APP" ]; then
   rouge "aucune Station.app produite — voir /tmp/station-ios-export.log"
   exit 1
 fi
-# L'IDENTIFIANT SE LIT EN JSON. Découpé à la colonne dans le tableau de
-# devicectl, on récoltait « 16 » (un morceau d'« iPhone 16 Pro »).
+# L'IDENTIFIANT SE LIT EN JSON, ET LE CÂBLE PASSE D'ABORD. Deux erreurs
+# corrigées ici le 3 septembre 2026 : découpé à la colonne dans le tableau de
+# devicectl on récoltait « 16 » (un morceau d'« iPhone 16 Pro ») ; et la
+# première entrée appairée était l'Apple Watch, jointe par le réseau local,
+# dont le tunnel expirait au bout d'une minute. On veut un appareil au bout
+# d'un fil, dont le tunnel est établi.
 xcrun devicectl list devices --json-output /tmp/station-ios-dev.json >/dev/null 2>&1
 ID=$(python3 -c "
 import json
@@ -97,10 +101,18 @@ try:
     d = json.load(open('/tmp/station-ios-dev.json'))
 except Exception:
     raise SystemExit
-for x in d['result']['devices']:
-    if x.get('connectionProperties', {}).get('pairingState') == 'paired':
-        print(x['identifier'])
-        break
+def note(x):
+    p = x.get('connectionProperties', {})
+    n = 0
+    if p.get('transportType') == 'wired': n += 4
+    if p.get('tunnelState') == 'connected': n += 2
+    if 'iPhone' in x.get('deviceProperties', {}).get('name', ''): n += 1
+    return n
+cands = [x for x in d['result']['devices']
+         if x.get('connectionProperties', {}).get('pairingState') == 'paired']
+cands.sort(key=note, reverse=True)
+if cands and note(cands[0]) >= 4:
+    print(cands[0]['identifier'])
 " 2>/dev/null)
 if [ -z "$ID" ]; then
   rouge "aucun appareil connecté"
