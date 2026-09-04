@@ -79,6 +79,7 @@ var barre: PanelContainer      # la barre du haut, sur toute la largeur
 var rangee_barre: HBoxContainer
 var panneau: PanelContainer
 var colonne: VBoxContainer
+var pied: VBoxContainer     # le geste, ancré en bas : il ne défile jamais
 var police: Font
 
 
@@ -327,7 +328,37 @@ func camera_voulue() -> Dictionary:
 	var b := boite(vues)
 	if b.is_empty():
 		return {"x": CADRE_L / 2, "y": CADRE_H / 2, "k": 1.0}
-	return {"x": b["x"], "y": b["y"], "k": zoom_pour(b["w"], b["h"], 15, K_MAX_CHAPITRE)}
+	# LES NOMS DÉBORDENT À DROITE DES POINTS. Cadrer la boîte des seuls points
+	# laissait tout le contenu poussé vers la droite de l'écran, une plaque de
+	# large — « la carte devrait être mieux centrée » (4 septembre 2026). On
+	# mesure la plus longue plaque des gares cadrées et on décale la caméra
+	# d'une demi-plaque : le contenu revient au milieu.
+	# DEUX PASSES, parce que le calcul se mord la queue : la largeur d'une
+	# plaque est en pixels, sa traduction en unités dépend du zoom, et le zoom
+	# dépend de la largeur à cadrer. On zoome donc une première fois sur les
+	# points seuls, on en tire la place que prennent les noms, puis on refait
+	# le cadrage sur la boîte élargie. Deux passes suffisent : la correction
+	# de la seconde est petite devant la première.
+	var k := zoom_pour(b["w"], b["h"], 15, K_MAX_CHAPITRE)
+	var plaques := _largeur_plaques(vues, k)
+	k = zoom_pour(b["w"] + plaques, b["h"], 15, K_MAX_CHAPITRE)
+	plaques = _largeur_plaques(vues, k)
+	return {"x": b["x"] + plaques / 2.0, "y": b["y"], "k": k}
+
+
+## La plus large étiquette des gares cadrées, en unités du cadre.
+func _largeur_plaques(ids: Array, k: float) -> float:
+	if police == null or k <= 0.0:
+		return 0.0
+	var px: float = fenetre()["px"]
+	if px <= 0.0:
+		return 0.0
+	var large := 0.0
+	var t := int(round(15 * Sty.HUD_K))
+	for id in ids:
+		large = max(large, police.get_string_size(nom_de(id), HORIZONTAL_ALIGNMENT_LEFT, -1, t).x
+			+ 46.0 * Sty.HUD_K)
+	return large / (k * px)
 
 
 func aller_camera(saut: bool = false) -> void:
@@ -691,16 +722,27 @@ func _construire_panneau() -> void:
 	# glissement au doigt reste possible si le contenu déborde quand même.
 	# Il faut habiller le RAIL et les trois états du curseur : n'en oublier
 	# qu'un laisse un trait clair sur le bord du panneau.
-	panneau.add_child(defil)
+	# LE GESTE NE DÉFILE PAS. Le bouton d'appel était en bas de la colonne, donc
+	# emporté hors de l'écran dès que la fiche s'allongeait — « le bouton est
+	# tronqué » (Vincent, 4 septembre 2026, en Cinzel qui prend plus de place).
+	# Il vit désormais dans un pied FIXE : ce qui se lit peut défiler, ce qui
+	# se touche est toujours là.
+	var pile := VBoxContainer.new()
+	pile.add_theme_constant_override("separation", int(round(10 * k)))
+	panneau.add_child(pile)
+	defil.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	pile.add_child(defil)
 	var bar := defil.get_v_scroll_bar()
 	for quoi in ["scroll", "scroll_focus", "grabber", "grabber_highlight", "grabber_pressed"]:
 		bar.add_theme_stylebox_override(quoi, StyleBoxEmpty.new())
 	bar.custom_minimum_size = Vector2.ZERO
 	colonne = VBoxContainer.new()
 	colonne.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	colonne.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	colonne.add_theme_constant_override("separation", int(round(10 * k)))
 	defil.add_child(colonne)
+	pied = VBoxContainer.new()
+	pied.add_theme_constant_override("separation", int(round(8 * k)))
+	pile.add_child(pied)
 	_poser_cadre()
 	get_viewport().size_changed.connect(_poser_cadre)
 
@@ -791,7 +833,8 @@ func rebatir() -> void:
 		colonne.add_child(_bloc_fete())
 	if prochaine != "" and fete.is_empty():
 		colonne.add_child(_cartouche(prochaine))
-	colonne.add_child(_pied())
+	_vider(pied)
+	pied.add_child(_pied())
 
 
 ## LA BARRE DU HAUT : le grade et sa jauge à gauche, les compteurs à droite,
