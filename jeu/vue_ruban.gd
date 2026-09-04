@@ -461,20 +461,19 @@ func _draw() -> void:
 			var avance: bool = ecrit and not fait and g[i] == gc
 			var pa := ecran(a)
 			var pb := ecran(b)
-			# Le rail est en LAITON, comme les ferrures : la couleur de zone
-			# revient sur le tracé déjà parcouru, en surbrillance dessus.
+			# UNE VOIE, PAS UN TRAIT : deux files de rail et leurs traverses,
+			# comme sur une carte ferroviaire. Le tracé parcouru est en laiton
+			# vif, celui qui vient respire, celui qu'on n'a pas ouvert reste
+			# gris de fonte.
 			var k := Sty.HUD_K
 			if not ecrit:
 				_pointille(pa, pb, Color(Sty.LAITON, 0.28), 2.0 * k, 7.0 * k)
 			elif fait:
-				draw_line(pa, pb, Color(Sty.BOIS, 0.8), 6.0 * k, true)
-				draw_line(pa, pb, Color(Sty.LAITON_CLAIR, 0.95), 3.0 * k, true)
-				draw_line(pa, pb, Color(col, 0.55), 1.4 * k, true)
+				_voie(pa, pb, Sty.LAITON_CLAIR, k, 1.0)
 			elif avance:
-				draw_line(pa, pb, Color(Sty.BOIS, 0.8), 6.0 * k, true)
-				draw_line(pa, pb, Color(Sty.LAITON_CLAIR, 0.6 + 0.4 * pulse), 3.4 * k, true)
+				_voie(pa, pb, Sty.LAITON_CLAIR, k, 0.65 + 0.35 * pulse)
 			else:
-				draw_line(pa, pb, Color(Sty.LAITON, 0.35), 2.2 * k, true)
+				_voie(pa, pb, Color("#7a6a55"), k, 0.75)
 	# --- la liaison de transit, et le convoi ------------------------------------
 	if not transit.is_empty():
 		var a := pos(transit["de"])
@@ -489,6 +488,8 @@ func _draw() -> void:
 				var p := pa.lerp(pb, e)
 				draw_circle(p, 7.0, Color(col, 0.35))
 				draw_circle(p, 4.0, col)
+	_rose_des_vents()
+
 	# --- les gares du chapitre vu, et la gare quittée ---------------------------
 	var dessinees: Array = []
 	if not ch.is_empty():
@@ -558,6 +559,51 @@ func _draw() -> void:
 			draw_style_box(Sty.boite(Color(Sty.BOIS_CLAIR, 0.95), Color(Sty.LAITON, 0.5), 3 * kk, max(1.0, kk)),
 				Rect2(c.x - 5 * kk, c.y - 4 * kk, 10 * kk, 8 * kk))
 			draw_arc(Vector2(c.x, c.y - 4 * kk), 3.2 * kk, PI, TAU, 12, Color(Sty.LAITON, 0.7), 1.4 * kk, true)
+
+
+## UNE VOIE FERRÉE : le ballast sombre, les traverses, puis les deux files de
+## rail. Les traverses sont espacées à l'ÉCRAN et non dans le monde — sinon
+## elles se collent quand on dézoome et disparaissent quand on approche.
+func _voie(a: Vector2, b: Vector2, col: Color, k: float, force: float) -> void:
+	var d := a.distance_to(b)
+	if d < 1.0:
+		return
+	var u := (b - a) / d
+	var n := Vector2(-u.y, u.x)
+	var demi := 2.2 * k
+	draw_line(a, b, Color(Sty.BOIS, 0.55 * force), 8.0 * k, true)      # le ballast
+	var pas := 9.0 * k
+	var s := pas / 2.0
+	while s < d:
+		var p := a + u * s
+		draw_line(p - n * demi * 1.55, p + n * demi * 1.55, Color(col, 0.55 * force), 1.6 * k, true)
+		s += pas
+	draw_line(a - n * demi, b - n * demi, Color(col, force), 1.7 * k, true)
+	draw_line(a + n * demi, b + n * demi, Color(col, force), 1.7 * k, true)
+
+
+## LA ROSE DES VENTS, posée dans l'angle de la carte. Elle est à l'ÉCRAN et
+## non sur le terrain : un ornement de cartouche ne dérive pas avec le zoom.
+func _rose_des_vents() -> void:
+	var k := Sty.HUD_K
+	var e := get_viewport_rect().size
+	var c := Vector2(e.x - Sty.marges["droite"] - 42 * k, hauteur_barre() + 46 * k)
+	var R := 22.0 * k
+	var col := Color(Sty.LAITON, 0.38)
+	draw_arc(c, R, 0, TAU, 40, col, 1.2 * k, true)
+	draw_arc(c, R * 0.72, 0, TAU, 36, Color(Sty.LAITON, 0.22), 1.0 * k, true)
+	# les quatre branches principales, en losanges effilés
+	for i in range(4):
+		var a: float = -PI / 2 + PI / 2 * float(i)
+		var u := Vector2(cos(a), sin(a))
+		var n := Vector2(-u.y, u.x)
+		draw_colored_polygon(PackedVector2Array([
+			c + u * R, c + n * R * 0.16, c, c - n * R * 0.16]), Color(Sty.LAITON, 0.55))
+	# et les quatre secondaires, plus courtes
+	for i in range(4):
+		var a: float = -PI / 4 + PI / 2 * float(i)
+		draw_line(c, c + Vector2(cos(a), sin(a)) * R * 0.62, Color(Sty.LAITON, 0.30), 1.0 * k, true)
+	Sty.texte_centre(self, police, int(round(9 * k)), c + Vector2(0, -R - 7 * k), "N", Color(Sty.LAITON, 0.75))
 
 
 func _pointille(a: Vector2, b: Vector2, col: Color, larg: float, pas: float) -> void:
@@ -1019,12 +1065,19 @@ func _cartouche(id: String) -> Control:
 	var grille := GridContainer.new()
 	grille.columns = 4
 	grille.add_theme_constant_override("h_separation", int(round(16 * k)))
-	for paire in [["Quais", str(quais)], ["Directions", str(dirs)],
-			["Difficulté", _pips(d)], ["Pour 3 ★", "%d min" % int(seuils["trois"])]]:
+	for trio in [["Quais", str(quais), "loco"], ["Directions", str(dirs), "aiguille"],
+			["Difficulté", _pips(d), ""], ["Pour 3 ★", "%d min" % int(seuils["trois"]), "horloge"]]:
 		var cell := VBoxContainer.new()
 		cell.add_theme_constant_override("separation", 0)
-		cell.add_child(_label(paire[0].to_upper(), 11, Sty.ENCRE_MUET, true, false))
-		cell.add_child(_label(paire[1], 16, OR if paire[0] == "Difficulté" else Sty.ENCRE, false, false))
+		cell.add_child(_label(String(trio[0]).to_upper(), 11, Sty.ENCRE_MUET, true, false))
+		# la figure à gauche de la valeur, comme sur la maquette
+		var ligne := HBoxContainer.new()
+		ligne.add_theme_constant_override("separation", int(round(5 * k)))
+		if trio[2] != "":
+			ligne.add_child(_icone(String(trio[2]), 17 * k, Sty.ENCRE_MUET))
+		ligne.add_child(_label(String(trio[1]), 16,
+			OR if trio[0] == "Difficulté" else Sty.ENCRE, false, false))
+		cell.add_child(ligne)
 		grille.add_child(cell)
 	v.add_child(grille)
 
@@ -1236,3 +1289,54 @@ func _pied() -> Control:
 func _passer(id: String) -> void:
 	if app != null:
 		app.passer(id)
+
+
+## LES ICÔNES SONT DESSINÉES, PAS IMPORTÉES. Une locomotive, une aiguille, un
+## cadran : trois figures simples qui se tracent au trait et suivent le
+## facteur d'échelle sans jamais pixeliser. Le jour où une vraie illustration
+## les remplacera, seul ce bloc changera.
+class Icone extends Control:
+	var quoi := ""
+	var col := Color.WHITE
+	var ep := 1.5
+
+	func _draw() -> void:
+		var r := size
+		var c := r / 2.0
+		match quoi:
+			"loco":
+				# caisse, cabine, cheminée, deux roues
+				var corps := Rect2(r.x * 0.10, r.y * 0.34, r.x * 0.62, r.y * 0.34)
+				draw_rect(corps, col, false, ep)
+				draw_rect(Rect2(r.x * 0.62, r.y * 0.18, r.x * 0.28, r.y * 0.50), col, false, ep)
+				draw_line(Vector2(r.x * 0.22, r.y * 0.34), Vector2(r.x * 0.22, r.y * 0.18), col, ep)
+				draw_arc(Vector2(r.x * 0.28, r.y * 0.76), r.x * 0.10, 0, TAU, 14, col, ep)
+				draw_arc(Vector2(r.x * 0.70, r.y * 0.76), r.x * 0.10, 0, TAU, 14, col, ep)
+				draw_line(Vector2(0, r.y * 0.90), Vector2(r.x, r.y * 0.90), col, ep)
+			"aiguille":
+				# une voie qui se divise : le geste même du jeu
+				draw_line(Vector2(c.x, r.y * 0.92), Vector2(c.x, r.y * 0.52), col, ep)
+				draw_line(Vector2(c.x, r.y * 0.52), Vector2(r.x * 0.14, r.y * 0.10), col, ep)
+				draw_line(Vector2(c.x, r.y * 0.52), Vector2(c.x, r.y * 0.10), col, ep)
+				draw_line(Vector2(c.x, r.y * 0.52), Vector2(r.x * 0.86, r.y * 0.10), col, ep)
+			"horloge":
+				draw_arc(c, r.x * 0.40, 0, TAU, 28, col, ep)
+				draw_line(c, c + Vector2(0, -r.y * 0.26), col, ep)
+				draw_line(c, c + Vector2(r.x * 0.20, r.y * 0.12), col, ep)
+			"etoile":
+				var pts := PackedVector2Array()
+				for i in range(10):
+					var a: float = -PI / 2 + PI * float(i) / 5.0
+					var rad: float = r.x * (0.44 if i % 2 == 0 else 0.19)
+					pts.append(c + Vector2(cos(a), sin(a)) * rad)
+				draw_colored_polygon(pts, col)
+
+
+func _icone(quoi: String, taille: float, col: Color) -> Control:
+	var i := Icone.new()
+	i.quoi = quoi
+	i.col = col
+	i.ep = max(1.0, 1.4 * Sty.HUD_K)
+	i.custom_minimum_size = Vector2(taille, taille)
+	i.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	return i
