@@ -76,6 +76,37 @@ func montrer(nom: String) -> void:
 		n.process_mode = Node.PROCESS_MODE_INHERIT if actif else Node.PROCESS_MODE_DISABLED
 
 
+# --- LA CAPTURE D'ÉCRAN, DEPUIS L'APPAREIL ------------------------------------------
+# Sur un téléphone il n'y a ni console lisible ni commande de capture dans
+# devicectl : le seul moyen de me montrer un écran était l'AirDrop à la main.
+# TROIS DOIGTS POSÉS ensemble enregistrent donc l'image dans le conteneur de
+# l'app, que `tools/ios.sh --capture` va chercher. Au bureau, F12 fait pareil.
+var _doigts := {}
+
+
+func _input(event: InputEvent) -> void:
+	if event is InputEventScreenTouch:
+		if event.pressed:
+			_doigts[event.index] = true
+			if _doigts.size() >= 3:
+				_doigts.clear()
+				capturer()
+		else:
+			_doigts.erase(event.index)
+	elif event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_F12:
+		capturer()
+
+
+func capturer() -> void:
+	await RenderingServer.frame_post_draw
+	var img := get_viewport().get_texture().get_image()
+	var vers := "user://capture.png"
+	if img.save_png(vers) == OK:
+		print("capture : " + ProjectSettings.globalize_path(vers))
+	else:
+		push_error("capture impossible")
+
+
 # --- le service ---------------------------------------------------------------------
 func jouer(id: String) -> void:
 	if not ruban.est_tenue(id):

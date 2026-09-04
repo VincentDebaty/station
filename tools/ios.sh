@@ -37,57 +37,6 @@ EQUIPE=$(grep -E '^application/app_store_team_id' export_presets.cfg 2>/dev/null
 rouge() { printf '\033[31m%s\033[0m\n' "$1"; }
 vert()  { printf '\033[32m%s\033[0m\n' "$1"; }
 
-# --- ce qui est en place ---------------------------------------------------
-etat() {
-  echo "identifiant   : ${BUNDLE:-(aucun)}"
-  echo "équipe        : ${EQUIPE:-(aucune)}"
-  local n_comptes
-  n_comptes=$(defaults read com.apple.dt.Xcode IDEProvisioningTeams 2>/dev/null | grep -c teamID)
-  if [ "${n_comptes:-0}" -gt 0 ]; then
-    vert "compte Xcode  : présent"
-  else
-    rouge "compte Xcode  : AUCUN — Xcode → Réglages → Comptes → + → Apple ID"
-  fi
-  local prof
-  prof=$(ls ~/Library/MobileDevice/Provisioning\ Profiles/*.mobileprovision 2>/dev/null | wc -l | tr -d ' ')
-  echo "profils        : ${prof}"
-  local dev
-  dev=$(xcrun devicectl list devices 2>/dev/null | grep -c "connected")
-  if [ "${dev:-0}" -gt 0 ]; then
-    vert "appareil       : connecté"
-    xcrun devicectl list devices 2>/dev/null | grep "connected" | sed 's/^/                 /'
-  else
-    rouge "appareil       : AUCUN — brancher l'iPhone et le déverrouiller"
-  fi
-}
-
-if [ "${1:-}" = "--etat" ]; then etat; exit 0; fi
-
-# --- l'export : Godot pose le projet Xcode, le compile et le signe ----------
-echo "→ export du projet Xcode…"
-mkdir -p "$SORTIE"
-# « error » TOUT COURT NE MARCHE PAS : la ligne de commande d'ibtool contient
-# `--errors --warnings --notices`, et l'export réussi passait pour un échec
-# (mesuré le 3 septembre 2026). On cherche donc « error: » ou « ERROR: ».
-godot --headless --path . --export-debug "iOS" "$PROJET" > /tmp/station-ios-export.log 2>&1
-if ! grep -qE "error:|^ERROR:|BUILD FAILED" /tmp/station-ios-export.log; then
-  vert "  projet exporté et signé"
-else
-  rouge "  l'export a rendu une erreur :"
-  grep -E "error:|^ERROR:|BUILD FAILED" /tmp/station-ios-export.log | head -5 | sed 's/^/    /'
-  echo
-  echo "  Si elle parle de compte ou de profil, c'est l'étape humaine :"
-  echo "  Xcode → Réglages → Comptes, puis ouvrir $PROJET une fois."
-  exit 1
-fi
-[ "${1:-}" = "--export" ] && exit 0
-
-# --- l'installation, puis le lancement -------------------------------------
-APP=$(find "$SORTIE" -name "Station.app" -maxdepth 5 2>/dev/null | head -1)
-if [ -z "$APP" ]; then
-  rouge "aucune Station.app produite — voir /tmp/station-ios-export.log"
-  exit 1
-fi
 # L'IDENTIFIANT SE LIT EN JSON, ET LE CÂBLE PASSE D'ABORD. Deux erreurs
 # corrigées ici le 3 septembre 2026 : découpé à la colonne dans le tableau de
 # devicectl on récoltait « 16 » (un morceau d'« iPhone 16 Pro ») ; et la
@@ -114,6 +63,95 @@ cands.sort(key=note, reverse=True)
 if cands and note(cands[0]) >= 4:
     print(cands[0]['identifier'])
 " 2>/dev/null)
+appareil() {
+  xcrun devicectl list devices --json-output /tmp/station-ios-dev.json >/dev/null 2>&1
+  python3 -c "
+import json
+try:
+    d = json.load(open('/tmp/station-ios-dev.json'))
+except Exception:
+    raise SystemExit
+def note(x):
+    p = x.get('connectionProperties', {})
+    n = 0
+    if p.get('transportType') == 'wired': n += 4
+    if p.get('tunnelState') == 'connected': n += 2
+    if 'iPhone' in x.get('deviceProperties', {}).get('name', ''): n += 1
+    return n
+cands = [x for x in d['result']['devices']
+         if x.get('connectionProperties', {}).get('pairingState') == 'paired']
+cands.sort(key=note, reverse=True)
+if cands and note(cands[0]) >= 4:
+    print(cands[0]['identifier'])
+" 2>/dev/null
+}
+
+# --- ce qui est en place ---------------------------------------------------
+etat() {
+  echo "identifiant   : ${BUNDLE:-(aucun)}"
+  echo "équipe        : ${EQUIPE:-(aucune)}"
+  local n_comptes
+  n_comptes=$(defaults read com.apple.dt.Xcode IDEProvisioningTeams 2>/dev/null | grep -c teamID)
+  if [ "${n_comptes:-0}" -gt 0 ]; then
+    vert "compte Xcode  : présent"
+  else
+    rouge "compte Xcode  : AUCUN — Xcode → Réglages → Comptes → + → Apple ID"
+  fi
+  local prof
+  prof=$(ls ~/Library/MobileDevice/Provisioning\ Profiles/*.mobileprovision 2>/dev/null | wc -l | tr -d ' ')
+  echo "profils        : ${prof}"
+  local dev
+  dev=$(xcrun devicectl list devices 2>/dev/null | grep -c "connected")
+  if [ "${dev:-0}" -gt 0 ]; then
+    vert "appareil       : connecté"
+    xcrun devicectl list devices 2>/dev/null | grep "connected" | sed 's/^/                 /'
+  else
+    rouge "appareil       : AUCUN — brancher l'iPhone et le déverrouiller"
+  fi
+}
+
+if [ "${1:-}" = "--etat" ]; then etat; exit 0; fi
+
+# --- récupérer la dernière capture prise sur l'appareil ---------------------
+# Trois doigts posés sur l'écran du jeu enregistrent l'image ; celle-ci va la
+# chercher dans le conteneur de l'app. Ni la console ni devicectl n'offrent
+# de capture, et la Recopie d'iPhone n'existe pas sur ce Mac.
+if [ "${1:-}" = "--capture" ]; then
+  ID=$(appareil) || { rouge "aucun iPhone au bout du fil"; exit 1; }
+  VERS="${2:-/tmp/station-capture.png}"
+  xcrun devicectl device copy from --device "$ID" \
+    --domain-type appDataContainer --domain-identifier "$BUNDLE" \
+    --source Documents/capture.png --destination "$VERS" > /dev/null 2>&1 \
+    && vert "capture : $VERS" || rouge "aucune capture sur l'appareil (trois doigts sur l'écran du jeu)"
+  exit 0
+fi
+
+# --- l'export : Godot pose le projet Xcode, le compile et le signe ----------
+echo "→ export du projet Xcode…"
+mkdir -p "$SORTIE"
+# « error » TOUT COURT NE MARCHE PAS : la ligne de commande d'ibtool contient
+# `--errors --warnings --notices`, et l'export réussi passait pour un échec
+# (mesuré le 3 septembre 2026). On cherche donc « error: » ou « ERROR: ».
+godot --headless --path . --export-debug "iOS" "$PROJET" > /tmp/station-ios-export.log 2>&1
+if ! grep -qE "error:|^ERROR:|BUILD FAILED" /tmp/station-ios-export.log; then
+  vert "  projet exporté et signé"
+else
+  rouge "  l'export a rendu une erreur :"
+  grep -E "error:|^ERROR:|BUILD FAILED" /tmp/station-ios-export.log | head -5 | sed 's/^/    /'
+  echo
+  echo "  Si elle parle de compte ou de profil, c'est l'étape humaine :"
+  echo "  Xcode → Réglages → Comptes, puis ouvrir $PROJET une fois."
+  exit 1
+fi
+[ "${1:-}" = "--export" ] && exit 0
+
+# --- l'installation, puis le lancement -------------------------------------
+APP=$(find "$SORTIE" -name "Station.app" -maxdepth 5 2>/dev/null | head -1)
+if [ -z "$APP" ]; then
+  rouge "aucune Station.app produite — voir /tmp/station-ios-export.log"
+  exit 1
+fi
+ID=$(appareil)
 if [ -z "$ID" ]; then
   rouge "aucun appareil connecté"
   exit 1
