@@ -64,6 +64,13 @@ static var HUD_K := 1.0
 ## téléphone, c'est le seul journal qu'on puisse lire.
 static var mesure := ""
 
+## LA ZONE SÛRE — les coins arrondis, l'île interactive, la barre d'accueil.
+## Le prototype la connaît depuis toujours (css/station.css, --safe-l/r/t/b
+## posées sur `env(safe-area-inset-*)`) et je ne l'avais pas transposée : sur
+## l'iPhone 16 de Vincent, une partie des boutons et des infos passait sous
+## le bord. Elle vaut zéro partout ailleurs, et le bureau ne bouge pas.
+static var marges := {"gauche": 0.0, "droite": 0.0, "haut": 0.0, "bas": 0.0}
+
 
 ## À appeler une fois l'écran connu. Sans elle, les deux facteurs valent 1 et
 ## le jeu s'affiche comme au bureau — ce qui est le bon repli.
@@ -80,13 +87,18 @@ static func calibrer(viewport: Viewport) -> void:
 		# bandeau ne bougerait pas, et l'essai ne montrerait que la moitié de la
 		# passe. 1,93 est ce que la mesure donne sur un iPhone 17 en paysage.
 		HUD_K = PLANCHER_TACTILE
-		mesure = "régime tactile forcé · HUD_K %.2f" % HUD_K
+		_mesurer_marges(viewport)
+		# de quoi voir au bureau ce que le téléphone réserve à ses bords
+		if marges["gauche"] + marges["droite"] == 0.0:
+			marges = {"gauche": 100.0, "droite": 100.0, "haut": 0.0, "bas": 40.0}
+		mesure = "régime tactile forcé · HUD_K %.2f · marges %s" % [HUD_K, marges]
 		return
 	var dpi := DisplayServer.screen_get_dpi()
 	var large := float(DisplayServer.window_get_size().x)
 	var unites := viewport.get_visible_rect().size.x
 	if dpi <= 0 or large <= 0 or unites <= 0:
 		HUD_K = max(PLANCHER_TACTILE, UIK) if UIK > 1.0 else 1.0
+		_mesurer_marges(viewport)
 		mesure = "mesure impossible · HUD_K %.2f" % HUD_K
 		return
 	# window_get_size() est en points sur macOS et sur iOS ; les pixels
@@ -94,6 +106,7 @@ static func calibrer(viewport: Viewport) -> void:
 	var pouces := large * DisplayServer.screen_get_max_scale() / dpi
 	if pouces <= 0.0:
 		HUD_K = max(PLANCHER_TACTILE, UIK) if UIK > 1.0 else 1.0
+		_mesurer_marges(viewport)
 		mesure = "pouces inconnus · HUD_K %.2f" % HUD_K
 		return
 	var calcule := clampf((unites / pouces) / UNITES_PAR_POUCE_BUREAU, 1.0, 3.0)
@@ -107,10 +120,40 @@ static func calibrer(viewport: Viewport) -> void:
 	# viewport (1652) et les points de l'écran (874) — de quoi rendre à une
 	# chip de 34 unités les 34 points qu'elle a sur le web.
 	HUD_K = max(PLANCHER_TACTILE, calcule) if UIK > 1.0 else 1.0
-	mesure = "tactile %s · fenêtre %s · échelle %.1f · dpi %d · écran %s · viewport %s · calcul %.2f · HUD_K %.2f" % [
+	_mesurer_marges(viewport)
+	mesure = "tactile %s · fenêtre %s · échelle %.1f · dpi %d · écran %s · viewport %s · calcul %.2f · HUD_K %.2f · marges %s" % [
 		DisplayServer.is_touchscreen_available(), DisplayServer.window_get_size(),
 		DisplayServer.screen_get_max_scale(), dpi, DisplayServer.screen_get_size(),
-		viewport.get_visible_rect().size, calcule, HUD_K]
+		viewport.get_visible_rect().size, calcule, HUD_K, marges]
+
+
+## Les retraits de la zone sûre, convertis en unités du viewport. Les deux
+## grandeurs viennent du même DisplayServer, donc du même espace : le rapport
+## est fiable là où une taille absolue ne l'est pas.
+static func _mesurer_marges(viewport: Viewport) -> void:
+	marges = {"gauche": 0.0, "droite": 0.0, "haut": 0.0, "bas": 0.0}
+	# SEULEMENT SUR MOBILE. `get_display_safe_area()` rend une zone en
+	# coordonnées d'ÉCRAN, pas relative à la fenêtre : sur macOS elle vaut le
+	# bureau utile, et prise pour un retrait elle donnait 3 288 unités de marge
+	# à gauche — l'écran du ruban en est devenu tout noir (mesuré le
+	# 3 septembre 2026). Sur un téléphone la fenêtre EST l'écran, et la
+	# comparaison a un sens ; ailleurs, il n'y a pas d'encoche à contourner.
+	if not OS.has_feature("mobile"):
+		return
+	var ecran := Vector2(DisplayServer.screen_get_size())
+	var vp := viewport.get_visible_rect().size
+	if ecran.x <= 0.0 or ecran.y <= 0.0:
+		return
+	var sure := DisplayServer.get_display_safe_area()
+	if sure.size.x <= 0 or sure.size.y <= 0:
+		return
+	var k := Vector2(vp.x / ecran.x, vp.y / ecran.y)
+	marges = {
+		"gauche": max(0.0, float(sure.position.x)) * k.x,
+		"haut": max(0.0, float(sure.position.y)) * k.y,
+		"droite": max(0.0, ecran.x - float(sure.position.x + sure.size.x)) * k.x,
+		"bas": max(0.0, ecran.y - float(sure.position.y + sure.size.y)) * k.y,
+	}
 
 
 # --- les polices, en cache --------------------------------------------------------

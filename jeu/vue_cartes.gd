@@ -31,8 +31,9 @@ func _ready() -> void:
 	add_child(fond)
 	var marge := MarginContainer.new()
 	marge.set_anchors_preset(Control.PRESET_FULL_RECT)
-	for cote in ["left", "right", "top", "bottom"]:
-		marge.add_theme_constant_override("margin_" + cote, 28)
+	# la zone sûre s'ajoute à la marge, elle ne la remplace pas
+	for paire in [["left", "gauche"], ["right", "droite"], ["top", "haut"], ["bottom", "bas"]]:
+		marge.add_theme_constant_override("margin_" + paire[0], int(28 + Sty.marges[paire[1]]))
 	add_child(marge)
 	colonne = VBoxContainer.new()
 	colonne.add_theme_constant_override("separation", 14)

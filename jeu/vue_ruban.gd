@@ -78,6 +78,7 @@ var police: Font
 
 
 func _ready() -> void:
+	Sty.calibrer(get_viewport())
 	police = Sty.sans(600)
 	fond = Node2D.new()
 	fond.show_behind_parent = true
@@ -224,8 +225,9 @@ func _construire_fond() -> void:
 # ------------------------------------------------------------------
 ## La fenêtre de la carte, en unités du cadre : l'écran moins le panneau.
 func fenetre() -> Dictionary:
-	var w := ECRAN_L - PANNEAU_L
-	var h := ECRAN_H
+	var e := get_viewport_rect().size
+	var w: float = max(50.0, e.x - PANNEAU_L - Sty.marges["gauche"] - Sty.marges["droite"])
+	var h: float = max(50.0, e.y - Sty.marges["haut"] - Sty.marges["bas"])
 	var a := w / h
 	if a >= CADRE_L / CADRE_H:
 		return {"w": CADRE_H * a, "h": CADRE_H, "px": w / (CADRE_H * a)}
@@ -235,8 +237,15 @@ func fenetre() -> Dictionary:
 ## D'une position du cadre à l'écran, par la caméra courante.
 func ecran(p: Vector2) -> Vector2:
 	var f := fenetre()
-	var centre := Vector2(PANNEAU_L + (ECRAN_L - PANNEAU_L) / 2, ECRAN_H / 2)
-	return centre + (p - Vector2(cam["x"], cam["y"])) * cam["k"] * f["px"]
+	return _centre_carte() + (p - Vector2(cam["x"], cam["y"])) * cam["k"] * f["px"]
+
+
+## Le milieu de la carte : ce qui reste à droite du panneau, dans la zone sûre.
+func _centre_carte() -> Vector2:
+	var e := get_viewport_rect().size
+	var g: float = PANNEAU_L + Sty.marges["gauche"]
+	return Vector2(g + (e.x - g - Sty.marges["droite"]) / 2.0,
+		Sty.marges["haut"] + (e.y - Sty.marges["haut"] - Sty.marges["bas"]) / 2.0)
 
 
 func zoom_pour(bw: float, bh: float, marge: float, k_max: float) -> float:
@@ -331,9 +340,8 @@ func _process(delta: float) -> void:
 			if transit_t >= 1.0:
 				_arriver()
 	var f := fenetre()
-	var centre := Vector2(PANNEAU_L + (ECRAN_L - PANNEAU_L) / 2, ECRAN_H / 2)
 	var k: float = cam["k"] * f["px"]
-	fond.transform = Transform2D(0.0, Vector2(k, k), 0.0, centre - Vector2(cam["x"], cam["y"]) * k)
+	fond.transform = Transform2D(0.0, Vector2(k, k), 0.0, _centre_carte() - Vector2(cam["x"], cam["y"]) * k)
 	for l in contours:
 		l.width = 1.2 / k
 	queue_redraw()
@@ -566,7 +574,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		var m: Vector2 = event.position
-		if m.x < PANNEAU_L:
+		if m.x < PANNEAU_L + Sty.marges["gauche"]:
 			return
 		var ch := chapitre_vu()
 		if ch.is_empty():
@@ -589,15 +597,16 @@ func _unhandled_input(event: InputEvent) -> void:
 func _construire_panneau() -> void:
 	panneau = PanelContainer.new()
 	panneau.position = Vector2.ZERO
-	panneau.size = Vector2(PANNEAU_L, ECRAN_H)
+	panneau.size = Vector2(PANNEAU_L + Sty.marges["gauche"], get_viewport_rect().size.y)
+	# la zone sûre s'ajoute au rembourrage du panneau, elle ne le remplace pas
 	var style := StyleBoxFlat.new()
 	style.bg_color = PANNEAU
 	style.border_color = BORD
 	style.border_width_right = 1
-	style.content_margin_left = 22
+	style.content_margin_left = 22 + Sty.marges["gauche"]
 	style.content_margin_right = 22
-	style.content_margin_top = 18
-	style.content_margin_bottom = 18
+	style.content_margin_top = 18 + Sty.marges["haut"]
+	style.content_margin_bottom = 18 + Sty.marges["bas"]
 	style.anti_aliasing = true
 	panneau.add_theme_stylebox_override("panel", style)
 	add_child(panneau)

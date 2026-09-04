@@ -645,8 +645,11 @@ func size_ecran() -> Vector2:
 ## le 3 septembre 2026 — ni `expand` ni `keep_height` ne recentrent). Le
 ## BANDEAU, lui, garde les vrais bords : c'est là qu'on va le chercher.
 func decalage() -> Vector2:
-	var d := (size_ecran() - Vector2(1400.0, 760.0)) / 2.0
-	return Vector2(max(0.0, d.x), max(0.0, d.y))
+	# le plan se centre dans la ZONE SÛRE, pas dans l'écran brut
+	var m := Sty.marges
+	var utile := size_ecran() - Vector2(m["gauche"] + m["droite"], m["haut"] + m["bas"])
+	var d := (utile - Vector2(1400.0, 760.0)) / 2.0
+	return Vector2(m["gauche"] + max(0.0, d.x), m["haut"] + max(0.0, d.y))
 
 
 ## Une chip de verre dépoli : le gabarit commun du bandeau (#hud-clock,
@@ -679,7 +682,7 @@ func _dessiner_hud(t: float) -> void:
 	var w_nm := gras.get_string_size(nom, HORIZONTAL_ALIGNMENT_LEFT, -1, ti.call(13)).x
 	var w_pips := (5.0 * 4.0 + 4.0 * 3.0) * k
 	var large := (10.0 + 14.0 + 6.0) * k + w_fl + 6.0 * k + w_nm + 3.0 * k + w_pips + 13.0 * k
-	var chip := Rect2(4 * k, 10 * k, large, 34 * k)
+	var chip := Rect2(Sty.marges["gauche"] + 4 * k, Sty.marges["haut"] + 10 * k, large, 34 * k)
 	zones_hud["carte"] = chip
 	_chip(chip, Sty.BORD, k)
 	var cy := chip.position.y + chip.size.y / 2.0
@@ -703,8 +706,8 @@ func _dessiner_hud(t: float) -> void:
 	var w_h := Sty.largeur_espacee(mono, ti.call(21), horloge, 1.0 * k)
 	var w_r := mono.get_string_size(txt_r, HORIZONTAL_ALIGNMENT_LEFT, -1, ti.call(14)).x
 	var w_chip := 13.0 * k + w_h + 8.0 * k + w_r + 13.0 * k
-	var milieu := size_ecran().x / 2.0
-	var ch := Rect2(milieu - w_chip / 2.0, 10 * k, w_chip, 38 * k)
+	var milieu: float = Sty.marges["gauche"] + (size_ecran().x - Sty.marges["gauche"] - Sty.marges["droite"]) / 2.0
+	var ch := Rect2(milieu - w_chip / 2.0, Sty.marges["haut"] + 10 * k, w_chip, 38 * k)
 	zones_hud["horloge"] = ch
 	_chip(ch, Sty.ACCENT if (pause or gel) else Sty.BORD, k)
 	var base := ch.position.y + 5.0 * k + mono.get_ascent(ti.call(21))
@@ -737,9 +740,9 @@ func _dessiner_hud(t: float) -> void:
 			etiq, Sty.ACCENT, 1.5 * k)
 
 	# --- les trois boutons, en haut à droite ---------------------------------
-	var bx := size_ecran().x - 4.0 * k - 34.0 * k
+	var bx: float = size_ecran().x - Sty.marges["droite"] - 4.0 * k - 34.0 * k
 	for bouton in [["gear", ""], ["speed", "%dx" % int(vitesse)], ["play", ""]]:
-		var r := Rect2(bx, 10 * k, 34 * k, 34 * k)
+		var r := Rect2(bx, Sty.marges["haut"] + 10 * k, 34 * k, 34 * k)
 		zones_hud[bouton[0]] = r
 		var actif: bool = bouton[0] == "speed" and vitesse > 1.0
 		_chip(r, Sty.ACCENT if actif else Sty.BORD, k)
@@ -772,7 +775,7 @@ func _dessiner_hud(t: float) -> void:
 	# Elle ne suit PAS le facteur du bandeau : grossie, elle déborde de l'écran
 	# d'un téléphone (mesuré le 3 septembre 2026). Petite, elle reste lisible
 	# quand on la cherche et invisible quand on joue — ce qu'on veut d'elle.
-	draw_string(sans, Vector2(18, size_ecran().y - 14),
+	draw_string(sans, Vector2(Sty.marges["gauche"] + 18, size_ecran().y - Sty.marges["bas"] - 14),
 		"graine %d · journée en %d ms · %s%s"
 			% [graine, duree_generation_ms, _niveau_texte(),
 				("   ·   " + Sty.mesure) if Sty.mesure != "" else ""],
