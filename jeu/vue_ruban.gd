@@ -87,7 +87,7 @@ func _ready() -> void:
 	# la mer sous la carte : c'est la couleur d'effacement qui la porte, et
 	# l'écran de jeu remet la sienne en reprenant la main (app.gd, montrer).
 	RenderingServer.set_default_clear_color(Sty.MER)
-	police = Sty.sans(600)
+	police = Sty.titre(600)
 	fond = Node2D.new()
 	fond.show_behind_parent = true
 	add_child(fond)
@@ -717,10 +717,12 @@ func _poser_cadre() -> void:
 ## `replie` : un texte long se replie sur la largeur du panneau ; un compteur
 ## ou une mesure ne se replie jamais — dans une rangée, un Label qui se
 ## replie n'a plus de largeur minimale et s'écrit lettre par lettre.
+## `gras` ne dit plus « en gras » mais « en TITRE » : Cinzel, la capitale
+## lapidaire de la direction artistique. Le texte courant reste en Garamond.
 func _label(texte: String, taille: int, couleur: Color, gras: bool = false, replie: bool = true) -> Label:
 	var l := Label.new()
 	l.text = texte
-	l.add_theme_font_override("font", Sty.sans(600 if gras else 400))
+	l.add_theme_font_override("font", Sty.titre(600) if gras else Sty.sans(400))
 	l.add_theme_font_size_override("font_size", int(round(taille * Sty.HUD_K)))
 	l.add_theme_color_override("font_color", couleur)
 	l.add_theme_constant_override("line_spacing", int(round(5 * Sty.HUD_K)))
@@ -808,7 +810,7 @@ func _remplir_barre() -> void:
 	bloc.add_theme_constant_override("separation", int(round(4 * k)))
 	bloc.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	bloc.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	var nom := _label(String(g["nom"]), 13, TEXTE, false, false)
+	var nom := _label(String(g["nom"]), 13, TEXTE, true, false)
 	nom.clip_text = true
 	bloc.add_child(nom)
 	var jauge := ProgressBar.new()
@@ -848,7 +850,7 @@ func _pastille(texte: String, couleur: Color) -> Control:
 	st.content_margin_top = 3 * k
 	st.content_margin_bottom = 3 * k
 	p.add_theme_stylebox_override("panel", st)
-	p.add_child(_label(texte, 13, couleur, false, false))
+	p.add_child(_label(texte, 13, couleur, true, false))
 	return p
 
 
@@ -970,7 +972,7 @@ func _cartouche(id: String) -> Control:
 			["Difficulté", _pips(d)], ["Pour 3 ★", "%d min" % int(seuils["trois"])]]:
 		var cell := VBoxContainer.new()
 		cell.add_theme_constant_override("separation", 0)
-		cell.add_child(_label(paire[0], 11, Sty.ENCRE_MUET, false, false))
+		cell.add_child(_label(paire[0].to_upper(), 11, Sty.ENCRE_MUET, true, false))
 		cell.add_child(_label(paire[1], 16, OR if paire[0] == "Difficulté" else Sty.ENCRE, false, false))
 		grille.add_child(cell)
 	v.add_child(grille)

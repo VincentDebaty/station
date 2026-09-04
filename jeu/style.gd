@@ -194,16 +194,48 @@ static var _sans: Dictionary = {}
 static var _mono: Dictionary = {}
 
 
-## L'interface : « Segoe UI », system-ui, -apple-system, sans-serif.
+## LES POLICES DE LA DIRECTION ARTISTIQUE (4 septembre 2026). Livrées avec
+## l'application — sur iOS une police système ne se redistribue pas — et sous
+## licence SIL Open Font (voir jeu/polices/LISEZ-MOI.md). Toutes deux sont
+## VARIABLES : un seul fichier porte toutes les graisses, et FontVariation en
+## tire le gras sans charger un second fichier.
+const FICHIER_TITRE := "res://jeu/polices/Cinzel.ttf"
+const FICHIER_TEXTE := "res://jeu/polices/EBGaramond.ttf"
+static var _titre: Dictionary = {}
+
+
+## LE TEXTE COURANT : EB Garamond. C'est elle qui remplace la police système
+## partout où le prototype écrivait en sans-serif — le nom de `sans` reste
+## parce que tout l'appelle, mais ce n'en est plus une.
 static func sans(graisse: int = 400) -> Font:
 	if not _sans.has(graisse):
-		var f := SystemFont.new()
-		f.font_names = PackedStringArray(["SF Pro Text", "Helvetica Neue", "Segoe UI", "Inter", "Roboto", "Arial"])
-		f.font_weight = graisse
-		f.antialiasing = TextServer.FONT_ANTIALIASING_GRAY
-		f.subpixel_positioning = TextServer.SUBPIXEL_POSITIONING_AUTO
-		_sans[graisse] = f
+		_sans[graisse] = _charger(FICHIER_TEXTE, graisse)
 	return _sans[graisse]
+
+
+## LES TITRES ET LES PETITES CAPITALES : Cinzel, une capitale romaine
+## lapidaire. C'est elle qui donne à l'écran son air de gravure.
+static func titre(graisse: int = 600) -> Font:
+	if not _titre.has(graisse):
+		_titre[graisse] = _charger(FICHIER_TITRE, graisse)
+	return _titre[graisse]
+
+
+static func _charger(chemin: String, graisse: int) -> Font:
+	var base: FontFile = load(chemin) if ResourceLoader.exists(chemin) else null
+	if base == null:
+		# repli : la police système, pour que rien ne disparaisse si un fichier
+		# manque (un export mal filtré, par exemple).
+		var sf := SystemFont.new()
+		sf.font_names = PackedStringArray(["Georgia", "Times New Roman", "Serif"])
+		sf.font_weight = graisse
+		return sf
+	base.antialiasing = TextServer.FONT_ANTIALIASING_GRAY
+	base.subpixel_positioning = TextServer.SUBPIXEL_POSITIONING_AUTO
+	var v := FontVariation.new()
+	v.base_font = base
+	v.variation_opentype = {&"wght": graisse}
+	return v
 
 
 ## L'horloge et les badges : ui-monospace, « SF Mono », Menlo, monospace.
@@ -345,8 +377,11 @@ static func texte_centre(canvas: CanvasItem, police: Font, taille: int, centre: 
 static func bouton(texte: String, principal: bool = false, taille: int = 15, k: float = 1.0) -> Button:
 	var b := Button.new()
 	b.text = texte
-	b.add_theme_font_override("font", sans(600 if principal else 400))
+	# LE BOUTON EST GRAVÉ : Cinzel, en capitales, comme les plaques d'une gare.
+	b.text = texte.to_upper()
+	b.add_theme_font_override("font", titre(700 if principal else 600))
 	b.add_theme_font_size_override("font_size", int(round(taille * k)))
+	b.add_theme_constant_override("h_separation", int(round(2 * k)))
 	var fond := ACCENT if principal else PANNEAU
 	var s := boite(fond, ACCENT if principal else BORD, 10 * k, max(1.0, k))
 	s.content_margin_left = (22 if principal else 14) * k
