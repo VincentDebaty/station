@@ -21,7 +21,7 @@ const Sty := preload("res://jeu/style.gd")
 const CADRE_L := 160.0
 const CADRE_H := 100.0
 const ETIREMENT_X := 1.6
-const PANNEAU_L := 380.0
+const PANNEAU_L := 380.0   # au bureau ; sur un téléphone, × Sty.HUD_K
 const ECRAN_L := 1400.0
 const ECRAN_H := 760.0
 const K_MAX_CHAPITRE := 200.0
@@ -159,6 +159,15 @@ func _xy(lon: float, lat: float) -> Vector2:
 		CADRE_H / 2 - (lat - proj["la"]) * proj["s"])
 
 
+## LE PANNEAU SUIT LE FACTEUR DU BANDEAU. Sans cela il gardait sa largeur de
+## bureau — 380 unités sur les 1 652 d'un iPhone, soit un quart d'écran de
+## texte minuscule : « c'est très petit comme si on avait dézoomé » (Vincent,
+## 3 septembre 2026). Tout ce qui se lit dans ce panneau passe par _label et
+## _bouton, qui multiplient eux aussi.
+func panneau_l() -> float:
+	return PANNEAU_L * Sty.HUD_K
+
+
 ## La position d'une gare en unités du cadre, ou Vector2.INF.
 func pos(id: String) -> Vector2:
 	if proj.is_empty():
@@ -226,7 +235,7 @@ func _construire_fond() -> void:
 ## La fenêtre de la carte, en unités du cadre : l'écran moins le panneau.
 func fenetre() -> Dictionary:
 	var e := get_viewport_rect().size
-	var w: float = max(50.0, e.x - PANNEAU_L - Sty.marges["gauche"] - Sty.marges["droite"])
+	var w: float = max(50.0, e.x - panneau_l() - Sty.marges["gauche"] - Sty.marges["droite"])
 	var h: float = max(50.0, e.y - Sty.marges["haut"] - Sty.marges["bas"])
 	var a := w / h
 	if a >= CADRE_L / CADRE_H:
@@ -243,7 +252,7 @@ func ecran(p: Vector2) -> Vector2:
 ## Le milieu de la carte : ce qui reste à droite du panneau, dans la zone sûre.
 func _centre_carte() -> Vector2:
 	var e := get_viewport_rect().size
-	var g: float = PANNEAU_L + Sty.marges["gauche"]
+	var g: float = panneau_l() + Sty.marges["gauche"]
 	return Vector2(g + (e.x - g - Sty.marges["droite"]) / 2.0,
 		Sty.marges["haut"] + (e.y - Sty.marges["haut"] - Sty.marges["bas"]) / 2.0)
 
@@ -443,7 +452,7 @@ func _draw() -> void:
 		var col := couleur_de_zone(chg["zone"]) if not chg.is_empty() else ACCENT
 		var fin: bool = not chg.is_empty() and chg["gares"][chg["gares"].size() - 1] == id
 		var ici: bool = id == prochaine
-		var r: float = 6.0 if fin else 4.5
+		var r: float = (6.0 if fin else 4.5) * Sty.HUD_K
 		var teinte: Color
 		match etat:
 			"avenir":
@@ -464,7 +473,7 @@ func _draw() -> void:
 			draw_arc(e, r, 0.0, TAU, 24, col, 1.0, true)
 		# le nom, au-dessus ; les étoiles ou le diamant à sa droite
 		var nom := nom_de(id)
-		var taille := 15 if fin else 13
+		var taille := int(round((15 if fin else 13) * Sty.HUD_K))
 		var w := police.get_string_size(nom, HORIZONTAL_ALIGNMENT_LEFT, -1, taille).x
 		var st: int = Rub.etoiles_de(ruban.progression_de(id))
 		var dia: bool = Rec.est_diamant(ruban.progression_de(id))
@@ -574,7 +583,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		var m: Vector2 = event.position
-		if m.x < PANNEAU_L + Sty.marges["gauche"]:
+		if m.x < panneau_l() + Sty.marges["gauche"]:
 			return
 		var ch := chapitre_vu()
 		if ch.is_empty():
@@ -597,16 +606,17 @@ func _unhandled_input(event: InputEvent) -> void:
 func _construire_panneau() -> void:
 	panneau = PanelContainer.new()
 	panneau.position = Vector2.ZERO
-	panneau.size = Vector2(PANNEAU_L + Sty.marges["gauche"], get_viewport_rect().size.y)
+	panneau.size = Vector2(panneau_l() + Sty.marges["gauche"], get_viewport_rect().size.y)
 	# la zone sûre s'ajoute au rembourrage du panneau, elle ne le remplace pas
 	var style := StyleBoxFlat.new()
 	style.bg_color = PANNEAU
 	style.border_color = BORD
 	style.border_width_right = 1
-	style.content_margin_left = 22 + Sty.marges["gauche"]
-	style.content_margin_right = 22
-	style.content_margin_top = 18 + Sty.marges["haut"]
-	style.content_margin_bottom = 18 + Sty.marges["bas"]
+	var k := Sty.HUD_K
+	style.content_margin_left = 22 * k + Sty.marges["gauche"]
+	style.content_margin_right = 22 * k
+	style.content_margin_top = 18 * k + Sty.marges["haut"]
+	style.content_margin_bottom = 18 * k + Sty.marges["bas"]
 	style.anti_aliasing = true
 	panneau.add_theme_stylebox_override("panel", style)
 	add_child(panneau)
@@ -616,7 +626,7 @@ func _construire_panneau() -> void:
 	colonne = VBoxContainer.new()
 	colonne.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	colonne.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	colonne.add_theme_constant_override("separation", 10)
+	colonne.add_theme_constant_override("separation", int(round(10 * Sty.HUD_K)))
 	defil.add_child(colonne)
 
 
@@ -627,9 +637,9 @@ func _label(texte: String, taille: int, couleur: Color, gras: bool = false, repl
 	var l := Label.new()
 	l.text = texte
 	l.add_theme_font_override("font", Sty.sans(600 if gras else 400))
-	l.add_theme_font_size_override("font_size", taille)
+	l.add_theme_font_size_override("font_size", int(round(taille * Sty.HUD_K)))
 	l.add_theme_color_override("font_color", couleur)
-	l.add_theme_constant_override("line_spacing", 5)
+	l.add_theme_constant_override("line_spacing", int(round(5 * Sty.HUD_K)))
 	if replie:
 		l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -637,14 +647,15 @@ func _label(texte: String, taille: int, couleur: Color, gras: bool = false, repl
 
 
 func _bouton(texte: String, principal: bool, actif: bool, sur: Callable) -> Button:
-	var b := Sty.bouton(texte, principal, 16 if principal else 14)
+	var k := Sty.HUD_K
+	var b := Sty.bouton(texte, principal, 16 if principal else 14, k)
 	b.disabled = not actif
 	b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	var sd := Sty.boite(Color("#1a2234"), Sty.BORD, 10, 1)
-	sd.content_margin_top = 8
-	sd.content_margin_bottom = 8
-	sd.content_margin_left = 14
-	sd.content_margin_right = 14
+	var sd := Sty.boite(Color("#1a2234"), Sty.BORD, 10 * k, max(1.0, k))
+	sd.content_margin_top = 8 * k
+	sd.content_margin_bottom = 8 * k
+	sd.content_margin_left = 14 * k
+	sd.content_margin_right = 14 * k
 	b.add_theme_stylebox_override("disabled", sd)
 	b.add_theme_color_override("font_disabled_color", Sty.MUET)
 	if sur.is_valid():
@@ -654,7 +665,7 @@ func _bouton(texte: String, principal: bool, actif: bool, sur: Callable) -> Butt
 
 func _separateur() -> Control:
 	var s := HSeparator.new()
-	s.add_theme_constant_override("separation", 8)
+	s.add_theme_constant_override("separation", int(round(8 * Sty.HUD_K)))
 	return s
 
 
@@ -687,15 +698,20 @@ func rebatir() -> void:
 
 func _compteurs() -> Control:
 	var h := HBoxContainer.new()
-	h.add_theme_constant_override("separation", 12)
+	h.add_theme_constant_override("separation", int(round(12 * Sty.HUD_K)))
 	var n: int = Rec.etoiles_total(Sauvegarde.progression_toutes_cartes())
 	var g: Dictionary = Rec.grade_de(n)
 	var serie: Dictionary = Sauvegarde.get_serie()
 	var e: Dictionary = Rec.etat_recompenses(ruban, serie)
 	if int(serie["n"]) >= 2:
 		h.add_child(_label("» %d" % int(serie["n"]), 13, ACCENT, false, false))
+	# LE GRADE CÈDE LA PLACE, PAS LES COMPTEURS. C'est le seul texte long de la
+	# rangée : grossi par le facteur du bandeau, il poussait « ★ 0 » hors du
+	# panneau (mesuré le 3 septembre 2026). Il se tronque, eux restent entiers.
 	var grade := _label(String(g["nom"]), 13, TEXTE, false, false)
 	grade.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	grade.clip_text = true
+	grade.custom_minimum_size = Vector2(40, 0)
 	h.add_child(grade)
 	if app != null:
 		h.add_child(_label("%d cr" % app.solde(), 13, MUET, false, false))
@@ -706,7 +722,7 @@ func _compteurs() -> Control:
 	v.add_child(h)
 	var jauge := ProgressBar.new()
 	jauge.show_percentage = false
-	jauge.custom_minimum_size = Vector2(0, 4)
+	jauge.custom_minimum_size = Vector2(0, 4 * Sty.HUD_K)
 	jauge.value = 100.0 * float(g["part"])
 	var fondj := StyleBoxFlat.new()
 	fondj.bg_color = Color("#1f2a40")
@@ -721,7 +737,7 @@ func _compteurs() -> Control:
 
 func _entete_chapitre() -> Control:
 	var v := VBoxContainer.new()
-	v.add_theme_constant_override("separation", 2)
+	v.add_theme_constant_override("separation", int(round(2 * Sty.HUD_K)))
 	var ch := chapitre
 	if ch.is_empty():
 		v.add_child(_label(String(ruban.carte.get("nom", "La carte")), 22, TEXTE, true))
@@ -752,7 +768,7 @@ func _entete_chapitre() -> Control:
 		else:
 			crans += "○"
 	var h := HBoxContainer.new()
-	h.add_theme_constant_override("separation", 10)
+	h.add_theme_constant_override("separation", int(round(10 * Sty.HUD_K)))
 	var lc := _label(crans, 14, col, false, false)
 	lc.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	h.add_child(lc)
@@ -775,7 +791,7 @@ func _pips(d: int) -> String:
 ## difficulté, barème.
 func _cartouche(id: String) -> Control:
 	var v := VBoxContainer.new()
-	v.add_theme_constant_override("separation", 3)
+	v.add_theme_constant_override("separation", int(round(3 * Sty.HUD_K)))
 	var cfg := ruban.fiche_de(id)
 	if cfg.is_empty():
 		return v
@@ -804,7 +820,7 @@ func _cartouche(id: String) -> Control:
 	grille.add_theme_constant_override("h_separation", 14)
 	for paire in [["Quais", str(quais)], ["Directions", str(dirs)], ["Difficulté", _pips(d)], ["Pour 3 ★", "%d min" % int(seuils["trois"])]]:
 		var cell := VBoxContainer.new()
-		cell.add_theme_constant_override("separation", 0)
+		cell.add_theme_constant_override("separation", int(round(0 * Sty.HUD_K)))
 		cell.add_child(_label(paire[0], 11, MUET, false, false))
 		cell.add_child(_label(paire[1], 16, OR if paire[0] == "Difficulté" else TEXTE, false, false))
 		grille.add_child(cell)
@@ -825,7 +841,7 @@ func _cartouche(id: String) -> Control:
 ## Le relevé du service, sous la gare qu'on vient de tenir.
 func _bloc_bilan(avec_medailles: bool = true) -> Control:
 	var v := VBoxContainer.new()
-	v.add_theme_constant_override("separation", 3)
+	v.add_theme_constant_override("separation", int(round(3 * Sty.HUD_K)))
 	var b := bilan
 	var st := int(b["stars"])
 	v.add_child(_label(ville_de(String(b["gare"])), 13, MUET))
@@ -874,7 +890,7 @@ func _ajouter_medailles(v: VBoxContainer, combien: int) -> void:
 ## La fête de fin de chapitre : ce qu'on a gagné, et ce qui reste à prendre.
 func _bloc_fete() -> Control:
 	var v := VBoxContainer.new()
-	v.add_theme_constant_override("separation", 3)
+	v.add_theme_constant_override("separation", int(round(3 * Sty.HUD_K)))
 	var ch: Dictionary = fete["ch"]
 	var n: int = ch["gares"].size()
 	var et := 0
@@ -915,7 +931,7 @@ func _bloc_fete() -> Control:
 ## Les boutons : un seul geste au repos, et il nomme la gare.
 func _pied() -> Control:
 	var v := VBoxContainer.new()
-	v.add_theme_constant_override("separation", 8)
+	v.add_theme_constant_override("separation", int(round(8 * Sty.HUD_K)))
 	var gc := prochaine
 	if not fete.is_empty():
 		var suivant: Dictionary = fete["suivant"]
@@ -934,14 +950,14 @@ func _pied() -> Control:
 			var manque := prix - solde
 			v.add_child(_label("Il te manque %d crédit%s — rejoue une gare déjà faite pour les gagner." % [manque, "s" if manque > 1 else ""], 12, MUET))
 		var h := HBoxContainer.new()
-		h.add_theme_constant_override("separation", 8)
+		h.add_theme_constant_override("separation", int(round(8 * Sty.HUD_K)))
 		h.add_child(_bouton("Passer · %d cr" % prix, false, assez, _passer.bind(gare)))
 		h.add_child(_bouton("Réessayer  ·  " + ville_de(gare), true, true, jouer.bind(gare)))
 		v.add_child(h)
 		return v
 	if not bilan.is_empty():
 		var h := HBoxContainer.new()
-		h.add_theme_constant_override("separation", 8)
+		h.add_theme_constant_override("separation", int(round(8 * Sty.HUD_K)))
 		h.add_child(_bouton("Rejouer", false, true, jouer.bind(String(bilan["gare"]))))
 		if gc != "":
 			h.add_child(_bouton("Jouer  ·  " + ville_de(gc), true, true, jouer.bind(gc)))

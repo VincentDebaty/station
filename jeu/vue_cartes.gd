@@ -33,10 +33,10 @@ func _ready() -> void:
 	marge.set_anchors_preset(Control.PRESET_FULL_RECT)
 	# la zone sûre s'ajoute à la marge, elle ne la remplace pas
 	for paire in [["left", "gauche"], ["right", "droite"], ["top", "haut"], ["bottom", "bas"]]:
-		marge.add_theme_constant_override("margin_" + paire[0], int(28 + Sty.marges[paire[1]]))
+		marge.add_theme_constant_override("margin_" + paire[0], int(28 * Sty.HUD_K + Sty.marges[paire[1]]))
 	add_child(marge)
 	colonne = VBoxContainer.new()
-	colonne.add_theme_constant_override("separation", 14)
+	colonne.add_theme_constant_override("separation", int(round(14 * Sty.HUD_K)))
 	marge.add_child(colonne)
 
 
@@ -44,8 +44,8 @@ func _label(texte: String, taille: int, couleur: Color) -> Label:
 	var l := Label.new()
 	l.text = texte
 	l.add_theme_font_override("font", Sty.sans(600 if taille >= 20 else 400))
-	l.add_theme_font_size_override("font_size", taille)
-	l.add_theme_constant_override("line_spacing", 5)
+	l.add_theme_font_size_override("font_size", int(round(taille * Sty.HUD_K)))
+	l.add_theme_constant_override("line_spacing", int(round(5 * Sty.HUD_K)))
 	l.add_theme_color_override("font_color", couleur)
 	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -53,13 +53,14 @@ func _label(texte: String, taille: int, couleur: Color) -> Label:
 
 
 func _bouton(texte: String, principal: bool, actif: bool, sur: Callable) -> Button:
-	var b := Sty.bouton(texte, principal, 15)
+	var k := Sty.HUD_K
+	var b := Sty.bouton(texte, principal, 15, k)
 	b.disabled = not actif
-	var sd := Sty.boite(Color("#1a2234"), Sty.BORD, 10, 1)
-	sd.content_margin_top = 9
-	sd.content_margin_bottom = 9
-	sd.content_margin_left = 14
-	sd.content_margin_right = 14
+	var sd := Sty.boite(Color("#1a2234"), Sty.BORD, 10 * k, max(1.0, k))
+	sd.content_margin_top = 9 * k
+	sd.content_margin_bottom = 9 * k
+	sd.content_margin_left = 14 * k
+	sd.content_margin_right = 14 * k
 	b.add_theme_stylebox_override("disabled", sd)
 	b.add_theme_color_override("font_disabled_color", Sty.MUET)
 	if sur.is_valid():
@@ -98,7 +99,7 @@ func rebatir() -> void:
 		c.queue_free()
 	var solde: int = app.solde() if app != null else 0
 	var entete := HBoxContainer.new()
-	entete.add_theme_constant_override("separation", 16)
+	entete.add_theme_constant_override("separation", int(round(16 * Sty.HUD_K)))
 	entete.add_child(_bouton("‹  Revenir au ruban", false, true, app.fermer_cartes if app != null else Callable()))
 	var titre := _label("Les cartes", 24, TEXTE)
 	titre.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -106,7 +107,7 @@ func rebatir() -> void:
 	entete.add_child(_label("%d cr" % solde, 15, MUET))
 	colonne.add_child(entete)
 	var rangee := HBoxContainer.new()
-	rangee.add_theme_constant_override("separation", 18)
+	rangee.add_theme_constant_override("separation", int(round(18 * Sty.HUD_K)))
 	colonne.add_child(rangee)
 	var courante: Variant = Sauvegarde.get_carte_courante()
 	for e in Donnees.cartes_index:
@@ -128,7 +129,7 @@ func rebatir() -> void:
 		tuile.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 		tuile.custom_minimum_size = Vector2(420, 0)
 		var v := VBoxContainer.new()
-		v.add_theme_constant_override("separation", 6)
+		v.add_theme_constant_override("separation", int(round(6 * Sty.HUD_K)))
 		tuile.add_child(v)
 		var tete := HBoxContainer.new()
 		var nom := _label(String(e.get("nom", r["def"].get("nom", id))), 20, TEXTE)

@@ -309,17 +309,17 @@ static func texte_centre(canvas: CanvasItem, police: Font, taille: int, centre: 
 
 
 ## Un bouton du prototype (.btn / .card .btn.primary), stylé.
-static func bouton(texte: String, principal: bool = false, taille: int = 15) -> Button:
+static func bouton(texte: String, principal: bool = false, taille: int = 15, k: float = 1.0) -> Button:
 	var b := Button.new()
 	b.text = texte
 	b.add_theme_font_override("font", sans(600 if principal else 400))
-	b.add_theme_font_size_override("font_size", taille)
+	b.add_theme_font_size_override("font_size", int(round(taille * k)))
 	var fond := ACCENT if principal else PANNEAU
-	var s := boite(fond, ACCENT if principal else BORD, 10, 1)
-	s.content_margin_left = 22 if principal else 14
+	var s := boite(fond, ACCENT if principal else BORD, 10 * k, max(1.0, k))
+	s.content_margin_left = (22 if principal else 14) * k
 	s.content_margin_right = s.content_margin_left
-	s.content_margin_top = 8
-	s.content_margin_bottom = 8
+	s.content_margin_top = 8 * k
+	s.content_margin_bottom = 8 * k
 	b.add_theme_stylebox_override("normal", s)
 	var h := s.duplicate()
 	h.bg_color = Color("#3ee0cc") if principal else PANNEAU
