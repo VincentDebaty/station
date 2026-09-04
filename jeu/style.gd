@@ -73,6 +73,50 @@ static func plaque(fond: Color, bord: Color, rayon: float = 8.0, k: float = 1.0)
 	return boite(fond, bord, rayon * k, max(1.0, k), 6.0 * k, Color(0, 0, 0, 0.35))
 
 
+# --- LE POSTE D'AIGUILLAGE, EN LAITON ET BOIS (4 septembre 2026) -------------
+# L'écran de jeu est un INSTRUMENT, pas un tableau. Une maquette illustrée en
+# a été produite puis écartée, et c'était la bonne décision : elle noyait les
+# trois choses dont la lisibilité dépend — la couleur EST la destination, un
+# quai éligible doit sauter aux yeux, et le vide autour d'un convoi sert à le
+# trouver. On change donc la MATIÈRE, jamais la signalisation : le fond passe
+# du bleu nuit au cuir, les quais deviennent des plaques, les voies reçoivent
+# leurs traverses. Aucune couleur de destination ne bouge.
+# Les valeurs comptent autant que les teintes : au premier essai le fond était
+# à #1c1610 et les quais à peine plus clairs — tout se lisait noir, et une
+# plaque ne se distinguait plus du pupitre. Le fond remonte, les plaques
+# passent nettement au-dessus de lui, et l'écart se voit.
+const POSTE_FOND := Color("#241a12")        # le cuir du pupitre
+const POSTE_QUAI_HAUT := Color("#453320")   # la plaque, en haut
+const POSTE_QUAI_BAS := Color("#2c2015")    # et son creux
+const POSTE_BORD := Color("#9a7f4e")        # le laiton des vis et du liseré
+const POSTE_VOIE := Color("#5d4e3a")        # le rail au repos
+const POSTE_BALLAST := Color("#1a120b")
+
+
+## Les traverses d'une voie, semées le long d'un tracé. Le PAS EST À L'ÉCRAN
+## et non dans le monde : dans le monde elles se colleraient de loin et
+## disparaîtraient de près.
+static func traverses(canvas: CanvasItem, pts: PackedVector2Array, col: Color,
+		demi: float, pas: float) -> void:
+	if pts.size() < 2:
+		return
+	var reste := pas / 2.0
+	for i in range(pts.size() - 1):
+		var a := pts[i]
+		var b := pts[i + 1]
+		var d := a.distance_to(b)
+		if d <= 0.0:
+			continue
+		var u := (b - a) / d
+		var n := Vector2(-u.y, u.x)
+		var s := reste
+		while s < d:
+			var p := a + u * s
+			canvas.draw_line(p - n * demi, p + n * demi, col, max(1.0, demi * 0.45), true)
+			s += pas
+		reste = s - d
+
+
 # --- LES DEUX FACTEURS D'ÉCHELLE ---------------------------------------------
 # LE FACTEUR TACTILE, celui du prototype (js/render.js, UIK) : sur un pointeur
 # grossier, tout ce qu'on touche et tout ce qu'on lit sur le plan grossit d'une

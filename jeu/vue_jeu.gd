@@ -28,14 +28,14 @@ const Rec := preload("res://jeu/recompense.gd")
 const Sty := preload("res://jeu/style.gd")
 
 # Les couleurs du prototype (css/station.css) : l'esthétique est conservée.
-const TEXTE := Color("#dbe2ee")
-const MUET := Color("#7a8699")
+const TEXTE := Color("#efe3c8")   # le papier, comme le ruban
+const MUET := Color("#9d8b71")
 const ACCENT := Color("#2dd4bf")
 const OR := Color("#f5b23c")
 const VERT := Color("#4ade80")
 const ROUGE := Color("#ef4444")
 const FRET := Color("#8f98a8")
-const VOILE := Color(0.055, 0.078, 0.125, 0.82)
+const VOILE := Color(0.110, 0.086, 0.063, 0.86)
 
 var fiche: Dictionary
 var G: Dictionary
@@ -656,8 +656,8 @@ func decalage() -> Vector2:
 ## #station-tag, les trois boutons) — fond rgba(21,29,46,.55), liseré #2a3550,
 ## coins de 12. Le flou du web n'existe pas ici : le fond translucide seul
 ## suffit, les voies restent lisibles dessous.
-func _chip(r: Rect2, bord: Color = Sty.BORD, k: float = 1.0) -> void:
-	draw_style_box(Sty.boite(Sty.VERRE, bord, 12 * k, max(1.0, k)), r)
+func _chip(r: Rect2, bord: Color = Sty.POSTE_BORD, k: float = 1.0) -> void:
+	draw_style_box(Sty.boite(Color(Sty.POSTE_QUAI_HAUT, 0.88), bord, 12 * k, max(1.0, k)), r)
 
 
 func _dessiner_hud(t: float) -> void:
@@ -709,7 +709,7 @@ func _dessiner_hud(t: float) -> void:
 	var milieu: float = Sty.marges["gauche"] + (size_ecran().x - Sty.marges["gauche"] - Sty.marges["droite"]) / 2.0
 	var ch := Rect2(milieu - w_chip / 2.0, Sty.marges["haut"] + 10 * k, w_chip, 38 * k)
 	zones_hud["horloge"] = ch
-	_chip(ch, Sty.ACCENT if (pause or gel) else Sty.BORD, k)
+	_chip(ch, Sty.ACCENT if (pause or gel) else Sty.POSTE_BORD, k)
 	var base := ch.position.y + 5.0 * k + mono.get_ascent(ti.call(21))
 	Sty.texte_espace(self, mono, ti.call(21), Vector2(ch.position.x + 13.0 * k, base), horloge, Sty.TEXTE, 1.0 * k)
 	var col_r: Color = Sty.VERT if retard < 10 else (Sty.AMBRE if retard < 30 else Sty.ROUGE)
@@ -745,7 +745,7 @@ func _dessiner_hud(t: float) -> void:
 		var r := Rect2(bx, Sty.marges["haut"] + 10 * k, 34 * k, 34 * k)
 		zones_hud[bouton[0]] = r
 		var actif: bool = bouton[0] == "speed" and vitesse > 1.0
-		_chip(r, Sty.ACCENT if actif else Sty.BORD, k)
+		_chip(r, Sty.ACCENT if actif else Sty.POSTE_BORD, k)
 		var c := r.get_center()
 		match bouton[0]:
 			"speed":

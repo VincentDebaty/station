@@ -73,7 +73,7 @@ func montrer(nom: String) -> void:
 	# CHAQUE ÉCRAN SA COULEUR DE FOND. Le ruban est une carte sur un bureau de
 	# cuir ; le poste d'aiguillage garde son bleu nuit, où la couleur d'une
 	# voie est sa destination et ne se rediscute pas.
-	RenderingServer.set_default_clear_color(Sty.FOND if nom == "jeu" else Sty.MER)
+	RenderingServer.set_default_clear_color(Sty.POSTE_FOND if nom == "jeu" else Sty.MER)
 	for paire in [[vue_ruban, "ruban"], [vue_jeu, "jeu"], [vue_cartes, "cartes"]]:
 		var n: Node = paire[0]
 		var actif: bool = paire[1] == nom

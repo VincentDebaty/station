@@ -9,10 +9,11 @@ extends Node2D
 ## points de convergence et les noms des portails. Ce qui bouge — convois,
 ## itinéraires, états des quais, badges — est peint par-dessus par vue_jeu.gd.
 ##
-## L'HABILLAGE EST CELUI DU PROTOTYPE, valeur pour valeur (jeu/style.gd,
-## d'après css/station.css et js/render.js) : voie sombre #323d4f à 3,5,
-## gril à 50 % de la couleur de sa ville, quai en dégradé #243049 → #161f30
-## aux coins de 10, numéro à 24, nom de portail à 15 détouré de fond.
+## LA GÉOMÉTRIE EST CELLE DU PROTOTYPE, valeur pour valeur (js/render.js) :
+## gril à 50 % de la couleur de sa ville, quai aux coins de 10, numéro à 24,
+## nom de portail à 15 détouré de fond. La MATIÈRE, elle, est passée au
+## laiton et au bois le 4 septembre 2026 — sans qu'aucune couleur de
+## destination ne bouge : ici, la couleur EST la destination.
 
 const Geo := preload("res://jeu/geometrie.gd")
 const Cap := preload("res://jeu/capture.gd")
@@ -75,11 +76,17 @@ func _draw() -> void:
 	var sans_g := Sty.sans(600)
 
 	# --- voies d'approche et de départ : la fuite vers le bord ---------------
+	# Elles portent leurs traverses depuis le 4 septembre 2026 : ce sont les
+	# seules voies du plan qui ne sont pas colorées par une destination, donc
+	# les seules où la matière peut parler sans brouiller la signalisation.
+	var k := Sty.UIK
 	for pname in G["approach"]:
-		var a: Dictionary = G["approach"][pname]
-		draw_polyline(Geo.vers_vector2(a["xs"], a["ys"]), Sty.VOIE_SOMBRE, 3.5, true)
-		var d: Dictionary = G["depart"][pname]
-		draw_polyline(Geo.vers_vector2(d["xs"], d["ys"]), Sty.VOIE_SOMBRE, 3.5, true)
+		for quoi in ["approach", "depart"]:
+			var v: Dictionary = G[quoi][pname]
+			var pts := Geo.vers_vector2(v["xs"], v["ys"])
+			draw_polyline(pts, Sty.POSTE_BALLAST, 9.0 * k, true)
+			Sty.traverses(self, pts, Color(Sty.POSTE_VOIE, 0.75), 3.4 * k, 11.0 * k)
+			draw_polyline(pts, Sty.POSTE_VOIE, 3.5, true)
 
 	# --- le gril : une bézier par liaison, teintée à sa destination -----------
 	for m in G["mesh"]:
@@ -96,14 +103,17 @@ func _draw() -> void:
 		var cy := float(q["cy"])
 		var r := Rect2(Geo.PLAT_X1, cy - Geo.PLAT_H / 2.0, Geo.PLAT_LEN, Geo.PLAT_H)
 		var contour := Sty.rect_arrondi(r, 10)
+		# LE QUAI EST UNE PLAQUE VISSÉE : bois sombre, liseré de laiton, numéro
+		# gravé. Il reste assez sombre pour que la teinte d'un quai éligible
+		# s'y lise — c'est elle qui compte, pas la matière.
 		var couleurs := PackedColorArray()
 		for pt in contour:
-			couleurs.append(Sty.QUAI_HAUT.lerp(Sty.QUAI_BAS, (pt.y - r.position.y) / r.size.y))
+			couleurs.append(Sty.POSTE_QUAI_HAUT.lerp(Sty.POSTE_QUAI_BAS, (pt.y - r.position.y) / r.size.y))
 		draw_polygon(contour, couleurs)
 		var ferme := contour.duplicate()
 		ferme.append(contour[0])
-		draw_polyline(ferme, Sty.BORD_QUAI, 1.5, true)
-		Sty.texte_centre(self, sans_g, 24, r.get_center(), str(int(q["id"])), Sty.TEXTE)
+		draw_polyline(ferme, Sty.POSTE_BORD, 1.8, true)
+		Sty.texte_centre(self, sans_g, 24, r.get_center(), str(int(q["id"])), Color(Sty.PAPIER, 0.92))
 		# le heurtoir du quai en impasse : rouge, avec son halo
 		if dead_ends.has(int(q["id"])):
 			var h := Rect2(Geo.PLAT_X2 + 4, cy - 13, 7, 26)
@@ -119,15 +129,15 @@ func _draw() -> void:
 		if noms_allumes.has(pname):
 			# « validé » : pleine couleur, halo à sa teinte
 			Sty.texte_centre(self, sans_g, 15, pos, nom, Color(col, 0.35), 7, Color(col, 0.35))
-			Sty.texte_centre(self, sans_g, 15, pos, nom, col, 3, Sty.FOND)
+			Sty.texte_centre(self, sans_g, 15, pos, nom, col, 3, Sty.POSTE_FOND)
 		else:
-			Sty.texte_centre(self, sans_g, 15, pos, nom, Color(col, 0.62), 3, Sty.FOND)
+			Sty.texte_centre(self, sans_g, 15, pos, nom, Color(col, 0.72), 3, Sty.POSTE_FOND)
 
 	# --- le cartouche de diagnostic, seul à l'écran --------------------------
 	if cartouche:
 		var pays := Donnees.pays_de(String(fiche.get("country", "")))
 		draw_string(sans_g, Vector2(28, 40), "%s  %s" % [pays["drapeau"], String(fiche.get("name", ""))],
-			HORIZONTAL_ALIGNMENT_LEFT, -1, 18, Sty.TEXTE)
+			HORIZONTAL_ALIGNMENT_LEFT, -1, 18, Sty.PAPIER)
 		draw_string(Sty.sans(), Vector2(28, 62),
 			"%d quais · %d directions · %d chemins · %d conflits" % [
 				G["platforms"].size(), G["portals"].size(), G["paths"].size(), _nb_conflits()],
