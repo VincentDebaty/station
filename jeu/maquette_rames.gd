@@ -18,11 +18,22 @@ const Cap := preload("res://jeu/capture.gd")
 const Geo := preload("res://jeu/geometrie.gd")
 
 const NOMS := ["I — la rame actuelle", "II — la gravure pleine",
-	"III — la gravure à caisses", "IV — la gravure texturée"]
+	"III — la gravure à caisses", "IV — la trame tissée", "V — la planche gravée"]
+## LES TROIS TRANCHES DE LA PLANCHE, en fractions de sa largeur. Mesurées sur
+## `jeu/illustrations/wagon.png` : les nervures y sont espacées de 44 points,
+## la tranche centrale en prend DEUX et commence à mi-chemin entre deux d'entre
+## elles, faute de quoi la nervure du raccord compterait double.
+const TR_NEZ := Vector2(0.0, 0.116)        # la ferrure de tête
+# La tranche centrale ÉVITE LE MILIEU DE LA PLANCHE : le dessin y porte une
+# valve ronde, unique sur la voiture, qui se répétait à chaque section — et
+# laissait au centre de la rame une marque que rien ne justifiait.
+const TR_MILIEU := Vector2(0.698, 0.836)   # deux nervures, raccordables
+const TR_QUEUE := Vector2(0.884, 1.0)      # la ferrure de queue
 ## Les teintes de destination du jeu, pour juger sur de vraies couleurs.
-const TEINTES := ["#e8875a", "#5b8def", "#3fa87a", "#c084fc"]
+const TEINTES := ["#e8875a", "#5b8def", "#3fa87a", "#c084fc", "#d97757"]
 
 var hachure: Texture2D
+var planche: Texture2D
 var grain: NoiseTexture2D
 
 
@@ -30,6 +41,7 @@ func _ready() -> void:
 	Sty.calibrer(get_viewport())
 	RenderingServer.set_default_clear_color(Sty.POSTE_FOND)
 	hachure = _tisser_hachure()
+	planche = load("res://jeu/illustrations/wagon.png") if ResourceLoader.exists("res://jeu/illustrations/wagon.png") else null
 	var g := FastNoiseLite.new()
 	g.noise_type = FastNoiseLite.TYPE_SIMPLEX_SMOOTH
 	g.frequency = 0.35
@@ -72,8 +84,8 @@ func _draw() -> void:
 	# quatrième rame sous le bord bas.
 	var k := 2.2
 	var titre := Sty.titre(600)
-	var pas: float = (e.y - 60.0) / 4.0
-	for v in 4:
+	var pas: float = (e.y - 50.0) / 5.0
+	for v in 5:
 		var y: float = 70.0 + float(v) * pas
 		draw_string(titre, Vector2(46, y - pas * 0.34), NOMS[v], HORIZONTAL_ALIGNMENT_LEFT, -1,
 			19, Color(Sty.PAPIER, 0.72))
@@ -84,6 +96,7 @@ func _draw() -> void:
 			1: _rame_gravee(axe, col, k, false)
 			2: _rame_caisses(axe, col, k)
 			3: _rame_gravee(axe, col, k, true)
+			4: _rame_planche(axe, col, k)
 		# et la même, à la TAILLE RÉELLE du jeu, en bout de ligne : c'est elle
 		# qui décide, pas l'agrandissement
 		var petit := _courbe(Vector2(e.x - 260, y), 1.0)
@@ -92,6 +105,7 @@ func _draw() -> void:
 			1: _rame_gravee(petit, col, 1.0, false)
 			2: _rame_caisses(petit, col, 1.0)
 			3: _rame_gravee(petit, col, 1.0, true)
+			4: _rame_planche(petit, col, 1.0)
 
 
 ## La même courbe pour les quatre : quatre voitures sur un S doux.
@@ -255,6 +269,110 @@ func _rame_caisses(axe: PackedVector2Array, col: Color, k: float) -> void:
 		var ferme := quad.duplicate()
 		ferme.append(quad[0])
 		draw_polyline(ferme, encre, 2.2 * k, true)
+
+
+# ------------------------------------------------------------------
+# V — LA PLANCHE GRAVÉE, EN TROIS TRANCHES
+# ------------------------------------------------------------------
+## La planche dessine UNE voiture, d'une proportion de un pour quatre et demi ;
+## une voiture du jeu occupe une case CARRÉE, que l'espacement du gril impose.
+## Poser le dessin entier sur une voiture l'écraserait ; l'étirer sur toute la
+## rame ferait varier l'écartement des nervures selon la longueur du convoi —
+## deux voitures et six voitures n'auraient pas le même dessin.
+##
+## D'où les TROIS TRANCHES : la ferrure de tête, une section centrale répétée
+## autant de fois que la longueur le demande, la ferrure de queue. Chaque
+## tranche est posée À SA PROPRE PROPORTION, jamais étirée, et la dernière du
+## milieu est rognée si elle ne tient pas — c'est ce qui garde aux nervures un
+## écartement constant quelle que soit la rame.
+##
+## LE LAVIS D'ABORD, L'ENCRE PAR-DESSUS : la planche est détourée, son blanc
+## est transparent. Le corps peint dessous donne la couleur de destination, le
+## dessin ne donne que le trait. Une seule planche sert les six teintes.
+func _rame_planche(axe: PackedVector2Array, col: Color, k: float) -> void:
+	if planche == null:
+		return
+	var h: float = Geo.CAR_H * 1.5 * k
+	var etendu := _etendre(axe, h * 0.5)
+	var L := _longueur(etendu)
+	var large := float(planche.get_width())
+	var haut := float(planche.get_height())
+	# la longueur qu'occupe chaque tranche, à sa proportion d'origine
+	var l_nez: float = h * (TR_NEZ.y - TR_NEZ.x) * large / haut
+	var l_mil: float = h * (TR_MILIEU.y - TR_MILIEU.x) * large / haut
+	var l_queue: float = h * (TR_QUEUE.y - TR_QUEUE.x) * large / haut
+	# L'ENCRE EST POSÉE DEUX FOIS SUR LE MÊME QUAD : une première passe au lavis
+	# de destination, qui remplit la caisse là où la planche est claire, et une
+	# seconde à l'encre, qui ne dépose que le trait. Le blanc du papier prend la
+	# couleur, le noir reste noir — la gravure mise en couleur, littéralement.
+	var lavis := col.lerp(Sty.PAPIER, 0.06)
+	var encre := Color.BLACK
+	_tranche(etendu, h, 0.0, l_nez, TR_NEZ.x, TR_NEZ.y, lavis, encre)
+	var s := l_nez
+	var fin: float = max(l_nez, L - l_queue)
+	while s < fin - 0.5:
+		var e2: float = min(s + l_mil, fin)
+		var u1: float = TR_MILIEU.x + (TR_MILIEU.y - TR_MILIEU.x) * (e2 - s) / l_mil
+		_tranche(etendu, h, s, e2, TR_MILIEU.x, u1, lavis, encre)
+		s = e2
+	_tranche(etendu, h, fin, L, TR_QUEUE.x, TR_QUEUE.y, lavis, encre)
+
+
+## Une tranche de planche posée sur la portion d'arc [s0, s1], subdivisée pour
+## qu'elle ÉPOUSE la courbe au lieu de la couper à la corde.
+func _tranche(axe: PackedVector2Array, h: float, s0: float, s1: float,
+		u0: float, u1: float, lavis: Color = Color.WHITE, encre: Color = Color.BLACK) -> void:
+	if s1 - s0 <= 0.5:
+		return
+	var n: int = max(2, int((s1 - s0) / 7.0) + 1)
+	for i in n:
+		var a0: float = lerpf(s0, s1, float(i) / float(n))
+		var a1: float = lerpf(s0, s1, float(i + 1) / float(n))
+		var p0 := _sur_arc(axe, a0)
+		var p1 := _sur_arc(axe, a1)
+		var quad := PackedVector2Array([
+			p0["p"] - p0["n"] * h * 0.5, p1["p"] - p1["n"] * h * 0.5,
+			p1["p"] + p1["n"] * h * 0.5, p0["p"] + p0["n"] * h * 0.5])
+		var v0: float = lerpf(u0, u1, float(i) / float(n))
+		var v1: float = lerpf(u0, u1, float(i + 1) / float(n))
+		# UNE SEULE PASSE, ET C'EST TOUT LE POINT. La planche porte sa
+		# SILHOUETTE dans son canal alpha et son GRIS dans ses couleurs :
+		# multipliée par le lavis de destination, le papier prend la teinte et
+		# le trait reste noir. Deux passes — l'une au lavis, l'autre à l'encre —
+		# ne donnaient rien, puisqu'elles partageaient le même masque et
+		# noircissaient deux fois les mêmes traits.
+		var uv := PackedVector2Array([Vector2(v0, 0), Vector2(v1, 0), Vector2(v1, 1), Vector2(v0, 1)])
+		draw_colored_polygon(quad, lavis, uv, planche)
+
+
+func _longueur(axe: PackedVector2Array) -> float:
+	var l := 0.0
+	for i in range(1, axe.size()):
+		l += axe[i - 1].distance_to(axe[i])
+	return l
+
+
+## L'axe prolongé d'un demi-nez à chaque bout : la rame commence AVANT le
+## centre de sa première voiture.
+func _etendre(axe: PackedVector2Array, d: float) -> PackedVector2Array:
+	var out := PackedVector2Array()
+	out.append(axe[0] - _tangente(axe, 0) * d)
+	for p in axe:
+		out.append(p)
+	out.append(axe[axe.size() - 1] + _tangente(axe, axe.size() - 1) * d)
+	return out
+
+
+func _sur_arc(axe: PackedVector2Array, s: float) -> Dictionary:
+	var reste := s
+	for i in range(1, axe.size()):
+		var l: float = axe[i - 1].distance_to(axe[i])
+		if reste <= l or i == axe.size() - 1:
+			var f: float = 0.0 if l <= 0.0 else clampf(reste / l, 0.0, 1.0)
+			var u: Vector2 = (axe[i] - axe[i - 1]).normalized()
+			return {"p": axe[i - 1].lerp(axe[i], f), "n": Vector2(-u.y, u.x)}
+		reste -= l
+	return {"p": axe[axe.size() - 1], "n": Vector2.UP}
 
 
 # ------------------------------------------------------------------
