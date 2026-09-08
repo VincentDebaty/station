@@ -133,20 +133,41 @@ func _draw() -> void:
 		# LE QUAI EST UNE PLAQUE VISSÉE : bois sombre, liseré de laiton, numéro
 		# gravé. Il reste assez sombre pour que la teinte d'un quai éligible
 		# s'y lise — c'est elle qui compte, pas la matière.
+		# L'OMBRE PORTÉE, d'abord : c'est elle qui décolle la plaque du pupitre.
+		# Sans elle, huit rectangles peints à plat sur une planche ; avec elle,
+		# huit plaques vissées dessus.
+		var sous := PackedVector2Array()
+		for pt in contour:
+			sous.append(pt + Vector2(0, 3.0))
+		var sous_ferme := sous.duplicate()
+		sous_ferme.append(sous[0])
+		draw_polyline(sous_ferme, Color(0, 0, 0, 0.34), 4.5, true)
+		# LA LAMPE ÉCLAIRE AUSSI CE QUI EST POSÉ DESSUS. Elle tombait sur le
+		# pupitre et s'arrêtait là : les quais gardaient tous exactement la même
+		# valeur, où qu'ils soient sous elle. Une plaque proche de la lampe est
+		# un peu plus claire, et c'est ce qui rattache l'objet à son éclairage.
+		var haut := Sty.POSTE_QUAI_HAUT.lightened(0.07 * _part_de_lumiere(r.get_center()))
 		var couleurs := PackedColorArray()
 		for pt in contour:
-			couleurs.append(Sty.POSTE_QUAI_HAUT.lerp(Sty.POSTE_QUAI_BAS, (pt.y - r.position.y) / r.size.y))
+			couleurs.append(haut.lerp(Sty.POSTE_QUAI_BAS, (pt.y - r.position.y) / r.size.y))
 		draw_polygon(contour, couleurs)
 		var ferme := contour.duplicate()
 		ferme.append(contour[0])
 		draw_polyline(ferme, Sty.POSTE_BORD, 1.8, true)
-		# LES LIGNES DE SÉCURITÉ, comme sur un vrai quai : deux filets pâles à
-		# six unités du bord. C'est ce qui fait qu'une plaque devient un QUAI —
-		# elle avait jusqu'ici l'air d'un bouton avec un numéro dessus.
-		for dy in [-Geo.PLAT_H / 2.0 + 6.0, Geo.PLAT_H / 2.0 - 6.0]:
-			draw_line(Vector2(r.position.x + 12, cy + dy), Vector2(r.end.x - 12, cy + dy),
-				Color(Sty.LAITON, 0.22), 1.4, true)
-		# et les quatre vis qui la tiennent au pupitre
+		# LE BISEAU : arête de lumière en haut, ombre en bas. Deux traits, et la
+		# plaque cesse d'être un aplat pour devenir une épaisseur.
+		draw_line(Vector2(r.position.x + 13, r.position.y + 2.2),
+			Vector2(r.end.x - 13, r.position.y + 2.2), Color(1.0, 0.94, 0.80, 0.15), 2.0, true)
+		draw_line(Vector2(r.position.x + 13, r.end.y - 2.2),
+			Vector2(r.end.x - 13, r.end.y - 2.2), Color(0, 0, 0, 0.28), 2.0, true)
+		# LES FILETS DE SÉCURITÉ ONT ÉTÉ RETIRÉS. Je les avais posés à six unités
+		# du bord pour qu'une plaque devienne un QUAI ; le biseau, arrivé après,
+		# passe à deux unités du même bord. Les deux paires se retrouvaient à
+		# quatre unités l'une de l'autre : plus un quai, un double encadrement,
+		# et l'œil y lisait une erreur d'impression. Le biseau gagne — il dit
+		# une ÉPAISSEUR, ce qu'un filet ne dira jamais, et cet objet est de
+		# toute façon une plaque de pupitre avant d'être un quai de gare.
+		# les quatre vis qui la tiennent au pupitre
 		for coin in [Vector2(r.position.x + 7, cy - Geo.PLAT_H / 2.0 + 7),
 				Vector2(r.end.x - 7, cy - Geo.PLAT_H / 2.0 + 7),
 				Vector2(r.position.x + 7, cy + Geo.PLAT_H / 2.0 - 7),
@@ -195,6 +216,19 @@ func _draw() -> void:
 			"%d quais · %d directions · %d chemins · %d conflits" % [
 				G["platforms"].size(), G["portals"].size(), G["paths"].size(), _nb_conflits()],
 			HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Sty.MUET)
+
+
+## LA PART DE LUMIÈRE reçue par un point du plan : un, sous la lampe ; zéro,
+## dans l'angle le plus éloigné. La lampe du pupitre est posée en haut au
+## milieu de l'ÉCRAN (vue_jeu.gd, Pupitre) — le plan est décalé pour se centrer
+## dedans, donc c'est ce décalage qui fait le lien entre les deux repères.
+func _part_de_lumiere(p: Vector2) -> float:
+	var vp := get_viewport_rect().size
+	if vp.x <= 0.0:
+		return 0.0
+	var e := p + position
+	var lampe := Vector2(vp.x / 2.0, vp.y * 0.10)
+	return clampf(1.0 - e.distance_to(lampe) / (0.95 * vp.x), 0.0, 1.0)
 
 
 func _nb_conflits() -> int:

@@ -832,7 +832,17 @@ func _dessiner_badges(t: float) -> void:
 		# un convoi encore à l'arrêt dont le retard court réclame un aiguillage :
 		# le badge clignote (en opacité seule).
 		var a: float = clign if (en_retard and not tr.settled) else 1.0
-		draw_style_box(Sty.boite(Color(Sty.BADGE_FOND, Sty.BADGE_FOND.a * a), Color(col, a), 6 * k, 1.2 * k), r)
+		# LA PASTILLE EST UNE PLAQUE ÉMAILLÉE. C'était le dernier objet générique
+		# du pupitre : un rectangle sombre à liseré. On lui donne son ombre —
+		# elle est posée sur la planche, pas peinte dessus — un émail plus
+		# profond, et un filet de brillance sous l'arête haute. Le liseré reste
+		# à la couleur de l'état : c'est lui qui parle.
+		draw_style_box(Sty.boite(Color(0, 0, 0, 0.30 * a), Color(0, 0, 0, 0),
+			Sty.R_PETIT * k, 0), Rect2(r.position + Vector2(0, 2.0 * k), r.size))
+		draw_style_box(Sty.boite(Color(Sty.BADGE_FOND, min(1.0, Sty.BADGE_FOND.a * 1.15) * a),
+			Color(col, a), Sty.R_PETIT * k, 1.2 * k), r)
+		draw_line(r.position + Vector2(6.0 * k, 2.2 * k), Vector2(r.end.x - 6.0 * k, r.position.y + 2.2 * k),
+			Color(1, 1, 1, 0.10 * a), max(1.0, 1.0 * k), true)
 		var x := r.position.x + 12.0 * k
 		if cadran:
 			_cadran(Vector2(x, centre.y), Color(col, a), k)
