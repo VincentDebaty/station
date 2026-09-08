@@ -89,6 +89,8 @@ func montrer(nom: String) -> void:
 		n.visible = actif
 		n.process_mode = Node.PROCESS_MODE_INHERIT if actif else Node.PROCESS_MODE_DISABLED
 		n.position = Vector2.ZERO
+		n.scale = Vector2.ONE
+		n.modulate = Color.WHITE
 
 
 # --- LE GLISSEMENT ENTRE LE RUBAN ET LES CARTES ---------------------------------------
@@ -114,6 +116,45 @@ func en_glissement() -> bool:
 	return glisse_t >= 0.0
 
 
+## Un écran change : le doigt attend. Un clic tombé au milieu d'une transition
+## déclenche l'écran d'après, ce que personne n'a jamais voulu.
+func en_transition() -> bool:
+	return glisse_t >= 0.0 or appar_t >= 0.0
+
+
+# --- L'APPARITION : un zoom et un fondu depuis le milieu -----------------------------
+# ON ENTRE DANS UNE GARE, ON EN RESSORT. Le ruban est la carte, la gare en est
+# un point : y entrer resserre la vue sur ce point, en sortir la rouvre. Le
+# poste d'aiguillage se pose donc en se CONTRACTANT — il arrive de plus grand
+# que l'écran — et le relevé s'ouvre en GRANDISSANT depuis le milieu. Deux
+# sens opposés pour deux gestes opposés ; c'est ce que dit un zoom, et c'est
+# tout ce qu'il a à dire.
+const APPARITION := 0.32
+
+var appar_t := -1.0
+var appar_qui: CanvasItem = null
+var appar_de := 1.0
+
+
+func _apparaitre(qui: CanvasItem, depuis: float) -> void:
+	appar_qui = qui
+	appar_de = depuis
+	appar_t = 0.0
+	_poser_apparition(0.0)
+
+
+func _poser_apparition(e: float) -> void:
+	if appar_qui == null:
+		return
+	var s: float = lerpf(appar_de, 1.0, e)
+	var c: Vector2 = get_viewport().get_visible_rect().size / 2.0
+	appar_qui.scale = Vector2(s, s)
+	appar_qui.position = c - c * s
+	# le fondu se termine avant le zoom : une image qui finit de grandir en
+	# étant encore translucide donne l'impression de n'être jamais arrivée.
+	appar_qui.modulate = Color(1, 1, 1, min(1.0, e * 1.7))
+
+
 func _glisser(de: CanvasItem, vers: CanvasItem, nom: String, sens: float) -> void:
 	if en_glissement():
 		return
@@ -132,6 +173,15 @@ func _glisser(de: CanvasItem, vers: CanvasItem, nom: String, sens: float) -> voi
 
 
 func _process(delta: float) -> void:
+	if appar_t >= 0.0:
+		appar_t = min(1.0, appar_t + delta / APPARITION)
+		_poser_apparition(ease(appar_t, -1.8))
+		if appar_t >= 1.0:
+			appar_t = -1.0
+			appar_qui.scale = Vector2.ONE
+			appar_qui.position = Vector2.ZERO
+			appar_qui.modulate = Color.WHITE
+			appar_qui = null
 	if not en_glissement():
 		return
 	glisse_t = min(1.0, glisse_t + delta / GLISSE)
@@ -184,18 +234,21 @@ func jouer(id: String) -> void:
 		return
 	vue_jeu.demarrer(f, ruban, carte_id)
 	montrer("jeu")
+	_apparaitre(vue_jeu, 1.10)
 
 
 ## Le jeu rend la main avec son relevé et les médailles décrochées.
 func fin_de_service(bilan: Dictionary, medailles: Array) -> void:
 	montrer("ruban")
 	vue_ruban.fin_de_service(bilan, medailles)
+	_apparaitre(vue_ruban, 0.90)
 
 
 ## Quitter un service en cours : rien n'est écrit, le ruban reprend.
 func abandonner_service() -> void:
 	montrer("ruban")
 	vue_ruban.rebatir()
+	_apparaitre(vue_ruban, 0.90)
 
 
 ## Passer en payant : la gare reste à zéro étoile et se rejoue quand on veut.

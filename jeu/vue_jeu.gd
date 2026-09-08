@@ -233,11 +233,24 @@ func _process(delta: float) -> void:
 			_joueur_scripte()
 	if enc.ended and not fin_enregistree:
 		_enregistrer_fin()
-		# Le relevé se lit sur la carte, sous la gare qu'on vient de tenir — le
-		# temps de voir le dernier convoi s'arrêter, puis la main est rendue.
+		# LE TEMPS MORT DE 1,2 SECONDE ÉTAIT UN BLOCAGE, ET PAS UNE RESPIRATION.
+		# Le service se termine à l'instant où le DERNIER convoi lâche son
+		# itinéraire — c'est-à-dire alors qu'il est encore en train de sortir de
+		# l'écran (enclenchement.gd : un convoi « sorti » suffit, il n'a pas
+		# besoin d'être arrivé au bout). Or `tick` ne fait plus rien une fois
+		# `ended` : le convoi se fige donc en pleine sortie, et l'écran reste
+		# une seconde et deux dixièmes sur cette image morte. « On a
+		# l'impression que le jeu se bloque une demi-seconde » (Vincent, 5
+		# septembre 2026) — c'est exactement cela, et c'était même plus long.
+		#
+		# Je ne fais pas terminer sa sortie au convoi : cela demanderait de
+		# faire tourner l'enclenchement après la fin, et l'enclenchement est la
+		# seule pièce du jeu sous contrôle d'oracle. On raccourcit le battement
+		# à ce qu'il faut pour que l'œil enregistre la fin, et la transition
+		# prend le relais — c'est du mouvement, plus une image morte.
 		if app != null and not retour_lance:
 			retour_lance = true
-			get_tree().create_timer(1.2).timeout.connect(_rendre_la_main)
+			get_tree().create_timer(0.35).timeout.connect(_rendre_la_main)
 	_calculer_positions()
 	_tuto_tick()
 	_placer_bulle()
@@ -723,7 +736,7 @@ func _obstacles_de_badge() -> Array:
 ## LES ÉCARTS ESSAYÉS, dans l'ordre : à sa place, puis un cran plus haut, puis
 ## un cran plus bas, et ainsi de suite. Le haut d'abord — au-dessus d'une voie
 ## d'approche il n'y a rien, en dessous il y a la voie suivante.
-const BADGE_ECARTS := [0.0, -1.0, 1.0, -2.0, 2.0]
+const BADGE_ECARTS := [0.0, -1.0, 1.0, -2.0, 2.0, -3.0, 3.0]
 
 func _dessiner_badges(t: float) -> void:
 	var clign := 0.22 + 0.78 * (0.5 + 0.5 * sin(t * TAU / 0.9))   # badge-blink
@@ -753,13 +766,15 @@ func _dessiner_badges(t: float) -> void:
 		var cadran: bool = not en_retard
 		var large: float = w + 24.0 * k + (14.0 * k if cadran else 0.0)
 		var tete: Dictionary = positions[tr.id][0]
-		# QUARANTE NE SUFFIT PLUS. Les noms de portail ayant grandi et pris de la
-		# hauteur, la place naturelle de la pastille s'est libérée — et elle
-		# tombait alors sur les voitures du convoi lui-même, qui traînent
-		# derrière sa tête sur une voie en biais. On monte d'une demi-caisse.
-		var centre := Vector2(float(tete["x"]), float(tete["y"]) - 50.0 * k)
+		# LA PASTILLE SE TIENT PRÈS DE SA TÊTE. Je l'avais montée à cinquante
+		# pour dégager les voitures du convoi ; elle s'est mise à flotter loin
+		# au-dessus, et on ne savait plus à quel convoi elle appartenait.
+		# Quarante-deux la ramène contre sa tête, et c'est l'ESQUIVE qui règle
+		# les rencontres — d'un demi-cran à la fois plutôt que d'un cran entier,
+		# pour qu'une pastille qui doit s'écarter ne parte pas au loin.
+		var centre := Vector2(float(tete["x"]), float(tete["y"]) - 42.0 * k)
 		var r := Rect2(centre.x - large / 2.0, centre.y - 10.0 * k, large, 20.0 * k)
-		var pas := r.size.y + 6.0 * k
+		var pas := r.size.y * 0.62 + 4.0 * k
 		for ecart in BADGE_ECARTS:
 			var essai := Rect2(r.position + Vector2(0, ecart * pas), r.size)
 			var libre := true
@@ -999,6 +1014,8 @@ func _dessiner_fin() -> void:
 # Les commandes
 # ------------------------------------------------------------------
 func _unhandled_input(event: InputEvent) -> void:
+	if app != null and app.en_transition():
+		return
 	if enc == null:
 		return
 	if event is InputEventKey and event.pressed and not event.echo:
