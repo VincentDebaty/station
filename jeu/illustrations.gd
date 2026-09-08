@@ -1,0 +1,73 @@
+extends RefCounted
+## LES ILLUSTRATIONS — une bannière par zone, une vignette par gare.
+##
+## Les images vivent dans `jeu/illustrations/`, dérivées de `assets/da/` par
+## `tools/illustrations.sh`. Elles sont chargées à la demande et gardées en
+## mémoire : dix images de cinq mégaoctets en tout, rien qui mérite un soin
+## particulier.
+##
+## IL N'Y A PAS 277 VIGNETTES, IL Y EN A SIX. Une illustration par gare serait
+## une œuvre en soi, et le jeu n'en a pas besoin : ce qu'une vignette dit,
+## c'est le CARACTÈRE d'un lieu — un viaduc de montagne, une cathédrale de
+## brique, une halle d'usine, un quai de port, une halte de campagne, une gare
+## monumentale. Six archétypes couvrent le catalogue, et la fiche décide
+## elle-même lequel lui revient.
+
+const DOSSIER := "res://jeu/illustrations/"
+static var _cache: Dictionary = {}
+
+## LES MOTS QUI DÉSIGNENT UN LIEU. Les phrases des fiches sont écrites à la
+## main, une par une, et elles disent presque toujours ce qu'est la gare :
+## « au pied de la citadelle », « la gare gothique de l'acier », « le port ».
+## On les lit donc plutôt que d'inventer un champ de plus dans 401 fiches —
+## la donnée existe déjà, il suffisait de s'en servir.
+const MOTS := {
+	"port": ["port", "mer ", "maritime", "océan", "ocean", "rade", "littoral",
+		"embarcadère", "digue", "ferry", "quai maritime", "estuaire", "marée"],
+	"viaduc": ["viaduc", "pont", "vallée", "vallee", "gorge", "tunnel", "col ",
+		"montagne", "alpin", "alpes", "sommet", "torrent"],
+	"industrielle": ["acier", "charbon", "usine", "industri", "mine", "sidérurg",
+		"houill", "forge", "manufacture", "textile", "fonderie", "chantier"],
+	"cathedrale": ["cathédrale", "cathedrale", "gothique", "abbaye", "basilique",
+		"cloître", "évêché", "collégiale"],
+}
+
+
+## L'archétype d'une gare : ce que sa phrase dit d'elle, et à défaut sa taille.
+## La taille seule reste un bon juge — une gare de huit quais est monumentale,
+## une gare de trois quais est une halte, et c'est vrai partout.
+static func archetype(cfg: Dictionary) -> String:
+	var texte := (String(cfg.get("tagline", "")) + " " + String(cfg.get("name", "")) \
+		+ " " + String(cfg.get("desc", ""))).to_lower()
+	for quoi in MOTS:
+		for mot in MOTS[quoi]:
+			if texte.contains(mot):
+				return quoi
+	var quais: int = Array(cfg.get("platforms", [])).size()
+	if quais >= 8:
+		return "monumentale"
+	if quais >= 6:
+		return "cathedrale"
+	if quais >= 4:
+		return "industrielle"
+	return "halte"
+
+
+## La vignette d'une gare, ou null si les images ne sont pas là — le jeu
+## s'affiche alors exactement comme avant, sans trou.
+static func vignette(cfg: Dictionary) -> Texture2D:
+	return _charger("gare-" + archetype(cfg))
+
+
+## La bannière d'une zone de la carte (`atl`, `alpes`, `rhin`, `ger`).
+static func banniere(zone: Variant) -> Texture2D:
+	return _charger("banniere-" + String(zone))
+
+
+static func _charger(nom: String) -> Texture2D:
+	if _cache.has(nom):
+		return _cache[nom]
+	var chemin := DOSSIER + nom + ".png"
+	var t: Texture2D = load(chemin) if ResourceLoader.exists(chemin) else null
+	_cache[nom] = t
+	return t

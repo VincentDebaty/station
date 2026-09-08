@@ -15,6 +15,7 @@ extends Node2D
 const Rub := preload("res://jeu/ruban.gd")
 const Rec := preload("res://jeu/recompense.gd")
 const Sty := preload("res://jeu/style.gd")
+const Ill := preload("res://jeu/illustrations.gd")
 
 # Le cadre de la projection, en unités du prototype (160 × 100), et son
 # étirement : l'Europe est plus haute que large.
@@ -869,7 +870,10 @@ func rebatir() -> void:
 	if ruban == null:
 		return
 	_remplir_barre()
-	colonne.add_child(_entete_chapitre())
+	# LA BANNIÈRE PORTE L'EN-TÊTE. Sans illustration — une zone qu'on n'a pas
+	# peinte — l'en-tête reprend sa place à lui seul.
+	var b := _banniere()
+	colonne.add_child(b if b != null else _entete_chapitre())
 	# LE RELEVÉ DE LA GARE RESTE pendant la fête : au seul moment du jeu où
 	# deux récompenses tombent ensemble, on ne perd pas de vue les étoiles
 	# qu'on vient de décrocher. Les médailles, elles, vont à la fête.
@@ -951,6 +955,124 @@ func _pastille(texte: String, couleur: Color) -> Control:
 	return p
 
 
+## LA BANNIÈRE PORTE LE TITRE, comme sur la maquette. Empilés, l'image et
+## l'en-tête prenaient cent unités de haut et poussaient la fiche de gare hors
+## du panneau ; superposés, ils en prennent quatre-vingts et se lisent mieux —
+## le nom du chapitre est posé sur son paysage, ce qui est exactement ce qu'il
+## désigne. Le voile dégradé vers le bas lui garantit son contraste, quel que
+## soit le ciel de l'illustration.
+##
+## Une bannière par ZONE et non par chapitre : quarante-neuf illustrations
+## seraient une œuvre, quatre suffisent à dire où l'on est.
+func _banniere() -> Control:
+	var ch := chapitre
+	if ch.is_empty():
+		return null
+	var t := Ill.banniere(ch["zone"])
+	if t == null:
+		return null
+	var k := Sty.HUD_K
+	var cadre := PanelContainer.new()
+	cadre.add_theme_stylebox_override("panel",
+		Sty.boite(Color(0, 0, 0, 0), Color(Sty.LAITON, 0.55), 8 * k, max(1.0, k)))
+	cadre.clip_contents = true
+
+	var pile := Control.new()
+	pile.custom_minimum_size = Vector2(0, 84 * k)
+	cadre.add_child(pile)
+
+	var img := TextureRect.new()
+	img.texture = t
+	img.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	img.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	img.set_anchors_preset(Control.PRESET_FULL_RECT)
+	img.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	pile.add_child(img)
+
+	var voile := TextureRect.new()
+	var g := GradientTexture2D.new()
+	var d := Gradient.new()
+	d.set_color(0, Color(Sty.BOIS, 0.0))
+	d.set_color(1, Color(Sty.BOIS, 0.88))
+	g.gradient = d
+	g.fill_from = Vector2(0, 0.18)
+	g.fill_to = Vector2(0, 1)
+	voile.texture = g
+	voile.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	voile.stretch_mode = TextureRect.STRETCH_SCALE
+	voile.set_anchors_preset(Control.PRESET_FULL_RECT)
+	voile.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	pile.add_child(voile)
+
+	var bas := MarginContainer.new()
+	bas.anchor_left = 0.0
+	bas.anchor_right = 1.0
+	bas.anchor_top = 1.0
+	bas.anchor_bottom = 1.0
+	bas.grow_vertical = Control.GROW_DIRECTION_BEGIN
+	bas.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	for cote in ["left", "right", "bottom"]:
+		bas.add_theme_constant_override("margin_" + cote, int(round(10 * k)))
+	pile.add_child(bas)
+	bas.add_child(_titre_chapitre(ch))
+	return cadre
+
+
+## Le nom du chapitre, sa région, et la jauge à crans : ce qui se pose sur la
+## bannière. Séparé du reste pour qu'un chapitre sans illustration — une carte
+## à venir, une zone qu'on n'a pas encore peinte — garde son en-tête.
+func _titre_chapitre(ch: Dictionary) -> Control:
+	var k := Sty.HUD_K
+	var v := VBoxContainer.new()
+	v.add_theme_constant_override("separation", int(round(1 * k)))
+	var col := couleur_de_zone(ch["zone"])
+	var titre := _label(String(ch["nom"]), 21, Sty.PAPIER, true, false)
+	titre.clip_text = true
+	v.add_child(titre)
+	var zone_nom := String(ruban.carte.get("nom", ""))
+	for z in ruban.zones():
+		if z.get("id") == ch["zone"]:
+			zone_nom = String(z.get("nom", zone_nom))
+	var h := HBoxContainer.new()
+	h.add_theme_constant_override("separation", int(round(8 * k)))
+	var lz := _label(zone_nom, 12, col, false, false)
+	lz.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	lz.clip_text = true
+	h.add_child(lz)
+	h.add_child(_crans_du_chapitre(ch))
+	v.add_child(h)
+	return v
+
+
+## La jauge du chapitre : un cran par gare, l'état de chacune.
+func _crans_du_chapitre(ch: Dictionary) -> Control:
+	var crans := ""
+	var faits := 0
+	for g in ch["gares"]:
+		var p: Dictionary = ruban.progression_de(g)
+		if ruban.est_faite(g):
+			faits += 1
+		if g == prochaine:
+			crans += "◉"
+		elif Rec.est_diamant(p):
+			crans += "◆"
+		elif ruban.est_faite(g):
+			crans += "●"
+		elif ruban.est_passee(g):
+			crans += "◌"
+		else:
+			crans += "○"
+	var h := HBoxContainer.new()
+	h.add_theme_constant_override("separation", int(round(8 * Sty.HUD_K)))
+	h.add_child(_label(crans, 13, couleur_de_zone(ch["zone"]), false, false))
+	var rang: Dictionary = Rec.rang_de_chapitre(ruban, ch)
+	if not rang.is_empty() and rang["id"] != "ouverte" and fete.is_empty():
+		h.add_child(_label(String(rang["nom"]), 11, Color(String(rang["couleur"])), false, false))
+	else:
+		h.add_child(_label("%d/%d" % [faits, ch["gares"].size()], 11, MUET, false, false))
+	return h
+
+
 func _entete_chapitre() -> Control:
 	var v := VBoxContainer.new()
 	v.add_theme_constant_override("separation", int(round(2 * Sty.HUD_K)))
@@ -1030,13 +1152,37 @@ func _cartouche(id: String) -> Control:
 	# la carte de la gare : un fond légèrement relevé, un liseré discret
 	var carte_gare := PanelContainer.new()
 	var st := Sty.parchemin(10, k)
-	st.set_content_margin_all(14 * k)
+	st.set_content_margin_all(11 * k)
 	carte_gare.add_theme_stylebox_override("panel", st)
 	var v := VBoxContainer.new()
 	v.add_theme_constant_override("separation", int(round(4 * k)))
 	carte_gare.add_child(v)
 
-	# le nom, le drapeau, et le terminus s'il y a lieu — sur une ligne
+	# LA VIGNETTE, À GAUCHE DU NOM, comme sur la maquette : la figure du lieu
+	# avant son nom. Six archétypes couvrent le catalogue, et c'est la phrase
+	# de la fiche qui décide lequel revient à cette gare (jeu/illustrations.gd).
+	var haut := HBoxContainer.new()
+	haut.add_theme_constant_override("separation", int(round(12 * k)))
+	var vig := Ill.vignette(cfg)
+	if vig != null:
+		var cadre := PanelContainer.new()
+		var sv := Sty.boite(Sty.PAPIER_OMBRE, Color(Sty.ENCRE, 0.5), 8 * k, max(1.0, k))
+		sv.set_content_margin_all(2 * k)
+		cadre.add_theme_stylebox_override("panel", sv)
+		cadre.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+		var ti := TextureRect.new()
+		ti.texture = vig
+		ti.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		ti.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+		ti.custom_minimum_size = Vector2(46 * k, 46 * k)
+		cadre.add_child(ti)
+		cadre.clip_contents = true
+		haut.add_child(cadre)
+
+	var bloc := VBoxContainer.new()
+	bloc.add_theme_constant_override("separation", int(round(2 * k)))
+	bloc.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	bloc.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	var tete := HBoxContainer.new()
 	tete.add_theme_constant_override("separation", int(round(8 * k)))
 	var nom := _label(ville_de(id), 20, Sty.ENCRE, true, false)
@@ -1045,8 +1191,10 @@ func _cartouche(id: String) -> Control:
 	tete.add_child(nom)
 	if fin:
 		tete.add_child(_pastille("terminus", OR))
-	v.add_child(tete)
-	v.add_child(_label("%s %s" % [pays.get("drapeau", ""), pays.get("nom", "")], 12, Sty.SARCELLE))
+	bloc.add_child(tete)
+	bloc.add_child(_label("%s %s" % [pays.get("drapeau", ""), pays.get("nom", "")], 12, Sty.SARCELLE))
+	haut.add_child(bloc)
+	v.add_child(haut)
 
 	var phrase := String(cfg.get("tagline", ""))
 	var re := RegEx.new()
