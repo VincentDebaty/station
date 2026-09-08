@@ -662,6 +662,34 @@ func _dessiner_convois(sel, t: float) -> void:
 				halo = 7.0 + 6.0 * pret
 			draw_style_box(Sty.boite(caisse, caisse, rayon, 0, halo, Color(col, 0.30)), r)
 
+			# LA CAISSE DEVIENT UNE VOITURE. Tout ce qui l'entoure est passé à
+			# l'instrument ; elle est restée un rectangle arrondi. On lui ajoute
+			# de la MATIÈRE, jamais de la signalisation : un filet de toiture,
+			# et deux fenêtres. Rien ici ne dit quoi que ce soit au joueur —
+			# la couleur reste la destination, le halo reste l'état, le contour
+			# épais reste le fret — mais un convoi cesse d'être une pastille.
+			#
+			# LE FRET N'A PAS DE FENÊTRES, et c'est gratuit : un wagon n'en a
+			# pas. Sa différence, déjà portée par son contour épais et sa caisse
+			# grise, s'en trouve dite une troisième fois sans un mot de plus.
+			var toit := Color(1, 1, 1, 0.26 if i == 0 else 0.20)
+			draw_line(Vector2(-Geo.CAR_LEN / 2.0 + rayon, -h / 2.0 + 2.0 * Sty.UIK),
+				Vector2(Geo.CAR_LEN / 2.0 - rayon, -h / 2.0 + 2.0 * Sty.UIK), toit,
+				max(1.0, 1.1 * Sty.UIK), true)
+			# TROIS FENÊTRES ÉTROITES, ET NON DEUX LARGES. Deux fenêtres carrées
+			# sur une caisse de trente unités font un domino — ou une paire
+			# d'yeux, ce qui est pire. Trois fentes serrées font une VOITURE :
+			# c'est le rythme des compartiments, et à la taille réelle la bande
+			# se lit comme une texture plutôt que comme des trous.
+			if i > 0 and not tr.freight:
+				var vitre := Color(caisse.darkened(0.72), 0.72)
+				var lf: float = 5.5
+				var hf: float = h * 0.32
+				for j in range(3):
+					var xf: float = -1.5 * lf - 2.5 + float(j) * (lf + 2.5)
+					draw_style_box(Sty.boite(vitre, vitre, 1.2 * Sty.UIK, 0),
+						Rect2(xf, -hf / 2.0 - h * 0.05, lf, hf))
+
 			# LE MASQUE D'EMBARQUEMENT : la portion vide, côté queue, qui recule
 			# à mesure qu'on approche du départ.
 			if plein < 1.0:
