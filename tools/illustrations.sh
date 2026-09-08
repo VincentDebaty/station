@@ -83,7 +83,7 @@ done
 # ombré et mange la vivacité de la couleur — or ici la couleur EST la
 # destination, et à la taille réelle du jeu c'est elle qui doit se lire en
 # premier. Le trait reste, le modelé s'allège. Un seul nombre, `ENCRAGE`.
-for f in "$SRC"/loco.png "$SRC"/wagon.png; do
+for f in "$SRC"/loco.png "$SRC"/wagon.png "$SRC"/fourgon.png; do
   [ -f "$f" ] || continue
   nom=$(basename "$f")
   cp "$f" "$DST/$nom"

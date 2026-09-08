@@ -111,7 +111,7 @@ func _draw() -> void:
 			4: _rame_planche(axe, col, k)
 		# et la même, à la TAILLE RÉELLE du jeu, en bout de ligne : c'est elle
 		# qui décide, pas l'agrandissement
-		var petit := _courbe(Vector2(e.x - 260, y), 1.0)
+		var petit := _courbe(Vector2(e.x - 260, y), 1.0, 4)
 		match v:
 			0: _rame_actuelle(petit, col, 1.0)
 			1: _rame_gravee(petit, col, 1.0, false)
@@ -120,12 +120,15 @@ func _draw() -> void:
 			4: _rame_planche(petit, col, 1.0)
 
 
-## La même courbe pour les quatre : quatre voitures sur un S doux.
-func _courbe(depart: Vector2, k: float) -> PackedVector2Array:
+## La même courbe pour tous : un S doux. La colonne agrandie montre un convoi
+## de CINQ voitures, celle de taille réelle un convoi de QUATRE — la
+## composition n'est pas la même (cinq donnent une machine et deux voitures,
+## quatre y ajoutent un fourgon), et il faut voir les deux.
+func _courbe(depart: Vector2, k: float, n: int = 5) -> PackedVector2Array:
 	var out := PackedVector2Array()
-	for i in 5:
-		var t := float(i) / 4.0
-		out.append(depart + Vector2(t * Geo.CAR_SPACING * 4.0 * k,
+	for i in n:
+		var t := float(i) / float(max(1, n - 1))
+		out.append(depart + Vector2(t * Geo.CAR_SPACING * float(n - 1) * k,
 			sin(t * PI) * 11.0 * k))
 	return out
 
