@@ -42,6 +42,15 @@ const PANNEAU := Sty.BOIS
 const BORD := Sty.LAITON
 const TEXTE := Sty.PAPIER
 const MUET := Color("#a28f74")
+# CE QUI S'ÉCRIT SUR LE PAPIER. Tout le contenu du panneau est passé sur une
+# seule feuille de parchemin : le relevé, la fête et la ligne « suivante »,
+# écrits jusqu'ici en clair sur du bois, s'écrivent maintenant à l'encre.
+# L'or n'y tient pas tel quel — #d9a441 sur #efe3c8 ne fait pas de contraste —
+# il fonce d'un cran, comme une dorure imprimée plutôt qu'une ferrure.
+const P_ENCRE := Sty.ENCRE
+const P_MUET := Sty.ENCRE_MUET
+const P_OR := Color("#9c6f1c")
+const P_ACCENT := Sty.SARCELLE
 const ACCENT := Sty.SARCELLE_CLAIR
 const OR := Sty.LAITON
 const DIAMANT := Color("#9fdcd6")
@@ -1447,8 +1456,12 @@ func _bouton(texte: String, principal: bool, actif: bool, sur: Callable) -> Butt
 	return b
 
 
+## UN PLI DE PAPIER, pas un trait d'interface : depuis que tout se lit sur la
+## feuille, le séparateur du thème par défaut y traçait une ligne grise.
 func _separateur() -> Control:
 	var s := HSeparator.new()
+	s.add_theme_stylebox_override("separator",
+		Sty.boite(Sty.PAPIER_OMBRE, Color.TRANSPARENT, 0, 0))
 	s.add_theme_constant_override("separation", int(round(8 * Sty.HUD_K)))
 	return s
 
@@ -1465,29 +1478,54 @@ func rebatir() -> void:
 	if ruban == null:
 		return
 	_remplir_barre()
-	# LA BANNIÈRE PORTE L'EN-TÊTE. Sans illustration — une zone qu'on n'a pas
-	# peinte — l'en-tête reprend sa place à lui seul.
-	var b := _banniere()
-	colonne.add_child(b if b != null else _entete_chapitre())
-	# LE RELEVÉ DE LA GARE RESTE pendant la fête : au seul moment du jeu où
-	# deux récompenses tombent ensemble, on ne perd pas de vue les étoiles
-	# qu'on vient de décrocher. Les médailles, elles, vont à la fête.
-	if not bilan.is_empty():
-		colonne.add_child(_bloc_bilan(fete.is_empty()))
-	if not fete.is_empty():
-		colonne.add_child(_bloc_fete())
-	# APRÈS UN SERVICE, LA FICHE COMPLÈTE CÈDE LA PLACE AU RELEVÉ. Les deux
-	# ensemble ne tiennent pas sur un téléphone, et elles ne se lisent pas au
-	# même moment : le relevé dit ce qu'on vient de faire, la fiche prépare le
-	# geste suivant — que le bouton nomme déjà. Elle se réduit donc à sa seule
-	# ligne utile tant que le relevé est là.
-	if prochaine != "" and fete.is_empty():
-		if bilan.is_empty():
-			colonne.add_child(_cartouche(prochaine))
-		else:
-			colonne.add_child(_ligne_suivante(prochaine))
+	colonne.add_child(_feuille())
 	_vider(pied)
 	pied.add_child(_pied())
+
+
+## LA FEUILLE — UN SEUL OBJET, SANS BORDURE.
+##
+## La bannière du chapitre et la carte de la gare étaient deux cadres empilés,
+## chacun avec son liseré de laiton : « les deux cadres d'une gare à gauche
+## pourraient être regroupés et ne pas avoir de bordure » (Vincent, 5 septembre
+## 2026). Ils ne disaient pourtant qu'une chose — où l'on est, et ce qui vient.
+## Un seul parchemin les porte, l'illustration en tête, et l'ombre chaude
+## suffit à le décoller du bureau : un liseré ne sert qu'à séparer deux choses,
+## et il n'y en a plus qu'une.
+##
+## LE RELEVÉ Y ENTRE AUSSI. Il flottait entre les deux cadres, sur le bois ;
+## il n'y avait plus d'entre-deux. Il s'écrit donc à l'encre sur la feuille,
+## à la place de la fiche complète — les deux ne tiennent pas sur un téléphone
+## et ne se lisent pas au même moment.
+func _feuille() -> Control:
+	var k := Sty.HUD_K
+	var feuille := PanelContainer.new()
+	var st := Sty.parchemin(Sty.R_GRAND, k)
+	st.set_border_width_all(0)
+	st.set_content_margin_all(10 * k)
+	feuille.add_theme_stylebox_override("panel", st)
+	var v := VBoxContainer.new()
+	v.add_theme_constant_override("separation", int(round(8 * k)))
+	feuille.add_child(v)
+	# L'ILLUSTRATION EST INSÉRÉE, PAS À FOND PERDU. Un Control ne se découpe
+	# qu'au rectangle : une image poussée jusqu'au bord montrerait ses angles
+	# carrés dans les coins arrondis de la feuille. Elle garde donc la marge de
+	# la feuille et son propre arrondi.
+	var b := _banniere()
+	if b != null:
+		v.add_child(b)
+	else:
+		v.add_child(_entete_chapitre())
+	# LE RELEVÉ RESTE PENDANT LA FÊTE : au seul moment du jeu où deux
+	# récompenses tombent ensemble, on ne perd pas de vue les étoiles qu'on
+	# vient de décrocher. Les médailles, elles, vont à la fête.
+	if not bilan.is_empty():
+		v.add_child(_bloc_bilan(fete.is_empty()))
+	if not fete.is_empty():
+		v.add_child(_bloc_fete())
+	if prochaine != "" and fete.is_empty():
+		v.add_child(_cartouche(prochaine) if bilan.is_empty() else _ligne_suivante(prochaine))
+	return feuille
 
 
 ## LA BARRE DU HAUT, EN TROIS FENTES : le geste à gauche, les compteurs au
@@ -1608,7 +1646,7 @@ func _banniere() -> Control:
 	var k := Sty.HUD_K
 	var cadre := PanelContainer.new()
 	cadre.add_theme_stylebox_override("panel",
-		Sty.boite(Color(0, 0, 0, 0), Color(Sty.LAITON, 0.55), Sty.R_GRAND * k, Sty.epaisseur(k)))
+		Sty.boite(Color(0, 0, 0, 0), Color(0, 0, 0, 0), Sty.R * k, 0))
 	cadre.clip_contents = true
 
 	var pile := Control.new()
@@ -1732,14 +1770,14 @@ func _entete_chapitre() -> Control:
 	v.add_theme_constant_override("separation", int(round(2 * Sty.HUD_K)))
 	var ch := chapitre
 	if ch.is_empty():
-		v.add_child(_label(String(ruban.carte.get("nom", "La carte")), 22, TEXTE, true))
+		v.add_child(_label(String(ruban.carte.get("nom", "La carte")), 22, P_ENCRE, true))
 		return v
-	var col := couleur_de_zone(ch["zone"])
+	var col := couleur_de_zone(ch["zone"]).darkened(0.42)
 	# « Chapitre 1 / 49 » RETIRÉ (demandé le 3 septembre 2026) : sur un
 	# téléphone la hauteur est la ressource rare, et le rang du chapitre ne
 	# sert à rien pour décider du geste suivant. La jauge à crans, elle, dit
 	# déjà où l'on en est DANS le chapitre — la seule position qui compte.
-	v.add_child(_label(String(ch["nom"]), 22, Sty.PAPIER, true))
+	v.add_child(_label(String(ch["nom"]), 22, P_ENCRE, true))
 	var zone_nom := String(ruban.carte.get("nom", ""))
 	for z in ruban.zones():
 		if z.get("id") == ch["zone"]:
@@ -1769,9 +1807,9 @@ func _entete_chapitre() -> Control:
 	h.add_child(lc)
 	var rang: Dictionary = Rec.rang_de_chapitre(ruban, ch)
 	if not rang.is_empty() and rang["id"] != "ouverte" and fete.is_empty():
-		h.add_child(_label(String(rang["nom"]), 12, Color(String(rang["couleur"])), false, false))
+		h.add_child(_label(String(rang["nom"]), 12, Color(String(rang["couleur"])).darkened(0.42), false, false))
 	else:
-		h.add_child(_label("%d/%d" % [faits, ch["gares"].size()], 12, MUET, false, false))
+		h.add_child(_label("%d/%d" % [faits, ch["gares"].size()], 12, P_MUET, false, false))
 	v.add_child(h)
 	v.add_child(_separateur())
 	return v
@@ -1803,14 +1841,10 @@ func _cartouche(id: String) -> Control:
 	var seuils := ruban.seuils_de_service(cfg)
 	var pays := Donnees.pays_de(String(cfg.get("country", "")))
 
-	# la carte de la gare : un fond légèrement relevé, un liseré discret
-	var carte_gare := PanelContainer.new()
-	var st := Sty.parchemin(Sty.R_GRAND, k)
-	st.set_content_margin_all(11 * k)
-	carte_gare.add_theme_stylebox_override("panel", st)
+	# LA GARE N'A PLUS DE CADRE À ELLE : elle est écrite sur la feuille, sous
+	# l'illustration du chapitre, et c'est la feuille qui porte le parchemin.
 	var v := VBoxContainer.new()
 	v.add_theme_constant_override("separation", int(round(4 * k)))
-	carte_gare.add_child(v)
 
 	# LA VIGNETTE, À GAUCHE DU NOM, comme sur la maquette : la figure du lieu
 	# avant son nom. Six archétypes couvrent le catalogue, et c'est la phrase
@@ -1898,8 +1932,8 @@ func _cartouche(id: String) -> Control:
 			score += "   ◆ sans faute"
 		elif p.get("bestDelay") != null:
 			score += "   record %d min" % int(p["bestDelay"])
-		v.add_child(_label(score, 14, OR))
-	return carte_gare
+		v.add_child(_label(score, 14, P_OR))
+	return v
 
 
 ## La gare qui vient, en une ligne : son nom, sa taille, son barème. C'est
@@ -1914,15 +1948,15 @@ func _ligne_suivante(id: String) -> Control:
 	var quais: int = Array(cfg.get("platforms", [])).size()
 	var dirs: int = (cfg["portals"] as Dictionary).size() if cfg.get("portals") is Dictionary else 0
 	var seuils := ruban.seuils_de_service(cfg)
-	v.add_child(_label("SUIVANTE", 11, MUET, true, false))
+	v.add_child(_label("SUIVANTE", 11, P_MUET, true, false))
 	var h := HBoxContainer.new()
 	h.add_theme_constant_override("separation", int(round(10 * Sty.HUD_K)))
-	var nom := _label(ville_de(id), 16, Sty.PAPIER, true, false)
+	var nom := _label(ville_de(id), 16, P_ENCRE, true, false)
 	nom.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	nom.clip_text = true
 	h.add_child(nom)
 	h.add_child(_label("%d quais · %d dir. · 3 ★ sous %d min" % [quais, dirs, int(seuils["trois"])],
-		12, MUET, false, false))
+		12, P_MUET, false, false))
 	v.add_child(h)
 	return v
 
@@ -1937,20 +1971,20 @@ func _bloc_bilan(avec_medailles: bool = true) -> Control:
 	v.add_theme_constant_override("separation", int(round(3 * Sty.HUD_K)))
 	var b := bilan
 	var st := int(b["stars"])
-	v.add_child(_label(ville_de(String(b["gare"])), 12, MUET, false, false))
+	v.add_child(_label(ville_de(String(b["gare"])), 12, P_MUET, false, false))
 
 	# les étoiles, et à leur droite ce que le service a coûté
 	var h := HBoxContainer.new()
 	h.add_theme_constant_override("separation", int(round(10 * Sty.HUD_K)))
-	h.add_child(_label("★".repeat(st) + "☆".repeat(3 - st), 22, OR if b["win"] else MUET, false, false))
+	h.add_child(_label("★".repeat(st) + "☆".repeat(3 - st), 22, P_OR if b["win"] else P_MUET, false, false))
 	var retard: String
-	var couleur: Color = TEXTE
+	var couleur: Color = P_ENCRE
 	if b.get("failed", false):
 		retard = "%d min — plafond dépassé" % int(b["d"])
 		couleur = ROUGE
 	elif b.get("perfect", false):
 		retard = "◆ Diamant — pas une minute"
-		couleur = DIAMANT
+		couleur = P_ACCENT
 	else:
 		retard = "%d min de retard" % int(b["d"])
 	var lr := _label(retard, 14, couleur, false, false)
@@ -1961,17 +1995,17 @@ func _bloc_bilan(avec_medailles: bool = true) -> Control:
 	# le record d'un côté, l'objectif de l'autre — sur la même ligne
 	var pb: Variant = b.get("prevBest")
 	var dit := ""
-	var teinte: Color = MUET
+	var teinte: Color = P_MUET
 	if b.get("failed", false):
 		dit = ""
 	elif not b["win"]:
 		dit = "objectif manqué"
 	elif pb == null:
 		dit = "premier service"
-		teinte = ACCENT
+		teinte = P_ACCENT
 	elif float(b["d"]) < float(pb):
 		dit = "record battu · −%d min" % int(float(pb) - float(b["d"]))
-		teinte = ACCENT
+		teinte = P_ACCENT
 	elif float(b["d"]) == float(pb):
 		dit = "record égalé"
 	else:
@@ -1988,7 +2022,7 @@ func _bloc_bilan(avec_medailles: bool = true) -> Control:
 			ld.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 			h2.add_child(ld)
 		if vise != "":
-			h2.add_child(_label(vise, 12, MUET, false, false))
+			h2.add_child(_label(vise, 12, P_MUET, false, false))
 		v.add_child(h2)
 
 	if avec_medailles:
@@ -2004,10 +2038,10 @@ func _ajouter_medailles(v: VBoxContainer, combien: int) -> void:
 	var utiles: Array = medailles.filter(func(m): return not (m["id"] == "sf1" and not bilan.is_empty() and bilan.get("perfect", false)))
 	var montrees: Array = utiles.slice(0, combien) if combien > 0 and utiles.size() > combien else utiles
 	for m in montrees:
-		v.add_child(_label("%s — %s" % [m["nom"], m["dit"]], 13, OR))
+		v.add_child(_label("%s — %s" % [m["nom"], m["dit"]], 13, P_OR))
 	var reste := utiles.size() - montrees.size()
 	if reste > 0:
-		v.add_child(_label("+%d" % reste, 12, MUET))
+		v.add_child(_label("+%d" % reste, 12, P_MUET))
 
 
 ## La fête de fin de chapitre : ce qu'on a gagné, et ce qui reste à prendre.
@@ -2027,25 +2061,25 @@ func _bloc_fete() -> Control:
 		if ruban.est_passee(g):
 			payees += 1
 	var et_max := n * 3
-	v.add_child(_label("Chapitre terminé", 12, couleur_de_zone(ch["zone"])))
-	v.add_child(_label("%d / %d ★     %d ◆" % [et, et_max, dia], 20, OR, true))
+	v.add_child(_label("Chapitre terminé", 12, couleur_de_zone(ch["zone"]).darkened(0.42)))
+	v.add_child(_label("%d / %d ★     %d ◆" % [et, et_max, dia], 20, P_OR, true))
 	var rang: Dictionary = Rec.rang_de_chapitre(ruban, ch)
 	if not rang.is_empty() and rang["id"] != "ouverte":
-		v.add_child(_label(String(rang["nom"]), 15, Color(String(rang["couleur"]))))
+		v.add_child(_label(String(rang["nom"]), 15, Color(String(rang["couleur"])).darkened(0.42)))
 	if et == et_max and dia == n:
-		v.add_child(_label("Pas une minute de retard, nulle part.", 13, DIAMANT))
+		v.add_child(_label("Pas une minute de retard, nulle part.", 13, P_ACCENT))
 	elif et < et_max:
 		var reste := et_max - et
 		var texte := "%d étoile%s à prendre ici" % [reste, "s" if reste > 1 else ""]
 		if payees > 0:
 			texte += ", dont %d gare%s passée%s" % [payees, "s" if payees > 1 else "", "s" if payees > 1 else ""]
-		v.add_child(_label(texte + ".", 13, TEXTE))
+		v.add_child(_label(texte + ".", 13, P_ENCRE))
 	else:
-		v.add_child(_label("Toutes les étoiles. Reste les sans-faute : %d." % (n - dia), 13, TEXTE))
+		v.add_child(_label("Toutes les étoiles. Reste les sans-faute : %d." % (n - dia), 13, P_ENCRE))
 	if fete.get("zone_finie", false):
 		for z in ruban.zones():
 			if z.get("id") == ch["zone"]:
-				v.add_child(_label("%s — région traversée" % String(z.get("nom", "")), 13, couleur_de_zone(ch["zone"])))
+				v.add_child(_label("%s — région traversée" % String(z.get("nom", "")), 13, couleur_de_zone(ch["zone"]).darkened(0.42)))
 	_ajouter_medailles(v, 0)
 	v.add_child(_separateur())
 	return v
