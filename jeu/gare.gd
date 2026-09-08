@@ -189,7 +189,7 @@ func _draw() -> void:
 	# --- le cartouche de diagnostic, seul à l'écran --------------------------
 	if cartouche:
 		var pays := Donnees.pays_de(String(fiche.get("country", "")))
-		draw_string(sans_g, Vector2(28, 40), "%s  %s" % [pays["drapeau"], String(fiche.get("name", ""))],
+		draw_string(sans_g, Vector2(28, 40), "%s  %s" % [pays["nom"], String(fiche.get("name", ""))],
 			HORIZONTAL_ALIGNMENT_LEFT, -1, 18, Sty.PAPIER)
 		draw_string(Sty.sans(), Vector2(28, 62),
 			"%d quais · %d directions · %d chemins · %d conflits" % [

@@ -1955,7 +1955,12 @@ func _cartouche(id: String) -> Control:
 	if fin:
 		tete.add_child(_pastille("terminus", OR))
 	bloc.add_child(tete)
-	bloc.add_child(_label("%s %s" % [pays.get("drapeau", ""), pays.get("nom", "")], 12, Sty.SARCELLE))
+	# SANS DRAPEAU. Il ne s'affiche NULLE PART sur l'iPhone de Vincent (essayé
+	# le 5 septembre 2026, ici comme dans le bandeau du poste) : composer un
+	# drapeau demande à la police d'assembler une paire d'indicateurs
+	# régionaux, et celle de l'appareil ne le fait pas. Le nom du pays suffit,
+	# et il se lit partout.
+	bloc.add_child(_label(String(pays.get("nom", "")), 12, Sty.SARCELLE))
 	haut.add_child(bloc)
 	v.add_child(haut)
 

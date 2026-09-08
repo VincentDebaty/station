@@ -167,7 +167,7 @@ func _liste_pays() -> Control:
 		var p := Donnees.pays_de(slug)
 		var entete := HBoxContainer.new()
 		entete.add_theme_constant_override("separation", 10)
-		entete.add_child(_label("%s %s" % [p["drapeau"], p["nom"]], 17, TEXTE))
+		entete.add_child(_label(String(p["nom"]), 17, TEXTE))
 		entete.add_child(_label("%d gares" % stations.size(), 13, MUET))
 		dedans.add_child(entete)
 

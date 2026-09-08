@@ -109,6 +109,12 @@ func _charger_pays_et_fiches() -> void:
 		var slug := String(bloc.get("country", ""))
 		var label := String(bloc.get("label", "")).strip_edges()
 		# Le libellé est authored « 🇬🇧 Royaume-Uni » : drapeau, espace, nom.
+		# LE DRAPEAU N'EST PLUS DESSINÉ NULLE PART (5 septembre 2026) : composer
+		# un drapeau demande à la police d'assembler une paire d'indicateurs
+		# régionaux, et celle de l'iPhone ne le fait pas — il n'y laissait qu'un
+		# blanc. On continue de le DÉCOUPER, parce que c'est ainsi qu'on obtient
+		# le nom seul, et parce qu'un moteur ultérieur saura peut-être le rendre.
+		# Ne pas le remettre dans une interface sans l'avoir vu sur l'appareil.
 		var i := label.find(" ")
 		pays[slug] = {
 			"label": label,
