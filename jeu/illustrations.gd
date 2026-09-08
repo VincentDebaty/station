@@ -102,6 +102,14 @@ static func banniere_brute(zone: Variant) -> Texture2D:
 	return _charger("banniere-" + String(ZONES_EMPRUNTEES.get(z, z)))
 
 
+## LES TROIS VÉHICULES GRAVÉS. `loco`, `wagon`, `fourgon` — vus du dessus, au
+## trait, détourés par `tools/illustrations.sh` : le canal alpha porte la
+## silhouette, les couleurs portent le gris du dessin. Multipliée par la teinte
+## de destination, une seule planche sert les six couleurs du jeu.
+static func vehicule(nom: String) -> Texture2D:
+	return _charger(nom)
+
+
 static func _charger(nom: String) -> Texture2D:
 	if _cache.has(nom):
 		return _cache[nom]

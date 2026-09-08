@@ -26,6 +26,7 @@ const Cap := preload("res://jeu/capture.gd")
 const Rub := preload("res://jeu/ruban.gd")
 const Rec := preload("res://jeu/recompense.gd")
 const Sty := preload("res://jeu/style.gd")
+const Ill := preload("res://jeu/illustrations.gd")
 
 # Les couleurs du prototype (css/station.css) : l'esthétique est conservée.
 const TEXTE := Color("#efe3c8")   # le papier, comme le ruban
@@ -613,28 +614,37 @@ func _embarquement(t) -> float:
 	return 1.0 if denom <= 0.0 else clampf((enc.game_min - arr) / denom, 0.0, 1.0)
 
 
-## LE CONVOI EST UNE RAME, PAS UN CHAPELET DE CAISSES.
+## LE CONVOI EST UN TRAIN GRAVÉ.
 ##
-## Les voitures étaient dessinées une par une, chacune sa pilule, chacune son
-## halo : cinq perles enfilées sur une courbe. Une rame est un CORPS CONTINU
-## qui épouse la voie — c'est ce qu'on voit d'un train, et c'est ce que la
-## courbe demandait depuis le début. Vincent a choisi cette piste le
-## 5 septembre 2026, avec le toit de la piste « vue de dessus ».
+## Trois planches dessinées du dessus, à l'encre, détourées : une machine, une
+## voiture, un fourgon (jeu/illustrations.gd, tools/illustrations.sh). Leur
+## canal alpha porte la silhouette, leurs couleurs portent le gris du dessin —
+## multipliées par la teinte de destination, elles donnent une gravure mise en
+## couleur, et une seule planche sert les six couleurs du jeu.
 ##
-## ET LE TOIT, JUSTEMENT. J'avais posé des FENÊTRES, qui sont un détail de
-## PROFIL : tout le reste de l'écran — gril, quais, voies — est une vue
-## aérienne, où une voiture montre son toit et ses aérations, pas ses vitres.
-## C'était l'erreur, et elle explique à elle seule pourquoi les convois
-## juraient avec le reste.
+## LA COMPOSITION EST RÉELLE, PAS UN PAVAGE. Une case du gril fait 35 sur 30 :
+## un véhicule qui l'occupe seul est trapu. Une voiture en prend donc DEUX. Mais
+## une machine plus un nombre pair de cases ne couvre pas tous les convois —
+## mesuré sur les tirages des 401 fiches, 55 % laissent une case impaire — d'où
+## le fourgon, qui la prend. Deux voitures montrent une machine et un fourgon ;
+## trois, une machine et une voiture ; quatre, une machine, une voiture et un
+## fourgon.
 ##
-## RIEN DE CE QUI PARLE AU JOUEUR N'A CHANGÉ, et tout a dû être refait, parce
-## que chaque signal était posé caisse par caisse : le halo blanc de sélection
-## et l'ambre du retenu deviennent des nappes autour du corps entier ; le
-## contour épais du fret devient un liseré de rame ; le masque d'embarquement,
-## qui vidait les voitures une à une depuis la queue, devient une PORTION
-## d'arc — c'est la pièce qui a demandé le plus de soin, et `_bout_de_rame` ne
-## fait que cela. Le nez garde la couleur de destination même sur un fret, dont
-## le corps est gris : c'est la loco.
+## RIEN DE CE QUE LE JEU MESURE NE BOUGE : la rame occupe exactement les mêmes
+## cases, donc même longueur, même quai nécessaire, même point d'arrêt, mêmes
+## positions pour les signaux et les pastilles. Seul change ce qu'on dessine
+## dessus.
+##
+## LES QUATRE CONTRATS ONT ÉTÉ REFAITS, comme à chaque changement de dessin :
+## le halo blanc de la sélection et l'ambre du convoi retenu deviennent des
+## nappes autour du corps entier ; le liseré du fret reste épais et opaque et
+## son corps reste gris, seule sa machine gardant la teinte ; le masque
+## d'embarquement vide la queue CASE PAR CASE, comme avant, mais en découpant
+## chaque case entre ses deux coupures.
+##
+## L'INITIALE DE DESTINATION DISPARAÎT. Elle doublait la couleur, qui est déjà
+## la destination, et le nom du portail l'écrit en toutes lettres au bout de
+## chaque voie. Une ligne à remettre si elle manque.
 func _dessiner_convois(sel, t: float) -> void:
 	var anneau := 0.65 + 0.35 * sin(t * TAU / 1.1)      # ring-pulse : 1 → .3
 	var pret := 0.5 + 0.5 * sin(t * TAU / 1.1)          # .train.ready
@@ -647,11 +657,8 @@ func _dessiner_convois(sel, t: float) -> void:
 		var axe := PackedVector2Array()
 		for p in pos:
 			axe.append(Vector2(float(p["x"]), float(p["y"])))
-		# une rame d'une seule voiture n'est pas une ligne : on lui donne sa
-		# longueur, sans quoi il n'y a rien à tracer
 		if axe.size() < 2:
-			var sens := Vector2(Geo.CAR_LEN * 0.5, 0)
-			axe.append(axe[0] - sens)
+			axe.append(axe[0] - Vector2(Geo.CAR_SPACING * 0.5, 0))
 		var col := Color(String(G["dest_color"][tr.to]))
 		var choisi: bool = tr == sel
 		var attend: bool = tr.state == Enc.S_WAITING or tr.state == Enc.S_APPROACHING
@@ -659,7 +666,6 @@ func _dessiner_convois(sel, t: float) -> void:
 		# La HAUTEUR grossit au doigt, la LONGUEUR jamais : elle tient à
 		# l'espacement du gril, l'étirer ferait se chevaucher les convois.
 		var h: float = Geo.CAR_H * k
-		var corps: Color = Sty.FRET if tr.freight else col
 
 		# LE HALO D'ÉTAT, sous la rame : quatre nappes de plus en plus larges et
 		# transparentes. C'est le signal PRINCIPAL de sélection.
@@ -669,94 +675,133 @@ func _dessiner_convois(sel, t: float) -> void:
 			for couche in [[16.0, 0.10], [10.0, 0.18], [5.5, 0.34], [2.5, 0.75]]:
 				draw_polyline(axe, Color(teinte, float(couche[1]) * opac),
 					h + float(couche[0]) * k, true)
-
-		# le halo à la couleur de la DESTINATION — fret compris, dont le corps
-		# est gris mais qui reste annoncé par sa teinte
-		var halo := 7.0
+		# LE HALO DE DESTINATION EST UNE LUEUR, PAS UNE BANDE. Il venait d'une
+		# ombre de StyleBox, douce par nature ; porté par une seule polyligne
+		# large il redevenait un aplat rectangulaire, plus visible que le train
+		# lui-même — mesuré au premier portage. Trois nappes dégressives lui
+		# rendent son dégradé.
+		var vif: float = 1.0
 		if choisi:
-			halo = 14.0
+			vif = 1.9
 		elif attend and not tr.freight:
-			halo = 7.0 + 6.0 * pret
-		draw_polyline(axe, Color(col, 0.30), h + halo, true)
+			vif = 1.0 + 0.6 * pret
+		for nappe in [[13.0, 0.07], [7.5, 0.11], [3.0, 0.16]]:
+			draw_polyline(axe, Color(col, float(nappe[1]) * vif),
+				h + float(nappe[0]) * k, true)
+		# LE LISERÉ DU FRET, et lui seul. Sur un convoi de voyageurs la planche
+		# porte déjà son propre contour d'encre ; en doubler un second à la
+		# teinte de destination noyait le dessin. Sur un fret il reste épais et
+		# opaque : c'est LUI le signe distinctif, et il ne bouge pas.
+		if tr.freight:
+			draw_polyline(axe, col, h + 5.2 * k, true)
 
-		# LE LISERÉ, puis LE CORPS. Sur un fret le liseré est épais et opaque :
-		# c'est LUI le signe distinctif, et il ne bouge pas.
-		var ep: float = (2.6 if tr.freight else 1.4) * k
-		var bord := Color(col, 1.0 if tr.freight else 0.85)
-		draw_polyline(axe, bord, h + 2.0 * ep, true)
-		draw_circle(axe[0], h / 2.0 + ep, bord)
-		draw_circle(axe[axe.size() - 1], h / 2.0 + ep, bord)
-		draw_polyline(axe, corps, h, true)
-		draw_circle(axe[axe.size() - 1], h / 2.0, corps)
-		draw_circle(axe[0], h / 2.0, col)                       # le nez, et c'est la loco
-
-		# LE TOIT ET SES AÉRATIONS — ce qu'on voit d'une voiture par au-dessus.
-		# Les aérations passent par la même fonction que les traverses du gril :
-		# c'est le même geste, un semis en travers d'un tracé.
-		# Le toit doit se VOIR : au premier essai, éclairci de 20 % à 55 %
-		# d'opacité, il se confondait avec la caisse et il ne restait que les
-		# aérations, qui faisaient un peigne.
-		draw_polyline(axe, Color(corps.lightened(0.34), 0.75), h * 0.46, true)
-		# UN BLOC PAR VOITURE, ET NON UN SEMIS. Un semis régulier — treize points,
-		# puis sept — donnait un peigne, puis un code-barres : c'est qu'une
-		# aération n'est pas une traverse. Vue de dessus, c'est un CAISSON posé
-		# au milieu de chaque toit, dans le sens de la marche. Un par voiture, il
-		# tombe donc entre deux articulations et redit le compte des voitures au
-		# lieu de le brouiller.
-		if not tr.freight:
-			var bloc := Color(corps.darkened(0.50), 0.34)
-			for i in axe.size():
-				var a: Vector2 = axe[max(0, i - 1)]
-				var b: Vector2 = axe[min(axe.size() - 1, i + 1)]
-				var u: Vector2 = (b - a)
-				u = u.normalized() if u.length() > 1e-6 else Vector2.RIGHT
-				draw_line(axe[i] - u * 4.5, axe[i] + u * 4.5, bloc, h * 0.28, true)
+		var coupes := _coupures(axe, k)
+		var case_i := 0
+		for element in _composition(axe.size()):
+			var nom := "wagon"
+			if case_i == 0:
+				nom = "loco"
+			elif element == 1:
+				nom = "fourgon"
+			var tex := Ill.vehicule(nom)
+			if tex == null:
+				tex = Ill.vehicule("wagon")
+			# la machine garde la teinte de destination même sur un fret, dont
+			# les wagons sont gris : c'est elle qui annonce où il va
+			var teinte: Color = col if (case_i == 0 or not tr.freight) else Sty.FRET
+			var lavis := teinte.lerp(Sty.PAPIER, 0.06)
+			for j in element:
+				var quad := _case_quad(coupes, case_i + j, h)
+				var u0: float = float(j) / float(element)
+				var u1: float = float(j + 1) / float(element)
+				if tex != null:
+					draw_colored_polygon(quad, lavis, PackedVector2Array([
+						Vector2(u0, 0), Vector2(u1, 0), Vector2(u1, 1), Vector2(u0, 1)]), tex)
+				else:
+					draw_colored_polygon(quad, lavis)
+			case_i += element
 
 		# LE MASQUE D'EMBARQUEMENT : la portion de rame encore vide, côté queue,
-		# qui recule à mesure qu'on approche du départ.
+		# qui recule à mesure qu'on approche du départ. Il se calcule CASE PAR
+		# CASE comme avant — les voyageurs montent de la tête vers la queue — et
+		# se découpe entre les deux coupures de sa case. Les coupures étant
+		# ordonnées de la tête vers la queue, il n'y a plus de côté à deviner.
 		var plein := _embarquement(tr)
 		if plein < 1.0:
-			var queue := _bout_de_rame(axe, plein)
-			if queue.size() >= 2:
-				draw_polyline(queue, Sty.MASQUE, h, true)
-				draw_circle(queue[queue.size() - 1], h / 2.0, Sty.MASQUE)
-
-		# LES ARTICULATIONS : un trait sombre entre deux voitures. C'est ce qui
-		# garde le COMPTE des voitures — donc la longueur du convoi, qui dit à
-		# quel quai il tient.
-		for i in range(1, axe.size()):
-			var m: Vector2 = (axe[i - 1] + axe[i]) / 2.0
-			var u: Vector2 = (axe[i] - axe[i - 1]).normalized()
-			var nrm := Vector2(-u.y, u.x)
-			draw_line(m - nrm * h * 0.5, m + nrm * h * 0.5, Color(0, 0, 0, 0.26), 1.8 * k, true)
-
-		Sty.texte_centre(self, Sty.sans(700), int(round(12 * k)), axe[0],
-			String(G["dest_abbr"].get(tr.to, "")), Sty.ETIQUETTE_TRAIN)
+			var n := axe.size()
+			for i in n:
+				var frac: float = clampf(plein * float(n) - float(i), 0.0, 1.0)
+				if frac >= 1.0:
+					continue
+				var a: Dictionary = _entre_coupures(coupes, i, frac)
+				var b: Dictionary = coupes[i + 1]
+				draw_colored_polygon(PackedVector2Array([
+					a["p"] - a["n"] * h * 0.5, b["p"] - b["n"] * h * 0.5,
+					b["p"] + b["n"] * h * 0.5, a["p"] + a["n"] * h * 0.5]), Sty.MASQUE)
 
 
-## LE BOUT DE RAME à partir d'une fraction de sa longueur : le point exact où
-## la fraction tombe, puis tous les points suivants. C'est ce qui permet au
-## masque d'embarquement de vider une PORTION d'un corps continu, là où il
-## éteignait des caisses entières.
-func _bout_de_rame(axe: PackedVector2Array, depuis: float) -> PackedVector2Array:
-	var total := 0.0
-	for i in range(1, axe.size()):
-		total += axe[i - 1].distance_to(axe[i])
-	var cible: float = clampf(depuis, 0.0, 1.0) * total
-	var out := PackedVector2Array()
-	var parcouru := 0.0
-	for i in range(1, axe.size()):
-		var l: float = axe[i - 1].distance_to(axe[i])
-		if out.is_empty() and parcouru + l >= cible:
-			var f: float = 0.0 if l <= 0.0 else clampf((cible - parcouru) / l, 0.0, 1.0)
-			out.append(axe[i - 1].lerp(axe[i], f))
-		if not out.is_empty():
-			out.append(axe[i])
-		parcouru += l
+## LA COMPOSITION D'UNE RAME : une machine sur une case, des voitures sur deux,
+## et un fourgon quand il reste une case impaire.
+func _composition(n: int) -> Array:
+	var out: Array = [1]
+	var reste := n - 1
+	while reste >= 2:
+		out.append(2)
+		reste -= 2
+	if reste == 1:
+		out.append(1)
 	return out
 
 
-# --- le signal d'arrêt ------------------------------------------------------
+## LES COUPURES ENTRE CASES, avec leur normale : une case commence à mi-chemin
+## de la voiture précédente et finit à mi-chemin de la suivante. Les véhicules
+## PARTAGENT ces arêtes, ce qui permet à une voiture de deux cases de se plier
+## dans la courbe sans laisser de fente à son articulation — une seule facette
+## lui aurait fait couper la corde.
+func _coupures(axe: PackedVector2Array, k: float) -> Array:
+	var demi: float = Geo.CAR_SPACING * 0.5 * k
+	var n := axe.size()
+	var out: Array = []
+	for i in n + 1:
+		var p: Vector2
+		var u: Vector2
+		if i == 0:
+			u = _tangente_de(axe, 0)
+			p = axe[0] - u * demi
+		elif i == n:
+			u = _tangente_de(axe, n - 1)
+			p = axe[n - 1] + u * demi
+		else:
+			u = (axe[i] - axe[i - 1]).normalized()
+			p = (axe[i - 1] + axe[i]) / 2.0
+		out.append({"p": p, "n": Vector2(-u.y, u.x)})
+	return out
+
+
+func _case_quad(coupes: Array, i: int, h: float) -> PackedVector2Array:
+	var a: Dictionary = coupes[i]
+	var b: Dictionary = coupes[i + 1]
+	return PackedVector2Array([
+		a["p"] - a["n"] * h * 0.5, b["p"] - b["n"] * h * 0.5,
+		b["p"] + b["n"] * h * 0.5, a["p"] + a["n"] * h * 0.5])
+
+
+func _entre_coupures(coupes: Array, i: int, f: float) -> Dictionary:
+	var a: Dictionary = coupes[i]
+	var b: Dictionary = coupes[i + 1]
+	var nrm: Vector2 = (a["n"] as Vector2).lerp(b["n"], f)
+	return {"p": (a["p"] as Vector2).lerp(b["p"], f),
+		"n": nrm.normalized() if nrm.length() > 1e-6 else a["n"]}
+
+
+func _tangente_de(axe: PackedVector2Array, i: int) -> Vector2:
+	var a: Vector2 = axe[max(0, i - 1)]
+	var b: Vector2 = axe[min(axe.size() - 1, i + 1)]
+	var u := b - a
+	return u.normalized() if u.length() > 1e-6 else Vector2.RIGHT
+
+
+# --- le signal d'arrêt ---# --- le signal d'arrêt ------------------------------------------------------
 ## Un convoi prêt dont la voie de sortie est prise ne doit pas rester muet,
 ## sinon son immobilité se lit comme un bug. On plante un vrai signal devant sa
 ## motrice : mât, cible à deux feux, le rouge allumé et pulsé (js/render.js,
