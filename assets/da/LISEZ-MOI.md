@@ -23,6 +23,21 @@ bande médiane ; c'est pourquoi la consigne impose un sujet centré en hauteur.
 Format : **1024 × 1024**. Fond de parchemin uni, pas de transparence — le jeu
 pose lui-même le cadre et l'arrondi.
 
+## La voiture gravée (le dessin des convois)
+
+`wagon.png` — une voiture de chemin de fer vue **strictement du dessus**, au
+trait, à l'encre noire sur fond blanc, sans couleur ni aplat gris.
+
+Le jeu la découpe en **trois tranches** : la ferrure de tête, une section
+centrale répétée autant de fois qu'il y a de voitures, et la ferrure de queue.
+C'est ce qui permet à une rame de deux voitures et à une rame de six d'avoir
+le même rythme de nervures — et c'est pour cela que les deux extrémités du
+dessin doivent porter leurs tampons et leurs robinets, et la partie centrale
+un motif qui se répète sans accident.
+
+Le noir devient l'encre, le blanc prend la couleur de destination : une seule
+planche sert les six teintes du jeu.
+
 ## Deux règles qui font gagner du temps
 
 **Aucun texte dans l'image.** Les générateurs écrivent du faux latin, et le
