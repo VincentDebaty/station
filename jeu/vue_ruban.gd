@@ -2199,9 +2199,8 @@ func _pied() -> Control:
 			v.add_child(_label("Il te manque %d crédit%s — rejoue une gare déjà faite pour les gagner." % [manque, "s" if manque > 1 else ""], 12, MUET))
 		var h := HBoxContainer.new()
 		h.add_theme_constant_override("separation", int(round(8 * Sty.HUD_K)))
-		var passer := "Passer · %d cr" % prix
-		h.add_child(_bouton(passer, false, assez, _passer.bind(gare)))
-		h.add_child(_bouton(_appel("Réessayer", ville_de(gare), _reste_pied(passer)),
+		h.add_child(_bouton("Passer · %d cr" % prix, false, assez, _passer.bind(gare)))
+		h.add_child(_bouton(_appel("Réessayer", ville_de(gare), _reste_pied(2)),
 			true, true, jouer.bind(gare)))
 		v.add_child(h)
 		return v
@@ -2210,7 +2209,7 @@ func _pied() -> Control:
 		h.add_theme_constant_override("separation", int(round(8 * Sty.HUD_K)))
 		h.add_child(_bouton("Rejouer", false, true, jouer.bind(String(bilan["gare"]))))
 		if gc != "":
-			h.add_child(_bouton(_appel("Jouer", ville_de(gc), _reste_pied("Rejouer")),
+			h.add_child(_bouton(_appel("Jouer", ville_de(gc), _reste_pied(2)),
 				true, true, jouer.bind(gc)))
 		v.add_child(h)
 		return v
@@ -2229,27 +2228,33 @@ func _pied() -> Control:
 ## bouton s'appelle « Jouer ». La ville est nommée juste au-dessus, sur la
 ## feuille : ce n'est pas une information perdue.
 func _appel(verbe: String, ville: String, large: float) -> String:
-	var k := Sty.HUD_K
 	var texte := verbe + "  ·  " + ville
-	var f := Sty.titre(700)
-	var t := int(round(16 * k))
-	if f.get_string_size(texte.to_upper(), HORIZONTAL_ALIGNMENT_LEFT, -1, t).x + 36.0 * k <= large:
+	var t := int(round(16 * Sty.HUD_K))
+	if Sty.titre(700).get_string_size(texte.to_upper(), HORIZONTAL_ALIGNMENT_LEFT, -1, t).x <= large:
 		return texte
 	return verbe
 
 
-## La place qui reste à un bouton d'appel une fois son voisin servi. Le panneau
-## porte 22 × k de marge de chaque côté, et 8 × k séparent deux boutons.
-func _reste_pied(voisin: String = "") -> float:
+## LA PLACE DU TEXTE d'un bouton d'appel, quand la rangée en porte `n`.
+##
+## J'ai mesuré la mauvaise chose. Le budget se calculait en retranchant la
+## largeur du VOISIN — un modèle où chaque bouton prend la place de son
+## contenu. Or `clip_text` a précisément supprimé ce modèle : depuis, deux
+## boutons font EXACTEMENT la moitié de la rangée chacun, quoi qu'on y écrive.
+## Le budget annoncé valait donc 365 unités là où il n'y en avait que 251, et
+## « Réessayer · York » a été jugé tenable puis rogné à « RÉESSAYER · YO »
+## (vu le 5 septembre 2026 sur un relevé d'échec). Deux mécanismes qui se
+## contredisent en silence : le second était juste, c'est le premier qui
+## devait suivre.
+##
+## Le panneau porte 22 × k de marge de chaque côté, 8 × k séparent deux
+## boutons, et un bouton garde 16 × k de marge intérieure — 36 avec le jeu.
+func _reste_pied(n: int = 1) -> float:
 	var k := Sty.HUD_K
 	var large: float = panneau_l() - 44.0 * k
-	if voisin != "":
-		# on mesure son TEXTE, pas sa taille minimale : un bouton détaché de
-		# l'arbre ne compte pas encore ses marges, et il s'annonçait deux fois
-		# trop étroit — le budget du voisin devenait deux fois trop large.
-		large -= Sty.titre(600).get_string_size(voisin.to_upper(), HORIZONTAL_ALIGNMENT_LEFT,
-			-1, int(round(14 * k))).x + 44.0 * k
-	return large
+	if n > 1:
+		large = (large - 8.0 * k * float(n - 1)) / float(n)
+	return large - 36.0 * k
 
 
 func _passer(id: String) -> void:
