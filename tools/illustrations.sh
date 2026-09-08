@@ -28,17 +28,17 @@ mkdir -p "$DST"
 vert() { printf '\033[32m%s\033[0m\n' "$1"; }
 rouge() { printf '\033[31m%s\033[0m\n' "$1"; }
 
-# LA BANNIÈRE EST UNE BANDE. L'original est un paysage 3:2 ; le panneau du
-# ruban n'en montre qu'un bandeau large. On recadre au centre en hauteur
-# — c'est pour cela que le prompt impose « sujet centré en hauteur » — puis
-# on ramène à 1024 de large, largement au-dessus des 1140 pixels qu'un écran
-# Retina demande pour ce panneau.
+# LA BANNIÈRE N'EST PLUS RECADRÉE ICI. Elle l'était, et le résultat coupait
+# DEUX FOIS : une bande centrée à la dérivation, puis un second rognage à
+# l'affichage, le panneau étant plus large encore que la bande. Le phare de
+# l'Atlantique y a disparu. Le jeu choisit désormais sa bande lui-même, par
+# une AtlasTexture (jeu/illustrations.gd) : un seul recadrage, et sur la
+# partie qui porte le sujet plutôt que sur le milieu géométrique.
 n=0
 for f in "$SRC"/banniere-*.png; do
   [ -f "$f" ] || continue
   nom=$(basename "$f")
   cp "$f" "$DST/$nom"
-  sips -c 640 1536 "$DST/$nom" >/dev/null 2>&1
   sips -Z 1024 "$DST/$nom" >/dev/null 2>&1
   n=$((n + 1))
 done

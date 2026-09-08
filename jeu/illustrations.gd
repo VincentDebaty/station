@@ -59,9 +59,30 @@ static func vignette(cfg: Dictionary) -> Texture2D:
 	return _charger("gare-" + archetype(cfg))
 
 
+## LA BANDE UTILE D'UNE BANNIÈRE. Le sujet d'un paysage 3:2 — l'horizon, ce
+## qui se découpe dessus — vit dans le TIERS SUPÉRIEUR, pas au milieu
+## géométrique : le bas n'est que du premier plan. On découpe donc de 8 % à
+## 52 % de la hauteur, ce qui garde le ciel, la ligne d'horizon et ce qui s'y
+## dresse — le phare, le viaduc, la verrière — et laisse les rochers dehors.
+const BANDE_HAUT := 0.08
+const BANDE_BAS := 0.52
+
+
 ## La bannière d'une zone de la carte (`atl`, `alpes`, `rhin`, `ger`).
 static func banniere(zone: Variant) -> Texture2D:
-	return _charger("banniere-" + String(zone))
+	var nom := "banniere-" + String(zone)
+	if _cache.has(nom + "|bande"):
+		return _cache[nom + "|bande"]
+	var t := _charger(nom)
+	var bande: Texture2D = null
+	if t != null:
+		var a := AtlasTexture.new()
+		a.atlas = t
+		var h := t.get_height()
+		a.region = Rect2(0, h * BANDE_HAUT, t.get_width(), h * (BANDE_BAS - BANDE_HAUT))
+		bande = a
+	_cache[nom + "|bande"] = bande
+	return bande
 
 
 static func _charger(nom: String) -> Texture2D:

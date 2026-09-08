@@ -57,9 +57,14 @@ const LAITON := Color("#d9a441")          # les ferrures, les étoiles, le rail
 const LAITON_CLAIR := Color("#f0c96b")
 const SARCELLE := Color("#1d6b66")        # les plaques, le bouton d'appel
 const SARCELLE_CLAIR := Color("#2dd4bf")
-const TERRE := Color("#6d5a3f")           # la terre de la carte
-const TERRE_OMBRE := Color("#5a4933")
-const MER := Color("#2b2118")             # l'eau, plus sombre que la terre
+const TERRE := Color("#7b6746")           # la terre de la carte
+const TERRE_OMBRE := Color("#5c4a30")     # son trait de côte
+# L'EAU EST DE L'EAU. À #2b2118 la mer était un brun presque noir : elle se
+# lisait comme un trou dans la carte, et non comme la Manche. Une carte
+# ancienne pose l'eau en gris-vert d'encre, plus froide que la terre et plus
+# claire qu'un vide — c'est le contraste de TEMPÉRATURE qui fait le rivage,
+# pas celui de valeur.
+const MER := Color("#33403f")
 
 
 ## Une fiche de parchemin : fond clair, liseré de laiton, ombre chaude.

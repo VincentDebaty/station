@@ -588,22 +588,24 @@ func _voie(a: Vector2, b: Vector2, col: Color, k: float, force: float) -> void:
 func _rose_des_vents() -> void:
 	var k := Sty.HUD_K
 	var e := get_viewport_rect().size
-	var c := Vector2(e.x - Sty.marges["droite"] - 42 * k, hauteur_barre() + 46 * k)
-	var R := 22.0 * k
-	var col := Color(Sty.LAITON, 0.38)
+	var c := Vector2(e.x - Sty.marges["droite"] - 34 * k, hauteur_barre() + 38 * k)
+	var R := 15.0 * k
+	# Plus petite et plus franche : à 22 unités et 38 % d'opacité elle occupait
+	# un coin entier sans se lire. Un ornement se remarque ou disparaît.
+	var col := Color(Sty.LAITON, 0.55)
 	draw_arc(c, R, 0, TAU, 40, col, 1.2 * k, true)
-	draw_arc(c, R * 0.72, 0, TAU, 36, Color(Sty.LAITON, 0.22), 1.0 * k, true)
+	draw_arc(c, R * 0.72, 0, TAU, 36, Color(Sty.LAITON, 0.32), 1.0 * k, true)
 	# les quatre branches principales, en losanges effilés
 	for i in range(4):
 		var a: float = -PI / 2 + PI / 2 * float(i)
 		var u := Vector2(cos(a), sin(a))
 		var n := Vector2(-u.y, u.x)
 		draw_colored_polygon(PackedVector2Array([
-			c + u * R, c + n * R * 0.16, c, c - n * R * 0.16]), Color(Sty.LAITON, 0.55))
+			c + u * R, c + n * R * 0.16, c, c - n * R * 0.16]), Color(Sty.LAITON, 0.75))
 	# et les quatre secondaires, plus courtes
 	for i in range(4):
 		var a: float = -PI / 4 + PI / 2 * float(i)
-		draw_line(c, c + Vector2(cos(a), sin(a)) * R * 0.62, Color(Sty.LAITON, 0.30), 1.0 * k, true)
+		draw_line(c, c + Vector2(cos(a), sin(a)) * R * 0.62, Color(Sty.LAITON, 0.45), 1.0 * k, true)
 	Sty.texte_centre(self, police, int(round(9 * k)), c + Vector2(0, -R - 7 * k), "N", Color(Sty.LAITON, 0.75))
 
 
@@ -814,7 +816,7 @@ func _label(texte: String, taille: int, couleur: Color, gras: bool = false, repl
 	l.add_theme_font_override("font", Sty.titre(600) if gras else Sty.sans(400))
 	l.add_theme_font_size_override("font_size", int(round(taille * Sty.HUD_K)))
 	l.add_theme_color_override("font_color", couleur)
-	l.add_theme_constant_override("line_spacing", int(round(5 * Sty.HUD_K)))
+	l.add_theme_constant_override("line_spacing", int(round(2 * Sty.HUD_K)))
 	if replie:
 		l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -916,7 +918,10 @@ func _remplir_barre() -> void:
 	bloc.add_child(nom)
 	var jauge := ProgressBar.new()
 	jauge.show_percentage = false
-	jauge.custom_minimum_size = Vector2(90 * k, 3 * k)
+	# LA JAUGE NE S'ÉTIRE PAS. Dans un bloc en expansion elle filait sur toute
+	# la largeur du panneau et se lisait comme un trait égaré sous le grade.
+	jauge.custom_minimum_size = Vector2(110 * k, 3 * k)
+	jauge.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	jauge.value = 100.0 * float(g["part"])
 	jauge.add_theme_stylebox_override("background", Sty.boite(Color("#1f2a40"), Color.TRANSPARENT, 2 * k, 0))
 	jauge.add_theme_stylebox_override("fill", Sty.boite(ACCENT, Color.TRANSPARENT, 2 * k, 0))
@@ -934,8 +939,24 @@ func _remplir_barre() -> void:
 	# « Les cartes » vit dans la barre, pas dans la colonne : c'est un geste de
 	# navigation, pas une étape du ruban, et il libère la hauteur qui manquait.
 	if app != null and app.plusieurs_cartes():
+		# Il gardait la palette BLEUE du prototype, seul objet de l'écran à ne
+		# pas être passé au laiton — et ça se voyait d'autant plus qu'il est
+		# dans l'angle. On lui pose la plaque des autres boutons.
 		var b := Sty.bouton("Les cartes", false, 12, k)
 		b.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		var pl := Sty.plaque(Sty.BOIS_CLAIR, Sty.LAITON, 8, k)
+		pl.content_margin_left = 12 * k
+		pl.content_margin_right = 12 * k
+		pl.content_margin_top = 6 * k
+		pl.content_margin_bottom = 6 * k
+		b.add_theme_stylebox_override("normal", pl)
+		var ph := pl.duplicate()
+		ph.bg_color = Sty.BOIS_CLAIR.lightened(0.12)
+		ph.border_color = Sty.LAITON_CLAIR
+		b.add_theme_stylebox_override("hover", ph)
+		b.add_theme_stylebox_override("pressed", ph)
+		for quoi in ["font_color", "font_hover_color", "font_pressed_color"]:
+			b.add_theme_color_override(quoi, Sty.PAPIER)
 		b.pressed.connect(app.ouvrir_cartes)
 		rangee_barre.add_child(b)
 
@@ -993,9 +1014,11 @@ func _banniere() -> Control:
 	var g := GradientTexture2D.new()
 	var d := Gradient.new()
 	d.set_color(0, Color(Sty.BOIS, 0.0))
-	d.set_color(1, Color(Sty.BOIS, 0.88))
+	d.set_color(1, Color(Sty.BOIS, 0.96))
 	g.gradient = d
-	g.fill_from = Vector2(0, 0.18)
+	# Le voile montait trop haut et pas assez fort : sur une bannière qui finit
+	# par un coucher de soleil, la jauge à crans se perdait dans la lumière.
+	g.fill_from = Vector2(0, 0.05)
 	g.fill_to = Vector2(0, 1)
 	voile.texture = g
 	voile.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
@@ -1026,8 +1049,14 @@ func _titre_chapitre(ch: Dictionary) -> Control:
 	var v := VBoxContainer.new()
 	v.add_theme_constant_override("separation", int(round(1 * k)))
 	var col := couleur_de_zone(ch["zone"])
+	# LE TITRE PORTE SON PROPRE CONTRASTE. Un voile suffit sur un ciel sombre et
+	# pas sur un coucher de soleil : le nom du chapitre se lisait mal sur la
+	# bannière de l'Atlantique. Un liseré d'encre autour des lettres le rend
+	# indépendant de ce qu'il y a derrière — quelle que soit l'illustration que
+	# Vincent produira demain.
 	var titre := _label(String(ch["nom"]), 21, Sty.PAPIER, true, false)
 	titre.clip_text = true
+	_cerner(titre, 5)
 	v.add_child(titre)
 	var zone_nom := String(ruban.carte.get("nom", ""))
 	for z in ruban.zones():
@@ -1035,9 +1064,10 @@ func _titre_chapitre(ch: Dictionary) -> Control:
 			zone_nom = String(z.get("nom", zone_nom))
 	var h := HBoxContainer.new()
 	h.add_theme_constant_override("separation", int(round(8 * k)))
-	var lz := _label(zone_nom, 12, col, false, false)
+	var lz := _label(zone_nom, 12, col.lightened(0.25), false, false)
 	lz.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	lz.clip_text = true
+	_cerner(lz, 4)
 	h.add_child(lz)
 	h.add_child(_crans_du_chapitre(ch))
 	v.add_child(h)
@@ -1064,13 +1094,24 @@ func _crans_du_chapitre(ch: Dictionary) -> Control:
 			crans += "○"
 	var h := HBoxContainer.new()
 	h.add_theme_constant_override("separation", int(round(8 * Sty.HUD_K)))
-	h.add_child(_label(crans, 13, couleur_de_zone(ch["zone"]), false, false))
+	var lc := _label(crans, 13, couleur_de_zone(ch["zone"]).lightened(0.3), false, false)
+	_cerner(lc, 4)
+	h.add_child(lc)
 	var rang: Dictionary = Rec.rang_de_chapitre(ruban, ch)
+	var droite: Label
 	if not rang.is_empty() and rang["id"] != "ouverte" and fete.is_empty():
-		h.add_child(_label(String(rang["nom"]), 11, Color(String(rang["couleur"])), false, false))
+		droite = _label(String(rang["nom"]), 11, Color(String(rang["couleur"])), false, false)
 	else:
-		h.add_child(_label("%d/%d" % [faits, ch["gares"].size()], 11, MUET, false, false))
+		droite = _label("%d/%d" % [faits, ch["gares"].size()], 11, Color(Sty.PAPIER, 0.85), false, false)
+	_cerner(droite, 4)
+	h.add_child(droite)
 	return h
+
+
+## Un liseré d'encre autour des lettres, pour un texte posé sur une image.
+func _cerner(l: Label, taille: int) -> void:
+	l.add_theme_constant_override("outline_size", int(round(taille * Sty.HUD_K)))
+	l.add_theme_color_override("font_outline_color", Color(Sty.BOIS, 0.85))
 
 
 func _entete_chapitre() -> Control:
