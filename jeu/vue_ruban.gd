@@ -1354,7 +1354,26 @@ func _unhandled_input(event: InputEvent) -> void:
 ## n'avaient rien à faire dans la colonne du ruban, où ils volaient la hauteur
 ## qui manquait au reste. Sortis là-haut, la colonne respire et la barre de
 ## défilement disparaît.
+## LA HAUTEUR DE LA BARRE SE MESURE, ELLE NE SE DEVINE PAS. Elle valait
+## 34 × k + la zone sûre, c'est-à-dire une formule ; la barre, elle, est un
+## PanelContainer qui prend la hauteur de son CONTENU — et le bloc du grade,
+## sur deux lignes, la poussait quelques unités plus bas que la formule. Deux
+## défauts en découlaient, vus tous les deux le 5 septembre 2026 :
+##
+##   « la topbar n'est pas à la même hauteur à gauche qu'à droite » — le
+##   panneau, dessiné APRÈS la barre, recouvrait ces quelques unités : à
+##   gauche la barre semblait finir plus haut qu'à droite ;
+##
+##   « mets la même bordure jaune en bas de la topbar à gauche » — il n'y en
+##   avait pas, parce que c'est précisément le bord inférieur que le panneau
+##   recouvrait.
+##
+## Une seule correction pour les deux : on demande sa taille à la barre.
 func hauteur_barre() -> float:
+	if barre != null:
+		var h: float = barre.get_combined_minimum_size().y
+		if h > 0.0:
+			return h
 	return 34.0 * Sty.HUD_K + Sty.marges["haut"]
 
 
@@ -1451,6 +1470,13 @@ func _bouton(texte: String, principal: bool, actif: bool, sur: Callable) -> Butt
 	var b := Sty.bouton_plaque(texte, principal, 16 if principal else 14, Sty.HUD_K)
 	b.disabled = not actif
 	b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	# LA GARANTIE, DERRIÈRE LA MESURE. Un Control ne descend jamais sous la
+	# taille minimale de son contenu : un bouton trop long ne débordait pas, il
+	# ÉLARGISSAIT LE PANNEAU — la carte reculait, et deux boutons cessaient
+	# d'avoir la même largeur. Avec `clip_text` leur largeur minimale tombe à
+	# rien : ils font exactement la moitié de la rangée, quoi qu'on y écrive.
+	# `_appel` fait le reste, pour qu'aucun nom n'ait jamais à être coupé.
+	b.clip_text = true
 	if sur.is_valid():
 		b.pressed.connect(sur)
 	return b
@@ -1478,6 +1504,8 @@ func rebatir() -> void:
 	if ruban == null:
 		return
 	_remplir_barre()
+	# la barre change de hauteur quand un compteur apparaît : le cadre suit
+	_poser_cadre()
 	colonne.add_child(_feuille())
 	_vider(pied)
 	pied.add_child(_pied())
@@ -1502,19 +1530,29 @@ func _feuille() -> Control:
 	var feuille := PanelContainer.new()
 	var st := Sty.parchemin(Sty.R_GRAND, k)
 	st.set_border_width_all(0)
-	st.set_content_margin_all(10 * k)
+	st.set_content_margin_all(0)
 	feuille.add_theme_stylebox_override("panel", st)
 	var v := VBoxContainer.new()
-	v.add_theme_constant_override("separation", int(round(8 * k)))
+	v.add_theme_constant_override("separation", 0)
 	feuille.add_child(v)
-	# L'ILLUSTRATION EST INSÉRÉE, PAS À FOND PERDU. Un Control ne se découpe
-	# qu'au rectangle : une image poussée jusqu'au bord montrerait ses angles
-	# carrés dans les coins arrondis de la feuille. Elle garde donc la marge de
-	# la feuille et son propre arrondi.
+	# L'ILLUSTRATION VA JUSQU'AUX BORDS. Elle restait dans la marge parce
+	# qu'un Control ne se découpe qu'au rectangle et qu'une image poussée au
+	# bord montrait ses angles carrés dans les coins arrondis de la feuille.
+	# Le bandeau se dessine donc lui-même, en polygone (voir Bandeau).
 	var b := _banniere()
 	if b != null:
 		v.add_child(b)
-	else:
+	var corps := MarginContainer.new()
+	corps.add_theme_constant_override("margin_left", int(round(12 * k)))
+	corps.add_theme_constant_override("margin_right", int(round(12 * k)))
+	corps.add_theme_constant_override("margin_top", int(round(10 * k)))
+	corps.add_theme_constant_override("margin_bottom", int(round(12 * k)))
+	v.add_child(corps)
+	var v2 := VBoxContainer.new()
+	v2.add_theme_constant_override("separation", int(round(8 * k)))
+	corps.add_child(v2)
+	v = v2
+	if b == null:
 		v.add_child(_entete_chapitre())
 	# LE RELEVÉ RESTE PENDANT LA FÊTE : au seul moment du jeu où deux
 	# récompenses tombent ensemble, on ne perd pas de vue les étoiles qu'on
@@ -1636,30 +1674,67 @@ func _pastille(texte: String, couleur: Color) -> Control:
 ##
 ## Une bannière par ZONE et non par chapitre : quarante-neuf illustrations
 ## seraient une œuvre, quatre suffisent à dire où l'on est.
+## LE BANDEAU — l'illustration à fond perdu, coins ronds compris.
+##
+## Godot ne sait découper un Control qu'au RECTANGLE : une TextureRect poussée
+## jusqu'au bord montre ses angles carrés dans les coins arrondis de la
+## feuille, et c'est pour cela que l'image restait sagement dans la marge.
+## « L'image du haut peut être dans la marge » (Vincent, 5 septembre 2026) —
+## on la dessine donc soi-même, en un polygone à deux coins ronds en haut et
+## deux angles vifs en bas, dont les UV recadrent la bande utile de
+## l'illustration en « couvrir ». Pas de shader, pas de masque : un polygone
+## texturé, qui suit l'arrondi de la feuille au pixel près.
+class Bandeau extends Control:
+	var image: Texture2D
+	var haut := 0.0        # la bande utile, en fraction de la hauteur d'origine
+	var bas := 1.0
+	var rayon := 16.0
+
+	func _draw() -> void:
+		if image == null or size.x < 2.0 or size.y < 2.0:
+			return
+		var w := size.x
+		var h := size.y
+		var r: float = min(rayon, w / 2.0, h)
+		var pts := PackedVector2Array([Vector2(0, h), Vector2(0, r)])
+		for i in range(9):                       # le coin haut-gauche
+			var a: float = PI + PI / 2.0 * float(i) / 8.0
+			pts.append(Vector2(r, r) + Vector2(cos(a), sin(a)) * r)
+		for i in range(9):                       # le coin haut-droit
+			var a: float = -PI / 2.0 + PI / 2.0 * float(i) / 8.0
+			pts.append(Vector2(w - r, r) + Vector2(cos(a), sin(a)) * r)
+		pts.append(Vector2(w, h))
+		var tw := float(image.get_width())
+		var th := float(image.get_height())
+		var bh: float = th * (bas - haut)
+		if tw <= 0.0 or bh <= 0.0:
+			return
+		# « couvrir » : la plus grande des deux échelles, et on centre le reste
+		var e: float = max(w / tw, h / bh)
+		var u0: float = (tw - w / e) / 2.0
+		var v0: float = th * haut + (bh - h / e) / 2.0
+		var uvs := PackedVector2Array()
+		for p in pts:
+			uvs.append(Vector2((u0 + p.x / e) / tw, (v0 + p.y / e) / th))
+		draw_colored_polygon(pts, Color.WHITE, uvs, image)
+
+
 func _banniere() -> Control:
 	var ch := chapitre
 	if ch.is_empty():
 		return null
-	var t := Ill.banniere(ch["zone"])
+	var t := Ill.banniere_brute(ch["zone"])
 	if t == null:
 		return null
 	var k := Sty.HUD_K
-	var cadre := PanelContainer.new()
-	cadre.add_theme_stylebox_override("panel",
-		Sty.boite(Color(0, 0, 0, 0), Color(0, 0, 0, 0), Sty.R * k, 0))
-	cadre.clip_contents = true
 
-	var pile := Control.new()
+	var pile := Bandeau.new()
+	pile.image = t
+	pile.haut = Ill.BANDE_HAUT
+	pile.bas = Ill.BANDE_BAS
+	pile.rayon = Sty.R_GRAND * k
 	pile.custom_minimum_size = Vector2(0, 84 * k)
-	cadre.add_child(pile)
-
-	var img := TextureRect.new()
-	img.texture = t
-	img.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	img.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
-	img.set_anchors_preset(Control.PRESET_FULL_RECT)
-	img.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	pile.add_child(img)
+	pile.clip_contents = true
 
 	var voile := TextureRect.new()
 	var g := GradientTexture2D.new()
@@ -1689,7 +1764,7 @@ func _banniere() -> Control:
 		bas.add_theme_constant_override("margin_" + cote, int(round(10 * k)))
 	pile.add_child(bas)
 	bas.add_child(_titre_chapitre(ch))
-	return cadre
+	return pile
 
 
 ## Le nom du chapitre, sa région, et la jauge à crans : ce qui se pose sur la
@@ -1948,16 +2023,32 @@ func _ligne_suivante(id: String) -> Control:
 	var quais: int = Array(cfg.get("platforms", [])).size()
 	var dirs: int = (cfg["portals"] as Dictionary).size() if cfg.get("portals") is Dictionary else 0
 	var seuils := ruban.seuils_de_service(cfg)
+	var k := Sty.HUD_K
 	v.add_child(_label("SUIVANTE", 11, P_MUET, true, false))
-	var h := HBoxContainer.new()
-	h.add_theme_constant_override("separation", int(round(10 * Sty.HUD_K)))
-	var nom := _label(ville_de(id), 16, P_ENCRE, true, false)
+	var ville := ville_de(id)
+	var mesures := "%d quais · %d dir. · 3 ★ sous %d min" % [quais, dirs, int(seuils["trois"])]
+	# UN NOM NE SE COUPE PAS. La ligne tient le nom et les mesures côte à côte
+	# pour économiser de la hauteur, mais « Villa San Giovanni » ne laissait
+	# plus la place aux mesures et se faisait rogner en plein mot. On mesure
+	# avant : si les deux ne tiennent pas, elles s'empilent.
+	var large: float = panneau_l() - 68.0 * k
+	var ln: float = Sty.titre(600).get_string_size(ville, HORIZONTAL_ALIGNMENT_LEFT, -1,
+		int(round(16 * k))).x
+	var lm: float = Sty.sans(400).get_string_size(mesures, HORIZONTAL_ALIGNMENT_LEFT, -1,
+		int(round(12 * k))).x
+	var cote_a_cote: bool = ln + lm + 10.0 * k <= large
+	var nom := _label(ville, 16, P_ENCRE, true, false)
 	nom.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	nom.clip_text = true
-	h.add_child(nom)
-	h.add_child(_label("%d quais · %d dir. · 3 ★ sous %d min" % [quais, dirs, int(seuils["trois"])],
-		12, P_MUET, false, false))
-	v.add_child(h)
+	var mes := _label(mesures, 12, P_MUET, false, false)
+	if cote_a_cote:
+		var h := HBoxContainer.new()
+		h.add_theme_constant_override("separation", int(round(10 * k)))
+		h.add_child(nom)
+		h.add_child(mes)
+		v.add_child(h)
+	else:
+		v.add_child(nom)
+		v.add_child(mes)
 	return v
 
 
@@ -2094,7 +2185,7 @@ func _pied() -> Control:
 		var suivant: Dictionary = fete["suivant"]
 		if not suivant.is_empty() and gc != "":
 			v.add_child(_label("Chapitre suivant · %s" % String(suivant["nom"]), 12, MUET))
-			v.add_child(_bouton("Jouer  ·  " + ville_de(gc), true, true, jouer.bind(gc)))
+			v.add_child(_bouton(_appel("Jouer", ville_de(gc), _reste_pied()), true, true, jouer.bind(gc)))
 		else:
 			v.add_child(_label("Le ruban s'arrête ici — pour le moment.", 13, MUET))
 		return v
@@ -2108,8 +2199,10 @@ func _pied() -> Control:
 			v.add_child(_label("Il te manque %d crédit%s — rejoue une gare déjà faite pour les gagner." % [manque, "s" if manque > 1 else ""], 12, MUET))
 		var h := HBoxContainer.new()
 		h.add_theme_constant_override("separation", int(round(8 * Sty.HUD_K)))
-		h.add_child(_bouton("Passer · %d cr" % prix, false, assez, _passer.bind(gare)))
-		h.add_child(_bouton("Réessayer  ·  " + ville_de(gare), true, true, jouer.bind(gare)))
+		var passer := "Passer · %d cr" % prix
+		h.add_child(_bouton(passer, false, assez, _passer.bind(gare)))
+		h.add_child(_bouton(_appel("Réessayer", ville_de(gare), _reste_pied(passer)),
+			true, true, jouer.bind(gare)))
 		v.add_child(h)
 		return v
 	if not bilan.is_empty():
@@ -2117,15 +2210,46 @@ func _pied() -> Control:
 		h.add_theme_constant_override("separation", int(round(8 * Sty.HUD_K)))
 		h.add_child(_bouton("Rejouer", false, true, jouer.bind(String(bilan["gare"]))))
 		if gc != "":
-			h.add_child(_bouton("Jouer  ·  " + ville_de(gc), true, true, jouer.bind(gc)))
+			h.add_child(_bouton(_appel("Jouer", ville_de(gc), _reste_pied("Rejouer")),
+				true, true, jouer.bind(gc)))
 		v.add_child(h)
 		return v
 	if gc != "":
-		v.add_child(_bouton("Jouer  ·  " + ville_de(gc), true, true, jouer.bind(gc)))
+		v.add_child(_bouton(_appel("Jouer", ville_de(gc), _reste_pied()), true, true, jouer.bind(gc)))
 		return v
 	v.add_child(_label("La suite du ruban n'est pas encore écrite." if ruban.au_bout_de_l_ecrit()
 		else "Le ruban est terminé. Reste à le dorer.", 13, MUET))
 	return v
+
+
+## LE NOM DE LA VILLE NE DOIT PAS CASSER LA RANGÉE. « Jouer · Villa San
+## Giovanni » ne tient pas dans la moitié du panneau d'un téléphone : le bouton
+## poussait sa voisine, les deux cessaient d'être alignées et la rangée
+## débordait. On mesure donc avant d'écrire — et si le nom ne tient pas, le
+## bouton s'appelle « Jouer ». La ville est nommée juste au-dessus, sur la
+## feuille : ce n'est pas une information perdue.
+func _appel(verbe: String, ville: String, large: float) -> String:
+	var k := Sty.HUD_K
+	var texte := verbe + "  ·  " + ville
+	var f := Sty.titre(700)
+	var t := int(round(16 * k))
+	if f.get_string_size(texte.to_upper(), HORIZONTAL_ALIGNMENT_LEFT, -1, t).x + 36.0 * k <= large:
+		return texte
+	return verbe
+
+
+## La place qui reste à un bouton d'appel une fois son voisin servi. Le panneau
+## porte 22 × k de marge de chaque côté, et 8 × k séparent deux boutons.
+func _reste_pied(voisin: String = "") -> float:
+	var k := Sty.HUD_K
+	var large: float = panneau_l() - 44.0 * k
+	if voisin != "":
+		# on mesure son TEXTE, pas sa taille minimale : un bouton détaché de
+		# l'arbre ne compte pas encore ses marges, et il s'annonçait deux fois
+		# trop étroit — le budget du voisin devenait deux fois trop large.
+		large -= Sty.titre(600).get_string_size(voisin.to_upper(), HORIZONTAL_ALIGNMENT_LEFT,
+			-1, int(round(14 * k))).x + 44.0 * k
+	return large
 
 
 func _passer(id: String) -> void:

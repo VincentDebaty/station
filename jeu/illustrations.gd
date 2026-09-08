@@ -93,6 +93,15 @@ static func banniere(zone: Variant) -> Texture2D:
 	return bande
 
 
+## L'ILLUSTRATION ENTIÈRE, sans sa bande découpée. Le ruban la dessine
+## lui-même — en polygone, pour lui donner des coins ronds — et recadre donc
+## la bande par ses UV : une AtlasTexture ne lui servirait à rien, et
+## l'empêcherait même de connaître la taille de l'image d'origine.
+static func banniere_brute(zone: Variant) -> Texture2D:
+	var z := String(zone)
+	return _charger("banniere-" + String(ZONES_EMPRUNTEES.get(z, z)))
+
+
 static func _charger(nom: String) -> Texture2D:
 	if _cache.has(nom):
 		return _cache[nom]
