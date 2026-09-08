@@ -165,21 +165,22 @@ func rebatir() -> void:
 	entete.add_child(_retour())
 	colonne.add_child(entete)
 
-	# UNE TUILE PEUT ÊTRE PLUS HAUTE QUE L'ÉCRAN — celle qu'on n'a pas encore
-	# achetée porte deux boutons et une phrase d'explication de plus. Elle
-	# débordait sous le bord bas. Le rang défile donc, sans montrer sa barre :
-	# la même solution que la colonne du ruban, et pour la même raison.
+	# UNE LISTE HORIZONTALE QU'ON FAIT GLISSER AU DOIGT. Les cartes se
+	# feuillettent, elles ne se déroulent pas : une carte est un objet qu'on
+	# compare à celle d'à côté, et il en viendra plus de deux. Le rang défile
+	# donc en largeur, sans montrer sa barre — le glissement tactile suffit.
 	var defil := ScrollContainer.new()
-	defil.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	defil.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	defil.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	defil.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	colonne.add_child(defil)
-	var bar := defil.get_v_scroll_bar()
+	var bar := defil.get_h_scroll_bar()
 	for quoi in ["scroll", "scroll_focus", "grabber", "grabber_highlight", "grabber_pressed"]:
 		bar.add_theme_stylebox_override(quoi, StyleBoxEmpty.new())
 	bar.custom_minimum_size = Vector2.ZERO
 	var rangee := HBoxContainer.new()
 	rangee.add_theme_constant_override("separation", int(round(16 * k)))
-	rangee.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	rangee.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	defil.add_child(rangee)
 	var courante: Variant = Sauvegarde.get_carte_courante()
 	for e in Donnees.cartes_index:
@@ -199,9 +200,13 @@ func _tuile(e: Dictionary, id: String, r: Dictionary, possede: bool, prix: int,
 		Sty.LAITON_CLAIR if est_courante else Color(Sty.LAITON, 0.55), Sty.R_GRAND, k)
 	st.set_content_margin_all(12 * k)
 	tuile.add_theme_stylebox_override("panel", st)
-	tuile.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	tuile.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
-	tuile.custom_minimum_size = Vector2(260 * k, 0)
+	# TOUTES LES TUILES À LA MÊME HAUTEUR : elles remplissent le rang, donc
+	# l'écran. Deux cartes de hauteurs différentes se comparent mal, et la plus
+	# courte a l'air inachevée. Leur LARGEUR, elle, est fixe : c'est ce qui fait
+	# qu'on devine la suivante et qu'on a envie de la faire glisser.
+	tuile.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	tuile.size_flags_vertical = Control.SIZE_FILL
+	tuile.custom_minimum_size = Vector2(300 * k, 0)
 	tuile.clip_contents = true
 	var v := VBoxContainer.new()
 	v.add_theme_constant_override("separation", int(round(6 * k)))
@@ -217,7 +222,7 @@ func _tuile(e: Dictionary, id: String, r: Dictionary, possede: bool, prix: int,
 		ti.texture = img
 		ti.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		ti.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
-		ti.custom_minimum_size = Vector2(0, 46 * k)
+		ti.custom_minimum_size = Vector2(0, 66 * k)
 		cadre.add_child(ti)
 		v.add_child(cadre)
 
@@ -238,23 +243,25 @@ func _tuile(e: Dictionary, id: String, r: Dictionary, possede: bool, prix: int,
 	if r["entamee"]:
 		v.add_child(_label("%d / %d gares · ★ %d" % [r["faites"], r["gares"], r["etoiles"]], 13, OR))
 
+	# LE GESTE TOMBE EN BAS DE LA TUILE. Les tuiles ont maintenant la hauteur de
+	# l'écran : sans ce ressort, le bouton flotterait au milieu du vide, à une
+	# place différente dans chaque carte.
+	var ressort := Control.new()
+	ressort.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	ressort.custom_minimum_size = Vector2(0, 8 * k)
+	ressort.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	v.add_child(ressort)
 	if est_courante:
 		v.add_child(_bouton("Carte en cours", false, false, Callable()))
 	elif possede:
 		v.add_child(_bouton("Reprendre" if r["entamee"] else "Commencer", true, true,
 			app.choisir_carte.bind(id) if app != null else Callable()))
-	elif solde >= prix:
-		v.add_child(_bouton("Ouvrir · %d cr" % prix, true, true,
-			app.acheter_carte.bind(id) if app != null else Callable()))
 	else:
-		var manque := prix - solde
-		v.add_child(_label("Il te manque %d crédit%s — gagne des étoiles sur ta carte en cours."
-			% [manque, "s" if manque > 1 else ""], 12, MUET))
-		v.add_child(_bouton("Ouvrir · %d cr" % prix, true, false, Callable()))
-	# LA CARTE BANCAIRE N'EST PAS UN BOUTON. Elle en portait un, éteint, qui ne
-	# s'allumera pas dans ce prototype : un bouton qu'on ne peut pas presser
-	# n'est pas une commande, c'est une phrase — et il coûtait la hauteur qui
-	# faisait déborder la tuile sous le bord bas de l'écran.
-	if not possede:
-		v.add_child(_label("Ou par carte bancaire, bientôt.", 12, Color(MUET, 0.8)))
+		# LE PRIX EST SUR LE BOUTON, ET IL SUFFIT. La tuile portait en plus une
+		# phrase sur les crédits manquants et une mention de carte bancaire :
+		# l'une répétait une soustraction que le joueur fait tout seul, l'autre
+		# annonçait ce qui n'existe pas. Retirées le 5 septembre 2026. Un bouton
+		# éteint à 1 500 cr en face de 1 140 cr dit déjà tout.
+		v.add_child(_bouton("Ouvrir · %d cr" % prix, true, solde >= prix,
+			app.acheter_carte.bind(id) if app != null else Callable()))
 	return tuile
