@@ -65,6 +65,7 @@ var tuto_feu_vu := false
 var tuto_vitesse_vu := false
 var coach_cible: Dictionary = {}     # {train: id} | {quai: pid} | {hud: "retard"|"vitesse"}
 var zones_hud: Dictionary = {}       # les rectangles du bandeau, pour le doigt
+var pupitre: Node2D
 var bulle: PanelContainer
 var bulle_texte: Label
 var bulle_bouton: Button
@@ -75,6 +76,7 @@ func _ready() -> void:
 	# Les deux facteurs d'échelle se lisent sur l'écran réel (jeu/style.gd) :
 	# le tactile grossit les cibles du plan, le bandeau garde sa taille physique.
 	Sty.calibrer(get_viewport())
+	_construire_pupitre()
 	_construire_coach()
 	if not autonome:
 		return
@@ -332,9 +334,93 @@ static func fmt(minute: float) -> String:
 	return "%02d:%02d" % [7 + m / 60, m % 60]
 
 
+## LE PUPITRE — la matière sous le plan.
+##
+## Le poste était un aplat brun : correct, et sans profondeur. Un vrai tableau
+## de contrôle optique est une PLAQUE — bakélite ou tôle laquée — sous une
+## lampe d'atelier, et c'est tout ce qui lui manquait. Trois couches, aucune
+## qui touche à la signalisation : le grain de la plaque, la lampe chaude qui
+## tombe du haut, et l'assombrissement des bords qui ramène l'œil au centre.
+## Rien ici ne se lit : tout ici se regarde.
+class Pupitre extends Node2D:
+	var grain: NoiseTexture2D
+	var lampe: GradientTexture2D
+	var ombre: GradientTexture2D
+	var ecran := Vector2(1400, 760)
+
+	func _draw() -> void:
+		var r := Rect2(Vector2.ZERO, ecran)
+		# LA LAMPE D'ABORD, ET ELLE RELÈVE. Au premier essai j'ai posé le grain
+		# et l'ombre sur un fond déjà très sombre : le pupitre est devenu noir,
+		# exactement la faute que cet écran m'avait déjà values le 4 septembre.
+		# Une plaque sous une lampe est plus CLAIRE au centre qu'un aplat, pas
+		# plus foncée aux bords : on éclaire, puis on tempère.
+		if lampe != null:
+			draw_texture_rect(lampe, r, false, Color(1, 1, 1, 1))
+		if grain != null and grain.get_width() > 0:
+			draw_texture_rect(grain, r, true, Color(0.0, 0.0, 0.0, 0.13))
+			draw_texture_rect(grain, Rect2(r.position + Vector2(3, 5), r.size), true,
+				Color(1.0, 0.90, 0.72, 0.05))
+		if ombre != null:
+			draw_texture_rect(ombre, r, false, Color(1, 1, 1, 1))
+
+
+func _construire_pupitre() -> void:
+	pupitre = Pupitre.new()
+	pupitre.show_behind_parent = true
+	var g := FastNoiseLite.new()
+	g.noise_type = FastNoiseLite.TYPE_SIMPLEX_SMOOTH
+	g.frequency = 0.35
+	g.fractal_octaves = 4
+	var t := NoiseTexture2D.new()
+	t.width = 256
+	t.height = 256
+	t.seamless = true
+	t.noise = g
+	pupitre.grain = t
+	pupitre.lampe = _radial(Color(1.0, 0.84, 0.58, 0.16), Vector2(0.5, 0.10), 1.05)
+	pupitre.ombre = _radial_inverse(Color(0.0, 0.0, 0.0, 0.24))
+	add_child(pupitre)
+	move_child(pupitre, 0)
+
+
+## Une nappe radiale : pleine au centre, éteinte au bord.
+func _radial(col: Color, centre: Vector2, rayon: float) -> GradientTexture2D:
+	var d := Gradient.new()
+	d.set_color(0, col)
+	d.set_color(1, Color(col.r, col.g, col.b, 0.0))
+	var g := GradientTexture2D.new()
+	g.gradient = d
+	g.fill = GradientTexture2D.FILL_RADIAL
+	g.fill_from = centre
+	g.fill_to = centre + Vector2(rayon, 0)
+	g.width = 256
+	g.height = 256
+	return g
+
+
+## L'inverse : rien au centre, sombre aux bords.
+func _radial_inverse(col: Color) -> GradientTexture2D:
+	var d := Gradient.new()
+	d.set_color(0, Color(col.r, col.g, col.b, 0.0))
+	d.set_color(1, col)
+	d.set_offset(0, 0.58)
+	var g := GradientTexture2D.new()
+	g.gradient = d
+	g.fill = GradientTexture2D.FILL_RADIAL
+	g.fill_from = Vector2(0.5, 0.5)
+	g.fill_to = Vector2(1.06, 0.5)
+	g.width = 256
+	g.height = 256
+	return g
+
+
 func _draw() -> void:
 	if enc == null:
 		return
+	if pupitre != null:
+		pupitre.ecran = size_ecran()
+		pupitre.queue_redraw()
 	var sel = enc.selected
 	# La ville d'origine du convoi choisi ressort dans le gril (.beam-lit) ;
 	# c'est le plan, dessous, qui porte le faisceau.
@@ -354,6 +440,7 @@ func _draw() -> void:
 	_dessiner_signaux(t)
 	_dessiner_badges(t)
 	draw_set_transform(Vector2.ZERO)
+	_bordure_du_pupitre()
 	_dessiner_hud(t)
 	_dessiner_coach(t)
 	_dessiner_fin()
@@ -408,9 +495,9 @@ func _dessiner_quais(sel, t: float) -> void:
 
 		# FERMÉ : pilule éteinte, hachures, numéro estompé, heure de réouverture
 		if enc.platform_closed(pid):
-			draw_colored_polygon(contour, Sty.QUAI_FERME)
+			draw_colored_polygon(contour, Sty.POSTE_QUAI_FERME)
 			_hachures(r, Color(Sty.ROUGE, 0.5))
-			draw_polyline(_boucle(contour), Sty.QUAI_FERME_BORD, 1.5, true)
+			draw_polyline(_boucle(contour), Sty.POSTE_BORD, 1.5, true)
 			Sty.texte_centre(self, Sty.sans(600), 24, r.get_center(), str(int(pid)), Color(Sty.TEXTE, 0.28))
 			var fin := ""
 			for ev in enc.events:
@@ -433,7 +520,7 @@ func _dessiner_quais(sel, t: float) -> void:
 			# le quai libre se teinte (color-mix 14 %) ; l'occupé garde son
 			# dégradé et souffle plus lentement : « oui, mais pas tout de suite »
 			if not occupe:
-				draw_colored_polygon(contour, Sty.QUAI_ELIGIBLE_FOND.lerp(col, 0.14))
+				draw_colored_polygon(contour, Sty.POSTE_QUAI_ELIGIBLE.lerp(col, 0.14))
 				# la teinte recouvre le numéro peint par le plan : on le repose
 				Sty.texte_centre(self, Sty.sans(600), 24, r.get_center(), str(int(pid)), Sty.TEXTE)
 			var larg: float = 2.5 + 0.9 * p
@@ -710,8 +797,16 @@ func _dessiner_hud(t: float) -> void:
 	var ch := Rect2(milieu - w_chip / 2.0, Sty.marges["haut"] + 10 * k, w_chip, 38 * k)
 	zones_hud["horloge"] = ch
 	_chip(ch, Sty.ACCENT if (pause or gel) else Sty.POSTE_BORD, k)
+	# LA FENÊTRE DE L'HEURE. Les chiffres flottaient sur le bandeau ; ils se
+	# lisent maintenant dans une découpe sombre cerclée de laiton, comme le
+	# guichet d'un compteur mécanique. Rien n'a changé de ce qui s'y écrit.
+	var w_fen := w_h + 12.0 * k
+	var fen := Rect2(ch.position.x + 7.0 * k, ch.position.y + 5.0 * k, w_fen, 26.0 * k)
+	draw_style_box(Sty.boite(Color(0, 0, 0, 0.45), Color(Sty.POSTE_BORD, 0.35),
+		4 * k, max(1.0, 0.9 * k)), fen)
 	var base := ch.position.y + 5.0 * k + mono.get_ascent(ti.call(21))
-	Sty.texte_espace(self, mono, ti.call(21), Vector2(ch.position.x + 13.0 * k, base), horloge, Sty.TEXTE, 1.0 * k)
+	Sty.texte_espace(self, mono, ti.call(21), Vector2(ch.position.x + 13.0 * k, base + 1.0 * k),
+		horloge, Sty.TEXTE, 1.0 * k)
 	var col_r: Color = Sty.VERT if retard < 10 else (Sty.AMBRE if retard < 30 else Sty.ROUGE)
 	draw_string(mono, Vector2(ch.position.x + 13.0 * k + w_h + 8.0 * k, base), txt_r,
 		HORIZONTAL_ALIGNMENT_LEFT, -1, ti.call(14), col_r)
@@ -722,9 +817,11 @@ func _dessiner_hud(t: float) -> void:
 			partis += 1
 	var part: float = float(partis) / float(max(1, enc.trains.size()))
 	var jauge := Rect2(ch.position.x + 10.0 * k, ch.end.y - 7.0 * k, ch.size.x - 20.0 * k, 3.0 * k)
-	draw_style_box(Sty.boite(Color(Sty.ACCENT, 0.14), Color.TRANSPARENT, 2 * k, 0), jauge)
+	# la jauge passe au laiton : la sarcelle du prototype était la dernière
+	# couleur froide du pupitre, et elle n'y désignait rien.
+	draw_style_box(Sty.boite(Color(Sty.LAITON, 0.16), Color.TRANSPARENT, 2 * k, 0), jauge)
 	if part > 0.0:
-		draw_style_box(Sty.boite(Sty.ACCENT, Color.TRANSPARENT, 2 * k, 0),
+		draw_style_box(Sty.boite(Sty.LAITON, Color.TRANSPARENT, 2 * k, 0),
 			Rect2(jauge.position, Vector2(jauge.size.x * part, jauge.size.y)))
 	# « EN PAUSE », sous l'horloge — et c'est une cible : on la touche pour
 	# reprendre, comme la pilule du prototype.
@@ -786,6 +883,26 @@ func _dessiner_hud(t: float) -> void:
 ## Le PROJECTEUR : tout l'écran s'assombrit sauf la cible (#coach-ring, dont
 ## l'ombre de 9999 px fait exactement cela sur le web). Sans lui, le repère
 ## désigne sans isoler, et l'œil continue de partir ailleurs.
+## LE LISERÉ DU PUPITRE et ses quatre vis. C'est peu de chose, et c'est ce qui
+## fait qu'on regarde un OBJET posé devant soi plutôt qu'un fond d'écran.
+func _bordure_du_pupitre() -> void:
+	var k := Sty.HUD_K
+	var e := size_ecran()
+	var r := Rect2(Sty.marges["gauche"] + 5 * k, Sty.marges["haut"] + 5 * k,
+		e.x - Sty.marges["gauche"] - Sty.marges["droite"] - 10 * k,
+		e.y - Sty.marges["haut"] - Sty.marges["bas"] - 10 * k)
+	if r.size.x <= 0.0 or r.size.y <= 0.0:
+		return
+	var contour := Sty.rect_arrondi(r, Sty.R_GRAND * k)
+	var ferme := contour.duplicate()
+	ferme.append(contour[0])
+	draw_polyline(ferme, Color(Sty.POSTE_BORD, 0.30), max(1.0, 1.2 * k), true)
+	for c in [r.position + Vector2(14, 14) * k, Vector2(r.end.x - 14 * k, r.position.y + 14 * k),
+			Vector2(r.position.x + 14 * k, r.end.y - 14 * k), r.end - Vector2(14, 14) * k]:
+		draw_circle(c, 3.4 * k, Color(Sty.POSTE_BORD, 0.40))
+		draw_line(c + Vector2(-2, -0.6) * k, c + Vector2(2, 0.6) * k, Color(0, 0, 0, 0.45), 1.1 * k, true)
+
+
 func _dessiner_coach(t: float) -> void:
 	if coach_cible.is_empty():
 		return

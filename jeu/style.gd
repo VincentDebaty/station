@@ -167,6 +167,14 @@ const POSTE_QUAI_BAS := Color("#2c2015")    # et son creux
 const POSTE_BORD := Color("#9a7f4e")        # le laiton des vis et du liseré
 const POSTE_VOIE := Color("#5d4e3a")        # le rail au repos
 const POSTE_BALLAST := Color("#1a120b")
+# LES DEUX FONDS DE QUAI ÉTAIENT RESTÉS BLEUS. `QUAI_FERME` et
+# `QUAI_ELIGIBLE_FOND` viennent du prototype (#141b29, #1b2436) et n'avaient
+# pas suivi le pupitre au laiton : un quai fermé y faisait une tache froide, et
+# surtout la teinte d'un quai éligible — un mélange à 14 % de la couleur de
+# destination sur ce fond — partait d'un bleu, donc virait sur toute la gamme.
+# La MÉCANIQUE ne bouge pas, seulement le point de départ du mélange.
+const POSTE_QUAI_FERME := Color("#241b12")
+const POSTE_QUAI_ELIGIBLE := Color("#31261a")
 
 
 ## Les traverses d'une voie, semées le long d'un tracé. Le PAS EST À L'ÉCRAN

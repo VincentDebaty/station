@@ -89,10 +89,24 @@ func _draw() -> void:
 			draw_polyline(pts, Sty.POSTE_VOIE, 3.5, true)
 
 	# --- le gril : une bézier par liaison, teintée à sa destination -----------
+	# LA LIAISON EST INCRUSTÉE DANS LE PUPITRE, pas posée dessus : une saignée
+	# sombre creusée sous elle, un biseau clair sur sa lèvre haute, et la
+	# couleur par-dessus comme un verre éclairé. C'est le vocabulaire d'un vrai
+	# tableau de contrôle optique — et il ne touche à aucune signalisation :
+	# la couleur reste la destination, à la même opacité qu'avant.
 	for m in G["mesh"]:
+		var pts := Geo.vers_vector2(m["xs"], m["ys"])
+		var allume: bool = faisceau != "" and m["portal"] == faisceau
 		var col := Color(String(G["dest_color"].get(m["portal"], "#ffffff")))
-		col.a = 0.82 if (faisceau != "" and m["portal"] == faisceau) else 0.5
-		draw_polyline(Geo.vers_vector2(m["xs"], m["ys"]), col, 3.5, true)
+		draw_polyline(pts, Color(0, 0, 0, 0.40), 7.0, true)
+		var levre := PackedVector2Array()
+		for pt in pts:
+			levre.append(pt + Vector2(0, -1.6))
+		draw_polyline(levre, Color(Sty.POSTE_BORD, 0.10), 1.0, true)
+		if allume:
+			draw_polyline(pts, Color(col, 0.16), 9.0, true)
+		col.a = 0.82 if allume else 0.5
+		draw_polyline(pts, col, 3.5, true)
 
 	# --- les quais : la pilule en dégradé, son liseré, son numéro -------------
 	var dead_ends := {}
@@ -113,6 +127,19 @@ func _draw() -> void:
 		var ferme := contour.duplicate()
 		ferme.append(contour[0])
 		draw_polyline(ferme, Sty.POSTE_BORD, 1.8, true)
+		# LES LIGNES DE SÉCURITÉ, comme sur un vrai quai : deux filets pâles à
+		# six unités du bord. C'est ce qui fait qu'une plaque devient un QUAI —
+		# elle avait jusqu'ici l'air d'un bouton avec un numéro dessus.
+		for dy in [-Geo.PLAT_H / 2.0 + 6.0, Geo.PLAT_H / 2.0 - 6.0]:
+			draw_line(Vector2(r.position.x + 12, cy + dy), Vector2(r.end.x - 12, cy + dy),
+				Color(Sty.LAITON, 0.22), 1.4, true)
+		# et les quatre vis qui la tiennent au pupitre
+		for coin in [Vector2(r.position.x + 7, cy - Geo.PLAT_H / 2.0 + 7),
+				Vector2(r.end.x - 7, cy - Geo.PLAT_H / 2.0 + 7),
+				Vector2(r.position.x + 7, cy + Geo.PLAT_H / 2.0 - 7),
+				Vector2(r.end.x - 7, cy + Geo.PLAT_H / 2.0 - 7)]:
+			draw_circle(coin, 2.2, Color(Sty.POSTE_BORD, 0.45))
+			draw_circle(coin + Vector2(0, -0.6), 1.2, Color(0, 0, 0, 0.35))
 		Sty.texte_centre(self, sans_g, 24, r.get_center(), str(int(q["id"])), Color(Sty.PAPIER, 0.92))
 		# le heurtoir du quai en impasse : rouge, avec son halo
 		if dead_ends.has(int(q["id"])):
@@ -123,7 +150,14 @@ func _draw() -> void:
 	for pname in G["portals"]:
 		var p: Dictionary = G["portals"][pname]
 		var col := Color(String(G["dest_color"].get(pname, "#ffffff")))
-		draw_circle(Vector2(float(p["x"]), float(p["cy"])), 5.0, Color(col, 0.85))
+		# LE PORTAIL EST UNE LAMPE, sertie de laiton : un point coloré posé sur
+		# un pupitre ne dit rien, une lampe allumée dit « c'est par là que ça
+		# vient ». La teinte ne bouge pas d'un iota — c'est la destination.
+		var c := Vector2(float(p["x"]), float(p["cy"]))
+		draw_circle(c, 11.0, Color(col, 0.10))
+		draw_circle(c, 7.5, Color(col, 0.18))
+		draw_circle(c, 5.0, Color(col, 0.85))
+		draw_arc(c, 6.4, 0.0, TAU, 24, Color(Sty.POSTE_BORD, 0.55), 1.2, true)
 		var nom := String(p["label"])
 		var pos := position_nom(pname)
 		if noms_allumes.has(pname):
