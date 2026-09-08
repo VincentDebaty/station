@@ -56,6 +56,29 @@ var proj := {}                # {lo, la, cosm, s} — vide tant qu'aucune carte
 var fond: Node2D              # les pays, en Polygon2D, sous la caméra
 var contours: Array = []      # les anneaux dessinés en Line2D, à la largeur du zoom
 
+# --- DE QUOI FAIRE UNE VIEILLE CARTE ----------------------------------------
+# Trois techniques, et il en faut trois parce que le zoom va de l'Europe
+# entière à cinq gares — aucune ne tient seule sur cet écart :
+#
+#   LE GRAIN DE PAPIER est en coordonnées d'ÉCRAN. C'est la feuille sur
+#   laquelle la carte est imprimée, pas un terrain : elle ne bouge pas, ne
+#   grossit pas, et ne peut donc jamais devenir floue.
+#
+#   LES HACHURES DE CÔTE sont VECTORIELLES et calculées une fois par carte,
+#   par décalage des anneaux de pays. Du vecteur reste net à tout zoom, et
+#   c'est la signature d'une carte ancienne : le rivage y est ombré de deux
+#   ou trois traits parallèles qui s'éloignent dans la mer.
+#
+#   LE RELIEF est semé en coordonnées d'écran mais ANCRÉ par un bruit lu en
+#   coordonnées du monde. Il garde donc une densité constante à l'œil — une
+#   gravure a toujours la même finesse de trait, quelle que soit l'échelle —
+#   tout en restant collé au terrain quand la carte se déplace.
+var bruit := FastNoiseLite.new()
+var papier: NoiseTexture2D
+var anneaux: Array = []       # [{pts, bbox}] en unités du cadre, pour savoir où est la terre
+var relief_traits := PackedVector2Array()
+var relief_pour := {}         # la caméra pour laquelle le relief a été semé
+
 # --- la caméra ------------------------------------------------------------------
 var cam := {"x": CADRE_L / 2, "y": CADRE_H / 2, "k": 1.0}
 var zoom_force := false
@@ -86,6 +109,21 @@ var police: Font
 
 func _ready() -> void:
 	Sty.calibrer(get_viewport())
+	bruit.noise_type = FastNoiseLite.TYPE_SIMPLEX
+	bruit.frequency = 0.9
+	bruit.fractal_octaves = 3
+	# le grain : un bruit fin et SANS COUTURE, pour se répéter sur tout l'écran
+	papier = NoiseTexture2D.new()
+	papier.width = 256
+	papier.height = 256
+	papier.seamless = true
+	papier.as_normal_map = false
+	var g := FastNoiseLite.new()
+	g.noise_type = FastNoiseLite.TYPE_SIMPLEX_SMOOTH
+	g.frequency = 0.28
+	g.fractal_octaves = 4
+	papier.noise = g
+	texture_repeat = CanvasItem.TEXTURE_REPEAT_ENABLED
 	# la mer sous la carte : c'est la couleur d'effacement qui la porte, et
 	# l'écran de jeu remet la sienne en reprenant la main (app.gd, montrer).
 	RenderingServer.set_default_clear_color(Sty.MER)
@@ -197,6 +235,7 @@ func _construire_fond() -> void:
 	# dont la largeur suit le zoom (voir _process). Mesuré sur les 68 anneaux
 	# d'Europe : aucun refus, mais deux défauts silencieux, corrigés ci-dessous.
 	contours.clear()
+	anneaux.clear()
 	var rates := 0
 	for r in Donnees.fond_europe:
 		var pts := PackedVector2Array()
@@ -221,6 +260,28 @@ func _construire_fond() -> void:
 		if propres.is_empty():
 			propres = [pts]
 		for anneau in propres:
+			# on retient l'anneau et sa boîte : c'est ce qui dira, plus tard et
+			# vite, si un point du relief tombe sur la terre ou dans l'eau.
+			var bb := Rect2(anneau[0], Vector2.ZERO)
+			for pt in anneau:
+				bb = bb.expand(pt)
+			anneaux.append({"pts": anneau, "bbox": bb})
+			# LES HACHURES DE CÔTE : deux traits qui s'éloignent dans la mer,
+			# de plus en plus pâles. Geometry2D sait décaler un polygone ; on
+			# le fait UNE FOIS par carte, et le résultat reste net à tout zoom.
+			var d := 0.30
+			for niveau in range(2):
+				for large in Geometry2D.offset_polygon(anneau, d):
+					if large.size() < 3:
+						continue
+					var h := Line2D.new()
+					h.points = large
+					h.closed = true
+					h.default_color = Color(Sty.TERRE_OMBRE, 0.55 - 0.20 * niveau)
+					h.width = 0.25
+					fond.add_child(h)
+					contours.append(h)
+				d += 0.42
 			if not Geometry2D.triangulate_polygon(anneau).is_empty():
 				var poly := Polygon2D.new()
 				poly.polygon = anneau
@@ -273,6 +334,27 @@ func _centre_carte() -> Vector2:
 	var g: float = panneau_l() + Sty.marges["gauche"]
 	return Vector2(g + (e.x - g - Sty.marges["droite"]) / 2.0,
 		hauteur_barre() + (e.y - hauteur_barre() - Sty.marges["bas"]) / 2.0)
+
+
+## L'inverse d'`ecran` : où tombe, dans le cadre, un point de l'écran. C'est
+## ce qui permet d'ancrer un semis dessiné à l'écran sur le terrain qu'il
+## couvre.
+func monde(p: Vector2) -> Vector2:
+	var f := fenetre()
+	var k: float = cam["k"] * f["px"]
+	if k <= 0.0:
+		return Vector2.ZERO
+	return (p - _centre_carte()) / k + Vector2(cam["x"], cam["y"])
+
+
+## Le rectangle d'écran que la carte occupe : à droite du panneau, sous la
+## barre, dans la zone sûre.
+func cadre_carte() -> Rect2:
+	var e := get_viewport_rect().size
+	var g: float = panneau_l() + Sty.marges["gauche"]
+	return Rect2(g, hauteur_barre(),
+		max(1.0, e.x - g - Sty.marges["droite"]),
+		max(1.0, e.y - hauteur_barre() - Sty.marges["bas"]))
 
 
 func zoom_pour(bw: float, bh: float, marge: float, k_max: float) -> float:
@@ -445,6 +527,8 @@ func _draw() -> void:
 	if ruban == null or proj.is_empty():
 		return
 	var ch := chapitre_vu()
+	_grain()
+	_relief()
 	var t := Time.get_ticks_msec() / 1000.0
 	var pulse := 0.5 + 0.5 * sin(t * 4.0)
 	# --- le rail du chapitre vu ------------------------------------------------
@@ -581,6 +665,86 @@ func _voie(a: Vector2, b: Vector2, col: Color, k: float, force: float) -> void:
 		s += pas
 	draw_line(a - n * demi, b - n * demi, Color(col, force), 1.7 * k, true)
 	draw_line(a + n * demi, b + n * demi, Color(col, force), 1.7 * k, true)
+
+
+## LE GRAIN DU PAPIER, en coordonnées d'écran. C'est la feuille sur laquelle
+## la carte est imprimée : elle ne se déplace pas avec le terrain et ne peut
+## donc jamais devenir floue, quel que soit le zoom. Très pâle — un grain qui
+## se remarque n'est plus un grain, c'est une texture.
+func _grain() -> void:
+	if papier == null or papier.get_width() == 0:
+		return
+	# Modulé par le BOIS et non par du blanc : la texture est un gris, et
+	# passée en blanc elle délavait la terre au lieu de la marbrer. Multipliée
+	# par un brun, elle assombrit irrégulièrement — ce que fait un papier.
+	draw_texture_rect(papier, cadre_carte(), true, Color(Sty.BOIS.r, Sty.BOIS.g, Sty.BOIS.b, 0.22))
+
+
+## LE RELIEF — un semis de hachures, à l'écran mais ancré au terrain.
+##
+## Semé À L'ÉCRAN : la densité reste celle d'une gravure, une hachure tous les
+## quinze pixels, que l'on regarde l'Europe entière ou cinq gares. Semé dans
+## le MONDE, il aurait été noir de traits de loin et vide de près — le zoom du
+## ruban va de 1 à 70, aucune densité fixe ne tient sur un tel écart.
+##
+## ANCRÉ AU TERRAIN : la position de chaque hachure est décidée par un bruit
+## lu aux coordonnées du MONDE. La carte se déplace, les collines restent où
+## elles sont. Et l'inclinaison du trait suit la pente du bruit, comme une
+## vraie hachure suit la ligne de plus grande pente.
+##
+## Recalculé seulement quand la caméra bouge : au repos, il ne coûte rien.
+func _relief() -> void:
+	if anneaux.is_empty():
+		return
+	var r := cadre_carte()
+	var cle := {"x": cam["x"], "y": cam["y"], "k": cam["k"], "r": r}
+	if relief_pour != cle:
+		relief_pour = cle
+		_semer_relief(r)
+	if not relief_traits.is_empty():
+		draw_multiline(relief_traits, Color("#4a3a22", 0.62), max(1.0, 1.0 * Sty.HUD_K))
+
+
+# Onze pixels et non quinze : à quinze, cent quarante traits sur toute la
+# carte se lisaient comme des poussières et non comme un relief. Le seuil
+# descend aussi — une gravure couvre ses reliefs, elle ne les pointille pas.
+const RELIEF_PAS := 11.0        # un trait tous les onze pixels
+const RELIEF_SEUIL := 0.10      # au-dessus de quoi le bruit fait une colline
+const RELIEF_MAX := 5000        # garde-fou : jamais plus de traits que cela
+
+func _semer_relief(r: Rect2) -> void:
+	relief_traits = PackedVector2Array()
+	var pas := RELIEF_PAS * Sty.HUD_K
+	var e := 0.05                                  # l'écart pour lire la pente
+	var y := r.position.y + pas * 0.5
+	while y < r.end.y:
+		var x := r.position.x + pas * 0.5
+		while x < r.end.x:
+			var w := monde(Vector2(x, y))
+			var n := bruit.get_noise_2d(w.x, w.y)
+			if n > RELIEF_SEUIL and _sur_terre(w):
+				# la pente du bruit, et la hachure perpendiculaire
+				var gx := bruit.get_noise_2d(w.x + e, w.y) - bruit.get_noise_2d(w.x - e, w.y)
+				var gy := bruit.get_noise_2d(w.x, w.y + e) - bruit.get_noise_2d(w.x, w.y - e)
+				var d := Vector2(gx, gy)
+				d = d.normalized() if d.length() > 1e-6 else Vector2.RIGHT
+				var l: float = pas * 0.62 * clampf((n - RELIEF_SEUIL) * 3.0, 0.40, 1.0)
+				relief_traits.append(Vector2(x, y) - d * l * 0.5)
+				relief_traits.append(Vector2(x, y) + d * l * 0.5)
+				if relief_traits.size() >= RELIEF_MAX * 2:
+					return
+			x += pas
+		y += pas
+
+
+## Ce point du cadre est-il sur la terre ? On ne teste que les anneaux dont la
+## boîte le contient — sans quoi ce serait soixante-huit tests par hachure, et
+## des milliers de hachures.
+func _sur_terre(w: Vector2) -> bool:
+	for a in anneaux:
+		if (a["bbox"] as Rect2).has_point(w) and Geometry2D.is_point_in_polygon(w, a["pts"]):
+			return true
+	return false
 
 
 ## LA ROSE DES VENTS, posée dans l'angle de la carte. Elle est à l'ÉCRAN et
@@ -908,40 +1072,9 @@ func _remplir_barre() -> void:
 	var serie: Dictionary = Sauvegarde.get_serie()
 	var e: Dictionary = Rec.etat_recompenses(ruban, serie)
 
-	# le grade, avec sa jauge de progression juste dessous
-	var bloc := VBoxContainer.new()
-	bloc.add_theme_constant_override("separation", int(round(4 * k)))
-	bloc.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	bloc.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	var nom := _label(String(g["nom"]), 13, TEXTE, true, false)
-	nom.clip_text = true
-	bloc.add_child(nom)
-	var jauge := ProgressBar.new()
-	jauge.show_percentage = false
-	# LA JAUGE NE S'ÉTIRE PAS. Dans un bloc en expansion elle filait sur toute
-	# la largeur du panneau et se lisait comme un trait égaré sous le grade.
-	jauge.custom_minimum_size = Vector2(110 * k, 3 * k)
-	jauge.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
-	jauge.value = 100.0 * float(g["part"])
-	jauge.add_theme_stylebox_override("background", Sty.boite(Color("#1f2a40"), Color.TRANSPARENT, 2 * k, 0))
-	jauge.add_theme_stylebox_override("fill", Sty.boite(ACCENT, Color.TRANSPARENT, 2 * k, 0))
-	bloc.add_child(jauge)
-	rangee_barre.add_child(bloc)
-
-	# la série, puis la monnaie du jeu — chacune dans sa pastille
-	if int(serie["n"]) >= 2:
-		rangee_barre.add_child(_pastille("» %d" % int(serie["n"]), ACCENT))
-	if app != null:
-		rangee_barre.add_child(_pastille("%d cr" % app.solde(), MUET))
-	if int(e["diamants"]) > 0:
-		rangee_barre.add_child(_pastille("◆ %d" % int(e["diamants"]), DIAMANT))
-	rangee_barre.add_child(_pastille("★ %d" % n, OR))
-	# « Les cartes » vit dans la barre, pas dans la colonne : c'est un geste de
-	# navigation, pas une étape du ruban, et il libère la hauteur qui manquait.
+	# À GAUCHE, LE GESTE. « Les cartes » n'est pas un compteur : c'est le seul
+	# objet cliquable de la barre, et il se tient du côté où le pouce arrive.
 	if app != null and app.plusieurs_cartes():
-		# Il gardait la palette BLEUE du prototype, seul objet de l'écran à ne
-		# pas être passé au laiton — et ça se voyait d'autant plus qu'il est
-		# dans l'angle. On lui pose la plaque des autres boutons.
 		var b := Sty.bouton("Les cartes", false, 12, k)
 		b.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		var pl := Sty.plaque(Sty.BOIS_CLAIR, Sty.LAITON, 8, k)
@@ -959,6 +1092,45 @@ func _remplir_barre() -> void:
 			b.add_theme_color_override(quoi, Sty.PAPIER)
 		b.pressed.connect(app.ouvrir_cartes)
 		rangee_barre.add_child(b)
+
+	# AU MILIEU, CE QU'ON A GAGNÉ. Les trois compteurs se lisent ensemble et
+	# se ressemblent : ils forment un bloc, centré par deux ressorts.
+	rangee_barre.add_child(_ressort())
+	if int(serie["n"]) >= 2:
+		rangee_barre.add_child(_pastille("» %d" % int(serie["n"]), ACCENT))
+	if app != null:
+		rangee_barre.add_child(_pastille("%d cr" % app.solde(), Sty.LAITON))
+	if int(e["diamants"]) > 0:
+		rangee_barre.add_child(_pastille("◆ %d" % int(e["diamants"]), DIAMANT))
+	rangee_barre.add_child(_pastille("★ %d" % n, OR))
+	rangee_barre.add_child(_ressort())
+
+	# À DROITE, LE GRADE. C'est le plus lent des trois — il ne change que
+	# toutes les vingt-cinq étoiles — donc celui qu'on consulte, pas celui
+	# qu'on surveille : il tient le bord, avec sa jauge sous le nom.
+	var bloc := VBoxContainer.new()
+	bloc.add_theme_constant_override("separation", int(round(3 * k)))
+	bloc.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	var nom := _label(String(g["nom"]), 13, TEXTE, true, false)
+	nom.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	bloc.add_child(nom)
+	var jauge := ProgressBar.new()
+	jauge.show_percentage = false
+	jauge.custom_minimum_size = Vector2(110 * k, 3 * k)
+	jauge.size_flags_horizontal = Control.SIZE_SHRINK_END
+	jauge.value = 100.0 * float(g["part"])
+	jauge.add_theme_stylebox_override("background", Sty.boite(Color(Sty.LAITON, 0.18), Color.TRANSPARENT, 2 * k, 0))
+	jauge.add_theme_stylebox_override("fill", Sty.boite(Sty.LAITON, Color.TRANSPARENT, 2 * k, 0))
+	bloc.add_child(jauge)
+	rangee_barre.add_child(bloc)
+
+
+## Un ressort : de l'espace qui s'étire, pour centrer ce qu'il encadre.
+func _ressort() -> Control:
+	var c := Control.new()
+	c.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	c.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return c
 
 
 ## Une pastille de compteur : le verre dépoli du bandeau de jeu, en plus petit.
