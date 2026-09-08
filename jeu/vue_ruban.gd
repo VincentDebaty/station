@@ -324,8 +324,15 @@ func fenetre() -> Dictionary:
 
 ## D'une position du cadre à l'écran, par la caméra courante.
 func ecran(p: Vector2) -> Vector2:
+	return _ecran_de(p, cam)
+
+
+## La même chose, par une caméra QUELCONQUE. Le cadrage doit pouvoir mesurer
+## ce que donnerait une caméra qu'il n'a pas encore adoptée : sans cela il ne
+## peut pas savoir où tomberont les plaques, donc pas cadrer ce qu'il montre.
+func _ecran_de(p: Vector2, c: Dictionary) -> Vector2:
 	var f := fenetre()
-	return _centre_carte() + (p - Vector2(cam["x"], cam["y"])) * cam["k"] * f["px"]
+	return _centre_carte() + (p - Vector2(c["x"], c["y"])) * float(c["k"]) * f["px"]
 
 
 ## Le milieu de la carte : ce qui reste à droite du panneau, dans la zone sûre.
@@ -340,11 +347,26 @@ func _centre_carte() -> Vector2:
 ## ce qui permet d'ancrer un semis dessiné à l'écran sur le terrain qu'il
 ## couvre.
 func monde(p: Vector2) -> Vector2:
+	return _monde_de(p, cam)
+
+
+func _monde_de(p: Vector2, c: Dictionary) -> Vector2:
 	var f := fenetre()
-	var k: float = cam["k"] * f["px"]
+	var k: float = float(c["k"]) * f["px"]
 	if k <= 0.0:
 		return Vector2.ZERO
-	return (p - _centre_carte()) / k + Vector2(cam["x"], cam["y"])
+	return (p - _centre_carte()) / k + Vector2(c["x"], c["y"])
+
+
+## Le degré de longitude d'une abscisse du cadre, et la latitude d'une
+## ordonnée : l'inverse de `_xy`. C'est ce qui permet de savoir quels
+## méridiens et quels parallèles passent dans la fenêtre.
+func _lon(x: float) -> float:
+	return proj["lo"] + (x - CADRE_L / 2) / (proj["cosm"] * proj["s"] * ETIREMENT_X)
+
+
+func _lat(y: float) -> float:
+	return proj["la"] + (CADRE_H / 2 - y) / proj["s"]
 
 
 ## Le rectangle d'écran que la carte occupe : à droite du panneau, sous la
@@ -401,47 +423,53 @@ func camera_voulue() -> Dictionary:
 	var ch := chapitre_vu()
 	if ch.is_empty():
 		return {"x": CADRE_L / 2, "y": CADRE_H / 2, "k": 1.0}
-	# Le voisinage, pas le chapitre entier : la gare courante avec sa
-	# précédente et ses trois suivantes.
-	var vues: Array = ch["gares"]
-	if vues.size() > 4:
-		var i: int = max(0, vues.find(ruban.gare_courante()))
-		var d: int = max(0, min(i - 1, vues.size() - 4))
-		vues = vues.slice(d, d + 4)
-	var b := boite(vues)
+	# CADRER CE QU'ON DESSINE, et rien d'autre. Le cadrage prenait un
+	# VOISINAGE — la gare courante, sa précédente et ses trois suivantes —
+	# alors que le dessin montre tout le chapitre : à York, Darlington tombait
+	# hors du cadrage tout en restant à l'écran, et la caméra poussait la
+	# scène dans un angle. « Le centrage n'est pas bon » (Vincent, 5 septembre
+	# 2026) : c'était ça, et c'était structurel.
+	var ids := gares_dessinees()
+	var b := boite(ids)
 	if b.is_empty():
 		return {"x": CADRE_L / 2, "y": CADRE_H / 2, "k": 1.0}
-	# LES NOMS DÉBORDENT À DROITE DES POINTS. Cadrer la boîte des seuls points
-	# laissait tout le contenu poussé vers la droite de l'écran, une plaque de
-	# large — « la carte devrait être mieux centrée » (4 septembre 2026). On
-	# mesure la plus longue plaque des gares cadrées et on décale la caméra
-	# d'une demi-plaque : le contenu revient au milieu.
-	# DEUX PASSES, parce que le calcul se mord la queue : la largeur d'une
-	# plaque est en pixels, sa traduction en unités dépend du zoom, et le zoom
-	# dépend de la largeur à cadrer. On zoome donc une première fois sur les
-	# points seuls, on en tire la place que prennent les noms, puis on refait
-	# le cadrage sur la boîte élargie. Deux passes suffisent : la correction
-	# de la seconde est petite devant la première.
-	var k := zoom_pour(b["w"], b["h"], 15, K_MAX_CHAPITRE)
-	var plaques := _largeur_plaques(vues, k)
-	k = zoom_pour(b["w"] + plaques, b["h"], 15, K_MAX_CHAPITRE)
-	plaques = _largeur_plaques(vues, k)
-	return {"x": b["x"] + plaques / 2.0, "y": b["y"], "k": k}
+	# TROIS PASSES, parce que le calcul se mord la queue : la place que prend
+	# une plaque est en pixels, sa traduction en unités du cadre dépend du
+	# zoom, et le zoom dépend de la place à ménager. On cadre donc les points
+	# seuls, on pose les plaques, on remesure l'encombrement réel, et on
+	# recommence. À la troisième passe plus rien ne bouge à l'œil.
+	var c := {"x": b["x"], "y": b["y"], "k": zoom_pour(b["w"], b["h"], 15, K_MAX_CHAPITRE)}
+	for passe in 3:
+		var r := _encombrement(ids, c)
+		if r.size.x <= 0.0 or r.size.y <= 0.0:
+			break
+		var a := _monde_de(r.position, c)
+		var z := _monde_de(r.end, c)
+		c = {"x": (a.x + z.x) / 2.0, "y": (a.y + z.y) / 2.0,
+			"k": zoom_pour(z.x - a.x, z.y - a.y, 10, K_MAX_CHAPITRE)}
+	return c
 
 
-## La plus large étiquette des gares cadrées, en unités du cadre.
-func _largeur_plaques(ids: Array, k: float) -> float:
-	if police == null or k <= 0.0:
-		return 0.0
-	var px: float = fenetre()["px"]
-	if px <= 0.0:
-		return 0.0
-	var large := 0.0
-	var t := int(round(15 * Sty.HUD_K))
+## L'encombrement RÉEL de la scène, à l'écran : les points et leurs plaques,
+## une fois celles-ci placées. C'est ce que la caméra doit contenir.
+func _encombrement(ids: Array, c: Dictionary) -> Rect2:
+	var plaques := _placer_plaques(ids, c)
+	var r := Rect2()
+	var premier := true
 	for id in ids:
-		large = max(large, police.get_string_size(nom_de(id), HORIZONTAL_ALIGNMENT_LEFT, -1, t).x
-			+ 46.0 * Sty.HUD_K)
-	return large / (k * px)
+		var p := pos(id)
+		if p == Vector2.INF:
+			continue
+		var m := _mesure_plaque(id)
+		var e := _ecran_de(p, c)
+		var rayon: float = m["r"] + 2.0 * Sty.HUD_K
+		var boites: Array = [Rect2(e - Vector2.ONE * rayon, Vector2.ONE * 2.0 * rayon)]
+		if plaques.has(id):
+			boites.append(plaques[id])
+		for boite_ in boites:
+			r = boite_ if premier else r.merge(boite_)
+			premier = false
+	return r
 
 
 func aller_camera(saut: bool = false) -> void:
@@ -529,6 +557,8 @@ func _draw() -> void:
 	var ch := chapitre_vu()
 	_grain()
 	_relief()
+	_graticule()
+	_fil_du_ruban()
 	var t := Time.get_ticks_msec() / 1000.0
 	var pulse := 0.5 + 0.5 * sin(t * 4.0)
 	# --- le rail du chapitre vu ------------------------------------------------
@@ -576,24 +606,18 @@ func _draw() -> void:
 	_rose_des_vents()
 
 	# --- les gares du chapitre vu, et la gare quittée ---------------------------
-	var dessinees: Array = []
-	if not ch.is_empty():
-		dessinees = ch["gares"].duplicate()
-	if not transit.is_empty() and not dessinees.has(transit["de"]):
-		dessinees.push_front(transit["de"])
+	var dessinees := gares_dessinees()
+	var plaques := _placer_plaques(dessinees, cam)
 	for id in dessinees:
 		var p := pos(id)
 		if p == Vector2.INF:
 			continue
 		var e := ecran(p)
-		var etat := etat_de_gare(id)
-		var chg := ruban.chapitre_de_gare(id)
-		var col := couleur_de_zone(chg["zone"]) if not chg.is_empty() else ACCENT
-		var fin: bool = not chg.is_empty() and chg["gares"][chg["gares"].size() - 1] == id
+		var m := _mesure_plaque(id)
 		var ici: bool = id == prochaine
-		var r: float = (6.0 if fin else 4.5) * Sty.HUD_K
+		var r: float = m["r"]
 		var teinte: Color
-		match etat:
+		match String(m["etat"]):
 			"avenir":
 				teinte = Color(Sty.LAITON, 0.30)
 			"fermee":
@@ -616,34 +640,181 @@ func _draw() -> void:
 		# LE NOM SUR UNE PLAQUE, comme sur une vraie carte ferroviaire : une
 		# étiquette posée à côté du point, et non un texte flottant que le
 		# relief traverse. Sarcelle et laiton quand la gare est tenue, papier
-		# fané quand elle attend son tour.
-		var nom := nom_de(id)
-		var taille := int(round((15 if fin else 13) * Sty.HUD_K))
-		var w := police.get_string_size(nom, HORIZONTAL_ALIGNMENT_LEFT, -1, taille).x
-		var prog := ruban.progression_de(id)
-		var st: int = Rub.etoiles_de(prog)
-		var dia: bool = Rec.est_diamant(prog)
-		var suffixe := "◆" if dia else ("★".repeat(st) if st > 0 else "")
-		var ws := police.get_string_size(suffixe, HORIZONTAL_ALIGNMENT_LEFT, -1, taille).x if suffixe != "" else 0.0
-		var ouverte: bool = etat == "faite" or etat == "courante" or etat == "payee"
-		var pad := 7.0 * Sty.HUD_K
-		var large := w + (ws + 5.0 * Sty.HUD_K if ws > 0 else 0.0) + 2 * pad
-		var haute := taille + 8.0 * Sty.HUD_K
-		var plaque := Rect2(e.x + r + 6 * Sty.HUD_K, e.y - haute / 2, large, haute)
-		draw_style_box(Sty.plaque(Sty.SARCELLE if ouverte else Color(Sty.BOIS_CLAIR, 0.9),
-			Color(Sty.LAITON, 0.9 if ouverte else 0.45), 5, Sty.HUD_K), plaque)
-		var encre: Color = Sty.PAPIER if ouverte else MUET
-		var xt := plaque.position.x + pad
-		Sty.texte_centre(self, police, taille, Vector2(xt + w / 2, e.y), nom, encre)
-		if suffixe != "":
-			Sty.texte_centre(self, police, taille,
-				Vector2(xt + w + 5 * Sty.HUD_K + ws / 2, e.y), suffixe, DIAMANT if dia else Sty.LAITON_CLAIR)
+		# fané quand elle attend son tour. Sa PLACE, elle, est négociée avec
+		# les autres plaques (_placer_plaques) : deux gares voisines ne se
+		# recouvrent plus.
+		var reserve: Rect2 = plaques.get(id, Rect2(
+			e.x + r + 6 * kk, e.y - float(m["haute"]) / 2, float(m["place"]), float(m["haute"])))
+		var plaque := Rect2(reserve.position, Vector2(float(m["large"]), float(m["haute"])))
+		var cy := plaque.get_center().y
+		# LE FILET DE RAPPEL : quand la plaque a dû s'écarter du point pour
+		# trouver sa place, un trait fin les rattache — sans quoi on ne sait
+		# plus quel nom va à quelle gare.
+		var attache := Vector2(clampf(e.x, plaque.position.x, plaque.end.x),
+			clampf(e.y, plaque.position.y, plaque.end.y))
+		if e.distance_to(attache) > r + 9.0 * kk:
+			draw_line(e, attache, Color(Sty.LAITON, 0.45), max(1.0, 1.0 * kk), true)
+		draw_style_box(Sty.plaque(Sty.SARCELLE if m["ouverte"] else Color(Sty.BOIS_CLAIR, 0.9),
+			Color(Sty.LAITON, 0.9 if m["ouverte"] else 0.45), 5, Sty.HUD_K), plaque)
+		var encre: Color = Sty.PAPIER if m["ouverte"] else MUET
+		var xt: float = plaque.position.x + float(m["pad"])
+		var w: float = m["w"]
+		Sty.texte_centre(self, police, int(m["taille"]), Vector2(xt + w / 2, cy), String(m["nom"]), encre)
+		if String(m["suffixe"]) != "":
+			Sty.texte_centre(self, police, int(m["taille"]),
+				Vector2(xt + w + 5 * kk + float(m["ws"]) / 2, cy), String(m["suffixe"]),
+				DIAMANT if m["dia"] else Sty.LAITON_CLAIR)
 		# une gare qu'on ne peut pas encore jouer porte son cadenas
-		if not ouverte:
-			var c := Vector2(plaque.end.x + 9 * Sty.HUD_K, e.y)
+		if not m["ouverte"]:
+			# la place réservée au cadenas est du côté opposé au point : une
+			# plaque posée à gauche porte donc son cadenas à gauche.
+			var a_gauche: bool = plaque.get_center().x < e.x
+			var c := Vector2(plaque.position.x - 9 * kk if a_gauche else plaque.end.x + 9 * kk, cy)
 			draw_style_box(Sty.boite(Color(Sty.BOIS_CLAIR, 0.95), Color(Sty.LAITON, 0.5), 3 * kk, max(1.0, kk)),
 				Rect2(c.x - 5 * kk, c.y - 4 * kk, 10 * kk, 8 * kk))
 			draw_arc(Vector2(c.x, c.y - 4 * kk), 3.2 * kk, PI, TAU, 12, Color(Sty.LAITON, 0.7), 1.4 * kk, true)
+
+
+# ------------------------------------------------------------------
+# LES PLAQUES — ce que porte chaque nom, et où il tient
+# ------------------------------------------------------------------
+## Les gares que la carte DESSINE : le chapitre vu, plus la gare qu'on vient
+## de quitter pendant un transit. Le cadrage lit la même liste — c'est ce qui
+## garantit que rien de visible ne tombe hors du cadre.
+func gares_dessinees() -> Array:
+	var ch := chapitre_vu()
+	var ids: Array = ch["gares"].duplicate() if not ch.is_empty() else []
+	if not transit.is_empty() and not ids.has(transit["de"]):
+		ids.push_front(transit["de"])
+	return ids
+
+
+## Ce que porte la plaque d'une gare, et la place qu'elle prend. Mesuré une
+## fois et relu par le placement, le cadrage et le dessin : trois calculs de
+## la même chose finissaient toujours par diverger.
+func _mesure_plaque(id: String) -> Dictionary:
+	var k := Sty.HUD_K
+	var chg := ruban.chapitre_de_gare(id)
+	var fin: bool = not chg.is_empty() and chg["gares"][chg["gares"].size() - 1] == id
+	var etat := etat_de_gare(id)
+	var ouverte: bool = etat == "faite" or etat == "courante" or etat == "payee"
+	var nom := nom_de(id)
+	var taille := int(round((15 if fin else 13) * k))
+	var w: float = police.get_string_size(nom, HORIZONTAL_ALIGNMENT_LEFT, -1, taille).x
+	var prog := ruban.progression_de(id)
+	var st: int = Rub.etoiles_de(prog)
+	var dia: bool = Rec.est_diamant(prog)
+	var suffixe := "◆" if dia else ("★".repeat(st) if st > 0 else "")
+	var ws: float = police.get_string_size(suffixe, HORIZONTAL_ALIGNMENT_LEFT, -1, taille).x if suffixe != "" else 0.0
+	var pad := 7.0 * k
+	var large: float = w + (ws + 5.0 * k if ws > 0.0 else 0.0) + 2.0 * pad
+	return {"etat": etat, "ouverte": ouverte, "fin": fin, "nom": nom, "taille": taille,
+		"w": w, "suffixe": suffixe, "ws": ws, "dia": dia, "pad": pad,
+		"large": large, "place": large + (18.0 * k if not ouverte else 0.0),
+		"haute": taille + 8.0 * k, "r": (6.0 if fin else 4.5) * k}
+
+
+## LA PLACE DE CHAQUE PLAQUE, NÉGOCIÉE. Toutes les plaques se posaient à
+## droite de leur point : deux gares proches se recouvraient — Darlington et
+## Middlesbrough, à quinze kilomètres l'une de l'autre (Vincent, 5 septembre
+## 2026). Chaque gare essaie donc huit positions autour de son point et garde
+## la moins mauvaise : ce qui pénalise, c'est recouvrir une plaque déjà posée,
+## couvrir un point de gare, traverser la voie, ou sortir de la carte. À
+## pénalité égale, la droite gagne — c'est là qu'on lit d'abord.
+const PLAQUE_JEU := 3.0
+
+func _placer_plaques(ids: Array, c: Dictionary) -> Dictionary:
+	var mis := {}
+	if police == null or ids.is_empty():
+		return mis
+	var k := Sty.HUD_K
+	var cadre := cadre_carte()
+	var pts := {}
+	for id in ids:
+		var p := pos(id)
+		if p != Vector2.INF:
+			pts[id] = _ecran_de(p, c)
+	var segs: Array = []
+	for i in range(1, ids.size()):
+		if pts.has(ids[i - 1]) and pts.has(ids[i]):
+			segs.append([pts[ids[i - 1]], pts[ids[i]]])
+	# L'ORDRE COMPTE : la première servie choisit librement. On sert donc la
+	# gare qui vient, puis les fins de chapitre, puis le reste dans l'ordre du
+	# rail — les plus importantes ont la meilleure place.
+	var ordre := ids.duplicate()
+	ordre.sort_custom(func(a, b): return _rang_de_plaque(a) < _rang_de_plaque(b))
+	# LA ROSE DES VENTS EST UN OBSTACLE, pas un fond : Middlesbrough est venu
+	# se poser dessus au premier essai. Elle occupe sa place avant tout le monde.
+	var poses: Array = [_cadre_rose()]
+	for id in ordre:
+		if not pts.has(id):
+			continue
+		var m := _mesure_plaque(id)
+		var e: Vector2 = pts[id]
+		var L: float = m["place"]
+		var H: float = m["haute"]
+		var d: float = float(m["r"]) + 6.0 * k
+		var cands: Array = [
+			Rect2(e.x + d, e.y - H / 2.0, L, H),
+			Rect2(e.x - d - L, e.y - H / 2.0, L, H),
+			Rect2(e.x + d * 0.4, e.y - d - H, L, H),
+			Rect2(e.x + d * 0.4, e.y + d, L, H),
+			Rect2(e.x - d * 0.4 - L, e.y - d - H, L, H),
+			Rect2(e.x - d * 0.4 - L, e.y + d, L, H),
+			Rect2(e.x - L / 2.0, e.y - d - H, L, H),
+			Rect2(e.x - L / 2.0, e.y + d, L, H),
+		]
+		var meilleur: Rect2 = cands[0]
+		var note := INF
+		for i in cands.size():
+			var q: float = float(i) * 22.0 + _note_plaque(cands[i], poses, pts, segs, cadre)
+			if q < note:
+				note = q
+				meilleur = cands[i]
+		poses.append(meilleur.grow(PLAQUE_JEU * k))
+		mis[id] = meilleur
+	return mis
+
+
+func _rang_de_plaque(id: String) -> int:
+	var chg := ruban.chapitre_de_gare(id)
+	var fin: bool = not chg.is_empty() and chg["gares"][chg["gares"].size() - 1] == id
+	var tete := 2
+	if id == prochaine:
+		tete = 0
+	elif fin:
+		tete = 1
+	return tete * 1000 + max(0, ruban.index_de(id))
+
+
+func _note_plaque(r: Rect2, poses: Array, pts: Dictionary, segs: Array, cadre: Rect2) -> float:
+	var k := Sty.HUD_K
+	var aire: float = max(1.0, r.size.x * r.size.y)
+	var n := 0.0
+	for autre in poses:
+		var i: Rect2 = r.intersection(autre)
+		if i.size.x > 0.0 and i.size.y > 0.0:
+			n += 900.0 * (i.size.x * i.size.y) / aire
+	for id in pts:
+		if r.grow(2.0 * k).has_point(pts[id]):
+			n += 400.0
+	for s in segs:
+		if _segment_coupe(r, s[0], s[1]):
+			n += 55.0
+	# ce qui déborde de la carte n'est pas une place : on paie au point sorti
+	n += 14.0 * (max(0.0, cadre.position.x - r.position.x) + max(0.0, r.end.x - cadre.end.x)
+		+ max(0.0, cadre.position.y - r.position.y) + max(0.0, r.end.y - cadre.end.y)) / k
+	return n
+
+
+func _segment_coupe(r: Rect2, a: Vector2, b: Vector2) -> bool:
+	if r.has_point(a) or r.has_point(b):
+		return true
+	var c: Array = [r.position, Vector2(r.end.x, r.position.y), r.end, Vector2(r.position.x, r.end.y)]
+	for i in 4:
+		if Geometry2D.segment_intersects_segment(a, b, c[i], c[(i + 1) % 4]) != null:
+			return true
+	return false
 
 
 ## UNE VOIE FERRÉE : le ballast sombre, les traverses, puis les deux files de
@@ -747,12 +918,97 @@ func _sur_terre(w: Vector2) -> bool:
 	return false
 
 
+## LE GRATICULE — méridiens et parallèles, à l'encre pâle. C'est la marque de
+## toute carte ancienne, et c'est surtout ce qui donne une ÉCHELLE : un brun
+## uni ne dit pas si l'on voit trois vallées ou trois pays. Le pas suit le
+## zoom — on prend la plus fine graduation qui laisse encore soixante-dix
+## points entre deux traits, sans quoi le quadrillage devient un grillage.
+const GRADUATIONS := [20.0, 10.0, 5.0, 2.0, 1.0, 0.5, 0.2, 0.1]
+
+func _graticule() -> void:
+	if proj.is_empty():
+		return
+	var r := cadre_carte()
+	var a := monde(r.position)
+	var b := monde(r.end)
+	var px: float = fenetre()["px"] * cam["k"]
+	var pas: float = GRADUATIONS[0]
+	for g in GRADUATIONS:
+		if g * proj["cosm"] * proj["s"] * ETIREMENT_X * px >= 70.0:
+			pas = g
+	var col := Color(Sty.TERRE_OMBRE, 0.17)
+	var ep: float = max(1.0, 0.9 * Sty.HUD_K)
+	var traits := PackedVector2Array()
+	var lo: float = ceil(_lon(a.x) / pas) * pas
+	while lo <= _lon(b.x) and traits.size() < 200:
+		var x := ecran(_xy(lo, 0.0)).x
+		traits.append(Vector2(x, r.position.y))
+		traits.append(Vector2(x, r.end.y))
+		lo += pas
+	var la: float = ceil(_lat(b.y) / pas) * pas
+	while la <= _lat(a.y) and traits.size() < 400:
+		var y := ecran(_xy(0.0, la)).y
+		traits.append(Vector2(r.position.x, y))
+		traits.append(Vector2(r.end.x, y))
+		la += pas
+	if not traits.is_empty():
+		draw_multiline(traits, col, ep)
+
+
+## LE FIL DU RUBAN — tout le parcours, en trait sourd, sous le chapitre en
+## cours. La carte ne montrait que cinq gares au milieu d'un brun vide : « le
+## fond n'est pas très engageant » (Vincent, 5 septembre 2026). Ce fil dit
+## d'où l'on vient et où l'on va, et il le dit avec la seule chose que cette
+## carte possède vraiment — son propre tracé. Un SAUT ne s'y dessine pas :
+## rien ne relie deux bouts de rail qu'aucune voie ne relie.
+func _fil_du_ruban() -> void:
+	if ruban == null:
+		return
+	var vu := cadre_carte().grow(80.0)
+	var traits := PackedVector2Array()
+	var points := PackedVector2Array()
+	var vus := chapitre_vu()
+	var rang_vu: int = int(vus["rang"]) if not vus.is_empty() else -99
+	var prec := Vector2.INF
+	for ch in ruban.chapitres:
+		if ch.get("saut") != null:
+			prec = Vector2.INF
+		var voisin: bool = absi(int(ch["rang"]) - rang_vu) == 1
+		for id in ch["gares"]:
+			var p := pos(id)
+			if p == Vector2.INF:
+				continue
+			var e := ecran(p)
+			if prec != Vector2.INF and (vu.has_point(prec) or vu.has_point(e)):
+				traits.append(prec)
+				traits.append(e)
+			if voisin and vu.has_point(e):
+				points.append(e)
+			prec = e
+	if not traits.is_empty():
+		draw_multiline(traits, Color(Sty.LAITON, 0.22), max(1.0, 1.3 * Sty.HUD_K))
+	# les gares des chapitres d'avant et d'après : des points sourds, sans nom
+	for e in points:
+		draw_circle(e, 3.0 * Sty.HUD_K, Color(Sty.LAITON, 0.32))
+
+
 ## LA ROSE DES VENTS, posée dans l'angle de la carte. Elle est à l'ÉCRAN et
 ## non sur le terrain : un ornement de cartouche ne dérive pas avec le zoom.
+## Où la rose se pose, et la place qu'elle prend : le placement des plaques
+## lit le même rectangle.
+func _centre_rose() -> Vector2:
+	var k := Sty.HUD_K
+	return Vector2(get_viewport_rect().size.x - Sty.marges["droite"] - 34 * k, hauteur_barre() + 38 * k)
+
+
+func _cadre_rose() -> Rect2:
+	var d := 24.0 * Sty.HUD_K
+	return Rect2(_centre_rose() - Vector2.ONE * d, Vector2.ONE * 2.0 * d)
+
+
 func _rose_des_vents() -> void:
 	var k := Sty.HUD_K
-	var e := get_viewport_rect().size
-	var c := Vector2(e.x - Sty.marges["droite"] - 34 * k, hauteur_barre() + 38 * k)
+	var c := _centre_rose()
 	var R := 15.0 * k
 	# Plus petite et plus franche : à 22 unités et 38 % d'opacité elle occupait
 	# un coin entier sans se lire. Un ornement se remarque ou disparaît.
@@ -1061,12 +1317,33 @@ func rebatir() -> void:
 	pied.add_child(_pied())
 
 
-## LA BARRE DU HAUT : le grade et sa jauge à gauche, les compteurs à droite,
-## sur toute la largeur de l'écran. Ce sont des faits de COMPTE — ils ne
-## bougent pas quand on change de chapitre.
+## LA BARRE DU HAUT, EN TROIS FENTES : le geste à gauche, les compteurs au
+## milieu, le grade à droite. Ce sont des faits de COMPTE — ils ne bougent pas
+## quand on change de chapitre.
+##
+## DEUX RESSORTS NE CENTRENT PAS. Un ressort partage l'espace LIBRE, pas
+## l'espace total : le bloc du grade étant trois fois plus large que le bouton
+## des cartes, les compteurs tombaient nettement à gauche du milieu de
+## l'écran. On force donc les deux fentes de bord à la même largeur — celle de
+## la plus large — et le milieu est vraiment au milieu.
 func _remplir_barre() -> void:
 	_vider(rangee_barre)
 	var k := Sty.HUD_K
+	var gauche := HBoxContainer.new()
+	gauche.alignment = BoxContainer.ALIGNMENT_BEGIN
+	gauche.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	gauche.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	rangee_barre.add_child(gauche)
+	var milieu := HBoxContainer.new()
+	milieu.add_theme_constant_override("separation", int(round(10 * k)))
+	milieu.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	milieu.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	rangee_barre.add_child(milieu)
+	var droite := HBoxContainer.new()
+	droite.alignment = BoxContainer.ALIGNMENT_END
+	droite.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	droite.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	rangee_barre.add_child(droite)
 	var n: int = Rec.etoiles_total(Sauvegarde.progression_toutes_cartes())
 	var g: Dictionary = Rec.grade_de(n)
 	var serie: Dictionary = Sauvegarde.get_serie()
@@ -1091,19 +1368,17 @@ func _remplir_barre() -> void:
 		for quoi in ["font_color", "font_hover_color", "font_pressed_color"]:
 			b.add_theme_color_override(quoi, Sty.PAPIER)
 		b.pressed.connect(app.ouvrir_cartes)
-		rangee_barre.add_child(b)
+		gauche.add_child(b)
 
 	# AU MILIEU, CE QU'ON A GAGNÉ. Les trois compteurs se lisent ensemble et
-	# se ressemblent : ils forment un bloc, centré par deux ressorts.
-	rangee_barre.add_child(_ressort())
+	# se ressemblent : ils forment un bloc.
 	if int(serie["n"]) >= 2:
-		rangee_barre.add_child(_pastille("» %d" % int(serie["n"]), ACCENT))
+		milieu.add_child(_pastille("» %d" % int(serie["n"]), ACCENT))
 	if app != null:
-		rangee_barre.add_child(_pastille("%d cr" % app.solde(), Sty.LAITON))
+		milieu.add_child(_pastille("%d cr" % app.solde(), Sty.LAITON))
 	if int(e["diamants"]) > 0:
-		rangee_barre.add_child(_pastille("◆ %d" % int(e["diamants"]), DIAMANT))
-	rangee_barre.add_child(_pastille("★ %d" % n, OR))
-	rangee_barre.add_child(_ressort())
+		milieu.add_child(_pastille("◆ %d" % int(e["diamants"]), DIAMANT))
+	milieu.add_child(_pastille("★ %d" % n, OR))
 
 	# À DROITE, LE GRADE. C'est le plus lent des trois — il ne change que
 	# toutes les vingt-cinq étoiles — donc celui qu'on consulte, pas celui
@@ -1122,15 +1397,16 @@ func _remplir_barre() -> void:
 	jauge.add_theme_stylebox_override("background", Sty.boite(Color(Sty.LAITON, 0.18), Color.TRANSPARENT, 2 * k, 0))
 	jauge.add_theme_stylebox_override("fill", Sty.boite(Sty.LAITON, Color.TRANSPARENT, 2 * k, 0))
 	bloc.add_child(jauge)
-	rangee_barre.add_child(bloc)
+	droite.add_child(bloc)
 
-
-## Un ressort : de l'espace qui s'étire, pour centrer ce qu'il encadre.
-func _ressort() -> Control:
-	var c := Control.new()
-	c.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	c.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	return c
+	# les deux bords à la même largeur : c'est cela, et cela seul, qui met le
+	# milieu au milieu. On ne le fait que si les trois blocs y tiennent —
+	# mieux vaut un centrage approximatif qu'un compteur coupé.
+	var bord: float = max(gauche.get_combined_minimum_size().x, droite.get_combined_minimum_size().x)
+	var dispo: float = get_viewport_rect().size.x - Sty.marges["gauche"] - Sty.marges["droite"] - 36.0 * k
+	if 2.0 * bord + milieu.get_combined_minimum_size().x + 28.0 * k <= dispo:
+		gauche.custom_minimum_size.x = bord
+		droite.custom_minimum_size.x = bord
 
 
 ## Une pastille de compteur : le verre dépoli du bandeau de jeu, en plus petit.
@@ -1423,13 +1699,19 @@ func _cartouche(id: String) -> Control:
 	filet.add_theme_stylebox_override("separator", Sty.boite(Sty.PAPIER_OMBRE, Color.TRANSPARENT, 0, 0))
 	filet.add_theme_constant_override("separation", int(round(10 * k)))
 	v.add_child(filet)
-	var grille := GridContainer.new()
-	grille.columns = 4
-	grille.add_theme_constant_override("h_separation", int(round(16 * k)))
+	# LES QUATRE MESURES SUR UNE VRAIE GRILLE. Une GridContainer donne à chaque
+	# colonne la largeur de son contenu : « QUAIS » occupait le tiers de la
+	# place de « DIFFICULTÉ », et aucune des quatre valeurs ne tombait sous une
+	# verticale commune — « l'alignement n'est pas toujours correct » (Vincent,
+	# 5 septembre 2026). Quatre fentes de largeur égale alignent les intitulés
+	# ET les valeurs.
+	var grille := HBoxContainer.new()
+	grille.add_theme_constant_override("separation", int(round(8 * k)))
 	for trio in [["Quais", str(quais), "loco"], ["Directions", str(dirs), "aiguille"],
 			["Difficulté", _pips(d), ""], ["Pour 3 ★", "%d min" % int(seuils["trois"]), "horloge"]]:
 		var cell := VBoxContainer.new()
-		cell.add_theme_constant_override("separation", 0)
+		cell.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		cell.add_theme_constant_override("separation", int(round(2 * k)))
 		cell.add_child(_label(String(trio[0]).to_upper(), 11, Sty.ENCRE_MUET, true, false))
 		# la figure à gauche de la valeur, comme sur la maquette
 		var ligne := HBoxContainer.new()
