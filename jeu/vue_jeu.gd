@@ -451,9 +451,16 @@ func _draw() -> void:
 	_dessiner_itineraires()
 	_dessiner_convois(sel, t)
 	_dessiner_signaux(t)
-	_dessiner_badges(t)
 	draw_set_transform(Vector2.ZERO)
 	_dessiner_hud(t)
+	# LES PASTILLES PASSENT EN DERNIER. « Il doit être au-dessus de tout » : une
+	# heure de départ est la seule chose de l'écran qui commande un geste TOUT
+	# DE SUITE, et elle se retrouvait sous le cadran quand un convoi tenait le
+	# premier quai. Le bandeau est dessiné avant elles — et il leur sert
+	# d'obstacle, pour qu'elles n'aient pas non plus à le couvrir.
+	draw_set_transform(d)
+	_dessiner_badges(t)
+	draw_set_transform(Vector2.ZERO)
 	_dessiner_coach(t)
 	_dessiner_fin()
 
@@ -729,13 +736,18 @@ func _obstacles_de_badge() -> Array:
 		var nom := String(G["portals"][pname]["label"])
 		var w: float = f.get_string_size(nom, HORIZONTAL_ALIGNMENT_LEFT, -1, t).x
 		var c: Vector2 = plan.position_nom(pname)
-		out.append(Rect2(c.x - w / 2.0 - 5, c.y - float(t) * 0.8, w + 10, float(t) * 1.6))
+		out.append(Rect2(c.x - w / 2.0 - 4, c.y - float(t) * 0.6, w + 8, float(t) * 1.2))
 	return out
 
 
-## LES ÉCARTS ESSAYÉS, dans l'ordre : à sa place, puis un cran plus haut, puis
-## un cran plus bas, et ainsi de suite. Le haut d'abord — au-dessus d'une voie
-## d'approche il n'y a rien, en dessous il y a la voie suivante.
+## L'ESQUIVE EST HORIZONTALE, ET C'EST TOUT LE POINT. Elle était verticale :
+## une pastille qui rencontrait un obstacle sautait d'un cran vers le haut, et
+## comme la rencontre dépend de l'endroit où se trouve le convoi, elle changeait
+## de niveau EN COURS DE ROUTE. « L'heure au-dessus du convoi doit rester au
+## même niveau qu'au départ tout le temps du trajet » (Vincent, 5 septembre
+## 2026) — c'est exact, et c'est ce qui la rattache à son convoi : une étiquette
+## qui monte et descend toute seule n'appartient plus à rien. Elle garde donc sa
+## hauteur, toujours, et s'écarte LE LONG de la voie, où il y a de la place.
 const BADGE_ECARTS := [0.0, -1.0, 1.0, -2.0, 2.0, -3.0, 3.0]
 
 func _dessiner_badges(t: float) -> void:
@@ -744,7 +756,19 @@ func _dessiner_badges(t: float) -> void:
 	# le pas à ce qui est là avant elle, et l'ordre des convois ne change pas
 	# dans une journée — la place d'une pastille ne saute donc pas d'une image
 	# à l'autre.
+	# les noms de portail, le bandeau, puis les pastilles déjà posées. Le
+	# bandeau vit en coordonnées d'écran et le plan est décalé : on le ramène.
 	var pris := _obstacles_de_badge()
+	var d := decalage()
+	for cle in zones_hud:
+		var z: Rect2 = zones_hud[cle]
+		pris.append(Rect2(z.position - d, z.size))
+	# LA PLACE DISPONIBLE, en coordonnées du plan : une esquive qui sort de
+	# l'écran ne vaut rien — deux convois en file sur la même voie d'approche
+	# ont envoyé la seconde pastille hors cadre au premier essai.
+	var vue := Rect2(Vector2(Sty.marges["gauche"], Sty.marges["haut"]) - d,
+		size_ecran() - Vector2(Sty.marges["gauche"] + Sty.marges["droite"],
+			Sty.marges["haut"] + Sty.marges["bas"]))
 	for tr in enc.trains:
 		if not positions.has(tr.id):
 			continue
@@ -774,19 +798,36 @@ func _dessiner_badges(t: float) -> void:
 		# pour qu'une pastille qui doit s'écarter ne parte pas au loin.
 		var centre := Vector2(float(tete["x"]), float(tete["y"]) - 42.0 * k)
 		var r := Rect2(centre.x - large / 2.0, centre.y - 10.0 * k, large, 20.0 * k)
-		var pas := r.size.y * 0.62 + 4.0 * k
+		var pas := r.size.x * 0.62 + 6.0 * k
+		var repli := Rect2()
+		var a_repli := false
 		for ecart in BADGE_ECARTS:
-			var essai := Rect2(r.position + Vector2(0, ecart * pas), r.size)
+			var essai := Rect2(r.position + Vector2(ecart * pas, 0), r.size)
+			# ON N'ESQUIVE QUE CE QU'ON COUVRE VRAIMENT. Testée bord à bord, la
+			# pastille frôlait le nom de portail de six unités — invisible — et
+			# s'écartait pour cela de deux crans, soit cent soixante unités :
+			# elle finissait à l'autre bout de la voie, loin de son convoi. On
+			# teste un rectangle rétréci : un frôlement ne coûte plus rien.
+			var test := essai.grow(-5.0 * k)
 			var libre := true
 			for o in pris:
-				if essai.intersects(o):
+				if test.intersects(o):
 					libre = false
 					break
-			if libre:
+			if not libre:
+				continue
+			# une place libre MAIS hors cadre ne sert que de dernier recours
+			if not a_repli:
+				repli = essai
+				a_repli = true
+			if vue.encloses(essai):
+				a_repli = false
 				r = essai
 				break
+		if a_repli:
+			r = repli
 		pris.append(r)
-		centre.y = r.get_center().y
+		centre = r.get_center()
 		# un convoi encore à l'arrêt dont le retard court réclame un aiguillage :
 		# le badge clignote (en opacité seule).
 		var a: float = clign if (en_retard and not tr.settled) else 1.0
