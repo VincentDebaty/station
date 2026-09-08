@@ -699,8 +699,38 @@ func _cadran(centre: Vector2, col: Color, k: float = 1.0) -> void:
 	draw_line(centre, centre + Vector2(2.6 * k, 1.6 * k), col, 1.4 * k, true)
 
 
+## LES NOMS DE PORTAIL, EN RECTANGLES. Ce sont les seules choses fixes du plan
+## qu'une pastille puisse recouvrir, et elle le faisait systématiquement : un
+## convoi qui attend sur la deuxième voie d'approche a sa tête 34 unités sous
+## le point de convergence, sa pastille se pose 60 au-dessus de sa tête, donc
+## 26 au-dessus du point — c'est-à-dire exactement là où le nom se tient
+## (34 au-dessus, borné). Ce n'était pas de la malchance, c'était géométrique :
+## « 07:12 » couvrait LEEDS à chaque service.
+func _obstacles_de_badge() -> Array:
+	var out: Array = []
+	if plan == null or G.is_empty():
+		return out
+	var f := Sty.sans(600)
+	for pname in G["portals"]:
+		var nom := String(G["portals"][pname]["label"])
+		var w: float = f.get_string_size(nom, HORIZONTAL_ALIGNMENT_LEFT, -1, 15).x
+		var c: Vector2 = plan.position_nom(pname)
+		out.append(Rect2(c.x - w / 2.0 - 5, c.y - 12, w + 10, 24))
+	return out
+
+
+## LES ÉCARTS ESSAYÉS, dans l'ordre : à sa place, puis un cran plus haut, puis
+## un cran plus bas, et ainsi de suite. Le haut d'abord — au-dessus d'une voie
+## d'approche il n'y a rien, en dessous il y a la voie suivante.
+const BADGE_ECARTS := [0.0, -1.0, 1.0, -2.0, 2.0]
+
 func _dessiner_badges(t: float) -> void:
 	var clign := 0.22 + 0.78 * (0.5 + 0.5 * sin(t * TAU / 0.9))   # badge-blink
+	# les noms de portail, puis les pastilles déjà posées : une pastille cède
+	# le pas à ce qui est là avant elle, et l'ordre des convois ne change pas
+	# dans une journée — la place d'une pastille ne saute donc pas d'une image
+	# à l'autre.
+	var pris := _obstacles_de_badge()
 	for tr in enc.trains:
 		if not positions.has(tr.id):
 			continue
@@ -724,6 +754,19 @@ func _dessiner_badges(t: float) -> void:
 		var tete: Dictionary = positions[tr.id][0]
 		var centre := Vector2(float(tete["x"]), float(tete["y"]) - 40.0 * k)
 		var r := Rect2(centre.x - large / 2.0, centre.y - 10.0 * k, large, 20.0 * k)
+		var pas := r.size.y + 6.0 * k
+		for ecart in BADGE_ECARTS:
+			var essai := Rect2(r.position + Vector2(0, ecart * pas), r.size)
+			var libre := true
+			for o in pris:
+				if essai.intersects(o):
+					libre = false
+					break
+			if libre:
+				r = essai
+				break
+		pris.append(r)
+		centre.y = r.get_center().y
 		# un convoi encore à l'arrêt dont le retard court réclame un aiguillage :
 		# le badge clignote (en opacité seule).
 		var a: float = clign if (en_retard and not tr.settled) else 1.0
