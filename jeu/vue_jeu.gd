@@ -440,7 +440,6 @@ func _draw() -> void:
 	_dessiner_signaux(t)
 	_dessiner_badges(t)
 	draw_set_transform(Vector2.ZERO)
-	_bordure_du_pupitre()
 	_dessiner_hud(t)
 	_dessiner_coach(t)
 	_dessiner_fin()
@@ -474,14 +473,25 @@ func _boucle(contour: PackedVector2Array) -> PackedVector2Array:
 	return b
 
 
-## Les hachures du quai fermé : le motif 8 × 8 de js/render.js, une barre
-## verticale toutes les huit unités.
+## LES HACHURES DU QUAI FERMÉ. Le prototype en posait une VERTICALE toutes les
+## huit unités : sur une plaque de 262 par 42, cela faisait trente-trois barres
+## rouges collées — un code-barres, et c'est exactement ce que Vincent a vu.
+## Une voie condamnée se barre en DIAGONALE, c'est le geste universel, et il
+## en faut peu : un trait tous les seize points suffit à dire « pas ici ».
+## Le rouge reste, il est la signalisation — il baisse seulement d'intensité,
+## parce qu'un signal qu'on hurle n'est pas plus clair qu'un signal qu'on dit.
 func _hachures(r: Rect2, col: Color) -> void:
-	var inner := r.grow(-4)
-	var x := inner.position.x
-	while x < inner.end.x:
-		draw_line(Vector2(x, inner.position.y), Vector2(x, inner.end.y), col, 2.0)
-		x += 8.0
+	var inner := r.grow(-5)
+	var pas := 16.0
+	# une diagonale à 45° est la droite x + y = c : on la coupe au rectangle
+	var c := inner.position.x + inner.position.y
+	var fin := inner.end.x + inner.end.y
+	while c <= fin:
+		var x0: float = max(inner.position.x, c - inner.end.y)
+		var x1: float = min(inner.end.x, c - inner.position.y)
+		if x1 > x0:
+			draw_line(Vector2(x0, c - x0), Vector2(x1, c - x1), col, 2.6, true)
+		c += pas
 
 
 func _dessiner_quais(sel, t: float) -> void:
@@ -495,10 +505,17 @@ func _dessiner_quais(sel, t: float) -> void:
 
 		# FERMÉ : pilule éteinte, hachures, numéro estompé, heure de réouverture
 		if enc.platform_closed(pid):
+			# LA PLAQUE EST DÉPOSÉE : creusée, barrée en diagonale, cerclée de
+			# rouge. Le numéro s'éteint sans disparaître — on doit encore
+			# pouvoir dire DE QUEL quai on parle.
 			draw_colored_polygon(contour, Sty.POSTE_QUAI_FERME)
-			_hachures(r, Color(Sty.ROUGE, 0.5))
-			draw_polyline(_boucle(contour), Sty.POSTE_BORD, 1.5, true)
-			Sty.texte_centre(self, Sty.sans(600), 24, r.get_center(), str(int(pid)), Color(Sty.TEXTE, 0.28))
+			draw_polyline(_boucle(contour), Color(0, 0, 0, 0.45), 3.0, true)
+			_hachures(r, Color(Sty.ROUGE, 0.26))
+			draw_polyline(_boucle(contour), Color(Sty.ROUGE, 0.55), 1.6, true)
+			# le numéro se détoure : les hachures le traversent, et il faut
+			# encore pouvoir dire DE QUEL quai on parle.
+			Sty.texte_centre(self, Sty.sans(600), 24, r.get_center(), str(int(pid)),
+				Color(Sty.TEXTE, 0.50), 5, Color(0, 0, 0, 0.65))
 			var fin := ""
 			for ev in enc.events:
 				if ev.get("type") == "closure" and ev["plat"] == pid and ev["revealed"] and not ev["cleared"]:
@@ -768,7 +785,7 @@ func _dessiner_hud(t: float) -> void:
 	var w_fl: float = max(20.0 * k, sans.get_string_size(drapeau, HORIZONTAL_ALIGNMENT_LEFT, -1, ti.call(15)).x)
 	var w_nm := gras.get_string_size(nom, HORIZONTAL_ALIGNMENT_LEFT, -1, ti.call(13)).x
 	var w_pips := (5.0 * 4.0 + 4.0 * 3.0) * k
-	var large := (10.0 + 14.0 + 6.0) * k + w_fl + 6.0 * k + w_nm + 3.0 * k + w_pips + 13.0 * k
+	var large := (10.0 + 14.0 + 6.0) * k + w_fl + 6.0 * k + w_nm + 12.0 * k + w_pips + 13.0 * k
 	var chip := Rect2(Sty.marges["gauche"] + 4 * k, Sty.marges["haut"] + 10 * k, large, 34 * k)
 	zones_hud["carte"] = chip
 	_chip(chip, Sty.BORD, k)
@@ -779,7 +796,9 @@ func _dessiner_hud(t: float) -> void:
 	Sty.texte_centre(self, sans, ti.call(15), Vector2(x + w_fl / 2.0, cy), drapeau, Sty.TEXTE)
 	x += w_fl + 6.0 * k
 	Sty.texte_centre(self, gras, ti.call(13), Vector2(x + w_nm / 2.0, cy), nom, Sty.TEXTE)
-	x += w_nm + 3.0 * k
+	# LA JAUGE RESPIRE. Trois unités séparaient « York » de ses crans : le nom
+	# et la difficulté se lisaient comme un seul bloc, « York|||||».
+	x += w_nm + 12.0 * k
 	# la difficulté : la MÊME jauge à cinq crans que partout dans le jeu
 	for i in range(5):
 		draw_style_box(Sty.boite(Sty.AMBRE if i < d else Sty.PIP_ETEINT, Color.TRANSPARENT, 1.5 * k, 0),
@@ -865,13 +884,14 @@ func _dessiner_hud(t: float) -> void:
 					draw_line(c + u * 6.5 * k, c + u * 9.0 * k, Sty.TEXTE, 1.8 * k, true)
 		bx -= (34.0 + 8.0) * k
 
-	# --- la ligne d'aide, en bas : hors prototype, elle porte la graine ------
-	# Le jeu web est « 100 % visuel » et n'a aucune bande de texte. Celle-ci est
-	# un outil de mise au point — c'est elle qui donne la graine à citer dans un
-	# retour de test. Volontairement discrète, et elle partira au moteur final.
-	# Elle ne suit PAS le facteur du bandeau : grossie, elle déborde de l'écran
-	# d'un téléphone (mesuré le 3 septembre 2026). Petite, elle reste lisible
-	# quand on la cherche et invisible quand on joue — ce qu'on veut d'elle.
+	# --- la ligne de mise au point : SUR DEMANDE SEULEMENT ------------------
+	# Elle porte la graine à citer dans un retour de test, et c'est elle qui a
+	# permis de mesurer HUD_K sur l'appareil quand tout y paraissait minuscule.
+	# Ce travail est fait : elle ne s'affiche plus qu'avec `STATION_MESURE=1`,
+	# et l'écran redevient ce que le jeu web a toujours été — 100 % visuel,
+	# sans une bande de texte.
+	if OS.get_environment("STATION_MESURE") == "":
+		return
 	draw_string(sans, Vector2(Sty.marges["gauche"] + 18, size_ecran().y - Sty.marges["bas"] - 14),
 		"graine %d · journée en %d ms · %s%s"
 			% [graine, duree_generation_ms, _niveau_texte(),
@@ -883,26 +903,6 @@ func _dessiner_hud(t: float) -> void:
 ## Le PROJECTEUR : tout l'écran s'assombrit sauf la cible (#coach-ring, dont
 ## l'ombre de 9999 px fait exactement cela sur le web). Sans lui, le repère
 ## désigne sans isoler, et l'œil continue de partir ailleurs.
-## LE LISERÉ DU PUPITRE et ses quatre vis. C'est peu de chose, et c'est ce qui
-## fait qu'on regarde un OBJET posé devant soi plutôt qu'un fond d'écran.
-func _bordure_du_pupitre() -> void:
-	var k := Sty.HUD_K
-	var e := size_ecran()
-	var r := Rect2(Sty.marges["gauche"] + 5 * k, Sty.marges["haut"] + 5 * k,
-		e.x - Sty.marges["gauche"] - Sty.marges["droite"] - 10 * k,
-		e.y - Sty.marges["haut"] - Sty.marges["bas"] - 10 * k)
-	if r.size.x <= 0.0 or r.size.y <= 0.0:
-		return
-	var contour := Sty.rect_arrondi(r, Sty.R_GRAND * k)
-	var ferme := contour.duplicate()
-	ferme.append(contour[0])
-	draw_polyline(ferme, Color(Sty.POSTE_BORD, 0.30), max(1.0, 1.2 * k), true)
-	for c in [r.position + Vector2(14, 14) * k, Vector2(r.end.x - 14 * k, r.position.y + 14 * k),
-			Vector2(r.position.x + 14 * k, r.end.y - 14 * k), r.end - Vector2(14, 14) * k]:
-		draw_circle(c, 3.4 * k, Color(Sty.POSTE_BORD, 0.40))
-		draw_line(c + Vector2(-2, -0.6) * k, c + Vector2(2, 0.6) * k, Color(0, 0, 0, 0.45), 1.1 * k, true)
-
-
 func _dessiner_coach(t: float) -> void:
 	if coach_cible.is_empty():
 		return
