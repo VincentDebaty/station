@@ -757,10 +757,15 @@ func _dessiner_badges(t: float) -> void:
 		var cadran: bool = not en_retard
 		var large: float = w + 24.0 * k + (14.0 * k if cadran else 0.0)
 		var tete: Dictionary = positions[tr.id][0]
-		# QUARANTE-DEUX AU-DESSUS DE SA TÊTE, et cette valeur ne dépend de rien
+		# TRENTE-DEUX AU-DESSUS DE SA TÊTE, et cette valeur ne dépend de rien
 		# d'autre : c'est ce qui fait que la pastille suit exactement le
 		# mouvement du convoi, sans jamais glisser par rapport à lui.
-		var centre := Vector2(float(tete["x"]), float(tete["y"]) - 42.0 * k)
+		#
+		# Elle était à quarante-deux, ce qui laissait vingt-sept unités de vide
+		# entre le bas de la pastille et le haut du quai — assez pour qu'elle
+		# paraisse flotter au-dessus plutôt que d'appartenir au convoi. À
+		# trente-deux il en reste douze : elle se pose dessus.
+		var centre := Vector2(float(tete["x"]), float(tete["y"]) - 32.0 * k)
 		var r := Rect2(centre.x - large / 2.0, centre.y - 10.0 * k, large, 20.0 * k)
 		# un convoi encore à l'arrêt dont le retard court réclame un aiguillage :
 		# le badge clignote (en opacité seule).
