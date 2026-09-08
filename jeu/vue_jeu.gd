@@ -719,56 +719,23 @@ func _cadran(centre: Vector2, col: Color, k: float = 1.0) -> void:
 	draw_line(centre, centre + Vector2(2.6 * k, 1.6 * k), col, 1.4 * k, true)
 
 
-## LES NOMS DE PORTAIL, EN RECTANGLES. Ce sont les seules choses fixes du plan
-## qu'une pastille puisse recouvrir, et elle le faisait systématiquement : un
-## convoi qui attend sur la deuxième voie d'approche a sa tête 34 unités sous
-## le point de convergence, sa pastille se pose 60 au-dessus de sa tête, donc
-## 26 au-dessus du point — c'est-à-dire exactement là où le nom se tient
-## (34 au-dessus, borné). Ce n'était pas de la malchance, c'était géométrique :
-## « 07:12 » couvrait LEEDS à chaque service.
-func _obstacles_de_badge() -> Array:
-	var out: Array = []
-	if plan == null or G.is_empty():
-		return out
-	var f := Sty.titre(600)
-	var t: int = Plan.taille_nom()
-	for pname in G["portals"]:
-		var nom := String(G["portals"][pname]["label"])
-		var w: float = f.get_string_size(nom, HORIZONTAL_ALIGNMENT_LEFT, -1, t).x
-		var c: Vector2 = plan.position_nom(pname)
-		out.append(Rect2(c.x - w / 2.0 - 4, c.y - float(t) * 0.6, w + 8, float(t) * 1.2))
-	return out
-
-
-## L'ESQUIVE EST HORIZONTALE, ET C'EST TOUT LE POINT. Elle était verticale :
-## une pastille qui rencontrait un obstacle sautait d'un cran vers le haut, et
-## comme la rencontre dépend de l'endroit où se trouve le convoi, elle changeait
-## de niveau EN COURS DE ROUTE. « L'heure au-dessus du convoi doit rester au
-## même niveau qu'au départ tout le temps du trajet » (Vincent, 5 septembre
-## 2026) — c'est exact, et c'est ce qui la rattache à son convoi : une étiquette
-## qui monte et descend toute seule n'appartient plus à rien. Elle garde donc sa
-## hauteur, toujours, et s'écarte LE LONG de la voie, où il y a de la place.
-const BADGE_ECARTS := [0.0, -1.0, 1.0, -2.0, 2.0, -3.0, 3.0]
-
+## LA PASTILLE NE S'ÉCARTE DE RIEN, ET C'EST LA RÉPONSE.
+##
+## J'ai construit en deux passes un placement qui l'écartait de ce qu'elle
+## couvrait : d'abord vers le haut, puis sur le côté. Les deux étaient faux
+## pour la même raison, et Vincent l'a dit d'une phrase — « elle doit suivre le
+## même mouvement que le convoi ». Une étiquette rigidement attachée à un objet
+## MOBILE ne peut pas négocier sa place : ce qu'elle rencontre change à chaque
+## image, donc elle se décale à chaque image, et elle cesse d'appartenir à son
+## convoi. Le solveur était la mauvaise réponse à une vraie question.
+##
+## La bonne réponse tenait en deux choses, et toutes deux sont déjà faites : la
+## pastille se dessine EN DERNIER, donc elle passe devant ce qu'elle croise au
+## lieu de disparaître dessous ; et les noms de portail, montés avec leur
+## nouvelle taille, ne la rencontrent plus que de quelques unités. Elle suit sa
+## tête, à hauteur constante, et rien d'autre.
 func _dessiner_badges(t: float) -> void:
 	var clign := 0.22 + 0.78 * (0.5 + 0.5 * sin(t * TAU / 0.9))   # badge-blink
-	# les noms de portail, puis les pastilles déjà posées : une pastille cède
-	# le pas à ce qui est là avant elle, et l'ordre des convois ne change pas
-	# dans une journée — la place d'une pastille ne saute donc pas d'une image
-	# à l'autre.
-	# les noms de portail, le bandeau, puis les pastilles déjà posées. Le
-	# bandeau vit en coordonnées d'écran et le plan est décalé : on le ramène.
-	var pris := _obstacles_de_badge()
-	var d := decalage()
-	for cle in zones_hud:
-		var z: Rect2 = zones_hud[cle]
-		pris.append(Rect2(z.position - d, z.size))
-	# LA PLACE DISPONIBLE, en coordonnées du plan : une esquive qui sort de
-	# l'écran ne vaut rien — deux convois en file sur la même voie d'approche
-	# ont envoyé la seconde pastille hors cadre au premier essai.
-	var vue := Rect2(Vector2(Sty.marges["gauche"], Sty.marges["haut"]) - d,
-		size_ecran() - Vector2(Sty.marges["gauche"] + Sty.marges["droite"],
-			Sty.marges["haut"] + Sty.marges["bas"]))
 	for tr in enc.trains:
 		if not positions.has(tr.id):
 			continue
@@ -790,44 +757,11 @@ func _dessiner_badges(t: float) -> void:
 		var cadran: bool = not en_retard
 		var large: float = w + 24.0 * k + (14.0 * k if cadran else 0.0)
 		var tete: Dictionary = positions[tr.id][0]
-		# LA PASTILLE SE TIENT PRÈS DE SA TÊTE. Je l'avais montée à cinquante
-		# pour dégager les voitures du convoi ; elle s'est mise à flotter loin
-		# au-dessus, et on ne savait plus à quel convoi elle appartenait.
-		# Quarante-deux la ramène contre sa tête, et c'est l'ESQUIVE qui règle
-		# les rencontres — d'un demi-cran à la fois plutôt que d'un cran entier,
-		# pour qu'une pastille qui doit s'écarter ne parte pas au loin.
+		# QUARANTE-DEUX AU-DESSUS DE SA TÊTE, et cette valeur ne dépend de rien
+		# d'autre : c'est ce qui fait que la pastille suit exactement le
+		# mouvement du convoi, sans jamais glisser par rapport à lui.
 		var centre := Vector2(float(tete["x"]), float(tete["y"]) - 42.0 * k)
 		var r := Rect2(centre.x - large / 2.0, centre.y - 10.0 * k, large, 20.0 * k)
-		var pas := r.size.x * 0.62 + 6.0 * k
-		var repli := Rect2()
-		var a_repli := false
-		for ecart in BADGE_ECARTS:
-			var essai := Rect2(r.position + Vector2(ecart * pas, 0), r.size)
-			# ON N'ESQUIVE QUE CE QU'ON COUVRE VRAIMENT. Testée bord à bord, la
-			# pastille frôlait le nom de portail de six unités — invisible — et
-			# s'écartait pour cela de deux crans, soit cent soixante unités :
-			# elle finissait à l'autre bout de la voie, loin de son convoi. On
-			# teste un rectangle rétréci : un frôlement ne coûte plus rien.
-			var test := essai.grow(-5.0 * k)
-			var libre := true
-			for o in pris:
-				if test.intersects(o):
-					libre = false
-					break
-			if not libre:
-				continue
-			# une place libre MAIS hors cadre ne sert que de dernier recours
-			if not a_repli:
-				repli = essai
-				a_repli = true
-			if vue.encloses(essai):
-				a_repli = false
-				r = essai
-				break
-		if a_repli:
-			r = repli
-		pris.append(r)
-		centre = r.get_center()
 		# un convoi encore à l'arrêt dont le retard court réclame un aiguillage :
 		# le badge clignote (en opacité seule).
 		var a: float = clign if (en_retard and not tr.settled) else 1.0
