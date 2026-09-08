@@ -118,6 +118,13 @@ func _draw() -> void:
 		draw_polyline(levre, Color(Sty.POSTE_BORD, 0.10), 1.0, true)
 		if allume:
 			draw_polyline(pts, Color(col, 0.16), 9.0, true)
+		# LES TRAVERSES, comme sur les voies d'entrée et de sortie. Le gril était
+		# le seul tracé du plan à n'être qu'un trait : les voies d'approche
+		# portaient leur ballast et leurs traverses depuis le 4 septembre, et
+		# lui non. Elles sont à SA couleur, sous le rail — une traverse est sous
+		# le rail, pas dessus — et discrètes : elles disent la voie ferrée, elles
+		# ne disputent pas la destination, qui reste ce que la couleur signale.
+		Sty.traverses(self, pts, Color(col, 0.34 if allume else 0.22), 2.8 * k, 10.0 * k)
 		col.a = 0.82 if allume else 0.5
 		draw_polyline(pts, col, 3.5, true)
 
