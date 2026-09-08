@@ -34,6 +34,7 @@ const TEINTES := ["#e8875a", "#5b8def", "#3fa87a", "#c084fc", "#d97757"]
 
 var hachure: Texture2D
 var planche: Texture2D
+var machine: Texture2D
 var grain: NoiseTexture2D
 
 
@@ -42,6 +43,7 @@ func _ready() -> void:
 	RenderingServer.set_default_clear_color(Sty.POSTE_FOND)
 	hachure = _tisser_hachure()
 	planche = load("res://jeu/illustrations/wagon.png") if ResourceLoader.exists("res://jeu/illustrations/wagon.png") else null
+	machine = load("res://jeu/illustrations/loco.png") if ResourceLoader.exists("res://jeu/illustrations/loco.png") else null
 	var g := FastNoiseLite.new()
 	g.noise_type = FastNoiseLite.TYPE_SIMPLEX_SMOOTH
 	g.frequency = 0.35
@@ -298,16 +300,31 @@ func _rame_planche(axe: PackedVector2Array, col: Color, k: float) -> void:
 	var large := float(planche.get_width())
 	var haut := float(planche.get_height())
 	# la longueur qu'occupe chaque tranche, à sa proportion d'origine
-	var l_nez: float = h * (TR_NEZ.y - TR_NEZ.x) * large / haut
 	var l_mil: float = h * (TR_MILIEU.y - TR_MILIEU.x) * large / haut
 	var l_queue: float = h * (TR_QUEUE.y - TR_QUEUE.x) * large / haut
+	# LA MACHINE PREND LA TÊTE, à sa propre proportion — trois fois deux
+	# dixièmes de sa hauteur.
+	var l_nez: float = h * (float(machine.get_width()) / float(machine.get_height())) \
+		if machine != null else h * (TR_NEZ.y - TR_NEZ.x) * large / haut
+	# UNE RAME COURTE NE PEUT PAS PORTER TOUTE LA MACHINE. Deux voitures font
+	# soixante-cinq unités en tout, la machine seule en demande quatre-vingt-
+	# seize : on comprime alors les deux bouts à la place disponible, plutôt
+	# que de les laisser se chevaucher. Cela n'arrive qu'aux convois les plus
+	# courts, et un raccourcissement se lit mieux qu'un empilement.
+	if l_nez + l_queue > L:
+		var f: float = L / (l_nez + l_queue)
+		l_nez *= f
+		l_queue *= f
 	# L'ENCRE EST POSÉE DEUX FOIS SUR LE MÊME QUAD : une première passe au lavis
 	# de destination, qui remplit la caisse là où la planche est claire, et une
 	# seconde à l'encre, qui ne dépose que le trait. Le blanc du papier prend la
 	# couleur, le noir reste noir — la gravure mise en couleur, littéralement.
 	var lavis := col.lerp(Sty.PAPIER, 0.06)
 	var encre := Color.BLACK
-	_tranche(etendu, h, 0.0, l_nez, TR_NEZ.x, TR_NEZ.y, lavis, encre)
+	if machine != null:
+		_tranche(etendu, h, 0.0, l_nez, 0.0, 1.0, lavis, encre, machine)
+	else:
+		_tranche(etendu, h, 0.0, l_nez, TR_NEZ.x, TR_NEZ.y, lavis, encre)
 	var s := l_nez
 	var fin: float = max(l_nez, L - l_queue)
 	while s < fin - 0.5:
@@ -321,7 +338,8 @@ func _rame_planche(axe: PackedVector2Array, col: Color, k: float) -> void:
 ## Une tranche de planche posée sur la portion d'arc [s0, s1], subdivisée pour
 ## qu'elle ÉPOUSE la courbe au lieu de la couper à la corde.
 func _tranche(axe: PackedVector2Array, h: float, s0: float, s1: float,
-		u0: float, u1: float, lavis: Color = Color.WHITE, encre: Color = Color.BLACK) -> void:
+		u0: float, u1: float, lavis: Color = Color.WHITE, encre: Color = Color.BLACK,
+		tex: Texture2D = null) -> void:
 	if s1 - s0 <= 0.5:
 		return
 	var n: int = max(2, int((s1 - s0) / 7.0) + 1)
@@ -342,7 +360,7 @@ func _tranche(axe: PackedVector2Array, h: float, s0: float, s1: float,
 		# ne donnaient rien, puisqu'elles partageaient le même masque et
 		# noircissaient deux fois les mêmes traits.
 		var uv := PackedVector2Array([Vector2(v0, 0), Vector2(v1, 0), Vector2(v1, 1), Vector2(v0, 1)])
-		draw_colored_polygon(quad, lavis, uv, planche)
+		draw_colored_polygon(quad, lavis, uv, tex if tex != null else planche)
 
 
 func _longueur(axe: PackedVector2Array) -> float:

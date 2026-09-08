@@ -81,6 +81,7 @@ if [ -f "$SRC/wagon.png" ]; then
   sips -Z 640 "$DST/wagon.png" >/dev/null 2>&1
   python3 - "$DST/wagon.png" <<'PYEOF'
 import sys, zlib, struct
+ENCRAGE = 0.50
 def lire(p):
     d=open(p,'rb').read(); i=8; idat=b''; w=hh=0; bd=ct=0
     while i < len(d):
@@ -125,13 +126,79 @@ while pile:
 out=bytearray()
 for y in range(h):
     for x in range(w):
-        g=min(255, lum(x,y))
+        # LA FORCE D'ENCRAGE. À pleine force, la gravure porte son propre
+        # ombré et mange la vivacité de la couleur — or ici la couleur EST la
+        # destination, et à la taille réelle du jeu c'est elle qui doit se lire
+        # en premier. On éclaircit donc le gris de moitié : le trait reste, le
+        # modelé s'allège, et le lavis ressort. Un seul nombre à changer.
+        g=min(255, 255 - int((255 - lum(x,y)) * ENCRAGE))
         out += bytes((g,g,g, 0 if dehors[y*w+x] else 255))
 raw=b''.join(b'\x00'+bytes(out[y*w*4:(y+1)*w*4]) for y in range(h))
 def ch(t,d):
     c=t+d; return struct.pack('>I',len(d))+c+struct.pack('>I',zlib.crc32(c))
 open(sys.argv[1],'wb').write(b'\x89PNG\r\n\x1a\x0a'[:8]+ch(b'IHDR',struct.pack('>IIBBBBB',w,h,8,6,0,0,0))+ch(b'IDAT',zlib.compress(raw,6))+ch(b'IEND',b''))
 print("  wagon : %d x %d, silhouette et encre séparées" % (w,h))
+PYEOF
+  m=$((m + 1))
+fi
+
+# LA LOCOMOTIVE — même chaîne que la voiture, avec DEUX opérations de plus.
+#
+# ON LAISSE LE TENDER. Le générateur en a dessiné un, superbe et encombrant :
+# la planche fait un pour quatre virgule sept là où il en fallait deux. Or la
+# tête d'une rame occupe une place bornée par la longueur du convoi le plus
+# court — deux voitures, soit soixante-cinq unités en tout. On ne garde donc
+# que la MACHINE, de la cabine à la cheminée, et le tender reste dans les
+# sources au cas où il servirait un jour.
+#
+# ON LA RETOURNE. Le jeu pose la tranche de tête au DÉBUT de la rame, et lit
+# la planche de gauche à droite : la cheminée doit donc se trouver à gauche,
+# alors qu'elle est à droite sur le dessin couché.
+if [ -f "$SRC/loco.png" ]; then
+  cp "$SRC/loco.png" "$DST/loco.png"
+  sips -c 1760 380 "$DST/loco.png" >/dev/null 2>&1
+  sips -r 90 "$DST/loco.png" >/dev/null 2>&1
+  sips -Z 700 "$DST/loco.png" >/dev/null 2>&1
+  python3 - "$DST/loco.png" 0.307 1 <<'PYEOF'
+import sys, zlib, struct
+ENCRAGE = 0.50
+exec(open("tools/lire_png.py").read())
+w,h,bpp,px = lire(sys.argv[1])
+d0 = int(float(sys.argv[2]) * w)
+miroir = sys.argv[3] == "1"
+w2 = w - d0
+def lum(x,y):
+    o=y*w*bpp+x*bpp
+    return (px[o]*3+px[o+1]*6+px[o+2])//10
+dehors=bytearray(w*h); pile=[]
+for x in range(w):
+    for y in (0,h-1):
+        if lum(x,y)>=232 and not dehors[y*w+x]: dehors[y*w+x]=1; pile.append((x,y))
+for y in range(h):
+    for x in (0,w-1):
+        if lum(x,y)>=232 and not dehors[y*w+x]: dehors[y*w+x]=1; pile.append((x,y))
+while pile:
+    x,y=pile.pop()
+    for dx,dy in ((1,0),(-1,0),(0,1),(0,-1)):
+        a,b=x+dx,y+dy
+        if 0<=a<w and 0<=b<h and not dehors[b*w+a] and lum(a,b)>=232:
+            dehors[b*w+a]=1; pile.append((a,b))
+out=bytearray()
+for y in range(h):
+    for i in range(w2):
+        x = (w - 1 - i) if miroir else (d0 + i)
+        # LA FORCE D'ENCRAGE. À pleine force, la gravure porte son propre
+        # ombré et mange la vivacité de la couleur — or ici la couleur EST la
+        # destination, et à la taille réelle du jeu c'est elle qui doit se lire
+        # en premier. On éclaircit donc le gris de moitié : le trait reste, le
+        # modelé s'allège, et le lavis ressort. Un seul nombre à changer.
+        g=min(255, 255 - int((255 - lum(x,y)) * ENCRAGE))
+        out += bytes((g,g,g, 0 if dehors[y*w+x] else 255))
+raw=b''.join(b'\x00'+bytes(out[y*w2*4:(y+1)*w2*4]) for y in range(h))
+def ch(t,d):
+    c=t+d; return struct.pack('>I',len(d))+c+struct.pack('>I',zlib.crc32(c))
+open(sys.argv[1],'wb').write(b'\x89PNG\r\n\x1a\x0a'[:8]+ch(b'IHDR',struct.pack('>IIBBBBB',w2,h,8,6,0,0,0))+ch(b'IDAT',zlib.compress(raw,6))+ch(b'IEND',b''))
+print("  loco : %d x %d, machine seule, retournée" % (w2,h))
 PYEOF
   m=$((m + 1))
 fi
