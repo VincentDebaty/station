@@ -23,20 +23,36 @@ bande médiane ; c'est pourquoi la consigne impose un sujet centré en hauteur.
 Format : **1024 × 1024**. Fond de parchemin uni, pas de transparence — le jeu
 pose lui-même le cadre et l'arrondi.
 
-## La voiture gravée (le dessin des convois)
+## Les trois véhicules gravés (le dessin des convois)
 
-`wagon.png` — une voiture de chemin de fer vue **strictement du dessus**, au
-trait, à l'encre noire sur fond blanc, sans couleur ni aplat gris.
+`loco.png`, `wagon.png`, `fourgon.png` — vus **strictement du dessus**, au
+trait, encre noire sur fond blanc, sans couleur ni aplat gris. Le véhicule est
+COUCHÉ, sa longueur de gauche à droite, et pour la machine la **cheminée à
+gauche** : le jeu pose la planche avec son bord gauche du côté de la tête.
 
-Le jeu la découpe en **trois tranches** : la ferrure de tête, une section
-centrale répétée autant de fois qu'il y a de voitures, et la ferrure de queue.
-C'est ce qui permet à une rame de deux voitures et à une rame de six d'avoir
-le même rythme de nervures — et c'est pour cela que les deux extrémités du
-dessin doivent porter leurs tampons et leurs robinets, et la partie centrale
-un motif qui se répète sans accident.
+**Les proportions sont imposées par le gril**, pas par le goût. Une case fait
+35 sur 30 unités.
+
+| Fichier | Occupe | Proportion à dessiner |
+|---|---|---|
+| `loco.png` | une case | 7 pour 6 — trapue |
+| `fourgon.png` | une case | 7 pour 6 — trapue |
+| `wagon.png` | DEUX cases | 7 pour 3 — allongée |
+
+**Pourquoi un fourgon.** Une voiture posée sur deux cases est mieux
+proportionnée, mais une machine plus un nombre pair de cases ne couvre pas
+tous les convois : mesuré sur les tirages des 401 fiches, **55 % d'entre eux
+laissent une case impaire**. Le fourgon la prend. Un convoi de deux voitures
+montre une machine et un fourgon ; de trois, une machine et une voiture ; de
+quatre, une machine, une voiture et un fourgon. C'est une composition de train
+réelle, pas un rattrapage.
+
+**Deux consignes tirées des premières planches.** Pas de motif unique au
+centre — une valve isolée oblige à décaler les découpages. Et le même trait
+pour les trois : elles seront côte à côte dans la même rame.
 
 Le noir devient l'encre, le blanc prend la couleur de destination : une seule
-planche sert les six teintes du jeu.
+planche sert les six teintes.
 
 ## Deux règles qui font gagner du temps
 
