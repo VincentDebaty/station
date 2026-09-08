@@ -263,12 +263,7 @@ func _rame_caisses(axe: PackedVector2Array, col: Color, k: float) -> void:
 	for i in axe.size():
 		var u := _tangente(axe, i)
 		var nrm := Vector2(-u.y, u.x)
-		# LA CASE ENTIÈRE, PAS LA CAISSE. Les centres de voiture sont espacés de
-		# 35 et une caisse en fait 30 : dessiner la caisse laissait cinq unités
-		# de vide entre deux véhicules, alors qu'un train attelé n'en a pas. La
-		# planche occupe donc toute la case — sept pour six — et les tampons
-		# d'un véhicule touchent ceux du suivant.
-		var demi: float = Geo.CAR_SPACING * 0.5 * k
+		var demi: float = Geo.CAR_LEN * 0.5 * k
 		var large: float = h * (0.46 if i > 0 else 0.50)
 		var c := axe[i]
 		var quad := PackedVector2Array([
@@ -318,7 +313,12 @@ func _rame_planche(axe: PackedVector2Array, col: Color, k: float) -> void:
 	if planche == null:
 		return
 	var h: float = Geo.CAR_H * 1.5 * k
-	var demi: float = Geo.CAR_LEN * 0.5 * k
+	# LA CASE ENTIÈRE, PAS LA CAISSE. Les centres de voiture sont espacés de 35
+	# et une caisse en fait 30 : poser la planche sur la caisse laisserait cinq
+	# unités de vide entre deux véhicules, alors qu'un train attelé n'en a pas.
+	# Elle occupe donc toute la case — sept pour six, la proportion à demander
+	# au générateur — et les tampons d'un véhicule touchent ceux du suivant.
+	var demi: float = Geo.CAR_SPACING * 0.5 * k
 	var lavis := col.lerp(Sty.PAPIER, 0.06)
 	var uv := PackedVector2Array([Vector2(0, 0), Vector2(1, 0), Vector2(1, 1), Vector2(0, 1)])
 	for i in axe.size():
