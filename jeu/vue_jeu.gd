@@ -717,6 +717,13 @@ func _dessiner_convois(sel, t: float) -> void:
 ## sinon son immobilité se lit comme un bug. On plante un vrai signal devant sa
 ## motrice : mât, cible à deux feux, le rouge allumé et pulsé (js/render.js,
 ## signalNode). Il reste tant que le convoi est retenu.
+##
+## C'ÉTAIT LE DERNIER OBJET BLEU DU PUPITRE. Mât, cible et feu éteint venaient
+## du prototype — #55617a, #0e1420, #1c2740 — et faisaient trois taches froides
+## sur une planche de laiton. Il passe à la matière commune, et la
+## SIGNALISATION NE BOUGE PAS D'UN IOTA : le rouge pulse, le vert reste éteint,
+## aux mêmes places et au même rythme. C'est même la pièce la plus « poste
+## d'aiguillage » de l'écran ; elle méritait d'en avoir l'air.
 func _dessiner_signaux(t: float) -> void:
 	var lampe := 0.45 + 0.55 * (0.5 + 0.5 * sin(t * TAU / 1.1))   # sig-pulse
 	for tr in enc.trains:
@@ -729,12 +736,39 @@ func _dessiner_signaux(t: float) -> void:
 		var dir: float = 1.0 if tete.x >= float(pos[1]["x"]) else -1.0
 		var k := Sty.UIK
 		var o := tete + Vector2(dir * (Geo.CAR_LEN / 2.0 + 14.0 * k), 2.0 * k)
-		draw_style_box(Sty.boite(Color("#55617a"), Color("#55617a"), 1.3 * k, 0),
-			Rect2(o.x - 1.3 * k, o.y - 2 * k, 2.6 * k, 16 * k))                       # le mât
-		draw_style_box(Sty.boite(Color("#0e1420"), Color("#55617a"), 4 * k, 1.2 * k),
-			Rect2(o.x - 7 * k, o.y - 22 * k, 14 * k, 21 * k))                         # la cible
-		draw_circle(o + Vector2(0, -16 * k), 3.6 * k, Color(Sty.ROUGE, lampe))        # le rouge
-		draw_circle(o + Vector2(0, -6.5 * k), 3.6 * k, Color("#1c2740"))              # le vert, éteint
+		# le socle : un signal est boulonné au ballast, il ne flotte pas
+		draw_style_box(Sty.boite(Sty.POSTE_BALLAST, Color(Sty.POSTE_BORD, 0.45),
+			1.5 * k, max(1.0, 0.9 * k)), Rect2(o.x - 5.0 * k, o.y + 11.0 * k, 10.0 * k, 3.6 * k))
+		# le mât : fonte sombre, et une arête de lumière sur son flanc gauche —
+		# c'est ce qui fait un cylindre plutôt qu'un trait
+		draw_style_box(Sty.boite(Sty.POSTE_BALLAST, Sty.POSTE_BALLAST, 1.6 * k, 0),
+			Rect2(o.x - 1.7 * k, o.y - 2.0 * k, 3.4 * k, 14.0 * k))
+		draw_line(o + Vector2(-0.7 * k, -1.0 * k), o + Vector2(-0.7 * k, 12.0 * k),
+			Color(Sty.POSTE_BORD, 0.50), max(1.0, 1.0 * k), true)
+		# la cible : la même plaque sombre cerclée de laiton que le cadran
+		draw_style_box(Sty.boite(Color(0, 0, 0, 0.70), Color(Sty.POSTE_BORD, 0.75),
+			4.5 * k, max(1.0, 1.1 * k)), Rect2(o.x - 7.5 * k, o.y - 23.0 * k, 15.0 * k, 22.0 * k))
+		_feu(o + Vector2(0, -17.0 * k), Sty.ROUGE, lampe, k)
+		_feu(o + Vector2(0, -7.0 * k), Sty.VERT, 0.0, k)
+
+
+## UN FEU EST UNE LENTILLE SOUS UNE VISIÈRE, pas un disque de couleur. La
+## visière — l'auvent de tôle qui coiffe chaque lentille pour qu'on la voie de
+## loin sans que le soleil l'allume — est le détail qui dit « signal » à qui a
+## déjà vu une voie. Éteint, le feu garde SA teinte, très foncée : un vert
+## éteint doit se lire comme un vert qui n'est pas allumé, pas comme un trou.
+func _feu(centre: Vector2, col: Color, allume: float, k: float) -> void:
+	if allume > 0.0:
+		draw_circle(centre, 8.2 * k, Color(col, 0.10 * allume))
+		draw_circle(centre, 5.6 * k, Color(col, 0.20 * allume))
+	draw_circle(centre, 4.0 * k, Color(0, 0, 0, 0.60))                       # la douille
+	draw_circle(centre, 3.3 * k, col.darkened(0.74) if allume <= 0.0 else Color(col, 0.40 + 0.60 * allume))
+	# le reflet du verre, en haut à gauche
+	draw_arc(centre + Vector2(-0.7 * k, -0.7 * k), 1.8 * k, PI * 1.02, PI * 1.72, 10,
+		Color(1, 1, 1, 0.14 + 0.26 * allume), max(1.0, 0.9 * k), true)
+	# la visière de tôle, par-dessus
+	draw_arc(centre + Vector2(0, -0.6 * k), 4.9 * k, PI * 1.06, TAU * 0.97, 16,
+		Color(Sty.POSTE_BORD, 0.62), 1.4 * k, true)
 
 
 # --- les badges d'heure -----------------------------------------------------
