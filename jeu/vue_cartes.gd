@@ -24,6 +24,7 @@ const OR := Sty.LAITON
 
 var app = null
 var colonne: VBoxContainer
+var modale: Control = null
 
 
 func _ready() -> void:
@@ -84,16 +85,6 @@ func _bouton(texte: String, principal: bool, actif: bool, sur: Callable) -> Butt
 	return b
 
 
-## Le retour : un chevron et un mot, sans cadre — le pendant exact du bouton
-## « Les cartes » de la barre du ruban. Il pointe à droite, parce que le ruban
-## est à droite : c'est de là qu'il revient.
-func _retour() -> Button:
-	var b := Sty.lien("Le ruban", Sty.HUD_K, false)
-	if app != null:
-		b.pressed.connect(app.fermer_cartes)
-	return b
-
-
 ## Une pastille de compteur, celle de la barre du ruban.
 func _pastille(texte: String, couleur: Color) -> Control:
 	var k := Sty.HUD_K
@@ -110,6 +101,95 @@ func _pastille(texte: String, couleur: Color) -> Control:
 
 
 ## Ce qu'une carte montre d'elle-même avant d'être ouverte.
+# ------------------------------------------------------------------
+# LA MODALE D'ACHAT
+# ------------------------------------------------------------------
+## Toucher une carte verrouillée ne peut pas ne rien faire, et ne peut pas non
+## plus l'ouvrir : elle propose de l'acheter. C'est le seul endroit du jeu où
+## l'on dépense, donc le seul où le solde et le prix doivent se lire ensemble
+## — le compteur de la barre est derrière le voile.
+func _ouvrir_modale(id: String) -> void:
+	_fermer_modale()
+	var k := Sty.HUD_K
+	var e := _entree(id)
+	var r := resume_de_carte(id)
+	var prix: int = Rec.prix_de_carte(r["def"], e)
+	var solde: int = app.solde() if app != null else 0
+
+	modale = Control.new()
+	modale.set_anchors_preset(Control.PRESET_TOP_LEFT)
+	modale.size = size
+	add_child(modale)
+	# LE VOILE FERME AUSSI. Un doigt posé à côté d'une boîte de dialogue veut
+	# en sortir : c'est le geste que tout le monde essaie en premier.
+	var voile := Button.new()
+	voile.size = size
+	voile.focus_mode = Control.FOCUS_NONE
+	for quoi in ["normal", "hover", "pressed", "focus"]:
+		voile.add_theme_stylebox_override(quoi,
+			Sty.boite(Color(Sty.BOIS, 0.82), Color(0, 0, 0, 0), 0, 0))
+	voile.pressed.connect(_fermer_modale)
+	modale.add_child(voile)
+
+	var centre := CenterContainer.new()
+	centre.size = size
+	centre.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	modale.add_child(centre)
+
+	var carte := PanelContainer.new()
+	var st := Sty.parchemin(Sty.R_GRAND, k)
+	st.set_content_margin_all(22 * k)
+	carte.add_theme_stylebox_override("panel", st)
+	carte.custom_minimum_size = Vector2(min(430.0 * k, size.x * 0.7), 0)
+	var v := VBoxContainer.new()
+	v.add_theme_constant_override("separation", int(round(8 * k)))
+	carte.add_child(v)
+	centre.add_child(carte)
+
+	v.add_child(_encre("Carte verrouillée", 12, Sty.SARCELLE, false))
+	v.add_child(_encre(String(e.get("nom", r["def"].get("nom", id))), 22, Sty.ENCRE, true))
+	v.add_child(_encre(String(e.get("sousTitre", "")), 13, Sty.ENCRE_MUET, false))
+	v.add_child(_encre("%d chapitre%s · %d gares" % [
+		r["chapitres"], "s" if r["chapitres"] > 1 else "", r["gares"]], 13, Sty.ENCRE, false))
+	var assez := solde >= prix
+	if not assez:
+		v.add_child(_encre("Il te manque %d cr." % (prix - solde), 13, Color("#a2432f"), false))
+	var h := HBoxContainer.new()
+	h.add_theme_constant_override("separation", int(round(8 * k)))
+	h.add_child(_bouton("Plus tard", false, true, _fermer_modale))
+	h.add_child(_bouton("Ouvrir · %d cr" % prix, true, assez, _acheter.bind(id)))
+	v.add_child(h)
+
+
+func _encre(texte: String, taille: int, couleur: Color, titre: bool) -> Label:
+	var l := _label(texte, taille, couleur, titre)
+	l.add_theme_color_override("font_color", couleur)
+	return l
+
+
+func _fermer_modale() -> void:
+	if modale != null:
+		modale.queue_free()
+		modale = null
+
+
+## Acheter, puis ENTRER. On ne vient pas de payer pour revenir à la liste.
+func _acheter(id: String) -> void:
+	if app == null:
+		return
+	app.acheter_carte(id)
+	_fermer_modale()
+	if Sauvegarde.possede_carte(id):
+		app.choisir_carte(id)
+
+
+func _entree(id: String) -> Dictionary:
+	for e in Donnees.cartes_index:
+		if String(e.get("id", "")) == id:
+			return e
+	return {}
+
+
 func resume_de_carte(id: String) -> Dictionary:
 	var def: Dictionary = Donnees.cartes.get(id, {})
 	var chs: Array = def["chapitres"] if def.get("chapitres") is Array else []
@@ -149,6 +229,7 @@ func _banniere_de(def: Dictionary) -> Texture2D:
 
 
 func rebatir() -> void:
+	_fermer_modale()
 	for c in colonne.get_children():
 		colonne.remove_child(c)
 		c.queue_free()
@@ -162,7 +243,6 @@ func rebatir() -> void:
 	titre.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	entete.add_child(titre)
 	entete.add_child(_pastille("%d cr" % solde, Sty.LAITON))
-	entete.add_child(_retour())
 	colonne.add_child(entete)
 
 	# UNE LISTE HORIZONTALE QU'ON FAIT GLISSER AU DOIGT. Les cartes se
@@ -210,6 +290,7 @@ func _tuile(e: Dictionary, id: String, r: Dictionary, possede: bool, prix: int,
 	tuile.clip_contents = true
 	var v := VBoxContainer.new()
 	v.add_theme_constant_override("separation", int(round(6 * k)))
+	v.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	tuile.add_child(v)
 
 	var img := _banniere_de(r["def"])
@@ -251,17 +332,63 @@ func _tuile(e: Dictionary, id: String, r: Dictionary, possede: bool, prix: int,
 	ressort.custom_minimum_size = Vector2(0, 8 * k)
 	ressort.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	v.add_child(ressort)
-	if est_courante:
-		v.add_child(_bouton("Carte en cours", false, false, Callable()))
-	elif possede:
-		v.add_child(_bouton("Reprendre" if r["entamee"] else "Commencer", true, true,
-			app.choisir_carte.bind(id) if app != null else Callable()))
-	else:
-		# LE PRIX EST SUR LE BOUTON, ET IL SUFFIT. La tuile portait en plus une
-		# phrase sur les crédits manquants et une mention de carte bancaire :
-		# l'une répétait une soustraction que le joueur fait tout seul, l'autre
-		# annonçait ce qui n'existe pas. Retirées le 5 septembre 2026. Un bouton
-		# éteint à 1 500 cr en face de 1 140 cr dit déjà tout.
-		v.add_child(_bouton("Ouvrir · %d cr" % prix, true, solde >= prix,
-			app.acheter_carte.bind(id) if app != null else Callable()))
+	# LE PIED DE LA TUILE N'EST PLUS UN BOUTON, c'est une plaque : depuis que la
+	# tuile ENTIÈRE se touche, un bouton posé dessus serait une seconde cible
+	# pour le même geste. Il garde l'apparence d'un bouton parce que c'est bien
+	# lui, l'appel — le prix y reste, et il suffit.
+	var appel := "Carte en cours"
+	if not est_courante:
+		appel = ("Reprendre" if r["entamee"] else "Commencer") if possede else "Ouvrir · %d cr" % prix
+	v.add_child(_plaque_appel(appel, possede and not est_courante))
+	tuile.add_child(_zone_cliquable(id, possede))
 	return tuile
+
+
+## LA TUILE ENTIÈRE SE TOUCHE. « Quand je tape sur la carte, je dois y
+## accéder » (Vincent, 5 septembre 2026) — et cela rend le lien « Le ruban »
+## inutile : toucher la carte en cours y ramène. Le bouton transparent est
+## posé PAR-DESSUS le contenu, dernier enfant du PanelContainer, qui l'étire
+## comme les autres à son rectangle : il n'y a donc qu'une cible, jamais deux
+## qui se disputent le même doigt.
+func _zone_cliquable(id: String, possede: bool) -> Button:
+	var b := Button.new()
+	b.focus_mode = Control.FOCUS_NONE
+	for quoi in ["normal", "pressed", "disabled", "focus"]:
+		b.add_theme_stylebox_override(quoi, StyleBoxEmpty.new())
+	# le seul retour visuel : un voile de laiton quand le doigt est dessus
+	b.add_theme_stylebox_override("hover",
+		Sty.boite(Color(Sty.LAITON, 0.07), Color(0, 0, 0, 0), Sty.R_GRAND * Sty.HUD_K, 0))
+	b.pressed.connect(_toucher.bind(id, possede))
+	return b
+
+
+func _toucher(id: String, possede: bool) -> void:
+	if app == null:
+		return
+	if possede:
+		app.choisir_carte(id)
+	else:
+		_ouvrir_modale(id)
+
+
+## Le pied d'une tuile : l'aspect d'un bouton, sans en être un.
+func _plaque_appel(texte: String, principal: bool) -> Control:
+	var k := Sty.HUD_K
+	var p := PanelContainer.new()
+	var fond: Color = Sty.SARCELLE if principal else Sty.BOIS_CLAIR
+	var st := Sty.plaque(fond, Sty.LAITON if principal else Color(Sty.LAITON, 0.45), Sty.R, k)
+	st.content_margin_top = 9 * k
+	st.content_margin_bottom = 9 * k
+	st.content_margin_left = 14 * k
+	st.content_margin_right = 14 * k
+	p.add_theme_stylebox_override("panel", st)
+	p.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var l := Label.new()
+	l.text = texte.to_upper()
+	l.add_theme_font_override("font", Sty.titre(700 if principal else 600))
+	l.add_theme_font_size_override("font_size", int(round(14 * k)))
+	l.add_theme_color_override("font_color", Sty.PAPIER if principal else Color(Sty.PAPIER, 0.75))
+	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	l.clip_text = true
+	p.add_child(l)
+	return p

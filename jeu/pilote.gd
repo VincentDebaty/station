@@ -54,6 +54,20 @@ func _jouer() -> void:
 				printerr("pilote : geste inconnu « %s »" % mots[1])
 
 
+## L'ÉVÉNEMENT VA AU VIEWPORT, EN COORDONNÉES LOCALES. Deux corrections, et il
+## fallait les deux pour qu'un bouton se laisse enfin cliquer (mesuré le
+## 5 septembre 2026 : « Les cartes » ne bougeait pas d'un pixel).
+##
+## `Input.parse_input_event` nourrit le singleton d'entrée : les nœuds qui
+## écoutent `_unhandled_input` le voient — le plan de gare, donc — mais la
+## couche d'interface n'en fait rien. `Viewport.push_input` traverse la pile
+## complète, GUI comprise.
+##
+## Et il faut lui dire que la position est DÉJÀ dans le repère du viewport.
+## Sans ce second argument, Godot y applique encore la transformation d'écran ;
+## or le viewport de 1 652 unités est étiré dans une fenêtre de 874 points, et
+## le clic atterrissait à près du double de sa position.
+##
 ## UN CLIC PREND TROIS IMAGES, PAS UNE. Le survol, l'appui, le relâchement :
 ## un Button de Godot ne s'arme qu'après avoir été survolé, et n'émet son
 ## signal qu'au relâchement. Poussés dans la même image, les trois événements
@@ -65,15 +79,16 @@ func _clic(pos: Vector2) -> void:
 	var m := InputEventMouseMotion.new()
 	m.position = pos
 	m.global_position = pos
-	Input.parse_input_event(m)
+	get_viewport().push_input(m)
 	await get_tree().process_frame
 	for presse in [true, false]:
 		var ev := InputEventMouseButton.new()
 		ev.position = pos
 		ev.global_position = pos
 		ev.button_index = MOUSE_BUTTON_LEFT
+		ev.button_mask = MOUSE_BUTTON_MASK_LEFT if presse else 0
 		ev.pressed = presse
-		Input.parse_input_event(ev)
+		get_viewport().push_input(ev, true)
 		await get_tree().process_frame
 
 
