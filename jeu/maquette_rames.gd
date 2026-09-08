@@ -299,31 +299,35 @@ func _rame_caisses(axe: PackedVector2Array, col: Color, k: float) -> void:
 ## LE LAVIS D'ABORD, L'ENCRE PAR-DESSUS : la planche est détourée, son blanc
 ## est transparent. Le corps peint dessous donne la couleur de destination, le
 ## dessin ne donne que le trait. Une seule planche sert les six teintes.
+## UNE CASE, UN VÉHICULE ENTIER. La première version découpait une voiture
+## allongée en trois tranches et les répétait : le compte des voitures était
+## juste, mais chaque case ne montrait qu'un MORCEAU de véhicule, et c'est
+## exactement ce qui se voyait. Une case du gril EST un véhicule.
+##
+## Le dessin se pose donc tel quel, un par voiture, orienté sur la tangente
+## locale — ce qui lui fait épouser la courbe sans qu'aucun raccord n'ait à
+## être calculé. Les cases sont espacées de 35 et les caisses longues de 30 :
+## le jeu d'attelage de cinq unités sépare les véhicules tout seul, et le trait
+## d'attelage que j'avais ajouté n'a plus lieu d'être.
 func _rame_planche(axe: PackedVector2Array, col: Color, k: float) -> void:
 	if planche == null:
 		return
 	var h: float = Geo.CAR_H * 1.5 * k
-	var etendu := _etendre(axe, h * 0.5)
-	var L := _longueur(etendu)
-	var n := axe.size()
-	var pas: float = L / float(n)
+	var demi: float = Geo.CAR_LEN * 0.5 * k
 	var lavis := col.lerp(Sty.PAPIER, 0.06)
-	for i in n:
-		var s0: float = float(i) * pas
-		var s1: float = float(i + 1) * pas
-		if i == 0 and machine != null:
-			_tranche(etendu, h, s0, s1, TR_LOCO.x, TR_LOCO.y, lavis, Color.BLACK, machine)
-		elif i == n - 1:
-			_tranche(etendu, h, s0, s1, TR_MILIEU.x, TR_QUEUE.y, lavis)
-		else:
-			_tranche(etendu, h, s0, s1, TR_MILIEU.x, TR_MILIEU.y, lavis)
-	# LE TRAIT D'ATTELAGE, à chaque limite de case. C'est lui qui rend le
-	# COMPTE lisible : sans lui, une rame gravée n'est qu'un long tube nervuré
-	# où l'œil ne sait pas dire combien de voitures il regarde.
-	for i in range(1, n):
-		var d := _sur_arc(etendu, float(i) * pas)
-		draw_line(d["p"] - d["n"] * h * 0.5, d["p"] + d["n"] * h * 0.5,
-			Color(0.09, 0.06, 0.04, 0.55), 1.6 * k, true)
+	var uv := PackedVector2Array([Vector2(0, 0), Vector2(1, 0), Vector2(1, 1), Vector2(0, 1)])
+	for i in axe.size():
+		# LA TANGENTE POINTE VERS LA QUEUE — elle va de la tête au suivant —
+		# donc le bord GAUCHE de la planche tombe du côté de la tête. C'est
+		# pour cela que la cheminée doit être à gauche du dessin.
+		var u := _tangente(axe, i)
+		var nrm := Vector2(-u.y, u.x)
+		var c := axe[i]
+		var quad := PackedVector2Array([
+			c - u * demi - nrm * h * 0.5, c + u * demi - nrm * h * 0.5,
+			c + u * demi + nrm * h * 0.5, c - u * demi + nrm * h * 0.5])
+		draw_colored_polygon(quad, lavis, uv,
+			machine if (i == 0 and machine != null) else planche)
 
 
 ## Une tranche de planche posée sur la portion d'arc [s0, s1], subdivisée pour
