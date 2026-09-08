@@ -29,6 +29,14 @@ const TR_NEZ := Vector2(0.0, 0.116)        # la ferrure de tête
 # laissait au centre de la rame une marque que rien ne justifiait.
 const TR_MILIEU := Vector2(0.698, 0.836)   # deux nervures, raccordables
 const TR_QUEUE := Vector2(0.884, 1.0)      # la ferrure de queue
+## UNE CASE, UN DESSIN. La rame se partage en autant de cases qu'elle a de
+## voitures : la machine dans la première, une section de voiture dans chacune
+## des autres, la ferrure de queue avec la dernière. Un convoi de cinq montre
+## donc UNE machine et QUATRE voitures — ce qui n'était pas le cas quand la
+## machine était posée à sa proportion naturelle : elle mangeait deux cases
+## trois quarts, et il ne restait que trois sections pour quatre voitures.
+## La case fait 35 sur 30, la planche de machine est découpée d'autant.
+const TR_LOCO := Vector2(0.0, 0.352)       # cheminée, boîte à fumée, premier dôme
 ## Les teintes de destination du jeu, pour juger sur de vraies couleurs.
 const TEINTES := ["#e8875a", "#5b8def", "#3fa87a", "#c084fc", "#d97757"]
 
@@ -297,42 +305,25 @@ func _rame_planche(axe: PackedVector2Array, col: Color, k: float) -> void:
 	var h: float = Geo.CAR_H * 1.5 * k
 	var etendu := _etendre(axe, h * 0.5)
 	var L := _longueur(etendu)
-	var large := float(planche.get_width())
-	var haut := float(planche.get_height())
-	# la longueur qu'occupe chaque tranche, à sa proportion d'origine
-	var l_mil: float = h * (TR_MILIEU.y - TR_MILIEU.x) * large / haut
-	var l_queue: float = h * (TR_QUEUE.y - TR_QUEUE.x) * large / haut
-	# LA MACHINE PREND LA TÊTE, à sa propre proportion — trois fois deux
-	# dixièmes de sa hauteur.
-	var l_nez: float = h * (float(machine.get_width()) / float(machine.get_height())) \
-		if machine != null else h * (TR_NEZ.y - TR_NEZ.x) * large / haut
-	# UNE RAME COURTE NE PEUT PAS PORTER TOUTE LA MACHINE. Deux voitures font
-	# soixante-cinq unités en tout, la machine seule en demande quatre-vingt-
-	# seize : on comprime alors les deux bouts à la place disponible, plutôt
-	# que de les laisser se chevaucher. Cela n'arrive qu'aux convois les plus
-	# courts, et un raccourcissement se lit mieux qu'un empilement.
-	if l_nez + l_queue > L:
-		var f: float = L / (l_nez + l_queue)
-		l_nez *= f
-		l_queue *= f
-	# L'ENCRE EST POSÉE DEUX FOIS SUR LE MÊME QUAD : une première passe au lavis
-	# de destination, qui remplit la caisse là où la planche est claire, et une
-	# seconde à l'encre, qui ne dépose que le trait. Le blanc du papier prend la
-	# couleur, le noir reste noir — la gravure mise en couleur, littéralement.
+	var n := axe.size()
+	var pas: float = L / float(n)
 	var lavis := col.lerp(Sty.PAPIER, 0.06)
-	var encre := Color.BLACK
-	if machine != null:
-		_tranche(etendu, h, 0.0, l_nez, 0.0, 1.0, lavis, encre, machine)
-	else:
-		_tranche(etendu, h, 0.0, l_nez, TR_NEZ.x, TR_NEZ.y, lavis, encre)
-	var s := l_nez
-	var fin: float = max(l_nez, L - l_queue)
-	while s < fin - 0.5:
-		var e2: float = min(s + l_mil, fin)
-		var u1: float = TR_MILIEU.x + (TR_MILIEU.y - TR_MILIEU.x) * (e2 - s) / l_mil
-		_tranche(etendu, h, s, e2, TR_MILIEU.x, u1, lavis, encre)
-		s = e2
-	_tranche(etendu, h, fin, L, TR_QUEUE.x, TR_QUEUE.y, lavis, encre)
+	for i in n:
+		var s0: float = float(i) * pas
+		var s1: float = float(i + 1) * pas
+		if i == 0 and machine != null:
+			_tranche(etendu, h, s0, s1, TR_LOCO.x, TR_LOCO.y, lavis, Color.BLACK, machine)
+		elif i == n - 1:
+			_tranche(etendu, h, s0, s1, TR_MILIEU.x, TR_QUEUE.y, lavis)
+		else:
+			_tranche(etendu, h, s0, s1, TR_MILIEU.x, TR_MILIEU.y, lavis)
+	# LE TRAIT D'ATTELAGE, à chaque limite de case. C'est lui qui rend le
+	# COMPTE lisible : sans lui, une rame gravée n'est qu'un long tube nervuré
+	# où l'œil ne sait pas dire combien de voitures il regarde.
+	for i in range(1, n):
+		var d := _sur_arc(etendu, float(i) * pas)
+		draw_line(d["p"] - d["n"] * h * 0.5, d["p"] + d["n"] * h * 0.5,
+			Color(0.09, 0.06, 0.04, 0.55), 1.6 * k, true)
 
 
 ## Une tranche de planche posée sur la portion d'arc [s0, s1], subdivisée pour
