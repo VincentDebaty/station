@@ -514,7 +514,7 @@ func _dessiner_quais(sel, t: float) -> void:
 			draw_polyline(_boucle(contour), Color(Sty.ROUGE, 0.55), 1.6, true)
 			# le numéro se détoure : les hachures le traversent, et il faut
 			# encore pouvoir dire DE QUEL quai on parle.
-			Sty.texte_centre(self, Sty.sans(600), 24, r.get_center(), str(int(pid)),
+			Sty.texte_centre(self, Sty.sans(700), 24, r.get_center(), str(int(pid)),
 				Color(Sty.TEXTE, 0.50), 5, Color(0, 0, 0, 0.65))
 			var fin := ""
 			for ev in enc.events:
@@ -539,7 +539,7 @@ func _dessiner_quais(sel, t: float) -> void:
 			if not occupe:
 				draw_colored_polygon(contour, Sty.POSTE_QUAI_ELIGIBLE.lerp(col, 0.14))
 				# la teinte recouvre le numéro peint par le plan : on le repose
-				Sty.texte_centre(self, Sty.sans(600), 24, r.get_center(), str(int(pid)), Sty.TEXTE)
+				Sty.texte_centre(self, Sty.sans(700), 24, r.get_center(), str(int(pid)), Sty.TEXTE)
 			var larg: float = 2.5 + 0.9 * p
 			Sty.pointille(self, contour, Color(col, 0.08 + 0.20 * p), larg + 8.0, 7, 5)
 			Sty.pointille(self, contour, col, larg, 7, 5)
@@ -710,12 +710,13 @@ func _obstacles_de_badge() -> Array:
 	var out: Array = []
 	if plan == null or G.is_empty():
 		return out
-	var f := Sty.sans(600)
+	var f := Sty.titre(600)
+	var t: int = Plan.taille_nom()
 	for pname in G["portals"]:
 		var nom := String(G["portals"][pname]["label"])
-		var w: float = f.get_string_size(nom, HORIZONTAL_ALIGNMENT_LEFT, -1, 15).x
+		var w: float = f.get_string_size(nom, HORIZONTAL_ALIGNMENT_LEFT, -1, t).x
 		var c: Vector2 = plan.position_nom(pname)
-		out.append(Rect2(c.x - w / 2.0 - 5, c.y - 12, w + 10, 24))
+		out.append(Rect2(c.x - w / 2.0 - 5, c.y - float(t) * 0.8, w + 10, float(t) * 1.6))
 	return out
 
 
@@ -752,7 +753,11 @@ func _dessiner_badges(t: float) -> void:
 		var cadran: bool = not en_retard
 		var large: float = w + 24.0 * k + (14.0 * k if cadran else 0.0)
 		var tete: Dictionary = positions[tr.id][0]
-		var centre := Vector2(float(tete["x"]), float(tete["y"]) - 40.0 * k)
+		# QUARANTE NE SUFFIT PLUS. Les noms de portail ayant grandi et pris de la
+		# hauteur, la place naturelle de la pastille s'est libérée — et elle
+		# tombait alors sur les voitures du convoi lui-même, qui traînent
+		# derrière sa tête sur une voie en biais. On monte d'une demi-caisse.
+		var centre := Vector2(float(tete["x"]), float(tete["y"]) - 50.0 * k)
 		var r := Rect2(centre.x - large / 2.0, centre.y - 10.0 * k, large, 20.0 * k)
 		var pas := r.size.y + 6.0 * k
 		for ecart in BADGE_ECARTS:
@@ -818,27 +823,25 @@ func _dessiner_hud(t: float) -> void:
 	zones_hud.clear()
 
 	# --- le cartouche de gare, en haut à gauche : c'est le bouton RETOUR ------
-	var pays := Donnees.pays_de(String(fiche.get("country", "")))
-	var drapeau := String(pays.get("drapeau", ""))
+	# LE DRAPEAU S'EN VA. Un drapeau est une paire d'indicateurs régionaux que
+	# la police doit savoir composer : macOS le fait, l'iPhone de Vincent non —
+	# et comme je lui réservais sa place au cas où sa largeur mentirait, il ne
+	# restait qu'un TROU entre le chevron et « York ». Il ne manquera à
+	# personne : le pays est écrit en toutes lettres sur la fiche du ruban,
+	# juste avant qu'on prenne le service.
 	var nom := String(fiche.get("name", ""))
 	var d := int(fiche_jouee.get("difficulty", fiche.get("difficulty", 1)))
-	# Un drapeau est une paire de caractères combinés : la police système en
-	# rend un glyphe unique dont la largeur mesurée ment (mesuré le 3 septembre
-	# 2026 : le nom débordait de la chip). On lui réserve sa place.
-	var w_fl: float = max(20.0 * k, sans.get_string_size(drapeau, HORIZONTAL_ALIGNMENT_LEFT, -1, ti.call(15)).x)
-	var w_nm := gras.get_string_size(nom, HORIZONTAL_ALIGNMENT_LEFT, -1, ti.call(13)).x
+	var w_nm := gras.get_string_size(nom, HORIZONTAL_ALIGNMENT_LEFT, -1, ti.call(15)).x
 	var w_pips := (5.0 * 4.0 + 4.0 * 3.0) * k
-	var large := (10.0 + 14.0 + 6.0) * k + w_fl + 6.0 * k + w_nm + 12.0 * k + w_pips + 13.0 * k
+	var large := (10.0 + 14.0 + 8.0) * k + w_nm + 12.0 * k + w_pips + 13.0 * k
 	var chip := Rect2(Sty.marges["gauche"] + 4 * k, Sty.marges["haut"] + 10 * k, large, 34 * k)
 	zones_hud["carte"] = chip
 	_chip(chip, Sty.BORD, k)
 	var cy := chip.position.y + chip.size.y / 2.0
 	var x := chip.position.x + 10.0 * k
-	Sty.texte_centre(self, sans, ti.call(22), Vector2(x + 7 * k, cy - 1 * k), "‹", Sty.MUET)
-	x += (14.0 + 6.0) * k
-	Sty.texte_centre(self, sans, ti.call(15), Vector2(x + w_fl / 2.0, cy), drapeau, Sty.TEXTE)
-	x += w_fl + 6.0 * k
-	Sty.texte_centre(self, gras, ti.call(13), Vector2(x + w_nm / 2.0, cy), nom, Sty.TEXTE)
+	Sty.texte_centre(self, sans, ti.call(22), Vector2(x + 7 * k, cy - 1 * k), "‹", Sty.LAITON)
+	x += (14.0 + 8.0) * k
+	Sty.texte_centre(self, gras, ti.call(15), Vector2(x + w_nm / 2.0, cy), nom, Sty.TEXTE)
 	# LA JAUGE RESPIRE. Trois unités séparaient « York » de ses crans : le nom
 	# et la difficulté se lisaient comme un seul bloc, « York|||||».
 	x += w_nm + 12.0 * k
@@ -858,16 +861,16 @@ func _dessiner_hud(t: float) -> void:
 	var milieu: float = Sty.marges["gauche"] + (size_ecran().x - Sty.marges["gauche"] - Sty.marges["droite"]) / 2.0
 	var ch := Rect2(milieu - w_chip / 2.0, Sty.marges["haut"] + 10 * k, w_chip, 38 * k)
 	zones_hud["horloge"] = ch
-	_chip(ch, Sty.ACCENT if (pause or gel) else Sty.POSTE_BORD, k)
-	# LA FENÊTRE DE L'HEURE. Les chiffres flottaient sur le bandeau ; ils se
-	# lisent maintenant dans une découpe sombre cerclée de laiton, comme le
-	# guichet d'un compteur mécanique. Rien n'a changé de ce qui s'y écrit.
-	var w_fen := w_h + 12.0 * k
-	var fen := Rect2(ch.position.x + 7.0 * k, ch.position.y + 5.0 * k, w_fen, 26.0 * k)
-	draw_style_box(Sty.boite(Color(0, 0, 0, 0.45), Color(Sty.POSTE_BORD, 0.35),
-		4 * k, max(1.0, 0.9 * k)), fen)
+	# LE CADRAN EST UN SEUL FOND. J'avais posé un guichet sombre DANS la chip
+	# chaude : deux fonds, deux cadres, et le retard qui tombait à côté du
+	# guichet sur la couleur de dessous — « il y a des fonds de couleur
+	# différents » (Vincent, 5 septembre 2026), et il avait raison, c'était un
+	# rapiéçage. La chip EST le cadran : une découpe sombre, un seul cerclage
+	# de laiton, et tout ce qui se lit — heure, retard, jauge — dedans.
+	draw_style_box(Sty.boite(Color(0, 0, 0, 0.42),
+		Sty.ACCENT if (pause or gel) else Sty.POSTE_BORD, 12 * k, max(1.0, 1.2 * k)), ch)
 	var base := ch.position.y + 5.0 * k + mono.get_ascent(ti.call(21))
-	Sty.texte_espace(self, mono, ti.call(21), Vector2(ch.position.x + 13.0 * k, base + 1.0 * k),
+	Sty.texte_espace(self, mono, ti.call(21), Vector2(ch.position.x + 13.0 * k, base),
 		horloge, Sty.TEXTE, 1.0 * k)
 	var col_r: Color = Sty.VERT if retard < 10 else (Sty.AMBRE if retard < 30 else Sty.ROUGE)
 	draw_string(mono, Vector2(ch.position.x + 13.0 * k + w_h + 8.0 * k, base), txt_r,

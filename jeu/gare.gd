@@ -57,8 +57,20 @@ func poser(f: Dictionary, geometrie: Dictionary) -> void:
 	queue_redraw()
 
 
+## LA TAILLE D'UN NOM DE PORTAIL. Elle était restée à 15, la valeur CSS du
+## prototype, sans le facteur tactile — alors que ce facteur existe justement
+## pour cela : sur un pointeur grossier, « tout ce qu'on touche et tout ce
+## qu'on lit sur le plan » grossit d'une moitié, et les libellés de portail
+## sont nommément dans cette liste (jeu/style.gd). Ils ne l'avaient jamais
+## reçu. « La police est trop petite pour le nom des destinations » — c'était
+## un oubli, pas un choix.
+static func taille_nom() -> int:
+	return int(round(15.0 * Sty.UIK))
+
+
 ## Où se pose le nom d'un portail : au-dessus de l'aiguillage, à 34 px au
-## plus, borné à 40 % de l'écart au voisin du même côté (js/render.js).
+## plus — × le facteur tactile depuis que le nom a grandi — borné à 40 % de
+## l'écart au voisin du même côté (js/render.js).
 func position_nom(pname: String) -> Vector2:
 	var p: Dictionary = G["portals"][pname]
 	var cy := float(p["cy"])
@@ -67,13 +79,14 @@ func position_nom(pname: String) -> Vector2:
 		var q: Dictionary = G["portals"][autre]
 		if autre != pname and q["side"] == p["side"]:
 			gap = min(gap, absf(float(q["cy"]) - cy))
-	return Vector2(float(p["x"]), cy - min(34.0, gap * 0.40))
+	return Vector2(float(p["x"]), cy - min(34.0 * Sty.UIK, gap * 0.40))
 
 
 func _draw() -> void:
 	if G.is_empty():
 		return
-	var sans_g := Sty.sans(600)
+	var sans_g := Sty.sans(700)
+	var grave := Sty.titre(600)
 
 	# --- voies d'approche et de départ : la fuite vers le bord ---------------
 	# Elles portent leurs traverses depuis le 4 septembre 2026 : ce sont les
@@ -160,12 +173,18 @@ func _draw() -> void:
 		draw_arc(c, 6.4, 0.0, TAU, 24, Color(Sty.POSTE_BORD, 0.55), 1.2, true)
 		var nom := String(p["label"])
 		var pos := position_nom(pname)
+		# EN CINZEL, ET NON EN GARAMOND. « Elle semble un peu fine globalement » :
+		# EB Garamond est une romane ancienne, dont les déliés s'amincissent
+		# encore sur un fond sombre. Un nom de gare sur un pupitre est GRAVÉ —
+		# c'est exactement ce que la capitale lapidaire du jeu sait faire, et
+		# elle porte deux fois plus de matière à taille égale.
+		var t := taille_nom()
 		if noms_allumes.has(pname):
 			# « validé » : pleine couleur, halo à sa teinte
-			Sty.texte_centre(self, sans_g, 15, pos, nom, Color(col, 0.35), 7, Color(col, 0.35))
-			Sty.texte_centre(self, sans_g, 15, pos, nom, col, 3, Sty.POSTE_FOND)
+			Sty.texte_centre(self, grave, t, pos, nom, Color(col, 0.35), 7, Color(col, 0.35))
+			Sty.texte_centre(self, grave, t, pos, nom, col, 3, Sty.POSTE_FOND)
 		else:
-			Sty.texte_centre(self, sans_g, 15, pos, nom, Color(col, 0.72), 3, Sty.POSTE_FOND)
+			Sty.texte_centre(self, grave, t, pos, nom, Color(col, 0.80), 3, Sty.POSTE_FOND)
 
 	# --- le cartouche de diagnostic, seul à l'écran --------------------------
 	if cartouche:
