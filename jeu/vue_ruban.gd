@@ -76,6 +76,7 @@ var contours: Array = []      # les anneaux dessinés en Line2D, à la largeur d
 var bruit := FastNoiseLite.new()
 var papier: NoiseTexture2D
 var anneaux: Array = []       # [{pts, bbox}] en unités du cadre, pour savoir où est la terre
+var courbes: Dictionary = {}  # "gare|gare" -> le tracé de la liaison, en unités du cadre
 var relief_traits := PackedVector2Array()
 var relief_pour := {}         # la caméra pour laquelle le relief a été semé
 
@@ -148,6 +149,7 @@ func poser(ruban_, carte_id_: String) -> void:
 	transit_t = -1.0
 	_projeter()
 	_construire_fond()
+	_construire_courbes()
 	prochaine = ruban.gare_courante()
 	chapitre = _chapitre_de_reference()
 	cam = camera_voulue()
@@ -159,6 +161,7 @@ func poser(ruban_, carte_id_: String) -> void:
 		cam = {"x": CADRE_L / 2, "y": CADRE_H / 2, "k": float(z)}
 		zoom_force = true
 	rebatir()
+	_poser_fond()
 	queue_redraw()
 
 
@@ -309,6 +312,118 @@ func _construire_fond() -> void:
 
 
 # ------------------------------------------------------------------
+# LES VOIES SE COURBENT
+# ------------------------------------------------------------------
+# Un rail tiré à la règle d'une gare à l'autre donne un zigzag d'épingles ;
+# une carte ferroviaire montre des courbes, et une voie EST courbe — c'est
+# même sa contrainte première. La base est une spline de Catmull-Rom passant
+# par toutes les gares du chapitre : lisse, continue, et elle ne coupe aucun
+# angle puisqu'elle passe exactement par chaque point.
+#
+# PUIS ON REGARDE LA MER. « Éviter de traverser la mer comme entre Salerne et
+# Paola » (Vincent, 5 septembre 2026) : la corde Salerne-Paola coupe le golfe
+# de Policastro, et aucune spline ne l'en sortira — c'est la géographie qui
+# décide, pas le lissage. On ajoute donc, au segment fautif SEULEMENT, un
+# renflement perpendiculaire nul aux deux bouts — 4t(1−t) — et on retient le
+# premier écart qui ramène le tracé sur la terre. Nul aux deux bouts : la voie
+# continue d'aboutir exactement sur ses gares, et les liaisons voisines ne
+# bougent pas.
+#
+# UNE VRAIE TRAVERSÉE NE SE CORRIGE PAS. Le train qui prend le bateau passe
+# le détroit de Messine, et aucun écart ne l'en dispensera : quand même le
+# meilleur essai laisse le tracé dans l'eau, on garde la spline. Un bac se
+# dessine droit.
+const COURBE_PAS := 14
+const COURBE_ECARTS := [0.07, -0.07, 0.14, -0.14, 0.24, -0.24, 0.36, -0.36]
+
+
+func _construire_courbes() -> void:
+	courbes.clear()
+	if ruban == null or proj.is_empty():
+		return
+	var debut := Time.get_ticks_usec()
+	var corriges := 0
+	for ch in ruban.chapitres:
+		var ids: Array = []
+		var pts: Array = []
+		for id in ch["gares"]:
+			var p := pos(id)
+			if p != Vector2.INF:
+				ids.append(id)
+				pts.append(p)
+		for i in range(1, pts.size()):
+			# les deux points de contrôle : le voisin, ou son reflet au bout
+			var p0: Vector2 = pts[i - 2] if i >= 2 else pts[i - 1] * 2.0 - pts[i]
+			var p3: Vector2 = pts[i + 1] if i + 1 < pts.size() else pts[i] * 2.0 - pts[i - 1]
+			var trace := _tracer(p0, pts[i - 1], pts[i], p3)
+			if trace[1]:
+				corriges += 1
+			courbes[ids[i - 1] + "|" + ids[i]] = trace[0]
+	print("courbes : %d liaisons, %d écartées de l'eau, %.1f ms" % [
+		courbes.size(), corriges, (Time.get_ticks_usec() - debut) / 1000.0])
+
+
+## Le tracé d'une liaison, et s'il a fallu l'écarter de l'eau.
+func _tracer(p0: Vector2, p1: Vector2, p2: Vector2, p3: Vector2) -> Array:
+	var base := PackedVector2Array()
+	for j in range(COURBE_PAS + 1):
+		base.append(_catmull(p0, p1, p2, p3, float(j) / float(COURBE_PAS)))
+	var reste := _dans_l_eau(base)
+	if reste == 0:
+		return [base, false]
+	var d := p2 - p1
+	var l := d.length()
+	if l <= 0.0:
+		return [base, false]
+	var n := Vector2(-d.y, d.x) / l
+	for e in COURBE_ECARTS:
+		var essai := PackedVector2Array()
+		for j in range(base.size()):
+			var t := float(j) / float(COURBE_PAS)
+			essai.append(base[j] + n * (e * l) * 4.0 * t * (1.0 - t))
+		var manque := _dans_l_eau(essai)
+		if manque == 0:
+			return [essai, true]
+	return [base, false]
+
+
+## Combien de points du tracé tombent dans l'eau — les DEUX BOUTS EXCEPTÉS :
+## ce sont les gares, elles ne bougeront pas, et une gare posée sur une île
+## que le fond de carte ignore condamnerait sa liaison à ne jamais convenir.
+func _dans_l_eau(pts: PackedVector2Array) -> int:
+	var n := 0
+	for i in range(1, pts.size() - 1):
+		if not _sur_terre(pts[i]):
+			n += 1
+	return n
+
+
+static func _catmull(p0: Vector2, p1: Vector2, p2: Vector2, p3: Vector2, t: float) -> Vector2:
+	var t2 := t * t
+	var t3 := t2 * t
+	return 0.5 * (2.0 * p1 + (p2 - p0) * t
+		+ (2.0 * p0 - 5.0 * p1 + 4.0 * p2 - p3) * t2
+		+ (p3 - p0 + 3.0 * (p1 - p2)) * t3)
+
+
+## Le tracé d'une liaison, en points d'écran. À défaut de courbe — deux gares
+## que rien ne relie dans un chapitre — la droite reste le repli.
+func _voie_ecran(a: String, b: String) -> PackedVector2Array:
+	var out := PackedVector2Array()
+	var c: Variant = courbes.get(a + "|" + b)
+	if c is PackedVector2Array:
+		for p in c:
+			out.append(ecran(p))
+		return out
+	var pa := pos(a)
+	var pb := pos(b)
+	if pa != Vector2.INF and pb != Vector2.INF:
+		out.append(ecran(pa))
+		out.append(ecran(pb))
+	return out
+
+
+# ------------------------------------------------------------------
 # La caméra — trois boîtes à cadrer, une fenêtre à remplir
 # ------------------------------------------------------------------
 ## La fenêtre de la carte, en unités du cadre : l'écran moins le panneau.
@@ -369,8 +484,20 @@ func _lat(y: float) -> float:
 	return proj["la"] + (CADRE_H / 2 - y) / proj["s"]
 
 
-## Le rectangle d'écran que la carte occupe : à droite du panneau, sous la
-## barre, dans la zone sûre.
+## LA SURFACE PEINTE de la carte : à droite du panneau, sous la barre, et
+## JUSQU'AUX BORDS DE L'ÉCRAN. Le grain, le relief et le graticule s'arrêtaient
+## à la zone sûre et laissaient une bande claire, non grainée, à droite et en
+## bas — « il faut étirer le carré plus sombre sur toute la carte » (Vincent,
+## 5 septembre 2026). La zone sûre retient ce qu'on doit LIRE ; elle n'a rien à
+## dire du fond, et un papier va jusqu'au bord de la feuille.
+func surface_carte() -> Rect2:
+	var e := get_viewport_rect().size
+	var g: float = panneau_l() + Sty.marges["gauche"]
+	return Rect2(g, hauteur_barre(), max(1.0, e.x - g), max(1.0, e.y - hauteur_barre()))
+
+
+## Le rectangle où la carte POSE ce qui se lit : la surface, moins la zone
+## sûre. C'est lui que consulte le placement des plaques et la rose des vents.
 func cadre_carte() -> Rect2:
 	var e := get_viewport_rect().size
 	var g: float = panneau_l() + Sty.marges["gauche"]
@@ -506,12 +633,21 @@ func _process(delta: float) -> void:
 			transit_t += delta / duree
 			if transit_t >= 1.0:
 				_arriver()
+	_poser_fond()
+	queue_redraw()
+
+
+## Le calque des pays sous la caméra. Appelé par `_process`, mais AUSSI par
+## `poser` : pendant un glissement l'écran ne tourne pas, et une carte changée
+## garderait le fond de l'ancienne le temps de la transition.
+func _poser_fond() -> void:
 	var f := fenetre()
 	var k: float = cam["k"] * f["px"]
+	if k <= 0.0:
+		return
 	fond.transform = Transform2D(0.0, Vector2(k, k), 0.0, _centre_carte() - Vector2(cam["x"], cam["y"]) * k)
 	for l in contours:
 		l.width = 1.6 * Sty.HUD_K / k
-	queue_redraw()
 
 
 # ------------------------------------------------------------------
@@ -574,21 +710,20 @@ func _draw() -> void:
 			var ecrit: bool = ruban.est_ecrite(g[i - 1]) and ruban.est_ecrite(g[i])
 			var fait: bool = ruban.est_franchie(g[i - 1]) and ruban.est_franchie(g[i])
 			var avance: bool = ecrit and not fait and g[i] == gc
-			var pa := ecran(a)
-			var pb := ecran(b)
 			# UNE VOIE, PAS UN TRAIT : deux files de rail et leurs traverses,
 			# comme sur une carte ferroviaire. Le tracé parcouru est en laiton
 			# vif, celui qui vient respire, celui qu'on n'a pas ouvert reste
 			# gris de fonte.
+			var trace := _voie_ecran(g[i - 1], g[i])
 			var k := Sty.HUD_K
 			if not ecrit:
-				_pointille(pa, pb, Color(Sty.LAITON, 0.28), 2.0 * k, 7.0 * k)
+				_pointille_ligne(trace, Color(Sty.LAITON, 0.28), 2.0 * k, 7.0 * k)
 			elif fait:
-				_voie(pa, pb, Sty.LAITON_CLAIR, k, 1.0)
+				_voie(trace, Sty.LAITON_CLAIR, k, 1.0)
 			elif avance:
-				_voie(pa, pb, Sty.LAITON_CLAIR, k, 0.65 + 0.35 * pulse)
+				_voie(trace, Sty.LAITON_CLAIR, k, 0.65 + 0.35 * pulse)
 			else:
-				_voie(pa, pb, Color("#7a6a55"), k, 0.75)
+				_voie(trace, Color("#7a6a55"), k, 0.75)
 	# --- la liaison de transit, et le convoi ------------------------------------
 	if not transit.is_empty():
 		var a := pos(transit["de"])
@@ -655,7 +790,7 @@ func _draw() -> void:
 		if e.distance_to(attache) > r + 9.0 * kk:
 			draw_line(e, attache, Color(Sty.LAITON, 0.45), max(1.0, 1.0 * kk), true)
 		draw_style_box(Sty.plaque(Sty.SARCELLE if m["ouverte"] else Color(Sty.BOIS_CLAIR, 0.9),
-			Color(Sty.LAITON, 0.9 if m["ouverte"] else 0.45), 5, Sty.HUD_K), plaque)
+			Color(Sty.LAITON, 0.9 if m["ouverte"] else 0.45), Sty.R_PETIT, Sty.HUD_K), plaque)
 		var encre: Color = Sty.PAPIER if m["ouverte"] else MUET
 		var xt: float = plaque.position.x + float(m["pad"])
 		var w: float = m["w"]
@@ -670,7 +805,7 @@ func _draw() -> void:
 			# plaque posée à gauche porte donc son cadenas à gauche.
 			var a_gauche: bool = plaque.get_center().x < e.x
 			var c := Vector2(plaque.position.x - 9 * kk if a_gauche else plaque.end.x + 9 * kk, cy)
-			draw_style_box(Sty.boite(Color(Sty.BOIS_CLAIR, 0.95), Color(Sty.LAITON, 0.5), 3 * kk, max(1.0, kk)),
+			draw_style_box(Sty.boite(Color(Sty.BOIS_CLAIR, 0.95), Color(Sty.LAITON, 0.5), 3 * kk, Sty.epaisseur(kk)),
 				Rect2(c.x - 5 * kk, c.y - 4 * kk, 10 * kk, 8 * kk))
 			draw_arc(Vector2(c.x, c.y - 4 * kk), 3.2 * kk, PI, TAU, 12, Color(Sty.LAITON, 0.7), 1.4 * kk, true)
 
@@ -734,10 +869,17 @@ func _placer_plaques(ids: Array, c: Dictionary) -> Dictionary:
 		var p := pos(id)
 		if p != Vector2.INF:
 			pts[id] = _ecran_de(p, c)
+	# les segments de voie qu'une plaque ne doit pas couvrir : le tracé courbe,
+	# décimé — cinq segments par liaison suffisent à dire où passe la voie.
 	var segs: Array = []
 	for i in range(1, ids.size()):
-		if pts.has(ids[i - 1]) and pts.has(ids[i]):
-			segs.append([pts[ids[i - 1]], pts[ids[i]]])
+		if not (pts.has(ids[i - 1]) and pts.has(ids[i])):
+			continue
+		var t: PackedVector2Array = _tracer_pour(ids[i - 1], ids[i], c)
+		var j := 0
+		while j + 3 < t.size():
+			segs.append([t[j], t[min(t.size() - 1, j + 3)]])
+			j += 3
 	# L'ORDRE COMPTE : la première servie choisit librement. On sert donc la
 	# gare qui vient, puis les fins de chapitre, puis le reste dans l'ordre du
 	# rail — les plus importantes ont la meilleure place.
@@ -776,6 +918,17 @@ func _placer_plaques(ids: Array, c: Dictionary) -> Dictionary:
 	return mis
 
 
+## Le tracé d'une liaison pour une caméra QUELCONQUE — le placement des
+## plaques doit pouvoir l'interroger avant que la caméra soit adoptée.
+func _tracer_pour(a: String, b: String, c: Dictionary) -> PackedVector2Array:
+	var out := PackedVector2Array()
+	var t: Variant = courbes.get(a + "|" + b)
+	if t is PackedVector2Array:
+		for p in t:
+			out.append(_ecran_de(p, c))
+	return out
+
+
 func _rang_de_plaque(id: String) -> int:
 	var chg := ruban.chapitre_de_gare(id)
 	var fin: bool = not chg.is_empty() and chg["gares"][chg["gares"].size() - 1] == id
@@ -800,7 +953,7 @@ func _note_plaque(r: Rect2, poses: Array, pts: Dictionary, segs: Array, cadre: R
 			n += 400.0
 	for s in segs:
 		if _segment_coupe(r, s[0], s[1]):
-			n += 55.0
+			n += 90.0
 	# ce qui déborde de la carte n'est pas une place : on paie au point sorti
 	n += 14.0 * (max(0.0, cadre.position.x - r.position.x) + max(0.0, r.end.x - cadre.end.x)
 		+ max(0.0, cadre.position.y - r.position.y) + max(0.0, r.end.y - cadre.end.y)) / k
@@ -819,23 +972,29 @@ func _segment_coupe(r: Rect2, a: Vector2, b: Vector2) -> bool:
 
 ## UNE VOIE FERRÉE : le ballast sombre, les traverses, puis les deux files de
 ## rail. Les traverses sont espacées à l'ÉCRAN et non dans le monde — sinon
-## elles se collent quand on dézoome et disparaissent quand on approche.
-func _voie(a: Vector2, b: Vector2, col: Color, k: float, force: float) -> void:
-	var d := a.distance_to(b)
-	if d < 1.0:
+## elles se collent quand on dézoome et disparaissent quand on approche. Et
+## tout se dessine sur une POLYLIGNE depuis que les voies se courbent : les
+## deux files suivent la normale locale du tracé, pas celle d'une corde.
+func _voie(pts: PackedVector2Array, col: Color, k: float, force: float) -> void:
+	if pts.size() < 2:
 		return
-	var u := (b - a) / d
-	var n := Vector2(-u.y, u.x)
 	var demi := 2.2 * k
-	draw_line(a, b, Color(Sty.BOIS, 0.55 * force), 8.0 * k, true)      # le ballast
-	var pas := 9.0 * k
-	var s := pas / 2.0
-	while s < d:
-		var p := a + u * s
-		draw_line(p - n * demi * 1.55, p + n * demi * 1.55, Color(col, 0.55 * force), 1.6 * k, true)
-		s += pas
-	draw_line(a - n * demi, b - n * demi, Color(col, force), 1.7 * k, true)
-	draw_line(a + n * demi, b + n * demi, Color(col, force), 1.7 * k, true)
+	draw_polyline(pts, Color(Sty.BOIS, 0.55 * force), 8.0 * k, true)      # le ballast
+	Sty.traverses(self, pts, Color(col, 0.55 * force), demi * 1.55, 9.0 * k)
+	_file(pts, -demi, Color(col, force), k)
+	_file(pts, demi, Color(col, force), k)
+
+
+## Une file de rail : le tracé décalé d'un demi-écartement, chaque point
+## poussé le long de la normale que lui donnent ses deux voisins.
+func _file(pts: PackedVector2Array, ecart: float, col: Color, k: float) -> void:
+	var out := PackedVector2Array()
+	var dernier := pts.size() - 1
+	for i in pts.size():
+		var u: Vector2 = pts[min(dernier, i + 1)] - pts[max(0, i - 1)]
+		u = u.normalized() if u.length() > 1e-6 else Vector2.RIGHT
+		out.append(pts[i] + Vector2(-u.y, u.x) * ecart)
+	draw_polyline(out, col, 1.7 * k, true)
 
 
 ## LE GRAIN DU PAPIER, en coordonnées d'écran. C'est la feuille sur laquelle
@@ -848,7 +1007,7 @@ func _grain() -> void:
 	# Modulé par le BOIS et non par du blanc : la texture est un gris, et
 	# passée en blanc elle délavait la terre au lieu de la marbrer. Multipliée
 	# par un brun, elle assombrit irrégulièrement — ce que fait un papier.
-	draw_texture_rect(papier, cadre_carte(), true, Color(Sty.BOIS.r, Sty.BOIS.g, Sty.BOIS.b, 0.22))
+	draw_texture_rect(papier, surface_carte(), true, Color(Sty.BOIS.r, Sty.BOIS.g, Sty.BOIS.b, 0.22))
 
 
 ## LE RELIEF — un semis de hachures, à l'écran mais ancré au terrain.
@@ -867,7 +1026,7 @@ func _grain() -> void:
 func _relief() -> void:
 	if anneaux.is_empty():
 		return
-	var r := cadre_carte()
+	var r := surface_carte()
 	var cle := {"x": cam["x"], "y": cam["y"], "k": cam["k"], "r": r}
 	if relief_pour != cle:
 		relief_pour = cle
@@ -928,7 +1087,7 @@ const GRADUATIONS := [20.0, 10.0, 5.0, 2.0, 1.0, 0.5, 0.2, 0.1]
 func _graticule() -> void:
 	if proj.is_empty():
 		return
-	var r := cadre_carte()
+	var r := surface_carte()
 	var a := monde(r.position)
 	var b := monde(r.end)
 	var px: float = fenetre()["px"] * cam["k"]
@@ -964,27 +1123,31 @@ func _graticule() -> void:
 func _fil_du_ruban() -> void:
 	if ruban == null:
 		return
-	var vu := cadre_carte().grow(80.0)
+	var vu := surface_carte().grow(80.0)
 	var traits := PackedVector2Array()
 	var points := PackedVector2Array()
 	var vus := chapitre_vu()
 	var rang_vu: int = int(vus["rang"]) if not vus.is_empty() else -99
-	var prec := Vector2.INF
+	var prec := ""
+	var prec_e := Vector2.INF
 	for ch in ruban.chapitres:
 		if ch.get("saut") != null:
-			prec = Vector2.INF
+			prec = ""
 		var voisin: bool = absi(int(ch["rang"]) - rang_vu) == 1
 		for id in ch["gares"]:
 			var p := pos(id)
 			if p == Vector2.INF:
 				continue
 			var e := ecran(p)
-			if prec != Vector2.INF and (vu.has_point(prec) or vu.has_point(e)):
-				traits.append(prec)
-				traits.append(e)
+			if prec != "" and (vu.has_point(prec_e) or vu.has_point(e)):
+				var trace := _voie_ecran(prec, id)
+				for j in range(trace.size() - 1):
+					traits.append(trace[j])
+					traits.append(trace[j + 1])
 			if voisin and vu.has_point(e):
 				points.append(e)
-			prec = e
+			prec = id
+			prec_e = e
 	if not traits.is_empty():
 		draw_multiline(traits, Color(Sty.LAITON, 0.22), max(1.0, 1.3 * Sty.HUD_K))
 	# les gares des chapitres d'avant et d'après : des points sourds, sans nom
@@ -1027,6 +1190,36 @@ func _rose_des_vents() -> void:
 		var a: float = -PI / 4 + PI / 2 * float(i)
 		draw_line(c, c + Vector2(cos(a), sin(a)) * R * 0.62, Color(Sty.LAITON, 0.45), 1.0 * k, true)
 	Sty.texte_centre(self, police, int(round(9 * k)), c + Vector2(0, -R - 7 * k), "N", Color(Sty.LAITON, 0.75))
+
+
+## Le pointillé le long d'un tracé quelconque : on marche en LONGUEUR D'ARC,
+## un tiret sur deux. Compter segment par segment relancerait un tiret à
+## chaque coude, et une voie courbe n'a plus que des coudes.
+func _pointille_ligne(pts: PackedVector2Array, col: Color, larg: float, pas: float) -> void:
+	if pts.size() < 2 or pas <= 0.0:
+		return
+	var total := 0.0
+	for i in range(pts.size() - 1):
+		total += pts[i].distance_to(pts[i + 1])
+	var s := 0.0
+	var plein := true
+	while s < total:
+		var e: float = min(total, s + pas)
+		if plein:
+			draw_line(_le_long(pts, s), _le_long(pts, e), col, larg, true)
+		plein = not plein
+		s = e
+
+
+## Le point situé à telle distance du départ, le long du tracé.
+func _le_long(pts: PackedVector2Array, d: float) -> Vector2:
+	var reste := d
+	for i in range(pts.size() - 1):
+		var l := pts[i].distance_to(pts[i + 1])
+		if reste <= l or i == pts.size() - 2:
+			return pts[i].lerp(pts[i + 1], clampf(reste / max(l, 1e-6), 0.0, 1.0))
+		reste -= l
+	return pts[pts.size() - 1]
 
 
 func _pointille(a: Vector2, b: Vector2, col: Color, larg: float, pas: float) -> void:
@@ -1122,6 +1315,8 @@ func jouer(id: String) -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if ruban == null or not visible:
 		return
+	if app != null and app.en_glissement():
+		return
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		var m: Vector2 = event.position
 		if m.x < panneau_l() + Sty.marges["gauche"]:
@@ -1161,7 +1356,7 @@ func _construire_panneau() -> void:
 	var sb := StyleBoxFlat.new()
 	sb.bg_color = Sty.BOIS_CLAIR
 	sb.border_color = Color(Sty.LAITON, 0.55)
-	sb.border_width_bottom = int(max(1.0, 2 * k))
+	sb.border_width_bottom = int(Sty.epaisseur(k, true))
 	sb.content_margin_left = 18 * k + Sty.marges["gauche"]
 	sb.content_margin_right = 18 * k + Sty.marges["droite"]
 	sb.content_margin_top = 7 * k + Sty.marges["haut"]
@@ -1176,7 +1371,7 @@ func _construire_panneau() -> void:
 	var style := StyleBoxFlat.new()
 	style.bg_color = PANNEAU
 	style.border_color = Color(Sty.LAITON, 0.55)
-	style.border_width_right = int(max(1.0, 2 * k))
+	style.border_width_right = int(Sty.epaisseur(k, true))
 	style.content_margin_left = 22 * k + Sty.marges["gauche"]
 	style.content_margin_right = 22 * k
 	style.content_margin_top = 16 * k
@@ -1244,31 +1439,9 @@ func _label(texte: String, taille: int, couleur: Color, gras: bool = false, repl
 
 
 func _bouton(texte: String, principal: bool, actif: bool, sur: Callable) -> Button:
-	var k := Sty.HUD_K
-	var b := Sty.bouton(texte, principal, 16 if principal else 14, k)
+	var b := Sty.bouton_plaque(texte, principal, 16 if principal else 14, Sty.HUD_K)
 	b.disabled = not actif
 	b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	# LE BOUTON EST UNE PLAQUE VISSÉE : sarcelle profonde et liseré de laiton
-	# pour l'appel, bois pour le reste. Le texte s'y écrit sur le papier.
-	var fond: Color = Sty.SARCELLE if principal else Sty.BOIS_CLAIR
-	var normal := Sty.plaque(fond, Sty.LAITON, 8, k)
-	normal.content_margin_top = 10 * k
-	normal.content_margin_bottom = 10 * k
-	normal.content_margin_left = 16 * k
-	normal.content_margin_right = 16 * k
-	b.add_theme_stylebox_override("normal", normal)
-	var survol := normal.duplicate()
-	survol.bg_color = fond.lightened(0.10)
-	survol.border_color = Sty.LAITON_CLAIR
-	b.add_theme_stylebox_override("hover", survol)
-	b.add_theme_stylebox_override("pressed", survol)
-	var eteint := normal.duplicate()
-	eteint.bg_color = Color(Sty.BOIS, 0.9)
-	eteint.border_color = Color(Sty.LAITON, 0.35)
-	b.add_theme_stylebox_override("disabled", eteint)
-	for quoi in ["font_color", "font_hover_color", "font_pressed_color"]:
-		b.add_theme_color_override(quoi, Sty.PAPIER)
-	b.add_theme_color_override("font_disabled_color", Color(Sty.PAPIER, 0.4))
 	if sur.is_valid():
 		b.pressed.connect(sur)
 	return b
@@ -1352,21 +1525,13 @@ func _remplir_barre() -> void:
 	# À GAUCHE, LE GESTE. « Les cartes » n'est pas un compteur : c'est le seul
 	# objet cliquable de la barre, et il se tient du côté où le pouce arrive.
 	if app != null and app.plusieurs_cartes():
-		var b := Sty.bouton("Les cartes", false, 12, k)
-		b.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-		var pl := Sty.plaque(Sty.BOIS_CLAIR, Sty.LAITON, 8, k)
-		pl.content_margin_left = 12 * k
-		pl.content_margin_right = 12 * k
-		pl.content_margin_top = 6 * k
-		pl.content_margin_bottom = 6 * k
-		b.add_theme_stylebox_override("normal", pl)
-		var ph := pl.duplicate()
-		ph.bg_color = Sty.BOIS_CLAIR.lightened(0.12)
-		ph.border_color = Sty.LAITON_CLAIR
-		b.add_theme_stylebox_override("hover", ph)
-		b.add_theme_stylebox_override("pressed", ph)
-		for quoi in ["font_color", "font_hover_color", "font_pressed_color"]:
-			b.add_theme_color_override(quoi, Sty.PAPIER)
+		# SANS CADRE, ET AVEC SA FLÈCHE. Ce n'est pas une commande de plus dans
+		# la barre : c'est un RETOUR, et un retour se lit comme un lien — un
+		# chevron, un mot, rien autour. Le cadre le faisait peser autant que le
+		# grade, qui n'est qu'un compteur. Le chevron pointe à gauche parce que
+		# les cartes sont à gauche : l'écran glisse vers la droite pour les
+		# découvrir, et revient depuis la droite quand on en choisit une.
+		var b := Sty.lien("Les cartes", k)
 		b.pressed.connect(app.ouvrir_cartes)
 		gauche.add_child(b)
 
@@ -1414,7 +1579,7 @@ func _pastille(texte: String, couleur: Color) -> Control:
 	var k := Sty.HUD_K
 	var p := PanelContainer.new()
 	p.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	var st := Sty.boite(Color(couleur, 0.10), Color(couleur, 0.35), 8 * k, max(1.0, k))
+	var st := Sty.boite(Color(couleur, 0.10), Color(couleur, 0.35), Sty.R_PETIT * k, Sty.epaisseur(k))
 	st.content_margin_left = 9 * k
 	st.content_margin_right = 9 * k
 	st.content_margin_top = 3 * k
@@ -1443,7 +1608,7 @@ func _banniere() -> Control:
 	var k := Sty.HUD_K
 	var cadre := PanelContainer.new()
 	cadre.add_theme_stylebox_override("panel",
-		Sty.boite(Color(0, 0, 0, 0), Color(Sty.LAITON, 0.55), 8 * k, max(1.0, k)))
+		Sty.boite(Color(0, 0, 0, 0), Color(Sty.LAITON, 0.55), Sty.R_GRAND * k, Sty.epaisseur(k)))
 	cadre.clip_contents = true
 
 	var pile := Control.new()
@@ -1640,7 +1805,7 @@ func _cartouche(id: String) -> Control:
 
 	# la carte de la gare : un fond légèrement relevé, un liseré discret
 	var carte_gare := PanelContainer.new()
-	var st := Sty.parchemin(10, k)
+	var st := Sty.parchemin(Sty.R_GRAND, k)
 	st.set_content_margin_all(11 * k)
 	carte_gare.add_theme_stylebox_override("panel", st)
 	var v := VBoxContainer.new()
@@ -1655,7 +1820,7 @@ func _cartouche(id: String) -> Control:
 	var vig := Ill.vignette(cfg)
 	if vig != null:
 		var cadre := PanelContainer.new()
-		var sv := Sty.boite(Sty.PAPIER_OMBRE, Color(Sty.ENCRE, 0.5), 8 * k, max(1.0, k))
+		var sv := Sty.boite(Sty.PAPIER_OMBRE, Color(Sty.ENCRE, 0.5), Sty.R_PETIT * k, Sty.epaisseur(k))
 		sv.set_content_margin_all(2 * k)
 		cadre.add_theme_stylebox_override("panel", sv)
 		cadre.size_flags_vertical = Control.SIZE_SHRINK_BEGIN

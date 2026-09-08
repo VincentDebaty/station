@@ -28,6 +28,7 @@ var carte_id := ""
 var vue_ruban: Node2D
 var vue_jeu: Node2D
 var vue_cartes: Control
+var porte_cartes: Node2D     ## le porteur des cartes, celui qui glisse
 var vue := ""
 
 
@@ -38,7 +39,14 @@ func _ready() -> void:
 	add_child(vue_ruban)
 	vue_cartes = VueCartes.new()
 	vue_cartes.app = self
-	add_child(vue_cartes)
+	# UN PORTEUR POUR LES CARTES. L'écran des cartes est un Control ancré au
+	# viewport : lui poser une position ne le déplace pas durablement, ses
+	# ancres la reprennent au premier recalcul. Un Node2D parent, lui,
+	# transporte tout ce qu'il contient — c'est déjà ainsi que la barre et le
+	# panneau du ruban suivent leur écran.
+	porte_cartes = Node2D.new()
+	porte_cartes.add_child(vue_cartes)
+	add_child(porte_cartes)
 	vue_jeu = VueJeu.new()
 	vue_jeu.autonome = false
 	vue_jeu.app = self
@@ -46,7 +54,8 @@ func _ready() -> void:
 	charger_carte(String(Sauvegarde.get_carte_courante()))
 	montrer("ruban")
 	if OS.get_environment("STATION_VUE") == "cartes":
-		ouvrir_cartes()
+		vue_cartes.rebatir()
+		montrer("cartes")
 	if OS.get_environment("STATION_JOUER") != "":
 		var gc: String = ruban.gare_courante()
 		if gc != "":
@@ -74,11 +83,65 @@ func montrer(nom: String) -> void:
 	# cuir ; le poste d'aiguillage garde son bleu nuit, où la couleur d'une
 	# voie est sa destination et ne se rediscute pas.
 	RenderingServer.set_default_clear_color(Sty.POSTE_FOND if nom == "jeu" else Sty.MER)
-	for paire in [[vue_ruban, "ruban"], [vue_jeu, "jeu"], [vue_cartes, "cartes"]]:
-		var n: Node = paire[0]
+	for paire in [[vue_ruban, "ruban"], [vue_jeu, "jeu"], [porte_cartes, "cartes"]]:
+		var n: CanvasItem = paire[0]
 		var actif: bool = paire[1] == nom
 		n.visible = actif
 		n.process_mode = Node.PROCESS_MODE_INHERIT if actif else Node.PROCESS_MODE_DISABLED
+		n.position = Vector2.ZERO
+
+
+# --- LE GLISSEMENT ENTRE LE RUBAN ET LES CARTES ---------------------------------------
+# LES CARTES SONT À GAUCHE DU RUBAN. Le chevron du bouton le dit, et le
+# mouvement le confirme : l'écran part vers la droite pour les découvrir, et
+# revient depuis la droite quand on en choisit une. Un écran qui apparaît sans
+# venir de nulle part ne dit pas où l'on est allé ; celui-ci le dit sans un mot.
+#
+# Pendant le mouvement les deux écrans sont visibles et AUCUN DES DEUX
+# n'écoute : un clic tombé au milieu d'une transition déclenche l'écran
+# d'après, ce que personne n'a jamais voulu. `PROCESS_MODE_DISABLED` suffit —
+# il coupe l'entrée sans rien cesser de dessiner.
+const GLISSE := 0.32
+
+var glisse_t := -1.0
+var glisse_de: CanvasItem = null
+var glisse_vers: CanvasItem = null
+var glisse_nom := ""
+var glisse_sens := 1.0
+
+
+func en_glissement() -> bool:
+	return glisse_t >= 0.0
+
+
+func _glisser(de: CanvasItem, vers: CanvasItem, nom: String, sens: float) -> void:
+	if en_glissement():
+		return
+	glisse_de = de
+	glisse_vers = vers
+	glisse_nom = nom
+	glisse_sens = sens
+	glisse_t = 0.0
+	var large := get_viewport().get_visible_rect().size.x
+	for n in [de, vers]:
+		n.visible = true
+		n.process_mode = Node.PROCESS_MODE_DISABLED
+	de.position = Vector2.ZERO
+	vers.position = Vector2(-sens * large, 0.0)
+	RenderingServer.set_default_clear_color(Sty.MER)
+
+
+func _process(delta: float) -> void:
+	if not en_glissement():
+		return
+	glisse_t = min(1.0, glisse_t + delta / GLISSE)
+	var e := ease(glisse_t, -1.8)          # entrée et sortie adoucies
+	var large := get_viewport().get_visible_rect().size.x
+	glisse_de.position = Vector2(lerpf(0.0, glisse_sens * large, e), 0.0)
+	glisse_vers.position = Vector2(lerpf(-glisse_sens * large, 0.0, e), 0.0)
+	if glisse_t >= 1.0:
+		glisse_t = -1.0
+		montrer(glisse_nom)
 
 
 # --- LA CAPTURE D'ÉCRAN, DEPUIS L'APPAREIL ------------------------------------------
@@ -157,12 +220,14 @@ func plusieurs_cartes() -> bool:
 
 
 func ouvrir_cartes() -> void:
+	if en_glissement():
+		return
 	vue_cartes.rebatir()
-	montrer("cartes")
+	_glisser(vue_ruban, porte_cartes, "cartes", 1.0)
 
 
 func fermer_cartes() -> void:
-	montrer("ruban")
+	_glisser(porte_cartes, vue_ruban, "ruban", -1.0)
 
 
 func choisir_carte(id: String) -> void:
@@ -170,7 +235,7 @@ func choisir_carte(id: String) -> void:
 		return
 	if id != carte_id:
 		charger_carte(id)
-	montrer("ruban")
+	_glisser(porte_cartes, vue_ruban, "ruban", -1.0)
 
 
 func acheter_carte(id: String) -> void:

@@ -67,15 +67,86 @@ const TERRE_OMBRE := Color("#5c4a30")     # son trait de côte
 const MER := Color("#33403f")
 
 
+# --- LA TRAME : TROIS RAYONS, DEUX TRAITS -----------------------------------
+# « Les bordures et les arrondis ne sont pas uniformes dans chaque cadre »
+# (Vincent, 5 septembre 2026), et c'était exact : sur le seul écran du ruban
+# cohabitaient cinq rayons — 3, 5, 8, 10, 12 — chacun choisi sur le moment,
+# et l'écran des cartes portait encore ses 12 en dur, sans facteur d'échelle.
+# Un cadre n'a désormais que trois tailles possibles et un liseré que deux
+# épaisseurs. Toujours multipliés par k : un rayon fixe rétrécit à l'œil dès
+# que l'écran grossit, ce qui est exactement le défaut qu'on corrige.
+const R_PETIT := 6.0     # ce qui se pose : plaques de la carte, pastilles, vignettes
+const R := 10.0          # le cas courant : boutons, chips, jauges à bord franc
+const R_GRAND := 16.0    # les grandes surfaces : fiches, bannières, tuiles, cartons
+const TRAIT := 1.0       # le liseré ordinaire
+const TRAIT_FORT := 2.0  # une séparation de structure
+
+
+## L'épaisseur d'un liseré, jamais moins d'un pixel — sous un pixel Godot
+## n'arrondit pas, il efface.
+static func epaisseur(k: float = 1.0, fort: bool = false) -> float:
+	return max(1.0, (TRAIT_FORT if fort else TRAIT) * k)
+
+
 ## Une fiche de parchemin : fond clair, liseré de laiton, ombre chaude.
-static func parchemin(rayon: float = 10.0, k: float = 1.0) -> StyleBoxFlat:
-	var b := boite(PAPIER, Color(ENCRE, 0.45), rayon * k, max(1.0, k), 10.0 * k, Color(0, 0, 0, 0.45))
+static func parchemin(rayon: float = R_GRAND, k: float = 1.0) -> StyleBoxFlat:
+	return boite(PAPIER, Color(ENCRE, 0.45), rayon * k, epaisseur(k), 10.0 * k, Color(0, 0, 0, 0.45))
+
+
+## LE BOUTON DE LA DIRECTION ARTISTIQUE : une plaque vissée, sarcelle profonde
+## pour l'appel, bois pour le reste, le texte gravé sur le papier. Il vivait en
+## trois exemplaires — un par écran — et les trois avaient divergé : rayons,
+## marges et couleurs d'extinction différents partout. Il n'y en a plus qu'un.
+static func bouton_plaque(texte: String, principal: bool, taille: int, k: float,
+		marge_h: float = 16.0, marge_v: float = 10.0) -> Button:
+	var b := bouton(texte, principal, taille, k)
+	var fond: Color = SARCELLE if principal else BOIS_CLAIR
+	var normal := plaque(fond, LAITON, R, k)
+	normal.content_margin_left = marge_h * k
+	normal.content_margin_right = marge_h * k
+	normal.content_margin_top = marge_v * k
+	normal.content_margin_bottom = marge_v * k
+	b.add_theme_stylebox_override("normal", normal)
+	var survol := normal.duplicate()
+	survol.bg_color = fond.lightened(0.10)
+	survol.border_color = LAITON_CLAIR
+	b.add_theme_stylebox_override("hover", survol)
+	b.add_theme_stylebox_override("pressed", survol)
+	var eteint := normal.duplicate()
+	eteint.bg_color = Color(BOIS, 0.9)
+	eteint.border_color = Color(LAITON, 0.35)
+	b.add_theme_stylebox_override("disabled", eteint)
+	for quoi in ["font_color", "font_hover_color", "font_pressed_color"]:
+		b.add_theme_color_override(quoi, PAPIER)
+	b.add_theme_color_override("font_disabled_color", Color(PAPIER, 0.4))
+	return b
+
+
+## UN LIEN, PAS UNE COMMANDE : un chevron, un mot, rien autour. C'est ce que
+## demande un RETOUR — le mettre dans un cadre lui donnait le poids d'un
+## geste, alors qu'il ne fait que changer d'écran.
+static func lien(texte: String, k: float, vers_la_gauche: bool = true) -> Button:
+	var b := bouton(("‹  " + texte) if vers_la_gauche else (texte + "  ›"), false, 12, k)
+	b.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	var nu := boite(Color(0, 0, 0, 0), Color(0, 0, 0, 0), R * k, 0)
+	nu.content_margin_left = 10 * k
+	nu.content_margin_right = 10 * k
+	nu.content_margin_top = 6 * k
+	nu.content_margin_bottom = 6 * k
+	b.add_theme_stylebox_override("normal", nu)
+	var survol := nu.duplicate()
+	survol.bg_color = Color(LAITON, 0.14)
+	b.add_theme_stylebox_override("hover", survol)
+	b.add_theme_stylebox_override("pressed", survol)
+	b.add_theme_color_override("font_color", LAITON)
+	for quoi in ["font_hover_color", "font_pressed_color"]:
+		b.add_theme_color_override(quoi, LAITON_CLAIR)
 	return b
 
 
 ## Une plaque de laiton sur bois : les pastilles de la barre, les cartouches.
-static func plaque(fond: Color, bord: Color, rayon: float = 8.0, k: float = 1.0) -> StyleBoxFlat:
-	return boite(fond, bord, rayon * k, max(1.0, k), 6.0 * k, Color(0, 0, 0, 0.35))
+static func plaque(fond: Color, bord: Color, rayon: float = R, k: float = 1.0) -> StyleBoxFlat:
+	return boite(fond, bord, rayon * k, epaisseur(k), 6.0 * k, Color(0, 0, 0, 0.35))
 
 
 # --- LE POSTE D'AIGUILLAGE, EN LAITON ET BOIS (4 septembre 2026) -------------

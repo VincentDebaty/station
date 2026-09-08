@@ -42,7 +42,7 @@ func _jouer() -> void:
 			await get_tree().create_timer(attente / 1000.0).timeout
 		match mots[1]:
 			"clic":
-				_clic(Vector2(float(mots[2]), float(mots[3])))
+				await _clic(Vector2(float(mots[2]), float(mots[3])))
 			"touche":
 				_touche(mots[2])
 			"capture":
@@ -54,12 +54,19 @@ func _jouer() -> void:
 				printerr("pilote : geste inconnu « %s »" % mots[1])
 
 
+## UN CLIC PREND TROIS IMAGES, PAS UNE. Le survol, l'appui, le relâchement :
+## un Button de Godot ne s'arme qu'après avoir été survolé, et n'émet son
+## signal qu'au relâchement. Poussés dans la même image, les trois événements
+## ne déclenchaient rien — mesuré le 5 septembre 2026 en essayant de piloter
+## le bouton « Les cartes », qui n'a jamais bougé. Le pilote ne savait donc
+## cliquer que ce qui écoute `_unhandled_input`, c'est-à-dire le plan de gare.
 func _clic(pos: Vector2) -> void:
 	Input.warp_mouse(pos)
 	var m := InputEventMouseMotion.new()
 	m.position = pos
 	m.global_position = pos
 	Input.parse_input_event(m)
+	await get_tree().process_frame
 	for presse in [true, false]:
 		var ev := InputEventMouseButton.new()
 		ev.position = pos
@@ -67,6 +74,7 @@ func _clic(pos: Vector2) -> void:
 		ev.button_index = MOUSE_BUTTON_LEFT
 		ev.pressed = presse
 		Input.parse_input_event(ev)
+		await get_tree().process_frame
 
 
 func _touche(nom: String) -> void:

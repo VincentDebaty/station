@@ -68,9 +68,17 @@ const BANDE_HAUT := 0.08
 const BANDE_BAS := 0.52
 
 
+## DES ZONES QUI EMPRUNTENT LEUR PAYSAGE. Une deuxième carte nomme ses zones
+## comme elle veut — « aller », « retour » — et il serait absurde de peindre un
+## paysage de plus pour chacune : le grand tour du Rhin traverse les mêmes
+## terres que les zones d'Europe qui portent déjà leur bannière.
+const ZONES_EMPRUNTEES := {"aller": "rhin", "retour": "ger"}
+
+
 ## La bannière d'une zone de la carte (`atl`, `alpes`, `rhin`, `ger`).
 static func banniere(zone: Variant) -> Texture2D:
-	var nom := "banniere-" + String(zone)
+	var z := String(zone)
+	var nom := "banniere-" + String(ZONES_EMPRUNTEES.get(z, z))
 	if _cache.has(nom + "|bande"):
 		return _cache[nom + "|bande"]
 	var t := _charger(nom)

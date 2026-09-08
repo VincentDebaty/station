@@ -904,28 +904,33 @@ func _unhandled_input(event: InputEvent) -> void:
 # accueilli). Deux étapes sont opportunistes : le premier feu rouge, et le
 # moment où il n'y a plus rien à aiguiller.
 func _construire_coach() -> void:
-	# #coach-bubble : panneau, liseré teal, coins de 12, ombre portée,
-	# texte centré à 15 px. Sa largeur ne dépend que de son texte (le
-	# `width: max-content` du web), plafonnée à 400 px comme la feuille.
+	# #coach-bubble : une feuille de parchemin posée sur le pupitre, liseré de
+	# laiton, texte centré. Elle était restée au bleu nuit du prototype ET EN
+	# UNITÉS BRUTES : sur un téléphone, où tout le reste du bandeau est multiplié
+	# par HUD_K, elle s'affichait à la moitié de sa taille et dans une autre
+	# palette que l'écran d'à côté. C'est le même défaut que les cadres du ruban
+	# — « les bordures et les arrondis ne sont pas uniformes » — mais sur l'écran
+	# que le joueur voit en PREMIER.
+	var k := Sty.HUD_K
 	bulle = PanelContainer.new()
-	var st := Sty.boite(Sty.PANNEAU, Sty.ACCENT, 12, 1, 22, Color(0, 0, 0, 0.55))
-	st.set_content_margin_all(14)
-	st.content_margin_left = 18
-	st.content_margin_right = 18
+	var st := Sty.parchemin(Sty.R, k)
+	st.set_content_margin_all(14 * k)
+	st.content_margin_left = 18 * k
+	st.content_margin_right = 18 * k
 	bulle.add_theme_stylebox_override("panel", st)
 	var v := VBoxContainer.new()
-	v.add_theme_constant_override("separation", 12)
+	v.add_theme_constant_override("separation", int(round(12 * k)))
 	bulle.add_child(v)
 	bulle_texte = Label.new()
 	bulle_texte.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	bulle_texte.custom_minimum_size = Vector2(364, 0)
+	bulle_texte.custom_minimum_size = Vector2(364 * k, 0)
 	bulle_texte.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	bulle_texte.add_theme_font_override("font", Sty.sans())
-	bulle_texte.add_theme_font_size_override("font_size", 15)
-	bulle_texte.add_theme_color_override("font_color", Sty.TEXTE)
-	bulle_texte.add_theme_constant_override("line_spacing", 6)
+	bulle_texte.add_theme_font_size_override("font_size", int(round(15 * k)))
+	bulle_texte.add_theme_color_override("font_color", Sty.ENCRE)
+	bulle_texte.add_theme_constant_override("line_spacing", int(round(6 * k)))
 	v.add_child(bulle_texte)
-	bulle_bouton = Sty.bouton("Suivant", false, 15)
+	bulle_bouton = Sty.bouton_plaque("Suivant", false, 14, k, 14.0, 8.0)
 	bulle_bouton.pressed.connect(_coach_suivant)
 	v.add_child(bulle_bouton)
 	bulle.visible = false
@@ -952,27 +957,28 @@ func _construire_coach() -> void:
 		for n in [accueil, voile, centre]:
 			n.size = get_viewport_rect().size)
 	var carte := PanelContainer.new()
-	var sc := Sty.boite(Sty.PANNEAU, Sty.ACCENT, 16, 1, 30, Color(0, 0, 0, 0.5))
-	sc.set_content_margin_all(30)
+	var sc := Sty.parchemin(Sty.R_GRAND, k)
+	sc.set_content_margin_all(26 * k)
 	carte.add_theme_stylebox_override("panel", sc)
-	carte.custom_minimum_size = Vector2(520, 0)
+	carte.custom_minimum_size = Vector2(min(520.0 * k, get_viewport_rect().size.x * 0.62), 0)
 	var cv := VBoxContainer.new()
-	cv.add_theme_constant_override("separation", 12)
+	cv.add_theme_constant_override("separation", int(round(10 * k)))
 	carte.add_child(cv)
-	# .wc-badge, h1, .wc-lead, .wc-tip — les quatre lignes du prototype
-	for ligne in [["Bienvenue", 12, Sty.ACCENT, 600],
-			["Le poste d'aiguillage", 26, Sty.TEXTE, 600],
-			["Vous dirigez la gare : faites entrer et repartir chaque train à l'heure.", 15, Sty.TEXTE, 400],
-			["Je vous montre, pas à pas, avec deux trains — les repères indiquent quoi toucher. Rien ne presse.", 13, Sty.MUET, 400]]:
+	# .wc-badge, h1, .wc-lead, .wc-tip — les quatre lignes du prototype, au
+	# parchemin : le titre en Cinzel comme toutes les enseignes du jeu.
+	for ligne in [["Bienvenue", 12, Sty.SARCELLE, false],
+			["Le poste d'aiguillage", 24, Sty.ENCRE, true],
+			["Vous dirigez la gare : faites entrer et repartir chaque train à l'heure.", 15, Sty.ENCRE, false],
+			["Je vous montre, pas à pas, avec deux trains — les repères indiquent quoi toucher. Rien ne presse.", 13, Sty.ENCRE_MUET, false]]:
 		var l := Label.new()
 		l.text = ligne[0]
 		l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		l.add_theme_font_override("font", Sty.sans(ligne[3]))
-		l.add_theme_font_size_override("font_size", ligne[1])
+		l.add_theme_font_override("font", Sty.titre(600) if ligne[3] else Sty.sans(400))
+		l.add_theme_font_size_override("font_size", int(round(float(ligne[1]) * k)))
 		l.add_theme_color_override("font_color", ligne[2])
-		l.add_theme_constant_override("line_spacing", 7)
+		l.add_theme_constant_override("line_spacing", int(round(5 * k)))
 		cv.add_child(l)
-	var b := Sty.bouton("Commencer", true, 17)
+	var b := Sty.bouton_plaque("Commencer", true, 16, k)
 	b.pressed.connect(_accueil_ferme)
 	cv.add_child(b)
 	centre.add_child(carte)
