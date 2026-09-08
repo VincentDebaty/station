@@ -43,6 +43,7 @@ const TEINTES := ["#e8875a", "#5b8def", "#3fa87a", "#c084fc", "#d97757"]
 var hachure: Texture2D
 var planche: Texture2D
 var machine: Texture2D
+var fourgon: Texture2D
 var grain: NoiseTexture2D
 
 
@@ -52,6 +53,7 @@ func _ready() -> void:
 	hachure = _tisser_hachure()
 	planche = load("res://jeu/illustrations/wagon.png") if ResourceLoader.exists("res://jeu/illustrations/wagon.png") else null
 	machine = load("res://jeu/illustrations/loco.png") if ResourceLoader.exists("res://jeu/illustrations/loco.png") else null
+	fourgon = load("res://jeu/illustrations/fourgon.png") if ResourceLoader.exists("res://jeu/illustrations/fourgon.png") else null
 	var g := FastNoiseLite.new()
 	g.noise_type = FastNoiseLite.TYPE_SIMPLEX_SMOOTH
 	g.frequency = 0.35
@@ -299,40 +301,82 @@ func _rame_caisses(axe: PackedVector2Array, col: Color, k: float) -> void:
 ## LE LAVIS D'ABORD, L'ENCRE PAR-DESSUS : la planche est détourée, son blanc
 ## est transparent. Le corps peint dessous donne la couleur de destination, le
 ## dessin ne donne que le trait. Une seule planche sert les six teintes.
-## UNE CASE, UN VÉHICULE ENTIER. La première version découpait une voiture
-## allongée en trois tranches et les répétait : le compte des voitures était
-## juste, mais chaque case ne montrait qu'un MORCEAU de véhicule, et c'est
-## exactement ce qui se voyait. Une case du gril EST un véhicule.
+## LA COMPOSITION D'UNE RAME. Une case du gril fait 35 sur 30 : un véhicule
+## qui l'occupe seul est TRAPU, et c'est ce qui gênait. Une voiture posée sur
+## DEUX cases fait 70 sur 30 — plus allongée, plus juste.
 ##
-## Le dessin se pose donc tel quel, un par voiture, orienté sur la tangente
-## locale — ce qui lui fait épouser la courbe sans qu'aucun raccord n'ait à
-## être calculé. Les cases sont espacées de 35 et les caisses longues de 30 :
-## le jeu d'attelage de cinq unités sépare les véhicules tout seul, et le trait
-## d'attelage que j'avais ajouté n'a plus lieu d'être.
+## Reste la parité, et elle n'est pas un cas rare : mesurée sur les tirages des
+## 401 fiches, 55 % des convois laissent une case impaire après la machine. Il
+## faut donc un troisième véhicule COURT, et le train en a un depuis toujours :
+## le FOURGON. Un train de deux voitures montre une machine et un fourgon ; de
+## trois, une machine et une voiture ; de quatre, une machine, une voiture et un
+## fourgon. C'est une composition de train réelle, pas un rattrapage.
+##
+## RIEN DE CE QUE LE JEU MESURE NE BOUGE. La rame occupe exactement les mêmes
+## cases qu'avant — même longueur totale à l'unité près, donc même quai
+## nécessaire, même point d'arrêt, même géométrie d'enclenchement. Seul change
+## le nombre de caisses dessinées dessus.
+func _composition(n: int) -> Array:
+	var out: Array = [1]                       # la machine, une case
+	var reste := n - 1
+	while reste >= 2:
+		out.append(2)
+		reste -= 2
+	if reste == 1:
+		out.append(1)                          # le fourgon
+	return out
+
+
+## LES COUPURES ENTRE CASES, avec leur normale : une case commence à mi-chemin
+## de la voiture précédente et finit à mi-chemin de la suivante. Les véhicules
+## PARTAGENT ces arêtes, ce qui garantit qu'un véhicule de deux cases se plie
+## dans la courbe sans laisser de fente à l'articulation.
+func _coupures(axe: PackedVector2Array, k: float) -> Array:
+	var demi: float = Geo.CAR_SPACING * 0.5 * k
+	var out: Array = []
+	var n := axe.size()
+	for i in n + 1:
+		var p: Vector2
+		var u: Vector2
+		if i == 0:
+			u = _tangente(axe, 0)
+			p = axe[0] - u * demi
+		elif i == n:
+			u = _tangente(axe, n - 1)
+			p = axe[n - 1] + u * demi
+		else:
+			u = (axe[i] - axe[i - 1]).normalized()
+			p = (axe[i - 1] + axe[i]) / 2.0
+		out.append({"p": p, "n": Vector2(-u.y, u.x)})
+	return out
+
+
 func _rame_planche(axe: PackedVector2Array, col: Color, k: float) -> void:
 	if planche == null:
 		return
 	var h: float = Geo.CAR_H * 1.5 * k
-	# LA CASE ENTIÈRE, PAS LA CAISSE. Les centres de voiture sont espacés de 35
-	# et une caisse en fait 30 : poser la planche sur la caisse laisserait cinq
-	# unités de vide entre deux véhicules, alors qu'un train attelé n'en a pas.
-	# Elle occupe donc toute la case — sept pour six, la proportion à demander
-	# au générateur — et les tampons d'un véhicule touchent ceux du suivant.
-	var demi: float = Geo.CAR_SPACING * 0.5 * k
 	var lavis := col.lerp(Sty.PAPIER, 0.06)
-	var uv := PackedVector2Array([Vector2(0, 0), Vector2(1, 0), Vector2(1, 1), Vector2(0, 1)])
-	for i in axe.size():
-		# LA TANGENTE POINTE VERS LA QUEUE — elle va de la tête au suivant —
-		# donc le bord GAUCHE de la planche tombe du côté de la tête. C'est
-		# pour cela que la cheminée doit être à gauche du dessin.
-		var u := _tangente(axe, i)
-		var nrm := Vector2(-u.y, u.x)
-		var c := axe[i]
-		var quad := PackedVector2Array([
-			c - u * demi - nrm * h * 0.5, c + u * demi - nrm * h * 0.5,
-			c + u * demi + nrm * h * 0.5, c - u * demi + nrm * h * 0.5])
-		draw_colored_polygon(quad, lavis, uv,
-			machine if (i == 0 and machine != null) else planche)
+	var coupes := _coupures(axe, k)
+	var case_i := 0
+	for element in _composition(axe.size()):
+		var tex: Texture2D = planche
+		if case_i == 0 and machine != null:
+			tex = machine
+		elif element == 1 and fourgon != null:
+			tex = fourgon
+		# LE VÉHICULE SE PLIE SUR SES CASES : une sous-case par pas, toutes
+		# adossées aux mêmes arêtes, et les UV découpés d'autant.
+		for j in element:
+			var a: Dictionary = coupes[case_i + j]
+			var b: Dictionary = coupes[case_i + j + 1]
+			var quad := PackedVector2Array([
+				a["p"] - a["n"] * h * 0.5, b["p"] - b["n"] * h * 0.5,
+				b["p"] + b["n"] * h * 0.5, a["p"] + a["n"] * h * 0.5])
+			var u0: float = float(j) / float(element)
+			var u1: float = float(j + 1) / float(element)
+			draw_colored_polygon(quad, lavis, PackedVector2Array([
+				Vector2(u0, 0), Vector2(u1, 0), Vector2(u1, 1), Vector2(u0, 1)]), tex)
+		case_i += element
 
 
 ## Une tranche de planche posée sur la portion d'arc [s0, s1], subdivisée pour
