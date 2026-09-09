@@ -771,6 +771,50 @@ Il suit une règle : **ce qui se vérifie tout seul d'abord**.
    avec l'interrupteur de sonnerie. Si le son se tait alors que le volet le dit
    ouvert, c'est là qu'il faut regarder.
 
+   **LA REMISE DES RÉCOMPENSES, passe du 9 septembre 2026.** Le service gagné,
+   l'écran du ruban s'ouvrait sur son relevé DÉJÀ ÉCRIT : trois étoiles
+   apparaissaient dans un coin du panneau, et rien ne disait qu'on venait de
+   les gagner. « Il faut animer tout cela » (Vincent). Trois temps, dans son
+   ordre : les étoiles arrivent en grand au milieu de l'écran et rejoignent
+   leur place sur la feuille ; le diamant fait le même chemin ensuite ; enfin
+   une puce de laiton traverse la voie vers la ville suivante, sa traîne
+   allumée derrière elle.
+
+   Deux choses portent tout le reste. La première : **la place d'arrivée n'est
+   pas calculée, elle est LUE** — le vol vise le `Label` qui porte les étoiles
+   dans le relevé, et c'est ce même Label qu'on masque jusqu'à l'atterrissage.
+   La feuille peut changer de hauteur, de police ou de contenu, le vol tombe
+   toujours juste, et la récompense n'est jamais en place avant d'y arriver.
+   La seconde : **la couche de vol est le DERNIER enfant de la vue** — un
+   enfant se dessine après son parent, et le panneau est un enfant ; une étoile
+   peinte dans le `_draw` de la vue passerait derrière l'endroit même où elle
+   doit atterrir.
+
+   **Le diamant n'est plus un glyphe.** « Il est petit et discret alors que
+   c'est la plus haute récompense d'une partie » (Vincent, le même jour) : il
+   valait exactement une étoile de plus. C'est maintenant une pierre TAILLÉE,
+   dessinée facette par facette — table, couronne, culasse, chacune sa nuance,
+   plus un éclat blanc sur le pan qui prend la lumière —, une fois et demie
+   plus grande qu'une étoile, dans une gerbe de douze rais, tenue trois quarts
+   de seconde sous son titre SANS FAUTE. Elle atterrit sur un sceau cerclé de
+   sarcelle, et non plus sur une ligne de texte de 14 qui pesait autant qu'un
+   « 7 min de retard ».
+
+   **La carte est devenue cliquable pour de bon.** Elle l'était déjà, mais d'un
+   seul geste : toucher une gare la LANÇAIT. Désormais la gare qui vient part
+   d'un doigt — elle est déjà décrite sur la feuille, il n'y a rien de plus à
+   lire —, et toute autre gare tenue se POSE dans le panneau, avec sa fiche
+   complète et son bouton ; une gare verrouillée ne fait rien. La cible n'est
+   plus le seul point de 16 unités (huit points sur l'iPhone, moins d'un tiers
+   de pulpe) : le nom compte aussi, et le rayon suit `HUD_K`.
+
+   `STATION_REMISE=<étoiles>[,diamant]` rejoue la remise sur la gare courante,
+   sans service et sans rien écrire : le joueur scripté n'a jamais fait de
+   sans-faute, et sans ce crochet le deuxième temps ne se vérifierait qu'à la
+   main. Cinq signatures de plus dans `jeu/sons.gd` — vingt en tout, 122 ms et
+   302 ko au démarrage. `oracle-ruban` 12 sur 12, `oracle-sauvegarde` 18 sur
+   18, `carte-check` et `net-check` verts.
+
    **Pris hors d'ordre le 3 septembre 2026, à la demande de Vincent : l'écran de
    jeu.** `jeu/jeu.tscn` (`jeu/vue_jeu.gd`) est la scène principale. Il ne
    décide de rien : la journée vient de `Journee`, chaque position vient de

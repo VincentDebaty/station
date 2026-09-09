@@ -53,6 +53,24 @@ func _ready() -> void:
 	for i in range(5):
 		parfait.append([[523, 659, 784, 1047, 1319][i], i * 0.10, 0.24, TRIANGLE, 0.05])
 	_cuire("parfait", parfait)
+	# LA REMISE DES RÉCOMPENSES, sur l'écran du ruban. Ces cinq-là n'ont pas
+	# d'équivalent web — le prototype ne montrait rien : le relevé s'affichait
+	# d'un coup. Elles restent dans le registre des autres : bas, court, et
+	# jamais une fanfare. Trois étoiles montent en accord majeur (sol, si, ré),
+	# le diamant sonne deux octaves de cristal, la puce du convoi souffle une
+	# note grave en partant et deux notes claires en arrivant.
+	for k in range(3):
+		var f: float = [784.0, 988.0, 1175.0][k]
+		_cuire("etoile%d" % k, [[f, 0.0, 0.16, TRIANGLE, 0.05],
+			[f * 1.5, 0.05, 0.20, TRIANGLE, 0.035]])
+	# LE DIAMANT SONNE PLUS LONG QUE LE RESTE : c'est la plus haute récompense
+	# d'un service, et elle se tient trois quarts de seconde à l'écran. Un
+	# fondamental grave lui donne du corps, trois octaves de cristal le timbre.
+	_cuire("diamant", [[659, 0.0, 0.55, TRIANGLE, 0.030], [1319, 0.0, 0.44, SINUS, 0.050],
+		[1976, 0.07, 0.46, SINUS, 0.040], [2637, 0.15, 0.42, SINUS, 0.024],
+		[3136, 0.24, 0.36, SINUS, 0.014]])
+	_cuire("puce", [[392, 0.0, 0.14, TRIANGLE, 0.035]])
+	_cuire("arrivee", [[659, 0.0, 0.10, TRIANGLE, 0.045], [988, 0.09, 0.22, TRIANGLE, 0.04]])
 	# Le carillon À L'HEURE monte avec la série, plafonnée à huit crans :
 	# `base = 720 + k·66`, `k = min(n-1, 7)`. Huit variantes, cuites d'avance.
 	for k in range(8):

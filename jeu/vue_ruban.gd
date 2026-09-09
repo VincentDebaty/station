@@ -33,6 +33,20 @@ const DUREE_VOYAGE := 1.15
 const DUREE_SAUT := 1.9
 const DELAI_LECTURE := 0.7
 
+# --- LA REMISE DES RÉCOMPENSES, en trois temps ------------------------------
+# « Les étoiles arrivent en grand au milieu de l'écran et se replacent dans le
+# cadre à gauche. Si il y a un diamant, on fait la même chose dans un second
+# temps. Dernier temps, la carte s'anime en faisant traverser la ligne la puce
+# jaune qui brille vers la ville suivante. » (Vincent, 9 septembre 2026)
+const SEQ_DELAI := 0.30      # le temps que l'écran finisse d'arriver
+const SEQ_ECART := 0.17      # d'une étoile à la suivante
+const SEQ_POSE := 0.28       # une récompense grandit au milieu
+const SEQ_TENUE := 0.22      # elle s'y tient, le temps qu'on la voie
+const SEQ_TENUE_GEMME := 0.75  # le sans-faute se tient plus longtemps : il est rare
+const SEQ_VOL := 0.55        # puis rejoint sa place sur la feuille
+const SEQ_ENTRE := 0.25      # entre deux temps
+const SEQ_PUCE := 1.20       # la puce d'un bout à l'autre de la liaison
+
 # LA CARTE EST UN PARCHEMIN (4 septembre 2026). L'écran du ruban passe à la
 # palette de jeu.style.gd : cuir, laiton, encre. Le poste d'aiguillage, lui,
 # garde la sienne — la couleur d'une voie y est sa destination.
@@ -107,6 +121,20 @@ var chapitre := {}            # celui que le panneau raconte
 var prochaine := ""
 var transit_t := -1.0         # < 0 : pas parti ; 0..1 : en route
 var voyage_saut := false
+var selection := ""           # la gare choisie sur la carte, dont le panneau parle
+
+# --- la remise des récompenses ----------------------------------------------
+var seq := ""                 # "" | "etoiles" | "diamant" | "puce"
+var seq_t := 0.0
+var seq_n := 0                # combien d'étoiles volent
+var vol: Node2D               # la couche qui les dessine, PAR-DESSUS le panneau
+var lbl_etoiles: Label        # leur place d'arrivée sur la feuille
+var lbl_diamant: Label
+var bloc_diamant: Control      # le sceau qu'on masque en entier jusqu'à l'atterrissage
+var seq_joues := 0            # combien de sons d'étoile déjà donnés
+var puce_de := ""
+var puce_vers := ""
+var plaques_ecran := {}       # la place des plaques au dernier dessin, pour le doigt
 
 # --- le panneau ---------------------------------------------------------------------
 var barre: PanelContainer      # la barre du haut, sur toute la largeur
@@ -142,6 +170,13 @@ func _ready() -> void:
 	fond.show_behind_parent = true
 	add_child(fond)
 	_construire_panneau()
+	# LA COUCHE DE VOL EST LE DERNIER ENFANT, et c'est tout ce qui la définit :
+	# un enfant se dessine après son parent, et le panneau est un enfant. Une
+	# étoile peinte dans le `_draw` de cette vue passerait DERRIÈRE la feuille,
+	# c'est-à-dire derrière l'endroit même où elle doit atterrir.
+	vol = Vol.new()
+	vol.vue = self
+	add_child(vol)
 
 
 # ------------------------------------------------------------------
@@ -172,6 +207,27 @@ func poser(ruban_, carte_id_: String) -> void:
 	rebatir()
 	_poser_fond()
 	queue_redraw()
+	_remise_pour_voir()
+
+
+## STATION_REMISE=<étoiles>[,diamant] : la remise des récompenses jouée sur la
+## gare courante, SANS SERVICE ET SANS RIEN ÉCRIRE — de quoi la photographier
+## et la revoir. Le joueur scripté n'a jamais fait de sans-faute : sans ce
+## crochet, le deuxième temps ne se vérifierait qu'à la main.
+func _remise_pour_voir() -> void:
+	var arg := OS.get_environment("STATION_REMISE")
+	if arg == "" or prochaine == "":
+		return
+	var mots := arg.split(",", false)
+	# la gare « jouée » est celle d'AVANT : sans cela la puce du dernier temps
+	# n'aurait nulle part où aller
+	var i: int = ruban.index_de(prochaine)
+	var gare: String = String(ruban.ordre[i - 1]) if i > 0 else prochaine
+	var etoiles: int = clampi(int(mots[0]), 1, 3)
+	var dia: bool = mots.size() > 1 and String(mots[1]).strip_edges() == "diamant"
+	var seuils := ruban.seuils_de_service(ruban.fiche_de(gare))
+	fin_de_service({"gare": gare, "stars": etoiles, "prevStars": 0, "d": 0 if dia else 7,
+		"prevBest": null, "perfect": dia, "failed": false, "win": true, "seuils": seuils}, [])
 
 
 ## Le chapitre que le panneau raconte : pendant la fête, celui qu'on vient de
@@ -623,6 +679,11 @@ func aller_camera(saut: bool = false) -> void:
 func _process(delta: float) -> void:
 	if ruban == null:
 		return
+	if seq != "":
+		_avancer_remise(delta)
+		if vol != null:
+			vol.queue_redraw()
+		queue_redraw()
 	if not cam_vers.is_empty():
 		cam_t = min(1.0, cam_t + delta / cam_duree)
 		var e := ease(cam_t, -2.0)          # ease in-out
@@ -632,7 +693,10 @@ func _process(delta: float) -> void:
 			"k": exp(lerp(log(cam_de["k"]), log(cam_vers["k"]), e))}
 		if cam_t >= 1.0:
 			cam_vers = {}
-	if not transit.is_empty():
+	# LE CONVOI DE CHAPITRE ATTEND SON TOUR. Il partait 0,7 s après l'arrivée
+	# sur le ruban, c'est-à-dire EN PLEIN VOL DES ÉTOILES : deux gestes en même
+	# temps, et l'œil n'en suit aucun. Il est le dernier temps, comme la puce.
+	if not transit.is_empty() and seq == "":
 		var duree: float = DUREE_SAUT if transit["saut"] else DUREE_VOYAGE
 		if transit_t < 0.0:
 			transit_t += delta / DELAI_LECTURE
@@ -747,11 +811,46 @@ func _draw() -> void:
 				var p := pa.lerp(pb, e)
 				draw_circle(p, 7.0, Color(col, 0.35))
 				draw_circle(p, 4.0, col)
+	# --- LA PUCE DU DERNIER TEMPS ------------------------------------------------
+	# Le convoi qui rejoint la ville suivante après un service gagné. Il file
+	# sur la voie elle-même — la même courbe que le rail, pas une corde tendue
+	# entre deux points —, et il laisse derrière lui la portion parcourue en
+	# laiton vif : on voit la ligne SE FAIRE.
+	if seq == "puce" and seq_t >= 0.0:
+		var tr := _voie_ecran(puce_de, puce_vers)
+		if tr.size() >= 2:
+			var e: float = ease(clampf(seq_t / SEQ_PUCE, 0.0, 1.0), -2.0)
+			var lg := 0.0
+			for i in range(tr.size() - 1):
+				lg += tr[i].distance_to(tr[i + 1])
+			var d: float = lg * e
+			var p := _le_long(tr, d)
+			var kk := Sty.HUD_K
+			# LA TRAÎNE : la portion déjà parcourue s'allume derrière la puce,
+			# sur une longueur fixe. C'est ce qui donne le SENS de la marche —
+			# une lampe seule ne dit pas d'où elle vient.
+			var traine := PackedVector2Array()
+			var pas := 6.0 * kk
+			var n_t := 10
+			for i in range(n_t, -1, -1):
+				var di: float = d - float(i) * pas
+				if di >= 0.0:
+					traine.append(_le_long(tr, di))
+			if traine.size() >= 2:
+				draw_polyline(traine, Color(Sty.LAITON_CLAIR, 0.30), 7.0 * kk, true)
+				draw_polyline(traine, Color(Sty.LAITON_CLAIR, 0.75), 3.0 * kk, true)
+			var battement: float = 0.78 + 0.22 * sin(t * 11.0)
+			for i in range(7):
+				var u: float = 1.0 - float(i) / 7.0
+				draw_circle(p, (5.0 + 13.0 * u * u) * kk * battement, Color(Sty.LAITON_CLAIR, 0.055))
+			draw_circle(p, 5.0 * kk, Color(Sty.LAITON_CLAIR, 0.85))
+			draw_circle(p, 2.6 * kk, Color(1, 1, 1, 0.95))
 	_rose_des_vents()
 
 	# --- les gares du chapitre vu, et la gare quittée ---------------------------
 	var dessinees := gares_dessinees()
 	var plaques := _placer_plaques(dessinees, cam)
+	plaques_ecran.clear()
 	for id in dessinees:
 		var p := pos(id)
 		if p == Vector2.INF:
@@ -778,6 +877,11 @@ func _draw() -> void:
 			draw_arc(e, r + 5.0 * kk, 0.0, TAU, 40, Color(Sty.LAITON_CLAIR, 0.95), 2.0 * kk, true)
 		if not bilan.is_empty() and bilan.get("gare") == id:
 			draw_arc(e, r + 9.0 * kk, 0.0, TAU, 48, Color(Sty.LAITON, 0.8), 1.6 * kk, true)
+		# LA GARE CHOISIE PORTE SON CERNE : le panneau parle d'elle, la carte
+		# doit dire laquelle — sans quoi on lit une fiche sans savoir d'où.
+		if id == selection:
+			draw_circle(e, r + (9.0 + 3.0 * pulse) * kk, Color(Sty.SARCELLE, 0.18))
+			draw_arc(e, r + 7.0 * kk, 0.0, TAU, 48, Color(Sty.SARCELLE, 0.95), 2.2 * kk, true)
 		draw_circle(e, r + 1.5 * kk, Color(Sty.BOIS, 0.85))
 		draw_circle(e, r, Sty.LAITON_CLAIR if ici else teinte)
 		draw_arc(e, r, 0.0, TAU, 28, Color(Sty.BOIS, 0.55), 1.2 * kk, true)
@@ -790,6 +894,7 @@ func _draw() -> void:
 		var reserve: Rect2 = plaques.get(id, Rect2(
 			e.x + r + 6 * kk, e.y - float(m["haute"]) / 2, float(m["place"]), float(m["haute"])))
 		var plaque := Rect2(reserve.position, Vector2(float(m["large"]), float(m["haute"])))
+		plaques_ecran[id] = plaque
 		var cy := plaque.get_center().y
 		# LE FILET DE RAPPEL : quand la plaque a dû s'écarter du point pour
 		# trouver sa place, un trait fin les rattache — sans quoi on ne sait
@@ -1255,17 +1360,103 @@ func fin_de_service(b: Dictionary, meds: Array) -> void:
 	voyage_fait = {}
 	transit_t = -1.0
 	prochaine = ruban.gare_courante()
+	selection = ""
 	if b.get("win", false):
 		_preparer_suite(String(b["gare"]))
 	chapitre = _chapitre_de_reference()
 	rebatir()
 	aller_camera(voyage_saut)
+	if b.get("win", false):
+		_ouvrir_remise(String(b["gare"]))
+
+
+## LES TROIS TEMPS S'OUVRENT ICI. Les étoiles et le diamant sont MASQUÉS sur
+## la feuille tant qu'ils n'y sont pas arrivés : sans cela la récompense serait
+## déjà en place avant que le vol ne la dépose, et le geste ne voudrait plus
+## rien dire.
+func _ouvrir_remise(gare: String) -> void:
+	seq_n = int(bilan.get("stars", 0))
+	seq_joues = 0
+	puce_de = gare
+	puce_vers = prochaine
+	if seq_n <= 0:
+		# gagné sans étoile n'existe pas, mais on ne laisse pas la porte ouverte
+		_temps_de_la_puce()
+		return
+	seq = "etoiles"
+	seq_t = -SEQ_DELAI
+	if lbl_etoiles != null and is_instance_valid(lbl_etoiles):
+		lbl_etoiles.modulate.a = 0.0
+	if bloc_diamant != null and is_instance_valid(bloc_diamant) and bilan.get("perfect", false):
+		bloc_diamant.modulate.a = 0.0
+
+
+func _temps_du_diamant() -> void:
+	_poser_label(lbl_etoiles)
+	if not bilan.get("perfect", false) or bloc_diamant == null:
+		_temps_de_la_puce()
+		return
+	seq = "diamant"
+	seq_t = -SEQ_ENTRE
+
+
+## LE DERNIER TEMPS N'EST PAS TOUJOURS À NOUS. Quand la gare finit un chapitre,
+## un convoi traverse DÉJÀ vers le chapitre suivant (`transit`) : c'est le même
+## geste, en plus long, et il porte la fête. On ne le double pas.
+func _temps_de_la_puce() -> void:
+	_poser_label(lbl_etoiles)
+	_poser_label(bloc_diamant)
+	if not transit.is_empty() or puce_vers == "" or puce_de == puce_vers \
+			or pos(puce_de) == Vector2.INF or pos(puce_vers) == Vector2.INF:
+		seq = ""
+		return
+	seq = "puce"
+	seq_t = -SEQ_ENTRE
+	Sons.jouer("puce")
+
+
+func _finir_remise() -> void:
+	seq = ""
+	_poser_label(lbl_etoiles)
+	_poser_label(bloc_diamant)
+
+
+func _poser_label(l: Control) -> void:
+	if l != null and is_instance_valid(l):
+		l.modulate.a = 1.0
+
+
+## L'avancée des trois temps, appelée par `_process`.
+func _avancer_remise(delta: float) -> void:
+	if seq == "":
+		return
+	seq_t += delta
+	match seq:
+		"etoiles":
+			# chaque étoile a son propre départ, décalé de SEQ_ECART
+			while seq_joues < seq_n and seq_t >= float(seq_joues) * SEQ_ECART:
+				Sons.jouer("etoile%d" % mini(seq_joues, 2))
+				seq_joues += 1
+			if seq_t >= float(seq_n - 1) * SEQ_ECART + SEQ_POSE + SEQ_TENUE + SEQ_VOL:
+				_temps_du_diamant()
+		"diamant":
+			if seq_t >= 0.0 and seq_joues == seq_n:
+				Sons.jouer("diamant")
+				seq_joues += 1
+			if seq_t >= SEQ_POSE + SEQ_TENUE_GEMME + SEQ_VOL:
+				_temps_de_la_puce()
+		"puce":
+			if seq_t >= SEQ_PUCE:
+				Sons.jouer("arrivee")
+				seq = ""
 
 
 func apres_passage(id: String) -> void:
 	bilan = {}
 	medailles = []
 	fete = {}
+	selection = ""
+	seq = ""
 	prochaine = ruban.gare_courante()
 	_preparer_suite(id)
 	chapitre = _chapitre_de_reference()
@@ -1317,8 +1508,26 @@ func jouer(id: String) -> void:
 		voyage_fait = ruban.chapitre_de_gare(id)
 	bilan = {}
 	medailles = []
+	selection = ""
+	seq = ""
 	if app != null:
 		app.jouer(id)
+
+
+## Reposer la gare choisie : le panneau redit ce qu'il disait avant.
+func _selectionner(id: String) -> void:
+	if selection == id:
+		return
+	selection = id
+	Sons.jouer("puce")
+	rebatir()
+
+
+func _deselectionner() -> void:
+	if selection == "":
+		return
+	selection = ""
+	rebatir()
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -1330,19 +1539,37 @@ func _unhandled_input(event: InputEvent) -> void:
 		var m: Vector2 = event.position
 		if m.x < panneau_l() + Sty.marges["gauche"]:
 			return
-		var ch := chapitre_vu()
-		if ch.is_empty():
+		# UN DOIGT PENDANT LA REMISE L'ABRÈGE. Une animation qu'on ne peut pas
+		# couper devient une attente dès la deuxième fois qu'on la voit.
+		if seq != "":
+			_finir_remise()
 			return
-		for id in ch["gares"]:
+		# LA CIBLE, C'EST LE POINT **ET** SA PLAQUE. Le rayon valait 16 unités
+		# en dur : sur l'iPhone de Vincent, où le viewport est étiré, cela fait
+		# huit points — moins d'un tiers de la pulpe d'un doigt. On vise donc
+		# aussi le nom, qui est la partie qu'on regarde.
+		var r_doigt: float = 22.0 * Sty.HUD_K
+		for id in gares_dessinees():
 			var p := pos(id)
 			if p == Vector2.INF:
 				continue
 			var etat := etat_de_gare(id)
+			# une gare non déverrouillée : il ne se passe rien
 			if etat != "faite" and etat != "courante" and etat != "payee":
 				continue
-			if ecran(p).distance_to(m) <= 16.0:
+			var pl: Rect2 = plaques_ecran.get(id, Rect2())
+			if ecran(p).distance_to(m) > r_doigt and not (pl != Rect2() and pl.grow(4.0 * Sty.HUD_K).has_point(m)):
+				continue
+			# LA GARE QUI VIENT SE LANCE D'UN DOIGT : elle est déjà décrite sur
+			# la feuille, il n'y a rien de plus à lire. Les autres se posent
+			# d'abord dans le panneau — on ne rejoue pas une gare par mégarde.
+			if id == prochaine and selection == "":
 				jouer(id)
-				return
+			else:
+				_selectionner(id)
+			return
+		# à côté de toute gare : on repose ce qu'on avait pris
+		_deselectionner()
 
 
 # ------------------------------------------------------------------
@@ -1501,6 +1728,9 @@ func _vider(noeud: Node) -> void:
 ## Tout le panneau, d'un bloc — comme renderCarte dans le prototype.
 func rebatir() -> void:
 	_vider(colonne)
+	lbl_etoiles = null
+	lbl_diamant = null
+	bloc_diamant = null
 	if ruban == null:
 		return
 	_remplir_barre()
@@ -1554,6 +1784,14 @@ func _feuille() -> Control:
 	v = v2
 	if b == null:
 		v.add_child(_entete_chapitre())
+	# UNE GARE CHOISIE SUR LA CARTE PARLE SEULE. « Les autres villes seront
+	# aussi cliquables sur la carte si le joueur souhaite recommencer cette
+	# gare. Dans ce cas, les infos s'affichent et le joueur clique ensuite sur
+	# le bouton Jouer » (Vincent, 9 septembre 2026). Le relevé du service
+	# précédent n'a plus rien à dire là : on regarde ailleurs.
+	if selection != "":
+		v.add_child(_cartouche(selection))
+		return feuille
 	# LE RELEVÉ RESTE PENDANT LA FÊTE : au seul moment du jeu où deux
 	# récompenses tombent ensemble, on ne perd pas de vue les étoiles qu'on
 	# vient de décrocher. Les médailles, elles, vont à la fête.
@@ -1674,6 +1912,216 @@ func _pastille(texte: String, couleur: Color) -> Control:
 ##
 ## Une bannière par ZONE et non par chapitre : quarante-neuf illustrations
 ## seraient une œuvre, quatre suffisent à dire où l'on est.
+# ------------------------------------------------------------------
+# LA REMISE DES RÉCOMPENSES — trois temps, par-dessus tout
+# ------------------------------------------------------------------
+## Le service gagné, l'écran du ruban s'ouvrait sur son relevé DÉJÀ ÉCRIT :
+## trois étoiles apparaissaient dans un coin du panneau, et rien ne disait
+## qu'on venait de les gagner. « Il faut animer tout cela » (Vincent, 9
+## septembre 2026).
+##
+## Trois temps, dans cet ordre : les étoiles arrivent en grand au milieu de
+## l'écran puis rejoignent leur place sur la feuille ; s'il y a un diamant, il
+## fait le même chemin ensuite ; enfin la puce du convoi traverse la liaison
+## vers la ville suivante. Un son court accompagne chacun.
+##
+## LA PLACE D'ARRIVÉE N'EST PAS CALCULÉE, ELLE EST LUE. Le vol vise le Label
+## qui porte les étoiles dans le relevé (`lbl_etoiles`) : la feuille peut
+## changer de hauteur, de police ou de contenu, le vol tombe toujours juste,
+## et c'est ce Label qu'on masque jusqu'à l'atterrissage — sans quoi la
+## récompense serait déjà en place avant d'y arriver.
+class Vol extends Node2D:
+	var vue: Node2D
+
+	func _draw() -> void:
+		if vue == null or vue.seq == "":
+			return
+		var k: float = Sty.HUD_K
+		var centre: Vector2 = to_local(vue.get_viewport_rect().size / 2.0)
+		match vue.seq:
+			"etoiles":
+				var n: int = vue.seq_n
+				# les étoiles s'alignent au milieu, comme sur la feuille
+				var pas := 62.0 * k
+				for i in range(n):
+					var depart := centre + Vector2((float(i) - (n - 1) / 2.0) * pas, -20.0 * k)
+					# CHAQUE ÉTOILE VISE SA FENTE. Le relevé écrit toujours trois
+					# glyphes — les gagnées pleines, les autres creuses : la
+					# première va au premier tiers, la deuxième au deuxième.
+					var cible := _cible(vue.lbl_etoiles, centre, (float(i) + 0.5) / 3.0)
+					_recompense(vue.seq_t - float(i) * SEQ_ECART, depart, cible, "★", Sty.LAITON_CLAIR, k)
+			"diamant":
+				# le losange vise le bord gauche du badge, pas le milieu de sa
+				# phrase : c'est là qu'il est écrit
+				var cd := _cible(vue.lbl_diamant, centre, 0.0, 9.0 * k)
+				_gemme(vue.seq_t, centre + Vector2(0, -26.0 * k), cd, k)
+
+	## Le point visé DANS le Label : une fraction de sa largeur, plus un
+	## décalage. À défaut — le panneau n'a pas encore été mis en page — le
+	## milieu de l'écran, ce qui fait simplement rester la récompense sur place.
+	func _cible(l: Label, defaut: Vector2, frac: float, dx: float = 0.0) -> Vector2:
+		if l == null or not is_instance_valid(l) or l.size == Vector2.ZERO:
+			return defaut
+		return to_local(l.global_position + Vector2(l.size.x * frac + dx, l.size.y / 2.0))
+
+	## LE DIAMANT N'EST PAS UNE ÉTOILE DE PLUS. « Le diamant est petit et
+	## discret alors que c'est la plus haute récompense d'une partie. Tu peux le
+	## valoriser ? » (Vincent, 9 septembre 2026). Il l'était : un glyphe « ◆ »
+	## de la police, au même gabarit qu'une étoile, dans la même couleur pâle.
+	##
+	## C'est maintenant une PIERRE TAILLÉE, dessinée : table, couronne, culasse
+	## et leurs facettes, chacune sa nuance, plus un éclat blanc sur le pan qui
+	## prend la lumière. Elle arrive une fois et demie plus grande qu'une
+	## étoile, dans une gerbe de rayons qui s'ouvre puis retombe, et se tient
+	## deux fois plus longtemps sous son titre — SANS FAUTE — avant de rejoindre
+	## la feuille. Le sans-faute se joue une fois sur bien des services : il a
+	## droit à son temps.
+	func _gemme(t: float, depart: Vector2, cible: Vector2, k: float) -> void:
+		if t <= 0.0:
+			return
+		var p := depart
+		var taille := 1.0
+		var alpha := 1.0
+		var pose := 0.0                        # 0..1 pendant la pose, sinon 0
+		var titre := 0.0                       # l'opacité du mot
+		if t < SEQ_POSE:
+			var u: float = t / SEQ_POSE
+			taille = 1.5 * sin(u * PI * 0.72) / sin(PI * 0.72)
+			taille = maxf(taille, 0.05)
+			alpha = minf(1.0, u * 3.0)
+			pose = u
+			titre = maxf(0.0, (u - 0.55) / 0.45)
+		elif t < SEQ_POSE + SEQ_TENUE_GEMME:
+			taille = 1.5
+			pose = 1.0
+			titre = 1.0
+		else:
+			var u: float = minf((t - SEQ_POSE - SEQ_TENUE_GEMME) / SEQ_VOL, 1.0)
+			var e: float = ease(u, -2.0)
+			var milieu := depart.lerp(cible, 0.5) + Vector2(0, -70.0 * k)
+			p = depart.lerp(milieu, e).lerp(milieu.lerp(cible, e), e)
+			taille = lerpf(1.5, 0.22, e)
+			alpha = 1.0 if u < 0.85 else lerpf(1.0, 0.0, (u - 0.85) / 0.15)
+			titre = maxf(0.0, 1.0 - u * 4.0)
+		var h: float = 78.0 * k * taille
+		# LA GERBE, qui s'ouvre au moment où la pierre se pose : douze rais
+		# fins, longs d'abord, qui rentrent et s'effacent. C'est ce qui fait
+		# l'événement — la pierre seule ne ferait qu'apparaître.
+		if pose > 0.0 and pose < 1.0:
+			var g: float = sin(pose * PI)
+			for i in range(12):
+				var a: float = TAU * float(i) / 12.0 + pose * 0.35
+				var u2 := Vector2(cos(a), sin(a))
+				draw_line(p + u2 * h * (0.62 + 0.5 * pose), p + u2 * h * (0.95 + 1.5 * pose),
+					Color(Sty.ACCENT_CLAIR, 0.55 * g * alpha), maxf(1.0, 2.2 * k), true)
+		# DIX-HUIT NAPPES À PAS RÉGULIER. Douze à pas quadratique laissaient des
+		# anneaux visibles : l'œil trouve un bord dès que deux marches sont
+		# loin l'une de l'autre. Beaucoup de marches courtes, et le dégradé
+		# redevient une lueur.
+		for j in range(18):
+			draw_circle(p, h * (0.45 + 1.00 * (1.0 - float(j) / 18.0)),
+				Color(vue.DIAMANT, 0.020 * alpha))
+		_tailler(p, h, alpha)
+		if titre > 0.0:
+			var ft: Font = Sty.titre(700)
+			var ts2: int = int(round(19.0 * k))
+			Sty.texte_espace(self, ft, ts2,
+				Vector2(p.x - Sty.largeur_espacee(ft, ts2, "SANS FAUTE", 4.0 * k) / 2.0,
+					p.y + h * 0.92 + ft.get_ascent(ts2)),
+				"SANS FAUTE", Color(Sty.ACCENT_CLAIR, titre * alpha), 4.0 * k)
+
+	## LA TAILLE DE LA PIERRE, de profil : table, couronne, culasse. C'est la
+	## silhouette que tout le monde lit comme un diamant, et elle tient à toutes
+	## les échelles — de la gerbe du milieu de l'écran au losange du relevé.
+	## Chaque pan a sa nuance : sans elles, la pierre redevient un losange plat.
+	func _tailler(c: Vector2, h: float, alpha: float) -> void:
+		var w: float = h * 0.86
+		var y_table: float = c.y - h * 0.42
+		var y_gird: float = c.y - h * 0.16
+		var y_pointe: float = c.y + h * 0.58
+		var xt: float = w * 0.27       # demi-largeur de la table
+		var xg: float = w * 0.50       # demi-largeur du rondiste
+		var clair := Color(1, 1, 1, 0.90).blend(Color(vue.DIAMANT, 0.0))
+		var pans := [
+			# la table, le pan le plus clair : c'est lui qui rend la lumière
+			[[Vector2(-xt, y_table - c.y), Vector2(xt, y_table - c.y),
+				Vector2(xt * 0.72, y_gird - c.y), Vector2(-xt * 0.72, y_gird - c.y)], 1.00],
+			# les deux pans de couronne
+			[[Vector2(-xt, y_table - c.y), Vector2(-xt * 0.72, y_gird - c.y),
+				Vector2(-xg, y_gird - c.y)], 0.62],
+			[[Vector2(xt, y_table - c.y), Vector2(xt * 0.72, y_gird - c.y),
+				Vector2(xg, y_gird - c.y)], 0.80],
+			# la culasse, en deux versants
+			[[Vector2(-xg, y_gird - c.y), Vector2(-xt * 0.72, y_gird - c.y),
+				Vector2(0, y_pointe - c.y)], 0.46],
+			[[Vector2(-xt * 0.72, y_gird - c.y), Vector2(xt * 0.72, y_gird - c.y),
+				Vector2(0, y_pointe - c.y)], 0.70],
+			[[Vector2(xt * 0.72, y_gird - c.y), Vector2(xg, y_gird - c.y),
+				Vector2(0, y_pointe - c.y)], 0.55],
+		]
+		for pan in pans:
+			var pts := PackedVector2Array()
+			for v in pan[0]:
+				pts.append(c + v)
+			draw_colored_polygon(pts, Color(vue.DIAMANT.lerp(clair, float(pan[1]) * 0.55),
+				(0.55 + 0.45 * float(pan[1])) * alpha))
+		# le contour, et l'arête du rondiste : deux traits, et la pierre tient
+		var bord := PackedVector2Array([
+			c + Vector2(-xt, y_table - c.y), c + Vector2(xt, y_table - c.y),
+			c + Vector2(xg, y_gird - c.y), c + Vector2(0, y_pointe - c.y),
+			c + Vector2(-xg, y_gird - c.y)])
+		bord.append(bord[0])
+		draw_polyline(bord, Color(Sty.ACCENT_CLAIR, 0.95 * alpha), maxf(1.0, h * 0.030), true)
+		draw_line(c + Vector2(-xg, y_gird - c.y), c + Vector2(xg, y_gird - c.y),
+			Color(Sty.ACCENT_CLAIR, 0.75 * alpha), maxf(1.0, h * 0.022), true)
+		# l'éclat : un court trait blanc sur le pan de gauche de la couronne
+		draw_line(c + Vector2(-xt * 0.86, y_table - c.y + h * 0.045),
+			c + Vector2(-xg * 0.80, y_gird - c.y - h * 0.02),
+			Color(1, 1, 1, 0.85 * alpha), maxf(1.0, h * 0.035), true)
+
+
+	## Une récompense, à l'instant `t` de sa propre vie : elle grandit sur
+	## place, s'y tient, puis file vers la feuille en rapetissant.
+	func _recompense(t: float, depart: Vector2, cible: Vector2, glyphe: String,
+			col: Color, k: float) -> void:
+		if t <= 0.0:
+			return
+		var p := depart
+		var taille := 1.0
+		var alpha := 1.0
+		if t < SEQ_POSE:
+			# l'arrivée : un dépassement, puis le repos — une récompense qui
+			# se pose sans rebond n'a l'air de rien
+			var u: float = t / SEQ_POSE
+			taille = 1.35 * sin(u * PI * 0.72) / sin(PI * 0.72)
+			taille = maxf(taille, 0.05)
+			alpha = minf(1.0, u * 3.0)
+		elif t < SEQ_POSE + SEQ_TENUE:
+			taille = 1.35
+		else:
+			var u: float = minf((t - SEQ_POSE - SEQ_TENUE) / SEQ_VOL, 1.0)
+			var e: float = ease(u, -2.0)
+			# une courbe, pas une corde : le vol passe par le haut, ce qui
+			# donne au geste sa direction
+			var milieu := depart.lerp(cible, 0.5) + Vector2(0, -70.0 * k)
+			p = depart.lerp(milieu, e).lerp(milieu.lerp(cible, e), e)
+			taille = lerpf(1.35, 0.28, e)
+			alpha = 1.0 if u < 0.85 else lerpf(1.0, 0.0, (u - 0.85) / 0.15)
+		var f: Font = Sty.titre(700)
+		var ts: int = int(round(52.0 * k * taille))
+		if ts < 1:
+			return
+		# le halo d'abord, la lettre ensuite : c'est ce qui la fait briller
+		# au-dessus du parchemin comme au-dessus de la carte
+		var w: float = f.get_string_size(glyphe, HORIZONTAL_ALIGNMENT_LEFT, -1, ts).x
+		# CINQ NAPPES, PAS DEUX. Deux disques donnaient un palet beige posé sur
+		# la carte — une tache, pas une lueur. Le rayon décroît et l'opacité
+		# monte : c'est la même recette que le halo du poste.
+		for j in range(12):
+			draw_circle(p, w * (0.28 + 0.52 * (1.0 - float(j) / 12.0)), Color(col, 0.028 * alpha))
+		Sty.texte_centre(self, f, ts, p, glyphe, Color(col, alpha))
+
+
 ## LE BANDEAU — l'illustration à fond perdu, coins ronds compris.
 ##
 ## Godot ne sait découper un Control qu'au RECTANGLE : une TextureRect poussée
@@ -2072,7 +2520,10 @@ func _bloc_bilan(avec_medailles: bool = true) -> Control:
 	# les étoiles, et à leur droite ce que le service a coûté
 	var h := HBoxContainer.new()
 	h.add_theme_constant_override("separation", int(round(10 * Sty.HUD_K)))
-	h.add_child(_label("★".repeat(st) + "☆".repeat(3 - st), 22, P_OR if b["win"] else P_MUET, false, false))
+	# CES DEUX LABELS SONT LA CIBLE DU VOL (voir la classe Vol) : on les garde,
+	# c'est leur place à l'écran qui dit où atterrissent les récompenses.
+	lbl_etoiles = _label("★".repeat(st) + "☆".repeat(3 - st), 22, P_OR if b["win"] else P_MUET, false, false)
+	h.add_child(lbl_etoiles)
 	var retard: String
 	var couleur: Color = P_ENCRE
 	if b.get("failed", false):
@@ -2085,7 +2536,33 @@ func _bloc_bilan(avec_medailles: bool = true) -> Control:
 		retard = "%d min de retard" % int(b["d"])
 	var lr := _label(retard, 14, couleur, false, false)
 	lr.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	h.add_child(lr)
+	lbl_diamant = null
+	bloc_diamant = null
+	if b.get("perfect", false):
+		# LE SANS-FAUTE PORTE SON SCEAU. Écrit comme le reste — une ligne de
+		# texte de 14 —, il pesait exactement autant qu'un « 7 min de retard ».
+		# C'est la plus haute récompense d'un service : elle a droit à sa
+		# plaque, cerclée de sarcelle, en capitales espacées.
+		var sceau := PanelContainer.new()
+		var ss := Sty.boite(Color(Sty.SARCELLE, 0.14), Color(Sty.SARCELLE, 0.85),
+			Sty.R_PETIT * Sty.HUD_K, Sty.epaisseur(Sty.HUD_K))
+		ss.set_content_margin_all(0)
+		ss.content_margin_left = 9 * Sty.HUD_K
+		ss.content_margin_right = 9 * Sty.HUD_K
+		ss.content_margin_top = 3 * Sty.HUD_K
+		ss.content_margin_bottom = 3 * Sty.HUD_K
+		sceau.add_theme_stylebox_override("panel", ss)
+		sceau.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		lr.text = "◆  DIAMANT · SANS FAUTE"
+		lr.add_theme_font_override("font", Sty.titre(700))
+		lr.add_theme_font_size_override("font_size", int(round(12 * Sty.HUD_K)))
+		lr.add_theme_constant_override("outline_size", 0)
+		sceau.add_child(lr)
+		h.add_child(sceau)
+		lbl_diamant = lr
+		bloc_diamant = sceau
+	else:
+		h.add_child(lr)
 	v.add_child(h)
 
 	# le record d'un côté, l'objectif de l'autre — sur la même ligne
@@ -2185,6 +2662,15 @@ func _bloc_fete() -> Control:
 func _pied() -> Control:
 	var v := VBoxContainer.new()
 	v.add_theme_constant_override("separation", int(round(8 * Sty.HUD_K)))
+	if selection != "":
+		var deja: bool = ruban.est_faite(selection)
+		var h0 := HBoxContainer.new()
+		h0.add_theme_constant_override("separation", int(round(8 * Sty.HUD_K)))
+		h0.add_child(_bouton("Retour", false, true, _deselectionner))
+		h0.add_child(_bouton(_appel("Rejouer" if deja else "Jouer", ville_de(selection), _reste_pied(2)),
+			true, true, jouer.bind(selection)))
+		v.add_child(h0)
+		return v
 	var gc := prochaine
 	if not fete.is_empty():
 		var suivant: Dictionary = fete["suivant"]
