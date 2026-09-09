@@ -652,10 +652,13 @@ func _dessiner_convois(sel, t: float) -> void:
 		if pos.is_empty():
 			continue
 		var axe := PackedVector2Array()
+		var angles := PackedFloat32Array()
 		for p in pos:
 			axe.append(Vector2(float(p["x"]), float(p["y"])))
+			angles.append(deg_to_rad(float(p["ang"])))
 		if axe.size() < 2:
 			axe.append(axe[0] - Vector2(Geo.CAR_SPACING * 0.5, 0))
+			angles.append(angles[0])
 		var col := Color(String(G["dest_color"][tr.to]))
 		var choisi: bool = tr == sel
 		var k := Sty.UIK
@@ -705,7 +708,7 @@ func _dessiner_convois(sel, t: float) -> void:
 		# voyageurs n'a — et il n'affiche AUCUNE heure de départ, parce qu'il
 		# n'en a pas. Le liseré était la quatrième façon de dire la même chose.
 
-		var coupes := _coupures(axe, k)
+		var coupes := _coupures(axe, angles)
 		# UN VÉHICULE PAR CASE, ET RIEN QUE DES FOURGONS DERRIÈRE LA MACHINE.
 		# Les voitures de deux cases donnaient une rame mieux proportionnée, mais
 		# Vincent leur préfère la lecture de la rame courte, où chaque véhicule
@@ -776,31 +779,49 @@ func _dessiner_convois(sel, t: float) -> void:
 ## PARTAGENT ces arêtes, ce qui permet à une voiture de deux cases de se plier
 ## dans la courbe sans laisser de fente à son articulation — une seule facette
 ## lui aurait fait couper la corde.
-func _coupures(axe: PackedVector2Array, k: float) -> Array:
+## LES BOUTS SE POSENT SUR LA TANGENTE RÉELLE DE LA VOIE, pas sur la corde.
+##
+## C'est ce qui manquait à une rame de DEUX véhicules, et l'explication est
+## géométrique. Les coupures des bouts se plaçaient dans la direction rendue par
+## les centres voisins ; à deux centres, cette direction est la même des deux
+## côtés — la corde — et la coupure du milieu en est le milieu. Les trois
+## coupures étaient donc COLINÉAIRES, la spline qui les traverse était une
+## droite, et la rame restait raide quel que soit le virage : « quand il y a
+## deux éléments, c'est toujours rigide » (Vincent, 9 septembre 2026).
+##
+## L'enclenchement donne pourtant à chaque voiture SON angle, mesuré sur la
+## voie. On s'en sert : le bout se pose dans cette direction-là, qui n'est pas
+## celle de la corde dès que ça tourne, et les trois coupures cessent d'être
+## alignées. Son SIGNE, en revanche, ne veut rien dire — la rotation est bridée
+## à l'endroit, le +x local pointe toujours à droite de l'écran — on le retourne
+## donc vers la queue.
+##
+## LA CASE DU BOUT PREND LA MOITIÉ DE SA CORDE, et non un demi-pas fixe : les
+## voitures sont espacées d'un pas constant LE LONG DE LA VOIE, si bien qu'en
+## courbe les cases du milieu, mesurées de corde à corde, se resserrent. Sans
+## cela le premier et le dernier véhicule paraissent plus longs que les autres.
+func _coupures(axe: PackedVector2Array, angles: PackedFloat32Array) -> Array:
 	var n := axe.size()
 	var out: Array = []
 	for i in n + 1:
 		var p: Vector2
 		var u: Vector2
 		if i == 0:
-			# LA CASE DU BOUT PREND LA MOITIÉ DE SA CORDE, PAS UN DEMI-PAS FIXE.
-			# Les voitures sont espacées d'un pas constant LE LONG DE LA VOIE ;
-			# en courbe, la corde entre deux centres est plus courte que ce pas.
-			# Les cases du milieu, mesurées de corde à corde, se resserraient
-			# donc, tandis que celles des bouts gardaient leur demi-pas entier :
-			# le premier et le dernier véhicule paraissaient plus longs que les
-			# autres — vu par Vincent le 9 septembre 2026. Elles suivent
-			# désormais la même corde que leurs voisines.
-			u = _tangente_de(axe, 0)
+			u = _vers_la_queue(angles[0], axe[1] - axe[0])
 			p = axe[0] - u * axe[0].distance_to(axe[1]) * 0.5
 		elif i == n:
-			u = _tangente_de(axe, n - 1)
+			u = _vers_la_queue(angles[n - 1], axe[n - 1] - axe[n - 2])
 			p = axe[n - 1] + u * axe[n - 2].distance_to(axe[n - 1]) * 0.5
 		else:
 			u = (axe[i] - axe[i - 1]).normalized()
 			p = (axe[i - 1] + axe[i]) / 2.0
 		out.append({"p": p, "n": Vector2(-u.y, u.x)})
 	return out
+
+
+func _vers_la_queue(angle: float, sens: Vector2) -> Vector2:
+	var u := Vector2.RIGHT.rotated(angle)
+	return -u if u.dot(sens) < 0.0 else u
 
 
 ## LE POINT ET LA NORMALE À UN ENDROIT QUELCONQUE DE LA RAME, l'indice étant
@@ -836,13 +857,6 @@ func _le_long_des_coupes(coupes: Array, t: float) -> Dictionary:
 		d = p2 - p1
 	d = d.normalized() if d.length() > 1e-6 else Vector2.RIGHT
 	return {"p": p, "n": Vector2(-d.y, d.x)}
-
-
-func _tangente_de(axe: PackedVector2Array, i: int) -> Vector2:
-	var a: Vector2 = axe[max(0, i - 1)]
-	var b: Vector2 = axe[min(axe.size() - 1, i + 1)]
-	var u := b - a
-	return u.normalized() if u.length() > 1e-6 else Vector2.RIGHT
 
 
 # --- le signal d'arrêt ---# --- le signal d'arrêt ------------------------------------------------------
