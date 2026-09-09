@@ -644,7 +644,7 @@ func _dessiner_quais(sel, t: float) -> void:
 			draw_polyline(_boucle(contour), Color(Sty.ROUGE, 0.55), 1.6, true)
 			# le numéro se détoure : les hachures le traversent, et il faut
 			# encore pouvoir dire DE QUEL quai on parle.
-			Sty.texte_centre(self, Sty.titre(700), 31, r.get_center(), str(int(pid)),
+			Sty.texte_centre(self, Sty.enseigne(700), 31, r.get_center(), str(int(pid)),
 				Color(Sty.TEXTE, 0.50), 5, Color(0, 0, 0, 0.65))
 			var fin := ""
 			for ev in enc.events:
@@ -669,7 +669,7 @@ func _dessiner_quais(sel, t: float) -> void:
 			if not occupe:
 				draw_colored_polygon(contour, Sty.POSTE_QUAI_ELIGIBLE.lerp(col, 0.14))
 				# la teinte recouvre le numéro peint par le plan : on le repose
-				Sty.texte_centre(self, Sty.titre(700), 31, r.get_center(), str(int(pid)), Sty.TEXTE)
+				Sty.texte_centre(self, Sty.enseigne(700), 31, r.get_center(), str(int(pid)), Sty.TEXTE)
 			var larg: float = 2.5 + 0.9 * p
 			Sty.pointille(self, contour, Color(col, 0.08 + 0.20 * p), larg + 8.0, 7, 5)
 			Sty.pointille(self, contour, col, larg, 7, 5)
@@ -1221,7 +1221,15 @@ func _dessiner_hud(t: float) -> void:
 			Vector2(ch.position.x + 8 * k, ch.end.y - 8 * k), ch.end - Vector2(8, 8) * k]:
 		draw_circle(vis, 1.9 * k, Color(Sty.POSTE_BORD, 0.42))
 		draw_circle(vis + Vector2(0, -0.5 * k), 1.0 * k, Color(0, 0, 0, 0.32))
-	var base := ch.position.y + 6.0 * k + mono.get_ascent(t_h)
+	# L'HEURE SE CENTRE DANS CE QUI LUI RESTE. Elle était posée à six unités du
+	# haut, donc elle TOMBAIT vers le bas du cadran — « l'heure semble alignée
+	# sur le bas » (Vincent, 9 septembre 2026). Le cadran n'est pas vide : sa
+	# jauge en occupe le pied. On centre donc sur la hauteur UTILE, celle qui
+	# reste au-dessus de la jauge, et sur la ligne médiane des lettres
+	# (ascendante moins descendante), pas sur la ligne de base.
+	var utile: float = ch.size.y - 11.0 * k
+	var base: float = ch.position.y + utile / 2.0 \
+		+ (mono.get_ascent(t_h) - mono.get_descent(t_h)) / 2.0
 	Sty.texte_espace(self, mono, t_h, Vector2(ch.position.x + 14.0 * k, base),
 		horloge, Sty.TEXTE, 1.05 * k)
 	var col_r: Color = Sty.VERT if retard < 10 else (Sty.AMBRE if retard < 30 else Sty.ROUGE)
@@ -1266,11 +1274,13 @@ func _dessiner_hud(t: float) -> void:
 				# « 1x » EST DE L'IDENTITÉ, pas de l'information : Vincent le
 				# range avec les noms de gare, et il a raison — c'est un
 				# réglage qu'on lit une fois, pas une valeur qu'on surveille.
-				var f_v := Sty.titre(600)
-				var t_v: int = ti.call(15)
-				Sty.texte_espace(self, f_v, t_v,
-					Vector2(c.x - Sty.largeur_espacee(f_v, t_v, bouton[1], 0.5 * k) / 2.0,
-						c.y + f_v.get_ascent(t_v) / 2.0 - 1 * k),
+				# CENTRÉ POUR DE BON, ET PLUS GRAND. Il l'était sur sa
+				# demi-ASCENDANTE, ce qui le poussait vers le bas de la
+				# pastille — Cormorant a une descendante généreuse, et c'est
+				# elle qu'on oubliait. `texte_centre_espace` centre sur la
+				# médiane. La taille passe de 15 à 17 : « police un peu petite
+				# aussi » (Vincent, 9 septembre 2026).
+				Sty.texte_centre_espace(self, Sty.enseigne(700), ti.call(17), c,
 					bouton[1], Sty.ACCENT if actif else Sty.TEXTE, 0.5 * k)
 			"play":
 				if pause:

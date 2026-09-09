@@ -355,6 +355,13 @@ const FICHIER_MONO_GRAS := "res://jeu/polices/SpaceMono-Bold.ttf"
 ## `STATION_GRAS=<x>` force les deux, pour comparer sans recompiler.
 const EMBOLDEN_IDENTITE := 0.13
 const EMBOLDEN_TEXTE := 0.06
+## L'ENSEIGNE — le plus épais des trois. Ce sont les noms de destination, les
+## numéros de quai et les compteurs du bandeau : les plus grands caractères de l'écran, espacés, lus
+## d'un coup d'œil à travers tout le plan et par-dessus un fond chargé de
+## voies. « Les destinations pourraient avoir une police plus épaisse »
+## (Vincent, 9 septembre 2026) — l'identité entière n'avait pas à monter avec
+## elles, le texte d'un panneau se boucherait.
+const EMBOLDEN_ENSEIGNE := 0.32
 static var _titre: Dictionary = {}
 
 
@@ -381,6 +388,21 @@ static func titre(graisse: int = 600) -> Font:
 	if not _titre.has(graisse):
 		_titre[graisse] = _charger(FICHIER_TITRE, graisse)
 	return _titre[graisse]
+
+
+static var _enseigne: Dictionary = {}
+
+## LA MÊME FONTE, PLUS APPUYÉE. Une enseigne de destination n'est pas un titre :
+## elle se lit de loin, en travers du plan, sur un fond de voies colorées. Elle
+## a droit à un tracé plus franc que le reste de l'identité — et le reste de
+## l'identité n'a pas à la suivre.
+static func enseigne(graisse: int = 700) -> Font:
+	if not _enseigne.has(graisse):
+		var f := _charger(FICHIER_TITRE, graisse)
+		if f is FontVariation:
+			(f as FontVariation).variation_embolden = EMBOLDEN_ENSEIGNE
+		_enseigne[graisse] = f
+	return _enseigne[graisse]
 
 
 static func _charger(chemin: String, graisse: int) -> Font:

@@ -50,12 +50,14 @@ qu'elle remplace — elle est dessinée fine. `FontVariation.variation_embolden`
 épaissit le TRACÉ lui-même, ce qu'aucune graisse ne peut faire au-delà du
 dessin de la fonte.
 
-Deux valeurs plutôt qu'une : **0,13 pour l'identité**, qui porte des capitales
-espacées en grand et réclame un tracé franc ; **0,06 pour le texte courant**,
-écrit en petit corps sur un téléphone, où trop d'épaisseur boucherait les
-contre-formes. Choisies en comparant quatre valeurs à l'écran (0,00 · 0,04 ·
-0,08 · 0,13). `STATION_GRAS=<x>` les force toutes deux, pour comparer sans
-recompiler.
+Trois valeurs, une par usage. **0,32 pour l'enseigne** — noms de destination,
+numéros de quai, compteurs du bandeau : les plus grands caractères de l'écran,
+espacés, lus d'un coup d'œil en travers du plan et par-dessus un fond de voies
+colorées. **0,13 pour le reste de l'identité**, qui n'avait pas à monter avec
+elle. **0,06 pour le texte courant**, écrit en petit corps sur un téléphone, où
+trop d'épaisseur boucherait les contre-formes. Choisies en comparant à l'écran
+(0,00 · 0,04 · 0,08 · 0,13, puis 0,22 contre 0,32 sur une enseigne).
+`STATION_GRAS=<x>` force l'identité et le texte, pour comparer sans recompiler.
 
 Space Mono n'en reçoit pas : elle n'est pas variable, et le Bold est un
 fichier.

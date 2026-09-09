@@ -99,7 +99,10 @@ func _draw() -> void:
 	if G.is_empty():
 		return
 	var sans_g := Sty.sans(700)
-	var grave := Sty.titre(600)
+	# LES NOMS DE DESTINATION PRENNENT L'ENSEIGNE : la même fonte, plus
+	# appuyée. Ils se lisent de loin, en travers du plan, sur un fond de voies
+	# colorées — le reste de l'identité n'a pas à monter avec eux.
+	var grave := Sty.enseigne(700)
 
 	# --- voies d'approche et de départ : la fuite vers le bord ---------------
 	# Elles portent leurs traverses depuis le 4 septembre 2026 : ce sont les
@@ -213,7 +216,7 @@ func _draw() -> void:
 		# à taille égale elle pèse bien moins que la lapidaire qu'elle
 		# remplace, et les numéros s'étaient effacés du plan. C'est le seul
 		# texte qui s'y trouve, il doit se lire de loin.
-		Sty.texte_centre(self, Sty.titre(700), 31, r.get_center(), str(int(q["id"])), Color(Sty.PAPIER, 0.92))
+		Sty.texte_centre(self, Sty.enseigne(700), 31, r.get_center(), str(int(q["id"])), Color(Sty.PAPIER, 0.92))
 		# le heurtoir du quai en impasse : rouge, avec son halo
 		if dead_ends.has(int(q["id"])):
 			var h := Rect2(Geo.PLAT_X2 + 4, cy - 13, 7, 26)
