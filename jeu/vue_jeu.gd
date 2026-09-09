@@ -471,8 +471,18 @@ func _construire_pupitre() -> void:
 	pupitre.grain = t
 	# la lampe éclaire un peu plus, l'ombre des bords retient un peu moins :
 	# le relief du pupitre se garde, mais moins au prix de la clarté
-	pupitre.lampe = _radial(Color(1.0, 0.84, 0.58, 0.20), Vector2(0.5, 0.10), 1.05)
-	pupitre.ombre = _radial_inverse(Color(0.0, 0.0, 0.0, 0.17))
+	# LE FOND SE CREUSE. La maquette de Vincent (9 septembre 2026) est bien
+	# plus CONTRASTÉE que le pupitre d'alors : une lumière franche au milieu,
+	# des angles qui s'enfoncent. Le nôtre était plat — un brun uniforme d'un
+	# bord à l'autre —, ce qui n'aidait ni les voies ni les plaques à se
+	# détacher.
+	#
+	# LA LAMPE MONTE PLUS QUE L'OMBRE, et c'est délibéré : Vincent avait
+	# demandé un écran plus clair sur son iPhone le 9 septembre au matin. Le
+	# contraste vient donc surtout de la lumière ajoutée au centre, pas de
+	# l'ombre ajoutée aux bords — le gain net de clarté est positif.
+	pupitre.lampe = _radial(Color(1.0, 0.85, 0.60, 0.30), Vector2(0.5, 0.12), 1.10)
+	pupitre.ombre = _radial_inverse(Color(0.0, 0.0, 0.0, 0.24))
 	add_child(pupitre)
 	move_child(pupitre, 0)
 
@@ -614,7 +624,7 @@ func _dessiner_quais(sel, t: float) -> void:
 			draw_polyline(_boucle(contour), Color(Sty.ROUGE, 0.55), 1.6, true)
 			# le numéro se détoure : les hachures le traversent, et il faut
 			# encore pouvoir dire DE QUEL quai on parle.
-			Sty.texte_centre(self, Sty.sans(700), 24, r.get_center(), str(int(pid)),
+			Sty.texte_centre(self, Sty.titre(600), 26, r.get_center(), str(int(pid)),
 				Color(Sty.TEXTE, 0.50), 5, Color(0, 0, 0, 0.65))
 			var fin := ""
 			for ev in enc.events:
@@ -639,7 +649,7 @@ func _dessiner_quais(sel, t: float) -> void:
 			if not occupe:
 				draw_colored_polygon(contour, Sty.POSTE_QUAI_ELIGIBLE.lerp(col, 0.14))
 				# la teinte recouvre le numéro peint par le plan : on le repose
-				Sty.texte_centre(self, Sty.sans(700), 24, r.get_center(), str(int(pid)), Sty.TEXTE)
+				Sty.texte_centre(self, Sty.titre(600), 26, r.get_center(), str(int(pid)), Sty.TEXTE)
 			var larg: float = 2.5 + 0.9 * p
 			Sty.pointille(self, contour, Color(col, 0.08 + 0.20 * p), larg + 8.0, 7, 5)
 			Sty.pointille(self, contour, col, larg, 7, 5)
@@ -1147,7 +1157,16 @@ func _dessiner_hud(t: float) -> void:
 			Rect2(x + i * 7.0 * k, cy - 5.0 * k, 4.0 * k, 10.0 * k))
 
 	# --- l'horloge, centrée : heure, retard, et la jauge du service ----------
-	var mono := Sty.mono(600)
+	# LA SERIF DE LA MAQUETTE, ET DES CHIFFRES QUI NE SAUTENT PAS. Vincent a
+	# fait dessiner une maquette où l'horloge est en romaine, et il a raison :
+	# la mono était le dernier objet de l'écran à ne pas appartenir à la
+	# direction artistique. Mais une horloge change de chiffre toutes les
+	# minutes, et un chiffre plus étroit que le précédent la fait tressauter.
+	# Mesuré sur les trois polices du jeu : Cinzel étale ses chiffres de 14 à
+	# 24 unités — 42 % d'écart, l'heure danserait —, tandis que GARAMOND les
+	# tient tous à 19, exactement comme la mono. C'est donc Garamond : la
+	# serif qu'on voulait, et des chiffres tabulaires.
+	var mono := Sty.sans(600)
 	var horloge := fmt(enc.game_min)
 	var retard := enc.live_delay()
 	var txt_r := "+%d" % int(retard)
@@ -1165,6 +1184,13 @@ func _dessiner_hud(t: float) -> void:
 	# de laiton, et tout ce qui se lit — heure, retard, jauge — dedans.
 	draw_style_box(Sty.boite(Color(0, 0, 0, 0.42),
 		Sty.ACCENT if (pause or gel) else Sty.POSTE_BORD, 12 * k, max(1.0, 1.2 * k)), ch)
+	# LES QUATRE VIS DU CADRAN. Les plaques de quai en portent depuis le 4
+	# septembre ; le cadran, lui, flottait sans attache. C'est le même objet —
+	# une plaque vissée au pupitre — et la maquette le dit aussi.
+	for vis in [ch.position + Vector2(8, 8) * k, Vector2(ch.end.x - 8 * k, ch.position.y + 8 * k),
+			Vector2(ch.position.x + 8 * k, ch.end.y - 8 * k), ch.end - Vector2(8, 8) * k]:
+		draw_circle(vis, 1.9 * k, Color(Sty.POSTE_BORD, 0.42))
+		draw_circle(vis + Vector2(0, -0.5 * k), 1.0 * k, Color(0, 0, 0, 0.32))
 	var base := ch.position.y + 5.0 * k + mono.get_ascent(ti.call(21))
 	Sty.texte_espace(self, mono, ti.call(21), Vector2(ch.position.x + 13.0 * k, base),
 		horloge, Sty.TEXTE, 1.0 * k)

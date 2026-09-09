@@ -192,7 +192,11 @@ func _draw() -> void:
 				Vector2(r.end.x - 7, cy + Geo.PLAT_H / 2.0 - 7)]:
 			draw_circle(coin, 2.2, Color(Sty.POSTE_BORD, 0.45))
 			draw_circle(coin + Vector2(0, -0.6), 1.2, Color(0, 0, 0, 0.35))
-		Sty.texte_centre(self, sans_g, 24, r.get_center(), str(int(q["id"])), Color(Sty.PAPIER, 0.92))
+		# LE NUMÉRO EN CINZEL, comme tout ce qui se grave dans ce jeu. Il était
+		# resté en sans : un chiffre de quai ne change jamais, il ne risque donc
+		# pas de tressauter, et la capitale lapidaire lui va mieux qu'à
+		# n'importe quoi d'autre — c'est le seul texte du plan.
+		Sty.texte_centre(self, grave, 26, r.get_center(), str(int(q["id"])), Color(Sty.PAPIER, 0.92))
 		# le heurtoir du quai en impasse : rouge, avec son halo
 		if dead_ends.has(int(q["id"])):
 			var h := Rect2(Geo.PLAT_X2 + 4, cy - 13, 7, 26)
