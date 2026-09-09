@@ -1227,7 +1227,11 @@ func _dessiner_hud(t: float) -> void:
 	# jauge en occupe le pied. On centre donc sur la hauteur UTILE, celle qui
 	# reste au-dessus de la jauge, et sur la ligne médiane des lettres
 	# (ascendante moins descendante), pas sur la ligne de base.
-	var utile: float = ch.size.y - 11.0 * k
+	# SIX, ET NON ONZE. La jauge ne mange pas onze unités du cadran — elle en
+	# occupe trois, à sept du bas : lui en réserver onze remontait l'heure d'un
+	# cran de trop. « L'heure un petit peu trop haut maintenant » (Vincent, 9
+	# septembre 2026).
+	var utile: float = ch.size.y - 6.0 * k
 	var base: float = ch.position.y + utile / 2.0 \
 		+ (mono.get_ascent(t_h) - mono.get_descent(t_h)) / 2.0
 	Sty.texte_espace(self, mono, t_h, Vector2(ch.position.x + 14.0 * k, base),
@@ -1280,7 +1284,14 @@ func _dessiner_hud(t: float) -> void:
 				# elle qu'on oubliait. `texte_centre_espace` centre sur la
 				# médiane. La taille passe de 15 à 17 : « police un peu petite
 				# aussi » (Vincent, 9 septembre 2026).
-				Sty.texte_centre_espace(self, Sty.enseigne(700), ti.call(17), c,
+				# ET REMONTÉ D'UN CHEVEU. Le centrage sur la médiane
+				# (ascendante moins descendante) est juste en métrique, pas à
+				# l'œil : l'ascendante de Cormorant réserve la place des
+				# accents, que « 1x » n'utilise pas, si bien que la ligne
+				# médiane tombe sous le milieu optique des capitales. Deux
+				# unités le remettent d'aplomb — « 1x un petit peu trop bas ».
+				Sty.texte_centre_espace(self, Sty.enseigne(700), ti.call(17),
+					c - Vector2(0, 2.0 * k),
 					bouton[1], Sty.ACCENT if actif else Sty.TEXTE, 0.5 * k)
 			"play":
 				if pause:
