@@ -5,6 +5,24 @@
 #     tools/ios.sh              exporte, installe et lance
 #     tools/ios.sh --export     exporte seulement (projet Xcode)
 #     tools/ios.sh --etat       dit ce qui manque, sans rien faire
+#     tools/ios.sh --simulateur pose le jeu sur le simulateur iOS démarré
+#
+# LE SIMULATEUR A DEMANDÉ UN GABARIT RECOMPILÉ (9 septembre 2026). Celui que
+# Godot 4.7.2 distribue annonce une tranche « ios-arm64_x86_64-simulator » dont
+# la bibliothèque `libgodot.a` ne contient QUE x86_64 — le nom du dossier ment.
+# Or ce Mac est en arm64 et tous ses simulateurs le sont : rien ne pouvait se
+# lier. MoltenVK, dans le même gabarit, livre bien ses deux tranches ; c'est
+# donc propre à la bibliothèque du moteur.
+#
+# La tranche manquante a été compilée depuis les sources :
+#
+#     scons platform=ios arch=arm64 ios_simulator=yes target=template_debug
+#
+# puis fondue à l'existante (`lipo -create`) dans
+# `~/Library/Application Support/Godot/export_templates/4.7.2.stable/ios.zip`.
+# Le gabarit officiel intact est gardé à côté sous
+# `ios-officiel-sans-simulateur.zip`. UNE MISE À JOUR DE GODOT EFFACERA CE
+# CORRECTIF : il faudra le refaire, et ces vingt lignes disent comment.
 #
 # CE QUE CE SCRIPT NE PEUT PAS FAIRE, et c'est la seule chose : ajouter un
 # compte Apple à Xcode. Il faut un mot de passe et une double authentification,
@@ -123,6 +141,40 @@ if [ "${1:-}" = "--capture" ]; then
     --domain-type appDataContainer --domain-identifier "$BUNDLE" \
     --source Documents/capture.png --destination "$VERS" > /dev/null 2>&1 \
     && vert "capture : $VERS" || rouge "aucune capture sur l'appareil (trois doigts sur l'écran du jeu)"
+  exit 0
+fi
+
+# --- le simulateur : même export, mais compilé pour le SDK du simulateur ----
+# Godot ne produit pas d'application, il produit un PROJET Xcode : c'est donc
+# xcodebuild qui décide de la cible, et le simulateur n'est qu'un autre SDK.
+# On ne signe pas — un simulateur ne le demande pas, et c'est ce qui rend cette
+# voie utilisable sans appareil ni compte.
+if [ "${1:-}" = "--simulateur" ]; then
+  SIM=$(xcrun simctl list devices booted | grep -Eo "[0-9A-F-]{36}" | head -1)
+  if [ -z "$SIM" ]; then
+    rouge "aucun simulateur démarré — ouvrir Simulator, ou : xcrun simctl boot 'iPhone 17'"
+    exit 1
+  fi
+  echo "→ export du projet Xcode…"
+  mkdir -p "$SORTIE"
+  godot --headless --path . --export-debug "iOS" "$PROJET" > /tmp/station-ios-export.log 2>&1
+  echo "→ compilation pour le simulateur…"
+  BUILD="$(dirname "$PROJET")/build-sim"
+  if ! xcodebuild -project "$PROJET" -target Station -configuration Debug       -sdk iphonesimulator -arch arm64       CONFIGURATION_BUILD_DIR="$BUILD"       CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO       build > /tmp/station-sim-build.log 2>&1; then
+    rouge "  la compilation a échoué :"
+    grep -E "error:" /tmp/station-sim-build.log | head -5 | sed 's/^/    /'
+    exit 1
+  fi
+  vert "  application compilée"
+  xcrun simctl install "$SIM" "$BUILD/Station.app" || exit 1
+  xcrun simctl launch "$SIM" "$BUNDLE" > /dev/null || exit 1
+  open -a Simulator
+  vert "posé sur le simulateur — ⌘← dans la fenêtre pour la mettre en paysage."
+  echo "  ⚠ le simulateur SACCADE, et ce n'est pas le jeu : il n'a pas de Vulkan,"
+  echo "    Godot y retombe sur OpenGL ES 3.0 par-dessus un GPU paravirtualisé"
+  echo "    (mesuré : « Setting up an OpenGL ES 3.0 context » à son lancement,"
+  echo "    là où l'appareil rend en Metal, moteur « mobile »). Il vaut pour la"
+  echo "    MISE EN PAGE et la zone sûre, jamais pour juger la fluidité."
   exit 0
 fi
 
