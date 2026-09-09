@@ -735,11 +735,17 @@ func _dessiner_convois(sel, t: float) -> void:
 				else:
 					draw_colored_polygon(quad, lavis)
 
-		# LE MASQUE D'EMBARQUEMENT : la portion de rame encore vide, côté queue,
-		# qui recule à mesure qu'on approche du départ. Il se calcule CASE PAR
-		# CASE comme avant — les voyageurs montent de la tête vers la queue — et
-		# se découpe entre les deux coupures de sa case. Les coupures étant
-		# ordonnées de la tête vers la queue, il n'y a plus de côté à deviner.
+		# LE VIDE N'EST PLUS UN VOILE NOIR, C'EST LA MÊME CAISSE EN SOURDINE.
+		# Le masque d'embarquement peignait un aplat presque noir par-dessus la
+		# portion non remplie : sur une caisse peinte il se lisait, sur un
+		# véhicule DESSINÉ il l'effaçait — « c'est tellement sombre qu'on ne
+		# voit plus bien les fourgons » (Vincent, 9 septembre 2026). On repeint
+		# donc la portion vide avec LA MÊME PLANCHE, dans une encre éteinte : le
+		# dessin reste lisible, le véhicule garde sa forme et son contour, et
+		# « vide » se dit par la VALEUR au lieu d'effacer l'objet.
+		#
+		# Les voyageurs montent de la tête vers la queue, case par case comme
+		# avant, et la découpe suit la même courbe que la caisse.
 		var plein := _embarquement(tr)
 		if plein < 1.0:
 			var n := axe.size()
@@ -747,12 +753,22 @@ func _dessiner_convois(sel, t: float) -> void:
 				var frac: float = clampf(plein * float(n) - float(i), 0.0, 1.0)
 				if frac >= 1.0:
 					continue
-				var a: Dictionary = _le_long_des_coupes(coupes, float(i) + frac)
-				var b: Dictionary = _le_long_des_coupes(coupes, float(i + 1))
-				draw_colored_polygon(PackedVector2Array([
-					a["p"] - a["n"] * h * 0.5, b["p"] - b["n"] * h * 0.5,
-					b["p"] + b["n"] * h * 0.5, a["p"] + a["n"] * h * 0.5]),
-					Color(Sty.MASQUE, Sty.MASQUE.a * vie))
+				var tex := Ill.vehicule("loco" if i == 0 else "fourgon")
+				var teinte: Color = col if (i == 0 or not tr.freight) else Sty.FRET
+				var eteint := Color(teinte.lerp(Sty.POSTE_FOND, 0.60), vie)
+				for j in 2:
+					var f0: float = lerpf(frac, 1.0, float(j) / 2.0)
+					var f1: float = lerpf(frac, 1.0, float(j + 1) / 2.0)
+					var a := _le_long_des_coupes(coupes, float(i) + f0)
+					var b := _le_long_des_coupes(coupes, float(i) + f1)
+					var quad := PackedVector2Array([
+						a["p"] - a["n"] * h * 0.5, b["p"] - b["n"] * h * 0.5,
+						b["p"] + b["n"] * h * 0.5, a["p"] + a["n"] * h * 0.5])
+					if tex != null:
+						draw_colored_polygon(quad, eteint, PackedVector2Array([
+							Vector2(f0, 0), Vector2(f1, 0), Vector2(f1, 1), Vector2(f0, 1)]), tex)
+					else:
+						draw_colored_polygon(quad, eteint)
 
 
 ## LES COUPURES ENTRE CASES, avec leur normale : une case commence à mi-chemin
