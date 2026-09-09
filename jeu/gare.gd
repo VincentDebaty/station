@@ -65,7 +65,20 @@ func poser(f: Dictionary, geometrie: Dictionary) -> void:
 ## reçu. « La police est trop petite pour le nom des destinations » — c'était
 ## un oubli, pas un choix.
 static func taille_nom() -> int:
-	return int(round(15.0 * Sty.UIK))
+	# 25 à 28 SUR L'ÉCRAN DE VINCENT, et il a chiffré la maquette : « LEEDS,
+	# Cormorant Garamond SemiBold, 25-28 px, uppercase, letter spacing +2 à +3 »
+	# (9 septembre 2026). Le viewport d'un iPhone fait 1652 unités pour une
+	# maquette large de 1670 : une unité vaut donc un pixel, et 17 × UIK donne
+	# 25,5. C'était 15 × UIK, soit 22,5 — trop maigre pour ce qu'un nom de
+	# destination doit dire.
+	return int(round(17.0 * Sty.UIK))
+
+
+## L'INTERLETTRAGE D'UNE PLAQUE ÉMAILLÉE. C'est lui, autant que la police, qui
+## fait le nom de destination : sans lui Cormorant se referme et se lit comme
+## du texte courant.
+static func espace_nom() -> float:
+	return 2.6 * Sty.UIK
 
 
 ## Où se pose le nom d'un portail : au-dessus de l'aiguillage, à 34 px au
@@ -192,11 +205,15 @@ func _draw() -> void:
 				Vector2(r.end.x - 7, cy + Geo.PLAT_H / 2.0 - 7)]:
 			draw_circle(coin, 2.2, Color(Sty.POSTE_BORD, 0.45))
 			draw_circle(coin + Vector2(0, -0.6), 1.2, Color(0, 0, 0, 0.35))
-		# LE NUMÉRO EN CINZEL, comme tout ce qui se grave dans ce jeu. Il était
-		# resté en sans : un chiffre de quai ne change jamais, il ne risque donc
-		# pas de tressauter, et la capitale lapidaire lui va mieux qu'à
-		# n'importe quoi d'autre — c'est le seul texte du plan.
-		Sty.texte_centre(self, grave, 26, r.get_center(), str(int(q["id"])), Color(Sty.PAPIER, 0.92))
+		# LE NUMÉRO PREND L'IDENTITÉ — Vincent le range avec les noms de gare
+		# (9 septembre 2026). Il était en sans ; un chiffre de quai ne change
+		# jamais, il ne risque donc pas de tressauter.
+		#
+		# EN 700 ET EN 31, PAS EN 600 ET EN 26. Cormorant est une romane FINE :
+		# à taille égale elle pèse bien moins que la lapidaire qu'elle
+		# remplace, et les numéros s'étaient effacés du plan. C'est le seul
+		# texte qui s'y trouve, il doit se lire de loin.
+		Sty.texte_centre(self, Sty.titre(700), 31, r.get_center(), str(int(q["id"])), Color(Sty.PAPIER, 0.92))
 		# le heurtoir du quai en impasse : rouge, avec son halo
 		if dead_ends.has(int(q["id"])):
 			var h := Rect2(Geo.PLAT_X2 + 4, cy - 13, 7, 26)
@@ -222,12 +239,13 @@ func _draw() -> void:
 		# c'est exactement ce que la capitale lapidaire du jeu sait faire, et
 		# elle porte deux fois plus de matière à taille égale.
 		var t := taille_nom()
+		var e := espace_nom()
 		if noms_allumes.has(pname):
 			# « validé » : pleine couleur, halo à sa teinte
-			Sty.texte_centre(self, grave, t, pos, nom, Color(col, 0.35), 7, Color(col, 0.35))
-			Sty.texte_centre(self, grave, t, pos, nom, col, 3, Sty.POSTE_FOND)
+			Sty.texte_centre_espace(self, grave, t, pos, nom, Color(col, 0.35), e, 7, Color(col, 0.35))
+			Sty.texte_centre_espace(self, grave, t, pos, nom, col, e, 3, Sty.POSTE_FOND)
 		else:
-			Sty.texte_centre(self, grave, t, pos, nom, Color(col, 0.80), 3, Sty.POSTE_FOND)
+			Sty.texte_centre_espace(self, grave, t, pos, nom, Color(col, 0.80), e, 3, Sty.POSTE_FOND)
 
 	# --- le cartouche de diagnostic, seul à l'écran --------------------------
 	if cartouche:

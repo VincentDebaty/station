@@ -343,8 +343,10 @@ static var _mono: Dictionary = {}
 ## licence SIL Open Font (voir jeu/polices/LISEZ-MOI.md). Toutes deux sont
 ## VARIABLES : un seul fichier porte toutes les graisses, et FontVariation en
 ## tire le gras sans charger un second fichier.
-const FICHIER_TITRE := "res://jeu/polices/Cinzel.ttf"
+const FICHIER_TITRE := "res://jeu/polices/CormorantGaramond.ttf"
 const FICHIER_TEXTE := "res://jeu/polices/EBGaramond.ttf"
+const FICHIER_MONO := "res://jeu/polices/SpaceMono.ttf"
+const FICHIER_MONO_GRAS := "res://jeu/polices/SpaceMono-Bold.ttf"
 static var _titre: Dictionary = {}
 
 
@@ -357,8 +359,16 @@ static func sans(graisse: int = 400) -> Font:
 	return _sans[graisse]
 
 
-## LES TITRES ET LES PETITES CAPITALES : Cinzel, une capitale romaine
-## lapidaire. C'est elle qui donne à l'écran son air de gravure.
+## L'IDENTITÉ : Cormorant Garamond. C'était Cinzel jusqu'au 9 septembre 2026 —
+## une capitale romaine LAPIDAIRE, qui donnait à l'écran un air de monument. Ce
+## jeu n'est pas un monument : c'est une compagnie de chemin de fer britannique
+## du XIXᵉ siècle, et Cormorant est exactement cela — plus fine, légèrement
+## irrégulière, avec une VRAIE bas-de-casse là où Cinzel n'avait que des petites
+## capitales. « Sheffield » s'écrit maintenant Sheffield, et non SHEFFIELD en
+## deux tailles.
+##
+## Le nom `titre` ne bouge pas : tout l'appelle, et ce qu'il désigne — ce qui
+## porte l'identité du jeu — n'a pas changé.
 static func titre(graisse: int = 600) -> Font:
 	if not _titre.has(graisse):
 		_titre[graisse] = _charger(FICHIER_TITRE, graisse)
@@ -382,13 +392,31 @@ static func _charger(chemin: String, graisse: int) -> Font:
 	return v
 
 
-## L'horloge et les badges : ui-monospace, « SF Mono », Menlo, monospace.
+## L'HORLOGE ET LES BADGES : Space Mono. C'était une police SYSTÈME — SF Mono
+## sur un Mac, on ne savait pas quoi sur un iPhone —, c'est-à-dire la seule
+## chose de l'écran dont on ne maîtrisait pas le dessin. Elle est maintenant
+## livrée comme les deux autres.
+##
+## ET C'EST UNE SÉPARATION, PAS UN GOÛT : Cormorant dit l'univers ferroviaire,
+## Space Mono dit l'information de jeu — l'heure, le retard, l'heure de départ.
+## Ce qui se lit d'un coup d'œil et change à chaque minute n'a pas à ressembler
+## à ce qui est gravé sur une plaque.
+##
+## Space Mono n'est pas variable : deux fichiers, le Regular et le Bold, et la
+## graisse choisit lequel.
 static func mono(graisse: int = 600) -> Font:
 	if not _mono.has(graisse):
-		var f := SystemFont.new()
-		f.font_names = PackedStringArray(["SF Mono", "Menlo", "Consolas", "DejaVu Sans Mono", "Courier New"])
-		f.font_weight = graisse
-		_mono[graisse] = f
+		var chemin: String = FICHIER_MONO_GRAS if graisse >= 650 else FICHIER_MONO
+		var base: FontFile = load(chemin) if ResourceLoader.exists(chemin) else null
+		if base == null:
+			var sf := SystemFont.new()
+			sf.font_names = PackedStringArray(["SF Mono", "Menlo", "Consolas", "DejaVu Sans Mono"])
+			sf.font_weight = graisse
+			_mono[graisse] = sf
+		else:
+			base.antialiasing = TextServer.FONT_ANTIALIASING_GRAY
+			base.subpixel_positioning = TextServer.SUBPIXEL_POSITIONING_AUTO
+			_mono[graisse] = base
 	return _mono[graisse]
 
 
@@ -515,6 +543,28 @@ static func texte_centre(canvas: CanvasItem, police: Font, taille: int, centre: 
 	if contour > 0.0:
 		canvas.draw_string_outline(police, pos, texte, HORIZONTAL_ALIGNMENT_LEFT, -1, taille, int(round(contour)), col_contour)
 	canvas.draw_string(police, pos, texte, HORIZONTAL_ALIGNMENT_LEFT, -1, taille, col)
+
+
+## CENTRÉ **ET** ESPACÉ, avec son contour. Il n'existait que l'un ou l'autre :
+## `texte_centre` sait détourer mais pas espacer, `texte_espace` l'inverse. Les
+## noms de destination demandent les deux — l'interlettrage est ce qui leur
+## donne leur air de plaque émaillée, et le contour est ce qui les détache du
+## pupitre.
+static func texte_centre_espace(canvas: CanvasItem, police: Font, taille: int, centre: Vector2,
+		texte: String, col: Color, espace: float,
+		contour: float = 0.0, col_contour: Color = FOND) -> void:
+	var w := largeur_espacee(police, taille, texte, espace)
+	var asc := police.get_ascent(taille)
+	var desc := police.get_descent(taille)
+	var x := centre.x - w / 2.0
+	var y := centre.y + (asc - desc) / 2.0
+	if contour > 0.0:
+		var xc := x
+		for c in texte:
+			canvas.draw_string_outline(police, Vector2(xc, y), c, HORIZONTAL_ALIGNMENT_LEFT, -1,
+				taille, int(round(contour)), col_contour)
+			xc += police.get_string_size(c, HORIZONTAL_ALIGNMENT_LEFT, -1, taille).x + espace
+	texte_espace(canvas, police, taille, Vector2(x, y), texte, col, espace)
 
 
 ## Un bouton du prototype (.btn / .card .btn.primary), stylé.

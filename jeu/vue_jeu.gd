@@ -644,7 +644,7 @@ func _dessiner_quais(sel, t: float) -> void:
 			draw_polyline(_boucle(contour), Color(Sty.ROUGE, 0.55), 1.6, true)
 			# le numéro se détoure : les hachures le traversent, et il faut
 			# encore pouvoir dire DE QUEL quai on parle.
-			Sty.texte_centre(self, Sty.titre(600), 26, r.get_center(), str(int(pid)),
+			Sty.texte_centre(self, Sty.titre(700), 31, r.get_center(), str(int(pid)),
 				Color(Sty.TEXTE, 0.50), 5, Color(0, 0, 0, 0.65))
 			var fin := ""
 			for ev in enc.events:
@@ -669,7 +669,7 @@ func _dessiner_quais(sel, t: float) -> void:
 			if not occupe:
 				draw_colored_polygon(contour, Sty.POSTE_QUAI_ELIGIBLE.lerp(col, 0.14))
 				# la teinte recouvre le numéro peint par le plan : on le repose
-				Sty.texte_centre(self, Sty.titre(600), 26, r.get_center(), str(int(pid)), Sty.TEXTE)
+				Sty.texte_centre(self, Sty.titre(700), 31, r.get_center(), str(int(pid)), Sty.TEXTE)
 			var larg: float = 2.5 + 0.9 * p
 			Sty.pointille(self, contour, Color(col, 0.08 + 0.20 * p), larg + 8.0, 7, 5)
 			Sty.pointille(self, contour, col, larg, 7, 5)
@@ -1190,11 +1190,16 @@ func _dessiner_hud(t: float) -> void:
 	var horloge := fmt(enc.game_min)
 	var retard := enc.live_delay()
 	var txt_r := "+%d" % int(retard)
-	var w_h := Sty.largeur_espacee(mono, ti.call(21), horloge, 1.0 * k)
+	# 46 À 50 SUR L'ÉCRAN DE VINCENT : « 07:05, Space Mono Regular, 46-50 px,
+	# letter spacing 2 px » (9 septembre 2026). Une unité vaut un pixel sur le
+	# viewport d'un iPhone, et HUD_K y vaut 1,93 : 24 × k donne 46,3. C'était
+	# 21 × k, soit 40,5.
+	var t_h: int = ti.call(24)
+	var w_h := Sty.largeur_espacee(mono, t_h, horloge, 1.05 * k)
 	var w_r := mono.get_string_size(txt_r, HORIZONTAL_ALIGNMENT_LEFT, -1, ti.call(14)).x
-	var w_chip := 13.0 * k + w_h + 8.0 * k + w_r + 13.0 * k
+	var w_chip := 14.0 * k + w_h + 9.0 * k + w_r + 14.0 * k
 	var milieu: float = Sty.marges["gauche"] + (size_ecran().x - Sty.marges["gauche"] - Sty.marges["droite"]) / 2.0
-	var ch := Rect2(milieu - w_chip / 2.0, Sty.marges["haut"] + 10 * k, w_chip, 38 * k)
+	var ch := Rect2(milieu - w_chip / 2.0, Sty.marges["haut"] + 8 * k, w_chip, 44 * k)
 	zones_hud["horloge"] = ch
 	# LE CADRAN EST UN SEUL FOND. J'avais posé un guichet sombre DANS la chip
 	# chaude : deux fonds, deux cadres, et le retard qui tombait à côté du
@@ -1211,11 +1216,11 @@ func _dessiner_hud(t: float) -> void:
 			Vector2(ch.position.x + 8 * k, ch.end.y - 8 * k), ch.end - Vector2(8, 8) * k]:
 		draw_circle(vis, 1.9 * k, Color(Sty.POSTE_BORD, 0.42))
 		draw_circle(vis + Vector2(0, -0.5 * k), 1.0 * k, Color(0, 0, 0, 0.32))
-	var base := ch.position.y + 5.0 * k + mono.get_ascent(ti.call(21))
-	Sty.texte_espace(self, mono, ti.call(21), Vector2(ch.position.x + 13.0 * k, base),
-		horloge, Sty.TEXTE, 1.0 * k)
+	var base := ch.position.y + 6.0 * k + mono.get_ascent(t_h)
+	Sty.texte_espace(self, mono, t_h, Vector2(ch.position.x + 14.0 * k, base),
+		horloge, Sty.TEXTE, 1.05 * k)
 	var col_r: Color = Sty.VERT if retard < 10 else (Sty.AMBRE if retard < 30 else Sty.ROUGE)
-	draw_string(mono, Vector2(ch.position.x + 13.0 * k + w_h + 8.0 * k, base), txt_r,
+	draw_string(mono, Vector2(ch.position.x + 14.0 * k + w_h + 9.0 * k, base), txt_r,
 		HORIZONTAL_ALIGNMENT_LEFT, -1, ti.call(14), col_r)
 	# la jauge : l'horloge se remplit à mesure que les convois quittent le quai
 	var partis := 0
@@ -1253,9 +1258,14 @@ func _dessiner_hud(t: float) -> void:
 		var c := r.get_center()
 		match bouton[0]:
 			"speed":
-				Sty.texte_espace(self, Sty.mono(700), ti.call(13),
-					Vector2(c.x - Sty.largeur_espacee(Sty.mono(700), ti.call(13), bouton[1], 0.5 * k) / 2.0,
-						c.y + Sty.mono(700).get_ascent(ti.call(13)) / 2.0 - 1 * k),
+				# « 1x » EST DE L'IDENTITÉ, pas de l'information : Vincent le
+				# range avec les noms de gare, et il a raison — c'est un
+				# réglage qu'on lit une fois, pas une valeur qu'on surveille.
+				var f_v := Sty.titre(600)
+				var t_v: int = ti.call(15)
+				Sty.texte_espace(self, f_v, t_v,
+					Vector2(c.x - Sty.largeur_espacee(f_v, t_v, bouton[1], 0.5 * k) / 2.0,
+						c.y + f_v.get_ascent(t_v) / 2.0 - 1 * k),
 					bouton[1], Sty.ACCENT if actif else Sty.TEXTE, 0.5 * k)
 			"play":
 				if pause:
