@@ -61,3 +61,19 @@ jeu pose ses propres libellés par-dessus.
 
 **Le style se tient d'une image à l'autre** : générer la première, puis
 demander les suivantes « dans le même style que l'image précédente ».
+
+## Les deux séries de véhicules, et la silhouette
+
+`loco.png`, `wagon.png`, `fourgon.png` sont vues **de haut** : c'est le poste,
+qui est un plan d'aiguillage. `loco-profil.png`, `wagon-profil.png`,
+`fourgon-profil.png` sont des **élévations**, dessinées le 9 septembre 2026
+pour une tentative de vue oblique — abandonnée le jour même — et gardées parce
+qu'elles servent à l'écran d'attente, où un train de côté vaut mieux qu'un
+toit. La dérivation traite les six d'un même mouvement.
+
+`silhouette.png` est un cas à part : une **découpe pleine**, noir sur blanc,
+sans aucun détail intérieur — la ville qu'on devine au bas du pupitre. Elle
+n'est pas traitée comme une gravure : la chaîne y garde la silhouette dans
+l'alpha et met le RVB à BLANC, si bien que la couleur donnée au dessin sort
+exactement telle qu'on la demande. Une découpe n'a pas de trait à préserver,
+elle n'a qu'un contour.

@@ -110,6 +110,13 @@ static func vehicule(nom: String) -> Texture2D:
 	return _charger(nom)
 
 
+## La silhouette de ville, posée au bas du pupitre. Une découpe pleine : son
+## alpha est la ville, son RVB est blanc, et c'est donc la couleur qu'on lui
+## donne au dessin qui sort telle quelle.
+static func silhouette() -> Texture2D:
+	return _charger("silhouette")
+
+
 static func _charger(nom: String) -> Texture2D:
 	if _cache.has(nom):
 		return _cache[nom]

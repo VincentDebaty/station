@@ -145,6 +145,67 @@ PYEOF
   m=$((m + 1))
 done
 
+# LA SILHOUETTE DE VILLE — un autre traitement, et il faut dire pourquoi.
+#
+# Les véhicules gardent le GRIS de leur gravure : c'est lui qui porte le trait,
+# et le jeu ne fait que le teinter. Une découpe pleine n'a pas de trait — elle
+# n'a qu'un contour —, et si on gardait son gris (noir, éclairci de moitié)
+# multiplié par une teinte déjà sourde, il ne resterait rien à l'écran. On
+# garde donc la SILHOUETTE dans l'alpha et on met le RVB à BLANC : la couleur
+# qu'on lui donne au dessin sort alors exactement telle qu'on la demande.
+#
+# Elle est large : 1536 suffisent pour une bande qui traverse l'écran d'un bord
+# à l'autre et qui n'est de toute façon qu'un horizon.
+for f in "$SRC"/silhouette.png; do
+  [ -f "$f" ] || continue
+  nom=$(basename "$f")
+  cp "$f" "$DST/$nom"
+  python3 - "$DST/$nom" <<'PYEOF'
+import sys, zlib, struct
+exec(open("tools/lire_png.py").read())
+w,h,bpp,px = lire(sys.argv[1])
+def lum(x,y):
+    o=y*w*bpp+x*bpp
+    return (px[o]*3+px[o+1]*6+px[o+2])//10
+dehors=bytearray(w*h); pile=[]
+for x in range(w):
+    for y in (0,h-1):
+        if lum(x,y)>=232 and not dehors[y*w+x]: dehors[y*w+x]=1; pile.append((x,y))
+for y in range(h):
+    for x in (0,w-1):
+        if lum(x,y)>=232 and not dehors[y*w+x]: dehors[y*w+x]=1; pile.append((x,y))
+while pile:
+    x,y=pile.pop()
+    for dx,dy in ((1,0),(-1,0),(0,1),(0,-1)):
+        a,b=x+dx,y+dy
+        if 0<=a<w and 0<=b<h and not dehors[b*w+a] and lum(a,b)>=232:
+            dehors[b*w+a]=1; pile.append((a,b))
+x0,y0,x1,y1 = w,h,0,0
+for y in range(h):
+    for x in range(w):
+        if not dehors[y*w+x]:
+            if x<x0: x0=x
+            if x>x1: x1=x
+            if y<y0: y0=y
+            if y>y1: y1=y
+lw, lh = x1-x0+1, y1-y0+1
+out=bytearray()
+for j in range(lh):
+    for i in range(lw):
+        x,y = x0+i, y0+j
+        # le contour garde sa demi-teinte : c'est ce qui lisse la découpe
+        a = 0 if dehors[y*w+x] else 255 - min(255, lum(x,y))
+        out += bytes((255,255,255, a))
+raw=b''.join(b'\x00'+bytes(out[j*lw*4:(j+1)*lw*4]) for j in range(lh))
+def ch(t,d):
+    c=t+d; return struct.pack('>I',len(d))+c+struct.pack('>I',zlib.crc32(c))
+open(sys.argv[1],'wb').write(b'\x89PNG\r\n\x1a\x0a'[:8]+ch(b'IHDR',struct.pack('>IIBBBBB',lw,lh,8,6,0,0,0))+ch(b'IDAT',zlib.compress(raw,6))+ch(b'IEND',b''))
+print("  %s : %d x %d, rapport %.2f:1" % (sys.argv[1].split("/")[-1], lw, lh, lw/lh))
+PYEOF
+  sips -Z 1536 "$DST/$nom" >/dev/null 2>&1
+  m=$((m + 1))
+done
+
 if [ $((n + m)) -eq 0 ]; then
   rouge "aucune image dans $SRC — voir $SRC/LISEZ-MOI.md pour les noms attendus"
   exit 1

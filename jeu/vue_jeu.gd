@@ -437,6 +437,7 @@ class Pupitre extends Node2D:
 	var grain: NoiseTexture2D
 	var lampe: GradientTexture2D
 	var ombre: GradientTexture2D
+	var ville: Texture2D
 	var ecran := Vector2(1400, 760)
 
 	func _draw() -> void:
@@ -452,6 +453,24 @@ class Pupitre extends Node2D:
 			draw_texture_rect(grain, r, true, Color(0.0, 0.0, 0.0, 0.13))
 			draw_texture_rect(grain, Rect2(r.position + Vector2(3, 5), r.size), true,
 				Color(1.0, 0.90, 0.72, 0.05))
+		# LA VILLE AU LOIN, entre la lampe et l'ombre. C'est le détail de la
+		# maquette du 9 septembre 2026 qui change le plus l'écran : le poste
+		# cesse d'être un tableau posé nulle part, il est DANS une ville.
+		#
+		# ELLE SE DEVINE, ELLE NE SE VOIT PAS, et c'est ce qui la rend juste :
+		# à peine plus sombre que le pupitre, et sous le grain plutôt que
+		# dessus. Un horizon qu'on remarque est un horizon qui dispute
+		# l'attention aux voies, et les voies sont le jeu.
+		#
+		# Elle est ancrée au BAS DE L'ÉCRAN et étalée sur toute la largeur : le
+		# rapport de la planche fait le reste, et rien n'est déformé — une
+		# flèche de cathédrale écrasée se verrait tout de suite.
+		if ville != null:
+			var t := ville.get_size()
+			if t.x > 0.0:
+				var hv: float = ecran.x * t.y / t.x
+				draw_texture_rect(ville, Rect2(0.0, ecran.y - hv, ecran.x, hv), false,
+					Color(0.16, 0.11, 0.07, 0.42))
 		if ombre != null:
 			draw_texture_rect(ombre, r, false, Color(1, 1, 1, 1))
 
@@ -481,6 +500,7 @@ func _construire_pupitre() -> void:
 	# demandé un écran plus clair sur son iPhone le 9 septembre au matin. Le
 	# contraste vient donc surtout de la lumière ajoutée au centre, pas de
 	# l'ombre ajoutée aux bords — le gain net de clarté est positif.
+	pupitre.ville = Ill.silhouette()
 	pupitre.lampe = _radial(Color(1.0, 0.85, 0.60, 0.30), Vector2(0.5, 0.12), 1.10)
 	pupitre.ombre = _radial_inverse(Color(0.0, 0.0, 0.0, 0.24))
 	add_child(pupitre)
