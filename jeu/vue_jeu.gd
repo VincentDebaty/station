@@ -1186,7 +1186,12 @@ func _dessiner_hud(t: float) -> void:
 	# 24 unités — 42 % d'écart, l'heure danserait —, tandis que GARAMOND les
 	# tient tous à 19, exactement comme la mono. C'est donc Garamond : la
 	# serif qu'on voulait, et des chiffres tabulaires.
-	var mono := Sty.sans(600)
+	# SPACE MONO REGULAR, comme Vincent l'a chiffré. Elle était restée en
+	# Garamond : j'avais fait passer l'horloge à la romane le matin même — la
+	# maquette en montrait une —, et je ne l'ai pas rendue à la mono quand
+	# Vincent a tranché la séparation des deux familles. L'heure appartient à
+	# l'information de jeu, pas à l'univers.
+	var mono := Sty.mono(400)
 	var horloge := fmt(enc.game_min)
 	var retard := enc.live_delay()
 	var txt_r := "+%d" % int(retard)

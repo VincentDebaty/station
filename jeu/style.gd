@@ -347,6 +347,14 @@ const FICHIER_TITRE := "res://jeu/polices/CormorantGaramond.ttf"
 const FICHIER_TEXTE := "res://jeu/polices/EBGaramond.ttf"
 const FICHIER_MONO := "res://jeu/polices/SpaceMono.ttf"
 const FICHIER_MONO_GRAS := "res://jeu/polices/SpaceMono-Bold.ttf"
+## CE QU'ON AJOUTE AU TRACÉ, ET DEUX VALEURS PLUTÔT QU'UNE. L'identité porte
+## des CAPITALES espacées, en grand : elle supporte — et réclame — un tracé
+## franc. Le texte courant est écrit en petit corps sur un téléphone : trop
+## d'épaisseur et les contre-formes se bouchent. Mesuré sur quatre valeurs
+## comparées à l'écran (0,00 · 0,04 · 0,08 · 0,13).
+## `STATION_GRAS=<x>` force les deux, pour comparer sans recompiler.
+const EMBOLDEN_IDENTITE := 0.13
+const EMBOLDEN_TEXTE := 0.06
 static var _titre: Dictionary = {}
 
 
@@ -389,6 +397,15 @@ static func _charger(chemin: String, graisse: int) -> Font:
 	var v := FontVariation.new()
 	v.base_font = base
 	v.variation_opentype = {&"wght": graisse}
+	# LE GRAS SYNTHÉTIQUE, PARCE QUE L'AXE NE SUFFIT PAS. « Il faudrait épaissir
+	# un peu la typo, c'est trop fin » (Vincent, 9 septembre 2026) — et il a
+	# raison : Cormorant Garamond est dessinée fine, son axe de graisse va de
+	# 300 à 700 seulement, et à 700 elle pèse encore moins que la lapidaire
+	# qu'elle remplace. `variation_embolden` épaissit le TRACÉ, ce qu'aucune
+	# graisse ne peut faire au-delà du dessin de la fonte.
+	var gras := float(OS.get_environment("STATION_GRAS"))
+	v.variation_embolden = gras if gras > 0.0 else \
+		(EMBOLDEN_IDENTITE if chemin == FICHIER_TITRE else EMBOLDEN_TEXTE)
 	return v
 
 

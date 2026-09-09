@@ -41,6 +41,25 @@ sur l'iPhone (1652 unités pour une maquette large de 1670) :
 | nom de destination | Cormorant SemiBold, capitales | 17 × `UIK` (25,5) | 2,6 × `UIK` |
 | horloge | Space Mono Regular | 24 × `HUD_K` (46,3) | 1,05 × `HUD_K` |
 
+## Le gras synthétique, et pourquoi il a fallu y venir
+
+« Il faudrait épaissir un peu la typo, c'est trop fin » (Vincent, 9 septembre
+2026). Monter la graisse ne suffisait pas : l'axe `wght` de Cormorant va de
+**300 à 700 seulement**, et à 700 elle pèse encore moins que la lapidaire
+qu'elle remplace — elle est dessinée fine. `FontVariation.variation_embolden`
+épaissit le TRACÉ lui-même, ce qu'aucune graisse ne peut faire au-delà du
+dessin de la fonte.
+
+Deux valeurs plutôt qu'une : **0,13 pour l'identité**, qui porte des capitales
+espacées en grand et réclame un tracé franc ; **0,06 pour le texte courant**,
+écrit en petit corps sur un téléphone, où trop d'épaisseur boucherait les
+contre-formes. Choisies en comparant quatre valeurs à l'écran (0,00 · 0,04 ·
+0,08 · 0,13). `STATION_GRAS=<x>` les force toutes deux, pour comparer sans
+recompiler.
+
+Space Mono n'en reçoit pas : elle n'est pas variable, et le Bold est un
+fichier.
+
 ## Deux remarques techniques
 
 Cormorant Garamond et EB Garamond sont **variables** : un seul fichier porte
