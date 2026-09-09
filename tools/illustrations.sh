@@ -83,7 +83,14 @@ done
 # ombré et mange la vivacité de la couleur — or ici la couleur EST la
 # destination, et à la taille réelle du jeu c'est elle qui doit se lire en
 # premier. Le trait reste, le modelé s'allège. Un seul nombre, `ENCRAGE`.
-for f in "$SRC"/loco.png "$SRC"/wagon.png "$SRC"/fourgon.png; do
+# DEUX SÉRIES, ET ELLES NE DISENT PAS LA MÊME CHOSE. Les planches sans suffixe
+# sont vues DE HAUT : c'est le poste, qui est un plan d'aiguillage et se lit
+# comme tel. Celles en `-profil` sont des ÉLÉVATIONS, dessinées le 9 septembre
+# 2026 pour la tentative de vue oblique — abandonnée le jour même —, et elles
+# servent aujourd'hui à l'écran d'attente, où un train de profil vaut mieux
+# qu'un toit. La même dérivation convient aux deux.
+for f in "$SRC"/loco.png "$SRC"/wagon.png "$SRC"/fourgon.png \
+         "$SRC"/loco-profil.png "$SRC"/wagon-profil.png "$SRC"/fourgon-profil.png; do
   [ -f "$f" ] || continue
   nom=$(basename "$f")
   cp "$f" "$DST/$nom"

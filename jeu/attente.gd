@@ -122,7 +122,11 @@ class Toile extends Node2D:
 		var teinte := Sty.LAITON_CLAIR
 		var x0: float = c.x - cell * 2.0
 		for i in range(4):
-			var tex: Texture2D = Ill.vehicule("loco" if i == 0 else "fourgon")
+			# LA SÉRIE « PROFIL », et elle n'existe que pour cet écran : le
+			# poste est revenu à la vue de haut le 9 septembre 2026, mais un
+			# train d'attente se regarde de côté — c'est une illustration, pas
+			# un plan d'aiguillage.
+			var tex: Texture2D = Ill.vehicule("loco-profil" if i == 0 else "fourgon-profil")
 			var g: float = x0 + float(3 - i) * cell
 			var dy: float = tangue * (1.0 if i % 2 == 0 else -1.0)
 			var lg: float = cell

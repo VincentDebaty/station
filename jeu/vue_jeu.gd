@@ -27,7 +27,6 @@ const Rub := preload("res://jeu/ruban.gd")
 const Rec := preload("res://jeu/recompense.gd")
 const Sty := preload("res://jeu/style.gd")
 const Ill := preload("res://jeu/illustrations.gd")
-const Ob := preload("res://jeu/oblique.gd")
 
 # Les couleurs du prototype (css/station.css) : l'esthétique est conservée.
 const TEXTE := Color("#efe3c8")   # le papier, comme le ruban
@@ -591,7 +590,7 @@ func _hachures(r: Rect2, col: Color) -> void:
 		var x0: float = max(inner.position.x, c - inner.end.y)
 		var x1: float = min(inner.end.x, c - inner.position.y)
 		if x1 > x0:
-			draw_line(Ob.p(Vector2(x0, c - x0)), Ob.p(Vector2(x1, c - x1)), col, 2.6, true)
+			draw_line(Vector2(x0, c - x0), Vector2(x1, c - x1), col, 2.6, true)
 		c += pas
 
 
@@ -602,9 +601,7 @@ func _dessiner_quais(sel, t: float) -> void:
 	for q in G["platforms"]:
 		var pid = q["id"]
 		var r := Rect2(Geo.PLAT_X1, float(q["cy"]) - Geo.PLAT_H / 2.0, Geo.PLAT_LEN, Geo.PLAT_H)
-		# LE CONTOUR EST PROJETÉ, LES TEXTES NON : on projette la PLACE d'un
-		# numéro, jamais sa forme (jeu/oblique.gd).
-		var contour := Ob.trace(Sty.rect_arrondi(r, 10))
+		var contour := Sty.rect_arrondi(r, 10)
 
 		# FERMÉ : pilule éteinte, hachures, numéro estompé, heure de réouverture
 		if enc.platform_closed(pid):
@@ -617,14 +614,14 @@ func _dessiner_quais(sel, t: float) -> void:
 			draw_polyline(_boucle(contour), Color(Sty.ROUGE, 0.55), 1.6, true)
 			# le numéro se détoure : les hachures le traversent, et il faut
 			# encore pouvoir dire DE QUEL quai on parle.
-			Sty.texte_centre(self, Sty.sans(700), 24, Ob.p(r.get_center()), str(int(pid)),
+			Sty.texte_centre(self, Sty.sans(700), 24, r.get_center(), str(int(pid)),
 				Color(Sty.TEXTE, 0.50), 5, Color(0, 0, 0, 0.65))
 			var fin := ""
 			for ev in enc.events:
 				if ev.get("type") == "closure" and ev["plat"] == pid and ev["revealed"] and not ev["cleared"]:
 					fin = "fermé jusqu'à " + fmt(float(ev["end"]))
 			if fin != "":
-				var haut := Ob.p(Vector2(Geo.PLAT_MID, r.position.y)) - Vector2(0, 13)
+				var haut := Vector2(Geo.PLAT_MID, r.position.y - 13)
 				Sty.texte_centre(self, Sty.mono(600), 13, haut, fin, Color(Sty.ROUGE, 0.30), 7, Color(Sty.ROUGE, 0.30))
 				Sty.texte_centre(self, Sty.mono(600), 13, haut, fin, Sty.ROUGE)
 			continue
@@ -642,7 +639,7 @@ func _dessiner_quais(sel, t: float) -> void:
 			if not occupe:
 				draw_colored_polygon(contour, Sty.POSTE_QUAI_ELIGIBLE.lerp(col, 0.14))
 				# la teinte recouvre le numéro peint par le plan : on le repose
-				Sty.texte_centre(self, Sty.sans(700), 24, Ob.p(r.get_center()), str(int(pid)), Sty.TEXTE)
+				Sty.texte_centre(self, Sty.sans(700), 24, r.get_center(), str(int(pid)), Sty.TEXTE)
 			var larg: float = 2.5 + 0.9 * p
 			Sty.pointille(self, contour, Color(col, 0.08 + 0.20 * p), larg + 8.0, 7, 5)
 			Sty.pointille(self, contour, col, larg, 7, 5)
@@ -660,7 +657,7 @@ func _dessiner_quais(sel, t: float) -> void:
 		# libre. Il se lit en même temps que le liseré d'occupation.
 		var promis = _train_promis(pid)
 		if promis != null:
-			var interieur := Ob.trace(Sty.rect_arrondi(Rect2(r.position + Vector2(5, 5), r.size - Vector2(10, 10)), 6))
+			var interieur := Sty.rect_arrondi(Rect2(r.position + Vector2(5, 5), r.size - Vector2(10, 10)), 6)
 			Sty.pointille(self, interieur, Color(String(G["dest_color"][promis.to])), 2.4, 6, 6, t * 10.9)
 
 
@@ -669,14 +666,14 @@ func _dessiner_itineraires() -> void:
 	for pid in enc.active_routes:
 		var t = enc.active_routes[pid]
 		var p: Dictionary = enc.paths[pid]
-		Sty.trait_halo(self, Ob.trace(Geo.vers_vector2(p["xs"], p["ys"])), Color(String(G["dest_color"][t.to])), 5.0, 4.0)
+		Sty.trait_halo(self, Geo.vers_vector2(p["xs"], p["ys"]), Color(String(G["dest_color"][t.to])), 5.0, 4.0)
 	# l'itinéraire PROMIS, en attente d'entrée : pointillé 10 8 à 55 %
 	for t in enc.trains:
 		if t.target != null and (t.state == Enc.S_WAITING or t.state == Enc.S_APPROACHING):
 			var pid := "in:%s:%d" % [t.from, int(t.target)]
 			if enc.paths.has(pid) and not enc.active_routes.has(pid):
 				var p: Dictionary = enc.paths[pid]
-				Sty.pointille(self, Ob.trace(Geo.vers_vector2(p["xs"], p["ys"])),
+				Sty.pointille(self, Geo.vers_vector2(p["xs"], p["ys"]),
 					Color(String(G["dest_color"][t.to]), 0.55), 5.0, 10, 8, 0.0, false)
 
 
@@ -760,16 +757,9 @@ func _dessiner_convois(sel, t: float) -> void:
 		# LE CONVOI RETENU GARDE SA COURONNE, à l'ambre : c'est un autre état,
 		# il lui faut un autre signe. Sans quoi « choisi » et « retenu » se
 		# diraient de la même façon.
-		# ELLE SE POSE AU PIED DU CONVOI, ET ELLE EST PROJETÉE. Deux corrections
-		# d'un coup : l'axe était peint en coordonnées de PLAN, sans passer par
-		# la projection — la couronne tombait donc à côté de son train depuis
-		# que le poste se regarde de biais ; et maintenant que les véhicules se
-		# tiennent debout, une nappe le long de la voie se lit comme une flaque
-		# de lumière ambre sous la rame, ce qu'un cerne ne dirait plus.
 		if tr.holding:
-			var socle := Ob.trace(axe)
 			for couche in [[16.0, 0.10], [10.0, 0.18], [5.5, 0.34], [2.5, 0.75]]:
-				draw_polyline(socle, Color(Sty.AMBRE, float(couche[1]) * anneau * 0.9),
+				draw_polyline(axe, Color(Sty.AMBRE, float(couche[1]) * anneau * 0.9),
 					h + float(couche[0]) * k, true)
 		# PLUS DE HALO DE DESTINATION, ET J'AVAIS COMPRIS L'INVERSE. « Pas de
 		# halo coloré pour le convoi de fret, il se confond avec les autres. Pas
@@ -803,104 +793,64 @@ func _dessiner_convois(sel, t: float) -> void:
 		# Vincent leur préfère la lecture de la rame courte, où chaque véhicule
 		# est une case et où le compte se voit sans compter. `wagon.png` reste
 		# dans les sources, inutilisé.
-		# LES VÉHICULES SE TIENNENT DEBOUT SUR LEUR RAIL.
-		#
-		# Les planches montraient un TOIT : posées à plat sur la voie, elles se
-		# lisaient comme des décalcomanies sur les dalles des quais — « les
-		# trains sont toujours vus de haut » (Vincent, 9 septembre 2026). Un
-		# flanc peint à la main sous la caisse n'y changeait rien : sans dessin
-		# dessus, plus de surface ne fait qu'un pan de couleur uni. Vincent a
-		# redessiné les trois planches en ÉLÉVATION — toit, joue, roues — et
-		# c'est le montage qui change avec elles.
-		#
-		# Un véhicule est désormais un panneau DEBOUT, D'UN SEUL TENANT.
-		#
-		# Deux erreurs successives, et elles se corrigent l'une l'autre. J'ai
-		# d'abord découpé chaque caisse en trois tranches suivant chacune la
-		# pente de la voie sous elle : dans un virage les trois pentes
-		# diffèrent, et la caisse se tordait — « les trains sont déformés
-		# surtout dans les virages et les aiguillages ». J'ai alors supprimé
-		# toute inclinaison : les véhicules sont devenus des rectangles droits
-		# posés chacun à sa hauteur, et la rame est montée en marches — « les
-		# wagons sont totalement décalés comme un escalier » (Vincent, 9
-		# septembre 2026). Les deux fois, la faute portait sur le NOMBRE de
-		# pentes, pas sur la pente elle-même.
-		#
-		# La géométrie tranche : le corps d'un wagon est HORIZONTAL dans le
-		# monde, donc son toit et son plancher sont parallèles, donc ils se
-		# projettent à la MÊME inclinaison. Un véhicule vu de biais s'incline
-		# en bloc, et seules ses faces d'about restent verticales. Un seul
-		# quadrilatère, une seule pente, des côtés verticaux : ni tordu, ni en
-		# escalier.
-		#
-		# Deux véhicules voisins partagent leur coupure : leurs bases se
-		# rejoignent exactement, et la rame épouse la courbe d'un trait continu.
-		# C'est ainsi qu'un train s'articule pour de vrai.
-		#
-		# SA HAUTEUR NE SE RÈGLE PAS, ELLE SE LIT. Chaque planche donne son
-		# propre rapport (la chaîne la rogne à la boîte du sujet), et la case
-		# fait 35 unités de long : une locomotive de 1,477:1 monte à 23,7, un
-		# fourgon à 22,4, une voiture longue à 17,5. Le véhicule le plus long
-		# est le plus bas, sans qu'on ait rien à décider.
-		#
-		# UNE LARGEUR NÉGATIVE RETOURNE LA PLANCHE, et c'est tout ce qu'il faut
-		# pour un convoi qui roule vers la gauche : la tête reste la tête, donc
-		# la machine regarde toujours où elle va.
-		var plein_v := _embarquement(tr)
 		for i in axe.size():
 			var tex := Ill.vehicule("loco" if i == 0 else "fourgon")
 			if tex == null:
 				tex = Ill.vehicule("wagon")
-			if tex == null:
-				continue
 			# la machine garde la teinte de destination même sur un fret, dont
 			# les wagons sont gris : c'est elle qui annonce où il va
 			var teinte: Color = col if (i == 0 or not tr.freight) else Sty.FRET
 			var lavis := Color(teinte.lerp(Sty.PAPIER, 0.06), vie)
-			var haut := _hauteur_planche(tex) * k
-			var pa := Ob.p(_le_long_des_coupes(coupes, float(i))["p"])
-			var pb := Ob.p(_le_long_des_coupes(coupes, float(i) + 1.0)["p"])
-			var toit := Vector2(0, haut)
-			draw_colored_polygon(PackedVector2Array([pa - toit, pb - toit, pb, pa]),
-				lavis, PLEINE, tex)
-			# LE VIDE N'EST PLUS UN VOILE NOIR, C'EST LA MÊME CAISSE EN
-			# SOURDINE. Le masque d'embarquement peignait un aplat presque noir
-			# par-dessus la portion non remplie : sur une caisse peinte il se
-			# lisait, sur un véhicule DESSINÉ il l'effaçait — « c'est tellement
-			# sombre qu'on ne voit plus bien les fourgons » (Vincent, 9
-			# septembre 2026). On repeint la portion vide avec LA MÊME PLANCHE,
-			# dans une encre éteinte : « vide » se dit par la VALEUR au lieu
-			# d'effacer l'objet. Les voyageurs montent de la tête vers la queue.
-			var frac: float = clampf(plein_v * float(axe.size()) - float(i), 0.0, 1.0)
-			if frac < 1.0:
-				var pc := Ob.p(_le_long_des_coupes(coupes, float(i) + frac)["p"])
-				draw_colored_polygon(PackedVector2Array([pc - toit, pb - toit, pb, pc]),
-					Color(teinte.lerp(Sty.POSTE_FOND, 0.60), vie),
-					PackedVector2Array([Vector2(frac, 0), Vector2(1, 0), Vector2(1, 1),
-						Vector2(frac, 1)]), tex)
+			for j in SOUS_CASES:
+				var t0: float = float(i) + float(j) / float(SOUS_CASES)
+				var t1: float = float(i) + float(j + 1) / float(SOUS_CASES)
+				var a := _le_long_des_coupes(coupes, t0)
+				var b := _le_long_des_coupes(coupes, t1)
+				var quad := PackedVector2Array([
+					a["p"] - a["n"] * h * 0.5, b["p"] - b["n"] * h * 0.5,
+					b["p"] + b["n"] * h * 0.5, a["p"] + a["n"] * h * 0.5])
+				var u0: float = float(j) / float(SOUS_CASES)
+				var u1: float = float(j + 1) / float(SOUS_CASES)
+				if tex != null:
+					draw_colored_polygon(quad, lavis, PackedVector2Array([
+						Vector2(u0, 0), Vector2(u1, 0), Vector2(u1, 1), Vector2(u0, 1)]), tex)
+				else:
+					draw_colored_polygon(quad, lavis)
 
-
-## Les coordonnées de texture d'une caisse entière : la planche remplit son
-## quadrilatère, un coin par coin. `static var` et non `const` — un
-## PackedVector2Array construit ne passe pas pour une expression constante.
-static var PLEINE := PackedVector2Array([Vector2(0, 0), Vector2(1, 0), Vector2(1, 1), Vector2(0, 1)])
-
-
-## LA HAUTEUR D'UNE PLANCHE, EN UNITÉS DE PLAN. La case fait 35 unités de
-## long et la planche remplit sa case : sa hauteur est donc son rapport, et
-## rien d'autre. Une planche plus longue en vrai — la voiture à bogies — rend
-## un rapport plus plat, donc un véhicule plus bas, sans qu'on décide rien.
-## Mesuré une fois par texture : `get_size()` interroge la ressource.
-static var _hauteurs := {}
-
-func _hauteur_planche(tex: Texture2D) -> float:
-	if tex == null:
-		return Geo.CAR_H
-	var id := tex.get_rid().get_id()
-	if not _hauteurs.has(id):
-		var t := tex.get_size()
-		_hauteurs[id] = Geo.CAR_SPACING * (t.y / maxf(1.0, t.x)) if t.x > 0.0 else float(Geo.CAR_H)
-	return _hauteurs[id]
+		# LE VIDE N'EST PLUS UN VOILE NOIR, C'EST LA MÊME CAISSE EN SOURDINE.
+		# Le masque d'embarquement peignait un aplat presque noir par-dessus la
+		# portion non remplie : sur une caisse peinte il se lisait, sur un
+		# véhicule DESSINÉ il l'effaçait — « c'est tellement sombre qu'on ne
+		# voit plus bien les fourgons » (Vincent, 9 septembre 2026). On repeint
+		# donc la portion vide avec LA MÊME PLANCHE, dans une encre éteinte : le
+		# dessin reste lisible, le véhicule garde sa forme et son contour, et
+		# « vide » se dit par la VALEUR au lieu d'effacer l'objet.
+		#
+		# Les voyageurs montent de la tête vers la queue, case par case comme
+		# avant, et la découpe suit la même courbe que la caisse.
+		var plein := _embarquement(tr)
+		if plein < 1.0:
+			var n := axe.size()
+			for i in n:
+				var frac: float = clampf(plein * float(n) - float(i), 0.0, 1.0)
+				if frac >= 1.0:
+					continue
+				var tex := Ill.vehicule("loco" if i == 0 else "fourgon")
+				var teinte: Color = col if (i == 0 or not tr.freight) else Sty.FRET
+				var eteint := Color(teinte.lerp(Sty.POSTE_FOND, 0.60), vie)
+				for j in 2:
+					var f0: float = lerpf(frac, 1.0, float(j) / 2.0)
+					var f1: float = lerpf(frac, 1.0, float(j + 1) / 2.0)
+					var a := _le_long_des_coupes(coupes, float(i) + f0)
+					var b := _le_long_des_coupes(coupes, float(i) + f1)
+					var quad := PackedVector2Array([
+						a["p"] - a["n"] * h * 0.5, b["p"] - b["n"] * h * 0.5,
+						b["p"] + b["n"] * h * 0.5, a["p"] + a["n"] * h * 0.5])
+					if tex != null:
+						draw_colored_polygon(quad, eteint, PackedVector2Array([
+							Vector2(f0, 0), Vector2(f1, 0), Vector2(f1, 1), Vector2(f0, 1)]), tex)
+					else:
+						draw_colored_polygon(quad, eteint)
 
 
 ## LES COUPURES ENTRE CASES, avec leur normale : une case commence à mi-chemin
@@ -959,12 +909,7 @@ func _vers_la_queue(angle: float, sens: Vector2) -> Vector2:
 ## coupures — c'est ce qui donne une COURBE là où les seules coupures ne
 ## donnaient qu'une ligne brisée — et la normale se prend sur sa tangente, donc
 ## au bon endroit et non à celui de la coupure la plus proche.
-##
-## LE SOUS-DÉCOUPAGE A DISPARU AVEC LE CISAILLEMENT. Une caisse se peignait en
-## trois tranches épousant chacune la pente de la voie sous elle ; dans un
-## virage les trois pentes diffèrent, et le véhicule se tordait. Il est rigide
-## désormais, et n'interroge plus que ses DEUX coupures.
-
+const SOUS_CASES := 3
 
 func _le_long_des_coupes(coupes: Array, t: float) -> Dictionary:
 	var n := coupes.size()
@@ -1016,10 +961,7 @@ func _dessiner_signaux(t: float) -> void:
 		var tete := Vector2(float(pos[0]["x"]), float(pos[0]["y"]))
 		var dir: float = 1.0 if tete.x >= float(pos[1]["x"]) else -1.0
 		var k := Sty.UIK
-		# UN SIGNAL EST DEBOUT, ET LE RESTE. Un mât est vertical dans le monde :
-		# vu de biais il reste vertical à l'écran, seul son PIED se déplace avec
-		# le plan. On projette donc l'ancre, pas l'objet.
-		var o := Ob.p(tete + Vector2(dir * (Geo.CAR_LEN / 2.0 + 14.0 * k), 0.0)) + Vector2(0, 2.0 * k)
+		var o := tete + Vector2(dir * (Geo.CAR_LEN / 2.0 + 14.0 * k), 2.0 * k)
 		# le socle : un signal est boulonné au ballast, il ne flotte pas
 		draw_style_box(Sty.boite(Sty.POSTE_BALLAST, Color(Sty.POSTE_BORD, 0.45),
 			1.5 * k, max(1.0, 0.9 * k)), Rect2(o.x - 5.0 * k, o.y + 11.0 * k, 10.0 * k, 3.6 * k))
@@ -1111,16 +1053,7 @@ func _dessiner_badges(t: float) -> void:
 		# entre le bas de la pastille et le haut du quai — assez pour qu'elle
 		# paraisse flotter au-dessus plutôt que d'appartenir au convoi. À
 		# trente-deux il en reste douze : elle se pose dessus.
-		# comme le signal : la pastille se tient DROITE au-dessus du convoi,
-		# c'est sa place qui suit le plan projeté.
-		#
-		# ET AU-DESSUS DU VÉHICULE, PAS DE LA VOIE. Les trente-deux unités
-		# dataient du temps où la caisse était couchée sur le rail ; depuis
-		# qu'elle se tient debout, elles tombaient EN PLEIN TOIT. On part
-		# maintenant du haut de la machine — c'est elle qui mène — et on garde
-		# les douze unités de jour qui posaient la pastille sur le convoi.
-		var sommet: float = _hauteur_planche(Ill.vehicule("loco")) * k
-		var centre := Ob.p(Vector2(float(tete["x"]), float(tete["y"]))) - Vector2(0, sommet + 12.0 * k)
+		var centre := Vector2(float(tete["x"]), float(tete["y"]) - 32.0 * k)
 		var r := Rect2(centre.x - large / 2.0, centre.y - 10.0 * k, large, 20.0 * k)
 		# un convoi encore à l'arrêt dont le retard court réclame un aiguillage :
 		# le badge clignote (en opacité seule).
@@ -1450,11 +1383,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			return
 		if enc.ended or tuto == "accueil":
 			return
-		# DU GESTE À L'ÉCRAN AU PLAN DE LA GARE, en deux temps : le décalage,
-		# puis l'INVERSE DE LA PROJECTION. C'est la seule chose que le doigt
-		# demande — toutes les zones de clic restent écrites dans le plan, et
-		# aucune n'a bougé d'une ligne.
-		m = Ob.inv(m - decalage())
+		m -= decalage()          # du geste à l'écran au plan de la gare
 		# un convoi ?
 		for t in enc.trains:
 			if not positions.has(t.id):
@@ -1898,16 +1827,12 @@ func _rect_cible() -> Rect2:
 		if not positions.has(id) or positions[id].is_empty():
 			return Rect2()
 		var tete: Dictionary = positions[id][0]
-		# LA CIBLE SUIT LE PLAN PROJETÉ. Un repère de tutoriel qui désigne à
-		# côté ne désigne rien : on projette le centre, et on garde un
-		# rectangle droit — le projecteur est un trou dans un voile d'écran.
-		var ct := Ob.p(Vector2(float(tete["x"]), float(tete["y"])))
-		return Rect2(ct - Vector2(Geo.CAR_LEN / 2.0, Geo.CAR_H * Sty.UIK / 2.0) + d,
+		return Rect2(Vector2(tete["x"] - Geo.CAR_LEN / 2.0, tete["y"] - Geo.CAR_H * Sty.UIK / 2.0) + d,
 			Vector2(Geo.CAR_LEN, Geo.CAR_H * Sty.UIK))
 	if coach_cible.has("quai"):
 		for q in G["platforms"]:
 			if q["id"] == coach_cible["quai"]:
-				return Rect2(Ob.p(Vector2(Geo.PLAT_X1, float(q["cy"]) - Geo.PLAT_H / 2.0)) + d,
+				return Rect2(Vector2(Geo.PLAT_X1, float(q["cy"]) - Geo.PLAT_H / 2.0) + d,
 					Vector2(Geo.PLAT_LEN, Geo.PLAT_H))
 		return Rect2()
 	if coach_cible.has("hud"):

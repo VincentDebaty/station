@@ -1,42 +1,27 @@
-## LA PROJECTION OBLIQUE DU PLAN — le poste vu de biais, pas de face.
+## LA PROJECTION OBLIQUE — ESSAYÉE, PUIS ÉCARTÉE.
 ##
-## « Les rails semblent en 3D vue de côté mais le train en 2D vue d'en haut.
-## Pourrait-on avoir une vue effet 3D de côté ? » (Vincent, 9 septembre 2026).
+## Le 9 septembre 2026, Vincent a demandé une vue « effet 3D de côté » ; une
+## élévation pure était exclue — onze quais s'y superposeraient en une seule
+## ligne, et un croisement, qui EST le conflit, deviendrait invisible. On a
+## donc essayé la projection OBLIQUE : un cisaillement affine, qui conserve les
+## incidences. Le plan tenait, les quais gagnaient une épaisseur, et
+## `jeu/maquette_oblique.gd` en garde la démonstration.
 ##
-## Une ÉLÉVATION pure est exclue, et ce n'est pas une affaire de goût : les
-## onze quais de Madrid-Chamartín s'y superposeraient en une seule ligne, et un
-## croisement — qui EST le conflit, le cœur du jeu — deviendrait invisible. Un
-## poste d'aiguillage se lit en plan, et les vrais aussi.
+## LE MÊME JOUR, ELLE A ÉTÉ ABANDONNÉE, et pour une raison qu'aucun réglage ne
+## rattrape : « cela semble écrasé quand le train monte et descend » — un plan
+## d'aiguillage a des voies qui montent et descendent sans arrêt, et sous un
+## aplatissement du sol, tout convoi qui suit une courbe se raccourcit. C'est
+## géométriquement exact et visuellement pénible. « Revenons à une vue 2D
+## classique vue de haut. » Le poste y est revenu.
 ##
-## Ce qu'on applique est une projection OBLIQUE : un cisaillement affine, donc
-## qui CONSERVE LES INCIDENCES. Deux voies qui se croisent se croisent encore,
-## une courbe reste une courbe, deux quais restent distincts. Vérifié sur les
-## onze quais de Madrid avant d'y toucher (jeu/maquette_oblique.gd).
+## CE QUI RESTE, ET POURQUOI. L'écran d'attente s'en sert encore : sa voie est
+## une élévation, et le cisaillement lui donne l'inclinaison de ses traverses.
+## Deux constantes suffisent à cela. Le reste — `p`, `inv`, `trace`,
+## `traverses`, `face`, `quad` — ne sert plus à personne : c'est de la mémoire,
+## gardée parce que la question reviendra peut-être, et qu'elle est chère à
+## retrouver.
 ##
 ##   p' = C + ( (x − Cx) + (y − Cy)·S , (y − Cy)·A )
-##
-## LES TROIS CHIFFRES, ET POURQUOI CEUX-LÀ.
-##
-## `S` = 0,22 — le cisaillement, mesuré en maquette contre 0,45. Le franc était
-## plus spectaculaire mais écrasait les quais les uns sur les autres et
-## gaspillait la hauteur d'écran ; le doux garde la lecture intacte.
-##
-## `A` = 0,86 — l'aplatissement. Il REND de la place verticale, il n'en prend
-## pas : c'est le cisaillement qui élargit, et l'élargissement part dans les
-## marges où filent déjà les voies d'entrée et de sortie (EDGE_RUN = 360 de
-## chaque côté). Le plan n'a donc pas à être réduit, et rien ne rapetisse.
-##
-## `EPAIS` = 8 — et ce plafond n'est pas un choix, il est MESURÉ. Deux quais
-## voisins ne sont séparés que de 10 unités au plus serré (Madrid-Chamartín,
-## relevé sur les 401 fiches, pour un quai de 42 de haut) ; après
-## aplatissement il reste 8,6 unités entre le bas d'un quai et le haut du
-## suivant. Une face plus épaisse passerait DERRIÈRE le quai d'en dessous et
-## disparaîtrait — c'est exactement ce que la maquette montrait à 13.
-##
-## CE QUI NE SE PROJETTE JAMAIS : le texte. On projette sa PLACE, pas sa forme.
-## Un chiffre de quai cisaillé serait illisible, et aucune signalétique de gare
-## n'est penchée. Même chose pour les lampes de portail, qui restent rondes :
-## une lampe est une lampe.
 
 const Geo := preload("res://jeu/geometrie.gd")
 
