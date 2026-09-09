@@ -99,6 +99,12 @@ var selected: Train = null
 var active_routes: Dictionary = {}   # id de chemin -> Train
 var queue_seq: int = 0
 var on_time_streak: int = 0
+## LA FILE DES SONS, vidée par la vue à chaque image. L'enclenchement ne joue
+## rien : il n'a ni scène ni haut-parleur, et l'oracle le rejoue mille fois par
+## seconde en tête-à-tête avec game.js. Il se contente de DIRE ce qui vient de
+## se passer, aux six endroits où game.js appelait SND.* ; c'est vue_jeu.gd qui
+## traduit en son. Le nom « heure:<n> » porte la série.
+var sons: PackedStringArray = []
 var resultat: Dictionary = {}        # rempli par fin_de_service
 
 
@@ -125,6 +131,7 @@ func charger(day: Dictionary) -> void:
 	queue_seq = 0
 	on_time_streak = 0
 	resultat = {}
+	sons.clear()
 	for ev in day.get("events", []):
 		var e: Dictionary = ev.duplicate()
 		e["revealed"] = false
@@ -340,6 +347,7 @@ func process_events() -> void:
 		if not ev["revealed"]:
 			if ev.get("type") == "late" and game_min >= float(ev["revealAt"]):
 				ev["revealed"] = true
+				sons.append("incident")
 			elif ev.get("type") == "closure" and game_min >= float(ev["start"]):
 				# on ne ferme jamais un quai occupé : repoussée tant qu'il l'est
 				if platform_occupied(ev["plat"]):
@@ -348,6 +356,7 @@ func process_events() -> void:
 						ev["cleared"] = true
 				else:
 					ev["revealed"] = true
+					sons.append("incident")
 		if ev.get("type") == "closure" and ev["revealed"] and not ev["cleared"] \
 				and game_min >= float(ev["end"]):
 			ev["cleared"] = true
@@ -464,6 +473,8 @@ func tick(dt: float) -> void:
 					t.state = S_APPROACHING
 					t.queued_at = queue_seq
 					queue_seq += 1
+					if t.freight:
+						sons.append("fret")   # corne grave : un lourd convoi se présente
 			S_APPROACHING:
 				placer_file(t, dt)
 				if game_min >= t.heure_arrivee():
@@ -516,6 +527,7 @@ func tick(dt: float) -> void:
 				if not paths.has(_pid_out(t, t.platform)):
 					if not t.wrong_platform:
 						t.wrong_platform = true
+						sons.append("incident")
 					var back_path := _pid_in(t, t.platform)
 					if can_grant(back_path):
 						grant(back_path, t)
@@ -535,13 +547,17 @@ func tick(dt: float) -> void:
 							- (t.cars - 1) * Geo.CAR_SPACING) if uturn else 0.0
 						t.state = S_MOVING_OUT
 						t.progress = 0.0
-						if not t.freight:
+						if t.freight:
+							sons.append("depart")
+						else:
 							t.dep_delay = max(0.0, lateness(t, game_min))
 							total_delay += floor(t.dep_delay)
 							if t.dep_delay < 1:
 								on_time_streak += 1
+								sons.append("heure:%d" % on_time_streak)
 							else:
 								on_time_streak = 0
+								sons.append("depart")
 					elif not t.holding:
 						t.holding = true
 				else:

@@ -71,8 +71,13 @@ var bulle: PanelContainer
 var bulle_texte: Label
 var bulle_bouton: Button
 var accueil: Control
-var confirmation: Control          ## « abandonner le service ? »
+var confirmation: Control          ## la question qui précède un geste destructeur
+var conf_titre: Label
+var conf_corps: Label
+var conf_oui: Button
+var conf_quoi := ""                ## « abandon » ou « recommencer »
 var gel_avant_confirmation := false
+var reglages_ouverts := false      ## le volet sous l'engrenage
 
 
 func _ready() -> void:
@@ -197,6 +202,9 @@ func _nouvelle_journee() -> void:
 func _enregistrer_fin() -> void:
 	fin_enregistree = true
 	var r: Dictionary = enc.resultat
+	# La signature de fin, comme game.js : fanfare pour un sans-faute, carillon
+	# pour un service tenu, deux notes basses pour un échec.
+	Sons.jouer("parfait" if r["perfect"] else ("fin" if r["win"] else "incident"))
 	var id := String(fiche.get("id", ""))
 	var stars := int(r["stars"])
 	var avant: Array = Rec.medailles_de(Rec.etat_recompenses(ruban, Sauvegarde.get_serie())) if ruban != null else []
@@ -235,6 +243,7 @@ func _process(delta: float) -> void:
 		enc.tick(dt_min)
 		if auto and not enc.ended:
 			_joueur_scripte()
+	_vider_les_sons()
 	if enc.ended and not fin_enregistree:
 		_enregistrer_fin()
 		# LE TEMPS MORT DE 1,2 SECONDE ÉTAIT UN BLOCAGE, ET PAS UNE RESPIRATION.
@@ -259,6 +268,21 @@ func _process(delta: float) -> void:
 	_tuto_tick()
 	_placer_bulle()
 	queue_redraw()
+
+
+## LA FILE DE L'ENCLENCHEMENT SE VIDE ICI, ET NULLE PART AILLEURS. Le moteur
+## nomme ce qui vient d'arriver ; cette vue est la seule pièce qui ait le droit
+## de faire du bruit — et le joueur scripté, l'oracle et les captures headless
+## passent par la même porte sans qu'on ait rien à leur dire de particulier.
+func _vider_les_sons() -> void:
+	if enc.sons.is_empty():
+		return
+	for nom in enc.sons:
+		if nom.begins_with("heure:"):
+			Sons.jouer_a_l_heure(int(nom.substr(6)))
+		else:
+			Sons.jouer(nom)
+	enc.sons.clear()
 
 
 func _rendre_la_main() -> void:
@@ -1145,12 +1169,14 @@ func _dessiner_hud(t: float) -> void:
 					draw_rect(Rect2(c.x - 5 * k, c.y - 6 * k, 3.5 * k, 12 * k), Sty.TEXTE, true)
 					draw_rect(Rect2(c.x + 1.5 * k, c.y - 6 * k, 3.5 * k, 12 * k), Sty.TEXTE, true)
 			"gear":
-				draw_arc(c, 6.0 * k, 0.0, TAU, 24, Sty.TEXTE, 1.8 * k, true)
+				draw_arc(c, 6.0 * k, 0.0, TAU, 24, Sty.ACCENT if reglages_ouverts else Sty.TEXTE, 1.8 * k, true)
 				for i in range(6):
 					var a: float = TAU * float(i) / 6.0
 					var u := Vector2(cos(a), sin(a))
-					draw_line(c + u * 6.5 * k, c + u * 9.0 * k, Sty.TEXTE, 1.8 * k, true)
+					draw_line(c + u * 6.5 * k, c + u * 9.0 * k,
+						Sty.ACCENT if reglages_ouverts else Sty.TEXTE, 1.8 * k, true)
 		bx -= (34.0 + 8.0) * k
+	_dessiner_reglages(k)
 
 	# --- la ligne de mise au point : SUR DEMANDE SEULEMENT ------------------
 	# Elle porte la graine à citer dans un retour de test, et c'est elle qui a
@@ -1165,6 +1191,55 @@ func _dessiner_hud(t: float) -> void:
 			% [graine, duree_generation_ms, _niveau_texte(),
 				("   ·   " + Sty.mesure) if Sty.mesure != "" else ""],
 		HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color(Sty.MUET, 0.55))
+
+
+# --- le volet des réglages, sous l'engrenage --------------------------------
+## L'ENGRENAGE NE FAISAIT RIEN DE CE QU'IL PROMET. Il rejouait la journée en
+## silence — un geste destructeur sans un mot, sous une icône qui annonce un
+## réglage. Le prototype, lui, déplie sous l'engrenage un volet de trois
+## boutons (`station.html`, #hud-controls) : recommencer, son, aide. On en
+## reprend les deux qui ont un sens ici — l'aide du prototype est un long texte
+## HTML, et le portage a le tutoriel guidé à sa place.
+##
+## Deux pastilles empilées sous l'engrenage, au même gabarit que les trois du
+## bandeau : rien de neuf à apprendre, et la cible reste celle du doigt.
+func _dessiner_reglages(k: float) -> void:
+	if not reglages_ouverts:
+		return
+	var g: Rect2 = zones_hud.get("gear", Rect2())
+	if g == Rect2():
+		return
+	var y := g.end.y + 8.0 * k
+	for nom in ["son", "recommencer"]:
+		var r := Rect2(g.position.x, y, g.size.x, g.size.y)
+		zones_hud[nom] = r
+		var c := r.get_center()
+		if nom == "son":
+			var coupe := Sauvegarde.get_muet()
+			_chip(r, Sty.POSTE_BORD, k)
+			var teinte: Color = Sty.MUET if coupe else Sty.TEXTE
+			# le haut-parleur : une caisse et son pavillon
+			draw_rect(Rect2(c.x - 8.0 * k, c.y - 3.0 * k, 4.0 * k, 6.0 * k), teinte, true)
+			draw_colored_polygon(PackedVector2Array([
+				c + Vector2(-4, -3) * k, c + Vector2(1, -8) * k,
+				c + Vector2(1, 8) * k, c + Vector2(-4, 3) * k]), teinte)
+			if coupe:
+				# la croix : le son est coupé
+				draw_line(c + Vector2(4, -4) * k, c + Vector2(10, 4) * k, teinte, 1.8 * k, true)
+				draw_line(c + Vector2(10, -4) * k, c + Vector2(4, 4) * k, teinte, 1.8 * k, true)
+			else:
+				# deux ondes, comme l'icône du prototype
+				draw_arc(c + Vector2(1, 0) * k, 6.0 * k, -PI / 3.0, PI / 3.0, 12, teinte, 1.6 * k, true)
+				draw_arc(c + Vector2(1, 0) * k, 9.5 * k, -PI / 3.0, PI / 3.0, 16, teinte, 1.6 * k, true)
+		else:
+			_chip(r, Sty.POSTE_BORD, k)
+			# la flèche circulaire : un arc ouvert et sa pointe
+			draw_arc(c, 7.0 * k, -PI * 0.62, PI * 1.10, 28, Sty.TEXTE, 1.8 * k, true)
+			var p := c + Vector2(cos(-PI * 0.62), sin(-PI * 0.62)) * 7.0 * k
+			draw_colored_polygon(PackedVector2Array([
+				p + Vector2(-3.6, -1.2) * k, p + Vector2(3.6, -1.6) * k, p + Vector2(0.4, 4.2) * k]),
+				Sty.TEXTE)
+		y = r.end.y + 8.0 * k
 
 
 # --- le repère du tutoriel --------------------------------------------------
@@ -1411,16 +1486,18 @@ func _construire_confirmation() -> void:
 	var v := VBoxContainer.new()
 	v.add_theme_constant_override("separation", int(round(10 * k)))
 	carte.add_child(v)
-	for ligne in [["Abandonner le service ?", 22, Sty.ENCRE, true],
-			["Les convois, l'horaire et le retard seront perdus. La gare pourra être reprise depuis le début.", 15, Sty.ENCRE, false]]:
+	for ligne in [[22, true], [15, false]]:
 		var l := Label.new()
-		l.text = ligne[0]
 		l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		l.add_theme_font_override("font", Sty.titre(600) if ligne[3] else Sty.sans(400))
-		l.add_theme_font_size_override("font_size", int(round(float(ligne[1]) * k)))
-		l.add_theme_color_override("font_color", ligne[2])
+		l.add_theme_font_override("font", Sty.titre(600) if ligne[1] else Sty.sans(400))
+		l.add_theme_font_size_override("font_size", int(round(float(ligne[0]) * k)))
+		l.add_theme_color_override("font_color", Sty.ENCRE)
 		l.add_theme_constant_override("line_spacing", int(round(5 * k)))
 		v.add_child(l)
+		if ligne[1]:
+			conf_titre = l
+		else:
+			conf_corps = l
 	var h := HBoxContainer.new()
 	h.add_theme_constant_override("separation", int(round(8 * k)))
 	# « CONTINUER LE SERVICE » NE TENAIT PAS : coupé à « CONTINUER LE SERVIC »
@@ -1431,11 +1508,11 @@ func _construire_confirmation() -> void:
 	non.clip_text = true
 	non.pressed.connect(_fermer_confirmation.bind(false))
 	h.add_child(non)
-	var oui := Sty.bouton_plaque("Abandonner", false, 15, k, 14.0, 9.0)
-	oui.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	oui.clip_text = true
-	oui.pressed.connect(_fermer_confirmation.bind(true))
-	h.add_child(oui)
+	conf_oui = Sty.bouton_plaque("Abandonner", false, 15, k, 14.0, 9.0)
+	conf_oui.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	conf_oui.clip_text = true
+	conf_oui.pressed.connect(_fermer_confirmation.bind(true))
+	h.add_child(conf_oui)
 	v.add_child(h)
 	centre.add_child(carte)
 	confirmation.visible = false
@@ -1443,17 +1520,45 @@ func _construire_confirmation() -> void:
 
 
 func _demander_abandon() -> void:
+	_demander("abandon", "Abandonner le service ?",
+		"Les convois, l'horaire et le retard seront perdus. La gare pourra être reprise depuis le début.",
+		"Abandonner")
+
+
+## RECOMMENCER SE DEMANDE AUSSI, et pour la même raison — le prototype le
+## faisait déjà (station.html, #confirm-reset). Ce n'est pas le même geste que
+## l'abandon : on reste dans la gare, mais la journée en cours est jetée et une
+## AUTRE est tirée. La question le dit, plutôt que de laisser croire qu'on
+## rejoue la même.
+func _demander_recommencer() -> void:
+	_demander("recommencer", "Recommencer le service ?",
+		"Le service en cours sera abandonné. Une nouvelle journée sera tirée : les trains et leurs horaires ne seront pas les mêmes.",
+		"Recommencer")
+
+
+func _demander(quoi: String, titre: String, corps: String, oui: String) -> void:
 	if confirmation == null or confirmation.visible:
 		return
+	conf_quoi = quoi
+	conf_titre.text = titre
+	conf_corps.text = corps
+	conf_oui.text = oui
 	gel_avant_confirmation = gel
 	gel = true
 	confirmation.visible = true
 
 
-func _fermer_confirmation(abandonner: bool) -> void:
+func _fermer_confirmation(accepter: bool) -> void:
 	confirmation.visible = false
 	gel = gel_avant_confirmation
-	if abandonner and app != null:
+	if not accepter:
+		return
+	if conf_quoi == "recommencer":
+		graine = (graine * 7 + 13) % 100000
+		pause = false
+		gel = false
+		_nouvelle_journee()
+	elif app != null:
 		app.abandonner_service()
 
 
@@ -1717,11 +1822,32 @@ func _clic_bandeau(m: Vector2) -> bool:
 		vitesse = 1.0 if vitesse >= 4.0 else vitesse * 2.0
 		return true
 	if zones_hud.get("gear", Rect2()).has_point(m):
-		# Le menu des réglages n'existe pas encore (son, aide, recommencer) :
-		# le bouton tient sa place et rejoue la journée, ce que fait « R ».
-		graine = (graine * 7 + 13) % 100000
-		pause = false
-		_nouvelle_journee()
+		reglages_ouverts = not reglages_ouverts
+		return true
+	if reglages_ouverts:
+		if zones_hud.get("son", Rect2()).has_point(m):
+			Sauvegarde.set_muet(not Sauvegarde.get_muet())
+			# ON REND LE SON AUDIBLE SUR-LE-CHAMP : sans une note, rétablir le
+			# son ne se distingue pas de le couper — l'icône change, et rien
+			# d'autre. C'est le carillon de départ, le plus court des six.
+			if not Sauvegarde.get_muet():
+				Sons.jouer("depart")
+			return true
+		if zones_hud.get("recommencer", Rect2()).has_point(m):
+			reglages_ouverts = false
+			# Une journée finie n'a rien à abandonner : on la rejoue tout de
+			# suite, comme « Rejouer » sur le relevé du prototype.
+			if enc.ended:
+				graine = (graine * 7 + 13) % 100000
+				pause = false
+				_nouvelle_journee()
+			else:
+				_demander_recommencer()
+			return true
+		# UN CLIC AILLEURS REFERME LE VOLET, et ne fait que cela : sur un
+		# téléphone, le geste qui range un menu ne doit pas aussi aiguiller un
+		# convoi resté sous le doigt.
+		reglages_ouverts = false
 		return true
 	return false
 

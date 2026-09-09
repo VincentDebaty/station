@@ -732,7 +732,44 @@ Il suit une règle : **ce qui se vérifie tout seul d'abord**.
    par le clavier) mais rendait la pause, la vitesse et le retour à la carte
    INATTEIGNABLES sur un téléphone. La pilule « EN PAUSE » reprend aussi le
    service, comme dans le prototype. L'engrenage rejoue la journée en attendant
-   son menu de réglages.
+   son menu de réglages — il l'a eu le 9 septembre, voir juste en dessous.
+
+   **LES SONS ET LE VOLET DE RÉGLAGES, passe du 9 septembre 2026.** L'engrenage
+   ne faisait pas ce que son icône promet : il rejouait la journée en silence,
+   sans un mot — un geste destructeur sous un bouton de réglage. « Le bouton
+   settings dans une gare ne fonctionne pas » (Vincent). Il déplie désormais
+   deux pastilles, au gabarit des trois du bandeau, comme `#hud-controls` du
+   prototype : le son, et recommencer. La troisième du prototype — l'aide — n'a
+   pas suivi : c'est un long texte HTML, et le portage a le tutoriel guidé à sa
+   place. Recommencer un service en cours pose la question du prototype
+   (`#confirm-reset`), et la modale d'abandon a été rendue réutilisable pour
+   la porter.
+
+   Un interrupteur de son n'a de sens que s'il y a du son : **`jeu/sons.gd`
+   transpose les signatures de `js/render.js`**, et le principe avec elles —
+   aucun fichier, rien à télécharger, une ambiance de poste et pas une fanfare.
+   Là où WebAudio recalcule chaque note, on cuit les quatorze signatures UNE
+   FOIS au démarrage dans un tampon PCM : **91 ms, 219 ko** (mesuré au bureau,
+   `STATION_MESURE=1 STATION_SONS_MESURE=1`). Mêmes fréquences, mêmes durées,
+   même enveloppe — 20 ms de montée droite puis une extinction exponentielle —
+   et les pics relevés valent exactement les `vol` de `playTone` : 0,050 pour
+   l'annonce, 0,061 pour le fret (deux dents de scie superposées), 0,035 pour
+   l'incident. Les oscillateurs de WebAudio sont à BANDE LIMITÉE, pas les
+   naïfs : un carré obtenu par `sign(sin)` remonte à l'infini et se replie en
+   criaillements. On les reconstruit donc par addition d'harmoniques bornées
+   par Nyquist, plafonnées à 24 — au-delà, 1/n et 1/n² ne s'entendent plus.
+
+   **L'enclenchement ne joue rien.** Il n'a ni scène ni haut-parleur, et
+   l'oracle le rejoue mille fois par seconde en tête-à-tête avec `game.js` : il
+   se contente d'empiler des noms dans `sons`, aux six endroits exacts où
+   `game.js` appelle `SND.*`, et `vue_jeu.gd` vide la file à chaque image.
+   Aucune règle n'a bougé : `oracle-enclenchement` donne 4 fiches identiques
+   sur 4 (Leeds, Darlington, Northallerton, York), `oracle-sauvegarde` 18 sur
+   18, et les quatre contrôles restent verts.
+
+   Reste à vérifier sur l'appareil : iOS coupe les catégories audio « ambient »
+   avec l'interrupteur de sonnerie. Si le son se tait alors que le volet le dit
+   ouvert, c'est là qu'il faut regarder.
 
    **Pris hors d'ordre le 3 septembre 2026, à la demande de Vincent : l'écran de
    jeu.** `jeu/jeu.tscn` (`jeu/vue_jeu.gd`) est la scène principale. Il ne
