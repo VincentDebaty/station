@@ -71,6 +71,8 @@ var bulle: PanelContainer
 var bulle_texte: Label
 var bulle_bouton: Button
 var accueil: Control
+var confirmation: Control          ## « abandonner le service ? »
+var gel_avant_confirmation := false
 
 
 func _ready() -> void:
@@ -79,6 +81,7 @@ func _ready() -> void:
 	Sty.calibrer(get_viewport())
 	_construire_pupitre()
 	_construire_coach()
+	_construire_confirmation()
 	if not autonome:
 		return
 	var id := OS.get_environment("STATION_GARE")
@@ -1052,7 +1055,10 @@ func _dessiner_hud(t: float) -> void:
 	var large := (10.0 + 14.0 + 8.0) * k + w_nm + 12.0 * k + w_pips + 13.0 * k
 	var chip := Rect2(Sty.marges["gauche"] + 4 * k, Sty.marges["haut"] + 10 * k, large, 34 * k)
 	zones_hud["carte"] = chip
-	_chip(chip, Sty.BORD, k)
+	# LE LISERÉ DU CARTOUCHE DE GARE ÉTAIT BLEU — `Sty.BORD`, #2a3550, hérité du
+	# prototype — quand les trois boutons de droite sont cerclés de laiton. Il
+	# les rejoint.
+	_chip(chip, Sty.POSTE_BORD, k)
 	var cy := chip.position.y + chip.size.y / 2.0
 	var x := chip.position.x + 10.0 * k
 	Sty.texte_centre(self, sans, ti.call(22), Vector2(x + 7 * k, cy - 1 * k), "‹", Sty.LAITON)
@@ -1063,7 +1069,7 @@ func _dessiner_hud(t: float) -> void:
 	x += w_nm + 12.0 * k
 	# la difficulté : la MÊME jauge à cinq crans que partout dans le jeu
 	for i in range(5):
-		draw_style_box(Sty.boite(Sty.AMBRE if i < d else Sty.PIP_ETEINT, Color.TRANSPARENT, 1.5 * k, 0),
+		draw_style_box(Sty.boite(Sty.AMBRE if i < d else Sty.POSTE_PIP_ETEINT, Color.TRANSPARENT, 1.5 * k, 0),
 			Rect2(x + i * 7.0 * k, cy - 5.0 * k, 4.0 * k, 10.0 * k))
 
 	# --- l'horloge, centrée : heure, retard, et la jauge du service ----------
@@ -1217,6 +1223,10 @@ func _dessiner_fin() -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if app != null and app.en_transition():
 		return
+	# rien ne se touche derrière la question : ses deux boutons sont des
+	# Controls, ils reçoivent le doigt avant d'arriver ici
+	if confirmation != null and confirmation.visible:
+		return
 	if enc == null:
 		return
 	if event is InputEventKey and event.pressed and not event.echo:
@@ -1235,7 +1245,7 @@ func _unhandled_input(event: InputEvent) -> void:
 				_nouvelle_journee()
 			KEY_ESCAPE:
 				if app != null and enc.selected == null:
-					app.abandonner_service()
+					_demander_abandon()
 				else:
 					enc.selected = null
 		return
@@ -1365,6 +1375,86 @@ func _construire_coach() -> void:
 	centre.add_child(carte)
 	accueil.visible = false
 	add_child(accueil)
+
+
+## QUITTER UN SERVICE SE DEMANDE. Le cartouche de gare ramenait à la carte d'un
+## seul doigt, et le service en cours était perdu sans un mot — les convois,
+## l'horaire, le retard. C'est le seul geste destructeur de l'écran ; il méritait
+## qu'on s'assure de l'intention.
+##
+## LE SERVICE SE FIGE PENDANT LA QUESTION, sans quoi le retard courrait pendant
+## qu'on hésite — et hésiter coûterait des étoiles. On réutilise le gel du
+## tutoriel, et on lui rend son état d'avant : poser la question ne doit pas
+## dégeler une partie qui l'était.
+##
+## LE GESTE SÛR EST LE PLUS EN VUE : « Continuer le service » porte la plaque
+## d'appel, « Abandonner » se contente du bois. Un bouton destructeur ne se met
+## pas en avant.
+func _construire_confirmation() -> void:
+	var k := Sty.HUD_K
+	confirmation = Control.new()
+	var voile := ColorRect.new()
+	voile.color = VOILE
+	confirmation.add_child(voile)
+	var centre := CenterContainer.new()
+	confirmation.add_child(centre)
+	for n in [confirmation, voile, centre]:
+		n.size = get_viewport_rect().size
+	get_viewport().size_changed.connect(func() -> void:
+		for n in [confirmation, voile, centre]:
+			n.size = get_viewport_rect().size)
+	var carte := PanelContainer.new()
+	var sc := Sty.parchemin(Sty.R_GRAND, k)
+	sc.set_content_margin_all(24 * k)
+	carte.add_theme_stylebox_override("panel", sc)
+	carte.custom_minimum_size = Vector2(min(460.0 * k, get_viewport_rect().size.x * 0.6), 0)
+	var v := VBoxContainer.new()
+	v.add_theme_constant_override("separation", int(round(10 * k)))
+	carte.add_child(v)
+	for ligne in [["Abandonner le service ?", 22, Sty.ENCRE, true],
+			["Les convois, l'horaire et le retard seront perdus. La gare pourra être reprise depuis le début.", 15, Sty.ENCRE, false]]:
+		var l := Label.new()
+		l.text = ligne[0]
+		l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		l.add_theme_font_override("font", Sty.titre(600) if ligne[3] else Sty.sans(400))
+		l.add_theme_font_size_override("font_size", int(round(float(ligne[1]) * k)))
+		l.add_theme_color_override("font_color", ligne[2])
+		l.add_theme_constant_override("line_spacing", int(round(5 * k)))
+		v.add_child(l)
+	var h := HBoxContainer.new()
+	h.add_theme_constant_override("separation", int(round(8 * k)))
+	# « CONTINUER LE SERVICE » NE TENAIT PAS : coupé à « CONTINUER LE SERVIC »
+	# par le clip qui protège la rangée. La question au-dessus dit déjà de quoi
+	# il s'agit ; le bouton n'a qu'à dire le geste.
+	var non := Sty.bouton_plaque("Continuer", true, 15, k, 14.0, 9.0)
+	non.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	non.clip_text = true
+	non.pressed.connect(_fermer_confirmation.bind(false))
+	h.add_child(non)
+	var oui := Sty.bouton_plaque("Abandonner", false, 15, k, 14.0, 9.0)
+	oui.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	oui.clip_text = true
+	oui.pressed.connect(_fermer_confirmation.bind(true))
+	h.add_child(oui)
+	v.add_child(h)
+	centre.add_child(carte)
+	confirmation.visible = false
+	add_child(confirmation)
+
+
+func _demander_abandon() -> void:
+	if confirmation == null or confirmation.visible:
+		return
+	gel_avant_confirmation = gel
+	gel = true
+	confirmation.visible = true
+
+
+func _fermer_confirmation(abandonner: bool) -> void:
+	confirmation.visible = false
+	gel = gel_avant_confirmation
+	if abandonner and app != null:
+		app.abandonner_service()
 
 
 func _tuto_demarrer() -> void:
@@ -1616,7 +1706,7 @@ func _placer_bulle() -> void:
 func _clic_bandeau(m: Vector2) -> bool:
 	if zones_hud.get("carte", Rect2()).has_point(m):
 		if app != null:
-			app.abandonner_service()
+			_demander_abandon()
 		return true
 	if zones_hud.get("play", Rect2()).has_point(m) or zones_hud.get("pause", Rect2()).has_point(m):
 		if not gel:

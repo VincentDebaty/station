@@ -185,6 +185,10 @@ const POSTE_BALLAST := Color("#251a10")
 # surtout la teinte d'un quai éligible — un mélange à 14 % de la couleur de
 # destination sur ce fond — partait d'un bleu, donc virait sur toute la gamme.
 # La MÉCANIQUE ne bouge pas, seulement le point de départ du mélange.
+# LE CRAN ÉTEINT DE LA JAUGE DE DIFFICULTÉ. Il valait `PIP_ETEINT`, #3b465c,
+# un gris-bleu du prototype : sur un bandeau de laiton c'était la dernière
+# tache froide, et elle voisinait le cran ALLUMÉ qui, lui, est ambre.
+const POSTE_PIP_ETEINT := Color("#5a4a30")
 const POSTE_QUAI_FERME := Color("#332619")
 const POSTE_QUAI_ELIGIBLE := Color("#413324")
 
