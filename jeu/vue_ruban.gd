@@ -408,10 +408,28 @@ func _construire_courbes() -> void:
 		return
 	var debut := Time.get_ticks_usec()
 	var corriges := 0
+	# LA COURBE NE S'ARRÊTE PLUS AU BOUT D'UN CHAPITRE. Chaque chapitre était
+	# courbé pour lui seul : la liaison qui mène au chapitre suivant n'avait
+	# donc pas de tracé du tout, et retombait sur la DROITE de secours — « il y
+	# a juste une simple ligne pour aller au chapitre suivant » (Vincent, 9
+	# septembre 2026). On courbe désormais des SUITES : le rail continu, d'un
+	# chapitre à l'autre, coupé seulement par un saut — un saut n'est pas du
+	# rail, et il garde son pointillé. Les fins de chapitre y gagnent en plus
+	# leurs vrais points de contrôle, au lieu du reflet qu'on leur inventait.
+	var suites: Array = []
+	var suite: Array = []
 	for ch in ruban.chapitres:
+		if ch.get("saut") != null and not suite.is_empty():
+			suites.append(suite)
+			suite = []
+		for id in ch["gares"]:
+			suite.append(id)
+	if not suite.is_empty():
+		suites.append(suite)
+	for gares in suites:
 		var ids: Array = []
 		var pts: Array = []
-		for id in ch["gares"]:
+		for id in gares:
 			var p := pos(id)
 			if p != Vector2.INF:
 				ids.append(id)
@@ -805,12 +823,26 @@ func _draw() -> void:
 			var col := couleur_de_zone(ch["zone"]) if not ch.is_empty() else ACCENT
 			var pa := ecran(a)
 			var pb := ecran(b)
-			_pointille(pa, pb, Color(col, 0.6), 2.5, 12.0 if transit["saut"] else 6.0)
+			# UN SAUT N'EST PAS DU RAIL — bateau, tunnel, correspondance : il
+			# garde son pointillé, qui dit précisément qu'on ne roule pas. Une
+			# liaison de chapitre, elle, est une voie comme les autres, et se
+			# dessine comme les autres : le tracé courbe existe désormais
+			# jusque-là (voir _construire_courbes).
+			var route := _voie_ecran(transit["de"], transit["vers"])
+			if transit["saut"]:
+				_pointille(pa, pb, Color(col, 0.6), 2.5, 12.0)
+			else:
+				_voie(route, col, Sty.HUD_K, 0.85)
 			if transit_t >= 0.0:
 				var e := ease(transit_t, -2.0)
 				var p := pa.lerp(pb, e)
-				draw_circle(p, 7.0, Color(col, 0.35))
-				draw_circle(p, 4.0, col)
+				if not transit["saut"] and route.size() >= 2:
+					var lg := 0.0
+					for i in range(route.size() - 1):
+						lg += route[i].distance_to(route[i + 1])
+					p = _le_long(route, lg * e)
+				draw_circle(p, 7.0 * Sty.HUD_K, Color(col, 0.35))
+				draw_circle(p, 4.0 * Sty.HUD_K, col)
 	# --- LA PUCE DU DERNIER TEMPS ------------------------------------------------
 	# Le convoi qui rejoint la ville suivante après un service gagné. Il file
 	# sur la voie elle-même — la même courbe que le rail, pas une corde tendue
@@ -1127,14 +1159,17 @@ func _segment_coupe(r: Rect2, a: Vector2, b: Vector2) -> bool:
 ## elles se collent quand on dézoome et disparaissent quand on approche. Et
 ## tout se dessine sur une POLYLIGNE depuis que les voies se courbent : les
 ## deux files suivent la normale locale du tracé, pas celle d'une corde.
-func _voie(pts: PackedVector2Array, col: Color, k: float, force: float) -> void:
+## `ech` : la voie du chapitre vu se dessine à 1, le fil du ruban plus fin —
+## c'est du rail lui aussi, mais il ne doit pas disputer la vedette à la ligne
+## qu'on est en train de parcourir.
+func _voie(pts: PackedVector2Array, col: Color, k: float, force: float, ech: float = 1.0) -> void:
 	if pts.size() < 2:
 		return
-	var demi := 2.2 * k
-	draw_polyline(pts, Color(Sty.BOIS, 0.55 * force), 8.0 * k, true)      # le ballast
-	Sty.traverses(self, pts, Color(col, 0.55 * force), demi * 1.55, 9.0 * k)
-	_file(pts, -demi, Color(col, force), k)
-	_file(pts, demi, Color(col, force), k)
+	var demi := 2.2 * k * ech
+	draw_polyline(pts, Color(Sty.BOIS, 0.55 * force), 8.0 * k * ech, true)   # le ballast
+	Sty.traverses(self, pts, Color(col, 0.55 * force), demi * 1.55, 9.0 * k * ech)
+	_file(pts, -demi, Color(col, force), k * ech)
+	_file(pts, demi, Color(col, force), k * ech)
 
 
 ## Une file de rail : le tracé décalé d'un demi-écartement, chaque point
@@ -1276,7 +1311,7 @@ func _fil_du_ruban() -> void:
 	if ruban == null:
 		return
 	var vu := surface_carte().grow(80.0)
-	var traits := PackedVector2Array()
+	var fils: Array = []
 	var points := PackedVector2Array()
 	var vus := chapitre_vu()
 	var rang_vu: int = int(vus["rang"]) if not vus.is_empty() else -99
@@ -1292,14 +1327,36 @@ func _fil_du_ruban() -> void:
 				continue
 			var e := ecran(p)
 			if prec != "" and (vu.has_point(prec_e) or vu.has_point(e)):
-				var trace := _voie_ecran(prec, id)
-				for j in range(trace.size() - 1):
-					traits.append(trace[j])
-					traits.append(trace[j + 1])
+				fils.append(_voie_ecran(prec, id))
 			if voisin and vu.has_point(e):
 				points.append(e)
 			prec = id
 			prec_e = e
+	# DU RAIL, PAS UN TRAIT. Le reste du ruban se dessinait au fil de fer —
+	# une polyligne de 1,3 —, si bien que la ligne qui sort du chapitre vu ne
+	# ressemblait à rien de ce qu'il y a dessus. C'est la même voie que
+	# partout, en plus fine et en plus sourde : elle dit où l'on va sans
+	# disputer la vedette à celle qu'on parcourt.
+	# ET UN NIVEAU DE DÉTAIL, parce que le rail se paie. Une voie, ce sont deux
+	# files et une traverse toutes les dix unités : au zoom du chapitre il y a
+	# une dizaine de liaisons en vue et cela ne coûte rien, mais quand la
+	# caméra recule sur le continent — pendant un saut, ou avec STATION_ZOOM —
+	# il y en a deux cent soixante-onze, et l'écran tombait de 78 à 34 images
+	# par seconde (mesuré au 1600 × 736). À cette échelle une liaison fait
+	# quelques unités : les traverses n'y sont de toute façon PAS lisibles. En
+	# dessous de cinquante unités, un trait dit la même chose pour rien.
+	# Et les courtes repassent EN UN SEUL APPEL, comme avant : deux cent
+	# soixante-onze polylignes séparées coûtaient déjà vingt images par
+	# seconde à elles seules.
+	var seuil: float = 50.0 * Sty.HUD_K
+	var traits := PackedVector2Array()
+	for trace in fils:
+		if trace.size() >= 2 and trace[0].distance_to(trace[trace.size() - 1]) >= seuil:
+			_voie(trace, Sty.LAITON, Sty.HUD_K, 0.40, 0.58)
+		else:
+			for j in range(trace.size() - 1):
+				traits.append(trace[j])
+				traits.append(trace[j + 1])
 	if not traits.is_empty():
 		draw_multiline(traits, Color(Sty.LAITON, 0.22), max(1.0, 1.3 * Sty.HUD_K))
 	# les gares des chapitres d'avant et d'après : des points sourds, sans nom

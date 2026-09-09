@@ -808,6 +808,27 @@ Il suit une règle : **ce qui se vérifie tout seul d'abord**.
    plus le seul point de 16 unités (huit points sur l'iPhone, moins d'un tiers
    de pulpe) : le nom compte aussi, et le rayon suit `HUD_K`.
 
+   **Et le ruban est devenu du rail sur toute sa longueur** (même jour) : « il y
+   a juste une simple ligne pour aller au chapitre suivant, la logique voudrait
+   que ce soit des rails aussi » (Vincent). Deux causes derrière ce trait. Les
+   courbes se construisaient PAR CHAPITRE, si bien que la liaison qui mène au
+   chapitre suivant n'avait aucun tracé et retombait sur la droite de secours ;
+   elles se construisent désormais par SUITES, coupées seulement par un saut —
+   un saut n'est pas du rail et garde son pointillé. Et le reste du ruban se
+   dessinait au fil de fer, une polyligne de 1,3 : c'est maintenant la même
+   voie que partout, en plus fine et en plus sourde.
+
+   Avec un NIVEAU DE DÉTAIL, parce que le rail se paie : une voie, ce sont deux
+   files et une traverse toutes les dix unités. Au zoom du chapitre il y a une
+   dizaine de liaisons en vue et cela ne coûte rien (120 images par seconde,
+   plafond de synchro) ; quand la caméra recule sur le continent — pendant un
+   saut, ou avec `STATION_ZOOM` — il y en a 271, et l'écran tombait de 78 à
+   34 images par seconde au 1600 × 736. En dessous de cinquante unités une
+   liaison n'a de toute façon pas de traverses lisibles : elle repasse en
+   trait, et toutes les courtes en UN SEUL `draw_multiline` — 271 polylignes
+   séparées coûtaient encore vingt images par seconde à elles seules. Mesuré à
+   73 contre 78, pour un mode qui ne sert qu'à la photographie.
+
    `STATION_REMISE=<étoiles>[,diamant]` rejoue la remise sur la gare courante,
    sans service et sans rien écrire : le joueur scripté n'a jamais fait de
    sans-faute, et sans ce crochet le deuxième temps ne se vérifierait qu'à la
