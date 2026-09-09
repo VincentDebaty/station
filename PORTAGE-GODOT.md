@@ -896,6 +896,45 @@ Il suit une règle : **ce qui se vérifie tout seul d'abord**.
    Le doigt n'a coûté qu'une ligne : `Ob.inv(m − decalage())`. Toutes les zones
    de clic restent écrites dans le plan, et aucune n'a bougé.
 
+   **LES VÉHICULES SE TIENNENT DEBOUT, 9 septembre 2026.** L'oblique posée, les
+   convois restaient des TOITS — « pas très fan, les trains sont toujours vus
+   de haut » (Vincent) — et c'était sans issue par le code : un flanc peint à
+   la main sous la caisse ne fait, sans dessin dessus, qu'un pan de couleur
+   uni (essayé à 5 puis à 9, revenu à 5, puis retiré). Vincent a redessiné les
+   trois planches en ÉLÉVATION — toit, joue, roues — et c'est le montage qui
+   change avec elles.
+
+   Un véhicule est désormais un panneau DEBOUT : son arête basse suit la voie
+   projetée, donc il s'inscrit dans les courbes case par case comme avant, et
+   il monte à la verticale de l'écran. C'est exact pour cette projection, qui
+   n'aplatit que le sol et jamais les verticales.
+
+   SA HAUTEUR NE SE RÈGLE PAS, ELLE SE LIT. La chaîne rogne chaque planche à la
+   boîte de son sujet ; la case fait 35 unités de long ; la hauteur est donc le
+   rapport de la planche, et rien d'autre. Locomotive 1,477:1 → 23,7 ; fourgon
+   1,562:1 → 22,4 ; voiture longue 2,000:1 → 17,5. Le véhicule le plus long est
+   le plus bas, sans qu'on décide rien.
+
+   Deux corrections tombées avec : la couronne ambre du convoi retenu était
+   peinte en coordonnées de PLAN, sans passer par la projection — elle tombait
+   à côté de son train depuis l'oblique ; elle est maintenant une nappe de
+   lumière au pied de la rame. Et la pastille d'heure partait de la voie à 32
+   unités, ce qui tombait en plein toit depuis que la caisse se tient debout :
+   elle part du sommet de la machine.
+
+   **Attention au cache d'import.** Remplacer un PNG sous `jeu/illustrations/`
+   ne suffit pas : une exécution (hors éditeur) lit la texture importée dans
+   `.godot/imported/`, et affiche donc l'ANCIENNE planche. Après
+   `tools/illustrations.sh`, il faut `godot --headless --path . --import`.
+   J'y ai perdu une capture entière, à me demander pourquoi le montage neuf
+   rendait les vieux tonneaux.
+
+   L'écran d'attente a suivi : convoi debout sur sa voie, et la voie mesurée en
+   FRACTIONS DE LA CASE — « tu peux faire les rails plus larges pour que cela
+   s'adapte bien au train » (Vincent). Le convoi avait grandi, la voie non.
+   Changer la taille du convoi déplace la voie avec lui ; il n'y a plus deux
+   réglages à tenir d'accord.
+
    `STATION_REMISE=<étoiles>[,diamant]` rejoue la remise sur la gare courante,
    sans service et sans rien écrire : le joueur scripté n'a jamais fait de
    sans-faute, et sans ce crochet le deuxième temps ne se vérifierait qu'à la

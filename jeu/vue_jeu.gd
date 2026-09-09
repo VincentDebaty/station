@@ -760,9 +760,16 @@ func _dessiner_convois(sel, t: float) -> void:
 		# LE CONVOI RETENU GARDE SA COURONNE, à l'ambre : c'est un autre état,
 		# il lui faut un autre signe. Sans quoi « choisi » et « retenu » se
 		# diraient de la même façon.
+		# ELLE SE POSE AU PIED DU CONVOI, ET ELLE EST PROJETÉE. Deux corrections
+		# d'un coup : l'axe était peint en coordonnées de PLAN, sans passer par
+		# la projection — la couronne tombait donc à côté de son train depuis
+		# que le poste se regarde de biais ; et maintenant que les véhicules se
+		# tiennent debout, une nappe le long de la voie se lit comme une flaque
+		# de lumière ambre sous la rame, ce qu'un cerne ne dirait plus.
 		if tr.holding:
+			var socle := Ob.trace(axe)
 			for couche in [[16.0, 0.10], [10.0, 0.18], [5.5, 0.34], [2.5, 0.75]]:
-				draw_polyline(axe, Color(Sty.AMBRE, float(couche[1]) * anneau * 0.9),
+				draw_polyline(socle, Color(Sty.AMBRE, float(couche[1]) * anneau * 0.9),
 					h + float(couche[0]) * k, true)
 		# PLUS DE HALO DE DESTINATION, ET J'AVAIS COMPRIS L'INVERSE. « Pas de
 		# halo coloré pour le convoi de fret, il se confond avec les autres. Pas
@@ -796,47 +803,26 @@ func _dessiner_convois(sel, t: float) -> void:
 		# Vincent leur préfère la lecture de la rame courte, où chaque véhicule
 		# est une case et où le compte se voit sans compter. `wagon.png` reste
 		# dans les sources, inutilisé.
-		# LE FLANC, AVANT LES TOITS. Les quais avaient pris leur épaisseur et les
-		# convois non : posés dessus, ils se lisaient comme des décalcomanies
-		# sur des dalles — « les trains sont toujours vus de haut » (Vincent, 9
-		# septembre 2026). Un véhicule est un OBJET : sous son toit il a un
-		# flanc, plus sombre, que la projection découvre du côté du regard.
+		# LES VÉHICULES SE TIENNENT DEBOUT SUR LEUR RAIL.
 		#
-		# Le côté « vers le regard » n'est pas toujours le même — un convoi
-		# tourne dans les courbes — donc on ne le décide pas, on le CHOISIT par
-		# l'ordonnée : des deux bords de la caisse, le flanc est celui qui tombe
-		# le plus bas à l'écran.
-		# CINQ, ET PAS NEUF. Essayé à neuf : sans dessin sur le flanc, plus de
-		# surface ne donne pas plus de volume — juste un pan de couleur uni,
-		# qui se lit comme une boîte. Tant que les planches montrent un TOIT,
-		# le flanc ne peut être qu'un liseré d'épaisseur.
-		var flanc: float = 5.0 * k
-		for i in axe.size():
-			var teinte0: Color = col if (i == 0 or not tr.freight) else Sty.FRET
-			# LE FLANC S'ARRÊTE OÙ S'ARRÊTE LA CAISSE. Les toits paraissent
-			# séparés parce que la planche porte sa marge transparente ; un
-			# flanc dessiné d'un bout à l'autre de la case ressoudait les
-			# véhicules en une seule barre. On reprend le même retrait.
-			var marge := 0.08
-			var bord := PackedVector2Array()
-			for j in range(SOUS_CASES + 1):
-				var d0 := _le_long_des_coupes(coupes, float(i) + lerpf(marge, 1.0 - marge,
-					float(j) / float(SOUS_CASES)))
-				var e1 := Ob.p(d0["p"] + d0["n"] * h * 0.5)
-				var e2 := Ob.p(d0["p"] - d0["n"] * h * 0.5)
-				bord.append(e1 if e1.y > e2.y else e2)
-			var mur := bord.duplicate()
-			for j in range(bord.size() - 1, -1, -1):
-				mur.append(bord[j] + Vector2(0, flanc))
-			draw_colored_polygon(mur, Color(teinte0.darkened(0.62), vie))
-			# l'arête haute prend la lumière, le pied porte l'ombre : deux
-			# traits, et le flanc cesse d'être une bande pour devenir un panneau
-			draw_polyline(bord, Color(teinte0.lightened(0.25), 0.55 * vie), max(1.0, 1.0 * k), true)
-			var pied := PackedVector2Array()
-			for pt in bord:
-				pied.append(pt + Vector2(0, flanc))
-			draw_polyline(pied, Color(0, 0, 0, 0.42 * vie), max(1.0, 1.3 * k), true)
-
+		# Les planches montraient un TOIT : posées à plat sur la voie, elles se
+		# lisaient comme des décalcomanies sur les dalles des quais — « les
+		# trains sont toujours vus de haut » (Vincent, 9 septembre 2026). Un
+		# flanc peint à la main sous la caisse n'y changeait rien : sans dessin
+		# dessus, plus de surface ne fait qu'un pan de couleur uni. Vincent a
+		# redessiné les trois planches en ÉLÉVATION — toit, joue, roues — et
+		# c'est le montage qui change avec elles.
+		#
+		# Un véhicule est désormais un panneau DEBOUT : son arête basse suit la
+		# voie projetée — donc il s'inscrit dans les courbes comme avant, case
+		# par case —, et il monte à la VERTICALE de l'écran. C'est exact pour
+		# cette projection : elle n'aplatit que le sol, jamais les verticales.
+		#
+		# SA HAUTEUR NE SE RÈGLE PAS, ELLE SE LIT. Chaque planche donne son
+		# propre rapport (la chaîne la rogne à la boîte du sujet), et la case
+		# fait 35 unités de long : une locomotive de 1,477:1 monte à 23,7, un
+		# fourgon à 22,4, une voiture longue à 17,5. Le véhicule le plus long
+		# est le plus bas, sans qu'on ait rien à décider.
 		for i in axe.size():
 			var tex := Ill.vehicule("loco" if i == 0 else "fourgon")
 			if tex == null:
@@ -845,18 +831,16 @@ func _dessiner_convois(sel, t: float) -> void:
 			# les wagons sont gris : c'est elle qui annonce où il va
 			var teinte: Color = col if (i == 0 or not tr.freight) else Sty.FRET
 			var lavis := Color(teinte.lerp(Sty.PAPIER, 0.06), vie)
+			var haut := _hauteur_planche(tex) * k
 			for j in SOUS_CASES:
 				var t0: float = float(i) + float(j) / float(SOUS_CASES)
 				var t1: float = float(i) + float(j + 1) / float(SOUS_CASES)
 				var a := _le_long_des_coupes(coupes, t0)
 				var b := _le_long_des_coupes(coupes, t1)
-				# LA CAISSE EST PROJETÉE PAR SES QUATRE COINS. La planche est
-				# une image vue de dessus ; sous une transformation affine elle
-				# devient un parallélogramme — c'est exactement ce qu'un toit
-				# devient vu de biais.
+				var pa := Ob.p(a["p"])
+				var pb := Ob.p(b["p"])
 				var quad := PackedVector2Array([
-					Ob.p(a["p"] - a["n"] * h * 0.5), Ob.p(b["p"] - b["n"] * h * 0.5),
-					Ob.p(b["p"] + b["n"] * h * 0.5), Ob.p(a["p"] + a["n"] * h * 0.5)])
+					pa - Vector2(0, haut), pb - Vector2(0, haut), pb, pa])
 				var u0: float = float(j) / float(SOUS_CASES)
 				var u1: float = float(j + 1) / float(SOUS_CASES)
 				if tex != null:
@@ -886,19 +870,38 @@ func _dessiner_convois(sel, t: float) -> void:
 				var tex := Ill.vehicule("loco" if i == 0 else "fourgon")
 				var teinte: Color = col if (i == 0 or not tr.freight) else Sty.FRET
 				var eteint := Color(teinte.lerp(Sty.POSTE_FOND, 0.60), vie)
+				var haut := _hauteur_planche(tex) * k
 				for j in 2:
 					var f0: float = lerpf(frac, 1.0, float(j) / 2.0)
 					var f1: float = lerpf(frac, 1.0, float(j + 1) / 2.0)
 					var a := _le_long_des_coupes(coupes, float(i) + f0)
 					var b := _le_long_des_coupes(coupes, float(i) + f1)
+					var pa := Ob.p(a["p"])
+					var pb := Ob.p(b["p"])
 					var quad := PackedVector2Array([
-						Ob.p(a["p"] - a["n"] * h * 0.5), Ob.p(b["p"] - b["n"] * h * 0.5),
-						Ob.p(b["p"] + b["n"] * h * 0.5), Ob.p(a["p"] + a["n"] * h * 0.5)])
+						pa - Vector2(0, haut), pb - Vector2(0, haut), pb, pa])
 					if tex != null:
 						draw_colored_polygon(quad, eteint, PackedVector2Array([
 							Vector2(f0, 0), Vector2(f1, 0), Vector2(f1, 1), Vector2(f0, 1)]), tex)
 					else:
 						draw_colored_polygon(quad, eteint)
+
+
+## LA HAUTEUR D'UNE PLANCHE, EN UNITÉS DE PLAN. La case fait 35 unités de
+## long et la planche remplit sa case : sa hauteur est donc son rapport, et
+## rien d'autre. Une planche plus longue en vrai — la voiture à bogies — rend
+## un rapport plus plat, donc un véhicule plus bas, sans qu'on décide rien.
+## Mesuré une fois par texture : `get_size()` interroge la ressource.
+static var _hauteurs := {}
+
+func _hauteur_planche(tex: Texture2D) -> float:
+	if tex == null:
+		return Geo.CAR_H
+	var id := tex.get_rid().get_id()
+	if not _hauteurs.has(id):
+		var t := tex.get_size()
+		_hauteurs[id] = Geo.CAR_SPACING * (t.y / maxf(1.0, t.x)) if t.x > 0.0 else float(Geo.CAR_H)
+	return _hauteurs[id]
 
 
 ## LES COUPURES ENTRE CASES, avec leur normale : une case commence à mi-chemin
@@ -1106,7 +1109,14 @@ func _dessiner_badges(t: float) -> void:
 		# trente-deux il en reste douze : elle se pose dessus.
 		# comme le signal : la pastille se tient DROITE au-dessus du convoi,
 		# c'est sa place qui suit le plan projeté.
-		var centre := Ob.p(Vector2(float(tete["x"]), float(tete["y"]))) - Vector2(0, 32.0 * k)
+		#
+		# ET AU-DESSUS DU VÉHICULE, PAS DE LA VOIE. Les trente-deux unités
+		# dataient du temps où la caisse était couchée sur le rail ; depuis
+		# qu'elle se tient debout, elles tombaient EN PLEIN TOIT. On part
+		# maintenant du haut de la machine — c'est elle qui mène — et on garde
+		# les douze unités de jour qui posaient la pastille sur le convoi.
+		var sommet: float = _hauteur_planche(Ill.vehicule("loco")) * k
+		var centre := Ob.p(Vector2(float(tete["x"]), float(tete["y"]))) - Vector2(0, sommet + 12.0 * k)
 		var r := Rect2(centre.x - large / 2.0, centre.y - 10.0 * k, large, 20.0 * k)
 		# un convoi encore à l'arrêt dont le retard court réclame un aiguillage :
 		# le badge clignote (en opacité seule).

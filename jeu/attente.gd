@@ -74,14 +74,21 @@ class Toile extends Node2D:
 			draw_circle(Vector2(c.x, y - 20.0 * k),
 				(50.0 + 330.0 * (1.0 - float(i) / 30.0)) * k, Color(Sty.LAITON_CLAIR, 0.006))
 
-		var cell: float = 78.0 * k                 # une case de convoi
-		var h: float = cell / 1.75                 # la proportion des planches
-		var pas: float = 26.0 * k                  # l'écart des traverses
+		# LA VOIE SE MESURE SUR LE CONVOI, PAS EN UNITÉS FIXES. « Tu peux faire
+		# les rails plus larges pour que cela s'adapte bien au train » (Vincent,
+		# 9 septembre 2026) : le convoi avait grandi, la voie non, et elle
+		# passait dessous comme un fil. Tout ce qui suit est une fraction de la
+		# CASE — changer `cell` déplace la voie avec le train, et on n'a plus
+		# deux réglages à tenir d'accord.
+		var cell: float = 96.0 * k                 # une case de convoi
+		var pas: float = cell * 0.29               # l'écart des traverses
 		var glisse: float = fmod(t * VITESSE * k, pas)
-		# LES ROUES TOUCHENT LE RAIL. La planche porte son propre bas de caisse :
-		# on pose donc la file supérieure À L'INTÉRIEUR du bas de l'image, sans
-		# quoi le convoi flotte au-dessus de sa voie.
-		var sol: float = y + h / 2.0 - 4.0 * k
+		var ballast: float = cell * 0.23           # la largeur de la plateforme
+		var demi: float = cell * 0.14              # la demi-traverse
+		var ecart: float = cell * 0.10             # l'écartement des deux files
+		# LES ROUES TOUCHENT LE RAIL : la file haute passe juste sous le bas des
+		# planches, qui portent leur propre train de roulement.
+		var sol: float = y + cell * 0.30
 
 		# --- LA VOIE, DANS L'IDIOME DU JEU --------------------------------
 		# Elle était en ÉLÉVATION — un épaulement de ballast vu de côté, sous
@@ -91,56 +98,47 @@ class Toile extends Node2D:
 		# cisaillement : ballast étroit, traverses penchées de `Ob.S`, deux
 		# files. La demi-longueur d'une traverse se cisaille en x et
 		# s'aplatit en y, comme n'importe quel point du plan.
-		draw_line(Vector2(0, sol + 4.0 * k), Vector2(e.x, sol + 4.0 * k),
-			Color(Sty.POSTE_BALLAST, 0.85), 13.0 * k, true)
-		var demi := 7.0 * k
+		var axe: float = sol + ecart / 2.0
+		draw_line(Vector2(0, axe), Vector2(e.x, axe),
+			Color(Sty.POSTE_BALLAST, 0.85), ballast, true)
 		var x: float = -pas - glisse
 		while x < e.x + pas:
-			draw_line(Vector2(x - demi * Ob.S, sol + 4.0 * k - demi * Ob.A),
-				Vector2(x + demi * Ob.S, sol + 4.0 * k + demi * Ob.A),
-				Color(Sty.POSTE_VOIE, 0.75), 3.0 * k, true)
+			draw_line(Vector2(x - demi * Ob.S, axe - demi * Ob.A),
+				Vector2(x + demi * Ob.S, axe + demi * Ob.A),
+				Color(Sty.POSTE_VOIE, 0.75), cell * 0.045, true)
 			x += pas
-		for dy in [-0.5, 8.5]:
-			draw_line(Vector2(0, sol + dy * k), Vector2(e.x, sol + dy * k),
-				Color(Sty.POSTE_VOIE, 0.95), 2.4 * k, true)
+		for dy in [-ecart / 2.0, ecart / 2.0]:
+			draw_line(Vector2(0, axe + dy), Vector2(e.x, axe + dy),
+				Color(Sty.POSTE_VOIE, 0.95), cell * 0.032, true)
 
 		# --- le convoi : une machine et trois fourgons ---------------------
 		# Il tangue d'un rien — un véhicule parfaitement immobile sur une voie
 		# qui défile a l'air collé au décor.
+		# LES VÉHICULES SE TIENNENT DEBOUT, comme au poste : les planches sont
+		# des ÉLÉVATIONS depuis le 9 septembre, et leur hauteur se lit sur
+		# elles — la case fait une longueur, le rapport de la planche donne le
+		# reste. Le flanc peint à la main a disparu avec elles.
 		var tangue: float = sin(t * 7.0) * 1.2 * k
 		var teinte := Sty.LAITON_CLAIR
 		var x0: float = c.x - cell * 2.0
-		var flanc: float = 5.0 * k
 		for i in range(4):
 			var tex: Texture2D = Ill.vehicule("loco" if i == 0 else "fourgon")
 			var g: float = x0 + float(3 - i) * cell
 			var dy: float = tangue * (1.0 if i % 2 == 0 else -1.0)
-			var cy2: float = y + dy
-			var xa: float = g + 2.0 * k
-			var xb: float = g + cell - 2.0 * k
-			var dh: float = h / 2.0
-			# la caisse cisaillée comme dans le poste : le bord du fond glisse
-			# à gauche et remonte, celui de devant glisse à droite et descend
-			var quad := PackedVector2Array([
-				Vector2(xa - dh * Ob.S, cy2 - dh * Ob.A), Vector2(xb - dh * Ob.S, cy2 - dh * Ob.A),
-				Vector2(xb + dh * Ob.S, cy2 + dh * Ob.A), Vector2(xa + dh * Ob.S, cy2 + dh * Ob.A)])
-			# le flanc, sous l'arête basse — le même qu'à quai
-			draw_colored_polygon(PackedVector2Array([quad[3], quad[2],
-				quad[2] + Vector2(0, flanc), quad[3] + Vector2(0, flanc)]),
-				teinte.darkened(0.62))
-			draw_line(quad[3] + Vector2(0, flanc), quad[2] + Vector2(0, flanc),
-				Color(0, 0, 0, 0.42), max(1.0, 1.3 * k), true)
+			var lg: float = cell
+			var ht: float = lg * (tex.get_size().y / tex.get_size().x) if tex != null else lg * 0.64
+			var base: float = sol + dy
+			var r := Rect2(g, base - ht, lg, ht)
 			var lavis := Color(teinte.lerp(Sty.PAPIER, 0.06), 1.0)
 			if tex != null:
-				draw_colored_polygon(quad, lavis, PackedVector2Array([
-					Vector2(0, 0), Vector2(1, 0), Vector2(1, 1), Vector2(0, 1)]), tex)
+				draw_texture_rect(tex, r, false, lavis)
 			else:
-				draw_colored_polygon(quad, lavis)
+				draw_rect(r, lavis, true)
 
 		# --- la fumée, qui part de la cheminée et se laisse distancer ------
 		# ELLE DOIT SE VOIR : une fumée à la couleur du quai sur le fond du
 		# poste, c'était deux bruns l'un sur l'autre. Elle prend le papier.
-		var chem := Vector2(x0 + 3.0 * cell + cell * 0.30, y - h * 0.52 + tangue)
+		var chem := Vector2(x0 + 3.0 * cell + cell * 0.28, sol - cell * 0.72 + tangue)
 		for i in range(PANACHE):
 			var age: float = fmod(t * 1.5 + float(i) * 0.30, 2.7)
 			var u: float = age / 2.7
