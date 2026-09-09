@@ -161,20 +161,32 @@ static func plaque(fond: Color, bord: Color, rayon: float = R, k: float = 1.0) -
 # à #1c1610 et les quais à peine plus clairs — tout se lisait noir, et une
 # plaque ne se distinguait plus du pupitre. Le fond remonte, les plaques
 # passent nettement au-dessus de lui, et l'écart se voit.
-const POSTE_FOND := Color("#241a12")        # le cuir du pupitre
-const POSTE_QUAI_HAUT := Color("#453320")   # la plaque, en haut
-const POSTE_QUAI_BAS := Color("#2c2015")    # et son creux
-const POSTE_BORD := Color("#9a7f4e")        # le laiton des vis et du liseré
-const POSTE_VOIE := Color("#5d4e3a")        # le rail au repos
-const POSTE_BALLAST := Color("#1a120b")
+# LE PUPITRE SE RELÈVE (9 septembre 2026). « Le jeu est sombre sur mon iPhone
+# alors que j'ai mis la luminosité au maximum » — et la mesure lui donne raison
+# sans appel : sur une image de service, la luminance moyenne tombait à 18 % et
+# QUATRE-VINGT-QUATRE POUR CENT des pixels vivaient sous le cinquième de
+# l'échelle. Un écran dont les trois quarts sont à un dixième de gris paraît
+# éteint dans une pièce claire, quelle que soit la luminosité de l'appareil —
+# et une application ne peut de toute façon pas dépasser le maximum du système.
+#
+# Le levier est donc l'image, et il porte sur le FOND, qui occupe ces trois
+# quarts : chaque teinte du poste monte d'un cran en gardant sa nuance et
+# l'écart qui la sépare des autres. La signalisation, elle, ne bouge pas d'un
+# iota : les couleurs de destination sont déjà les plus claires de l'écran.
+const POSTE_FOND := Color("#362819")        # le cuir du pupitre
+const POSTE_QUAI_HAUT := Color("#5a442c")   # la plaque, en haut
+const POSTE_QUAI_BAS := Color("#3b2b1d")    # et son creux
+const POSTE_BORD := Color("#b0925a")        # le laiton des vis et du liseré
+const POSTE_VOIE := Color("#71604a")        # le rail au repos
+const POSTE_BALLAST := Color("#251a10")
 # LES DEUX FONDS DE QUAI ÉTAIENT RESTÉS BLEUS. `QUAI_FERME` et
 # `QUAI_ELIGIBLE_FOND` viennent du prototype (#141b29, #1b2436) et n'avaient
 # pas suivi le pupitre au laiton : un quai fermé y faisait une tache froide, et
 # surtout la teinte d'un quai éligible — un mélange à 14 % de la couleur de
 # destination sur ce fond — partait d'un bleu, donc virait sur toute la gamme.
 # La MÉCANIQUE ne bouge pas, seulement le point de départ du mélange.
-const POSTE_QUAI_FERME := Color("#241b12")
-const POSTE_QUAI_ELIGIBLE := Color("#31261a")
+const POSTE_QUAI_FERME := Color("#332619")
+const POSTE_QUAI_ELIGIBLE := Color("#413324")
 
 
 ## Les traverses d'une voie, semées le long d'un tracé. Le PAS EST À L'ÉCRAN

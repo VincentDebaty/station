@@ -392,8 +392,10 @@ func _construire_pupitre() -> void:
 	t.seamless = true
 	t.noise = g
 	pupitre.grain = t
-	pupitre.lampe = _radial(Color(1.0, 0.84, 0.58, 0.16), Vector2(0.5, 0.10), 1.05)
-	pupitre.ombre = _radial_inverse(Color(0.0, 0.0, 0.0, 0.24))
+	# la lampe éclaire un peu plus, l'ombre des bords retient un peu moins :
+	# le relief du pupitre se garde, mais moins au prix de la clarté
+	pupitre.lampe = _radial(Color(1.0, 0.84, 0.58, 0.20), Vector2(0.5, 0.10), 1.05)
+	pupitre.ombre = _radial_inverse(Color(0.0, 0.0, 0.0, 0.17))
 	add_child(pupitre)
 	move_child(pupitre, 0)
 
