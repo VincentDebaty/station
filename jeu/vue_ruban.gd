@@ -1023,7 +1023,10 @@ func _placer_plaques(ids: Array, c: Dictionary) -> Dictionary:
 		var meilleur: Rect2 = cands[0]
 		var note := INF
 		for i in cands.size():
-			var q: float = float(i) * 22.0 + _note_plaque(cands[i], poses, pts, segs, cadre)
+			# le rang du candidat n'est plus qu'un DÉPARTAGE : à 22 points il
+			# décidait tout seul, et une plaque partait à gauche pour éviter un
+			# frôlement à droite qui n'aurait rien coûté.
+			var q: float = float(i) * 12.0 + _note_plaque(cands[i], poses, pts, segs, cadre, id, e)
 			if q < note:
 				note = q
 				meilleur = cands[i]
@@ -1054,7 +1057,20 @@ func _rang_de_plaque(id: String) -> int:
 	return tete * 1000 + max(0, ruban.index_de(id))
 
 
-func _note_plaque(r: Rect2, poses: Array, pts: Dictionary, segs: Array, cadre: Rect2) -> float:
+## UNE PLAQUE APPARTIENT À SON POINT, ET À LUI SEUL.
+##
+## Pontefract s'écrivait 330 unités à GAUCHE de sa gare, juste au-dessus du
+## point de Wakefield — plus près du point de Wakefield que la plaque de
+## Wakefield elle-même. Les deux noms se lisaient comme une pile, et on ne
+## savait plus lequel allait où : « ça se confond avec Pontefract, il y a
+## pourtant beaucoup de place sur la droite » (Vincent, 9 septembre 2026).
+##
+## Rien ne l'interdisait : on ne payait qu'en RECOUVRANT un point. Or ce qui
+## trompe, c'est la PROXIMITÉ — un nom posé à quarante unités d'une autre gare
+## lui est attribué, même sans la toucher. On paie donc en s'approchant, avec
+## une décroissance, et de son propre point on ne paie jamais.
+func _note_plaque(r: Rect2, poses: Array, pts: Dictionary, segs: Array, cadre: Rect2,
+		moi: String = "", mien: Vector2 = Vector2.INF) -> float:
 	var k := Sty.HUD_K
 	var aire: float = max(1.0, r.size.x * r.size.y)
 	var n := 0.0
@@ -1062,9 +1078,24 @@ func _note_plaque(r: Rect2, poses: Array, pts: Dictionary, segs: Array, cadre: R
 		var i: Rect2 = r.intersection(autre)
 		if i.size.x > 0.0 and i.size.y > 0.0:
 			n += 900.0 * (i.size.x * i.size.y) / aire
+		# DEUX PLAQUES QUI SE FRÔLENT SE LISENT DÉJÀ COMME UNE PILE : on garde
+		# un cordon autour de chacune, moins cher qu'un recouvrement franc.
+		var j: Rect2 = r.grow(9.0 * k).intersection(autre.grow(9.0 * k))
+		if j.size.x > 0.0 and j.size.y > 0.0:
+			n += 130.0 * (j.size.x * j.size.y) / aire
+	var portee: float = 30.0 * k
 	for id in pts:
-		if r.grow(2.0 * k).has_point(pts[id]):
+		if id == moi:
+			continue
+		var d: float = _ecart_au_rect(r, pts[id])
+		if d <= 2.0 * k:
 			n += 400.0
+		elif d < portee:
+			n += 260.0 * (1.0 - d / portee)
+	# et une plaque reste attachée à SA gare : plus elle s'en éloigne, moins on
+	# devine à quoi elle appartient
+	if mien != Vector2.INF:
+		n += 0.55 * _ecart_au_rect(r, mien) / k
 	for s in segs:
 		if _segment_coupe(r, s[0], s[1]):
 			n += 90.0
@@ -1072,6 +1103,13 @@ func _note_plaque(r: Rect2, poses: Array, pts: Dictionary, segs: Array, cadre: R
 	n += 14.0 * (max(0.0, cadre.position.x - r.position.x) + max(0.0, r.end.x - cadre.end.x)
 		+ max(0.0, cadre.position.y - r.position.y) + max(0.0, r.end.y - cadre.end.y)) / k
 	return n
+
+
+## La distance d'un point au rectangle — nulle s'il est dedans.
+func _ecart_au_rect(r: Rect2, p: Vector2) -> float:
+	var dx: float = maxf(maxf(r.position.x - p.x, 0.0), p.x - r.end.x)
+	var dy: float = maxf(maxf(r.position.y - p.y, 0.0), p.y - r.end.y)
+	return Vector2(dx, dy).length()
 
 
 func _segment_coupe(r: Rect2, a: Vector2, b: Vector2) -> bool:
@@ -1629,8 +1667,16 @@ func _construire_panneau() -> void:
 	style.border_width_right = int(Sty.epaisseur(k, true))
 	style.content_margin_left = 22 * k + Sty.marges["gauche"]
 	style.content_margin_right = 22 * k
-	style.content_margin_top = 16 * k
-	style.content_margin_bottom = 16 * k + Sty.marges["bas"]
+	# LA FEUILLE MANQUAIT D'UNE LIGNE, ET C'ÉTAIT DE LA MARGE. « Je ne vois pas
+	# la ligne avec mon record » (Vincent, 9 septembre 2026) : sur une fiche
+	# dont la phrase tient sur deux lignes — Rotherham Central —, « ★★★ record
+	# 1 min » tombait sous le bord du défilement, et rien ne disait qu'il y
+	# avait quelque chose de plus bas. Or le panneau se payait 16 × k en haut
+	# ET en bas, EN PLUS de la zone sûre de l'appareil, qui est déjà la
+	# respiration du bord. Sept et huit suffisent : quarante unités rendues à
+	# ce qui se lit, et la ligne rentre.
+	style.content_margin_top = 7 * k
+	style.content_margin_bottom = 8 * k + Sty.marges["bas"]
 	style.anti_aliasing = true
 	panneau.add_theme_stylebox_override("panel", style)
 	add_child(panneau)
@@ -1647,7 +1693,7 @@ func _construire_panneau() -> void:
 	# Il vit désormais dans un pied FIXE : ce qui se lit peut défiler, ce qui
 	# se touche est toujours là.
 	var pile := VBoxContainer.new()
-	pile.add_theme_constant_override("separation", int(round(10 * k)))
+	pile.add_theme_constant_override("separation", int(round(8 * k)))
 	panneau.add_child(pile)
 	defil.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	pile.add_child(defil)
@@ -2181,7 +2227,7 @@ func _banniere() -> Control:
 	pile.haut = Ill.BANDE_HAUT
 	pile.bas = Ill.BANDE_BAS
 	pile.rayon = Sty.R_GRAND * k
-	pile.custom_minimum_size = Vector2(0, 84 * k)
+	pile.custom_minimum_size = Vector2(0, 78 * k)
 	pile.clip_contents = true
 
 	var voile := TextureRect.new()
