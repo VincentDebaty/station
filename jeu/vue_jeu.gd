@@ -813,24 +813,29 @@ func _dessiner_convois(sel, t: float) -> void:
 		# redessiné les trois planches en ÉLÉVATION — toit, joue, roues — et
 		# c'est le montage qui change avec elles.
 		#
-		# Un véhicule est désormais un panneau DEBOUT, et c'est un CORPS RIGIDE.
+		# Un véhicule est désormais un panneau DEBOUT, D'UN SEUL TENANT.
 		#
-		# Je l'avais d'abord découpé en trois tranches dont chacune suivait la
-		# pente de la voie sous elle : dans un virage ou sur une aiguille, les
-		# trois tranches n'ont pas la même pente, et la caisse se tordait —
-		# « les trains sont déformés surtout dans les virages et les
-		# aiguillages » (Vincent, 9 septembre 2026). Un wagon ne se tord pas :
-		# il est rigide, et le plan est un plan HORIZONTAL vu de biais, où une
-		# courbe est un virage, pas une rampe.
+		# Deux erreurs successives, et elles se corrigent l'une l'autre. J'ai
+		# d'abord découpé chaque caisse en trois tranches suivant chacune la
+		# pente de la voie sous elle : dans un virage les trois pentes
+		# diffèrent, et la caisse se tordait — « les trains sont déformés
+		# surtout dans les virages et les aiguillages ». J'ai alors supprimé
+		# toute inclinaison : les véhicules sont devenus des rectangles droits
+		# posés chacun à sa hauteur, et la rame est montée en marches — « les
+		# wagons sont totalement décalés comme un escalier » (Vincent, 9
+		# septembre 2026). Les deux fois, la faute portait sur le NOMBRE de
+		# pentes, pas sur la pente elle-même.
 		#
-		# Un véhicule est donc UN SEUL rectangle droit, jamais cisaillé ni
-		# incliné. Il occupe l'écart HORIZONTAL entre ses deux coupures — ce qui
-		# le raccourcit tout seul quand la voie s'enfonce dans la profondeur,
-		# et c'est le bon raccourci pour une vue de côté — et sa base est à
-		# l'ordonnée moyenne de ces deux coupures. Deux véhicules voisins
-		# partagent leur coupure : ils restent donc jointifs, et la rame suit
-		# la courbe comme un chapelet de corps rigides. C'est ainsi qu'un train
-		# s'articule pour de vrai.
+		# La géométrie tranche : le corps d'un wagon est HORIZONTAL dans le
+		# monde, donc son toit et son plancher sont parallèles, donc ils se
+		# projettent à la MÊME inclinaison. Un véhicule vu de biais s'incline
+		# en bloc, et seules ses faces d'about restent verticales. Un seul
+		# quadrilatère, une seule pente, des côtés verticaux : ni tordu, ni en
+		# escalier.
+		#
+		# Deux véhicules voisins partagent leur coupure : leurs bases se
+		# rejoignent exactement, et la rame épouse la courbe d'un trait continu.
+		# C'est ainsi qu'un train s'articule pour de vrai.
 		#
 		# SA HAUTEUR NE SE RÈGLE PAS, ELLE SE LIT. Chaque planche donne son
 		# propre rapport (la chaîne la rogne à la boîte du sujet), et la case
@@ -855,9 +860,9 @@ func _dessiner_convois(sel, t: float) -> void:
 			var haut := _hauteur_planche(tex) * k
 			var pa := Ob.p(_le_long_des_coupes(coupes, float(i))["p"])
 			var pb := Ob.p(_le_long_des_coupes(coupes, float(i) + 1.0)["p"])
-			var base: float = (pa.y + pb.y) / 2.0
-			var caisse := Rect2(pa.x, base - haut, pb.x - pa.x, haut)
-			draw_texture_rect(tex, caisse, false, lavis)
+			var toit := Vector2(0, haut)
+			draw_colored_polygon(PackedVector2Array([pa - toit, pb - toit, pb, pa]),
+				lavis, PLEINE, tex)
 			# LE VIDE N'EST PLUS UN VOILE NOIR, C'EST LA MÊME CAISSE EN
 			# SOURDINE. Le masque d'embarquement peignait un aplat presque noir
 			# par-dessus la portion non remplie : sur une caisse peinte il se
@@ -868,12 +873,17 @@ func _dessiner_convois(sel, t: float) -> void:
 			# d'effacer l'objet. Les voyageurs montent de la tête vers la queue.
 			var frac: float = clampf(plein_v * float(axe.size()) - float(i), 0.0, 1.0)
 			if frac < 1.0:
-				var ts := tex.get_size()
-				draw_texture_rect_region(tex,
-					Rect2(pa.x + caisse.size.x * frac, base - haut,
-						caisse.size.x * (1.0 - frac), haut),
-					Rect2(ts.x * frac, 0, ts.x * (1.0 - frac), ts.y),
-					Color(teinte.lerp(Sty.POSTE_FOND, 0.60), vie))
+				var pc := Ob.p(_le_long_des_coupes(coupes, float(i) + frac)["p"])
+				draw_colored_polygon(PackedVector2Array([pc - toit, pb - toit, pb, pc]),
+					Color(teinte.lerp(Sty.POSTE_FOND, 0.60), vie),
+					PackedVector2Array([Vector2(frac, 0), Vector2(1, 0), Vector2(1, 1),
+						Vector2(frac, 1)]), tex)
+
+
+## Les coordonnées de texture d'une caisse entière : la planche remplit son
+## quadrilatère, un coin par coin. `static var` et non `const` — un
+## PackedVector2Array construit ne passe pas pour une expression constante.
+static var PLEINE := PackedVector2Array([Vector2(0, 0), Vector2(1, 0), Vector2(1, 1), Vector2(0, 1)])
 
 
 ## LA HAUTEUR D'UNE PLANCHE, EN UNITÉS DE PLAN. La case fait 35 unités de
