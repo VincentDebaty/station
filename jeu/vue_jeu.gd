@@ -647,7 +647,6 @@ func _embarquement(t) -> float:
 ## chaque voie. Une ligne à remettre si elle manque.
 func _dessiner_convois(sel, t: float) -> void:
 	var anneau := 0.65 + 0.35 * sin(t * TAU / 1.1)      # ring-pulse : 1 → .3
-	var pret := 0.5 + 0.5 * sin(t * TAU / 1.1)          # .train.ready
 	for tr in enc.trains:
 		if not positions.has(tr.id):
 			continue
@@ -661,7 +660,6 @@ func _dessiner_convois(sel, t: float) -> void:
 			axe.append(axe[0] - Vector2(Geo.CAR_SPACING * 0.5, 0))
 		var col := Color(String(G["dest_color"][tr.to]))
 		var choisi: bool = tr == sel
-		var attend: bool = tr.state == Enc.S_WAITING or tr.state == Enc.S_APPROACHING
 		var k := Sty.UIK
 		# La HAUTEUR grossit au doigt, la LONGUEUR jamais : elle tient à
 		# l'espacement du gril, l'étirer ferait se chevaucher les convois.
@@ -683,21 +681,21 @@ func _dessiner_convois(sel, t: float) -> void:
 			for couche in [[16.0, 0.10], [10.0, 0.18], [5.5, 0.34], [2.5, 0.75]]:
 				draw_polyline(axe, Color(Sty.AMBRE, float(couche[1]) * anneau * 0.9),
 					h + float(couche[0]) * k, true)
-		# LE HALO DE DESTINATION, POUR TOUS, ET D'ABORD POUR LE FRET. Je l'avais
-		# tellement adouci qu'il ne se voyait plus — et sur un fret, dont la
-		# caisse est grise, il est le seul aplat qui annonce où le convoi va :
-		# sans lui il se confondait avec ses voisins. Trois nappes dégressives
-		# pour garder le dégradé, mais à une intensité qui existe, et un quart
-		# de plus sur le fret, qui n'a que cela.
-		var vif: float = (1.25 if tr.freight else 1.0) * vie
-		if attend and not tr.freight:
-			vif *= 1.0 + 0.5 * pret
-		# CINQ NAPPES ET NON TROIS : à trois, l'escalier se voyait — trois
-		# rectangles emboîtés autour de la rame plutôt qu'une lueur. Le total
-		# d'encre est le même, réparti plus finement.
-		for nappe in [[17.0, 0.045], [12.5, 0.06], [8.5, 0.085], [5.0, 0.115], [2.0, 0.17]]:
-			draw_polyline(axe, Color(col, float(nappe[1]) * vif),
-				h + float(nappe[0]) * k, true)
+		# PLUS DE HALO DE DESTINATION, ET J'AVAIS COMPRIS L'INVERSE. « Pas de
+		# halo coloré pour le convoi de fret, il se confond avec les autres. Pas
+		# de halo non plus pour les autres en fait » : c'était une consigne, je
+		# l'ai lue comme un constat de manque et je les ai RENFORCÉS. Ils
+		# partent.
+		#
+		# Ce qu'ils portaient ne se perd pas : la destination d'un convoi reste
+		# dite par sa caisse, et sur un fret — dont les wagons sont gris — par sa
+		# machine colorée et son liseré épais, qui restent. Un halo autour d'un
+		# train DESSINÉ ajoutait une lueur là où le dessin a déjà un contour ;
+		# c'est ce qui les faisait tous se ressembler.
+		#
+		# Ce qui disparaît vraiment, et il faut le dire : la RESPIRATION du
+		# convoi qui attend, qui était portée par la largeur de ce halo. Le
+		# badge d'heure la porte désormais seul.
 		# LE LISERÉ DU FRET, et lui seul. Sur un convoi de voyageurs la planche
 		# porte déjà son propre contour d'encre ; en doubler un second à la
 		# teinte de destination noyait le dessin. Sur un fret il reste épais et
