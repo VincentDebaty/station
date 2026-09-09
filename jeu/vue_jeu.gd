@@ -622,13 +622,11 @@ func _embarquement(t) -> float:
 ## multipliées par la teinte de destination, elles donnent une gravure mise en
 ## couleur, et une seule planche sert les six couleurs du jeu.
 ##
-## LA COMPOSITION EST RÉELLE, PAS UN PAVAGE. Une case du gril fait 35 sur 30 :
-## un véhicule qui l'occupe seul est trapu. Une voiture en prend donc DEUX. Mais
-## une machine plus un nombre pair de cases ne couvre pas tous les convois —
-## mesuré sur les tirages des 401 fiches, 55 % laissent une case impaire — d'où
-## le fourgon, qui la prend. Deux voitures montrent une machine et un fourgon ;
-## trois, une machine et une voiture ; quatre, une machine, une voiture et un
-## fourgon.
+## UN VÉHICULE PAR CASE. Une case du gril fait 35 sur 30 : le véhicule y est
+## trapu. On a essayé la voiture longue, sur deux cases, mieux proportionnée —
+## et Vincent lui a préféré la rame courte, où chaque véhicule est une case et
+## où le compte des voitures se voit sans compter. Une machine en tête, des
+## fourgons derrière. `wagon.png` reste dans les sources, inutilisé.
 ##
 ## RIEN DE CE QUE LE JEU MESURE NE BOUGE : la rame occupe exactement les mêmes
 ## cases, donc même longueur, même quai nécessaire, même point d'arrêt, mêmes
@@ -708,43 +706,34 @@ func _dessiner_convois(sel, t: float) -> void:
 		# n'en a pas. Le liseré était la quatrième façon de dire la même chose.
 
 		var coupes := _coupures(axe, k)
-		var case_i := 0
-		for element in _composition(axe.size()):
-			var nom := "wagon"
-			if case_i == 0:
-				nom = "loco"
-			elif element == 1:
-				nom = "fourgon"
-			var tex := Ill.vehicule(nom)
+		# UN VÉHICULE PAR CASE, ET RIEN QUE DES FOURGONS DERRIÈRE LA MACHINE.
+		# Les voitures de deux cases donnaient une rame mieux proportionnée, mais
+		# Vincent leur préfère la lecture de la rame courte, où chaque véhicule
+		# est une case et où le compte se voit sans compter. `wagon.png` reste
+		# dans les sources, inutilisé.
+		for i in axe.size():
+			var tex := Ill.vehicule("loco" if i == 0 else "fourgon")
 			if tex == null:
 				tex = Ill.vehicule("wagon")
 			# la machine garde la teinte de destination même sur un fret, dont
 			# les wagons sont gris : c'est elle qui annonce où il va
-			var teinte: Color = col if (case_i == 0 or not tr.freight) else Sty.FRET
+			var teinte: Color = col if (i == 0 or not tr.freight) else Sty.FRET
 			var lavis := Color(teinte.lerp(Sty.PAPIER, 0.06), vie)
-			# TROIS FACETTES PAR CASE, ET NON UNE. Avec une seule, une voiture de
-			# deux cases n'avait qu'un COUDE en son milieu : elle traversait la
-			# courbe en deux segments droits, ce qui se lit comme une rigidité —
-			# « le mouvement ne paraît pas naturel » (Vincent, 9 septembre 2026).
-			# Les facettes suivent une courbe passant par les coupures, si bien
-			# qu'une caisse ÉPOUSE le virage au lieu de le couper à la corde.
-			var pas: int = element * SOUS_CASES
-			for j in pas:
-				var t0: float = float(case_i) + float(j) / float(SOUS_CASES)
-				var t1: float = float(case_i) + float(j + 1) / float(SOUS_CASES)
+			for j in SOUS_CASES:
+				var t0: float = float(i) + float(j) / float(SOUS_CASES)
+				var t1: float = float(i) + float(j + 1) / float(SOUS_CASES)
 				var a := _le_long_des_coupes(coupes, t0)
 				var b := _le_long_des_coupes(coupes, t1)
 				var quad := PackedVector2Array([
 					a["p"] - a["n"] * h * 0.5, b["p"] - b["n"] * h * 0.5,
 					b["p"] + b["n"] * h * 0.5, a["p"] + a["n"] * h * 0.5])
-				var u0: float = float(j) / float(pas)
-				var u1: float = float(j + 1) / float(pas)
+				var u0: float = float(j) / float(SOUS_CASES)
+				var u1: float = float(j + 1) / float(SOUS_CASES)
 				if tex != null:
 					draw_colored_polygon(quad, lavis, PackedVector2Array([
 						Vector2(u0, 0), Vector2(u1, 0), Vector2(u1, 1), Vector2(u0, 1)]), tex)
 				else:
 					draw_colored_polygon(quad, lavis)
-			case_i += element
 
 		# LE MASQUE D'EMBARQUEMENT : la portion de rame encore vide, côté queue,
 		# qui recule à mesure qu'on approche du départ. Il se calcule CASE PAR
@@ -766,37 +755,31 @@ func _dessiner_convois(sel, t: float) -> void:
 					Color(Sty.MASQUE, Sty.MASQUE.a * vie))
 
 
-## LA COMPOSITION D'UNE RAME : une machine sur une case, des voitures sur deux,
-## et un fourgon quand il reste une case impaire.
-func _composition(n: int) -> Array:
-	var out: Array = [1]
-	var reste := n - 1
-	while reste >= 2:
-		out.append(2)
-		reste -= 2
-	if reste == 1:
-		out.append(1)
-	return out
-
-
 ## LES COUPURES ENTRE CASES, avec leur normale : une case commence à mi-chemin
 ## de la voiture précédente et finit à mi-chemin de la suivante. Les véhicules
 ## PARTAGENT ces arêtes, ce qui permet à une voiture de deux cases de se plier
 ## dans la courbe sans laisser de fente à son articulation — une seule facette
 ## lui aurait fait couper la corde.
 func _coupures(axe: PackedVector2Array, k: float) -> Array:
-	var demi: float = Geo.CAR_SPACING * 0.5 * k
 	var n := axe.size()
 	var out: Array = []
 	for i in n + 1:
 		var p: Vector2
 		var u: Vector2
 		if i == 0:
+			# LA CASE DU BOUT PREND LA MOITIÉ DE SA CORDE, PAS UN DEMI-PAS FIXE.
+			# Les voitures sont espacées d'un pas constant LE LONG DE LA VOIE ;
+			# en courbe, la corde entre deux centres est plus courte que ce pas.
+			# Les cases du milieu, mesurées de corde à corde, se resserraient
+			# donc, tandis que celles des bouts gardaient leur demi-pas entier :
+			# le premier et le dernier véhicule paraissaient plus longs que les
+			# autres — vu par Vincent le 9 septembre 2026. Elles suivent
+			# désormais la même corde que leurs voisines.
 			u = _tangente_de(axe, 0)
-			p = axe[0] - u * demi
+			p = axe[0] - u * axe[0].distance_to(axe[1]) * 0.5
 		elif i == n:
 			u = _tangente_de(axe, n - 1)
-			p = axe[n - 1] + u * demi
+			p = axe[n - 1] + u * axe[n - 2].distance_to(axe[n - 1]) * 0.5
 		else:
 			u = (axe[i] - axe[i - 1]).normalized()
 			p = (axe[i - 1] + axe[i]) / 2.0
