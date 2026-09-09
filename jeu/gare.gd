@@ -111,21 +111,32 @@ func _draw() -> void:
 		var pts := Geo.vers_vector2(m["xs"], m["ys"])
 		var allume: bool = faisceau != "" and m["portal"] == faisceau
 		var col := Color(String(G["dest_color"].get(m["portal"], "#ffffff")))
-		draw_polyline(pts, Color(0, 0, 0, 0.40), 7.0, true)
+		draw_polyline(pts, Color(0, 0, 0, 0.45), 8.4, true)
 		var levre := PackedVector2Array()
 		for pt in pts:
 			levre.append(pt + Vector2(0, -1.6))
 		draw_polyline(levre, Color(Sty.POSTE_BORD, 0.10), 1.0, true)
 		if allume:
-			draw_polyline(pts, Color(col, 0.16), 9.0, true)
+			draw_polyline(pts, Color(col, 0.26), 10.0, true)
 		# LES TRAVERSES, comme sur les voies d'entrée et de sortie. Le gril était
 		# le seul tracé du plan à n'être qu'un trait : les voies d'approche
 		# portaient leur ballast et leurs traverses depuis le 4 septembre, et
 		# lui non. Elles sont à SA couleur, sous le rail — une traverse est sous
 		# le rail, pas dessus — et discrètes : elles disent la voie ferrée, elles
 		# ne disputent pas la destination, qui reste ce que la couleur signale.
-		Sty.traverses(self, pts, Color(col, 0.34 if allume else 0.22), 2.8 * k, 10.0 * k)
-		col.a = 0.82 if allume else 0.5
+		# LE GRIL PÈSE MAINTENANT AUTANT QUE LES VOIES D'ENTRÉE ET DE SORTIE.
+		# Celles-ci portent un rail OPAQUE sur un ballast large ; le gril gardait
+		# le demi-transparent du prototype — `.mesh` à 50 % d'opacité — et
+		# paraissait donc plus pâle que le reste du plan, alors qu'il en occupe
+		# les trois quarts. Il monte à 78 %.
+		#
+		# L'ÉCART AVEC LE FAISCEAU ALLUMÉ SE CONSERVE, et c'est la seule chose
+		# qui comptait : le faisceau passe à l'opacité pleine, et sa nappe de
+		# halo s'épaissit d'autant que l'écart d'opacité s'est resserré. Un
+		# convoi choisi doit toujours faire ressortir sa provenance d'un coup
+		# d'œil.
+		Sty.traverses(self, pts, Color(col, 0.55 if allume else 0.38), 3.2 * k, 10.0 * k)
+		col.a = 1.0 if allume else 0.78
 		draw_polyline(pts, col, 3.5, true)
 
 	# --- les quais : la pilule en dégradé, son liseré, son numéro -------------
