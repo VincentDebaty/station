@@ -198,7 +198,14 @@ fi
 [ "${1:-}" = "--export" ] && exit 0
 
 # --- l'installation, puis le lancement -------------------------------------
-APP=$(find "$SORTIE" -name "Station.app" -maxdepth 5 2>/dev/null | head -1)
+# L'APPLICATION DE L'APPAREIL EST CELLE DE L'ARCHIVE, ET SEULEMENT ELLE. Cette
+# recherche balayait tout le dossier de sortie ; depuis que `--simulateur` y
+# dépose sa propre `Station.app`, elle ramassait la build du SIMULATEUR — non
+# signée, refusée par l'appareil avec « The executable contains an invalid
+# signature » (mesuré le 9 septembre 2026, et le message ne dit évidemment pas
+# qu'on lui a tendu la mauvaise app).
+APP=$(find "$SORTIE/Station.xcarchive" -name "Station.app" -maxdepth 4 2>/dev/null | head -1)
+[ -n "$APP" ] || APP=$(find "$SORTIE" -path "$SORTIE/build-sim" -prune -o -name "Station.app" -print -maxdepth 5 2>/dev/null | head -1)
 if [ -z "$APP" ]; then
   rouge "aucune Station.app produite — voir /tmp/station-ios-export.log"
   exit 1
