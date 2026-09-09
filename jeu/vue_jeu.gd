@@ -796,6 +796,47 @@ func _dessiner_convois(sel, t: float) -> void:
 		# Vincent leur préfère la lecture de la rame courte, où chaque véhicule
 		# est une case et où le compte se voit sans compter. `wagon.png` reste
 		# dans les sources, inutilisé.
+		# LE FLANC, AVANT LES TOITS. Les quais avaient pris leur épaisseur et les
+		# convois non : posés dessus, ils se lisaient comme des décalcomanies
+		# sur des dalles — « les trains sont toujours vus de haut » (Vincent, 9
+		# septembre 2026). Un véhicule est un OBJET : sous son toit il a un
+		# flanc, plus sombre, que la projection découvre du côté du regard.
+		#
+		# Le côté « vers le regard » n'est pas toujours le même — un convoi
+		# tourne dans les courbes — donc on ne le décide pas, on le CHOISIT par
+		# l'ordonnée : des deux bords de la caisse, le flanc est celui qui tombe
+		# le plus bas à l'écran.
+		# CINQ, ET PAS NEUF. Essayé à neuf : sans dessin sur le flanc, plus de
+		# surface ne donne pas plus de volume — juste un pan de couleur uni,
+		# qui se lit comme une boîte. Tant que les planches montrent un TOIT,
+		# le flanc ne peut être qu'un liseré d'épaisseur.
+		var flanc: float = 5.0 * k
+		for i in axe.size():
+			var teinte0: Color = col if (i == 0 or not tr.freight) else Sty.FRET
+			# LE FLANC S'ARRÊTE OÙ S'ARRÊTE LA CAISSE. Les toits paraissent
+			# séparés parce que la planche porte sa marge transparente ; un
+			# flanc dessiné d'un bout à l'autre de la case ressoudait les
+			# véhicules en une seule barre. On reprend le même retrait.
+			var marge := 0.08
+			var bord := PackedVector2Array()
+			for j in range(SOUS_CASES + 1):
+				var d0 := _le_long_des_coupes(coupes, float(i) + lerpf(marge, 1.0 - marge,
+					float(j) / float(SOUS_CASES)))
+				var e1 := Ob.p(d0["p"] + d0["n"] * h * 0.5)
+				var e2 := Ob.p(d0["p"] - d0["n"] * h * 0.5)
+				bord.append(e1 if e1.y > e2.y else e2)
+			var mur := bord.duplicate()
+			for j in range(bord.size() - 1, -1, -1):
+				mur.append(bord[j] + Vector2(0, flanc))
+			draw_colored_polygon(mur, Color(teinte0.darkened(0.62), vie))
+			# l'arête haute prend la lumière, le pied porte l'ombre : deux
+			# traits, et le flanc cesse d'être une bande pour devenir un panneau
+			draw_polyline(bord, Color(teinte0.lightened(0.25), 0.55 * vie), max(1.0, 1.0 * k), true)
+			var pied := PackedVector2Array()
+			for pt in bord:
+				pied.append(pt + Vector2(0, flanc))
+			draw_polyline(pied, Color(0, 0, 0, 0.42 * vie), max(1.0, 1.3 * k), true)
+
 		for i in axe.size():
 			var tex := Ill.vehicule("loco" if i == 0 else "fourgon")
 			if tex == null:

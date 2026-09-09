@@ -22,6 +22,7 @@ extends CanvasLayer
 
 const Sty := preload("res://jeu/style.gd")
 const Ill := preload("res://jeu/illustrations.gd")
+const Ob := preload("res://jeu/oblique.gd")
 
 var toile: Toile
 
@@ -82,17 +83,26 @@ class Toile extends Node2D:
 		# quoi le convoi flotte au-dessus de sa voie.
 		var sol: float = y + h / 2.0 - 4.0 * k
 
-		# --- la voie, qui défile ------------------------------------------
-		draw_line(Vector2(0, sol + 8.0 * k), Vector2(e.x, sol + 8.0 * k),
-			Color(Sty.POSTE_BALLAST, 0.75), 20.0 * k, true)
+		# --- LA VOIE, DANS L'IDIOME DU JEU --------------------------------
+		# Elle était en ÉLÉVATION — un épaulement de ballast vu de côté, sous
+		# des traverses en perspective — pendant que le convoi restait vu de
+		# dessus. Deux points de vue dans la même image, et c'est exactement ce
+		# que Vincent a vu. C'est maintenant la voie du poste, avec le même
+		# cisaillement : ballast étroit, traverses penchées de `Ob.S`, deux
+		# files. La demi-longueur d'une traverse se cisaille en x et
+		# s'aplatit en y, comme n'importe quel point du plan.
+		draw_line(Vector2(0, sol + 4.0 * k), Vector2(e.x, sol + 4.0 * k),
+			Color(Sty.POSTE_BALLAST, 0.85), 13.0 * k, true)
+		var demi := 7.0 * k
 		var x: float = -pas - glisse
 		while x < e.x + pas:
-			draw_line(Vector2(x, sol + 1.0 * k), Vector2(x + 2.0 * k, sol + 15.0 * k),
-				Color(Sty.POSTE_QUAI_HAUT, 0.55), 4.0 * k, true)
+			draw_line(Vector2(x - demi * Ob.S, sol + 4.0 * k - demi * Ob.A),
+				Vector2(x + demi * Ob.S, sol + 4.0 * k + demi * Ob.A),
+				Color(Sty.POSTE_VOIE, 0.75), 3.0 * k, true)
 			x += pas
-		for dy in [1.0, 11.0]:
+		for dy in [-0.5, 8.5]:
 			draw_line(Vector2(0, sol + dy * k), Vector2(e.x, sol + dy * k),
-				Color(Sty.POSTE_BORD, 0.90 if dy == 1.0 else 0.50), 2.0 * k, true)
+				Color(Sty.POSTE_VOIE, 0.95), 2.4 * k, true)
 
 		# --- le convoi : une machine et trois fourgons ---------------------
 		# Il tangue d'un rien — un véhicule parfaitement immobile sur une voie
@@ -100,13 +110,26 @@ class Toile extends Node2D:
 		var tangue: float = sin(t * 7.0) * 1.2 * k
 		var teinte := Sty.LAITON_CLAIR
 		var x0: float = c.x - cell * 2.0
+		var flanc: float = 5.0 * k
 		for i in range(4):
 			var tex: Texture2D = Ill.vehicule("loco" if i == 0 else "fourgon")
 			var g: float = x0 + float(3 - i) * cell
 			var dy: float = tangue * (1.0 if i % 2 == 0 else -1.0)
-			var r := Rect2(g + 2.0 * k, y - h / 2.0 + dy, cell - 4.0 * k, h)
+			var cy2: float = y + dy
+			var xa: float = g + 2.0 * k
+			var xb: float = g + cell - 2.0 * k
+			var dh: float = h / 2.0
+			# la caisse cisaillée comme dans le poste : le bord du fond glisse
+			# à gauche et remonte, celui de devant glisse à droite et descend
 			var quad := PackedVector2Array([
-				r.position, Vector2(r.end.x, r.position.y), r.end, Vector2(r.position.x, r.end.y)])
+				Vector2(xa - dh * Ob.S, cy2 - dh * Ob.A), Vector2(xb - dh * Ob.S, cy2 - dh * Ob.A),
+				Vector2(xb + dh * Ob.S, cy2 + dh * Ob.A), Vector2(xa + dh * Ob.S, cy2 + dh * Ob.A)])
+			# le flanc, sous l'arête basse — le même qu'à quai
+			draw_colored_polygon(PackedVector2Array([quad[3], quad[2],
+				quad[2] + Vector2(0, flanc), quad[3] + Vector2(0, flanc)]),
+				teinte.darkened(0.62))
+			draw_line(quad[3] + Vector2(0, flanc), quad[2] + Vector2(0, flanc),
+				Color(0, 0, 0, 0.42), max(1.0, 1.3 * k), true)
 			var lavis := Color(teinte.lerp(Sty.PAPIER, 0.06), 1.0)
 			if tex != null:
 				draw_colored_polygon(quad, lavis, PackedVector2Array([
