@@ -813,78 +813,67 @@ func _dessiner_convois(sel, t: float) -> void:
 		# redessiné les trois planches en ÉLÉVATION — toit, joue, roues — et
 		# c'est le montage qui change avec elles.
 		#
-		# Un véhicule est désormais un panneau DEBOUT : son arête basse suit la
-		# voie projetée — donc il s'inscrit dans les courbes comme avant, case
-		# par case —, et il monte à la VERTICALE de l'écran. C'est exact pour
-		# cette projection : elle n'aplatit que le sol, jamais les verticales.
+		# Un véhicule est désormais un panneau DEBOUT, et c'est un CORPS RIGIDE.
+		#
+		# Je l'avais d'abord découpé en trois tranches dont chacune suivait la
+		# pente de la voie sous elle : dans un virage ou sur une aiguille, les
+		# trois tranches n'ont pas la même pente, et la caisse se tordait —
+		# « les trains sont déformés surtout dans les virages et les
+		# aiguillages » (Vincent, 9 septembre 2026). Un wagon ne se tord pas :
+		# il est rigide, et le plan est un plan HORIZONTAL vu de biais, où une
+		# courbe est un virage, pas une rampe.
+		#
+		# Un véhicule est donc UN SEUL rectangle droit, jamais cisaillé ni
+		# incliné. Il occupe l'écart HORIZONTAL entre ses deux coupures — ce qui
+		# le raccourcit tout seul quand la voie s'enfonce dans la profondeur,
+		# et c'est le bon raccourci pour une vue de côté — et sa base est à
+		# l'ordonnée moyenne de ces deux coupures. Deux véhicules voisins
+		# partagent leur coupure : ils restent donc jointifs, et la rame suit
+		# la courbe comme un chapelet de corps rigides. C'est ainsi qu'un train
+		# s'articule pour de vrai.
 		#
 		# SA HAUTEUR NE SE RÈGLE PAS, ELLE SE LIT. Chaque planche donne son
 		# propre rapport (la chaîne la rogne à la boîte du sujet), et la case
 		# fait 35 unités de long : une locomotive de 1,477:1 monte à 23,7, un
 		# fourgon à 22,4, une voiture longue à 17,5. Le véhicule le plus long
 		# est le plus bas, sans qu'on ait rien à décider.
+		#
+		# UNE LARGEUR NÉGATIVE RETOURNE LA PLANCHE, et c'est tout ce qu'il faut
+		# pour un convoi qui roule vers la gauche : la tête reste la tête, donc
+		# la machine regarde toujours où elle va.
+		var plein_v := _embarquement(tr)
 		for i in axe.size():
 			var tex := Ill.vehicule("loco" if i == 0 else "fourgon")
 			if tex == null:
 				tex = Ill.vehicule("wagon")
+			if tex == null:
+				continue
 			# la machine garde la teinte de destination même sur un fret, dont
 			# les wagons sont gris : c'est elle qui annonce où il va
 			var teinte: Color = col if (i == 0 or not tr.freight) else Sty.FRET
 			var lavis := Color(teinte.lerp(Sty.PAPIER, 0.06), vie)
 			var haut := _hauteur_planche(tex) * k
-			for j in SOUS_CASES:
-				var t0: float = float(i) + float(j) / float(SOUS_CASES)
-				var t1: float = float(i) + float(j + 1) / float(SOUS_CASES)
-				var a := _le_long_des_coupes(coupes, t0)
-				var b := _le_long_des_coupes(coupes, t1)
-				var pa := Ob.p(a["p"])
-				var pb := Ob.p(b["p"])
-				var quad := PackedVector2Array([
-					pa - Vector2(0, haut), pb - Vector2(0, haut), pb, pa])
-				var u0: float = float(j) / float(SOUS_CASES)
-				var u1: float = float(j + 1) / float(SOUS_CASES)
-				if tex != null:
-					draw_colored_polygon(quad, lavis, PackedVector2Array([
-						Vector2(u0, 0), Vector2(u1, 0), Vector2(u1, 1), Vector2(u0, 1)]), tex)
-				else:
-					draw_colored_polygon(quad, lavis)
-
-		# LE VIDE N'EST PLUS UN VOILE NOIR, C'EST LA MÊME CAISSE EN SOURDINE.
-		# Le masque d'embarquement peignait un aplat presque noir par-dessus la
-		# portion non remplie : sur une caisse peinte il se lisait, sur un
-		# véhicule DESSINÉ il l'effaçait — « c'est tellement sombre qu'on ne
-		# voit plus bien les fourgons » (Vincent, 9 septembre 2026). On repeint
-		# donc la portion vide avec LA MÊME PLANCHE, dans une encre éteinte : le
-		# dessin reste lisible, le véhicule garde sa forme et son contour, et
-		# « vide » se dit par la VALEUR au lieu d'effacer l'objet.
-		#
-		# Les voyageurs montent de la tête vers la queue, case par case comme
-		# avant, et la découpe suit la même courbe que la caisse.
-		var plein := _embarquement(tr)
-		if plein < 1.0:
-			var n := axe.size()
-			for i in n:
-				var frac: float = clampf(plein * float(n) - float(i), 0.0, 1.0)
-				if frac >= 1.0:
-					continue
-				var tex := Ill.vehicule("loco" if i == 0 else "fourgon")
-				var teinte: Color = col if (i == 0 or not tr.freight) else Sty.FRET
-				var eteint := Color(teinte.lerp(Sty.POSTE_FOND, 0.60), vie)
-				var haut := _hauteur_planche(tex) * k
-				for j in 2:
-					var f0: float = lerpf(frac, 1.0, float(j) / 2.0)
-					var f1: float = lerpf(frac, 1.0, float(j + 1) / 2.0)
-					var a := _le_long_des_coupes(coupes, float(i) + f0)
-					var b := _le_long_des_coupes(coupes, float(i) + f1)
-					var pa := Ob.p(a["p"])
-					var pb := Ob.p(b["p"])
-					var quad := PackedVector2Array([
-						pa - Vector2(0, haut), pb - Vector2(0, haut), pb, pa])
-					if tex != null:
-						draw_colored_polygon(quad, eteint, PackedVector2Array([
-							Vector2(f0, 0), Vector2(f1, 0), Vector2(f1, 1), Vector2(f0, 1)]), tex)
-					else:
-						draw_colored_polygon(quad, eteint)
+			var pa := Ob.p(_le_long_des_coupes(coupes, float(i))["p"])
+			var pb := Ob.p(_le_long_des_coupes(coupes, float(i) + 1.0)["p"])
+			var base: float = (pa.y + pb.y) / 2.0
+			var caisse := Rect2(pa.x, base - haut, pb.x - pa.x, haut)
+			draw_texture_rect(tex, caisse, false, lavis)
+			# LE VIDE N'EST PLUS UN VOILE NOIR, C'EST LA MÊME CAISSE EN
+			# SOURDINE. Le masque d'embarquement peignait un aplat presque noir
+			# par-dessus la portion non remplie : sur une caisse peinte il se
+			# lisait, sur un véhicule DESSINÉ il l'effaçait — « c'est tellement
+			# sombre qu'on ne voit plus bien les fourgons » (Vincent, 9
+			# septembre 2026). On repeint la portion vide avec LA MÊME PLANCHE,
+			# dans une encre éteinte : « vide » se dit par la VALEUR au lieu
+			# d'effacer l'objet. Les voyageurs montent de la tête vers la queue.
+			var frac: float = clampf(plein_v * float(axe.size()) - float(i), 0.0, 1.0)
+			if frac < 1.0:
+				var ts := tex.get_size()
+				draw_texture_rect_region(tex,
+					Rect2(pa.x + caisse.size.x * frac, base - haut,
+						caisse.size.x * (1.0 - frac), haut),
+					Rect2(ts.x * frac, 0, ts.x * (1.0 - frac), ts.y),
+					Color(teinte.lerp(Sty.POSTE_FOND, 0.60), vie))
 
 
 ## LA HAUTEUR D'UNE PLANCHE, EN UNITÉS DE PLAN. La case fait 35 unités de
@@ -960,7 +949,12 @@ func _vers_la_queue(angle: float, sens: Vector2) -> Vector2:
 ## coupures — c'est ce qui donne une COURBE là où les seules coupures ne
 ## donnaient qu'une ligne brisée — et la normale se prend sur sa tangente, donc
 ## au bon endroit et non à celui de la coupure la plus proche.
-const SOUS_CASES := 3
+##
+## LE SOUS-DÉCOUPAGE A DISPARU AVEC LE CISAILLEMENT. Une caisse se peignait en
+## trois tranches épousant chacune la pente de la voie sous elle ; dans un
+## virage les trois pentes diffèrent, et le véhicule se tordait. Il est rigide
+## désormais, et n'interroge plus que ses DEUX coupures.
+
 
 func _le_long_des_coupes(coupes: Array, t: float) -> Dictionary:
 	var n := coupes.size()
