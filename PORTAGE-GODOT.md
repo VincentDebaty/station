@@ -860,6 +860,42 @@ Il suit une règle : **ce qui se vérifie tout seul d'abord**.
    à la fermeture (`NOTIFICATION_WM_CLOSE_REQUEST`), sans quoi le moteur aboie
    — et iOS plante à la sortie.
 
+   **LA PROJECTION OBLIQUE, posée le 9 septembre 2026** après une maquette
+   (`jeu/maquette_oblique.gd`, gardée). « Les rails semblent en 3D vue de côté
+   mais le train en 2D vue d'en haut. Pourrait-on avoir une vue effet 3D de
+   côté ? » (Vincent). Une ÉLÉVATION pure était exclue, et pas par goût : les
+   onze quais de Madrid-Chamartín s'y superposeraient en une seule ligne, et un
+   croisement — qui EST le conflit — deviendrait invisible. Un poste
+   d'aiguillage se lit en plan, et les vrais aussi.
+
+   Ce qui est appliqué est un CISAILLEMENT AFFINE, donc qui conserve les
+   incidences : deux voies qui se croisent se croisent encore, une courbe reste
+   une courbe, onze quais restent onze. `p' = C + ((x−Cx) + (y−Cy)·0,22 ,
+   (y−Cy)·0,86)`, dans `jeu/oblique.gd`, appliqué au DESSIN seulement —
+   `geometrie.gd` n'a pas bougé d'une décimale, et l'oracle le confirme (pire
+   écart 1,1 × 10⁻¹³ sur York et Madrid).
+
+   Les trois chiffres sont mesurés, pas choisis. **0,22** contre 0,45 : le
+   franc était plus spectaculaire mais écrasait les quais et gaspillait la
+   hauteur. **0,86** rend de la place verticale au lieu d'en prendre — c'est le
+   cisaillement qui élargit, et l'élargissement part dans les marges où filent
+   déjà les voies d'entrée et de sortie (`EDGE_RUN` = 360) ; rien n'a donc eu à
+   être réduit. **8 d'épaisseur** est un PLAFOND relevé sur les 401 fiches :
+   deux quais voisins ne sont séparés que de 10 unités au plus serré, soit 8,6
+   après aplatissement. Au-delà, la face avant passe derrière le quai suivant
+   et disparaît.
+
+   Trois règles tiennent tout le reste. **Le texte ne se projette jamais** — on
+   projette sa PLACE, pas sa forme : un chiffre de quai cisaillé serait
+   illisible. **Ce qui est debout reste debout** : un signal est un mât
+   vertical, vu de biais il reste vertical à l'écran et seul son pied se
+   déplace ; idem pour les pastilles d'heure. **Les traverses se calculent dans
+   le plan puis se projettent**, sinon elles sont perpendiculaires à l'écran
+   au lieu de l'être à la voie, et trahissent la projection à chaque courbe.
+
+   Le doigt n'a coûté qu'une ligne : `Ob.inv(m − decalage())`. Toutes les zones
+   de clic restent écrites dans le plan, et aucune n'a bougé.
+
    `STATION_REMISE=<étoiles>[,diamant]` rejoue la remise sur la gare courante,
    sans service et sans rien écrire : le joueur scripté n'a jamais fait de
    sans-faute, et sans ce crochet le deuxième temps ne se vérifierait qu'à la

@@ -27,6 +27,7 @@ const Rub := preload("res://jeu/ruban.gd")
 const Rec := preload("res://jeu/recompense.gd")
 const Sty := preload("res://jeu/style.gd")
 const Ill := preload("res://jeu/illustrations.gd")
+const Ob := preload("res://jeu/oblique.gd")
 
 # Les couleurs du prototype (css/station.css) : l'esthétique est conservée.
 const TEXTE := Color("#efe3c8")   # le papier, comme le ruban
@@ -590,7 +591,7 @@ func _hachures(r: Rect2, col: Color) -> void:
 		var x0: float = max(inner.position.x, c - inner.end.y)
 		var x1: float = min(inner.end.x, c - inner.position.y)
 		if x1 > x0:
-			draw_line(Vector2(x0, c - x0), Vector2(x1, c - x1), col, 2.6, true)
+			draw_line(Ob.p(Vector2(x0, c - x0)), Ob.p(Vector2(x1, c - x1)), col, 2.6, true)
 		c += pas
 
 
@@ -601,7 +602,9 @@ func _dessiner_quais(sel, t: float) -> void:
 	for q in G["platforms"]:
 		var pid = q["id"]
 		var r := Rect2(Geo.PLAT_X1, float(q["cy"]) - Geo.PLAT_H / 2.0, Geo.PLAT_LEN, Geo.PLAT_H)
-		var contour := Sty.rect_arrondi(r, 10)
+		# LE CONTOUR EST PROJETÉ, LES TEXTES NON : on projette la PLACE d'un
+		# numéro, jamais sa forme (jeu/oblique.gd).
+		var contour := Ob.trace(Sty.rect_arrondi(r, 10))
 
 		# FERMÉ : pilule éteinte, hachures, numéro estompé, heure de réouverture
 		if enc.platform_closed(pid):
@@ -614,14 +617,14 @@ func _dessiner_quais(sel, t: float) -> void:
 			draw_polyline(_boucle(contour), Color(Sty.ROUGE, 0.55), 1.6, true)
 			# le numéro se détoure : les hachures le traversent, et il faut
 			# encore pouvoir dire DE QUEL quai on parle.
-			Sty.texte_centre(self, Sty.sans(700), 24, r.get_center(), str(int(pid)),
+			Sty.texte_centre(self, Sty.sans(700), 24, Ob.p(r.get_center()), str(int(pid)),
 				Color(Sty.TEXTE, 0.50), 5, Color(0, 0, 0, 0.65))
 			var fin := ""
 			for ev in enc.events:
 				if ev.get("type") == "closure" and ev["plat"] == pid and ev["revealed"] and not ev["cleared"]:
 					fin = "fermé jusqu'à " + fmt(float(ev["end"]))
 			if fin != "":
-				var haut := Vector2(Geo.PLAT_MID, r.position.y - 13)
+				var haut := Ob.p(Vector2(Geo.PLAT_MID, r.position.y)) - Vector2(0, 13)
 				Sty.texte_centre(self, Sty.mono(600), 13, haut, fin, Color(Sty.ROUGE, 0.30), 7, Color(Sty.ROUGE, 0.30))
 				Sty.texte_centre(self, Sty.mono(600), 13, haut, fin, Sty.ROUGE)
 			continue
@@ -639,7 +642,7 @@ func _dessiner_quais(sel, t: float) -> void:
 			if not occupe:
 				draw_colored_polygon(contour, Sty.POSTE_QUAI_ELIGIBLE.lerp(col, 0.14))
 				# la teinte recouvre le numéro peint par le plan : on le repose
-				Sty.texte_centre(self, Sty.sans(700), 24, r.get_center(), str(int(pid)), Sty.TEXTE)
+				Sty.texte_centre(self, Sty.sans(700), 24, Ob.p(r.get_center()), str(int(pid)), Sty.TEXTE)
 			var larg: float = 2.5 + 0.9 * p
 			Sty.pointille(self, contour, Color(col, 0.08 + 0.20 * p), larg + 8.0, 7, 5)
 			Sty.pointille(self, contour, col, larg, 7, 5)
@@ -657,7 +660,7 @@ func _dessiner_quais(sel, t: float) -> void:
 		# libre. Il se lit en même temps que le liseré d'occupation.
 		var promis = _train_promis(pid)
 		if promis != null:
-			var interieur := Sty.rect_arrondi(Rect2(r.position + Vector2(5, 5), r.size - Vector2(10, 10)), 6)
+			var interieur := Ob.trace(Sty.rect_arrondi(Rect2(r.position + Vector2(5, 5), r.size - Vector2(10, 10)), 6))
 			Sty.pointille(self, interieur, Color(String(G["dest_color"][promis.to])), 2.4, 6, 6, t * 10.9)
 
 
@@ -666,14 +669,14 @@ func _dessiner_itineraires() -> void:
 	for pid in enc.active_routes:
 		var t = enc.active_routes[pid]
 		var p: Dictionary = enc.paths[pid]
-		Sty.trait_halo(self, Geo.vers_vector2(p["xs"], p["ys"]), Color(String(G["dest_color"][t.to])), 5.0, 4.0)
+		Sty.trait_halo(self, Ob.trace(Geo.vers_vector2(p["xs"], p["ys"])), Color(String(G["dest_color"][t.to])), 5.0, 4.0)
 	# l'itinéraire PROMIS, en attente d'entrée : pointillé 10 8 à 55 %
 	for t in enc.trains:
 		if t.target != null and (t.state == Enc.S_WAITING or t.state == Enc.S_APPROACHING):
 			var pid := "in:%s:%d" % [t.from, int(t.target)]
 			if enc.paths.has(pid) and not enc.active_routes.has(pid):
 				var p: Dictionary = enc.paths[pid]
-				Sty.pointille(self, Geo.vers_vector2(p["xs"], p["ys"]),
+				Sty.pointille(self, Ob.trace(Geo.vers_vector2(p["xs"], p["ys"])),
 					Color(String(G["dest_color"][t.to]), 0.55), 5.0, 10, 8, 0.0, false)
 
 
@@ -806,9 +809,13 @@ func _dessiner_convois(sel, t: float) -> void:
 				var t1: float = float(i) + float(j + 1) / float(SOUS_CASES)
 				var a := _le_long_des_coupes(coupes, t0)
 				var b := _le_long_des_coupes(coupes, t1)
+				# LA CAISSE EST PROJETÉE PAR SES QUATRE COINS. La planche est
+				# une image vue de dessus ; sous une transformation affine elle
+				# devient un parallélogramme — c'est exactement ce qu'un toit
+				# devient vu de biais.
 				var quad := PackedVector2Array([
-					a["p"] - a["n"] * h * 0.5, b["p"] - b["n"] * h * 0.5,
-					b["p"] + b["n"] * h * 0.5, a["p"] + a["n"] * h * 0.5])
+					Ob.p(a["p"] - a["n"] * h * 0.5), Ob.p(b["p"] - b["n"] * h * 0.5),
+					Ob.p(b["p"] + b["n"] * h * 0.5), Ob.p(a["p"] + a["n"] * h * 0.5)])
 				var u0: float = float(j) / float(SOUS_CASES)
 				var u1: float = float(j + 1) / float(SOUS_CASES)
 				if tex != null:
@@ -844,8 +851,8 @@ func _dessiner_convois(sel, t: float) -> void:
 					var a := _le_long_des_coupes(coupes, float(i) + f0)
 					var b := _le_long_des_coupes(coupes, float(i) + f1)
 					var quad := PackedVector2Array([
-						a["p"] - a["n"] * h * 0.5, b["p"] - b["n"] * h * 0.5,
-						b["p"] + b["n"] * h * 0.5, a["p"] + a["n"] * h * 0.5])
+						Ob.p(a["p"] - a["n"] * h * 0.5), Ob.p(b["p"] - b["n"] * h * 0.5),
+						Ob.p(b["p"] + b["n"] * h * 0.5), Ob.p(a["p"] + a["n"] * h * 0.5)])
 					if tex != null:
 						draw_colored_polygon(quad, eteint, PackedVector2Array([
 							Vector2(f0, 0), Vector2(f1, 0), Vector2(f1, 1), Vector2(f0, 1)]), tex)
@@ -961,7 +968,10 @@ func _dessiner_signaux(t: float) -> void:
 		var tete := Vector2(float(pos[0]["x"]), float(pos[0]["y"]))
 		var dir: float = 1.0 if tete.x >= float(pos[1]["x"]) else -1.0
 		var k := Sty.UIK
-		var o := tete + Vector2(dir * (Geo.CAR_LEN / 2.0 + 14.0 * k), 2.0 * k)
+		# UN SIGNAL EST DEBOUT, ET LE RESTE. Un mât est vertical dans le monde :
+		# vu de biais il reste vertical à l'écran, seul son PIED se déplace avec
+		# le plan. On projette donc l'ancre, pas l'objet.
+		var o := Ob.p(tete + Vector2(dir * (Geo.CAR_LEN / 2.0 + 14.0 * k), 0.0)) + Vector2(0, 2.0 * k)
 		# le socle : un signal est boulonné au ballast, il ne flotte pas
 		draw_style_box(Sty.boite(Sty.POSTE_BALLAST, Color(Sty.POSTE_BORD, 0.45),
 			1.5 * k, max(1.0, 0.9 * k)), Rect2(o.x - 5.0 * k, o.y + 11.0 * k, 10.0 * k, 3.6 * k))
@@ -1053,7 +1063,9 @@ func _dessiner_badges(t: float) -> void:
 		# entre le bas de la pastille et le haut du quai — assez pour qu'elle
 		# paraisse flotter au-dessus plutôt que d'appartenir au convoi. À
 		# trente-deux il en reste douze : elle se pose dessus.
-		var centre := Vector2(float(tete["x"]), float(tete["y"]) - 32.0 * k)
+		# comme le signal : la pastille se tient DROITE au-dessus du convoi,
+		# c'est sa place qui suit le plan projeté.
+		var centre := Ob.p(Vector2(float(tete["x"]), float(tete["y"]))) - Vector2(0, 32.0 * k)
 		var r := Rect2(centre.x - large / 2.0, centre.y - 10.0 * k, large, 20.0 * k)
 		# un convoi encore à l'arrêt dont le retard court réclame un aiguillage :
 		# le badge clignote (en opacité seule).
@@ -1383,7 +1395,11 @@ func _unhandled_input(event: InputEvent) -> void:
 			return
 		if enc.ended or tuto == "accueil":
 			return
-		m -= decalage()          # du geste à l'écran au plan de la gare
+		# DU GESTE À L'ÉCRAN AU PLAN DE LA GARE, en deux temps : le décalage,
+		# puis l'INVERSE DE LA PROJECTION. C'est la seule chose que le doigt
+		# demande — toutes les zones de clic restent écrites dans le plan, et
+		# aucune n'a bougé d'une ligne.
+		m = Ob.inv(m - decalage())
 		# un convoi ?
 		for t in enc.trains:
 			if not positions.has(t.id):
@@ -1827,12 +1843,16 @@ func _rect_cible() -> Rect2:
 		if not positions.has(id) or positions[id].is_empty():
 			return Rect2()
 		var tete: Dictionary = positions[id][0]
-		return Rect2(Vector2(tete["x"] - Geo.CAR_LEN / 2.0, tete["y"] - Geo.CAR_H * Sty.UIK / 2.0) + d,
+		# LA CIBLE SUIT LE PLAN PROJETÉ. Un repère de tutoriel qui désigne à
+		# côté ne désigne rien : on projette le centre, et on garde un
+		# rectangle droit — le projecteur est un trou dans un voile d'écran.
+		var ct := Ob.p(Vector2(float(tete["x"]), float(tete["y"])))
+		return Rect2(ct - Vector2(Geo.CAR_LEN / 2.0, Geo.CAR_H * Sty.UIK / 2.0) + d,
 			Vector2(Geo.CAR_LEN, Geo.CAR_H * Sty.UIK))
 	if coach_cible.has("quai"):
 		for q in G["platforms"]:
 			if q["id"] == coach_cible["quai"]:
-				return Rect2(Vector2(Geo.PLAT_X1, float(q["cy"]) - Geo.PLAT_H / 2.0) + d,
+				return Rect2(Ob.p(Vector2(Geo.PLAT_X1, float(q["cy"]) - Geo.PLAT_H / 2.0)) + d,
 					Vector2(Geo.PLAT_LEN, Geo.PLAT_H))
 		return Rect2()
 	if coach_cible.has("hud"):
