@@ -696,12 +696,16 @@ func _dessiner_convois(sel, t: float) -> void:
 		# Ce qui disparaît vraiment, et il faut le dire : la RESPIRATION du
 		# convoi qui attend, qui était portée par la largeur de ce halo. Le
 		# badge d'heure la porte désormais seul.
-		# LE LISERÉ DU FRET, et lui seul. Sur un convoi de voyageurs la planche
-		# porte déjà son propre contour d'encre ; en doubler un second à la
-		# teinte de destination noyait le dessin. Sur un fret il reste épais et
-		# opaque : c'est LUI le signe distinctif, et il ne bouge pas.
-		if tr.freight:
-			draw_polyline(axe, Color(col, vie), h + 5.2 * k, true)
+		# LE LISERÉ DU FRET PART AUSSI. C'était le dernier halo, et il l'était
+		# bel et bien : une polyligne cinq unités plus large que la caisse, à la
+		# teinte de destination, qui débordait de tous côtés d'un train qui a
+		# déjà son contour d'encre.
+		#
+		# LE FRET RESTE POURTANT LE PLUS RECONNAISSABLE DES CONVOIS, et par trois
+		# marques qu'aucun autre ne porte : ses wagons sont GRIS quand sa machine
+		# garde la couleur de destination — un contraste qu'aucun train de
+		# voyageurs n'a — et il n'affiche AUCUNE heure de départ, parce qu'il
+		# n'en a pas. Le liseré était la quatrième façon de dire la même chose.
 
 		var coupes := _coupures(axe, k)
 		var case_i := 0
@@ -718,10 +722,23 @@ func _dessiner_convois(sel, t: float) -> void:
 			# les wagons sont gris : c'est elle qui annonce où il va
 			var teinte: Color = col if (case_i == 0 or not tr.freight) else Sty.FRET
 			var lavis := Color(teinte.lerp(Sty.PAPIER, 0.06), vie)
-			for j in element:
-				var quad := _case_quad(coupes, case_i + j, h)
-				var u0: float = float(j) / float(element)
-				var u1: float = float(j + 1) / float(element)
+			# TROIS FACETTES PAR CASE, ET NON UNE. Avec une seule, une voiture de
+			# deux cases n'avait qu'un COUDE en son milieu : elle traversait la
+			# courbe en deux segments droits, ce qui se lit comme une rigidité —
+			# « le mouvement ne paraît pas naturel » (Vincent, 9 septembre 2026).
+			# Les facettes suivent une courbe passant par les coupures, si bien
+			# qu'une caisse ÉPOUSE le virage au lieu de le couper à la corde.
+			var pas: int = element * SOUS_CASES
+			for j in pas:
+				var t0: float = float(case_i) + float(j) / float(SOUS_CASES)
+				var t1: float = float(case_i) + float(j + 1) / float(SOUS_CASES)
+				var a := _le_long_des_coupes(coupes, t0)
+				var b := _le_long_des_coupes(coupes, t1)
+				var quad := PackedVector2Array([
+					a["p"] - a["n"] * h * 0.5, b["p"] - b["n"] * h * 0.5,
+					b["p"] + b["n"] * h * 0.5, a["p"] + a["n"] * h * 0.5])
+				var u0: float = float(j) / float(pas)
+				var u1: float = float(j + 1) / float(pas)
 				if tex != null:
 					draw_colored_polygon(quad, lavis, PackedVector2Array([
 						Vector2(u0, 0), Vector2(u1, 0), Vector2(u1, 1), Vector2(u0, 1)]), tex)
@@ -741,8 +758,8 @@ func _dessiner_convois(sel, t: float) -> void:
 				var frac: float = clampf(plein * float(n) - float(i), 0.0, 1.0)
 				if frac >= 1.0:
 					continue
-				var a: Dictionary = _entre_coupures(coupes, i, frac)
-				var b: Dictionary = coupes[i + 1]
+				var a: Dictionary = _le_long_des_coupes(coupes, float(i) + frac)
+				var b: Dictionary = _le_long_des_coupes(coupes, float(i + 1))
 				draw_colored_polygon(PackedVector2Array([
 					a["p"] - a["n"] * h * 0.5, b["p"] - b["n"] * h * 0.5,
 					b["p"] + b["n"] * h * 0.5, a["p"] + a["n"] * h * 0.5]),
@@ -787,20 +804,39 @@ func _coupures(axe: PackedVector2Array, k: float) -> Array:
 	return out
 
 
-func _case_quad(coupes: Array, i: int, h: float) -> PackedVector2Array:
-	var a: Dictionary = coupes[i]
-	var b: Dictionary = coupes[i + 1]
-	return PackedVector2Array([
-		a["p"] - a["n"] * h * 0.5, b["p"] - b["n"] * h * 0.5,
-		b["p"] + b["n"] * h * 0.5, a["p"] + a["n"] * h * 0.5])
+## LE POINT ET LA NORMALE À UN ENDROIT QUELCONQUE DE LA RAME, l'indice étant
+## compté en cases : 0 au nez, 1 à la première coupure, 2,5 au milieu de la
+## troisième case. La position suit une spline de Catmull-Rom passant par les
+## coupures — c'est ce qui donne une COURBE là où les seules coupures ne
+## donnaient qu'une ligne brisée — et la normale se prend sur sa tangente, donc
+## au bon endroit et non à celui de la coupure la plus proche.
+const SOUS_CASES := 3
 
-
-func _entre_coupures(coupes: Array, i: int, f: float) -> Dictionary:
-	var a: Dictionary = coupes[i]
-	var b: Dictionary = coupes[i + 1]
-	var nrm: Vector2 = (a["n"] as Vector2).lerp(b["n"], f)
-	return {"p": (a["p"] as Vector2).lerp(b["p"], f),
-		"n": nrm.normalized() if nrm.length() > 1e-6 else a["n"]}
+func _le_long_des_coupes(coupes: Array, t: float) -> Dictionary:
+	var n := coupes.size()
+	var i: int = clampi(int(floor(t)), 0, n - 2)
+	var f: float = clampf(t - float(i), 0.0, 1.0)
+	var p0: Vector2 = coupes[max(0, i - 1)]["p"]
+	var p1: Vector2 = coupes[i]["p"]
+	var p2: Vector2 = coupes[i + 1]["p"]
+	var p3: Vector2 = coupes[min(n - 1, i + 2)]["p"]
+	# aux deux bouts, on prolonge par symétrie plutôt que de plafonner : sans
+	# quoi la spline s'aplatit et le nez de la rame redevient rigide
+	if i == 0:
+		p0 = p1 * 2.0 - p2
+	if i + 2 > n - 1:
+		p3 = p2 * 2.0 - p1
+	var f2 := f * f
+	var f3 := f2 * f
+	var p: Vector2 = 0.5 * (2.0 * p1 + (p2 - p0) * f
+		+ (2.0 * p0 - 5.0 * p1 + 4.0 * p2 - p3) * f2
+		+ (p3 - p0 + 3.0 * (p1 - p2)) * f3)
+	var d: Vector2 = 0.5 * ((p2 - p0) + (2.0 * p0 - 5.0 * p1 + 4.0 * p2 - p3) * 2.0 * f
+		+ (p3 - p0 + 3.0 * (p1 - p2)) * 3.0 * f2)
+	if d.length() < 1e-6:
+		d = p2 - p1
+	d = d.normalized() if d.length() > 1e-6 else Vector2.RIGHT
+	return {"p": p, "n": Vector2(-d.y, d.x)}
 
 
 func _tangente_de(axe: PackedVector2Array, i: int) -> Vector2:
