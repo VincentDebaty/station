@@ -667,25 +667,35 @@ func _dessiner_convois(sel, t: float) -> void:
 		# l'espacement du gril, l'étirer ferait se chevaucher les convois.
 		var h: float = Geo.CAR_H * k
 
-		# LE HALO D'ÉTAT, sous la rame : quatre nappes de plus en plus larges et
-		# transparentes. C'est le signal PRINCIPAL de sélection.
-		if choisi or tr.holding:
-			var teinte: Color = Color.WHITE if choisi else Sty.AMBRE
-			var opac: float = anneau if choisi else anneau * 0.9
-			for couche in [[16.0, 0.10], [10.0, 0.18], [5.5, 0.34], [2.5, 0.75]]:
-				draw_polyline(axe, Color(teinte, float(couche[1]) * opac),
-					h + float(couche[0]) * k, true)
-		# LE HALO DE DESTINATION EST UNE LUEUR, PAS UNE BANDE. Il venait d'une
-		# ombre de StyleBox, douce par nature ; porté par une seule polyligne
-		# large il redevenait un aplat rectangulaire, plus visible que le train
-		# lui-même — mesuré au premier portage. Trois nappes dégressives lui
-		# rendent son dégradé.
-		var vif: float = 1.0
+		# LA SÉLECTION EST UN CLIGNOTEMENT, PLUS UNE COURONNE. Une couronne
+		# blanche cernait la rame d'un liseré large ; sur une caisse peinte elle
+		# se lisait, sur un train DESSINÉ elle se lit comme une bavure autour du
+		# dessin. Le convoi choisi FOND ET REVIENT : le signal est porté par
+		# l'objet lui-même, pas par ce qui l'entoure, et rien ne peut le
+		# confondre avec le halo de destination.
+		var vie: float = 1.0
 		if choisi:
-			vif = 1.9
-		elif attend and not tr.freight:
-			vif = 1.0 + 0.6 * pret
-		for nappe in [[13.0, 0.07], [7.5, 0.11], [3.0, 0.16]]:
+			vie = 0.38 + 0.62 * (0.5 + 0.5 * sin(t * TAU / 0.9))
+		# LE CONVOI RETENU GARDE SA COURONNE, à l'ambre : c'est un autre état,
+		# il lui faut un autre signe. Sans quoi « choisi » et « retenu » se
+		# diraient de la même façon.
+		if tr.holding:
+			for couche in [[16.0, 0.10], [10.0, 0.18], [5.5, 0.34], [2.5, 0.75]]:
+				draw_polyline(axe, Color(Sty.AMBRE, float(couche[1]) * anneau * 0.9),
+					h + float(couche[0]) * k, true)
+		# LE HALO DE DESTINATION, POUR TOUS, ET D'ABORD POUR LE FRET. Je l'avais
+		# tellement adouci qu'il ne se voyait plus — et sur un fret, dont la
+		# caisse est grise, il est le seul aplat qui annonce où le convoi va :
+		# sans lui il se confondait avec ses voisins. Trois nappes dégressives
+		# pour garder le dégradé, mais à une intensité qui existe, et un quart
+		# de plus sur le fret, qui n'a que cela.
+		var vif: float = (1.25 if tr.freight else 1.0) * vie
+		if attend and not tr.freight:
+			vif *= 1.0 + 0.5 * pret
+		# CINQ NAPPES ET NON TROIS : à trois, l'escalier se voyait — trois
+		# rectangles emboîtés autour de la rame plutôt qu'une lueur. Le total
+		# d'encre est le même, réparti plus finement.
+		for nappe in [[17.0, 0.045], [12.5, 0.06], [8.5, 0.085], [5.0, 0.115], [2.0, 0.17]]:
 			draw_polyline(axe, Color(col, float(nappe[1]) * vif),
 				h + float(nappe[0]) * k, true)
 		# LE LISERÉ DU FRET, et lui seul. Sur un convoi de voyageurs la planche
@@ -693,7 +703,7 @@ func _dessiner_convois(sel, t: float) -> void:
 		# teinte de destination noyait le dessin. Sur un fret il reste épais et
 		# opaque : c'est LUI le signe distinctif, et il ne bouge pas.
 		if tr.freight:
-			draw_polyline(axe, col, h + 5.2 * k, true)
+			draw_polyline(axe, Color(col, vie), h + 5.2 * k, true)
 
 		var coupes := _coupures(axe, k)
 		var case_i := 0
@@ -709,7 +719,7 @@ func _dessiner_convois(sel, t: float) -> void:
 			# la machine garde la teinte de destination même sur un fret, dont
 			# les wagons sont gris : c'est elle qui annonce où il va
 			var teinte: Color = col if (case_i == 0 or not tr.freight) else Sty.FRET
-			var lavis := teinte.lerp(Sty.PAPIER, 0.06)
+			var lavis := Color(teinte.lerp(Sty.PAPIER, 0.06), vie)
 			for j in element:
 				var quad := _case_quad(coupes, case_i + j, h)
 				var u0: float = float(j) / float(element)
@@ -737,7 +747,8 @@ func _dessiner_convois(sel, t: float) -> void:
 				var b: Dictionary = coupes[i + 1]
 				draw_colored_polygon(PackedVector2Array([
 					a["p"] - a["n"] * h * 0.5, b["p"] - b["n"] * h * 0.5,
-					b["p"] + b["n"] * h * 0.5, a["p"] + a["n"] * h * 0.5]), Sty.MASQUE)
+					b["p"] + b["n"] * h * 0.5, a["p"] + a["n"] * h * 0.5]),
+					Color(Sty.MASQUE, Sty.MASQUE.a * vie))
 
 
 ## LA COMPOSITION D'UNE RAME : une machine sur une case, des voitures sur deux,
