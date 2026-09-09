@@ -126,19 +126,68 @@ func _ready() -> void:
 
 
 ## Un service commandé par l'application : la fiche, le ruban et sa carte.
+##
+## LE SERVICE SE PRÉPARE EN TROIS TEMPS, ET C'EST VOULU. Tout tenait ici, dans
+## un seul appel : la géométrie, le tirage de la journée, l'enclenchement, les
+## nœuds. Or le tirage prend UNE SECONDE sur Darlington et cinq et demie sur
+## Bruxelles-Midi — pendant lesquelles rien ne pouvait s'afficher, puisque le
+## fil principal était pris. « On a l'impression que cela bug » (Vincent, 9
+## septembre 2026), et ce n'était pas une impression : l'écran était gelé.
+##
+##   `commande()`  ce qu'il faut savoir — immédiat, sur le fil principal ;
+##   `preparer()`  le calcul lourd — PUR, sans un nœud, donc portable sur un
+##                 fil d'exécution (app.gd le fait) ;
+##   `installer()` les nœuds et l'état — sur le fil principal, immédiat.
+##
+## `demarrer` enchaîne les trois d'un coup : c'est le chemin de l'oracle, des
+## captures et du mode autonome, où personne ne regarde l'écran.
 func demarrer(f: Dictionary, r, cid: String) -> void:
-	fiche = f
-	ruban = r
-	carte_id = cid
-	fiche_jouee = ruban.fiche_de_service(fiche) if ruban != null else fiche
+	var cmd := commande(f, r, cid)
+	installer(cmd, preparer(cmd))
+
+
+## Ce qu'il faut savoir avant de préparer un service. Rien de lourd.
+func commande(f: Dictionary, r, cid: String) -> Dictionary:
+	var fj: Dictionary = r.fiche_de_service(f) if r != null else f
 	var g := OS.get_environment("STATION_GRAINE")
-	graine = int(g) if g != "" else int(Time.get_unix_time_from_system()) % 100000
 	var v := OS.get_environment("STATION_VITESSE")
-	vitesse = float(v) if v != "" else 1.0
+	return {"fiche": f, "ruban": r, "carte": cid, "jouee": fj,
+		"graine": int(g) if g != "" else int(Time.get_unix_time_from_system()) % 100000,
+		"vitesse": float(v) if v != "" else 1.0,
+		"seuils": r.seuils_de_service(f) if r != null else null}
+
+
+## LA PART LOURDE, ET ELLE NE TOUCHE À AUCUN NŒUD. C'est la condition pour
+## qu'elle parte sur un fil : la géométrie, la journée tirée et l'enclenchement
+## chargé sont des objets de données — `Enclenchement` n'est même pas un Node.
+## Rien ici ne lit ni n'écrit l'arbre de scène, la sauvegarde ou le style.
+static func preparer(cmd: Dictionary) -> Dictionary:
+	var g: Dictionary = Geo.construire(cmd["fiche"])
+	var t0 := Time.get_ticks_msec()
+	var day: Dictionary = Jour.new(g, cmd["jouee"], Has.new(int(cmd["graine"]))).generate_schedule()
+	var ms := Time.get_ticks_msec() - t0
+	var e = Enc.new(g, cmd["jouee"])
+	if cmd["seuils"] != null:
+		e.seuils = cmd["seuils"]
+	e.charger(day)
+	return {"G": g, "enc": e, "ms": ms}
+
+
+## Les nœuds et l'état. Immédiat : le calcul est déjà fait.
+func installer(cmd: Dictionary, pret: Dictionary) -> void:
+	fiche = cmd["fiche"]
+	ruban = cmd["ruban"]
+	carte_id = cmd["carte"]
+	fiche_jouee = cmd["jouee"]
+	graine = int(cmd["graine"])
+	vitesse = float(cmd["vitesse"])
 	auto = OS.get_environment("STATION_AUTO") != ""
 	pause = false
 	retour_lance = false
-	G = Geo.construire(fiche)
+	fin_enregistree = false
+	G = pret["G"]
+	enc = pret["enc"]
+	duree_generation_ms = int(pret["ms"])
 	if plan != null:
 		remove_child(plan)
 		plan.queue_free()
@@ -148,7 +197,8 @@ func demarrer(f: Dictionary, r, cid: String) -> void:
 	plan.show_behind_parent = true
 	add_child(plan)
 	plan.poser(fiche, G)
-	_nouvelle_journee()
+	print("%s · graine %d — %d convois, journée tirée en %d ms · %s"
+		% [fiche.get("id", "?"), graine, enc.trains.size(), duree_generation_ms, _niveau_texte()])
 	_tuto_demarrer()
 
 
@@ -1554,6 +1604,12 @@ func _fermer_confirmation(accepter: bool) -> void:
 	if not accepter:
 		return
 	if conf_quoi == "recommencer":
+		# RECOMMENCER PASSE PAR L'APPLICATION, qui sait montrer l'écran
+		# d'attente pendant que la journée se tire : c'est le même geste que
+		# « Jouer », et il gelait l'écran de la même seconde.
+		if app != null:
+			app.jouer(String(fiche.get("id", "")))
+			return
 		graine = (graine * 7 + 13) % 100000
 		pause = false
 		gel = false

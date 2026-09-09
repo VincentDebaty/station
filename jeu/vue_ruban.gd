@@ -1628,7 +1628,7 @@ func _deselectionner() -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if ruban == null or not visible:
 		return
-	if app != null and app.en_glissement():
+	if app != null and (app.en_glissement() or app.en_attente()):
 		return
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		var m: Vector2 = event.position

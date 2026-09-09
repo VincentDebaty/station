@@ -829,6 +829,37 @@ Il suit une règle : **ce qui se vérifie tout seul d'abord**.
    séparées coûtaient encore vingt images par seconde à elles seules. Mesuré à
    73 contre 78, pour un mode qui ne sert qu'à la photographie.
 
+   **PRENDRE UN SERVICE NE GÈLE PLUS L'ÉCRAN** (même jour). « Quand je clique
+   sur le bouton Jouer, j'ai une seconde d'attente avant que le jeu commence,
+   il faudrait montrer que cela charge. On a l'impression que cela bug »
+   (Vincent) — et ce n'était pas une impression : le tirage d'une journée, la
+   seule opération lourde du jeu, tenait sur le fil principal. Une seconde sur
+   Darlington, cinq et demie sur Bruxelles-Midi, pendant lesquelles AUCUNE
+   image ne pouvait s'afficher. C'est aussi pourquoi une pancarte n'aurait rien
+   réglé : un écran gelé se lit comme un plantage, animé ou non.
+
+   `demarrer` se coupe donc en trois, et la coupure est la vraie affaire :
+   `commande()` dit ce qu'il faut savoir (immédiat) ; `preparer()` fait le
+   calcul lourd — géométrie, journée, enclenchement — et ne touche à AUCUN
+   nœud, ce qui est la condition pour partir sur un `Thread` ; `installer()`
+   pose les nœuds et l'état au retour. `demarrer` enchaîne les trois d'un coup
+   pour l'oracle, les captures et le mode autonome, où personne ne regarde.
+   `STATION_JOUER=1` prend le même chemin pressé : un fil ferait photographier
+   un écran d'attente.
+
+   `jeu/attente.gd` est ce qu'on regarde pendant : une `CanvasLayer` au-dessus
+   de tout, sur le fond du POSTE — on va vers le poste, arriver sur la même
+   couleur fait de l'attente le début du service au lieu d'un écran de plus.
+   Le convoi ne bouge pas, c'est la voie qui défile : le regard reste sur la
+   machine, la vitesse se lit aux traverses, et le nom de la gare tient sa
+   place dessous. Les planches de véhicules sont celles du jeu.
+
+   Deux garde-fous. Un écran d'attente qui CLIGNOTE est pire que pas d'écran :
+   une petite gare se tire en 160 ms sur un Mac. Il ne s'ouvre donc qu'au-delà
+   de 140 ms, et une fois ouvert se tient 650 ms au moins. Et le fil se rejoint
+   à la fermeture (`NOTIFICATION_WM_CLOSE_REQUEST`), sans quoi le moteur aboie
+   — et iOS plante à la sortie.
+
    `STATION_REMISE=<étoiles>[,diamant]` rejoue la remise sur la gare courante,
    sans service et sans rien écrire : le joueur scripté n'a jamais fait de
    sans-faute, et sans ce crochet le deuxième temps ne se vérifierait qu'à la

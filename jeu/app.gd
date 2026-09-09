@@ -22,6 +22,7 @@ const VueJeu := preload("res://jeu/vue_jeu.gd")
 const Pilote := preload("res://jeu/pilote.gd")
 const Cap := preload("res://jeu/capture.gd")
 const Sty := preload("res://jeu/style.gd")
+const Attente := preload("res://jeu/attente.gd")
 
 var ruban = null
 var carte_id := ""
@@ -30,6 +31,16 @@ var vue_jeu: Node2D
 var vue_cartes: Control
 var porte_cartes: Node2D     ## le porteur des cartes, celui qui glisse
 var vue := ""
+
+# --- LE SERVICE QUI SE PRÉPARE, PENDANT QU'ON REGARDE ROULER UN TRAIN -------
+var attente: CanvasLayer     ## l'écran d'attente, au-dessus de tout
+var fil: Thread              ## le tirage de la journée, hors du fil principal
+var fil_cmd := {}            ## la commande qu'il prépare
+var fil_ville := ""
+var fil_depuis := 0
+
+const SEUIL_ATTENTE := 0.14  ## en deçà, l'écran d'attente clignoterait
+const MINI_ATTENTE := 0.65   ## une fois ouvert, il se tient au moins ce temps
 
 
 func _ready() -> void:
@@ -51,6 +62,8 @@ func _ready() -> void:
 	vue_jeu.autonome = false
 	vue_jeu.app = self
 	add_child(vue_jeu)
+	attente = Attente.new()
+	add_child(attente)
 	charger_carte(String(Sauvegarde.get_carte_courante()))
 	montrer("ruban")
 	if OS.get_environment("STATION_VUE") == "cartes":
@@ -59,9 +72,18 @@ func _ready() -> void:
 	if OS.get_environment("STATION_JOUER") != "":
 		var gc: String = ruban.gare_courante()
 		if gc != "":
-			jouer(gc)
+			jouer(gc, true)
 	Pilote.eventuel(self)
 	Cap.eventuelle(self)
+
+
+## UN FIL SE REJOINT TOUJOURS. Quitter l'application en laissant un Thread
+## vivant fait aboyer le moteur — et sur iOS, plante à la sortie.
+func _notification(quoi: int) -> void:
+	if quoi == NOTIFICATION_WM_CLOSE_REQUEST or quoi == NOTIFICATION_PREDELETE:
+		if fil != null and fil.is_started():
+			fil.wait_to_finish()
+			fil = null
 
 
 ## Changer de carte, c'est changer de monde : la progression de l'ancienne
@@ -173,6 +195,7 @@ func _glisser(de: CanvasItem, vers: CanvasItem, nom: String, sens: float) -> voi
 
 
 func _process(delta: float) -> void:
+	_suivre_le_fil()
 	if appar_t >= 0.0:
 		appar_t = min(1.0, appar_t + delta / APPARITION)
 		_poser_apparition(ease(appar_t, -1.8))
@@ -226,15 +249,73 @@ func capturer() -> void:
 
 
 # --- le service ---------------------------------------------------------------------
-func jouer(id: String) -> void:
-	if not ruban.est_tenue(id):
+## PRENDRE UN SERVICE NE GÈLE PLUS L'ÉCRAN. Le tirage d'une journée coûte une
+## seconde sur Darlington et cinq et demie sur Bruxelles-Midi, et il tenait sur
+## le fil principal : entre le doigt sur « Jouer » et la première image, rien
+## ne bougeait — « on a l'impression que cela bug » (Vincent, 9 septembre
+## 2026). Il part maintenant sur un FIL D'EXÉCUTION, et l'écran d'attente
+## tourne pendant ce temps. C'est la seule façon d'animer quoi que ce soit :
+## une pancarte immobile sur un écran gelé se lit encore comme un plantage.
+##
+## Ce qui part sur le fil est PUR — géométrie, journée, enclenchement, aucun
+## nœud (vue_jeu.preparer). Ce qui touche à l'arbre de scène attend le retour.
+## `presse` : préparer sur place, sans écran d'attente. C'est ce que demande
+## `STATION_JOUER=1` — on ouvre l'application DANS le service, pour une capture
+## ou une mesure, et le service doit être prêt au retour de l'appel. Le fil
+## ferait photographier un train qui roule à vide.
+func jouer(id: String, presse: bool = false) -> void:
+	if fil != null or not ruban.est_tenue(id):
 		return
 	var f := Donnees.fiche(id)
 	if f.is_empty():
 		return
-	vue_jeu.demarrer(f, ruban, carte_id)
+	fil_cmd = vue_jeu.commande(f, ruban, carte_id)
+	if presse:
+		_prendre_le_service(VueJeu.preparer(fil_cmd))
+		return
+	fil_ville = vue_ruban.ville_de(id)
+	fil_depuis = Time.get_ticks_msec()
+	fil = Thread.new()
+	fil.start(VueJeu.preparer.bind(fil_cmd))
+
+
+## Vrai tant qu'un service se prépare : les écrans dessous n'écoutent pas —
+## un doigt tombé sur la carte pendant l'attente ne doit pas choisir une gare
+## qu'on ne verra jamais.
+func en_attente() -> bool:
+	return fil != null
+
+
+func _prendre_le_service(pret: Dictionary) -> void:
+	vue_jeu.installer(fil_cmd, pret)
+	fil_cmd = {}
+	attente.fermer()
 	montrer("jeu")
 	_apparaitre(vue_jeu, 1.10)
+
+
+## Le fil ne prévient pas : on le cueille dès qu'il a fini. `is_alive` reste
+## vrai tant que la fonction tourne ; `wait_to_finish` rend son résultat et
+## libère le fil.
+## UN ÉCRAN D'ATTENTE QUI CLIGNOTE EST PIRE QUE PAS D'ÉCRAN DU TOUT. Une
+## petite gare se tire en cent soixante millisecondes sur un Mac : y faire
+## passer un train une sixième de seconde donnerait un sursaut, pas une
+## information. On ne l'ouvre donc qu'au-delà du SEUIL, et une fois ouvert on
+## le tient au moins le temps du MINIMUM — la moitié du désagrément d'une
+## attente, c'est de ne pas savoir si elle a commencé.
+func _suivre_le_fil() -> void:
+	if fil == null:
+		return
+	var ecoule: float = (Time.get_ticks_msec() - fil_depuis) / 1000.0
+	if not attente.visible and ecoule >= SEUIL_ATTENTE and fil.is_alive():
+		attente.ouvrir(fil_ville)
+	if fil.is_alive():
+		return
+	if attente.visible and ecoule < SEUIL_ATTENTE + MINI_ATTENTE:
+		return
+	var pret: Dictionary = fil.wait_to_finish()
+	fil = null
+	_prendre_le_service(pret)
 
 
 ## Le jeu rend la main avec son relevé et les médailles décrochées.
