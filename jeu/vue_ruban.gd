@@ -1030,10 +1030,15 @@ func _draw() -> void:
 		var xt: float = plaque.position.x + float(m["pad"])
 		var w: float = m["w"]
 		Sty.texte_centre(self, police, int(m["taille"]), Vector2(xt + w / 2, cy), String(m["nom"]), encre)
-		if String(m["suffixe"]) != "":
+		if m["dia"]:
+			# la même pierre que le vol, le sceau et la barre — on ne doit pas
+			# pouvoir croire qu'il y en a deux
+			var hg: float = float(m["taille"]) * 1.15
+			tailler_gemme(self, Vector2(xt + w + 5 * kk + float(m["ws"]) / 2, cy - hg * 0.08), hg, 1.0)
+		elif String(m["suffixe"]) != "":
 			Sty.texte_centre(self, police, int(m["taille"]),
 				Vector2(xt + w + 5 * kk + float(m["ws"]) / 2, cy), String(m["suffixe"]),
-				DIAMANT if m["dia"] else Sty.LAITON_CLAIR)
+				Sty.LAITON_CLAIR)
 		# une gare qu'on ne peut pas encore jouer porte son cadenas
 		if not m["ouverte"]:
 			# la place réservée au cadenas est du côté opposé au point : une
@@ -1112,7 +1117,15 @@ func _mesure_plaque(id: String) -> Dictionary:
 	var st: int = Rub.etoiles_de(prog)
 	var dia: bool = Rec.est_diamant(prog)
 	var suffixe := "◆" if dia else ("★".repeat(st) if st > 0 else "")
-	var ws: float = police.get_string_size(suffixe, HORIZONTAL_ALIGNMENT_LEFT, -1, taille).x if suffixe != "" else 0.0
+	# LA PIERRE SE MESURE COMME CE QU'ELLE EST : un dessin, pas un glyphe. Le
+	# « ◆ » de Cormorant fait à peine le tiers d'une capitale — « Newport · »,
+	# un point bleu à côté du nom (Vincent, 10 septembre 2026). La pierre prend
+	# la hauteur d'une capitale et un peu plus, comme les étoiles d'à côté.
+	var ws: float
+	if dia:
+		ws = float(taille) * 1.15 * 0.86
+	else:
+		ws = police.get_string_size(suffixe, HORIZONTAL_ALIGNMENT_LEFT, -1, taille).x if suffixe != "" else 0.0
 	var pad := 7.0 * k
 	var large: float = w + (ws + 5.0 * k if ws > 0.0 else 0.0) + 2.0 * pad
 	return {"etat": etat, "ouverte": ouverte, "fin": fin, "nom": nom, "taille": taille,
@@ -2286,7 +2299,10 @@ func _pastille_gemme(n: int) -> Control:
 	p.add_theme_stylebox_override("panel", st)
 	var h := HBoxContainer.new()
 	h.add_theme_constant_override("separation", int(round(5 * k)))
-	var pierre := Gemme.new(self, 17.0 * k)
+	# TREIZE ET NON DIX-SEPT : « un peu trop grand dans la top bar » (Vincent,
+	# 10 septembre 2026). À dix-sept la pierre dépassait la hauteur des
+	# chiffres de ses voisines ; à treize elle s'aligne sur « 154 cr » et « 94 ».
+	var pierre := Gemme.new(self, 13.0 * k)
 	pierre.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	h.add_child(pierre)
 	var l := _label(str(n), 13, DIAMANT, true, false)
