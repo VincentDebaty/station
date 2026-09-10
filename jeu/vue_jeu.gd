@@ -1052,9 +1052,31 @@ func _cadran(centre: Vector2, col: Color, k: float = 1.0) -> void:
 ## lieu de disparaître dessous ; et les noms de portail, montés avec leur
 ## nouvelle taille, ne la rencontrent plus que de quelques unités. Elle suit sa
 ## tête, à hauteur constante, et rien d'autre.
+## LA PASTILLE LA PLUS URGENTE PASSE DEVANT.
+##
+## Deux convois qui se suivent sur une voie d'approche portent leurs heures à
+## la même hauteur, et à quelques unités d'écart : celle de derrière recouvrait
+## celle de devant, c'est-à-dire que la seule qui commande un geste TOUT DE
+## SUITE se retrouvait cachée par celle qui peut attendre. « Il faut trouver un
+## moyen pour que l'heure du second train soit décalée ou derrière le premier »
+## (Vincent, 10 septembre 2026).
+##
+## DÉCALER, JE L'AI DÉJÀ ESSAYÉ, ET IL L'A REFUSÉ — c'était le 9 septembre :
+## un solveur qui écartait les pastilles à chaque image les faisait glisser par
+## rapport à leur convoi, « elle doit suivre le même mouvement que le convoi ».
+## L'ordre de dessin, lui, ne déplace RIEN : chaque pastille reste exactement
+## au-dessus de sa machine, seule la superposition change.
+##
+## On trie donc par heure de départ DÉCROISSANTE, si bien que la plus proche
+## dans le temps est peinte en dernier, donc au-dessus. Un convoi en retard a
+## une heure de départ passée : il est le plus urgent de tous, et il ressort
+## sans qu'on ait à le dire. Le tri porte sur `dep`, qui ne change jamais — la
+## superposition est donc stable elle aussi.
 func _dessiner_badges(t: float) -> void:
 	var clign := 0.22 + 0.78 * (0.5 + 0.5 * sin(t * TAU / 0.9))   # badge-blink
-	for tr in enc.trains:
+	var ordre: Array = enc.trains.duplicate()
+	ordre.sort_custom(func(a, b): return a.dep > b.dep)
+	for tr in ordre:
 		if not positions.has(tr.id):
 			continue
 		# jamais pour le fret : ce qui le distingue, c'est justement l'absence
@@ -1240,9 +1262,19 @@ func _dessiner_hud(t: float) -> void:
 	draw_string(mono, Vector2(ch.position.x + 14.0 * k + w_h + 9.0 * k, base), txt_r,
 		HORIZONTAL_ALIGNMENT_LEFT, -1, ti.call(14), col_r)
 	# la jauge : l'horloge se remplit à mesure que les convois quittent le quai
+	# LA JAUGE COMPTE CE QUI A QUITTÉ LE QUAI, PAS CE QUI A QUITTÉ L'ÉCRAN.
+	# Elle ne comptait que les convois à l'état DONE — c'est-à-dire ceux qui
+	# sont sortis du cadre, une bonne seconde après leur départ. Elle avançait
+	# donc avec un temps de retard sur le geste du joueur : « dès qu'un train
+	# quitte le quai, la barre progresse » (Vincent, 10 septembre 2026), et
+	# c'est bien ce qu'une jauge de service doit dire — le travail est fait à
+	# l'instant où l'itinéraire de sortie est accordé, pas quand le dernier
+	# wagon disparaît. Le transit d'un fret compte pour la même raison : le
+	# routage EST tout son service.
 	var partis := 0
 	for tr in enc.trains:
-		if tr.state == Enc.S_DONE:
+		if tr.state == Enc.S_DONE or tr.state == Enc.S_MOVING_OUT \
+				or tr.state == Enc.S_MOVING_THROUGH:
 			partis += 1
 	var part: float = float(partis) / float(max(1, enc.trains.size()))
 	var jauge := Rect2(ch.position.x + 10.0 * k, ch.end.y - 7.0 * k, ch.size.x - 20.0 * k, 3.0 * k)
