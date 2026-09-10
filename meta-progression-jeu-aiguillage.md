@@ -538,12 +538,16 @@ supérieures : zone entièrement dorée = célébration, carte dorée = titre.
 C'est exactement l'ancien « rang de ligne », appliqué au chapitre : le code de
 `js/recompense.js` change de vocabulaire, pas de calcul.
 
-### 6.3 Grades (compte, toutes cartes confondues) — inchangé
+### 6.3 Grades (compte, toutes cartes confondues)
 Le grade suit le **total d'étoiles** cumulées sur toutes les cartes. Purement
-honorifique (titre, livrée), jamais bloquant. Échelle : Aiguilleur stagiaire 0 ·
-Aiguilleur 25 · Chef de quai 75 · Chef de gare 150 · Chef de ligne 300 ·
-Régulateur 600 · Inspecteur 1 000 · Directeur régional 1 600 · Directeur de
-réseau 2 400 · Légende du rail 3 500.
+honorifique (titre, livrée), jamais bloquant. **Cinquante crans** depuis le
+10 septembre 2026 (« il y aura de nombreuses cartes à terme », Vincent) : la
+table vit dans `jeu/recompense.gd` et `js/catalog.js` (`GRADES`), d'Apprenti
+aiguilleur (0) à Légende du rail (7 370 ★), sur une courbe presque
+quadratique — 8, 20, 40, 65, 95… — pour que le premier cran tombe après trois
+gares et que l'Europe en or mène au dix-septième. Le grade se touche dans la
+barre : il déroule l'échelle entière, avec un badge numéroté par cran. Rien
+n'est stocké, changer l'échelle ne coûte aucune migration.
 
 ### 6.4 Médailles (déduites)
 Familles : *Accumulation* (paliers d'étoiles, diamants, gares, chapitres),

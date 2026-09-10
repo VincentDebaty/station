@@ -2605,14 +2605,25 @@ func _ouvrir_grades() -> void:
 	var courant: int = int(g["i"])
 	var largeur: float = 300.0 * k
 
+	# LE CADRE EST SUR LE CONTENEUR DE DÉFILEMENT, pas sur le contenu : sinon
+	# il défile avec les lignes, et le panneau perd son bord en haut dès qu'on
+	# le fait glisser. Le contenu, lui, n'a qu'une marge.
 	var p := PanelContainer.new()
 	var st := Sty.boite(Sty.BOIS_CLAIR, Color(Sty.LAITON, 0.60), Sty.R * k, Sty.epaisseur(k), 10.0 * k, Color(0, 0, 0, 0.45))
 	st.set_content_margin_all(12 * k)
-	p.add_theme_stylebox_override("panel", st)
-	p.mouse_filter = Control.MOUSE_FILTER_STOP
+	var vide := StyleBoxEmpty.new()
+	vide.set_content_margin_all(2 * k)
+	p.add_theme_stylebox_override("panel", vide)
+	# PASS, PAS STOP : un enfant en STOP arrête la remontée du geste vers ses
+	# parents, et le conteneur de défilement ne recevait jamais le doigt —
+	# « le scroll vertical ne fonctionne pas » (Vincent, 10 septembre 2026).
+	# C'est le ScrollContainer, en STOP par défaut, qui garde le geste pour lui
+	# et l'empêche d'atteindre la carte.
+	p.mouse_filter = Control.MOUSE_FILTER_PASS
 	var v := VBoxContainer.new()
 	v.add_theme_constant_override("separation", int(round(4 * k)))
 	p.add_child(v)
+	var plaque_courante: Control = null
 
 	var tete := HBoxContainer.new()
 	var titre := _label("Tes grades", 12, MUET, true, false)
@@ -2665,6 +2676,7 @@ func _ouvrir_grades() -> void:
 			pv.add_child(_label(dit, 11, ACCENT, false, false))
 			plaque.add_child(pv)
 			v.add_child(plaque)
+			plaque_courante = plaque
 		else:
 			var m := MarginContainer.new()
 			m.add_theme_constant_override("margin_left", int(round(8 * k)))
@@ -2678,6 +2690,7 @@ func _ouvrir_grades() -> void:
 	var haut: float = hauteur_barre() + 4.0 * k
 	var dispo: float = ecran.y - haut - Sty.marges["bas"] - 10.0 * k
 	var sc := ScrollContainer.new()
+	sc.add_theme_stylebox_override("panel", st)
 	sc.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	sc.custom_minimum_size = Vector2(largeur, 0)
 	sc.add_child(p)
@@ -2692,6 +2705,13 @@ func _ouvrir_grades() -> void:
 			return
 		var h_contenu: float = p.get_combined_minimum_size().y
 		sc.size = Vector2(largeur, minf(h_contenu, dispo))
+		# et l'on s'ouvre SUR le grade courant : cinquante crans ne tiennent
+		# pas à l'écran, c'est le sien qu'on vient voir
+		if plaque_courante != null and is_instance_valid(plaque_courante):
+			(func() -> void:
+				if is_instance_valid(sc) and is_instance_valid(plaque_courante):
+					sc.scroll_vertical = int(maxf(0.0, plaque_courante.position.y - 40.0 * k))
+			).call_deferred()
 	).call_deferred()
 	# IL SE DÉROULE : depuis le haut, en un cinquième de seconde
 	sc.pivot_offset = Vector2(largeur, 0)
@@ -2895,19 +2915,73 @@ class Badge extends Control:
 		var r := diam / 2.0
 		var f: Font = Sty.titre(700)
 		var ts: int = int(round(diam * 0.58))
+		var col_texte: Color
 		match etat:
 			"acquis":
 				draw_circle(c, r, Sty.LAITON)
 				draw_arc(c, r, 0.0, TAU, 32, Color(Sty.LAITON_CLAIR, 0.9), maxf(1.0, diam * 0.07), true)
-				Sty.texte_centre(self, f, ts, c, str(numero), Sty.BOIS)
+				col_texte = Sty.BOIS
 			"courant":
 				draw_circle(c, r, Sty.SARCELLE)
 				draw_arc(c, r, 0.0, TAU, 32, Sty.LAITON_CLAIR, maxf(1.0, diam * 0.10), true)
-				Sty.texte_centre(self, f, ts, c, str(numero), Sty.PAPIER)
+				col_texte = Sty.PAPIER
 			_:
 				draw_circle(c, r, Color(Sty.BOIS, 0.6))
 				draw_arc(c, r, 0.0, TAU, 32, Color(Sty.LAITON, 0.45), maxf(1.0, diam * 0.07), true)
-				Sty.texte_centre(self, f, ts, c, str(numero), Color(Sty.PAPIER, 0.45))
+				col_texte = Color(Sty.PAPIER, 0.45)
+		# LE CHIFFRE SE CENTRE SUR SES CAPITALES, pas sur la boîte de la police :
+		# centré sur ascendante et descendante, il remontait d'un cran visible
+		# (« le chiffre n'est pas bien centré verticalement », Vincent,
+		# 10 septembre 2026). Un chiffre n'a pas de descendante : sa ligne de
+		# base se pose à mi-hauteur de capitale sous le centre.
+		var texte := str(numero)
+		var w: float = f.get_string_size(texte, HORIZONTAL_ALIGNMENT_LEFT, -1, ts).x
+		draw_string(f, Vector2(c.x - w / 2.0, c.y + f.get_ascent(ts) * 0.36), texte,
+			HORIZONTAL_ALIGNMENT_LEFT, -1, ts, col_texte)
+
+
+## LA JAUGE D'UN CHAPITRE, DESSINÉE : un cran par gare. Plein pour une gare
+## faite, un losange pour un sans-faute, un anneau à point pour la prochaine,
+## un anneau en pointillé pour une gare payée, un anneau creux pour ce qui
+## vient. Aucun glyphe : la police de l'iPhone n'a pas le rond creux.
+class Crans extends Control:
+	var etats: Array = []
+	var d := 8.0
+	var col := Color.WHITE
+	var col_dia := Color.WHITE
+
+	func _init(e: Array, diam: float, c: Color, cd: Color) -> void:
+		etats = e
+		d = diam
+		col = c
+		col_dia = cd
+		custom_minimum_size = Vector2(float(e.size()) * d * 1.6, d * 1.4)
+		mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+	func _draw() -> void:
+		var pas := d * 1.6
+		var cy := size.y / 2.0
+		var ep := maxf(1.0, d * 0.14)
+		var r := d * 0.5
+		for i in etats.size():
+			var c := Vector2(d * 0.8 + float(i) * pas, cy)
+			match etats[i]:
+				"courant":
+					draw_arc(c, r, 0.0, TAU, 28, col, ep, true)
+					draw_circle(c, r * 0.5, col)
+				"diamant":
+					var rd := r * 1.15
+					draw_colored_polygon(PackedVector2Array([c + Vector2(0, -rd), c + Vector2(rd * 0.85, 0),
+						c + Vector2(0, rd), c + Vector2(-rd * 0.85, 0)]), col_dia)
+					draw_line(c + Vector2(-rd * 0.85, 0), c + Vector2(rd * 0.85, 0), Color(1, 1, 1, 0.55), maxf(1.0, ep * 0.6), true)
+				"fait":
+					draw_circle(c, r, col)
+				"passee":
+					for j in range(6):
+						var a0: float = TAU * float(j) / 6.0
+						draw_arc(c, r, a0, a0 + TAU / 12.0, 6, col, ep, true)
+				_:
+					draw_arc(c, r, 0.0, TAU, 28, Color(col, 0.9), ep, true)
 
 
 class Vol extends Node2D:
@@ -3296,28 +3370,40 @@ func _titre_chapitre(ch: Dictionary) -> Control:
 	return v
 
 
-## La jauge du chapitre : un cran par gare, l'état de chacune.
-func _crans_du_chapitre(ch: Dictionary) -> Control:
-	var crans := ""
-	var faits := 0
+## LES CRANS SE DESSINENT, ILS NE S'ÉCRIVENT PLUS. La jauge était une chaîne de
+## glyphes — ◉ ◆ ● ◌ ○ — et le rond creux n'existe pas dans la police de
+## l'iPhone : « de drôles de caractères dans la bande » (Vincent,
+## 10 septembre 2026), des cases à la place des gares à venir. C'est la même
+## leçon que le drapeau et la mire : un glyphe qu'on n'embarque pas n'est pas
+## là. Un cran par gare, dans l'ordre du rail, et cinq états.
+func _etats_du_chapitre(ch: Dictionary) -> Array:
+	var etats: Array = []
 	for g in ch["gares"]:
 		var p: Dictionary = ruban.progression_de(g)
+		if g == prochaine:
+			etats.append("courant")
+		elif Rec.est_diamant(p):
+			etats.append("diamant")
+		elif ruban.est_faite(g):
+			etats.append("fait")
+		elif ruban.est_passee(g):
+			etats.append("passee")
+		else:
+			etats.append("avenir")
+	return etats
+
+
+## La jauge du chapitre : un cran par gare, l'état de chacune.
+func _crans_du_chapitre(ch: Dictionary) -> Control:
+	var faits := 0
+	for g in ch["gares"]:
 		if ruban.est_faite(g):
 			faits += 1
-		if g == prochaine:
-			crans += "◉"
-		elif Rec.est_diamant(p):
-			crans += "◆"
-		elif ruban.est_faite(g):
-			crans += "●"
-		elif ruban.est_passee(g):
-			crans += "◌"
-		else:
-			crans += "○"
 	var h := HBoxContainer.new()
 	h.add_theme_constant_override("separation", int(round(8 * Sty.HUD_K)))
-	var lc := _label(crans, 13, couleur_de_zone(ch["zone"]).lightened(0.3), false, false)
-	_cerner(lc, 4)
+	var lc := Crans.new(_etats_du_chapitre(ch), 8.0 * Sty.HUD_K,
+		couleur_de_zone(ch["zone"]).lightened(0.3), DIAMANT)
+	lc.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	h.add_child(lc)
 	var rang: Dictionary = Rec.rang_de_chapitre(ruban, ch)
 	var droite: Label
@@ -3354,27 +3440,16 @@ func _entete_chapitre() -> Control:
 		if z.get("id") == ch["zone"]:
 			zone_nom = String(z.get("nom", zone_nom))
 	v.add_child(_label(zone_nom, 13, col))
-	# la jauge du chapitre : un cran par gare
-	var crans := ""
+	# la jauge du chapitre : un cran par gare, dessiné (voir _etats_du_chapitre)
 	var faits := 0
 	for g in ch["gares"]:
-		var p: Dictionary = ruban.progression_de(g)
 		if ruban.est_faite(g):
 			faits += 1
-		if g == prochaine:
-			crans += "◉"
-		elif Rec.est_diamant(p):
-			crans += "◆"
-		elif ruban.est_faite(g):
-			crans += "●"
-		elif ruban.est_passee(g):
-			crans += "◌"
-		else:
-			crans += "○"
 	var h := HBoxContainer.new()
 	h.add_theme_constant_override("separation", int(round(10 * Sty.HUD_K)))
-	var lc := _label(crans, 14, col, false, false)
+	var lc := Crans.new(_etats_du_chapitre(ch), 8.5 * Sty.HUD_K, col, DIAMANT)
 	lc.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	lc.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	h.add_child(lc)
 	var rang: Dictionary = Rec.rang_de_chapitre(ruban, ch)
 	if not rang.is_empty() and rang["id"] != "ouverte" and fete.is_empty():
@@ -3483,7 +3558,9 @@ func _cartouche(id: String) -> Control:
 	var grille := HBoxContainer.new()
 	grille.add_theme_constant_override("separation", int(round(8 * k)))
 	for trio in [["Quais", str(quais), "loco"], ["Directions", str(dirs), "aiguille"],
-			["Difficulté", _pips(d), ""], ["Pour 3 ★", "%d min" % int(seuils["trois"]), "horloge"]]:
+			# « +7 min », pas « 7 min » : sans le signe, on lit une durée —
+			# c'est le RETARD toléré (Vincent, 10 septembre 2026)
+			["Difficulté", _pips(d), ""], ["Pour 3 ★", "+%d min" % int(seuils["trois"]), "horloge"]]:
 		var cell := VBoxContainer.new()
 		cell.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		cell.add_theme_constant_override("separation", int(round(2 * k)))

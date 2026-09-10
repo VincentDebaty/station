@@ -442,6 +442,14 @@ static func _charger(chemin: String, graisse: int) -> Font:
 	var gras := float(OS.get_environment("STATION_GRAS"))
 	v.variation_embolden = gras if gras > 0.0 else \
 		(EMBOLDEN_IDENTITE if chemin == FICHIER_TITRE else EMBOLDEN_TEXTE)
+	# DES CHIFFRES ALIGNÉS, PAS À L'ANCIENNE. Cormorant Garamond sert par
+	# défaut des chiffres elzéviriens — le 3, le 4, le 5, le 7 et le 9
+	# descendent sous la ligne, le 6 et le 8 montent. À côté de capitales ou
+	# dans un badge, un « 3 » tombe donc trop bas : « le chiffre n'est pas
+	# bien centré verticalement », « le 3 de Pour 3 ★ n'est pas bien aligné »
+	# (Vincent, 10 septembre 2026). La fonte a ses chiffres alignés (lnum) :
+	# on les demande, pour l'identité comme pour le texte.
+	v.opentype_features = {TextServerManager.get_primary_interface().name_to_tag("lnum"): 1}
 	return v
 
 
