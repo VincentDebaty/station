@@ -63,27 +63,31 @@ function mulberry32(a) {
 }
 const ordreDe = def => { const o = []; for (const ch of def.chapitres) for (const g of ch.gares) if (!o.includes(g)) o.push(g); return o; };
 function mixte(def, graine) {
-  const rnd = mulberry32(graine), stations = {}, passees = [];
+  const rnd = mulberry32(graine), stations = {}, passees = [], passeesEnPierres = [];
   for (const g of ordreDe(def)) {
     const r = rnd();
     if (r < 0.55) stations[g] = { stars: 1 + Math.floor(rnd() * 3), bestDelay: rnd() < 0.25 ? 0 : 1 + Math.floor(rnd() * 25) };
-    else if (r < 0.65) { passees.push(g); if (rnd() < 0.5) stations[g] = { stars: 0, bestDelay: null }; }
-    else if (r < 0.70) { passees.push(g); stations[g] = { stars: 2, bestDelay: 3 }; }   // payée PUIS gagnée : la mise est rendue
+    else if (r < 0.62) { passees.push(g); if (rnd() < 0.5) stations[g] = { stars: 0, bestDelay: null }; }
+    else if (r < 0.65) { passeesEnPierres.push(g); if (rnd() < 0.5) stations[g] = { stars: 0, bestDelay: null }; }   // payée en pierres
+    else if (r < 0.68) { passees.push(g); stations[g] = { stars: 2, bestDelay: 3 }; }   // payée PUIS gagnée : la mise est rendue
+    else if (r < 0.70) { passeesEnPierres.push(g); stations[g] = { stars: 3, bestDelay: 0 }; }   // en pierres, puis gagnée sans faute
   }
   // Une gare du catalogue HORS ruban, avec un résultat : le prototype compte
   // ses étoiles (CATALOG) mais pas sa gare (isBought).
   const hors = [...FICHES.keys()].filter(id => !ordreDe(def).includes(id));
   if (hors.length) stations[hors[Math.floor(rnd() * hors.length)]] = { stars: 2, bestDelay: 0 };
-  return { stations, passees, serie: { n: Math.floor(rnd() * 5), record: Math.floor(rnd() * 14) } };
+  return { stations, passees, passeesEnPierres, serie: { n: Math.floor(rnd() * 5), record: Math.floor(rnd() * 14) } };
 }
 function scenarios(carteId) {
   const def = DEFS[carteId], ordre = ordreDe(def), autre = INDEX_CARTES.map(e => e.id).find(id => id !== carteId);
-  const debut = { stations: {}, passees: [ordre[7]], serie: { n: 2, record: 3 } };
+  const debut = { stations: {}, passees: [ordre[7]], passeesEnPierres: [ordre[8]], serie: { n: 2, record: 3 } };
   ordre.slice(0, 7).forEach((g, k) => { debut.stations[g] = { stars: (k % 3) + 1, bestDelay: k === 2 ? 0 : 5 + k }; });
-  const complet = { stations: {}, passees: [], serie: { n: 12, record: 12 } };
+  const complet = { stations: {}, passees: [], passeesEnPierres: [], serie: { n: 12, record: 12 } };
   ordre.forEach((g, k) => { complet.stations[g] = { stars: 3, bestDelay: k % 2 === 0 ? 0 : 1 }; });
+  // le premier chapitre du complet est de diamant : trois pierres de plus
+  for (const g of def.chapitres[0].gares) complet.stations[g] = { stars: 3, bestDelay: 0 };
   const liste = [
-    { nom: "vierge", stations: {}, passees: [], serie: { n: 0, record: 0 } },
+    { nom: "vierge", stations: {}, passees: [], passeesEnPierres: [], serie: { n: 0, record: 0 } },
     { nom: "debut", ...debut }, { nom: "complet", ...complet },
     { nom: "mixte-1", ...mixte(def, 1) }, { nom: "mixte-2", ...mixte(def, 2) }, { nom: "mixte-3", ...mixte(def, 3) }
   ];
@@ -91,10 +95,11 @@ function scenarios(carteId) {
     carte: carteId, ...s,
     // Le compte : la carte courante telle quelle, plus l'autre carte avec sa
     // propre progression — le solde est un fait de compte, pas de carte.
-    cartes: [{ id: carteId, stations: s.stations, passees: s.passees, serie: s.serie },
-      ...(autre ? [{ id: autre, ...(k % 2 ? mixte(DEFS[autre], 100 + k) : { stations: {}, passees: [], serie: { n: 0, record: 0 } }) }] : [])]
-      .map(c => ({ id: c.id, stations: c.stations, passees: c.passees, serie: c.serie })),
-    possedees: k % 2 ? { [carteId]: "offerte", ...(autre ? { [autre]: "credits" } : {}) } : { [carteId]: "gratuite" }
+    cartes: [{ id: carteId, stations: s.stations, passees: s.passees, passeesEnPierres: s.passeesEnPierres, serie: s.serie },
+      ...(autre ? [{ id: autre, ...(k % 2 ? mixte(DEFS[autre], 100 + k) : { stations: {}, passees: [], passeesEnPierres: [], serie: { n: 0, record: 0 } }) }] : [])]
+      .map(c => ({ id: c.id, stations: c.stations, passees: c.passees, passeesEnPierres: c.passeesEnPierres, serie: c.serie })),
+    possedees: k % 2 ? { [carteId]: "offerte", ...(autre ? { [autre]: "credits" } : {}) } : { [carteId]: "gratuite" },
+    achats: { diamants: k % 3 }
   }));
 }
 const SCENARIOS = cartes.flatMap(scenarios);
@@ -103,6 +108,8 @@ const SCENARIOS = cartes.flatMap(scenarios);
 const sandbox = { console, JSON, Math, __SC: null, CARTE_COURANTE: null };
 sandbox.getProgress = () => sandbox.__SC.stations;
 sandbox.getPassees = () => sandbox.__SC.passees;
+sandbox.getPasseesEnPierres = () => sandbox.__SC.passeesEnPierres;
+sandbox.getAchats = () => sandbox.__SC.achats;
 sandbox.getSerie = () => ({ ...sandbox.__SC.serie });
 sandbox.getCartesEnregistrees = () => sandbox.__SC.cartes;
 sandbox.getCarteCourante = () => sandbox.__SC.carte;
@@ -138,8 +145,8 @@ function __exporter(brevets, viergeIds, retards) {
       difficulte: d, plafond: plafondDeFlux(cfg), seuils: seuilsDeService(cfg),
       service: s ? { difficulty: s.difficulty, gen: s.gen } : null, enveloppe: enveloppeDeGare(id, cfg),
       grande: estGrandeGare(id), boss: estBoss(id, cfg), ecrite: estEcrite(id),
-      faite: estFaite(id), passee: estPassee(id), franchie: estFranchie(id), tenue: estTenue(id),
-      niveau: niveauDeGare(id), prix: prixDePassage(id), r10: null };
+      faite: estFaite(id), passee: estPassee(id), passeePierres: estPasseeEnPierres(id), franchie: estFranchie(id), tenue: estTenue(id),
+      niveau: niveauDeGare(id), prix: prixDePassage(id), prixPierres: prixDePassageEnPierres(id), r10: null };
     const b = brevets[id];
     if (cfg && b && typeof b === "object")
       e.r10 = e.boss ? (b.boss === "OK" ? "ok" : "boss-ko") : (d > (b.niveau || 0) ? "depasse" : "ok");
@@ -153,6 +160,7 @@ function __exporter(brevets, viergeIds, retards) {
   out.medailles = [...medaillesDe(out.etat)];
   out.nouvelles = medaillesNouvelles(new Set(viergeIds), medaillesDe(out.etat)).map(m => m.id);
   out.pieces = { detail: detailPiecesGagnees(), gagnes: piecesGagnees(), depenses: piecesDepensees(), solde: soldePieces() };
+  out.pierres = { detail: detailPierresGagnees(), gagnes: pierresGagnees(), depenses: pierresDepensees(), stock: stockPierres() };
   // le barème par gare, tel que les écrans le lisent : ce que la gare rend,
   // et ce qu'elle peut rendre au plus
   out.parGare = {};
@@ -167,7 +175,7 @@ function __exporter(brevets, viergeIds, retards) {
 }`, sandbox, { filename: "exporter.js" });
 function exporterJS(sc) {
   if (!sandbox.CARTE_COURANTE || sandbox.CARTE_COURANTE.id !== sc.carte) { sandbox.CARTE_COURANTE = DEFS[sc.carte]; sandbox.resetRuban(); }
-  sandbox.__SC = { ...sc, stations: {}, passees: [], serie: { n: 0, record: 0 } };
+  sandbox.__SC = { ...sc, stations: {}, passees: [], passeesEnPierres: [], serie: { n: 0, record: 0 } };
   const vierge = [...sandbox.medaillesDe(sandbox.etatRecompenses())];
   sandbox.__SC = sc;
   sandbox.__brevets = brevets; sandbox.__vierge = vierge; sandbox.__retards = RETARDS;
@@ -226,7 +234,7 @@ for (const sc of SCENARIOS) {
   const gd = JSON.parse(readFileSync(f, "utf8"));
   const ecarts = [];
   comparer(js, gd, nom, ecarts);
-  const resume = `${js.gares.length} gares · position ${js.position} · ${js.etat.etoiles} étoiles · ${js.medailles.length} médailles · solde ${js.pieces.solde}`;
+  const resume = `${js.gares.length} gares · position ${js.position} · ${js.etat.etoiles} étoiles · ${js.medailles.length} médailles · solde ${js.pieces.solde} · pierres ${js.pierres.stock}`;
   if (ecarts.length) {
     ko++;
     const n = opt("detail") ? 60 : 6;

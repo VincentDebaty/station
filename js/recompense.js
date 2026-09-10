@@ -269,10 +269,16 @@ function medaillesNouvelles(avant, apres) {
 // La dépense en passages ne compte que les gares payées ENCORE à zéro étoile.
 // C'est ce qui REND LA MISE au joueur qui revient gagner la gare plus tard —
 // sans qu'une ligne de sauvegarde ait bougé.
-const PIECES_PAR_ETOILE = 10, PIECES_PAR_MINUTE = 1, PIECES_PAR_DIAMANT = 50,
-      PIECES_PAR_CHAPITRE_DOR = 200, PIECES_PAR_CHAPITRE_DIAMANT = 500,
-      PIECES_PAR_ZONE = 1000, PIECES_PAR_CARTE = 5000;
+const PIECES_PAR_ETOILE = 10, PIECES_PAR_MINUTE = 1,
+      PIECES_PAR_CHAPITRE_DOR = 200, PIECES_PAR_ZONE = 1000, PIECES_PAR_CARTE = 5000;
 const PASSAGE_BASE = 50, PASSAGE_PAR_CHAPITRE = 30;
+// LA PIERRE (lot 2, 10 septembre 2026, economie-du-jeu.md §4). Le sans-faute
+// ne rend plus de pièces : il produit une PIERRE, que l'on garde ou que l'on
+// dépense — un passage vaut `prix en pièces / 50` pierres, arrondi au-dessus.
+// Le TROPHÉE, lui, ne bouge pas : le sceau sur la carte, le rang de diamant,
+// les médailles se déduisent toujours de `bestDelay`, et ne s'achètent
+// jamais. Seul le stock en poche se dépense.
+const PIERRE_PAR_SANS_FAUTE = 1, PIERRES_PAR_CHAPITRE_DIAMANT = 3, PIERRE_VAUT = 50;
 const SEUIL_OR = (RANGS.find(r => r.id === "or") || { seuil: 3 }).seuil;
 const SEUIL_DIAMANT = (RANGS.find(r => r.id === "diamant") || { seuil: 4 }).seuil;
 
@@ -320,11 +326,10 @@ function avanceDe(r, seuils) {
 }
 function piecesDeGare(r, seuils) {
   if (!r) return 0;
-  return (r.stars || 0) * PIECES_PAR_ETOILE + avanceDe(r, seuils) * PIECES_PAR_MINUTE +
-    (r.bestDelay === 0 ? PIECES_PAR_DIAMANT : 0);
+  return (r.stars || 0) * PIECES_PAR_ETOILE + avanceDe(r, seuils) * PIECES_PAR_MINUTE;
 }
 function plafondDeGare(seuils) {
-  return 3 * PIECES_PAR_ETOILE + seuils.trois * PIECES_PAR_MINUTE + PIECES_PAR_DIAMANT;
+  return 3 * PIECES_PAR_ETOILE + seuils.trois * PIECES_PAR_MINUTE;
 }
 function manqueAGagner(r, seuils) { return plafondDeGare(seuils) - piecesDeGare(r, seuils); }
 
@@ -397,15 +402,14 @@ function bourseDesMedailles(etat) {
 // enregistrée pour elle, et sa série. Rien n'est stocké de plus — le solde
 // reste entièrement déduit. Le détail sert au relevé : c'est en recevant les
 // pièces poste par poste que le joueur apprend le barème.
-const POSTES = ["etoiles", "avance", "sansFaute", "or", "diamant", "zones", "carte", "medailles"];
-function detailPiecesDUneCarte(def, stations, passees, serie) {
-  const st = stations || {}, paye = passees || [];
+const POSTES = ["etoiles", "avance", "or", "zones", "carte", "medailles"];
+function detailPiecesDUneCarte(def, stations, passees, serie, passeesEnPierres) {
+  const st = stations || {}, paye = (passees || []).concat(passeesEnPierres || []);
   const rb = rubanDe(def);
-  const d = { etoiles: 0, avance: 0, sansFaute: 0, or: 0, diamant: 0, zones: 0, carte: 0, medailles: 0, total: 0 };
+  const d = { etoiles: 0, avance: 0, or: 0, zones: 0, carte: 0, medailles: 0, total: 0 };
   for (const id in st) {
     const r = st[id] || {};
     d.etoiles += (r.stars || 0) * PIECES_PAR_ETOILE;
-    if (r.bestDelay === 0) d.sansFaute += PIECES_PAR_DIAMANT;
     // la précision ne se lit que sur une gare dont on connaît la fiche : le
     // barème dépend de sa géométrie
     const cfg = typeof cardOf === "function" ? cardOf(id) : null;
@@ -425,7 +429,6 @@ function detailPiecesDUneCarte(def, stations, passees, serie) {
     let bas = 4;
     for (const x of g) bas = Math.min(bas, niv(x));
     if (bas >= SEUIL_OR) d.or += PIECES_PAR_CHAPITRE_DOR;
-    if (bas >= SEUIL_DIAMANT) d.diamant += PIECES_PAR_CHAPITRE_DIAMANT;
     if (g.every(franchie)) finis++;
   }
   for (const z of (def && def.zones) || []) {
@@ -437,8 +440,25 @@ function detailPiecesDUneCarte(def, stations, passees, serie) {
   for (const k of POSTES) d.total += d[k];
   return d;
 }
-function piecesDUneCarte(def, stations, passees, serie) {
-  return detailPiecesDUneCarte(def, stations, passees, serie).total;
+function piecesDUneCarte(def, stations, passees, serie, passeesEnPierres) {
+  return detailPiecesDUneCarte(def, stations, passees, serie, passeesEnPierres).total;
+}
+// CE QU'UNE CARTE RAPPORTE EN PIERRES : une par sans-faute, trois par chapitre
+// de diamant. Déduit de `bestDelay`, comme le trophée — mais c'est le stock.
+function detailPierresDUneCarte(def, stations) {
+  const st = stations || {};
+  const d = { sansFaute: 0, diamant: 0, total: 0 };
+  for (const id in st) if ((st[id] || {}).bestDelay === 0) d.sansFaute += PIERRE_PAR_SANS_FAUTE;
+  const niv = id => { const r = st[id]; if (!r) return 0; return r.bestDelay === 0 ? 4 : (r.stars || 0); };
+  for (const ch of (def && def.chapitres) || []) {
+    const g = ch.gares || [];
+    if (!g.length) continue;
+    let bas = 4;
+    for (const x of g) bas = Math.min(bas, niv(x));
+    if (bas >= SEUIL_DIAMANT) d.diamant += PIERRES_PAR_CHAPITRE_DIAMANT;
+  }
+  d.total = d.sansFaute + d.diamant;
+  return d;
 }
 // La liste des cartes du compte : celles qu'on a enregistrées, à défaut la
 // courante seule. Une carte dont la définition n'a pas pu être lue ne
@@ -451,20 +471,34 @@ function cartesDuCompte() {
     id: typeof getCarteCourante === "function" ? getCarteCourante() : null,
     stations: typeof getProgress === "function" ? getProgress() : {},
     passees: typeof getPassees === "function" ? getPassees() : [],
+    passeesEnPierres: typeof getPasseesEnPierres === "function" ? getPasseesEnPierres() : [],
     serie: typeof getSerie === "function" ? getSerie() : { n: 0, record: 0 }
   }];
 }
 // La somme sur TOUTES les cartes jouées, poste par poste.
 function detailPiecesGagnees() {
-  const t = { etoiles: 0, avance: 0, sansFaute: 0, or: 0, diamant: 0, zones: 0, carte: 0, medailles: 0, total: 0 };
+  const t = { etoiles: 0, avance: 0, or: 0, zones: 0, carte: 0, medailles: 0, total: 0 };
   for (const c of cartesDuCompte()) {
     const def = typeof defDeCarte === "function" ? defDeCarte(c.id) : null;
-    const d = detailPiecesDUneCarte(def, c.stations, c.passees, c.serie);
+    const d = detailPiecesDUneCarte(def, c.stations, c.passees, c.serie, c.passeesEnPierres);
     for (const k in t) t[k] += d[k];
   }
   return t;
 }
 function piecesGagnees() { return detailPiecesGagnees().total; }
+// Les pierres, sur toutes les cartes — plus celles qu'on a achetées.
+function detailPierresGagnees() {
+  const t = { sansFaute: 0, diamant: 0, achetees: 0, total: 0 };
+  for (const c of cartesDuCompte()) {
+    const def = typeof defDeCarte === "function" ? defDeCarte(c.id) : null;
+    const d = detailPierresDUneCarte(def, c.stations);
+    t.sansFaute += d.sansFaute; t.diamant += d.diamant;
+  }
+  t.achetees = typeof getAchats === "function" ? ((getAchats().diamants) | 0) : 0;
+  t.total = t.sansFaute + t.diamant + t.achetees;
+  return t;
+}
+function pierresGagnees() { return detailPierresGagnees().total; }
 // LE PRIX D'UN PASSAGE SUIT LA POSITION DANS LE RUBAN. Petit au début — pour
 // que le débutant bloqué puisse se le payer en rejouant deux ou trois gares —
 // et cher en fin de carte, pour qu'on n'achète pas la fin du voyage.
@@ -482,6 +516,10 @@ function prixDePassage(gareId) {
   if (ch) return PASSAGE_BASE + ch.rang * PASSAGE_PAR_CHAPITRE;
   return prixDePassageDans(typeof carteCourante === "function" ? carteCourante() : null, gareId);
 }
+// Le même passage, en pierres : une au premier chapitre, sept au dixième,
+// trente au dernier. La fin du ruban reste hors de prix.
+function prixDePassageEnPierresDans(def, gareId) { return Math.ceil(prixDePassageDans(def, gareId) / PIERRE_VAUT); }
+function prixDePassageEnPierres(gareId) { return Math.ceil(prixDePassage(gareId) / PIERRE_VAUT); }
 // La dépense, elle aussi sur toutes les cartes : les passages payés dont la
 // gare est ENCORE à zéro étoile (gagner la gare plus tard rend la mise), plus
 // le prix des cartes acquises EN PIÈCES — une carte reçue gratuitement ou
@@ -499,3 +537,15 @@ function piecesDepensees() {
   return d;
 }
 function soldePieces() { return Math.max(0, piecesGagnees() - piecesDepensees()); }
+// La dépense en pierres : les passages payés en pierres dont la gare est
+// ENCORE à zéro étoile — la mise se rend, comme pour les pièces.
+function pierresDepensees() {
+  let d = 0;
+  for (const c of cartesDuCompte()) {
+    const def = typeof defDeCarte === "function" ? defDeCarte(c.id) : null;
+    for (const g of c.passeesEnPierres || [])
+      if (!((((c.stations || {})[g]) || {}).stars >= 1)) d += prixDePassageEnPierresDans(def, g);
+  }
+  return d;
+}
+function stockPierres() { return Math.max(0, pierresGagnees() - pierresDepensees()); }

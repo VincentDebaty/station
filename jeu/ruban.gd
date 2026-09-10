@@ -54,7 +54,8 @@ const ENVELOPPE_BOSS := {"nMin": 20, "nMax": 24, "gapMin": 1.50, "gapMax": 2.50,
 var carte: Dictionary
 var fiches: Dictionary          ## id -> fiche : le catalogue (cardOf)
 var stations: Dictionary = {}   ## id -> {stars, bestDelay} : la progression de la carte
-var passees: Array = []         ## les gares payées par la soupape
+var passees: Array = []         ## les gares payées par la soupape, en pièces
+var passees_pierres: Array = [] ## et celles payées en pierres (schéma 8)
 
 var chapitres: Array = []       ## [{id, nom, zone, rang, gares, plancher, arrivee, saut, debut, fin}]
 var ordre: Array = []           ## les gares dans l'ordre du rail
@@ -162,10 +163,14 @@ func est_faite(id: String) -> bool:
 	return id != "" and etoiles_de(progression_de(id)) >= 1
 
 
-## PAYÉE : franchie par la soupape, en crédits. Elle laisse avancer le ruban
-## et ne rapporte rien.
+## PAYÉE : franchie par la soupape, en pièces ou en pierres. Elle laisse
+## avancer le ruban et ne rapporte rien.
 func est_passee(id: String) -> bool:
-	return id != "" and passees.has(id)
+	return id != "" and (passees.has(id) or passees_pierres.has(id))
+
+
+func est_passee_en_pierres(id: String) -> bool:
+	return id != "" and passees_pierres.has(id)
 
 
 ## FRANCHIE : faite ou payée. C'est ce qui fait avancer la position.

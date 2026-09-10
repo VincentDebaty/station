@@ -155,12 +155,20 @@ const APPARITION := 0.32
 
 var appar_t := -1.0
 var appar_qui: CanvasItem = null
+var appar_duree := APPARITION
+## L'écran qu'on quitte, quand il doit encore VIVRE pendant qu'on s'en va :
+## visible, animé, et qui s'efface au lieu de disparaître d'un coup.
+var sortant: CanvasItem = null
+## LA FIN DE SERVICE PREND SON TEMPS. Un tiers de seconde suffit à passer d'un
+## écran à l'autre ; il ne suffit pas à voir un convoi finir de sortir.
+const APPARITION_FIN := 0.85
 var appar_de := 1.0
 
 
-func _apparaitre(qui: CanvasItem, depuis: float) -> void:
+func _apparaitre(qui: CanvasItem, depuis: float, duree: float = APPARITION) -> void:
 	appar_qui = qui
 	appar_de = depuis
+	appar_duree = duree
 	appar_t = 0.0
 	_poser_apparition(0.0)
 
@@ -175,6 +183,9 @@ func _poser_apparition(e: float) -> void:
 	# le fondu se termine avant le zoom : une image qui finit de grandir en
 	# étant encore translucide donne l'impression de n'être jamais arrivée.
 	appar_qui.modulate = Color(1, 1, 1, min(1.0, e * 1.7))
+	# l'écran qu'on quitte s'efface au même rythme, par-dessus
+	if sortant != null:
+		sortant.modulate = Color(1, 1, 1, 1.0 - min(1.0, e * 1.3))
 
 
 func _glisser(de: CanvasItem, vers: CanvasItem, nom: String, sens: float) -> void:
@@ -197,7 +208,7 @@ func _glisser(de: CanvasItem, vers: CanvasItem, nom: String, sens: float) -> voi
 func _process(delta: float) -> void:
 	_suivre_le_fil()
 	if appar_t >= 0.0:
-		appar_t = min(1.0, appar_t + delta / APPARITION)
+		appar_t = min(1.0, appar_t + delta / appar_duree)
 		_poser_apparition(ease(appar_t, -1.8))
 		if appar_t >= 1.0:
 			appar_t = -1.0
@@ -205,6 +216,11 @@ func _process(delta: float) -> void:
 			appar_qui.position = Vector2.ZERO
 			appar_qui.modulate = Color.WHITE
 			appar_qui = null
+			if sortant != null:
+				sortant.visible = false
+				sortant.process_mode = Node.PROCESS_MODE_DISABLED
+				sortant.modulate = Color.WHITE
+				sortant = null
 	if not en_glissement():
 		return
 	glisse_t = min(1.0, glisse_t + delta / GLISSE)
@@ -320,11 +336,20 @@ func _suivre_le_fil() -> void:
 
 
 ## Le jeu rend la main avec son relevé et les médailles décrochées.
+## LE POSTE NE S'ÉTEINT PLUS D'UN COUP. `montrer("ruban")` cachait et gelait
+## l'écran de jeu à l'instant même : le dernier convoi, encore sur sa voie de
+## départ, se figeait et disparaissait. On garde donc l'écran de jeu VIVANT
+## pendant la transition — visible, animé, par-dessus le ruban qui grandit
+## dessous — et il s'efface pendant qu'on le quitte. Il n'est rangé qu'une fois
+## le ruban arrivé.
 func fin_de_service(bilan: Dictionary, medailles: Array) -> void:
 	montrer("ruban")
+	vue_jeu.visible = true
+	vue_jeu.process_mode = Node.PROCESS_MODE_INHERIT
+	sortant = vue_jeu
 	bilan["pieces"] = bourse_du_service()
 	vue_ruban.fin_de_service(bilan, medailles)
-	_apparaitre(vue_ruban, 0.90)
+	_apparaitre(vue_ruban, 0.90, APPARITION_FIN)
 
 
 ## Quitter un service en cours : rien n'est écrit, le ruban reprend.

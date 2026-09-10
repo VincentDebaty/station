@@ -293,6 +293,23 @@ func _process(delta: float) -> void:
 		enc.tick(dt_min)
 		if auto and not enc.ended:
 			_joueur_scripte()
+	elif enc.ended:
+		# LE DERNIER CONVOI FINIT SA SORTIE. Le service se termine à l'instant où
+		# il lâche son itinéraire, alors qu'il est encore sur la voie de départ ;
+		# on le figeait là, et l'écran s'éteignait sur une image morte. « Le
+		# dernier train s'arrête, il peut continuer son trajet durant la
+		# transition » (Vincent, 10 septembre 2026).
+		#
+		# L'enclenchement le permet sans qu'on y touche, et c'est vérifié : après
+		# `ended`, `tick` ne fait plus que DÉPLACER — ses deux contrôles de fin
+		# sont gardés par `not ended`, et le résultat n'est écrit que par
+		# `fin_de_service`, déjà passé. Rien de ce qui roule maintenant ne compte.
+		var dt_fin: float = delta * vitesse / Geo.SEC_PER_GAMEMIN
+		enc.game_min += dt_fin
+		enc.tick(dt_fin)
+		# ET EN SILENCE : un convoi encore à quai qui partirait après la fin d'un
+		# service échoué sonnerait son carillon par-dessus la signature de fin.
+		enc.sons.clear()
 	_vider_les_sons()
 	if enc.ended and not fin_enregistree:
 		_enregistrer_fin()
@@ -442,6 +459,12 @@ class Pupitre extends Node2D:
 
 	func _draw() -> void:
 		var r := Rect2(Vector2.ZERO, ecran)
+		# LE PUPITRE PEINT SON PROPRE FOND. Il comptait sur la couleur
+		# d'effacement du projet, qui vaut POSTE_FOND pendant le jeu — mais
+		# pendant le fondu de fin, l'écran de jeu passe PAR-DESSUS le ruban, et
+		# ses nappes translucides auraient laissé voir la carte d'un coup, avant
+		# même que le fondu commence.
+		draw_rect(r, Sty.POSTE_FOND, true)
 		# LA LAMPE D'ABORD, ET ELLE RELÈVE. Au premier essai j'ai posé le grain
 		# et l'ombre sur un fond déjà très sombre : le pupitre est devenu noir,
 		# exactement la faute que cet écran m'avait déjà values le 4 septembre.

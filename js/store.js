@@ -20,7 +20,7 @@
 // serie }`, la carte courante, et les cartes possédées (avec leur mode
 // d'acquisition : gratuite, crédits, achat). Tout le reste — grade, crédits,
 // rangs, médailles — se déduit.
-const SCHEMA_VERSION = 7;
+const SCHEMA_VERSION = 8;
 // La carte de tout joueur d'avant les cartes : l'Europe, et elle est gratuite.
 const CARTE_PAR_DEFAUT = "europe";
 const KEY_PROGRESS = "station-progress";
@@ -54,11 +54,12 @@ const _store = makeBackend();
 // `passees` : les gares franchies en payant (meta-progression §4 ter) — le
 // seul fait nouveau, et il porte aussi la dépense, puisque celle-ci ne compte
 // que les gares passées ENCORE à zéro étoile.
-function carteVierge() { return { stations: {}, passees: [], serie: { n: 0, record: 0 } }; }
+function carteVierge() { return { stations: {}, passees: [], passeesEnPierres: [], serie: { n: 0, record: 0 } }; }
 function sauvegardeVierge() {
   return { version: SCHEMA_VERSION, carteCourante: CARTE_PAR_DEFAUT,
     cartes: { [CARTE_PAR_DEFAUT]: carteVierge() },
-    possedees: { [CARTE_PAR_DEFAUT]: "gratuite" } };
+    possedees: { [CARTE_PAR_DEFAUT]: "gratuite" },
+    achats: { diamants: 0 }, possessions: {} };
 }
 let _progress = sauvegardeVierge();
 // La progression de la carte COURANTE — c'est elle que lisent tous les
@@ -85,25 +86,47 @@ function migrate(raw) {
   // graphe qui avait pris une autre branche garde ses étoiles sur des gares
   // hors ruban : elles restent au catalogue et comptent pour le grade.
   // `passees` naît vide — personne n'a encore rien payé.
-  if (raw && (raw.version === 6 || raw.version === 7) && raw.cartes && typeof raw.cartes === "object") {
+  //
+  // v7 → v8 (10 septembre 2026, economie-du-jeu.md §4) : LA PIERRE SE DÉPENSE.
+  // Trois champs naissent vides — `passeesEnPierres` par carte (les passages
+  // payés en pierres, à côté de `passees`), `achats.diamants` (les pierres
+  // achetées, pour le paiement réel qui viendra) et `possessions` (les objets,
+  // sous le moteur). Le stock de pierres se DÉDUIT : sans-fautes + chapitres
+  // de diamant + achetées − passages en pierres encore à zéro étoile.
+  if (raw && (raw.version === 6 || raw.version === 7 || raw.version === 8) && raw.cartes && typeof raw.cartes === "object") {
     const cartes = {};
     for (const id in raw.cartes) {
       const c = raw.cartes[id] || {};
       cartes[id] = { stations: c.stations || {},
         passees: Array.isArray(c.passees) ? c.passees.slice() : [],
+        passeesEnPierres: Array.isArray(c.passeesEnPierres) ? c.passeesEnPierres.slice() : [],
         serie: lireSerie(c) };
     }
     const possedees = raw.possedees && typeof raw.possedees === "object" ? raw.possedees : {};
     if (!possedees[CARTE_PAR_DEFAUT]) possedees[CARTE_PAR_DEFAUT] = "gratuite";
-    return { version: SCHEMA_VERSION, carteCourante: raw.carteCourante || CARTE_PAR_DEFAUT, cartes, possedees };
+    return { version: SCHEMA_VERSION, carteCourante: raw.carteCourante || CARTE_PAR_DEFAUT, cartes, possedees,
+      achats: lireAchats(raw), possessions: lirePossessions(raw) };
   }
   // v5 et avant : UNE seule progression, et c'était l'Europe. Elle devient la
   // progression de la carte « europe », intacte — le joueur retrouve ses gares,
   // ses records et sa série exactement où il les avait laissés.
   const v5 = migrerVersV5(raw);
   return { version: SCHEMA_VERSION, carteCourante: CARTE_PAR_DEFAUT,
-    cartes: { [CARTE_PAR_DEFAUT]: { stations: v5.stations, passees: [], serie: v5.serie } },
-    possedees: { [CARTE_PAR_DEFAUT]: "gratuite" } };
+    cartes: { [CARTE_PAR_DEFAUT]: { stations: v5.stations, passees: [], passeesEnPierres: [], serie: v5.serie } },
+    possedees: { [CARTE_PAR_DEFAUT]: "gratuite" }, achats: { diamants: 0 }, possessions: {} };
+}
+// Les pierres achetées, avec un défaut ; les possessions, un objet dont les
+// valeurs sont des chaînes (« diamants » ou « achat »), et rien d'autre.
+function lireAchats(r) {
+  const a = r && r.achats;
+  return { diamants: Math.max(0, (a && a.diamants) | 0) };
+}
+function lirePossessions(r) {
+  const p = r && r.possessions;
+  const out = {};
+  if (p && typeof p === "object" && !Array.isArray(p))
+    for (const k in p) if (typeof p[k] === "string" && p[k]) out[k] = p[k];
+  return out;
 }
 // La série se lit avec un défaut : « aucune série en cours » n'a pas besoin
 // d'être écrit pour être vrai.
@@ -214,7 +237,8 @@ function getCartesEnregistrees() {
   const out = [];
   for (const id in _progress.cartes) {
     const c = _progress.cartes[id] || {};
-    out.push({ id, stations: c.stations || {}, passees: (c.passees || []).slice(), serie: lireSerie(c) });
+    out.push({ id, stations: c.stations || {}, passees: (c.passees || []).slice(),
+      passeesEnPierres: (c.passeesEnPierres || []).slice(), serie: lireSerie(c) });
   }
   return out;
 }
@@ -266,13 +290,33 @@ function isBought(id) {
 // celle-ci ne compte que les gares passées encore à zéro étoile : gagner la
 // gare plus tard rend la mise, sans qu'une ligne de sauvegarde ait bougé.
 function getPassees() { const c = _carte(); return c.passees || (c.passees = []); }
-function estGarePayee(id) { return getPassees().indexOf(id) >= 0; }
+function getPasseesEnPierres() { const c = _carte(); return c.passeesEnPierres || (c.passeesEnPierres = []); }
+// Payée, en pièces OU en pierres : une gare ne se paie qu'une fois.
+function estGarePayee(id) { return getPassees().indexOf(id) >= 0 || getPasseesEnPierres().indexOf(id) >= 0; }
 function payerPassage(id) {
   if (!id || estGarePayee(id)) return false;
   getPassees().push(id);
   persistProgress();
   return true;
 }
+function payerPassageEnPierres(id) {
+  if (!id || estGarePayee(id)) return false;
+  getPasseesEnPierres().push(id);
+  persistProgress();
+  return true;
+}
+// LES PIERRES ACHETÉES — le seul chiffre de l'économie qui soit stocké, parce
+// qu'il ne se déduit de rien : c'est de l'argent réel. Le prototype ne vend
+// rien ; l'écriture existe pour que le moteur n'ait pas à migrer.
+function getAchats() { return _progress.achats || (_progress.achats = { diamants: 0 }); }
+function ajouterDiamantsAchetes(n) {
+  n = n | 0;
+  if (n <= 0) return false;
+  getAchats().diamants = (getAchats().diamants | 0) + n;
+  persistProgress();
+  return true;
+}
+function getPossessions() { return _progress.possessions || (_progress.possessions = {}); }
 
 // ------------------------------------------------------------------
 // Solde. Une seule bourse pour tout le réseau, tous pays confondus.

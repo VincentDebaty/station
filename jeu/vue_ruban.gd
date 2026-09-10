@@ -3404,7 +3404,30 @@ func _bloc_fete() -> Control:
 			payees += 1
 	var et_max := n * 3
 	v.add_child(_label("Chapitre terminé", 12, couleur_de_zone(ch["zone"]).darkened(0.42)))
-	v.add_child(_label("%d / %d ★     %d ◆" % [et, et_max, dia], 20, P_OR, true))
+	# LA PIERRE DU BILAN DE CHAPITRE, DESSINÉE COMME LES AUTRES. C'était encore
+	# un « ◆ » de police au bout de la ligne des étoiles — « le résumé de ce
+	# chapitre affiche un diamant minuscule » (Vincent, 10 septembre 2026) : un
+	# point, à côté d'étoiles en corps 20. Même pierre que partout ailleurs, à la
+	# hauteur de ces étoiles.
+	var bilan_ch := HBoxContainer.new()
+	bilan_ch.add_theme_constant_override("separation", int(round(8 * Sty.HUD_K)))
+	# `replie` À FAUX, pour les deux libellés : un Label qui se replie prend
+	# toute la largeur disponible, et la pierre partait au bout de la ligne,
+	# loin du nombre qu'elle qualifie.
+	var l_et := _label("%d / %d ★" % [et, et_max], 20, P_OR, true, false)
+	l_et.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	bilan_ch.add_child(l_et)
+	if dia > 0:
+		var ecart := Control.new()
+		ecart.custom_minimum_size = Vector2(18 * Sty.HUD_K, 0)
+		bilan_ch.add_child(ecart)
+		var l_dia := _label(str(dia), 20, P_OR, true, false)
+		l_dia.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		bilan_ch.add_child(l_dia)
+		var pierre := Gemme.new(self, 19.0 * Sty.HUD_K)
+		pierre.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		bilan_ch.add_child(pierre)
+	v.add_child(bilan_ch)
 	var rang: Dictionary = Rec.rang_de_chapitre(ruban, ch)
 	if not rang.is_empty() and rang["id"] != "ouverte":
 		v.add_child(_label(String(rang["nom"]), 15, Color(String(rang["couleur"])).darkened(0.42)))

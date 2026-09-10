@@ -70,10 +70,14 @@ function estFaite(gareId) {
   if (!gareId || typeof getProgress !== "function") return false;
   return ((getProgress()[gareId] || {}).stars || 0) >= 1;
 }
-// PAYÉE : franchie par la soupape, en crédits (meta-progression §4 ter). Elle
-// laisse avancer le ruban et ne rapporte rien — ni étoile, ni rang, ni jauge.
+// PAYÉE : franchie par la soupape, en pièces ou en pierres (meta-progression
+// §4 ter). Elle laisse avancer le ruban et ne rapporte rien — ni étoile, ni
+// rang, ni jauge.
+function estPasseeEnPierres(gareId) {
+  return !!gareId && typeof getPasseesEnPierres === "function" && getPasseesEnPierres().indexOf(gareId) >= 0;
+}
 function estPassee(gareId) {
-  return !!gareId && typeof getPassees === "function" && getPassees().indexOf(gareId) >= 0;
+  return (!!gareId && typeof getPassees === "function" && getPassees().indexOf(gareId) >= 0) || estPasseeEnPierres(gareId);
 }
 // FRANCHIE : faite ou payée. C'est ce qui fait avancer la position, et rien
 // d'autre — surtout pas « ouverte » ou « tentée ».
