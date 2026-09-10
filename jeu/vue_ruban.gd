@@ -74,6 +74,7 @@ const SEQ_MONTANT := 0.75      # le montant gagné, qui grandit et s'efface sous
 const SEQ_ECHEC_POSE := 0.32   # le tampon « DOMMAGE » se pose
 const SEQ_ECHEC_TENUE := 1.40  # et se tient, le temps qu'on le lise
 const SEQ_ECHEC_FIN := 0.45    # puis s'efface
+const SEQ_TENUE_GRADE := 1.70  # la promotion se tient : c'est l'événement le plus rare de la remise
 
 # LA CARTE EST UN PARCHEMIN (4 septembre 2026). L'écran du ruban passe à la
 # palette de jeu.style.gd : cuir, laiton, encre. Le poste d'aiguillage, lui,
@@ -191,6 +192,8 @@ var pince_k := 1.0            # et le zoom qu'on avait alors
 var barre: PanelContainer      # la barre du haut, sur toute la largeur
 var grades_panneau: Control    # le panneau déroulant des grades, sous le bloc du grade ; null tant qu'il n'a pas été ouvert
 var grades_chip: Control       # le bloc du grade dans la barre, qu'on touche pour l'ouvrir
+var badge_barre: Control       # le badge numéroté dans la barre — la cible du vol de promotion
+var grade_montre := -1         # le cran que la barre affiche pendant une promotion (-1 : le vrai)
 var rangee_barre: HBoxContainer
 var panneau: PanelContainer
 var colonne: VBoxContainer
@@ -288,10 +291,15 @@ func _remise_pour_voir() -> void:
 	var gain := -1
 	var butin := 0
 	var rendu := 0
+	var promotion := {}
 	for m in mots.slice(1):
 		var mot := String(m).strip_edges()
 		if mot == "diamant":
 			dia = true
+		elif mot == "grade":
+			# une promotion forcée, du cran courant au suivant
+			var gc: Dictionary = Rec.grade_de(Rec.etoiles_total(Sauvegarde.progression_toutes_cartes()))
+			promotion = {"avant": int(gc["i"]), "apres": mini(int(gc["i"]) + 1, Rec.GRADES.size() - 1)}
 		elif mot.begins_with("pieces="):
 			gain = int(mot.substr(7))
 		elif mot.begins_with("butin="):
@@ -308,9 +316,12 @@ func _remise_pour_voir() -> void:
 	if gain < 0:
 		gain = int(det["etoiles"]) + int(det["avance"]) + int(det["sansFaute"]) + butin + rendu
 	var solde: int = app.solde() if app != null else 0
-	fin_de_service({"gare": gare, "stars": etoiles, "prevStars": 0, "d": 0 if dia else 7,
+	var faux := {"gare": gare, "stars": etoiles, "prevStars": 0, "d": 0 if dia else 7,
 		"prevBest": null, "perfect": dia, "failed": false, "win": true, "seuils": seuils,
-		"pieces": {"avant": max(0, solde - gain), "apres": solde, "gain": gain, "rendu": rendu, "detail": det}}, [])
+		"pieces": {"avant": max(0, solde - gain), "apres": solde, "gain": gain, "rendu": rendu, "detail": det}}
+	if not promotion.is_empty():
+		faux["promotion"] = promotion
+	fin_de_service(faux, [])
 
 
 ## Le chapitre que le panneau raconte : pendant la fête, celui qu'on vient de
@@ -1734,6 +1745,20 @@ func fin_de_service(b: Dictionary, meds: Array) -> void:
 	medailles = meds
 	var pb: Dictionary = b["pieces"] if b.get("pieces") is Dictionary else {}
 	solde_montre = int(pb["avant"]) if (b.get("win", false) and not pb.is_empty() and int(pb.get("gain", 0)) > 0) else -1
+	# LA PROMOTION SE DÉDUIT : la progression est déjà écrite quand la remise
+	# s'ouvre, le total d'AVANT est donc le total d'après moins les étoiles que
+	# ce service vient d'ajouter. Deux crans différents, et la remise gagne un
+	# temps (« quand on monte d'un grade, après les étoiles, le diamant et
+	# les pièces, une animation supplémentaire montre la montée en grade avec
+	# toutes les félicitations qui s'imposent », Vincent, 10 septembre 2026).
+	if b.get("win", false) and not b.has("promotion"):
+		var n_apres: int = Rec.etoiles_total(Sauvegarde.progression_toutes_cartes())
+		var gagnees: int = max(0, int(b.get("stars", 0)) - int(b.get("prevStars", 0)))
+		var ga: Dictionary = Rec.grade_de(max(0, n_apres - gagnees))
+		var gp: Dictionary = Rec.grade_de(n_apres)
+		if int(gp["i"]) > int(ga["i"]):
+			bilan["promotion"] = {"avant": int(ga["i"]), "apres": int(gp["i"])}
+	grade_montre = int(bilan["promotion"]["avant"]) if bilan.get("promotion") is Dictionary else -1
 	bourse = {}
 	depense = {}
 	fete = {}
@@ -1820,7 +1845,7 @@ func _temps_de_la_bourse() -> void:
 			or lbl_pieces == null or not is_instance_valid(lbl_pieces):
 		solde_montre = -1
 		_rafraichir_solde()
-		_temps_de_la_puce()
+		_temps_du_grade()
 		return
 	var n: int = clampi(1 + int(floor(log(float(gain)) / log(2.0))), 4, 10)
 	var rendu: int = int(pb.get("rendu", 0))
@@ -1850,6 +1875,34 @@ func _sursaut_pastille() -> void:
 	pastille_pieces.scale = Vector2(1.18, 1.18)
 	var tw := create_tween()
 	tw.tween_property(pastille_pieces, "scale", Vector2.ONE, 0.18).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+
+
+## LE TEMPS DU GRADE — seulement quand un cran est franchi. Le nouveau badge
+## se pose au milieu de l'écran dans sa gerbe, avec « PROMOTION », le nom du
+## grade et ses félicitations, se tient, puis rejoint son emplacement dans la
+## barre, qui ne change de grade qu'à cet instant.
+func _temps_du_grade() -> void:
+	_poser_label(lbl_etoiles)
+	_poser_label(bloc_diamant)
+	_poser_label(lbl_gain)
+	_poser_label(lbl_rendu)
+	if not (bilan.get("promotion") is Dictionary) or badge_barre == null or not is_instance_valid(badge_barre):
+		grade_montre = -1
+		_temps_de_la_puce()
+		return
+	seq = "grade"
+	seq_t = -SEQ_ENTRE
+	seq_joues = 0
+
+
+## Un contrôle qui sursaute quand quelque chose s'y pose.
+func _sursaut(c: Control) -> void:
+	if c == null or not is_instance_valid(c):
+		return
+	c.pivot_offset = c.size / 2.0
+	c.scale = Vector2(1.18, 1.18)
+	var tw := create_tween()
+	tw.tween_property(c, "scale", Vector2.ONE, 0.22).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
 
 ## LE DERNIER TEMPS N'EST PAS TOUJOURS À NOUS. Quand la gare finit un chapitre,
@@ -1917,7 +1970,7 @@ func _avancer_remise(delta: float) -> void:
 				_temps_de_la_bourse()
 		"pieces":
 			if bourse.is_empty():
-				_temps_de_la_puce()
+				_temps_du_grade()
 				return
 			# la ligne s'écrit à l'instant où les pièces en partent
 			if seq_t >= 0.0:
@@ -1944,6 +1997,16 @@ func _avancer_remise(delta: float) -> void:
 				bourse = {}
 				solde_montre = -1
 				_rafraichir_solde()
+				_temps_du_grade()
+		"grade":
+			if seq_t >= 0.0 and seq_joues == 0:
+				Sons.jouer("grade")
+				seq_joues = 1
+			if seq_t >= SEQ_POSE + SEQ_TENUE_GRADE + SEQ_VOL:
+				# le badge s'est posé : la barre passe au nouveau grade, et sursaute
+				grade_montre = -1
+				_remplir_barre()
+				_sursaut(grades_chip)
 				_temps_de_la_puce()
 		"depense":
 			if depense.is_empty():
@@ -2503,6 +2566,11 @@ func _remplir_barre() -> void:
 	rangee_barre.add_child(droite)
 	var n: int = Rec.etoiles_total(Sauvegarde.progression_toutes_cartes())
 	var g: Dictionary = Rec.grade_de(n)
+	# pendant une promotion, la barre garde l'ANCIEN grade jusqu'à ce que le
+	# nouveau badge s'y pose — comme la pastille garde le solde d'avant
+	if grade_montre >= 0 and grade_montre < Rec.GRADES.size():
+		g = {"i": grade_montre, "nom": Rec.GRADES[grade_montre]["nom"], "from": Rec.GRADES[grade_montre]["at"],
+			"next": {}, "part": 1.0}
 	var serie: Dictionary = Sauvegarde.get_serie()
 	var e: Dictionary = Rec.etat_recompenses(ruban, serie)
 
@@ -2546,6 +2614,7 @@ func _remplir_barre() -> void:
 	var badge := Badge.new(int(g["i"]) + 1, 18.0 * k, "courant")
 	badge.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	ligne.add_child(badge)
+	badge_barre = badge
 	var nom := _label(String(g["nom"]), 13, TEXTE, true, false)
 	nom.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	nom.size_flags_vertical = Control.SIZE_SHRINK_CENTER
@@ -2923,24 +2992,28 @@ class Badge extends Control:
 		mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 	func _draw() -> void:
-		var c := size / 2.0
+		Badge.dessiner(self, size / 2.0, diam, numero, etat)
+
+	## LA MÊME RECETTE POUR LE BADGE DE LA BARRE, CEUX DU PANNEAU ET CELUI QUI
+	## VOLE à la promotion : on ne doit pas pouvoir croire qu'il y en a deux.
+	static func dessiner(cv: CanvasItem, c: Vector2, diam: float, numero: int, etat: String, alpha: float = 1.0) -> void:
 		var r := diam / 2.0
 		var f: Font = Sty.titre(700)
 		var ts: int = int(round(diam * 0.58))
 		var col_texte: Color
 		match etat:
 			"acquis":
-				draw_circle(c, r, Sty.LAITON)
-				draw_arc(c, r, 0.0, TAU, 32, Color(Sty.LAITON_CLAIR, 0.9), maxf(1.0, diam * 0.07), true)
-				col_texte = Sty.BOIS
+				cv.draw_circle(c, r, Color(Sty.LAITON, alpha))
+				cv.draw_arc(c, r, 0.0, TAU, 32, Color(Sty.LAITON_CLAIR, 0.9 * alpha), maxf(1.0, diam * 0.07), true)
+				col_texte = Color(Sty.BOIS, alpha)
 			"courant":
-				draw_circle(c, r, Sty.SARCELLE)
-				draw_arc(c, r, 0.0, TAU, 32, Sty.LAITON_CLAIR, maxf(1.0, diam * 0.10), true)
-				col_texte = Sty.PAPIER
+				cv.draw_circle(c, r, Color(Sty.SARCELLE, alpha))
+				cv.draw_arc(c, r, 0.0, TAU, 32, Color(Sty.LAITON_CLAIR, alpha), maxf(1.0, diam * 0.10), true)
+				col_texte = Color(Sty.PAPIER, alpha)
 			_:
-				draw_circle(c, r, Color(Sty.BOIS, 0.6))
-				draw_arc(c, r, 0.0, TAU, 32, Color(Sty.LAITON, 0.45), maxf(1.0, diam * 0.07), true)
-				col_texte = Color(Sty.PAPIER, 0.45)
+				cv.draw_circle(c, r, Color(Sty.BOIS, 0.6 * alpha))
+				cv.draw_arc(c, r, 0.0, TAU, 32, Color(Sty.LAITON, 0.45 * alpha), maxf(1.0, diam * 0.07), true)
+				col_texte = Color(Sty.PAPIER, 0.45 * alpha)
 		# LE CHIFFRE SE CENTRE SUR SES CAPITALES, pas sur la boîte de la police :
 		# centré sur ascendante et descendante, il remontait d'un cran visible
 		# (« le chiffre n'est pas bien centré verticalement », Vincent,
@@ -2948,7 +3021,7 @@ class Badge extends Control:
 		# base se pose à mi-hauteur de capitale sous le centre.
 		var texte := str(numero)
 		var w: float = f.get_string_size(texte, HORIZONTAL_ALIGNMENT_LEFT, -1, ts).x
-		draw_string(f, Vector2(c.x - w / 2.0, c.y + f.get_ascent(ts) * 0.36), texte,
+		cv.draw_string(f, Vector2(c.x - w / 2.0, c.y + f.get_ascent(ts) * 0.36), texte,
 			HORIZONTAL_ALIGNMENT_LEFT, -1, ts, col_texte)
 
 
@@ -3041,6 +3114,12 @@ class Vol extends Node2D:
 				_montant(vue.seq_t, int(b["n"]), int(b["gain"]), vers, k)
 			"echec":
 				_tampon(vue.seq_t, centre, k)
+			"grade":
+				var pr: Dictionary = vue.bilan.get("promotion", {})
+				if pr.is_empty():
+					return
+				var cible := _cible(vue.badge_barre, centre, 0.5)
+				_promotion(vue.seq_t, centre + Vector2(0, -10.0 * k), cible, int(pr["apres"]), k)
 			"depense":
 				var d: Dictionary = vue.depense
 				if d.is_empty():
@@ -3123,10 +3202,70 @@ class Vol extends Node2D:
 		Sty.texte_centre(self, fs, ts2, p + Vector2(0, cadre.size.y * 0.5 + 30.0 * k),
 			"Objectif manqué — réessaie, ou paie le passage", Color(Sty.PAPIER, alpha))
 
+	## LA PROMOTION : le badge du nouveau grade, une fois et demie plus grand
+	## qu'une étoile, dans une gerbe de rayons — la recette du diamant —, avec
+	## PROMOTION au-dessus, le nom du grade et « Félicitations ! » au-dessous.
+	## Il se tient, puis file vers la barre en rapetissant jusqu'à la taille
+	## du badge qui l'y attend.
+	func _promotion(t: float, depart: Vector2, cible: Vector2, cran: int, k: float) -> void:
+		if t <= 0.0:
+			return
+		var p := depart
+		var taille := 1.0
+		var alpha := 1.0
+		var pose := 0.0
+		var titre := 0.0
+		if t < SEQ_POSE:
+			var u: float = t / SEQ_POSE
+			taille = 1.5 * sin(u * PI * 0.72) / sin(PI * 0.72)
+			taille = maxf(taille, 0.05)
+			alpha = minf(1.0, u * 3.0)
+			pose = u
+			titre = maxf(0.0, (u - 0.55) / 0.45)
+		elif t < SEQ_POSE + SEQ_TENUE_GRADE:
+			taille = 1.5
+			pose = 1.0
+			titre = 1.0
+		else:
+			var u: float = minf((t - SEQ_POSE - SEQ_TENUE_GRADE) / SEQ_VOL, 1.0)
+			var e: float = ease(u, -2.0)
+			var milieu := depart.lerp(cible, 0.5) + Vector2(0, -70.0 * k)
+			p = depart.lerp(milieu, e).lerp(milieu.lerp(cible, e), e)
+			taille = lerpf(1.5, 0.24, e)
+			alpha = 1.0 if u < 0.85 else lerpf(1.0, 0.0, (u - 0.85) / 0.15)
+			titre = maxf(0.0, 1.0 - u * 4.0)
+		var h: float = 78.0 * k * taille
+		if pose > 0.0 and pose < 1.0:
+			var g: float = sin(pose * PI)
+			for i in range(12):
+				var a: float = TAU * float(i) / 12.0 + pose * 0.35
+				var u2 := Vector2(cos(a), sin(a))
+				draw_line(p + u2 * h * (0.62 + 0.5 * pose), p + u2 * h * (0.95 + 1.5 * pose),
+					Color(Sty.LAITON_CLAIR, 0.55 * g * alpha), maxf(1.0, 2.2 * k), true)
+		for j in range(18):
+			draw_circle(p, h * (0.45 + 1.00 * (1.0 - float(j) / 18.0)), Color(Sty.LAITON_CLAIR, 0.020 * alpha))
+		Badge.dessiner(self, p, h, cran + 1, "courant", alpha)
+		if titre > 0.0:
+			var ft: Font = Sty.titre(700)
+			var ts: int = int(round(19.0 * k))
+			var col_t := Color(Sty.LAITON_CLAIR, titre * alpha)
+			Sty.texte_espace(self, ft, ts,
+				Vector2(p.x - Sty.largeur_espacee(ft, ts, "PROMOTION", 4.0 * k) / 2.0,
+					p.y - h * 0.72 - ft.get_descent(ts) - 6.0 * k),
+				"PROMOTION", col_t, 4.0 * k)
+			var nom := String(Rec.GRADES[cran]["nom"])
+			var tn: int = int(round(30.0 * k))
+			Sty.texte_centre(self, ft, tn, p + Vector2(0, h * 0.72 + 14.0 * k + 1.5 * k), nom, Color(0, 0, 0, 0.40 * titre * alpha))
+			Sty.texte_centre(self, ft, tn, p + Vector2(0, h * 0.72 + 14.0 * k), nom, Color(Sty.PAPIER, titre * alpha))
+			var fs: Font = Sty.sans(600)
+			var tf: int = int(round(15.0 * k))
+			Sty.texte_centre(self, fs, tf, p + Vector2(0, h * 0.72 + 44.0 * k), "Félicitations !",
+				Color(Sty.LAITON_CLAIR, titre * alpha))
+
 	## Le point visé DANS le Label : une fraction de sa largeur, plus un
 	## décalage. À défaut — le panneau n'a pas encore été mis en page — le
 	## milieu de l'écran, ce qui fait simplement rester la récompense sur place.
-	func _cible(l: Label, defaut: Vector2, frac: float, dx: float = 0.0) -> Vector2:
+	func _cible(l: Control, defaut: Vector2, frac: float, dx: float = 0.0) -> Vector2:
 		if l == null or not is_instance_valid(l) or l.size == Vector2.ZERO:
 			return defaut
 		return to_local(l.global_position + Vector2(l.size.x * frac + dx, l.size.y / 2.0))

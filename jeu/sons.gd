@@ -74,6 +74,10 @@ func _ready() -> void:
 		[3136, 0.24, 0.36, SINUS, 0.014]])
 	_cuire("puce", [[392, 0.0, 0.14, TRIANGLE, 0.035]])
 	_cuire("arrivee", [[659, 0.0, 0.10, TRIANGLE, 0.045], [988, 0.09, 0.22, TRIANGLE, 0.04]])
+	# la promotion (vue_ruban, _promotion) : une petite fanfare, quatre notes
+	# qui montent et la dernière qui se tient
+	_cuire("grade", [[523, 0.0, 0.12, TRIANGLE, 0.045], [659, 0.12, 0.12, TRIANGLE, 0.045],
+		[784, 0.24, 0.16, TRIANGLE, 0.045], [1046, 0.42, 0.40, TRIANGLE, 0.05], [1319, 0.42, 0.40, SINUS, 0.03]])
 	# LA BOURSE (10 septembre 2026) : un tintement par pièce, sur une hauteur
 	# qui monte d'une pièce à l'autre — six crans par tons entiers depuis mi6 —,
 	# un accord bref quand la dernière se pose, et le même tintement, mat, une
