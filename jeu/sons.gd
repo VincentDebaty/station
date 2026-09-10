@@ -38,9 +38,20 @@ var _voix: Array[AudioStreamPlayer] = []
 var _tour := 0
 var duree_synthese_ms := 0            # cité dans STATION_MESURE
 
+## LES BRUITAGES DÉPOSÉS L'EMPORTENT SUR LES SIGNATURES (10 septembre 2026).
+## Un fichier `jeu/sons/<nom>.ogg` (ou .wav, .mp3) remplace la signature
+## `<nom>` ; ce qui n'a pas de fichier reste synthétisé. On remplace donc un
+## son à la fois, et on revient en arrière en effaçant le fichier. La liste
+## des noms, des moments et des descriptions à générer est dans
+## jeu/sons/BRUITAGES.md. Les familles à variantes (etoile0..2, piece0..5,
+## heure0..7) se contentent d'UN fichier : la hauteur suit la variante.
+const DOSSIER := "res://jeu/sons/"
+var _fichiers: Dictionary = {}        # nom → AudioStream, ce qui a été déposé
+
 
 func _ready() -> void:
 	var t0 := Time.get_ticks_usec()
+	_charger_fichiers()
 	# Le dictionnaire SND de js/render.js, ligne pour ligne. Un ton est
 	# [fréquence, retard, durée, forme, volume].
 	_cuire("annonce", [[830, 0.0, 0.12, SINUS, 0.05], [1108, 0.13, 0.2, SINUS, 0.05]])
@@ -105,6 +116,9 @@ func _ready() -> void:
 			octets += _pistes[nom].data.size()
 		print("%d signatures synthétisées en %d ms — %d ko de PCM"
 			% [_pistes.size(), duree_synthese_ms, octets / 1024])
+		var noms: Array = _fichiers.keys()
+		noms.sort()
+		print("%d bruitage(s) déposé(s) dans %s : %s" % [noms.size(), DOSSIER, ", ".join(PackedStringArray(noms)) if not noms.is_empty() else "aucun"])
 		if OS.get_environment("STATION_SONS_MESURE") != "":
 			for nom in _pistes:
 				var f: AudioStreamWAV = _pistes[nom]
@@ -121,14 +135,82 @@ func _ready() -> void:
 					% [nom, f.get_length(), pic, pic / 32768.0, somme / max(1, d.size() / 2) / 32768.0])
 
 
-## Une signature, par son nom. Muette si le joueur a coupé le son.
+## Une signature, par son nom. Muette si le joueur a coupé le son. Un
+## bruitage déposé passe d'abord — au nom exact, puis au nom de sa famille
+## avec la hauteur de la variante — et la signature synthétisée ferme la marche.
 func jouer(nom: String) -> void:
-	if Sauvegarde.get_muet() or not _pistes.has(nom):
+	if Sauvegarde.get_muet():
+		return
+	var src := _source(nom)
+	if src.is_empty():
 		return
 	var p: AudioStreamPlayer = _voix[_tour]
 	_tour = (_tour + 1) % VOIX
-	p.stream = _pistes[nom]
+	p.stream = src["flux"]
+	p.pitch_scale = float(src["hauteur"])
 	p.play()
+
+
+func _source(nom: String) -> Dictionary:
+	if _fichiers.has(nom):
+		return {"flux": _fichiers[nom], "hauteur": 1.0}
+	var famille := nom.rstrip("0123456789")
+	if famille != nom and _fichiers.has(famille):
+		return {"flux": _fichiers[famille], "hauteur": _hauteur(famille, int(nom.substr(famille.length())))}
+	if _pistes.has(nom):
+		return {"flux": _pistes[nom], "hauteur": 1.0}
+	return {}
+
+
+## La hauteur d'une variante, relative au fichier de sa famille : les mêmes
+## rapports que les signatures synthétisées.
+static func _hauteur(famille: String, k: int) -> float:
+	match famille:
+		"etoile":
+			return [1.0, 988.0 / 784.0, 1175.0 / 784.0][clampi(k, 0, 2)]
+		"piece":
+			return pow(2.0, float(clampi(k, 0, 5)) / 6.0)
+		"heure":
+			return (720.0 + 66.0 * float(clampi(k, 0, 7))) / 720.0
+	return 1.0
+
+
+## Ce qui a été déposé dans le dossier : chaque fichier audio, par son nom
+## sans extension. Une ressource importée se charge comme telle ; à défaut
+## (un fichier posé sans passer par l'importation), on le lit directement.
+func _charger_fichiers() -> void:
+	var d := DirAccess.open(DOSSIER)
+	if d == null:
+		return
+	d.list_dir_begin()
+	var f := d.get_next()
+	while f != "":
+		if not d.current_is_dir():
+			var ext := f.get_extension().to_lower()
+			if ext in ["ogg", "wav", "mp3"]:
+				var flux := _charger_flux(DOSSIER + f, ext)
+				if flux != null:
+					_fichiers[f.get_basename()] = flux
+		f = d.get_next()
+	d.list_dir_end()
+
+
+func _charger_flux(chemin: String, ext: String) -> AudioStream:
+	if ResourceLoader.exists(chemin):
+		var r: Variant = load(chemin)
+		if r is AudioStream:
+			return r
+	var abs := ProjectSettings.globalize_path(chemin)
+	if not FileAccess.file_exists(abs):
+		return null
+	match ext:
+		"ogg":
+			return AudioStreamOggVorbis.load_from_file(abs)
+		"wav":
+			return AudioStreamWAV.load_from_file(abs)
+		"mp3":
+			return AudioStreamMP3.load_from_file(abs)
+	return null
 
 
 ## Le carillon du départ à l'heure, dont la hauteur suit la série.

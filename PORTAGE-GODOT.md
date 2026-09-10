@@ -1080,6 +1080,19 @@ Il suit une règle : **ce qui se vérifie tout seul d'abord**.
    `oracle-sauvegarde` 21/21 (un cas v9 de plus, la migration v8 → v9
    vérifiée des deux côtés), `oracle-ruban` 12/12, `boutique-check` B1…B4.
 
+   **LES BRUITAGES SE DÉPOSENT, passe du 10 septembre 2026.** Vincent veut
+   générer lui-même les bruitages des animations, pour en avoir les droits.
+   `jeu/sons/BRUITAGES.md` liste chaque nom, le moment où il joue, la durée
+   cible et une description prête à coller dans un générateur — seize sons
+   branchés, quatre noms réservés pour les animations encore muettes. Un
+   fichier `jeu/sons/<nom>.ogg` (ou .wav, .mp3) remplace la signature
+   synthétisée du même nom, tout le reste reste synthétisé ; les familles à
+   variantes (`etoile`, `piece`, `heure`) se contentent d'un fichier, la
+   hauteur suit la variante par `pitch_scale` avec les mêmes rapports que la
+   synthèse. Le fichier se charge comme ressource importée, ou directement
+   s'il a été posé sans passer par l'importation — vérifié dans les deux cas
+   avec un WAV de test, `STATION_MESURE=1` le dit au démarrage.
+
 À l'étape 3 et à l'étape 5, il existe une **oracle** : le prototype. Faire
 tourner les deux sur la même graine et comparer les sorties est le meilleur test
 de non-régression disponible, et il ne coûte rien à écrire.
