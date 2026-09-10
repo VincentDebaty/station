@@ -471,6 +471,22 @@ annoncée, la gare payée qui porte sa pièce sur la carte. Aucune migration :
 `oracle-ruban` 12/12 (web ↔ Godot sur le nouveau barème), `oracle-sauvegarde`
 18/18, `carte-check` et `net-check` verts.
 
+*Lot 2 — FAIT le 10 septembre 2026* (`economie-du-jeu.md`, proposition C). **La
+pierre se dépense.** Le sans-faute reste un trophée intouchable (sceau, cran,
+rang, médailles, déduits de `bestDelay`) ; la pierre qu'il produit va en poche,
+et le compteur de la barre dit le stock : sans-fautes + 3 par chapitre de
+diamant + achetées − passages payés en pierres encore à zéro étoile. Une pierre
+paie un passage quand les pièces manquent (`prix / 50`, arrondi au-dessus) —
+jamais une carte. Le sans-faute ne rend plus de pièces. **Schéma 8** :
+`passeesEnPierres` par carte, `achats.diamants`, `possessions`, tous vides à
+la migration ; `oracle-sauvegarde` 20/20 (deux cas v8 dont un tordu, quatre
+écritures de plus), `oracle-ruban` 12/12 (le stock, le prix en pierres, les
+gares payées en pierres). À l'écran : la pastille des pierres monte d'un cran
+quand la gemme se pose sur son sceau, le bouton « Passer · 1 pierre » remplace
+celui des pièces quand elles manquent, les pierres partent de la pastille vers
+la gare (gerbe à l'envers), la gare payée en pierres porte une gemme pâle, la
+mise rendue en pierres a sa ligne.
+
 <details><summary>Le plan d'origine du lot G</summary>
 
 **But** : le chapitre remplace la ligne, la zone devient un palier.

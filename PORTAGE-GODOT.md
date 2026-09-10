@@ -201,9 +201,10 @@ praticable.
 ### Le barème des pièces (`recompense.js` / `recompense.gd`, 10 septembre 2026)
 
 ```
-étoile 10 · minute sous le seuil 3 ★ 1 (0..12) · sans-faute 50
-chapitre d'or 200 · chapitre de diamant 500 · zone 1 000 · carte 5 000
+étoile 10 · minute sous le seuil 3 ★ 1 (0..12)
+chapitre d'or 200 · zone 1 000 · carte 5 000
 médaille 50 / 150 / 500 · passage 50 + 30 × chapitre · le Rhin 15 000
+PIERRES : sans-faute 1 · chapitre de diamant 3 · un passage = ⌈pièces / 50⌉
 ```
 
 Tout est déduit, rien n'est stocké : `oracle-ruban` compare les deux
@@ -1008,6 +1009,26 @@ Il suit une règle : **ce qui se vérifie tout seul d'abord**.
    accepte `0` (un échec), `pieces=N`, `butin=N` et `rendu=N` pour tout
    photographier sans jouer. Trois signatures de plus dans `sons.gd`
    (`piece0..5`, `bourse`, `depense`).
+
+   **LA PIERRE SE DÉPENSE, passe du 10 septembre 2026** (`economie-du-jeu.md`,
+   lot 2). Le diamant avait deux natures dans un seul compteur. Séparées : le
+   SANS-FAUTE est un fait de progression — sceau, cran bleu, rang, médailles,
+   déduits de `bestDelay`, jamais achetés ni dépensés — et la PIERRE est
+   l'objet qu'il produit, en poche, déduite elle aussi : sans-fautes + 3 par
+   chapitre de diamant + `achats.diamants` − passages payés en pierres encore
+   à zéro étoile (`passeesEnPierres`, à côté de `passees`). **Schéma 8**, trois
+   champs vides à la migration ; `oracle-sauvegarde` 20/20 avec deux cas v8
+   dont un tordu (`passeesEnPierres: "york"`, `achats: [5]`), et quatre
+   écritures de plus (`payerPassageEnPierres`, `ajouterDiamantsAchetes`).
+   `Ruban` porte `passees_pierres` ; `est_passee` lit les deux listes. Le
+   sans-faute ne rend plus de pièces (le poste `sansFaute` a disparu du
+   détail). À l'écran : la pastille des pierres dit le stock et monte d'un
+   cran au moment où la gemme se pose sur son sceau (`pierres_montre`, même
+   règle que `solde_montre`) ; quand les pièces manquent, le pied propose
+   « Passer · 1 pierre » à la place, et « Il te manque 8 pièces, ou 1 pierre »
+   ; les pierres partent de la pastille vers la gare avec la gerbe à
+   l'envers ; la gare payée en pierres porte une gemme pâle ; « Mise rendue ·
+   + 1 pierre » a sa ligne. Le prototype web suit (`data-payer-pierres`).
 
 À l'étape 3 et à l'étape 5, il existe une **oracle** : le prototype. Faire
 tourner les deux sur la même graine et comparer les sorties est le meilleur test

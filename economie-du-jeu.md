@@ -1,9 +1,9 @@
 # L'économie du jeu — pièces, diamants, et ce qu'on en fait
 
-Écrit le 10 septembre 2026. **Le lot 1 (A, B, D) est livré le même jour** —
-voir `plan-de-dev.md`, lot G point 6, et `PORTAGE-GODOT.md`, passe de la
-bourse. C et E restent des propositions. Le texte ci-dessous est celui de
-l'analyse, conservé comme justification. Elle
+Écrit le 10 septembre 2026. **Les lots 1 (A, B, D) et 2 (C) sont livrés le
+même jour** — voir `plan-de-dev.md`, lot G point 6, et `PORTAGE-GODOT.md`,
+passes de la bourse et de la pierre. E reste une proposition. Le texte
+ci-dessous est celui de l'analyse, conservé comme justification. Elle
 répond à un constat de Vincent, capture à l'appui : « on ne se rend pas compte
 qu'on gagne des crédits, "cr" ne veut pas dire grand-chose, et les diamants ne
 servent à rien ». Elle mesure d'abord ce qui existe, puis propose cinq choses

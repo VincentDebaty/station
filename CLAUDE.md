@@ -129,7 +129,9 @@ le support Capacitor est écrit d'avance, pour que le portage ne touche que
 
 Toute modification du format sauvegardé impose d'incrémenter `SCHEMA_VERSION`
 et d'écrire la migration dans `migrate()`, testée depuis une sauvegarde
-ancienne. Schéma courant : **6** (la progression est par carte). Une mise à
+ancienne. Schéma courant : **8** (la progression est par carte ; depuis le
+10 septembre 2026, les passages payés en pierres, les pierres achetées et les
+possessions s'y ajoutent). Une mise à
 jour qui perd la partie d'un joueur est un bug bloquant, pas un détail.
 
 ## Git

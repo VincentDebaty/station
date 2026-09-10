@@ -5,7 +5,7 @@
 //
 // js/store.js est évalué dans un node:vm avec un localStorage en mémoire ;
 // jeu/sauvegarde.gd écrit dans un dossier de travail. Pour chaque sauvegarde
-// de départ — une par schéma, de v0 (objet plat) à v7, plus les cas tordus :
+// de départ — une par schéma, de v0 (objet plat) à v8, plus les cas tordus :
 // vide, null, JSON invalide, un nombre, une version en chaîne, une version
 // future — les deux côtés :
 //   1. migrent la sauvegarde (migrate / migrer) ;
@@ -56,7 +56,11 @@ const FIXTURES = [
     possedees: { europe: "gratuite", germanie: "credits" } }) },
   { nom: "v7-lacunaire", brut: JSON.stringify({ version: 7, carteCourante: "", cartes: { germanie: { stations: { mons: st(2, 12) } } }, possedees: { germanie: "achat" } }) },
   { nom: "version-en-chaine", brut: JSON.stringify({ version: "7", stations: { arlon: st(2, 9) }, cartes: { europe: { stations: { york: st(3, 0) } } } }) },
-  { nom: "version-future", brut: JSON.stringify({ version: 8, stations: { arlon: st(2, 9) }, cartes: { europe: { stations: { york: st(3, 0) } } }, serie: { n: 4, record: 4 } }) },
+  { nom: "v8", brut: JSON.stringify({ version: 8, carteCourante: "europe", cartes: {
+    europe: { stations: { darlington: st(3, 0), york: st(2, 14), leeds: st(0, null) }, passees: ["northallerton"], passeesEnPierres: ["leeds", "wakefield"], serie: { n: 2, record: 2 } } },
+    possedees: { europe: "gratuite" }, achats: { diamants: "3" }, possessions: { livree_acajou: "diamants", cadran: 7, vide: "" } }) },
+  { nom: "v8-tordue", brut: JSON.stringify({ version: 8, cartes: { europe: { stations: {}, passeesEnPierres: "york" } }, achats: [5], possessions: ["a"] }) },
+  { nom: "version-future", brut: JSON.stringify({ version: 9, stations: { arlon: st(2, 9) }, cartes: { europe: { stations: { york: st(3, 0) } } }, serie: { n: 4, record: 4 } }) },
   { nom: "cartes-en-tableau", brut: JSON.stringify({ version: 7, cartes: [{ stations: { york: st(2, 5) } }] }) }
 ];
 for (const f of args.filter(a => a.startsWith("--fixture=")).map(a => a.slice(10)))
@@ -72,6 +76,8 @@ const OPS = [
   ["saveResult", "york", 1, 25],
   ["pushSerie", true], ["pushSerie", true], ["pushSerie", false], ["pushSerie", true],
   ["payerPassage", "leeds"], ["payerPassage", "leeds"], ["payerPassage", ""],
+  ["payerPassageEnPierres", "york"], ["payerPassageEnPierres", "york"], ["payerPassageEnPierres", "leeds"], ["payerPassageEnPierres", ""],
+  ["ajouterDiamantsAchetes", 2], ["ajouterDiamantsAchetes", 0], ["ajouterDiamantsAchetes", -3], ["ajouterDiamantsAchetes", "4"],
   ["setCarteCourante", "germanie"], ["setCarteCourante", "germanie"], ["setCarteCourante", ""],
   ["markTentee", "mons"], ["saveResult", "mons", 2, 8], ["pushSerie", false], ["payerPassage", "aachen"],
   ["acquerirCarte", "germanie", "credits"], ["acquerirCarte", "germanie", "achat"], ["acquerirCarte", "", "achat"],
@@ -99,9 +105,9 @@ async function __jouer(brut, ops) {
   await loadStore();
   const rets = [];
   for (const [f, ...a] of ops) { const r = globalThis[f](...a); rets.push(r === undefined ? null : r); }
-  const etat = () => JSON.parse(JSON.stringify({ progression: getProgress(), passees: getPassees(), serie: getSerie(),
-    carte: getCarteCourante(), possedees: cartesPossedees(), cartes: getCartesEnregistrees(),
-    muet: getMuted(), accueilli: getOnboarded() }));
+  const etat = () => JSON.parse(JSON.stringify({ progression: getProgress(), passees: getPassees(), passeesEnPierres: getPasseesEnPierres(),
+    serie: getSerie(), carte: getCarteCourante(), possedees: cartesPossedees(), cartes: getCartesEnregistrees(),
+    achats: getAchats(), possessions: getPossessions(), muet: getMuted(), accueilli: getOnboarded() }));
   const e1 = etat();
   const fichier = JSON.parse(localStorage.getItem("station-progress"));
   await loadStore();

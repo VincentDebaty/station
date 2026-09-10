@@ -95,6 +95,7 @@ func charger_carte(id: String) -> void:
 	ruban = Rub.new(Donnees.cartes[id], Donnees.fiches)
 	ruban.stations = Sauvegarde.get_progression()
 	ruban.passees = Sauvegarde.get_passees()
+	ruban.passees_pierres = Sauvegarde.get_passees_en_pierres()
 	carte_id = id
 	vue_ruban.poser(ruban, id)
 
@@ -368,6 +369,16 @@ func passer(id: String) -> void:
 	vue_ruban.apres_passage(id, avant, prix)
 
 
+## Passer en pierres, quand les pièces manquent : la même soupape, dans
+## l'autre monnaie. Même règle — la gare reste à zéro étoile, la mise se rend.
+func passer_en_pierres(id: String) -> void:
+	var prix: int = Rec.prix_de_passage_en_pierres(ruban, id)
+	var avant := pierres()
+	if avant < prix or not Sauvegarde.payer_passage_en_pierres(id):
+		return
+	vue_ruban.apres_passage(id, avant, prix, true)
+
+
 # --- les pièces : un fait de compte, déduit --------------------------------------------
 func solde() -> int:
 	return Rec.solde_pieces(int(detail()["total"]), depenses())
@@ -383,6 +394,19 @@ func depenses() -> int:
 		Sauvegarde.cartes_possedees(), Donnees.cartes_index)
 
 
+# --- les pierres : le stock en poche, déduit lui aussi ------------------------------------
+func pierres_gagnees() -> int:
+	return Rec.pierres_gagnees(Sauvegarde.cartes_enregistrees(), Donnees.cartes, Sauvegarde.get_achats())
+
+
+func pierres_depensees() -> int:
+	return Rec.pierres_depensees(Sauvegarde.cartes_enregistrees(), Donnees.cartes)
+
+
+func pierres() -> int:
+	return Rec.stock_pierres(pierres_gagnees(), pierres_depensees())
+
+
 ## CE QU'UN SERVICE A RAPPORTÉ SE MESURE PAR DIFFÉRENCE. Le solde est déduit,
 ## il n'y a pas de « gain » à lire quelque part : on photographie le compte
 ## quand le service commence, et on compare quand il rend la main. Un rejeu
@@ -391,8 +415,10 @@ func depenses() -> int:
 var compte_avant := {}
 
 func _photographier_le_compte() -> void:
-	compte_avant = {"detail": detail(), "depenses": depenses()}
+	compte_avant = {"detail": detail(), "depenses": depenses(),
+		"pierres_gagnees": pierres_gagnees(), "pierres_depensees": pierres_depensees()}
 	compte_avant["solde"] = Rec.solde_pieces(int(compte_avant["detail"]["total"]), int(compte_avant["depenses"]))
+	compte_avant["pierres"] = Rec.stock_pierres(int(compte_avant["pierres_gagnees"]), int(compte_avant["pierres_depensees"]))
 
 
 func bourse_du_service() -> Dictionary:
@@ -405,7 +431,15 @@ func bourse_du_service() -> Dictionary:
 	for k in Rec.POSTES:
 		delta[k] = int(d_apres[k]) - int(d_avant.get(k, d_apres[k]))
 	var rendu: int = max(0, int(compte_avant.get("depenses", dep_apres)) - dep_apres)
-	return {"avant": avant, "apres": apres, "gain": apres - avant, "rendu": rendu, "detail": delta}
+	# et les pierres, de la même façon
+	var pg := pierres_gagnees()
+	var pd := pierres_depensees()
+	var p_apres: int = Rec.stock_pierres(pg, pd)
+	var p_avant: int = int(compte_avant.get("pierres", p_apres))
+	var p_rendu: int = max(0, int(compte_avant.get("pierres_depensees", pd)) - pd)
+	return {"avant": avant, "apres": apres, "gain": apres - avant, "rendu": rendu, "detail": delta,
+		"pierres": {"avant": p_avant, "apres": p_apres, "gain": p_apres - p_avant, "rendu": p_rendu,
+			"nouvelles": pg - int(compte_avant.get("pierres_gagnees", pg))}}
 
 
 # --- les cartes ------------------------------------------------------------------------------

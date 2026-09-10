@@ -84,6 +84,10 @@ func _appliquer(s, op: Array) -> Variant:
 			return s.pousser_serie(bool(op[1]))
 		"payerPassage":
 			return s.payer_passage(op[1])
+		"payerPassageEnPierres":
+			return s.payer_passage_en_pierres(op[1])
+		"ajouterDiamantsAchetes":
+			return s.ajouter_diamants_achetes(op[1])
 		"setCarteCourante":
 			s.set_carte_courante(op[1])
 			return null
@@ -102,7 +106,9 @@ func _appliquer(s, op: Array) -> Variant:
 func _etat(s) -> Dictionary:
 	return {
 		"progression": s.get_progression().duplicate(true), "passees": s.get_passees().duplicate(),
+		"passeesEnPierres": s.get_passees_en_pierres().duplicate(),
 		"serie": s.get_serie(), "carte": s.get_carte_courante(),
 		"possedees": s.cartes_possedees().duplicate(), "cartes": s.cartes_enregistrees(),
+		"achats": s.get_achats().duplicate(), "possessions": s.get_possessions().duplicate(),
 		"muet": s.get_muet(), "accueilli": s.get_accueilli(),
 	}
