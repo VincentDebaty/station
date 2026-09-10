@@ -446,11 +446,6 @@ static func fmt(minute: float) -> String:
 	return "%02d:%02d" % [7 + m / 60, m % 60]
 
 
-## Un retard au dixième, virgule française (fmtDixieme, js/render.js).
-static func fmt_dixieme(minute: float) -> String:
-	return ("%.1f" % max(0.1, floor(minute * 10.0 + 0.5) / 10.0)).replace(".", ",")
-
-
 ## LE PUPITRE — la matière sous le plan.
 ##
 ## Le poste était un aplat brun : correct, et sans profondeur. Un vrai tableau
@@ -1119,9 +1114,11 @@ func _dessiner_badges(t: float) -> void:
 		if not montre:
 			continue
 		var late: float = Enc.lateness(tr, enc.game_min)
-		# dès que le retard COÛTE, et au dixième — comme il s'encaisse (js/render.js)
-		var en_retard: bool = late > 0
-		var txt: String = ("+%s min" % fmt_dixieme(late)) if en_retard else fmt(tr.dep)
+		# la pastille ARRONDIT à la minute — rouge dès 0,5 min, jamais de dixièmes
+		# qui défilent ; ils comptent quand même, dans le compteur (js/render.js)
+		var late_min: int = int(floor(max(0.0, late) + 0.5))
+		var en_retard: bool = late_min >= 1
+		var txt: String = ("+%d min" % late_min) if en_retard else fmt(tr.dep)
 		var col: Color = Sty.ROUGE if en_retard else (Sty.AMBRE if late > -3 else Sty.VERT)
 		var k := Sty.UIK
 		var police := Sty.mono(700 if en_retard else 600)

@@ -350,7 +350,7 @@ function updateQueueUI() {
     // Reconstruction seulement quand le CONTENU change (la file est stable des
     // minutes durant) : sinon on redessinerait tout le calque à chaque frame.
     const sig = show ? q.map(t => t.id + ((t.target || t.freight) ? "+" : "-") +
-                                  (lateness(t, gameMin) > 0 ? "!" : "")).join(",") : "";
+                                  (lateness(t, gameMin) >= 0.5 ? "!" : "")).join(",") : "";
     if (sig === u.stripSig) continue;
     u.stripSig = sig;
     while (u.strip.firstChild) u.strip.removeChild(u.strip.firstChild);
@@ -418,7 +418,7 @@ function updateQueueUI() {
         r.style.fill = c.t.freight ? FREIGHT_COLOR : col;
         if (c.t.freight && loco) { r.style.stroke = col; r.style.strokeWidth = 1.1 * QK; }
       }
-      if (lateness(c.t, gameMin) > 0)
+      if (lateness(c.t, gameMin) >= 0.5)
         el("rect", {
           x: x - 3, y: yc - hLoco / 2 - 3, width: c.w + 6, height: hLoco + 6,
           rx: 4, class: "qtrain-late"
@@ -778,12 +778,6 @@ function fmt(min) {
   const h = 7 + Math.floor(m / 60);
   return String(h).padStart(2, "0") + ":" + String(m % 60).padStart(2, "0");
 }
-// Un retard au dixième, virgule française : « 0,8 », « 12,3 ». Jamais « 0,0 » :
-// la pastille ne l'écrit que lorsque le retard coûte, donc au-dessus de zéro,
-// et un dixième arrondi à zéro se lit « 0,1 » plutôt que rien.
-function fmtDixieme(min) {
-  return Math.max(0.1, Math.round(min * 10) / 10).toFixed(1).replace(".", ",");
-}
 function trainNode(t) {
   const g = el("g", { class: "train" + (t.freight ? " freight" : "") }, gQueue);
   // Deux silhouettes franchement distinctes :
@@ -1024,11 +1018,13 @@ function updateBadge(t) {
   }
   const late = lateness(t, gameMin);
   let txt, color;
-  // Le retard s'affiche dès qu'il COÛTE — au-delà de la tolérance de départ —
-  // et au dixième, parce que c'est au dixième qu'il s'encaisse (js/game.js,
-  // liveDelay). Une pastille qui dirait « à l'heure » pendant que le compteur
-  // monte contredirait le jeu.
-  if (late > 0) { txt = "+" + fmtDixieme(late) + " min"; color = "var(--red)"; }
+  // La pastille ARRONDIT à la minute : rouge et « +1 min » dès 0,5 min de
+  // retard, jamais de dixièmes qui défilent au-dessus de chaque convoi
+  // (Vincent, 10 septembre 2026). Les dixièmes n'en comptent pas moins : ils
+  // s'additionnent dans le compteur (js/game.js, liveDelay), qui lui aussi
+  // s'affiche arrondi. Même arrondi partout — Math.round, pas la partie entière.
+  const lateMin = Math.round(Math.max(0, late));
+  if (lateMin >= 1) { txt = "+" + lateMin + " min"; color = "var(--red)"; }
   else if (late > -3) { txt = fmt(t.dep); color = "#f5b23c"; }
   else { txt = fmt(t.dep); color = "var(--green)"; }
   // Horloge devant l'heure ; en retard, elle disparaît et l'heure reprend tout
@@ -1036,7 +1032,7 @@ function updateBadge(t) {
   // s'éteint par visibility="hidden", or un enfant en visibility="visible"
   // ANNULE celle du parent — le cadran restait alors seul en l'air au-dessus
   // d'un quai vide, sans sa pilule. display:none, lui, ne se laisse pas rouvrir.
-  const clock = late <= 0;
+  const clock = lateMin < 1;
   t.badgeClock.style.display = clock ? "" : "none";
   t.badgeClock.style.color = color;
   // Composition CENTRÉE dans la pilule : [cadran][gouttière][heure], le tout
@@ -1049,7 +1045,7 @@ function updateBadge(t) {
   if (clock) t.badgeClock.setAttribute("transform",
     "translate(" + (x0 + CK / 2).toFixed(1) + " 0)");
   t.badgeText.setAttribute("x", (clock ? x0 + CK + GUT + tw / 2 : 0).toFixed(1));
-  t.badgeEl.classList.toggle("late", late > 0);
+  t.badgeEl.classList.toggle("late", lateMin >= 1);
   // Retard qui court sur un convoi encore NON DÉMARRÉ (à l'arrêt sur la voie
   // d'approche, pas encore aiguillé vers un quai) : c'est le seul cas où le
   // joueur peut le régler à l'instant. Son retard clignote pour l'appeler à
@@ -1058,7 +1054,7 @@ function updateBadge(t) {
   // entendu, et deux pulsations désynchronisées (le cerne de sélection bat à
   // 1,1 s, le badge à 0,9 s) donneraient un scintillement brouillon.
   t.badgeEl.classList.toggle("late-idle",
-    late > 0 && selected !== t &&
+    lateMin >= 1 && selected !== t &&
     (t.state === "waiting" || t.state === "approaching"));
   t.badgeText.textContent = txt;
   t.badgeText.style.fill = color;

@@ -207,7 +207,9 @@ praticable.
 relevé. Avant, chaque convoi n'encaissait que sa minute entière : un train
 parti 1,14 min après son heure pesait zéro, et un diamant tolérait une minute
 par convoi. « À l'heure » (série, carillon) veut dire à zéro, donc sous la
-tolérance ; la pastille écrit « + 0,8 min » dès que le retard coûte.
+tolérance ; la pastille au-dessus du convoi, elle, **arrondit à la minute**
+(rouge et « +1 min » dès 0,5 — pas de dixièmes qui défilent, Vincent,
+10 septembre 2026) : les dixièmes ne comptent que dans le total.
 `oracle-enclenchement` compare les deux implémentations sur le total et les
 étoiles.
 
