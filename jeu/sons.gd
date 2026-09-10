@@ -184,6 +184,13 @@ static func _hauteur(famille: String, k: int) -> float:
 ## Ce qui a été déposé dans le dossier : chaque fichier audio, par son nom
 ## sans extension. Une ressource importée se charge comme telle ; à défaut
 ## (un fichier posé sans passer par l'importation), on le lit directement.
+##
+## DANS UN EXPORT, LE DOSSIER NE LISTE PAS `annonce.ogg` MAIS `annonce.ogg.import`
+## (mesuré sur l'iPhone le 10 septembre 2026 : les vingt sons étaient dans le
+## paquet, et le jeu n'en trouvait aucun — il jouait les signatures). Le
+## fichier original n'est pas embarqué, seule sa fiche d'importation l'est,
+## et c'est par le chemin original que ResourceLoader le rend. On retire donc
+## le `.import` du nom, et on charge par le chemin d'origine.
 func _charger_fichiers() -> void:
 	var d := DirAccess.open(DOSSIER)
 	if d == null:
@@ -192,11 +199,14 @@ func _charger_fichiers() -> void:
 	var f := d.get_next()
 	while f != "":
 		if not d.current_is_dir():
-			var ext := f.get_extension().to_lower()
-			if ext in ["ogg", "wav", "mp3"]:
-				var flux := _charger_flux(DOSSIER + f, ext)
+			var nom_fichier := f
+			if nom_fichier.get_extension().to_lower() == "import":
+				nom_fichier = nom_fichier.get_basename()
+			var ext := nom_fichier.get_extension().to_lower()
+			if ext in ["ogg", "wav", "mp3"] and not _fichiers.has(nom_fichier.get_basename()):
+				var flux := _charger_flux(DOSSIER + nom_fichier, ext)
 				if flux != null:
-					_fichiers[f.get_basename()] = flux
+					_fichiers[nom_fichier.get_basename()] = flux
 		f = d.get_next()
 	d.list_dir_end()
 
