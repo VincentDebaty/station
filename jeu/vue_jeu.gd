@@ -811,13 +811,11 @@ func _dessiner_convois(sel, t: float) -> void:
 		var vie: float = 1.0
 		if choisi:
 			vie = 0.38 + 0.62 * (0.5 + 0.5 * sin(t * TAU / 0.9))
-		# LE CONVOI RETENU GARDE SA COURONNE, à l'ambre : c'est un autre état,
-		# il lui faut un autre signe. Sans quoi « choisi » et « retenu » se
-		# diraient de la même façon.
-		if tr.holding:
-			for couche in [[16.0, 0.10], [10.0, 0.18], [5.5, 0.34], [2.5, 0.75]]:
-				draw_polyline(axe, Color(Sty.AMBRE, float(couche[1]) * anneau * 0.9),
-					h + float(couche[0]) * k, true)
+		# PLUS DE COURONNE AMBRE SUR LE CONVOI RETENU. « Quand un train attend à
+		# un feu rouge, il y a comme un halo jaune. À retirer. Le feu veut déjà
+		# tout dire » (Vincent, 10 septembre 2026). Le signal planté devant la
+		# motrice (_dessiner_signaux) porte seul l'état : une seule chose qui
+		# pulse, à la place où un aiguilleur la regarde.
 		# PLUS DE HALO DE DESTINATION, ET J'AVAIS COMPRIS L'INVERSE. « Pas de
 		# halo coloré pour le convoi de fret, il se confond avec les autres. Pas
 		# de halo non plus pour les autres en fait » : c'était une consigne, je
@@ -1533,9 +1531,24 @@ func _unhandled_input(event: InputEvent) -> void:
 		if enc.ended or tuto == "accueil":
 			return
 		m -= decalage()          # du geste à l'écran au plan de la gare
+		# UN CONVOI CHOISI CHERCHE UN QUAI. « Je dois parfois taper deux ou trois
+		# fois sur un quai » (Vincent, 10 septembre 2026, sur iPhone). Deux
+		# causes, mesurées : le quai n'acceptait que son propre rectangle — 42
+		# unités de haut, soit 25 points sur un iPhone en paysage, sous les 44
+		# que le doigt demande — et un convoi À QUAI, testé avant les quais avec
+		# un rayon de 37 unités par wagon, avalait tout tap sur un quai occupé
+		# pour répondre « à quai ». Désormais, un convoi étant choisi, seuls les
+		# convois encore aiguillables se touchent (changer de sélection reste
+		# possible) ; tout le reste tombe sur le quai, dont la zone s'étend
+		# jusqu'à mi-chemin des quais voisins (js/game.js, onTrainClick).
+		var choisi_avant = enc.selected
+		var cherche_quai: bool = choisi_avant != null \
+			and (choisi_avant.state == Enc.S_WAITING or choisi_avant.state == Enc.S_APPROACHING)
 		# un convoi ?
 		for t in enc.trains:
 			if not positions.has(t.id):
+				continue
+			if cherche_quai and not (t.state == Enc.S_WAITING or t.state == Enc.S_APPROACHING):
 				continue
 			for p in positions[t.id]:
 				# la zone de clic grossit avec le doigt (js/render.js, hitH × UIK)
@@ -1548,16 +1561,30 @@ func _unhandled_input(event: InputEvent) -> void:
 					return
 		# un quai ?
 		for q in G["platforms"]:
-			var r := Rect2(Geo.PLAT_X1, float(q["cy"]) - Geo.PLAT_H / 2.0, Geo.PLAT_LEN, Geo.PLAT_H)
-			if r.has_point(m):
-				var choisi = enc.selected
+			if zone_de_quai(q).has_point(m):
 				var dit := enc.clic_quai(q["id"])
 				if dit != "":
 					print("quai %d — %s" % [int(q["id"]), dit])
-				if choisi != null and choisi.target != null:
+				if choisi_avant != null and choisi_avant.target != null:
 					_tuto_quai_choisi()
 				return
 		enc.selected = null
+
+
+## LA ZONE QU'UN DOIGT PEUT TOUCHER POUR CHOISIR UN QUAI — plus large que le
+## quai dessiné. En hauteur, jusqu'à mi-chemin du quai voisin (au plus 50
+## unités de part et d'autre, jamais moins que le quai lui-même) : entre deux
+## quais, il n'y a plus de zone morte. En largeur, 30 unités au-delà de chaque
+## bout. Même règle que la cible invisible du web (js/render.js, .plat-zone).
+func zone_de_quai(q: Dictionary) -> Rect2:
+	var cy := float(q["cy"])
+	var demi: float = 50.0
+	for o in G["platforms"]:
+		if o["id"] == q["id"]:
+			continue
+		demi = min(demi, abs(float(o["cy"]) - cy) / 2.0)
+	demi = max(demi, Geo.PLAT_H / 2.0)
+	return Rect2(Geo.PLAT_X1 - 30.0, cy - demi, Geo.PLAT_LEN + 60.0, 2.0 * demi)
 
 
 # ------------------------------------------------------------------

@@ -199,6 +199,20 @@ function drawStatic() {
   // valides pendant une sélection
   for (const q of PLATFORMS) {
     const pg = el("g", { class: "plat", id: "plat-" + q.id }, gPlatforms);
+    // LA ZONE QU'UN DOIGT PEUT TOUCHER, plus large que le quai dessiné : en
+    // hauteur jusqu'à mi-chemin du quai voisin (au plus 50 unités de part et
+    // d'autre, jamais moins que le quai), en largeur 30 unités au-delà de
+    // chaque bout. Le quai fait 42 unités de haut, soit 25 points sur un
+    // iPhone en paysage — sous les 44 que le doigt demande. Même règle que
+    // jeu/vue_jeu.gd, zone_de_quai.
+    let demi = 50;
+    for (const o of PLATFORMS) if (o !== q) demi = Math.min(demi, Math.abs(o.cy - q.cy) / 2);
+    demi = Math.max(demi, PLAT_H / 2);
+    const zone = el("rect", {
+      x: PLAT_X1 - 30, y: q.cy - demi, width: PLAT_X2 - PLAT_X1 + 60, height: 2 * demi,
+      fill: "transparent", class: "plat-zone"
+    }, pg);
+    zone.addEventListener("click", () => onPlatformClick(q.id));
     const rect = el("rect", {
       x: PLAT_X1, y: q.cy - PLAT_H / 2, width: PLAT_X2 - PLAT_X1, height: PLAT_H,
       rx: 10, class: "platform", "data-platform": q.id

@@ -716,6 +716,19 @@ function onPlatformClick(pid) {
 }
 function onTrainClick(t) {
   if (ended) return;
+  // UN CONVOI CHOISI CHERCHE UN QUAI. Les convois sont dessinés au-dessus des
+  // quais, et leur cible de clic déborde du quai : tant qu'un convoi occupait
+  // un quai, le tap sur ce quai touchait le convoi et répondait « quai 3 —
+  // départ 07:21 » au lieu de l'aiguiller — « je dois parfois taper deux ou
+  // trois fois » (Vincent, 10 septembre 2026). Un convoi étant choisi, seul un
+  // autre convoi encore aiguillable prend le tap ; un convoi à quai le passe à
+  // son quai, qu'on a le droit de choisir occupé (on attend dehors).
+  const routableT = t.state === "waiting" || t.state === "approaching";
+  if (selected && selected !== t && !routableT && !t.freight &&
+      (t.state === "dwell" || t.state === "movingIn") && t.platform != null) {
+    onPlatformClick(t.platform);
+    return;
+  }
   if (t.freight) {
     // Le fret s'aiguille tout seul : il n'y a rien à décider pour lui. On ne le
     // sélectionne donc pas — mais le tap n'est pas mort pour autant, une pilule
