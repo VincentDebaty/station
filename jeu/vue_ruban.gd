@@ -32,6 +32,11 @@ const DUREE_CAMERA_SAUT := 1.5
 const DUREE_VOYAGE := 1.15
 const DUREE_SAUT := 1.9
 const DELAI_LECTURE := 0.7
+## Au-delà de cette course, un doigt ne DÉSIGNE plus, il TIRE. Un demi-
+## centimètre sur l'appareil de Vincent : assez pour qu'un doigt qui appuie ne
+## déclenche pas un déplacement, assez peu pour qu'un déplacement démarre sans
+## qu'on ait à forcer.
+const COURSE_CLIC := 14.0
 
 # --- LA REMISE DES RÉCOMPENSES, en trois temps ------------------------------
 # « Les étoiles arrivent en grand au milieu de l'écran et se replacent dans le
@@ -135,6 +140,14 @@ var seq_joues := 0            # combien de sons d'étoile déjà donnés
 var puce_de := ""
 var puce_vers := ""
 var plaques_ecran := {}       # la place des plaques au dernier dessin, pour le doigt
+
+# --- LA CARTE SE DÉPLACE AU DOIGT --------------------------------------------
+var cam_libre := false        # le joueur a pris la main sur le cadrage
+var glisse_pris := false      # un doigt est posé sur la carte
+var glisse_depuis := Vector2.ZERO
+var glisse_cam := Vector2.ZERO
+var glisse_course := 0.0      # combien il a parcouru : au-delà, ce n'est plus un clic
+var zone_recentrer := Rect2()
 
 # --- le panneau ---------------------------------------------------------------------
 var barre: PanelContainer      # la barre du haut, sur toute la largeur
@@ -682,9 +695,33 @@ func _encombrement(ids: Array, c: Dictionary) -> Rect2:
 	return r
 
 
+## LA CARTE NE SORT PAS DE SES BORDS. On garde la fenêtre visible à
+## l'intérieur du cadre : tirer la carte ne doit jamais découvrir du vide. Si
+## le zoom est tel que le cadre est plus petit que la fenêtre — ce qui arrive
+## quand on recule sur le continent —, il n'y a rien à borner, on centre.
+func _borner_camera() -> void:
+	var f := fenetre()
+	var k: float = max(1e-6, float(cam["k"]))
+	var demi_l: float = float(f["w"]) / (2.0 * k)
+	var demi_h: float = float(f["h"]) / (2.0 * k)
+	cam["x"] = CADRE_L / 2.0 if demi_l * 2.0 >= CADRE_L else clampf(float(cam["x"]), demi_l, CADRE_L - demi_l)
+	cam["y"] = CADRE_H / 2.0 if demi_h * 2.0 >= CADRE_H else clampf(float(cam["y"]), demi_h, CADRE_H - demi_h)
+
+
+## Rendre la main au cadrage automatique — celui qui tient le chapitre en cours
+## et la gare qui vient. C'est ce que fait le bouton, et c'est aussi ce que fait
+## la fin d'un service : on ne laisse pas le joueur revenir sur une carte
+## décadrée par un geste d'il y a dix minutes.
+func _recentrer() -> void:
+	cam_libre = false
+	glisse_pris = false
+	aller_camera()
+
+
 func aller_camera(saut: bool = false) -> void:
 	if zoom_force:
 		return
+	cam_libre = false
 	var v := camera_voulue()
 	if is_equal_approx(v["x"], cam["x"]) and is_equal_approx(v["y"], cam["y"]) and is_equal_approx(v["k"], cam["k"]):
 		return
@@ -878,6 +915,7 @@ func _draw() -> void:
 			draw_circle(p, 5.0 * kk, Color(Sty.LAITON_CLAIR, 0.85))
 			draw_circle(p, 2.6 * kk, Color(1, 1, 1, 0.95))
 	_rose_des_vents()
+	_bouton_recentrer()
 
 	# --- les gares du chapitre vu, et la gare quittée ---------------------------
 	var dessinees := gares_dessinees()
@@ -1364,6 +1402,45 @@ func _fil_du_ruban() -> void:
 		draw_circle(e, 3.0 * Sty.HUD_K, Color(Sty.LAITON, 0.32))
 
 
+## LE RETOUR AU CADRAGE, quand on s'est éloigné.
+##
+## Une carte qu'on peut tirer est une carte où l'on peut se perdre — surtout
+## celle-ci, qui couvre l'Europe et dont le chapitre en cours n'occupe qu'un
+## timbre-poste. Le bouton n'apparaît QUE si l'on a pris la main : tant que le
+## cadrage est automatique, il n'aurait rien à faire, et un bouton qui ne sert
+## à rien encombre.
+##
+## Il se pose en bas à droite de la carte, dans la zone sûre, du côté opposé au
+## panneau — là où le pouce arrive, et là où il ne couvre ni les plaques de
+## gare, ni la rose.
+func _bouton_recentrer() -> void:
+	zone_recentrer = Rect2()
+	if not cam_libre:
+		return
+	var k := Sty.HUD_K
+	var f := Sty.titre(600)
+	var t := int(round(13.0 * k))
+	var mot := "Recentrer"
+	var w: float = Sty.largeur_espacee(f, t, mot, 1.0 * k)
+	var r := Rect2(Vector2.ZERO, Vector2(w + 46.0 * k, 30.0 * k))
+	var c := cadre_carte()
+	r.position = Vector2(c.end.x - r.size.x - 14.0 * k, c.end.y - r.size.y - 14.0 * k)
+	zone_recentrer = r
+	draw_style_box(Sty.boite(Color(Sty.BOIS, 0.92), Color(Sty.LAITON, 0.85), Sty.R * k,
+		Sty.epaisseur(k), 6.0 * k, Color(0, 0, 0, 0.35)), r)
+	# LA MIRE : deux traits croisés et un cercle, le signe universel du
+	# recentrage. Dessinée, pas écrite : un glyphe de police ne serait pas là
+	# sur l'iPhone, on l'a déjà appris avec le drapeau.
+	var m := Vector2(r.position.x + 17.0 * k, r.get_center().y)
+	draw_arc(m, 6.5 * k, 0.0, TAU, 24, Color(Sty.LAITON_CLAIR, 0.9), 1.6 * k, true)
+	draw_circle(m, 2.0 * k, Sty.LAITON_CLAIR)
+	for u in [Vector2.LEFT, Vector2.RIGHT, Vector2.UP, Vector2.DOWN]:
+		draw_line(m + u * 5.0 * k, m + u * 10.0 * k, Color(Sty.LAITON_CLAIR, 0.9), 1.6 * k, true)
+	Sty.texte_espace(self, f, t,
+		Vector2(r.position.x + 30.0 * k, r.get_center().y + f.get_ascent(t) / 2.0 - 2.0 * k),
+		mot, Sty.PAPIER, 1.0 * k)
+
+
 ## LA ROSE DES VENTS, posée dans l'angle de la carte. Elle est à l'ÉCRAN et
 ## non sur le terrain : un ornement de cartouche ne dérive pas avec le zoom.
 ## Où la rose se pose, et la place qu'elle prend : le placement des plaques
@@ -1630,6 +1707,33 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if app != null and (app.en_glissement() or app.en_attente()):
 		return
+	# --- LA CARTE SE DÉPLACE AU DOIGT, dans ses limites -----------------------
+	# Un doigt posé sur la carte peut faire deux choses, et on ne sait laquelle
+	# qu'au relâcher : DÉSIGNER une gare, ou TIRER la carte. On garde donc le
+	# geste en suspens et on mesure sa course — au-delà d'un demi-centimètre ce
+	# n'est plus un clic, c'est un déplacement. C'est la règle de toutes les
+	# cartes tactiles, et elle évite d'avoir à choisir entre les deux.
+	if event is InputEventMouseMotion and glisse_pris:
+		var d: Vector2 = event.position - glisse_depuis
+		glisse_course = max(glisse_course, d.length())
+		if glisse_course > COURSE_CLIC:
+			cam_libre = true
+			cam_vers = {}
+			var f := fenetre()
+			var u: float = max(1e-6, float(cam["k"]) * float(f["px"]))
+			cam["x"] = glisse_cam.x - d.x / u
+			cam["y"] = glisse_cam.y - d.y / u
+			_borner_camera()
+			_poser_fond()
+			queue_redraw()
+		return
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and not event.pressed:
+		var pris := glisse_pris
+		var course := glisse_course
+		glisse_pris = false
+		if pris and course <= COURSE_CLIC:
+			_toucher_carte(event.position)
+		return
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		var m: Vector2 = event.position
 		if m.x < panneau_l() + Sty.marges["gauche"]:
@@ -1639,32 +1743,46 @@ func _unhandled_input(event: InputEvent) -> void:
 		if seq != "":
 			_finir_remise()
 			return
-		# LA CIBLE, C'EST LE POINT **ET** SA PLAQUE. Le rayon valait 16 unités
-		# en dur : sur l'iPhone de Vincent, où le viewport est étiré, cela fait
-		# huit points — moins d'un tiers de la pulpe d'un doigt. On vise donc
-		# aussi le nom, qui est la partie qu'on regarde.
-		var r_doigt: float = 22.0 * Sty.HUD_K
-		for id in gares_dessinees():
-			var p := pos(id)
-			if p == Vector2.INF:
-				continue
-			var etat := etat_de_gare(id)
-			# une gare non déverrouillée : il ne se passe rien
-			if etat != "faite" and etat != "courante" and etat != "payee":
-				continue
-			var pl: Rect2 = plaques_ecran.get(id, Rect2())
-			if ecran(p).distance_to(m) > r_doigt and not (pl != Rect2() and pl.grow(4.0 * Sty.HUD_K).has_point(m)):
-				continue
-			# LA GARE QUI VIENT SE LANCE D'UN DOIGT : elle est déjà décrite sur
-			# la feuille, il n'y a rien de plus à lire. Les autres se posent
-			# d'abord dans le panneau — on ne rejoue pas une gare par mégarde.
-			if id == prochaine and selection == "":
-				jouer(id)
-			else:
-				_selectionner(id)
+		# LE BOUTON DE RECENTRAGE PASSE AVANT TOUT : il est posé sur la carte,
+		# et il ne doit pas se confondre avec une gare qui serait dessous.
+		if cam_libre and zone_recentrer.has_point(m):
+			_recentrer()
 			return
-		# à côté de toute gare : on repose ce qu'on avait pris
-		_deselectionner()
+		glisse_pris = true
+		glisse_depuis = m
+		glisse_cam = Vector2(cam["x"], cam["y"])
+		glisse_course = 0.0
+		return
+
+
+## Ce qu'un doigt DÉSIGNE sur la carte, une fois qu'on sait qu'il n'a pas tiré.
+func _toucher_carte(m: Vector2) -> void:
+	# LA CIBLE, C'EST LE POINT **ET** SA PLAQUE. Le rayon valait 16 unités
+	# en dur : sur l'iPhone de Vincent, où le viewport est étiré, cela fait
+	# huit points — moins d'un tiers de la pulpe d'un doigt. On vise donc
+	# aussi le nom, qui est la partie qu'on regarde.
+	var r_doigt: float = 22.0 * Sty.HUD_K
+	for id in gares_dessinees():
+		var p := pos(id)
+		if p == Vector2.INF:
+			continue
+		var etat := etat_de_gare(id)
+		# une gare non déverrouillée : il ne se passe rien
+		if etat != "faite" and etat != "courante" and etat != "payee":
+			continue
+		var pl: Rect2 = plaques_ecran.get(id, Rect2())
+		if ecran(p).distance_to(m) > r_doigt and not (pl != Rect2() and pl.grow(4.0 * Sty.HUD_K).has_point(m)):
+			continue
+		# LA GARE QUI VIENT SE LANCE D'UN DOIGT : elle est déjà décrite sur
+		# la feuille, il n'y a rien de plus à lire. Les autres se posent
+		# d'abord dans le panneau — on ne rejoue pas une gare par mégarde.
+		if id == prochaine and selection == "":
+			jouer(id)
+		else:
+			_selectionner(id)
+		return
+	# à côté de toute gare : on repose ce qu'on avait pris
+	_deselectionner()
 
 
 # ------------------------------------------------------------------

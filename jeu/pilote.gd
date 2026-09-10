@@ -6,6 +6,7 @@ extends Node
 ##
 ## Chaque pas est « <secondes depuis le début> <geste> [args] » :
 ##   clic X Y        un clic gauche à cette position d'écran (fenêtre 1400 × 760)
+##   glisser X Y A B un doigt posé en X Y, tiré jusqu'en A B, puis relâché
 ##   touche NOM      une touche (space, escape, r, 1, 2, 4, enter…)
 ##   capture CHEMIN  une image de l'écran, sans quitter
 ##   quitter         la fin
@@ -45,6 +46,9 @@ func _jouer() -> void:
 				await _clic(Vector2(float(mots[2]), float(mots[3])))
 			"touche":
 				_touche(mots[2])
+			"glisser":
+				await _glisser(Vector2(float(mots[2]), float(mots[3])),
+					Vector2(float(mots[4]), float(mots[5])))
 			"capture":
 				await _capture(mots[2])
 			"quitter":
@@ -74,6 +78,39 @@ func _jouer() -> void:
 ## ne déclenchaient rien — mesuré le 5 septembre 2026 en essayant de piloter
 ## le bouton « Les cartes », qui n'a jamais bougé. Le pilote ne savait donc
 ## cliquer que ce qui écoute `_unhandled_input`, c'est-à-dire le plan de gare.
+## UN GLISSEMENT EST UN APPUI, DES MOUVEMENTS, PUIS UN RELÂCHEMENT — et il en
+## faut PLUSIEURS, de mouvements : une carte qui se tire mesure la course du
+## doigt pour distinguer un déplacement d'un clic, et un saut unique jusqu'à
+## l'arrivée ne dirait rien du chemin.
+func _glisser(de: Vector2, vers: Vector2) -> void:
+	Input.warp_mouse(de)
+	var appui := InputEventMouseButton.new()
+	appui.position = de
+	appui.global_position = de
+	appui.button_index = MOUSE_BUTTON_LEFT
+	appui.button_mask = MOUSE_BUTTON_MASK_LEFT
+	appui.pressed = true
+	get_viewport().push_input(appui, true)
+	await get_tree().process_frame
+	for i in range(1, 9):
+		var p := de.lerp(vers, float(i) / 8.0)
+		var m := InputEventMouseMotion.new()
+		m.position = p
+		m.global_position = p
+		m.relative = (vers - de) / 8.0
+		m.button_mask = MOUSE_BUTTON_MASK_LEFT
+		get_viewport().push_input(m, true)
+		await get_tree().process_frame
+	var fin := InputEventMouseButton.new()
+	fin.position = vers
+	fin.global_position = vers
+	fin.button_index = MOUSE_BUTTON_LEFT
+	fin.button_mask = 0
+	fin.pressed = false
+	get_viewport().push_input(fin, true)
+	await get_tree().process_frame
+
+
 func _clic(pos: Vector2) -> void:
 	Input.warp_mouse(pos)
 	var m := InputEventMouseMotion.new()
