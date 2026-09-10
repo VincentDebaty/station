@@ -204,8 +204,10 @@ praticable.
 étoile 10 · minute sous le seuil 3 ★ 1 (0..12)
 chapitre d'or 200 · zone 1 000 · carte 5 000
 médaille 50 / 150 / 500 · passage 50 + 30 × chapitre · le Rhin 15 000
-PIERRES : sans-faute 1 · chapitre de diamant 3 · un passage = ⌈pièces / 50⌉
 ```
+
+Le sans-faute vaut 50 pièces et le chapitre de diamant 500 : la pierre qui se
+dépensait à leur place (schéma 8) a été retirée le jour même de sa livraison.
 
 Tout est déduit, rien n'est stocké : `oracle-ruban` compare les deux
 implémentations sur douze scénarios, dont trois cartes mixtes à trous. Les
@@ -1050,6 +1052,18 @@ Il suit une règle : **ce qui se vérifie tout seul d'abord**.
    acheter la carte la rend courante, le pack marque tout. Reste à exercer
    sur l'appareil : le greffon, les produits dans App Store Connect, et la
    restauration.
+
+   **LES PIERRES SONT DÉFAITES, le 10 septembre 2026 au soir.** « Les pierres
+   peuvent être supprimées. Pas une bonne idée. » (Vincent). Tout ce que la
+   passe de la pierre avait posé est retiré : le stock en poche, le passage en
+   pierres, la gemme pâle sur la carte, la mise rendue en pierres, la boutique
+   des pierres et ses trois lots, `achats.diamants`. Le diamant est un
+   trophée, il rend ses 50 pièces (500 par chapitre de diamant), et la
+   pastille de la barre redit les sans-fautes. **Schéma 9** : les passages
+   payés en pierres rejoignent `passees` à la migration — une gare passée
+   reste passée, rien n'est perdu —, `possessions` reste pour le pack.
+   `oracle-sauvegarde` 21/21 (un cas v9 de plus, la migration v8 → v9
+   vérifiée des deux côtés), `oracle-ruban` 12/12, `boutique-check` B1…B4.
 
 À l'étape 3 et à l'étape 5, il existe une **oracle** : le prototype. Faire
 tourner les deux sur la même graine et comparer les sorties est le meilleur test

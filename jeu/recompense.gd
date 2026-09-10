@@ -35,25 +35,23 @@ const RANGS := [
 ## PRÉCISION (une pièce par minute sous le seuil des trois étoiles, lue dans
 ## `bestDelay`) et la BOURSE des médailles. Même chiffres que js/recompense.js,
 ## et tools/oracle-ruban.mjs le vérifie.
+## LE DIAMANT RESTE UN TROPHÉE, ET IL REND SES PIÈCES. La pierre qui se
+## dépense (lot 2, schéma 8) a vécu quelques heures le 10 septembre 2026 —
+## « pas une bonne idée » (Vincent) : un sans-faute vaut 50 pièces, un
+## chapitre de diamant 500, et le diamant ne s'échange contre rien.
 const PIECES_PAR_ETOILE := 10
 const PIECES_PAR_MINUTE := 1
+const PIECES_PAR_DIAMANT := 50
 const PIECES_PAR_CHAPITRE_DOR := 200
+const PIECES_PAR_CHAPITRE_DIAMANT := 500
 const PIECES_PAR_ZONE := 1000
 const PIECES_PAR_CARTE := 5000
 const PASSAGE_BASE := 50
 const PASSAGE_PAR_CHAPITRE := 30
 const SEUIL_OR := 3        # RANGS « or »
 const SEUIL_DIAMANT := 4   # RANGS « diamant »
-## LA PIERRE (lot 2, 10 septembre 2026, economie-du-jeu.md §4). Le sans-faute
-## ne rend plus de pièces : il produit une PIERRE, qu'on garde ou qu'on
-## dépense — un passage vaut `prix en pièces / 50` pierres, arrondi au-dessus.
-## Le TROPHÉE ne bouge pas : sceau, rang de diamant et médailles se déduisent
-## toujours de `bestDelay` et ne s'achètent jamais. Seul le stock se dépense.
-const PIERRE_PAR_SANS_FAUTE := 1
-const PIERRES_PAR_CHAPITRE_DIAMANT := 3
-const PIERRE_VAUT := 50
 ## Les postes du détail, dans l'ordre où le relevé les dit.
-const POSTES := ["etoiles", "avance", "or", "zones", "carte", "medailles"]
+const POSTES := ["etoiles", "avance", "sansFaute", "or", "diamant", "zones", "carte", "medailles"]
 
 ## Les vingt-six médailles, dans l'ordre de la plus commune à la plus rare.
 ## Le prédicat de chacune est dans medaille_tenue() : GDScript n'a pas de
@@ -321,11 +319,12 @@ static func avance_de(r: Dictionary, seuils: Dictionary) -> int:
 static func pieces_de_gare(r: Dictionary, seuils: Dictionary) -> int:
 	if r.is_empty():
 		return 0
-	return Rub.etoiles_de(r) * PIECES_PAR_ETOILE + avance_de(r, seuils) * PIECES_PAR_MINUTE
+	return Rub.etoiles_de(r) * PIECES_PAR_ETOILE + avance_de(r, seuils) * PIECES_PAR_MINUTE \
+		+ (PIECES_PAR_DIAMANT if est_diamant(r) else 0)
 
 
 static func plafond_de_gare(seuils: Dictionary) -> int:
-	return 3 * PIECES_PAR_ETOILE + int(seuils["trois"]) * PIECES_PAR_MINUTE
+	return 3 * PIECES_PAR_ETOILE + int(seuils["trois"]) * PIECES_PAR_MINUTE + PIECES_PAR_DIAMANT
 
 
 static func manque_a_gagner(r: Dictionary, seuils: Dictionary) -> int:
@@ -355,19 +354,18 @@ static func detail_vide() -> Dictionary:
 ## barème — la précision dépend de la difficulté jouée, donc de la position.
 ## Une gare PAYÉE reste à zéro : franchie, pas tenue.
 static func detail_pieces_d_une_carte(def: Dictionary, fiches: Dictionary, stations: Dictionary,
-		passees: Array, serie: Dictionary, passees_pierres: Array = []) -> Dictionary:
+		passees: Array, serie: Dictionary) -> Dictionary:
 	var d := detail_vide()
 	var r := Rub.new(def, fiches)
 	r.stations = stations
 	r.passees = passees
-	r.passees_pierres = passees_pierres
-	# franchie, c'est payée en pièces OU en pierres
-	var franchies: Array = passees + passees_pierres
 	for id in stations:
 		var p: Variant = stations[id]
 		if not (p is Dictionary):
 			continue
 		d["etoiles"] += Rub.etoiles_de(p) * PIECES_PAR_ETOILE
+		if est_diamant(p):
+			d["sansFaute"] += PIECES_PAR_DIAMANT
 		# la précision ne se lit que sur une gare dont on connaît la fiche
 		var cfg: Dictionary = r.fiche_de(String(id))
 		if not cfg.is_empty():
@@ -382,10 +380,12 @@ static func detail_pieces_d_une_carte(def: Dictionary, fiches: Dictionary, stati
 		var toutes := true
 		for x in g:
 			bas = min(bas, _niveau_dans(stations, x))
-			if not _franchie_dans(stations, franchies, x):
+			if not _franchie_dans(stations, passees, x):
 				toutes = false
 		if bas >= SEUIL_OR:
 			d["or"] += PIECES_PAR_CHAPITRE_DOR
+		if bas >= SEUIL_DIAMANT:
+			d["diamant"] += PIECES_PAR_CHAPITRE_DIAMANT
 		if toutes:
 			finis += 1
 	var zs: Array = def["zones"] if def.get("zones") is Array else []
@@ -397,7 +397,7 @@ static func detail_pieces_d_une_carte(def: Dictionary, fiches: Dictionary, stati
 				continue
 			dans += 1
 			for x in (c["gares"] if c.get("gares") is Array else []):
-				if not _franchie_dans(stations, franchies, x):
+				if not _franchie_dans(stations, passees, x):
 					toutes = false
 		if dans > 0 and toutes:
 			d["zones"] += PIECES_PAR_ZONE
@@ -410,30 +410,8 @@ static func detail_pieces_d_une_carte(def: Dictionary, fiches: Dictionary, stati
 
 
 static func pieces_d_une_carte(def: Dictionary, fiches: Dictionary, stations: Dictionary,
-		passees: Array, serie: Dictionary, passees_pierres: Array = []) -> int:
-	return int(detail_pieces_d_une_carte(def, fiches, stations, passees, serie, passees_pierres)["total"])
-
-
-## CE QU'UNE CARTE RAPPORTE EN PIERRES : une par sans-faute, trois par chapitre
-## de diamant. Déduit de `bestDelay`, comme le trophée — mais c'est le stock.
-static func detail_pierres_d_une_carte(def: Dictionary, stations: Dictionary) -> Dictionary:
-	var d := {"sansFaute": 0, "diamant": 0, "total": 0}
-	for id in stations:
-		var p: Variant = stations[id]
-		if p is Dictionary and est_diamant(p):
-			d["sansFaute"] += PIERRE_PAR_SANS_FAUTE
-	var chs: Array = def["chapitres"] if def.get("chapitres") is Array else []
-	for ch in chs:
-		var g: Array = ch["gares"] if ch.get("gares") is Array else []
-		if g.is_empty():
-			continue
-		var bas := 4
-		for x in g:
-			bas = min(bas, _niveau_dans(stations, x))
-		if bas >= SEUIL_DIAMANT:
-			d["diamant"] += PIERRES_PAR_CHAPITRE_DIAMANT
-	d["total"] = int(d["sansFaute"]) + int(d["diamant"])
-	return d
+		passees: Array, serie: Dictionary) -> int:
+	return int(detail_pieces_d_une_carte(def, fiches, stations, passees, serie)["total"])
 
 
 ## Mêmes crans que niveau_de_gare, mais lus dans la table qu'on nous donne.
@@ -459,8 +437,7 @@ static func detail_pieces_gagnees(cartes: Array, defs: Dictionary, fiches: Dicti
 		var d := detail_pieces_d_une_carte(def if def is Dictionary else {}, fiches,
 			c["stations"] if c.get("stations") is Dictionary else {},
 			c["passees"] if c.get("passees") is Array else [],
-			c["serie"] if c.get("serie") is Dictionary else {},
-			c["passeesEnPierres"] if c.get("passeesEnPierres") is Array else [])
+			c["serie"] if c.get("serie") is Dictionary else {})
 		for k in t:
 			t[k] += d[k]
 	return t
@@ -468,26 +445,6 @@ static func detail_pieces_gagnees(cartes: Array, defs: Dictionary, fiches: Dicti
 
 static func pieces_gagnees(cartes: Array, defs: Dictionary, fiches: Dictionary) -> int:
 	return int(detail_pieces_gagnees(cartes, defs, fiches)["total"])
-
-
-## Les pierres, sur toutes les cartes — plus celles qu'on a achetées
-## (`achats` : {diamants}, la sauvegarde).
-static func detail_pierres_gagnees(cartes: Array, defs: Dictionary, achats: Dictionary) -> Dictionary:
-	var t := {"sansFaute": 0, "diamant": 0, "achetees": 0, "total": 0}
-	for c in cartes:
-		var def: Variant = defs.get(c.get("id"))
-		var d := detail_pierres_d_une_carte(def if def is Dictionary else {},
-			c["stations"] if c.get("stations") is Dictionary else {})
-		t["sansFaute"] += d["sansFaute"]
-		t["diamant"] += d["diamant"]
-	var a: Variant = achats.get("diamants")
-	t["achetees"] = int(a) if (a is int or a is float) else 0
-	t["total"] = int(t["sansFaute"]) + int(t["diamant"]) + int(t["achetees"])
-	return t
-
-
-static func pierres_gagnees(cartes: Array, defs: Dictionary, achats: Dictionary) -> int:
-	return int(detail_pierres_gagnees(cartes, defs, achats)["total"])
 
 
 ## Le prix d'un passage suit la position dans le ruban : 50 + 30 par chapitre.
@@ -506,15 +463,6 @@ static func prix_de_passage(r: Rub, id: String) -> int:
 		return PASSAGE_BASE + int(ch["rang"]) * PASSAGE_PAR_CHAPITRE
 	return prix_de_passage_dans(r.carte, id)
 
-
-## Le même passage, en pierres : une au premier chapitre, sept au dixième,
-## trente au dernier. La fin du ruban reste hors de prix.
-static func prix_de_passage_en_pierres_dans(def: Dictionary, id: String) -> int:
-	return int(ceil(float(prix_de_passage_dans(def, id)) / float(PIERRE_VAUT)))
-
-
-static func prix_de_passage_en_pierres(r: Rub, id: String) -> int:
-	return int(ceil(float(prix_de_passage(r, id)) / float(PIERRE_VAUT)))
 
 
 ## Le prix en pièces d'une carte : sa définition (`prix`), à défaut son entrée
@@ -558,22 +506,3 @@ static func pieces_depensees(cartes: Array, defs: Dictionary, possedees: Diction
 static func solde_pieces(gagnes: int, depenses: int) -> int:
 	return max(0, gagnes - depenses)
 
-
-## La dépense en pierres : les passages payés en pierres dont la gare est
-## ENCORE à zéro étoile — la mise se rend, comme pour les pièces.
-static func pierres_depensees(cartes: Array, defs: Dictionary) -> int:
-	var d := 0
-	for c in cartes:
-		var def: Variant = defs.get(c.get("id"))
-		var st: Dictionary = c["stations"] if c.get("stations") is Dictionary else {}
-		var pa: Array = c["passeesEnPierres"] if c.get("passeesEnPierres") is Array else []
-		for g in pa:
-			var p: Variant = st.get(g)
-			var stars: int = Rub.etoiles_de(p) if p is Dictionary else 0
-			if not (stars >= 1):
-				d += prix_de_passage_en_pierres_dans(def if def is Dictionary else {}, g)
-	return d
-
-
-static func stock_pierres(gagnes: int, depenses: int) -> int:
-	return max(0, gagnes - depenses)

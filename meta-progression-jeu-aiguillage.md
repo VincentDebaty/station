@@ -112,16 +112,11 @@ Les trois premiers niveaux décrivent *comment on avance* ; le quatrième décri
   compteur ◆ dans la barre du haut. Il était enregistré depuis toujours
   (`bestDelay = 0`) et ne s'affichait nulle part — on faisait un sans-faute et
   le jeu ne disait rien.
-- **Le diamant a deux natures, et on ne les confond plus** (tranché le
-  10 septembre 2026, `economie-du-jeu.md` §4) : le **sans-faute** est un fait
-  de progression — le sceau sur la carte, le cran bleu, le rang de diamant,
-  les médailles —, absolu, déduit de `bestDelay`, et il ne s'achète ni ne se
-  dépense jamais ; la **pierre** est l'objet qu'il a produit, qu'on garde ou
-  qu'on dépense. Le compteur de la barre dit les pierres **en poche** :
-  sans-fautes + 3 par chapitre de diamant + pierres achetées − passages payés
-  en pierres encore à zéro étoile. Une pierre paie un passage quand les
-  pièces manquent (`prix en pièces / 50`, arrondi au-dessus) ; jamais une
-  étoile, un rang, une médaille, une carte.
+- **Le diamant est un trophée, et rien d'autre** (essayé puis défait le
+  10 septembre 2026) : la pierre qui se dépense — un stock en poche, des
+  passages payés en pierres, des pierres à vendre — a été livrée puis retirée
+  le même jour, « pas une bonne idée » (Vincent). Le diamant rend ses pièces
+  (§7), se montre partout où il se gagne, et ne s'échange contre rien.
 - **Trois objets, trois formes, et on ne les mélange pas** (10 septembre
   2026, `economie-du-jeu.md`) : **★ est l'étoile**, **◆ est le diamant**, la
   **pièce** frappée en laiton est la monnaie. Elle a remplacé le « cr » — une
@@ -574,23 +569,17 @@ se rééquilibre sans migration.
   pièces, se **déduit** de la progression comme tout le reste :
   10 par étoile · **1 par minute sous le seuil des trois étoiles** (la
   précision, lue dans le meilleur retard — c'est ce qui paie le rejeu) ·
-  200 par chapitre d'or · 1 000 par zone traversée · 5 000 par carte
-  terminée · **et la bourse de chaque médaille** (50 / 150 / 500 selon sa
-  rareté). Le sans-faute, lui, ne rend pas de pièces : il rend une **pierre**
-  (une par sans-faute, trois par chapitre de diamant — lot 2, §2.1). Mesuré :
-  l'Europe entière en or vaut ≈ 32 000 pièces ; complète avec un sans-faute
-  sur deux, 34 885 pièces et 146 pierres.
+  50 par sans-faute · 200 par chapitre d'or · 500 par chapitre de diamant ·
+  1 000 par zone traversée · 5 000 par carte terminée · **et la bourse de
+  chaque médaille** (50 / 150 / 500 selon sa rareté). Mesuré : l'Europe
+  entière en or vaut ≈ 32 000 pièces, 42 435 complète avec un sans-faute sur
+  deux et un premier chapitre de diamant.
 - **Prix d'un passage** : 50 + 30 par chapitre — 50 au premier, 350 au
   dixième, 1 490 au dernier. Il suit la position dans le ruban, pour que le
   débutant puisse se le payer et que la fin de carte ne s'achète pas. Ordre de
   grandeur tenu : **le prix d'un passage ≈ ce que rapportent trois à cinq gares
   bien jouées**. Assez cher pour qu'on préfère réessayer, assez bon marché pour
   ne jamais enfermer personne. La deuxième carte coûte 15 000.
-- **Le passage en pierres** (lot 2) : proposé seulement quand les pièces
-  manquent, au prix de `prix en pièces / 50` arrondi au-dessus — une pierre au
-  premier chapitre, sept au dixième, trente au dernier. Même règle que les
-  pièces : la gare reste à zéro étoile, et la mise se rend si on revient la
-  gagner (les `passeesEnPierres` encore à zéro étoile sont la dépense).
 - **Solde = gagnés − dépensés**, et **rien de plus n'est stocké** :
   - dépense en cartes = Σ prix des cartes acquises en crédits
     (`cartesPossedees`) ;
@@ -602,20 +591,18 @@ se rééquilibre sans migration.
   payer, **même s'il a payé quelques passages en route**. C'est la contrainte
   qui cale les deux barèmes l'un contre l'autre.
 - **Ce qui se vend** (tranché le 10 septembre 2026, `economie-du-jeu.md` §6,
-  lot 3) : **une carte** (en pièces OU en argent — le revenu principal),
-  **des pierres** (trois lots), et **le pack du poste** (toutes les cartes,
-  présentes et à venir). Le catalogue est `data/boutique.json`, et
-  `tools/boutique-check.mjs` en est l'autorité : jamais de pièces, d'étoiles,
-  de rangs, de médailles ni de temps ; toute carte payante a exactement une
-  offre ; acheter en pierres tous les passages d'une carte coûte au moins
-  cinq fois la carte (mesuré : 325 pierres ≈ 22 € pour le Rhin à 3,99 €, et
-  4 422 pierres ≈ 295 € pour un ruban d'Europe à zéro étoile). Sous Godot, le
+  lot 3) : **une carte** (en pièces OU en argent — le revenu principal) et
+  **le pack du poste** (toutes les cartes, présentes et à venir). Le contenu
+  se vend, jamais la progression. Le catalogue est `data/boutique.json`, et
+  `tools/boutique-check.mjs` en est l'autorité : jamais de pièces, de
+  pierres, d'étoiles, de rangs, de médailles ni de temps ; toute carte payante
+  a exactement une offre. Sous Godot, le
   `Magasin` (autoload) tient trois dos : le magasin de la plateforme (raccord
   StoreKit écrit, non exercé), le mode libre `STATION_MAGASIN=libre` (le
   déblocage de débogage), et aucun — l'offre s'affiche avec son prix et dit
   que le paiement arrivera avec la version publiée. Ce qui est accordé
   s'écrit dans la sauvegarde et rien d'autre : `possedees[id] = "achat"`,
-  `achats.diamants`, `possessions["pack-du-poste"]`.
+  `possessions["pack-du-poste"]`.
 - **La première carte est gratuite** et complète : pas de démo tronquée.
 
 ---
@@ -661,15 +648,12 @@ interface EtatJoueur {
                               // Seul fait nouveau du schéma 7. La dépense s'en
                               // déduit : Σ prix des passees ENCORE à 0 étoile,
                               // d'où la restitution de la mise sans rien stocker.
-      passeesEnPierres?: FicheId[];  // schéma 8 : les mêmes, payées en pierres
       serie: { n: number; record: number };
     }
   };
   cartesPossedees: { [carteId: string]: "gratuite" | "credits" | "achat" };
   carteCourante: CarteId;
-  achats: { diamants: number };   // schéma 8 : les pierres ACHETÉES — le seul chiffre
-                                  // de l'économie stocké, parce qu'il ne se déduit de rien
-  possessions: { [objetId: string]: "diamants" | "achat" };  // schéma 8 : les objets, sous le moteur
+  possessions: { [objetId: string]: "achat" };  // schéma 9 : le pack, plus tard des objets
 }
 // La POSITION sur le ruban n'est pas stockée : c'est la première gare du ruban
 // qui n'est ni faite (≥ 1 ★) ni payée. Un état déduit ne peut pas désynchroniser.
@@ -680,10 +664,10 @@ interface EtatJoueur {
 // `versionsJouees` (le ruban dit lui-même quelle version se joue quand).
 ```
 
-**Migration schéma 7 → 8** (10 septembre 2026) : `passeesEnPierres`,
-`achats` et `possessions` naissent vides ; rien d'autre ne bouge. Le stock de
-pierres se déduit — un joueur qui avait des sans-fautes se découvre des
-pierres en poche au premier lancement.
+**Migration schéma 7 → 8 → 9** (10 septembre 2026) : le 8 a vécu quelques
+heures (la pierre se dépensait : `passeesEnPierres`, `achats.diamants`). Le 9
+les retire — les passages payés en pierres rejoignent `passees`, une gare
+passée reste passée, rien n'est perdu — et garde `possessions`, né vide.
 
 **Migration schéma 6 → 7** : `resultats` et `serie` sont repris tels quels ;
 `acquises` et `versionsJouees` sont abandonnés ; `passees` naît vide. Aucune
@@ -707,11 +691,11 @@ au catalogue et comptent pour le grade.
    difficulté monte-t-il d'un cran ? À mesurer en headless sur le ruban réel.
 4. ~~Les trois barèmes de crédits~~ **Tranché le 10 septembre 2026** : le
    crédit devient la pièce, l'unité est multipliée par dix, la précision et
-   les médailles paient (§7, `economie-du-jeu.md` lot 1) ; puis, le même jour,
-   **la pierre se dépense** (lot 2, §2.1, schéma 8), et **ce qui se vend** est
-   tranché (lot 3, §7 : cartes, pierres, pack — jamais de pièces). Le
-   document est clos ; seul le raccord au magasin de la plateforme reste à
-   exercer sur l'appareil.
+   les médailles paient (§7, `economie-du-jeu.md` lot 1) ; **ce qui se vend**
+   est tranché (lot 3, §7 : cartes et pack — jamais de pièces). La pierre qui
+   se dépense (lot 2) a été livrée puis DÉFAITE le même jour. Le document est
+   clos ; seul le raccord au magasin de la plateforme reste à exercer sur
+   l'appareil.
 5. **Les deuxièmes gares des grandes villes** : écrire Hanovre, Cologne,
    Zurich ou Bruxelles une seconde fois (autre gare réelle) rouvre plusieurs
    des dix chapitres mis en réserve par R6 (§5). Lesquelles, et dans quel

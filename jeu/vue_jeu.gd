@@ -217,7 +217,6 @@ func _choisir_ruban(id: String) -> void:
 			Sauvegarde.set_carte_courante(cid)
 			r.stations = Sauvegarde.get_progression()
 			r.passees = Sauvegarde.get_passees()
-			r.passees_pierres = Sauvegarde.get_passees_en_pierres()
 			return
 
 

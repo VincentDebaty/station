@@ -164,10 +164,6 @@ var pastille_pieces: Control   # la pastille elle-même, qui sursaute
 var lbl_gain: Label            # « + 33 pièces » sur le relevé — d'où partent les pièces
 var lbl_rendu: Label           # « Mise rendue » sur le relevé
 var solde_montre := -1         # ce que la pastille affiche pendant un vol (-1 : le vrai solde)
-var lbl_pierres: Label         # le nombre dans la pastille des pierres
-var pastille_pierres: Control
-var pierres_montre := -1       # idem pour les pierres : le stock d'avant, jusqu'à la pose de la gemme
-var lbl_rendu_pierres: Label   # « Mise rendue · + 1 pierre »
 var bourse := {}               # le temps des pièces : {n, avant, apres, gain, rendu_n, rendu_de, posees}
 var depense := {}              # un passage qu'on paie : {vers, avant, prix, n, posees}
 var seq_joues := 0            # combien de sons d'étoile déjà donnés
@@ -299,18 +295,16 @@ func _remise_pour_voir() -> void:
 	# la bourse de ce faux service : ce que le barème lui donnerait, ou ce
 	# qu'on a demandé
 	var avance: int = int(seuils["trois"]) if dia else max(0, int(seuils["trois"]) - 7)
-	var det := {"etoiles": etoiles * Rec.PIECES_PAR_ETOILE, "avance": avance}
+	var det := {"etoiles": etoiles * Rec.PIECES_PAR_ETOILE, "avance": avance,
+		"sansFaute": Rec.PIECES_PAR_DIAMANT if dia else 0}
 	if butin > 0:
 		det["or"] = butin
 	if gain < 0:
-		gain = int(det["etoiles"]) + int(det["avance"]) + butin + rendu
+		gain = int(det["etoiles"]) + int(det["avance"]) + int(det["sansFaute"]) + butin + rendu
 	var solde: int = app.solde() if app != null else 0
-	var stock: int = app.pierres() if app != null else 0
-	var p_gain := 1 if dia else 0
 	fin_de_service({"gare": gare, "stars": etoiles, "prevStars": 0, "d": 0 if dia else 7,
 		"prevBest": null, "perfect": dia, "failed": false, "win": true, "seuils": seuils,
-		"pieces": {"avant": max(0, solde - gain), "apres": solde, "gain": gain, "rendu": rendu, "detail": det,
-			"pierres": {"avant": max(0, stock - p_gain), "apres": stock, "gain": p_gain, "rendu": 0, "nouvelles": p_gain}}}, [])
+		"pieces": {"avant": max(0, solde - gain), "apres": solde, "gain": gain, "rendu": rendu, "detail": det}}, [])
 
 
 ## Le chapitre que le panneau raconte : pendant la fête, celui qu'on vient de
@@ -1132,11 +1126,6 @@ func _draw() -> void:
 			# pouvoir croire qu'il y en a deux
 			var hg: float = float(m["taille"]) * 1.15
 			tailler_gemme(self, Vector2(xt + w + 5 * kk + float(m["ws"]) / 2, cy - hg * 0.08), hg, 1.0)
-		elif m.get("mise_pierre", false):
-			# la mise avancée en pierres : la même gemme, un peu pâle, tant
-			# qu'elle n'est pas rendue
-			var hp: float = float(m["taille"]) * 1.15
-			tailler_gemme(self, Vector2(xt + w + 5 * kk + float(m["ws"]) / 2, cy - hp * 0.08), hp, 0.25)
 		elif m.get("mise", false):
 			Piece.frapper(self, Vector2(xt + w + 5 * kk + float(m["ws"]) / 2, cy), float(m["ws"]), 1.0)
 		elif String(m["suffixe"]) != "":
@@ -1224,13 +1213,12 @@ func _mesure_plaque(id: String) -> Dictionary:
 	# UNE GARE PAYÉE PORTE SA MISE : une pièce à côté du nom, tant qu'elle
 	# n'est pas rendue — c'est-à-dire tant que la gare est à zéro étoile.
 	var mise: bool = etat == "payee" and st == 0
-	var mise_pierre: bool = mise and ruban.est_passee_en_pierres(id)
 	# LA PIERRE SE MESURE COMME CE QU'ELLE EST : un dessin, pas un glyphe. Le
 	# « ◆ » de Cormorant fait à peine le tiers d'une capitale — « Newport · »,
 	# un point bleu à côté du nom (Vincent, 10 septembre 2026). La pierre prend
 	# la hauteur d'une capitale et un peu plus, comme les étoiles d'à côté.
 	var ws: float
-	if dia or mise_pierre:
+	if dia:
 		ws = float(taille) * 1.15 * 0.86
 	elif mise:
 		ws = float(taille) * 0.95
@@ -1239,7 +1227,7 @@ func _mesure_plaque(id: String) -> Dictionary:
 	var pad := 7.0 * k
 	var large: float = w + (ws + 5.0 * k if ws > 0.0 else 0.0) + 2.0 * pad
 	return {"etat": etat, "ouverte": ouverte, "fin": fin, "nom": nom, "taille": taille,
-		"w": w, "suffixe": suffixe, "ws": ws, "dia": dia, "mise": mise, "mise_pierre": mise_pierre, "pad": pad,
+		"w": w, "suffixe": suffixe, "ws": ws, "dia": dia, "mise": mise, "pad": pad,
 		"large": large, "place": large + (18.0 * k if not ouverte else 0.0),
 		"haute": taille + 8.0 * k, "r": (6.0 if fin else 4.5) * k}
 
@@ -1740,8 +1728,6 @@ func fin_de_service(b: Dictionary, meds: Array) -> void:
 	medailles = meds
 	var pb: Dictionary = b["pieces"] if b.get("pieces") is Dictionary else {}
 	solde_montre = int(pb["avant"]) if (b.get("win", false) and not pb.is_empty() and int(pb.get("gain", 0)) > 0) else -1
-	var pp: Dictionary = pb["pierres"] if pb.get("pierres") is Dictionary else {}
-	pierres_montre = int(pp["avant"]) if (b.get("win", false) and not pp.is_empty() and int(pp.get("gain", 0)) > 0) else -1
 	bourse = {}
 	depense = {}
 	fete = {}
@@ -1808,7 +1794,6 @@ func _temps_du_diamant() -> void:
 func _temps_de_la_bourse() -> void:
 	_poser_label(lbl_etoiles)
 	_poser_label(bloc_diamant)
-	_poser_pierres()
 	var pb: Dictionary = bilan["pieces"] if bilan.get("pieces") is Dictionary else {}
 	var gain: int = int(pb.get("gain", 0))
 	if gain <= 0 or lbl_gain == null or not is_instance_valid(lbl_gain) \
@@ -1835,21 +1820,6 @@ func _temps_de_la_bourse() -> void:
 func _rafraichir_solde() -> void:
 	if lbl_pieces != null and is_instance_valid(lbl_pieces):
 		lbl_pieces.text = Sty.nombre(solde_montre if solde_montre >= 0 else (app.solde() if app != null else 0))
-	if lbl_pierres != null and is_instance_valid(lbl_pierres):
-		lbl_pierres.text = str(pierres_montre if pierres_montre >= 0 else (app.pierres() if app != null else 0))
-
-
-## Les pierres sont en poche : la pastille prend le vrai stock, et sursaute.
-func _poser_pierres() -> void:
-	if pierres_montre < 0:
-		return
-	pierres_montre = -1
-	_rafraichir_solde()
-	if pastille_pierres != null and is_instance_valid(pastille_pierres):
-		pastille_pierres.pivot_offset = pastille_pierres.size / 2.0
-		pastille_pierres.scale = Vector2(1.22, 1.22)
-		var tw := create_tween()
-		tw.tween_property(pastille_pierres, "scale", Vector2.ONE, 0.22).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
 
 ## La pastille sursaute quand une pièce s'y pose.
@@ -1888,7 +1858,6 @@ func _finir_remise() -> void:
 	bourse = {}
 	depense = {}
 	solde_montre = -1
-	pierres_montre = -1
 	_rafraichir_solde()
 
 
@@ -1925,9 +1894,6 @@ func _avancer_remise(delta: float) -> void:
 				Sons.jouer("diamant")
 				seq_joues += 1
 			if seq_t >= SEQ_POSE + SEQ_TENUE_GEMME + SEQ_VOL:
-				# LA PIERRE SE POSE SUR LE SCEAU, ET LE STOCK MONTE D'UN CRAN : c'est
-				# le même objet, on vient de le mettre en poche.
-				_poser_pierres()
 				_temps_de_la_bourse()
 		"pieces":
 			if bourse.is_empty():
@@ -1963,16 +1929,11 @@ func _avancer_remise(delta: float) -> void:
 			for i in range(n):
 				if seq_t >= float(i) * SEQ_PIECE_ECART + SEQ_DEPENSE:
 					parties += 1
-			var reste: int = int(depense["avant"]) - int(round(float(depense["prix"]) * float(parties) / float(n)))
-			if depense.get("pierres", false):
-				pierres_montre = reste
-			else:
-				solde_montre = reste
+			solde_montre = int(depense["avant"]) - int(round(float(depense["prix"]) * float(parties) / float(n)))
 			_rafraichir_solde()
 			if seq_t >= float(n - 1) * SEQ_PIECE_ECART + SEQ_DEPENSE + 0.10:
 				depense = {}
 				solde_montre = -1
-				pierres_montre = -1
 				_rafraichir_solde()
 				seq = ""
 		"puce":
@@ -1985,7 +1946,7 @@ func _avancer_remise(delta: float) -> void:
 ## vers la gare qu'on vient de passer, le nombre roule vers le bas, et la gare
 ## garde sur la carte une pièce à côté de son nom — la mise avancée, visible
 ## tant qu'elle n'est pas rendue.
-func apres_passage(id: String, avant: int = -1, prix: int = 0, en_pierres: bool = false) -> void:
+func apres_passage(id: String, avant: int = -1, prix: int = 0) -> void:
 	bilan = {}
 	medailles = []
 	fete = {}
@@ -1993,25 +1954,19 @@ func apres_passage(id: String, avant: int = -1, prix: int = 0, en_pierres: bool 
 	seq = ""
 	bourse = {}
 	depense = {}
-	var paye: bool = avant >= 0 and prix > 0
-	solde_montre = avant if (paye and not en_pierres) else -1
-	pierres_montre = avant if (paye and en_pierres) else -1
+	solde_montre = avant if (avant >= 0 and prix > 0) else -1
 	prochaine = ruban.gare_courante()
 	_preparer_suite(id)
 	chapitre = _chapitre_de_reference()
 	rebatir()
 	aller_camera(voyage_saut)
-	if paye and pos(id) != Vector2.INF:
-		# en pierres, chaque pierre part pour de vrai — il y en a peu ; en
-		# pièces, cinq suffisent à dire le geste
-		depense = {"vers": id, "avant": avant, "prix": prix, "n": (mini(prix, 6) if en_pierres else 5),
-			"posees": 0, "pierres": en_pierres}
+	if avant >= 0 and prix > 0 and pos(id) != Vector2.INF:
+		depense = {"vers": id, "avant": avant, "prix": prix, "n": 5, "posees": 0}
 		seq = "depense"
 		seq_t = 0.0
 		Sons.jouer("depense")
 	else:
 		solde_montre = -1
-		pierres_montre = -1
 		_rafraichir_solde()
 
 
@@ -2377,9 +2332,6 @@ func rebatir() -> void:
 	lbl_rendu = null
 	lbl_pieces = null
 	pastille_pieces = null
-	lbl_pierres = null
-	pastille_pierres = null
-	lbl_rendu_pierres = null
 	if ruban == null:
 		return
 	_remplir_barre()
@@ -2504,12 +2456,8 @@ func _remplir_barre() -> void:
 		milieu.add_child(_pastille("» %d" % int(serie["n"]), ACCENT))
 	if app != null:
 		milieu.add_child(_pastille_piece(solde_montre if solde_montre >= 0 else app.solde()))
-	# LA PASTILLE DIT LES PIERRES EN POCHE, pas les sans-fautes (lot 2) : le
-	# trophée se lit sur la carte, dans la jauge et dans les médailles ; ici,
-	# c'est ce qu'on peut dépenser.
-	var stock: int = pierres_montre if pierres_montre >= 0 else (app.pierres() if app != null else 0)
-	if stock > 0 or int(e["diamants"]) > 0:
-		milieu.add_child(_pastille_gemme(stock))
+	if int(e["diamants"]) > 0:
+		milieu.add_child(_pastille_gemme(int(e["diamants"])))
 	milieu.add_child(_pastille("★ %d" % n, OR))
 
 	# À DROITE, LE GRADE. C'est le plus lent des trois — il ne change que
@@ -2609,8 +2557,6 @@ func _pastille_gemme(n: int) -> Control:
 	l.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	h.add_child(l)
 	p.add_child(h)
-	lbl_pierres = l
-	pastille_pierres = p
 	return p
 
 
@@ -2760,8 +2706,7 @@ class Vol extends Node2D:
 				var d: Dictionary = vue.depense
 				if d.is_empty():
 					return
-				var en_pierres: bool = d.get("pierres", false)
-				var de := _cible(vue.lbl_pierres if en_pierres else vue.lbl_pieces, centre, 0.5)
+				var de := _cible(vue.lbl_pieces, centre, 0.5)
 				var gare: Vector2 = vue.pos(String(d["vers"]))
 				if gare == Vector2.INF:
 					return
@@ -2770,10 +2715,7 @@ class Vol extends Node2D:
 					var t: float = vue.seq_t - float(i) * SEQ_PIECE_ECART
 					if t <= 0.0 or t >= SEQ_DEPENSE:
 						continue
-					if en_pierres:
-						_pierre_en_vol(t / SEQ_DEPENSE, de, vers, k, i)
-					else:
-						_piece_en_vol(t / SEQ_DEPENSE, de, vers, k, i)
+					_piece_en_vol(t / SEQ_DEPENSE, de, vers, k, i)
 
 	## Le point visé DANS le Label : une fraction de sa largeur, plus un
 	## décalage. À défaut — le panneau n'a pas encore été mis en page — le
@@ -2865,26 +2807,6 @@ class Vol extends Node2D:
 		for j in range(6):
 			draw_circle(p, d * (0.55 + 0.55 * (1.0 - float(j) / 6.0)), Color(Sty.LAITON_CLAIR, 0.035 * alpha))
 		Piece.frapper(self, p, d, alpha)
-
-	## UNE PIERRE QUI PART : le même arc que la pièce, la gemme à la place, et
-	## sa gerbe à l'envers au départ — les rais se referment sur la pastille.
-	func _pierre_en_vol(u: float, de: Vector2, vers: Vector2, k: float, i: int) -> void:
-		var e: float = ease(u, -2.0)
-		var haut: float = (46.0 + 14.0 * float(i % 3)) * k
-		var milieu := de.lerp(vers, 0.5) + Vector2(0, -haut)
-		var p := de.lerp(milieu, e).lerp(milieu.lerp(vers, e), e)
-		var h: float = lerpf(26.0, 14.0, e) * k
-		var alpha: float = 1.0 if u < 0.84 else lerpf(1.0, 0.0, (u - 0.84) / 0.16)
-		if u < 0.35 and i == 0:
-			var g: float = 1.0 - u / 0.35
-			for j in range(12):
-				var a: float = TAU * float(j) / 12.0
-				var u2 := Vector2(cos(a), sin(a))
-				draw_line(de + u2 * h * (0.7 + 0.9 * g), de + u2 * h * (1.0 + 1.6 * g),
-					Color(Sty.ACCENT_CLAIR, 0.45 * g), maxf(1.0, 2.0 * k), true)
-		for j in range(6):
-			draw_circle(p, h * (0.5 + 0.5 * (1.0 - float(j) / 6.0)), Color(vue.DIAMANT, 0.03 * alpha))
-		vue.tailler_gemme(self, p, h, alpha)
 
 	## Une récompense, à l'instant `t` de sa propre vie : elle grandit sur
 	## place, s'y tient, puis file vers la feuille en rapetissant.
@@ -3400,11 +3322,6 @@ func _bloc_bilan(avec_medailles: bool = true) -> Control:
 		if rendu > 0:
 			lbl_rendu = _label("Mise rendue · + %s pièces" % Sty.nombre(rendu), 12, P_ACCENT, false, false)
 			v.add_child(lbl_rendu)
-		var pp: Dictionary = bp["pierres"] if bp.get("pierres") is Dictionary else {}
-		var p_rendu: int = int(pp.get("rendu", 0))
-		if p_rendu > 0:
-			lbl_rendu_pierres = _label("Mise rendue · + %d pierre%s" % [p_rendu, "s" if p_rendu > 1 else ""], 12, P_ACCENT, false, false)
-			v.add_child(lbl_rendu_pierres)
 		if montant > 0:
 			var hg := HBoxContainer.new()
 			hg.add_theme_constant_override("separation", int(round(8 * Sty.HUD_K)))
@@ -3520,22 +3437,11 @@ func _bloc_fete() -> Control:
 	var pb: Dictionary = bilan["pieces"] if bilan.get("pieces") is Dictionary else {}
 	if not pb.is_empty():
 		var det: Dictionary = pb["detail"] if pb.get("detail") is Dictionary else {}
-		var postes: Array = ["or", "zones", "carte", "medailles"]
+		var postes: Array = ["or", "diamant", "zones", "carte", "medailles"]
 		var butin := _somme(det, postes)
-		# les pierres du chapitre : ce que le service a produit en plus du
-		# sans-faute de la gare elle-même — trois pour un chapitre de diamant
-		var pp: Dictionary = pb["pierres"] if pb.get("pierres") is Dictionary else {}
-		var p_chapitre: int = int(pp.get("nouvelles", 0)) - (1 if bilan.get("perfect", false) else 0)
-		if butin > 0 or p_chapitre > 0:
-			var titre := "Butin du chapitre"
-			if butin > 0:
-				titre += " · %s pièces" % Sty.nombre(butin)
-			if p_chapitre > 0:
-				titre += " · %d pierre%s" % [p_chapitre, "s" if p_chapitre > 1 else ""]
-			v.add_child(_label(titre, 15, P_OR, true))
+		if butin > 0:
+			v.add_child(_label("Butin du chapitre · %s pièces" % Sty.nombre(butin), 15, P_OR, true))
 			var dit_det := _dire_detail(det, postes)
-			if p_chapitre > 0:
-				dit_det += (" · " if dit_det != "" else "") + "chapitre de diamant %d" % p_chapitre
 			if dit_det != "":
 				v.add_child(_label(dit_det, 11, P_MUET))
 	# ce qui reste à prendre, en étoiles ET en pièces : la règle « retourner
@@ -3592,36 +3498,19 @@ func _pied() -> Control:
 		var prix: int = Rec.prix_de_passage(ruban, gare)
 		var solde: int = app.solde() if app != null else 0
 		var assez := solde >= prix
-		# LA SOUPAPE DE LA SOUPAPE (lot 2) : quand les pièces manquent, le
-		# passage se propose en pierres — celles des sans-fautes. Une au
-		# premier chapitre, sept au dixième, trente au dernier.
-		var prix_pierres: int = Rec.prix_de_passage_en_pierres(ruban, gare)
-		var stock: int = app.pierres() if app != null else 0
 		if not assez:
 			# CE QU'IL MANQUE, ET OÙ LE PRENDRE. « Rejoue une gare déjà faite »
 			# ne disait ni laquelle ni combien : on nomme la gare tenue qui a
 			# le plus grand manque à gagner, et ce qu'elle peut rendre.
 			var manque := prix - solde
-			var texte := "Il te manque %s pièce%s" % [Sty.nombre(manque), "s" if manque > 1 else ""]
-			if stock < prix_pierres:
-				texte += ", ou %d pierre%s" % [prix_pierres, "s" if prix_pierres > 1 else ""]
-			texte += "."
+			var texte := "Il te manque %s pièce%s." % [Sty.nombre(manque), "s" if manque > 1 else ""]
 			var mieux := _meilleur_rejeu(gare)
 			if not mieux.is_empty():
 				texte += " Rejouer %s peut en rapporter %s." % [ville_de(String(mieux["id"])), Sty.nombre(int(mieux["manque"]))]
 			v.add_child(_label(texte, 12, MUET))
-			# ni pièces ni pierres : la boutique, si le catalogue en vend (lot 3)
-			if stock < prix_pierres and not Magasin.offres_de_pierres().is_empty():
-				var lien := Sty.lien("Obtenir des pierres", Sty.HUD_K, false)
-				lien.pressed.connect(_ouvrir_boutique)
-				v.add_child(lien)
 		var h := HBoxContainer.new()
 		h.add_theme_constant_override("separation", int(round(8 * Sty.HUD_K)))
-		if assez:
-			h.add_child(_bouton("Passer · %s pièces" % Sty.nombre(prix), false, true, _passer.bind(gare)))
-		else:
-			h.add_child(_bouton("Passer · %d pierre%s" % [prix_pierres, "s" if prix_pierres > 1 else ""], false,
-				stock >= prix_pierres, _passer_en_pierres.bind(gare)))
+		h.add_child(_bouton("Passer · %s pièces" % Sty.nombre(prix), false, assez, _passer.bind(gare)))
 		h.add_child(_bouton(_appel("Réessayer", ville_de(gare), _reste_pied(2)),
 			true, true, jouer.bind(gare)))
 		v.add_child(h)
@@ -3682,15 +3571,6 @@ func _reste_pied(n: int = 1) -> float:
 func _passer(id: String) -> void:
 	if app != null:
 		app.passer(id)
-
-
-func _passer_en_pierres(id: String) -> void:
-	if app != null:
-		app.passer_en_pierres(id)
-
-
-func _ouvrir_boutique() -> void:
-	Boutique.ouvrir(self, rebatir)
 
 
 ## La gare tenue qui a le plus à rendre si on la rejoue — sauf celle qu'on

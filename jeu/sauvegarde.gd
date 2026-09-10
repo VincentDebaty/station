@@ -13,7 +13,7 @@ extends Node
 ## LE FORMAT EST VERSIONNÉ, ET LA RÈGLE NE CHANGE PAS : toute modification du
 ## format impose d'incrémenter SCHEMA_VERSION et d'écrire la migration dans
 ## migrer(), testée depuis une sauvegarde ancienne (tools/oracle-sauvegarde.mjs
-## rejoue chaque schéma de v0 à v8 des deux côtés). Une mise à jour qui perd la
+## rejoue chaque schéma de v0 à v9 des deux côtés). Une mise à jour qui perd la
 ## partie d'un joueur est un bug bloquant.
 ##
 ## Autoload `Sauvegarde` (project.godot) — qui existe aussi sous --script, et
@@ -29,7 +29,7 @@ extends Node
 ##   getCartesEnregistrees → cartes_enregistrees · isBought → Ruban.est_tenue
 ##   getMuted / setMuted → get_muet / set_muet · getOnboarded → get_accueilli
 
-const SCHEMA_VERSION := 8
+const SCHEMA_VERSION := 9
 ## La carte de tout joueur d'avant les cartes : l'Europe, et elle est gratuite.
 const CARTE_PAR_DEFAUT := "europe"
 const CLE_PROGRESSION := "station-progress"
@@ -90,13 +90,13 @@ func _ecrire(cle: String, valeur: String) -> void:
 
 # --- Le format ----------------------------------------------------------------
 static func carte_vierge() -> Dictionary:
-	return {"stations": {}, "passees": [], "passeesEnPierres": [], "serie": {"n": 0, "record": 0}}
+	return {"stations": {}, "passees": [], "serie": {"n": 0, "record": 0}}
 
 
 static func sauvegarde_vierge() -> Dictionary:
 	return {"version": SCHEMA_VERSION, "carteCourante": CARTE_PAR_DEFAUT,
 		"cartes": {CARTE_PAR_DEFAUT: carte_vierge()},
-		"possedees": {CARTE_PAR_DEFAUT: "gratuite"}, "achats": {"diamants": 0}, "possessions": {}}
+		"possedees": {CARTE_PAR_DEFAUT: "gratuite"}, "possessions": {}}
 
 
 ## La vérité de JavaScript : null, false, 0 et "" sont faux.
@@ -143,17 +143,19 @@ static func lire_serie(r: Variant) -> Dictionary:
 
 ## MIGRATION : amène n'importe quel format vers le schéma courant.
 ##
-## v6, v7 et v8 : déjà par carte. `bought` (v6) est abandonné et rien n'est
+## v6 à v9 : déjà par carte. `bought` (v6) est abandonné et rien n'est
 ## perdu — étoiles et records passent intacts, la position se recalcule.
-## v7 → v8 (10 septembre 2026, economie-du-jeu.md §4) : LA PIERRE SE DÉPENSE.
-## Trois champs naissent vides — `passeesEnPierres` par carte, `achats.diamants`
-## (les pierres achetées : le seul chiffre stocké, parce qu'il ne se déduit de
-## rien) et `possessions`. Le stock de pierres se déduit du reste.
+## v7 → v8 → v9 (10 septembre 2026) : le schéma 8 a vécu quelques heures — la
+## pierre se dépensait, avec `passeesEnPierres` par carte et `achats.diamants`.
+## Vincent : « pas une bonne idée ». Le 9 les retire ; les passages payés en
+## pierres REJOIGNENT `passees` (une gare passée reste passée, rien n'est
+## perdu), les pierres achetées, qui n'existaient chez personne, sont
+## abandonnées. Reste `possessions` (le pack).
 ## v5 et avant : une seule progression, et c'était l'Europe ; elle devient la
 ## progression de la carte « europe », intacte.
 static func migrer(raw: Variant) -> Dictionary:
 	if raw is Dictionary and _nombre(raw.get("version")) \
-			and (float(raw["version"]) == 6.0 or float(raw["version"]) == 7.0 or float(raw["version"]) == 8.0) \
+			and float(raw["version"]) >= 6.0 and float(raw["version"]) <= 9.0 \
 			and _objet(raw.get("cartes")):
 		var brutes: Dictionary = _en_dictionnaire(raw["cartes"])
 		var cartes := {}
@@ -161,10 +163,14 @@ static func migrer(raw: Variant) -> Dictionary:
 			var c: Variant = brutes[id]
 			if not (c is Dictionary):
 				c = {}
+			var passees: Array = c["passees"].duplicate() if c.get("passees") is Array else []
+			if c.get("passeesEnPierres") is Array:
+				for g in c["passeesEnPierres"]:
+					if _vrai(g) and not passees.has(g):
+						passees.append(g)
 			cartes[id] = {
 				"stations": c["stations"].duplicate() if c.get("stations") is Dictionary else {},
-				"passees": c["passees"].duplicate() if c.get("passees") is Array else [],
-				"passeesEnPierres": c["passeesEnPierres"].duplicate() if c.get("passeesEnPierres") is Array else [],
+				"passees": passees,
 				"serie": lire_serie(c),
 			}
 		var possedees: Dictionary = _en_dictionnaire(raw["possedees"]).duplicate() if _objet(raw.get("possedees")) else {}
@@ -173,21 +179,15 @@ static func migrer(raw: Variant) -> Dictionary:
 		var courante: Variant = raw.get("carteCourante")
 		return {"version": SCHEMA_VERSION,
 			"carteCourante": courante if _vrai(courante) else CARTE_PAR_DEFAUT,
-			"cartes": cartes, "possedees": possedees,
-			"achats": lire_achats(raw), "possessions": lire_possessions(raw)}
+			"cartes": cartes, "possedees": possedees, "possessions": lire_possessions(raw)}
 	var v5 := _migrer_vers_v5(raw)
 	return {"version": SCHEMA_VERSION, "carteCourante": CARTE_PAR_DEFAUT,
-		"cartes": {CARTE_PAR_DEFAUT: {"stations": v5["stations"], "passees": [], "passeesEnPierres": [], "serie": v5["serie"]}},
-		"possedees": {CARTE_PAR_DEFAUT: "gratuite"}, "achats": {"diamants": 0}, "possessions": {}}
+		"cartes": {CARTE_PAR_DEFAUT: {"stations": v5["stations"], "passees": [], "serie": v5["serie"]}},
+		"possedees": {CARTE_PAR_DEFAUT: "gratuite"}, "possessions": {}}
 
 
-## Les pierres achetées, avec un défaut ; les possessions, un dictionnaire
-## dont les valeurs sont des chaînes non vides, et rien d'autre.
-static func lire_achats(r: Variant) -> Dictionary:
-	var a: Variant = r.get("achats") if r is Dictionary else null
-	return {"diamants": max(0, _entier(a.get("diamants")) if a is Dictionary else 0)}
-
-
+## Les possessions : un dictionnaire dont les valeurs sont des chaînes non
+## vides, et rien d'autre.
 static func lire_possessions(r: Variant) -> Dictionary:
 	var p: Variant = r.get("possessions") if r is Dictionary else null
 	var out := {}
@@ -323,7 +323,6 @@ func cartes_enregistrees() -> Array:
 		out.append({"id": id,
 			"stations": c["stations"] if c.get("stations") is Dictionary else {},
 			"passees": c["passees"].duplicate() if c.get("passees") is Array else [],
-			"passeesEnPierres": c["passeesEnPierres"].duplicate() if c.get("passeesEnPierres") is Array else [],
 			"serie": lire_serie(c)})
 	return out
 
@@ -370,49 +369,14 @@ func get_passees() -> Array:
 	return c["passees"]
 
 
-func get_passees_en_pierres() -> Array:
-	var c := _carte()
-	if not (c.get("passeesEnPierres") is Array):
-		c["passeesEnPierres"] = []
-	return c["passeesEnPierres"]
-
-
-## Payée, en pièces OU en pierres : une gare ne se paie qu'une fois.
 func est_gare_payee(id: Variant) -> bool:
-	return get_passees().has(id) or get_passees_en_pierres().has(id)
+	return get_passees().has(id)
 
 
 func payer_passage(id: Variant) -> bool:
 	if not _vrai(id) or est_gare_payee(id):
 		return false
 	get_passees().append(id)
-	persister()
-	return true
-
-
-func payer_passage_en_pierres(id: Variant) -> bool:
-	if not _vrai(id) or est_gare_payee(id):
-		return false
-	get_passees_en_pierres().append(id)
-	persister()
-	return true
-
-
-# --- Les pierres achetées : le seul chiffre de l'économie qui soit stocké -----------
-## Il ne se déduit de rien : c'est de l'argent réel. Le prototype ne vend
-## rien ; l'écriture existe pour que le moteur n'ait pas à migrer.
-func get_achats() -> Dictionary:
-	if not (sauve.get("achats") is Dictionary):
-		sauve["achats"] = {"diamants": 0}
-	return sauve["achats"]
-
-
-func ajouter_diamants_achetes(n: Variant) -> bool:
-	var k := _entier(n)
-	if k <= 0:
-		return false
-	var a := get_achats()
-	a["diamants"] = _entier(a.get("diamants")) + k
 	persister()
 	return true
 
@@ -424,7 +388,7 @@ func get_possessions() -> Dictionary:
 
 
 ## Un objet possédé (le pack, plus tard une livrée) : `mode` dit comment
-## (« achat », « diamants »). Une fois, comme une carte.
+## (« achat »). Une fois, comme une carte.
 func possede(id: Variant) -> bool:
 	return _vrai(get_possessions().get(id))
 

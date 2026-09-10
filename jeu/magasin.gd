@@ -3,10 +3,10 @@ extends Node
 ## §6, lot 3, 10 septembre 2026).
 ##
 ## Le modèle est tranché : la première carte est gratuite et complète, les
-## cartes suivantes se paient (en pièces, ou ici en argent), les pierres sont
-## en option, et un pack prend toutes les cartes. On ne vend JAMAIS de pièces,
-## d'étoiles, de rangs, de médailles ni de temps — data/boutique.json le dit,
-## tools/boutique-check.mjs le refuse.
+## cartes suivantes se paient (en pièces, ou ici en argent), et un pack prend
+## toutes les cartes. On ne vend JAMAIS de pièces, de pierres, d'étoiles, de
+## rangs, de médailles ni de temps — data/boutique.json le dit,
+## tools/boutique-check.mjs le refuse. Le contenu se vend, pas la progression.
 ##
 ## TROIS DOS, UNE SEULE PORTE. Le reste du jeu n'appelle que `acheter(id)` et
 ## écoute `fini` ; ce qui se passe derrière dépend de la plateforme :
@@ -24,9 +24,8 @@ extends Node
 ## faire qu'ajouter le greffon et déclarer les produits.
 ##
 ## CE QUI EST ACCORDÉ EST ÉCRIT DANS LA SAUVEGARDE, et rien d'autre : une
-## carte → `possedees[id] = "achat"`, des pierres → `achats.diamants += n`,
-## le pack → `possessions["pack-du-poste"] = "achat"` plus toutes les cartes.
-## Le stock de pierres et l'accès aux cartes s'en déduisent comme avant.
+## carte → `possedees[id] = "achat"`, le pack → `possessions["pack-du-poste"]
+## = "achat"` plus toutes les cartes. L'accès aux cartes s'en déduit.
 
 signal fini(offre_id: String, ok: bool, message: String)
 
@@ -70,15 +69,6 @@ func offre_de_carte(carte_id: String) -> Dictionary:
 		if o.get("type") == "carte" and String(o.get("carte", "")) == carte_id:
 			return o
 	return {}
-
-
-func offres_de_pierres() -> Array:
-	var out: Array = []
-	for o in offres():
-		if o.get("type") == "pierres":
-			out.append(o)
-	out.sort_custom(func(a, b): return int(a.get("pierres", 0)) < int(b.get("pierres", 0)))
-	return out
 
 
 func offre_pack() -> Dictionary:
@@ -136,8 +126,6 @@ func _accorder(o: Dictionary) -> void:
 	match String(o.get("type", "")):
 		"carte":
 			Sauvegarde.acquerir_carte(String(o.get("carte", "")), "achat")
-		"pierres":
-			Sauvegarde.ajouter_diamants_achetes(int(o.get("pierres", 0)))
 		"pack":
 			Sauvegarde.acquerir_possession(PACK, "achat")
 			for e in Donnees.cartes_index:
@@ -177,6 +165,6 @@ func _process(_delta: float) -> void:
 					fini.emit(id, false, "Le paiement n'a pas abouti.")
 			"restore":
 				var o := _offre_du_produit(String(ev.get("product_id", "")))
-				if ev.get("result") == "ok" and not o.is_empty() and o.get("type") != "pierres":
+				if ev.get("result") == "ok" and not o.is_empty():
 					_accorder(o)
 					fini.emit(String(o.get("id", "")), true, "")

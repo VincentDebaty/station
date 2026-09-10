@@ -471,8 +471,14 @@ annoncée, la gare payée qui porte sa pièce sur la carte. Aucune migration :
 `oracle-ruban` 12/12 (web ↔ Godot sur le nouveau barème), `oracle-sauvegarde`
 18/18, `carte-check` et `net-check` verts.
 
-*Lot 2 — FAIT le 10 septembre 2026* (`economie-du-jeu.md`, proposition C). **La
-pierre se dépense.** Le sans-faute reste un trophée intouchable (sceau, cran,
+*Lot 2 — FAIT puis DÉFAIT le 10 septembre 2026* (`economie-du-jeu.md`,
+proposition C). Livré, joué, retiré le même jour : « les pierres peuvent être
+supprimées, pas une bonne idée » (Vincent). Le diamant est redevenu un trophée
+qui rend ses pièces (50 par sans-faute, 500 par chapitre de diamant), le
+schéma 9 a remplacé le 8 (les passages payés en pierres rejoignent `passees`,
+`achats` disparaît, `possessions` reste pour le pack), `oracle-sauvegarde`
+21/21 dont la migration v8 → v9, `oracle-ruban` 12/12. Ce qui suit décrit ce
+qui a existé. **La pierre se dépense.** Le sans-faute reste un trophée intouchable (sceau, cran,
 rang, médailles, déduits de `bestDelay`) ; la pierre qu'il produit va en poche,
 et le compteur de la barre dit le stock : sans-fautes + 3 par chapitre de
 diamant + achetées − passages payés en pierres encore à zéro étoile. Une pierre
@@ -488,20 +494,19 @@ la gare (gerbe à l'envers), la gare payée en pierres porte une gemme pâle, la
 mise rendue en pierres a sa ligne.
 
 *Lot 3 — FAIT le 10 septembre 2026* (`economie-du-jeu.md`, proposition E). **Ce
-qui se vend** : une carte (en pièces ou en argent), trois lots de pierres, le
-pack du poste — jamais de pièces, d'étoiles, de rangs ni de temps. Le
-catalogue est `data/boutique.json` ; `tools/boutique-check.mjs` (B1…B6) en est
-l'autorité, avec le garde-fou mesuré : la voie sans gloire coûte 5,4 fois le
-Rhin, et 295 € pour l'Europe. `jeu/magasin.gd` (autoload) tient trois dos —
+qui se vend** : une carte (en pièces ou en argent) et le pack du poste — jamais
+de pièces, de pierres, d'étoiles, de rangs ni de temps (les trois lots de
+pierres sont partis avec le lot 2). Le catalogue est `data/boutique.json` ;
+`tools/boutique-check.mjs` (B1…B4) en est l'autorité. `jeu/magasin.gd`
+(autoload) tient trois dos —
 plateforme (raccord StoreKit du greffon iOS, écrit et NON exercé ici : le
 greffon n'est pas dans le dépôt), libre (`STATION_MAGASIN=libre`, le
 déblocage de débogage), aucun (l'offre dit pourquoi elle ne fait rien). Ce qui
 est accordé s'écrit dans la sauvegarde, rien d'autre ; `possessions` gagne
 `acquerir_possession` des deux côtés (`oracle-sauvegarde` 20/20, 41
 écritures). Écrans : la modale d'une carte propose les deux monnaies, la tuile
-dit « 15 000 pièces, ou 3,99 € », le pied des cartes porte le pack, les
-pierres et « Restaurer mes achats » ; l'échec sans pièces ni pierres ouvre la
-boutique (`jeu/boutique.gd`). Vérifié en mode libre, pilote au doigt : la carte
+dit « 15 000 pièces, ou 3,99 € », le pied des cartes porte le pack et
+« Restaurer mes achats ». Vérifié en mode libre, pilote au doigt : la carte
 achetée devient la carte courante, le pack marque la possession et toutes les
 cartes.
 

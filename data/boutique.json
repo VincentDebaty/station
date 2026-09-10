@@ -1,15 +1,20 @@
 {
-  "_doc": "CE QUI SE VEND (economie-du-jeu.md §6, lot 3, 10 septembre 2026). Une carte, des pierres, le pack. JAMAIS des pièces, des étoiles, des rangs, des médailles, du temps : tools/boutique-check.mjs refuse. `prix` est le prix AFFICHÉ tant que le magasin de la plateforme n'a pas répondu ; le vrai prix vient de lui (Magasin.prix_de). `produit` est l'identifiant du produit dans le magasin (App Store / Play).",
+  "_doc": "CE QUI SE VEND (economie-du-jeu.md §6, lot 3, 10 septembre 2026 ; les pierres retirées le même jour). Une carte, le pack. JAMAIS des pièces, des étoiles, des rangs, des médailles, du temps : tools/boutique-check.mjs refuse. `prix` est le prix AFFICHÉ tant que le magasin de la plateforme n'a pas répondu ; le vrai prix vient de lui (Magasin.prix_de). `produit` est l'identifiant du produit dans le magasin (App Store / Play).",
   "offres": [
-    {"id": "carte-germanie", "type": "carte", "carte": "germanie", "produit": "be.station.carte.germanie", "prix": "3,99 €",
-     "dit": "Le grand tour du Rhin — soixante et onze gares, et pas une qu'on ait déjà jouée."},
-    {"id": "pack-du-poste", "type": "pack", "produit": "be.station.pack", "prix": "9,99 €",
-     "dit": "Toutes les cartes, présentes et à venir, en un seul achat."},
-    {"id": "pierres-20", "type": "pierres", "pierres": 20, "produit": "be.station.pierres.20", "prix": "1,99 €",
-     "dit": "Vingt pierres — de quoi passer une gare qui bloque, au milieu du ruban."},
-    {"id": "pierres-60", "type": "pierres", "pierres": 60, "produit": "be.station.pierres.60", "prix": "4,99 €",
-     "dit": "Soixante pierres."},
-    {"id": "pierres-150", "type": "pierres", "pierres": 150, "produit": "be.station.pierres.150", "prix": "9,99 €",
-     "dit": "Cent cinquante pierres — l'écrin."}
+    {
+      "id": "carte-germanie",
+      "type": "carte",
+      "carte": "germanie",
+      "produit": "be.station.carte.germanie",
+      "prix": "3,99 €",
+      "dit": "Le grand tour du Rhin — soixante et onze gares, et pas une qu'on ait déjà jouée."
+    },
+    {
+      "id": "pack-du-poste",
+      "type": "pack",
+      "produit": "be.station.pack",
+      "prix": "9,99 €",
+      "dit": "Toutes les cartes, présentes et à venir, en un seul achat."
+    }
   ]
 }

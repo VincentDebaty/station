@@ -518,16 +518,11 @@ function piedHTML() {
   if (b && !b.win) {
     const prix = prixDePassage(b.gare), solde = soldePieces(), assez = solde >= prix;
     const manque = prix - solde;
-    // LA SOUPAPE DE LA SOUPAPE (lot 2) : quand les pièces manquent, le passage
-    // se propose en pierres — celles des sans-fautes.
-    const prixP = prixDePassageEnPierres(b.gare), stock = stockPierres();
     return `<div class="cc-pied">` +
-      (assez ? "" : `<div class="cb-manque">Il te manque ${manque} pièce${manque > 1 ? "s" : ""}` +
-        (stock < prixP ? `, ou ${prixP} pierre${prixP > 1 ? "s" : ""}` : "") + ` — ` +
+      (assez ? "" : `<div class="cb-manque">Il te manque ${manque} pièce${manque > 1 ? "s" : ""} — ` +
         `rejoue une gare déjà faite pour les gagner.</div>`) +
-      (assez ? `<button class="c-suite cb-payer" data-payer="${b.gare}">Passer · ${prix} pièces</button>`
-        : `<button class="c-suite cb-payer" data-payer-pierres="${b.gare}"${stock >= prixP ? "" : " disabled"}>` +
-          `Passer · ${prixP} pierre${prixP > 1 ? "s" : ""}</button>`) +
+      `<button class="c-suite cb-payer" data-payer="${b.gare}"${assez ? "" : " disabled"}>` +
+        `Passer · ${prix} pièces</button>` +
       `<button class="c-suite c-appel" data-gare="${b.gare}">` +
         `<span class="ca-texte"><span class="ca-quoi">Réessayer</span>` +
         `<span class="ca-ou">${villeDe(b.gare)}</span></span>${BOUCLE}</button></div>`;
@@ -847,8 +842,6 @@ function renderCarte() {
     if (ev.target.closest("[data-ouvrir-cartes]")) { ouvrirCartes(); return; }
     const pay = ev.target.closest("[data-payer]");
     if (pay && !pay.disabled) { passerLaGare(pay.dataset.payer); return; }
-    const payP = ev.target.closest("[data-payer-pierres]");
-    if (payP && !payP.disabled) { passerLaGareEnPierres(payP.dataset.payerPierres); return; }
     const g = ev.target.closest("[data-gare]");
     if (g && g.dataset.gare) { jouerGare(g.dataset.gare); return; }
   };
@@ -1077,13 +1070,7 @@ function passerLaGare(gareId) {
   CARTE.medailles = null;
   finDeGare(gareId);
 }
-function passerLaGareEnPierres(gareId) {
-  const prix = prixDePassageEnPierres(gareId);
-  if (stockPierres() < prix || !payerPassageEnPierres(gareId)) return;
-  CARTE.bilan = null;
-  CARTE.medailles = null;
-  finDeGare(gareId);
-}
+
 
 // ------------------------------------------------------------------
 // CE QUI SE PASSE QUAND UNE GARE EST FRANCHIE.

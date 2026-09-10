@@ -58,7 +58,6 @@ func _traiter(sc: Dictionary, don: Node, dossier: String) -> bool:
 	var r = Rub.new(carte, don.fiches)
 	r.stations = sc["stations"]
 	r.passees = sc["passees"]
-	r.passees_pierres = sc["passeesEnPierres"] if sc.get("passeesEnPierres") is Array else []
 	var vierge = Rub.new(carte, don.fiches)
 	var out := _exporter(r, vierge, don, sc)
 	var sortie := dossier.path_join("%s-%s.json" % [sc["carte"], sc["nom"]])
@@ -98,10 +97,9 @@ func _exporter(r, vierge, don: Node, sc: Dictionary) -> Dictionary:
 			"service": {"difficulty": s["difficulty"], "gen": s["gen"]} if not s.is_empty() else null,
 			"enveloppe": r.enveloppe_de_gare(id, cfg),
 			"grande": r.est_grande_gare(id), "boss": r.est_boss(id, cfg), "ecrite": r.est_ecrite(id),
-			"faite": r.est_faite(id), "passee": r.est_passee(id), "passeePierres": r.est_passee_en_pierres(id),
-			"franchie": r.est_franchie(id),
+			"faite": r.est_faite(id), "passee": r.est_passee(id), "franchie": r.est_franchie(id),
 			"tenue": r.est_tenue(id), "niveau": Rec.niveau_de_gare(r, id), "prix": Rec.prix_de_passage(r, id),
-			"prixPierres": Rec.prix_de_passage_en_pierres(r, id), "r10": null,
+			"r10": null,
 		}
 		var b: Variant = don.brevets.get(id)
 		if not cfg.is_empty() and b is Dictionary:
@@ -130,11 +128,6 @@ func _exporter(r, vierge, don: Node, sc: Dictionary) -> Dictionary:
 	var depenses: int = Rec.pieces_depensees(sc["cartes"], don.cartes, sc["possedees"], don.cartes_index)
 	out["pieces"] = {"detail": Rec.detail_pieces_gagnees(sc["cartes"], don.cartes, don.fiches),
 		"gagnes": gagnes, "depenses": depenses, "solde": Rec.solde_pieces(gagnes, depenses)}
-	var achats: Dictionary = sc["achats"] if sc.get("achats") is Dictionary else {}
-	var pg: int = Rec.pierres_gagnees(sc["cartes"], don.cartes, achats)
-	var pd: int = Rec.pierres_depensees(sc["cartes"], don.cartes)
-	out["pierres"] = {"detail": Rec.detail_pierres_gagnees(sc["cartes"], don.cartes, achats),
-		"gagnes": pg, "depenses": pd, "stock": Rec.stock_pierres(pg, pd)}
 	# le barème par gare, tel que les écrans le lisent
 	var par_gare := {}
 	for id in r.stations:

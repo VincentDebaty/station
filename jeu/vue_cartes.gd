@@ -248,10 +248,6 @@ func _restaurer() -> void:
 	Magasin.restaurer()
 
 
-func _ouvrir_boutique() -> void:
-	Boutique.ouvrir(self, rebatir)
-
-
 func _entree(id: String) -> Dictionary:
 	for e in Donnees.cartes_index:
 		if String(e.get("id", "")) == id:
@@ -340,7 +336,7 @@ func rebatir() -> void:
 		var est_courante: bool = id == courante
 		rangee.add_child(_tuile(e, id, r, possede, prix, est_courante, solde))
 
-	# LE PIED DE L'ÉCRAN (lot 3) : le pack, les pierres, et la restauration.
+	# LE PIED DE L'ÉCRAN (lot 3) : le pack, et la restauration.
 	# Ce qui se vend se lit d'un seul regard, sous les cartes.
 	var pied := HBoxContainer.new()
 	pied.add_theme_constant_override("separation", int(round(12 * k)))
@@ -354,11 +350,6 @@ func rebatir() -> void:
 			bp.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 			bp.custom_minimum_size = Vector2(260 * k, 0)
 			pied.add_child(bp)
-	if not Magasin.offres_de_pierres().is_empty():
-		var bpi := _bouton("Des pierres", false, true, _ouvrir_boutique)
-		bpi.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
-		bpi.custom_minimum_size = Vector2(150 * k, 0)
-		pied.add_child(bpi)
 	var ressort := Control.new()
 	ressort.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	ressort.mouse_filter = Control.MOUSE_FILTER_IGNORE
