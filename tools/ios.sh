@@ -108,10 +108,16 @@ if cands and note(cands[0]) >= 4:
 etat() {
   echo "identifiant   : ${BUNDLE:-(aucun)}"
   echo "équipe        : ${EQUIPE:-(aucune)}"
-  local n_comptes
-  n_comptes=$(defaults read com.apple.dt.Xcode IDEProvisioningTeams 2>/dev/null | grep -c teamID)
+  # LA CLÉ A CHANGÉ DE NOM (10 septembre 2026) : Xcode range désormais les
+  # équipes sous `IDEProvisioningTeamByIdentifier`, plus sous
+  # `IDEProvisioningTeams` — le contrôle disait « AUCUN » à côté d'une
+  # signature qui marchait. On lit le domaine entier et on compte les
+  # `teamID`, quel que soit le nom du dictionnaire qui les porte.
+  local n_comptes equipes
+  n_comptes=$(defaults read com.apple.dt.Xcode 2>/dev/null | grep -c "teamID = ")
   if [ "${n_comptes:-0}" -gt 0 ]; then
-    vert "compte Xcode  : présent"
+    equipes=$(defaults read com.apple.dt.Xcode 2>/dev/null | grep "teamID = " | sed -E 's/.*teamID = ([A-Z0-9]+);.*/\1/' | sort -u | tr '\n' ' ')
+    vert "compte Xcode  : présent (équipes : ${equipes})"
   else
     rouge "compte Xcode  : AUCUN — Xcode → Réglages → Comptes → + → Apple ID"
   fi
