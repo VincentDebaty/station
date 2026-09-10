@@ -47,6 +47,9 @@ func _ready() -> void:
 	_cuire("fret", [[98, 0.0, 0.55, DENT, 0.045], [147, 0.0, 0.55, DENT, 0.03]])
 	_cuire("depart", [[1244, 0.0, 0.08, TRIANGLE, 0.05], [1661, 0.09, 0.13, TRIANGLE, 0.05]])
 	_cuire("incident", [[622, 0.0, 0.16, CARRE, 0.03], [466, 0.18, 0.24, CARRE, 0.03]])
+	# le cachet de l'échec sur le ruban (vue_ruban, _tampon) : deux notes qui
+	# descendent, feutrées — un « dommage », pas une alarme
+	_cuire("dommage", [[392, 0.0, 0.20, TRIANGLE, 0.04], [294, 0.22, 0.34, TRIANGLE, 0.04]])
 	_cuire("fin", [[659, 0.0, 0.12, SINUS, 0.05], [830, 0.13, 0.12, SINUS, 0.05],
 		[988, 0.26, 0.3, SINUS, 0.05]])
 	var parfait: Array = []

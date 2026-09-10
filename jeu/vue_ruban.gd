@@ -70,6 +70,10 @@ const SEQ_PUCE := 1.20       # la puce d'un bout à l'autre de la liaison
 const SEQ_PIECE_ECART := 0.07  # d'une pièce à la suivante
 const SEQ_PIECE_VOL := 0.50    # le vol d'une pièce vers la barre
 const SEQ_DEPENSE := 0.55      # les pièces qui partent de la barre vers la gare payée
+const SEQ_MONTANT := 0.75      # le montant gagné, qui grandit et s'efface sous la pastille
+const SEQ_ECHEC_POSE := 0.32   # le tampon « DOMMAGE » se pose
+const SEQ_ECHEC_TENUE := 1.40  # et se tient, le temps qu'on le lise
+const SEQ_ECHEC_FIN := 0.45    # puis s'efface
 
 # LA CARTE EST UN PARCHEMIN (4 septembre 2026). L'écran du ruban passe à la
 # palette de jeu.style.gd : cuir, laiton, encre. Le poste d'aiguillage, lui,
@@ -1743,6 +1747,20 @@ func fin_de_service(b: Dictionary, meds: Array) -> void:
 	aller_camera(voyage_saut)
 	if b.get("win", false):
 		_ouvrir_remise(String(b["gare"]))
+	else:
+		_ouvrir_echec()
+
+
+## L'ÉCHEC A SON TEMPS AUSSI. « Quand on ne gagne rien, il faut une petite
+## animation ; rien ne se passe pour le moment. Quelque chose qui fasse
+## comprendre au joueur qu'il n'a pas réussi — dommage — mais qu'il doit
+## recommencer, ou payer des pièces d'or » (Vincent, 10 septembre 2026). Un
+## tampon rouge se pose au milieu de l'écran, avec la consigne sous lui, et
+## s'efface ; les deux boutons du pied — Réessayer, Passer — restent.
+func _ouvrir_echec() -> void:
+	seq = "echec"
+	seq_t = -SEQ_DELAI
+	seq_joues = 0
 
 
 ## LES TROIS TEMPS S'OUVRENT ICI. Les étoiles et le diamant sont MASQUÉS sur
@@ -1914,8 +1932,13 @@ func _avancer_remise(delta: float) -> void:
 				_sursaut_pastille()
 			solde_montre = int(bourse["avant"]) + int(round(float(bourse["gain"]) * float(arrivees) / float(n)))
 			_rafraichir_solde()
-			if seq_t >= float(n - 1) * SEQ_PIECE_ECART + SEQ_PIECE_VOL + 0.12:
+			# l'accord de fin sonne quand la dernière pièce se pose ; le montant,
+			# lui, reste à grandir sous la pastille le temps de SEQ_MONTANT
+			var fin: float = float(n - 1) * SEQ_PIECE_ECART + SEQ_PIECE_VOL + 0.12
+			if seq_t >= fin and not bool(bourse.get("accord", false)):
 				Sons.jouer("bourse")
+				bourse["accord"] = true
+			if seq_t >= fin + SEQ_MONTANT:
 				bourse = {}
 				solde_montre = -1
 				_rafraichir_solde()
@@ -1939,6 +1962,12 @@ func _avancer_remise(delta: float) -> void:
 		"puce":
 			if seq_t >= SEQ_PUCE:
 				Sons.jouer("arrivee")
+				seq = ""
+		"echec":
+			if seq_t >= 0.0 and seq_joues == 0:
+				Sons.jouer("dommage")
+				seq_joues = 1
+			if seq_t >= SEQ_ECHEC_POSE + SEQ_ECHEC_TENUE + SEQ_ECHEC_FIN:
 				seq = ""
 
 
@@ -2702,6 +2731,9 @@ class Vol extends Node2D:
 						# la gare est en unités du cadre : on la passe à l'écran
 						origine = to_local(vue.to_global(vue.ecran(b["rendu_de"])))
 					_piece_en_vol(t / SEQ_PIECE_VOL, origine, vers, k, i)
+				_montant(vue.seq_t, int(b["n"]), int(b["gain"]), vers, k)
+			"echec":
+				_tampon(vue.seq_t, centre, k)
 			"depense":
 				var d: Dictionary = vue.depense
 				if d.is_empty():
@@ -2716,6 +2748,73 @@ class Vol extends Node2D:
 					if t <= 0.0 or t >= SEQ_DEPENSE:
 						continue
 					_piece_en_vol(t / SEQ_DEPENSE, de, vers, k, i)
+
+	## LE MONTANT, SOUS LA PASTILLE. « Dans l'animation des pièces d'or
+	## gagnées, ajouter le montant qui apparaît en arrivant, de plus en plus
+	## grand, en fondu, pour se rendre compte de combien on a gagné »
+	## (Vincent, 10 septembre 2026). Il naît quand la première pièce se pose,
+	## grandit tant qu'elles arrivent, et s'efface en descendant un peu — le
+	## nombre de la pastille, lui, garde le solde.
+	func _montant(t: float, n: int, gain: int, vers: Vector2, k: float) -> void:
+		var debut: float = SEQ_PIECE_VOL
+		var fin: float = float(n - 1) * SEQ_PIECE_ECART + SEQ_PIECE_VOL + 0.12 + SEQ_MONTANT
+		if t < debut or gain <= 0:
+			return
+		var u: float = clampf((t - debut) / (fin - debut), 0.0, 1.0)
+		var taille: float = lerpf(0.8, 2.1, ease(u, 0.6))
+		var alpha: float = minf(1.0, (t - debut) * 6.0) * (1.0 if u < 0.62 else lerpf(1.0, 0.0, (u - 0.62) / 0.38))
+		var p := vers + Vector2(0, (30.0 + 16.0 * u) * k)
+		var f: Font = Sty.titre(700)
+		var ts: int = int(round(19.0 * k * taille))
+		var texte := "+ " + Sty.nombre(gain)
+		var w: float = f.get_string_size(texte, HORIZONTAL_ALIGNMENT_LEFT, -1, ts).x
+		for j in range(10):
+			draw_circle(p, w * (0.30 + 0.45 * (1.0 - float(j) / 10.0)), Color(Sty.LAITON_CLAIR, 0.030 * alpha))
+		Sty.texte_centre(self, f, ts, p + Vector2(0, 1.5 * k), texte, Color(0, 0, 0, 0.35 * alpha))
+		Sty.texte_centre(self, f, ts, p, texte, Color(Sty.LAITON_CLAIR, alpha))
+
+	## LE TAMPON DE L'ÉCHEC : « DOMMAGE » en rouge, légèrement de travers,
+	## qui tombe sur l'écran comme un cachet — grand puis à sa taille —, et
+	## sous lui la consigne. Il se tient, puis s'efface.
+	func _tampon(t: float, centre: Vector2, k: float) -> void:
+		if t <= 0.0:
+			return
+		var taille := 1.0
+		var alpha := 1.0
+		if t < SEQ_ECHEC_POSE:
+			var u: float = t / SEQ_ECHEC_POSE
+			taille = lerpf(2.4, 1.0, ease(u, 0.35))
+			alpha = minf(1.0, u * 2.5)
+		elif t >= SEQ_ECHEC_POSE + SEQ_ECHEC_TENUE:
+			alpha = maxf(0.0, 1.0 - (t - SEQ_ECHEC_POSE - SEQ_ECHEC_TENUE) / SEQ_ECHEC_FIN)
+		if alpha <= 0.0:
+			return
+		var p := centre + Vector2(0, -24.0 * k)
+		var f: Font = Sty.titre(700)
+		var ts: int = int(round(40.0 * k * taille))
+		var mot := "DOMMAGE"
+		var w: float = Sty.largeur_espacee(f, ts, mot, 5.0 * k)
+		# le cadre du cachet, dans la même encre, serré sur les capitales : la
+		# ligne de base est à `base` sous le centre, les capitales montent de
+		# 0,72 fois la hauteur d'ascendante au-dessus d'elle
+		var asc: float = f.get_ascent(ts)
+		var base: float = asc * 0.36
+		var marge := Vector2(18.0 * k, 12.0 * k) * taille
+		var local := Rect2(Vector2(-w / 2.0, base - asc * 0.72) - marge,
+			Vector2(w, asc * 0.72 + asc * 0.10) + marge * 2.0)
+		var cadre := Rect2(local.position + p, local.size)
+		draw_set_transform(p, -0.10, Vector2.ONE)
+		draw_rect(local, Color(Sty.PAPIER, 0.10 * alpha), true)
+		draw_rect(local, Color(vue.ROUGE, 0.85 * alpha), false, maxf(1.0, 3.0 * k * taille), true)
+		Sty.texte_espace(self, f, ts, Vector2(-w / 2.0, base), mot, Color(vue.ROUGE, alpha), 5.0 * k)
+		draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+		# la consigne, droite, sous le cachet
+		var fs: Font = Sty.sans(600)
+		var ts2: int = int(round(14.0 * k))
+		Sty.texte_centre(self, fs, ts2, p + Vector2(0, cadre.size.y * 0.5 + 30.0 * k) + Vector2(0, 1.0 * k),
+			"Objectif manqué — réessaie, ou paie le passage", Color(0, 0, 0, 0.45 * alpha))
+		Sty.texte_centre(self, fs, ts2, p + Vector2(0, cadre.size.y * 0.5 + 30.0 * k),
+			"Objectif manqué — réessaie, ou paie le passage", Color(Sty.PAPIER, alpha))
 
 	## Le point visé DANS le Label : une fraction de sa largeur, plus un
 	## décalage. À défaut — le panneau n'a pas encore été mis en page — le
