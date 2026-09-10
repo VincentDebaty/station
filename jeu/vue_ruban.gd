@@ -189,6 +189,8 @@ var pince_k := 1.0            # et le zoom qu'on avait alors
 
 # --- le panneau ---------------------------------------------------------------------
 var barre: PanelContainer      # la barre du haut, sur toute la largeur
+var grades_panneau: Control    # le panneau déroulant des grades, sous le bloc du grade ; null tant qu'il n'a pas été ouvert
+var grades_chip: Control       # le bloc du grade dans la barre, qu'on touche pour l'ouvrir
 var rangee_barre: HBoxContainer
 var panneau: PanelContainer
 var colonne: VBoxContainer
@@ -2070,6 +2072,13 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if app != null and (app.en_glissement() or app.en_attente()):
 		return
+	# le panneau des grades se referme au premier toucher ailleurs — et ce
+	# toucher ne fait rien d'autre
+	if grades_panneau != null and is_instance_valid(grades_panneau) \
+			and event is InputEventMouseButton and event.pressed:
+		_fermer_grades()
+		get_viewport().set_input_as_handled()
+		return
 	# --- LE ZOOM ------------------------------------------------------------
 	# « Le zoom peut être sympa quand même, et quand on clique sur recentrer le
 	# zoom se réinitialise aussi » (Vincent, 10 septembre 2026) — ce dernier
@@ -2511,21 +2520,51 @@ func _remplir_barre() -> void:
 	# À DROITE, LE GRADE. C'est le plus lent des trois — il ne change que
 	# toutes les vingt-cinq étoiles — donc celui qu'on consulte, pas celui
 	# qu'on surveille : il tient le bord, avec sa jauge sous le nom.
+	# LE GRADE SE TOUCHE (Vincent, 10 septembre 2026) : il ouvre le panneau
+	# déroulant de tous les grades. Il porte son BADGE NUMÉROTÉ — le cran où
+	# l'on est, de 1 à 10 — devant son nom, pour qu'on sache où l'on en est
+	# sans ouvrir.
+	_fermer_grades()
 	var bloc := VBoxContainer.new()
 	bloc.add_theme_constant_override("separation", int(round(3 * k)))
 	bloc.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	var ligne := HBoxContainer.new()
+	ligne.alignment = BoxContainer.ALIGNMENT_END
+	ligne.add_theme_constant_override("separation", int(round(6 * k)))
+	var badge := Badge.new(int(g["i"]) + 1, 18.0 * k, "courant")
+	badge.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	ligne.add_child(badge)
 	var nom := _label(String(g["nom"]), 13, TEXTE, true, false)
 	nom.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	bloc.add_child(nom)
+	nom.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	ligne.add_child(nom)
+	bloc.add_child(ligne)
 	var jauge := ProgressBar.new()
 	jauge.show_percentage = false
+	jauge.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	jauge.custom_minimum_size = Vector2(110 * k, 3 * k)
 	jauge.size_flags_horizontal = Control.SIZE_SHRINK_END
 	jauge.value = 100.0 * float(g["part"])
 	jauge.add_theme_stylebox_override("background", Sty.boite(Color(Sty.LAITON, 0.18), Color.TRANSPARENT, 2 * k, 0))
 	jauge.add_theme_stylebox_override("fill", Sty.boite(Sty.LAITON, Color.TRANSPARENT, 2 * k, 0))
 	bloc.add_child(jauge)
-	droite.add_child(bloc)
+	# la zone qui reçoit le doigt : le bloc entier, avec un peu d'air autour
+	var chip := MarginContainer.new()
+	chip.add_theme_constant_override("margin_left", int(round(8 * k)))
+	chip.add_theme_constant_override("margin_right", int(round(4 * k)))
+	# pas d'air en haut ni en bas : la barre mesure sa hauteur sur son
+	# contenu, et le grade ne doit pas la faire grandir
+	chip.add_theme_constant_override("margin_top", 0)
+	chip.add_theme_constant_override("margin_bottom", 0)
+	chip.mouse_filter = Control.MOUSE_FILTER_STOP
+	chip.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	chip.add_child(bloc)
+	chip.gui_input.connect(func(ev: InputEvent) -> void:
+		if ev is InputEventMouseButton and ev.pressed and ev.button_index == MOUSE_BUTTON_LEFT:
+			_basculer_grades()
+			chip.accept_event())
+	grades_chip = chip
+	droite.add_child(chip)
 
 	# les deux bords à la même largeur : c'est cela, et cela seul, qui met le
 	# milieu au milieu. On ne le fait que si les trois blocs y tiennent —
@@ -2535,6 +2574,132 @@ func _remplir_barre() -> void:
 	if 2.0 * bord + milieu.get_combined_minimum_size().x + 28.0 * k <= dispo:
 		gauche.custom_minimum_size.x = bord
 		droite.custom_minimum_size.x = bord
+
+
+## LE PANNEAU DÉROULANT DES GRADES. « Quand on clique sur son grade, il
+## faudrait afficher un petit panneau déroulant montrant tous les grades avec
+## notre évolution dedans, et un genre de badge numéroté pour montrer à quel
+## niveau on se trouve » (Vincent, 10 septembre 2026). Dix lignes, une par
+## grade : le badge numéroté (plein pour les grades acquis, cerclé de sarcelle
+## pour le courant, creux pour ceux qui viennent), le nom, le seuil en
+## étoiles ; sous la ligne courante, la jauge et ce qu'il manque. Il se
+## déroule depuis le haut, sous le bloc du grade, et se referme au premier
+## toucher ailleurs. Rien n'y est stocké : tout se déduit du total d'étoiles.
+func _basculer_grades() -> void:
+	if grades_panneau != null and is_instance_valid(grades_panneau):
+		_fermer_grades()
+		return
+	_ouvrir_grades()
+
+
+func _fermer_grades() -> void:
+	if grades_panneau != null and is_instance_valid(grades_panneau):
+		grades_panneau.queue_free()
+	grades_panneau = null
+
+
+func _ouvrir_grades() -> void:
+	var k := Sty.HUD_K
+	var n: int = Rec.etoiles_total(Sauvegarde.progression_toutes_cartes())
+	var g: Dictionary = Rec.grade_de(n)
+	var courant: int = int(g["i"])
+	var largeur: float = 300.0 * k
+
+	var p := PanelContainer.new()
+	var st := Sty.boite(Sty.BOIS_CLAIR, Color(Sty.LAITON, 0.60), Sty.R * k, Sty.epaisseur(k), 10.0 * k, Color(0, 0, 0, 0.45))
+	st.set_content_margin_all(12 * k)
+	p.add_theme_stylebox_override("panel", st)
+	p.mouse_filter = Control.MOUSE_FILTER_STOP
+	var v := VBoxContainer.new()
+	v.add_theme_constant_override("separation", int(round(4 * k)))
+	p.add_child(v)
+
+	var tete := HBoxContainer.new()
+	var titre := _label("Tes grades", 12, MUET, true, false)
+	titre.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	tete.add_child(titre)
+	tete.add_child(_label("★ %d" % n, 12, OR, true, false))
+	v.add_child(tete)
+	v.add_child(_separateur())
+
+	for i in Rec.GRADES.size():
+		var gr: Dictionary = Rec.GRADES[i]
+		var etat := "courant" if i == courant else ("acquis" if i < courant else "futur")
+		var h := HBoxContainer.new()
+		h.add_theme_constant_override("separation", int(round(8 * k)))
+		var b := Badge.new(i + 1, (20.0 if etat == "courant" else 17.0) * k, etat)
+		b.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		h.add_child(b)
+		var nom := _label(String(gr["nom"]), 13 if etat == "courant" else 12,
+			TEXTE if etat != "futur" else MUET, etat == "courant", false)
+		nom.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		nom.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		h.add_child(nom)
+		var seuil := _label(("dès %d ★" % int(gr["at"])) if int(gr["at"]) > 0 else "départ", 11,
+			OR if etat != "futur" else MUET, false, false)
+		seuil.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		h.add_child(seuil)
+		if etat == "courant":
+			# la ligne courante a sa plaque, et sa jauge dessous
+			var plaque := PanelContainer.new()
+			var ps := Sty.boite(Color(Sty.SARCELLE, 0.18), Color(Sty.SARCELLE_CLAIR, 0.55), Sty.R_PETIT * k, Sty.epaisseur(k))
+			ps.set_content_margin_all(6 * k)
+			ps.content_margin_left = 8 * k
+			ps.content_margin_right = 8 * k
+			plaque.add_theme_stylebox_override("panel", ps)
+			var pv := VBoxContainer.new()
+			pv.add_theme_constant_override("separation", int(round(5 * k)))
+			pv.add_child(h)
+			var suivant: Dictionary = g["next"]
+			var jauge := ProgressBar.new()
+			jauge.show_percentage = false
+			jauge.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			jauge.custom_minimum_size = Vector2(0, 4 * k)
+			jauge.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			jauge.value = 100.0 * float(g["part"])
+			jauge.add_theme_stylebox_override("background", Sty.boite(Color(Sty.LAITON, 0.18), Color.TRANSPARENT, 2 * k, 0))
+			jauge.add_theme_stylebox_override("fill", Sty.boite(Sty.LAITON, Color.TRANSPARENT, 2 * k, 0))
+			pv.add_child(jauge)
+			var dit := "grade le plus haut" if suivant.is_empty() \
+				else "encore %d ★ pour %s" % [int(suivant["at"]) - n, String(suivant["nom"])]
+			pv.add_child(_label(dit, 11, ACCENT, false, false))
+			plaque.add_child(pv)
+			v.add_child(plaque)
+		else:
+			var m := MarginContainer.new()
+			m.add_theme_constant_override("margin_left", int(round(8 * k)))
+			m.add_theme_constant_override("margin_right", int(round(8 * k)))
+			m.add_child(h)
+			v.add_child(m)
+
+	# SOUS LE BLOC DU GRADE, calé au bord droit de la barre ; jamais plus haut
+	# que ce que l'écran laisse sous elle — au-delà, il se fait défiler.
+	var ecran := get_viewport_rect().size
+	var haut: float = hauteur_barre() + 4.0 * k
+	var dispo: float = ecran.y - haut - Sty.marges["bas"] - 10.0 * k
+	var sc := ScrollContainer.new()
+	sc.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	sc.custom_minimum_size = Vector2(largeur, 0)
+	sc.add_child(p)
+	p.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	sc.position = Vector2(ecran.x - Sty.marges["droite"] - 18.0 * k - largeur, haut)
+	add_child(sc)
+	grades_panneau = sc
+	# la hauteur ne se connaît qu'une fois mis en page : on la borne après
+	sc.call_deferred("set_custom_minimum_size", Vector2(largeur, 0))
+	(func() -> void:
+		if not is_instance_valid(sc):
+			return
+		var h_contenu: float = p.get_combined_minimum_size().y
+		sc.size = Vector2(largeur, minf(h_contenu, dispo))
+	).call_deferred()
+	# IL SE DÉROULE : depuis le haut, en un cinquième de seconde
+	sc.pivot_offset = Vector2(largeur, 0)
+	sc.scale = Vector2(1.0, 0.15)
+	sc.modulate.a = 0.0
+	var tw := create_tween().set_parallel(true)
+	tw.tween_property(sc, "scale", Vector2.ONE, 0.20).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	tw.tween_property(sc, "modulate:a", 1.0, 0.16)
 
 
 ## Une pastille de compteur : le verre dépoli du bandeau de jeu, en plus petit.
@@ -2706,6 +2871,43 @@ class Gemme extends Control:
 	func _draw() -> void:
 		if vue != null:
 			vue.tailler_gemme(self, size / 2.0 + Vector2(0, -hauteur * 0.06), hauteur, 1.0)
+
+
+## LE BADGE NUMÉROTÉ D'UN GRADE : un disque de laiton frappé du numéro du
+## cran. Plein pour un grade acquis, cerclé de sarcelle et un peu plus grand
+## pour le courant, creux pour ceux qui viennent. Dessiné, pas écrit : le même
+## badge sert dans la barre et dans le panneau, et on ne doit pas pouvoir
+## croire qu'il y en a deux.
+class Badge extends Control:
+	var numero := 1
+	var diam := 18.0
+	var etat := "courant"   # "acquis" | "courant" | "futur"
+
+	func _init(n: int, d: float, e: String) -> void:
+		numero = n
+		diam = d
+		etat = e
+		custom_minimum_size = Vector2(d + 4.0, d + 4.0)
+		mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+	func _draw() -> void:
+		var c := size / 2.0
+		var r := diam / 2.0
+		var f: Font = Sty.titre(700)
+		var ts: int = int(round(diam * 0.58))
+		match etat:
+			"acquis":
+				draw_circle(c, r, Sty.LAITON)
+				draw_arc(c, r, 0.0, TAU, 32, Color(Sty.LAITON_CLAIR, 0.9), maxf(1.0, diam * 0.07), true)
+				Sty.texte_centre(self, f, ts, c, str(numero), Sty.BOIS)
+			"courant":
+				draw_circle(c, r, Sty.SARCELLE)
+				draw_arc(c, r, 0.0, TAU, 32, Sty.LAITON_CLAIR, maxf(1.0, diam * 0.10), true)
+				Sty.texte_centre(self, f, ts, c, str(numero), Sty.PAPIER)
+			_:
+				draw_circle(c, r, Color(Sty.BOIS, 0.6))
+				draw_arc(c, r, 0.0, TAU, 32, Color(Sty.LAITON, 0.45), maxf(1.0, diam * 0.07), true)
+				Sty.texte_centre(self, f, ts, c, str(numero), Color(Sty.PAPIER, 0.45))
 
 
 class Vol extends Node2D:
