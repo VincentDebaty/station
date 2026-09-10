@@ -2332,7 +2332,26 @@ func _bouton(texte: String, principal: bool, actif: bool, sur: Callable) -> Butt
 	b.clip_text = true
 	if sur.is_valid():
 		b.pressed.connect(sur)
+	if principal and actif:
+		_faire_respirer(b)
 	return b
+
+
+## LE BOUTON À PRESSER RESPIRE. « Le bouton Réessayer doit clignoter pour
+## montrer où cliquer. Idem pour le bouton Jouer » (Vincent, 10 septembre
+## 2026). Pas un clignotement sec : une respiration — la plaque s'éclaire et
+## grossit d'un rien, puis revient, en boucle — le même geste que le cerne de
+## la prochaine gare sur la carte. Seul le bouton PRINCIPAL et actif respire :
+## il n'y en a qu'un par écran, c'est lui qu'on cherche. Le tween appartient
+## au bouton et meurt avec lui à la prochaine mise en page.
+func _faire_respirer(b: Button) -> void:
+	b.resized.connect(func() -> void: b.pivot_offset = b.size / 2.0)
+	var tw := b.create_tween().set_loops()
+	tw.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	tw.tween_property(b, "modulate", Color(1.25, 1.25, 1.25), 0.70)
+	tw.parallel().tween_property(b, "scale", Vector2(1.035, 1.035), 0.70)
+	tw.chain().tween_property(b, "modulate", Color(1, 1, 1), 0.70)
+	tw.parallel().tween_property(b, "scale", Vector2.ONE, 0.70)
 
 
 ## UN PLI DE PAPIER, pas un trait d'interface : depuis que tout se lit sur la
