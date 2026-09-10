@@ -1122,8 +1122,11 @@ func _draw() -> void:
 		# comparerait tous deux à deux.
 		if not noms:
 			continue
-		var reserve: Rect2 = plaques.get(id, Rect2(
-			e.x + r + 6 * kk, e.y - float(m["haute"]) / 2, float(m["place"]), float(m["haute"])))
+		# UNE GARE SANS PLAQUE GARDE SON POINT : le placement a jugé que son nom
+		# ne tenait pas ici sans en couvrir un autre (voir _placer_plaques).
+		if not plaques.has(id):
+			continue
+		var reserve: Rect2 = plaques[id]
 		var plaque := Rect2(reserve.position, Vector2(float(m["large"]), float(m["haute"])))
 		plaques_ecran[id] = plaque
 		var cy := plaque.get_center().y
@@ -1283,10 +1286,12 @@ func _placer_plaques(ids: Array, c: Dictionary) -> Dictionary:
 			segs.append([t[j], t[min(t.size() - 1, j + 3)]])
 			j += 3
 	# L'ORDRE COMPTE : la première servie choisit librement. On sert donc la
-	# gare qui vient, puis les fins de chapitre, puis le reste dans l'ordre du
-	# rail — les plus importantes ont la meilleure place.
+	# gare qui vient, puis les fins de chapitre, puis le chapitre vu dans
+	# l'ordre du rail, puis les voisins — les plus importantes ont la
+	# meilleure place.
+	var du_chapitre := gares_dessinees()
 	var ordre := ids.duplicate()
-	ordre.sort_custom(func(a, b): return _rang_de_plaque(a) < _rang_de_plaque(b))
+	ordre.sort_custom(func(a, b): return _rang_de_plaque(a, du_chapitre) < _rang_de_plaque(b, du_chapitre))
 	# LA ROSE DES VENTS EST UN OBSTACLE, pas un fond : Middlesbrough est venu
 	# se poser dessus au premier essai. Elle occupe sa place avant tout le monde.
 	var poses: Array = [_cadre_rose()]
@@ -1318,9 +1323,35 @@ func _placer_plaques(ids: Array, c: Dictionary) -> Dictionary:
 			if q < note:
 				note = q
 				meilleur = cands[i]
+		# COMME SUR UNE CARTE ROUTIÈRE, LE NOM VIENT AVEC LE ZOOM. Les gares du
+		# chapitre vu ont toujours leur plaque — c'est pour elles qu'on cadre,
+		# et le placement négocie. Celles des chapitres VOISINS, elles, ne
+		# l'obtiennent que si la moins mauvaise place tient sans chevaucher une
+		# plaque déjà posée ni couvrir un point : sinon le point seul reste, et
+		# le nom apparaît quand on s'approche. Sans cette règle, quatre gares
+		# de Bristol à quinze kilomètres l'une de l'autre s'empilaient en haut
+		# de la carte du Wessex (« on n'est pas obligé d'afficher toutes les
+		# pancartes du chapitre précédent », Vincent, 10 septembre 2026).
+		if not du_chapitre.has(id) and id != prochaine and id != selection \
+				and _plaque_genee(meilleur, poses, pts, id):
+			continue
 		poses.append(meilleur.grow(PLAQUE_JEU * k))
 		mis[id] = meilleur
 	return mis
+
+
+## Une plaque GÊNE si, avec son cordon, elle mord une plaque déjà posée ou
+## couvre le point d'une autre gare.
+func _plaque_genee(r: Rect2, poses: Array, pts: Dictionary, moi: String) -> bool:
+	var rj := r.grow(PLAQUE_JEU * Sty.HUD_K)
+	for autre in poses:
+		var i: Rect2 = rj.intersection(autre)
+		if i.size.x > 0.0 and i.size.y > 0.0:
+			return true
+	for id in pts:
+		if id != moi and rj.has_point(pts[id]):
+			return true
+	return false
 
 
 ## Le tracé d'une liaison pour une caméra QUELCONQUE — le placement des
@@ -1334,13 +1365,13 @@ func _tracer_pour(a: String, b: String, c: Dictionary) -> PackedVector2Array:
 	return out
 
 
-func _rang_de_plaque(id: String) -> int:
+func _rang_de_plaque(id: String, du_chapitre: Array = []) -> int:
 	var chg := ruban.chapitre_de_gare(id)
 	var fin: bool = not chg.is_empty() and chg["gares"][chg["gares"].size() - 1] == id
-	var tete := 2
+	var tete := 2 if (du_chapitre.is_empty() or du_chapitre.has(id)) else 3
 	if id == prochaine:
 		tete = 0
-	elif fin:
+	elif fin and tete == 2:
 		tete = 1
 	return tete * 1000 + max(0, ruban.index_de(id))
 
