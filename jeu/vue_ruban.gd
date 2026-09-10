@@ -2072,13 +2072,25 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if app != null and (app.en_glissement() or app.en_attente()):
 		return
-	# le panneau des grades se referme au premier toucher ailleurs — et ce
-	# toucher ne fait rien d'autre
-	if grades_panneau != null and is_instance_valid(grades_panneau) \
-			and event is InputEventMouseButton and event.pressed:
-		_fermer_grades()
-		get_viewport().set_input_as_handled()
-		return
+	# LE PANNEAU DES GRADES SE REFERME AU PREMIER TOUCHER AILLEURS — et ce
+	# toucher ne fait rien d'autre. AILLEURS, pas n'importe où : un toucher
+	# DANS le panneau n'est pas consommé par le conteneur de défilement (une
+	# pression simple ne l'intéresse pas), il redescend jusqu'ici, et le
+	# panneau se fermait sous le doigt avant qu'on ait pu le faire glisser —
+	# « quand je tape dessus, il disparaît » (Vincent, 10 septembre 2026, sur
+	# iPhone). Tout geste dont la position tombe dans le panneau lui
+	# appartient : on ne ferme pas, et on ne déplace pas la carte dessous.
+	if grades_panneau != null and is_instance_valid(grades_panneau):
+		var ou: Variant = event.get("position")
+		if ou is Vector2:
+			if grades_panneau.get_global_rect().has_point(ou):
+				return
+			var presse: bool = (event is InputEventMouseButton and event.pressed) \
+				or (event is InputEventScreenTouch and event.pressed)
+			if presse:
+				_fermer_grades()
+				get_viewport().set_input_as_handled()
+				return
 	# --- LE ZOOM ------------------------------------------------------------
 	# « Le zoom peut être sympa quand même, et quand on clique sur recentrer le
 	# zoom se réinitialise aussi » (Vincent, 10 septembre 2026) — ce dernier
