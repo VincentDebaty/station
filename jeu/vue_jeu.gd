@@ -43,6 +43,7 @@ var G: Dictionary
 var enc: Enc                          # le script préchargé sert de type
 var graine: int
 var vitesse: float = 1.0
+var sec_par_min: float = Geo.SEC_PER_GAMEMIN   # le temps qui presse : suit le niveau (Rub.TEMPS)
 var pause: bool = false
 var auto: bool = false
 var duree_generation_ms: int = 0
@@ -240,6 +241,9 @@ func _nouvelle_journee() -> void:
 	enc = Enc.new(G, fiche_jouee)
 	if ruban != null:
 		enc.seuils = ruban.seuils_de_service(fiche)
+		sec_par_min = ruban.secondes_de_service(fiche)
+	else:
+		sec_par_min = Rub.secondes_par_minute(int(fiche.get("difficulty", 0)))
 	enc.charger(day)
 	print("%s · graine %d — %d convois, journée tirée en %d ms · %s"
 		% [fiche.get("id", "?"), graine, enc.trains.size(), duree_generation_ms, _niveau_texte()])
@@ -288,7 +292,7 @@ func _process(delta: float) -> void:
 	if enc == null:
 		return
 	if not pause and not gel and not enc.ended:
-		var dt_min: float = delta * vitesse / Geo.SEC_PER_GAMEMIN
+		var dt_min: float = delta * vitesse / sec_par_min
 		enc.game_min += dt_min
 		enc.tick(dt_min)
 		if auto and not enc.ended:
@@ -304,7 +308,7 @@ func _process(delta: float) -> void:
 		# `ended`, `tick` ne fait plus que DÉPLACER — ses deux contrôles de fin
 		# sont gardés par `not ended`, et le résultat n'est écrit que par
 		# `fin_de_service`, déjà passé. Rien de ce qui roule maintenant ne compte.
-		var dt_fin: float = delta * vitesse / Geo.SEC_PER_GAMEMIN
+		var dt_fin: float = delta * vitesse / sec_par_min
 		enc.game_min += dt_fin
 		enc.tick(dt_fin)
 		# ET EN SILENCE : un convoi encore à quai qui partirait après la fin d'un
@@ -440,6 +444,11 @@ func _positions_de(t) -> Array:
 static func fmt(minute: float) -> String:
 	var m := int(max(0.0, floor(minute)))
 	return "%02d:%02d" % [7 + m / 60, m % 60]
+
+
+## Un retard au dixième, virgule française (fmtDixieme, js/render.js).
+static func fmt_dixieme(minute: float) -> String:
+	return ("%.1f" % max(0.1, floor(minute * 10.0 + 0.5) / 10.0)).replace(".", ",")
 
 
 ## LE PUPITRE — la matière sous le plan.
@@ -1110,8 +1119,9 @@ func _dessiner_badges(t: float) -> void:
 		if not montre:
 			continue
 		var late: float = Enc.lateness(tr, enc.game_min)
-		var en_retard: bool = late >= 1
-		var txt: String = ("+%d min" % int(floor(late))) if en_retard else fmt(tr.dep)
+		# dès que le retard COÛTE, et au dixième — comme il s'encaisse (js/render.js)
+		var en_retard: bool = late > 0
+		var txt: String = ("+%s min" % fmt_dixieme(late)) if en_retard else fmt(tr.dep)
 		var col: Color = Sty.ROUGE if en_retard else (Sty.AMBRE if late > -3 else Sty.VERT)
 		var k := Sty.UIK
 		var police := Sty.mono(700 if en_retard else 600)
@@ -1239,7 +1249,7 @@ func _dessiner_hud(t: float) -> void:
 	var mono := Sty.mono(400)
 	var horloge := fmt(enc.game_min)
 	var retard := enc.live_delay()
-	var txt_r := "+%d" % int(retard)
+	var txt_r := "+%d" % int(floor(retard + 0.5))   # arrondi, comme Math.round côté web
 	# 46 À 50 SUR L'ÉCRAN DE VINCENT : « 07:05, Space Mono Regular, 46-50 px,
 	# letter spacing 2 px » (9 septembre 2026). Une unité vaut un pixel sur le
 	# viewport d'un iPhone, et HUD_K y vaut 1,93 : 24 × k donne 46,3. C'était
@@ -1281,7 +1291,12 @@ func _dessiner_hud(t: float) -> void:
 		+ (mono.get_ascent(t_h) - mono.get_descent(t_h)) / 2.0
 	Sty.texte_espace(self, mono, t_h, Vector2(ch.position.x + 14.0 * k, base),
 		horloge, Sty.TEXTE, 1.05 * k)
-	var col_r: Color = Sty.VERT if retard < 10 else (Sty.AMBRE if retard < 30 else Sty.ROUGE)
+	# vert tant qu'on vise 3★ au barème de LA gare, ambre tant qu'une étoile
+	# reste jouable, rouge dès 0★ (js/game.js, updateDelay)
+	var s_r: Dictionary = enc.seuils_de_service()
+	var r_arr: float = floor(retard + 0.5)
+	var col_r: Color = Sty.VERT if r_arr < float(s_r.get("trois", 6)) \
+		else (Sty.AMBRE if r_arr < float(s_r.get("une", 30)) else Sty.ROUGE)
 	draw_string(mono, Vector2(ch.position.x + 14.0 * k + w_h + 9.0 * k, base), txt_r,
 		HORIZONTAL_ALIGNMENT_LEFT, -1, ti.call(14), col_r)
 	# la jauge : l'horloge se remplit à mesure que les convois quittent le quai

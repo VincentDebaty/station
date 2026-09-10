@@ -171,7 +171,8 @@ long — `MAX_CARS × CAR_SPACING − CAR_GAP + 2 × PLAT_MARGIN` = 262. Si
 ### Le temps (`js/engine.js`)
 
 ```
-SEC_PER_GAMEMIN   4.0     1 minute de jeu = 4 secondes réelles à ×1
+SEC_PER_GAMEMIN   4.0     1 minute de jeu = 4 secondes réelles à ×1, aux niveaux 1-2
+TEMPS             4 · 4 · 3,5 · 3 · 2,5   les secondes d'une minute, par niveau (ruban.js / ruban.gd, 10 septembre 2026)
 TRAVEL            1.6     minutes de jeu pour traverser un gril
 MIN_DWELL         2       arrêt minimum au quai
 DEPART_GRACE      0.15    tolérance de départ, en minutes de jeu
@@ -185,18 +186,30 @@ contredire.
 
 ### Le barème (`js/ruban.js`, `SEUILS`)
 
-Minutes de retard tolérées pour trois étoiles, **par palier de difficulté** :
+Minutes de retard tolérées pour trois étoiles, **par palier de difficulté**
+(serré le 10 septembre 2026, `difficulte-et-merite.md` lot 1 — c'était
+12 → 8 et 20) :
 
 | palier | 3 ★ | 2 ★ | 1 ★ |
 |---|---|---|---|
-| 1 | 12 | 20 | 30 |
-| 2 | 11 | 20 | 30 |
-| 3 | 10 | 20 | 30 |
-| 4 | 9 | 20 | 30 |
-| 5 | 8 | 20 | 30 |
+| 1 | 8 | 15 | 30 |
+| 2 | 7 | 15 | 30 |
+| 3 | 6 | 15 | 30 |
+| 4 | 5 | 15 | 30 |
+| 5 | 4 | 15 | 30 |
 
 Une étoile reste à **30 partout** : c'est le plancher qui rend le ruban
 praticable.
+
+**Le retard se compte au dixième** (même jour). Le retard brut d'un départ
+(`lateness`, tolérance `DEPART_GRACE` déduite) s'additionne tel quel dans
+`totalDelay` / `total_delay` ; c'est le TOTAL qui s'arrondit, une fois, au
+relevé. Avant, chaque convoi n'encaissait que sa minute entière : un train
+parti 1,14 min après son heure pesait zéro, et un diamant tolérait une minute
+par convoi. « À l'heure » (série, carillon) veut dire à zéro, donc sous la
+tolérance ; la pastille écrit « + 0,8 min » dès que le retard coûte.
+`oracle-enclenchement` compare les deux implémentations sur le total et les
+étoiles.
 
 ### Le barème des pièces (`recompense.js` / `recompense.gd`, 10 septembre 2026)
 

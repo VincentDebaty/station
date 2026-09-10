@@ -753,3 +753,14 @@ créée ; le point de passage `dundee` devient une gare). Elles portent le
 catalogue à 401 fiches. **Elles ne sont pas posées sur le ruban** — la carte
 reste à 277 gares, conformément à la décision ci-dessus. Elles restent au
 dépôt, écrites et certifiées, prêtes pour le moteur.
+
+**10 septembre 2026** — `difficulte-et-merite.md` mesure pourquoi tout se
+gagne (minute entière libre par convoi, deux minutes de mou d'horaire, rampe
+plate) et son **lot 1 est livré** : le retard se compte au dixième, le barème
+des trois étoiles passe de 12 → 8 à 8 → 4 (deux étoiles sous 15, une reste à
+30), et une minute de jeu dure 4 · 4 · 3,5 · 3 · 2,5 s selon le niveau. Web et
+Godot ensemble : `oracle-enclenchement` 4/4, `oracle-ruban` 12/12,
+`oracle-sauvegarde` 21/21, `carte-check` vert. Aucune génération touchée, donc
+aucun brevet à refaire. Les étoiles acquises sont gardées. Restent, à décider
+sur le taux d'échec mesuré : la rampe (lot 2), les portes à étoiles (lot 3),
+l'échec qui coûte.

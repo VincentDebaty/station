@@ -448,11 +448,14 @@ func clic_quai(pid: Variant) -> String:
 # ------------------------------------------------------------------
 # Boucle de jeu
 # ------------------------------------------------------------------
+## LES DIXIÈMES COMPTENT (10 septembre 2026, js/game.js liveDelay) : le retard
+## brut s'additionne, tolérance de départ déduite par lateness ; c'est le total
+## qui s'arrondit, une fois, dans fin_de_service.
 func live_delay() -> float:
 	var d: float = total_delay
 	for t in trains:
 		if not t.freight and (t.state != S_MOVING_OUT or t.refoul) and t.state != S_DONE:
-			d += floor(max(0.0, lateness(t, game_min)))
+			d += max(0.0, lateness(t, game_min))
 	return d
 
 
@@ -551,8 +554,8 @@ func tick(dt: float) -> void:
 							sons.append("depart")
 						else:
 							t.dep_delay = max(0.0, lateness(t, game_min))
-							total_delay += floor(t.dep_delay)
-							if t.dep_delay < 1:
+							total_delay += t.dep_delay
+							if t.dep_delay == 0.0:
 								on_time_streak += 1
 								sons.append("heure:%d" % on_time_streak)
 							else:

@@ -117,8 +117,8 @@ function stationDifficulty(id) {
 // l'apprendre — le pas suivant vaut toujours tout ce qui précède.
 const PALIERS = [
   { under: 30, mult: 0.25, stars: 1, nom: "Service assuré", seuil: "moins de 30 min" },
-  { under: 20, mult: 0.5,  stars: 2, nom: "Deux étoiles",   seuil: "moins de 20 min" },
-  { under: 10, mult: 1,    stars: 3, nom: "Trois étoiles",  seuil: "moins de 10 min" },
+  { under: 15, mult: 0.5,  stars: 2, nom: "Deux étoiles",   seuil: "moins de 15 min" },
+  { under: 6,  mult: 1,    stars: 3, nom: "Trois étoiles",  seuil: "moins de 6 min" },
   { under: 1,  mult: 2,    stars: 3, nom: "Sans faute",     seuil: "aucun retard", parfait: true }
 ];
 // Le plus haut palier qu'un service à ce retard décroche — et donc tous ceux

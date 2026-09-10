@@ -293,15 +293,20 @@ function enveloppeDe(cfg, niveau, profil) {
 //   · LE DIAMANT RESTE ABSOLU. Zéro, c'est zéro. C'est la seule mesure
 //     comparable d'un bout à l'autre du jeu, et la vraie chasse de fin de partie.
 //
-// La courbe est DOUCE exprès (12 → 8, pas 15 → 4) : deux cadrans qui disent
-// tous les deux « difficulté » se composent, et un niveau 5 déjà à 22 convois
-// avec quatre minutes de marge serait un mur déguisé.
+// LE BARÈME A SERRÉ LE 10 SEPTEMBRE 2026 (difficulte-et-merite.md, lot 1).
+// Il était 12 → 8 pour trois étoiles et 20 partout pour deux, avec un retard
+// encaissé par MINUTES ENTIÈRES : rapporté au nombre de convois, cela laissait
+// près de deux minutes de retard par train pour trois étoiles au niveau 1, et
+// un diamant tolérait une minute par convoi. Mesuré : tout se gagnait. Le
+// retard se compte désormais au dixième (js/game.js), et le seuil des trois
+// étoiles vaut 8 → 4 — soit 0,5 min par convoi au niveau 1, 0,2 au niveau 5.
+// Deux étoiles sous 15. Une étoile reste à 30 : le plancher ne bouge pas.
 const SEUILS = {
-  1: { trois: 12, deux: 20, une: 30 },
-  2: { trois: 11, deux: 20, une: 30 },
-  3: { trois: 10, deux: 20, une: 30 },
-  4: { trois:  9, deux: 20, une: 30 },
-  5: { trois:  8, deux: 20, une: 30 }
+  1: { trois: 8, deux: 15, une: 30 },
+  2: { trois: 7, deux: 15, une: 30 },
+  3: { trois: 6, deux: 15, une: 30 },
+  4: { trois: 5, deux: 15, une: 30 },
+  5: { trois: 4, deux: 15, une: 30 }
 };
 function seuilsDeNiveau(niveau) {
   return SEUILS[Math.max(1, Math.min(5, niveau || 3))] || SEUILS[3];
@@ -314,6 +319,27 @@ function seuilsDeService(cfg) {
   const d = cfg ? (difficulteDeGare(cfg.id, cfg) ?? cfg.difficulty) : null;
   return seuilsDeNiveau(d);
 }
+// ------------------------------------------------------------------
+// LE TEMPS QUI PRESSE — le troisième cadran (10 septembre 2026, lot 1).
+// ------------------------------------------------------------------
+// Une minute de jeu durait quatre secondes réelles à tous les niveaux : le
+// trafic montait, le rythme non. La géométrie plafonne le trafic des petites
+// gares réelles (plafondDeFlux), mais rien ne plafonne le RYTHME : c'est le
+// seul cadran qui puisse porter la difficulté sur toute la longueur du ruban
+// sans toucher à la génération — donc sans toucher aux brevets. Les niveaux 1
+// et 2 gardent leurs quatre secondes : l'enfant qui apprend ne voit rien.
+// Le bouton ×2 double ce qui est, comme avant.
+const TEMPS = { 1: 4.0, 2: 4.0, 3: 3.5, 4: 3.0, 5: 2.5 };
+function secondesParMinute(niveau) {
+  return TEMPS[Math.max(1, Math.min(5, niveau || 3))] || SEC_PER_GAMEMIN;
+}
+// Les secondes réelles d'une minute de jeu pour une gare telle qu'on la JOUE :
+// même résolution du niveau que seuilsDeService.
+function secondesDeService(cfg) {
+  const d = cfg ? (difficulteDeGare(cfg.id, cfg) ?? cfg.difficulty) : null;
+  return secondesParMinute(d);
+}
+
 // Les étoiles d'un service : le retard face au barème de la gare.
 function etoilesPour(retard, seuils) {
   const s = seuils || seuilsDeNiveau(3);

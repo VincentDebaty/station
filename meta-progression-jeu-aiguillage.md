@@ -85,9 +85,15 @@ Les trois premiers niveaux décrivent *comment on avance* ; le quatrième décri
   Barème : 2 ★ < 20 min · 1 ★ < 30 · sans-faute = 3 ★ **+ 1 diamant** (le
   diamant s'empile, il ne remplace jamais : mieux jouer ne rapporte jamais
   moins).
-- **Le seuil des trois étoiles suit la difficulté** (tranché le 25 août 2026) :
-  12 min au niveau 1, puis 11, 10, 9, et **8 au niveau 5** (`SEUILS`,
-  js/ruban.js). C'est un **second cadran de difficulté**, et il ne joue pas la
+- **Le seuil des trois étoiles suit la difficulté** (tranché le 25 août 2026,
+  **serré le 10 septembre 2026** — `difficulte-et-merite.md`, lot 1) :
+  8 min au niveau 1, puis 7, 6, 5, et **4 au niveau 5** (`SEUILS`,
+  js/ruban.js) ; deux étoiles sous 15. **Le retard se compte au dixième**
+  depuis le même jour : le retard brut de chaque départ s'additionne, et c'est
+  le total qui s'arrondit au relevé. Avant, une minute entière par convoi était
+  libre, et tout se gagnait. **Le temps presse avec le niveau** (`TEMPS`) : une
+  minute de jeu dure 4 s réelles aux niveaux 1 et 2, 3,5 au 3, 3 au 4 et 2,5
+  au 5 — le seul cadran qui ne dépende ni de la géométrie ni de la génération. C'est un **second cadran de difficulté**, et il ne joue pas la
   même musique que le premier : le trafic récompense le **débit**, une
   tolérance serrée récompense la **précision**. Un petit nœud à trois quais qui
   exige de la justesse ne se joue pas comme un terminus qui exige du volume —

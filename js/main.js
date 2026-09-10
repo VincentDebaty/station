@@ -20,8 +20,12 @@ function frame(ts) {
   if (lastTs === null) lastTs = ts;
   const dtReal = Math.min(0.1, (ts - lastTs) / 1000);
   lastTs = ts;
+  // Le temps presse avec le niveau (js/ruban.js, TEMPS) : 4 s la minute au
+  // niveau 1, 2,5 s au niveau 5. Hors ruban, la constante du moteur.
+  const spm = (typeof secondesDeService === "function" && typeof STATION !== "undefined" && STATION)
+    ? secondesDeService(STATION) : SEC_PER_GAMEMIN;
   if (started && !paused && !ended && !orientationBlocked) {
-    const dtMin = dtReal * speed / SEC_PER_GAMEMIN;
+    const dtMin = dtReal * speed / spm;
     gameMin += dtMin;
     tick(dtMin);
     document.getElementById("clock").textContent = fmt(gameMin);
@@ -30,7 +34,7 @@ function frame(ts) {
     // Service terminé, score figé : on laisse les derniers convois TERMINER leur
     // sortie en arrière-plan (derrière la modale), sans avancer l'horloge ni le
     // score — le mouvement de sortie ne dépend que de dtMin, pas de gameMin.
-    tick(dtReal * speed / SEC_PER_GAMEMIN);
+    tick(dtReal * speed / spm);
   }
   // Repère de tutoriel : recalé chaque frame (même en pause) pour épouser sa cible.
   if (typeof positionCoach === "function") positionCoach();

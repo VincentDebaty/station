@@ -1,6 +1,11 @@
 # La difficulté et le mérite — pourquoi tout se gagne, et ce qu'on peut y faire
 
-Écrit le 10 septembre 2026, sur un constat de Vincent : « je réussis
+Écrit le 10 septembre 2026. **Le lot 1 est livré le même jour** — les
+dixièmes comptent, le barème absolu (8 → 4, 15, 30), le temps qui presse
+(4 → 2,5 s la minute) — dans les deux implémentations, sous
+`oracle-enclenchement` et `oracle-ruban`. Les étoiles déjà acquises sont
+**gardées** (pas de migration) ; le joueur paresseux (3.4) n'est pas écrit.
+Sur un constat de Vincent : « je réussis
 pratiquement toutes les gares plutôt facilement ; je remets en cause le niveau
 de difficulté pour avoir des étoiles ; le mérite doit être plus prononcé, quitte
 à payer des pièces pour passer au suivant ». Il ajoute une piste : des vies

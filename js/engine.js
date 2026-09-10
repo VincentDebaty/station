@@ -23,7 +23,7 @@ let PLATFORMS, PORTALS, DEST_COLOR, DEST_ABBR, LINKS, GEN;
 
 const TRAVEL = 1.6;             // minutes de jeu pour traverser un gril
 const MIN_DWELL = 2;            // arrêt minimum en minutes de jeu (8 s réelles à x1)
-const SEC_PER_GAMEMIN = 4.0;    // 1 min de jeu = 4 s réelles à x1
+const SEC_PER_GAMEMIN = 4.0;    // 1 min de jeu = 4 s réelles à x1, aux niveaux 1-2 (js/ruban.js, TEMPS)
 // Tolérance de départ : un convoi qui part « à l'heure » traîne toujours un
 // dépassement d'une fraction de minute (la frame où gameMin franchit t.dep).
 // Isolé c'est invisible, mais ces miettes s'accumulent sur tout le service et

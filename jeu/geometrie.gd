@@ -44,7 +44,7 @@ const PORTAL_CLEAR := 130
 # --- Temps (PORTAGE-GODOT.md §4) ----------------------------------------------
 const TRAVEL := 1.6
 const MIN_DWELL := 2
-const SEC_PER_GAMEMIN := 4.0
+const SEC_PER_GAMEMIN := 4.0   # aux niveaux 1-2 ; le temps presse ensuite (ruban.gd, TEMPS)
 const DEPART_GRACE := 0.15
 const APPROACH_LEAD := 1.3
 const FREIGHT_COLOR := "#8f98a8"

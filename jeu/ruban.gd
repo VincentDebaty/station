@@ -39,14 +39,21 @@ const PROFILS := [
 	{"nom": "nocturne",       "rush": "plat",   "densite": 0.95, "fret": 3},
 ]
 # --- Le barème d'étoiles suit la difficulté : une étoile reste à 30 minutes,
-# partout et pour toujours ; le diamant reste absolu.
+# partout et pour toujours ; le diamant reste absolu. Serré le 10 septembre
+# 2026 (difficulte-et-merite.md, lot 1) : 8 → 4 pour trois étoiles, 15 pour
+# deux — le retard se compte au dixième depuis le même jour (enclenchement.gd).
 const SEUILS := {
-	1: {"trois": 12, "deux": 20, "une": 30},
-	2: {"trois": 11, "deux": 20, "une": 30},
-	3: {"trois": 10, "deux": 20, "une": 30},
-	4: {"trois":  9, "deux": 20, "une": 30},
-	5: {"trois":  8, "deux": 20, "une": 30},
+	1: {"trois": 8, "deux": 15, "une": 30},
+	2: {"trois": 7, "deux": 15, "une": 30},
+	3: {"trois": 6, "deux": 15, "une": 30},
+	4: {"trois": 5, "deux": 15, "une": 30},
+	5: {"trois": 4, "deux": 15, "une": 30},
 }
+# --- Le temps qui presse : les secondes réelles d'une minute de jeu, par
+# niveau (js/ruban.js, TEMPS). Les niveaux 1 et 2 gardent la constante du
+# moteur ; le niveau 5 tourne presque deux fois plus vite. Le seul cadran qui
+# ne touche ni la génération ni les brevets.
+const TEMPS := {1: 4.0, 2: 4.0, 3: 3.5, 4: 3.0, 5: 2.5}
 # --- L'enveloppe de boss : deux convois de plus que le niveau 5, une rafale et
 # du fret. Mesurée, pas posée (js/ruban.js).
 const ENVELOPPE_BOSS := {"nMin": 20, "nMax": 24, "gapMin": 1.50, "gapMax": 2.50, "freightCount": 6, "rush": "rafale"}
@@ -353,12 +360,29 @@ static func seuils_de_fiche(cfg: Dictionary) -> Dictionary:
 func seuils_de_service(cfg: Dictionary) -> Dictionary:
 	if cfg.get("seuils") is Dictionary:
 		return seuils_de_fiche(cfg)
+	return seuils_de_niveau(_niveau_de_service(cfg))
+
+
+## Le niveau auquel une gare se JOUE : celui du ruban, sinon celui de sa fiche.
+func _niveau_de_service(cfg: Dictionary) -> int:
 	var d := 0
 	if not cfg.is_empty():
 		d = difficulte_de_gare(String(cfg.get("id", "")), cfg)
 		if d == 0 and cfg.get("difficulty") != null:
 			d = int(cfg["difficulty"])
-	return seuils_de_niveau(d)
+	return d
+
+
+## Les secondes réelles d'une minute de jeu, par niveau (secondesParMinute).
+static func secondes_par_minute(niveau: int) -> float:
+	var n := niveau if niveau != 0 else 3
+	return float(TEMPS[max(1, min(5, n))])
+
+
+## ... pour une gare telle qu'on la joue (secondesDeService) — même résolution
+## du niveau que seuils_de_service.
+func secondes_de_service(cfg: Dictionary) -> float:
+	return secondes_par_minute(_niveau_de_service(cfg))
 
 
 ## Les étoiles d'un service : le retard face au barème.

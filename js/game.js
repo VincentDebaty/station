@@ -764,23 +764,31 @@ board.addEventListener("click", e => {
 // ------------------------------------------------------------------
 // Retard vivant : le retard déjà encaissé + celui qui se creuse pour les
 // trains pas encore partis — le compteur bouge PENDANT que le joueur hésite.
-// On ne compte que les MINUTES ENTIÈRES de retard, par convoi : un train sous
-// la minute est « à l'heure » (même règle que la pastille) et pèse 0. Ainsi le
-// compteur et la mention « à l'heure » ne peuvent plus se contredire.
+//
+// LES DIXIÈMES COMPTENT (10 septembre 2026, difficulte-et-merite.md, lot 1).
+// On n'encaissait que les minutes ENTIÈRES, par convoi : un train parti 1,14
+// min après son heure pesait zéro, et un service où chaque convoi partait une
+// minute en retard valait un diamant. Le retard brut (tolérance de départ
+// déduite, js/engine.js) s'additionne maintenant tel quel ; c'est le TOTAL qui
+// s'arrondit, une fois, au relevé — et « à l'heure » veut dire sous la
+// tolérance, comme la pastille le dit.
 function liveDelay() {
   let d = totalDelay;
   for (const t of trains)
     if (!t.freight && (t.state !== "movingOut" || t.refoul) && t.state !== "done")
-      d += Math.floor(Math.max(0, lateness(t, gameMin)));
+      d += Math.max(0, lateness(t, gameMin));
   return d;
 }
 function updateDelay() {
   const d = document.getElementById("delay");
   const v = liveDelay();
   d.textContent = "+" + Math.round(v);
-  // Couleur alignée sur le barème d'étoiles : vert tant qu'on vise 3★ (< 10),
-  // ambre tant qu'une étoile reste jouable (< 30), rouge dès que 0★ (≥ 30).
-  d.className = v < 10 ? "" : v < 30 ? "warn" : "bad";
+  // Couleur alignée sur le barème de LA gare : vert tant qu'on vise 3★, ambre
+  // tant qu'une étoile reste jouable, rouge dès que 0★. Le seuil des trois
+  // étoiles suit le niveau (js/ruban.js, SEUILS) — un « 10 » écrit ici
+  // mentirait sur quatre niveaux sur cinq.
+  const s = typeof seuilsDeService === "function" ? seuilsDeService(STATION) : { trois: 6, une: 30 };
+  d.className = Math.round(v) < s.trois ? "" : Math.round(v) < s.une ? "warn" : "bad";
   updateGoal(v);
 }
 
@@ -1030,14 +1038,15 @@ function tick(dtMin) {
               SND.depart();
             } else {
               t.depDelay = Math.max(0, lateness(t, gameMin));
-              // On n'encaisse que les minutes entières (même règle que liveDelay
-              // et que la mention « à l'heure »). depDelay garde la valeur brute
-              // pour la pastille et le pire retardataire du bilan.
-              totalDelay += Math.floor(t.depDelay);
-              // Juice : un départ À L'HEURE (< 1 min) allonge la série et
-              // déclenche un éclat vert + un carillon qui monte avec le combo ;
-              // un départ en retard casse la série (le badge rouge suffit à le dire).
-              if (t.depDelay < 1) {
+              // Le retard brut s'encaisse au dixième (voir liveDelay) : la
+              // tolérance de départ est déjà déduite par lateness, et c'est le
+              // total du service qui s'arrondit, au relevé.
+              totalDelay += t.depDelay;
+              // Juice : un départ À L'HEURE (sous la tolérance de départ, donc
+              // à zéro) allonge la série et déclenche un éclat vert + un
+              // carillon qui monte avec le combo ; un départ en retard casse la
+              // série (le badge rouge suffit à le dire).
+              if (t.depDelay === 0) {
                 onTimeStreak++;
                 flashOnTime(t.headPos, onTimeStreak);
                 SND.onTime(onTimeStreak);
@@ -1330,11 +1339,11 @@ function endGame(failed) {
   // sinon le retard cumulé réellement encaissé
   const d = Math.round(failed ? liveDelay() : totalDelay);
   // Tolérance de retard (minutes). Elle SUIT LA DIFFICULTÉ de la gare pour les
-  // trois étoiles (12 min au niveau 1, 8 au niveau 5 — js/ruban.js, SEUILS) ;
+  // trois étoiles (8 min au niveau 1, 4 au niveau 5 — js/ruban.js, SEUILS) ;
   // une étoile reste à 30 partout, parce que c'est le plancher qui rend le
   // ruban praticable. Le repli sert à la démo « limites », hors ruban.
   const seuils = typeof seuilsDeService === "function"
-    ? seuilsDeService(STATION) : { trois: 10, deux: 20, une: 30 };
+    ? seuilsDeService(STATION) : { trois: 6, deux: 15, une: 30 };
   const stars = failed ? 0 : (typeof etoilesPour === "function"
     ? etoilesPour(d, seuils)
     : (d < seuils.trois ? 3 : d < seuils.deux ? 2 : d < seuils.une ? 1 : 0));
