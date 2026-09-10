@@ -51,14 +51,14 @@ mieux ; la colonne « quand » dit ce que l'animation montre à cet instant.
 | `arrivee` | la puce arrive à la gare suivante | 0,4 s | *Small brass desk bell, one ding, arrival, short* |
 | `annonce` | en réserve (une annonce en gare) | 0,5 s | *Old railway station announcement chime, two mellow notes, slightly distant hall* |
 
-## Les animations sans son (à brancher si un fichier arrive)
+## Les quatre autres, branchés le 10 septembre 2026 quand les fichiers sont arrivés
 
 | fichier | quand | durée | description à coller |
 |---|---|---|---|
 | `glissement` | l'écran des cartes glisse devant le ruban, et revient | 0,4 s | *Heavy sheet of paper slid across a wooden desk, soft, one movement* |
 | `saut` | le voyage de nuit : la caméra franchit un saut du ruban | 1,2 s | *Distant steam train passing at night, brief, receding, outdoors* |
 | `vitesse` | le joueur passe en ×2 ou ×4 | 0,2 s | *Small brass lever clicked one notch, mechanical, dry* |
-| `fermeture` | un quai ferme (aujourd'hui : `incident`) | 0,6 s | *Iron gate latch closed on a platform, metallic, echo of a station hall* |
+| `fermeture` | un quai ferme (`incident` à défaut de fichier) | 0,6 s | *Iron gate latch closed on a platform, metallic, echo of a station hall* |
 
-Ces quatre-là ne jouent pas encore : un nom réservé, pour que le fichier
-puisse être généré maintenant et branché après.
+Sans fichier déposé, `glissement`, `saut` et `vitesse` se taisent — ils n'ont
+pas de signature synthétisée.

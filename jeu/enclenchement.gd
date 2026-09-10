@@ -356,7 +356,7 @@ func process_events() -> void:
 						ev["cleared"] = true
 				else:
 					ev["revealed"] = true
-					sons.append("incident")
+					sons.append("fermeture")   # la grille qui se ferme ; « incident » à défaut de fichier
 		if ev.get("type") == "closure" and ev["revealed"] and not ev["cleared"] \
 				and game_min >= float(ev["end"]):
 			ev["cleared"] = true

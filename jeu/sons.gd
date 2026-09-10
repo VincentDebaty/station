@@ -46,6 +46,10 @@ var duree_synthese_ms := 0            # cité dans STATION_MESURE
 ## jeu/sons/BRUITAGES.md. Les familles à variantes (etoile0..2, piece0..5,
 ## heure0..7) se contentent d'UN fichier : la hauteur suit la variante.
 const DOSSIER := "res://jeu/sons/"
+## Les noms qui n'ont pas de signature synthétisée, et ce qu'ils jouent à
+## défaut de fichier : la fermeture d'un quai retombe sur l'incident, les
+## trois autres se taisent.
+const REPLI := {"fermeture": "incident"}
 var _fichiers: Dictionary = {}        # nom → AudioStream, ce qui a été déposé
 
 
@@ -159,6 +163,8 @@ func _source(nom: String) -> Dictionary:
 		return {"flux": _fichiers[famille], "hauteur": _hauteur(famille, int(nom.substr(famille.length())))}
 	if _pistes.has(nom):
 		return {"flux": _pistes[nom], "hauteur": 1.0}
+	if REPLI.has(nom):
+		return _source(String(REPLI[nom]))
 	return {}
 
 

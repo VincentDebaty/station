@@ -196,6 +196,7 @@ func _glisser(de: CanvasItem, vers: CanvasItem, nom: String, sens: float) -> voi
 	glisse_nom = nom
 	glisse_sens = sens
 	glisse_t = 0.0
+	Sons.jouer("glissement")   # une feuille qu'on fait glisser — muet sans fichier déposé
 	var large := get_viewport().get_visible_rect().size.x
 	for n in [de, vers]:
 		n.visible = true

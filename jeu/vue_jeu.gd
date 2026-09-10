@@ -1507,10 +1507,13 @@ func _unhandled_input(event: InputEvent) -> void:
 				pause = not pause
 			KEY_1:
 				vitesse = 1.0
+				Sons.jouer("vitesse")
 			KEY_2:
 				vitesse = 2.0
+				Sons.jouer("vitesse")
 			KEY_4:
 				vitesse = 4.0
+				Sons.jouer("vitesse")
 			KEY_R:
 				graine = (graine * 7 + 13) % 100000
 				pause = false
@@ -2052,6 +2055,7 @@ func _clic_bandeau(m: Vector2) -> bool:
 	if zones_hud.get("speed", Rect2()).has_point(m):
 		# 1 → 2 → 4 → 1, comme le bouton du prototype
 		vitesse = 1.0 if vitesse >= 4.0 else vitesse * 2.0
+		Sons.jouer("vitesse")   # le levier qui passe un cran — muet sans fichier déposé
 		return true
 	if zones_hud.get("gear", Rect2()).has_point(m):
 		reglages_ouverts = not reglages_ouverts

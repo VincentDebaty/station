@@ -877,6 +877,8 @@ func aller_camera(saut: bool = false) -> void:
 	cam_vers = v
 	cam_t = 0.0
 	cam_duree = DUREE_CAMERA_SAUT if saut else DUREE_CAMERA
+	if saut:
+		Sons.jouer("saut")   # le train de nuit qui passe — muet sans fichier déposé
 
 
 func _process(delta: float) -> void:
