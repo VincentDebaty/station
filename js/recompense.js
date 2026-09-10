@@ -192,37 +192,43 @@ function etatRecompenses() {
 // sauts sont au tracé (`ruban-europe.md`) et arriveront avec le lot F. Une
 // médaille déduite qui attend son contenu ne coûte rien ; la retirer puis la
 // réécrire coûterait deux fois.
+//
+// CHAQUE MÉDAILLE PORTE SA BOURSE (10 septembre 2026, economie-du-jeu.md §3) :
+// 50 pièces pour une médaille commune, 150 pour une rare, 500 pour une
+// « toutes / ultime ». Les vingt-six valent ≈ 5 000 pièces, un cinquième du
+// revenu de la carte, réparti sur des moments qui étaient DÉJÀ fêtés — et
+// comme la médaille se déduit, sa bourse se déduit avec elle.
 const MEDAILLES = [
   // --- Accumulation : la trace du temps passé. --------------------
-  { id: "et25",   fam: "Accumulation", nom: "Premières étoiles",   dit: "25 étoiles",            si: e => e.etoiles >= 25 },
-  { id: "et50",   fam: "Accumulation", nom: "Bon élève",           dit: "50 étoiles",            si: e => e.etoiles >= 50 },
-  { id: "et100",  fam: "Accumulation", nom: "Cent étoiles",        dit: "100 étoiles",           si: e => e.etoiles >= 100 },
-  { id: "etmoit", fam: "Accumulation", nom: "Ciel chargé",         dit: "la moitié du ruban",    si: e => e.max && e.max.etoiles > 0 && e.etoiles >= e.max.etoiles / 2 },
-  { id: "ettout", fam: "Accumulation", nom: "Tout le ruban",       dit: "toutes les étoiles",    si: e => e.max && e.max.etoiles > 0 && e.etoiles >= e.max.etoiles },
-  { id: "di5",    fam: "Accumulation", nom: "Cinq diamants",       dit: "5 sans-fautes",         si: e => e.diamants >= 5 },
-  { id: "di15",   fam: "Accumulation", nom: "Écrin",               dit: "15 sans-fautes",        si: e => e.diamants >= 15 },
-  { id: "di40",   fam: "Accumulation", nom: "Coffre-fort",         dit: "40 sans-fautes",        si: e => e.diamants >= 40 },
-  { id: "ga10",   fam: "Accumulation", nom: "Petit réseau",        dit: "10 gares",              si: e => e.gares >= 10 },
-  { id: "ga30",   fam: "Accumulation", nom: "Réseau régional",     dit: "30 gares",              si: e => e.gares >= 30 },
-  { id: "gatout", fam: "Accumulation", nom: "Réseau national",     dit: "toutes les gares",      si: e => e.max && e.max.gares > 0 && e.gares >= e.max.gares },
+  { id: "et25",   fam: "Accumulation", nom: "Premières étoiles",   dit: "25 étoiles",            bourse: 50, si: e => e.etoiles >= 25 },
+  { id: "et50",   fam: "Accumulation", nom: "Bon élève",           dit: "50 étoiles",            bourse: 50, si: e => e.etoiles >= 50 },
+  { id: "et100",  fam: "Accumulation", nom: "Cent étoiles",        dit: "100 étoiles",           bourse: 150, si: e => e.etoiles >= 100 },
+  { id: "etmoit", fam: "Accumulation", nom: "Ciel chargé",         dit: "la moitié du ruban",    bourse: 150, si: e => e.max && e.max.etoiles > 0 && e.etoiles >= e.max.etoiles / 2 },
+  { id: "ettout", fam: "Accumulation", nom: "Tout le ruban",       dit: "toutes les étoiles",    bourse: 500, si: e => e.max && e.max.etoiles > 0 && e.etoiles >= e.max.etoiles },
+  { id: "di5",    fam: "Accumulation", nom: "Cinq diamants",       dit: "5 sans-fautes",         bourse: 50, si: e => e.diamants >= 5 },
+  { id: "di15",   fam: "Accumulation", nom: "Écrin",               dit: "15 sans-fautes",        bourse: 150, si: e => e.diamants >= 15 },
+  { id: "di40",   fam: "Accumulation", nom: "Coffre-fort",         dit: "40 sans-fautes",        bourse: 500, si: e => e.diamants >= 40 },
+  { id: "ga10",   fam: "Accumulation", nom: "Petit réseau",        dit: "10 gares",              bourse: 50, si: e => e.gares >= 10 },
+  { id: "ga30",   fam: "Accumulation", nom: "Réseau régional",     dit: "30 gares",              bourse: 150, si: e => e.gares >= 30 },
+  { id: "gatout", fam: "Accumulation", nom: "Réseau national",     dit: "toutes les gares",      bourse: 500, si: e => e.max && e.max.gares > 0 && e.gares >= e.max.gares },
   // --- Maîtrise : ce qu'on a fini, et bien fini. ------------------
-  { id: "ch1",    fam: "Maîtrise",     nom: "Bout en bout",        dit: "un chapitre fini",      si: e => e.chapitres.ouverte >= 1 },
-  { id: "ch5",    fam: "Maîtrise",     nom: "Cinq chapitres",      dit: "5 chapitres finis",     si: e => e.chapitres.ouverte >= 5 },
-  { id: "chtout", fam: "Maîtrise",     nom: "Toile ferrée",        dit: "tous les chapitres",    si: e => e.max && e.max.chapitres > 0 && e.chapitres.ouverte >= e.max.chapitres },
-  { id: "or1",    fam: "Maîtrise",     nom: "Voie royale",         dit: "un chapitre d'or",      si: e => e.chapitres.or >= 1 },
-  { id: "or3",    fam: "Maîtrise",     nom: "Trois fois l'or",     dit: "3 chapitres d'or",      si: e => e.chapitres.or >= 3 },
-  { id: "diam1",  fam: "Maîtrise",     nom: "Pas une minute",      dit: "un chapitre de diamant", si: e => e.chapitres.diamant >= 1 },
-  { id: "zo1",    fam: "Maîtrise",     nom: "Région traversée",    dit: "une zone entière",      si: e => e.zonesFinies >= 1 },
+  { id: "ch1",    fam: "Maîtrise",     nom: "Bout en bout",        dit: "un chapitre fini",      bourse: 50, si: e => e.chapitres.ouverte >= 1 },
+  { id: "ch5",    fam: "Maîtrise",     nom: "Cinq chapitres",      dit: "5 chapitres finis",     bourse: 150, si: e => e.chapitres.ouverte >= 5 },
+  { id: "chtout", fam: "Maîtrise",     nom: "Toile ferrée",        dit: "tous les chapitres",    bourse: 500, si: e => e.max && e.max.chapitres > 0 && e.chapitres.ouverte >= e.max.chapitres },
+  { id: "or1",    fam: "Maîtrise",     nom: "Voie royale",         dit: "un chapitre d'or",      bourse: 150, si: e => e.chapitres.or >= 1 },
+  { id: "or3",    fam: "Maîtrise",     nom: "Trois fois l'or",     dit: "3 chapitres d'or",      bourse: 150, si: e => e.chapitres.or >= 3 },
+  { id: "diam1",  fam: "Maîtrise",     nom: "Pas une minute",      dit: "un chapitre de diamant", bourse: 500, si: e => e.chapitres.diamant >= 1 },
+  { id: "zo1",    fam: "Maîtrise",     nom: "Région traversée",    dit: "une zone entière",      bourse: 150, si: e => e.zonesFinies >= 1 },
   // --- Exploration : jusqu'où l'on est allé. ----------------------
-  { id: "av1",    fam: "Exploration",  nom: "En route",            dit: "un chapitre entamé",    si: e => e.chapitresFinis >= 1 },
-  { id: "av5",    fam: "Exploration",  nom: "Cinq étapes",         dit: "5 chapitres franchis",  si: e => e.chapitresFinis >= 5 },
-  { id: "zo2",    fam: "Exploration",  nom: "Passeport",           dit: "2 zones touchées",      si: e => e.zones >= 2 },
-  { id: "sa1",    fam: "Exploration",  nom: "Par-delà la mer",     dit: "un saut franchi",       si: e => e.sauts >= 1 },
+  { id: "av1",    fam: "Exploration",  nom: "En route",            dit: "un chapitre entamé",    bourse: 50, si: e => e.chapitresFinis >= 1 },
+  { id: "av5",    fam: "Exploration",  nom: "Cinq étapes",         dit: "5 chapitres franchis",  bourse: 150, si: e => e.chapitresFinis >= 5 },
+  { id: "zo2",    fam: "Exploration",  nom: "Passeport",           dit: "2 zones touchées",      bourse: 50, si: e => e.zones >= 2 },
+  { id: "sa1",    fam: "Exploration",  nom: "Par-delà la mer",     dit: "un saut franchi",       bourse: 150, si: e => e.sauts >= 1 },
   // --- Style : la manière. ----------------------------------------
-  { id: "sf1",    fam: "Style",        nom: "Sans faute",          dit: "un service parfait",    si: e => e.diamants >= 1 },
-  { id: "se3",    fam: "Style",        nom: "Trois d'affilée",     dit: "série de 3",            si: e => e.serieRecord >= 3 },
-  { id: "se6",    fam: "Style",        nom: "Ponctualité suisse",  dit: "série de 6",            si: e => e.serieRecord >= 6 },
-  { id: "se12",   fam: "Style",        nom: "Horloge de gare",     dit: "série de 12",           si: e => e.serieRecord >= 12 }
+  { id: "sf1",    fam: "Style",        nom: "Sans faute",          dit: "un service parfait",    bourse: 50, si: e => e.diamants >= 1 },
+  { id: "se3",    fam: "Style",        nom: "Trois d'affilée",     dit: "série de 3",            bourse: 50, si: e => e.serieRecord >= 3 },
+  { id: "se6",    fam: "Style",        nom: "Ponctualité suisse",  dit: "série de 6",            bourse: 150, si: e => e.serieRecord >= 6 },
+  { id: "se12",   fam: "Style",        nom: "Horloge de gare",     dit: "série de 12",           bourse: 500, si: e => e.serieRecord >= 12 }
 ];
 // Les médailles décrochées dans un état donné. Un Set : on ne s'en sert que
 // pour comparer deux instants.
@@ -239,18 +245,145 @@ function medaillesNouvelles(avant, apres) {
 }
 
 // ------------------------------------------------------------------
-// LES CRÉDITS — gagnés en jouant, dépensés pour passer (§7 du document).
+// LES PIÈCES — gagnées en jouant, dépensées pour passer (§7 du document).
 // ------------------------------------------------------------------
 // Deux usages, et deux seulement : acheter une carte, et PAYER LE PASSAGE
 // d'une gare sur laquelle on bloque (§4 ter). Rien n'est stocké : le solde se
 // déduit comme tout le reste.
 //
+// LE CRÉDIT EST DEVENU UNE PIÈCE (10 septembre 2026, economie-du-jeu.md).
+// « On ne se rend pas compte qu'on en gagne » (Vincent) : un service rendait
+// 1, 2 ou 3 crédits, un chiffre qui ne se lit pas comme un revenu, et 69 % de
+// l'argent tombait en trois sommes silencieuses. L'unité est multipliée par
+// DIX — tous les rapports mesurés sont gardés (un passage ≈ trois à cinq gares
+// bien jouées, finir l'Europe paie la deuxième carte) — et deux revenus qui
+// manquaient s'ajoutent, déduits comme le reste :
+//
+//   LA PRÉCISION : une pièce par minute sous le seuil des trois étoiles, lue
+//   dans `bestDelay`. C'est ce qui donne un prix au « record battu · −3 min »,
+//   c'est-à-dire au REJEU, la boucle que la soupape suppose et que rien ne
+//   payait. Plafond 12 par gare.
+//
+//   LES MÉDAILLES : chacune porte sa bourse (MEDAILLES[].bourse).
+//
 // La dépense en passages ne compte que les gares payées ENCORE à zéro étoile.
 // C'est ce qui REND LA MISE au joueur qui revient gagner la gare plus tard —
 // sans qu'une ligne de sauvegarde ait bougé.
-const CREDIT_PAR_ETOILE = 1, CREDIT_PAR_DIAMANT = 5, CREDIT_PAR_CHAPITRE_DOR = 20,
-      CREDIT_PAR_ZONE = 100, CREDIT_PAR_CARTE = 500;
+const PIECES_PAR_ETOILE = 10, PIECES_PAR_MINUTE = 1, PIECES_PAR_DIAMANT = 50,
+      PIECES_PAR_CHAPITRE_DOR = 200, PIECES_PAR_CHAPITRE_DIAMANT = 500,
+      PIECES_PAR_ZONE = 1000, PIECES_PAR_CARTE = 5000;
+const PASSAGE_BASE = 50, PASSAGE_PAR_CHAPITRE = 30;
 const SEUIL_OR = (RANGS.find(r => r.id === "or") || { seuil: 3 }).seuil;
+const SEUIL_DIAMANT = (RANGS.find(r => r.id === "diamant") || { seuil: 4 }).seuil;
+
+// UN RUBAN ÉPHÉMÈRE POUR UNE CARTE QUI N'EST PAS LA COURANTE. js/ruban.js ne
+// connaît que CARTE_COURANTE ; le solde, lui, est un fait de compte et somme
+// toutes les cartes. On rebâtit donc la forme du ruban — l'ordre, l'index,
+// les chapitres avec leur rang — exactement comme `buildRuban`, sur la
+// définition qu'on nous donne. Rien d'autre n'est réimplémenté : la rampe, le
+// plafond et le barème sont les fonctions PURES de ruban.js.
+function rubanDe(def) {
+  const rb = { chapitres: [], ordre: [], index: {}, chapitreDe: {} };
+  ((def && def.chapitres) || []).forEach((ch, k) => {
+    const c = { id: ch.id, zone: ch.zone, rang: k, gares: (ch.gares || []).slice(),
+      plancher: ch.plancher, arrivee: ch.arrivee, saut: ch.saut || null };
+    rb.chapitres.push(c);
+    for (const g of c.gares) {
+      if (rb.index[g] !== undefined) continue;
+      rb.index[g] = rb.ordre.length;
+      rb.chapitreDe[g] = c;
+      rb.ordre.push(g);
+    }
+  });
+  return rb;
+}
+// Le barème d'une gare telle qu'on la JOUE sur ce ruban-là — la même règle
+// que `seuilsDeService`, sans passer par la carte courante.
+function seuilsDansRuban(rb, gareId, cfg) {
+  if (cfg && cfg.seuils) return { ...seuilsDeNiveau(cfg.difficulty), ...cfg.seuils };
+  const ch = rb.chapitreDe[gareId];
+  let d = null;
+  if (ch) {
+    const i = ch.gares.indexOf(gareId);
+    const voulue = difficulteVoulue(i, ch.gares.length, plancherDeChapitre(ch), arriveeDeChapitre(ch));
+    d = Math.max(1, Math.min(voulue, plafondDeFlux(cfg)));
+  }
+  return seuilsDeNiveau(d ?? (cfg ? cfg.difficulty : null));
+}
+// CE QU'UNE GARE RAPPORTE, et ce qu'elle peut rapporter au plus. Les deux se
+// lisent ensemble : la différence est le manque à gagner, ce que « rejouer
+// Doncaster » peut encore rendre.
+function avanceDe(r, seuils) {
+  const bd = r ? r.bestDelay : null;
+  if (typeof bd !== "number" || !(r.stars >= 1)) return 0;
+  return Math.max(0, Math.floor(seuils.trois - bd));
+}
+function piecesDeGare(r, seuils) {
+  if (!r) return 0;
+  return (r.stars || 0) * PIECES_PAR_ETOILE + avanceDe(r, seuils) * PIECES_PAR_MINUTE +
+    (r.bestDelay === 0 ? PIECES_PAR_DIAMANT : 0);
+}
+function plafondDeGare(seuils) {
+  return 3 * PIECES_PAR_ETOILE + seuils.trois * PIECES_PAR_MINUTE + PIECES_PAR_DIAMANT;
+}
+function manqueAGagner(r, seuils) { return plafondDeGare(seuils) - piecesDeGare(r, seuils); }
+
+// L'ÉTAT D'UNE CARTE QUI N'EST PAS LA COURANTE — le même instantané que
+// `etatRecompenses`, calculé sur un ruban éphémère. C'est ce qui permet de
+// déduire la bourse des médailles de CHAQUE carte, et donc un solde qui ne
+// change pas quand on change de monde.
+function etatDUneCarte(def, stations, passees, serie) {
+  const rb = rubanDe(def), st = stations || {}, paye = passees || [];
+  const faite = id => ((st[id] || {}).stars || 0) >= 1;
+  const franchie = id => faite(id) || paye.indexOf(id) >= 0;
+  let position = rb.ordre.length;
+  for (let i = 0; i < rb.ordre.length; i++) if (!franchie(rb.ordre[i])) { position = i; break; }
+  const ecrite = id => typeof cardOf === "function" && !!cardOf(id);
+  const tenue = id => { const i = rb.index[id]; return i !== undefined && i <= position && ecrite(id); };
+  const niv = id => { if (!tenue(id)) return 0; const r = st[id] || {}; return r.bestDelay === 0 ? 4 : (r.stars || 0); };
+  let etoiles = 0, diamants = 0, gares = 0;
+  for (const id of rb.ordre) if (tenue(id)) gares++;
+  for (const id in st) {
+    if (!ecrite(id)) continue;
+    const r = st[id] || {};
+    etoiles += r.stars || 0;
+    if (r.bestDelay === 0) diamants++;
+  }
+  const chapitres = { ouverte: 0, argent: 0, or: 0, diamant: 0 };
+  let chapitresFinis = 0, sauts = 0;
+  for (const ch of rb.chapitres) {
+    if (ch.gares.length && ch.gares.every(franchie)) chapitresFinis++;
+    if (ch.saut && ch.gares.some(g => niv(g) >= 1)) sauts++;
+    if (!ch.gares.length) continue;
+    let bas = 4;
+    for (const g of ch.gares) bas = Math.min(bas, niv(g));
+    if (bas < 1) continue;
+    for (let k = 0; k < bas; k++) chapitres[RANGS[k].id]++;
+  }
+  const touchees = new Set();
+  let zonesFinies = 0;
+  const zones = (def && def.zones) || [];
+  for (const z of zones) {
+    const dans = rb.chapitres.filter(c => c.zone === z.id);
+    if (!dans.length) continue;
+    if (dans.some(c => c.gares.some(g => niv(g) >= 1))) touchees.add(z.id);
+    if (dans.every(c => c.gares.every(franchie))) zonesFinies++;
+  }
+  const nGares = rb.chapitres.reduce((t, c) => t + c.gares.length, 0);
+  const s = serie || { n: 0, record: 0 };
+  return {
+    etoiles, diamants, gares, chapitres, chapitresFinis, sauts,
+    zones: touchees.size, zonesFinies,
+    max: { etoiles: nGares * 3, gares: nGares, chapitres: rb.chapitres.length, zones: zones.length },
+    serie: s.n || 0, serieRecord: s.record || 0
+  };
+}
+function bourseDesMedailles(etat) {
+  const tenues = medaillesDe(etat);
+  let b = 0;
+  for (const m of MEDAILLES) if (tenues.has(m.id)) b += m.bourse || 0;
+  return b;
+}
 
 // LE SOLDE EST UN FAIT DE COMPTE, PAS DE CARTE (lot G, point 4 — 1er septembre
 // 2026). `creditsGagnes` ne comptait que la carte COURANTE : invisible tant
@@ -259,16 +392,24 @@ const SEUIL_OR = (RANGS.find(r => r.id === "or") || { seuil: 3 }).seuil;
 // terminée » manquait par-dessus le marché.
 //
 // D'où cette fonction : ce qu'UNE carte rapporte, calculé sans qu'elle soit la
-// carte courante. On ne lui donne que sa définition (js/cartes.js la garde en
-// mémoire pour toutes les cartes) et la progression enregistrée pour elle. Rien
-// n'est stocké de plus — le solde reste entièrement déduit.
-function creditsDUneCarte(def, stations, passees) {
+// carte courante, POSTE PAR POSTE. On ne lui donne que sa définition
+// (js/cartes.js la garde en mémoire pour toutes les cartes), la progression
+// enregistrée pour elle, et sa série. Rien n'est stocké de plus — le solde
+// reste entièrement déduit. Le détail sert au relevé : c'est en recevant les
+// pièces poste par poste que le joueur apprend le barème.
+const POSTES = ["etoiles", "avance", "sansFaute", "or", "diamant", "zones", "carte", "medailles"];
+function detailPiecesDUneCarte(def, stations, passees, serie) {
   const st = stations || {}, paye = passees || [];
-  let etoiles = 0, diamants = 0;
+  const rb = rubanDe(def);
+  const d = { etoiles: 0, avance: 0, sansFaute: 0, or: 0, diamant: 0, zones: 0, carte: 0, medailles: 0, total: 0 };
   for (const id in st) {
     const r = st[id] || {};
-    etoiles += r.stars || 0;
-    if (r.bestDelay === 0) diamants++;
+    d.etoiles += (r.stars || 0) * PIECES_PAR_ETOILE;
+    if (r.bestDelay === 0) d.sansFaute += PIECES_PAR_DIAMANT;
+    // la précision ne se lit que sur une gare dont on connaît la fiche : le
+    // barème dépend de sa géométrie
+    const cfg = typeof cardOf === "function" ? cardOf(id) : null;
+    if (cfg) d.avance += avanceDe(r, seuilsDansRuban(rb, id, cfg)) * PIECES_PAR_MINUTE;
   }
   // Mêmes crans que niveauDeGare, mais lus dans la table qu'on nous donne.
   // Une gare PAYÉE reste à zéro : elle est franchie, pas tenue, et le rang de
@@ -277,69 +418,77 @@ function creditsDUneCarte(def, stations, passees) {
   const niv = id => { const r = st[id]; if (!r) return 0; return r.bestDelay === 0 ? 4 : (r.stars || 0); };
   const franchie = id => niv(id) >= 1 || paye.indexOf(id) >= 0;
   const chs = (def && def.chapitres) || [];
-  let or = 0, finis = 0;
+  let finis = 0;
   for (const ch of chs) {
     const g = ch.gares || [];
     if (!g.length) continue;
     let bas = 4;
     for (const x of g) bas = Math.min(bas, niv(x));
-    if (bas >= SEUIL_OR) or++;
+    if (bas >= SEUIL_OR) d.or += PIECES_PAR_CHAPITRE_DOR;
+    if (bas >= SEUIL_DIAMANT) d.diamant += PIECES_PAR_CHAPITRE_DIAMANT;
     if (g.every(franchie)) finis++;
   }
-  let zones = 0;
   for (const z of (def && def.zones) || []) {
     const dans = chs.filter(c => c.zone === z.id);
-    if (dans.length && dans.every(c => (c.gares || []).every(franchie))) zones++;
+    if (dans.length && dans.every(c => (c.gares || []).every(franchie))) d.zones += PIECES_PAR_ZONE;
   }
-  const carteFinie = chs.length && finis === chs.length ? 1 : 0;
-  return etoiles * CREDIT_PAR_ETOILE + diamants * CREDIT_PAR_DIAMANT +
-    or * CREDIT_PAR_CHAPITRE_DOR + zones * CREDIT_PAR_ZONE + carteFinie * CREDIT_PAR_CARTE;
+  if (chs.length && finis === chs.length) d.carte += PIECES_PAR_CARTE;
+  d.medailles = bourseDesMedailles(etatDUneCarte(def, st, paye, serie));
+  for (const k of POSTES) d.total += d[k];
+  return d;
 }
-// La somme sur TOUTES les cartes jouées. Une carte dont la définition n'a pas
-// pu être lue ne rapporte que ses étoiles et ses diamants : on préfère un solde
-// un peu bas à un plantage, et `precargerCartes` rend le cas improbable.
-function creditsGagnes() {
+function piecesDUneCarte(def, stations, passees, serie) {
+  return detailPiecesDUneCarte(def, stations, passees, serie).total;
+}
+// La liste des cartes du compte : celles qu'on a enregistrées, à défaut la
+// courante seule. Une carte dont la définition n'a pas pu être lue ne
+// rapporte que ses étoiles et ses diamants : on préfère un solde un peu bas à
+// un plantage, et `precargerCartes` rend le cas improbable.
+function cartesDuCompte() {
   const cartes = typeof getCartesEnregistrees === "function" ? getCartesEnregistrees() : [];
-  if (!cartes.length) {
-    const def = typeof carteCourante === "function" ? carteCourante() : null;
-    return creditsDUneCarte(def, typeof getProgress === "function" ? getProgress() : {},
-      typeof getPassees === "function" ? getPassees() : []);
-  }
-  let t = 0;
-  for (const c of cartes) {
+  if (cartes.length) return cartes;
+  return [{
+    id: typeof getCarteCourante === "function" ? getCarteCourante() : null,
+    stations: typeof getProgress === "function" ? getProgress() : {},
+    passees: typeof getPassees === "function" ? getPassees() : [],
+    serie: typeof getSerie === "function" ? getSerie() : { n: 0, record: 0 }
+  }];
+}
+// La somme sur TOUTES les cartes jouées, poste par poste.
+function detailPiecesGagnees() {
+  const t = { etoiles: 0, avance: 0, sansFaute: 0, or: 0, diamant: 0, zones: 0, carte: 0, medailles: 0, total: 0 };
+  for (const c of cartesDuCompte()) {
     const def = typeof defDeCarte === "function" ? defDeCarte(c.id) : null;
-    t += creditsDUneCarte(def, c.stations, c.passees);
+    const d = detailPiecesDUneCarte(def, c.stations, c.passees, c.serie);
+    for (const k in t) t[k] += d[k];
   }
   return t;
 }
+function piecesGagnees() { return detailPiecesGagnees().total; }
 // LE PRIX D'UN PASSAGE SUIT LA POSITION DANS LE RUBAN. Petit au début — pour
 // que le débutant bloqué puisse se le payer en rejouant deux ou trois gares —
 // et cher en fin de carte, pour qu'on n'achète pas la fin du voyage.
-// Ordre de grandeur voulu : trois à cinq gares bien jouées.
+// Ordre de grandeur voulu : trois à cinq gares bien jouées. Au chapitre 1,
+// cinq gares à une étoile font 50 pièces, le passage en coûte 50 : le même
+// rapport qu'avant le passage à la pièce (5 pour 5).
 function prixDePassageDans(def, gareId) {
   const chs = (def && def.chapitres) || [];
   for (let i = 0; i < chs.length; i++)
-    if ((chs[i].gares || []).indexOf(gareId) >= 0) return 5 + i * 3;
-  return 5;
+    if ((chs[i].gares || []).indexOf(gareId) >= 0) return PASSAGE_BASE + i * PASSAGE_PAR_CHAPITRE;
+  return PASSAGE_BASE;
 }
 function prixDePassage(gareId) {
   const ch = typeof chapitreDeGare === "function" ? chapitreDeGare(gareId) : null;
-  if (ch) return 5 + ch.rang * 3;
+  if (ch) return PASSAGE_BASE + ch.rang * PASSAGE_PAR_CHAPITRE;
   return prixDePassageDans(typeof carteCourante === "function" ? carteCourante() : null, gareId);
 }
 // La dépense, elle aussi sur toutes les cartes : les passages payés dont la
 // gare est ENCORE à zéro étoile (gagner la gare plus tard rend la mise), plus
-// le prix des cartes acquises EN CRÉDITS — une carte reçue gratuitement ou
+// le prix des cartes acquises EN PIÈCES — une carte reçue gratuitement ou
 // payée en argent réel ne coûte rien à la bourse.
-function creditsDepenses() {
+function piecesDepensees() {
   let d = 0;
-  const cartes = typeof getCartesEnregistrees === "function" ? getCartesEnregistrees() : [];
-  const liste = cartes.length ? cartes : [{
-    id: typeof getCarteCourante === "function" ? getCarteCourante() : null,
-    stations: typeof getProgress === "function" ? getProgress() : {},
-    passees: typeof getPassees === "function" ? getPassees() : []
-  }];
-  for (const c of liste) {
+  for (const c of cartesDuCompte()) {
     const def = typeof defDeCarte === "function" ? defDeCarte(c.id) : null;
     for (const g of c.passees || [])
       if (!((((c.stations || {})[g]) || {}).stars >= 1)) d += prixDePassageDans(def, g);
@@ -349,4 +498,4 @@ function creditsDepenses() {
     if (poss[id] === "credits" && typeof prixDeCarte === "function") d += prixDeCarte(id);
   return d;
 }
-function soldeCredits() { return Math.max(0, creditsGagnes() - creditsDepenses()); }
+function soldePieces() { return Math.max(0, piecesGagnees() - piecesDepensees()); }

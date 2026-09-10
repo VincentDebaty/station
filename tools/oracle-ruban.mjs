@@ -13,7 +13,7 @@
 // rang ; par gare la difficulté jouée, le plafond, le barème, la fiche de
 // service (difficulty + gen), le boss, les cinq états (écrite, faite, payée,
 // franchie, tenue), le niveau, le prix de passage et le verdict R10 ; puis
-// la position, les zones, l'état des récompenses, les médailles, les crédits,
+// la position, les zones, l'état des récompenses, les médailles, les pièces,
 // et une grille d'étoiles et d'enveloppes.
 //
 // LA PROGRESSION EST SYNTHÉTIQUE ET REPRODUCTIBLE : une carte vierge, un
@@ -91,9 +91,9 @@ function scenarios(carteId) {
     carte: carteId, ...s,
     // Le compte : la carte courante telle quelle, plus l'autre carte avec sa
     // propre progression — le solde est un fait de compte, pas de carte.
-    cartes: [{ id: carteId, stations: s.stations, passees: s.passees },
-      ...(autre ? [{ id: autre, ...(k % 2 ? mixte(DEFS[autre], 100 + k) : { stations: {}, passees: [] }) }] : [])]
-      .map(c => ({ id: c.id, stations: c.stations, passees: c.passees })),
+    cartes: [{ id: carteId, stations: s.stations, passees: s.passees, serie: s.serie },
+      ...(autre ? [{ id: autre, ...(k % 2 ? mixte(DEFS[autre], 100 + k) : { stations: {}, passees: [], serie: { n: 0, record: 0 } }) }] : [])]
+      .map(c => ({ id: c.id, stations: c.stations, passees: c.passees, serie: c.serie })),
     possedees: k % 2 ? { [carteId]: "offerte", ...(autre ? { [autre]: "credits" } : {}) } : { [carteId]: "gratuite" }
   }));
 }
@@ -114,9 +114,9 @@ sandbox.carteCourante = () => sandbox.CARTE_COURANTE;
 sandbox.zonesDeCarte = () => sandbox.CARTE_COURANTE ? sandbox.CARTE_COURANTE.zones || [] : [];
 sandbox.prixDeCarte = id => {
   const d = DEFS[id];
-  if (d && typeof d.prixCredits === "number") return d.prixCredits;
+  if (d && typeof d.prix === "number") return d.prix;
   const e = INDEX_CARTES.find(c => c.id === id);
-  return (e && typeof e.prixCredits === "number") ? e.prixCredits : 0;
+  return (e && typeof e.prix === "number") ? e.prix : 0;
 };
 sandbox.isBought = id => sandbox.estTenue(id);   // js/store.js : tenir, c'est avoir atteint
 createContext(sandbox);
@@ -152,7 +152,12 @@ function __exporter(brevets, viergeIds, retards) {
   out.etat = etatRecompenses();
   out.medailles = [...medaillesDe(out.etat)];
   out.nouvelles = medaillesNouvelles(new Set(viergeIds), medaillesDe(out.etat)).map(m => m.id);
-  out.credits = { gagnes: creditsGagnes(), depenses: creditsDepenses(), solde: soldeCredits() };
+  out.pieces = { detail: detailPiecesGagnees(), gagnes: piecesGagnees(), depenses: piecesDepensees(), solde: soldePieces() };
+  // le barème par gare, tel que les écrans le lisent : ce que la gare rend,
+  // et ce qu'elle peut rendre au plus
+  out.parGare = {};
+  for (const id in getProgress()) { const cfg = cardOf(id); if (!cfg) continue; const s = seuilsDeService(cfg);
+    out.parGare[id] = { pieces: piecesDeGare(getProgress()[id], s), manque: manqueAGagner(getProgress()[id], s) }; }
   out.etoilesPour = [];
   for (let n = 1; n <= 5; n++) for (const r of retards) out.etoilesPour.push([n, r, etoilesPour(r, seuilsDeNiveau(n))]);
   out.enveloppes = [];
@@ -221,7 +226,7 @@ for (const sc of SCENARIOS) {
   const gd = JSON.parse(readFileSync(f, "utf8"));
   const ecarts = [];
   comparer(js, gd, nom, ecarts);
-  const resume = `${js.gares.length} gares · position ${js.position} · ${js.etat.etoiles} étoiles · ${js.medailles.length} médailles · solde ${js.credits.solde}`;
+  const resume = `${js.gares.length} gares · position ${js.position} · ${js.etat.etoiles} étoiles · ${js.medailles.length} médailles · solde ${js.pieces.solde}`;
   if (ecarts.length) {
     ko++;
     const n = opt("detail") ? 60 : 6;

@@ -214,7 +214,7 @@ function getCartesEnregistrees() {
   const out = [];
   for (const id in _progress.cartes) {
     const c = _progress.cartes[id] || {};
-    out.push({ id, stations: c.stations || {}, passees: (c.passees || []).slice() });
+    out.push({ id, stations: c.stations || {}, passees: (c.passees || []).slice(), serie: lireSerie(c) });
   }
   return out;
 }

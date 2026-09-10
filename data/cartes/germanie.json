@@ -2,9 +2,9 @@
  "id": "germanie",
  "nom": "Le grand tour du Rhin",
  "gratuite": false,
- "prixCredits": 1500,
+ "prix": 15000,
  "enChantier": false,
- "note": "Deuxieme carte, lot I — la preuve que le modele est generique. 71 gares DEJA ECRITES et brevetees, prises hors du ruban d'Europe : 40 allemandes, 23 belges, 5 luxembourgeoises, 3 suisses. AUCUNE fiche ecrite, aucune gare rejouee d'Europe. Louvain est ecartee volontairement (gare de queue, 3 graines sur 10 en echec a K=30). Ruban et decoupage issus d'une optimisation conjointe chemin+coupures sous R3/R5/R7/R8/R10. C'est une BOUCLE : le bassin disponible est un long corridor allemand accroche a une grappe belge, et tout chemin ouvert propre y revient. D'ou l'aller/retour en deux zones. LIMITE CONNUE : les chapitres 10, 11 et 12 ont une rampe 1-2, donc la difficulte RETOMBE a la fin — les gares belges disponibles ont des brevets bas et la boucle les met aux deux bouts. Aucune regle ne l'interdit (R8 est par chapitre) mais c'est un defaut de rythme. prixCredits est PROVISOIRE : il se cale au lot G point 6.",
+ "note": "Deuxieme carte, lot I — la preuve que le modele est generique. 71 gares DEJA ECRITES et brevetees, prises hors du ruban d'Europe : 40 allemandes, 23 belges, 5 luxembourgeoises, 3 suisses. AUCUNE fiche ecrite, aucune gare rejouee d'Europe. Louvain est ecartee volontairement (gare de queue, 3 graines sur 10 en echec a K=30). Ruban et decoupage issus d'une optimisation conjointe chemin+coupures sous R3/R5/R7/R8/R10. C'est une BOUCLE : le bassin disponible est un long corridor allemand accroche a une grappe belge, et tout chemin ouvert propre y revient. D'ou l'aller/retour en deux zones. LIMITE CONNUE : les chapitres 10, 11 et 12 ont une rampe 1-2, donc la difficulte RETOMBE a la fin — les gares belges disponibles ont des brevets bas et la boucle les met aux deux bouts. Aucune regle ne l'interdit (R8 est par chapitre) mais c'est un defaut de rythme. prix (en pieces) est cale par economie-du-jeu.md : finir l'Europe en or en rapporte environ 32 000.",
  "echelle": {
   "kmMinEntreHubs": 110
  },

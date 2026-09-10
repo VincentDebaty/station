@@ -289,7 +289,8 @@ func progression_toutes_cartes() -> Array:
 	return out
 
 
-## Les cartes enregistrées, avec leur id et leurs gares payées (copiées).
+## Les cartes enregistrées, avec leur id, leurs gares payées (copiées) et leur
+## série — la bourse des médailles se déduit par carte, et la série en fait partie.
 func cartes_enregistrees() -> Array:
 	var out: Array = []
 	for id in sauve["cartes"]:
@@ -298,7 +299,8 @@ func cartes_enregistrees() -> Array:
 			c = {}
 		out.append({"id": id,
 			"stations": c["stations"] if c.get("stations") is Dictionary else {},
-			"passees": c["passees"].duplicate() if c.get("passees") is Array else []})
+			"passees": c["passees"].duplicate() if c.get("passees") is Array else [],
+			"serie": lire_serie(c)})
 	return out
 
 

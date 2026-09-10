@@ -456,6 +456,21 @@ Le grand tour du Rhin coûte 1500, donc la contrainte « finir l'Europe paie la
 deuxième carte, même après quelques passages achetés » est tenue avec de la
 marge. Reste à décider si cette marge est la bonne.
 
+*Point 6 — TRANCHÉ le 10 septembre 2026* (`economie-du-jeu.md`, lot 1). Le
+constat de Vincent : « on ne se rend pas compte qu'on en gagne, "cr" ne veut
+pas dire grand-chose ». Le crédit devient la **pièce** (dessinée, `jeu/piece.gd`),
+l'unité est multipliée par dix à rapports constants, et deux revenus qui
+manquaient sont déduits comme le reste : la **précision** (une pièce par
+minute sous le seuil des trois étoiles, ce qui paie enfin le rejeu) et la
+**bourse des médailles** (50 / 150 / 500). Le prix du Rhin passe à 15 000. Les
+écrans Godot montrent le gain : un quatrième temps de remise (les pièces
+volent vers la barre, le compteur roule, un tintement par pièce), le relevé
+itemisé, le butin de la fête, « jusqu'à N pièces à prendre ici », « Il te
+manque 50 pièces. Rejouer Darlington peut en rapporter 82 », la mise rendue
+annoncée, la gare payée qui porte sa pièce sur la carte. Aucune migration :
+`oracle-ruban` 12/12 (web ↔ Godot sur le nouveau barème), `oracle-sauvegarde`
+18/18, `carte-check` et `net-check` verts.
+
 <details><summary>Le plan d'origine du lot G</summary>
 
 **But** : le chapitre remplace la ligne, la zone devient un palier.

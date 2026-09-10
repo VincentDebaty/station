@@ -84,6 +84,20 @@ const TRAIT_FORT := 2.0  # une séparation de structure
 
 ## L'épaisseur d'un liseré, jamais moins d'un pixel — sous un pixel Godot
 ## n'arrondit pas, il efface.
+## Un nombre à la française : « 15 000 », avec une espace insécable pour
+## séparer les milliers — les pièces se comptent désormais par milliers.
+static func nombre(n: int) -> String:
+	var s := str(absi(n))
+	var out := ""
+	var k := 0
+	for i in range(s.length() - 1, -1, -1):
+		out = s[i] + out
+		k += 1
+		if k % 3 == 0 and i > 0:
+			out = "\u00a0" + out
+	return ("-" if n < 0 else "") + out
+
+
 static func epaisseur(k: float = 1.0, fort: bool = false) -> float:
 	return max(1.0, (TRAIT_FORT if fort else TRAIT) * k)
 

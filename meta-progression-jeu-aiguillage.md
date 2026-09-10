@@ -112,9 +112,11 @@ Les trois premiers niveaux décrivent *comment on avance* ; le quatrième décri
   compteur ◆ dans la barre du haut. Il était enregistré depuis toujours
   (`bestDelay = 0`) et ne s'affichait nulle part — on faisait un sans-faute et
   le jeu ne disait rien.
-- **Deux symboles, deux sens, et on ne les mélange pas** : **◆ est le diamant**,
-  jamais la monnaie. Les crédits s'écrivent **« 24 cr »**. Ils s'étaient
-  disputé le losange dans la barre du haut.
+- **Trois objets, trois formes, et on ne les mélange pas** (10 septembre
+  2026, `economie-du-jeu.md`) : **★ est l'étoile**, **◆ est le diamant**, la
+  **pièce** frappée en laiton est la monnaie. Elle a remplacé le « cr » — une
+  abréviation sans objet, qu'on ne pouvait ni dessiner ni faire tinter. La
+  barre écrit la pièce puis le nombre ; les boutons écrivent « 50 pièces ».
 - Une fiche peut imposer ses propres seuils (champ `seuils`), mais rien ne s'en
   sert : le barème se déduit, comme tout le reste.
 - Plancher de jouabilité : **au moins 3 directions et 3-4 quais**. Une gare de
@@ -557,15 +559,21 @@ se rééquilibre sans migration.
   le 25 août 2026) :
   1. **acheter une carte** ;
   2. **payer le passage d'une gare** sur laquelle on bloque (§4 ter).
-- **Gain** (à caler) : les crédits se **déduisent** de la progression comme
-  tout le reste — par exemple 1 crédit par étoile, 5 par diamant, 20 par
-  chapitre doré, 100 par zone maîtrisée, 500 par carte terminée.
-- **Prix d'un passage** (à caler, §9) : il suit la position dans le ruban, pour
-  que le débutant puisse se le payer et que la fin de carte ne s'achète pas —
-  par exemple 5 crédits dans la première zone, 15 au milieu, 40 sur une grande
-  gare de fin de ruban. Ordre de grandeur voulu : **le prix d'un passage ≈ ce
-  que rapportent trois à cinq gares bien jouées**. Assez cher pour qu'on
-  préfère réessayer, assez bon marché pour ne jamais enfermer personne.
+- **La monnaie est la pièce** (tranché le 10 septembre 2026, voir
+  `economie-du-jeu.md` pour la mesure et la justification). Le barème, en
+  pièces, se **déduit** de la progression comme tout le reste :
+  10 par étoile · **1 par minute sous le seuil des trois étoiles** (la
+  précision, lue dans le meilleur retard — c'est ce qui paie le rejeu) ·
+  50 par sans-faute · 200 par chapitre d'or · 500 par chapitre de diamant ·
+  1 000 par zone traversée · 5 000 par carte terminée · **et la bourse de
+  chaque médaille** (50 / 150 / 500 selon sa rareté). Mesuré : l'Europe entière
+  en or vaut ≈ 32 000 pièces, 41 333 avec un sans-faute sur deux.
+- **Prix d'un passage** : 50 + 30 par chapitre — 50 au premier, 350 au
+  dixième, 1 490 au dernier. Il suit la position dans le ruban, pour que le
+  débutant puisse se le payer et que la fin de carte ne s'achète pas. Ordre de
+  grandeur tenu : **le prix d'un passage ≈ ce que rapportent trois à cinq gares
+  bien jouées**. Assez cher pour qu'on préfère réessayer, assez bon marché pour
+  ne jamais enfermer personne. La deuxième carte coûte 15 000.
 - **Solde = gagnés − dépensés**, et **rien de plus n'est stocké** :
   - dépense en cartes = Σ prix des cartes acquises en crédits
     (`cartesPossedees`) ;
@@ -592,7 +600,7 @@ interface Carte {
   id: string;                 // "europe"
   nom: string;
   gratuite: boolean;
-  prixCredits?: number;       // absent si gratuite
+  prix?: number;              // en pièces ; absent si gratuite
   echelle: { kmMinEntreHubs: number };
   zones: Zone[];
   chapitres: Chapitre[];      // DANS L'ORDRE DU RUBAN — c'est la progression
@@ -660,10 +668,10 @@ au catalogue et comptent pour le grade.
    d'identifiants (`valence` française vs espagnole).
 3. **Le pas de la courbe** : tous les combien de chapitres le plancher de
    difficulté monte-t-il d'un cran ? À mesurer en headless sur le ruban réel.
-4. **Les trois barèmes de crédits** (§7), à caler **ensemble** parce qu'ils se
-   contraignent : ce qu'une gare rapporte, ce qu'un **passage** coûte, ce
-   qu'une carte vaut. Contrainte tenante : finir l'Europe doit payer la
-   deuxième carte, même après quelques passages achetés.
+4. ~~Les trois barèmes de crédits~~ **Tranché le 10 septembre 2026** : le
+   crédit devient la pièce, l'unité est multipliée par dix, la précision et
+   les médailles paient (§7, `economie-du-jeu.md` lots 1). Restent ouverts
+   là-bas : le rôle du diamant (proposition C) et le modèle commercial (E).
 5. **Les deuxièmes gares des grandes villes** : écrire Hanovre, Cologne,
    Zurich ou Bruxelles une seconde fois (autre gare réelle) rouvre plusieurs
    des dix chapitres mis en réserve par R6 (§5). Lesquelles, et dans quel

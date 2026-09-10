@@ -11,7 +11,7 @@ extends RefCounted
 ##   Recompense.rang_de_chapitre(r, ch)             # {} ou une entrée de RANGS
 ##   Recompense.etat_recompenses(r, serie)          # l'instantané
 ##   Recompense.medailles_de(etat)                  # les ids décrochés
-##   Recompense.credits_d_une_carte(def, stations, passees)
+##   Recompense.pieces_d_une_carte(def, fiches, stations, passees, serie)
 ##
 ## La série, les cartes enregistrées et les cartes possédées viennent de la
 ## sauvegarde (étape 6) : ils sont passés en argument, jamais lus ici.
@@ -29,43 +29,57 @@ const RANGS := [
 	{"id": "diamant", "nom": "Chapitre de diamant", "seuil": 4, "couleur": "#7fd4ff"},
 ]
 
-const CREDIT_PAR_ETOILE := 1
-const CREDIT_PAR_DIAMANT := 5
-const CREDIT_PAR_CHAPITRE_DOR := 20
-const CREDIT_PAR_ZONE := 100
-const CREDIT_PAR_CARTE := 500
-const SEUIL_OR := 3   # RANGS « or »
+## LE BARÈME DES PIÈCES (10 septembre 2026, economie-du-jeu.md §3). Le crédit
+## est devenu une pièce et l'unité a été multipliée par dix, tous les rapports
+## mesurés gardés ; deux revenus s'ajoutent, déduits comme le reste : la
+## PRÉCISION (une pièce par minute sous le seuil des trois étoiles, lue dans
+## `bestDelay`) et la BOURSE des médailles. Même chiffres que js/recompense.js,
+## et tools/oracle-ruban.mjs le vérifie.
+const PIECES_PAR_ETOILE := 10
+const PIECES_PAR_MINUTE := 1
+const PIECES_PAR_DIAMANT := 50
+const PIECES_PAR_CHAPITRE_DOR := 200
+const PIECES_PAR_CHAPITRE_DIAMANT := 500
+const PIECES_PAR_ZONE := 1000
+const PIECES_PAR_CARTE := 5000
+const PASSAGE_BASE := 50
+const PASSAGE_PAR_CHAPITRE := 30
+const SEUIL_OR := 3        # RANGS « or »
+const SEUIL_DIAMANT := 4   # RANGS « diamant »
+## Les postes du détail, dans l'ordre où le relevé les dit.
+const POSTES := ["etoiles", "avance", "sansFaute", "or", "diamant", "zones", "carte", "medailles"]
 
 ## Les vingt-six médailles, dans l'ordre de la plus commune à la plus rare.
 ## Le prédicat de chacune est dans medaille_tenue() : GDScript n'a pas de
-## lambda dans une constante.
+## lambda dans une constante. Chacune porte sa BOURSE en pièces (50 / 150 /
+## 500 selon la rareté — economie-du-jeu.md §3) : déduite avec elle.
 const MEDAILLES := [
-	{"id": "et25",   "fam": "Accumulation", "nom": "Premières étoiles",  "dit": "25 étoiles"},
-	{"id": "et50",   "fam": "Accumulation", "nom": "Bon élève",          "dit": "50 étoiles"},
-	{"id": "et100",  "fam": "Accumulation", "nom": "Cent étoiles",       "dit": "100 étoiles"},
-	{"id": "etmoit", "fam": "Accumulation", "nom": "Ciel chargé",        "dit": "la moitié du ruban"},
-	{"id": "ettout", "fam": "Accumulation", "nom": "Tout le ruban",      "dit": "toutes les étoiles"},
-	{"id": "di5",    "fam": "Accumulation", "nom": "Cinq diamants",      "dit": "5 sans-fautes"},
-	{"id": "di15",   "fam": "Accumulation", "nom": "Écrin",              "dit": "15 sans-fautes"},
-	{"id": "di40",   "fam": "Accumulation", "nom": "Coffre-fort",        "dit": "40 sans-fautes"},
-	{"id": "ga10",   "fam": "Accumulation", "nom": "Petit réseau",       "dit": "10 gares"},
-	{"id": "ga30",   "fam": "Accumulation", "nom": "Réseau régional",    "dit": "30 gares"},
-	{"id": "gatout", "fam": "Accumulation", "nom": "Réseau national",    "dit": "toutes les gares"},
-	{"id": "ch1",    "fam": "Maîtrise",     "nom": "Bout en bout",       "dit": "un chapitre fini"},
-	{"id": "ch5",    "fam": "Maîtrise",     "nom": "Cinq chapitres",     "dit": "5 chapitres finis"},
-	{"id": "chtout", "fam": "Maîtrise",     "nom": "Toile ferrée",       "dit": "tous les chapitres"},
-	{"id": "or1",    "fam": "Maîtrise",     "nom": "Voie royale",        "dit": "un chapitre d'or"},
-	{"id": "or3",    "fam": "Maîtrise",     "nom": "Trois fois l'or",    "dit": "3 chapitres d'or"},
-	{"id": "diam1",  "fam": "Maîtrise",     "nom": "Pas une minute",     "dit": "un chapitre de diamant"},
-	{"id": "zo1",    "fam": "Maîtrise",     "nom": "Région traversée",   "dit": "une zone entière"},
-	{"id": "av1",    "fam": "Exploration",  "nom": "En route",           "dit": "un chapitre entamé"},
-	{"id": "av5",    "fam": "Exploration",  "nom": "Cinq étapes",        "dit": "5 chapitres franchis"},
-	{"id": "zo2",    "fam": "Exploration",  "nom": "Passeport",          "dit": "2 zones touchées"},
-	{"id": "sa1",    "fam": "Exploration",  "nom": "Par-delà la mer",    "dit": "un saut franchi"},
-	{"id": "sf1",    "fam": "Style",        "nom": "Sans faute",         "dit": "un service parfait"},
-	{"id": "se3",    "fam": "Style",        "nom": "Trois d'affilée",    "dit": "série de 3"},
-	{"id": "se6",    "fam": "Style",        "nom": "Ponctualité suisse", "dit": "série de 6"},
-	{"id": "se12",   "fam": "Style",        "nom": "Horloge de gare",    "dit": "série de 12"},
+	{"id": "et25",   "fam": "Accumulation", "nom": "Premières étoiles",  "dit": "25 étoiles", "bourse": 50},
+	{"id": "et50",   "fam": "Accumulation", "nom": "Bon élève",          "dit": "50 étoiles", "bourse": 50},
+	{"id": "et100",  "fam": "Accumulation", "nom": "Cent étoiles",       "dit": "100 étoiles", "bourse": 150},
+	{"id": "etmoit", "fam": "Accumulation", "nom": "Ciel chargé",        "dit": "la moitié du ruban", "bourse": 150},
+	{"id": "ettout", "fam": "Accumulation", "nom": "Tout le ruban",      "dit": "toutes les étoiles", "bourse": 500},
+	{"id": "di5",    "fam": "Accumulation", "nom": "Cinq diamants",      "dit": "5 sans-fautes", "bourse": 50},
+	{"id": "di15",   "fam": "Accumulation", "nom": "Écrin",              "dit": "15 sans-fautes", "bourse": 150},
+	{"id": "di40",   "fam": "Accumulation", "nom": "Coffre-fort",        "dit": "40 sans-fautes", "bourse": 500},
+	{"id": "ga10",   "fam": "Accumulation", "nom": "Petit réseau",       "dit": "10 gares", "bourse": 50},
+	{"id": "ga30",   "fam": "Accumulation", "nom": "Réseau régional",    "dit": "30 gares", "bourse": 150},
+	{"id": "gatout", "fam": "Accumulation", "nom": "Réseau national",    "dit": "toutes les gares", "bourse": 500},
+	{"id": "ch1",    "fam": "Maîtrise",     "nom": "Bout en bout",       "dit": "un chapitre fini", "bourse": 50},
+	{"id": "ch5",    "fam": "Maîtrise",     "nom": "Cinq chapitres",     "dit": "5 chapitres finis", "bourse": 150},
+	{"id": "chtout", "fam": "Maîtrise",     "nom": "Toile ferrée",       "dit": "tous les chapitres", "bourse": 500},
+	{"id": "or1",    "fam": "Maîtrise",     "nom": "Voie royale",        "dit": "un chapitre d'or", "bourse": 150},
+	{"id": "or3",    "fam": "Maîtrise",     "nom": "Trois fois l'or",    "dit": "3 chapitres d'or", "bourse": 150},
+	{"id": "diam1",  "fam": "Maîtrise",     "nom": "Pas une minute",     "dit": "un chapitre de diamant", "bourse": 500},
+	{"id": "zo1",    "fam": "Maîtrise",     "nom": "Région traversée",   "dit": "une zone entière", "bourse": 150},
+	{"id": "av1",    "fam": "Exploration",  "nom": "En route",           "dit": "un chapitre entamé", "bourse": 50},
+	{"id": "av5",    "fam": "Exploration",  "nom": "Cinq étapes",        "dit": "5 chapitres franchis", "bourse": 150},
+	{"id": "zo2",    "fam": "Exploration",  "nom": "Passeport",          "dit": "2 zones touchées", "bourse": 50},
+	{"id": "sa1",    "fam": "Exploration",  "nom": "Par-delà la mer",    "dit": "un saut franchi", "bourse": 150},
+	{"id": "sf1",    "fam": "Style",        "nom": "Sans faute",         "dit": "un service parfait", "bourse": 50},
+	{"id": "se3",    "fam": "Style",        "nom": "Trois d'affilée",    "dit": "série de 3", "bourse": 50},
+	{"id": "se6",    "fam": "Style",        "nom": "Ponctualité suisse", "dit": "série de 6", "bourse": 150},
+	{"id": "se12",   "fam": "Style",        "nom": "Horloge de gare",    "dit": "série de 12", "bourse": 500},
 ]
 
 
@@ -275,22 +289,84 @@ static func medailles_nouvelles(avant: Array, apres: Array) -> Array:
 	return out
 
 
-# --- Les crédits ----------------------------------------------------------------------
-## Ce qu'UNE carte rapporte, sans qu'elle soit la carte courante : sa
-## définition et la progression enregistrée pour elle, rien d'autre. Une gare
-## PAYÉE reste à zéro : franchie, pas tenue.
-static func credits_d_une_carte(def: Dictionary, stations: Dictionary, passees: Array) -> int:
-	var etoiles := 0
-	var diamants := 0
+# --- Les pièces -----------------------------------------------------------------------
+## Le barème d'une gare sur CE ruban-là : la règle de seuils_de_service, sans
+## passer par la carte courante (seuilsDansRuban côté web).
+static func _seuils_dans(r: Rub, id: String, cfg: Dictionary) -> Dictionary:
+	if cfg.get("seuils") is Dictionary:
+		return Rub.seuils_de_fiche(cfg)
+	var d: int = r.difficulte_de_gare(id, cfg)
+	if d == 0 and cfg.get("difficulty") != null:
+		d = int(cfg["difficulty"])
+	return Rub.seuils_de_niveau(d)
+
+
+## Les minutes d'avance sur le seuil des trois étoiles : 0 sans étoile, sans
+## record, ou au-dessus du seuil. Plafond : le seuil lui-même (12 au palier 1).
+static func avance_de(r: Dictionary, seuils: Dictionary) -> int:
+	var bd: Variant = r.get("bestDelay")
+	if not (bd is int or bd is float) or Rub.etoiles_de(r) < 1:
+		return 0
+	return max(0, int(floor(float(seuils["trois"]) - float(bd))))
+
+
+## Ce qu'UNE gare rapporte, et ce qu'elle peut rapporter au plus. La
+## différence est le manque à gagner : ce que « rejouer Doncaster » rend encore.
+static func pieces_de_gare(r: Dictionary, seuils: Dictionary) -> int:
+	if r.is_empty():
+		return 0
+	return Rub.etoiles_de(r) * PIECES_PAR_ETOILE + avance_de(r, seuils) * PIECES_PAR_MINUTE \
+		+ (PIECES_PAR_DIAMANT if est_diamant(r) else 0)
+
+
+static func plafond_de_gare(seuils: Dictionary) -> int:
+	return 3 * PIECES_PAR_ETOILE + int(seuils["trois"]) * PIECES_PAR_MINUTE + PIECES_PAR_DIAMANT
+
+
+static func manque_a_gagner(r: Dictionary, seuils: Dictionary) -> int:
+	return plafond_de_gare(seuils) - pieces_de_gare(r, seuils)
+
+
+## La bourse des médailles tenues dans un état.
+static func bourse_des_medailles(e: Dictionary) -> int:
+	var b := 0
+	for m in MEDAILLES:
+		if medaille_tenue(m["id"], e):
+			b += int(m.get("bourse", 0))
+	return b
+
+
+static func detail_vide() -> Dictionary:
+	var d := {}
+	for k in POSTES:
+		d[k] = 0
+	d["total"] = 0
+	return d
+
+
+## Ce qu'UNE carte rapporte, POSTE PAR POSTE, sans qu'elle soit la carte
+## courante : sa définition, le catalogue, la progression enregistrée pour
+## elle et sa série, rien d'autre. Un ruban éphémère porte la rampe et le
+## barème — la précision dépend de la difficulté jouée, donc de la position.
+## Une gare PAYÉE reste à zéro : franchie, pas tenue.
+static func detail_pieces_d_une_carte(def: Dictionary, fiches: Dictionary, stations: Dictionary,
+		passees: Array, serie: Dictionary) -> Dictionary:
+	var d := detail_vide()
+	var r := Rub.new(def, fiches)
+	r.stations = stations
+	r.passees = passees
 	for id in stations:
 		var p: Variant = stations[id]
 		if not (p is Dictionary):
 			continue
-		etoiles += Rub.etoiles_de(p)
+		d["etoiles"] += Rub.etoiles_de(p) * PIECES_PAR_ETOILE
 		if est_diamant(p):
-			diamants += 1
+			d["sansFaute"] += PIECES_PAR_DIAMANT
+		# la précision ne se lit que sur une gare dont on connaît la fiche
+		var cfg: Dictionary = r.fiche_de(String(id))
+		if not cfg.is_empty():
+			d["avance"] += avance_de(p, _seuils_dans(r, String(id), cfg)) * PIECES_PAR_MINUTE
 	var chs: Array = def["chapitres"] if def.get("chapitres") is Array else []
-	var or_ := 0
 	var finis := 0
 	for ch in chs:
 		var g: Array = ch["gares"] if ch.get("gares") is Array else []
@@ -303,10 +379,11 @@ static func credits_d_une_carte(def: Dictionary, stations: Dictionary, passees: 
 			if not _franchie_dans(stations, passees, x):
 				toutes = false
 		if bas >= SEUIL_OR:
-			or_ += 1
+			d["or"] += PIECES_PAR_CHAPITRE_DOR
+		if bas >= SEUIL_DIAMANT:
+			d["diamant"] += PIECES_PAR_CHAPITRE_DIAMANT
 		if toutes:
 			finis += 1
-	var zones := 0
 	var zs: Array = def["zones"] if def.get("zones") is Array else []
 	for z in zs:
 		var dans := 0
@@ -319,10 +396,18 @@ static func credits_d_une_carte(def: Dictionary, stations: Dictionary, passees: 
 				if not _franchie_dans(stations, passees, x):
 					toutes = false
 		if dans > 0 and toutes:
-			zones += 1
-	var carte_finie := 1 if (not chs.is_empty() and finis == chs.size()) else 0
-	return etoiles * CREDIT_PAR_ETOILE + diamants * CREDIT_PAR_DIAMANT \
-		+ or_ * CREDIT_PAR_CHAPITRE_DOR + zones * CREDIT_PAR_ZONE + carte_finie * CREDIT_PAR_CARTE
+			d["zones"] += PIECES_PAR_ZONE
+	if not chs.is_empty() and finis == chs.size():
+		d["carte"] += PIECES_PAR_CARTE
+	d["medailles"] = bourse_des_medailles(etat_recompenses(r, serie))
+	for k in POSTES:
+		d["total"] += d[k]
+	return d
+
+
+static func pieces_d_une_carte(def: Dictionary, fiches: Dictionary, stations: Dictionary,
+		passees: Array, serie: Dictionary) -> int:
+	return int(detail_pieces_d_une_carte(def, fiches, stations, passees, serie)["total"])
 
 
 ## Mêmes crans que niveau_de_gare, mais lus dans la table qu'on nous donne.
@@ -337,52 +422,60 @@ static func _franchie_dans(stations: Dictionary, passees: Array, id: Variant) ->
 	return _niveau_dans(stations, id) >= 1 or passees.has(id)
 
 
-## La somme sur toutes les cartes jouées. `cartes` : [{id, stations, passees}]
-## (la sauvegarde), `defs` : id -> définition de carte. Une carte sans
-## définition ne rapporte que ses étoiles et ses diamants.
-static func credits_gagnes(cartes: Array, defs: Dictionary) -> int:
-	var t := 0
+## La somme sur toutes les cartes jouées, poste par poste. `cartes` :
+## [{id, stations, passees, serie}] (la sauvegarde), `defs` : id -> définition
+## de carte, `fiches` : le catalogue. Une carte sans définition ne rapporte que
+## ses étoiles, sa précision et ses diamants.
+static func detail_pieces_gagnees(cartes: Array, defs: Dictionary, fiches: Dictionary) -> Dictionary:
+	var t := detail_vide()
 	for c in cartes:
 		var def: Variant = defs.get(c.get("id"))
-		t += credits_d_une_carte(def if def is Dictionary else {},
+		var d := detail_pieces_d_une_carte(def if def is Dictionary else {}, fiches,
 			c["stations"] if c.get("stations") is Dictionary else {},
-			c["passees"] if c.get("passees") is Array else [])
+			c["passees"] if c.get("passees") is Array else [],
+			c["serie"] if c.get("serie") is Dictionary else {})
+		for k in t:
+			t[k] += d[k]
 	return t
 
 
-## Le prix d'un passage suit la position dans le ruban : 5 + 3 par chapitre.
+static func pieces_gagnees(cartes: Array, defs: Dictionary, fiches: Dictionary) -> int:
+	return int(detail_pieces_gagnees(cartes, defs, fiches)["total"])
+
+
+## Le prix d'un passage suit la position dans le ruban : 50 + 30 par chapitre.
 static func prix_de_passage_dans(def: Dictionary, id: String) -> int:
 	var chs: Array = def["chapitres"] if def.get("chapitres") is Array else []
 	for i in chs.size():
 		var g: Array = chs[i]["gares"] if chs[i].get("gares") is Array else []
 		if g.has(id):
-			return 5 + i * 3
-	return 5
+			return PASSAGE_BASE + i * PASSAGE_PAR_CHAPITRE
+	return PASSAGE_BASE
 
 
 static func prix_de_passage(r: Rub, id: String) -> int:
 	var ch := r.chapitre_de_gare(id)
 	if not ch.is_empty():
-		return 5 + int(ch["rang"]) * 3
+		return PASSAGE_BASE + int(ch["rang"]) * PASSAGE_PAR_CHAPITRE
 	return prix_de_passage_dans(r.carte, id)
 
 
-## Le prix en crédits d'une carte : sa définition, à défaut son entrée
+## Le prix en pièces d'une carte : sa définition (`prix`), à défaut son entrée
 ## d'index. Une carte gratuite vaut zéro.
 static func prix_de_carte(def: Dictionary, entree: Dictionary) -> int:
-	var p: Variant = def.get("prixCredits")
+	var p: Variant = def.get("prix")
 	if p is int or p is float:
 		return int(p)
-	p = entree.get("prixCredits")
+	p = entree.get("prix")
 	if p is int or p is float:
 		return int(p)
 	return 0
 
 
 ## La dépense sur toutes les cartes : les passages payés dont la gare est
-## ENCORE à zéro étoile, plus le prix des cartes acquises en crédits.
+## ENCORE à zéro étoile, plus le prix des cartes acquises en pièces.
 ## `possedees` : id de carte -> comment ("credits", ou autre chose).
-static func credits_depenses(cartes: Array, defs: Dictionary, possedees: Dictionary, index_cartes: Array) -> int:
+static func pieces_depensees(cartes: Array, defs: Dictionary, possedees: Dictionary, index_cartes: Array) -> int:
 	var d := 0
 	for c in cartes:
 		var def: Variant = defs.get(c.get("id"))
@@ -405,5 +498,5 @@ static func credits_depenses(cartes: Array, defs: Dictionary, possedees: Diction
 	return d
 
 
-static func solde_credits(gagnes: int, depenses: int) -> int:
+static func solde_pieces(gagnes: int, depenses: int) -> int:
 	return max(0, gagnes - depenses)

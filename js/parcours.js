@@ -516,13 +516,13 @@ function piedHTML() {
 
   // Échec : réessayer (gratuit, illimité) et payer le passage, côte à côte.
   if (b && !b.win) {
-    const prix = prixDePassage(b.gare), solde = soldeCredits(), assez = solde >= prix;
+    const prix = prixDePassage(b.gare), solde = soldePieces(), assez = solde >= prix;
     const manque = prix - solde;
     return `<div class="cc-pied">` +
-      (assez ? "" : `<div class="cb-manque">Il te manque ${manque} crédit${manque > 1 ? "s" : ""} — ` +
+      (assez ? "" : `<div class="cb-manque">Il te manque ${manque} pièce${manque > 1 ? "s" : ""} — ` +
         `rejoue une gare déjà faite pour les gagner.</div>`) +
       `<button class="c-suite cb-payer" data-payer="${b.gare}"${assez ? "" : " disabled"}>` +
-        `Passer · ${prix} cr</button>` +
+        `Passer · ${prix} pièces</button>` +
       `<button class="c-suite c-appel" data-gare="${b.gare}">` +
         `<span class="ca-texte"><span class="ca-quoi">Réessayer</span>` +
         `<span class="ca-ou">${villeDe(b.gare)}</span></span>${BOUCLE}</button></div>`;
@@ -596,7 +596,7 @@ function bourseHTML() {
   if (typeof gradeOf !== "function" || typeof etoilesTotal !== "function") return "";
   const n = etoilesTotal(), g = gradeOf(n);
   const s = typeof getSerie === "function" ? getSerie() : { n: 0 };
-  const cr = typeof soldeCredits === "function" ? soldeCredits() : null;
+  const cr = typeof soldePieces === "function" ? soldePieces() : null;
   // ◆ EST LE DIAMANT, PAS LA MONNAIE. Les deux se disputaient le signe dans la
   // barre du haut ; les crédits passent donc en « cr », et le losange revient
   // à ce qu'il désigne depuis le premier jour : un service sans la moindre
@@ -606,7 +606,7 @@ function bourseHTML() {
     (s.n >= 2 ? `<span class="c-serie" title="${s.n} services d'affilée sous dix minutes">» ${s.n}</span>` : "") +
     `<span class="c-grade" title="${g.nom}"><span class="g-nom">${g.nom}</span>` +
       `<span class="g-jauge"><i style="width:${Math.round(g.part * 100)}%"></i></span></span>` +
-    (cr === null ? "" : `<span class="c-credits" title="crédits, pour passer une gare">${cr} cr</span>`) +
+    (cr === null ? "" : `<span class="c-credits" title="pièces, pour passer une gare">${cr} pièces</span>`) +
     (dia ? `<span class="c-diamants" title="${dia} service${dia > 1 ? "s" : ""} sans faute">◆ ${dia}</span>` : "") +
     `<span class="c-etoiles">★ ${n}</span></div>`;
 }
@@ -674,7 +674,7 @@ function resumeDeCarte(id) {
 function vueCartes() {
   const liste = typeof CARTES !== "undefined" ? CARTES : [];
   const cour = typeof getCarteCourante === "function" ? getCarteCourante() : null;
-  const solde = typeof soldeCredits === "function" ? soldeCredits() : 0;
+  const solde = typeof soldePieces === "function" ? soldePieces() : 0;
   const tuiles = liste.map(e => {
     const r = resumeDeCarte(e.id);
     const possede = typeof possedeCarte === "function" ? possedeCarte(e.id) : !!e.gratuite;
@@ -690,10 +690,10 @@ function vueCartes() {
     if (courante) action = `<button class="c-suite ct-action" disabled>Carte en cours</button>`;
     else if (possede) action = `<button class="c-suite ct-action" data-carte="${e.id}">` +
       (r.entamee ? "Reprendre" : "Commencer") + `</button>`;
-    else if (solde >= prix) action = `<button class="c-suite ct-action" data-acheter="${e.id}">Ouvrir · ${prix} cr</button>`;
-    else action = `<div class="cb-manque">Il te manque ${manque} crédit${manque > 1 ? "s" : ""} — ` +
+    else if (solde >= prix) action = `<button class="c-suite ct-action" data-acheter="${e.id}">Ouvrir · ${prix} pièces</button>`;
+    else action = `<div class="cb-manque">Il te manque ${manque} pièce${manque > 1 ? "s" : ""} — ` +
       `gagne des étoiles sur ta carte en cours.</div>` +
-      `<button class="c-suite ct-action" disabled>Ouvrir · ${prix} cr</button>`;
+      `<button class="c-suite ct-action" disabled>Ouvrir · ${prix} pièces</button>`;
     // LA CARTE BANCAIRE EST HORS PROTOTYPE. Le bouton existe pour que la place
     // soit prise et que le geste se voie, mais il ne fait rien : seul l'état
     // « achat » est prévu dans la sauvegarde, pour que le moteur final n'ait
@@ -714,7 +714,7 @@ function vueCartes() {
   return `<div class="cv-entete">
       <button class="cv-retour" data-fermer-cartes><span class="arw">‹</span>Revenir au ruban</button>
       <h2 class="cv-titre">Les cartes</h2>
-      <span class="c-credits" title="crédits">${solde} cr</span>
+      <span class="c-credits" title="pièces">${solde} pièces</span>
     </div>
     <div class="cv-tuiles">${tuiles}</div>`;
 }
@@ -746,7 +746,7 @@ async function choisirCarte(id) {
 // déduit — et il retombe tout seul du prix de la carte (js/recompense.js).
 function acheterCarte(id) {
   const prix = typeof prixDeCarte === "function" ? prixDeCarte(id) : 0;
-  if (typeof soldeCredits === "function" && soldeCredits() < prix) return;
+  if (typeof soldePieces === "function" && soldePieces() < prix) return;
   if (typeof acquerirCarte !== "function" || !acquerirCarte(id, "credits")) return;
   renderCarte();
 }
@@ -1065,7 +1065,7 @@ function lancerVoyageDeChapitre() {
 // ni médaille — et se rejoue quand on veut : la gagner plus tard rend la mise.
 function passerLaGare(gareId) {
   const prix = prixDePassage(gareId);
-  if (soldeCredits() < prix || !payerPassage(gareId)) return;
+  if (soldePieces() < prix || !payerPassage(gareId)) return;
   CARTE.bilan = null;
   CARTE.medailles = null;
   finDeGare(gareId);

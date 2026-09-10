@@ -20,7 +20,7 @@ navigateur.
   "id": "europe",
   "nom": "L'Europe",
   "gratuite": true,
-  "prixCredits": 0,              // absent si gratuite
+  "prix": 0,                     // en pièces ; absent si gratuite
   "enChantier": true,            // relâche R2 et R4 dans carte-check (voir plus bas)
   "note": "…",                   // à l'usage des auteurs, jamais affichée
   "echelle": { "kmMinEntreHubs": 110 },

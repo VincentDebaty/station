@@ -71,7 +71,7 @@ js/
   cartes.js                   Chargement des cartes et de la carte courante
   ruban.js                    Le ruban vu du jeu : position déduite, gare suivante,
                               rampe de difficulté, enveloppes de génération
-  recompense.js               Série, rangs de chapitre, crédits, médailles — tous déduits
+  recompense.js               Série, rangs de chapitre, pièces, médailles — tous déduits
   parcours.js                 L'écran du ruban : panneau, carte du chapitre, relevé, fête
   network.js, geo.js          Réseau ferré dérivé et coordonnées des villes
   hub.js                      Entrée dans une gare : showHub(), startStation(), le cartouche

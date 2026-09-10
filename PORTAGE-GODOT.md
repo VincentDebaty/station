@@ -198,6 +198,19 @@ Minutes de retard tolérées pour trois étoiles, **par palier de difficulté** 
 Une étoile reste à **30 partout** : c'est le plancher qui rend le ruban
 praticable.
 
+### Le barème des pièces (`recompense.js` / `recompense.gd`, 10 septembre 2026)
+
+```
+étoile 10 · minute sous le seuil 3 ★ 1 (0..12) · sans-faute 50
+chapitre d'or 200 · chapitre de diamant 500 · zone 1 000 · carte 5 000
+médaille 50 / 150 / 500 · passage 50 + 30 × chapitre · le Rhin 15 000
+```
+
+Tout est déduit, rien n'est stocké : `oracle-ruban` compare les deux
+implémentations sur douze scénarios, dont trois cartes mixtes à trous. Les
+RAPPORTS sont l'invariant mesuré (un passage ≈ trois à cinq gares bien
+jouées ; finir l'Europe paie le Rhin avec de la marge), pas les valeurs.
+
 ### La rampe (`js/ruban.js`)
 
 ```
@@ -400,9 +413,9 @@ au point débordait de l'écran une fois grossie.
   `pfaffenhofen` : les haltes de LGV retirées du ruban le 26 août 2026, dont
   l'entrée géo est restée. Sans effet (aucune fiche, aucun contrôle ne les
   voit), mais à ne pas porter.
-- **Le barème des crédits** (lot G, point 6). Finir l'Europe rapporte 2 711,
-  la deuxième carte coûte 1 500, finir la deuxième n'en rapporte que 1 153.
-  La pente est à valider si d'autres cartes payantes suivent.
+- ~~Le barème des crédits~~ Tranché le 10 septembre 2026 : la pièce, ×10,
+  précision et médailles (`economie-du-jeu.md`, §4 ci-dessus). Finir l'Europe
+  en or rapporte ≈ 32 000, le Rhin coûte 15 000.
 - **Abréviation des directions en paysage sur téléphone.** Mesuré : à
   844 × 390, six quais avec leurs numéros, quatre directions et le compteur ne
   tiennent qu'avec des noms abrégés (YK, BA, NC, MI). Contrainte de lisibilité.
@@ -963,6 +976,38 @@ Il suit une règle : **ce qui se vérifie tout seul d'abord**.
    glissement de l'embarquement, la file en réduction. Et la journée se tire
    au démarrage, en synchrone — 1,3 s sur Darlington, 5,6 s sur Bruxelles-Midi
    — là où il faudra un fil d'exécution et le pré-tirage pendant le relevé.
+
+   **LA BOURSE, passe du 10 septembre 2026** (`economie-du-jeu.md`, lot 1).
+   « On ne se rend pas compte qu'on gagne des crédits, "cr" ne veut pas dire
+   grand-chose » (Vincent). Mesuré sur trois captures : la pastille « 30 cr »
+   affichait le solde d'APRÈS dès l'ouverture du relevé et ne bougeait pas
+   pendant la remise ; les crédits ne figuraient ni dans le relevé ni dans la
+   fête. Le crédit est devenu une **pièce** (`jeu/piece.gd`, frappée en laiton :
+   tranche, champ, listel, roue, éclat — une seule pour tout le jeu), le
+   barème a été multiplié par dix à rapports constants, la précision et les
+   médailles paient (voir §4). Puis la remise a pris son **quatrième temps** :
+   la ligne « + 90 pièces · étoiles 30 · avance 10 · sans-faute 50 » s'écrit
+   sur le relevé au moment où les pièces en partent, six à dix pièces
+   (logarithme du gain) décrivent un arc vers la pastille, qui SURSAUTE à
+   chaque arrivée pendant que son nombre roule du solde d'avant vers celui
+   d'après, un tintement montant par pièce et un accord à la fin. La pastille
+   ne montre le solde d'après qu'à l'atterrissage (`solde_montre`), comme les
+   étoiles restent creuses jusqu'au leur. Le montant est un DELTA du solde,
+   photographié dans `app.gd` quand le service commence (`bourse_du_service`)
+   — un rejeu qui n'améliore rien ne fait voler aucune pièce, et la mise
+   rendue d'une gare payée se lit dans la dépense qui a baissé : elle a sa
+   ligne, et ses pièces reviennent depuis la gare sur la carte.
+
+   Le reste dit le barème là où il se reçoit : le butin itemisé de la fête
+   (« Butin du chapitre · 250 pièces / chapitre d'or 250 »), les médailles avec
+   leur bourse, « jusqu'à 215 pièces à prendre ici », et l'échec sans le sou :
+   « Il te manque 50 pièces. Rejouer Darlington peut en rapporter 82. » — la
+   gare tenue au plus grand manque à gagner, nommée. Payer se voit : cinq
+   pièces quittent la pastille vers la gare passée, qui garde une pièce à
+   côté de son nom tant que la mise n'est pas rendue. `STATION_REMISE`
+   accepte `0` (un échec), `pieces=N`, `butin=N` et `rendu=N` pour tout
+   photographier sans jouer. Trois signatures de plus dans `sons.gd`
+   (`piece0..5`, `bourse`, `depense`).
 
 À l'étape 3 et à l'étape 5, il existe une **oracle** : le prototype. Faire
 tourner les deux sur la même graine et comparer les sorties est le meilleur test

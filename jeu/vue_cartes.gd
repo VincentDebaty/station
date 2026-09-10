@@ -86,6 +86,29 @@ func _bouton(texte: String, principal: bool, actif: bool, sur: Callable) -> Butt
 
 
 ## Une pastille de compteur, celle de la barre du ruban.
+## LE SOLDE, AVEC SA PIÈCE : la même pastille que sur le ruban.
+func _pastille_piece(n: int) -> Control:
+	var k := Sty.HUD_K
+	var p := PanelContainer.new()
+	p.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	var st := Sty.boite(Color(Sty.LAITON, 0.10), Color(Sty.LAITON, 0.35), Sty.R_PETIT * k, Sty.epaisseur(k))
+	st.content_margin_left = 8 * k
+	st.content_margin_right = 9 * k
+	st.content_margin_top = 3 * k
+	st.content_margin_bottom = 3 * k
+	p.add_theme_stylebox_override("panel", st)
+	var h := HBoxContainer.new()
+	h.add_theme_constant_override("separation", int(round(5 * k)))
+	var piece := Piece.new(13.0 * k)
+	piece.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	h.add_child(piece)
+	var l := _label(Sty.nombre(n), 13, Sty.LAITON, true, false)
+	l.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	h.add_child(l)
+	p.add_child(h)
+	return p
+
+
 func _pastille(texte: String, couleur: Color) -> Control:
 	var k := Sty.HUD_K
 	var p := PanelContainer.new()
@@ -153,11 +176,11 @@ func _ouvrir_modale(id: String) -> void:
 		r["chapitres"], "s" if r["chapitres"] > 1 else "", r["gares"]], 13, Sty.ENCRE, false))
 	var assez := solde >= prix
 	if not assez:
-		v.add_child(_encre("Il te manque %d cr." % (prix - solde), 13, Color("#a2432f"), false))
+		v.add_child(_encre("Il te manque %s pièces." % Sty.nombre(prix - solde), 13, Color("#a2432f"), false))
 	var h := HBoxContainer.new()
 	h.add_theme_constant_override("separation", int(round(8 * k)))
 	h.add_child(_bouton("Plus tard", false, true, _fermer_modale))
-	h.add_child(_bouton("Ouvrir · %d cr" % prix, true, assez, _acheter.bind(id)))
+	h.add_child(_bouton("Ouvrir · %s pièces" % Sty.nombre(prix), true, assez, _acheter.bind(id)))
 	v.add_child(h)
 
 
@@ -242,7 +265,7 @@ func rebatir() -> void:
 	titre.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	titre.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	entete.add_child(titre)
-	entete.add_child(_pastille("%d cr" % solde, Sty.LAITON))
+	entete.add_child(_pastille_piece(solde))
 	colonne.add_child(entete)
 
 	# UNE LISTE HORIZONTALE QU'ON FAIT GLISSER AU DOIGT. Les cartes se
@@ -338,7 +361,7 @@ func _tuile(e: Dictionary, id: String, r: Dictionary, possede: bool, prix: int,
 	# lui, l'appel — le prix y reste, et il suffit.
 	var appel := "Carte en cours"
 	if not est_courante:
-		appel = ("Reprendre" if r["entamee"] else "Commencer") if possede else "Ouvrir · %d cr" % prix
+		appel = ("Reprendre" if r["entamee"] else "Commencer") if possede else "Ouvrir · %s pièces" % Sty.nombre(prix)
 	v.add_child(_plaque_appel(appel, possede and not est_courante))
 	tuile.add_child(_zone_cliquable(id, possede))
 	return tuile

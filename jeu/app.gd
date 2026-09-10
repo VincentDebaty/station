@@ -270,6 +270,7 @@ func jouer(id: String, presse: bool = false) -> void:
 	if f.is_empty():
 		return
 	fil_cmd = vue_jeu.commande(f, ruban, carte_id)
+	_photographier_le_compte()
 	if presse:
 		_prendre_le_service(VueJeu.preparer(fil_cmd))
 		return
@@ -321,6 +322,7 @@ func _suivre_le_fil() -> void:
 ## Le jeu rend la main avec son relevé et les médailles décrochées.
 func fin_de_service(bilan: Dictionary, medailles: Array) -> void:
 	montrer("ruban")
+	bilan["pieces"] = bourse_du_service()
 	vue_ruban.fin_de_service(bilan, medailles)
 	_apparaitre(vue_ruban, 0.90)
 
@@ -335,17 +337,50 @@ func abandonner_service() -> void:
 ## Passer en payant : la gare reste à zéro étoile et se rejoue quand on veut.
 func passer(id: String) -> void:
 	var prix: int = Rec.prix_de_passage(ruban, id)
-	if solde() < prix or not Sauvegarde.payer_passage(id):
+	var avant := solde()
+	if avant < prix or not Sauvegarde.payer_passage(id):
 		return
-	vue_ruban.apres_passage(id)
+	vue_ruban.apres_passage(id, avant, prix)
 
 
-# --- les crédits : un fait de compte, déduit --------------------------------------------
+# --- les pièces : un fait de compte, déduit --------------------------------------------
 func solde() -> int:
-	var cartes: Array = Sauvegarde.cartes_enregistrees()
-	var gagnes: int = Rec.credits_gagnes(cartes, Donnees.cartes)
-	var depenses: int = Rec.credits_depenses(cartes, Donnees.cartes, Sauvegarde.cartes_possedees(), Donnees.cartes_index)
-	return Rec.solde_credits(gagnes, depenses)
+	return Rec.solde_pieces(int(detail()["total"]), depenses())
+
+
+## Les pièces gagnées, poste par poste, sur toutes les cartes.
+func detail() -> Dictionary:
+	return Rec.detail_pieces_gagnees(Sauvegarde.cartes_enregistrees(), Donnees.cartes, Donnees.fiches)
+
+
+func depenses() -> int:
+	return Rec.pieces_depensees(Sauvegarde.cartes_enregistrees(), Donnees.cartes,
+		Sauvegarde.cartes_possedees(), Donnees.cartes_index)
+
+
+## CE QU'UN SERVICE A RAPPORTÉ SE MESURE PAR DIFFÉRENCE. Le solde est déduit,
+## il n'y a pas de « gain » à lire quelque part : on photographie le compte
+## quand le service commence, et on compare quand il rend la main. Un rejeu
+## qui n'améliore rien donne zéro, et la mise rendue d'une gare payée qu'on
+## vient de gagner se lit dans la dépense qui a baissé.
+var compte_avant := {}
+
+func _photographier_le_compte() -> void:
+	compte_avant = {"detail": detail(), "depenses": depenses()}
+	compte_avant["solde"] = Rec.solde_pieces(int(compte_avant["detail"]["total"]), int(compte_avant["depenses"]))
+
+
+func bourse_du_service() -> Dictionary:
+	var d_apres := detail()
+	var dep_apres := depenses()
+	var apres: int = Rec.solde_pieces(int(d_apres["total"]), dep_apres)
+	var avant: int = int(compte_avant.get("solde", apres))
+	var delta := {}
+	var d_avant: Dictionary = compte_avant.get("detail", {})
+	for k in Rec.POSTES:
+		delta[k] = int(d_apres[k]) - int(d_avant.get(k, d_apres[k]))
+	var rendu: int = max(0, int(compte_avant.get("depenses", dep_apres)) - dep_apres)
+	return {"avant": avant, "apres": apres, "gain": apres - avant, "rendu": rendu, "detail": delta}
 
 
 # --- les cartes ------------------------------------------------------------------------------

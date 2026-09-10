@@ -124,9 +124,19 @@ func _exporter(r, vierge, don: Node, sc: Dictionary) -> Dictionary:
 	for m in Rec.medailles_nouvelles(avant, out["medailles"]):
 		nouvelles.append(m["id"])
 	out["nouvelles"] = nouvelles
-	var gagnes: int = Rec.credits_gagnes(sc["cartes"], don.cartes)
-	var depenses: int = Rec.credits_depenses(sc["cartes"], don.cartes, sc["possedees"], don.cartes_index)
-	out["credits"] = {"gagnes": gagnes, "depenses": depenses, "solde": Rec.solde_credits(gagnes, depenses)}
+	var gagnes: int = Rec.pieces_gagnees(sc["cartes"], don.cartes, don.fiches)
+	var depenses: int = Rec.pieces_depensees(sc["cartes"], don.cartes, sc["possedees"], don.cartes_index)
+	out["pieces"] = {"detail": Rec.detail_pieces_gagnees(sc["cartes"], don.cartes, don.fiches),
+		"gagnes": gagnes, "depenses": depenses, "solde": Rec.solde_pieces(gagnes, depenses)}
+	# le barème par gare, tel que les écrans le lisent
+	var par_gare := {}
+	for id in r.stations:
+		var cfg: Dictionary = r.fiche_de(String(id))
+		if cfg.is_empty():
+			continue
+		var s2: Dictionary = r.seuils_de_service(cfg)
+		par_gare[id] = {"pieces": Rec.pieces_de_gare(r.stations[id], s2), "manque": Rec.manque_a_gagner(r.stations[id], s2)}
+	out["parGare"] = par_gare
 	var grille: Array = []
 	for n in range(1, 6):
 		for ret in RETARDS:

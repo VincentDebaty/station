@@ -71,6 +71,15 @@ func _ready() -> void:
 		[3136, 0.24, 0.36, SINUS, 0.014]])
 	_cuire("puce", [[392, 0.0, 0.14, TRIANGLE, 0.035]])
 	_cuire("arrivee", [[659, 0.0, 0.10, TRIANGLE, 0.045], [988, 0.09, 0.22, TRIANGLE, 0.04]])
+	# LA BOURSE (10 septembre 2026) : un tintement par pièce, sur une hauteur
+	# qui monte d'une pièce à l'autre — six crans par tons entiers depuis mi6 —,
+	# un accord bref quand la dernière se pose, et le même tintement, mat, une
+	# octave sous, quand on paie.
+	for k in range(6):
+		var f: float = 1318.5 * pow(2.0, float(k) / 6.0)
+		_cuire("piece%d" % k, [[f, 0.0, 0.06, SINUS, 0.045], [f * 2.0, 0.0, 0.05, SINUS, 0.018]])
+	_cuire("bourse", [[1046.5, 0.0, 0.14, TRIANGLE, 0.04], [1568.0, 0.06, 0.22, TRIANGLE, 0.035]])
+	_cuire("depense", [[659.0, 0.0, 0.07, SINUS, 0.04], [523.3, 0.08, 0.12, SINUS, 0.035]])
 	# Le carillon À L'HEURE monte avec la série, plafonnée à huit crans :
 	# `base = 720 + k·66`, `k = min(n-1, 7)`. Huit variantes, cuites d'avance.
 	for k in range(8):
