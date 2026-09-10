@@ -7,6 +7,7 @@ extends Node
 ## Chaque pas est « <secondes depuis le début> <geste> [args] » :
 ##   clic X Y        un clic gauche à cette position d'écran (fenêtre 1400 × 760)
 ##   glisser X Y A B un doigt posé en X Y, tiré jusqu'en A B, puis relâché
+##   molette X Y N   N crans de molette en X Y (négatif : vers l'arrière)
 ##   touche NOM      une touche (space, escape, r, 1, 2, 4, enter…)
 ##   capture CHEMIN  une image de l'écran, sans quitter
 ##   quitter         la fin
@@ -46,6 +47,8 @@ func _jouer() -> void:
 				await _clic(Vector2(float(mots[2]), float(mots[3])))
 			"touche":
 				_touche(mots[2])
+			"molette":
+				await _molette(Vector2(float(mots[2]), float(mots[3])), int(mots[4]))
 			"glisser":
 				await _glisser(Vector2(float(mots[2]), float(mots[3])),
 					Vector2(float(mots[4]), float(mots[5])))
@@ -78,6 +81,21 @@ func _jouer() -> void:
 ## ne déclenchaient rien — mesuré le 5 septembre 2026 en essayant de piloter
 ## le bouton « Les cartes », qui n'a jamais bougé. Le pilote ne savait donc
 ## cliquer que ce qui écoute `_unhandled_input`, c'est-à-dire le plan de gare.
+## Des crans de molette, un par image : un zoom qui s'accumule se lit sur
+## plusieurs images, et les pousser d'un coup ne dirait rien du chemin.
+func _molette(pos: Vector2, crans: int) -> void:
+	Input.warp_mouse(pos)
+	for i in range(absi(crans)):
+		for presse in [true, false]:
+			var ev := InputEventMouseButton.new()
+			ev.position = pos
+			ev.global_position = pos
+			ev.button_index = MOUSE_BUTTON_WHEEL_UP if crans > 0 else MOUSE_BUTTON_WHEEL_DOWN
+			ev.pressed = presse
+			get_viewport().push_input(ev, true)
+		await get_tree().process_frame
+
+
 ## UN GLISSEMENT EST UN APPUI, DES MOUVEMENTS, PUIS UN RELÂCHEMENT — et il en
 ## faut PLUSIEURS, de mouvements : une carte qui se tire mesure la course du
 ## doigt pour distinguer un déplacement d'un clic, et un saut unique jusqu'à

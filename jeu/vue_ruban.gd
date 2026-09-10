@@ -37,6 +37,17 @@ const DELAI_LECTURE := 0.7
 ## déclenche pas un déplacement, assez peu pour qu'un déplacement démarre sans
 ## qu'on ait à forcer.
 const COURSE_CLIC := 14.0
+## Au-delà, on ne rend plus que les points : le placement des plaques est
+## quadratique, et à cette densité aucun nom ne serait lisible de toute façon.
+const PLAQUES_MAX := 26
+## LES BORNES DU ZOOM LIBRE. En bas, 1 : la carte entière tient dans la
+## fenêtre, on ne recule pas au-delà. En haut, deux fois le plafond du cadrage
+## automatique — de quoi lire une gare de près sans que le fond de carte, qui
+## est dessiné en unités de terrain, ne se délite.
+const K_MIN_LIBRE := 1.0
+const K_MAX_LIBRE := 2.0 * K_MAX_CHAPITRE
+## Un cran de molette. Le pincement, lui, suit le rapport des doigts.
+const CRAN_ZOOM := 1.18
 
 # --- LA REMISE DES RÉCOMPENSES, en trois temps ------------------------------
 # « Les étoiles arrivent en grand au milieu de l'écran et se replacent dans le
@@ -72,7 +83,11 @@ const P_OR := Color("#9c6f1c")
 const P_ACCENT := Sty.SARCELLE
 const ACCENT := Sty.SARCELLE_CLAIR
 const OR := Sty.LAITON
-const DIAMANT := Color("#9fdcd6")
+# PLUS BLEU, et c'est une couleur de pierre, pas d'écran : « le diamant sera
+# plus bleu » (Vincent, 10 septembre 2026). C'était une sarcelle pâle, #9fdcd6,
+# qui se confondait avec la sarcelle des plaques de gare tenues — deux choses
+# différentes dites dans la même couleur.
+const DIAMANT := Color("#6fbcf5")
 const ROUGE := Color("#c4553d")
 
 var app = null
@@ -148,6 +163,9 @@ var glisse_depuis := Vector2.ZERO
 var glisse_cam := Vector2.ZERO
 var glisse_course := 0.0      # combien il a parcouru : au-delà, ce n'est plus un clic
 var zone_recentrer := Rect2()
+var doigts := {}              # index du doigt -> position, pour le pincement
+var pince_ecart := 0.0        # l'écart entre les deux doigts au début du geste
+var pince_k := 1.0            # et le zoom qu'on avait alors
 
 # --- le panneau ---------------------------------------------------------------------
 var barre: PanelContainer      # la barre du haut, sur toute la largeur
@@ -708,6 +726,28 @@ func _borner_camera() -> void:
 	cam["y"] = CADRE_H / 2.0 if demi_h * 2.0 >= CADRE_H else clampf(float(cam["y"]), demi_h, CADRE_H - demi_h)
 
 
+## ZOOMER AUTOUR D'UN POINT, ET NON AUTOUR DU MILIEU. C'est toute la
+## différence entre un zoom qui obéit et un zoom qui fuit : ce qui est sous le
+## doigt — ou sous le curseur — doit rester sous le doigt. On note donc le point
+## du TERRAIN visé, on change l'échelle, et on ramène la caméra pour que ce
+## point retombe exactement où il était.
+func _zoomer(vers: float, foyer: Vector2) -> void:
+	var k0: float = float(cam["k"])
+	var k1: float = clampf(vers, K_MIN_LIBRE, K_MAX_LIBRE)
+	if is_equal_approx(k0, k1):
+		return
+	var avant := monde(foyer)
+	cam["k"] = k1
+	var apres := monde(foyer)
+	cam["x"] = float(cam["x"]) + avant.x - apres.x
+	cam["y"] = float(cam["y"]) + avant.y - apres.y
+	cam_libre = true
+	cam_vers = {}
+	_borner_camera()
+	_poser_fond()
+	queue_redraw()
+
+
 ## Rendre la main au cadrage automatique — celui qui tient le chapitre en cours
 ## et la gare qui vient. C'est ce que fait le bouton, et c'est aussi ce que fait
 ## la fin d'un service : on ne laisse pas le joueur revenir sur une carte
@@ -915,11 +955,11 @@ func _draw() -> void:
 			draw_circle(p, 5.0 * kk, Color(Sty.LAITON_CLAIR, 0.85))
 			draw_circle(p, 2.6 * kk, Color(1, 1, 1, 0.95))
 	_rose_des_vents()
-	_bouton_recentrer()
 
-	# --- les gares du chapitre vu, et la gare quittée ---------------------------
-	var dessinees := gares_dessinees()
-	var plaques := _placer_plaques(dessinees, cam)
+	# --- les gares en vue, chapitre ou pas --------------------------------------
+	var dessinees := gares_visibles()
+	var noms: bool = dessinees.size() <= PLAQUES_MAX
+	var plaques := _placer_plaques(dessinees, cam) if noms else {}
 	plaques_ecran.clear()
 	for id in dessinees:
 		var p := pos(id)
@@ -940,6 +980,12 @@ func _draw() -> void:
 			_:
 				teinte = Sty.LAITON
 		var kk := Sty.HUD_K
+		# SANS SON NOM, UN POINT SE FAIT PLUS DISCRET. À l'échelle du continent
+		# ils sont deux cent soixante-dix-sept, et à taille de doigt ils se
+		# touchent : le semis devient une tache. Le point garde sa taille dès
+		# qu'il porte un nom, c'est-à-dire dès qu'on peut le viser.
+		if not noms:
+			r *= 0.52
 		if ici:
 			# la gare qui vient : un halo d'ambre, comme une lampe posée dessus
 			draw_circle(e, r + (7.0 + 4.0 * pulse) * kk, Color(Sty.LAITON, 0.16 + 0.12 * pulse))
@@ -961,6 +1007,11 @@ func _draw() -> void:
 		# fané quand elle attend son tour. Sa PLACE, elle, est négociée avec
 		# les autres plaques (_placer_plaques) : deux gares voisines ne se
 		# recouvrent plus.
+		# À FAIBLE ZOOM, LE POINT SUFFIT. Cent noms qu'on ne peut pas lire ne
+		# valent pas mieux que pas de nom du tout, et le placement les
+		# comparerait tous deux à deux.
+		if not noms:
+			continue
 		var reserve: Rect2 = plaques.get(id, Rect2(
 			e.x + r + 6 * kk, e.y - float(m["haute"]) / 2, float(m["place"]), float(m["haute"])))
 		var plaque := Rect2(reserve.position, Vector2(float(m["large"]), float(m["haute"])))
@@ -992,6 +1043,10 @@ func _draw() -> void:
 			draw_style_box(Sty.boite(Color(Sty.BOIS_CLAIR, 0.95), Color(Sty.LAITON, 0.5), 3 * kk, Sty.epaisseur(kk)),
 				Rect2(c.x - 5 * kk, c.y - 4 * kk, 10 * kk, 8 * kk))
 			draw_arc(Vector2(c.x, c.y - 4 * kk), 3.2 * kk, PI, TAU, 12, Color(Sty.LAITON, 0.7), 1.4 * kk, true)
+	# LE BOUTON EN DERNIER, PAR-DESSUS TOUT. Il était peint avant les gares :
+	# au recul continental, deux cent soixante-dix-sept points lui passaient
+	# dessus.
+	_bouton_recentrer()
 
 
 # ------------------------------------------------------------------
@@ -1005,6 +1060,39 @@ func gares_dessinees() -> Array:
 	var ids: Array = ch["gares"].duplicate() if not ch.is_empty() else []
 	if not transit.is_empty() and not ids.has(transit["de"]):
 		ids.push_front(transit["de"])
+	return ids
+
+
+## TOUTE GARE QUI TOMBE DANS LA FENÊTRE, chapitre ou pas.
+##
+## « Quand on se déplace, il faut voir le nom des villes et le résultat qu'on a
+## fait. Pour les villes futures, juste affiche la ville comme bloquée »
+## (Vincent, 10 septembre 2026). Depuis qu'on peut tirer la carte, s'en tenir au
+## chapitre courant n'a plus de sens : on arrive chez les voisins et on n'y voit
+## que des points sourds, sans un nom.
+##
+## ELLE NE SERT PAS AU CADRAGE, et c'est important : `camera_voulue` continue de
+## lire `gares_dessinees`, le chapitre. Cadrer sur ce qui est visible serait
+## circulaire — le cadre dépendrait de ce qu'il montre, qui dépend du cadre.
+##
+## ET IL Y A UN NIVEAU DE DÉTAIL. Le placement des plaques essaie huit positions
+## par gare et les compare à toutes celles déjà posées : c'est quadratique, et à
+## faible zoom la fenêtre peut contenir cent gares dont aucun nom ne serait
+## lisible. Au-delà de PLAQUES_MAX on ne rend que les points — ce qui est de
+## toute façon ce qu'on veut voir à cette échelle.
+func gares_visibles() -> Array:
+	var ids := gares_dessinees()
+	if ruban == null:
+		return ids
+	var vu := surface_carte().grow(60.0 * Sty.HUD_K)
+	for id in ruban.ordre:
+		if ids.has(id):
+			continue
+		var p := pos(id)
+		if p == Vector2.INF:
+			continue
+		if vu.has_point(ecran(p)):
+			ids.append(id)
 	return ids
 
 
@@ -1557,8 +1645,15 @@ func _ouvrir_remise(gare: String) -> void:
 		return
 	seq = "etoiles"
 	seq_t = -SEQ_DELAI
+	# LA PLACE D'ARRIVÉE EST DÉJÀ LÀ, VIDE. Le relevé était masqué en entier
+	# jusqu'à l'atterrissage : les étoiles volaient vers un endroit où il n'y
+	# avait rien. « La zone où atterrissent les étoiles doit déjà avoir des
+	# étoiles vides » (Vincent, 10 septembre 2026). On montre donc trois
+	# étoiles creuses dès l'ouverture, et chacune se remplit à l'instant où la
+	# sienne arrive.
 	if lbl_etoiles != null and is_instance_valid(lbl_etoiles):
-		lbl_etoiles.modulate.a = 0.0
+		lbl_etoiles.text = "☆☆☆"
+		lbl_etoiles.modulate.a = 1.0
 	if bloc_diamant != null and is_instance_valid(bloc_diamant) and bilan.get("perfect", false):
 		bloc_diamant.modulate.a = 0.0
 
@@ -1596,6 +1691,9 @@ func _finir_remise() -> void:
 func _poser_label(l: Control) -> void:
 	if l != null and is_instance_valid(l):
 		l.modulate.a = 1.0
+		if l == lbl_etoiles and not bilan.is_empty():
+			var st := int(bilan.get("stars", 0))
+			lbl_etoiles.text = "★".repeat(st) + "☆".repeat(3 - st)
 
 
 ## L'avancée des trois temps, appelée par `_process`.
@@ -1609,6 +1707,13 @@ func _avancer_remise(delta: float) -> void:
 			while seq_joues < seq_n and seq_t >= float(seq_joues) * SEQ_ECART:
 				Sons.jouer("etoile%d" % mini(seq_joues, 2))
 				seq_joues += 1
+			# une étoile se remplit quand la sienne se POSE, pas quand elle part
+			if lbl_etoiles != null and is_instance_valid(lbl_etoiles):
+				var posees := 0
+				for i in range(seq_n):
+					if seq_t >= float(i) * SEQ_ECART + SEQ_POSE + SEQ_TENUE + SEQ_VOL * 0.9:
+						posees += 1
+				lbl_etoiles.text = "★".repeat(posees) + "☆".repeat(3 - posees)
 			if seq_t >= float(seq_n - 1) * SEQ_ECART + SEQ_POSE + SEQ_TENUE + SEQ_VOL:
 				_temps_du_diamant()
 		"diamant":
@@ -1707,6 +1812,45 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if app != null and (app.en_glissement() or app.en_attente()):
 		return
+	# --- LE ZOOM ------------------------------------------------------------
+	# « Le zoom peut être sympa quand même, et quand on clique sur recentrer le
+	# zoom se réinitialise aussi » (Vincent, 10 septembre 2026) — ce dernier
+	# point est déjà vrai : le bouton rend la main au cadrage automatique, qui
+	# porte son échelle avec lui.
+	#
+	# DEUX GESTES POUR LA MÊME CHOSE. La molette au bureau, le pincement au
+	# doigt. Le pincement demande de suivre les DEUX doigts : Godot envoie un
+	# événement d'écran par doigt, et — l'émulation de la souris étant active —
+	# le premier envoie AUSSI des événements de souris. On coupe donc le
+	# déplacement dès qu'un second doigt se pose, sans quoi la carte serait
+	# tirée pendant qu'on la pince.
+	if event is InputEventMouseButton and event.pressed \
+			and (event.button_index == MOUSE_BUTTON_WHEEL_UP or event.button_index == MOUSE_BUTTON_WHEEL_DOWN):
+		if event.position.x < panneau_l() + Sty.marges["gauche"]:
+			return
+		var sens: float = CRAN_ZOOM if event.button_index == MOUSE_BUTTON_WHEEL_UP else 1.0 / CRAN_ZOOM
+		_zoomer(float(cam["k"]) * sens, event.position)
+		return
+	if event is InputEventScreenTouch:
+		if event.pressed:
+			doigts[event.index] = event.position
+		else:
+			doigts.erase(event.index)
+		if doigts.size() == 2:
+			var p := doigts.values()
+			pince_ecart = max(1.0, (p[0] as Vector2).distance_to(p[1]))
+			pince_k = float(cam["k"])
+			glisse_pris = false
+		return
+	if event is InputEventScreenDrag:
+		doigts[event.index] = event.position
+		if doigts.size() == 2:
+			var p := doigts.values()
+			var e: float = max(1.0, (p[0] as Vector2).distance_to(p[1]))
+			_zoomer(pince_k * e / pince_ecart, ((p[0] as Vector2) + (p[1] as Vector2)) / 2.0)
+			return
+		return
+
 	# --- LA CARTE SE DÉPLACE AU DOIGT, dans ses limites -----------------------
 	# Un doigt posé sur la carte peut faire deux choses, et on ne sait laquelle
 	# qu'au relâcher : DÉSIGNER une gare, ou TIRER la carte. On garde donc le
@@ -1761,8 +1905,11 @@ func _toucher_carte(m: Vector2) -> void:
 	# en dur : sur l'iPhone de Vincent, où le viewport est étiré, cela fait
 	# huit points — moins d'un tiers de la pulpe d'un doigt. On vise donc
 	# aussi le nom, qui est la partie qu'on regarde.
+	# LE DOIGT VISE CE QUI EST DESSINÉ, et depuis qu'on peut tirer la carte cela
+	# comprend les voisins : on doit pouvoir toucher la gare qu'on est allé
+	# chercher.
 	var r_doigt: float = 22.0 * Sty.HUD_K
-	for id in gares_dessinees():
+	for id in gares_visibles():
 		var p := pos(id)
 		if p == Vector2.INF:
 			continue
@@ -2077,7 +2224,7 @@ func _remplir_barre() -> void:
 	if app != null:
 		milieu.add_child(_pastille("%d cr" % app.solde(), Sty.LAITON))
 	if int(e["diamants"]) > 0:
-		milieu.add_child(_pastille("◆ %d" % int(e["diamants"]), DIAMANT))
+		milieu.add_child(_pastille_gemme(int(e["diamants"])))
 	milieu.add_child(_pastille("★ %d" % n, OR))
 
 	# À DROITE, LE GRADE. C'est le plus lent des trois — il ne change que
@@ -2124,6 +2271,31 @@ func _pastille(texte: String, couleur: Color) -> Control:
 	return p
 
 
+## LE COMPTEUR DE DIAMANTS, AVEC SA PIERRE. « Idem dans la top bar » : le
+## « ◆ » y était un glyphe de corps 13, à peine un point à côté du nombre.
+## Même pastille que ses voisines, mais la pierre dessinée à la place du glyphe.
+func _pastille_gemme(n: int) -> Control:
+	var k := Sty.HUD_K
+	var p := PanelContainer.new()
+	p.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	var st := Sty.boite(Color(DIAMANT, 0.10), Color(DIAMANT, 0.35), Sty.R_PETIT * k, Sty.epaisseur(k))
+	st.content_margin_left = 8 * k
+	st.content_margin_right = 9 * k
+	st.content_margin_top = 3 * k
+	st.content_margin_bottom = 3 * k
+	p.add_theme_stylebox_override("panel", st)
+	var h := HBoxContainer.new()
+	h.add_theme_constant_override("separation", int(round(5 * k)))
+	var pierre := Gemme.new(self, 17.0 * k)
+	pierre.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	h.add_child(pierre)
+	var l := _label(str(n), 13, DIAMANT, true, false)
+	l.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	h.add_child(l)
+	p.add_child(h)
+	return p
+
+
 ## LA BANNIÈRE PORTE LE TITRE, comme sur la maquette. Empilés, l'image et
 ## l'en-tête prenaient cent unités de haut et poussaient la fiche de gare hors
 ## du panneau ; superposés, ils en prennent quatre-vingts et se lisent mieux —
@@ -2151,6 +2323,79 @@ func _pastille(texte: String, couleur: Color) -> Control:
 ## changer de hauteur, de police ou de contenu, le vol tombe toujours juste,
 ## et c'est ce Label qu'on masque jusqu'à l'atterrissage — sans quoi la
 ## récompense serait déjà en place avant d'y arriver.
+## LA TAILLE DE LA PIERRE, de profil : table, couronne, culasse. C'est la
+## silhouette que tout le monde lit comme un diamant, et elle tient à toutes
+## les échelles — de la gerbe du milieu de l'écran au losange du relevé.
+## Chaque pan a sa nuance : sans elles, la pierre redevient un losange plat.
+static func tailler_gemme(canvas: CanvasItem, c: Vector2, h: float, alpha: float) -> void:
+	var w: float = h * 0.86
+	var y_table: float = c.y - h * 0.42
+	var y_gird: float = c.y - h * 0.16
+	var y_pointe: float = c.y + h * 0.58
+	var xt: float = w * 0.27       # demi-largeur de la table
+	var xg: float = w * 0.50       # demi-largeur du rondiste
+	var clair := Color(1, 1, 1, 0.90).blend(Color(DIAMANT, 0.0))
+	var pans := [
+		# la table, le pan le plus clair : c'est lui qui rend la lumière
+		[[Vector2(-xt, y_table - c.y), Vector2(xt, y_table - c.y),
+			Vector2(xt * 0.72, y_gird - c.y), Vector2(-xt * 0.72, y_gird - c.y)], 1.00],
+		# les deux pans de couronne
+		[[Vector2(-xt, y_table - c.y), Vector2(-xt * 0.72, y_gird - c.y),
+			Vector2(-xg, y_gird - c.y)], 0.62],
+		[[Vector2(xt, y_table - c.y), Vector2(xt * 0.72, y_gird - c.y),
+			Vector2(xg, y_gird - c.y)], 0.80],
+		# la culasse, en deux versants
+		[[Vector2(-xg, y_gird - c.y), Vector2(-xt * 0.72, y_gird - c.y),
+			Vector2(0, y_pointe - c.y)], 0.46],
+		[[Vector2(-xt * 0.72, y_gird - c.y), Vector2(xt * 0.72, y_gird - c.y),
+			Vector2(0, y_pointe - c.y)], 0.70],
+		[[Vector2(xt * 0.72, y_gird - c.y), Vector2(xg, y_gird - c.y),
+			Vector2(0, y_pointe - c.y)], 0.55],
+	]
+	for pan in pans:
+		var pts := PackedVector2Array()
+		for v in pan[0]:
+			pts.append(c + v)
+		# « UN PEU MOINS TRANSPARENT » : les pans descendaient à 55 % d'opacité,
+		# et le parchemin passait à travers la pierre. Ils ne descendent plus
+		# sous 85 % — la nuance entre facettes vient de la couleur, plus du
+		# fond qui transparaît.
+		canvas.draw_colored_polygon(pts, Color(DIAMANT.lerp(clair, float(pan[1]) * 0.55),
+			(0.85 + 0.15 * float(pan[1])) * alpha))
+	# le contour, et l'arête du rondiste : deux traits, et la pierre tient
+	var bord := PackedVector2Array([
+		c + Vector2(-xt, y_table - c.y), c + Vector2(xt, y_table - c.y),
+		c + Vector2(xg, y_gird - c.y), c + Vector2(0, y_pointe - c.y),
+		c + Vector2(-xg, y_gird - c.y)])
+	bord.append(bord[0])
+	canvas.draw_polyline(bord, Color(Sty.ACCENT_CLAIR, 0.95 * alpha), maxf(1.0, h * 0.030), true)
+	canvas.draw_line(c + Vector2(-xg, y_gird - c.y), c + Vector2(xg, y_gird - c.y),
+		Color(Sty.ACCENT_CLAIR, 0.75 * alpha), maxf(1.0, h * 0.022), true)
+	# l'éclat : un court trait blanc sur le pan de gauche de la couronne
+	canvas.draw_line(c + Vector2(-xt * 0.86, y_table - c.y + h * 0.045),
+		c + Vector2(-xg * 0.80, y_gird - c.y - h * 0.02),
+		Color(1, 1, 1, 0.85 * alpha), maxf(1.0, h * 0.035), true)
+
+
+## LA PIERRE, EN PETIT, DANS UNE MISE EN PAGE. Le vol la dessine au milieu de
+## l'écran ; le relevé et la barre du haut la portent dans des conteneurs, où
+## seul un Control prend sa place. Même recette de taille, même facettes :
+## c'est la MÊME pierre, et on ne doit pas pouvoir croire qu'il y en a deux.
+class Gemme extends Control:
+	var vue: Node2D
+	var hauteur := 16.0
+
+	func _init(v: Node2D, h: float) -> void:
+		vue = v
+		hauteur = h
+		custom_minimum_size = Vector2(h * 0.9, h * 1.05)
+		mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+	func _draw() -> void:
+		if vue != null:
+			vue.tailler_gemme(self, size / 2.0 + Vector2(0, -hauteur * 0.06), hauteur, 1.0)
+
+
 class Vol extends Node2D:
 	var vue: Node2D
 
@@ -2242,7 +2487,7 @@ class Vol extends Node2D:
 		for j in range(18):
 			draw_circle(p, h * (0.45 + 1.00 * (1.0 - float(j) / 18.0)),
 				Color(vue.DIAMANT, 0.020 * alpha))
-		_tailler(p, h, alpha)
+		vue.tailler_gemme(self, p, h, alpha)
 		if titre > 0.0:
 			var ft: Font = Sty.titre(700)
 			var ts2: int = int(round(19.0 * k))
@@ -2251,54 +2496,6 @@ class Vol extends Node2D:
 					p.y + h * 0.92 + ft.get_ascent(ts2)),
 				"SANS FAUTE", Color(Sty.ACCENT_CLAIR, titre * alpha), 4.0 * k)
 
-	## LA TAILLE DE LA PIERRE, de profil : table, couronne, culasse. C'est la
-	## silhouette que tout le monde lit comme un diamant, et elle tient à toutes
-	## les échelles — de la gerbe du milieu de l'écran au losange du relevé.
-	## Chaque pan a sa nuance : sans elles, la pierre redevient un losange plat.
-	func _tailler(c: Vector2, h: float, alpha: float) -> void:
-		var w: float = h * 0.86
-		var y_table: float = c.y - h * 0.42
-		var y_gird: float = c.y - h * 0.16
-		var y_pointe: float = c.y + h * 0.58
-		var xt: float = w * 0.27       # demi-largeur de la table
-		var xg: float = w * 0.50       # demi-largeur du rondiste
-		var clair := Color(1, 1, 1, 0.90).blend(Color(vue.DIAMANT, 0.0))
-		var pans := [
-			# la table, le pan le plus clair : c'est lui qui rend la lumière
-			[[Vector2(-xt, y_table - c.y), Vector2(xt, y_table - c.y),
-				Vector2(xt * 0.72, y_gird - c.y), Vector2(-xt * 0.72, y_gird - c.y)], 1.00],
-			# les deux pans de couronne
-			[[Vector2(-xt, y_table - c.y), Vector2(-xt * 0.72, y_gird - c.y),
-				Vector2(-xg, y_gird - c.y)], 0.62],
-			[[Vector2(xt, y_table - c.y), Vector2(xt * 0.72, y_gird - c.y),
-				Vector2(xg, y_gird - c.y)], 0.80],
-			# la culasse, en deux versants
-			[[Vector2(-xg, y_gird - c.y), Vector2(-xt * 0.72, y_gird - c.y),
-				Vector2(0, y_pointe - c.y)], 0.46],
-			[[Vector2(-xt * 0.72, y_gird - c.y), Vector2(xt * 0.72, y_gird - c.y),
-				Vector2(0, y_pointe - c.y)], 0.70],
-			[[Vector2(xt * 0.72, y_gird - c.y), Vector2(xg, y_gird - c.y),
-				Vector2(0, y_pointe - c.y)], 0.55],
-		]
-		for pan in pans:
-			var pts := PackedVector2Array()
-			for v in pan[0]:
-				pts.append(c + v)
-			draw_colored_polygon(pts, Color(vue.DIAMANT.lerp(clair, float(pan[1]) * 0.55),
-				(0.55 + 0.45 * float(pan[1])) * alpha))
-		# le contour, et l'arête du rondiste : deux traits, et la pierre tient
-		var bord := PackedVector2Array([
-			c + Vector2(-xt, y_table - c.y), c + Vector2(xt, y_table - c.y),
-			c + Vector2(xg, y_gird - c.y), c + Vector2(0, y_pointe - c.y),
-			c + Vector2(-xg, y_gird - c.y)])
-		bord.append(bord[0])
-		draw_polyline(bord, Color(Sty.ACCENT_CLAIR, 0.95 * alpha), maxf(1.0, h * 0.030), true)
-		draw_line(c + Vector2(-xg, y_gird - c.y), c + Vector2(xg, y_gird - c.y),
-			Color(Sty.ACCENT_CLAIR, 0.75 * alpha), maxf(1.0, h * 0.022), true)
-		# l'éclat : un court trait blanc sur le pan de gauche de la couronne
-		draw_line(c + Vector2(-xt * 0.86, y_table - c.y + h * 0.045),
-			c + Vector2(-xg * 0.80, y_gird - c.y - h * 0.02),
-			Color(1, 1, 1, 0.85 * alpha), maxf(1.0, h * 0.035), true)
 
 
 	## Une récompense, à l'instant `t` de sa propre vie : elle grandit sur
@@ -2774,11 +2971,24 @@ func _bloc_bilan(avec_medailles: bool = true) -> Control:
 		ss.content_margin_bottom = 3 * Sty.HUD_K
 		sceau.add_theme_stylebox_override("panel", ss)
 		sceau.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-		lr.text = "◆  DIAMANT · SANS FAUTE"
+		# LA PIERRE EST DESSINÉE, ET À LA TAILLE DES ÉTOILES. Le « ◆ » était un
+		# glyphe de police en corps 12 : « le diamant à côté est minuscule, à
+		# agrandir ! » (Vincent, 10 septembre 2026). C'est maintenant la même
+		# pierre taillée que celle du vol, à la hauteur d'une étoile du relevé —
+		# la plus haute récompense ne pèse pas moins que les étoiles qu'elle
+		# couronne.
+		var ligne := HBoxContainer.new()
+		ligne.add_theme_constant_override("separation", int(round(6 * Sty.HUD_K)))
+		var pierre := Gemme.new(self, 20.0 * Sty.HUD_K)
+		pierre.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		ligne.add_child(pierre)
+		lr.text = "DIAMANT · SANS FAUTE"
 		lr.add_theme_font_override("font", Sty.titre(700))
 		lr.add_theme_font_size_override("font_size", int(round(12 * Sty.HUD_K)))
 		lr.add_theme_constant_override("outline_size", 0)
-		sceau.add_child(lr)
+		lr.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		ligne.add_child(lr)
+		sceau.add_child(ligne)
 		h.add_child(sceau)
 		lbl_diamant = lr
 		bloc_diamant = sceau
