@@ -1030,6 +1030,27 @@ Il suit une règle : **ce qui se vérifie tout seul d'abord**.
    l'envers ; la gare payée en pierres porte une gemme pâle ; « Mise rendue ·
    + 1 pierre » a sa ligne. Le prototype web suit (`data-payer-pierres`).
 
+   **CE QUI SE VEND, passe du 10 septembre 2026** (`economie-du-jeu.md`,
+   lot 3). Le modèle est tranché et écrit en données : `data/boutique.json`
+   porte une offre par carte payante, trois lots de pierres et le pack ;
+   `tools/boutique-check.mjs` refuse tout le reste (B1…B6, dont le garde-fou
+   « la voie sans gloire coûte cinq fois la carte », mesuré à 5,4 pour le
+   Rhin et 295 € pour l'Europe). `jeu/magasin.gd` est un autoload à trois
+   dos : « plateforme » si le singleton `InAppStore` du greffon iOS est là
+   (request_product_info, purchase, restore_purchases, pop_pending_event —
+   ÉCRIT À L'AVEUGLE, le greffon n'est pas dans le dépôt et le magasin
+   d'Apple ne se simule pas), « libre » sous `STATION_MAGASIN=libre` (le
+   déblocage de débogage prévu au design : on accorde sans payer), « aucun »
+   sinon (l'offre s'affiche, le bouton dit pourquoi il ne fait rien). Une
+   seule porte, `acheter(id)`, un seul signal, `fini`. Accorder, c'est écrire
+   dans la sauvegarde : `possedees[carte] = "achat"`, `achats.diamants += n`,
+   `possessions["pack-du-poste"]` plus toutes les cartes — le reste se déduit.
+   `jeu/boutique.gd` est la modale des pierres, ouverte depuis l'échec sans
+   le sou et depuis le pied des cartes. Vérifié en mode libre, au pilote :
+   acheter la carte la rend courante, le pack marque tout. Reste à exercer
+   sur l'appareil : le greffon, les produits dans App Store Connect, et la
+   restauration.
+
 À l'étape 3 et à l'étape 5, il existe une **oracle** : le prototype. Faire
 tourner les deux sur la même graine et comparer les sorties est le meilleur test
 de non-régression disponible, et il ne coûte rien à écrire.

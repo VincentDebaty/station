@@ -21,6 +21,7 @@ config/icon="res://jeu/icone.png"
 Donnees="*res://jeu/donnees.gd"
 Sauvegarde="*res://jeu/sauvegarde.gd"
 Sons="*res://jeu/sons.gd"
+Magasin="*res://jeu/magasin.gd"
 
 [display]
 

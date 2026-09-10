@@ -423,6 +423,20 @@ func get_possessions() -> Dictionary:
 	return sauve["possessions"]
 
 
+## Un objet possédé (le pack, plus tard une livrée) : `mode` dit comment
+## (« achat », « diamants »). Une fois, comme une carte.
+func possede(id: Variant) -> bool:
+	return _vrai(get_possessions().get(id))
+
+
+func acquerir_possession(id: Variant, mode: Variant = null) -> bool:
+	if not _vrai(id) or possede(id):
+		return false
+	get_possessions()[id] = mode if _vrai(mode) else "achat"
+	persister()
+	return true
+
+
 # --- Les résultats ----------------------------------------------------------------------
 ## Une gare tentée, même ratée, laisse une trace vide de tout score.
 func marquer_tentee(id: Variant) -> void:

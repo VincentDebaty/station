@@ -44,6 +44,7 @@ Il n'y a pas de framework de test. Il y a quatre contrôles headless, qui
 | `node tools/brevet.mjs` | le **brevet** de chaque fiche : le niveau maximal mesuré sain, une fois pour toutes, sur graines fixes |
 | `node tools/carte-check.mjs` | la carte est-elle livrable — règles **R1…R10 du ruban** |
 | `node tools/net-check.mjs` | le réseau tracé et les coordonnées (`js/geo.js`, `data/places.js`) |
+| `node tools/boutique-check.mjs` | ce qui se vend (`data/boutique.json`) — règles **B1…B6** : jamais de pièces, d'étoiles ni de temps ; la voie sans gloire coûte cinq fois la carte |
 
 **Le brevet évite de re-balayer le catalogue à chaque geste de carte** (ajouté
 le 27 août 2026) : une gare du ruban ne joue que des régimes en nombre fini —

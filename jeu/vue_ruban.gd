@@ -3610,6 +3610,11 @@ func _pied() -> Control:
 			if not mieux.is_empty():
 				texte += " Rejouer %s peut en rapporter %s." % [ville_de(String(mieux["id"])), Sty.nombre(int(mieux["manque"]))]
 			v.add_child(_label(texte, 12, MUET))
+			# ni pièces ni pierres : la boutique, si le catalogue en vend (lot 3)
+			if stock < prix_pierres and not Magasin.offres_de_pierres().is_empty():
+				var lien := Sty.lien("Obtenir des pierres", Sty.HUD_K, false)
+				lien.pressed.connect(_ouvrir_boutique)
+				v.add_child(lien)
 		var h := HBoxContainer.new()
 		h.add_theme_constant_override("separation", int(round(8 * Sty.HUD_K)))
 		if assez:
@@ -3682,6 +3687,10 @@ func _passer(id: String) -> void:
 func _passer_en_pierres(id: String) -> void:
 	if app != null:
 		app.passer_en_pierres(id)
+
+
+func _ouvrir_boutique() -> void:
+	Boutique.ouvrir(self, rebatir)
 
 
 ## La gare tenue qui a le plus à rendre si on la rejoue — sauf celle qu'on

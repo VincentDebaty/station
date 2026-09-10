@@ -317,6 +317,15 @@ function ajouterDiamantsAchetes(n) {
   return true;
 }
 function getPossessions() { return _progress.possessions || (_progress.possessions = {}); }
+// Un objet possédé (le pack, plus tard une livrée) : `mode` dit comment
+// (« achat », « diamants »). Une fois, comme une carte.
+function possede(id) { return !!getPossessions()[id]; }
+function acquerirPossession(id, mode) {
+  if (!id || possede(id)) return false;
+  getPossessions()[id] = mode || "achat";
+  persistProgress();
+  return true;
+}
 
 // ------------------------------------------------------------------
 // Solde. Une seule bourse pour tout le réseau, tous pays confondus.

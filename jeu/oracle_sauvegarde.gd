@@ -93,6 +93,8 @@ func _appliquer(s, op: Array) -> Variant:
 			return null
 		"acquerirCarte":
 			return s.acquerir_carte(op[1], op[2] if op.size() > 2 else null)
+		"acquerirPossession":
+			return s.acquerir_possession(op[1], op[2] if op.size() > 2 else null)
 		"setMuted":
 			s.set_muet(bool(op[1]))
 			return null

@@ -28,6 +28,7 @@ var brevets: Dictionary = {}          ## id -> {niveau, boss, geometrie, ...}
 var pays: Dictionary = {}             ## slug -> {label, drapeau, nom}
 var cartes_index: Array = []          ## [{id, nom, gratuite, fichier, sousTitre}]
 var cartes: Dictionary = {}           ## id -> carte complète
+var boutique: Dictionary = {}         ## data/boutique.json : ce qui se vend
 var geo: Dictionary = {}
 var lignes: Array = []
 var lieux: Dictionary = {}
@@ -50,6 +51,7 @@ func charger() -> void:
 	_charger_pays_et_fiches()
 	_charger_brevets()
 	_charger_cartes()
+	_charger_boutique()
 	_charger_derive()
 	duree_ms = Time.get_ticks_msec() - t0
 
@@ -146,6 +148,11 @@ func _charger_cartes() -> void:
 		var c: Variant = _lire_json(RACINE + "cartes/" + fichier)
 		if c is Dictionary:
 			cartes[id] = c
+
+
+func _charger_boutique() -> void:
+	var b: Variant = _lire_json(RACINE + "boutique.json")
+	boutique = b if b is Dictionary else {"offres": []}
 
 
 func _charger_derive() -> void:

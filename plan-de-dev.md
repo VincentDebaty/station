@@ -487,6 +487,24 @@ celui des pièces quand elles manquent, les pierres partent de la pastille vers
 la gare (gerbe à l'envers), la gare payée en pierres porte une gemme pâle, la
 mise rendue en pierres a sa ligne.
 
+*Lot 3 — FAIT le 10 septembre 2026* (`economie-du-jeu.md`, proposition E). **Ce
+qui se vend** : une carte (en pièces ou en argent), trois lots de pierres, le
+pack du poste — jamais de pièces, d'étoiles, de rangs ni de temps. Le
+catalogue est `data/boutique.json` ; `tools/boutique-check.mjs` (B1…B6) en est
+l'autorité, avec le garde-fou mesuré : la voie sans gloire coûte 5,4 fois le
+Rhin, et 295 € pour l'Europe. `jeu/magasin.gd` (autoload) tient trois dos —
+plateforme (raccord StoreKit du greffon iOS, écrit et NON exercé ici : le
+greffon n'est pas dans le dépôt), libre (`STATION_MAGASIN=libre`, le
+déblocage de débogage), aucun (l'offre dit pourquoi elle ne fait rien). Ce qui
+est accordé s'écrit dans la sauvegarde, rien d'autre ; `possessions` gagne
+`acquerir_possession` des deux côtés (`oracle-sauvegarde` 20/20, 41
+écritures). Écrans : la modale d'une carte propose les deux monnaies, la tuile
+dit « 15 000 pièces, ou 3,99 € », le pied des cartes porte le pack, les
+pierres et « Restaurer mes achats » ; l'échec sans pièces ni pierres ouvre la
+boutique (`jeu/boutique.gd`). Vérifié en mode libre, pilote au doigt : la carte
+achetée devient la carte courante, le pack marque la possession et toutes les
+cartes.
+
 <details><summary>Le plan d'origine du lot G</summary>
 
 **But** : le chapitre remplace la ligne, la zone devient un palier.
@@ -624,7 +642,9 @@ Il porte `startStation`, `startAdhocStation` et le cartouche de gare ; seul
   ruban strictement unique d'abord (§0 du document).
 - **Pas de chaîne graphique web** nouvelle : le prototype valide la structure,
   le rendu final est l'affaire du moteur.
-- **Pas de paiement réel** dans le prototype.
+- **Pas de paiement réel** dans le prototype web. Sous Godot, le raccord au
+  magasin de la plateforme est écrit (`jeu/magasin.gd`) mais ne s'exerce que
+  sur l'appareil, avec le greffon et les produits déclarés.
 - **Pas d'allongement du ruban**, définitivement depuis le 1er septembre 2026 :
   277 gares suffisent à juger le prototype, et les 316 restantes de
   `ruban-europe.md` ne s'écriront que sous le moteur, si elles s'écrivent.

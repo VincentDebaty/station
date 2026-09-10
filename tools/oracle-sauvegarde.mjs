@@ -81,6 +81,7 @@ const OPS = [
   ["setCarteCourante", "germanie"], ["setCarteCourante", "germanie"], ["setCarteCourante", ""],
   ["markTentee", "mons"], ["saveResult", "mons", 2, 8], ["pushSerie", false], ["payerPassage", "aachen"],
   ["acquerirCarte", "germanie", "credits"], ["acquerirCarte", "germanie", "achat"], ["acquerirCarte", "", "achat"],
+  ["acquerirPossession", "pack-du-poste", "achat"], ["acquerirPossession", "pack-du-poste", "diamants"], ["acquerirPossession", "livree", null], ["acquerirPossession", "", "achat"],
   ["setCarteCourante", "europe"], ["saveResult", "darlington", 3, 4],
   ["setMuted", true], ["setOnboarded", true], ["setMuted", false]
 ];

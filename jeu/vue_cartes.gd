@@ -4,8 +4,10 @@ extends Control
 ## Transposition de js/parcours.js (vueCartes, lot H). Il n'apparaît qu'à
 ## partir de deux cartes : avec une seule, il n'y a rien à choisir. Tout ce
 ## qu'une tuile montre se déduit de la définition de la carte et de la
-## progression enregistrée — rien n'est stocké pour l'affichage. La carte
-## bancaire est hors prototype : le bouton prend la place, et ne fait rien.
+## progression enregistrée — rien n'est stocké pour l'affichage. L'achat en
+## argent passe par le Magasin (lot 3) : une carte se paie en pièces OU en
+## argent, le pack prend toutes les cartes, et « Restaurer mes achats » les
+## retrouve depuis le magasin de la plateforme.
 ##
 ## IL ÉTAIT RESTÉ À L'ANCIENNE PALETTE (5 septembre 2026). Le bleu nuit du
 ## prototype, des rayons de 12 posés en dur sans facteur d'échelle, les
@@ -25,6 +27,8 @@ const OR := Sty.LAITON
 var app = null
 var colonne: VBoxContainer
 var modale: Control = null
+var avis: Label = null          # ce que le Magasin a répondu en dernier
+var attendu := ""               # l'offre dont on attend la réponse
 
 
 func _ready() -> void:
@@ -182,6 +186,14 @@ func _ouvrir_modale(id: String) -> void:
 	h.add_child(_bouton("Plus tard", false, true, _fermer_modale))
 	h.add_child(_bouton("Ouvrir · %s pièces" % Sty.nombre(prix), true, assez, _acheter.bind(id)))
 	v.add_child(h)
+	# OU EN ARGENT (lot 3). Le prix vient du catalogue, ou du magasin de la
+	# plateforme s'il a répondu ; le bouton dit lui-même quand il ne peut rien.
+	var o: Dictionary = Magasin.offre_de_carte(id)
+	if not o.is_empty():
+		v.add_child(_bouton("Acheter · %s" % Magasin.prix_de(o), false, Magasin.disponible(),
+			_acheter_argent.bind(String(o.get("id", "")))))
+		if not Magasin.disponible():
+			v.add_child(_encre(Magasin.EXPLICATION, 12, Sty.ENCRE_MUET, false))
 
 
 func _encre(texte: String, taille: int, couleur: Color, titre: bool) -> Label:
@@ -204,6 +216,40 @@ func _acheter(id: String) -> void:
 	_fermer_modale()
 	if Sauvegarde.possede_carte(id):
 		app.choisir_carte(id)
+
+
+## Acheter en argent : on passe la commande, et on attend le Magasin.
+func _acheter_argent(offre_id: String) -> void:
+	attendu = offre_id
+	if not Magasin.fini.is_connected(_sur_fini):
+		Magasin.fini.connect(_sur_fini)
+	Magasin.acheter(offre_id)
+
+
+func _sur_fini(offre_id: String, ok: bool, message: String) -> void:
+	if Magasin.fini.is_connected(_sur_fini):
+		Magasin.fini.disconnect(_sur_fini)
+	var o := Magasin.offre(offre_id)
+	attendu = ""
+	if ok and o.get("type") == "carte" and app != null:
+		_fermer_modale()
+		var cid := String(o.get("carte", ""))
+		if Sauvegarde.possede_carte(cid):
+			app.choisir_carte(cid)
+		return
+	rebatir()
+	if avis != null:
+		avis.text = message if not ok else ("C'est fait." if offre_id != "restaurer" else "Tes achats sont de retour.")
+
+
+func _restaurer() -> void:
+	if not Magasin.fini.is_connected(_sur_fini):
+		Magasin.fini.connect(_sur_fini)
+	Magasin.restaurer()
+
+
+func _ouvrir_boutique() -> void:
+	Boutique.ouvrir(self, rebatir)
 
 
 func _entree(id: String) -> Dictionary:
@@ -294,6 +340,36 @@ func rebatir() -> void:
 		var est_courante: bool = id == courante
 		rangee.add_child(_tuile(e, id, r, possede, prix, est_courante, solde))
 
+	# LE PIED DE L'ÉCRAN (lot 3) : le pack, les pierres, et la restauration.
+	# Ce qui se vend se lit d'un seul regard, sous les cartes.
+	var pied := HBoxContainer.new()
+	pied.add_theme_constant_override("separation", int(round(12 * k)))
+	var pack: Dictionary = Magasin.offre_pack()
+	if not pack.is_empty():
+		if Magasin.possede_pack():
+			pied.add_child(_pastille("Pack du poste — acquis", Sty.SARCELLE_CLAIR))
+		else:
+			var bp := _bouton("Le pack du poste · %s" % Magasin.prix_de(pack), true, Magasin.disponible(),
+				_acheter_argent.bind(String(pack.get("id", ""))))
+			bp.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+			bp.custom_minimum_size = Vector2(260 * k, 0)
+			pied.add_child(bp)
+	if not Magasin.offres_de_pierres().is_empty():
+		var bpi := _bouton("Des pierres", false, true, _ouvrir_boutique)
+		bpi.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+		bpi.custom_minimum_size = Vector2(150 * k, 0)
+		pied.add_child(bpi)
+	var ressort := Control.new()
+	ressort.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	ressort.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	pied.add_child(ressort)
+	var restaurer := Sty.lien("Restaurer mes achats", k, false)
+	restaurer.pressed.connect(_restaurer)
+	pied.add_child(restaurer)
+	colonne.add_child(pied)
+	avis = _label("" if Magasin.disponible() else Magasin.EXPLICATION, 12, MUET)
+	colonne.add_child(avis)
+
 
 func _tuile(e: Dictionary, id: String, r: Dictionary, possede: bool, prix: int,
 		est_courante: bool, solde: int) -> Control:
@@ -344,6 +420,10 @@ func _tuile(e: Dictionary, id: String, r: Dictionary, possede: bool, prix: int,
 	v.add_child(_label(String(e.get("sousTitre", "")), 13, MUET))
 	v.add_child(_label("%d chapitre%s · %d gares" % [
 		r["chapitres"], "s" if r["chapitres"] > 1 else "", r["gares"]], 13, TEXTE))
+	if not possede:
+		var o: Dictionary = Magasin.offre_de_carte(id)
+		if not o.is_empty():
+			v.add_child(_label("%s pièces, ou %s" % [Sty.nombre(prix), Magasin.prix_de(o)], 13, OR))
 	if r["entamee"]:
 		v.add_child(_label("%d / %d gares · ★ %d" % [r["faites"], r["gares"], r["etoiles"]], 13, OR))
 

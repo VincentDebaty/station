@@ -601,10 +601,21 @@ se rééquilibre sans migration.
 - Un joueur qui a fini l'Europe doit pouvoir s'offrir une deuxième carte sans
   payer, **même s'il a payé quelques passages en route**. C'est la contrainte
   qui cale les deux barèmes l'un contre l'autre.
-- **Achat CB** : achat intégré (App Store / Play). Hors prototype web : le
-  prototype ne modélise que l'état *possédée / verrouillée*, un prix en
-  crédits, et un déblocage de débogage. Le paiement réel arrive avec le moteur
-  final (Unity ou Godot, non tranché).
+- **Ce qui se vend** (tranché le 10 septembre 2026, `economie-du-jeu.md` §6,
+  lot 3) : **une carte** (en pièces OU en argent — le revenu principal),
+  **des pierres** (trois lots), et **le pack du poste** (toutes les cartes,
+  présentes et à venir). Le catalogue est `data/boutique.json`, et
+  `tools/boutique-check.mjs` en est l'autorité : jamais de pièces, d'étoiles,
+  de rangs, de médailles ni de temps ; toute carte payante a exactement une
+  offre ; acheter en pierres tous les passages d'une carte coûte au moins
+  cinq fois la carte (mesuré : 325 pierres ≈ 22 € pour le Rhin à 3,99 €, et
+  4 422 pierres ≈ 295 € pour un ruban d'Europe à zéro étoile). Sous Godot, le
+  `Magasin` (autoload) tient trois dos : le magasin de la plateforme (raccord
+  StoreKit écrit, non exercé), le mode libre `STATION_MAGASIN=libre` (le
+  déblocage de débogage), et aucun — l'offre s'affiche avec son prix et dit
+  que le paiement arrivera avec la version publiée. Ce qui est accordé
+  s'écrit dans la sauvegarde et rien d'autre : `possedees[id] = "achat"`,
+  `achats.diamants`, `possessions["pack-du-poste"]`.
 - **La première carte est gratuite** et complète : pas de démo tronquée.
 
 ---
@@ -697,8 +708,10 @@ au catalogue et comptent pour le grade.
 4. ~~Les trois barèmes de crédits~~ **Tranché le 10 septembre 2026** : le
    crédit devient la pièce, l'unité est multipliée par dix, la précision et
    les médailles paient (§7, `economie-du-jeu.md` lot 1) ; puis, le même jour,
-   **la pierre se dépense** (lot 2, §2.1, schéma 8). Reste ouvert là-bas : le
-   modèle commercial (E).
+   **la pierre se dépense** (lot 2, §2.1, schéma 8), et **ce qui se vend** est
+   tranché (lot 3, §7 : cartes, pierres, pack — jamais de pièces). Le
+   document est clos ; seul le raccord au magasin de la plateforme reste à
+   exercer sur l'appareil.
 5. **Les deuxièmes gares des grandes villes** : écrire Hanovre, Cologne,
    Zurich ou Bruxelles une seconde fois (autre gare réelle) rouvre plusieurs
    des dix chapitres mis en réserve par R6 (§5). Lesquelles, et dans quel
