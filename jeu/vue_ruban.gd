@@ -158,6 +158,7 @@ var plaques_ecran := {}       # la place des plaques au dernier dessin, pour le 
 
 # --- LA CARTE SE DÉPLACE AU DOIGT --------------------------------------------
 var cam_libre := false        # le joueur a pris la main sur le cadrage
+var emprise := Rect2(0, 0, CADRE_L, CADRE_H)   # ce que la carte a le droit de montrer
 var glisse_pris := false      # un doigt est posé sur la carte
 var glisse_depuis := Vector2.ZERO
 var glisse_cam := Vector2.ZERO
@@ -225,6 +226,7 @@ func poser(ruban_, carte_id_: String) -> void:
 	_projeter()
 	_construire_fond()
 	_construire_courbes()
+	_mesurer_emprise()
 	prochaine = ruban.gare_courante()
 	chapitre = _chapitre_de_reference()
 	cam = camera_voulue()
@@ -722,8 +724,53 @@ func _borner_camera() -> void:
 	var k: float = max(1e-6, float(cam["k"]))
 	var demi_l: float = float(f["w"]) / (2.0 * k)
 	var demi_h: float = float(f["h"]) / (2.0 * k)
-	cam["x"] = CADRE_L / 2.0 if demi_l * 2.0 >= CADRE_L else clampf(float(cam["x"]), demi_l, CADRE_L - demi_l)
-	cam["y"] = CADRE_H / 2.0 if demi_h * 2.0 >= CADRE_H else clampf(float(cam["y"]), demi_h, CADRE_H - demi_h)
+	var e := emprise
+	cam["x"] = e.get_center().x if demi_l * 2.0 >= e.size.x \
+		else clampf(float(cam["x"]), e.position.x + demi_l, e.end.x - demi_l)
+	cam["y"] = e.get_center().y if demi_h * 2.0 >= e.size.y \
+		else clampf(float(cam["y"]), e.position.y + demi_h, e.end.y - demi_h)
+
+
+## L'EMPRISE DE LA CARTE : le ruban, et une marge autour — pas le monde.
+##
+## Les bornes étaient celles du CADRE, c'est-à-dire du fond de carte entier :
+## on pouvait reculer jusqu'à voir l'Asie et l'Atlantique, de grandes zones où
+## aucune gare n'existe. « Il est inutile de voir des grandes zones vides (Asie
+## ou océan). Limite plus la carte » (Vincent, 10 septembre 2026).
+##
+## On borne donc sur la BOÎTE DES GARES DU RUBAN, élargie d'un DIXIÈME de sa
+## taille : assez pour que les gares du bord ne collent pas au cadre et que leur
+## plaque tienne, trop peu pour ouvrir un désert. Un cinquième, essayé d'abord,
+## laissait encore une bande de Méditerranée et un morceau de Russie. Mesurée une fois, à la pose de
+## la carte — le ruban ne change pas en cours de route.
+func _mesurer_emprise() -> void:
+	var b := Rect2()
+	var premier := true
+	for id in ruban.ordre:
+		var p := pos(id)
+		if p == Vector2.INF:
+			continue
+		if premier:
+			b = Rect2(p, Vector2.ZERO)
+			premier = false
+		else:
+			b = b.expand(p)
+	if premier:
+		emprise = Rect2(0, 0, CADRE_L, CADRE_H)
+		return
+	var marge: float = max(b.size.x, b.size.y) * 0.10
+	emprise = b.grow(marge).intersection(Rect2(0, 0, CADRE_L, CADRE_H))
+
+
+## LE RECUL MAXIMAL SE DÉDUIT DE L'EMPRISE : le zoom où elle tient tout
+## entière dans la fenêtre. En deçà, on reverrait le vide qu'on vient
+## d'interdire.
+func _k_min() -> float:
+	var f := fenetre()
+	var e := emprise
+	if e.size.x <= 0.0 or e.size.y <= 0.0:
+		return K_MIN_LIBRE
+	return maxf(K_MIN_LIBRE, minf(float(f["w"]) / e.size.x, float(f["h"]) / e.size.y))
 
 
 ## ZOOMER AUTOUR D'UN POINT, ET NON AUTOUR DU MILIEU. C'est toute la
@@ -733,7 +780,7 @@ func _borner_camera() -> void:
 ## point retombe exactement où il était.
 func _zoomer(vers: float, foyer: Vector2) -> void:
 	var k0: float = float(cam["k"])
-	var k1: float = clampf(vers, K_MIN_LIBRE, K_MAX_LIBRE)
+	var k1: float = clampf(vers, _k_min(), K_MAX_LIBRE)
 	if is_equal_approx(k0, k1):
 		return
 	var avant := monde(foyer)
