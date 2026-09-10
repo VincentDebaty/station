@@ -270,7 +270,7 @@ schéma 10. Contrairement aux vies, l'échec renvoie vers l'entraînement, pas
 vers l'attente.
 
 **P3 — Les vies à la Cookie Jam (demandé).** Cinq vies, une revient toutes
-les trente minutes, recharge en pierres. Évaluation honnête :
+les trente minutes, recharge payante. Évaluation honnête :
 
 - ce qu'elles achètent : de la tension, un rythme de session, et une vente ;
 - ce qu'elles coûtent : **une horloge dans la sauvegarde** (un horodatage de
@@ -287,9 +287,12 @@ les trente minutes, recharge en pierres. Évaluation honnête :
 
 Si Vincent la veut malgré tout, elle s'écrit : `vies: { n, perdueA }` dans la
 sauvegarde, `Time.get_unix_time_from_system()` côté Godot, `Date.now()` côté
-web, la recharge en pierres au prix de la boutique (`boutique-check` B-x : la
-vie n'est pas du temps qu'on vend, c'est une pierre qu'on dépense), et
-l'écran d'échec qui affiche le compte à rebours à la place de *Réessayer*.
+web, et l'écran d'échec qui affiche le compte à rebours à la place de
+*Réessayer*. La recharge pose un problème que la boutique a déjà tranché :
+`boutique-check` (B4) refuse de vendre du temps, et les pierres ne se
+dépensent plus depuis le 10 septembre au soir. Il resterait les pièces —
+mais une vie achetée en pièces vide la boucle « retourner dorer », qui est le
+jeu. C'est une raison de plus de préférer P2, où la vie se regagne en jouant.
 
 **P4 — La journée sans fin (Mini Metro).** Une fois une gare à trois
 étoiles, un mode où le service **ne s'arrête pas** : la cadence se resserre
