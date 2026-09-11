@@ -57,7 +57,7 @@ mieux ; la colonne « quand » dit ce que l'animation montre à cet instant.
 
 | fichier | quand | durée | description à coller |
 |---|---|---|---|
-| `glissement` | l'écran des cartes glisse devant le ruban, et revient | 0,32 s | *Son pour un slide* — prise remplacée le 11 septembre au soir. **Reculée à −18,5 dBFS** au lieu du standard : elle est continue là où tout le reste est un choc, et à crête égale son énergie moyenne en faisait le son le plus fort du jeu. Descendue en deux fois sur écoute en jeu, de RMS −13,6 à −29,1. |
+| `glissement` | l'écran des cartes glisse devant le ruban, et revient | — | **MUET depuis le 11 septembre 2026 au soir : le fichier a été retiré.** Deux prises ont été essayées, et la seconde reculée deux fois, de RMS −13,6 à −18,1 puis à −29,1 ; à ce niveau elle ne servait plus à rien, et elle gênait encore. Une transition d'écran n'a peut-être pas besoin de son. Redéposer un `glissement.wav` suffit à le rétablir. |
 | `saut` | le voyage de nuit : la caméra franchit un saut du ruban | 1,2 s | *Distant steam train passing at night, brief, receding, outdoors* |
 | `vitesse` | le joueur passe en ×2 ou ×4 | 0,2 s | *Small brass lever clicked one notch, mechanical, dry* |
 | `fermeture` | un quai ferme (`incident` à défaut de fichier) | 0,6 s | *Iron gate latch closed on a platform, metallic, echo of a station hall* |
@@ -114,12 +114,13 @@ produit des sons acceptés, ce qui ne veut pas dire qu'elles les reproduiraient.
 - **Crête à −3 dBFS par voie**, pour tous les fichiers, sauf quatre reculés
   exprès : `depart` (−15 dBFS) et `fret` (−9 dBFS) — un départ en retard et un
   convoi lointain ne doivent pas dominer la cloche de la réussite —, puis
-  `choix` (−9), `puce` (−12), `clic` (−19) et `glissement` (−18,5).
+  `choix` (−9), `puce` (−12) et `clic` (−19).
 - **Un son qu'on déclenche soi-même se recule beaucoup plus qu'on ne croit.**
-  `clic`, `glissement`, `choix` et `puce` ont tous été descendus après une
+  `clic`, `choix`, `puce` et `glissement` ont tous été descendus après une
   écoute en jeu, aucun ne s'est révélé trop faible. Le standard à −3 dBFS vaut
   pour ce que le jeu joue de lui-même ; ce que le joueur provoque doit
-  répondre sans s'entendre.
+  répondre sans s'entendre. **Et parfois la bonne valeur est le silence** :
+  `glissement` a fini par être retiré plutôt que reculé une troisième fois.
 - **La crête ne dit pas la présence.** Un son continu et un choc à la même
   crête ne pèsent pas pareil dans le mixage : c'est le RMS qu'il faut
   comparer, et le peloton vit entre −18 et −27.
