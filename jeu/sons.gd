@@ -49,7 +49,15 @@ const DOSSIER := "res://jeu/sons/"
 ## Les noms qui n'ont pas de signature synthétisée, et ce qu'ils jouent à
 ## défaut de fichier : la fermeture d'un quai retombe sur l'incident, les
 ## trois autres se taisent.
-const REPLI := {"fermeture": "incident"}
+##
+## `choix` (la gare qu'on touche sur la carte) retombe sur `puce`, et c'est
+## exactement ce que le jeu faisait avant le 11 septembre 2026 : le même son
+## servait au jeton qui PART le long de la voie et à la gare qu'on SÉLECTIONNE.
+## Deux gestes sans rapport — un mouvement d'une seconde et un choc instantané
+## —, et aucun bruitage ne pouvait convenir aux deux. Le repli garde le jeu
+## sonore tant que `choix.wav` n'est pas déposé ; le déposer suffit à séparer
+## les deux, sans toucher à ce fichier.
+const REPLI := {"fermeture": "incident", "choix": "puce"}
 var _fichiers: Dictionary = {}        # nom → AudioStream, ce qui a été déposé
 
 

@@ -47,7 +47,8 @@ mieux ; la colonne « quand » dit ce que l'animation montre à cet instant.
 | `bourse` | la dernière pièce est posée, la bourse est pleine | 0,4 s | *Handful of gold coins poured into a small leather pouch, short jingle, close* |
 | `depense` | des pièces quittent la pastille pour payer un passage | 0,3 s | *Coin slid across a wooden counter and dropped into a brass tray, one soft clink* |
 | `grade` | une promotion : le grade change dans la barre | 0,7 s | *Wax seal pressed onto parchment then a soft brass bell, ceremonial but quiet* |
-| `puce` | la puce de laiton part le long de la voie ; aussi : une gare choisie sur la carte | 0,2 s | *Brass token slid a few centimetres on polished wood, soft click at the end* |
+| `puce` | la puce de laiton part le long de la voie (elle voyage `SEQ_PUCE` = 1,2 s) | 0,34 s | *Brass token slid a few centimetres on polished wood, soft click at the end* |
+| `choix` | une gare qu'on touche sur la carte du ruban | 0,15 s | *A small brass token set down once on polished oak, one dry tap, close, no ring, no room* |
 | `arrivee` | la puce arrive à la gare suivante | 0,4 s | *Small brass desk bell, one ding, arrival, short* |
 | `annonce` | en réserve (une annonce en gare) | 0,5 s | *Old railway station announcement chime, two mellow notes, slightly distant hall* |
 
@@ -62,6 +63,15 @@ mieux ; la colonne « quand » dit ce que l'animation montre à cet instant.
 
 Sans fichier déposé, `glissement`, `saut` et `vitesse` se taisent — ils n'ont
 pas de signature synthétisée.
+
+## `puce` et `choix` : deux gestes, deux sons (11 septembre 2026)
+
+Jusqu'ici `puce` servait aux deux — le jeton qui PART le long de la voie, et
+la gare qu'on SÉLECTIONNE sur la carte. Un mouvement d'une seconde et un choc
+instantané : deux prises successives ont échoué à convenir aux deux, et c'est
+normal. `vue_ruban.gd` appelle désormais `choix` pour la sélection, et
+`sons.gd` le fait retomber sur `puce` tant que `choix.wav` n'est pas déposé —
+soit exactement le comportement d'avant.
 
 ## Ce que valent ces descriptions (11 septembre 2026)
 

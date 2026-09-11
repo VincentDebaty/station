@@ -2152,7 +2152,7 @@ func _selectionner(id: String) -> void:
 	if selection == id:
 		return
 	selection = id
-	Sons.jouer("puce")
+	Sons.jouer("choix")   # un choc, pas le glissement du jeton qui part
 	rebatir()
 
 
