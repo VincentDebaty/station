@@ -38,7 +38,7 @@ mieux ; la colonne « quand » dit ce que l'animation montre à cet instant.
 | `heure` | un convoi part **à l'heure** ; la hauteur monte avec la série (8 crans, gérés par le jeu) | 0,5 s | *Single clear strike of a small brass platform bell, bright, short decay, no room* |
 | `fret` | un lourd convoi de marchandises se présente à l'entrée | 1,0 s | *Distant diesel freight locomotive horn, low and rounded, one blast, fading, outdoors* |
 | `incident` | un retard s'annonce, un quai ferme, ou un convoi s'est trompé de quai et refoule | 0,5 s | *Old railway signal box alarm bell, two quick clanks, metallic, small, dry* |
-| `dommage` | l'échec : le tampon rouge se pose sur le relevé | 0,6 s | *Heavy rubber stamp slammed once on paper over a wooden desk, thud with a short paper slap* |
+| `dommage` | l'échec : le tampon rouge se pose sur le relevé | 0,46 s | *A heavy wooden-handled rubber stamp pressed hard onto a thick sheet of paper lying on an oak desk. A deep muffled thud, the dull slap of the paper underneath, then the short wooden resonance of the desk itself. Close, indoors, small office, no reverb tail.* |
 | `fin` | le service est tenu ; le relevé arrive | 0,7 s | *Small warm end-of-shift bell in a railway office, two soft strikes, close* |
 | `parfait` | un sans-faute : la fanfare des cinq notes, la seule du jeu | 0,8 s | *Five ascending notes on a small glockenspiel, bright and quick, C major arpeggio, dry* |
 | `etoile` | une étoile se pose sur la feuille (3 variantes en hauteur, gérées par le jeu) | 0,3 s | *Tiny brass pin dropped onto thick parchment on a desk, small metallic tick with a faint ring* |
@@ -55,10 +55,36 @@ mieux ; la colonne « quand » dit ce que l'animation montre à cet instant.
 
 | fichier | quand | durée | description à coller |
 |---|---|---|---|
-| `glissement` | l'écran des cartes glisse devant le ruban, et revient | 0,4 s | *Heavy sheet of paper slid across a wooden desk, soft, one movement* |
+| `glissement` | l'écran des cartes glisse devant le ruban, et revient | 0,32 s | *A single heavy sheet of paper pushed in one smooth movement across a wooden desk. A dry fibrous rustle with weight to it, one continuous gesture that stops cleanly. Close, indoors, no reverb, no whoosh.* |
 | `saut` | le voyage de nuit : la caméra franchit un saut du ruban | 1,2 s | *Distant steam train passing at night, brief, receding, outdoors* |
 | `vitesse` | le joueur passe en ×2 ou ×4 | 0,2 s | *Small brass lever clicked one notch, mechanical, dry* |
 | `fermeture` | un quai ferme (`incident` à défaut de fichier) | 0,6 s | *Iron gate latch closed on a platform, metallic, echo of a station hall* |
 
 Sans fichier déposé, `glissement`, `saut` et `vitesse` se taisent — ils n'ont
 pas de signature synthétisée.
+
+## Ce que valent ces descriptions (11 septembre 2026)
+
+Les deux ci-dessus ont été **réécrites après une écoute** : les précédentes
+(« Heavy rubber stamp slammed once… », « Heavy sheet of paper slid… ») ont
+produit un tampon sec et sans corps, et un souffle plutôt que du papier. Ce
+qui a marché tient en une règle : **décrire la matière ET la pièce**, pas le
+geste seul. Les autres lignes du tableau n'ont pas été revues ; elles ont
+produit des sons acceptés, ce qui ne veut pas dire qu'elles les reproduiraient.
+
+## Le niveau et la durée, tels qu'ils sont appliqués
+
+- **Crête à −3 dBFS par voie**, pour tous les fichiers, sauf deux reculés
+  exprès : `depart` (−15 dBFS) et `fret` (−9 dBFS) — un départ en retard et un
+  convoi lointain ne doivent pas dominer la cloche de la réussite.
+- **Mono**, sauf si sommer les deux voies coûte plus d'un décibel de RMS : six
+  fichiers sur vingt ont une vraie largeur et restent stéréo.
+- **48 kHz conservé.** Godot le lit, et sans sox ni ffmpeg sur la machine un
+  rééchantillonneur maison coûterait plus qu'il ne rapporterait.
+- **La durée se taille sur l'animation, pas sur la cible du tableau.** Les
+  chiffres qui font autorité sont dans le code : `GLISSE = 0,32` (app.gd),
+  `SEQ_ECHEC_POSE = 0,32`, `SEQ_PUCE = 1,20`, `SEQ_ECART = 0,17` d'une étoile à
+  la suivante et `SEQ_PIECE_ECART = 0,07` d'une pièce à la suivante
+  (vue_ruban.gd). Un son plus long que l'écart de sa rafale se superpose à
+  lui-même : `piece` à 0,48 s tenait sept exemplaires sur les huit voix de
+  `sons.gd`.
