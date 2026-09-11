@@ -47,8 +47,8 @@ mieux ; la colonne « quand » dit ce que l'animation montre à cet instant.
 | `bourse` | la dernière pièce est posée, la bourse est pleine | 0,4 s | *Handful of gold coins poured into a small leather pouch, short jingle, close* |
 | `depense` | des pièces quittent la pastille pour payer un passage | 0,3 s | *Coin slid across a wooden counter and dropped into a brass tray, one soft clink* |
 | `grade` | une promotion : le grade change dans la barre | 0,7 s | *Wax seal pressed onto parchment then a soft brass bell, ceremonial but quiet* |
-| `puce` | la puce de laiton part le long de la voie (elle voyage `SEQ_PUCE` = 1,2 s) | 0,42 s | *Marble rolling on wood* — une bille qui roule, pas un jeton qui glisse : c'est le son d'une chose qui S'EN VA. Trois prises de glissement de laiton ont échoué avant celle-ci. |
-| `choix` | une gare qu'on touche sur la carte du ruban | 0,16 s | *Wood chess piece placed* — la pièce d'échecs posée sur son plateau. Crête à 20 ms, morte à 150 : un choc, pas une résonance. C'est le son le plus souvent entendu du jeu, il doit s'effacer. |
+| `puce` | la puce de laiton part le long de la voie (elle voyage `SEQ_PUCE` = 1,2 s) | 0,25 s | *Marble rolling on wood* — une bille qui roule, pas un jeton qui glisse : c'est le son d'une chose qui S'EN VA. Trois prises de glissement de laiton ont échoué avant celle-ci. Allégée après essai sur l'iPhone : +7 demi-tons et -9 dB. |
+| `choix` | une gare qu'on touche sur la carte du ruban | 0,13 s | *Wood chess piece placed* — la pièce d'échecs posée sur son plateau. Crête à 20 ms, morte à 150 : un choc, pas une résonance. C'est le son le plus souvent entendu du jeu, il doit s'effacer. Allégée après essai sur l'iPhone : +4 demi-tons et -6 dB. |
 | `arrivee` | la puce arrive à la gare suivante | 0,4 s | *Small brass desk bell, one ding, arrival, short* |
 | `annonce` | en réserve (une annonce en gare) | 0,5 s | *Old railway station announcement chime, two mellow notes, slightly distant hall* |
 
@@ -91,9 +91,14 @@ produit des sons acceptés, ce qui ne veut pas dire qu'elles les reproduiraient.
 
 ## Le niveau et la durée, tels qu'ils sont appliqués
 
-- **Crête à −3 dBFS par voie**, pour tous les fichiers, sauf deux reculés
+- **Crête à −3 dBFS par voie**, pour tous les fichiers, sauf quatre reculés
   exprès : `depart` (−15 dBFS) et `fret` (−9 dBFS) — un départ en retard et un
-  convoi lointain ne doivent pas dominer la cloche de la réussite.
+  convoi lointain ne doivent pas dominer la cloche de la réussite —, puis
+  `choix` (−9) et `puce` (−12), allégés après un essai sur l'iPhone.
+- **Un son qu'on déclenche soi-même se juge en jeu, pas au casque.** `choix` et
+  `puce` avaient gagné leur banc d'essai à −3 dBFS ; au doigt, sur la carte,
+  ils écrasaient. Monter la hauteur allège autant que baisser le volume : ce
+  n'est plus le même objet, c'en est un plus petit.
 - **Mono**, sauf si sommer les deux voies coûte plus d'un décibel de RMS : six
   fichiers sur vingt ont une vraie largeur et restent stéréo.
 - **48 kHz conservé.** Godot le lit, et sans sox ni ffmpeg sur la machine un
