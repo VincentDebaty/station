@@ -57,7 +57,10 @@ const DOSSIER := "res://jeu/sons/"
 ## —, et aucun bruitage ne pouvait convenir aux deux. Le repli garde le jeu
 ## sonore tant que `choix.wav` n'est pas déposé ; le déposer suffit à séparer
 ## les deux, sans toucher à ce fichier.
-const REPLI := {"fermeture": "incident", "choix": "puce"}
+## `clic` (n'importe quel bouton) retombe sur `choix` : c'est déjà un petit
+## choc de bois, et le jeu sonne donc dès maintenant. Déposer `clic.wav`
+## suffira à lui donner sa propre matière, sans toucher à ce fichier.
+const REPLI := {"fermeture": "incident", "choix": "puce", "clic": "choix"}
 var _fichiers: Dictionary = {}        # nom → AudioStream, ce qui a été déposé
 
 

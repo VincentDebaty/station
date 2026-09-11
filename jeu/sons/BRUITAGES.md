@@ -48,6 +48,7 @@ mieux ; la colonne « quand » dit ce que l'animation montre à cet instant.
 | `depense` | des pièces quittent la pastille pour payer un passage | 0,3 s | *Coin slid across a wooden counter and dropped into a brass tray, one soft clink* |
 | `grade` | une promotion : le grade change dans la barre | 0,7 s | *Wax seal pressed onto parchment then a soft brass bell, ceremonial but quiet* |
 | `puce` | la puce de laiton part le long de la voie (elle voyage `SEQ_PUCE` = 1,2 s) | 0,25 s | *Marble rolling on wood* — une bille qui roule, pas un jeton qui glisse : c'est le son d'une chose qui S'EN VA. Trois prises de glissement de laiton ont échoué avant celle-ci. Allégée après essai sur l'iPhone : +7 demi-tons et -9 dB. |
+| `clic` | **n'importe quel bouton du jeu**, et la carte de mission qu'on touche. Sans fichier, retombe sur `choix`. | 0,12 s | *A small brass-and-wood button pressed once, one dry tick, close, no ring* — le plus léger de tous : il sonne à chaque geste. |
 | `choix` | une gare qu'on touche sur la carte du ruban | 0,13 s | *Wood chess piece placed* — la pièce d'échecs posée sur son plateau. Crête à 20 ms, morte à 150 : un choc, pas une résonance. C'est le son le plus souvent entendu du jeu, il doit s'effacer. Allégée après essai sur l'iPhone : +4 demi-tons et -6 dB. |
 | `arrivee` | la puce arrive à la gare suivante | 0,4 s | *Small brass desk bell, one ding, arrival, short* |
 | `annonce` | en réserve (une annonce en gare) | 0,5 s | *Old railway station announcement chime, two mellow notes, slightly distant hall* |
@@ -63,6 +64,25 @@ mieux ; la colonne « quand » dit ce que l'animation montre à cet instant.
 
 Sans fichier déposé, `glissement`, `saut` et `vitesse` se taisent — ils n'ont
 pas de signature synthétisée.
+
+## Où s'accroche le clic des boutons (11 septembre 2026)
+
+`Sty.bouton()` est la fabrique unique : `bouton_plaque()` et `lien()`
+l'appellent, donc un seul `pressed.connect` y couvre tous les boutons du jeu.
+Deux réserves, payées sur place :
+
+- **La fonction est statique, et GDScript n'expose pas les autoloads dans un
+  contexte statique.** Écrire `Sons.jouer(...)` dans `Sty.bouton` ne compile
+  pas — « Identifier not found: Sons ». On passe par le nœud du bouton,
+  `b.get_node_or_null("/root/Sons")`, qui est dans l'arbre au moment du clic.
+- **Le bandeau du poste n'est pas fait de `Button`** : `_clic_bandeau`
+  (`vue_jeu.gd`) teste des rectangles à la main, et échappe donc à la
+  fabrique. Le clic y est posé branche par branche — sauf sur la vitesse, qui
+  fait déjà entendre son levier, et sur l'interrupteur du son.
+
+Deux autres cibles ne sont pas des boutons stylés et ont leur propre
+accroche dans `vue_cartes.gd` : le voile d'une modale, et `_zone_cliquable`,
+la carte de mission elle-même.
 
 ## `puce` et `choix` : deux gestes, deux sons (11 septembre 2026)
 

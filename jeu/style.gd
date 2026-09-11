@@ -653,4 +653,17 @@ static func bouton(texte: String, principal: bool = false, taille: int = 15, k: 
 	b.add_theme_color_override("font_color", Color("#0b1a1f") if principal else TEXTE)
 	b.add_theme_color_override("font_hover_color", Color("#0b1a1f") if principal else TEXTE)
 	b.add_theme_color_override("font_pressed_color", Color("#0b1a1f") if principal else TEXTE)
+	# TOUS LES BOUTONS DU JEU PASSENT ICI — `bouton_plaque` et `lien` appellent
+	# celui-ci —, c'est donc le seul endroit où accrocher le clic. Sur
+	# `pressed` et non `button_down` : un doigt qui glisse hors du bouton avant
+	# de se lever n'a rien déclenché, il ne doit rien faire entendre.
+	#
+	# ON VA CHERCHER L'AUTOLOAD PAR SON CHEMIN, et non par son nom : cette
+	# fonction est STATIQUE, et GDScript n'expose pas les singletons dans un
+	# contexte statique — écrire `Sons.jouer(...)` ici ne compile pas. Le
+	# bouton, lui, est un nœud de l'arbre au moment où on le presse.
+	b.pressed.connect(func() -> void:
+		var sons: Node = b.get_node_or_null("/root/Sons")
+		if sons != null:
+			sons.jouer("clic"))
 	return b

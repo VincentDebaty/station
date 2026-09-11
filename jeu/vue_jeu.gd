@@ -2043,12 +2043,20 @@ func _placer_bulle() -> void:
 
 
 ## Un geste sur le bandeau. Rend vrai s'il a été pris.
+##
+## LE BANDEAU N'EST PAS FAIT DE `Button` : ce sont des rectangles testés à la
+## main, qui échappent donc au clic accroché dans `Sty.bouton`. On le pose ici
+## branche par branche — sauf sur la vitesse, qui fait déjà entendre son
+## levier, et sur l'interrupteur du son, qui joue le carillon du départ quand
+## il rétablit (et ne peut évidemment rien jouer quand il coupe).
 func _clic_bandeau(m: Vector2) -> bool:
 	if zones_hud.get("carte", Rect2()).has_point(m):
+		Sons.jouer("clic")
 		if app != null:
 			_demander_abandon()
 		return true
 	if zones_hud.get("play", Rect2()).has_point(m) or zones_hud.get("pause", Rect2()).has_point(m):
+		Sons.jouer("clic")
 		if not gel:
 			pause = not pause
 		return true
@@ -2058,6 +2066,7 @@ func _clic_bandeau(m: Vector2) -> bool:
 		Sons.jouer("vitesse")   # le levier qui passe un cran — muet sans fichier déposé
 		return true
 	if zones_hud.get("gear", Rect2()).has_point(m):
+		Sons.jouer("clic")
 		reglages_ouverts = not reglages_ouverts
 		return true
 	if reglages_ouverts:
@@ -2070,6 +2079,7 @@ func _clic_bandeau(m: Vector2) -> bool:
 				Sons.jouer("depart")
 			return true
 		if zones_hud.get("recommencer", Rect2()).has_point(m):
+			Sons.jouer("clic")
 			reglages_ouverts = false
 			# Une journée finie n'a rien à abandonner : on la rejoue tout de
 			# suite, comme « Rejouer » sur le relevé du prototype.
@@ -2083,6 +2093,7 @@ func _clic_bandeau(m: Vector2) -> bool:
 		# UN CLIC AILLEURS REFERME LE VOLET, et ne fait que cela : sur un
 		# téléphone, le geste qui range un menu ne doit pas aussi aiguiller un
 		# convoi resté sous le doigt.
+		Sons.jouer("clic")
 		reglages_ouverts = false
 		return true
 	return false

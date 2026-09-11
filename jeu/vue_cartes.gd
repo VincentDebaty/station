@@ -155,6 +155,7 @@ func _ouvrir_modale(id: String) -> void:
 	for quoi in ["normal", "hover", "pressed", "focus"]:
 		voile.add_theme_stylebox_override(quoi,
 			Sty.boite(Color(Sty.BOIS, 0.82), Color(0, 0, 0, 0), 0, 0))
+	voile.pressed.connect(func() -> void: Sons.jouer("clic"))
 	voile.pressed.connect(_fermer_modale)
 	modale.add_child(voile)
 
@@ -452,6 +453,7 @@ func _zone_cliquable(id: String, possede: bool) -> Button:
 	# le seul retour visuel : un voile de laiton quand le doigt est dessus
 	b.add_theme_stylebox_override("hover",
 		Sty.boite(Color(Sty.LAITON, 0.07), Color(0, 0, 0, 0), Sty.R_GRAND * Sty.HUD_K, 0))
+	b.pressed.connect(func() -> void: Sons.jouer("clic"))
 	b.pressed.connect(_toucher.bind(id, possede))
 	return b
 
