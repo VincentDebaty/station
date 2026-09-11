@@ -47,8 +47,8 @@ mieux ; la colonne « quand » dit ce que l'animation montre à cet instant.
 | `bourse` | la dernière pièce est posée, la bourse est pleine | 0,4 s | *Handful of gold coins poured into a small leather pouch, short jingle, close* |
 | `depense` | des pièces quittent la pastille pour payer un passage | 0,3 s | *Coin slid across a wooden counter and dropped into a brass tray, one soft clink* |
 | `grade` | une promotion : le grade change dans la barre | 0,7 s | *Wax seal pressed onto parchment then a soft brass bell, ceremonial but quiet* |
-| `puce` | la puce de laiton part le long de la voie (elle voyage `SEQ_PUCE` = 1,2 s) | 0,34 s | *Brass token slid a few centimetres on polished wood, soft click at the end* |
-| `choix` | une gare qu'on touche sur la carte du ruban | 0,15 s | *A small brass token set down once on polished oak, one dry tap, close, no ring, no room* |
+| `puce` | la puce de laiton part le long de la voie (elle voyage `SEQ_PUCE` = 1,2 s) | 0,42 s | *Marble rolling on wood* — une bille qui roule, pas un jeton qui glisse : c'est le son d'une chose qui S'EN VA. Trois prises de glissement de laiton ont échoué avant celle-ci. |
+| `choix` | une gare qu'on touche sur la carte du ruban | 0,16 s | *Wood chess piece placed* — la pièce d'échecs posée sur son plateau. Crête à 20 ms, morte à 150 : un choc, pas une résonance. C'est le son le plus souvent entendu du jeu, il doit s'effacer. |
 | `arrivee` | la puce arrive à la gare suivante | 0,4 s | *Small brass desk bell, one ding, arrival, short* |
 | `annonce` | en réserve (une annonce en gare) | 0,5 s | *Old railway station announcement chime, two mellow notes, slightly distant hall* |
 
@@ -75,7 +75,14 @@ soit exactement le comportement d'avant.
 
 ## Ce que valent ces descriptions (11 septembre 2026)
 
-Les deux ci-dessus ont été **réécrites après une écoute** : les précédentes
+Quatre des cinq bruitages refaits ce jour-là ont demandé DEUX prises ou plus,
+et `puce` en a demandé trois — la troisième n'a réussi qu'en changeant d'objet
+physique (une bille qui roule au lieu d'un jeton qui glisse) et de source (la
+bibliothèque au lieu de la génération : les frictions courtes et discrètes sont
+ce que ces modèles ratent le plus). Affiner la même description une troisième
+fois n'aurait rien donné.
+
+Les deux descriptions de `dommage` et `glissement` ont été **réécrites après une écoute** : les précédentes
 (« Heavy rubber stamp slammed once… », « Heavy sheet of paper slid… ») ont
 produit un tampon sec et sans corps, et un souffle plutôt que du papier. Ce
 qui a marché tient en une règle : **décrire la matière ET la pièce**, pas le
