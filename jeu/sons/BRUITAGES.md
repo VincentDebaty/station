@@ -48,7 +48,7 @@ mieux ; la colonne « quand » dit ce que l'animation montre à cet instant.
 | `depense` | des pièces quittent la pastille pour payer un passage | 0,3 s | *Coin slid across a wooden counter and dropped into a brass tray, one soft clink* |
 | `grade` | une promotion : le grade change dans la barre | 0,7 s | *Wax seal pressed onto parchment then a soft brass bell, ceremonial but quiet* |
 | `puce` | la puce de laiton part le long de la voie (elle voyage `SEQ_PUCE` = 1,2 s) | 0,25 s | *Marble rolling on wood* — une bille qui roule, pas un jeton qui glisse : c'est le son d'une chose qui S'EN VA. Trois prises de glissement de laiton ont échoué avant celle-ci. Allégée après essai sur l'iPhone : +7 demi-tons et -9 dB. |
-| `clic` | **n'importe quel bouton du jeu**, et la carte de mission qu'on touche. Sans fichier, retombe sur `choix`. | 0,12 s | *A small brass-and-wood button pressed once, one dry tick, close, no ring* — le plus léger de tous : il sonne à chaque geste. |
+| `clic` | **n'importe quel bouton du jeu**, et la carte de mission qu'on touche | 0,11 s | **Tiré de `choix`**, monté de 3 demi-tons et reculé de 10 dB. Ce n'est pas une prise à part : c'est la même pièce d'échecs, plus petite et plus loin. RMS −38,4, le son le plus discret du jeu de 5 dB — il sonne à chaque geste, il ne doit pas s'entendre, seulement répondre. |
 | `choix` | une gare qu'on touche sur la carte du ruban | 0,13 s | *Wood chess piece placed* — la pièce d'échecs posée sur son plateau. Crête à 20 ms, morte à 150 : un choc, pas une résonance. C'est le son le plus souvent entendu du jeu, il doit s'effacer. Allégée après essai sur l'iPhone : +4 demi-tons et -6 dB. |
 | `arrivee` | la puce arrive à la gare suivante | 0,4 s | *Small brass desk bell, one ding, arrival, short* |
 | `annonce` | en réserve (une annonce en gare) | 0,5 s | *Old railway station announcement chime, two mellow notes, slightly distant hall* |
@@ -57,7 +57,7 @@ mieux ; la colonne « quand » dit ce que l'animation montre à cet instant.
 
 | fichier | quand | durée | description à coller |
 |---|---|---|---|
-| `glissement` | l'écran des cartes glisse devant le ruban, et revient | 0,32 s | *Son pour un slide* — prise remplacée le 11 septembre au soir. **Reculée à −7,5 dBFS** au lieu du standard : elle est continue là où tout le reste est un choc, et à crête égale son énergie moyenne en faisait le son le plus fort du jeu (RMS −13,6 contre −18,1 pour celle qu'elle remplace). |
+| `glissement` | l'écran des cartes glisse devant le ruban, et revient | 0,32 s | *Son pour un slide* — prise remplacée le 11 septembre au soir. **Reculée à −18,5 dBFS** au lieu du standard : elle est continue là où tout le reste est un choc, et à crête égale son énergie moyenne en faisait le son le plus fort du jeu. Descendue en deux fois sur écoute en jeu, de RMS −13,6 à −29,1. |
 | `saut` | le voyage de nuit : la caméra franchit un saut du ruban | 1,2 s | *Distant steam train passing at night, brief, receding, outdoors* |
 | `vitesse` | le joueur passe en ×2 ou ×4 | 0,2 s | *Small brass lever clicked one notch, mechanical, dry* |
 | `fermeture` | un quai ferme (`incident` à défaut de fichier) | 0,6 s | *Iron gate latch closed on a platform, metallic, echo of a station hall* |
@@ -114,8 +114,12 @@ produit des sons acceptés, ce qui ne veut pas dire qu'elles les reproduiraient.
 - **Crête à −3 dBFS par voie**, pour tous les fichiers, sauf quatre reculés
   exprès : `depart` (−15 dBFS) et `fret` (−9 dBFS) — un départ en retard et un
   convoi lointain ne doivent pas dominer la cloche de la réussite —, puis
-  `choix` (−9) et `puce` (−12), allégés après un essai sur l'iPhone, et
-  `glissement` (−7,5), reculé parce qu'il est continu.
+  `choix` (−9), `puce` (−12), `clic` (−19) et `glissement` (−18,5).
+- **Un son qu'on déclenche soi-même se recule beaucoup plus qu'on ne croit.**
+  `clic`, `glissement`, `choix` et `puce` ont tous été descendus après une
+  écoute en jeu, aucun ne s'est révélé trop faible. Le standard à −3 dBFS vaut
+  pour ce que le jeu joue de lui-même ; ce que le joueur provoque doit
+  répondre sans s'entendre.
 - **La crête ne dit pas la présence.** Un son continu et un choc à la même
   crête ne pèsent pas pareil dans le mixage : c'est le RMS qu'il faut
   comparer, et le peloton vit entre −18 et −27.
