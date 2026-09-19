@@ -1426,6 +1426,11 @@ document.querySelectorAll(".speed").forEach(b => b.addEventListener("click", () 
   document.querySelectorAll(".speed").forEach(x => x.classList.toggle("active", x === b));
 }));
 document.getElementById("btn-start").addEventListener("click", () => {
+  // La journée a été construite au chargement, avant tout réglage : on la
+  // reconstruit avec ce que la carte d'accueil dit MAINTENANT — la gare,
+  // les débits, la patience. Sans cela, un choix fait ici n'était lu qu'au
+  // « Reprendre le service » suivant.
+  resetGame();
   document.getElementById("intro").classList.add("hidden");
   started = true;
 });
