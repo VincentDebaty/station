@@ -174,7 +174,7 @@
       <h1>Gare de Namur — les voyageurs</h1>
       <p><b>Un train n'a pas d'heure. Il a une destination, et c'est sa couleur.</b> Six directions réelles : Bruxelles, Charleroi et Dinant à l'ouest ; Liège, Luxembourg et Arlon à l'est.</p>
       <p><b>Les voyageurs attendent sur les quais</b>, un rond chacun, de la couleur de là où ils vont — et seulement sur un quai <b>relié</b> à leur destination. Ils s'impatientent ; passé un moment, ils abandonnent.</p>
-      <p><b>Vos deux gestes :</b> touchez un train qui s'annonce, puis le quai où il doit entrer — il embarque les voyageurs <b>de ce quai</b> qui vont où il va, tant qu'il a des places (les wagons se remplissent). Puis <b>touchez le train à quai pour le faire partir.</b> Lui seul décide ; vous seul décidez.</p>
+      <p><b>Votre seul geste :</b> touchez un train qui s'annonce, puis le quai où il doit entrer. Il embarque les voyageurs <b>de ce quai</b> qui vont où il va — <b>un point par voyageur dans ses wagons</b> — et <b>repart seul</b> dès qu'il n'y a plus personne à prendre, ou qu'il est plein. La loco ne prend personne.</p>
       <p><b>Le quai 6 est en impasse</b>, relié au seul côté ouest ; <b>le fret</b> traverse sans s'arrêter en verrouillant son itinéraire. Rien de cela n'a changé.</p>
       <p><b>Objectif :</b> transporter le plus de voyageurs — 3 ★ à 90 %, 2 à 80 %, 1 à 70 %. Un diamant si personne n'a abandonné.</p>
       <div class="reglages">
@@ -244,7 +244,7 @@ const TRAVEL = 1.6;             // minutes de jeu pour traverser un gril
 const MIN_DWELL = 1;            // arrêt minimum en minutes de jeu (4 s réelles à x1) — le temps d'embarquer
 // LES VOYAGEURS : ils attendent sur le quai, chacun un rond de la couleur de
 // sa destination, et ils montent dans le train de leur quai qui va où ils vont.
-const EMBARQUEMENT = 40;        // voyageurs par minute de jeu qui montent dans un train à quai
+const EMBARQUEMENT_S = 0.2;     // secondes réelles (à ×1) par voyageur qui monte — à ajuster à l'oreille
 const P = { ou: "habitude", debit: 0.8, patience: 15, places: 6, trains: 24, cadence: 1.9 }; // lus dans la carte d'accueil
 function lireReglages() {
   P.ou = document.getElementById("p-ou").value;
@@ -254,7 +254,7 @@ function lireReglages() {
   P.trains = +document.getElementById("p-trains").value;
   P.cadence = +document.getElementById("p-cadence").value;
 }
-function capacite(t) { return t.cars * P.places; }
+function capacite(t) { return (t.cars - 1) * P.places; }   // la loco ne prend personne
 const SEC_PER_GAMEMIN = 4.0;    // 1 min de jeu = 4 s réelles à x1
 
 // Wagons : 1 à 7 par train — plus le convoi est long, plus il est lent
@@ -442,7 +442,7 @@ let SCHEDULE = [], EVENTS = [];
 // État
 // ------------------------------------------------------------------
 let trains, gameMin, speed, paused, started, ended, totalDelay, selected, activeRoutes;
-let voyageurs, habitude, stats, accu, tenues, choix;   // la couche voyageurs
+let voyageurs, habitude, stats, accu, choix;   // la couche voyageurs
 
 function resetGame() {
   lireReglages();
@@ -458,13 +458,13 @@ function resetGame() {
     entryPath: null, exitPath: null, pendingEl: null, stopS: null, startS: 0, backS: 0,
     actualArr: null, el: null, carEls: null,
     badgeEl: null, badgeText: null, badgeRect: null, headPos: null,
-    aBord: 0, veutPartir: false, tenu: 0, _reste: 0
+    aBord: 0, veutPartir: false, _reste: 0
   }));
   voyageurs = [];                                  // {dest, plat, t0, el}
   habitude = Object.fromEntries(Object.keys(PORTALS).map(k => [k, null]));
   stats = Object.fromEntries(Object.keys(PORTALS).map(k => [k, { arrives: 0, transportes: 0, abandonnes: 0 }]));
   accu = Object.fromEntries(Object.keys(PORTALS).map(k => [k, 0]));
-  tenues = []; choix = { pour: 0, total: 0 };
+  choix = { pour: 0, total: 0 };
   gameMin = 0; speed = 1; paused = false; ended = false;
   totalDelay = 0; selected = null; activeRoutes = {};
   document.querySelectorAll(".speed").forEach(b => b.classList.toggle("active", b.dataset.s === "1"));
@@ -779,15 +779,8 @@ function onTrainClick(t) {
     toast(t.id + " : affectation annulée — choisissez un nouveau quai");
     return;
   }
-  // LE DÉPART EST UN GESTE : un train à quai part quand on le touche — dès
-  // que l'arrêt minimum est fait et que sa sortie se libère. Le retoucher
-  // annule. C'est ici que se joue « je le retiens, ou je le lance ? »
   if (t.state === "dwell" && paths["out:" + t.to + ":" + t.platform]) {
-    if (gameMin < t.actualArr + MIN_DWELL) { toast(t.id + " : arrêt minimum en cours"); return; }
-    t.veutPartir = !t.veutPartir;
-    toast(t.veutPartir
-      ? t.id + " part vers " + PORTALS[t.to].label + " avec " + t.aBord + " voyageur" + (t.aBord > 1 ? "s" : "")
-      : t.id + " reste à quai");
+    toast(t.id + " embarque pour " + PORTALS[t.to].label + " — " + t.aBord + "/" + capacite(t) + " ; il partira seul");
     return;
   }
   if (t.state === "movingIn" || t.state === "movingOut" || t.state === "movingBack") {
@@ -836,7 +829,7 @@ function updateDelay() {
 function trainNode(t) {
   const g = el("g", { class: "train" }, gQueue);
   const c = t.freight ? "#8f98a8" : DEST_COLOR[t.to];
-  t.carEls = [];
+  t.carEls = []; t.placeEls = [];
   for (let i = 0; i < t.cars; i++) {
     const car = el("g", {}, g);
     // zone de clic généreuse (invisible) : indispensable au doigt
@@ -850,6 +843,17 @@ function trainNode(t) {
     if (i > 0) body.style.opacity = "0.72";
     if (i === 0) el("text", { x: 0, y: 0.5, class: "train-label" }, car)
       .textContent = t.freight ? "F" : DEST_ABBR[t.to];
+    // LES WAGONS SE REMPLISSENT DE POINTS : une place par voyageur, en deux
+    // rangées, cachée tant qu'elle est vide. La loco n'en a pas.
+    if (i > 0 && !t.freight) {
+      const cols = Math.ceil(P.places / 2), pas = (CAR_LEN - 8) / Math.max(1, cols - 1);
+      for (let k = 0; k < P.places; k++) {
+        const s = el("circle", { r: 2.4, class: "place", visibility: "hidden",
+          cx: cols === 1 ? 0 : -CAR_LEN / 2 + 4 + (k % cols) * pas, cy: k < cols ? -3.5 : 3.5 }, car);
+        s.style.fill = "#08141a"; s.style.opacity = "0.85";
+        t.placeEls.push(s);
+      }
+    }
     t.carEls.push(car);
   }
   // Badge au-dessus de la loco : heure de départ, puis retard qui file en rouge
@@ -988,8 +992,8 @@ function updateBadge(t) {
   let txt, color;
   if (t.state === "dwell") {
     const plein = t.aBord >= capacite(t);
-    txt = t.aBord + "/" + capacite(t) + (t.veutPartir ? " ▶" : plein ? " PLEIN" : "");
-    color = t.veutPartir ? "var(--green)" : plein ? "#f5b23c" : DEST_COLOR[t.to];
+    txt = t.aBord + "/" + capacite(t) + (plein ? " PLEIN" : "");
+    color = plein ? "#f5b23c" : DEST_COLOR[t.to];
   } else { txt = capacite(t) + " pl."; color = "var(--muted)"; }
   t.badgeEl.classList.toggle("late", false);
   t.badgeText.textContent = txt;
@@ -1039,18 +1043,24 @@ function tickVoyageurs(dtMin) {
     const v = voyageurs[i];
     if (gameMin - v.t0 > P.patience) { stats[v.dest].abandonnes++; retirerVoyageur(v); }
   }
-  // l'embarquement : les voyageurs DU QUAI qui vont où va le train, les plus anciens d'abord
+  // l'embarquement : les voyageurs DU QUAI qui vont où va le train, les plus
+  // anciens d'abord, un toutes les EMBARQUEMENT_S secondes ; chacun allume
+  // une place dans un wagon. Quand plus personne n'attend — ou que le train
+  // est plein — IL PART SEUL, l'arrêt minimum fait. Le joueur ne décide que
+  // du quai ; le train, lui, ne s'attarde pas.
   for (const t of trains) {
     if (t.state !== "dwell" || t.freight) continue;
-    let places = capacite(t) - t.aBord, quota = EMBARQUEMENT * dtMin + t._reste;
+    let places = capacite(t) - t.aBord, quota = dtMin * SEC_PER_GAMEMIN / EMBARQUEMENT_S + t._reste;
     const candidats = voyageurs.filter(v => v.plat === t.platform && v.dest === t.to).sort((a, b) => a.t0 - b.t0);
     let montes = 0;
     while (places > 0 && quota >= 1 && montes < candidats.length) {
-      retirerVoyageur(candidats[montes++]); t.aBord++; places--; quota -= 1;
+      retirerVoyageur(candidats[montes++]);
+      if (t.placeEls[t.aBord]) t.placeEls[t.aBord].setAttribute("visibility", "visible");
+      t.aBord++; places--; quota -= 1;
     }
     t._reste = Math.min(quota, 1);
-    // LA MESURE DU DILEMME : le temps à quai alors qu'il n'y a plus personne à prendre
-    if (!(places > 0 && candidats.length > montes) && !t.veutPartir) t.tenu += dtMin;
+    const finiDEmbarquer = places <= 0 || candidats.length <= montes;
+    if (finiDEmbarquer && gameMin >= t.actualArr + MIN_DWELL) t.veutPartir = true;
   }
   // le dessin : chaque quai range ses voyageurs sur sa bande, les plus anciens à gauche
   for (const q of PLATFORMS) {
@@ -1155,7 +1165,7 @@ function tick(dtMin) {
           release(t.entryPath);
           const chip = document.getElementById("depchip-" + t.platform);
           if (paths["out:" + t.to + ":" + t.platform]) {
-            chip.textContent = "→ " + PORTALS[t.to].label + " — touchez le train pour partir";
+            chip.textContent = "→ " + PORTALS[t.to].label + " · embarquement";
             chip.style.fill = DEST_COLOR[t.to];
             habitude[t.to] = t.platform; // désormais, les voyageurs pour là-bas viennent ici
           } else {
@@ -1198,7 +1208,6 @@ function tick(dtMin) {
             t.state = "movingOut";
             t.progress = 0;
             stats[t.to].transportes += t.aBord;
-            tenues.push(t.tenu);
             updateDelay();
             document.getElementById("depchip-" + t.platform).textContent = "";
             refreshEligible();
@@ -1337,17 +1346,14 @@ function endGame() {
   const diamant = stars >= 1 && aband === 0;
   document.getElementById("stars").textContent = "★★★".slice(0, stars) + "☆☆☆".slice(0, 3 - stars) + (diamant ? " ◆" : "");
   document.getElementById("end-delay").textContent = pct + " % des voyageurs transportés" + (stars === 0 ? " — échec" : diamant ? " — personne n'a abandonné" : "");
-  const tenueMoy = tenues.length ? tenues.reduce((a, b) => a + b, 0) / tenues.length : 0;
-  const longs = tenues.filter(x => x > 1).length;
   const voy = trains.filter(t => !t.freight);
   const remplissage = voy.length ? Math.round(100 * voy.reduce((a, t) => a + t.aBord, 0) / voy.reduce((a, t) => a + capacite(t), 0)) : 0;
   const pour = choix.total ? Math.round(100 * choix.pour / choix.total) : 0;
   document.getElementById("end-table").innerHTML =
     "<table><tr><th>destination</th><th>arrivés</th><th>transportés</th><th>abandons</th><th>restés</th></tr>" + lignes + "</table>" +
     "<div class='mesure'>Remplissage moyen des trains : <b>" + remplissage + " %</b>.<br>" +
-    "Tenu à quai <i>sans plus personne à prendre</i> : <b>" + tenueMoy.toFixed(1) + " min</b> en moyenne, " + longs + " train" + (longs > 1 ? "s" : "") + " plus d'une minute.<br>" +
     "Quai choisi <i>pour ses voyageurs</i> (celui qui en avait le plus pour cette destination) : <b>" + pour + " %</b> des envois.<br>" +
-    "<span style='opacity:.7'>Retenue grande = tu as hésité. Choix pour voyageurs élevé = le quai est devenu une décision.</span></div>";
+    "<span style='opacity:.7'>Élevé = le quai est devenu une décision, pas une case libre.</span></div>";
   document.getElementById("end").classList.remove("hidden");
 }
 
