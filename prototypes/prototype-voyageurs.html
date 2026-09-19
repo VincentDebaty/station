@@ -35,7 +35,9 @@
   #hall .h .l { color: var(--red); }
   .quai-bande { fill: #161e30; stroke: #263149; stroke-width: 1; pointer-events: none; }
   .voy { pointer-events: none; }
-  .voy.presse { stroke: var(--red); stroke-width: 1.4; }
+  .voy .anneau { fill: none; stroke-width: 1.7; stroke-linecap: butt; transform: rotate(-90deg); }
+  .voy.presse .point { animation: presse .5s ease-in-out infinite; }
+  @keyframes presse { 50% { transform: scale(1.45); } }
   .quai-plus { font-family: ui-monospace, Menlo, monospace; font-size: 11px; fill: var(--muted); pointer-events: none; }
   .reglages { display: grid; grid-template-columns: 1fr auto; gap: 6px 14px; margin: 14px 0 4px; font-size: 14px; text-align: left; }
   .reglages label { color: var(--muted); }
@@ -167,7 +169,7 @@
 </div>
 <div id="board-wrap">
   <svg id="board" viewBox="0 0 1400 760" preserveAspectRatio="xMidYMid meet"></svg>
-  <div id="delay">perdus 0</div>
+  <div id="delay">100 % transportés ★★★</div>
   <div id="toast"></div>
   <div class="overlay" id="intro">
     <div class="card">
@@ -176,7 +178,7 @@
       <p><b>Les voyageurs attendent sur les quais</b>, un rond chacun, de la couleur de là où ils vont — et seulement sur un quai <b>relié</b> à leur destination. Ils s'impatientent ; passé un moment, ils abandonnent.</p>
       <p><b>Votre seul geste :</b> touchez un train qui s'annonce, puis le quai où il doit entrer. Il embarque les voyageurs <b>de ce quai</b> qui vont où il va — <b>un point par voyageur dans ses wagons</b> — et <b>repart seul</b> dès qu'il n'y a plus personne à prendre, ou qu'il est plein. La loco ne prend personne.</p>
       <p><b>Le quai 6 est en impasse</b>, relié au seul côté ouest ; <b>le fret</b> traverse sans s'arrêter en verrouillant son itinéraire. Rien de cela n'a changé.</p>
-      <p><b>Objectif :</b> transporter le plus de voyageurs — 3 ★ à 90 %, 2 à 80 %, 1 à 70 %. Un diamant si personne n'a abandonné.</p>
+      <p><b>Objectif :</b> transporter le plus de voyageurs. <b>L'anneau autour de chacun est sa patience</b> : il se vide, passe à l'ambre, puis au rouge — et le voyageur s'en va dans un éclat. 3 ★ à 90 % transportés, 2 à 80 %, 1 à 70 %. Un diamant si personne n'a abandonné.</p>
       <div class="reglages">
         <label>Où attendent-ils ?</label><select id="p-ou"><option value="habitude">où leur train part d'habitude</option><option value="hasard">au hasard (quais reliés)</option></select>
         <label>Voyageurs par minute et par destination</label><input type="number" id="p-debit" min="0.2" max="6" step="0.1" value="0.8">
@@ -478,7 +480,7 @@ function resetGame() {
 // Rendu statique
 // ------------------------------------------------------------------
 let gTracks, gRoutes, gPlatforms, gPortals, gQueue, gTrains, gFx, gChips, gVoy;
-const BANDE_Y = 25, BANDE_H = 22;   // la bande de quai, sous la pilule : là où l'on attend
+const BANDE_Y = 24, BANDE_H = 30;   // la bande de quai, sous la pilule : là où l'on attend (deux rangées d'anneaux)
 
 function el(tag, attrs, parent) {
   const e = document.createElementNS(SVGNS, tag);
@@ -536,7 +538,7 @@ function drawStatic() {
     el("text", { x: PLAT_X2 - 6, y: q.cy + BANDE_Y + BANDE_H / 2, class: "quai-plus", id: "quaiplus-" + q.id,
       "text-anchor": "end", "dominant-baseline": "central" }, gChips).textContent = "";
     const chip = el("text", {
-      x: (PLAT_X1 + PLAT_X2) / 2, y: q.cy + BANDE_Y + BANDE_H + 12,
+      x: (PLAT_X1 + PLAT_X2) / 2, y: q.cy + BANDE_Y + BANDE_H + 11,
       class: "chip", id: "depchip-" + q.id, "text-anchor": "middle", fill: "var(--muted)"
     }, gChips);
     chip.textContent = "";
@@ -820,11 +822,15 @@ function fmt(min) {
 }
 function totalPerdus() { return Object.values(stats).reduce((a, s) => a + s.abandonnes, 0); }
 function totalTransportes() { return Object.values(stats).reduce((a, s) => a + s.transportes, 0); }
+// L'OBJECTIF, EN CLAIR : la part des voyageurs déjà tranchés (montés ou
+// partis) qu'on a transportés, et les étoiles qu'elle vaut à cet instant.
 function updateDelay() {
   const d = document.getElementById("delay");
-  const p = totalPerdus();
-  d.textContent = "transportés " + totalTransportes() + " · perdus " + p;
-  d.className = p === 0 ? "" : p <= 10 ? "warn" : "bad";
+  const tr = totalTransportes(), p = totalPerdus();
+  const pct = tr + p ? Math.round(100 * tr / (tr + p)) : 100;
+  const stars = pct >= 90 ? 3 : pct >= 80 ? 2 : pct >= 70 ? 1 : 0;
+  d.textContent = pct + " % transportés  " + "★★★".slice(0, stars) + "☆☆☆".slice(0, 3 - stars) + "   " + tr + " montés · " + p + " perdus";
+  d.className = stars === 3 ? "" : stars >= 1 ? "warn" : "bad";
 }
 function trainNode(t) {
   const g = el("g", { class: "train" }, gQueue);
@@ -1016,14 +1022,22 @@ function quaiPour(dest) {
   if (P.ou === "habitude" && h != null) return h;
   return pick(LINKS[dest]);
 }
+// L'IMPATIENCE SE VOIT : autour de chaque voyageur, un anneau plein à son
+// arrivée se vide avec le temps — gris, puis ambre à mi-course, puis rouge
+// sur le dernier quart, où le point bat. Quand il s'en va, un éclat rouge
+// à sa place — le même que celui d'un conflit d'itinéraire.
+const R_ANNEAU = 5.6, L_ANNEAU = 2 * Math.PI * R_ANNEAU;
 function nouveauVoyageur(dest) {
-  const v = { dest, plat: quaiPour(dest), t0: gameMin, el: null };
-  v.el = el("circle", { r: 3.8, class: "voy" }, gVoy);
-  v.el.style.fill = DEST_COLOR[dest];
+  const v = { dest, plat: quaiPour(dest), t0: gameMin, el: null, x: 0, y: 0 };
+  v.el = el("g", { class: "voy" }, gVoy);
+  v.anneau = el("circle", { r: R_ANNEAU, class: "anneau", "stroke-dasharray": L_ANNEAU + " " + L_ANNEAU }, v.el);
+  v.point = el("circle", { r: 3.6, class: "point" }, v.el);
+  v.point.style.fill = DEST_COLOR[dest];
   voyageurs.push(v); stats[dest].arrives++;
 }
-function retirerVoyageur(v) {
+function retirerVoyageur(v, abandon) {
   voyageurs.splice(voyageurs.indexOf(v), 1);
+  if (abandon && v.el.getAttribute("visibility") !== "hidden") flashAt({ x: v.x, y: v.y });
   if (v.el) v.el.remove();
 }
 // Il reste un train à prendre pour cette destination : annoncé, en file,
@@ -1041,7 +1055,7 @@ function tickVoyageurs(dtMin) {
   }
   for (let i = voyageurs.length - 1; i >= 0; i--) {
     const v = voyageurs[i];
-    if (gameMin - v.t0 > P.patience) { stats[v.dest].abandonnes++; retirerVoyageur(v); }
+    if (gameMin - v.t0 > P.patience) { stats[v.dest].abandonnes++; retirerVoyageur(v, true); }
   }
   // l'embarquement : les voyageurs DU QUAI qui vont où va le train, les plus
   // anciens d'abord, un toutes les EMBARQUEMENT_S secondes ; chacun allume
@@ -1065,15 +1079,17 @@ function tickVoyageurs(dtMin) {
   // le dessin : chaque quai range ses voyageurs sur sa bande, les plus anciens à gauche
   for (const q of PLATFORMS) {
     const ici = voyageurs.filter(v => v.plat === q.id).sort((a, b) => a.t0 - b.t0);
-    const parLigne = Math.floor((PLAT_X2 - PLAT_X1 - 50) / 10), lignes = 2, max = parLigne * lignes;
+    const PAS = 14, parLigne = Math.floor((PLAT_X2 - PLAT_X1 - 44) / PAS), lignes = 2, max = parLigne * lignes;
     ici.forEach((v, k) => {
       if (k >= max) { v.el.setAttribute("visibility", "hidden"); return; }
       v.el.setAttribute("visibility", "visible");
-      v.el.setAttribute("cx", PLAT_X1 + 12 + (k % parLigne) * 10);
-      v.el.setAttribute("cy", q.cy + BANDE_Y + 6 + Math.floor(k / parLigne) * 10);
-      const reste = 1 - (gameMin - v.t0) / P.patience;
+      v.x = PLAT_X1 + 12 + (k % parLigne) * PAS;
+      v.y = q.cy + BANDE_Y + 6 + Math.floor(k / parLigne) * (BANDE_H - 12);
+      v.el.setAttribute("transform", "translate(" + v.x + " " + v.y + ")");
+      const reste = Math.max(0, 1 - (gameMin - v.t0) / P.patience);
+      v.anneau.setAttribute("stroke-dasharray", (L_ANNEAU * reste).toFixed(1) + " " + L_ANNEAU.toFixed(1));
+      v.anneau.style.stroke = reste < 0.25 ? "var(--red)" : reste < 0.5 ? "#f5b23c" : "rgba(219,226,238,.45)";
       v.el.classList.toggle("presse", reste < 0.25);
-      v.el.style.opacity = reste < 0.25 ? String(0.45 + reste) : "1";
     });
     document.getElementById("quaiplus-" + q.id).textContent = ici.length > max ? "+" + (ici.length - max) : "";
   }
