@@ -173,13 +173,14 @@
   <div id="toast"></div>
   <div class="overlay" id="intro">
     <div class="card">
-      <h1>Gare de Namur — les voyageurs</h1>
+      <h1 id="titre-gare">Gare de Namur — les voyageurs</h1>
       <p><b>Un train n'a pas d'heure. Il a une destination, et c'est sa couleur.</b> Six directions réelles : Bruxelles, Charleroi et Dinant à l'ouest ; Liège, Luxembourg et Arlon à l'est.</p>
       <p><b>Les voyageurs attendent sur les quais</b>, un rond chacun, de la couleur de là où ils vont — et seulement sur un quai <b>relié</b> à leur destination. Ils s'impatientent ; passé un moment, ils abandonnent.</p>
       <p><b>Votre seul geste :</b> touchez un train qui s'annonce, puis le quai où il doit entrer. Il embarque les voyageurs <b>de ce quai</b> qui vont où il va — <b>un point par voyageur dans ses wagons</b> — et <b>repart seul</b> dès qu'il n'y a plus personne à prendre, ou qu'il est plein. La loco ne prend personne.</p>
-      <p><b>Le quai 6 est en impasse</b>, relié au seul côté ouest ; <b>le fret</b> traverse sans s'arrêter en verrouillant son itinéraire. Rien de cela n'a changé.</p>
+      <p>À Namur, <b>le quai 6 est en impasse</b>, relié au seul côté ouest ; <b>le fret</b> traverse sans s'arrêter en verrouillant son itinéraire. Rien de cela n'a changé.</p>
       <p><b>Objectif :</b> transporter le plus de voyageurs. <b>L'anneau autour de chacun est sa patience</b> : il se vide, passe à l'ambre, puis au rouge — et le voyageur s'en va dans un éclat. 3 ★ à 90 % transportés, 2 à 80 %, 1 à 70 %. Un diamant si personne n'a abandonné.</p>
       <div class="reglages">
+        <label>Gare</label><select id="p-gare"><option value="namur">Namur — 6 destinations, 6 quais</option><option value="reduite">Réduite — 4 destinations, 4 quais</option></select>
         <label>Où attendent-ils ?</label><select id="p-ou"><option value="habitude">où leur train part d'habitude</option><option value="hasard">au hasard (quais reliés)</option></select>
         <label>Voyageurs par minute et par destination</label><input type="number" id="p-debit" min="0.2" max="6" step="0.1" value="0.8">
         <label>Patience (minutes de jeu)</label><input type="number" id="p-patience" min="3" max="40" value="15">
@@ -210,17 +211,38 @@ const SVGNS = "http://www.w3.org/2000/svg";
 const board = document.getElementById("board");
 
 const PLAT_X1 = 560, PLAT_X2 = 840, PLAT_H = 42;
-const PLATFORMS = [
-  { id: 1, cy: 140 }, { id: 2, cy: 240 }, { id: 3, cy: 340 },
-  { id: 4, cy: 440 }, { id: 5, cy: 540 }, { id: 6, cy: 640, deadEnd: true }
-];
-const PORTALS = {
-  BRUXELLES:  { side: "L", x: 150,  cy: 170, label: "BRUXELLES"  },
-  CHARLEROI:  { side: "L", x: 150,  cy: 405, label: "CHARLEROI"  },
-  DINANT:     { side: "L", x: 150,  cy: 640, label: "DINANT"     },
-  LIEGE:      { side: "R", x: 1250, cy: 170, label: "LIÈGE"      },
-  LUXEMBOURG: { side: "R", x: 1250, cy: 405, label: "LUXEMBOURG" },
-  ARLON:      { side: "R", x: 1250, cy: 640, label: "ARLON"      }
+// DEUX GARES AU CHOIX. Namur, telle que le prototype l'a toujours dessinée ;
+// et une gare réduite — quatre destinations, quatre quais, deux portails par
+// côté, pas d'impasse — pour juger le jeu des voyageurs sur moins de choses.
+const GARES = {
+  namur: {
+    nom: "Namur",
+    platforms: [{ id: 1, cy: 140 }, { id: 2, cy: 240 }, { id: 3, cy: 340 }, { id: 4, cy: 440 }, { id: 5, cy: 540 }, { id: 6, cy: 640, deadEnd: true }],
+    portals: {
+      BRUXELLES:  { side: "L", x: 150,  cy: 170, label: "BRUXELLES"  },
+      CHARLEROI:  { side: "L", x: 150,  cy: 405, label: "CHARLEROI"  },
+      DINANT:     { side: "L", x: 150,  cy: 640, label: "DINANT"     },
+      LIEGE:      { side: "R", x: 1250, cy: 170, label: "LIÈGE"      },
+      LUXEMBOURG: { side: "R", x: 1250, cy: 405, label: "LUXEMBOURG" },
+      ARLON:      { side: "R", x: 1250, cy: 640, label: "ARLON"      }
+    },
+    // Quels quais chaque portail dessert (entrée ET sortie). Le quai 6 (impasse) n'est relié qu'au côté ouest.
+    links: { BRUXELLES: [1, 2, 3, 6], CHARLEROI: [2, 3, 4, 6], DINANT: [3, 4, 5, 6], LIEGE: [1, 2, 3], LUXEMBOURG: [2, 3, 4], ARLON: [3, 4, 5] },
+    // seuls les Bruxelles<->Dinant rebroussent, comme dans la réalité
+    rebrousse: [["BRUXELLES", "DINANT"]]
+  },
+  reduite: {
+    nom: "Gare réduite",
+    platforms: [{ id: 1, cy: 190 }, { id: 2, cy: 290 }, { id: 3, cy: 390 }, { id: 4, cy: 490 }],
+    portals: {
+      BRUXELLES:  { side: "L", x: 150,  cy: 220, label: "BRUXELLES"  },
+      CHARLEROI:  { side: "L", x: 150,  cy: 470, label: "CHARLEROI"  },
+      LIEGE:      { side: "R", x: 1250, cy: 220, label: "LIÈGE"      },
+      LUXEMBOURG: { side: "R", x: 1250, cy: 470, label: "LUXEMBOURG" }
+    },
+    links: { BRUXELLES: [1, 2, 3], CHARLEROI: [2, 3, 4], LIEGE: [1, 2, 3], LUXEMBOURG: [2, 3, 4] },
+    rebrousse: []
+  }
 };
 const DEST_COLOR = {
   BRUXELLES: "#2dd4bf", CHARLEROI: "#f5b23c", DINANT: "#4ade80",
@@ -230,25 +252,17 @@ const DEST_ABBR = {
   BRUXELLES: "B", CHARLEROI: "C", DINANT: "D",
   LIEGE: "LG", LUXEMBOURG: "LX", ARLON: "A"
 };
-
-// Quels quais chaque portail dessert (entrée ET sortie).
-// Le quai 6 (impasse) n'est relié qu'au côté ouest.
-const LINKS = {
-  BRUXELLES:  [1, 2, 3, 6],
-  CHARLEROI:  [2, 3, 4, 6],
-  DINANT:     [3, 4, 5, 6],
-  LIEGE:      [1, 2, 3],
-  LUXEMBOURG: [2, 3, 4],
-  ARLON:      [3, 4, 5]
-};
+let PLATFORMS, PORTALS, LINKS, REBROUSSE;   // la gare en cours, posée par construireGare
+let paths, meshD, APPROACH, DEPART, conflicts, PAIRS;
 
 const TRAVEL = 1.6;             // minutes de jeu pour traverser un gril
 const MIN_DWELL = 1;            // arrêt minimum en minutes de jeu (4 s réelles à x1) — le temps d'embarquer
 // LES VOYAGEURS : ils attendent sur le quai, chacun un rond de la couleur de
 // sa destination, et ils montent dans le train de leur quai qui va où ils vont.
 const EMBARQUEMENT_S = 0.2;     // secondes réelles (à ×1) par voyageur qui monte — à ajuster à l'oreille
-const P = { ou: "habitude", debit: 0.8, patience: 15, places: 6, trains: 24, cadence: 1.9 }; // lus dans la carte d'accueil
+const P = { gare: "namur", ou: "habitude", debit: 0.8, patience: 15, places: 6, trains: 24, cadence: 1.9 }; // lus dans la carte d'accueil
 function lireReglages() {
+  P.gare = document.getElementById("p-gare").value;
   P.ou = document.getElementById("p-ou").value;
   P.debit = +document.getElementById("p-debit").value;
   P.patience = +document.getElementById("p-patience").value;
@@ -286,9 +300,13 @@ function pathD(pts) {
   return "M " + pts.map(p => p.x.toFixed(1) + " " + p.y.toFixed(1)).join(" L ");
 }
 
-const paths = {};   // "in:PORTAIL:quai" / "out:PORTAIL:quai" -> {id, pts, cum, len, side, dur}
-const meshD = [];   // tracés gris du maillage (béziers seuls)
 const STOP_MARGIN = 30;
+
+function construireGare(cle) {
+  const g = GARES[cle] || GARES.namur;
+  PLATFORMS = g.platforms; PORTALS = g.portals; LINKS = g.links; REBROUSSE = g.rebrousse;
+  paths = {};   // "in:PORTAIL:quai" / "out:PORTAIL:quai" -> {id, pts, cum, len, side, dur}
+  meshD = [];   // tracés gris du maillage (béziers seuls)
 
 for (const [pname, p] of Object.entries(PORTALS)) {
   for (const pid of LINKS[pname]) {
@@ -332,7 +350,7 @@ for (const [pname, p] of Object.entries(PORTALS)) {
 //   jusqu'au point de convergence — la file d'attente s'y poste, en amont
 // - voie du haut (DÉPARTS) : prolonge le point de convergence tout droit
 //   vers le bord — les convois qui partent filent dessus
-const APPROACH = {}, DEPART = {};
+APPROACH = {}; DEPART = {};
 for (const [pname, p] of Object.entries(PORTALS)) {
   const startX = p.side === "L" ? -10 : 1410;
   const mk = pts => {
@@ -351,7 +369,7 @@ for (const [pname, p] of Object.entries(PORTALS)) {
 }
 
 // Conflits : deux chemins du même gril à moins de 16 px l'un de l'autre
-const conflicts = {};
+conflicts = {};
 {
   const ids = Object.keys(paths);
   for (const id of ids) conflicts[id] = {};
@@ -393,17 +411,18 @@ const conflicts = {};
 // départ faisable + une marge de réaction pour l'humain.
 // ------------------------------------------------------------------
 
-// Liaisons autorisées : un quai commun requis ; côté est<->est exclu,
-// seuls les Bruxelles<->Dinant rebroussent, comme dans la réalité
-const PAIRS = [];
+// Liaisons autorisées : un quai commun requis ; même côté exclu, sauf les
+// rebroussements que la gare déclare (à Namur, Bruxelles<->Dinant)
+PAIRS = [];
 for (const a of Object.keys(PORTALS)) for (const b of Object.keys(PORTALS)) {
   if (a === b) continue;
   if (!LINKS[a].some(q => LINKS[b].includes(q))) continue;
   if (PORTALS[a].side === PORTALS[b].side &&
-      !(a === "BRUXELLES" && b === "DINANT") && !(a === "DINANT" && b === "BRUXELLES"))
+      !REBROUSSE.some(([x, y]) => (a === x && b === y) || (a === y && b === x)))
     continue;
   PAIRS.push([a, b]);
 }
+}  // construireGare
 const rnd = (a, b) => a + Math.random() * (b - a);
 const pick = arr => arr[Math.floor(Math.random() * arr.length)];
 
@@ -448,6 +467,8 @@ let voyageurs, habitude, stats, accu, choix;   // la couche voyageurs
 
 function resetGame() {
   lireReglages();
+  construireGare(P.gare);   // la géométrie, les conflits et les liaisons de la gare choisie
+  document.getElementById("titre-gare").textContent = GARES[P.gare].nom + " — les voyageurs";
   const day = generateDay(); // nouvelle journée à chaque partie
   SCHEDULE = day.schedule;
   EVENTS = day.events.map(ev => ({ ...ev, revealed: false, cleared: false, el: null }));
