@@ -92,7 +92,6 @@
     fill: var(--text); font-size: 24px; font-weight: 600;
     text-anchor: middle; dominant-baseline: central; pointer-events: none;
   }
-  .plat-dot { pointer-events: none; }
   .buffer-stop { fill: var(--red); pointer-events: none; filter: drop-shadow(0 0 4px var(--red)); }
   .portal {
     fill: none; stroke-width: 2.5;
@@ -174,7 +173,7 @@
     <div class="card">
       <h1>Gare de Namur — les voyageurs</h1>
       <p><b>Un train n'a pas d'heure. Il a une destination, et c'est sa couleur.</b> Six directions réelles : Bruxelles, Charleroi et Dinant à l'ouest ; Liège, Luxembourg et Arlon à l'est.</p>
-      <p><b>Les voyageurs attendent sur les quais</b>, un rond chacun, de la couleur de là où ils vont — et seulement sur un quai <b>relié</b> à leur destination (les pastilles). Ils s'impatientent ; passé un moment, ils abandonnent.</p>
+      <p><b>Les voyageurs attendent sur les quais</b>, un rond chacun, de la couleur de là où ils vont — et seulement sur un quai <b>relié</b> à leur destination. Ils s'impatientent ; passé un moment, ils abandonnent.</p>
       <p><b>Vos deux gestes :</b> touchez un train qui s'annonce, puis le quai où il doit entrer — il embarque les voyageurs <b>de ce quai</b> qui vont où il va, tant qu'il a des places (les wagons se remplissent). Puis <b>touchez le train à quai pour le faire partir.</b> Lui seul décide ; vous seul décidez.</p>
       <p><b>Le quai 6 est en impasse</b>, relié au seul côté ouest ; <b>le fret</b> traverse sans s'arrêter en verrouillant son itinéraire. Rien de cela n'a changé.</p>
       <p><b>Objectif :</b> transporter le plus de voyageurs — 3 ★ à 90 %, 2 à 80 %, 1 à 70 %. Un diamant si personne n'a abandonné.</p>
@@ -527,16 +526,10 @@ function drawStatic() {
     if (q.deadEnd)
       el("rect", { x: PLAT_X2 + 4, y: q.cy - 13, width: 7, height: 26, rx: 2, class: "buffer-stop" }, gPlatforms);
 
-    // pastilles : gauche = portails L reliés, droite = portails R reliés
-    let li = 0, ri = 0;
-    for (const [pname, p] of Object.entries(PORTALS)) {
-      if (!LINKS[pname].includes(q.id)) continue;
-      const dot = el("circle", { r: 5.5, class: "plat-dot" }, gPlatforms);
-      dot.style.fill = DEST_COLOR[pname];
-      if (p.side === "L") { dot.setAttribute("cx", PLAT_X1 + 16 + li * 16); li++; }
-      else                { dot.setAttribute("cx", PLAT_X2 - 16 - ri * 16); ri++; }
-      dot.setAttribute("cy", q.cy - PLAT_H / 2 + 9);
-    }
+    // PAS DE PASTILLES DE LIAISON SUR LES QUAIS : des ronds de couleur en
+    // haut de la pilule se confondaient avec les voyageurs en bas. Ce sont
+    // les voyageurs eux-mêmes qui disent ce que dessert un quai — ils n'y
+    // attendent que si leur destination y est reliée.
 
     // la bande de quai : les voyageurs s'y tiennent, sous la pilule
     el("rect", { x: PLAT_X1, y: q.cy + BANDE_Y, width: PLAT_X2 - PLAT_X1, height: BANDE_H, rx: 6, class: "quai-bande" }, gPlatforms);
@@ -740,7 +733,7 @@ function onPlatformClick(pid) {
     return;
   }
   // Le piège volontaire : on accepte un quai qui ne dessert PAS la destination.
-  // Le train y restera bloqué — au joueur de lire les pastilles.
+  // Le train y restera bloqué — au joueur de lire les voyageurs.
   // LA MESURE DU CHOIX : ce quai était-il celui qui avait le plus de voyageurs
   // pour la destination du train ?
   {
