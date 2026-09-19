@@ -176,7 +176,8 @@
       <h1 id="titre-gare">Gare de Namur — les voyageurs</h1>
       <p><b>Un train n'a pas d'heure. Il a une destination, et c'est sa couleur.</b> Six directions réelles : Bruxelles, Charleroi et Dinant à l'ouest ; Liège, Luxembourg et Arlon à l'est.</p>
       <p><b>Les voyageurs attendent sur les quais</b>, un rond chacun, de la couleur de là où ils vont — et seulement sur un quai <b>relié</b> à leur destination. Ils s'impatientent ; passé un moment, ils abandonnent.</p>
-      <p><b>Votre seul geste :</b> touchez un train qui s'annonce, puis le quai où il doit entrer. Il embarque les voyageurs <b>de ce quai</b> qui vont où il va — <b>un point par voyageur dans ses wagons</b> — et <b>repart seul</b> dès qu'il n'y a plus personne à prendre, ou qu'il est plein. La loco ne prend personne.</p>
+      <p><b>Votre seul geste :</b> touchez un train qui s'annonce, puis le quai où il doit entrer. Il embarque les voyageurs <b>de ce quai</b> qui vont où il va — <b>un point par voyageur dans ses wagons</b> — et <b>repart aussitôt</b> qu'il n'y a plus personne à prendre, ou qu'il est plein. La loco ne prend personne.</p>
+      <p><b>Les trains n'ont pas de fin ; les voyageurs, si.</b> Un nombre fixe de personnes se présentera dans la journée, et le service s'arrête quand les quais sont vides — tout le monde parti, dans un train ou à pied.</p>
       <p>À Namur, <b>le quai 6 est en impasse</b>, relié au seul côté ouest. Pas de fret ici : il ne transporte personne.</p>
       <p><b>Objectif :</b> transporter le plus de voyageurs. <b>L'anneau autour de chacun est sa patience</b> : il se vide, passe à l'ambre, puis au rouge — et le voyageur s'en va dans un éclat. 3 ★ à 90 % transportés, 2 à 80 %, 1 à 70 %. Un diamant si personne n'a abandonné.</p>
       <div class="reglages">
@@ -185,7 +186,7 @@
         <label>Voyageurs par minute et par destination</label><input type="number" id="p-debit" min="0.2" max="6" step="0.1" value="0.8">
         <label>Patience (minutes de jeu)</label><input type="number" id="p-patience" min="3" max="40" value="15">
         <label>Places par wagon</label><input type="number" id="p-places" min="2" max="12" value="6">
-        <label>Trains dans la journée</label><input type="number" id="p-trains" min="6" max="48" value="24">
+        <label>Voyageurs dans la journée</label><input type="number" id="p-voyageurs" min="20" max="600" step="10" value="120">
         <label>Un train toutes les (minutes)</label><input type="number" id="p-cadence" min="0.8" max="5" step="0.1" value="1.9">
       </div>
       <button class="btn" id="btn-start">Prendre le service</button>
@@ -256,18 +257,18 @@ let PLATFORMS, PORTALS, LINKS, REBROUSSE;   // la gare en cours, posée par cons
 let paths, meshD, APPROACH, DEPART, conflicts, PAIRS;
 
 const TRAVEL = 1.6;             // minutes de jeu pour traverser un gril
-const MIN_DWELL = 1;            // arrêt minimum en minutes de jeu (4 s réelles à x1) — le temps d'embarquer
+const MIN_DWELL = 0;            // pas d'arrêt minimum : dès que tous les siens sont montés, le train part
 // LES VOYAGEURS : ils attendent sur le quai, chacun un rond de la couleur de
 // sa destination, et ils montent dans le train de leur quai qui va où ils vont.
 const EMBARQUEMENT_S = 0.2;     // secondes réelles (à ×1) par voyageur qui monte — à ajuster à l'oreille
-const P = { gare: "namur", ou: "habitude", debit: 0.8, patience: 15, places: 6, trains: 24, cadence: 1.9 }; // lus dans la carte d'accueil
+const P = { gare: "namur", ou: "habitude", debit: 0.8, patience: 15, places: 6, voyageurs: 120, cadence: 1.9 }; // lus dans la carte d'accueil
 function lireReglages() {
   P.gare = document.getElementById("p-gare").value;
   P.ou = document.getElementById("p-ou").value;
   P.debit = +document.getElementById("p-debit").value;
   P.patience = +document.getElementById("p-patience").value;
   P.places = +document.getElementById("p-places").value;
-  P.trains = +document.getElementById("p-trains").value;
+  P.voyageurs = +document.getElementById("p-voyageurs").value;
   P.cadence = +document.getElementById("p-cadence").value;
 }
 function capacite(t) { return (t.cars - 1) * P.places; }   // la loco ne prend personne
@@ -431,25 +432,37 @@ const pick = arr => arr[Math.floor(Math.random() * arr.length)];
 // CHAQUE DESTINATION EST SERVIE À TOUR DE RÔLE. Mesuré avant cette règle,
 // avec les liaisons tirées au hasard comme dans l'horaire de Namur : sur
 // quatorze trains, Luxembourg n'en avait aucun, Charleroi un — et leurs
-// voyageurs abandonnaient tous, faute d'un train à attendre. L'horaire de
-// Namur n'avait pas à s'en soucier : il n'y avait pas de voyageurs.
-function generateDay() {
-  const n = P.trains;
-  const draft = [];
-  let arr = rnd(1, 2), tour = [];
-  for (let i = 0; i < n; i++) {
-    if (!tour.length) { tour = Object.keys(PORTALS); for (let j = tour.length - 1; j > 0; j--) { const k = Math.floor(Math.random() * (j + 1)); [tour[j], tour[k]] = [tour[k], tour[j]]; } }
-    const to = tour.pop();
-    const from = pick(PAIRS.filter(([a, b]) => b === to))[0];
-    draft.push({ id: "T" + String(i + 1).padStart(2, "0"), from, to,
-      cars: pick([2, 3, 3, 4, 4, 4, 5, 5, 6, 7]), arr: Math.round(arr * 2) / 2 });
-    arr += P.cadence * rnd(0.75, 1.25);
-  }
-  // PAS DE FRET dans ce prototype (retiré le 19 septembre 2026, à la demande de
-  // Vincent) : il ne transporte personne, et il brouillait la lecture d'un jeu
-  // qui ne parle que de voyageurs. Le moteur sait toujours le faire traverser ;
-  // il suffirait de le tirer à nouveau ici.
-  return { schedule: draft, events: [] };
+// voyageurs abandonnaient tous, faute d'un train à attendre.
+//
+// ET LES TRAINS N'ONT PAS DE FIN (19 septembre 2026) : ce qui borne la
+// journée, c'est le stock de voyageurs, pas le nombre de convois. On tire
+// donc les trains à mesure, toujours quelques-uns d'avance, et la partie
+// s'arrête quand les quais sont vides.
+let tour = [], prochainId = 1, derniereArrivee = 0;
+function tirerTrain() {
+  if (!tour.length) { tour = Object.keys(PORTALS); for (let j = tour.length - 1; j > 0; j--) { const k = Math.floor(Math.random() * (j + 1)); [tour[j], tour[k]] = [tour[k], tour[j]]; } }
+  const to = tour.pop();
+  const from = pick(PAIRS.filter(([a, b]) => b === to))[0];
+  derniereArrivee += P.cadence * rnd(0.75, 1.25);
+  return { id: "T" + String(prochainId++).padStart(2, "0"), from, to,
+    cars: pick([2, 3, 3, 4, 4, 4, 5, 5, 6, 7]), arr: Math.round(derniereArrivee * 2) / 2 };
+}
+function creerTrain(s) {
+  return {
+    ...s,
+    cars: Math.min(MAX_CARS, Math.max(2, s.cars || 2)),
+    state: "scheduled", // scheduled | approaching | waiting | movingIn | dwell | movingOut | done
+    progress: 0, qs: null,
+    platform: null, target: null,
+    entryPath: null, exitPath: null, pendingEl: null, stopS: null, startS: 0, backS: 0,
+    actualArr: null, el: null, carEls: null,
+    badgeEl: null, badgeText: null, badgeRect: null, headPos: null,
+    aBord: 0, veutPartir: false, _reste: 0
+  };
+}
+// toujours une douzaine de trains annoncés d'avance
+function completerTrains() {
+  while (trains.filter(t => t.state === "scheduled").length < 12) trains.push(creerTrain(tirerTrain()));
 }
 
 let SCHEDULE = [], EVENTS = [];
@@ -458,26 +471,16 @@ let SCHEDULE = [], EVENTS = [];
 // État
 // ------------------------------------------------------------------
 let trains, gameMin, speed, paused, started, ended, totalDelay, selected, activeRoutes;
-let voyageurs, habitude, stats, accu, choix;   // la couche voyageurs
+let voyageurs, habitude, stats, accu, choix, arrivesTotal;   // la couche voyageurs
 
 function resetGame() {
   lireReglages();
   construireGare(P.gare);   // la géométrie, les conflits et les liaisons de la gare choisie
   document.getElementById("titre-gare").textContent = GARES[P.gare].nom + " — les voyageurs";
-  const day = generateDay(); // nouvelle journée à chaque partie
-  SCHEDULE = day.schedule;
-  EVENTS = day.events.map(ev => ({ ...ev, revealed: false, cleared: false, el: null }));
-  trains = SCHEDULE.map(s => ({
-    ...s,
-    cars: s.freight ? s.cars : Math.min(MAX_CARS, Math.max(1, s.cars || 1)),
-    state: "scheduled", // scheduled | approaching | waiting | movingIn | dwell | movingOut | movingThrough | done
-    progress: 0, qs: null,
-    platform: null, target: s.freight ? s.plat : null,
-    entryPath: null, exitPath: null, pendingEl: null, stopS: null, startS: 0, backS: 0,
-    actualArr: null, el: null, carEls: null,
-    badgeEl: null, badgeText: null, badgeRect: null, headPos: null,
-    aBord: 0, veutPartir: false, _reste: 0
-  }));
+  EVENTS = [];
+  tour = []; prochainId = 1; derniereArrivee = rnd(0.5, 1.5);
+  trains = []; completerTrains();
+  arrivesTotal = 0;
   voyageurs = [];                                  // {dest, plat, t0, el}
   habitude = Object.fromEntries(Object.keys(PORTALS).map(k => [k, null]));
   stats = Object.fromEntries(Object.keys(PORTALS).map(k => [k, { arrives: 0, transportes: 0, abandonnes: 0 }]));
@@ -1056,18 +1059,14 @@ function retirerVoyageur(v, abandon) {
   if (abandon && v.el.getAttribute("visibility") !== "hidden") flashAt({ x: v.x, y: v.y });
   if (v.el) v.el.remove();
 }
-// Il reste un train à prendre pour cette destination : annoncé, en file,
-// en train d'entrer ou à quai. Après le dernier, plus personne ne vient —
-// on ne se poste pas sur un quai pour un train qui n'existe plus.
-function trainAVenir(dest) {
-  return trains.some(t => !t.freight && t.to === dest &&
-    (t.state === "scheduled" || t.state === "approaching" || t.state === "waiting" || t.state === "movingIn" || t.state === "dwell"));
-}
+// LE STOCK EST LA JOURNÉE : P.voyageurs personnes viendront, pas une de
+// plus. Quand elles sont toutes venues et que les quais sont vides — parties
+// dans un train ou à pied —, le service est fini.
 function tickVoyageurs(dtMin) {
   for (const dest of Object.keys(PORTALS)) {
-    if (!trainAVenir(dest)) { accu[dest] = 0; continue; }
+    if (arrivesTotal >= P.voyageurs) break;
     accu[dest] += P.debit * dtMin * (0.6 + Math.random() * 0.8);
-    while (accu[dest] >= 1) { accu[dest] -= 1; nouveauVoyageur(dest); }
+    while (accu[dest] >= 1 && arrivesTotal < P.voyageurs) { accu[dest] -= 1; nouveauVoyageur(dest); arrivesTotal++; }
   }
   for (let i = voyageurs.length - 1; i >= 0; i--) {
     const v = voyageurs[i];
@@ -1114,6 +1113,7 @@ function tickVoyageurs(dtMin) {
 
 function tick(dtMin) {
   processEvents();
+  completerTrains();
   tickVoyageurs(dtMin);
   for (const t of trains) {
     switch (t.state) {
@@ -1361,7 +1361,10 @@ function tick(dtMin) {
   }
   updateDelay();
 
-  if (!ended && trains.every(t => t.state === "done")) endGame();
+  // fin de service : tout le monde est venu, plus personne n'attend, et
+  // aucun train n'est en train d'entrer ou d'embarquer
+  if (!ended && arrivesTotal >= P.voyageurs && voyageurs.length === 0 &&
+      !trains.some(t => t.state === "movingIn" || t.state === "dwell")) endGame();
 }
 
 function endGame() {
@@ -1378,12 +1381,12 @@ function endGame() {
   const diamant = stars >= 1 && aband === 0;
   document.getElementById("stars").textContent = "★★★".slice(0, stars) + "☆☆☆".slice(0, 3 - stars) + (diamant ? " ◆" : "");
   document.getElementById("end-delay").textContent = pct + " % des voyageurs transportés" + (stars === 0 ? " — échec" : diamant ? " — personne n'a abandonné" : "");
-  const voy = trains.filter(t => !t.freight);
+  const voy = trains.filter(t => t.state === "movingOut" || t.state === "done");
   const remplissage = voy.length ? Math.round(100 * voy.reduce((a, t) => a + t.aBord, 0) / voy.reduce((a, t) => a + capacite(t), 0)) : 0;
   const pour = choix.total ? Math.round(100 * choix.pour / choix.total) : 0;
   document.getElementById("end-table").innerHTML =
     "<table><tr><th>destination</th><th>arrivés</th><th>transportés</th><th>abandons</th><th>restés</th></tr>" + lignes + "</table>" +
-    "<div class='mesure'>Remplissage moyen des trains : <b>" + remplissage + " %</b>.<br>" +
+    "<div class='mesure'>" + voy.length + " trains ont servi · remplissage moyen <b>" + remplissage + " %</b>.<br>" +
     "Quai choisi <i>pour ses voyageurs</i> (celui qui en avait le plus pour cette destination) : <b>" + pour + " %</b> des envois.<br>" +
     "<span style='opacity:.7'>Élevé = le quai est devenu une décision, pas une case libre.</span></div>";
   document.getElementById("end").classList.remove("hidden");
