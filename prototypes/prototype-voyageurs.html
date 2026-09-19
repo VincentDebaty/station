@@ -177,7 +177,7 @@
       <p><b>Un train n'a pas d'heure. Il a une destination, et c'est sa couleur.</b> Six directions réelles : Bruxelles, Charleroi et Dinant à l'ouest ; Liège, Luxembourg et Arlon à l'est.</p>
       <p><b>Les voyageurs attendent sur les quais</b>, un rond chacun, de la couleur de là où ils vont — et seulement sur un quai <b>relié</b> à leur destination. Ils s'impatientent ; passé un moment, ils abandonnent.</p>
       <p><b>Votre seul geste :</b> touchez un train qui s'annonce, puis le quai où il doit entrer. Il embarque les voyageurs <b>de ce quai</b> qui vont où il va — <b>un point par voyageur dans ses wagons</b> — et <b>repart seul</b> dès qu'il n'y a plus personne à prendre, ou qu'il est plein. La loco ne prend personne.</p>
-      <p>À Namur, <b>le quai 6 est en impasse</b>, relié au seul côté ouest ; <b>le fret</b> traverse sans s'arrêter en verrouillant son itinéraire. Rien de cela n'a changé.</p>
+      <p>À Namur, <b>le quai 6 est en impasse</b>, relié au seul côté ouest. Pas de fret ici : il ne transporte personne.</p>
       <p><b>Objectif :</b> transporter le plus de voyageurs. <b>L'anneau autour de chacun est sa patience</b> : il se vide, passe à l'ambre, puis au rouge — et le voyageur s'en va dans un éclat. 3 ★ à 90 % transportés, 2 à 80 %, 1 à 70 %. Un diamant si personne n'a abandonné.</p>
       <div class="reglages">
         <label>Gare</label><select id="p-gare"><option value="namur">Namur — 6 destinations, 6 quais</option><option value="reduite">Réduite — 4 destinations, 4 quais</option></select>
@@ -427,7 +427,7 @@ const rnd = (a, b) => a + Math.random() * (b - a);
 const pick = arr => arr[Math.floor(Math.random() * arr.length)];
 
 // La journée : des trains qui s'annoncent, une liaison, des wagons — et
-// aucune heure de départ. Le fret garde son rôle : il traverse, il verrouille.
+// aucune heure de départ.
 // CHAQUE DESTINATION EST SERVIE À TOUR DE RÔLE. Mesuré avant cette règle,
 // avec les liaisons tirées au hasard comme dans l'horaire de Namur : sur
 // quatorze trains, Luxembourg n'en avait aucun, Charleroi un — et leurs
@@ -445,15 +445,10 @@ function generateDay() {
       cars: pick([2, 3, 3, 4, 4, 4, 5, 5, 6, 7]), arr: Math.round(arr * 2) / 2 });
     arr += P.cadence * rnd(0.75, 1.25);
   }
-  const lastArr = draft[draft.length - 1].arr;
-  if (Math.random() < 0.4) {
-    const cross = PAIRS.filter(([a, b]) => PORTALS[a].side !== PORTALS[b].side);
-    const [from, to] = pick(cross);
-    const plat = pick(LINKS[from].filter(q => LINKS[to].includes(q)));
-    const fArr = Math.round(rnd(8, Math.max(12, lastArr - 6)));
-    draft.push({ id: "F01", freight: true, from, to, plat, cars: 8 + Math.floor(rnd(0, 3)), arr: fArr });
-    draft.sort((a, b) => a.arr - b.arr);
-  }
+  // PAS DE FRET dans ce prototype (retiré le 19 septembre 2026, à la demande de
+  // Vincent) : il ne transporte personne, et il brouillait la lecture d'un jeu
+  // qui ne parle que de voyageurs. Le moteur sait toujours le faire traverser ;
+  // il suffirait de le tirer à nouveau ici.
   return { schedule: draft, events: [] };
 }
 
