@@ -181,13 +181,13 @@
       <p>À Namur, <b>le quai 6 est en impasse</b>, relié au seul côté ouest. Pas de fret ici : il ne transporte personne.</p>
       <p><b>Objectif :</b> transporter le plus de voyageurs. <b>L'anneau autour de chacun est sa patience</b> : il se vide, passe à l'ambre, puis au rouge — et le voyageur s'en va dans un éclat. 3 ★ à 90 % transportés, 2 à 80 %, 1 à 70 %. Un diamant si personne n'a abandonné.</p>
       <div class="reglages">
-        <label>Gare</label><select id="p-gare"><option value="namur">Namur — 6 destinations, 6 quais</option><option value="reduite">Réduite — 4 destinations, 4 quais</option></select>
+        <label>Gare</label><select id="p-gare"><option value="reduite">Réduite — 4 destinations, 4 quais</option><option value="namur">Namur — 6 destinations, 6 quais</option></select>
         <label>Où attendent-ils ?</label><select id="p-ou"><option value="habitude">où leur train part d'habitude</option><option value="hasard">au hasard (quais reliés)</option></select>
-        <label>Voyageurs par minute et par destination</label><input type="number" id="p-debit" min="0.2" max="6" step="0.1" value="0.8">
-        <label>Patience (minutes de jeu)</label><input type="number" id="p-patience" min="3" max="40" value="15">
+        <label>Voyageurs par minute et par destination</label><input type="number" id="p-debit" min="0.1" max="6" step="0.1" value="0.2">
+        <label>Patience (secondes, à ×1)</label><input type="number" id="p-patience" min="5" max="240" step="5" value="30">
         <label>Places par wagon</label><input type="number" id="p-places" min="2" max="12" value="6">
-        <label>Voyageurs dans la journée</label><input type="number" id="p-voyageurs" min="20" max="600" step="10" value="120">
-        <label>Un train toutes les (minutes)</label><input type="number" id="p-cadence" min="0.8" max="5" step="0.1" value="1.9">
+        <label>Voyageurs dans la journée</label><input type="number" id="p-voyageurs" min="20" max="600" step="10" value="300">
+        <label>Un train toutes les (minutes)</label><input type="number" id="p-cadence" min="0.5" max="5" step="0.1" value="1.0">
       </div>
       <button class="btn" id="btn-start">Prendre le service</button>
     </div>
@@ -261,12 +261,16 @@ const MIN_DWELL = 0;            // pas d'arrêt minimum : dès que tous les sien
 // LES VOYAGEURS : ils attendent sur le quai, chacun un rond de la couleur de
 // sa destination, et ils montent dans le train de leur quai qui va où ils vont.
 const EMBARQUEMENT_S = 0.2;     // secondes réelles (à ×1) par voyageur qui monte — à ajuster à l'oreille
-const P = { gare: "namur", ou: "habitude", debit: 0.8, patience: 15, places: 6, voyageurs: 120, cadence: 1.9 }; // lus dans la carte d'accueil
+// Les défauts sont ceux que Vincent a posés le 19 septembre 2026 après ses
+// premières parties. La patience se règle en SECONDES RÉELLES à ×1, comme
+// l'embarquement — c'est ainsi qu'on la ressent — et se convertit en minutes
+// de jeu pour la simulation.
+const P = { gare: "reduite", ou: "habitude", debit: 0.2, patience: 30 / 4.0, places: 6, voyageurs: 300, cadence: 1.0 };
 function lireReglages() {
   P.gare = document.getElementById("p-gare").value;
   P.ou = document.getElementById("p-ou").value;
   P.debit = +document.getElementById("p-debit").value;
-  P.patience = +document.getElementById("p-patience").value;
+  P.patience = +document.getElementById("p-patience").value / SEC_PER_GAMEMIN;   // secondes réelles → minutes de jeu
   P.places = +document.getElementById("p-places").value;
   P.voyageurs = +document.getElementById("p-voyageurs").value;
   P.cadence = +document.getElementById("p-cadence").value;
@@ -280,7 +284,10 @@ const MAX_CARS = 7;
 const CAR_LEN = 30, CAR_GAP = 5, CAR_SPACING = CAR_LEN + CAR_GAP;
 const EXIT_RUN = 420; // fuite après le gril : détour par la voie de départ + hors carte
 function trainLen(t) { return t.cars * CAR_SPACING - CAR_GAP; }
-function slowness(t) { return 1 + (t.cars - 1) * 0.22; } // 7 wagons ≈ 2.3× plus lent
+// TOUS LES TRAINS ROULENT À LA MÊME VITESSE — celle qu'avait un convoi de
+// trois voitures, loco comprise (Vincent, 19 septembre 2026). La longueur ne
+// change plus que la capacité et l'encombrement du quai.
+function slowness(t) { return 1 + 2 * 0.22; }
 
 // ------------------------------------------------------------------
 // Géométrie : un chemin par liaison (portail <-> quai), direction libre
