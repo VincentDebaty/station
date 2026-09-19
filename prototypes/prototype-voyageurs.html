@@ -438,10 +438,16 @@ const pick = arr => arr[Math.floor(Math.random() * arr.length)];
 // journée, c'est le stock de voyageurs, pas le nombre de convois. On tire
 // donc les trains à mesure, toujours quelques-uns d'avance, et la partie
 // s'arrête quand les quais sont vides.
-let tour = [], prochainId = 1, derniereArrivee = 0;
+// L'ORDRE DES COULEURS EST FIXE POUR LA PARTIE, ET IL TOURNE. Mesuré par
+// Vincent avec des tours mélangés indépendamment : Charleroi fermait un tour
+// et ouvrait le suivant sept trains plus tard — treize minutes sans jaune,
+// à deux minutes de la patience. Ici, chaque couleur revient exactement
+// tous les N trains, N étant le nombre de destinations ; seul l'ordre est
+// tiré, une fois, au début de la journée.
+let ordre = [], rang = 0, prochainId = 1, derniereArrivee = 0;
 function tirerTrain() {
-  if (!tour.length) { tour = Object.keys(PORTALS); for (let j = tour.length - 1; j > 0; j--) { const k = Math.floor(Math.random() * (j + 1)); [tour[j], tour[k]] = [tour[k], tour[j]]; } }
-  const to = tour.pop();
+  if (!ordre.length) { ordre = Object.keys(PORTALS); for (let j = ordre.length - 1; j > 0; j--) { const k = Math.floor(Math.random() * (j + 1)); [ordre[j], ordre[k]] = [ordre[k], ordre[j]]; } rang = 0; }
+  const to = ordre[rang++ % ordre.length];
   const from = pick(PAIRS.filter(([a, b]) => b === to))[0];
   derniereArrivee += P.cadence * rnd(0.75, 1.25);
   return { id: "T" + String(prochainId++).padStart(2, "0"), from, to,
@@ -478,7 +484,7 @@ function resetGame() {
   construireGare(P.gare);   // la géométrie, les conflits et les liaisons de la gare choisie
   document.getElementById("titre-gare").textContent = GARES[P.gare].nom + " — les voyageurs";
   EVENTS = [];
-  tour = []; prochainId = 1; derniereArrivee = rnd(0.5, 1.5);
+  ordre = []; rang = 0; prochainId = 1; derniereArrivee = rnd(0.5, 1.5);
   trains = []; completerTrains();
   arrivesTotal = 0;
   voyageurs = [];                                  // {dest, plat, t0, el}
