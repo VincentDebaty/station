@@ -3,16 +3,16 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Prototype — les voyageurs (Liège)</title>
+<title>Prototype — les voyageurs (Rheine)</title>
 <style>
-  :root { --fond:#101722; --panneau:#18212f; --bord:#2a3650; --texte:#e6ebf5; --sourd:#8d9ab5; --accent:#2fd0bd; }
+  :root { --fond:#0f1523; --panneau:#141b2b; --bord:#243049; --texte:#e6ebf5; --sourd:#8593ad; --accent:#2fd0bd; }
   html,body{margin:0;background:var(--fond);color:var(--texte);font:14px/1.4 "Segoe UI",system-ui,-apple-system,sans-serif;height:100%}
-  #cadre{display:grid;grid-template-columns:1fr 250px;grid-template-rows:auto 1fr;height:100vh;gap:0}
-  header{grid-column:1/3;display:flex;align-items:baseline;gap:18px;padding:8px 14px;border-bottom:1px solid var(--bord);background:var(--panneau)}
-  header h1{font-size:15px;margin:0;font-weight:600;letter-spacing:.04em}
+  #cadre{display:grid;grid-template-columns:1fr 250px;grid-template-rows:auto 1fr;height:100vh}
+  header{grid-column:1/3;display:flex;align-items:center;gap:14px;padding:8px 14px;border-bottom:1px solid var(--bord);background:var(--panneau)}
+  header .gare{display:flex;align-items:center;gap:8px;border:1px solid var(--bord);border-radius:10px;padding:4px 12px;font-weight:600;font-size:13px}
   header .sous{color:var(--sourd);font-size:12px}
-  header .hud{margin-left:auto;display:flex;gap:16px;align-items:center;font-variant-numeric:tabular-nums}
-  header .hud b{color:var(--accent)}
+  header .hud{margin-left:auto;display:flex;gap:14px;align-items:center;font-variant-numeric:tabular-nums;font-size:13px}
+  header .hud b{color:var(--accent);font-family:"SF Mono",Menlo,monospace}
   button{background:var(--panneau);color:var(--texte);border:1px solid var(--bord);border-radius:8px;padding:5px 11px;cursor:pointer;font:inherit}
   button:hover{border-color:var(--accent)} button.actif{background:var(--accent);color:#082421;border-color:var(--accent)}
   #scene{position:relative;overflow:hidden}
@@ -20,12 +20,12 @@
   aside{border-left:1px solid var(--bord);background:var(--panneau);padding:12px 14px;overflow:auto}
   aside h2{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--sourd);margin:12px 0 6px}
   aside label{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:4px 0;font-size:13px}
-  aside input[type=number]{width:64px;background:var(--fond);color:var(--texte);border:1px solid var(--bord);border-radius:6px;padding:3px 6px;font:inherit;text-align:right}
-  aside select{background:var(--fond);color:var(--texte);border:1px solid var(--bord);border-radius:6px;padding:3px 6px;font:inherit}
+  aside input[type=number]{width:60px;background:var(--fond);color:var(--texte);border:1px solid var(--bord);border-radius:6px;padding:3px 6px;font:inherit;text-align:right}
+  aside select{background:var(--fond);color:var(--texte);border:1px solid var(--bord);border-radius:6px;padding:3px 6px;font:inherit;max-width:140px}
   aside .note{color:var(--sourd);font-size:12px;margin-top:8px}
-  aside .regle{font-size:12.5px;color:var(--texte);border-left:2px solid var(--accent);padding-left:8px;margin:8px 0}
+  aside .regle{font-size:12.5px;border-left:2px solid var(--accent);padding-left:8px;margin:8px 0}
   #releve{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:rgba(6,10,16,.78)}
-  #releve .feuille{background:#f3ead8;color:#2a241c;border-radius:12px;padding:22px 26px;min-width:440px;box-shadow:0 20px 60px rgba(0,0,0,.5);font-family:Georgia,serif}
+  #releve .feuille{background:#f3ead8;color:#2a241c;border-radius:12px;padding:22px 26px;min-width:460px;box-shadow:0 20px 60px rgba(0,0,0,.5);font-family:Georgia,serif}
   #releve h3{margin:0 0 4px;font-size:20px;letter-spacing:.06em;text-transform:uppercase}
   #releve .etoiles{font-size:34px;letter-spacing:6px;margin:6px 0 10px;color:#9a7a1c}
   #releve table{border-collapse:collapse;width:100%;font-size:14px;margin:8px 0}
@@ -38,15 +38,15 @@
 <body>
 <div id="cadre">
   <header>
-    <h1>LIÈGE — les voyageurs</h1>
-    <span class="sous">prototype · un train part quand tu le sors, pas avant, pas après</span>
+    <span class="gare">🇩🇪 Rheine</span>
+    <span class="sous">prototype voyageurs · un train part quand tu le sors</span>
     <div class="hud">
       <span>⏱ <b id="hTemps">0:00</b></span>
       <span>trains <b id="hTrains">0/0</b></span>
       <span>transportés <b id="hTransp">0</b></span>
       <span>perdus <b id="hPerdus" style="color:#f08a7a">0</b></span>
-      <button id="bVitesse">×1</button>
-      <button id="bPause">Pause</button>
+      <button id="bVitesse">1x</button>
+      <button id="bPause">⏸</button>
     </div>
   </header>
   <div id="scene">
@@ -55,49 +55,52 @@
   </div>
   <aside>
     <h2>La règle</h2>
-    <div class="regle">Un train n'a <b>pas d'heure</b>. Il a une couleur. Tu l'aiguilles vers un quai libre en <b>cliquant le quai</b> ; les voyageurs de sa couleur montent tant qu'il reste de la place. Tu le fais partir en <b>cliquant le train</b>.</div>
-    <div class="regle">Un voyageur qui attend trop longtemps <b>abandonne</b>. Le gril n'accepte qu'<b>un mouvement à la fois</b>.</div>
-    <h2>Les débits</h2>
-    <label>Îlots (2 voies chacun) <input type="number" id="pIlots" min="1" max="4" value="2"></label>
-    <label>Destinations <select id="pCouleurs"><option value="4">4</option><option value="6">6</option></select></label>
-    <label>Voyageurs / min / destination <input type="number" id="pDebit" min="4" max="80" value="24"></label>
-    <label>Patience (s) <input type="number" id="pPatience" min="20" max="240" value="70"></label>
-    <label>Capacité d'un train <input type="number" id="pCap" min="5" max="60" value="18"></label>
+    <div class="regle">Un train n'a <b>pas d'heure</b> : il a une destination, et c'est sa couleur. <b>Touche-le</b> quand il attend au portail, puis <b>touche un quai</b>. Il embarque les voyageurs <b>de ce quai</b> qui vont où il va. <b>Touche-le à quai</b> pour le faire partir.</div>
+    <div class="regle">Un voyageur qui attend trop <b>abandonne</b>. Chaque côté du gril n'accepte qu'<b>un mouvement à la fois</b>.</div>
+    <h2>Les voyageurs</h2>
+    <label>Où attendent-ils ? <select id="pOu"><option value="habitude">où leur train part d'habitude</option><option value="hasard">au hasard</option></select></label>
+    <label>Quais en îlot (1-2, 3-4) <select id="pIlot"><option value="1">oui</option><option value="0">non</option></select></label>
+    <label>Voyageurs / min / destination <input type="number" id="pDebit" min="4" max="80" value="20"></label>
+    <label>Patience (s) <input type="number" id="pPatience" min="20" max="240" value="75"></label>
+    <h2>Les trains</h2>
+    <label>Capacité (wagons × 4) <input type="number" id="pCap" min="8" max="40" step="4" value="16"></label>
     <label>Un train toutes les (s) <input type="number" id="pCadence" min="3" max="40" value="9"></label>
     <label>Trains dans la journée <input type="number" id="pNombre" min="6" max="60" value="24"></label>
     <label>Entrée / sortie (s) <input type="number" id="pMvt" min="1" max="8" value="3"></label>
     <button id="bRejouer" style="width:100%;margin-top:8px">Appliquer et rejouer</button>
-    <p class="note">La question que ce prototype pose : <b>as-tu hésité entre retenir un train et le lancer ?</b> Le relevé mesure combien de temps chaque train est resté à quai une fois plein ou vide de candidats.</p>
+    <p class="note"><b>La question :</b> as-tu hésité entre retenir un train et le lancer ? Et avec les voyageurs sur les quais : as-tu choisi un quai <i>pour ses voyageurs</i> plutôt que parce qu'il était libre ?</p>
   </aside>
 </div>
 
 <script>
 "use strict";
 // ---------------------------------------------------------------------------
-// LE PROTOTYPE DES VOYAGEURS — un seul but : voir si le dilemme
-// « retenir pour remplir / lancer pour libérer » apparaît en jouant.
-// Rien ici n'a vocation à survivre : ni le dessin, ni les constantes.
-// Le hall est le modèle A : les voyageurs attendent par destination et
-// coulent vers le quai où le joueur a envoyé leur train.
+// LE PROTOTYPE DES VOYAGEURS, SUR LE DESSIN DU JEU — Rheine : deux portails à
+// gauche, deux à droite, cinq quais. Un seul but : voir si le dilemme
+// « retenir pour remplir / lancer pour libérer » apparaît, et si le choix du
+// quai devient un choix POUR SES VOYAGEURS. Modèle B : les voyageurs
+// attendent sur les quais, pas dans un hall. Rien ici n'a vocation à survivre.
 // ---------------------------------------------------------------------------
 
-const DESTS = [
-  { nom: "BRUXELLES",  couleur: "#e0483e" },
-  { nom: "NAMUR",      couleur: "#3d7be0" },
-  { nom: "COLOGNE",    couleur: "#e6b422" },
-  { nom: "LUXEMBOURG", couleur: "#42b86a" },
-  { nom: "HASSELT",    couleur: "#b06fe0" },
-  { nom: "MAASTRICHT", couleur: "#ff8b3d" },
+const PORTAILS = [
+  { code: "HG", nom: "HENGELO",   cote: "g", y: 120, couleur: "#5b8def" },
+  { code: "EM", nom: "EMDEN",     cote: "g", y: 440, couleur: "#3fc78a" },
+  { code: "OS", nom: "OSNABRÜCK", cote: "d", y: 120, couleur: "#e0a83a" },
+  { code: "MÜ", nom: "MÜNSTER",   cote: "d", y: 440, couleur: "#3ec3c9" },
 ];
+const NQ = 5;
+const L = 1200, H = 560;
+const QUAI = { x: 440, l: 320, h: 26, y0: 110, pas: 85 };    // les pilules
+const yQuai = i => QUAI.y0 + i * QUAI.pas;
+const X_PORTAIL_G = 150, X_PORTAIL_D = L - 150;
 
-const P = {};                    // les paramètres, lus du panneau
-let etat = null;                 // la partie en cours
-let vitesse = 1, pause = false;
+const P = {};
+let etat = null, vitesse = 1, pause = false, selection = null;
 
 function lireParametres() {
-  P.ilots    = +document.getElementById("pIlots").value;
-  P.nDests   = +document.getElementById("pCouleurs").value;
-  P.debit    = +document.getElementById("pDebit").value / 60;  // voyageurs par seconde par destination
+  P.ou       = document.getElementById("pOu").value;
+  P.ilot     = document.getElementById("pIlot").value === "1";
+  P.debit    = +document.getElementById("pDebit").value / 60;
   P.patience = +document.getElementById("pPatience").value;
   P.cap      = +document.getElementById("pCap").value;
   P.cadence  = +document.getElementById("pCadence").value;
@@ -105,118 +108,115 @@ function lireParametres() {
   P.mvt      = +document.getElementById("pMvt").value;
 }
 
-// Une séquence de couleurs équilibrée : chaque destination revient à son tour,
-// avec un peu de désordre pour qu'on ne puisse pas la prévoir.
+// Le quai (au sens : où l'on attend) d'une voie. En îlot, 1-2 partagent, 3-4
+// partagent, 5 est seule. Sans îlot, chaque voie a son propre quai.
+function quaiDe(voie) { return P.ilot ? (voie < 4 ? Math.floor(voie / 2) : 2) : voie; }
+function nQuais() { return P.ilot ? 3 : NQ; }
+function voiesDuQuai(q) { return [...Array(NQ).keys()].filter(v => quaiDe(v) === q); }
+// où se tiennent les voyageurs d'un quai (une bande entre les deux voies, ou sous la voie seule)
+function bandeQuai(q) {
+  const vs = voiesDuQuai(q);
+  if (vs.length === 2) { const a = yQuai(vs[0]) + QUAI.h + 4, b = yQuai(vs[1]) - 4; return { x: QUAI.x, l: QUAI.l, y: a, h: b - a }; }
+  return { x: QUAI.x, l: QUAI.l, y: yQuai(vs[0]) + QUAI.h + 4, h: 26 };
+}
+
+// Un train vient d'un côté et va de l'autre : sa destination est un portail
+// d'en face, et c'est sa couleur.
 function sequenceTrains() {
-  const seq = [];
-  let paquet = [];
+  const trains = []; let t = 3;
   for (let i = 0; i < P.nombre; i++) {
-    if (paquet.length === 0) {
-      paquet = [...Array(P.nDests).keys()];
-      for (let j = paquet.length - 1; j > 0; j--) { const k = Math.floor(Math.random() * (j + 1)); [paquet[j], paquet[k]] = [paquet[k], paquet[j]]; }
-    }
-    seq.push(paquet.pop());
-  }
-  let t = 4;
-  return seq.map((c, i) => {
+    const origine = PORTAILS[Math.floor(Math.random() * 4)];
+    const enFace = PORTAILS.filter(p => p.cote !== origine.cote);
+    const dest = enFace[Math.floor(Math.random() * enFace.length)];
     t += P.cadence * (0.7 + Math.random() * 0.6);
-    return { id: i + 1, c, cap: P.cap, arrivee: t, etat: "attendu", quai: -1,
-             aBord: 0, tFin: 0, tArriveQuai: 0, tPlein: -1, tenu: 0 };
-  });
+    trains.push({ id: i + 1, origine: PORTAILS.indexOf(origine), dest: PORTAILS.indexOf(dest), cap: P.cap,
+                  arrivee: t, etat: "attendu", voie: -1, aBord: 0, tDebut: 0, tFin: 0, tenu: 0, _reste: 0 });
+  }
+  return trains;
 }
 
 function nouvellePartie() {
   lireParametres();
   etat = {
     t: 0,
-    hall: [],                    // {c, t0}
+    voyageurs: [],                       // {dest, quai, t0}
     trains: sequenceTrains(),
-    voies: Array(P.ilots * 2).fill(null),   // train posé sur la voie, ou null
-    grilLibreA: 0,
-    accu: Array(P.nDests).fill(0),          // accumulateurs de spawn
-    stats: Array.from({ length: P.nDests }, () => ({ arrives: 0, transportes: 0, abandonnes: 0 })),
-    flux: [],                    // petits points en mouvement (hall → train)
-    toasts: [],
-    fini: false,
-    tenues: [],                  // par train : secondes tenues à quai après la fin utile de l'embarquement
+    voies: Array(NQ).fill(null),
+    grilLibre: { g: 0, d: 0 },           // chaque côté du gril, libre à partir de
+    habitude: Array(4).fill(-1),         // par destination : le quai d'où son dernier train est parti
+    accu: Array(4).fill(0),
+    stats: PORTAILS.map(() => ({ arrives: 0, transportes: 0, abandonnes: 0 })),
+    toasts: [], tenues: [], fini: false,
+    choixPourVoyageurs: 0, choixTotal: 0, // combien de fois le quai choisi était celui qui avait le plus de voyageurs de la couleur
   };
+  selection = null;
   document.getElementById("releve").style.display = "none";
-  pause = false; document.getElementById("bPause").textContent = "Pause";
+  pause = false; document.getElementById("bPause").textContent = "⏸";
 }
 
 // ---------------------------------------------------------------------------
 // La simulation
 // ---------------------------------------------------------------------------
-function file() { return etat.trains.filter(tr => tr.etat === "file"); }
-function tete()  { const f = file(); return f.length ? f[0] : null; }
+function fileDe(portail) { return etat.trains.filter(tr => tr.etat === "file" && tr.origine === portail); }
+function coteDe(tr, sens) { return sens === "entre" ? PORTAILS[tr.origine].cote : PORTAILS[tr.dest].cote; }
 
 function pas(dt) {
   const e = etat; e.t += dt;
-
-  // les voyageurs arrivent dans le hall
-  for (let c = 0; c < P.nDests; c++) {
-    e.accu[c] += P.debit * dt * (0.6 + Math.random() * 0.8);
-    while (e.accu[c] >= 1) { e.accu[c] -= 1; e.hall.push({ c, t0: e.t }); e.stats[c].arrives++; }
-  }
-  // ceux qui n'en peuvent plus s'en vont
-  for (let i = e.hall.length - 1; i >= 0; i--) {
-    const v = e.hall[i];
-    if (e.t - v.t0 > P.patience) { e.hall.splice(i, 1); e.stats[v.c].abandonnes++; }
-  }
-  // les trains se présentent à la file
-  for (const tr of e.trains) if (tr.etat === "attendu" && e.t >= tr.arrivee) tr.etat = "file";
-
-  // les mouvements s'achèvent
-  for (const tr of e.trains) {
-    if (tr.etat === "entre" && e.t >= tr.tFin) { tr.etat = "quai"; tr.tArriveQuai = e.t; }
-    if (tr.etat === "sort"  && e.t >= tr.tFin) {
-      tr.etat = "parti"; e.voies[tr.quai] = null;
-      e.stats[tr.c].transportes += tr.aBord;
-      e.tenues.push(tr.tenu);
+  for (let d = 0; d < 4; d++) {
+    e.accu[d] += P.debit * dt * (0.6 + Math.random() * 0.8);
+    while (e.accu[d] >= 1) {
+      e.accu[d] -= 1;
+      let q = e.habitude[d];
+      if (P.ou === "hasard" || q < 0) q = Math.floor(Math.random() * nQuais());
+      e.voyageurs.push({ dest: d, quai: q, t0: e.t }); e.stats[d].arrives++;
     }
   }
-  // l'embarquement : les plus anciens d'abord, huit par seconde
+  for (let i = e.voyageurs.length - 1; i >= 0; i--) {
+    const v = e.voyageurs[i];
+    if (e.t - v.t0 > P.patience) { e.voyageurs.splice(i, 1); e.stats[v.dest].abandonnes++; }
+  }
+  for (const tr of e.trains) if (tr.etat === "attendu" && e.t >= tr.arrivee) tr.etat = "file";
+  for (const tr of e.trains) {
+    if (tr.etat === "entre" && e.t >= tr.tFin) { tr.etat = "quai"; e.habitude[tr.dest] = quaiDe(tr.voie); }
+    if (tr.etat === "sort"  && e.t >= tr.tFin) { tr.etat = "parti"; e.voies[tr.voie] = null; e.stats[tr.dest].transportes += tr.aBord; e.tenues.push(tr.tenu); }
+  }
+  // l'embarquement : les voyageurs DE CE QUAI qui vont où va le train, les plus anciens d'abord
   for (const tr of e.trains) {
     if (tr.etat !== "quai") continue;
-    let places = tr.cap - tr.aBord;
-    let quota = 8 * dt + (tr._reste || 0);
-    const candidats = e.hall.filter(v => v.c === tr.c).sort((a, b) => a.t0 - b.t0);
+    const q = quaiDe(tr.voie);
+    let places = tr.cap - tr.aBord, quota = 8 * dt + tr._reste;
+    const candidats = e.voyageurs.filter(v => v.quai === q && v.dest === tr.dest).sort((a, b) => a.t0 - b.t0);
     let montes = 0;
     while (places > 0 && quota >= 1 && montes < candidats.length) {
-      const v = candidats[montes++];
-      e.hall.splice(e.hall.indexOf(v), 1);
-      tr.aBord++; places--; quota -= 1;
-      e.flux.push({ c: v.c, x0: 0, y0: 0, quai: tr.quai, t0: e.t, dest: tr });
+      e.voyageurs.splice(e.voyageurs.indexOf(candidats[montes++]), 1); tr.aBord++; places--; quota -= 1;
     }
     tr._reste = Math.min(quota, 1);
-    // LA MESURE DU DILEMME : le temps passé à quai alors qu'il n'y a plus
-    // personne à prendre (plein, ou plus un candidat dans le hall).
-    const utile = places > 0 && candidats.length > montes;
-    if (!utile) tr.tenu += dt;
+    // LA MESURE DU DILEMME : le temps à quai sans plus personne à prendre
+    if (!(places > 0 && candidats.length > montes)) tr.tenu += dt;
   }
-  for (let i = e.flux.length - 1; i >= 0; i--) if (e.t - e.flux[i].t0 > 0.7) e.flux.splice(i, 1);
   e.toasts = e.toasts.filter(t => e.t - t.t0 < 1.6);
-
-  // fin de journée : tous partis
   if (!e.fini && e.trains.every(tr => tr.etat === "parti")) { e.fini = true; releve(); }
 }
 
 function toast(msg, x, y) { etat.toasts.push({ msg, x, y, t0: etat.t }); }
 
-// Cliquer un quai : la tête de file y entre, si le gril est libre.
-function envoyerSurVoie(i) {
-  const e = etat, tr = tete();
-  if (!tr) { toast("Aucun train en attente", 640, 400); return; }
-  if (e.voies[i]) { toast("Voie occupée", 640, 400); return; }
-  if (e.t < e.grilLibreA) { toast("Gril occupé", 360, 400); return; }
-  tr.etat = "entre"; tr.quai = i; tr.tFin = e.t + P.mvt; e.voies[i] = tr; e.grilLibreA = tr.tFin;
+function envoyer(tr, voie) {
+  const e = etat, cote = coteDe(tr, "entre");
+  if (e.voies[voie]) { toast("Voie occupée", QUAI.x + QUAI.l / 2, yQuai(voie) + 13); return; }
+  if (e.t < e.grilLibre[cote]) { toast("Gril occupé", cote === "g" ? 300 : L - 300, 280); return; }
+  // la mesure du choix : ce quai était-il celui qui avait le plus de voyageurs pour sa destination ?
+  const parQuai = [...Array(nQuais()).keys()].map(q => e.voyageurs.filter(v => v.quai === q && v.dest === tr.dest).length);
+  const maxi = Math.max(...parQuai);
+  e.choixTotal++; if (maxi > 0 && parQuai[quaiDe(voie)] === maxi) e.choixPourVoyageurs++;
+  tr.etat = "entre"; tr.voie = voie; tr.tDebut = e.t; tr.tFin = e.t + P.mvt; e.voies[voie] = tr; e.grilLibre[cote] = tr.tFin;
+  selection = null;
 }
-// Cliquer un train à quai : il part, si le gril est libre.
 function fairePartir(tr) {
-  const e = etat;
+  const e = etat, cote = coteDe(tr, "sort");
   if (tr.etat !== "quai") return;
-  if (e.t < e.grilLibreA) { toast("Gril occupé", 360, 400); return; }
-  tr.etat = "sort"; tr.tFin = e.t + P.mvt; e.grilLibreA = tr.tFin;
+  if (e.t < e.grilLibre[cote]) { toast("Gril occupé", cote === "g" ? 300 : L - 300, 280); return; }
+  tr.etat = "sort"; tr.tDebut = e.t; tr.tFin = e.t + P.mvt; e.grilLibre[cote] = tr.tFin;
+  selection = null;
 }
 
 // ---------------------------------------------------------------------------
@@ -225,224 +225,217 @@ function fairePartir(tr) {
 function releve() {
   const e = etat;
   let arrives = 0, transp = 0, aband = 0;
-  const lignes = e.stats.map((s, c) => {
+  const lignes = e.stats.map((s, d) => {
     arrives += s.arrives; transp += s.transportes; aband += s.abandonnes;
-    const restes = e.hall.filter(v => v.c === c).length;
-    return `<tr><td><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${DESTS[c].couleur};margin-right:6px"></span>${DESTS[c].nom}</td>
+    const restes = e.voyageurs.filter(v => v.dest === d).length;
+    return `<tr><td><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${PORTAILS[d].couleur};margin-right:6px"></span>${PORTAILS[d].nom}</td>
       <td>${s.arrives}</td><td>${s.transportes}</td><td>${s.abandonnes}</td><td>${restes}</td></tr>`;
   }).join("");
   const pct = arrives ? Math.round(100 * transp / arrives) : 0;
   const etoiles = pct >= 90 ? 3 : pct >= 80 ? 2 : pct >= 70 ? 1 : 0;
   const diamant = etoiles >= 1 && aband === 0;
-  const tenues = e.tenues;
-  const tenueMoy = tenues.length ? (tenues.reduce((a, b) => a + b, 0) / tenues.length) : 0;
-  const tenusLongtemps = tenues.filter(t => t > 4).length;
-  const remplissage = e.trains.length ? Math.round(100 * e.trains.reduce((a, tr) => a + tr.aBord, 0) / (e.trains.length * P.cap)) : 0;
+  const tenueMoy = e.tenues.length ? e.tenues.reduce((a, b) => a + b, 0) / e.tenues.length : 0;
+  const longs = e.tenues.filter(t => t > 4).length;
+  const remplissage = Math.round(100 * e.trains.reduce((a, tr) => a + tr.aBord, 0) / (e.trains.length * P.cap));
+  const pourVoy = e.choixTotal ? Math.round(100 * e.choixPourVoyageurs / e.choixTotal) : 0;
   document.getElementById("feuille").innerHTML = `
     <h3>Relevé de service</h3>
-    <div>Liège · ${e.trains.length} trains · ${arrives} voyageurs</div>
+    <div>Rheine · ${e.trains.length} trains · ${arrives} voyageurs · voyageurs ${P.ou === "habitude" ? "à leur quai d'habitude" : "au hasard"}, quais ${P.ilot ? "en îlot" : "séparés"}</div>
     <div class="etoiles">${"★".repeat(etoiles)}${"☆".repeat(3 - etoiles)} ${diamant ? "◆" : ""}</div>
-    <div><b>${pct} %</b> des voyageurs transportés ${etoiles === 0 ? "— <b>échec</b>" : ""}${diamant ? " — <b>personne n'a abandonné</b>" : ""}</div>
+    <div><b>${pct} %</b> des voyageurs transportés${etoiles === 0 ? " — <b>échec</b>" : ""}${diamant ? " — <b>personne n'a abandonné</b>" : ""}</div>
     <table><tr><th>destination</th><th>arrivés</th><th>transportés</th><th>abandons</th><th>restés</th></tr>${lignes}</table>
-    <div class="mesure">Remplissage moyen des trains : <b>${remplissage} %</b>.<br>
-    Temps moyen tenu à quai <i>sans plus personne à prendre</i> : <b>${tenueMoy.toFixed(1)} s</b> — ${tenusLongtemps} train${tenusLongtemps > 1 ? "s" : ""} tenu${tenusLongtemps > 1 ? "s" : ""} plus de 4 s.<br>
-    <span style="color:#8a7a5a">Si ces chiffres sont grands, tu as retenu des trains. Si tu as retenu des trains <i>et</i> que c'était pour remplir, le dilemme existe.</span></div>
+    <div class="mesure">Remplissage moyen : <b>${remplissage} %</b>.<br>
+    Tenu à quai <i>sans plus personne à prendre</i> : <b>${tenueMoy.toFixed(1)} s</b> en moyenne, ${longs} train${longs > 1 ? "s" : ""} plus de 4 s.<br>
+    Quai choisi <i>pour ses voyageurs</i> (celui qui en avait le plus pour cette destination) : <b>${pourVoy} %</b> des envois.<br>
+    <span style="color:#8a7a5a">Retenue grande = tu as hésité. Choix pour voyageurs élevé = le quai est devenu une décision.</span></div>
     <button id="bRelever">Rejouer</button>`;
   document.getElementById("releve").style.display = "flex";
   document.getElementById("bRelever").onclick = nouvellePartie;
 }
 
 // ---------------------------------------------------------------------------
-// Le dessin — repère logique 1200 × 700, mis à l'échelle de la fenêtre
+// Le dessin — le repère du jeu : portails, courbes, pilules, chapelets
 // ---------------------------------------------------------------------------
 const cv = document.getElementById("c"), cx = cv.getContext("2d");
-const L = 1200, H = 700;
 let ech = 1, ox = 0, oy = 0;
-const zones = { voies: [], trains: [] };     // les cibles cliquables du dernier dessin
+const zones = { voies: [], trains: [] };
 
 function redimensionner() {
   const r = cv.parentElement.getBoundingClientRect(), dpr = window.devicePixelRatio || 1;
   cv.width = r.width * dpr; cv.height = r.height * dpr;
-  ech = Math.min(r.width / L, r.height / H);
-  ox = (r.width - L * ech) / 2; oy = (r.height - H * ech) / 2;
+  ech = Math.min(r.width / L, r.height / H); ox = (r.width - L * ech) / 2; oy = (r.height - H * ech) / 2;
   cx.setTransform(dpr, 0, 0, dpr, 0, 0);
 }
 window.addEventListener("resize", redimensionner);
 
-// géométrie
-const HALL = { x: 40, y: 20, l: 1120, h: 165 };
-const FILE = { x: 40, y: 260, l: 250, h: 380 };
-const GRIL = { x: 310, y: 260, l: 90, h: 380 };
-const QUAIS = { x: 430, y: 240, l: 730, h: 420 };
-
-function rectVoie(i) {
-  const n = P.ilots * 2, pas = QUAIS.h / (P.ilots);           // un îlot = deux voies + le quai entre
-  const ilot = Math.floor(i / 2), haut = i % 2 === 0;
-  const y0 = QUAIS.y + ilot * pas;
-  const hVoie = 36, hQuai = Math.max(22, pas - 2 * hVoie - 20);
-  const y = haut ? y0 + 10 : y0 + 10 + hVoie + hQuai;
-  return { x: QUAIS.x, y, l: QUAIS.l, h: hVoie, ilot, haut, yQuai: y0 + 10 + hVoie, hQuai };
+// la courbe d'un portail à une voie, et un point dessus
+function courbe(portail, voie) {
+  const p = PORTAILS[portail], yv = yQuai(voie) + QUAI.h / 2;
+  if (p.cote === "g") return [X_PORTAIL_G, p.y, 330, p.y, 340, yv, QUAI.x, yv];
+  return [X_PORTAIL_D, p.y, L - 330, p.y, L - 340, yv, QUAI.x + QUAI.l, yv];
 }
-function centreHall(c) {
-  const larg = HALL.l / P.nDests;
-  return { x: HALL.x + larg * c + larg / 2, y: HALL.y + 95, larg };
+function surCourbe(c, t) {
+  const u = 1 - t;
+  return { x: u*u*u*c[0] + 3*u*u*t*c[2] + 3*u*t*t*c[4] + t*t*t*c[6], y: u*u*u*c[1] + 3*u*u*t*c[3] + 3*u*t*t*c[5] + t*t*t*c[7] };
+}
+function tracer(c) { cx.beginPath(); cx.moveTo(c[0], c[1]); cx.bezierCurveTo(c[2], c[3], c[4], c[5], c[6], c[7]); cx.stroke(); }
+function arrondi(x, y, l, h, r) { cx.beginPath(); cx.roundRect(x, y, l, h, r); }
+
+// un chapelet : la tête porte le code de la destination, les wagons se remplissent
+function chapelet(tr, x, y, sens, alpha = 1) {
+  const col = PORTAILS[tr.dest].couleur, nW = Math.max(2, Math.round(tr.cap / 4)), lw = 22, ew = 3, hh = 18;
+  const total = 24 + nW * (lw + ew);
+  const x0 = x - total / 2;
+  cx.globalAlpha = alpha;
+  // la tête
+  cx.fillStyle = col; arrondi(x0, y - hh / 2, 24, hh, 6); cx.fill();
+  cx.fillStyle = "#0b1a1f"; cx.font = "700 9px system-ui"; cx.textAlign = "center"; cx.fillText(PORTAILS[tr.dest].code, x0 + 12, y + 3.5);
+  // les wagons : pleins pour les voyageurs à bord, vides sinon
+  const pleins = tr.aBord / tr.cap * nW;
+  for (let k = 0; k < nW; k++) {
+    const wx = x0 + 24 + ew + k * (lw + ew);
+    arrondi(wx, y - hh / 2 + 1, lw, hh - 2, 5);
+    if (k + 1 <= pleins) { cx.fillStyle = col; cx.fill(); }
+    else if (k < pleins) { cx.fillStyle = col; cx.globalAlpha = alpha * 0.45; cx.fill(); cx.globalAlpha = alpha; cx.strokeStyle = col; cx.lineWidth = 1.5; cx.stroke(); }
+    else { cx.strokeStyle = col; cx.lineWidth = 1.5; cx.stroke(); }
+  }
+  cx.globalAlpha = 1;
+  return { x: x0, l: total };
 }
 
 function dessiner() {
   const e = etat;
-  cx.save();
-  cx.clearRect(0, 0, cv.width, cv.height);
-  cx.translate(ox, oy); cx.scale(ech, ech);
-  cx.fillStyle = "#101722"; cx.fillRect(0, 0, L, H);
+  cx.save(); cx.clearRect(0, 0, cv.width, cv.height); cx.translate(ox, oy); cx.scale(ech, ech);
+  cx.fillStyle = "#0f1523"; cx.fillRect(0, 0, L, H);
   zones.voies = []; zones.trains = [];
 
-  // --- le hall ---
-  cx.fillStyle = "#151e2c"; arrondi(HALL.x, HALL.y, HALL.l, HALL.h, 12); cx.fill();
-  const larg = HALL.l / P.nDests;
-  for (let c = 0; c < P.nDests; c++) {
-    const x0 = HALL.x + larg * c;
-    const attend = e.hall.filter(v => v.c === c);
-    cx.fillStyle = DESTS[c].couleur; cx.font = "600 12px system-ui"; cx.textAlign = "left";
-    cx.fillText(DESTS[c].nom, x0 + 14, HALL.y + 22);
-    cx.fillStyle = "#8d9ab5"; cx.font = "11px system-ui"; cx.textAlign = "right";
-    cx.fillText(`${attend.length} attendent · ${e.stats[c].transportes} partis · ${e.stats[c].abandonnes} perdus`, x0 + larg - 12, HALL.y + 22);
-    if (c > 0) { cx.strokeStyle = "#233047"; cx.beginPath(); cx.moveTo(x0, HALL.y + 8); cx.lineTo(x0, HALL.y + HALL.h - 8); cx.stroke(); }
-    // les ronds, en grille, les plus anciens en premier ; l'anneau dit la patience qui reste
-    attend.sort((a, b) => a.t0 - b.t0);
-    const parLigne = Math.max(4, Math.floor((larg - 28) / 15));
+  // --- les portails et leurs lignes ---
+  for (let p = 0; p < 4; p++) {
+    const po = PORTAILS[p], g = po.cote === "g";
+    cx.strokeStyle = po.couleur; cx.lineWidth = 2.5; cx.globalAlpha = 0.9;
+    cx.beginPath(); cx.moveTo(g ? 0 : L, po.y); cx.lineTo(g ? X_PORTAIL_G : X_PORTAIL_D, po.y); cx.stroke();
+    cx.globalAlpha = 0.28; cx.lineWidth = 1.5;
+    for (let v = 0; v < NQ; v++) tracer(courbe(p, v));
+    cx.globalAlpha = 1;
+    cx.fillStyle = po.couleur; cx.beginPath(); cx.arc(g ? X_PORTAIL_G : X_PORTAIL_D, po.y, 3.5, 0, Math.PI * 2); cx.fill();
+    cx.font = "600 11px system-ui"; cx.textAlign = "center"; cx.fillText(po.nom, g ? X_PORTAIL_G : X_PORTAIL_D, po.y - 14);
+  }
+
+  // --- les quais (où l'on attend) et les voyageurs dessus ---
+  for (let q = 0; q < nQuais(); q++) {
+    const b = bandeQuai(q);
+    cx.fillStyle = "#1a2236"; arrondi(b.x + 10, b.y, b.l - 20, b.h, 6); cx.fill();
+    const attend = e.voyageurs.filter(v => v.quai === q).sort((a, c) => a.t0 - c.t0);
+    const parLigne = Math.floor((b.l - 40) / 13), lignes = Math.max(1, Math.floor((b.h - 6) / 13));
     attend.forEach((v, k) => {
-      if (k >= parLigne * 8) return;
-      const px = x0 + 20 + (k % parLigne) * 15, py = HALL.y + 40 + Math.floor(k / parLigne) * 15;
+      if (k >= parLigne * lignes) return;
+      const px = b.x + 26 + (k % parLigne) * 13, py = b.y + 8 + Math.floor(k / parLigne) * 13;
       const reste = 1 - (e.t - v.t0) / P.patience;
-      cx.beginPath(); cx.arc(px, py, 4.5, 0, Math.PI * 2);
-      cx.fillStyle = reste < 0.25 ? "#5b6172" : DESTS[c].couleur; cx.fill();
-      cx.beginPath(); cx.arc(px, py, 6.5, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * Math.max(0, reste));
-      cx.strokeStyle = reste < 0.25 ? "#f08a7a" : "rgba(255,255,255,.35)"; cx.lineWidth = 1.5; cx.stroke();
+      cx.beginPath(); cx.arc(px, py, 3.6, 0, Math.PI * 2); cx.fillStyle = reste < 0.25 ? "#5b6172" : PORTAILS[v.dest].couleur; cx.fill();
+      if (reste < 0.25) { cx.beginPath(); cx.arc(px, py, 5.5, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * Math.max(0, reste / 0.25)); cx.strokeStyle = "#f08a7a"; cx.lineWidth = 1.3; cx.stroke(); }
     });
-    if (attend.length > parLigne * 8) { cx.fillStyle = "#8d9ab5"; cx.font = "11px system-ui"; cx.textAlign = "left"; cx.fillText(`+${attend.length - parLigne * 8}`, x0 + 20, HALL.y + HALL.h - 12); }
+    if (attend.length > parLigne * lignes) { cx.fillStyle = "#8593ad"; cx.font = "10px system-ui"; cx.textAlign = "right"; cx.fillText(`+${attend.length - parLigne * lignes}`, b.x + b.l - 14, b.y + b.h - 4); }
+    // le compte par destination, discret, à droite de la bande
+    const comptes = PORTAILS.map((po, d) => ({ n: attend.filter(v => v.dest === d).length, po })).filter(c => c.n);
+    let tx = b.x + b.l + 14; cx.font = "600 11px system-ui"; cx.textAlign = "left";
+    for (const c of comptes) { cx.fillStyle = c.po.couleur; cx.fillText(`${c.po.code} ${c.n}`, tx, b.y + b.h / 2 + 4); tx += 44; }
   }
 
-  // --- la file d'approche ---
-  cx.fillStyle = "#8d9ab5"; cx.font = "600 11px system-ui"; cx.textAlign = "left";
-  cx.fillText("FILE D'APPROCHE — la tête entre en premier", FILE.x, FILE.y - 12);
-  cx.fillStyle = "#151e2c"; arrondi(FILE.x, FILE.y, FILE.l, FILE.h, 12); cx.fill();
-  const f = file();
-  f.slice(0, 7).forEach((tr, k) => {
-    const y = FILE.y + 16 + k * 50, estTete = k === 0;
-    cx.fillStyle = DESTS[tr.c].couleur; arrondi(FILE.x + 14, y, FILE.l - 28, 36, 6); cx.fill();
-    if (estTete) { cx.strokeStyle = "#fff"; cx.lineWidth = 2; arrondi(FILE.x + 11, y - 3, FILE.l - 22, 42, 8); cx.stroke(); }
-    cx.fillStyle = "#0b1a1f"; cx.font = "600 12px system-ui"; cx.textAlign = "left";
-    cx.fillText(DESTS[tr.c].nom, FILE.x + 26, y + 23);
-    cx.textAlign = "right"; cx.fillText(`${tr.cap} pl.`, FILE.x + FILE.l - 26, y + 23);
-  });
-  if (f.length > 7) { cx.fillStyle = "#8d9ab5"; cx.font = "11px system-ui"; cx.textAlign = "left"; cx.fillText(`+${f.length - 7} derrière`, FILE.x + 14, FILE.y + FILE.h - 12); }
-  const aVenir = e.trains.filter(tr => tr.etat === "attendu").length;
-  cx.fillStyle = "#8d9ab5"; cx.font = "11px system-ui"; cx.textAlign = "left";
-  cx.fillText(f.length === 0 ? (aVenir ? "personne — le prochain arrive" : "plus aucun train") : "", FILE.x + 14, FILE.y + 34);
-  if (f.length) { cx.fillStyle = "#e6ebf5"; cx.font = "12px system-ui"; cx.fillText("▶ clique un quai libre", FILE.x + 14, FILE.y + FILE.h - 34); }
-
-  // --- le gril ---
-  const grilOccupe = e.t < e.grilLibreA;
-  cx.fillStyle = grilOccupe ? "#3a2a1a" : "#151e2c"; arrondi(GRIL.x, GRIL.y, GRIL.l, GRIL.h, 12); cx.fill();
-  cx.strokeStyle = grilOccupe ? "#ffb05c" : "#2a3650"; cx.lineWidth = 2;
-  for (let i = 0; i < P.ilots * 2; i++) {
-    const r = rectVoie(i); cx.beginPath(); cx.moveTo(GRIL.x + 8, GRIL.y + GRIL.h / 2); cx.lineTo(GRIL.x + GRIL.l - 8, r.y + r.h / 2); cx.stroke();
+  // --- les voies (pilules) ---
+  for (let v = 0; v < NQ; v++) {
+    const y = yQuai(v), tr = e.voies[v], libre = !tr, viser = selection && selection.etat === "file" && libre;
+    cx.fillStyle = "#1c2438"; arrondi(QUAI.x, y, QUAI.l, QUAI.h, 8); cx.fill();
+    if (viser) { cx.strokeStyle = PORTAILS[selection.dest].couleur; cx.lineWidth = 1.5; cx.setLineDash([5, 5]); arrondi(QUAI.x, y, QUAI.l, QUAI.h, 8); cx.stroke(); cx.setLineDash([]); }
+    else if (tr && tr.etat === "quai") { cx.strokeStyle = PORTAILS[tr.dest].couleur; cx.lineWidth = 1.2; arrondi(QUAI.x, y, QUAI.l, QUAI.h, 8); cx.stroke(); }
+    if (libre || tr.etat !== "quai") { cx.fillStyle = "#c8d0e0"; cx.font = "600 12px system-ui"; cx.textAlign = "center"; cx.fillText(String(v + 1), QUAI.x + QUAI.l / 2, y + 17); }
+    if (libre) zones.voies.push({ v, x: QUAI.x, y: y - 6, l: QUAI.l, h: QUAI.h + 12 });
   }
-  cx.fillStyle = grilOccupe ? "#ffb05c" : "#8d9ab5"; cx.font = "600 11px system-ui"; cx.textAlign = "center";
-  cx.fillText(grilOccupe ? "GRIL OCCUPÉ" : "GRIL", GRIL.x + GRIL.l / 2, GRIL.y - 12);
 
-  // --- les quais en îlot ---
-  for (let ilot = 0; ilot < P.ilots; ilot++) {
-    const r = rectVoie(ilot * 2);
-    cx.fillStyle = "#3a3f4b"; arrondi(QUAIS.x + 20, r.yQuai, QUAIS.l - 40, r.hQuai, 6); cx.fill();
-    cx.fillStyle = "#8d9ab5"; cx.font = "600 11px system-ui"; cx.textAlign = "center";
-    cx.fillText(`QUAI ${ilot + 1} — îlot`, QUAIS.x + QUAIS.l / 2, r.yQuai + r.hQuai / 2 + 4);
+  // --- les trains en file, au portail ---
+  for (let p = 0; p < 4; p++) {
+    const f = fileDe(p), po = PORTAILS[p], g = po.cote === "g";
+    f.slice(0, 3).forEach((tr, k) => {
+      const x = g ? X_PORTAIL_G - 70 - k * 150 : X_PORTAIL_D + 70 + k * 150;
+      const z = chapelet(tr, x, po.y, g ? 1 : -1, k === 0 ? 1 : 0.55);
+      if (k === 0) {
+        zones.trains.push({ tr, x: z.x - 6, y: po.y - 16, l: z.l + 12, h: 32 });
+        if (selection === tr) { cx.strokeStyle = "#fff"; cx.lineWidth = 2; cx.globalAlpha = 0.6 + 0.4 * Math.sin(e.t * 6); arrondi(z.x - 6, po.y - 15, z.l + 12, 30, 10); cx.stroke(); cx.globalAlpha = 1; }
+      }
+    });
+    if (f.length > 3) { cx.fillStyle = "#8593ad"; cx.font = "10px system-ui"; cx.textAlign = g ? "right" : "left"; cx.fillText(`+${f.length - 3}`, g ? 8 : L - 8, po.y + 24); }
   }
-  for (let i = 0; i < P.ilots * 2; i++) {
-    const r = rectVoie(i), tr = e.voies[i];
-    // la voie
-    cx.strokeStyle = "#2a3650"; cx.lineWidth = 4; cx.beginPath(); cx.moveTo(r.x, r.y + r.h / 2); cx.lineTo(r.x + r.l, r.y + r.h / 2); cx.stroke();
-    cx.fillStyle = "#8d9ab5"; cx.font = "11px system-ui"; cx.textAlign = "left"; cx.fillText(`voie ${i + 1}`, r.x + 8, r.y + r.h / 2 + 4);
-    if (!tr) {
-      if (tete() && !grilOccupe) { cx.strokeStyle = "rgba(47,208,189,.45)"; cx.lineWidth = 1.5; cx.setLineDash([6, 6]); arrondi(r.x + 60, r.y + 3, r.l - 120, r.h - 6, 6); cx.stroke(); cx.setLineDash([]); }
-      zones.voies.push({ i, x: r.x, y: r.y - 8, l: r.l, h: r.h + 16 });
-      continue;
+
+  // --- les trains en mouvement et à quai ---
+  for (const tr of e.trains) {
+    if (tr.etat === "entre" || tr.etat === "sort") {
+      const c = courbe(tr.etat === "entre" ? tr.origine : tr.dest, tr.voie);
+      const t = (e.t - tr.tDebut) / P.mvt, a = Math.min(1, Math.max(0, t));
+      const pt = surCourbe(c, tr.etat === "entre" ? a : 1 - a);
+      const aBout = 0.5 * (1 - a) * 300;
+      chapelet(tr, pt.x + (PORTAILS[tr.etat === "entre" ? tr.origine : tr.dest].cote === "g" ? -aBout : aBout) * 0 , pt.y);
     }
-    // le train : glisse à l'entrée, glisse à la sortie
-    let prog = 1;
-    if (tr.etat === "entre") prog = 1 - (tr.tFin - e.t) / P.mvt;
-    if (tr.etat === "sort")  prog = 1 - (1 - (tr.tFin - e.t) / P.mvt);
-    const lTrain = 300, xFin = r.x + (r.l - lTrain) / 2;
-    const x = tr.etat === "sort" ? xFin + (1 - prog) * 520 : r.x - lTrain + prog * (xFin - r.x + lTrain);
-    cx.fillStyle = DESTS[tr.c].couleur; arrondi(x, r.y + 3, lTrain, r.h - 6, 7); cx.fill();
-    // jauge de remplissage
-    cx.fillStyle = "rgba(0,0,0,.28)"; arrondi(x + 10, r.y + r.h - 12, lTrain - 20, 6, 3); cx.fill();
-    cx.fillStyle = "#fff"; arrondi(x + 10, r.y + r.h - 12, (lTrain - 20) * tr.aBord / tr.cap, 6, 3); cx.fill();
-    cx.fillStyle = "#0b1a1f"; cx.font = "600 12px system-ui"; cx.textAlign = "left";
-    cx.fillText(DESTS[tr.c].nom, x + 12, r.y + 17);
-    cx.textAlign = "right"; cx.fillText(`${tr.aBord} / ${tr.cap}`, x + lTrain - 12, r.y + 17);
     if (tr.etat === "quai") {
-      const candidats = e.hall.some(v => v.c === tr.c), plein = tr.aBord >= tr.cap;
-      const pret = plein || !candidats;
-      cx.fillStyle = pret ? "#fff" : "rgba(255,255,255,.7)"; cx.font = "600 11px system-ui"; cx.textAlign = "center";
-      const clignote = pret && Math.floor(e.t * 2) % 2 === 0;
-      cx.fillText(plein ? "PLEIN — clique pour partir" : candidats ? "embarquement… (clique pour partir)" : (clignote ? "PRÊT — clique pour partir" : "PRÊT"), x + lTrain / 2, r.haut ? r.yQuai + 16 : r.yQuai + r.hQuai - 8);
-      zones.trains.push({ tr, x, y: r.y, l: lTrain, h: r.h });
+      const y = yQuai(tr.voie) + QUAI.h / 2, z = chapelet(tr, QUAI.x + QUAI.l / 2, y);
+      const q = quaiDe(tr.voie), candidats = e.voyageurs.some(v => v.quai === q && v.dest === tr.dest), plein = tr.aBord >= tr.cap;
+      const pret = plein || !candidats, clignote = Math.floor(e.t * 2) % 2 === 0;
+      cx.fillStyle = pret ? "#fff" : "rgba(255,255,255,.65)"; cx.font = "600 10px system-ui"; cx.textAlign = "left";
+      cx.fillText(plein ? "PLEIN" : candidats ? `${tr.aBord}/${tr.cap}` : (clignote ? "PRÊT" : ""), QUAI.x + QUAI.l + 8, y + 4);
+      // les autres compteurs de ce quai passent à droite du mot
+      zones.trains.push({ tr, x: z.x - 6, y: y - 16, l: z.l + 12, h: 32 });
+      if (selection === tr) { cx.strokeStyle = "#fff"; cx.lineWidth = 2; arrondi(z.x - 6, y - 15, z.l + 12, 30, 10); cx.stroke(); }
     }
   }
 
-  // --- les voyageurs en route vers leur train ---
-  for (const fl of e.flux) {
-    const a = Math.min(1, (e.t - fl.t0) / 0.7), r = rectVoie(fl.quai), c0 = centreHall(fl.c);
-    const x = c0.x + (r.x + r.l / 2 - c0.x) * a, y = c0.y + 40 + (r.y + r.h / 2 - c0.y - 40) * a;
-    cx.beginPath(); cx.arc(x, y, 4, 0, Math.PI * 2); cx.fillStyle = DESTS[fl.c].couleur; cx.globalAlpha = 1 - a * 0.6; cx.fill(); cx.globalAlpha = 1;
+  // --- le gril occupé ---
+  for (const cote of ["g", "d"]) if (e.t < e.grilLibre[cote]) {
+    cx.fillStyle = "rgba(255,176,92,.85)"; cx.font = "600 10px system-ui"; cx.textAlign = "center";
+    cx.fillText("GRIL OCCUPÉ", cote === "g" ? 300 : L - 300, 292);
   }
-  // --- les mots qui répondent ---
+  // --- les mots ---
   for (const t of e.toasts) {
-    const a = 1 - (e.t - t.t0) / 1.6;
-    cx.globalAlpha = Math.max(0, a); cx.fillStyle = "#f3ead8"; arrondi(t.x - 70, t.y - 16, 140, 30, 15); cx.fill();
-    cx.fillStyle = "#2a241c"; cx.font = "600 12px system-ui"; cx.textAlign = "center"; cx.fillText(t.msg, t.x, t.y + 4); cx.globalAlpha = 1;
+    const a = Math.max(0, 1 - (e.t - t.t0) / 1.6);
+    cx.globalAlpha = a; cx.fillStyle = "#f3ead8"; arrondi(t.x - 62, t.y - 14, 124, 26, 13); cx.fill();
+    cx.fillStyle = "#2a241c"; cx.font = "600 11px system-ui"; cx.textAlign = "center"; cx.fillText(t.msg, t.x, t.y + 4); cx.globalAlpha = 1;
   }
+  // --- l'aide ---
+  cx.fillStyle = "#8593ad"; cx.font = "11px system-ui"; cx.textAlign = "center";
+  cx.fillText(selection ? (selection.etat === "file" ? "touche un quai libre" : "touche-le encore pour le faire partir") : "touche un train qui attend au portail", L / 2, H - 14);
   cx.restore();
 
-  // le bandeau
   const m = Math.floor(e.t / 60), s = Math.floor(e.t % 60);
   document.getElementById("hTemps").textContent = `${m}:${s < 10 ? "0" : ""}${s}`;
-  const partis = e.trains.filter(tr => tr.etat === "parti").length;
-  document.getElementById("hTrains").textContent = `${partis}/${e.trains.length}`;
+  document.getElementById("hTrains").textContent = `${e.trains.filter(tr => tr.etat === "parti").length}/${e.trains.length}`;
   let tot = 0, perdus = 0; for (const st of e.stats) { tot += st.transportes; perdus += st.abandonnes; }
-  document.getElementById("hTransp").textContent = tot;
-  document.getElementById("hPerdus").textContent = perdus;
+  document.getElementById("hTransp").textContent = tot; document.getElementById("hPerdus").textContent = perdus;
 }
-function arrondi(x, y, l, h, r) { cx.beginPath(); cx.roundRect(x, y, l, h, r); }
 
 // ---------------------------------------------------------------------------
-// Les gestes
+// Les gestes : toucher un train, puis un quai ; toucher un train à quai, il part
 // ---------------------------------------------------------------------------
 cv.addEventListener("pointerdown", ev => {
   if (etat.fini) return;
-  const rct = cv.getBoundingClientRect();
-  const x = (ev.clientX - rct.left - ox) / ech, y = (ev.clientY - rct.top - oy) / ech;
-  for (const z of zones.trains) if (x >= z.x && x <= z.x + z.l && y >= z.y && y <= z.y + z.h) { fairePartir(z.tr); return; }
-  for (const z of zones.voies)  if (x >= z.x && x <= z.x + z.l && y >= z.y && y <= z.y + z.h) { envoyerSurVoie(z.i); return; }
+  const r = cv.getBoundingClientRect(), x = (ev.clientX - r.left - ox) / ech, y = (ev.clientY - r.top - oy) / ech;
+  const dans = z => x >= z.x && x <= z.x + z.l && y >= z.y && y <= z.y + z.h;
+  for (const z of zones.trains) if (dans(z)) {
+    if (z.tr.etat === "quai") { if (selection === z.tr) fairePartir(z.tr); else selection = z.tr; return; }
+    selection = selection === z.tr ? null : z.tr; return;
+  }
+  for (const z of zones.voies) if (dans(z)) {
+    if (!selection || selection.etat !== "file") { toast("Choisis d'abord un train", QUAI.x + QUAI.l / 2, yQuai(z.v) + 13); return; }
+    envoyer(selection, z.v); return;
+  }
+  selection = null;
 });
-window.addEventListener("keydown", ev => {
-  if (ev.key >= "1" && ev.key <= "8") { const i = +ev.key - 1; if (i < etat.voies.length) { etat.voies[i] ? fairePartir(etat.voies[i]) : envoyerSurVoie(i); } }
-  if (ev.key === " ") { ev.preventDefault(); document.getElementById("bPause").click(); }
-});
-document.getElementById("bVitesse").onclick = function () { vitesse = vitesse === 1 ? 2 : 1; this.textContent = `×${vitesse}`; this.classList.toggle("actif", vitesse === 2); };
-document.getElementById("bPause").onclick = function () { pause = !pause; this.textContent = pause ? "Reprendre" : "Pause"; this.classList.toggle("actif", pause); };
+window.addEventListener("keydown", ev => { if (ev.key === " ") { ev.preventDefault(); document.getElementById("bPause").click(); } });
+document.getElementById("bVitesse").onclick = function () { vitesse = vitesse === 1 ? 2 : 1; this.textContent = `${vitesse}x`; this.classList.toggle("actif", vitesse === 2); };
+document.getElementById("bPause").onclick = function () { pause = !pause; this.textContent = pause ? "▶" : "⏸"; this.classList.toggle("actif", pause); };
 document.getElementById("bRejouer").onclick = nouvellePartie;
 
-// ---------------------------------------------------------------------------
-// La boucle
-// ---------------------------------------------------------------------------
 let tPrec = performance.now();
 function boucle(now) {
   const dt = Math.min(0.1, (now - tPrec) / 1000); tPrec = now;
   if (!pause && !etat.fini) pas(dt * vitesse);
-  dessiner();
-  requestAnimationFrame(boucle);
+  dessiner(); requestAnimationFrame(boucle);
 }
 redimensionner(); nouvellePartie(); requestAnimationFrame(boucle);
 </script>
