@@ -41,15 +41,19 @@ const VOILE := Color(0.110, 0.086, 0.063, 0.86)
 ## LA JAUGE DES VOYAGEURS — le proto de la branche jauge-voyageurs (20 sept. 2026).
 ##
 ## Vincent garde le jeu tel qu'il est et change UNE chose : ce que l'on compte.
-## Chaque voiture d'un convoi vaut une unité de voyageurs. Les unités de TOUS
-## les convois de la journée sont là dès le premier instant, À LA COULEUR DE
-## LEUR DESTINATION, mais réparties sous les quais et rangées AU HASARD : on
-## voit ce qu'il reste à transporter et pour où, jamais quel train ira à quel
-## quai ni dans quel ordre (Vincent, 20 septembre 2026 — d'abord « grises,
-## pas d'indice », puis « en couleur mais pas dans l'ordre »). Quand un convoi
-## s'arrête à un quai d'où il peut repartir, SES unités se cerclent de blanc,
-## où qu'elles soient, et montent au rythme de l'embarquement ; il les
-## emporte en partant. Le retard se paie en
+## Chaque voiture d'un convoi vaut une unité de voyageurs, et une unité est
+## UN VOYAGEUR POUR UNE DESTINATION — pas le passager d'un train précis. Elles
+## sont toutes là dès le premier instant, à la couleur de leur destination,
+## réparties au hasard sous les quais d'où l'on part pour là-bas, et rangées au
+## hasard : on voit ce qu'il reste à transporter et pour où, jamais quel train
+## ira à quel quai ni dans quel ordre (Vincent, 20 septembre 2026). Quand un
+## convoi s'arrête à un quai d'où il peut repartir, il prend autant d'unités
+## de sa couleur qu'il a de voitures — D'ABORD CELLES DU QUAI OÙ IL EST, puis
+## celles qui attendent ailleurs s'il lui reste des places : « c'est bien les
+## unités sur lesquelles je suis qui doivent disparaître ». Elles se cerclent
+## de blanc, montent au rythme de l'embarquement, et partent avec lui. Le total
+## par couleur égale la capacité des trains de cette couleur : chacun se
+## remplit, et le quai choisi est celui qui se vide. Le retard se paie en
 ## continu : quinze secondes de jeu valent un point, quatre points la minute.
 ## Le service est tenu si la jauge finit positive ; en dessous, c'est l'échec.
 ## Le seul adversaire est donc le retard ; les unités disent ce qu'il reste à
@@ -66,7 +70,8 @@ const JAUGE_ECLAT_DUREE := 1.4            # secondes réelles : le « +X » mont
 var mode_jauge: bool = OS.get_environment("STATION_JAUGE") != "0"   # la branche EST l'interrupteur
 var jauge_parti: Dictionary = {}          # id -> le convoi est parti (et a emporté ses unités)
 var jauge_eclats: Array = []              # les « +X » en vol : {id, pts, t0, pos}
-var jauge_quai: Dictionary = {}           # id -> le quai sous lequel ses unités attendent, tiré au sort
+var jauge_unites: Array = []              # les voyageurs : {dest, quai, train (id ou ""), montee}
+var jauge_ordre: Dictionary = {}          # quai -> ses unités, dans un ordre tiré au sort une fois
 
 var fiche: Dictionary
 var G: Dictionary
@@ -277,13 +282,14 @@ func _nouvelle_journee() -> void:
 	enc.charger(day)
 	jauge_parti = {}
 	jauge_eclats = []
-	jauge_quai = {}
+	if mode_jauge:
+		_construire_unites()
 	if mode_jauge and OS.get_environment("STATION_MESURE") != "":
 		var mal_placees := 0
-		for tr in enc.trains:
-			if _unites_de(tr) > 0 and not enc.paths.has("out:%s:%d" % [tr.to, _quai_des_unites(tr)]):
-				mal_placees += _unites_de(tr)
-		print("jauge : %d unité(s) sous un quai qui ne mène pas à leur destination (attendu : 0)" % mal_placees)
+		for u in jauge_unites:
+			if not enc.paths.has("out:%s:%d" % [u["dest"], int(u["quai"])]):
+				mal_placees += 1
+		print("jauge : %d unités, %d sous un quai qui ne mène pas à leur destination (attendu : 0)" % [jauge_unites.size(), mal_placees])
 	print("%s · graine %d — %d convois, journée tirée en %d ms · %s%s"
 		% [fiche.get("id", "?"), graine, enc.trains.size(), duree_generation_ms, _niveau_texte(),
 		(" · jauge des voyageurs, %d unités" % _points_max()) if mode_jauge else ""])
@@ -341,6 +347,8 @@ func _noter_les_departs() -> void:
 			continue
 		if (tr.state == Enc.S_MOVING_OUT and not tr.refoul) or tr.state == Enc.S_DONE:
 			jauge_parti[tr.id] = true
+			for u in _unites_prises(tr.id):
+				u["montee"] = true
 			# « hey, tu as gagné X points » : un +X au-dessus de la machine, qui
 			# monte et s'efface. Il suit le convoi tant qu'on sait où il est.
 			var pos := Vector2(float(positions[tr.id][0]["x"]), float(positions[tr.id][0]["y"])) \
@@ -349,15 +357,22 @@ func _noter_les_departs() -> void:
 				"t0": Time.get_ticks_msec() / 1000.0, "pos": pos})
 
 
-## Le quai sous lequel attendent les unités d'un convoi : tiré au sort avec la
-## graine du jour, une fois, PARMI LES QUAIS D'OÙ UN TRAIN PEUT PARTIR VERS SA
-## DESTINATION. Vincent a vu deux unités pour Bristol sous le quai 1 de
-## Salisbury, qui ne mène pas à Bristol : « techniquement impossibles à amener
-## à bon port ». Le train les aurait prises quand même — la place ne compte
-## pas —, mais une promesse fausse sur le quai, ça se lit. Le tirage respecte
-## donc les courbes, qui disent déjà ce que chaque quai dessert.
-func _quai_des_unites(tr) -> int:
-	if not jauge_quai.has(tr.id):
+## LES VOYAGEURS DE LA JOURNÉE, posés une fois. Autant d'unités par convoi
+## que de voitures, à la couleur de sa destination — mais l'unité ne garde
+## pas le nom du convoi : n'importe quel train pour là-bas pourra la prendre.
+## Le quai se tire au sort avec la graine du jour PARMI LES QUAIS D'OÙ UN TRAIN
+## PEUT PARTIR VERS CETTE DESTINATION : Vincent avait vu deux unités pour
+## Bristol sous un quai qui ne mène pas à Bristol, « techniquement impossibles
+## à amener à bon port » — une promesse fausse, que les courbes contredisaient.
+func _construire_unites() -> void:
+	jauge_unites = []
+	jauge_ordre = {}
+	var hasard := RandomNumberGenerator.new()
+	hasard.seed = graine * 7919 + 20260920
+	for tr in enc.trains:
+		var n := _unites_de(tr)
+		if n == 0:
+			continue
 		var possibles: Array = []
 		for q in G["platforms"]:
 			if enc.paths.has("out:%s:%d" % [tr.to, int(q["id"])]):
@@ -365,17 +380,54 @@ func _quai_des_unites(tr) -> int:
 		if possibles.is_empty():   # ne devrait pas arriver : gen-check refuse une destination sans quai
 			for q in G["platforms"]:
 				possibles.append(int(q["id"]))
-		var h: int = (tr.id + "·" + str(graine)).hash()
-		jauge_quai[tr.id] = possibles[abs(h) % possibles.size()]
-	return int(jauge_quai[tr.id])
+		for u in range(n):
+			jauge_unites.append({"dest": tr.to, "quai": possibles[hasard.randi() % possibles.size()], "train": "", "montee": false})
+	# l'ordre sous chaque quai est tiré au sort, une fois : rangées par convoi,
+	# elles auraient écrit la séquence des départs sur le quai
+	for q in G["platforms"]:
+		var ici: Array = []
+		for i in range(jauge_unites.size()):
+			if int(jauge_unites[i]["quai"]) == int(q["id"]):
+				ici.append(i)
+		for j in range(ici.size() - 1, 0, -1):
+			var k := hasard.randi() % (j + 1)
+			var tmp = ici[j]; ici[j] = ici[k]; ici[k] = tmp
+		jauge_ordre[int(q["id"])] = ici
 
 
 ## À quai, et d'un quai d'où il peut repartir vers sa destination : c'est là
-## que ses unités s'allument et montent. Sur un mauvais quai il refoulera,
-## et elles n'ont pas à bouger.
+## qu'il prend ses voyageurs. Sur un mauvais quai il refoulera, et rien ne bouge.
 func _embarque(tr) -> bool:
 	return tr.state == Enc.S_DWELL and tr.platform != null \
 		and enc.paths.has("out:%s:%d" % [tr.to, int(tr.platform)])
+
+
+## LE CONVOI À QUAI PREND SES VOYAGEURS : autant d'unités de sa couleur qu'il a
+## de voitures, d'abord celles du quai où il est, puis celles qui attendent
+## ailleurs. Décidé une fois, à l'arrêt ; ensuite elles sont à lui.
+func _affecter_unites() -> void:
+	for tr in enc.trains:
+		if not _embarque(tr) or _unites_prises(tr.id).size() > 0:
+			continue
+		var reste := _unites_de(tr)
+		for passe in range(2):   # 0 : son quai ; 1 : les autres
+			for u in jauge_unites:
+				if reste == 0:
+					break
+				if u["montee"] or u["train"] != "" or u["dest"] != tr.to:
+					continue
+				var ici: bool = int(u["quai"]) == int(tr.platform)
+				if (passe == 0 and ici) or (passe == 1 and not ici):
+					u["train"] = tr.id
+					reste -= 1
+
+
+func _unites_prises(id: String) -> Array:
+	var prises: Array = []
+	for u in jauge_unites:
+		if u["train"] == id:
+			prises.append(u)
+	return prises
 
 
 func _points_max() -> int:
@@ -400,12 +452,6 @@ func _points_live() -> float:
 	return float(_points_transportes()) - enc.live_delay() * 60.0 / JAUGE_SECONDES_PAR_POINT
 
 
-## Les unités d'un convoi sont visibles dès le premier instant du service,
-## jusqu'à ce qu'il soit parti.
-func _unites_visibles(tr) -> bool:
-	return _unites_de(tr) > 0 and not jauge_parti.get(tr.id, false)
-
-
 ## À la fin du service, la jauge décide : positive, le service est tenu ;
 ## négative, c'est l'échec. Les étoiles en sont dérivées pour le reste du jeu.
 func _appliquer_jauge() -> void:
@@ -424,42 +470,38 @@ func _appliquer_jauge() -> void:
 
 
 ## LES UNITÉS DE VOYAGEURS, sous les pilules. Une rangée de ronds à la couleur
-## de leur destination, rangés par convoi dans un ordre tiré au sort avec la
-## graine du jour. Celles du convoi qui est À QUAI et peut repartir se
-## cerclent de blanc — où qu'elles attendent — et s'effacent de la tête vers
-## la queue au rythme de l'embarquement, puis partent avec lui.
+## de leur destination, dans l'ordre tiré au sort du jour. Celles qu'un convoi
+## à quai a prises se cerclent de blanc — sur son quai d'abord, ailleurs s'il
+## en fallait plus — et s'effacent une à une au rythme de l'embarquement, puis
+## partent avec lui.
 func _dessiner_unites() -> void:
 	var k := Sty.UIK
 	var pas := 9.0 * k
 	var par_rang := int(floor((Geo.PLAT_LEN - 20.0) / pas))
+	# combien chaque convoi à quai a déjà fait monter
+	var montees: Dictionary = {}
+	for tr in enc.trains:
+		if _embarque(tr):
+			montees[tr.id] = int(floor(_embarquement(tr) * _unites_de(tr)))
 	for q in G["platforms"]:
-		var pid = q["id"]
-		var siens: Array = []
-		for tr in enc.trains:
-			if _unites_visibles(tr) and _quai_des_unites(tr) == int(pid):
-				siens.append(tr)
-		if siens.is_empty():
-			continue
-		siens.sort_custom(func(a, b): return (a.id + str(graine)).hash() < (b.id + str(graine)).hash())
+		var pid := int(q["id"])
 		var i := 0
 		var y0: float = float(q["cy"]) + Geo.PLAT_H / 2.0 + 9.0 * k
-		for tr in siens:
-			var n := _unites_de(tr)
-			var embarque: bool = _embarque(tr)
-			var col := Color(String(G["dest_color"][tr.to]))
-			# à quai : les premières sont déjà montées
-			var montees := 0
-			if embarque:
-				montees = int(floor(_embarquement(tr) * n))
-			for u in range(n):
-				var pos := Vector2(Geo.PLAT_X1 + 10.0 + (i % par_rang) * pas, y0 + floor(float(i) / par_rang) * pas)
-				i += 1
-				if u < montees:
-					continue
-				draw_circle(pos, 3.4 * k, col)
-				draw_arc(pos, 3.4 * k, 0.0, TAU, 16, Color(0, 0, 0, 0.45), max(1.0, 0.9 * k), true)
-				if embarque:   # « ceux-là montent » : un cerne blanc
-					draw_arc(pos, 4.8 * k, 0.0, TAU, 20, Color(1, 1, 1, 0.85), max(1.0, 1.1 * k), true)
+		for idx in jauge_ordre.get(pid, []):
+			var u: Dictionary = jauge_unites[idx]
+			if u["montee"]:
+				continue
+			var pos := Vector2(Geo.PLAT_X1 + 10.0 + (i % par_rang) * pas, y0 + floor(float(i) / par_rang) * pas)
+			i += 1
+			var prise: bool = u["train"] != ""
+			if prise and montees.get(u["train"], 0) > 0:
+				montees[u["train"]] -= 1   # celle-ci est déjà montée : on ne la dessine plus
+				continue
+			var col := Color(String(G["dest_color"][u["dest"]]))
+			draw_circle(pos, 3.4 * k, col)
+			draw_arc(pos, 3.4 * k, 0.0, TAU, 16, Color(0, 0, 0, 0.45), max(1.0, 0.9 * k), true)
+			if prise:   # « ceux-là montent » : un cerne blanc
+				draw_arc(pos, 4.8 * k, 0.0, TAU, 20, Color(1, 1, 1, 0.85), max(1.0, 1.1 * k), true)
 
 
 ## LE « +X » : au-dessus de la machine du convoi qui vient d'emporter ses
@@ -513,6 +555,7 @@ func _process(delta: float) -> void:
 		enc.sons.clear()
 	_vider_les_sons()
 	if mode_jauge:
+		_affecter_unites()
 		_noter_les_departs()
 	if enc.ended and not fin_enregistree:
 		if mode_jauge:
