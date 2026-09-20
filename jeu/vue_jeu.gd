@@ -44,9 +44,12 @@ const VOILE := Color(0.110, 0.086, 0.063, 0.86)
 ## Chaque voiture d'un convoi vaut une unité de voyageurs, et une unité est
 ## UN VOYAGEUR POUR UNE DESTINATION — pas le passager d'un train précis. Elles
 ## sont toutes là dès le premier instant, à la couleur de leur destination,
-## réparties au hasard sous les quais d'où l'on part pour là-bas, et rangées au
-## hasard : on voit ce qu'il reste à transporter et pour où, jamais quel train
-## ira à quel quai ni dans quel ordre (Vincent, 20 septembre 2026). Quand un
+## posées SOUS LE QUAI OÙ LA SOLUTION DU CALIBRAGE ARRÊTE LEUR TRAIN
+## (Train.hint), et rangées au hasard : une partie où tout le monde monte existe
+## toujours, et le hall en est la carte — sans dire quel train ni dans quel
+## ordre. (Placées au hasard d'abord, elles laissaient à la fin des voyageurs
+## qu'aucun train ne pouvait plus prendre : « un peu frustrant », Vincent, 20
+## septembre 2026. C'était son idée d'origine ; on y revient.) Quand un
 ## convoi s'arrête à un quai d'où il peut repartir, il prend les unités de sa
 ## couleur QUI ATTENDENT SOUS CE QUAI, jusqu'à sa capacité — et rien d'autre :
 ## « cela reste fixe, quitte à ce qu'il en reste après le dernier train ». Elles
@@ -382,12 +385,11 @@ func _preparer_jauge() -> void:
 
 
 ## LES VOYAGEURS DE LA JOURNÉE, posés une fois. Autant d'unités par convoi
-## que de voitures, à la couleur de sa destination — mais l'unité ne garde
-## pas le nom du convoi : n'importe quel train pour là-bas pourra la prendre.
-## Le quai se tire au sort avec la graine du jour PARMI LES QUAIS D'OÙ UN TRAIN
-## PEUT PARTIR VERS CETTE DESTINATION : Vincent avait vu deux unités pour
-## Bristol sous un quai qui ne mène pas à Bristol, « techniquement impossibles
-## à amener à bon port » — une promesse fausse, que les courbes contredisaient.
+## que de wagons, à la couleur de sa destination — mais l'unité ne garde pas
+## le nom du convoi : n'importe quel train pour là-bas pourra la prendre. Elles
+## attendent sous le quai que le calibrage destine à ce convoi : c'est ce qui
+## garantit qu'un joueur qui suit le plan emmène tout le monde. Sans quai prévu
+## — ça n'arrive pas —, un quai relié tiré au sort.
 func _construire_unites() -> void:
 	jauge_unites = []
 	jauge_ordre = {}
@@ -404,8 +406,9 @@ func _construire_unites() -> void:
 		if possibles.is_empty():   # ne devrait pas arriver : gen-check refuse une destination sans quai
 			for q in G["platforms"]:
 				possibles.append(int(q["id"]))
+		var quai_prevu: int = int(tr.hint) if (tr.hint != null and possibles.has(int(tr.hint))) else possibles[hasard.randi() % possibles.size()]
 		for u in range(n):
-			jauge_unites.append({"dest": tr.to, "quai": possibles[hasard.randi() % possibles.size()], "train": "", "montee": false})
+			jauge_unites.append({"dest": tr.to, "quai": quai_prevu, "train": "", "montee": false})
 	# l'ordre sous chaque quai est tiré au sort, une fois : rangées par convoi,
 	# elles auraient écrit la séquence des départs sur le quai
 	for q in G["platforms"]:
