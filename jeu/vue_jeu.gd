@@ -549,9 +549,13 @@ func _dessiner_unites() -> void:
 				draw_arc(pos, 4.8 * k, 0.0, TAU, 20, Color(1, 1, 1, 0.85), max(1.0, 1.1 * k), true)
 
 
-## LE VOYAGEUR QUI MONTE : il quitte sa place sur la bande, s'élève en une
-## petite arche et se pose au milieu de son wagon — le premier fourgon pour le
-## premier, et ainsi de suite. Là, il devient le point noir.
+## LE VOYAGEUR QUI MONTE : il quitte sa place sur la bande, MARCHE LE LONG DU
+## QUAI — vers la gauche ou la droite — jusqu'à la hauteur de son wagon, puis
+## monte dedans. Le premier fourgon pour le premier, et ainsi de suite. Là, il
+## devient le point noir. (Il volait en arche ; « on dirait qu'il vole »,
+## Vincent, 20 septembre 2026.)
+const JAUGE_MARCHE := 0.7   # la part du trajet passée à marcher ; le reste, à monter
+
 func _dessiner_vols() -> void:
 	var k := Sty.UIK
 	for v in jauge_vols:
@@ -560,8 +564,13 @@ func _dessiner_vols() -> void:
 		var cases: Array = positions[v["train"]]
 		var i: int = mini(int(v["rang"]) + 1, cases.size() - 1)
 		var vers := Vector2(float(cases[i]["x"]), float(cases[i]["y"]))
-		var p: float = smoothstep(0.0, 1.0, float(v["p"]))
-		var pos: Vector2 = Vector2(v["de"]).lerp(vers, p) + Vector2(0, -14.0 * k * sin(PI * p))
+		var de: Vector2 = v["de"]
+		var p: float = float(v["p"])
+		var pos: Vector2
+		if p < JAUGE_MARCHE:
+			pos = Vector2(lerpf(de.x, vers.x, smoothstep(0.0, 1.0, p / JAUGE_MARCHE)), de.y)
+		else:
+			pos = Vector2(vers.x, lerpf(de.y, vers.y, smoothstep(0.0, 1.0, (p - JAUGE_MARCHE) / (1.0 - JAUGE_MARCHE))))
 		draw_circle(pos, 3.4 * k, v["col"])
 		draw_arc(pos, 4.8 * k, 0.0, TAU, 20, Color(1, 1, 1, 0.85), max(1.0, 1.1 * k), true)
 
