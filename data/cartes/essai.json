@@ -1,0 +1,50 @@
+{
+  "id": "essai",
+  "nom": "L'atelier",
+  "gratuite": true,
+  "enChantier": true,
+  "note": "Carte d'ATELIER, pas de jeu (20 septembre 2026) : deux chapitres belges repris tels quels de la carte du Rhin — déjà certifiés par carte-check — pour éprouver la jauge des voyageurs sur treize gares de formes variées, plancher 1. Gratuite pour être jouable sans pièces. À retirer quand le proto sera tranché.",
+  "echelle": {
+    "kmMinEntreHubs": 110
+  },
+  "zones": [
+    {
+      "id": "flandre",
+      "nom": "Le Brabant, la Flandre et la Campine",
+      "couleur": "#d97757"
+    }
+  ],
+  "chapitres": [
+    {
+      "id": "le-brabant-et-la-flandre",
+      "nom": "Le Brabant et la Flandre",
+      "zone": "flandre",
+      "gares": [
+        "landen",
+        "hal",
+        "enghien",
+        "denderleeuw",
+        "audenarde",
+        "deinze",
+        "bruges"
+      ],
+      "plancher": 1,
+      "arrivee": 2
+    },
+    {
+      "id": "l-escaut-et-la-campine",
+      "nom": "L'Escaut et la Campine",
+      "zone": "flandre",
+      "gares": [
+        "gand",
+        "lokeren",
+        "termonde",
+        "herentals",
+        "aarschot",
+        "hasselt"
+      ],
+      "plancher": 1,
+      "arrivee": 2
+    }
+  ]
+}

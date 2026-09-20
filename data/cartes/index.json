@@ -12,5 +12,12 @@
     "gratuite": false,
     "fichier": "germanie.json",
     "sousTitre": "Soixante et onze gares du Hainaut à la Baltique et retour — et pas une qu'on ait déjà jouée."
+  },
+  {
+    "id": "essai",
+    "nom": "L'atelier",
+    "gratuite": true,
+    "fichier": "essai.json",
+    "sousTitre": "Treize gares de Flandre et de Campine pour éprouver la jauge des voyageurs — une carte d'atelier, gratuite, à retirer."
   }
 ]
