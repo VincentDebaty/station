@@ -68,6 +68,7 @@ const VOILE := Color(0.110, 0.086, 0.063, 0.86)
 const JAUGE_POINTS_PAR_WAGON := 1
 const JAUGE_SECONDES_PAR_POINT := 60.0    # de jeu — soit -1 point la minute de retard (Vincent, 20 sept. : « le jeu paraît plus dur qu'avant »)
 const JAUGE_EMBARQUEMENT_S := 0.5         # secondes réelles à ×1 par voyageur qui monte : « chaque passager entre à la même vitesse »
+const FRET_BLANC := Color("#ece7dc")       # les wagons du fret, en mode jauge : le gris est pris par les voyageurs
 const JAUGE_ECLAT_DUREE := 1.4            # secondes réelles : le « +X » monte et s'efface
 var mode_jauge: bool = OS.get_environment("STATION_JAUGE") != "0"   # la branche EST l'interrupteur
 var jauge_parti: Dictionary = {}          # id -> le convoi est parti (et a emporté ses unités)
@@ -1201,6 +1202,11 @@ func _dessiner_convois(sel, t: float) -> void:
 			# la machine garde la teinte de destination même sur un fret, dont
 			# les wagons sont gris : c'est elle qui annonce où il va
 			var teinte: Color = col if (i == 0 or not tr.freight) else Sty.FRET
+			# LE FRET EN WAGONS BLANCS, en mode jauge : ses wagons gris étaient sa
+			# signature, et les trains de voyageurs arrivent désormais gris aussi
+			# — « le train de fret ressemble aux autres » (Vincent, 20 sept.).
+			if tr.freight and i > 0 and mode_jauge:
+				teinte = FRET_BLANC
 			if i > 0 and (jauge_vide or (jauge_ici and i > montes_ici)):
 				teinte = col.lerp(Sty.FRET, 0.80)   # grisé : personne à bord
 			var lavis := Color(teinte.lerp(Sty.PAPIER, 0.06), vie)
