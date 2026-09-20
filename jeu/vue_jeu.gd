@@ -278,6 +278,12 @@ func _nouvelle_journee() -> void:
 	jauge_parti = {}
 	jauge_eclats = []
 	jauge_quai = {}
+	if mode_jauge and OS.get_environment("STATION_MESURE") != "":
+		var mal_placees := 0
+		for tr in enc.trains:
+			if _unites_de(tr) > 0 and not enc.paths.has("out:%s:%d" % [tr.to, _quai_des_unites(tr)]):
+				mal_placees += _unites_de(tr)
+		print("jauge : %d unité(s) sous un quai qui ne mène pas à leur destination (attendu : 0)" % mal_placees)
 	print("%s · graine %d — %d convois, journée tirée en %d ms · %s%s"
 		% [fiche.get("id", "?"), graine, enc.trains.size(), duree_generation_ms, _niveau_texte(),
 		(" · jauge des voyageurs, %d unités" % _points_max()) if mode_jauge else ""])
@@ -344,12 +350,23 @@ func _noter_les_departs() -> void:
 
 
 ## Le quai sous lequel attendent les unités d'un convoi : tiré au sort avec la
-## graine du jour, une fois. Il ne veut rien dire — c'est le but.
+## graine du jour, une fois, PARMI LES QUAIS D'OÙ UN TRAIN PEUT PARTIR VERS SA
+## DESTINATION. Vincent a vu deux unités pour Bristol sous le quai 1 de
+## Salisbury, qui ne mène pas à Bristol : « techniquement impossibles à amener
+## à bon port ». Le train les aurait prises quand même — la place ne compte
+## pas —, mais une promesse fausse sur le quai, ça se lit. Le tirage respecte
+## donc les courbes, qui disent déjà ce que chaque quai dessert.
 func _quai_des_unites(tr) -> int:
 	if not jauge_quai.has(tr.id):
-		var quais: Array = G["platforms"]
+		var possibles: Array = []
+		for q in G["platforms"]:
+			if enc.paths.has("out:%s:%d" % [tr.to, int(q["id"])]):
+				possibles.append(int(q["id"]))
+		if possibles.is_empty():   # ne devrait pas arriver : gen-check refuse une destination sans quai
+			for q in G["platforms"]:
+				possibles.append(int(q["id"]))
 		var h: int = (tr.id + "·" + str(graine)).hash()
-		jauge_quai[tr.id] = int(quais[abs(h) % quais.size()]["id"])
+		jauge_quai[tr.id] = possibles[abs(h) % possibles.size()]
 	return int(jauge_quai[tr.id])
 
 
