@@ -113,17 +113,32 @@ etat() {
   # `IDEProvisioningTeams` — le contrôle disait « AUCUN » à côté d'une
   # signature qui marchait. On lit le domaine entier et on compte les
   # `teamID`, quel que soit le nom du dictionnaire qui les porte.
+  # LES ÉQUIPES NE SONT PAS LE COMPTE (20 septembre 2026). Après la mise à
+  # jour vers Xcode 27, le contrôle disait « présent (équipes : …) » alors
+  # que xcodebuild refusait : « No Accounts ». Les `teamID` survivent dans
+  # les préférences quand le compte est déconnecté — ce n'est qu'une trace.
+  # Le compte, c'est la liste `DVTDeveloperAccountManagerAppleIDLists`, et
+  # elle était vide. On la lit ; les équipes ne servent qu'à l'affichage.
   local n_comptes equipes
-  n_comptes=$(defaults read com.apple.dt.Xcode 2>/dev/null | grep -c "teamID = ")
+  n_comptes=$(defaults read com.apple.dt.Xcode DVTDeveloperAccountManagerAppleIDLists 2>/dev/null \
+    | python3 -c "import sys,re; t=sys.stdin.read(); print(len(re.findall(r'\"[^\"]+@[^\"]+\"', t)))" 2>/dev/null)
+  equipes=$(defaults read com.apple.dt.Xcode 2>/dev/null | grep "teamID = " | sed -E 's/.*teamID = ([A-Z0-9]+);.*/\1/' | sort -u | tr '\n' ' ')
   if [ "${n_comptes:-0}" -gt 0 ]; then
-    equipes=$(defaults read com.apple.dt.Xcode 2>/dev/null | grep "teamID = " | sed -E 's/.*teamID = ([A-Z0-9]+);.*/\1/' | sort -u | tr '\n' ' ')
-    vert "compte Xcode  : présent (équipes : ${equipes})"
+    vert "compte Xcode  : présent (${n_comptes} Apple ID ; équipes : ${equipes})"
   else
     rouge "compte Xcode  : AUCUN — Xcode → Réglages → Comptes → + → Apple ID"
+    [ -n "${equipes}" ] && echo "                 (équipes en trace, sans compte : ${equipes})"
   fi
+  # LE PROFIL QUI COMPTE EST CELUI DE STATION. On en comptait huit et aucun
+  # n'était le sien : avec une équipe personnelle, Xcode le régénère à
+  # chaque signature, et il a besoin du compte pour ça.
   local prof
-  prof=$(ls ~/Library/MobileDevice/Provisioning\ Profiles/*.mobileprovision 2>/dev/null | wc -l | tr -d ' ')
-  echo "profils        : ${prof}"
+  prof=0
+  for f in ~/Library/MobileDevice/Provisioning\ Profiles/*.mobileprovision ~/Library/Developer/Xcode/UserData/Provisioning\ Profiles/*.mobileprovision; do
+    [ -f "$f" ] || continue
+    if security cms -D -i "$f" 2>/dev/null | grep -q "${BUNDLE}"; then prof=$((prof+1)); fi
+  done
+  echo "profils        : ${prof} pour ${BUNDLE}"
   local dev
   dev=$(xcrun devicectl list devices 2>/dev/null | grep -c "connected")
   if [ "${dev:-0}" -gt 0 ]; then
