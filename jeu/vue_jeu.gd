@@ -332,8 +332,11 @@ func _enregistrer_fin() -> void:
 
 
 # --- la jauge des voyageurs ---------------------------------------------------
+## Un voyageur par WAGON : la machine ne prend personne. On comptait une
+## unité par voiture machine comprise, et un train à un wagon embarquait deux
+## voyageurs — le second montait dans le même wagon (Vincent, 20 septembre).
 func _unites_de(tr) -> int:
-	return 0 if tr.freight or tr.hint == null else int(tr.cars)
+	return 0 if tr.freight or tr.hint == null else max(0, int(tr.cars) - 1)
 
 
 ## Les convois partis, notés une fois pour toutes à l'instant où ils quittent
@@ -1164,6 +1167,13 @@ func _dessiner_convois(sel, t: float) -> void:
 		# n'en a pas. Le liseré était la quatrième façon de dire la même chose.
 
 		var coupes := _coupures(axe, angles)
+		# EN MODE JAUGE, LA MACHINE EST EN COULEUR ET LES WAGONS GRISÉS : un
+		# wagon prend la couleur quand un voyageur y monte, et la garde. Le
+		# gris est teinté de la destination, pas le gris plat du fret — dont
+		# c'est justement la signature, machine colorée sur wagons gris.
+		var jauge_ici: bool = mode_jauge and not tr.freight and jauge_affecte.has(tr.id)
+		var jauge_vide: bool = mode_jauge and not tr.freight and not jauge_affecte.has(tr.id)
+		var montes_ici := _jauge_montes(tr) if jauge_ici else 0
 		# UN VÉHICULE PAR CASE, ET RIEN QUE DES FOURGONS DERRIÈRE LA MACHINE.
 		# Les voitures de deux cases donnaient une rame mieux proportionnée, mais
 		# Vincent leur préfère la lecture de la rame courte, où chaque véhicule
@@ -1176,11 +1186,8 @@ func _dessiner_convois(sel, t: float) -> void:
 			# la machine garde la teinte de destination même sur un fret, dont
 			# les wagons sont gris : c'est elle qui annonce où il va
 			var teinte: Color = col if (i == 0 or not tr.freight) else Sty.FRET
-			# LA MACHINE SE DISTINGUE DES VOITURES : la même teinte, plus profonde.
-			# Sur le téléphone, machine et fourgon se lisaient pareil — « pour ne
-			# pas confondre avec un wagon » (Vincent, 20 septembre 2026).
-			if i == 0 and not tr.freight:
-				teinte = col.darkened(0.38)
+			if i > 0 and (jauge_vide or (jauge_ici and i > montes_ici)):
+				teinte = col.lerp(Sty.FRET, 0.80)   # grisé : personne à bord
 			var lavis := Color(teinte.lerp(Sty.PAPIER, 0.06), vie)
 			for j in SOUS_CASES:
 				var t0: float = float(i) + float(j) / float(SOUS_CASES)
@@ -1214,23 +1221,18 @@ func _dessiner_convois(sel, t: float) -> void:
 		var remplis: Array = []
 		for i in n:
 			remplis.append(clampf(plein * float(n) - float(i), 0.0, 1.0))
-		# EN MODE JAUGE, UN WAGON EST PLEIN QUAND UN VOYAGEUR Y EST MONTÉ — et il
-		# le reste, ou reste éteint, après le départ : un train parti à moitié
-		# vide se voit. La machine est toujours allumée.
-		var jauge_ici: bool = mode_jauge and not tr.freight and jauge_affecte.has(tr.id)
-		var montes_ici := _jauge_montes(tr) if jauge_ici else 0
-		if jauge_ici:
+		# EN MODE JAUGE, LE VIDE SE DIT PAR LE GRIS DU WAGON, pas par l'encre
+		# éteinte : on ne repeint rien.
+		if mode_jauge and not tr.freight:
 			for i in n:
-				remplis[i] = 1.0 if (i == 0 or i <= montes_ici) else 0.0
-		if plein < 1.0 or jauge_ici:
+				remplis[i] = 1.0
+		if plein < 1.0 and not (mode_jauge and not tr.freight):
 			for i in n:
 				var frac: float = remplis[i]
 				if frac >= 1.0:
 					continue
 				var tex := Ill.vehicule("loco" if i == 0 else "fourgon")
 				var teinte: Color = col if (i == 0 or not tr.freight) else Sty.FRET
-				if i == 0 and not tr.freight:
-					teinte = col.darkened(0.38)
 				var eteint := Color(teinte.lerp(Sty.POSTE_FOND, 0.60), vie)
 				for j in 2:
 					var f0: float = lerpf(frac, 1.0, float(j) / 2.0)
