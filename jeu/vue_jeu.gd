@@ -38,6 +38,28 @@ const ROUGE := Color("#ef4444")
 const FRET := Color("#8f98a8")
 const VOILE := Color(0.110, 0.086, 0.063, 0.86)
 
+## LA JAUGE DES VOYAGEURS — le proto de la branche jauge-voyageurs (20 sept. 2026).
+##
+## Vincent garde le jeu tel qu'il est et change UNE chose : ce que l'on compte.
+## Chaque voiture d'un convoi vaut une unité de voyageurs. Les unités d'un
+## convoi se posent, grises, sous le quai que la solution du calibrage lui
+## destine (Train.hint), quinze minutes de jeu avant son heure de départ ; elles
+## prennent sa couleur quand il s'annonce au portail ; elles montent s'il
+## s'arrête À CE QUAI — sinon elles restent là, et il part vide. Le retard se
+## paie en continu : six secondes de jeu valent un point, dix points la minute.
+## Le service est tenu si la jauge finit positive ; en dessous, c'est l'échec.
+##
+## Rien de cela ne touche l'enclenchement, qui est sous oracle : cette vue
+## LIT ses trains et son retard, et ne fait que compter autrement. Les étoiles
+## restent calculées pour le ruban, les grades et les pièces — dérivées de la
+## jauge (deux tiers du maximum : 3, un tiers : 2, positive : 1) — pour que
+## rien en aval ne bouge tant que l'idée n'est pas validée.
+const JAUGE_POINTS_PAR_WAGON := 1
+const JAUGE_SECONDES_PAR_POINT := 6.0     # de jeu — soit -10 points la minute de retard
+const JAUGE_AVANCE := 15.0                # les unités paraissent 15 min avant le départ
+var mode_jauge: bool = OS.get_environment("STATION_JAUGE") != "0"   # la branche EST l'interrupteur
+var jauge_parti: Dictionary = {}          # id -> le convoi est parti du bon quai (true) ou d'ailleurs (false)
+
 var fiche: Dictionary
 var G: Dictionary
 var enc: Enc                          # le script préchargé sert de type
@@ -245,8 +267,10 @@ func _nouvelle_journee() -> void:
 	else:
 		sec_par_min = Rub.secondes_par_minute(int(fiche.get("difficulty", 0)))
 	enc.charger(day)
-	print("%s · graine %d — %d convois, journée tirée en %d ms · %s"
-		% [fiche.get("id", "?"), graine, enc.trains.size(), duree_generation_ms, _niveau_texte()])
+	jauge_parti = {}
+	print("%s · graine %d — %d convois, journée tirée en %d ms · %s%s"
+		% [fiche.get("id", "?"), graine, enc.trains.size(), duree_generation_ms, _niveau_texte(),
+		(" · jauge des voyageurs, %d unités" % _points_max()) if mode_jauge else ""])
 
 
 ## LA FIN DE SERVICE S'ÉCRIT COMME DANS LE PROTOTYPE (js/game.js, endGame) :
@@ -267,7 +291,7 @@ func _enregistrer_fin() -> void:
 	var prev: Dictionary = ruban.progression_de(id) if ruban != null else {}
 	bilan_final = {"gare": id, "stars": stars, "prevStars": Rub.etoiles_de(prev), "d": r["d"],
 		"prevBest": prev.get("bestDelay"), "perfect": r["perfect"], "failed": r["failed"], "win": r["win"],
-		"seuils": enc.seuils_de_service()}
+		"seuils": enc.seuils_de_service(), "points": r.get("points"), "pointsMax": r.get("pointsMax")}
 	medailles_final = []
 	if r["failed"]:
 		Sauvegarde.marquer_tentee(id)
@@ -286,6 +310,104 @@ func _enregistrer_fin() -> void:
 	if Sauvegarde.apercu_sans_trace:
 		texte += " (sans trace)"
 	print(texte)
+
+
+# --- la jauge des voyageurs ---------------------------------------------------
+func _unites_de(tr) -> int:
+	return 0 if tr.freight or tr.hint == null else int(tr.cars)
+
+
+## Les convois partis, notés une fois pour toutes à l'instant où ils quittent
+## le quai : du bon quai (les unités sont montées) ou d'un autre (elles restent).
+func _noter_les_departs() -> void:
+	for tr in enc.trains:
+		if jauge_parti.has(tr.id) or _unites_de(tr) == 0:
+			continue
+		if (tr.state == Enc.S_MOVING_OUT and not tr.refoul) or tr.state == Enc.S_DONE:
+			jauge_parti[tr.id] = tr.platform != null and int(tr.platform) == int(tr.hint)
+
+
+func _points_max() -> int:
+	var n := 0
+	for tr in enc.trains:
+		n += _unites_de(tr) * JAUGE_POINTS_PAR_WAGON
+	return n
+
+
+func _points_transportes() -> int:
+	var n := 0
+	for tr in enc.trains:
+		if jauge_parti.get(tr.id, false):
+			n += _unites_de(tr) * JAUGE_POINTS_PAR_WAGON
+	return n
+
+
+## La jauge, vivante : ce qui est monté moins ce que le retard a coûté — le
+## retard déjà encaissé ET celui qui court sur les convois pas encore partis,
+## comme le compteur d'aujourd'hui (Enclenchement.live_delay).
+func _points_live() -> float:
+	return float(_points_transportes()) - enc.live_delay() * 60.0 / JAUGE_SECONDES_PAR_POINT
+
+
+## Les unités d'un convoi sont visibles de « dep - 15 » jusqu'à ce qu'il soit
+## parti du bon quai. Un convoi parti d'ailleurs les laisse derrière lui.
+func _unites_visibles(tr) -> bool:
+	if _unites_de(tr) == 0 or enc.game_min < tr.dep - JAUGE_AVANCE:
+		return false
+	return not jauge_parti.get(tr.id, false)
+
+
+## À la fin du service, la jauge décide : positive, le service est tenu ;
+## négative, c'est l'échec. Les étoiles en sont dérivées pour le reste du jeu.
+func _appliquer_jauge() -> void:
+	var r: Dictionary = enc.resultat
+	var pts := _points_live()
+	var maxi := _points_max()
+	var stars := 0
+	if not bool(r.get("failed", false)) and pts >= 0.0 and maxi > 0:
+		stars = 3 if pts >= maxi * 2.0 / 3.0 else (2 if pts >= maxi / 3.0 else 1)
+	r["stars"] = stars
+	r["win"] = stars >= 1
+	r["perfect"] = stars == 3 and _points_transportes() >= maxi and float(r.get("d", 0.0)) == 0.0
+	r["points"] = int(round(pts))
+	r["pointsMax"] = maxi
+	print("jauge : %+d points sur %d — %d unités montées, retard %.1f min" % [int(round(pts)), maxi, _points_transportes(), enc.live_delay()])
+
+
+## LES UNITÉS DE VOYAGEURS, sous la pilule de leur quai. Une rangée de ronds,
+## les convois qui partent le plus tôt à gauche. Gris tant que le convoi n'est
+## pas annoncé, à sa couleur ensuite ; celles qui montent s'effacent de la
+## tête vers la queue au rythme de l'embarquement.
+func _dessiner_unites() -> void:
+	var k := Sty.UIK
+	var pas := 9.0 * k
+	var par_rang := int(floor((Geo.PLAT_LEN - 20.0) / pas))
+	for q in G["platforms"]:
+		var pid = q["id"]
+		var siens: Array = []
+		for tr in enc.trains:
+			if tr.hint != null and int(tr.hint) == int(pid) and _unites_visibles(tr):
+				siens.append(tr)
+		if siens.is_empty():
+			continue
+		siens.sort_custom(func(a, b): return a.dep < b.dep)
+		var i := 0
+		var y0: float = float(q["cy"]) + Geo.PLAT_H / 2.0 + 9.0 * k
+		for tr in siens:
+			var n := _unites_de(tr)
+			var annonce: bool = tr.state >= Enc.S_APPROACHING
+			var col: Color = Color(String(G["dest_color"][tr.to])) if annonce else Color(MUET, 0.85)
+			# à quai au bon endroit : les premières sont déjà montées
+			var montees := 0
+			if tr.state == Enc.S_DWELL and tr.platform != null and int(tr.platform) == int(pid):
+				montees = int(floor(_embarquement(tr) * n))
+			for u in range(n):
+				var pos := Vector2(Geo.PLAT_X1 + 10.0 + (i % par_rang) * pas, y0 + floor(float(i) / par_rang) * pas)
+				i += 1
+				if u < montees:
+					continue
+				draw_circle(pos, 3.4 * k, col)
+				draw_arc(pos, 3.4 * k, 0.0, TAU, 16, Color(0, 0, 0, 0.45), max(1.0, 0.9 * k), true)
 
 
 func _process(delta: float) -> void:
@@ -315,7 +437,11 @@ func _process(delta: float) -> void:
 		# service échoué sonnerait son carillon par-dessus la signature de fin.
 		enc.sons.clear()
 	_vider_les_sons()
+	if mode_jauge:
+		_noter_les_departs()
 	if enc.ended and not fin_enregistree:
+		if mode_jauge:
+			_appliquer_jauge()
 		_enregistrer_fin()
 		# LE TEMPS MORT DE 1,2 SECONDE ÉTAIT UN BLOCAGE, ET PAS UNE RESPIRATION.
 		# Le service se termine à l'instant où le DERNIER convoi lâche son
@@ -585,6 +711,8 @@ func _draw() -> void:
 		plan.position = d
 	draw_set_transform(d)
 	_dessiner_quais(sel, t)
+	if mode_jauge:
+		_dessiner_unites()
 	_dessiner_itineraires()
 	_dessiner_convois(sel, t)
 	_dessiner_signaux(t)
@@ -1245,6 +1373,11 @@ func _dessiner_hud(t: float) -> void:
 	var horloge := fmt(enc.game_min)
 	var retard := enc.live_delay()
 	var txt_r := "+%d" % int(floor(retard + 0.5))   # arrondi, comme Math.round côté web
+	# la jauge des voyageurs : le cadran dit les POINTS, signés
+	var pts_live := 0.0
+	if mode_jauge:
+		pts_live = _points_live()
+		txt_r = "%+d" % int(floor(pts_live + 0.5))
 	# 46 À 50 SUR L'ÉCRAN DE VINCENT : « 07:05, Space Mono Regular, 46-50 px,
 	# letter spacing 2 px » (9 septembre 2026). Une unité vaut un pixel sur le
 	# viewport d'un iPhone, et HUD_K y vaut 1,93 : 24 × k donne 46,3. C'était
@@ -1292,6 +1425,10 @@ func _dessiner_hud(t: float) -> void:
 	var r_arr: float = floor(retard + 0.5)
 	var col_r: Color = Sty.VERT if r_arr < float(s_r.get("trois", 6)) \
 		else (Sty.AMBRE if r_arr < float(s_r.get("une", 30)) else Sty.ROUGE)
+	if mode_jauge:
+		# vert au-dessus du tiers du maximum, ambre tant que c'est positif, rouge dessous
+		var maxi := float(max(1, _points_max()))
+		col_r = Sty.VERT if pts_live >= maxi / 3.0 else (Sty.AMBRE if pts_live >= 0.0 else Sty.ROUGE)
 	draw_string(mono, Vector2(ch.position.x + 14.0 * k + w_h + 9.0 * k, base), txt_r,
 		HORIZONTAL_ALIGNMENT_LEFT, -1, ti.call(14), col_r)
 	# la jauge : l'horloge se remplit à mesure que les convois quittent le quai
@@ -1310,12 +1447,19 @@ func _dessiner_hud(t: float) -> void:
 				or tr.state == Enc.S_MOVING_THROUGH:
 			partis += 1
 	var part: float = float(partis) / float(max(1, enc.trains.size()))
+	var teinte_jauge: Color = Sty.LAITON
+	if mode_jauge:
+		# la barre est la jauge elle-même : sa part du maximum, laiton si
+		# positive — et rouge, mesurant le déficit, si elle est passée dessous
+		var maxi := float(max(1, _points_max()))
+		part = clampf(abs(pts_live) / maxi, 0.0, 1.0)
+		teinte_jauge = Sty.LAITON if pts_live >= 0.0 else Sty.ROUGE
 	var jauge := Rect2(ch.position.x + 10.0 * k, ch.end.y - 7.0 * k, ch.size.x - 20.0 * k, 3.0 * k)
 	# la jauge passe au laiton : la sarcelle du prototype était la dernière
 	# couleur froide du pupitre, et elle n'y désignait rien.
 	draw_style_box(Sty.boite(Color(Sty.LAITON, 0.16), Color.TRANSPARENT, 2 * k, 0), jauge)
 	if part > 0.0:
-		draw_style_box(Sty.boite(Sty.LAITON, Color.TRANSPARENT, 2 * k, 0),
+		draw_style_box(Sty.boite(teinte_jauge, Color.TRANSPARENT, 2 * k, 0),
 			Rect2(jauge.position, Vector2(jauge.size.x * part, jauge.size.y)))
 	# « EN PAUSE », sous l'horloge — et c'est une cible : on la touche pour
 	# reprendre, comme la pilule du prototype.
@@ -1485,7 +1629,8 @@ func _dessiner_fin() -> void:
 	var c := e / 2.0
 	Sty.texte_centre(self, Sty.sans(600), 34, c - Vector2(0, 20), titre, Sty.TEXTE)
 	Sty.texte_centre(self, Sty.sans(), 18, c + Vector2(0, 20),
-		"%s   ·   retard cumulé %d min" % [etoiles, int(r.get("d", 0))], Sty.AMBRE)
+		("%s   ·   %+d points sur %d   ·   retard %d min" % [etoiles, int(r.get("points", 0)), int(r.get("pointsMax", 0)), int(r.get("d", 0))]) if mode_jauge
+		else ("%s   ·   retard cumulé %d min" % [etoiles, int(r.get("d", 0))]), Sty.AMBRE)
 	Sty.texte_centre(self, Sty.sans(), 14, c + Vector2(0, 60), "R pour rejouer", Sty.MUET)
 
 
