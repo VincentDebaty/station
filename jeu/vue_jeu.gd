@@ -224,6 +224,11 @@ func installer(cmd: Dictionary, pret: Dictionary) -> void:
 	G = pret["G"]
 	enc = pret["enc"]
 	duree_generation_ms = int(pret["ms"])
+	# LE RUBAN ENTRE PAR ICI, PAS PAR _nouvelle_journee : la journée est tirée
+	# dans un fil (preparer) et posée toute faite. Les unités n'étaient
+	# construites que sur l'autre chemin — sur le téléphone, il n'y en avait
+	# aucune (Vincent, 20 septembre 2026).
+	_preparer_jauge()
 	if plan != null:
 		remove_child(plan)
 		plan.queue_free()
@@ -280,16 +285,7 @@ func _nouvelle_journee() -> void:
 	else:
 		sec_par_min = Rub.secondes_par_minute(int(fiche.get("difficulty", 0)))
 	enc.charger(day)
-	jauge_parti = {}
-	jauge_eclats = []
-	if mode_jauge:
-		_construire_unites()
-	if mode_jauge and OS.get_environment("STATION_MESURE") != "":
-		var mal_placees := 0
-		for u in jauge_unites:
-			if not enc.paths.has("out:%s:%d" % [u["dest"], int(u["quai"])]):
-				mal_placees += 1
-		print("jauge : %d unités, %d sous un quai qui ne mène pas à leur destination (attendu : 0)" % [jauge_unites.size(), mal_placees])
+	_preparer_jauge()
 	print("%s · graine %d — %d convois, journée tirée en %d ms · %s%s"
 		% [fiche.get("id", "?"), graine, enc.trains.size(), duree_generation_ms, _niveau_texte(),
 		(" · jauge des voyageurs, %d unités" % _points_max()) if mode_jauge else ""])
@@ -355,6 +351,22 @@ func _noter_les_departs() -> void:
 				if positions.has(tr.id) and not positions[tr.id].is_empty() else Vector2(Geo.PLAT_MID, 0.0)
 			jauge_eclats.append({"id": tr.id, "pts": _unites_de(tr) * JAUGE_POINTS_PAR_WAGON,
 				"t0": Time.get_ticks_msec() / 1000.0, "pos": pos})
+
+
+## La jauge repart de zéro avec la journée — par les DEUX chemins d'entrée,
+## l'écran seul et le ruban.
+func _preparer_jauge() -> void:
+	jauge_parti = {}
+	jauge_eclats = []
+	if not mode_jauge:
+		return
+	_construire_unites()
+	if OS.get_environment("STATION_MESURE") != "":
+		var mal_placees := 0
+		for u in jauge_unites:
+			if not enc.paths.has("out:%s:%d" % [u["dest"], int(u["quai"])]):
+				mal_placees += 1
+		print("jauge : %d unités, %d sous un quai qui ne mène pas à leur destination (attendu : 0)" % [jauge_unites.size(), mal_placees])
 
 
 ## LES VOYAGEURS DE LA JOURNÉE, posés une fois. Autant d'unités par convoi
