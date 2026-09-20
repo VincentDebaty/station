@@ -1631,7 +1631,7 @@ func _dessiner_hud(t: float) -> void:
 	var pts_live := 0.0
 	if mode_jauge:
 		pts_live = _points_live()
-		txt_r = "%+d" % int(floor(pts_live + 0.5))
+		txt_r = "%d" % int(floor(pts_live + 0.5))   # le nombre, sans « + » : le vert le dit
 	# 46 À 50 SUR L'ÉCRAN DE VINCENT : « 07:05, Space Mono Regular, 46-50 px,
 	# letter spacing 2 px » (9 septembre 2026). Une unité vaut un pixel sur le
 	# viewport d'un iPhone, et HUD_K y vaut 1,93 : 24 × k donne 46,3. C'était
@@ -1639,6 +1639,9 @@ func _dessiner_hud(t: float) -> void:
 	var t_h: int = ti.call(24)
 	var w_h := Sty.largeur_espacee(mono, t_h, horloge, 1.05 * k)
 	var w_r := mono.get_string_size(txt_r, HORIZONTAL_ALIGNMENT_LEFT, -1, ti.call(14)).x
+	var w_jauge := 40.0 * k   # la petite jauge à zéro central, en mode jauge
+	if mode_jauge:
+		w_r = w_jauge + 6.0 * k + mono.get_string_size(txt_r, HORIZONTAL_ALIGNMENT_LEFT, -1, ti.call(12)).x
 	var w_chip := 14.0 * k + w_h + 9.0 * k + w_r + 14.0 * k
 	var milieu: float = Sty.marges["gauche"] + (size_ecran().x - Sty.marges["gauche"] - Sty.marges["droite"]) / 2.0
 	var ch := Rect2(milieu - w_chip / 2.0, Sty.marges["haut"] + 8 * k, w_chip, 44 * k)
@@ -1680,11 +1683,28 @@ func _dessiner_hud(t: float) -> void:
 	var col_r: Color = Sty.VERT if r_arr < float(s_r.get("trois", 6)) \
 		else (Sty.AMBRE if r_arr < float(s_r.get("une", 30)) else Sty.ROUGE)
 	if mode_jauge:
-		# vert au-dessus du tiers du maximum, ambre tant que c'est positif, rouge dessous
+		# LA PETITE JAUGE À ZÉRO CENTRAL (Vincent, 20 septembre 2026) : « +34 » se
+		# lisait comme l'ancien retard en minutes. Vert vers la droite à zéro ou
+		# plus, rouge vers la gauche en dessous ; la longueur est la part du
+		# maximum de la journée, le nombre en petit à côté.
 		var maxi := float(max(1, _points_max()))
-		col_r = Sty.VERT if pts_live >= maxi / 3.0 else (Sty.AMBRE if pts_live >= 0.0 else Sty.ROUGE)
-	draw_string(mono, Vector2(ch.position.x + 14.0 * k + w_h + 9.0 * k, base), txt_r,
-		HORIZONTAL_ALIGNMENT_LEFT, -1, ti.call(14), col_r)
+		col_r = Sty.VERT if pts_live >= 0.0 else Sty.ROUGE
+		var x0: float = ch.position.x + 14.0 * k + w_h + 9.0 * k
+		var yc: float = ch.position.y + utile / 2.0
+		var cadre := Rect2(x0, yc - 4.5 * k, w_jauge, 9.0 * k)
+		draw_style_box(Sty.boite(Color(0, 0, 0, 0.55), Color(Sty.POSTE_BORD, 0.8), 2.5 * k, max(1.0, 0.9 * k)), cadre)
+		var milieu_j: float = x0 + w_jauge / 2.0
+		var part_j: float = clampf(abs(pts_live) / maxi, 0.0, 1.0) * (w_jauge / 2.0 - 2.0 * k)
+		if part_j > 0.5:
+			var barre := Rect2(milieu_j if pts_live >= 0.0 else milieu_j - part_j, yc - 2.5 * k, part_j, 5.0 * k)
+			draw_style_box(Sty.boite(col_r, Color.TRANSPARENT, 1.5 * k, 0), barre)
+		draw_line(Vector2(milieu_j, yc - 4.5 * k), Vector2(milieu_j, yc + 4.5 * k), Color(Sty.POSTE_BORD, 0.9), max(1.0, 1.0 * k))
+		var t12: int = ti.call(12)
+		draw_string(mono, Vector2(x0 + w_jauge + 6.0 * k, yc + (mono.get_ascent(t12) - mono.get_descent(t12)) / 2.0), txt_r,
+			HORIZONTAL_ALIGNMENT_LEFT, -1, t12, col_r)
+	else:
+		draw_string(mono, Vector2(ch.position.x + 14.0 * k + w_h + 9.0 * k, base), txt_r,
+			HORIZONTAL_ALIGNMENT_LEFT, -1, ti.call(14), col_r)
 	# la jauge : l'horloge se remplit à mesure que les convois quittent le quai
 	# LA JAUGE COMPTE CE QUI A QUITTÉ LE QUAI, PAS CE QUI A QUITTÉ L'ÉCRAN.
 	# Elle ne comptait que les convois à l'état DONE — c'est-à-dire ceux qui
@@ -1701,13 +1721,7 @@ func _dessiner_hud(t: float) -> void:
 				or tr.state == Enc.S_MOVING_THROUGH:
 			partis += 1
 	var part: float = float(partis) / float(max(1, enc.trains.size()))
-	var teinte_jauge: Color = Sty.LAITON
-	if mode_jauge:
-		# la barre est la jauge elle-même : sa part du maximum, laiton si
-		# positive — et rouge, mesurant le déficit, si elle est passée dessous
-		var maxi := float(max(1, _points_max()))
-		part = clampf(abs(pts_live) / maxi, 0.0, 1.0)
-		teinte_jauge = Sty.LAITON if pts_live >= 0.0 else Sty.ROUGE
+	var teinte_jauge: Color = Sty.LAITON   # la barre du bas garde son sens : la part des convois partis
 	var jauge := Rect2(ch.position.x + 10.0 * k, ch.end.y - 7.0 * k, ch.size.x - 20.0 * k, 3.0 * k)
 	# la jauge passe au laiton : la sarcelle du prototype était la dernière
 	# couleur froide du pupitre, et elle n'y désignait rien.
