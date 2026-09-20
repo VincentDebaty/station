@@ -55,7 +55,8 @@ const VOILE := Color(0.110, 0.086, 0.063, 0.86)
 ## « cela reste fixe, quitte à ce qu'il en reste après le dernier train ». Elles
 ## se cerclent de blanc, montent au rythme de l'embarquement, et partent avec
 ## lui ; un point chacune. Le quai est donc une vraie décision : c'est lui qui
-## dit combien le train emporte. Chaque voyageur monte en un temps fixe — le
+## dit combien le train emporte. Chaque voyageur part à l'arrêt du train et
+## marche à la vitesse d'un convoi de cinq wagons jusqu'à son wagon — le
 ## train, lui, attend son heure comme toujours : l'embarquement est un dessin,
 ## le départ est une règle du moteur. Le retard se paie en
 ## continu : quinze secondes de jeu valent un point, quatre points la minute.
@@ -70,7 +71,11 @@ const VOILE := Color(0.110, 0.086, 0.063, 0.86)
 ## rien en aval ne bouge tant que l'idée n'est pas validée.
 const JAUGE_POINTS_PAR_WAGON := 1
 const JAUGE_SECONDES_PAR_POINT := 60.0    # de jeu — soit -1 point la minute de retard (Vincent, 20 sept. : « le jeu paraît plus dur qu'avant »)
-const JAUGE_EMBARQUEMENT_S := 0.5         # secondes réelles à ×1 par voyageur qui monte : « chaque passager entre à la même vitesse »
+## LES VOYAGEURS MARCHENT À LA VITESSE D'UN TRAIN DE CINQ WAGONS (Vincent, 20
+## septembre 2026) : la vitesse de base des convois, 700 unités en TRAVEL
+## minutes, ralentie comme un convoi de cinq voitures. Tous partent à l'arrêt
+## du train ; les plus loin de leur wagon arrivent en dernier.
+const JAUGE_VITESSE_MARCHE := (700.0 / Geo.TRAVEL) / (1.0 + 4.0 * 0.22)   # unités par minute de jeu
 const FRET_BLANC := Color("#ece7dc")       # les wagons du fret, en mode jauge : le gris est pris par les voyageurs
 const JAUGE_ECLAT_DUREE := 1.4            # secondes réelles : le « +X » monte et s'efface
 var mode_jauge: bool = OS.get_environment("STATION_JAUGE") != "0"   # la branche EST l'interrupteur
@@ -408,7 +413,7 @@ func _construire_unites() -> void:
 				possibles.append(int(q["id"]))
 		var quai_prevu: int = int(tr.hint) if (tr.hint != null and possibles.has(int(tr.hint))) else possibles[hasard.randi() % possibles.size()]
 		for u in range(n):
-			jauge_unites.append({"dest": tr.to, "quai": quai_prevu, "train": "", "montee": false})
+			jauge_unites.append({"dest": tr.to, "quai": quai_prevu, "train": "", "montee": false, "pos": Vector2.ZERO})
 	# l'ordre sous chaque quai est tiré au sort, une fois : rangées par convoi,
 	# elles auraient écrit la séquence des départs sur le quai
 	for q in G["platforms"]:
@@ -451,33 +456,44 @@ func _affecter_unites() -> void:
 			reste -= 1
 
 
-## Le trajet d'un voyageur, de la bande au wagon, occupe cette part de son tour
-## d'embarquement : le voyageur de rang r part quand la part embarquée dépasse
-## r sur n, et il est à bord quand elle dépasse r + VOL.
-const JAUGE_VOL := 0.8
+## Le wagon d'un voyageur pris : le premier fourgon pour le rang 0, et ainsi
+## de suite ; la machine, jamais.
+func _wagon_de(u: Dictionary, tr) -> Vector2:
+	var cases: Array = positions.get(tr.id, [])
+	if cases.is_empty():
+		return Vector2(u["pos"])
+	var i: int = mini(int(u.get("rang", 0)) + 1, cases.size() - 1)
+	return Vector2(float(cases[i]["x"]), float(cases[i]["y"]))
 
-## LA PART EMBARQUÉE D'UN CONVOI À QUAI, au rythme d'un voyageur toutes les
-## JAUGE_EMBARQUEMENT_S secondes réelles à ×1 — converties en minutes de jeu
-## par sec_par_min, pour qu'à ×4 tout aille quatre fois plus vite ensemble.
-## Sans personne à prendre : 1, il n'y a rien à montrer. Ce rythme ne dit rien
-## du départ, qui reste à l'heure de l'horaire.
-func _embarquement_jauge(tr) -> float:
-	var n := _unites_prises(tr.id).size()
-	if n == 0 or tr.actual_arr == null:
+
+## L'AVANCEMENT D'UN VOYAGEUR VERS SON WAGON, de 0 à 1 : il part à l'arrêt du
+## train et parcourt, à JAUGE_VITESSE_MARCHE, la longueur du quai qui le sépare
+## de son wagon puis la montée. Sa place sur la bande est celle du dernier
+## dessin ; tant qu'elle n'est pas connue, il n'a pas bougé.
+func _avancement(u: Dictionary, tr) -> float:
+	if tr.actual_arr == null or Vector2(u["pos"]) == Vector2.ZERO:
+		return 0.0
+	var de: Vector2 = u["pos"]
+	var vers := _wagon_de(u, tr)
+	var d: float = abs(vers.x - de.x) + abs(vers.y - de.y)
+	if d < 1.0:
 		return 1.0
-	var pas_min: float = JAUGE_EMBARQUEMENT_S / sec_par_min
-	return clampf((enc.game_min - float(tr.actual_arr)) / (float(n) * pas_min), 0.0, 1.0)
+	return clampf((enc.game_min - float(tr.actual_arr)) * JAUGE_VITESSE_MARCHE / d, 0.0, 1.0)
+
 
 ## Combien de ses voyageurs sont à bord : tous une fois parti ; à quai, ceux
-## dont le vol est fini.
+## qui sont arrivés à leur wagon.
 func _jauge_montes(tr) -> int:
 	var prises := _unites_prises(tr.id)
 	if prises.is_empty():
 		return 0
 	if jauge_parti.get(tr.id, false) or tr.state != Enc.S_DWELL:
 		return prises.size()
-	var x: float = _embarquement_jauge(tr) * float(prises.size()) - JAUGE_VOL
-	return clampi(int(floor(x)) + 1, 0, prises.size())
+	var n := 0
+	for u in prises:
+		if _avancement(u, tr) >= 1.0:
+			n += 1
+	return n
 
 
 func _unites_prises(id: String) -> Array:
@@ -538,11 +554,10 @@ func _dessiner_unites() -> void:
 	var pas := 9.0 * k
 	var par_rang := int(floor((Geo.PLAT_LEN - 20.0) / pas))
 	jauge_vols = []
-	# par convoi à quai : la part embarquée, sur le nombre qu'il a PRIS
-	var a_quai: Dictionary = {}
+	var a_quai: Dictionary = {}   # id -> le convoi à quai qui embarque
 	for tr in enc.trains:
 		if _embarque(tr):
-			a_quai[tr.id] = {"frac": _embarquement_jauge(tr), "n": _unites_prises(tr.id).size()}
+			a_quai[tr.id] = tr
 	for q in G["platforms"]:
 		var pid := int(q["id"])
 		var i := 0
@@ -553,16 +568,14 @@ func _dessiner_unites() -> void:
 				continue
 			var pos := Vector2(Geo.PLAT_X1 + 10.0 + (i % par_rang) * pas, y0 + floor(float(i) / par_rang) * pas)
 			i += 1
+			u["pos"] = pos   # sa place sur la bande : le point de départ de sa marche
 			var prise: bool = u["train"] != "" and a_quai.has(u["train"])
 			if prise:
-				var e: Dictionary = a_quai[u["train"]]
-				var rang := int(u.get("rang", 0))
-				var x: float = float(e["frac"]) * float(e["n"]) - float(rang)
-				if x >= JAUGE_VOL:
+				var p := _avancement(u, a_quai[u["train"]])
+				if p >= 1.0:
 					continue   # à bord : c'est le point noir du wagon qui le dit
-				if x > 0.0:    # en vol vers son wagon
-					jauge_vols.append({"train": u["train"], "rang": rang, "p": x / JAUGE_VOL,
-						"de": pos, "col": Color(String(G["dest_color"][u["dest"]]))})
+				if p > 0.0:    # en marche vers son wagon
+					jauge_vols.append({"u": u, "tr": a_quai[u["train"]], "p": p})
 					continue
 			var col := Color(String(G["dest_color"][u["dest"]]))
 			draw_circle(pos, 3.4 * k, col)
@@ -573,27 +586,25 @@ func _dessiner_unites() -> void:
 
 ## LE VOYAGEUR QUI MONTE : il quitte sa place sur la bande, MARCHE LE LONG DU
 ## QUAI — vers la gauche ou la droite — jusqu'à la hauteur de son wagon, puis
-## monte dedans. Le premier fourgon pour le premier, et ainsi de suite. Là, il
-## devient le point noir. (Il volait en arche ; « on dirait qu'il vole »,
-## Vincent, 20 septembre 2026.)
-const JAUGE_MARCHE := 0.7   # la part du trajet passée à marcher ; le reste, à monter
-
+## monte dedans, le tout à vitesse constante. Le premier fourgon pour le
+## premier, et ainsi de suite. Là, il devient le point noir. (Il volait en
+## arche ; « on dirait qu'il vole », Vincent, 20 septembre 2026.)
 func _dessiner_vols() -> void:
 	var k := Sty.UIK
 	for v in jauge_vols:
-		if not positions.has(v["train"]) or positions[v["train"]].is_empty():
-			continue
-		var cases: Array = positions[v["train"]]
-		var i: int = mini(int(v["rang"]) + 1, cases.size() - 1)
-		var vers := Vector2(float(cases[i]["x"]), float(cases[i]["y"]))
-		var de: Vector2 = v["de"]
-		var p: float = float(v["p"])
+		var u: Dictionary = v["u"]
+		var de: Vector2 = u["pos"]
+		var vers := _wagon_de(u, v["tr"])
+		var dx: float = abs(vers.x - de.x)
+		var d: float = dx + abs(vers.y - de.y)
+		var parcouru: float = float(v["p"]) * d
 		var pos: Vector2
-		if p < JAUGE_MARCHE:
-			pos = Vector2(lerpf(de.x, vers.x, smoothstep(0.0, 1.0, p / JAUGE_MARCHE)), de.y)
+		if parcouru <= dx:
+			pos = Vector2(move_toward(de.x, vers.x, parcouru), de.y)
 		else:
-			pos = Vector2(vers.x, lerpf(de.y, vers.y, smoothstep(0.0, 1.0, (p - JAUGE_MARCHE) / (1.0 - JAUGE_MARCHE))))
-		draw_circle(pos, 3.4 * k, v["col"])
+			pos = Vector2(vers.x, move_toward(de.y, vers.y, parcouru - dx))
+		var col := Color(String(G["dest_color"][u["dest"]]))
+		draw_circle(pos, 3.4 * k, col)
 		draw_arc(pos, 4.8 * k, 0.0, TAU, 20, Color(1, 1, 1, 0.85), max(1.0, 1.1 * k), true)
 
 
