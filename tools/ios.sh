@@ -121,7 +121,7 @@ etat() {
   # elle était vide. On la lit ; les équipes ne servent qu'à l'affichage.
   local n_comptes equipes
   n_comptes=$(defaults read com.apple.dt.Xcode DVTDeveloperAccountManagerAppleIDLists 2>/dev/null \
-    | python3 -c "import sys,re; t=sys.stdin.read(); print(len(re.findall(r'\"[^\"]+@[^\"]+\"', t)))" 2>/dev/null)
+    | grep -c "identifier = " 2>/dev/null)   # un compte = une entrée « identifier = <UUID> », pas une adresse
   equipes=$(defaults read com.apple.dt.Xcode 2>/dev/null | grep "teamID = " | sed -E 's/.*teamID = ([A-Z0-9]+);.*/\1/' | sort -u | tr '\n' ' ')
   if [ "${n_comptes:-0}" -gt 0 ]; then
     vert "compte Xcode  : présent (${n_comptes} Apple ID ; équipes : ${equipes})"
