@@ -52,7 +52,9 @@ const VOILE := Color(0.110, 0.086, 0.063, 0.86)
 ## « cela reste fixe, quitte à ce qu'il en reste après le dernier train ». Elles
 ## se cerclent de blanc, montent au rythme de l'embarquement, et partent avec
 ## lui ; un point chacune. Le quai est donc une vraie décision : c'est lui qui
-## dit combien le train emporte. Le retard se paie en
+## dit combien le train emporte. Chaque voyageur monte en un temps fixe — le
+## train, lui, attend son heure comme toujours : l'embarquement est un dessin,
+## le départ est une règle du moteur. Le retard se paie en
 ## continu : quinze secondes de jeu valent un point, quatre points la minute.
 ## Le service est tenu si la jauge finit positive ; en dessous, c'est l'échec.
 ## Le seul adversaire est donc le retard ; les unités disent ce qu'il reste à
@@ -64,7 +66,8 @@ const VOILE := Color(0.110, 0.086, 0.063, 0.86)
 ## jauge (deux tiers du maximum : 3, un tiers : 2, positive : 1) — pour que
 ## rien en aval ne bouge tant que l'idée n'est pas validée.
 const JAUGE_POINTS_PAR_WAGON := 1
-const JAUGE_SECONDES_PAR_POINT := 15.0    # de jeu — soit -4 points la minute de retard
+const JAUGE_SECONDES_PAR_POINT := 60.0    # de jeu — soit -1 point la minute de retard (Vincent, 20 sept. : « le jeu paraît plus dur qu'avant »)
+const JAUGE_EMBARQUEMENT_S := 0.5         # secondes réelles à ×1 par voyageur qui monte : « chaque passager entre à la même vitesse »
 const JAUGE_ECLAT_DUREE := 1.4            # secondes réelles : le « +X » monte et s'efface
 var mode_jauge: bool = OS.get_environment("STATION_JAUGE") != "0"   # la branche EST l'interrupteur
 var jauge_parti: Dictionary = {}          # id -> le convoi est parti (et a emporté ses unités)
@@ -444,10 +447,22 @@ func _affecter_unites() -> void:
 			reste -= 1
 
 
-## Le vol d'un voyageur, de la bande au wagon, occupe cette part de son tour
-## d'embarquement : le voyageur de rang r décolle quand la part embarquée
-## dépasse r sur n, et il est à bord quand elle dépasse r + VOL.
+## Le trajet d'un voyageur, de la bande au wagon, occupe cette part de son tour
+## d'embarquement : le voyageur de rang r part quand la part embarquée dépasse
+## r sur n, et il est à bord quand elle dépasse r + VOL.
 const JAUGE_VOL := 0.8
+
+## LA PART EMBARQUÉE D'UN CONVOI À QUAI, au rythme d'un voyageur toutes les
+## JAUGE_EMBARQUEMENT_S secondes réelles à ×1 — converties en minutes de jeu
+## par sec_par_min, pour qu'à ×4 tout aille quatre fois plus vite ensemble.
+## Sans personne à prendre : 1, il n'y a rien à montrer. Ce rythme ne dit rien
+## du départ, qui reste à l'heure de l'horaire.
+func _embarquement_jauge(tr) -> float:
+	var n := _unites_prises(tr.id).size()
+	if n == 0 or tr.actual_arr == null:
+		return 1.0
+	var pas_min: float = JAUGE_EMBARQUEMENT_S / sec_par_min
+	return clampf((enc.game_min - float(tr.actual_arr)) / (float(n) * pas_min), 0.0, 1.0)
 
 ## Combien de ses voyageurs sont à bord : tous une fois parti ; à quai, ceux
 ## dont le vol est fini.
@@ -457,7 +472,7 @@ func _jauge_montes(tr) -> int:
 		return 0
 	if jauge_parti.get(tr.id, false) or tr.state != Enc.S_DWELL:
 		return prises.size()
-	var x: float = _embarquement(tr) * float(prises.size()) - JAUGE_VOL
+	var x: float = _embarquement_jauge(tr) * float(prises.size()) - JAUGE_VOL
 	return clampi(int(floor(x)) + 1, 0, prises.size())
 
 
@@ -523,7 +538,7 @@ func _dessiner_unites() -> void:
 	var a_quai: Dictionary = {}
 	for tr in enc.trains:
 		if _embarque(tr):
-			a_quai[tr.id] = {"frac": _embarquement(tr), "n": _unites_prises(tr.id).size()}
+			a_quai[tr.id] = {"frac": _embarquement_jauge(tr), "n": _unites_prises(tr.id).size()}
 	for q in G["platforms"]:
 		var pid := int(q["id"])
 		var i := 0
