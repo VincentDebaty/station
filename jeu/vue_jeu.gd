@@ -42,15 +42,18 @@ const VOILE := Color(0.110, 0.086, 0.063, 0.86)
 ##
 ## Vincent garde le jeu tel qu'il est et change UNE chose : ce que l'on compte.
 ## Chaque voiture d'un convoi vaut une unité de voyageurs. Les unités de TOUS
-## les convois de la journée sont là dès le premier instant, grises, sous le
-## quai que la solution du calibrage destine à chacun (Train.hint) — dans un
-## ordre tiré au sort, pour ne pas trahir la séquence des départs ; elles
-## prennent la couleur d'un convoi quand il s'annonce au portail ; elles
-## montent s'il s'arrête À CE QUAI — sinon elles restent là, et il part vide.
-## Le retard se paie en continu : quinze secondes de jeu valent un point,
-## quatre points la minute. Le service est tenu si la jauge finit positive ;
-## en dessous, c'est l'échec. (Réglé ainsi par Vincent le 20 septembre 2026,
-## après une première partie : c'était « 15 min avant » et « 6 s le point ».)
+## les convois de la journée sont là dès le premier instant, À LA COULEUR DE
+## LEUR DESTINATION, mais réparties sous les quais et rangées AU HASARD : on
+## voit ce qu'il reste à transporter et pour où, jamais quel train ira à quel
+## quai ni dans quel ordre (Vincent, 20 septembre 2026 — d'abord « grises,
+## pas d'indice », puis « en couleur mais pas dans l'ordre »). Quand un convoi
+## s'arrête à un quai d'où il peut repartir, SES unités se cerclent de blanc,
+## où qu'elles soient, et montent au rythme de l'embarquement ; il les
+## emporte en partant. Le retard se paie en
+## continu : quinze secondes de jeu valent un point, quatre points la minute.
+## Le service est tenu si la jauge finit positive ; en dessous, c'est l'échec.
+## Le seul adversaire est donc le retard ; les unités disent ce qu'il reste à
+## faire, et le « +X » ce qu'on vient de gagner.
 ##
 ## Rien de cela ne touche l'enclenchement, qui est sous oracle : cette vue
 ## LIT ses trains et son retard, et ne fait que compter autrement. Les étoiles
@@ -61,8 +64,9 @@ const JAUGE_POINTS_PAR_WAGON := 1
 const JAUGE_SECONDES_PAR_POINT := 15.0    # de jeu — soit -4 points la minute de retard
 const JAUGE_ECLAT_DUREE := 1.4            # secondes réelles : le « +X » monte et s'efface
 var mode_jauge: bool = OS.get_environment("STATION_JAUGE") != "0"   # la branche EST l'interrupteur
-var jauge_parti: Dictionary = {}          # id -> le convoi est parti du bon quai (true) ou d'ailleurs (false)
+var jauge_parti: Dictionary = {}          # id -> le convoi est parti (et a emporté ses unités)
 var jauge_eclats: Array = []              # les « +X » en vol : {id, pts, t0, pos}
+var jauge_quai: Dictionary = {}           # id -> le quai sous lequel ses unités attendent, tiré au sort
 
 var fiche: Dictionary
 var G: Dictionary
@@ -273,6 +277,7 @@ func _nouvelle_journee() -> void:
 	enc.charger(day)
 	jauge_parti = {}
 	jauge_eclats = []
+	jauge_quai = {}
 	print("%s · graine %d — %d convois, journée tirée en %d ms · %s%s"
 		% [fiche.get("id", "?"), graine, enc.trains.size(), duree_generation_ms, _niveau_texte(),
 		(" · jauge des voyageurs, %d unités" % _points_max()) if mode_jauge else ""])
@@ -323,21 +328,37 @@ func _unites_de(tr) -> int:
 
 
 ## Les convois partis, notés une fois pour toutes à l'instant où ils quittent
-## le quai : du bon quai (les unités sont montées) ou d'un autre (elles restent).
+## le quai. Un convoi qui part emporte ses unités, où qu'elles aient attendu.
 func _noter_les_departs() -> void:
 	for tr in enc.trains:
 		if jauge_parti.has(tr.id) or _unites_de(tr) == 0:
 			continue
 		if (tr.state == Enc.S_MOVING_OUT and not tr.refoul) or tr.state == Enc.S_DONE:
-			var bon: bool = tr.platform != null and int(tr.platform) == int(tr.hint)
-			jauge_parti[tr.id] = bon
+			jauge_parti[tr.id] = true
 			# « hey, tu as gagné X points » : un +X au-dessus de la machine, qui
 			# monte et s'efface. Il suit le convoi tant qu'on sait où il est.
-			if bon:
-				var pos := Vector2(float(positions[tr.id][0]["x"]), float(positions[tr.id][0]["y"])) \
-					if positions.has(tr.id) and not positions[tr.id].is_empty() else Vector2(Geo.PLAT_MID, 0.0)
-				jauge_eclats.append({"id": tr.id, "pts": _unites_de(tr) * JAUGE_POINTS_PAR_WAGON,
-					"t0": Time.get_ticks_msec() / 1000.0, "pos": pos})
+			var pos := Vector2(float(positions[tr.id][0]["x"]), float(positions[tr.id][0]["y"])) \
+				if positions.has(tr.id) and not positions[tr.id].is_empty() else Vector2(Geo.PLAT_MID, 0.0)
+			jauge_eclats.append({"id": tr.id, "pts": _unites_de(tr) * JAUGE_POINTS_PAR_WAGON,
+				"t0": Time.get_ticks_msec() / 1000.0, "pos": pos})
+
+
+## Le quai sous lequel attendent les unités d'un convoi : tiré au sort avec la
+## graine du jour, une fois. Il ne veut rien dire — c'est le but.
+func _quai_des_unites(tr) -> int:
+	if not jauge_quai.has(tr.id):
+		var quais: Array = G["platforms"]
+		var h: int = (tr.id + "·" + str(graine)).hash()
+		jauge_quai[tr.id] = int(quais[abs(h) % quais.size()]["id"])
+	return int(jauge_quai[tr.id])
+
+
+## À quai, et d'un quai d'où il peut repartir vers sa destination : c'est là
+## que ses unités s'allument et montent. Sur un mauvais quai il refoulera,
+## et elles n'ont pas à bouger.
+func _embarque(tr) -> bool:
+	return tr.state == Enc.S_DWELL and tr.platform != null \
+		and enc.paths.has("out:%s:%d" % [tr.to, int(tr.platform)])
 
 
 func _points_max() -> int:
@@ -363,8 +384,7 @@ func _points_live() -> float:
 
 
 ## Les unités d'un convoi sont visibles dès le premier instant du service,
-## jusqu'à ce qu'il soit parti du bon quai. Un convoi parti d'ailleurs les
-## laisse derrière lui.
+## jusqu'à ce qu'il soit parti.
 func _unites_visibles(tr) -> bool:
 	return _unites_de(tr) > 0 and not jauge_parti.get(tr.id, false)
 
@@ -383,14 +403,14 @@ func _appliquer_jauge() -> void:
 	r["perfect"] = stars == 3 and _points_transportes() >= maxi and float(r.get("d", 0.0)) == 0.0
 	r["points"] = int(round(pts))
 	r["pointsMax"] = maxi
-	print("jauge : %+d points sur %d — %d unités montées, retard %.1f min, %d convois partis du bon quai" % [int(round(pts)), maxi, _points_transportes(), enc.live_delay(), jauge_parti.values().count(true)])
+	print("jauge : %+d points sur %d — %d unités montées, retard %.1f min, %d convois partis" % [int(round(pts)), maxi, _points_transportes(), enc.live_delay(), jauge_parti.size()])
 
 
-## LES UNITÉS DE VOYAGEURS, sous la pilule de leur quai. Une rangée de ronds,
-## rangés par convoi dans un ordre TIRÉ AU SORT avec la graine du jour — les
-## ranger par heure de départ aurait écrit la séquence sur le quai. Gris tant
-## que le convoi n'est pas annoncé, à sa couleur ensuite ; celles qui montent
-## s'effacent de la tête vers la queue au rythme de l'embarquement.
+## LES UNITÉS DE VOYAGEURS, sous les pilules. Une rangée de ronds à la couleur
+## de leur destination, rangés par convoi dans un ordre tiré au sort avec la
+## graine du jour. Celles du convoi qui est À QUAI et peut repartir se
+## cerclent de blanc — où qu'elles attendent — et s'effacent de la tête vers
+## la queue au rythme de l'embarquement, puis partent avec lui.
 func _dessiner_unites() -> void:
 	var k := Sty.UIK
 	var pas := 9.0 * k
@@ -399,7 +419,7 @@ func _dessiner_unites() -> void:
 		var pid = q["id"]
 		var siens: Array = []
 		for tr in enc.trains:
-			if tr.hint != null and int(tr.hint) == int(pid) and _unites_visibles(tr):
+			if _unites_visibles(tr) and _quai_des_unites(tr) == int(pid):
 				siens.append(tr)
 		if siens.is_empty():
 			continue
@@ -408,11 +428,11 @@ func _dessiner_unites() -> void:
 		var y0: float = float(q["cy"]) + Geo.PLAT_H / 2.0 + 9.0 * k
 		for tr in siens:
 			var n := _unites_de(tr)
-			var annonce: bool = tr.state >= Enc.S_APPROACHING
-			var col: Color = Color(String(G["dest_color"][tr.to])) if annonce else Color(MUET, 0.85)
-			# à quai au bon endroit : les premières sont déjà montées
+			var embarque: bool = _embarque(tr)
+			var col := Color(String(G["dest_color"][tr.to]))
+			# à quai : les premières sont déjà montées
 			var montees := 0
-			if tr.state == Enc.S_DWELL and tr.platform != null and int(tr.platform) == int(pid):
+			if embarque:
 				montees = int(floor(_embarquement(tr) * n))
 			for u in range(n):
 				var pos := Vector2(Geo.PLAT_X1 + 10.0 + (i % par_rang) * pas, y0 + floor(float(i) / par_rang) * pas)
@@ -421,6 +441,8 @@ func _dessiner_unites() -> void:
 					continue
 				draw_circle(pos, 3.4 * k, col)
 				draw_arc(pos, 3.4 * k, 0.0, TAU, 16, Color(0, 0, 0, 0.45), max(1.0, 0.9 * k), true)
+				if embarque:   # « ceux-là montent » : un cerne blanc
+					draw_arc(pos, 4.8 * k, 0.0, TAU, 20, Color(1, 1, 1, 0.85), max(1.0, 1.1 * k), true)
 
 
 ## LE « +X » : au-dessus de la machine du convoi qui vient d'emporter ses
