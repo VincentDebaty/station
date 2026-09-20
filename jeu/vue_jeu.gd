@@ -443,17 +443,27 @@ func _affecter_unites() -> void:
 		if not _embarque(tr) or jauge_affecte.has(tr.id):
 			continue
 		jauge_affecte[tr.id] = true
-		var reste := _unites_de(tr)
-		var rang := 0
+		var candidats: Array = []
 		for u in jauge_unites:
-			if reste == 0:
+			if candidats.size() >= _unites_de(tr):
 				break
 			if u["montee"] or u["train"] != "" or u["dest"] != tr.to or int(u["quai"]) != int(tr.platform):
 				continue
-			u["train"] = tr.id
-			u["rang"] = rang
-			rang += 1
-			reste -= 1
+			candidats.append(u)
+		# CHACUN VISE LE WAGON LE PLUS PROCHE DE SA PLACE, sans se croiser : les
+		# voyageurs rangés par abscisse prennent les wagons rangés par abscisse.
+		# Rangés par ordre de prise, celui du wagon 3 arrivait avant celui du
+		# wagon 1 et le point s'allumait au mauvais endroit — « deux passagers
+		# rentrent dans le même wagon » (Vincent, 20 septembre 2026).
+		var cases: Array = positions.get(tr.id, [])
+		var wagons: Array = []
+		for i in range(1, cases.size()):
+			wagons.append({"i": i, "x": float(cases[i]["x"])})
+		wagons.sort_custom(func(a, b): return a["x"] < b["x"])
+		candidats.sort_custom(func(a, b): return Vector2(a["pos"]).x < Vector2(b["pos"]).x)
+		for j in range(candidats.size()):
+			candidats[j]["train"] = tr.id
+			candidats[j]["rang"] = (int(wagons[j]["i"]) - 1) if j < wagons.size() else j
 
 
 ## Le wagon d'un voyageur pris : le premier fourgon pour le rang 0, et ainsi
@@ -481,19 +491,15 @@ func _avancement(u: Dictionary, tr) -> float:
 	return clampf((enc.game_min - float(tr.actual_arr)) * JAUGE_VITESSE_MARCHE / d, 0.0, 1.0)
 
 
-## Combien de ses voyageurs sont à bord : tous une fois parti ; à quai, ceux
-## qui sont arrivés à leur wagon.
-func _jauge_montes(tr) -> int:
-	var prises := _unites_prises(tr.id)
-	if prises.is_empty():
-		return 0
-	if jauge_parti.get(tr.id, false) or tr.state != Enc.S_DWELL:
-		return prises.size()
-	var n := 0
-	for u in prises:
-		if _avancement(u, tr) >= 1.0:
-			n += 1
-	return n
+## Les wagons occupés d'un convoi — l'indice de case de chacun : tous ceux
+## pris une fois parti ; à quai, ceux dont le voyageur est arrivé.
+func _wagons_occupes(tr) -> Dictionary:
+	var occ: Dictionary = {}
+	var parti: bool = jauge_parti.get(tr.id, false) or tr.state != Enc.S_DWELL
+	for u in _unites_prises(tr.id):
+		if parti or _avancement(u, tr) >= 1.0:
+			occ[int(u.get("rang", 0)) + 1] = true
+	return occ
 
 
 func _unites_prises(id: String) -> Array:
@@ -1203,7 +1209,7 @@ func _dessiner_convois(sel, t: float) -> void:
 		# c'est justement la signature, machine colorée sur wagons gris.
 		var jauge_ici: bool = mode_jauge and not tr.freight and jauge_affecte.has(tr.id)
 		var jauge_vide: bool = mode_jauge and not tr.freight and not jauge_affecte.has(tr.id)
-		var montes_ici := _jauge_montes(tr) if jauge_ici else 0
+		var occupes: Dictionary = _wagons_occupes(tr) if jauge_ici else {}
 		# UN VÉHICULE PAR CASE, ET RIEN QUE DES FOURGONS DERRIÈRE LA MACHINE.
 		# Les voitures de deux cases donnaient une rame mieux proportionnée, mais
 		# Vincent leur préfère la lecture de la rame courte, où chaque véhicule
@@ -1221,7 +1227,7 @@ func _dessiner_convois(sel, t: float) -> void:
 			# — « le train de fret ressemble aux autres » (Vincent, 20 sept.).
 			if tr.freight and i > 0 and mode_jauge:
 				teinte = FRET_BLANC
-			if i > 0 and (jauge_vide or (jauge_ici and i > montes_ici)):
+			if i > 0 and (jauge_vide or (jauge_ici and not occupes.has(i))):
 				teinte = col.lerp(Sty.FRET, 0.80)   # grisé : personne à bord
 			var lavis := Color(teinte.lerp(Sty.PAPIER, 0.06), vie)
 			for j in SOUS_CASES:
@@ -1285,9 +1291,10 @@ func _dessiner_convois(sel, t: float) -> void:
 		# LE VOYAGEUR À BORD : un point noir au milieu de son wagon, un par
 		# unité montée, la machine n'en porte pas (Vincent, 20 septembre 2026).
 		if jauge_ici:
-			for i in range(1, min(n, montes_ici + 1)):
-				draw_circle(axe[i], 3.2 * Sty.UIK, Color(0.04, 0.04, 0.05, vie))
-				draw_circle(axe[i] + Vector2(-0.8, -0.8) * Sty.UIK, 1.0 * Sty.UIK, Color(1, 1, 1, 0.18 * vie))
+			for i in occupes:
+				if int(i) < n:
+					draw_circle(axe[int(i)], 3.2 * Sty.UIK, Color(0.04, 0.04, 0.05, vie))
+					draw_circle(axe[int(i)] + Vector2(-0.8, -0.8) * Sty.UIK, 1.0 * Sty.UIK, Color(1, 1, 1, 0.18 * vie))
 
 
 ## LES COUPURES ENTRE CASES, avec leur normale : une case commence à mi-chemin
@@ -1438,6 +1445,21 @@ func _feu(centre: Vector2, col: Color, allume: float, k: float) -> void:
 ## Le cadran de l'horloge, aiguilles figées sur 10 h 10 : la pose qui se lit le
 ## mieux en tout petit. Il dit « heure de départ » sans mot à lire, et s'efface
 ## quand le badge bascule sur le retard — « +3 min » n'est plus une heure.
+## Un disque dont la part pleine est ce qu'il reste de temps, de midi dans le
+## sens des aiguilles ; le reste en creux, dans la même teinte éteinte.
+func _camembert(centre: Vector2, col: Color, reste: float, k: float = 1.0) -> void:
+	var r := 5.2 * k
+	draw_circle(centre, r, Color(col, col.a * 0.22))
+	if reste > 0.005:
+		var pts := PackedVector2Array([centre])
+		var n := maxi(3, int(ceil(28.0 * reste)))
+		for i in range(n + 1):
+			var ang: float = -PI / 2.0 + TAU * reste * float(i) / float(n)
+			pts.append(centre + Vector2(cos(ang), sin(ang)) * r)
+		draw_colored_polygon(pts, col)
+	draw_arc(centre, r, 0.0, TAU, 24, Color(col, col.a * 0.9), max(1.0, 1.0 * k), true)
+
+
 func _cadran(centre: Vector2, col: Color, k: float = 1.0) -> void:
 	draw_arc(centre, 5.4 * k, 0.0, TAU, 24, col, 1.4 * k, true)
 	draw_line(centre, centre + Vector2(0, -3.2 * k), col, 1.4 * k, true)
@@ -1533,7 +1555,14 @@ func _dessiner_badges(t: float) -> void:
 			Color(1, 1, 1, 0.10 * a), max(1.0, 1.0 * k), true)
 		var x := r.position.x + 12.0 * k
 		if cadran:
-			_cadran(Vector2(x, centre.y), Color(col, a), k)
+			if mode_jauge:
+				# LE CAMEMBERT SE VIDE JUSQU'AU DÉPART (Vincent, 20 septembre 2026) :
+				# plein quand le convoi s'annonce, vide à l'heure de partir.
+				var debut: float = tr.heure_arrivee() - 1.3
+				var reste: float = clampf((tr.dep - enc.game_min) / maxf(0.1, tr.dep - debut), 0.0, 1.0)
+				_camembert(Vector2(x, centre.y), Color(col, a), reste, k)
+			else:
+				_cadran(Vector2(x, centre.y), Color(col, a), k)
 			x += 14.0 * k
 		Sty.texte_centre(self, police, taille, Vector2(x + w / 2.0, centre.y), txt, Color(col, a))
 
