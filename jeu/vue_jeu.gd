@@ -71,6 +71,7 @@ var jauge_parti: Dictionary = {}          # id -> le convoi est parti (et a empo
 var jauge_eclats: Array = []              # les « +X » en vol : {id, pts, t0, pos}
 var jauge_unites: Array = []              # les voyageurs : {dest, quai, train (id ou ""), rang, montee}
 var jauge_affecte: Dictionary = {}        # id -> le convoi a déjà pris ce qu'il pouvait à son quai
+var jauge_vols: Array = []                # les voyageurs en vol vers leur wagon, recalculés à chaque image
 var jauge_ordre: Dictionary = {}          # quai -> ses unités, dans un ordre tiré au sort une fois
 
 var fiche: Dictionary
@@ -440,6 +441,23 @@ func _affecter_unites() -> void:
 			reste -= 1
 
 
+## Le vol d'un voyageur, de la bande au wagon, occupe cette part de son tour
+## d'embarquement : le voyageur de rang r décolle quand la part embarquée
+## dépasse r sur n, et il est à bord quand elle dépasse r + VOL.
+const JAUGE_VOL := 0.8
+
+## Combien de ses voyageurs sont à bord : tous une fois parti ; à quai, ceux
+## dont le vol est fini.
+func _jauge_montes(tr) -> int:
+	var prises := _unites_prises(tr.id)
+	if prises.is_empty():
+		return 0
+	if jauge_parti.get(tr.id, false) or tr.state != Enc.S_DWELL:
+		return prises.size()
+	var x: float = _embarquement(tr) * float(prises.size()) - JAUGE_VOL
+	return clampi(int(floor(x)) + 1, 0, prises.size())
+
+
 func _unites_prises(id: String) -> Array:
 	var prises: Array = []
 	for u in jauge_unites:
@@ -497,6 +515,7 @@ func _dessiner_unites() -> void:
 	var k := Sty.UIK
 	var pas := 9.0 * k
 	var par_rang := int(floor((Geo.PLAT_LEN - 20.0) / pas))
+	jauge_vols = []
 	# par convoi à quai : la part embarquée, sur le nombre qu'il a PRIS
 	var a_quai: Dictionary = {}
 	for tr in enc.trains:
@@ -515,14 +534,36 @@ func _dessiner_unites() -> void:
 			var prise: bool = u["train"] != "" and a_quai.has(u["train"])
 			if prise:
 				var e: Dictionary = a_quai[u["train"]]
-				# monté : au rang r, quand la part embarquée dépasse r sur n
-				if float(e["frac"]) * float(e["n"]) > float(int(u.get("rang", 0))):
+				var rang := int(u.get("rang", 0))
+				var x: float = float(e["frac"]) * float(e["n"]) - float(rang)
+				if x >= JAUGE_VOL:
+					continue   # à bord : c'est le point noir du wagon qui le dit
+				if x > 0.0:    # en vol vers son wagon
+					jauge_vols.append({"train": u["train"], "rang": rang, "p": x / JAUGE_VOL,
+						"de": pos, "col": Color(String(G["dest_color"][u["dest"]]))})
 					continue
 			var col := Color(String(G["dest_color"][u["dest"]]))
 			draw_circle(pos, 3.4 * k, col)
 			draw_arc(pos, 3.4 * k, 0.0, TAU, 16, Color(0, 0, 0, 0.45), max(1.0, 0.9 * k), true)
 			if prise:   # « ceux-là montent » : un cerne blanc
 				draw_arc(pos, 4.8 * k, 0.0, TAU, 20, Color(1, 1, 1, 0.85), max(1.0, 1.1 * k), true)
+
+
+## LE VOYAGEUR QUI MONTE : il quitte sa place sur la bande, s'élève en une
+## petite arche et se pose au milieu de son wagon — le premier fourgon pour le
+## premier, et ainsi de suite. Là, il devient le point noir.
+func _dessiner_vols() -> void:
+	var k := Sty.UIK
+	for v in jauge_vols:
+		if not positions.has(v["train"]) or positions[v["train"]].is_empty():
+			continue
+		var cases: Array = positions[v["train"]]
+		var i: int = mini(int(v["rang"]) + 1, cases.size() - 1)
+		var vers := Vector2(float(cases[i]["x"]), float(cases[i]["y"]))
+		var p: float = smoothstep(0.0, 1.0, float(v["p"]))
+		var pos: Vector2 = Vector2(v["de"]).lerp(vers, p) + Vector2(0, -14.0 * k * sin(PI * p))
+		draw_circle(pos, 3.4 * k, v["col"])
+		draw_arc(pos, 4.8 * k, 0.0, TAU, 20, Color(1, 1, 1, 0.85), max(1.0, 1.1 * k), true)
 
 
 ## LE « +X » : au-dessus de la machine du convoi qui vient d'emporter ses
@@ -854,6 +895,8 @@ func _draw() -> void:
 		_dessiner_unites()
 	_dessiner_itineraires()
 	_dessiner_convois(sel, t)
+	if mode_jauge:
+		_dessiner_vols()
 	_dessiner_signaux(t)
 	draw_set_transform(Vector2.ZERO)
 	_dessiner_hud(t)
@@ -1124,6 +1167,11 @@ func _dessiner_convois(sel, t: float) -> void:
 			# la machine garde la teinte de destination même sur un fret, dont
 			# les wagons sont gris : c'est elle qui annonce où il va
 			var teinte: Color = col if (i == 0 or not tr.freight) else Sty.FRET
+			# LA MACHINE SE DISTINGUE DES VOITURES : la même teinte, plus profonde.
+			# Sur le téléphone, machine et fourgon se lisaient pareil — « pour ne
+			# pas confondre avec un wagon » (Vincent, 20 septembre 2026).
+			if i == 0 and not tr.freight:
+				teinte = col.darkened(0.38)
 			var lavis := Color(teinte.lerp(Sty.PAPIER, 0.06), vie)
 			for j in SOUS_CASES:
 				var t0: float = float(i) + float(j) / float(SOUS_CASES)
@@ -1153,14 +1201,27 @@ func _dessiner_convois(sel, t: float) -> void:
 		# Les voyageurs montent de la tête vers la queue, case par case comme
 		# avant, et la découpe suit la même courbe que la caisse.
 		var plein := _embarquement(tr)
-		if plein < 1.0:
-			var n := axe.size()
+		var n := axe.size()
+		var remplis: Array = []
+		for i in n:
+			remplis.append(clampf(plein * float(n) - float(i), 0.0, 1.0))
+		# EN MODE JAUGE, UN WAGON EST PLEIN QUAND UN VOYAGEUR Y EST MONTÉ — et il
+		# le reste, ou reste éteint, après le départ : un train parti à moitié
+		# vide se voit. La machine est toujours allumée.
+		var jauge_ici: bool = mode_jauge and not tr.freight and jauge_affecte.has(tr.id)
+		var montes_ici := _jauge_montes(tr) if jauge_ici else 0
+		if jauge_ici:
 			for i in n:
-				var frac: float = clampf(plein * float(n) - float(i), 0.0, 1.0)
+				remplis[i] = 1.0 if (i == 0 or i <= montes_ici) else 0.0
+		if plein < 1.0 or jauge_ici:
+			for i in n:
+				var frac: float = remplis[i]
 				if frac >= 1.0:
 					continue
 				var tex := Ill.vehicule("loco" if i == 0 else "fourgon")
 				var teinte: Color = col if (i == 0 or not tr.freight) else Sty.FRET
+				if i == 0 and not tr.freight:
+					teinte = col.darkened(0.38)
 				var eteint := Color(teinte.lerp(Sty.POSTE_FOND, 0.60), vie)
 				for j in 2:
 					var f0: float = lerpf(frac, 1.0, float(j) / 2.0)
@@ -1175,6 +1236,12 @@ func _dessiner_convois(sel, t: float) -> void:
 							Vector2(f0, 0), Vector2(f1, 0), Vector2(f1, 1), Vector2(f0, 1)]), tex)
 					else:
 						draw_colored_polygon(quad, eteint)
+		# LE VOYAGEUR À BORD : un point noir au milieu de son wagon, un par
+		# unité montée, la machine n'en porte pas (Vincent, 20 septembre 2026).
+		if jauge_ici:
+			for i in range(1, min(n, montes_ici + 1)):
+				draw_circle(axe[i], 3.2 * Sty.UIK, Color(0.04, 0.04, 0.05, vie))
+				draw_circle(axe[i] + Vector2(-0.8, -0.8) * Sty.UIK, 1.0 * Sty.UIK, Color(1, 1, 1, 0.18 * vie))
 
 
 ## LES COUPURES ENTRE CASES, avec leur normale : une case commence à mi-chemin
