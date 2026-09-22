@@ -714,11 +714,30 @@ func _appliquer_jauge() -> void:
 ## Ce qui reste reste : personne ne bouge d'un quai à l'autre.
 func _dessiner_unites() -> void:
 	var k := Sty.UIK
-	var pas := 9.0 * k
-	var blanc := 5.0 * k     # le souffle entre deux paquets de cinq
-	# le blanc des paquets se paie sur la longueur du quai : un rang en tient
-	# donc un peu moins qu'avant
-	var par_rang := maxi(1, int(floor((Geo.PLAT_LEN - 20.0) / (pas + blanc / float(JAUGE_PAR_PAQUET)))))
+	# LA BORDURE DU QUAI : LES VOYAGEURS ATTENDENT DESSUS, PAS EN DESSOUS
+	# (Vincent, 22 septembre 2026, sur une capture de Clapham Junction : « les
+	# voyageurs semblent être sur le quai du bas »). Il avait raison, et la
+	# géométrie le dit : à dix quais le pas vertical tombe à 57,8 unités pour
+	# une pilule de 42, soit un écart de 15,8 — et la rangée, posée à
+	# PLAT_H/2 + 9 × UIK, tombait à 34,5 sous le centre quand la pilule
+	# suivante commence à 36,8. Sur téléphone (UIK 1,5) les pastilles mordaient
+	# donc la plaque d'en dessous.
+	#
+	# Elles sont maintenant DANS la pilule, sur la bande basse que la marge du
+	# quai laisse libre (PLAT_MARGIN vaut 11, la caisse d'un véhicule n'occupe
+	# que les 20 du milieu) : plus aucune ambiguïté possible, quel que soit le
+	# nombre de quais, et c'est aussi ce qui se passe en vrai — on attend SUR le
+	# quai. La bordure qui les porte ne se dessine que là où quelqu'un attend :
+	# un quai vide garde exactement l'aspect qu'il avait.
+	#
+	# ET LA RANGÉE EST CENTRÉE, « que cela fasse plus naturel » (Vincent, même
+	# jour) : une foule se masse au milieu du quai, elle ne s'aligne pas à
+	# gauche. Elle se serre quand elle déborde, plutôt que de passer à la ligne.
+	var r_u := minf(3.4 * k, 5.0)
+	var pas := 2.65 * r_u
+	var blanc := 1.5 * r_u                      # le souffle entre deux paquets de cinq
+	var large := Geo.PLAT_LEN - 24.0            # la place où poser la rangée
+	var haut := 12.0                            # la bordure, en unités du plan
 	jauge_vols = []
 	var a_quai: Dictionary = {}   # id -> le convoi à quai qui embarque
 	for tr in enc.trains:
@@ -726,17 +745,44 @@ func _dessiner_unites() -> void:
 			a_quai[tr.id] = tr
 	for q in G["platforms"]:
 		var pid := int(q["id"])
-		var i := 0
-		var y0: float = float(q["cy"]) + Geo.PLAT_H / 2.0 + 9.0 * k
+		# QUI ATTEND ICI — il faut les compter avant de les placer, puisque la
+		# rangée est centrée et qu'elle se serre.
+		var ici: Array = []
 		for idx in jauge_ordre.get(pid, []):
 			var u: Dictionary = jauge_unites[idx]
 			if u["montee"] or not _arrive(u):
 				continue
-			var col_i: int = i % par_rang
-			var pos := Vector2(Geo.PLAT_X1 + 10.0 + col_i * pas + floor(float(col_i) / float(JAUGE_PAR_PAQUET)) * blanc,
-				y0 + floor(float(i) / par_rang) * pas)
+			ici.append(u)
+		if ici.is_empty():
+			continue
+		var n := ici.size()
+		var w: float = (n - 1) * pas + floor(float(n - 1) / float(JAUGE_PAR_PAQUET)) * blanc
+		var serre: float = 1.0 if w <= large else large / w
+		var pas_e := pas * serre
+		var blanc_e := blanc * serre
+		var w_e: float = (n - 1) * pas_e + floor(float(n - 1) / float(JAUGE_PAR_PAQUET)) * blanc_e
+		var bas: float = float(q["cy"]) + Geo.PLAT_H / 2.0
+		var yc: float = bas - haut / 2.0
+		# la bordure : un creux le long du bord du quai, cerné d'un filet de
+		# laiton au ras de la plaque. Le plus jeune des voyageurs lui donne son
+		# opacité, pour qu'elle paraisse avec la foule au lieu de surgir.
+		var vif := 0.0
+		for u in ici:
+			vif = maxf(vif, clampf((enc.game_min - float(u.get("arrivee", 0.0))) / JAUGE_PARUTION, 0.0, 1.0))
+		# CREUSÉE, PAS TEINTÉE : la plaque du quai est déjà brune, et le brun
+		# du creux (POSTE_QUAI_BAS) s'y fondait sans rien montrer — essayé, et
+		# la bordure était invisible. Une ombre noire et un filet de laiton au
+		# ras du bord la détachent sans ajouter de couleur au pupitre.
+		var bande := Rect2(Geo.PLAT_X1 + 5.0, bas - haut, Geo.PLAT_LEN - 10.0, haut - 1.5)
+		draw_colored_polygon(Sty.rect_arrondi(bande, 5), Color(0, 0, 0, 0.22 * vif))
+		draw_line(Vector2(bande.position.x + 5.0, bande.position.y), Vector2(bande.end.x - 5.0, bande.position.y),
+			Color(Sty.POSTE_BORD, 0.30 * vif), 1.0, true)
+		var i := 0
+		for u in ici:
+			var pos := Vector2(Geo.PLAT_MID - w_e / 2.0 + i * pas_e
+				+ floor(float(i) / float(JAUGE_PAR_PAQUET)) * blanc_e, yc)
 			i += 1
-			u["pos"] = pos   # sa place sur la bande : le point de départ de sa marche
+			u["pos"] = pos   # sa place sur le quai : le point de départ de sa marche
 			var prise: bool = u["train"] != "" and a_quai.has(u["train"])
 			if prise:
 				var p := _avancement(u, a_quai[u["train"]])
@@ -751,11 +797,11 @@ func _dessiner_unites() -> void:
 			# néant au milieu de la rangée — et à ×4, on ne verrait qu'un
 			# clignotement.
 			var neuf: float = clampf((enc.game_min - float(u.get("arrivee", 0.0))) / JAUGE_PARUTION, 0.0, 1.0)
-			var r_u: float = 3.4 * k * (0.45 + 0.55 * neuf)
-			draw_circle(pos, r_u, Color(col, neuf))
-			draw_arc(pos, r_u, 0.0, TAU, 16, Color(0, 0, 0, 0.45 * neuf), max(1.0, 0.9 * k), true)
+			var r_i: float = r_u * (0.45 + 0.55 * neuf)
+			draw_circle(pos, r_i, Color(col, neuf))
+			draw_arc(pos, r_i, 0.0, TAU, 16, Color(0, 0, 0, 0.45 * neuf), max(1.0, 0.9 * k), true)
 			if prise:   # « ceux-là montent » : un cerne blanc
-				draw_arc(pos, 4.8 * k, 0.0, TAU, 20, Color(1, 1, 1, 0.85), max(1.0, 1.1 * k), true)
+				draw_arc(pos, r_u * 1.4, 0.0, TAU, 20, Color(1, 1, 1, 0.85), max(1.0, 1.1 * k), true)
 
 
 ## LE VOYAGEUR QUI MONTE : il quitte sa place sur la bande, MARCHE LE LONG DU

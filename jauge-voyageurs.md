@@ -151,7 +151,20 @@ prenne sur une version qui se défend.
    voyageurs, deux notes descendantes (`dommage`) quand il part à vide alors
    que des voyageurs pour sa destination attendent ailleurs. Une fois par
    convoi, jamais une fanfare.
-7. **Le tutoriel dit la bonne règle** en mode jauge, et le commentaire périmé
+7. **Les voyageurs attendent SUR le quai** (ajouté le 22 septembre au soir,
+   sur une capture de Clapham Junction : « les voyageurs semblent être sur le
+   quai du bas »). La géométrie lui donnait raison : à dix quais le pas
+   vertical tombe à 57,8 unités pour une pilule de 42 — un écart de 15,8 —, et
+   la rangée, posée à `PLAT_H/2 + 9 × UIK`, tombait à 34,5 sous le centre quand
+   la pilule suivante commence à 36,8 ; sur téléphone (`UIK` = 1,5) les
+   pastilles mordaient la plaque d'en dessous. Elles sont maintenant **dans**
+   la pilule, sur la bande basse que la marge du quai laisse libre, portées par
+   une bordure creusée d'un filet de laiton qui ne paraît que là où quelqu'un
+   attend. Aucune ambiguïté possible, quel que soit le nombre de quais — et
+   c'est ce qui se passe en vrai : on attend SUR le quai. La rangée est
+   **centrée** et se serre quand la foule déborde, au lieu de s'aligner à
+   gauche et de passer à la ligne : « que cela fasse plus naturel ».
+8. **Le tutoriel dit la bonne règle** en mode jauge, et le commentaire périmé
    de `JAUGE_SECONDES_PAR_POINT` (« quinze secondes valent un point ») est
    corrigé.
 
@@ -280,3 +293,7 @@ bourse : à instruire dans `economie-du-jeu.md`, pas ici.
   présents sur quarante-trois à l'ouverture) ; l'avance se compte désormais en
   convois. Troisième passage du banc, à graines identiques : rien ne bouge au
   score, ce qui était la condition.
+- **22 septembre 2026, la nuit** — posé sur l'iPhone. Deux remarques de Vincent
+  sur une capture de Clapham Junction, toutes deux vraies et toutes deux
+  mesurables : les voyageurs semblaient appartenir au quai du dessous, et leur
+  rangée collait à gauche. §4.7.
