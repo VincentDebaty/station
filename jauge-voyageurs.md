@@ -165,13 +165,43 @@ cartes. Tout tient dans `vue_jeu.gd` et six lignes de `vue_ruban.gd`.
 Par coût croissant. Aucune n'est faite ; la première est la moins chère et
 sans doute la plus payante.
 
-### 5.1 Les voyageurs arrivent au fil de la journée
+### 5.1 Les voyageurs arrivent au fil de la journée — FAIT le 22 septembre 2026
 
-Aujourd'hui, tout le monde est là à 7 h 00. Une heure d'arrivée par unité et
-un filtre au dessin suffisent à changer ça. Gains : le hall respire, le mur de
-confettis disparaît, le corrigé ne se lit plus d'un coup, l'heure de pointe
-existe, et le hall vide en fin de service devient une récompense visuelle.
-Rien d'autre ne bouge — ni le calibrage, ni l'enclenchement.
+Tout le monde était là à 7 h 00. Chacun se présente maintenant **un à quatre
+convois avant le sien**, et paraît en six dixièmes de minute de jeu — il
+grandit et se teinte, faute de quoi une pastille surgirait du néant au milieu
+de la rangée.
+
+**L'avance se compte en convois, pas en minutes**, et c'est la mesure qui l'a
+imposé. Trois à dix-huit minutes, essayées d'abord, ne voulaient rien dire :
+un service dure une demi-heure de jeu et porte quinze convois — un train
+toutes les deux minutes —, et dix-huit minutes d'avance ramenaient
+**dix-sept voyageurs sur quarante-trois dès l'ouverture**, c'est-à-dire le mur
+d'avant. Le pas moyen entre deux convois sert donc d'unité : la foule vaut
+quelques convois à venir, aussi bien au niveau 1 qu'au niveau 5, où les trains
+se serrent sans que les gens se pressent.
+
+Mesuré à Gand, graine 3 : **six présents à l'ouverture** au lieu de
+quarante-trois. À Landen, le hall ne dépasse jamais dix-huit personnes sur les
+vingt-huit de la journée. Le hall se lit enfin d'un coup d'œil à la taille
+d'un téléphone, il se remplit avant une rafale et il est vide à la fin du
+service.
+
+**La garantie du calibrage tient.** L'heure d'arrivée est tirée sur l'HORAIRE,
+une fois, et tombe toujours avant l'annonce du convoi (`heure_arrivee −
+APPROACH_LEAD`) : un convoi ne peut jamais se présenter à son quai avant sa
+foule, et la journée où tout le monde monte existe toujours. Le retard du
+joueur ne retarde personne — les voyageurs ne sont pas au courant.
+
+**Et cela ne change rien au jeu, ce qui est le but.** Les 39 services du banc
+rejoués à graines identiques, avec et sans échelonnement : mêmes étoiles
+(4 · 5 · 5 · 25), même embarquement médian (86 %), même retard médian
+(19,4 contre 19,6 min), même perte médiane (27). La journée est la même ; c'est
+le hall qui a changé d'allure.
+
+Effet de bord voulu : **le corrigé ne se lit plus d'un coup**. Le hall
+n'annonce plus que les quelques convois à venir ; c'est un radar, plus une
+solution.
 
 ### 5.2 Les correspondances
 
@@ -223,8 +253,9 @@ bourse : à instruire dans `economie-du-jeu.md`, pas ici.
 1. **La jauge reste-t-elle ?** Le §4 la rend lisible et discriminante ; c'est
    sur cette version-là qu'il faut rejouer trois ou quatre chapitres avant de
    décider.
-2. **Le corrigé affiché** (§1) : accepté comme aide au joueur, ou corrigé par
-   5.1 (les voyageurs arrivent tard) ?
+2. **Le corrigé affiché** (§1) : 5.1 l'a réduit à un horizon de quelques
+   convois. Reste à dire si ce qu'il en montre est encore trop — la question se
+   tranche en jouant, pas en mesurant.
 3. **Le voyageur têtu** (§1) : règle assumée, ou 5.4 ?
 4. **Le barème du §4.2** : une minute de retard vaut-elle vraiment un
    voyageur ? C'est l'arithmétique de la jauge elle-même, mais elle durcit le
@@ -244,3 +275,8 @@ bourse : à instruire dans `economie-du-jeu.md`, pas ici.
   déplace : sept étoiles perdues, aucune gagnée. `carte-check`, `net-check` et
   `boutique-check` repassés — aucune donnée n'a bougé, ils ne pouvaient rien
   dire d'autre, mais autant que ce soit écrit.
+- **22 septembre 2026, le soir** — §5.1 : les voyageurs arrivent au fil de la
+  journée. Une première fenêtre en minutes s'est révélée sans effet (dix-sept
+  présents sur quarante-trois à l'ouverture) ; l'avance se compte désormais en
+  convois. Troisième passage du banc, à graines identiques : rien ne bouge au
+  score, ce qui était la condition.

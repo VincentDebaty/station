@@ -92,6 +92,31 @@ const JAUGE_SECONDES_PAR_POINT := 60.0
 const JAUGE_VITESSE_MARCHE := (700.0 / Geo.TRAVEL) / (1.0 + 4.0 * 0.22)   # unités par minute de jeu
 const FRET_BLANC := Color("#ece7dc")       # les wagons du fret, en mode jauge : le gris est pris par les voyageurs
 const JAUGE_ECLAT_DUREE := 1.4            # secondes réelles : le « +X » monte et s'efface
+## LES VOYAGEURS ARRIVENT AU FIL DE LA JOURNÉE (22 septembre 2026,
+## `jauge-voyageurs.md` §5.1). Ils étaient tous là à l'ouverture : le hall
+## était un mur de confettis qu'on ne lisait pas, et la journée entière —
+## quel train, à quel quai — s'y lisait d'un coup dès la première seconde.
+## Chacun se présente maintenant à sa gare UN À QUATRE CONVOIS avant le sien :
+## le hall respire, il se remplit aux heures de pointe, et il est vide quand le
+## service se termine. Il devient aussi ce qu'il aurait dû être depuis le début
+## — le radar de ce qui vient, et non le corrigé de la journée.
+##
+## L'AVANCE SE COMPTE EN CONVOIS, PAS EN MINUTES. Trois à dix-huit minutes,
+## essayées d'abord, ne voulaient rien dire : un service dure une demi-heure de
+## jeu et porte quinze convois — un train toutes les deux minutes —, et
+## dix-huit minutes d'avance ramenaient dix-sept voyageurs sur quarante-trois
+## dès l'ouverture, c'est-à-dire le mur d'avant. Le pas moyen entre deux
+## convois est donc l'unité : la foule en attente vaut quelques convois à
+## venir, aussi bien au niveau 1 qu'au niveau 5, où les trains se serrent.
+##
+## LA GARANTIE DU CALIBRAGE TIENT. Le retard pris par le joueur ne retarde
+## personne : l'heure d'arrivée est tirée sur l'HORAIRE, une fois, et elle
+## tombe toujours avant l'annonce du convoi (`heure_arrivee − APPROACH_LEAD`).
+## Un convoi ne peut donc jamais se présenter à son quai avant sa foule, et la
+## journée où tout le monde monte existe toujours.
+const JAUGE_AVANCE_MIN := 1.0             # en PAS moyens entre deux convois, avant l'annonce du sien
+const JAUGE_AVANCE_MAX := 4.0
+const JAUGE_PARUTION := 0.6               # minutes de jeu : le fondu de celui qui arrive
 ## Les pastilles se comptent par CINQ : sans ce blanc, une rangée de douze
 ## ronds de 3,4 px est un pointillé qu'on ne compte pas — et au téléphone,
 ## elle se confond avec celui des voies (`jauge-voyageurs.md` §3).
@@ -103,6 +128,8 @@ var jauge_unites: Array = []              # les voyageurs : {dest, quai, train (
 var jauge_affecte: Dictionary = {}        # id -> le convoi a déjà pris ce qu'il pouvait à son quai
 var jauge_vols: Array = []                # les voyageurs en vol vers leur wagon, recalculés à chaque image
 var jauge_ordre: Dictionary = {}          # quai -> ses unités, dans un ordre tiré au sort une fois
+var jauge_mesure := false                 # STATION_MESURE : on suit le pic de foule
+var jauge_pic := 0                        # le plus de voyageurs vus ensemble dans le hall
 
 var fiche: Dictionary
 var G: Dictionary
@@ -397,15 +424,31 @@ func _preparer_jauge() -> void:
 	jauge_parti = {}
 	jauge_eclats = []
 	jauge_affecte = {}
+	jauge_pic = 0
+	jauge_mesure = OS.get_environment("STATION_MESURE") != ""
 	if not mode_jauge:
 		return
 	_construire_unites()
 	if OS.get_environment("STATION_MESURE") != "":
 		var mal_placees := 0
+		var tot := 0.0
+		var premiere := INF
+		var derniere := -INF
+		var a_l_ouverture := 0
 		for u in jauge_unites:
 			if not enc.paths.has("out:%s:%d" % [u["dest"], int(u["quai"])]):
 				mal_placees += 1
-		print("jauge : %d unités, %d sous un quai qui ne mène pas à leur destination (attendu : 0)" % [jauge_unites.size(), mal_placees])
+			var h: float = float(u.get("arrivee", 0.0))
+			tot += h
+			premiere = minf(premiere, h)
+			derniere = maxf(derniere, h)
+			if h <= 0.0:
+				a_l_ouverture += 1
+		var n := jauge_unites.size()
+		print("jauge : %d unités, %d sous un quai qui ne mène pas à leur destination (attendu : 0)" % [n, mal_placees])
+		if n > 0:
+			print("jauge : arrivées de %.0f à %.0f min de service (moyenne %.0f), %d présents à l'ouverture" % [
+				premiere, derniere, tot / float(n), a_l_ouverture])
 
 
 ## LES VOYAGEURS DE LA JOURNÉE, posés une fois. Autant d'unités par convoi
@@ -419,6 +462,7 @@ func _construire_unites() -> void:
 	jauge_ordre = {}
 	var hasard := RandomNumberGenerator.new()
 	hasard.seed = graine * 7919 + 20260920
+	var pas_moyen := _pas_moyen()
 	for tr in enc.trains:
 		var n := _unites_de(tr)
 		if n == 0:
@@ -432,7 +476,12 @@ func _construire_unites() -> void:
 				possibles.append(int(q["id"]))
 		var quai_prevu: int = int(tr.hint) if (tr.hint != null and possibles.has(int(tr.hint))) else possibles[hasard.randi() % possibles.size()]
 		for u in range(n):
-			jauge_unites.append({"dest": tr.to, "quai": quai_prevu, "train": "", "montee": false, "pos": Vector2.ZERO})
+			# chacun la sienne : la foule d'un convoi se forme voyageur par
+			# voyageur, elle ne tombe pas d'un bloc
+			var avance: float = hasard.randf_range(JAUGE_AVANCE_MIN, JAUGE_AVANCE_MAX) * pas_moyen
+			var quand: float = maxf(0.0, tr.heure_arrivee() - Geo.APPROACH_LEAD - avance)
+			jauge_unites.append({"dest": tr.to, "quai": quai_prevu, "train": "", "montee": false,
+				"pos": Vector2.ZERO, "arrivee": quand})
 	# L'ORDRE SOUS CHAQUE QUAI : MÉLANGÉ, PUIS RANGÉ PAR DESTINATION.
 	# Le mélange reste — rangées par convoi, les unités auraient écrit la
 	# séquence des départs sur le quai —, mais les couleurs ne s'entremêlent
@@ -463,6 +512,27 @@ func _construire_unites() -> void:
 		jauge_ordre[int(q["id"])] = range_
 
 
+## LE PAS MOYEN ENTRE DEUX CONVOIS de la journée : la durée du service divisée
+## par le nombre de convois. C'est l'unité d'avance des voyageurs, et elle vaut
+## deux minutes au niveau 1 comme au niveau 5 — ce sont les journées qui se
+## serrent, pas les gens qui se pressent.
+func _pas_moyen() -> float:
+	var tot := 0.0
+	var premier := INF
+	var dernier := -INF
+	var n := 0
+	for tr in enc.trains:
+		if tr.freight:
+			continue
+		n += 1
+		premier = minf(premier, tr.heure_arrivee())
+		dernier = maxf(dernier, tr.heure_arrivee())
+	if n < 2:
+		return 2.0
+	tot = dernier - premier
+	return clampf(tot / float(n - 1), 0.5, 6.0)
+
+
 ## À quai, et d'un quai d'où il peut repartir vers sa destination : c'est là
 ## qu'il prend ses voyageurs. Sur un mauvais quai il refoulera, et rien ne bouge.
 func _embarque(tr) -> bool:
@@ -484,6 +554,8 @@ func _affecter_unites() -> void:
 			if candidats.size() >= _unites_de(tr):
 				break
 			if u["montee"] or u["train"] != "" or u["dest"] != tr.to or int(u["quai"]) != int(tr.platform):
+				continue
+			if not _arrive(u):   # pas encore en gare : ce convoi-ci partira sans lui
 				continue
 			candidats.append(u)
 		# L'EMBARQUEMENT SONNE, une fois par convoi (22 septembre 2026). Une
@@ -552,9 +624,15 @@ func _wagons_occupes(tr) -> Dictionary:
 ## qu'aucun convoi n'a encore pris ?
 func _reste_pour(dest: String) -> bool:
 	for u in jauge_unites:
-		if u["dest"] == dest and not u["montee"] and u["train"] == "":
+		if u["dest"] == dest and not u["montee"] and u["train"] == "" and _arrive(u):
 			return true
 	return false
+
+
+## Ce voyageur est-il déjà en gare ? Son heure est tirée sur l'horaire, pas sur
+## la partie : elle ne bouge pas quand le joueur prend du retard.
+func _arrive(u: Dictionary) -> bool:
+	return enc.game_min >= float(u.get("arrivee", 0.0))
 
 
 func _unites_prises(id: String) -> Array:
@@ -622,6 +700,8 @@ func _appliquer_jauge() -> void:
 	r["montes"] = _points_transportes()
 	r["points"] = int(round(pts))
 	r["pointsMax"] = maxi
+	if jauge_mesure:
+		print("jauge : %d voyageurs au plus dans le hall, sur %d dans la journée" % [jauge_pic, maxi])
 	print("jauge : %+d points sur %d (perte %d, barème %d·%d·%d) — %d unités montées, %d restées à quai, retard %.1f min, %d convois partis" % [
 		int(round(pts)), maxi, int(round(perte)), int(s["trois"]), int(s["deux"]), int(s["une"]),
 		_points_transportes(), restes, enc.live_delay(), jauge_parti.size()])
@@ -650,7 +730,7 @@ func _dessiner_unites() -> void:
 		var y0: float = float(q["cy"]) + Geo.PLAT_H / 2.0 + 9.0 * k
 		for idx in jauge_ordre.get(pid, []):
 			var u: Dictionary = jauge_unites[idx]
-			if u["montee"]:
+			if u["montee"] or not _arrive(u):
 				continue
 			var col_i: int = i % par_rang
 			var pos := Vector2(Geo.PLAT_X1 + 10.0 + col_i * pas + floor(float(col_i) / float(JAUGE_PAR_PAQUET)) * blanc,
@@ -666,8 +746,14 @@ func _dessiner_unites() -> void:
 					jauge_vols.append({"u": u, "tr": a_quai[u["train"]], "p": p})
 					continue
 			var col := Color(String(G["dest_color"][u["dest"]]))
-			draw_circle(pos, 3.4 * k, col)
-			draw_arc(pos, 3.4 * k, 0.0, TAU, 16, Color(0, 0, 0, 0.45), max(1.0, 0.9 * k), true)
+			# CELUI QUI VIENT D'ARRIVER PARAÎT : il grandit et se teinte en six
+			# dixièmes de minute de jeu. Sans ce fondu, une pastille surgit du
+			# néant au milieu de la rangée — et à ×4, on ne verrait qu'un
+			# clignotement.
+			var neuf: float = clampf((enc.game_min - float(u.get("arrivee", 0.0))) / JAUGE_PARUTION, 0.0, 1.0)
+			var r_u: float = 3.4 * k * (0.45 + 0.55 * neuf)
+			draw_circle(pos, r_u, Color(col, neuf))
+			draw_arc(pos, r_u, 0.0, TAU, 16, Color(0, 0, 0, 0.45 * neuf), max(1.0, 0.9 * k), true)
 			if prise:   # « ceux-là montent » : un cerne blanc
 				draw_arc(pos, 4.8 * k, 0.0, TAU, 20, Color(1, 1, 1, 0.85), max(1.0, 1.1 * k), true)
 
@@ -753,6 +839,12 @@ func _process(delta: float) -> void:
 	if mode_jauge:
 		_affecter_unites()
 		_noter_les_departs()
+		if jauge_mesure:
+			var ici := 0
+			for u in jauge_unites:
+				if not u["montee"] and _arrive(u):
+					ici += 1
+			jauge_pic = maxi(jauge_pic, ici)
 	if enc.ended and not fin_enregistree:
 		if mode_jauge:
 			_appliquer_jauge()
