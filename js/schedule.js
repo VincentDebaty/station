@@ -5,6 +5,26 @@
 // (mêmes règles que le jeu) ; l'heure de départ officielle = l'heure de
 // départ faisable + une marge de réaction pour l'humain.
 // ------------------------------------------------------------------
+// ------------------------------------------------------------------
+// LE FRET ET LES FERMETURES DE QUAI SONT RETIRÉS DU JEU (Vincent, 22 septembre
+// 2026, après une partie : « le vrai problème qui me frustre à chaque fois,
+// c'est les convois de fret qui bloquent souvent tout systématiquement. Je
+// désactiverais cela ainsi que le quai bloqué qui n'apporte rien au jeu »).
+//
+// Les deux mobilisaient un quai sans rien rapporter : le fret verrouille
+// entrée ET sortie d'un seul tenant le temps du transit, la fermeture retire
+// un quai pour quelques minutes. Depuis la jauge des voyageurs, ils coûtent en
+// plus la foule qu'un convoi n'a pas pu emmener — le prix a doublé sans que le
+// plaisir suive.
+//
+// Les deux interrupteurs restent, et les enveloppes gardent leur
+// `freightCount` : les remettre à `true` ici ET dans `jeu/journee.gd` suffit à
+// retrouver le jeu d'avant. LES DEUX IMPLÉMENTATIONS BOUGENT ENSEMBLE, sans
+// quoi `tools/oracle-journee.mjs` refuse — une journée n'est pas « proche »,
+// elle est la même ou elle ne l'est pas.
+const FREIGHT = false;
+const CLOSURES = false;
+
 const REACTION_MARGIN = 1.5;   // marge laissée au joueur (minutes de jeu)
 // Densité globale du trafic (réglage transversal, toutes gares confondues) :
 // on veut un jeu sans temps mort. Le service démarre plus tôt et les arrivées
@@ -420,7 +440,8 @@ function generateOnce() {
   // gares « stress test ». Une gare TERMINUS n'en voit aucun : traverser sans
   // s'arrêter suppose d'entrer par un côté et de sortir par l'autre (cross est
   // alors vide). Les paires de PAIRS ont déjà un quai commun garanti.
-  const nFreight = cross.length === 0 ? 0
+  const nFreight = !FREIGHT ? 0
+    : cross.length === 0 ? 0
     : (GEN.freightCount != null ? GEN.freightCount
        : Math.max(1, Math.min(5, STATION.difficulty || 1)));
   // Les quais possibles de chaque relation traversante — même rôle que
@@ -460,6 +481,10 @@ function generateOnce() {
   let wantClosures = 0;
   for (let e = 0; e < nEv; e++) {
     const type = pick(["late", "closure"]);
+    // LA FERMETURE TIRÉE NE DEVIENT PAS UN RETARD : elle ne devient rien, et
+    // la journée est simplement plus calme — c'est ce que valait l'événement
+    // qu'on retire (voir CLOSURES en tête de fichier).
+    if (type === "closure" && !CLOSURES) continue;
     if (type === "late") {
       const cand = draft.filter((s, i) => i >= 2 && !hit.has(s.id) && !s.freight);
       if (!cand.length) continue;

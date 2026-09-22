@@ -328,7 +328,40 @@ bourse : à instruire dans `economie-du-jeu.md`, pas ici.
 
 ---
 
-## 7. Ce qui reste à trancher
+## 7. Ce que l'essai a fait retirer : le fret et les fermetures de quai
+
+Décidé le 22 septembre 2026, après une partie : « le vrai problème qui me
+frustre à chaque fois, c'est les convois de fret qui bloquent souvent tout
+systématiquement. Je désactiverais cela ainsi que le quai bloqué qui n'apporte
+rien au jeu » (Vincent).
+
+Les deux mobilisaient un quai sans rien rapporter : le fret verrouille entrée
+ET sortie d'un seul tenant le temps du transit, la fermeture retire un quai
+pour quelques minutes. **Depuis la jauge, ils coûtent en plus la foule qu'un
+convoi n'a pas pu emmener** — le prix a doublé sans que le plaisir suive.
+C'est donc un effet de bord de la jauge, et il vaut d'être noté comme tel : un
+obstacle supportable quand il ne coûtait que des minutes devient odieux quand
+il coûte des gens.
+
+Deux interrupteurs, `FREIGHT` et `CLOSURES`, dans **les deux** générateurs —
+`js/schedule.js` et `jeu/journee.gd`. Ils bougent ensemble, sans quoi
+`oracle-journee` refuse : une journée n'est pas « proche », elle est la même ou
+elle ne l'est pas. Les enveloppes gardent leur `freightCount` : remettre `true`
+suffit à retrouver le jeu d'avant.
+
+Une fermeture tirée ne devient pas un retard — elle ne devient rien, et la
+journée est simplement plus calme.
+
+**Contrôles.** `oracle-journee` et `oracle-enclenchement` verts (les deux
+implémentations tirent et jouent la même journée) ; `gen-check` passé **quatre
+fois** — une à graine fixe, trois libres —, toutes les gares passent ;
+`carte-check` vert. Les **brevets ne sont pas repassés** : ils certifient qu'un
+niveau est sain, et retirer un fret et une fermeture ne peut que détendre une
+journée. Ils restent donc valides, et conservateurs.
+
+---
+
+## 8. Ce qui reste à trancher
 
 1. **La jauge reste-t-elle ?** Le §4 la rend lisible et discriminante ; c'est
    sur cette version-là qu'il faut rejouer trois ou quatre chapitres avant de
@@ -377,3 +410,6 @@ bourse : à instruire dans `economie-du-jeu.md`, pas ici.
   par sa bouche, et les voyageurs alignés sur le bord du quai. Trois remarques
   de Vincent sur le jeu posé, trois corrections : on ne traverse pas les voies,
   on ne paraît pas de nulle part, et on ne tangue pas sur un quai.
+- **22 septembre 2026, au soir** — le fret et les fermetures de quai sont
+  retirés (§7), après une partie de Vincent. Quatre balayages de `gen-check`,
+  les deux oracles, `carte-check`.

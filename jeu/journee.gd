@@ -39,6 +39,25 @@ const Geo := preload("res://jeu/geometrie.gd")
 # pas hors éditeur (cache des classes globales), le chemin, si.
 const Has := preload("res://jeu/hasard.gd")
 
+## LE FRET ET LES FERMETURES DE QUAI SONT RETIRÉS DU JEU (Vincent, 22 septembre
+## 2026, après une partie : « le vrai problème qui me frustre à chaque fois,
+## c'est les convois de fret qui bloquent souvent tout systématiquement. Je
+## désactiverais cela ainsi que le quai bloqué qui n'apporte rien au jeu »).
+##
+## Les deux mobilisaient un quai sans rien rapporter : le fret verrouille
+## entrée ET sortie d'un seul tenant le temps du transit, la fermeture retire
+## un quai pour quelques minutes. Depuis la jauge des voyageurs, ils coûtent en
+## plus la foule qu'un convoi n'a pas pu emmener — le prix a doublé sans que le
+## plaisir suive.
+##
+## Les deux interrupteurs restent, et les enveloppes gardent leur
+## `freightCount` : les remettre à `true` ici ET dans `js/schedule.js` suffit à
+## retrouver le jeu d'avant. LES DEUX IMPLÉMENTATIONS BOUGENT ENSEMBLE, sans
+## quoi `tools/oracle-journee.mjs` refuse — une journée n'est pas « proche »,
+## elle est la même ou elle ne l'est pas.
+const FREIGHT := false
+const CLOSURES := false
+
 const REACTION_MARGIN := 1.5
 const FIRST_ARRIVAL := [0.5, 1.0]
 const ARRIVAL_GAP_SCALE := 0.82
@@ -635,7 +654,7 @@ func generate_once() -> Dictionary:
 		if portals[pr[0]]["side"] != portals[pr[1]]["side"]:
 			cross.append(pr)
 	var n_freight: int
-	if cross.is_empty():
+	if not FREIGHT or cross.is_empty():
 		n_freight = 0
 	elif GEN.has("freightCount") and GEN["freightCount"] != null:
 		n_freight = int(GEN["freightCount"])
@@ -668,6 +687,11 @@ func generate_once() -> Dictionary:
 	var want_closures := 0
 	for e in range(n_ev):
 		var type: String = hasard.pick(["late", "closure"])
+		# LA FERMETURE TIRÉE NE DEVIENT PAS UN RETARD : elle ne devient rien, et
+		# la journée est simplement plus calme — c'est ce que valait l'événement
+		# qu'on retire (voir CLOSURES en tête de fichier).
+		if type == "closure" and not CLOSURES:
+			continue
 		if type == "late":
 			var cand: Array = []
 			for i in range(draft.size()):

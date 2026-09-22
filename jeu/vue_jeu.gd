@@ -1189,7 +1189,13 @@ func _dessiner_eclats() -> void:
 		if positions.has(e["id"]) and not positions[e["id"]].is_empty():
 			pos = Vector2(float(positions[e["id"]][0]["x"]), float(positions[e["id"]][0]["y"]))
 		var a: float = 1.0 - pow(age, 2.0)
-		var centre := pos + Vector2(0, -56.0 * k - 30.0 * k * age)
+		# AU-DESSUS DE LA MACHINE, SAUF S'IL N'Y A PLUS DE PLACE : sur un convoi
+		# du premier quai, le « +X » montait par-dessus le bandeau et l'horloge.
+		# Il passe alors sous la machine, et monte quand même.
+		var monte := Vector2(0, -56.0 * k - 30.0 * k * age)
+		var centre := pos + monte
+		if centre.y < _tunnel_bouche():
+			centre = pos - monte
 		var txt := "+%d" % int(e["pts"])
 		# VINGT-SIX, ET PLUS DIX-HUIT (22 septembre 2026) : réduit à la taille
 		# d'un téléphone, le « +4 » d'un convoi qui part plein ne se voyait pas
