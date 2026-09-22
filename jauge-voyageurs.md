@@ -224,13 +224,50 @@ Effet de bord voulu : **le corrigé ne se lit plus d'un coup**. Le hall
 n'annonce plus que les quelques convois à venir ; c'est un radar, plus une
 solution.
 
-### 5.2 Les correspondances
+### 5.2 Les correspondances — FAIT le 22 septembre 2026
 
-Un convoi qui **arrive** dépose des voyageurs pour d'autres directions. La
-foule devient alors la conséquence de mon aiguillage, et non un décor posé
-d'avance : la gare devient un flux. C'est, à mon sens, le « volume » que
-cherche Vincent. Coût : une règle de dépôt dans la vue, et un plafond pour que
-la journée reste finie.
+**Un tiers des voyageurs ne vient plus de la ville : il descend d'un train.**
+Ils ne sont nulle part tant que leur convoi d'apport n'est pas à quai — on les
+voit dedans, points noirs dans ses wagons —, ils en descendent à l'arrêt,
+traversent la gare au pas pressé de qui a une correspondance (une fois et
+demie l'allure du flâneur), rejoignent leur quai puis leur place. La foule
+devient la conséquence de ce qu'on fait des trains, et non un décor posé
+d'avance.
+
+**C'est la première fois qu'un retard se propage.** Retenez l'apport, et ses
+voyageurs descendent trop tard pour leur correspondance : ils restent, et ils
+comptent comme tous les autres. Un convoi mal aiguillé ne coûte plus seulement
+son propre retard — il coûte la foule d'un autre.
+
+**Le total ne bouge pas** : ce sont les mêmes voyageurs, arrivés autrement. Ni
+le maximum de la journée, ni le barème, ni la garantie du calibrage ne
+changent. L'apport est choisi À LA CONSTRUCTION parmi les convois qui arrivent
+au moins trois minutes avant celui qu'ils alimentent — de quoi couvrir la plus
+longue traversée possible (770 unités au pas pressé, deux minutes) — et qui ne
+viennent pas de là où va leur voyageur : on ne revient pas de Brighton pour
+repartir à Brighton. Un convoi ne débarque jamais plus de monde qu'il n'a de
+wagons.
+
+Deux conséquences qu'il a fallu régler au passage :
+
+- **un convoi à quai continue de se remplir.** L'embarquement était décidé une
+  fois pour toutes à l'arrêt ; une correspondance qui traversait encore la gare
+  arrivait alors deux secondes trop tard et restait, aussi durement qu'une
+  minute entière. Le convoi prend maintenant les retardataires tant qu'il est à
+  quai et qu'il lui reste des wagons — le « dommage » du départ à vide se joue
+  donc au départ, seul moment où l'on sait qu'il n'a emmené personne ;
+- **un wagon est en couleur dès qu'il porte quelqu'un**, à l'arrivée comme au
+  départ. Un convoi n'arrive plus forcément vide.
+
+Mesuré sur les 39 services du banc, à graines identiques : **357
+correspondances sur 1 160 voyageurs, soit 31 %**. Les étoiles ne bougent pas
+(4 · 5 · 5 · 25, comme avant), le retard médian non plus (19,6 min), et
+l'embarquement médian passe de 86 à **84 %** — la mécanique mord un peu, sans
+déplacer la difficulté. Sur les 357 correspondances, 91 sont restées à quai
+(un quart, contre un sixième pour l'ensemble des voyageurs : c'est la
+pression nouvelle) et **3 seulement ne sont jamais descendues**, dans des
+services où leur apport n'est jamais arrivé — c'est-à-dire des services
+échoués. La journée reste la même pour qui tient l'horaire.
 
 ### 5.3 La capacité doit mordre
 
@@ -310,3 +347,7 @@ bourse : à instruire dans `economie-du-jeu.md`, pas ici.
   à chaque fois, avec cet effet qu'arrivé pousse les autres ? ». Posé à mi-pas
   avec un frisson de 22 %, le quai redevenait une règle graduée ; un tiers de
   pas dans les deux sens, et deux unités de haut, lui donnent sa foule.
+- **22 septembre 2026, la fin** — §5.2, les correspondances. Un tiers des
+  voyageurs descend d'un train, traverse la gare et va prendre sa place. Le
+  retard se propage enfin d'un convoi à l'autre. Quatrième passage du banc :
+  étoiles inchangées, embarquement de 86 à 84 %.

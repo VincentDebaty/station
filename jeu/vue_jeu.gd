@@ -117,6 +117,26 @@ const JAUGE_ECLAT_DUREE := 1.4            # secondes réelles : le « +X » mont
 const JAUGE_AVANCE_MIN := 1.0             # en PAS moyens entre deux convois, avant l'annonce du sien
 const JAUGE_AVANCE_MAX := 4.0
 const JAUGE_PARUTION := 0.6               # minutes de jeu : le fondu de celui qui arrive
+## LES CORRESPONDANCES (`jauge-voyageurs.md` §5.2). Une part des voyageurs ne
+## vient pas de la ville : elle DESCEND D'UN TRAIN. Elle n'est nulle part tant
+## que son convoi d'apport n'est pas à quai ; elle en descend à l'arrêt,
+## traverse la gare au pas pressé de qui a une correspondance, et va prendre
+## sa place sur le quai de son train. La gare cesse d'être une file d'attente
+## posée d'avance : elle devient un flux, et ce que le joueur fait d'un convoi
+## décide de ce qu'il y aura sur les quais ensuite.
+##
+## C'EST AUSSI LA PREMIÈRE FOIS QU'UN RETARD SE PROPAGE. Retenez l'apport, et
+## ses voyageurs descendent trop tard pour leur correspondance : ils restent.
+## Le calibrage n'est pourtant pas rompu — l'apport est choisi À LA
+## CONSTRUCTION parmi les convois qui arrivent au moins JAUGE_MARGE minutes
+## avant celui qu'il alimente, ce qui laisse le temps de la plus longue
+## traversée (770 unités à la vitesse pressée, deux minutes). Qui tient
+## l'horaire ne perd personne ; qui le laisse filer paie deux fois.
+const JAUGE_PART_CORRESPONDANCE := 0.35   # la part des voyageurs qui descend d'un train
+const JAUGE_MARGE_CORRESPONDANCE := 3.0   # minutes de jeu entre l'apport et son convoi
+## Le pas pressé de la correspondance : une fois et demie celui du voyageur qui
+## flâne le long de son quai. On court, quand on change de train.
+const JAUGE_VITESSE_CORRESPONDANCE := JAUGE_VITESSE_MARCHE * 1.6
 ## La bordure du quai où l'on attend : la bande basse de la pilule, que la
 ## marge du quai laisse libre (PLAT_MARGIN vaut 11). Le placement des
 ## voyageurs et son dessin la partagent.
@@ -132,6 +152,7 @@ var jauge_unites: Array = []              # les voyageurs : {dest, quai, train (
 var jauge_affecte: Dictionary = {}        # id -> le convoi a déjà pris ce qu'il pouvait à son quai
 var jauge_vols: Array = []                # les voyageurs en vol vers leur wagon, recalculés à chaque image
 var jauge_ordre: Dictionary = {}          # quai -> ses unités, dans un ordre tiré au sort une fois
+var jauge_descendu: Dictionary = {}       # id -> son apport a été débarqué
 var jauge_mesure := false                 # STATION_MESURE : on suit le pic de foule
 var jauge_pic := 0                        # le plus de voyageurs vus ensemble dans le hall
 
@@ -415,11 +436,58 @@ func _noter_les_departs() -> void:
 			# « hey, tu as gagné X points » : un +X au-dessus de la machine, qui
 			# monte et s'efface. Il suit le convoi tant qu'on sait où il est.
 			# Rien si le convoi part vide : il n'y a rien à fêter.
+			# LE CONVOI QUI PART À VIDE le dit en deux notes descendantes — et
+			# c'est au départ qu'on le sait, plus à l'arrêt : depuis les
+			# correspondances, un convoi peut se remplir jusqu'au dernier
+			# instant avec des voyageurs qui traversent encore la gare.
+			if prises.is_empty():
+				if _reste_pour(String(tr.to)):
+					Sons.jouer("dommage")
 			if not prises.is_empty():
 				var pos := Vector2(float(positions[tr.id][0]["x"]), float(positions[tr.id][0]["y"])) \
 					if positions.has(tr.id) and not positions[tr.id].is_empty() else Vector2(Geo.PLAT_MID, 0.0)
 				jauge_eclats.append({"id": tr.id, "pts": prises.size() * JAUGE_POINTS_PAR_WAGON,
 					"t0": Time.get_ticks_msec() / 1000.0, "pos": pos})
+
+
+## LES VOYAGEURS EN CORRESPONDANCE DESCENDENT, à l'instant où leur apport
+## s'arrête — à n'importe quel quai : on descend d'un train où qu'il s'arrête.
+## De là, chacun part vers sa place, et le temps de la traversée est celui
+## qu'il faut pour la faire : c'est `arrivee` qui le porte, si bien que tout le
+## reste du compte — qui attend, qui peut monter, qui est resté — n'a pas à
+## savoir d'où il vient.
+func _noter_les_descentes() -> void:
+	for tr in enc.trains:
+		if tr.actual_arr == null or jauge_descendu.has(tr.id):
+			continue
+		jauge_descendu[tr.id] = true
+		var cases: Array = positions.get(tr.id, [])
+		for u in jauge_unites:
+			if u.get("source", "") != tr.id or u.get("descente") != null:
+				continue
+			var i: int = mini(int(u.get("source_rang", 0)) + 1, maxi(0, cases.size() - 1))
+			var de := Vector2(float(cases[i]["x"]), float(cases[i]["y"])) if not cases.is_empty() \
+				else Vector2(Geo.PLAT_MID, float(u["pos"].y))
+			var vers: Vector2 = u["pos"]
+			var d: float = abs(vers.x - de.x) + abs(vers.y - de.y)
+			u["de"] = de
+			u["descente"] = enc.game_min
+			u["arrivee"] = enc.game_min + d / JAUGE_VITESSE_CORRESPONDANCE
+
+
+## Ceux qui traversent la gare en ce moment : descendus, pas encore à leur
+## place. Ils marchent le long du train, puis rejoignent leur quai.
+func _en_correspondance() -> Array:
+	var out: Array = []
+	for u in jauge_unites:
+		if u.get("descente") == null or u["montee"]:
+			continue
+		var t0: float = float(u["descente"])
+		var t1: float = float(u["arrivee"])
+		if enc.game_min >= t1 or t1 <= t0:
+			continue
+		out.append({"u": u, "p": clampf((enc.game_min - t0) / (t1 - t0), 0.0, 1.0)})
+	return out
 
 
 ## La jauge repart de zéro avec la journée — par les DEUX chemins d'entrée,
@@ -428,6 +496,7 @@ func _preparer_jauge() -> void:
 	jauge_parti = {}
 	jauge_eclats = []
 	jauge_affecte = {}
+	jauge_descendu = {}
 	jauge_pic = 0
 	jauge_mesure = OS.get_environment("STATION_MESURE") != ""
 	if not mode_jauge:
@@ -439,9 +508,13 @@ func _preparer_jauge() -> void:
 		var premiere := INF
 		var derniere := -INF
 		var a_l_ouverture := 0
+		var n_corr := 0
 		for u in jauge_unites:
 			if not enc.paths.has("out:%s:%d" % [u["dest"], int(u["quai"])]):
 				mal_placees += 1
+			if u.get("source", "") != "":
+				n_corr += 1      # celle-là n'a pas d'heure : elle est dans un train
+				continue
 			var h: float = float(u.get("arrivee", 0.0))
 			tot += h
 			premiere = minf(premiere, h)
@@ -450,9 +523,10 @@ func _preparer_jauge() -> void:
 				a_l_ouverture += 1
 		var n := jauge_unites.size()
 		print("jauge : %d unités, %d sous un quai qui ne mène pas à leur destination (attendu : 0)" % [n, mal_placees])
-		if n > 0:
+		if n > n_corr and n_corr < n:
 			print("jauge : arrivées de %.0f à %.0f min de service (moyenne %.0f), %d présents à l'ouverture" % [
-				premiere, derniere, tot / float(n), a_l_ouverture])
+				premiere, derniere, tot / float(n - n_corr), a_l_ouverture])
+		print("jauge : %d correspondances sur %d voyageurs (%.0f %%)" % [n_corr, n, 100.0 * float(n_corr) / float(maxi(1, n))])
 
 
 ## LES VOYAGEURS DE LA JOURNÉE, posés une fois. Autant d'unités par convoi
@@ -485,7 +559,8 @@ func _construire_unites() -> void:
 			var avance: float = hasard.randf_range(JAUGE_AVANCE_MIN, JAUGE_AVANCE_MAX) * pas_moyen
 			var quand: float = maxf(0.0, tr.heure_arrivee() - Geo.APPROACH_LEAD - avance)
 			jauge_unites.append({"dest": tr.to, "quai": quai_prevu, "train": "", "montee": false,
-				"pos": Vector2.ZERO, "arrivee": quand})
+				"pos": Vector2.ZERO, "arrivee": quand, "pour": tr.id, "source": ""})
+	_tirer_les_correspondances(hasard)
 	# CHACUN SA PLACE SUR LE QUAI, TIRÉE UNE FOIS POUR TOUTES (Vincent, 22
 	# septembre 2026 : « possible de les afficher aléatoirement sur le quai et
 	# pas au milieu à chaque fois, avec cet effet qu'arrivé pousse les
@@ -552,6 +627,48 @@ func _construire_unites() -> void:
 			x += w
 
 
+## QUI DESCEND D'UN TRAIN PLUTÔT QUE DE VENIR DE LA VILLE. Une part des
+## voyageurs est reprise à la ville et donnée à un convoi d'APPORT : ils
+## voyagent dedans, en descendent à son arrêt et traversent la gare pour
+## rejoindre leur quai. Le total ne bouge pas — ce sont les mêmes voyageurs,
+## arrivés autrement —, donc ni le maximum de la journée, ni le barème, ni la
+## garantie du calibrage ne changent.
+##
+## L'APPORT EST ÉLIGIBLE S'IL ARRIVE ASSEZ TÔT (JAUGE_MARGE_CORRESPONDANCE),
+## s'il n'est pas du fret, s'il ne vient pas de là où va son voyageur — on ne
+## revient pas de Brighton pour repartir à Brighton —, et s'il lui reste une
+## place : un convoi ne débarque jamais plus de monde qu'il n'a de wagons.
+func _tirer_les_correspondances(hasard: RandomNumberGenerator) -> void:
+	var arr: Dictionary = {}          # id -> heure d'arrivée prévue
+	var venant: Dictionary = {}       # id -> portail d'origine
+	var reste: Dictionary = {}        # id -> places encore libres dans le convoi
+	var convois: Array = []
+	for tr in enc.trains:
+		arr[tr.id] = tr.heure_arrivee()
+		venant[tr.id] = tr.from
+		if not tr.freight:
+			reste[tr.id] = maxi(0, int(tr.cars) - 1)
+			convois.append(tr.id)
+	for u in jauge_unites:
+		if hasard.randf() > JAUGE_PART_CORRESPONDANCE:
+			continue
+		var limite: float = float(arr.get(u["pour"], 0.0)) - JAUGE_MARGE_CORRESPONDANCE
+		var possibles: Array = []
+		for id in convois:
+			if id == u["pour"] or float(arr[id]) > limite or int(reste[id]) <= 0:
+				continue
+			if venant[id] == u["dest"]:
+				continue
+			possibles.append(id)
+		if possibles.is_empty():
+			continue
+		var apport: String = possibles[hasard.randi() % possibles.size()]
+		u["source"] = apport
+		u["source_rang"] = int(reste[apport]) - 1   # il occupe un wagon, du fond vers l'avant
+		u["arrivee"] = INF                          # il n'est nulle part : il est dans un train
+		reste[apport] = int(reste[apport]) - 1
+
+
 ## LE PAS MOYEN ENTRE DEUX CONVOIS de la journée : la durée du service divisée
 ## par le nombre de convois. C'est l'unité d'avance des voyageurs, et elle vaut
 ## deux minutes au niveau 1 comme au niveau 5 — ce sont les journées qui se
@@ -586,42 +703,48 @@ func _embarque(tr) -> bool:
 ## repartira vide — c'était le mauvais quai pour ces voyageurs-là.
 func _affecter_unites() -> void:
 	for tr in enc.trains:
-		if not _embarque(tr) or jauge_affecte.has(tr.id):
+		if not _embarque(tr):
 			continue
+		var premiere := not jauge_affecte.has(tr.id)
 		jauge_affecte[tr.id] = true
+		var deja: Array = _unites_prises(tr.id)
+		var place: int = _unites_de(tr) - deja.size()
+		if place <= 0:
+			continue
 		var candidats: Array = []
 		for u in jauge_unites:
-			if candidats.size() >= _unites_de(tr):
+			if candidats.size() >= place:
 				break
 			if u["montee"] or u["train"] != "" or u["dest"] != tr.to or int(u["quai"]) != int(tr.platform):
 				continue
-			if not _arrive(u):   # pas encore en gare : ce convoi-ci partira sans lui
+			if not _arrive(u):   # pas encore en gare : ce convoi-ci partira peut-être sans lui
 				continue
 			candidats.append(u)
-		# L'EMBARQUEMENT SONNE, une fois par convoi (22 septembre 2026). Une
-		# note grave quand il prend du monde ; les deux notes descendantes du
-		# « dommage » quand il part à vide alors que des voyageurs pour sa
-		# destination attendent ailleurs — c'est le seul moment où le joueur
-		# peut apprendre la règle sans qu'on la lui écrive.
 		if candidats.is_empty():
-			if _reste_pour(String(tr.to)):
-				Sons.jouer("dommage")
-		else:
-			Sons.jouer("puce")
+			continue
 		# CHACUN VISE LE WAGON LE PLUS PROCHE DE SA PLACE, sans se croiser : les
 		# voyageurs rangés par abscisse prennent les wagons rangés par abscisse.
 		# Rangés par ordre de prise, celui du wagon 3 arrivait avant celui du
 		# wagon 1 et le point s'allumait au mauvais endroit — « deux passagers
 		# rentrent dans le même wagon » (Vincent, 20 septembre 2026).
+		var occupes: Dictionary = {}
+		for u in deja:
+			occupes[int(u.get("rang", 0))] = true
 		var cases: Array = positions.get(tr.id, [])
 		var wagons: Array = []
 		for i in range(1, cases.size()):
-			wagons.append({"i": i, "x": float(cases[i]["x"])})
+			if not occupes.has(i - 1):
+				wagons.append({"i": i, "x": float(cases[i]["x"])})
 		wagons.sort_custom(func(a, b): return a["x"] < b["x"])
 		candidats.sort_custom(func(a, b): return Vector2(a["pos"]).x < Vector2(b["pos"]).x)
 		for j in range(candidats.size()):
 			candidats[j]["train"] = tr.id
 			candidats[j]["rang"] = (int(wagons[j]["i"]) - 1) if j < wagons.size() else j
+		# L'EMBARQUEMENT SONNE, une fois par convoi : une note grave quand il
+		# prend du monde. Le « dommage » d'un convoi qui part à vide se joue au
+		# départ, puisque c'est là seulement qu'on sait qu'il n'a pris personne.
+		if deja.is_empty():
+			Sons.jouer("puce")
 
 
 ## Le wagon d'un voyageur pris : le premier fourgon pour le rang 0, et ainsi
@@ -653,6 +776,15 @@ func _avancement(u: Dictionary, tr) -> float:
 ## pris une fois parti ; à quai, ceux dont le voyageur est arrivé.
 func _wagons_occupes(tr) -> Dictionary:
 	var occ: Dictionary = {}
+	# AVANT L'ARRÊT, CE SONT SES CORRESPONDANCES QU'IL PORTE : un convoi
+	# n'arrive plus forcément à vide, et on doit voir d'où sort la foule qui
+	# traversera la gare. Elles descendent à l'arrêt, à l'instant précis où les
+	# voyageurs d'ici commencent à monter : les deux ne se chevauchent pas.
+	if tr.actual_arr == null:
+		for u in jauge_unites:
+			if u.get("source", "") == tr.id and u.get("descente") == null:
+				occ[mini(int(u.get("source_rang", 0)) + 1, maxi(1, int(tr.cars) - 1))] = true
+		return occ
 	var parti: bool = jauge_parti.get(tr.id, false) or tr.state != Enc.S_DWELL
 	for u in _unites_prises(tr.id):
 		if parti or _avancement(u, tr) >= 1.0:
@@ -741,7 +873,19 @@ func _appliquer_jauge() -> void:
 	r["points"] = int(round(pts))
 	r["pointsMax"] = maxi
 	if jauge_mesure:
+		var c_tot := 0
+		var c_restees := 0
+		var c_jamais := 0
+		for u in jauge_unites:
+			if u.get("source", "") == "":
+				continue
+			c_tot += 1
+			if not u["montee"]:
+				c_restees += 1
+				if u.get("descente") == null:
+					c_jamais += 1
 		print("jauge : %d voyageurs au plus dans le hall, sur %d dans la journée" % [jauge_pic, maxi])
+		print("jauge : %d correspondances, %d restées à quai dont %d jamais descendues" % [c_tot, c_restees, c_jamais])
 	print("jauge : %+d points sur %d (perte %d, barème %d·%d·%d) — %d unités montées, %d restées à quai, retard %.1f min, %d convois partis" % [
 		int(round(pts)), maxi, int(round(perte)), int(s["trois"]), int(s["deux"]), int(s["une"]),
 		_points_transportes(), restes, enc.live_delay(), jauge_parti.size()])
@@ -847,6 +991,34 @@ func _dessiner_vols() -> void:
 		draw_arc(pos, 4.8 * k, 0.0, TAU, 20, Color(1, 1, 1, 0.85), max(1.0, 1.1 * k), true)
 
 
+## LA TRAVERSÉE D'UNE CORRESPONDANCE : descendu de son train, le voyageur
+## longe d'abord la voie jusqu'à l'abscisse de sa place, puis rejoint son quai.
+## L'ordre compte — il marche le long des quais, il ne coupe pas en diagonale —
+## et c'est le même dessin en deux temps que celui qui monte, à l'envers.
+func _dessiner_correspondances() -> void:
+	var k := Sty.UIK
+	var r_u := minf(3.4 * k, 5.0)
+	for v in _en_correspondance():
+		var u: Dictionary = v["u"]
+		var de: Vector2 = u.get("de", u["pos"])
+		var vers: Vector2 = u["pos"]
+		# LE QUAI D'ABORD, LA PLACE ENSUITE : il traverse la gare jusqu'à son
+		# quai, puis le longe jusqu'à sa place. L'inverse — longer d'abord, puis
+		# traverser — le faisait cheminer le long d'un quai qui n'était pas le
+		# sien, où on le prenait pour un voyageur d'ici.
+		var dy: float = abs(vers.y - de.y)
+		var d: float = dy + abs(vers.x - de.x)
+		var parcouru: float = float(v["p"]) * d
+		var pos: Vector2
+		if parcouru <= dy:
+			pos = Vector2(de.x, move_toward(de.y, vers.y, parcouru))
+		else:
+			pos = Vector2(move_toward(de.x, vers.x, parcouru - dy), vers.y)
+		var col := Color(String(G["dest_color"][u["dest"]]))
+		draw_circle(pos, r_u, col)
+		draw_arc(pos, r_u, 0.0, TAU, 16, Color(0, 0, 0, 0.45), max(1.0, 0.9 * k), true)
+
+
 ## LE « +X » : au-dessus de la machine du convoi qui vient d'emporter ses
 ## voyageurs, il monte d'une trentaine d'unités et s'efface en 1,4 s. Vert,
 ## comme une bonne nouvelle ; en temps réel, pour qu'on le voie aussi à ×4.
@@ -902,6 +1074,7 @@ func _process(delta: float) -> void:
 		enc.sons.clear()
 	_vider_les_sons()
 	if mode_jauge:
+		_noter_les_descentes()
 		_affecter_unites()
 		_noter_les_departs()
 		if jauge_mesure:
@@ -1188,6 +1361,7 @@ func _draw() -> void:
 	_dessiner_convois(sel, t)
 	if mode_jauge:
 		_dessiner_vols()
+		_dessiner_correspondances()
 	_dessiner_signaux(t)
 	draw_set_transform(Vector2.ZERO)
 	_dessiner_hud(t)
@@ -1450,8 +1624,11 @@ func _dessiner_convois(sel, t: float) -> void:
 		# wagon prend la couleur quand un voyageur y monte, et la garde. Le
 		# gris est teinté de la destination, pas le gris plat du fret — dont
 		# c'est justement la signature, machine colorée sur wagons gris.
-		var jauge_ici: bool = mode_jauge and not tr.freight and jauge_affecte.has(tr.id)
-		var jauge_vide: bool = mode_jauge and not tr.freight and not jauge_affecte.has(tr.id)
+		# UN WAGON EST EN COULEUR DÈS QU'IL PORTE QUELQU'UN — ceux qui montent
+		# ici, et depuis les correspondances ceux qui sont déjà dedans en
+		# arrivant. La teinte ne demande donc plus au convoi s'il a « décidé »
+		# son embarquement : elle demande à chaque wagon s'il est occupé.
+		var jauge_ici: bool = mode_jauge and not tr.freight
 		var occupes: Dictionary = _wagons_occupes(tr) if jauge_ici else {}
 		# UN VÉHICULE PAR CASE, ET RIEN QUE DES FOURGONS DERRIÈRE LA MACHINE.
 		# Les voitures de deux cases donnaient une rame mieux proportionnée, mais
@@ -1470,7 +1647,7 @@ func _dessiner_convois(sel, t: float) -> void:
 			# — « le train de fret ressemble aux autres » (Vincent, 20 sept.).
 			if tr.freight and i > 0 and mode_jauge:
 				teinte = FRET_BLANC
-			if i > 0 and (jauge_vide or (jauge_ici and not occupes.has(i))):
+			if i > 0 and jauge_ici and not occupes.has(i):
 				teinte = col.lerp(Sty.FRET, 0.80)   # grisé : personne à bord
 			var lavis := Color(teinte.lerp(Sty.PAPIER, 0.06), vie)
 			for j in SOUS_CASES:
