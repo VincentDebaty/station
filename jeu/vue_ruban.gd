@@ -3887,6 +3887,21 @@ func _bloc_bilan(avec_medailles: bool = true) -> Control:
 		h.add_child(lr)
 	v.add_child(h)
 
+	# LES VOYAGEURS, QUAND LA JAUGE EST EN JEU (22 septembre 2026). Le service
+	# se joue sur eux et le relevé n'en disait rien : on finissait à 27
+	# voyageurs sur 28 et le panneau répondait « 2 min de retard »
+	# (`jauge-voyageurs.md` §3). La ligne se tient sous les étoiles, avant la
+	# bourse, et nomme aussi ceux qu'on a laissés — c'est ce qui donne envie de
+	# rejouer.
+	if b.get("pointsMax") != null and int(b.get("pointsMax", 0)) > 0:
+		var montes := int(b.get("montes", 0))
+		var total := int(b.get("pointsMax", 0))
+		var laisses := int(b.get("restes", 0))
+		var dit := "%d voyageur%s sur %d" % [montes, "s" if montes > 1 else "", total]
+		if laisses > 0:
+			dit += " · %d resté%s à quai" % [laisses, "s" if laisses > 1 else ""]
+		v.add_child(_label(dit, 13, P_ENCRE, false, false))
+
 	# CE QUE LE SERVICE A RAPPORTÉ, EN PIÈCES. La ligne est la CIBLE DE DÉPART
 	# du quatrième temps : les pièces s'en élèvent vers la barre. Pendant une
 	# fête, le relevé ne dit que la part de la gare — étoiles, avance,

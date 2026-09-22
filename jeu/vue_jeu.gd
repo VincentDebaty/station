@@ -64,13 +64,27 @@ const VOILE := Color(0.110, 0.086, 0.063, 0.86)
 ## Le seul adversaire est donc le retard ; les unités disent ce qu'il reste à
 ## faire, et le « +X » ce qu'on vient de gagner.
 ##
+## LES ÉTOILES SE CALCULENT DANS LA MONNAIE DE LA JAUGE (22 septembre 2026,
+## `jauge-voyageurs.md` §4.2). Elles venaient de la part du maximum — deux
+## tiers pour trois étoiles —, et l'axe des voyageurs ne mordait jamais :
+## mesuré à Gand, trois étoiles avec neuf voyageurs laissés à quai. On compte
+## désormais la PERTE du service, `maximum − points`, c'est-à-dire *voyageurs
+## manqués + minutes de retard cumulées*, et on la passe dans le barème
+## existant de la fiche (8 · 15 · 30 au niveau 1). Une minute de retard et un
+## voyageur laissé pèsent donc pareil — ce que la jauge affirmait déjà, et que
+## les étoiles ignoraient.
+##
 ## Rien de cela ne touche l'enclenchement, qui est sous oracle : cette vue
 ## LIT ses trains et son retard, et ne fait que compter autrement. Les étoiles
 ## restent calculées pour le ruban, les grades et les pièces — dérivées de la
-## jauge (deux tiers du maximum : 3, un tiers : 2, positive : 1) — pour que
-## rien en aval ne bouge tant que l'idée n'est pas validée.
+## jauge — pour que rien en aval ne bouge tant que l'idée n'est pas validée.
 const JAUGE_POINTS_PAR_WAGON := 1
-const JAUGE_SECONDES_PAR_POINT := 60.0    # de jeu — soit -1 point la minute de retard (Vincent, 20 sept. : « le jeu paraît plus dur qu'avant »)
+## Les secondes de JEU que coûte un point de retard : soixante, soit un point
+## par minute de retard CUMULÉE sur les convois (`Enclenchement.live_delay`).
+## Le compte était à quinze — « le jeu paraît plus dur qu'avant » (Vincent, 20
+## septembre 2026) — et le commentaire l'a dit quatre fois plus cher qu'il ne
+## l'était jusqu'au 22 septembre.
+const JAUGE_SECONDES_PAR_POINT := 60.0
 ## LES VOYAGEURS MARCHENT À LA VITESSE D'UN TRAIN DE CINQ WAGONS (Vincent, 20
 ## septembre 2026) : la vitesse de base des convois, 700 unités en TRAVEL
 ## minutes, ralentie comme un convoi de cinq voitures. Tous partent à l'arrêt
@@ -78,6 +92,10 @@ const JAUGE_SECONDES_PAR_POINT := 60.0    # de jeu — soit -1 point la minute d
 const JAUGE_VITESSE_MARCHE := (700.0 / Geo.TRAVEL) / (1.0 + 4.0 * 0.22)   # unités par minute de jeu
 const FRET_BLANC := Color("#ece7dc")       # les wagons du fret, en mode jauge : le gris est pris par les voyageurs
 const JAUGE_ECLAT_DUREE := 1.4            # secondes réelles : le « +X » monte et s'efface
+## Les pastilles se comptent par CINQ : sans ce blanc, une rangée de douze
+## ronds de 3,4 px est un pointillé qu'on ne compte pas — et au téléphone,
+## elle se confond avec celui des voies (`jauge-voyageurs.md` §3).
+const JAUGE_PAR_PAQUET := 5
 var mode_jauge: bool = OS.get_environment("STATION_JAUGE") != "0"   # la branche EST l'interrupteur
 var jauge_parti: Dictionary = {}          # id -> le convoi est parti (et a emporté ses unités)
 var jauge_eclats: Array = []              # les « +X » en vol : {id, pts, t0, pos}
@@ -322,7 +340,8 @@ func _enregistrer_fin() -> void:
 	var prev: Dictionary = ruban.progression_de(id) if ruban != null else {}
 	bilan_final = {"gare": id, "stars": stars, "prevStars": Rub.etoiles_de(prev), "d": r["d"],
 		"prevBest": prev.get("bestDelay"), "perfect": r["perfect"], "failed": r["failed"], "win": r["win"],
-		"seuils": enc.seuils_de_service(), "points": r.get("points"), "pointsMax": r.get("pointsMax")}
+		"seuils": enc.seuils_de_service(), "points": r.get("points"), "pointsMax": r.get("pointsMax"),
+		"montes": r.get("montes"), "restes": r.get("restes")}
 	medailles_final = []
 	if r["failed"]:
 		Sauvegarde.marquer_tentee(id)
@@ -414,8 +433,13 @@ func _construire_unites() -> void:
 		var quai_prevu: int = int(tr.hint) if (tr.hint != null and possibles.has(int(tr.hint))) else possibles[hasard.randi() % possibles.size()]
 		for u in range(n):
 			jauge_unites.append({"dest": tr.to, "quai": quai_prevu, "train": "", "montee": false, "pos": Vector2.ZERO})
-	# l'ordre sous chaque quai est tiré au sort, une fois : rangées par convoi,
-	# elles auraient écrit la séquence des départs sur le quai
+	# L'ORDRE SOUS CHAQUE QUAI : MÉLANGÉ, PUIS RANGÉ PAR DESTINATION.
+	# Le mélange reste — rangées par convoi, les unités auraient écrit la
+	# séquence des départs sur le quai —, mais les couleurs ne s'entremêlent
+	# plus : « trois turquoise, cinq violettes » se compte, un damier ne se
+	# compte pas (22 septembre 2026, `jauge-voyageurs.md` §4.4). Ranger par
+	# destination ne dit rien de l'ORDRE des convois : c'est le tri à
+	# l'intérieur d'une couleur qui le dirait, et il reste au hasard.
 	for q in G["platforms"]:
 		var ici: Array = []
 		for i in range(jauge_unites.size()):
@@ -424,7 +448,19 @@ func _construire_unites() -> void:
 		for j in range(ici.size() - 1, 0, -1):
 			var k := hasard.randi() % (j + 1)
 			var tmp = ici[j]; ici[j] = ici[k]; ici[k] = tmp
-		jauge_ordre[int(q["id"])] = ici
+		# un tri STABLE par destination : le mélange survit dans chaque paquet
+		var paquets: Dictionary = {}
+		var couleurs: Array = []
+		for i in ici:
+			var d := String(jauge_unites[i]["dest"])
+			if not paquets.has(d):
+				paquets[d] = []
+				couleurs.append(d)
+			paquets[d].append(i)
+		var range_: Array = []
+		for d in couleurs:
+			range_.append_array(paquets[d])
+		jauge_ordre[int(q["id"])] = range_
 
 
 ## À quai, et d'un quai d'où il peut repartir vers sa destination : c'est là
@@ -450,6 +486,16 @@ func _affecter_unites() -> void:
 			if u["montee"] or u["train"] != "" or u["dest"] != tr.to or int(u["quai"]) != int(tr.platform):
 				continue
 			candidats.append(u)
+		# L'EMBARQUEMENT SONNE, une fois par convoi (22 septembre 2026). Une
+		# note grave quand il prend du monde ; les deux notes descendantes du
+		# « dommage » quand il part à vide alors que des voyageurs pour sa
+		# destination attendent ailleurs — c'est le seul moment où le joueur
+		# peut apprendre la règle sans qu'on la lui écrive.
+		if candidats.is_empty():
+			if _reste_pour(String(tr.to)):
+				Sons.jouer("dommage")
+		else:
+			Sons.jouer("puce")
 		# CHACUN VISE LE WAGON LE PLUS PROCHE DE SA PLACE, sans se croiser : les
 		# voyageurs rangés par abscisse prennent les wagons rangés par abscisse.
 		# Rangés par ordre de prise, celui du wagon 3 arrivait avant celui du
@@ -502,6 +548,15 @@ func _wagons_occupes(tr) -> Dictionary:
 	return occ
 
 
+## Reste-t-il, quelque part dans la gare, un voyageur pour cette destination
+## qu'aucun convoi n'a encore pris ?
+func _reste_pour(dest: String) -> bool:
+	for u in jauge_unites:
+		if u["dest"] == dest and not u["montee"] and u["train"] == "":
+			return true
+	return false
+
+
 func _unites_prises(id: String) -> Array:
 	var prises: Array = []
 	for u in jauge_unites:
@@ -528,26 +583,48 @@ func _points_transportes() -> int:
 ## La jauge, vivante : ce qui est monté moins ce que le retard a coûté — le
 ## retard déjà encaissé ET celui qui court sur les convois pas encore partis,
 ## comme le compteur d'aujourd'hui (Enclenchement.live_delay).
+##
+## LA PERTE EST BORNÉE À L'OPPOSÉ DU MAXIMUM. Le retard cumulé ne l'est pas :
+## trois convois en retard de cinq minutes coûtent quinze points, et l'on a
+## mesuré −111 points sur une journée qui en valait 21. En dessous de −maximum
+## le nombre ne veut plus rien dire, la barre est pleine de toute façon, et la
+## partie est perdue depuis longtemps (22 septembre 2026).
 func _points_live() -> float:
-	return float(_points_transportes()) - enc.live_delay() * 60.0 / JAUGE_SECONDES_PAR_POINT
+	var bruts: float = float(_points_transportes()) - enc.live_delay() * 60.0 / JAUGE_SECONDES_PAR_POINT
+	return maxf(bruts, -float(_points_max()))
 
 
 ## À la fin du service, la jauge décide : positive, le service est tenu ;
 ## négative, c'est l'échec. Les étoiles en sont dérivées pour le reste du jeu.
+##
+## LA PERTE PASSE DANS LE BARÈME DE LA FICHE, comme le retard y passait :
+## `perte = maximum − points`, soit les voyageurs manqués plus les minutes de
+## retard cumulées, contre les seuils trois · deux · une de la gare telle
+## qu'on la joue (`Ruban.seuils_de_service`). C'est le même barème, dans la
+## même unité, pour les deux façons de rater un service — et c'est ce qui rend
+## l'axe des voyageurs vivant : trois étoiles avec neuf voyageurs à quai n'est
+## plus possible (`jauge-voyageurs.md` §4.2).
 func _appliquer_jauge() -> void:
 	var r: Dictionary = enc.resultat
 	var pts := _points_live()
 	var maxi := _points_max()
+	var restes: int = maxi - _points_transportes()
+	var perte: float = float(maxi) - pts
+	var s: Dictionary = enc.seuils_de_service()
 	var stars := 0
-	if not bool(r.get("failed", false)) and pts >= 0.0 and maxi > 0:
-		stars = 3 if pts >= maxi * 2.0 / 3.0 else (2 if pts >= maxi / 3.0 else 1)
+	if not bool(r.get("failed", false)) and maxi > 0:
+		stars = 3 if perte < float(s["trois"]) else (2 if perte < float(s["deux"]) else (1 if perte < float(s["une"]) else 0))
 	r["stars"] = stars
 	r["win"] = stars >= 1
-	r["perfect"] = stars == 3 and _points_transportes() >= maxi and float(r.get("d", 0.0)) == 0.0
-	r["restes"] = maxi - _points_transportes()
+	# LE SANS-FAUTE, EN MODE JAUGE : personne n'est resté, et pas une minute.
+	r["perfect"] = stars == 3 and restes == 0 and float(r.get("d", 0.0)) == 0.0
+	r["restes"] = restes
+	r["montes"] = _points_transportes()
 	r["points"] = int(round(pts))
 	r["pointsMax"] = maxi
-	print("jauge : %+d points sur %d — %d unités montées, %d restées à quai, retard %.1f min, %d convois partis" % [int(round(pts)), maxi, _points_transportes(), maxi - _points_transportes(), enc.live_delay(), jauge_parti.size()])
+	print("jauge : %+d points sur %d (perte %d, barème %d·%d·%d) — %d unités montées, %d restées à quai, retard %.1f min, %d convois partis" % [
+		int(round(pts)), maxi, int(round(perte)), int(s["trois"]), int(s["deux"]), int(s["une"]),
+		_points_transportes(), restes, enc.live_delay(), jauge_parti.size()])
 
 
 ## LES UNITÉS DE VOYAGEURS, sous les pilules. Une rangée de ronds à la couleur
@@ -558,7 +635,10 @@ func _appliquer_jauge() -> void:
 func _dessiner_unites() -> void:
 	var k := Sty.UIK
 	var pas := 9.0 * k
-	var par_rang := int(floor((Geo.PLAT_LEN - 20.0) / pas))
+	var blanc := 5.0 * k     # le souffle entre deux paquets de cinq
+	# le blanc des paquets se paie sur la longueur du quai : un rang en tient
+	# donc un peu moins qu'avant
+	var par_rang := maxi(1, int(floor((Geo.PLAT_LEN - 20.0) / (pas + blanc / float(JAUGE_PAR_PAQUET)))))
 	jauge_vols = []
 	var a_quai: Dictionary = {}   # id -> le convoi à quai qui embarque
 	for tr in enc.trains:
@@ -572,7 +652,9 @@ func _dessiner_unites() -> void:
 			var u: Dictionary = jauge_unites[idx]
 			if u["montee"]:
 				continue
-			var pos := Vector2(Geo.PLAT_X1 + 10.0 + (i % par_rang) * pas, y0 + floor(float(i) / par_rang) * pas)
+			var col_i: int = i % par_rang
+			var pos := Vector2(Geo.PLAT_X1 + 10.0 + col_i * pas + floor(float(col_i) / float(JAUGE_PAR_PAQUET)) * blanc,
+				y0 + floor(float(i) / par_rang) * pas)
 			i += 1
 			u["pos"] = pos   # sa place sur la bande : le point de départ de sa marche
 			var prise: bool = u["train"] != "" and a_quai.has(u["train"])
@@ -633,8 +715,12 @@ func _dessiner_eclats() -> void:
 		var a: float = 1.0 - pow(age, 2.0)
 		var centre := pos + Vector2(0, -56.0 * k - 30.0 * k * age)
 		var txt := "+%d" % int(e["pts"])
-		Sty.texte_centre(self, police, int(round(18 * k)), centre, txt, Color(0, 0, 0, 0.55 * a), 6, Color(0, 0, 0, 0.55 * a))
-		Sty.texte_centre(self, police, int(round(18 * k)), centre, txt, Color(VERT, a))
+		# VINGT-SIX, ET PLUS DIX-HUIT (22 septembre 2026) : réduit à la taille
+		# d'un téléphone, le « +4 » d'un convoi qui part plein ne se voyait pas
+		# — or c'est la seule fois où le jeu dit au joueur qu'il a bien fait.
+		var t_eclat: int = int(round(26 * k))
+		Sty.texte_centre(self, police, t_eclat, centre, txt, Color(0, 0, 0, 0.55 * a), 6, Color(0, 0, 0, 0.55 * a))
+		Sty.texte_centre(self, police, t_eclat, centre, txt, Color(VERT, a))
 
 
 func _process(delta: float) -> void:
@@ -1668,9 +1754,15 @@ func _dessiner_hud(t: float) -> void:
 	var t_h: int = ti.call(24)
 	var w_h := Sty.largeur_espacee(mono, t_h, horloge, 1.05 * k)
 	var w_r := mono.get_string_size(txt_r, HORIZONTAL_ALIGNMENT_LEFT, -1, ti.call(14)).x
-	var w_jauge := 40.0 * k   # la petite jauge à zéro central, en mode jauge
+	# LA JAUGE EST LE BUT DU JEU : ELLE SE LIT COMME TEL (22 septembre 2026).
+	# L'horloge tenait 46 px et le nombre de points 12 — réduit à la taille
+	# d'un téléphone, on ne lisait plus son propre score. La barre passe de 40
+	# à 56 unités, le nombre de 12 à 18. L'horloge, elle, ne bouge pas : sa
+	# taille est une mesure de Vincent (9 septembre).
+	var w_jauge := 56.0 * k   # la petite jauge à zéro central, en mode jauge
+	var t_pts: int = ti.call(18)
 	if mode_jauge:
-		w_r = w_jauge + 6.0 * k + mono.get_string_size(txt_r, HORIZONTAL_ALIGNMENT_LEFT, -1, ti.call(12)).x
+		w_r = w_jauge + 7.0 * k + mono.get_string_size(txt_r, HORIZONTAL_ALIGNMENT_LEFT, -1, t_pts).x
 	var w_chip := 14.0 * k + w_h + 9.0 * k + w_r + 14.0 * k
 	var milieu: float = Sty.marges["gauche"] + (size_ecran().x - Sty.marges["gauche"] - Sty.marges["droite"]) / 2.0
 	var ch := Rect2(milieu - w_chip / 2.0, Sty.marges["haut"] + 8 * k, w_chip, 44 * k)
@@ -1720,17 +1812,16 @@ func _dessiner_hud(t: float) -> void:
 		col_r = Sty.VERT if pts_live >= 0.0 else Sty.ROUGE
 		var x0: float = ch.position.x + 14.0 * k + w_h + 9.0 * k
 		var yc: float = ch.position.y + utile / 2.0
-		var cadre := Rect2(x0, yc - 4.5 * k, w_jauge, 9.0 * k)
-		draw_style_box(Sty.boite(Color(0, 0, 0, 0.55), Color(Sty.POSTE_BORD, 0.8), 2.5 * k, max(1.0, 0.9 * k)), cadre)
+		var cadre := Rect2(x0, yc - 6.0 * k, w_jauge, 12.0 * k)
+		draw_style_box(Sty.boite(Color(0, 0, 0, 0.55), Color(Sty.POSTE_BORD, 0.8), 3.0 * k, max(1.0, 0.9 * k)), cadre)
 		var milieu_j: float = x0 + w_jauge / 2.0
 		var part_j: float = clampf(abs(pts_live) / maxi, 0.0, 1.0) * (w_jauge / 2.0 - 2.0 * k)
 		if part_j > 0.5:
-			var barre := Rect2(milieu_j if pts_live >= 0.0 else milieu_j - part_j, yc - 2.5 * k, part_j, 5.0 * k)
-			draw_style_box(Sty.boite(col_r, Color.TRANSPARENT, 1.5 * k, 0), barre)
-		draw_line(Vector2(milieu_j, yc - 4.5 * k), Vector2(milieu_j, yc + 4.5 * k), Color(Sty.POSTE_BORD, 0.9), max(1.0, 1.0 * k))
-		var t12: int = ti.call(12)
-		draw_string(mono, Vector2(x0 + w_jauge + 6.0 * k, yc + (mono.get_ascent(t12) - mono.get_descent(t12)) / 2.0), txt_r,
-			HORIZONTAL_ALIGNMENT_LEFT, -1, t12, col_r)
+			var barre := Rect2(milieu_j if pts_live >= 0.0 else milieu_j - part_j, yc - 3.5 * k, part_j, 7.0 * k)
+			draw_style_box(Sty.boite(col_r, Color.TRANSPARENT, 2.0 * k, 0), barre)
+		draw_line(Vector2(milieu_j, yc - 6.0 * k), Vector2(milieu_j, yc + 6.0 * k), Color(Sty.POSTE_BORD, 0.9), max(1.0, 1.0 * k))
+		draw_string(mono, Vector2(x0 + w_jauge + 7.0 * k, yc + (mono.get_ascent(t_pts) - mono.get_descent(t_pts)) / 2.0), txt_r,
+			HORIZONTAL_ALIGNMENT_LEFT, -1, t_pts, col_r)
 	else:
 		draw_string(mono, Vector2(ch.position.x + 14.0 * k + w_h + 9.0 * k, base), txt_r,
 			HORIZONTAL_ALIGNMENT_LEFT, -1, ti.call(14), col_r)
@@ -1926,7 +2017,8 @@ func _dessiner_fin() -> void:
 	var c := e / 2.0
 	Sty.texte_centre(self, Sty.sans(600), 34, c - Vector2(0, 20), titre, Sty.TEXTE)
 	Sty.texte_centre(self, Sty.sans(), 18, c + Vector2(0, 20),
-		("%s   ·   %+d points sur %d   ·   retard %d min" % [etoiles, int(r.get("points", 0)), int(r.get("pointsMax", 0)), int(r.get("d", 0))]) if mode_jauge
+		("%s   ·   %d voyageurs sur %d   ·   %+d points   ·   retard %d min" % [etoiles,
+			int(r.get("montes", 0)), int(r.get("pointsMax", 0)), int(r.get("points", 0)), int(r.get("d", 0))]) if mode_jauge
 		else ("%s   ·   retard cumulé %d min" % [etoiles, int(r.get("d", 0))]), Sty.AMBRE)
 	Sty.texte_centre(self, Sty.sans(), 14, c + Vector2(0, 60), "R pour rejouer", Sty.MUET)
 
@@ -2409,12 +2501,17 @@ func _tuto_train_touche(t) -> void:
 
 
 func _tuto_quai_choisi() -> void:
+	# LE TUTORIEL DIT LA RÈGLE QU'ON JOUE (22 septembre 2026) : en mode jauge,
+	# les étoiles ne viennent plus du retard mais des points, et promettre une
+	# étoile « sous 30 min de retard » était devenu faux.
 	if tuto == "choix1":
 		tuto = "retard"
-		_coach({"hud": "retard"}, "Il entre et s'arrête. Ici s'affiche le retard cumulé du service — gardez-le au plus bas.", "Suivant")
+		_coach({"hud": "retard"}, ("Il entre et s'arrête, et ses voyageurs montent. Ici s'affiche votre jauge : un point par voyageur emmené, un point de moins par minute de retard." if mode_jauge
+			else "Il entre et s'arrête. Ici s'affiche le retard cumulé du service — gardez-le au plus bas."), "Suivant")
 	elif tuto == "choix2":
 		tuto = "objectif"
-		_coach({"hud": "retard"}, "Un quai occupé peut quand même être choisi : le convoi attend dehors, sans pénalité — seule compte l'heure de départ. À vous ! Terminez le service avec moins de 30 min de retard pour décrocher une étoile.", "Continuer")
+		_coach({"hud": "retard"}, ("Un quai occupé peut quand même être choisi : le convoi attend dehors, sans pénalité — seule compte l'heure de départ. À vous ! Les voyageurs attendent sous le quai où leur train est annoncé : emmenez-les tous, et à l'heure." if mode_jauge
+			else "Un quai occupé peut quand même être choisi : le convoi attend dehors, sans pénalité — seule compte l'heure de départ. À vous ! Terminez le service avec moins de 30 min de retard pour décrocher une étoile."), "Continuer")
 
 
 func _coach_suivant() -> void:
