@@ -141,10 +141,18 @@ prenne sur une version qui se défend.
    qu'on laisse, pas la compétence.
 3. **La perte est bornée à `−maximum`.** En dessous, le nombre ne veut plus
    rien dire et la barre est pleine de toute façon.
-4. **Les pastilles se comptent.** Rangées par destination (les couleurs ne
-   sont plus mêlées) et groupées par cinq. L'ordre à l'intérieur d'une
-   destination reste tiré au sort : la séquence des départs n'est toujours pas
-   écrite sur le quai.
+4. **Les pastilles se comptent, et chacune a sa place.** Les couleurs ne sont
+   plus mêlées : chaque destination reçoit sa **bande** sur le quai, dans un
+   ordre tiré au sort et d'une largeur proportionnelle à sa foule du jour — on
+   attend près de l'affichage de son train. L'ordre à l'intérieur d'une
+   destination reste au hasard : la séquence des départs n'est toujours pas
+   écrite sur le quai. Et **la place de chacun est tirée une fois pour
+   toutes**, n'importe où dans son pas et pas exactement à la même hauteur :
+   personne ne se décale quand un voisin arrive ou monte. (Première version :
+   une rangée centrée, recalculée à chaque image depuis le rang des présents —
+   « cet effet qu'arrivé pousse les autres », Vincent, 22 septembre. Les
+   paquets de cinq, qui rendaient cette rangée comptable, ont disparu avec
+   elle.)
 5. **La jauge se voit.** Le nombre passe de 12 à 18 px, la barre s'élargit, et
    le « +X » d'un convoi qui part passe de 18 à 26 px.
 6. **L'embarquement sonne.** Une note grave (`puce`) quand un convoi prend des
@@ -297,3 +305,8 @@ bourse : à instruire dans `economie-du-jeu.md`, pas ici.
   sur une capture de Clapham Junction, toutes deux vraies et toutes deux
   mesurables : les voyageurs semblaient appartenir au quai du dessous, et leur
   rangée collait à gauche. §4.7.
+- **22 septembre 2026, plus tard** — chacun sa place sur le quai, tirée une
+  fois : « possible de les afficher aléatoirement sur le quai et pas au milieu
+  à chaque fois, avec cet effet qu'arrivé pousse les autres ? ». Posé à mi-pas
+  avec un frisson de 22 %, le quai redevenait une règle graduée ; un tiers de
+  pas dans les deux sens, et deux unités de haut, lui donnent sa foule.

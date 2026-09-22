@@ -117,10 +117,14 @@ const JAUGE_ECLAT_DUREE := 1.4            # secondes réelles : le « +X » mont
 const JAUGE_AVANCE_MIN := 1.0             # en PAS moyens entre deux convois, avant l'annonce du sien
 const JAUGE_AVANCE_MAX := 4.0
 const JAUGE_PARUTION := 0.6               # minutes de jeu : le fondu de celui qui arrive
-## Les pastilles se comptent par CINQ : sans ce blanc, une rangée de douze
-## ronds de 3,4 px est un pointillé qu'on ne compte pas — et au téléphone,
-## elle se confond avec celui des voies (`jauge-voyageurs.md` §3).
-const JAUGE_PAR_PAQUET := 5
+## La bordure du quai où l'on attend : la bande basse de la pilule, que la
+## marge du quai laisse libre (PLAT_MARGIN vaut 11). Le placement des
+## voyageurs et son dessin la partagent.
+const JAUGE_BANDE := 12.0
+## Les paquets de cinq ont vécu du 22 septembre au soir : une rangée serrée au
+## milieu du quai se comptait par paquets, une foule éparpillée n'a plus de
+## rangée. C'est la bande par destination qui porte maintenant la lisibilité —
+## les couleurs restent groupées, chacune à sa place sur le quai.
 var mode_jauge: bool = OS.get_environment("STATION_JAUGE") != "0"   # la branche EST l'interrupteur
 var jauge_parti: Dictionary = {}          # id -> le convoi est parti (et a emporté ses unités)
 var jauge_eclats: Array = []              # les « +X » en vol : {id, pts, t0, pos}
@@ -482,13 +486,27 @@ func _construire_unites() -> void:
 			var quand: float = maxf(0.0, tr.heure_arrivee() - Geo.APPROACH_LEAD - avance)
 			jauge_unites.append({"dest": tr.to, "quai": quai_prevu, "train": "", "montee": false,
 				"pos": Vector2.ZERO, "arrivee": quand})
-	# L'ORDRE SOUS CHAQUE QUAI : MÉLANGÉ, PUIS RANGÉ PAR DESTINATION.
-	# Le mélange reste — rangées par convoi, les unités auraient écrit la
-	# séquence des départs sur le quai —, mais les couleurs ne s'entremêlent
-	# plus : « trois turquoise, cinq violettes » se compte, un damier ne se
-	# compte pas (22 septembre 2026, `jauge-voyageurs.md` §4.4). Ranger par
-	# destination ne dit rien de l'ORDRE des convois : c'est le tri à
-	# l'intérieur d'une couleur qui le dirait, et il reste au hasard.
+	# CHACUN SA PLACE SUR LE QUAI, TIRÉE UNE FOIS POUR TOUTES (Vincent, 22
+	# septembre 2026 : « possible de les afficher aléatoirement sur le quai et
+	# pas au milieu à chaque fois, avec cet effet qu'arrivé pousse les
+	# autres ? »). La rangée était recalculée à chaque image depuis le rang des
+	# PRÉSENTS : un voyageur qui arrivait ou qui montait décalait tous les
+	# autres. Une place fixe supprime le défaut à la racine — plus personne ne
+	# bouge, jamais, sauf pour aller à son wagon.
+	#
+	# LE QUAI SE PARTAGE PAR DESTINATION, dans un ordre tiré au sort, chacune
+	# recevant une largeur proportionnelle à sa foule du jour. On attend près de
+	# l'affichage de son train, pas mêlé au reste : les couleurs restent
+	# comptables — « trois turquoise, cinq violettes » (§4.4) — et le quai se
+	# remplit sur toute sa longueur au lieu d'un tas au milieu. Le mélange
+	# d'origine survit à l'intérieur d'une couleur : il n'y a toujours rien à
+	# lire de la séquence des départs.
+	#
+	# Les places sont réparties sur TOUTE la foule de la journée, pas sur les
+	# présents : c'est ce qui fait qu'elles ne bougent pas. Ceux qui ne sont pas
+	# encore là laissent donc des trous — et un quai clairsemé en fin de service
+	# est exactement ce qu'on veut voir.
+	var large := Geo.PLAT_LEN - 24.0
 	for q in G["platforms"]:
 		var ici: Array = []
 		for i in range(jauge_unites.size()):
@@ -510,6 +528,28 @@ func _construire_unites() -> void:
 		for d in couleurs:
 			range_.append_array(paquets[d])
 		jauge_ordre[int(q["id"])] = range_
+		# la bande de chaque destination, puis la place de chacun dedans
+		var n_tot: int = range_.size()
+		if n_tot == 0:
+			continue
+		var yc: float = float(q["cy"]) + Geo.PLAT_H / 2.0 - JAUGE_BANDE / 2.0
+		var x: float = Geo.PLAT_X1 + 12.0
+		for d in couleurs:
+			var groupe: Array = paquets[d]
+			var w: float = large * float(groupe.size()) / float(n_tot)
+			var pas_g: float = w / float(groupe.size())
+			for j in range(groupe.size()):
+				var u: Dictionary = jauge_unites[groupe[j]]
+				# N'IMPORTE OÙ DANS SON PAS, ET PAS À SA HAUTEUR EXACTE. Posé au
+				# milieu du pas avec un frisson de 22 %, le quai redevenait une
+				# règle graduée — quatre pastilles à intervalles égaux, ce qui
+				# n'est pas ce qu'on nous demandait. Un tiers de pas de jeu
+				# dans les deux sens suffit à casser l'alignement sans que deux
+				# voisins se touchent, et deux unités de haut donnent à la
+				# foule son épaisseur.
+				var gx: float = x + (float(j) + 0.5 + hasard.randf_range(-0.35, 0.35)) * pas_g
+				u["pos"] = Vector2(gx, yc + hasard.randf_range(-2.0, 2.0))
+			x += w
 
 
 ## LE PAS MOYEN ENTRE DEUX CONVOIS de la journée : la durée du service divisée
@@ -730,14 +770,10 @@ func _dessiner_unites() -> void:
 	# quai. La bordure qui les porte ne se dessine que là où quelqu'un attend :
 	# un quai vide garde exactement l'aspect qu'il avait.
 	#
-	# ET LA RANGÉE EST CENTRÉE, « que cela fasse plus naturel » (Vincent, même
-	# jour) : une foule se masse au milieu du quai, elle ne s'aligne pas à
-	# gauche. Elle se serre quand elle déborde, plutôt que de passer à la ligne.
+	# LA PLACE DE CHACUN EST TIRÉE UNE FOIS (_construire_unites) : cette
+	# fonction ne fait plus que dessiner. Personne ne se décale quand un
+	# voisin arrive ou monte.
 	var r_u := minf(3.4 * k, 5.0)
-	var pas := 2.65 * r_u
-	var blanc := 1.5 * r_u                      # le souffle entre deux paquets de cinq
-	var large := Geo.PLAT_LEN - 24.0            # la place où poser la rangée
-	var haut := 12.0                            # la bordure, en unités du plan
 	jauge_vols = []
 	var a_quai: Dictionary = {}   # id -> le convoi à quai qui embarque
 	for tr in enc.trains:
@@ -745,44 +781,27 @@ func _dessiner_unites() -> void:
 			a_quai[tr.id] = tr
 	for q in G["platforms"]:
 		var pid := int(q["id"])
-		# QUI ATTEND ICI — il faut les compter avant de les placer, puisque la
-		# rangée est centrée et qu'elle se serre.
 		var ici: Array = []
+		var vif := 0.0   # le plus jeune des présents donne son opacité à la bordure
 		for idx in jauge_ordre.get(pid, []):
 			var u: Dictionary = jauge_unites[idx]
 			if u["montee"] or not _arrive(u):
 				continue
 			ici.append(u)
+			vif = maxf(vif, clampf((enc.game_min - float(u.get("arrivee", 0.0))) / JAUGE_PARUTION, 0.0, 1.0))
 		if ici.is_empty():
 			continue
-		var n := ici.size()
-		var w: float = (n - 1) * pas + floor(float(n - 1) / float(JAUGE_PAR_PAQUET)) * blanc
-		var serre: float = 1.0 if w <= large else large / w
-		var pas_e := pas * serre
-		var blanc_e := blanc * serre
-		var w_e: float = (n - 1) * pas_e + floor(float(n - 1) / float(JAUGE_PAR_PAQUET)) * blanc_e
-		var bas: float = float(q["cy"]) + Geo.PLAT_H / 2.0
-		var yc: float = bas - haut / 2.0
 		# la bordure : un creux le long du bord du quai, cerné d'un filet de
-		# laiton au ras de la plaque. Le plus jeune des voyageurs lui donne son
-		# opacité, pour qu'elle paraisse avec la foule au lieu de surgir.
-		var vif := 0.0
-		for u in ici:
-			vif = maxf(vif, clampf((enc.game_min - float(u.get("arrivee", 0.0))) / JAUGE_PARUTION, 0.0, 1.0))
-		# CREUSÉE, PAS TEINTÉE : la plaque du quai est déjà brune, et le brun
-		# du creux (POSTE_QUAI_BAS) s'y fondait sans rien montrer — essayé, et
-		# la bordure était invisible. Une ombre noire et un filet de laiton au
-		# ras du bord la détachent sans ajouter de couleur au pupitre.
-		var bande := Rect2(Geo.PLAT_X1 + 5.0, bas - haut, Geo.PLAT_LEN - 10.0, haut - 1.5)
+		# laiton au ras de la plaque. CREUSÉE, PAS TEINTÉE : la plaque du quai
+		# est déjà brune, et le brun du creux (POSTE_QUAI_BAS) s'y fondait sans
+		# rien montrer — essayé, et la bordure était invisible.
+		var bas: float = float(q["cy"]) + Geo.PLAT_H / 2.0
+		var bande := Rect2(Geo.PLAT_X1 + 5.0, bas - JAUGE_BANDE, Geo.PLAT_LEN - 10.0, JAUGE_BANDE - 1.5)
 		draw_colored_polygon(Sty.rect_arrondi(bande, 5), Color(0, 0, 0, 0.22 * vif))
 		draw_line(Vector2(bande.position.x + 5.0, bande.position.y), Vector2(bande.end.x - 5.0, bande.position.y),
 			Color(Sty.POSTE_BORD, 0.30 * vif), 1.0, true)
-		var i := 0
 		for u in ici:
-			var pos := Vector2(Geo.PLAT_MID - w_e / 2.0 + i * pas_e
-				+ floor(float(i) / float(JAUGE_PAR_PAQUET)) * blanc_e, yc)
-			i += 1
-			u["pos"] = pos   # sa place sur le quai : le point de départ de sa marche
+			var pos: Vector2 = u["pos"]
 			var prise: bool = u["train"] != "" and a_quai.has(u["train"])
 			if prise:
 				var p := _avancement(u, a_quai[u["train"]])
