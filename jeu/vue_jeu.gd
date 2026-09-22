@@ -116,7 +116,13 @@ const JAUGE_ECLAT_DUREE := 1.4            # secondes réelles : le « +X » mont
 ## journée où tout le monde monte existe toujours.
 const JAUGE_AVANCE_MIN := 1.0             # en PAS moyens entre deux convois, avant l'annonce du sien
 const JAUGE_AVANCE_MAX := 4.0
-const JAUGE_PARUTION := 0.6               # minutes de jeu : le fondu de celui qui arrive
+## Le fondu de celui qui paraît a vécu du 22 septembre au soir au 22 au
+## soir : personne ne paraît plus de nulle part — on entre par le couloir, ou
+## bien on est là à l'ouverture. « Quand les voyageurs arrivent sur le quai,
+## ils disparaissent puis réapparaissent dans un fondu » (Vincent) : c'était
+## ce fondu-là, rejoué à l'arrivée de quelqu'un qu'on venait de suivre des
+## yeux. Il ne reste que pour la bordure du quai, qui ne peut pas surgir.
+const JAUGE_BORD_FONDU := 6.0             # la vitesse d'apparition de la bordure
 ## LES CORRESPONDANCES (`jauge-voyageurs.md` §5.2). Une part des voyageurs ne
 ## vient pas de la ville : elle DESCEND D'UN TRAIN. Elle n'est nulle part tant
 ## que son convoi d'apport n'est pas à quai ; elle en descend à l'arrêt,
@@ -137,6 +143,25 @@ const JAUGE_MARGE_CORRESPONDANCE := 3.0   # minutes de jeu entre l'apport et son
 ## Le pas pressé de la correspondance : une fois et demie celui du voyageur qui
 ## flâne le long de son quai. On court, quand on change de train.
 const JAUGE_VITESSE_CORRESPONDANCE := JAUGE_VITESSE_MARCHE * 1.6
+## LE COULOIR SOUS LES QUAIS (Vincent, 22 septembre 2026 : « un voyageur ne
+## traverse pas les voies ; il faudrait dessiner un tunnel sous les voies par
+## lequel tous les voyageurs passent »). Il avait raison, et c'était le défaut
+## de la première version des correspondances : le voyageur coupait à travers
+## le faisceau comme s'il marchait sur les rails.
+##
+## Le couloir court à l'aplomb du milieu des quais — SOUS L'HORLOGE, que
+## Vincent prend pour le bâtiment de la gare : « le tunnel démarre de là ».
+## C'est par cette bouche que la ville entre. Il ne croise aucune voie : le
+## gril et les courbes d'approche tiennent les deux bouts du plan, et le milieu
+## est libre. Il se dessine donc DANS LES INTERVALLES entre les quais, et
+## disparaît sous chacun d'eux — ce qui est exactement ce qu'il est.
+const TUNNEL_LARGE := 13.0          # la largeur du couloir
+## Ce qui sépare la bouche du premier quai. Cinquante-deux, essayés d'abord :
+## sur une gare à dix quais le plan remplit l'écran, et la bouche passait
+## DERRIÈRE le bandeau — on voyait des voyageurs sortir au-dessus de l'horloge.
+## Vingt-six la ramènent sous le bord du plan, ce qui est aussi bien : le haut
+## du plan, c'est déjà l'horloge.
+const TUNNEL_HAUT := 26.0
 ## La bordure du quai où l'on attend : la bande basse de la pilule, que la
 ## marge du quai laisse libre (PLAT_MARGIN vaut 11). Le placement des
 ## voyageurs et son dessin la partagent.
@@ -153,6 +178,7 @@ var jauge_affecte: Dictionary = {}        # id -> le convoi a déjà pris ce qu'
 var jauge_vols: Array = []                # les voyageurs en vol vers leur wagon, recalculés à chaque image
 var jauge_ordre: Dictionary = {}          # quai -> ses unités, dans un ordre tiré au sort une fois
 var jauge_descendu: Dictionary = {}       # id -> son apport a été débarqué
+var jauge_bord: Dictionary = {}           # quai -> l'opacité de sa bordure, lissée
 var jauge_mesure := false                 # STATION_MESURE : on suit le pic de foule
 var jauge_pic := 0                        # le plus de voyageurs vus ensemble dans le hall
 
@@ -468,23 +494,91 @@ func _noter_les_descentes() -> void:
 			var i: int = mini(int(u.get("source_rang", 0)) + 1, maxi(0, cases.size() - 1))
 			var de := Vector2(float(cases[i]["x"]), float(cases[i]["y"])) if not cases.is_empty() \
 				else Vector2(Geo.PLAT_MID, float(u["pos"].y))
-			var vers: Vector2 = u["pos"]
-			var d: float = abs(vers.x - de.x) + abs(vers.y - de.y)
-			u["de"] = de
+			var chemin := _chemin_vers(de, u["pos"])
+			u["chemin"] = chemin
+			u["marche"] = enc.game_min
 			u["descente"] = enc.game_min
-			u["arrivee"] = enc.game_min + d / JAUGE_VITESSE_CORRESPONDANCE
+			u["arrivee"] = enc.game_min + _longueur(chemin) / JAUGE_VITESSE_CORRESPONDANCE
 
 
-## Ceux qui traversent la gare en ce moment : descendus, pas encore à leur
-## place. Ils marchent le long du train, puis rejoignent leur quai.
-func _en_correspondance() -> Array:
+## L'ABSCISSE DU COULOIR, et l'ordonnée de sa bouche : le milieu des quais, et
+## ce qui se trouve au-dessus du premier — sous l'horloge.
+func _tunnel_x() -> float:
+	return Geo.PLAT_MID
+
+
+func _tunnel_bouche() -> float:
+	var haut := INF
+	for q in G["platforms"]:
+		haut = minf(haut, float(q["cy"]))
+	return haut - Geo.PLAT_H / 2.0 - TUNNEL_HAUT
+
+
+## LE CHEMIN D'UN VOYAGEUR À TRAVERS LA GARE, en trois temps au plus : le long
+## du quai où il se trouve jusqu'à l'escalier, le couloir jusqu'à son quai, puis
+## le quai jusqu'à sa place. Personne ne coupe en diagonale, et personne ne
+## traverse une voie. Sur son propre quai, il marche tout droit.
+func _chemin_vers(de: Vector2, vers: Vector2) -> PackedVector2Array:
+	if absf(vers.y - de.y) < 1.0:
+		return PackedVector2Array([de, vers])
+	var tx := _tunnel_x()
+	var pts := PackedVector2Array([de])
+	if absf(de.x - tx) > 1.0:
+		pts.append(Vector2(tx, de.y))
+	pts.append(Vector2(tx, vers.y))
+	pts.append(vers)
+	return pts
+
+
+func _longueur(pts: PackedVector2Array) -> float:
+	var d := 0.0
+	for i in range(1, pts.size()):
+		d += pts[i - 1].distance_to(pts[i])
+	return d
+
+
+## Où l'on en est sur un chemin, et si l'on est sous terre : le couloir est le
+## segment vertical à l'aplomb de l'escalier, sous le premier quai. Dans la
+## bouche, au-dessus des quais, on est encore à l'air libre.
+func _point_du_chemin(pts: PackedVector2Array, p: float) -> Dictionary:
+	var total := _longueur(pts)
+	var reste: float = clampf(p, 0.0, 1.0) * total
+	var haut := _tunnel_bouche() + TUNNEL_HAUT
+	for i in range(1, pts.size()):
+		var seg: float = pts[i - 1].distance_to(pts[i])
+		if reste <= seg or i == pts.size() - 1:
+			var pos: Vector2 = pts[i - 1].lerp(pts[i], clampf(reste / maxf(0.001, seg), 0.0, 1.0))
+			var vertical: bool = absf(pts[i].x - pts[i - 1].x) < 1.0 and seg > 1.0
+			return {"pos": pos, "sous": vertical and pos.y > haut}
+		reste -= seg
+	return {"pos": pts[pts.size() - 1], "sous": false}
+
+
+## L'OPACITÉ DE CHAQUE BORDURE suit la présence, en temps réel et en douceur :
+## une plaque qui s'allume et s'éteint d'un coup à chaque quai qui se vide et
+## se remplit clignoterait tout le service.
+func _suivre_les_bordures(delta: float) -> void:
+	var monde: Dictionary = {}
+	for u in jauge_unites:
+		if not u["montee"] and _arrive(u):
+			monde[int(u["quai"])] = true
+	for q in G["platforms"]:
+		var pid := int(q["id"])
+		var cible: float = 1.0 if monde.has(pid) else 0.0
+		var a: float = float(jauge_bord.get(pid, 0.0))
+		jauge_bord[pid] = a + (cible - a) * minf(1.0, delta * JAUGE_BORD_FONDU)
+
+
+## Ceux qui marchent dans la gare en ce moment : entrés par la bouche du
+## couloir, ou descendus d'un train, et pas encore à leur place.
+func _marcheurs() -> Array:
 	var out: Array = []
 	for u in jauge_unites:
-		if u.get("descente") == null or u["montee"]:
+		if u["montee"] or u.get("chemin") == null:
 			continue
-		var t0: float = float(u["descente"])
+		var t0: float = float(u["marche"])
 		var t1: float = float(u["arrivee"])
-		if enc.game_min >= t1 or t1 <= t0:
+		if enc.game_min < t0 or enc.game_min >= t1 or t1 <= t0:
 			continue
 		out.append({"u": u, "p": clampf((enc.game_min - t0) / (t1 - t0), 0.0, 1.0)})
 	return out
@@ -497,6 +591,7 @@ func _preparer_jauge() -> void:
 	jauge_eclats = []
 	jauge_affecte = {}
 	jauge_descendu = {}
+	jauge_bord = {}
 	jauge_pic = 0
 	jauge_mesure = OS.get_environment("STATION_MESURE") != ""
 	if not mode_jauge:
@@ -615,16 +710,47 @@ func _construire_unites() -> void:
 			var pas_g: float = w / float(groupe.size())
 			for j in range(groupe.size()):
 				var u: Dictionary = jauge_unites[groupe[j]]
-				# N'IMPORTE OÙ DANS SON PAS, ET PAS À SA HAUTEUR EXACTE. Posé au
-				# milieu du pas avec un frisson de 22 %, le quai redevenait une
-				# règle graduée — quatre pastilles à intervalles égaux, ce qui
-				# n'est pas ce qu'on nous demandait. Un tiers de pas de jeu
-				# dans les deux sens suffit à casser l'alignement sans que deux
-				# voisins se touchent, et deux unités de haut donnent à la
-				# foule son épaisseur.
+				# N'IMPORTE OÙ DANS SON PAS, MAIS TOUS À LA MÊME HAUTEUR. Posé
+				# au milieu du pas avec un frisson de 22 %, le quai redevenait
+				# une règle graduée — quatre pastilles à intervalles égaux, ce
+				# qui n'était pas la demande ; un tiers de pas dans les deux
+				# sens casse l'alignement sans que deux voisins se touchent.
+				# L'écart en hauteur, lui, a vécu deux heures : « les voyageurs
+				# peuvent être alignés verticalement sur le quai » (Vincent, 22
+				# septembre 2026) — la bande est haute de douze unités et ils y
+				# tanguaient pour rien.
 				var gx: float = x + (float(j) + 0.5 + hasard.randf_range(-0.35, 0.35)) * pas_g
-				u["pos"] = Vector2(gx, yc + hasard.randf_range(-2.0, 2.0))
+				u["pos"] = Vector2(gx, yc)
 			x += w
+	# ET SEULEMENT MAINTENANT LES CHEMINS D'ENTRÉE : ils vont à une place, et
+	# la place vient d'être posée. Tracés plus haut, ils menaient tous à
+	# l'origine du plan — on voyait deux voyageurs filer vers le coin de
+	# l'écran, au-dessus de l'horloge.
+	_tracer_les_entrees()
+
+
+## LA VILLE ENTRE PAR LA BOUCHE DU COULOIR, sous l'horloge, et descend à son
+## quai (Vincent, 22 septembre 2026). Personne ne paraît plus à sa place : on
+## voit le voyageur entrer, longer le couloir et surgir sur son quai. L'heure
+## d'arrivée reste celle qu'elle était — c'est l'ENTRÉE qu'on recule du temps
+## de la marche —, si bien que le calibrage, le barème et le compte ne savent
+## rien de tout ceci.
+##
+## CEUX DE L'OUVERTURE SONT DÉJÀ LÀ : « en début de partie, on voit directement
+## les premiers voyageurs sur les quais ». Ce sont ceux dont la marche aurait
+## commencé avant le service — ils n'entrent pas, ils sont entrés.
+func _tracer_les_entrees() -> void:
+	var bouche := Vector2(_tunnel_x(), _tunnel_bouche())
+	for u in jauge_unites:
+		if u["source"] != "":
+			continue          # celui-là descend d'un train : son chemin se trace à l'arrêt
+		var chemin := _chemin_vers(bouche, u["pos"])
+		var duree: float = _longueur(chemin) / JAUGE_VITESSE_CORRESPONDANCE
+		var depart: float = float(u["arrivee"]) - duree
+		if depart <= 0.0:
+			continue          # il est là depuis l'ouverture
+		u["chemin"] = chemin
+		u["marche"] = depart
 
 
 ## QUI DESCEND D'UN TRAIN PLUTÔT QUE DE VENIR DE LA VILLE. Une part des
@@ -926,14 +1052,16 @@ func _dessiner_unites() -> void:
 	for q in G["platforms"]:
 		var pid := int(q["id"])
 		var ici: Array = []
-		var vif := 0.0   # le plus jeune des présents donne son opacité à la bordure
 		for idx in jauge_ordre.get(pid, []):
 			var u: Dictionary = jauge_unites[idx]
 			if u["montee"] or not _arrive(u):
 				continue
 			ici.append(u)
-			vif = maxf(vif, clampf((enc.game_min - float(u.get("arrivee", 0.0))) / JAUGE_PARUTION, 0.0, 1.0))
-		if ici.is_empty():
+		# LA BORDURE SEULE GARDE UN FONDU : elle ne peut pas entrer par le
+		# couloir, et elle clignoterait à chaque quai qui se vide et se
+		# remplit. Elle suit la présence en temps réel, pas en temps de jeu.
+		var vif: float = float(jauge_bord.get(pid, 0.0))
+		if ici.is_empty() and vif <= 0.01:
 			continue
 		# la bordure : un creux le long du bord du quai, cerné d'un filet de
 		# laiton au ras de la plaque. CREUSÉE, PAS TEINTÉE : la plaque du quai
@@ -955,14 +1083,8 @@ func _dessiner_unites() -> void:
 					jauge_vols.append({"u": u, "tr": a_quai[u["train"]], "p": p})
 					continue
 			var col := Color(String(G["dest_color"][u["dest"]]))
-			# CELUI QUI VIENT D'ARRIVER PARAÎT : il grandit et se teinte en six
-			# dixièmes de minute de jeu. Sans ce fondu, une pastille surgit du
-			# néant au milieu de la rangée — et à ×4, on ne verrait qu'un
-			# clignotement.
-			var neuf: float = clampf((enc.game_min - float(u.get("arrivee", 0.0))) / JAUGE_PARUTION, 0.0, 1.0)
-			var r_i: float = r_u * (0.45 + 0.55 * neuf)
-			draw_circle(pos, r_i, Color(col, neuf))
-			draw_arc(pos, r_i, 0.0, TAU, 16, Color(0, 0, 0, 0.45 * neuf), max(1.0, 0.9 * k), true)
+			draw_circle(pos, r_u, col)
+			draw_arc(pos, r_u, 0.0, TAU, 16, Color(0, 0, 0, 0.45), max(1.0, 0.9 * k), true)
 			if prise:   # « ceux-là montent » : un cerne blanc
 				draw_arc(pos, r_u * 1.4, 0.0, TAU, 20, Color(1, 1, 1, 0.85), max(1.0, 1.1 * k), true)
 
@@ -991,6 +1113,44 @@ func _dessiner_vols() -> void:
 		draw_arc(pos, 4.8 * k, 0.0, TAU, 20, Color(1, 1, 1, 0.85), max(1.0, 1.1 * k), true)
 
 
+## LE COULOIR, DANS LES INTERVALLES. Un creux sombre bordé de deux filets de
+## laiton, à l'aplomb du milieu des quais : on le voit entre eux et il
+## disparaît sous chacun, ce qui dit qu'il passe dessous. En haut, la bouche —
+## sous l'horloge, du côté de la ville. Et sur le bord bas de chaque quai, la
+## petite trappe par où l'on remonte.
+func _dessiner_tunnel() -> void:
+	var tx := _tunnel_x()
+	var l := TUNNEL_LARGE
+	var creux := Color(0, 0, 0, 0.20)
+	var filet := Color(Sty.POSTE_BORD, 0.18)
+	var bords: Array = []
+	for q in G["platforms"]:
+		bords.append(float(q["cy"]))
+	bords.sort()
+	# la bouche, puis un tronçon par intervalle
+	var trous: Array = [[_tunnel_bouche(), bords[0] - Geo.PLAT_H / 2.0]]
+	for i in range(1, bords.size()):
+		trous.append([bords[i - 1] + Geo.PLAT_H / 2.0, bords[i] - Geo.PLAT_H / 2.0])
+	for t in trous:
+		var h: float = float(t[1]) - float(t[0])
+		if h <= 1.0:
+			continue
+		draw_colored_polygon(Sty.rect_arrondi(Rect2(tx - l / 2.0, float(t[0]), l, h), 3), creux)
+		draw_line(Vector2(tx - l / 2.0, float(t[0])), Vector2(tx - l / 2.0, float(t[1])), filet, 1.0, true)
+		draw_line(Vector2(tx + l / 2.0, float(t[0])), Vector2(tx + l / 2.0, float(t[1])), filet, 1.0, true)
+	# LA BOUCHE : une plaque sous l'horloge, d'où sort la ville.
+	var y0 := _tunnel_bouche()
+	var plaque := Rect2(tx - l, y0 - 9.0, l * 2.0, 12.0)
+	draw_colored_polygon(Sty.rect_arrondi(plaque, 4), Color(Sty.POSTE_QUAI_BAS, 0.85))
+	draw_polyline(_boucle(Sty.rect_arrondi(plaque, 4)), Color(Sty.POSTE_BORD, 0.35), 1.0, true)
+	# la trappe de chaque quai, sur son bord bas : c'est par là qu'on remonte
+	for cy in bords:
+		var t_r := Rect2(tx - l / 2.0 + 1.5, cy + Geo.PLAT_H / 2.0 - JAUGE_BANDE - 4.5, l - 3.0, 5.0)
+		draw_colored_polygon(Sty.rect_arrondi(t_r, 1.5), Color(0, 0, 0, 0.42))
+		draw_line(Vector2(t_r.position.x, t_r.position.y), Vector2(t_r.end.x, t_r.position.y),
+			Color(Sty.POSTE_BORD, 0.22), 1.0, true)
+
+
 ## LA TRAVERSÉE D'UNE CORRESPONDANCE : descendu de son train, le voyageur
 ## longe d'abord la voie jusqu'à l'abscisse de sa place, puis rejoint son quai.
 ## L'ordre compte — il marche le long des quais, il ne coupe pas en diagonale —
@@ -998,25 +1158,18 @@ func _dessiner_vols() -> void:
 func _dessiner_correspondances() -> void:
 	var k := Sty.UIK
 	var r_u := minf(3.4 * k, 5.0)
-	for v in _en_correspondance():
+	for v in _marcheurs():
 		var u: Dictionary = v["u"]
-		var de: Vector2 = u.get("de", u["pos"])
-		var vers: Vector2 = u["pos"]
-		# LE QUAI D'ABORD, LA PLACE ENSUITE : il traverse la gare jusqu'à son
-		# quai, puis le longe jusqu'à sa place. L'inverse — longer d'abord, puis
-		# traverser — le faisait cheminer le long d'un quai qui n'était pas le
-		# sien, où on le prenait pour un voyageur d'ici.
-		var dy: float = abs(vers.y - de.y)
-		var d: float = dy + abs(vers.x - de.x)
-		var parcouru: float = float(v["p"]) * d
-		var pos: Vector2
-		if parcouru <= dy:
-			pos = Vector2(de.x, move_toward(de.y, vers.y, parcouru))
-		else:
-			pos = Vector2(move_toward(de.x, vers.x, parcouru - dy), vers.y)
+		var e: Dictionary = _point_du_chemin(u["chemin"], float(v["p"]))
+		var pos: Vector2 = e["pos"]
+		# SOUS LES QUAIS, ON SE VOIT MOINS. Le voyageur ne disparaît pas — on le
+		# suit des yeux d'un bout à l'autre de sa traversée —, mais il passe en
+		# demi-teinte tant qu'il est dans le couloir : c'est ce qui dit qu'il est
+		# dessous, et non sur les voies.
+		var a: float = 0.45 if e["sous"] else 1.0
 		var col := Color(String(G["dest_color"][u["dest"]]))
-		draw_circle(pos, r_u, col)
-		draw_arc(pos, r_u, 0.0, TAU, 16, Color(0, 0, 0, 0.45), max(1.0, 0.9 * k), true)
+		draw_circle(pos, r_u, Color(col, a))
+		draw_arc(pos, r_u, 0.0, TAU, 16, Color(0, 0, 0, 0.45 * a), max(1.0, 0.9 * k), true)
 
 
 ## LE « +X » : au-dessus de la machine du convoi qui vient d'emporter ses
@@ -1077,6 +1230,7 @@ func _process(delta: float) -> void:
 		_noter_les_descentes()
 		_affecter_unites()
 		_noter_les_departs()
+		_suivre_les_bordures(delta)
 		if jauge_mesure:
 			var ici := 0
 			for u in jauge_unites:
@@ -1356,6 +1510,7 @@ func _draw() -> void:
 	draw_set_transform(d)
 	_dessiner_quais(sel, t)
 	if mode_jauge:
+		_dessiner_tunnel()
 		_dessiner_unites()
 	_dessiner_itineraires()
 	_dessiner_convois(sel, t)

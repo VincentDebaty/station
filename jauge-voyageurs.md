@@ -248,6 +248,28 @@ viennent pas de là où va leur voyageur : on ne revient pas de Brighton pour
 repartir à Brighton. Un convoi ne débarque jamais plus de monde qu'il n'a de
 wagons.
 
+**Le couloir sous les quais** (ajouté le 22 au soir : « un voyageur ne traverse
+pas les voies ; il faudrait dessiner un tunnel sous les voies par lequel tous
+les voyageurs passent »). C'était le défaut de la première version : le
+voyageur coupait à travers le faisceau comme s'il marchait sur les rails. Il
+court à l'aplomb du milieu des quais — **sous l'horloge**, que Vincent prend
+pour le bâtiment de la gare —, ne croise aucune voie (le gril et les courbes
+tiennent les deux bouts du plan, le milieu est libre), et se dessine **dans les
+intervalles** entre les quais : il disparaît sous chacun d'eux, ce qui est
+exactement ce qu'il est. Le voyageur y passe en demi-teinte — on le suit des
+yeux d'un bout à l'autre, mais il est dessous.
+
+**Et la ville entre par là.** Personne ne paraît plus à sa place : le voyageur
+sort de la bouche du couloir, le descend et surgit sur son quai. Son heure
+d'arrivée reste celle qu'elle était — c'est son ENTRÉE qu'on recule du temps de
+la marche —, si bien que le calibrage, le barème et le compte n'en savent rien.
+Ceux dont la marche aurait commencé avant l'ouverture sont déjà sur les quais
+au premier instant : « en début de partie, on voit directement les premiers
+voyageurs sur les quais ». Le fondu d'apparition disparaît avec eux — c'était
+lui qu'on voyait se rejouer à l'arrivée de quelqu'un qu'on venait de suivre des
+yeux (« ils disparaissent puis réapparaissent dans un fondu ») ; seule la
+bordure du quai en garde un, parce qu'elle ne peut pas entrer par le couloir.
+
 Deux conséquences qu'il a fallu régler au passage :
 
 - **un convoi à quai continue de se remplir.** L'embarquement était décidé une
@@ -351,3 +373,7 @@ bourse : à instruire dans `economie-du-jeu.md`, pas ici.
   voyageurs descend d'un train, traverse la gare et va prendre sa place. Le
   retard se propage enfin d'un convoi à l'autre. Quatrième passage du banc :
   étoiles inchangées, embarquement de 86 à 84 %.
+- **22 septembre 2026, tard** — le couloir sous les quais, la ville qui entre
+  par sa bouche, et les voyageurs alignés sur le bord du quai. Trois remarques
+  de Vincent sur le jeu posé, trois corrections : on ne traverse pas les voies,
+  on ne paraît pas de nulle part, et on ne tangue pas sur un quai.
