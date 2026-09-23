@@ -155,8 +155,17 @@ func charger(day: Dictionary) -> void:
 # ------------------------------------------------------------------
 # Petits calculs, aux noms de engine.js / render.js
 # ------------------------------------------------------------------
+## LE SERVICE S'ARRÊTE QUAND LA TROISIÈME ÉTOILE S'ÉTEINT (23 septembre 2026).
+## Le retard ne se compte plus en points : il éteint les trois étoiles l'une
+## après l'autre, aux seuils déjà calibrés de la fiche — 8, 15 et 30 minutes au
+## niveau 1 —, et la dernière éteinte interrompt le service. Le plafond de 120
+## minutes ne servait plus à rien : il laissait la partie continuer une heure et
+## demie après qu'elle était perdue. Une fiche peut encore imposer le sien.
 func max_delay() -> float:
-	return float(cfg["maxDelay"]) if cfg.has("maxDelay") and cfg["maxDelay"] != null else DEFAULT_MAX_DELAY
+	if cfg.has("maxDelay") and cfg["maxDelay"] != null:
+		return float(cfg["maxDelay"])
+	var s := seuils_de_service()
+	return float(s["une"]) if s.has("une") else DEFAULT_MAX_DELAY
 
 
 static func lateness(t: Train, now: float) -> float:

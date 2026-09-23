@@ -6,10 +6,23 @@
 let trains, gameMin, speed, paused, started, ended, totalDelay, selected, activeRoutes, queueSeq;
 let onTimeStreak; // série de départs à l'heure consécutifs (juice : combo)
 
-// Retard plafond : au-delà, le service est interrompu (game over). Réglable
-// par gare via le champ « maxDelay » de sa fiche ; 120 min par défaut.
+// LE SERVICE S'ARRÊTE QUAND LA TROISIÈME ÉTOILE S'ÉTEINT (23 septembre 2026).
+// Le retard ne se compte plus en points : il éteint les trois étoiles l'une
+// après l'autre, aux seuils déjà calibrés de la fiche — 8, 15 et 30 minutes au
+// niveau 1 —, et la dernière éteinte interrompt le service. Le plafond de 120
+// minutes ne servait plus à rien : il laissait la partie continuer une heure et
+// demie après qu'elle était perdue. Une fiche peut encore imposer le sien.
+//
+// C'est le seuil « une » qui fait office de plafond, donc : plus de constante
+// à régler, et le joueur voit s'éteindre ce qu'il va perdre.
 const DEFAULT_MAX_DELAY = 120;
-function maxDelay() { return STATION.maxDelay ?? DEFAULT_MAX_DELAY; }
+function maxDelay() {
+  if (STATION.maxDelay != null) return STATION.maxDelay;
+  // seuilsDeService vient de js/ruban.js, qui n'est pas toujours chargé (les
+  // oracles n'en veulent pas) : le plafond d'avant sert alors de repli.
+  const s = typeof seuilsDeService === "function" ? seuilsDeService(STATION) : null;
+  return s && s.une != null ? s.une : DEFAULT_MAX_DELAY;
+}
 
 // ------------------------------------------------------------------
 // Accueil du tout premier service : TUTORIEL GUIDÉ (une seule fois)

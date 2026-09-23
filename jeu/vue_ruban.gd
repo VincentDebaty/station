@@ -3893,14 +3893,17 @@ func _bloc_bilan(avec_medailles: bool = true) -> Control:
 	# (`jauge-voyageurs.md` §3). La ligne se tient sous les étoiles, avant la
 	# bourse, et nomme aussi ceux qu'on a laissés — c'est ce qui donne envie de
 	# rejouer.
-	if b.get("pointsMax") != null and int(b.get("pointsMax", 0)) > 0:
+	if b.get("voyageurs") != null and int(b.get("voyageurs", 0)) > 0:
 		var montes := int(b.get("montes", 0))
-		var total := int(b.get("pointsMax", 0))
+		var total := int(b.get("voyageurs", 0))
 		var laisses := int(b.get("restes", 0))
 		var dit := "%d voyageur%s sur %d" % [montes, "s" if montes > 1 else "", total]
 		if laisses > 0:
 			dit += " · %d resté%s à quai" % [laisses, "s" if laisses > 1 else ""]
 		v.add_child(_label(dit, 13, P_ENCRE, false, false))
+		# LE SCORE DU SERVICE, EN GROS : c'est lui qui fera les pièces, et il
+		# n'a rien à voir avec les étoiles — celles-ci disent l'heure tenue.
+		v.add_child(_label("%s points" % Sty.nombre(int(b.get("points", 0))), 16, P_ACCENT, false, false))
 
 	# CE QUE LE SERVICE A RAPPORTÉ, EN PIÈCES. La ligne est la CIBLE DE DÉPART
 	# du quatrième temps : les pièces s'en élèvent vers la barre. Pendant une

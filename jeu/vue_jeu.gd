@@ -78,7 +78,13 @@ const VOILE := Color(0.110, 0.086, 0.063, 0.86)
 ## LIT ses trains et son retard, et ne fait que compter autrement. Les étoiles
 ## restent calculées pour le ruban, les grades et les pièces — dérivées de la
 ## jauge — pour que rien en aval ne bouge tant que l'idée n'est pas validée.
-const JAUGE_POINTS_PAR_WAGON := 1
+## CINQ POINTS PAR VOYAGEUR EMMENÉ (Vincent, 23 septembre 2026). Les points
+## sont la RÉCOMPENSE — ils ne se perdent jamais, et ce sont eux qui feront les
+## pièces d'or. Le retard, lui, ne coûte plus un point : il éteint les étoiles
+## (`Enclenchement.max_delay`). Les deux axes du jeu cessent d'être mêlés dans
+## un seul compteur, ce qui était le défaut de la jauge du 20 septembre :
+## « pour le moment rien n'est clair ».
+const JAUGE_POINTS_PAR_VOYAGEUR := 5
 ## QUATRE VOYAGEURS PAR WAGON (Vincent, 23 septembre 2026 : « les passagers
 ## pourraient être plus nombreux ; le but est de mettre plus d'animation dans
 ## la gare »). Un wagon en portait un, et la gare était vide entre deux
@@ -216,6 +222,8 @@ var jauge_vols: Array = []                # les voyageurs en vol vers leur wagon
 var jauge_ordre: Dictionary = {}          # quai -> ses unités, dans un ordre tiré au sort une fois
 var jauge_descendu: Dictionary = {}       # id -> son apport a été débarqué
 var jauge_bord: Dictionary = {}           # quai -> l'opacité de sa bordure, lissée
+var etoiles_vues := 3                     # les étoiles allumées à la dernière image
+var etoile_perdue_a := 0.0                # quand la dernière s'est éteinte (temps réel)
 var jauge_mesure := false                 # STATION_MESURE : on suit le pic de foule
 var jauge_pic := 0                        # le plus de voyageurs vus ensemble dans le hall
 
@@ -434,7 +442,7 @@ func _nouvelle_journee() -> void:
 	_preparer_jauge()
 	print("%s · graine %d — %d convois, journée tirée en %d ms · %s%s"
 		% [fiche.get("id", "?"), graine, enc.trains.size(), duree_generation_ms, _niveau_texte(),
-		(" · jauge des voyageurs, %d unités" % _points_max()) if mode_jauge else ""])
+		(" · jauge des voyageurs, %d voyageurs" % _voyageurs_du_jour()) if mode_jauge else ""])
 
 
 ## LA FIN DE SERVICE S'ÉCRIT COMME DANS LE PROTOTYPE (js/game.js, endGame) :
@@ -456,7 +464,7 @@ func _enregistrer_fin() -> void:
 	bilan_final = {"gare": id, "stars": stars, "prevStars": Rub.etoiles_de(prev), "d": r["d"],
 		"prevBest": prev.get("bestDelay"), "perfect": r["perfect"], "failed": r["failed"], "win": r["win"],
 		"seuils": enc.seuils_de_service(), "points": r.get("points"), "pointsMax": r.get("pointsMax"),
-		"montes": r.get("montes"), "restes": r.get("restes")}
+		"montes": r.get("montes"), "restes": r.get("restes"), "voyageurs": r.get("voyageurs")}
 	medailles_final = []
 	if r["failed"]:
 		Sauvegarde.marquer_tentee(id)
@@ -509,7 +517,7 @@ func _noter_les_departs() -> void:
 			if not prises.is_empty():
 				var pos := Vector2(float(positions[tr.id][0]["x"]), float(positions[tr.id][0]["y"])) \
 					if positions.has(tr.id) and not positions[tr.id].is_empty() else Vector2(Geo.PLAT_MID, 0.0)
-				jauge_eclats.append({"id": tr.id, "pts": prises.size() * JAUGE_POINTS_PAR_WAGON,
+				jauge_eclats.append({"id": tr.id, "pts": prises.size() * JAUGE_POINTS_PAR_VOYAGEUR,
 					"t0": Time.get_ticks_msec() / 1000.0, "pos": pos})
 
 
@@ -627,6 +635,21 @@ func _point_du_chemin(pts: PackedVector2Array, p: float) -> Dictionary:
 	return {"pos": pts[pts.size() - 1], "sous": false}
 
 
+## UNE ÉTOILE QUI S'ÉTEINT S'ENTEND ET SE VOIT. C'est le seul moment où le jeu
+## dit au joueur que l'heure compte, et il ne dure qu'un instant : deux notes
+## qui descendent, la pastille qui bat en rouge, et un « −1 ★ » qui monte du
+## bandeau. Sans cela, on perdrait une étoile sans jamais savoir quand.
+func _suivre_les_etoiles() -> void:
+	var vives := _etoiles_vives()
+	if vives < etoiles_vues and not enc.ended:
+		etoile_perdue_a = Time.get_ticks_msec() / 1000.0
+		Sons.jouer("incident")
+		var centre := Vector2(Geo.PLAT_MID, _tunnel_bouche() + 10.0)
+		jauge_eclats.append({"id": "", "pts": 0, "t0": etoile_perdue_a, "pos": centre,
+			"texte": "−1 ★", "col": Sty.ROUGE})
+	etoiles_vues = vives
+
+
 ## L'OPACITÉ DE CHAQUE BORDURE suit la présence, en temps réel et en douceur :
 ## une plaque qui s'allume et s'éteint d'un coup à chaque quai qui se vide et
 ## se remplit clignoterait tout le service.
@@ -664,6 +687,8 @@ func _preparer_jauge() -> void:
 	jauge_eclats = []
 	jauge_descendu = {}
 	jauge_bord = {}
+	etoiles_vues = 3
+	etoile_perdue_a = 0.0
 	jauge_pic = 0
 	jauge_mesure = OS.get_environment("STATION_MESURE") != ""
 	if not mode_jauge:
@@ -1068,67 +1093,62 @@ func _unites_prises(id: String) -> Array:
 	return prises
 
 
-func _points_max() -> int:
+## ON COMPTE DES VOYAGEURS, ET ON AFFICHE DES POINTS : deux unités, deux
+## fonctions. Le relevé parle de voyageurs, le bandeau de points, et cinq les
+## séparent — les confondre donnait « 172 voyageurs » là où il y en avait 34.
+func _voyageurs_du_jour() -> int:
 	var n := 0
 	for tr in enc.trains:
-		n += _unites_de(tr) * JAUGE_POINTS_PAR_WAGON
+		n += _unites_de(tr)
 	return n
 
 
-func _points_transportes() -> int:
+func _voyageurs_emmenes() -> int:
 	var n := 0
 	for u in jauge_unites:
 		if u["montee"]:
-			n += JAUGE_POINTS_PAR_WAGON
+			n += 1
 	return n
 
 
-## La jauge, vivante : ce qui est monté moins ce que le retard a coûté — le
-## retard déjà encaissé ET celui qui court sur les convois pas encore partis,
-## comme le compteur d'aujourd'hui (Enclenchement.live_delay).
-##
-## LA PERTE EST BORNÉE À L'OPPOSÉ DU MAXIMUM. Le retard cumulé ne l'est pas :
-## trois convois en retard de cinq minutes coûtent quinze points, et l'on a
-## mesuré −111 points sur une journée qui en valait 21. En dessous de −maximum
-## le nombre ne veut plus rien dire, la barre est pleine de toute façon, et la
-## partie est perdue depuis longtemps (22 septembre 2026).
+func _points_max() -> int:
+	return _voyageurs_du_jour() * JAUGE_POINTS_PAR_VOYAGEUR
+
+
+## LE SCORE DU JOUR : ce qui est monté, cinq points par voyageur. Il ne
+## descend jamais. Le retard n'y touche plus — il éteint les étoiles.
 func _points_live() -> float:
-	var bruts: float = float(_points_transportes()) - enc.live_delay() * 60.0 / JAUGE_SECONDES_PAR_POINT
-	return maxf(bruts, -float(_points_max()))
+	return float(_voyageurs_emmenes() * JAUGE_POINTS_PAR_VOYAGEUR)
 
 
-## À la fin du service, la jauge décide : positive, le service est tenu ;
-## négative, c'est l'échec. Les étoiles en sont dérivées pour le reste du jeu.
+## LES ÉTOILES ENCORE ALLUMÉES, à cet instant : trois au départ, une de moins
+## à chaque seuil de la fiche franchi par le retard cumulé. C'est exactement le
+## barème que l'enclenchement applique à la fin ; on ne fait que le lire en
+## cours de route, pour que le joueur voie partir ce qu'il perd.
+func _etoiles_vives() -> int:
+	var d := enc.live_delay()
+	var s: Dictionary = enc.seuils_de_service()
+	return 3 if d < float(s["trois"]) else (2 if d < float(s["deux"]) else (1 if d < float(s["une"]) else 0))
+
+
+## À LA FIN DU SERVICE, LA JAUGE NE DÉCIDE PLUS RIEN : les étoiles sont celles
+## que l'enclenchement a calculées sur le retard, et cette vue ne fait
+## qu'ajouter ce qu'elle sait — le score en points, le compte des voyageurs, et
+## le sans-faute qu'elle resserre.
 ##
-## LA PERTE PASSE DANS LE BARÈME DE LA FICHE, comme le retard y passait :
-## `perte = maximum − points`, soit les voyageurs manqués plus les minutes de
-## retard cumulées, contre les seuils trois · deux · une de la gare telle
-## qu'on la joue (`Ruban.seuils_de_service`). C'est le même barème, dans la
-## même unité, pour les deux façons de rater un service — et c'est ce qui rend
-## l'axe des voyageurs vivant : trois étoiles avec neuf voyageurs à quai n'est
-## plus possible (`jauge-voyageurs.md` §4.2).
+## LE DIAMANT DEMANDE DÉSORMAIS LES DEUX : pas une minute de retard, ET
+## personne resté à quai (Vincent, 23 septembre 2026). Une gare tenue à la
+## seconde près dont on laisse huit voyageurs n'est pas un sans-faute.
 func _appliquer_jauge() -> void:
 	var r: Dictionary = enc.resultat
-	var pts := _points_live()
-	var maxi := _points_max()
-	var restes: int = maxi - _points_transportes()
-	var perte: float = float(maxi) - pts
-	var s: Dictionary = enc.seuils_de_service()
-	var stars := 0
-	if not bool(r.get("failed", false)) and maxi > 0:
-		# les seuils sont en MINUTES de retard ; une minute vaut un wagon, donc
-		# JAUGE_PAR_WAGON points — le barème se lit dans la même monnaie que la
-		# perte sans qu'aucun de ses trois nombres n'ait bougé
-		var f := float(JAUGE_PAR_WAGON)
-		stars = 3 if perte < float(s["trois"]) * f else (2 if perte < float(s["deux"]) * f else (1 if perte < float(s["une"]) * f else 0))
-	r["stars"] = stars
-	r["win"] = stars >= 1
-	# LE SANS-FAUTE, EN MODE JAUGE : personne n'est resté, et pas une minute.
-	r["perfect"] = stars == 3 and restes == 0 and float(r.get("d", 0.0)) == 0.0
-	r["restes"] = restes
-	r["montes"] = _points_transportes()
-	r["points"] = int(round(pts))
-	r["pointsMax"] = maxi
+	var tous := _voyageurs_du_jour()
+	var montes := _voyageurs_emmenes()
+	r["perfect"] = bool(r.get("perfect", false)) and montes == tous
+	r["restes"] = tous - montes
+	r["montes"] = montes
+	r["voyageurs"] = tous
+	r["points"] = montes * JAUGE_POINTS_PAR_VOYAGEUR
+	r["pointsMax"] = tous * JAUGE_POINTS_PAR_VOYAGEUR
 	if jauge_mesure:
 		var c_tot := 0
 		var c_restees := 0
@@ -1141,11 +1161,11 @@ func _appliquer_jauge() -> void:
 				c_restees += 1
 				if u.get("descente") == null:
 					c_jamais += 1
-		print("jauge : %d voyageurs au plus dans le hall, sur %d dans la journée" % [jauge_pic, maxi])
+		print("jauge : %d voyageurs au plus dans le hall, sur %d dans la journée" % [jauge_pic, tous])
 		print("jauge : %d correspondances, %d restées à quai dont %d jamais descendues" % [c_tot, c_restees, c_jamais])
-	print("jauge : %+d points sur %d (perte %d, barème %d·%d·%d) — %d unités montées, %d restées à quai, retard %.1f min, %d convois partis" % [
-		int(round(pts)), maxi, int(round(perte)), int(s["trois"]), int(s["deux"]), int(s["une"]),
-		_points_transportes(), restes, enc.live_delay(), jauge_parti.size()])
+	print("jauge : %d points — %d voyageurs sur %d, %d restés à quai, retard %.1f min, %d★%s" % [
+		int(r["points"]), montes, tous, tous - montes, enc.live_delay(), int(r.get("stars", 0)),
+		" ÉCHEC" if r.get("failed", false) else ""])
 
 
 ## LES UNITÉS DE VOYAGEURS, sous les pilules. Une rangée de ronds à la couleur
@@ -1335,13 +1355,14 @@ func _dessiner_eclats() -> void:
 		var centre := pos + monte
 		if centre.y < _tunnel_bouche():
 			centre = pos - monte
-		var txt := "+%d" % int(e["pts"])
+		var txt: String = String(e["texte"]) if e.has("texte") else "+%d" % int(e["pts"])
+		var col_e: Color = e["col"] if e.has("col") else VERT
 		# VINGT-SIX, ET PLUS DIX-HUIT (22 septembre 2026) : réduit à la taille
 		# d'un téléphone, le « +4 » d'un convoi qui part plein ne se voyait pas
 		# — or c'est la seule fois où le jeu dit au joueur qu'il a bien fait.
 		var t_eclat: int = int(round(26 * k))
 		Sty.texte_centre(self, police, t_eclat, centre, txt, Color(0, 0, 0, 0.55 * a), 6, Color(0, 0, 0, 0.55 * a))
-		Sty.texte_centre(self, police, t_eclat, centre, txt, Color(VERT, a))
+		Sty.texte_centre(self, police, t_eclat, centre, txt, Color(col_e, a))
 
 
 func _process(delta: float) -> void:
@@ -1376,6 +1397,7 @@ func _process(delta: float) -> void:
 		_affecter_unites()
 		_noter_les_departs()
 		_suivre_les_bordures(delta)
+		_suivre_les_etoiles()
 		if jauge_mesure:
 			var ici := 0
 			for u in jauge_unites:
@@ -2329,6 +2351,17 @@ func _chip(r: Rect2, bord: Color = Sty.POSTE_BORD, k: float = 1.0) -> void:
 	draw_style_box(Sty.boite(Color(Sty.POSTE_QUAI_HAUT, 0.88), bord, 12 * k, max(1.0, k)), r)
 
 
+## UNE ÉTOILE À CINQ BRANCHES, pleine. Le bandeau n'en avait pas : celles du
+## relevé sont des glyphes de police, et un glyphe ne s'éteint pas à moitié.
+func _etoile(centre: Vector2, r: float, col: Color) -> void:
+	var pts := PackedVector2Array()
+	for i in 10:
+		var a: float = -PI / 2.0 + float(i) * PI / 5.0
+		var rr: float = r if i % 2 == 0 else r * 0.42
+		pts.append(centre + Vector2(cos(a), sin(a)) * rr)
+	draw_colored_polygon(pts, col)
+
+
 func _dessiner_hud(t: float) -> void:
 	var sans := Sty.sans()
 	var gras := Sty.sans(600)
@@ -2389,11 +2422,14 @@ func _dessiner_hud(t: float) -> void:
 	var horloge := fmt(enc.game_min)
 	var retard := enc.live_delay()
 	var txt_r := "+%d" % int(floor(retard + 0.5))   # arrondi, comme Math.round côté web
-	# la jauge des voyageurs : le cadran dit les POINTS, signés
+	# LE BANDEAU DIT DEUX CHOSES, ET PLUS UNE SEULE : les trois étoiles qu'il
+	# reste — ce que le retard coûte — et le score en points — ce que les
+	# voyageurs rapportent. La petite jauge à zéro central mêlait les deux et
+	# « ne voulait pas dire grand-chose » (Vincent, 23 septembre 2026).
 	var pts_live := 0.0
 	if mode_jauge:
 		pts_live = _points_live()
-		txt_r = "%d" % int(floor(pts_live + 0.5))   # le nombre, sans « + » : le vert le dit
+		txt_r = Sty.nombre(int(pts_live)) if pts_live >= 1000.0 else "%d" % int(pts_live)
 	# 46 À 50 SUR L'ÉCRAN DE VINCENT : « 07:05, Space Mono Regular, 46-50 px,
 	# letter spacing 2 px » (9 septembre 2026). Une unité vaut un pixel sur le
 	# viewport d'un iPhone, et HUD_K y vaut 1,93 : 24 × k donne 46,3. C'était
@@ -2406,10 +2442,10 @@ func _dessiner_hud(t: float) -> void:
 	# d'un téléphone, on ne lisait plus son propre score. La barre passe de 40
 	# à 56 unités, le nombre de 12 à 18. L'horloge, elle, ne bouge pas : sa
 	# taille est une mesure de Vincent (9 septembre).
-	var w_jauge := 56.0 * k   # la petite jauge à zéro central, en mode jauge
+	var w_etoiles := 54.0 * k   # les trois étoiles du service, en mode jauge
 	var t_pts: int = ti.call(18)
 	if mode_jauge:
-		w_r = w_jauge + 7.0 * k + mono.get_string_size(txt_r, HORIZONTAL_ALIGNMENT_LEFT, -1, t_pts).x
+		w_r = w_etoiles + 9.0 * k + mono.get_string_size(txt_r, HORIZONTAL_ALIGNMENT_LEFT, -1, t_pts).x
 	var w_chip := 14.0 * k + w_h + 9.0 * k + w_r + 14.0 * k
 	var milieu: float = Sty.marges["gauche"] + (size_ecran().x - Sty.marges["gauche"] - Sty.marges["droite"]) / 2.0
 	var ch := Rect2(milieu - w_chip / 2.0, Sty.marges["haut"] + 8 * k, w_chip, 44 * k)
@@ -2451,23 +2487,26 @@ func _dessiner_hud(t: float) -> void:
 	var col_r: Color = Sty.VERT if r_arr < float(s_r.get("trois", 6)) \
 		else (Sty.AMBRE if r_arr < float(s_r.get("une", 30)) else Sty.ROUGE)
 	if mode_jauge:
-		# LA PETITE JAUGE À ZÉRO CENTRAL (Vincent, 20 septembre 2026) : « +34 » se
-		# lisait comme l'ancien retard en minutes. Vert vers la droite à zéro ou
-		# plus, rouge vers la gauche en dessous ; la longueur est la part du
-		# maximum de la journée, le nombre en petit à côté.
-		var maxi := float(max(1, _points_max()))
-		col_r = Sty.VERT if pts_live >= 0.0 else Sty.ROUGE
+		# LES TROIS ÉTOILES DU SERVICE, qui s'éteignent l'une après l'autre
+		# (Vincent, 23 septembre 2026) : « j'affiche 3 étoiles qui s'éteignent au
+		# fur et à mesure du retard ; quand on n'a plus d'étoile, fin de partie ».
+		# C'est le barème de la fiche, lu en cours de route au lieu d'être
+		# annoncé à la fin — le joueur voit partir ce qu'il perd, et comprend que
+		# l'heure compte. Celle qui vient de s'éteindre bat encore un instant.
+		var vives := _etoiles_vives()
 		var x0: float = ch.position.x + 14.0 * k + w_h + 9.0 * k
 		var yc: float = ch.position.y + utile / 2.0
-		var cadre := Rect2(x0, yc - 6.0 * k, w_jauge, 12.0 * k)
-		draw_style_box(Sty.boite(Color(0, 0, 0, 0.55), Color(Sty.POSTE_BORD, 0.8), 3.0 * k, max(1.0, 0.9 * k)), cadre)
-		var milieu_j: float = x0 + w_jauge / 2.0
-		var part_j: float = clampf(abs(pts_live) / maxi, 0.0, 1.0) * (w_jauge / 2.0 - 2.0 * k)
-		if part_j > 0.5:
-			var barre := Rect2(milieu_j if pts_live >= 0.0 else milieu_j - part_j, yc - 3.5 * k, part_j, 7.0 * k)
-			draw_style_box(Sty.boite(col_r, Color.TRANSPARENT, 2.0 * k, 0), barre)
-		draw_line(Vector2(milieu_j, yc - 6.0 * k), Vector2(milieu_j, yc + 6.0 * k), Color(Sty.POSTE_BORD, 0.9), max(1.0, 1.0 * k))
-		draw_string(mono, Vector2(x0 + w_jauge + 7.0 * k, yc + (mono.get_ascent(t_pts) - mono.get_descent(t_pts)) / 2.0), txt_r,
+		for i in 3:
+			var allumee: bool = i < vives
+			var teinte: Color = Sty.LAITON_CLAIR if allumee else Color(Sty.POSTE_BORD, 0.28)
+			if not allumee and i == vives and etoile_perdue_a > 0.0:
+				# le battement de la dernière perdue, une seconde et demie
+				var age: float = (Time.get_ticks_msec() / 1000.0 - etoile_perdue_a) / 1.5
+				if age < 1.0:
+					teinte = Sty.ROUGE.lerp(Color(Sty.POSTE_BORD, 0.30), age)
+			_etoile(Vector2(x0 + (float(i) + 0.5) * w_etoiles / 3.0, yc), 8.0 * k, teinte)
+		col_r = Sty.VERT
+		draw_string(mono, Vector2(x0 + w_etoiles + 9.0 * k, yc + (mono.get_ascent(t_pts) - mono.get_descent(t_pts)) / 2.0), txt_r,
 			HORIZONTAL_ALIGNMENT_LEFT, -1, t_pts, col_r)
 	else:
 		draw_string(mono, Vector2(ch.position.x + 14.0 * k + w_h + 9.0 * k, base), txt_r,
@@ -2664,8 +2703,8 @@ func _dessiner_fin() -> void:
 	var c := e / 2.0
 	Sty.texte_centre(self, Sty.sans(600), 34, c - Vector2(0, 20), titre, Sty.TEXTE)
 	Sty.texte_centre(self, Sty.sans(), 18, c + Vector2(0, 20),
-		("%s   ·   %d voyageurs sur %d   ·   %+d points   ·   retard %d min" % [etoiles,
-			int(r.get("montes", 0)), int(r.get("pointsMax", 0)), int(r.get("points", 0)), int(r.get("d", 0))]) if mode_jauge
+		("%s   ·   %d voyageurs sur %d   ·   %d points   ·   retard %d min" % [etoiles,
+			int(r.get("montes", 0)), int(r.get("voyageurs", 0)), int(r.get("points", 0)), int(r.get("d", 0))]) if mode_jauge
 		else ("%s   ·   retard cumulé %d min" % [etoiles, int(r.get("d", 0))]), Sty.AMBRE)
 	Sty.texte_centre(self, Sty.sans(), 14, c + Vector2(0, 60), "R pour rejouer", Sty.MUET)
 
@@ -3153,11 +3192,11 @@ func _tuto_quai_choisi() -> void:
 	# étoile « sous 30 min de retard » était devenu faux.
 	if tuto == "choix1":
 		tuto = "retard"
-		_coach({"hud": "retard"}, ("Il entre et s'arrête, et ses voyageurs montent. Ici s'affiche votre jauge : un point par voyageur emmené, un point de moins par minute de retard." if mode_jauge
+		_coach({"hud": "retard"}, ("Il entre et s'arrête, et ses voyageurs montent. Chacun vous rapporte cinq points. Vos trois étoiles, elles, sont là pour le retard : elles s'éteignent s'il s'accumule." if mode_jauge
 			else "Il entre et s'arrête. Ici s'affiche le retard cumulé du service — gardez-le au plus bas."), "Suivant")
 	elif tuto == "choix2":
 		tuto = "objectif"
-		_coach({"hud": "retard"}, ("Un quai occupé peut quand même être choisi : le convoi attend dehors, sans pénalité — seule compte l'heure de départ. À vous ! Les voyageurs attendent sous le quai où leur train est annoncé : emmenez-les tous, et à l'heure." if mode_jauge
+		_coach({"hud": "retard"}, ("Un quai occupé peut quand même être choisi : le convoi attend dehors, sans pénalité — seule compte l'heure de départ. À vous ! Emmenez tout le monde pour les points, et tenez l'heure : à la troisième étoile éteinte, le service est interrompu." if mode_jauge
 			else "Un quai occupé peut quand même être choisi : le convoi attend dehors, sans pénalité — seule compte l'heure de départ. À vous ! Terminez le service avec moins de 30 min de retard pour décrocher une étoile."), "Continuer")
 
 
