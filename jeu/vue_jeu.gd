@@ -2429,7 +2429,10 @@ func _dessiner_hud(t: float) -> void:
 	var pts_live := 0.0
 	if mode_jauge:
 		pts_live = _points_live()
-		txt_r = Sty.nombre(int(pts_live)) if pts_live >= 1000.0 else "%d" % int(pts_live)
+		# SANS L'ESPACE DES MILLIERS (Vincent, 23 septembre 2026) : « 1 000 »
+		# élargissait le cadre d'un cran au millième point, et tout le bandeau
+		# sautait. Quatre chiffres collés tiennent dans la même place.
+		txt_r = "%d" % int(pts_live)
 	# 46 À 50 SUR L'ÉCRAN DE VINCENT : « 07:05, Space Mono Regular, 46-50 px,
 	# letter spacing 2 px » (9 septembre 2026). Une unité vaut un pixel sur le
 	# viewport d'un iPhone, et HUD_K y vaut 1,93 : 24 × k donne 46,3. C'était
@@ -2444,8 +2447,14 @@ func _dessiner_hud(t: float) -> void:
 	# taille est une mesure de Vincent (9 septembre).
 	var w_etoiles := 54.0 * k   # les trois étoiles du service, en mode jauge
 	var t_pts: int = ti.call(18)
+	# LE CADRE NE BOUGE PLUS : sa largeur se calcule sur QUATRE CHIFFRES, pas
+	# sur le score du moment. Mesuré à la largeur du texte, il s'élargissait au
+	# centième puis au millième point, et l'horloge glissait sous le pouce en
+	# pleine partie. Quatre chiffres portent jusqu'à 9 999, soit deux mille
+	# voyageurs — le double de la plus grosse journée d'une gare à dix quais.
+	var w_pts := mono.get_string_size("0000", HORIZONTAL_ALIGNMENT_LEFT, -1, t_pts).x
 	if mode_jauge:
-		w_r = w_etoiles + 9.0 * k + mono.get_string_size(txt_r, HORIZONTAL_ALIGNMENT_LEFT, -1, t_pts).x
+		w_r = w_etoiles + 9.0 * k + w_pts
 	var w_chip := 14.0 * k + w_h + 9.0 * k + w_r + 14.0 * k
 	var milieu: float = Sty.marges["gauche"] + (size_ecran().x - Sty.marges["gauche"] - Sty.marges["droite"]) / 2.0
 	var ch := Rect2(milieu - w_chip / 2.0, Sty.marges["haut"] + 8 * k, w_chip, 44 * k)
@@ -2506,7 +2515,11 @@ func _dessiner_hud(t: float) -> void:
 					teinte = Sty.ROUGE.lerp(Color(Sty.POSTE_BORD, 0.30), age)
 			_etoile(Vector2(x0 + (float(i) + 0.5) * w_etoiles / 3.0, yc), 8.0 * k, teinte)
 		col_r = Sty.VERT
-		draw_string(mono, Vector2(x0 + w_etoiles + 9.0 * k, yc + (mono.get_ascent(t_pts) - mono.get_descent(t_pts)) / 2.0), txt_r,
+		# le score est CENTRÉ dans sa place, sinon il se décollerait des étoiles
+		# à mesure qu'il grandit
+		var w_txt := mono.get_string_size(txt_r, HORIZONTAL_ALIGNMENT_LEFT, -1, t_pts).x
+		draw_string(mono, Vector2(x0 + w_etoiles + 9.0 * k + (w_pts - w_txt) / 2.0,
+			yc + (mono.get_ascent(t_pts) - mono.get_descent(t_pts)) / 2.0), txt_r,
 			HORIZONTAL_ALIGNMENT_LEFT, -1, t_pts, col_r)
 	else:
 		draw_string(mono, Vector2(ch.position.x + 14.0 * k + w_h + 9.0 * k, base), txt_r,
