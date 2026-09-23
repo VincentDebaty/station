@@ -530,3 +530,9 @@ le voyageur peut changer d'encre sans partir.
 - **23 septembre 2026** — quatre voyageurs par wagon (§8), et le barème
   quadruplé avec eux. La gare est pleine, et le banc montre que le retrait du
   fret avait déjà supprimé les effondrements.
+- **23 septembre 2026, le soir** — le refoulement est remplacé par le convoi
+  perdu : un mauvais quai fait repartir le train vers ailleurs, sans ses
+  voyageurs, et éteint une étoile. Mesuré sur 20 services : le jeu devient plus
+  DOUX (11 services à trois étoiles contre 5, retard médian de 6 à 4 min, aucun
+  service qui perde une étoile), parce que le vrai coût du refoulement n'était
+  pas sa sanction mais l'embouteillage qu'il provoquait.

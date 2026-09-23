@@ -67,6 +67,8 @@ class Train:
 	var entry_path: String = ""
 	var exit_path: String = ""
 	var refoul: bool = false
+	## PERDU : parti d'un mauvais quai, sans ses voyageurs et vers ailleurs.
+	var perdu: bool = false
 	var stop_s: float = 0.0
 	var start_s: float = 0.0
 	var back_s: float = 0.0
@@ -94,6 +96,10 @@ var trains: Array = []
 var events: Array = []
 var game_min: float = 0.0
 var total_delay: float = 0.0
+## LES CONVOIS PERDUS, ceux qu'un mauvais quai a fait repartir à vide. Chacun
+## éteint une étoile : le même prix que le retard, dans la même monnaie, et le
+## joueur le voit au moment où il le paie.
+var trains_perdus: int = 0
 var ended: bool = false
 var selected: Train = null
 var active_routes: Dictionary = {}   # id de chemin -> Train
@@ -125,6 +131,7 @@ func charger(day: Dictionary) -> void:
 	events.clear()
 	game_min = 0.0
 	total_delay = 0.0
+	trains_perdus = 0
 	ended = false
 	selected = null
 	active_routes = {}
@@ -460,6 +467,26 @@ func clic_quai(pid: Variant) -> String:
 ## LES DIXIÈMES COMPTENT (10 septembre 2026, js/game.js liveDelay) : le retard
 ## brut s'additionne, tolérance de départ déduite par lateness ; c'est le total
 ## qui s'arrondit, une fois, dans fin_de_service.
+## LA SORTIE D'UN CONVOI MAL AIGUILLÉ : n'importe quel portail que son quai
+## dessert, sauf le sien. On préfère CONTINUER — un portail de l'autre côté —
+## plutôt que de ressortir par où l'on est entré : c'est ce qu'on voit faire à
+## un train, et cela évite de croiser la file d'approche. L'ordre de parcours
+## est celui des portails de la fiche, le même des deux côtés.
+func _sortie_de_secours(t: Train) -> String:
+	var repli := ""
+	for p in portals:
+		if p == t.to:
+			continue
+		var id: String = "out:%s:%d" % [p, int(t.platform)]
+		if not paths.has(id):
+			continue
+		if portals[p]["side"] != portals[t.from]["side"]:
+			return id
+		if repli == "":
+			repli = id
+	return repli
+
+
 func live_delay() -> float:
 	var d: float = total_delay
 	for t in trains:
@@ -540,12 +567,33 @@ func tick(dt: float) -> void:
 					if not t.wrong_platform:
 						t.wrong_platform = true
 						sons.append("incident")
-					var back_path := _pid_in(t, t.platform)
-					if can_grant(back_path):
-						grant(back_path, t)
-						t.exit_path = back_path
-						t.state = S_MOVING_BACK
-						t.progress = 1 - t.stop_s / paths[back_path]["len"]
+					# IL CONTINUE SON CHEMIN, ET IL EST PERDU (Vincent, 23
+					# septembre 2026). Le refoulement le faisait RECULER sur sa
+					# propre voie d'entrée — « il passe par-dessus un autre
+					# train en attente, ce n'est pas logique » : la file
+					# d'approche n'est pas un itinéraire, rien ne la protégeait,
+					# et le convoi lui roulait dessus. Il repart donc vers une
+					# AUTRE destination que la sienne, et ses voyageurs restent
+					# à quai.
+					var sortie := _sortie_de_secours(t)
+					if sortie != "" and can_grant(sortie):
+						grant(sortie, t)
+						t.exit_path = sortie
+						t.perdu = true
+						t.state = S_MOVING_OUT
+						t.progress = 0.0
+						t.back_s = 0.0
+						trains_perdus += 1
+					elif sortie == "":
+						# aucun quai n'est à ce point fermé dans les 401 fiches,
+						# mais si l'on en écrivait un, le refoulement reste le
+						# seul recours
+						var back_path := _pid_in(t, t.platform)
+						if can_grant(back_path):
+							grant(back_path, t)
+							t.exit_path = back_path
+							t.state = S_MOVING_BACK
+							t.progress = 1 - t.stop_s / paths[back_path]["len"]
 					continue
 				var can_leave: bool = t.freight or game_min >= max(t.dep, float(t.actual_arr) + Geo.MIN_DWELL)
 				if can_leave:
@@ -621,7 +669,9 @@ func tick(dt: float) -> void:
 						release(t.exit_path)
 						t.platform = null
 					t.state = S_DONE
-	if not ended and live_delay() > max_delay():
+	# LE SERVICE S'ARRÊTE À LA TROISIÈME ÉTOILE ÉTEINTE, qu'elle le soit par le
+	# retard ou par un convoi perdu.
+	if not ended and (live_delay() > max_delay() or trains_perdus >= 3):
 		fin_de_service(true)
 		return
 	if not ended:
@@ -651,9 +701,13 @@ func fin_de_service(failed: bool) -> Dictionary:
 	ended = true
 	var d: float = floor((live_delay() if failed else total_delay) + 0.5)
 	var s := seuils_de_service()
-	var stars: int = 0 if failed else (3 if d < s["trois"] else 2 if d < s["deux"] else 1 if d < s["une"] else 0)
+	# CHAQUE CONVOI PERDU ÉTEINT UNE ÉTOILE, au même titre qu'un seuil de retard
+	# franchi : c'est le même prix, dans la même monnaie, et trois erreurs
+	# terminent le service (Vincent, 23 septembre 2026).
+	var par_le_retard: int = 0 if failed else (3 if d < s["trois"] else 2 if d < s["deux"] else 1 if d < s["une"] else 0)
+	var stars: int = max(0, par_le_retard - trains_perdus)
 	var win: bool = stars >= 1
-	var perfect: bool = win and not failed and d == 0
+	var perfect: bool = win and not failed and d == 0 and trains_perdus == 0
 	resultat = {"failed": failed, "d": d, "stars": stars, "win": win, "perfect": perfect,
-		"totalDelay": total_delay, "streak": on_time_streak}
+		"totalDelay": total_delay, "streak": on_time_streak, "perdus": trains_perdus}
 	return resultat

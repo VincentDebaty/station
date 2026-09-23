@@ -117,10 +117,14 @@ runInContext(`
     ended = true;
     const d = Math.round(failed ? liveDelay() : totalDelay);
     const s = seuilsDeService(STATION);
-    const stars = failed ? 0 : etoilesPour(d, s);
+    // CHAQUE CONVOI PERDU ÉTEINT UNE ÉTOILE (23 septembre 2026) : le harnais
+    // rejoue endGame, il doit donc rejouer aussi cette règle-là, sans quoi il
+    // juge le jeu sur un barème qui n'est plus le sien.
+    const stars = Math.max(0, (failed ? 0 : etoilesPour(d, s)) - trainsPerdus);
     const win = stars >= 1;
-    __fin = { failed: !!failed, d, stars, win, perfect: win && !failed && d === 0,
-              totalDelay, streak: onTimeStreak };
+    __fin = { failed: !!failed, d, stars, win,
+              perfect: win && !failed && d === 0 && trainsPerdus === 0,
+              totalDelay, streak: onTimeStreak, perdus: trainsPerdus };
   };
   // Le joueur scripté — la même politique que côté Godot, mot pour mot.
   __joueur = function (n, choix) {
@@ -142,6 +146,10 @@ runInContext(`
   __jouer = function (day, dt) {
     started = false; ended = false; paused = false; gameMin = 0; speed = 1;
     totalDelay = 0; selected = null; activeRoutes = {}; queueSeq = 0; onTimeStreak = 0;
+    // LE BAC À SABLE SERT À TOUTES LES FICHES : ce qui n'est pas remis à zéro
+    // ici traverse d'un service à l'autre. Les convois perdus de Darlington
+    // éteignaient les étoiles de Namur (23 septembre 2026).
+    trainsPerdus = 0;
     __fin = null;
     SCHEDULE = day.schedule;
     EVENTS = day.events.map(ev => ({ ...ev, revealed: false, cleared: false, el: null }));

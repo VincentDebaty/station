@@ -221,6 +221,7 @@ var jauge_unites: Array = []              # les voyageurs : {dest, quai, train (
 var jauge_vols: Array = []                # les voyageurs en vol vers leur wagon, recalculés à chaque image
 var jauge_ordre: Dictionary = {}          # quai -> ses unités, dans un ordre tiré au sort une fois
 var jauge_descendu: Dictionary = {}       # id -> son apport a été débarqué
+var jauge_perdus: Dictionary = {}         # id -> son « PERDU » a déjà été dit
 var jauge_bord: Dictionary = {}           # quai -> l'opacité de sa bordure, lissée
 var etoiles_vues := 3                     # les étoiles allumées à la dernière image
 var etoile_perdue_a := 0.0                # quand la dernière s'est éteinte (temps réel)
@@ -640,10 +641,27 @@ func _point_du_chemin(pts: PackedVector2Array, p: float) -> Dictionary:
 ## qui descendent, la pastille qui bat en rouge, et un « −1 ★ » qui monte du
 ## bandeau. Sans cela, on perdrait une étoile sans jamais savoir quand.
 func _suivre_les_etoiles() -> void:
+	# LE CONVOI PERDU SE DIT SUR LUI-MÊME. Un mauvais quai le fait repartir vers
+	# ailleurs, sans ses voyageurs et en emportant une étoile : « PERDU » monte
+	# de sa machine, là où le joueur regarde, et l'étoile s'éteint dans le
+	# bandeau. L'enclenchement a déjà sonné l'incident à l'arrêt — on ne
+	# sonne donc pas une deuxième fois par-dessus.
+	var perdu_neuf := false
+	for tr in enc.trains:
+		if not tr.perdu or jauge_perdus.has(tr.id):
+			continue
+		jauge_perdus[tr.id] = true
+		perdu_neuf = true
+		var pos := Vector2(float(positions[tr.id][0]["x"]), float(positions[tr.id][0]["y"])) \
+			if positions.has(tr.id) and not positions[tr.id].is_empty() else Vector2(Geo.PLAT_MID, Geo.CENTER_Y)
+		jauge_eclats.append({"id": tr.id, "pts": 0, "t0": Time.get_ticks_msec() / 1000.0,
+			"pos": pos, "texte": "PERDU", "col": Sty.ROUGE})
 	var vives := _etoiles_vives()
 	if vives < etoiles_vues and not enc.ended:
 		etoile_perdue_a = Time.get_ticks_msec() / 1000.0
-		Sons.jouer("incident")
+		if not perdu_neuf:
+			# une étoile que le RETARD emporte : elle, il faut l'annoncer
+			Sons.jouer("incident")
 		var centre := Vector2(Geo.PLAT_MID, _tunnel_bouche() + 10.0)
 		jauge_eclats.append({"id": "", "pts": 0, "t0": etoile_perdue_a, "pos": centre,
 			"texte": "−1 ★", "col": Sty.ROUGE})
@@ -686,6 +704,7 @@ func _preparer_jauge() -> void:
 	jauge_parti = {}
 	jauge_eclats = []
 	jauge_descendu = {}
+	jauge_perdus = {}
 	jauge_bord = {}
 	etoiles_vues = 3
 	etoile_perdue_a = 0.0
@@ -1128,7 +1147,9 @@ func _points_live() -> float:
 func _etoiles_vives() -> int:
 	var d := enc.live_delay()
 	var s: Dictionary = enc.seuils_de_service()
-	return 3 if d < float(s["trois"]) else (2 if d < float(s["deux"]) else (1 if d < float(s["une"]) else 0))
+	var par_le_retard: int = 3 if d < float(s["trois"]) else (2 if d < float(s["deux"]) else (1 if d < float(s["une"]) else 0))
+	# et une de moins par convoi perdu : le mauvais quai se paie en étoile
+	return maxi(0, par_le_retard - enc.trains_perdus)
 
 
 ## CE QUI RESTE DE L'ÉTOILE EN DANGER, de 1 à 0 (Vincent, 23 septembre 2026 :
@@ -1142,6 +1163,11 @@ func _reste_de_l_etoile() -> float:
 	var vives := _etoiles_vives()
 	if vives <= 0:
 		return 0.0
+	# la jauge mesure le RETARD qui vient ; un convoi perdu, lui, prend son
+	# étoile d'un coup — la part restante se lit donc sur les seuils, quel que
+	# soit le nombre d'étoiles déjà éteintes par des pertes
+	vives = 3 if enc.live_delay() < float(enc.seuils_de_service()["trois"]) \
+		else (2 if enc.live_delay() < float(enc.seuils_de_service()["deux"]) else 1)
 	var d := enc.live_delay()
 	var s: Dictionary = enc.seuils_de_service()
 	var bas := 0.0

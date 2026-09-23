@@ -359,7 +359,7 @@ async function resetGame() {
   started = false; ended = false; paused = false;
   gameMin = 0; speed = 1;
   totalDelay = 0; selected = null; activeRoutes = {}; queueSeq = 0;
-  onTimeStreak = 0;
+  onTimeStreak = 0; trainsPerdus = 0;
   hideCoach(); // efface un éventuel repère de tutoriel resté d'un service précédent
   document.getElementById("hud-controls").classList.add("hidden");
   document.getElementById("settings").classList.remove("open"); // engrenage revient à l'état repos
@@ -798,6 +798,28 @@ board.addEventListener("click", e => {
 // déduite, js/engine.js) s'additionne maintenant tel quel ; c'est le TOTAL qui
 // s'arrondit, une fois, au relevé — et « à l'heure » veut dire sous la
 // tolérance, comme la pastille le dit.
+// LA SORTIE D'UN CONVOI MAL AIGUILLÉ : n'importe quel portail que son quai
+// dessert, sauf le sien. On préfère CONTINUER — un portail de l'autre côté —
+// plutôt que de ressortir par où l'on est entré : c'est ce qu'on voit faire à
+// un train, et cela évite de croiser la file d'approche. L'ordre de parcours
+// est celui des portails de la fiche, le même des deux côtés.
+function sortieDeSecours(t) {
+  let repli = null;
+  for (const p in PORTALS) {
+    if (p === t.to) continue;
+    const id = "out:" + p + ":" + t.platform;
+    if (!paths[id]) continue;
+    if (PORTALS[p].side !== PORTALS[t.from].side) return id;
+    if (!repli) repli = id;
+  }
+  return repli;
+}
+
+// LES CONVOIS PERDUS, ceux qu'un mauvais quai a fait repartir à vide. Chacun
+// éteint une étoile : c'est le même prix que le retard, dans la même monnaie,
+// et le joueur le voit au moment où il le paie.
+let trainsPerdus = 0;
+
 function liveDelay() {
   let d = totalDelay;
   for (const t of trains)
@@ -1022,21 +1044,39 @@ function tick(dtMin) {
         if (!paths["out:" + t.to + ":" + t.platform]) {
           if (!t.wrongPlatform) {
             // instant de l'arrêt sur le mauvais quai : on l'explique tout de
-            // suite (pilule + son), puis le train refoule sans attendre
+            // suite (pilule + son), puis le convoi s'en va SANS SES VOYAGEURS
             t.wrongPlatform = true;
-            flashLabel(t.headPos, "Mauvais quai — refoulement", "warn");
+            flashLabel(t.headPos, "Mauvais quai — convoi perdu", "warn");
             SND.incident();
           }
-          // Demi-tour IMMÉDIAT (plein, sans arrêt) : le convoi RECULE le long de
-          // sa voie d'entrée jusqu'à l'aiguillage et s'y arrête, prêt à être
-          // ré-aiguillé — il ne quitte jamais l'écran (pas de disparition/réapparition).
-          const backPath = "in:" + t.from + ":" + t.platform;
-          if (canGrant(backPath)) {
-            grant(backPath, t);
-            t.exitPath = backPath;
-            t.state = "movingBack";
-            t.progress = 1 - t.stopS / paths[backPath].len;
+          // IL CONTINUE SON CHEMIN, ET IL EST PERDU (Vincent, 23 septembre
+          // 2026). Le refoulement le faisait RECULER sur sa propre voie
+          // d'entrée — « il passe par-dessus un autre train en attente, ce
+          // n'est pas logique » : la file d'approche n'est pas un itinéraire,
+          // rien ne la protégeait, et le convoi lui roulait dessus. Il repart
+          // donc vers une AUTRE destination que la sienne, ce qui est ce que
+          // ferait un vrai train mal aiguillé, et ses voyageurs restent à quai.
+          const sortie = sortieDeSecours(t);
+          if (sortie && canGrant(sortie)) {
+            grant(sortie, t);
+            t.exitPath = sortie;
+            t.perdu = true;
+            t.state = "movingOut";
+            t.progress = 0;
+            t.backS = 0;
+            trainsPerdus++;
             refreshEligible();
+          } else if (!sortie) {
+            // aucun quai n'est à ce point fermé dans les 401 fiches, mais si
+            // l'on en écrivait un, le refoulement reste le seul recours
+            const backPath = "in:" + t.from + ":" + t.platform;
+            if (canGrant(backPath)) {
+              grant(backPath, t);
+              t.exitPath = backPath;
+              t.state = "movingBack";
+              t.progress = 1 - t.stopS / paths[backPath].len;
+              refreshEligible();
+            }
           }
           break;
         }
@@ -1292,7 +1332,9 @@ function tick(dtMin) {
   onboardingTick(); // accueil : gèle le service dès qu'un train est prêt à tapoter
 
   // retard plafond dépassé : on arrête tout, service interrompu
-  if (!ended && liveDelay() > maxDelay()) { endGame(true); return; }
+  // LE SERVICE S'ARRÊTE À LA TROISIÈME ÉTOILE ÉTEINTE, qu'elle le soit par le
+  // retard ou par un convoi perdu.
+  if (!ended && (liveDelay() > maxDelay() || trainsPerdus >= 3)) { endGame(true); return; }
   // Fin de service : dès que chaque train a QUITTÉ LE GRIL (itinéraire relâché),
   // le score est figé — inutile d'attendre qu'il ait fini de glisser hors écran.
   // La modale sort donc plus tôt ; le dernier convoi termine sa sortie derrière
@@ -1370,15 +1412,19 @@ function endGame(failed) {
   // ruban praticable. Le repli sert à la démo « limites », hors ruban.
   const seuils = typeof seuilsDeService === "function"
     ? seuilsDeService(STATION) : { trois: 6, deux: 15, une: 30 };
-  const stars = failed ? 0 : (typeof etoilesPour === "function"
+  // CHAQUE CONVOI PERDU ÉTEINT UNE ÉTOILE, au même titre qu'un seuil de retard
+  // franchi : c'est le même prix, dans la même monnaie, et trois erreurs
+  // terminent le service (Vincent, 23 septembre 2026).
+  const parLeRetard = failed ? 0 : (typeof etoilesPour === "function"
     ? etoilesPour(d, seuils)
     : (d < seuils.trois ? 3 : d < seuils.deux ? 2 : d < seuils.une ? 1 : 0));
+  const stars = Math.max(0, parLeRetard - trainsPerdus);
   // Réussite = au moins une étoile (débloque la suite). 0 étoile = échec, qu'on
   // ait terminé sans étoile OU crevé le plafond de retard : dans les deux cas il
   // faut recommencer.
   const win = stars >= 1;
   // Service PARFAIT : gagné, terminé sans le moindre retard cumulé.
-  const perfect = win && !failed && d === 0;
+  const perfect = win && !failed && d === 0 && trainsPerdus === 0;
   // Étoiles et record de CETTE gare AVANT enregistrement : c'est la différence
   // qui dit ce que le service a rapporté, et le record d'avant qui dit si on
   // vient de se dépasser. Mesurés après, ils vaudraient le service du jour.
