@@ -186,6 +186,17 @@ static func lateness(t: Train, now: float) -> float:
 	return now - t.dep - Geo.DEPART_GRACE
 
 
+## LE RETARD SE COMPTE EN MINUTES PLEINES (Vincent, 23 septembre 2026 : « un
+## train qui part avec 0,9 de retard n'est pas comptabilisé comme en retard »).
+## Les dixièmes s'additionnaient : dix convois partis chacun à 0,3 minute
+## faisaient trois minutes, et éteignaient une étoile sans qu'aucun badge ne
+## soit jamais passé au rouge. On compte désormais ce que l'horloge affiche :
+## les minutes révolues depuis l'heure de départ. La tolérance de départ n'a
+## plus d'objet ici — la minute entière l'englobe.
+static func retard_entier(t: Train, now: float) -> float:
+	return max(0.0, floor(now - t.dep))
+
+
 static func slowness(t: Train) -> float:
 	return Enclenchement.FREIGHT_SLOWNESS if t.freight else 1 + (t.cars - 1) * 0.22
 
@@ -277,6 +288,53 @@ func departure_waiting(exit_id: String, moi: Train) -> bool:
 		if oid == exit_id or (conflicts.has(oid) and conflicts[oid].has(exit_id)):
 			return true
 	return false
+
+
+## LE CONVOI EN RETARD PASSE D'ABORD (Vincent, 23 septembre 2026). Deux
+## convois qui visent la même gorge d'aiguillage, c'était l'ordre du tableau
+## qui tranchait. Désormais, celui qui demande un itinéraire CÈDE s'il existe un
+## autre convoi PRÊT — à quai et à son heure, ou en tête de file avec son quai
+## dégagé — plus en retard que lui d'au moins une minute pleine, dont
+## l'itinéraire est le même ou croise le sien.
+##
+## Aucun blocage mutuel possible : l'ordre est strict (retard, puis heure de
+## départ), si bien que le plus en retard des convois prêts ne cède jamais à
+## personne, et les itinéraires actifs finissent toujours par se libérer.
+func cede_au_retard(path_id: String, moi: Train) -> bool:
+	var mien: float = -INF if moi.freight else game_min - moi.dep
+	for o in trains:
+		if o == moi or o.freight or retard_entier(o, game_min) < 1.0:
+			continue
+		if game_min - o.dep <= mien:
+			continue
+		var sien := _itineraire_pret(o)
+		if sien == "":
+			continue
+		if sien == path_id or (conflicts.has(sien) and conflicts[sien].has(path_id)) \
+				or (conflicts.has(path_id) and conflicts[path_id].has(sien)):
+			return true
+	return false
+
+
+## L'itinéraire qu'un convoi prendrait à l'instant si on le lui accordait ; vide
+## s'il ne peut pas encore bouger pour une autre raison que l'enclenchement.
+func _itineraire_pret(o: Train) -> String:
+	if o.state == S_DWELL:
+		if o.wrong_platform or o.platform == null:
+			return ""
+		if game_min < max(o.dep, float(o.actual_arr) + Geo.MIN_DWELL):
+			return ""
+		var oid := _pid_out(o, o.platform)
+		return oid if paths.has(oid) else ""
+	if o.state == S_WAITING:
+		if o.target == null or platform_closed(o.target) or not is_queue_head(o):
+			return ""
+		for x in trains:
+			if x != o and x.platform == o.target and (x.state == S_MOVING_IN \
+					or x.state == S_DWELL or x.state == S_MOVING_THROUGH):
+				return ""
+		return _pid_in(o, o.target)
+	return ""
 
 
 func can_grant(path_id: String) -> bool:
@@ -471,9 +529,8 @@ func clic_quai(pid: Variant) -> String:
 # ------------------------------------------------------------------
 # Boucle de jeu
 # ------------------------------------------------------------------
-## LES DIXIÈMES COMPTENT (10 septembre 2026, js/game.js liveDelay) : le retard
-## brut s'additionne, tolérance de départ déduite par lateness ; c'est le total
-## qui s'arrondit, une fois, dans fin_de_service.
+## LES DIXIÈMES NE COMPTENT PLUS (23 septembre 2026, voir retard_entier) :
+## chaque convoi pèse ses minutes pleines, et le total est donc déjà entier.
 ## LES ÉTOILES ENCORE ALLUMÉES, à cet instant : trois au départ, une de moins
 ## par seuil de retard franchi et une de moins par convoi perdu. C'est le compte
 ## que le bandeau affiche, celui qui décide de la fin du service, et celui que
@@ -513,7 +570,7 @@ func live_delay() -> float:
 	var d: float = total_delay
 	for t in trains:
 		if not t.freight and (t.state != S_MOVING_OUT or t.refoul) and t.state != S_DONE:
-			d += max(0.0, lateness(t, game_min))
+			d += retard_entier(t, game_min)
 	return d
 
 
@@ -557,7 +614,7 @@ func tick(dt: float) -> void:
 							busy = true
 							break
 					var path_id := _pid_in(t, t.target)
-					if not busy and can_grant(path_id):
+					if not busy and can_grant(path_id) and not cede_au_retard(path_id, t):
 						grant(path_id, t)
 						t.entry_path = path_id
 						t.platform = t.target
@@ -573,7 +630,7 @@ func tick(dt: float) -> void:
 					t.progress = stop_p
 					var out_id := _pid_out(t, t.platform)
 					if t.freight and paths.has(out_id) and can_grant(out_id) \
-							and not departure_waiting(out_id, t):
+							and not departure_waiting(out_id, t) and not cede_au_retard(out_id, t):
 						release(t.entry_path)
 						grant(out_id, t)
 						t.exit_path = out_id
@@ -610,7 +667,7 @@ func tick(dt: float) -> void:
 						continue
 					var vers := _sortie_de_secours(t)
 					var sortie: String = "out:%s:%d" % [vers, int(t.platform)] if vers != "" else ""
-					if sortie != "" and can_grant(sortie):
+					if sortie != "" and can_grant(sortie) and not cede_au_retard(sortie, t):
 						grant(sortie, t)
 						t.exit_path = sortie
 						t.exit_to = vers
@@ -633,7 +690,7 @@ func tick(dt: float) -> void:
 				var can_leave: bool = t.freight or game_min >= max(t.dep, float(t.actual_arr) + Geo.MIN_DWELL)
 				if can_leave:
 					var path_id := _pid_out(t, t.platform)
-					if can_grant(path_id):
+					if can_grant(path_id) and not cede_au_retard(path_id, t):
 						t.holding = false
 						grant(path_id, t)
 						t.exit_path = path_id
@@ -645,7 +702,7 @@ func tick(dt: float) -> void:
 						if t.freight:
 							sons.append("depart")
 						else:
-							t.dep_delay = max(0.0, lateness(t, game_min))
+							t.dep_delay = retard_entier(t, game_min)
 							total_delay += t.dep_delay
 							if t.dep_delay == 0.0:
 								on_time_streak += 1

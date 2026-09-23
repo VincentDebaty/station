@@ -453,6 +453,41 @@ function departureWaiting(exitId, self) {
     return oid === exitId || !!(conflicts[oid] && conflicts[oid][exitId]);
   });
 }
+// LE CONVOI EN RETARD PASSE D'ABORD (23 septembre 2026, miroir de
+// jeu/enclenchement.gd cede_au_retard). Celui qui demande un itinéraire cède
+// s'il existe un autre convoi PRÊT — à quai et à son heure, ou en tête de file
+// avec son quai dégagé — plus en retard que lui d'au moins une minute pleine,
+// dont l'itinéraire est le même ou croise le sien. L'ordre est strict : le plus
+// en retard des convois prêts ne cède jamais, donc rien ne se bloque.
+function cedeAuRetard(pathId, self) {
+  const mien = self.freight ? -Infinity : gameMin - self.dep;
+  return trains.some(o => {
+    if (o === self || o.freight || retardEntier(o, gameMin) < 1) return false;
+    if (gameMin - o.dep <= mien) return false;
+    const sien = itinerairePret(o);
+    if (!sien) return false;
+    return sien === pathId || !!(conflicts[sien] && conflicts[sien][pathId])
+      || !!(conflicts[pathId] && conflicts[pathId][sien]);
+  });
+}
+function itinerairePret(o) {
+  if (o.state === "dwell") {
+    if (o.wrongPlatform || o.platform == null) return "";
+    if (gameMin < Math.max(o.dep, o.actualArr + MIN_DWELL)) return "";
+    const oid = "out:" + o.to + ":" + o.platform;
+    return paths[oid] ? oid : "";
+  }
+  if (o.state === "waiting") {
+    if (!o.target || platformClosed(o.target) || !isQueueHead(o)) return "";
+    if (trains.some(x => x !== o && x.platform === o.target &&
+        (x.state === "movingIn" || x.state === "dwell" || x.state === "movingThrough"))) return "";
+    return "in:" + o.from + ":" + o.target;
+  }
+  return "";
+}
+// LE RETARD SE COMPTE EN MINUTES PLEINES (23 septembre 2026) : un convoi parti
+// à 0,9 minute n'est pas en retard, et les dixièmes ne s'additionnent plus.
+function retardEntier(t, now) { return Math.max(0, Math.floor(now - t.dep)); }
 function canGrant(pathId) {
   if (activeRoutes[pathId]) return false; // chemin déjà occupé par un autre train
   for (const aid of Object.keys(activeRoutes)) {
@@ -834,7 +869,7 @@ function liveDelay() {
   let d = totalDelay;
   for (const t of trains)
     if (!t.freight && (t.state !== "movingOut" || t.refoul) && t.state !== "done")
-      d += Math.max(0, lateness(t, gameMin));
+      d += retardEntier(t, gameMin);
   return d;
 }
 function updateDelay() {
@@ -980,7 +1015,7 @@ function tick(dtMin) {
           // cause d'un fret qui n'avait pas encore atteint le quai — il tenait
           // un aiguillage dont il était encore à une demi-gare. La sortie se
           // demande donc à l'arrivée au quai, et pas avant (voir « movingIn »).
-          if (!busy && canGrant(pathId)) {
+          if (!busy && canGrant(pathId) && !cedeAuRetard(pathId, t)) {
             if (t.pendingEl) { t.pendingEl.remove(); t.pendingEl = null; }
             grant(pathId, t);
             t.entryPath = pathId;
@@ -1011,7 +1046,7 @@ function tick(dtMin) {
           // s'arrête au quai, au rouge, et repartira dès qu'elle se dégage
           // (le « dwell » ordinaire s'en charge — il n'a pas d'heure à tenir).
           const outId = "out:" + t.to + ":" + t.platform;
-          if (t.freight && paths[outId] && canGrant(outId) && !departureWaiting(outId, t)) {
+          if (t.freight && paths[outId] && canGrant(outId) && !departureWaiting(outId, t) && !cedeAuRetard(outId, t)) {
             release(t.entryPath);
             grant(outId, t);
             t.exitPath = outId;
@@ -1074,7 +1109,7 @@ function tick(dtMin) {
           // n'importe quel autre, portes ouvertes, et s'en va ensuite.
           if (gameMin < t.actualArr + MIN_DWELL) break;
           const sortie = sortieDeSecours(t);
-          if (sortie && canGrant(sortie)) {
+          if (sortie && canGrant(sortie) && !cedeAuRetard(sortie, t)) {
             grant(sortie, t);
             t.exitPath = sortie;
             // la voie de départ à prendre est celle de CE portail-là : DEPART
@@ -1106,7 +1141,7 @@ function tick(dtMin) {
         const canLeave = t.freight || gameMin >= Math.max(t.dep, t.actualArr + MIN_DWELL);
         if (canLeave) {
           const pathId = "out:" + t.to + ":" + t.platform;
-          if (canGrant(pathId)) {
+          if (canGrant(pathId) && !cedeAuRetard(pathId, t)) {
             t.holding = false;
             grant(pathId, t);
             t.exitPath = pathId;
@@ -1123,10 +1158,9 @@ function tick(dtMin) {
             if (t.freight) {
               SND.depart();
             } else {
-              t.depDelay = Math.max(0, lateness(t, gameMin));
-              // Le retard brut s'encaisse au dixième (voir liveDelay) : la
-              // tolérance de départ est déjà déduite par lateness, et c'est le
-              // total du service qui s'arrondit, au relevé.
+              // en minutes pleines (voir retardEntier) : 0,9 minute n'est pas
+              // un retard
+              t.depDelay = retardEntier(t, gameMin);
               totalDelay += t.depDelay;
               // Juice : un départ À L'HEURE (sous la tolérance de départ, donc
               // à zéro) allonge la série et déclenche un éclat vert + un

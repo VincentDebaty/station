@@ -536,3 +536,12 @@ le voyageur peut changer d'encre sans partir.
   DOUX (11 services à trois étoiles contre 5, retard médian de 6 à 4 min, aucun
   service qui perde une étoile), parce que le vrai coût du refoulement n'était
   pas sa sanction mais l'embouteillage qu'il provoquait.
+- **23 septembre 2026, la nuit** — quatre remarques de Vincent sur le jeu posé.
+  Le retard se compte en MINUTES PLEINES (`retard_entier`) : un convoi parti à
+  0,9 minute n'est plus en retard, et les dixièmes ne s'additionnent plus. Le
+  convoi en retard passe d'abord : un itinéraire qui croise celui d'un convoi
+  prêt et plus en retard d'au moins une minute attend (`cede_au_retard`, dans
+  les deux moteurs). Les voyageurs se voient dans le couloir entre les quais et
+  disparaissent sous chacun d'eux. La pastille de la tête de file passe devant
+  celles qui la suivent. Mesuré sur 33 services à graines fixes : le retard
+  baisse presque partout, une étoile de plus sur 4 services, aucun n'en perd.

@@ -619,21 +619,35 @@ func _longueur(pts: PackedVector2Array) -> float:
 	return d
 
 
-## Où l'on en est sur un chemin, et si l'on est sous terre : le couloir est le
-## segment vertical à l'aplomb de l'escalier, sous le premier quai. Dans la
-## bouche, au-dessus des quais, on est encore à l'air libre.
+## Où l'on en est sur un chemin, et si l'on est caché : sur le segment vertical
+## du couloir, sous la pilule d'un quai. Dans la bouche et dans les intervalles,
+## le couloir se voit, et celui qui y marche aussi.
 func _point_du_chemin(pts: PackedVector2Array, p: float) -> Dictionary:
 	var total := _longueur(pts)
 	var reste: float = clampf(p, 0.0, 1.0) * total
-	var haut := _tunnel_bouche() + TUNNEL_HAUT
 	for i in range(1, pts.size()):
 		var seg: float = pts[i - 1].distance_to(pts[i])
 		if reste <= seg or i == pts.size() - 1:
 			var pos: Vector2 = pts[i - 1].lerp(pts[i], clampf(reste / maxf(0.001, seg), 0.0, 1.0))
 			var vertical: bool = absf(pts[i].x - pts[i - 1].x) < 1.0 and seg > 1.0
-			return {"pos": pos, "sous": vertical and pos.y > haut}
+			return {"pos": pos, "sous": vertical and _sous_un_quai(pos.y)}
 		reste -= seg
 	return {"pos": pts[pts.size() - 1], "sous": false}
+
+
+## SOUS UN QUAI, OU DANS LE COULOIR À CIEL OUVERT (Vincent, 23 septembre 2026 :
+## « on peut voir les passagers se déplacer dans le tunnel, mais pas quand ils
+## passent sous les quais »). On cachait tout le trajet vertical, intervalles
+## compris : le couloir dessiné entre les quais restait vide alors qu'on y
+## marchait. Le voyageur se voit donc dans chaque intervalle, disparaît sous la
+## pilule du quai, et ressort par sa trappe, juste au-dessus de la bordure.
+func _sous_un_quai(y: float) -> bool:
+	for q in G["platforms"]:
+		var cy := float(q["cy"])
+		var trappe := cy + Geo.PLAT_H / 2.0 - JAUGE_BANDE - 4.5
+		if y > cy - Geo.PLAT_H / 2.0 and y < trappe:
+			return true
+	return false
 
 
 ## UNE ÉTOILE QUI S'ÉTEINT S'ENTEND ET SE VOIT. C'est le seul moment où le jeu
@@ -1371,10 +1385,8 @@ func _dessiner_correspondances() -> void:
 		var e: Dictionary = _point_du_chemin(u["chemin"], float(v["p"]))
 		# SOUS LES QUAIS, ON NE SE VOIT PAS (Vincent, 23 septembre 2026 : « dans
 		# le tunnel il ne faut pas voir les passagers passer sous les voies »).
-		# Ils y passaient en demi-teinte, pour qu'on les suive des yeux d'un bout
-		# à l'autre — mais un couloir souterrain ne se regarde pas par-dessus. Le
-		# voyageur entre par un escalier et ressort par l'autre ; entre les deux,
-		# la gare ne le montre pas.
+		# Mais le couloir, lui, se voit entre les quais, et ceux qui y marchent
+		# aussi : seule la pilule d'un quai les cache (voir _sous_un_quai).
 		if e["sous"]:
 			continue
 		var pos: Vector2 = e["pos"]
@@ -2313,8 +2325,30 @@ func _cadran(centre: Vector2, col: Color, k: float = 1.0) -> void:
 ## superposition est donc stable elle aussi.
 func _dessiner_badges(t: float) -> void:
 	var clign := 0.22 + 0.78 * (0.5 + 0.5 * sin(t * TAU / 0.9))   # badge-blink
+	# LA TÊTE DE FILE PASSE DEVANT (Vincent, 23 septembre 2026 : « la puce avec
+	# l'heure doit être au premier plan quand il s'agit du premier train dans
+	# la file »). Le tri par heure de départ ne le garantissait pas : dans une
+	# file, celui de derrière peut partir plus tôt que celui de devant, et sa
+	# pastille recouvrait la seule qui commande un geste. On trie donc d'abord
+	# par RANG DANS LA FILE, du dernier au premier — la tête et les convois qui
+	# ne sont pas en file partagent le rang zéro —, puis par heure de départ.
+	var rang: Dictionary = {}
+	for tr in enc.trains:
+		if tr.state != Enc.S_APPROACHING and tr.state != Enc.S_WAITING:
+			continue
+		var n := 0
+		for o in enc.trains:
+			if o != tr and o.from == tr.from and o.queued_at < tr.queued_at \
+					and (o.state == Enc.S_APPROACHING or o.state == Enc.S_WAITING):
+				n += 1
+		rang[tr.id] = n
 	var ordre: Array = enc.trains.duplicate()
-	ordre.sort_custom(func(a, b): return a.dep > b.dep)
+	ordre.sort_custom(func(a, b):
+		var ra: int = int(rang.get(a.id, 0))
+		var rb: int = int(rang.get(b.id, 0))
+		if ra != rb:
+			return ra > rb
+		return a.dep > b.dep)
 	for tr in ordre:
 		if not positions.has(tr.id):
 			continue
@@ -2326,9 +2360,11 @@ func _dessiner_badges(t: float) -> void:
 		if not montre:
 			continue
 		var late: float = Enc.lateness(tr, enc.game_min)
-		# la pastille ARRONDIT à la minute — rouge dès 0,5 min, jamais de dixièmes
-		# qui défilent ; ils comptent quand même, dans le compteur (js/render.js)
-		var late_min: int = int(floor(max(0.0, late) + 0.5))
+		# LA PASTILLE DIT LE RETARD QUI COMPTE : les minutes PLEINES depuis
+		# l'heure de départ, celles que le compteur additionne (23 septembre
+		# 2026). Elle arrondissait, rouge dès 0,5 min, quand le retard se
+		# comptait au dixième.
+		var late_min: int = int(Enc.retard_entier(tr, enc.game_min))
 		var en_retard: bool = late_min >= 1
 		var txt: String = ("+%d min" % late_min) if en_retard else fmt(tr.dep)
 		var col: Color = Sty.ROUGE if en_retard else (Sty.AMBRE if late > -3 else Sty.VERT)
