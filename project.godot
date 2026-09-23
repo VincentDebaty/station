@@ -10,7 +10,7 @@ config_version=5
 
 [application]
 
-config/name="Station"
+config/name="Station 7"
 config/description="Jeu d'aiguillage ferroviaire. Le poste d'aiguillage."
 run/main_scene="res://jeu/app.tscn"
 config/features=PackedStringArray("4.7", "Mobile")

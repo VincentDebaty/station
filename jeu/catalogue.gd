@@ -74,7 +74,7 @@ func _label(texte: String, taille: int, couleur: Color) -> Label:
 func _titre() -> Control:
 	var boite := VBoxContainer.new()
 	boite.add_theme_constant_override("separation", 2)
-	boite.add_child(_label("STATION", 13, MUET))
+	boite.add_child(_label("STATION 7", 13, MUET))
 	boite.add_child(_label("Le catalogue est chargé", 30, TEXTE))
 	return boite
 
