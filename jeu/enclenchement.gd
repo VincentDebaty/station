@@ -69,6 +69,13 @@ class Train:
 	var refoul: bool = false
 	## PERDU : parti d'un mauvais quai, sans ses voyageurs et vers ailleurs.
 	var perdu: bool = false
+	## LE PORTAIL PAR LEQUEL IL SORT, quand ce n'est pas sa destination — le cas
+	## d'un convoi perdu. Vide sinon : on prend alors `to`. Le prototype web
+	## portait déjà ce champ (`exitTo`) ; le portage l'avait laissé tomber, et
+	## la queue du convoi se dessinait sur la voie de départ d'une AUTRE ville,
+	## à l'autre bout du plan — « gros bug d'affichage » (Vincent, 23 septembre
+	## 2026).
+	var exit_to: String = ""
 	var stop_s: float = 0.0
 	var start_s: float = 0.0
 	var back_s: float = 0.0
@@ -467,6 +474,11 @@ func clic_quai(pid: Variant) -> String:
 ## LES DIXIÈMES COMPTENT (10 septembre 2026, js/game.js liveDelay) : le retard
 ## brut s'additionne, tolérance de départ déduite par lateness ; c'est le total
 ## qui s'arrondit, une fois, dans fin_de_service.
+## LE PORTAIL PAR LEQUEL UN CONVOI S'EN VA : le sien, sauf s'il est perdu.
+func _portail_de_sortie(t: Train) -> String:
+	return t.exit_to if t.exit_to != "" else t.to
+
+
 ## LA SORTIE D'UN CONVOI MAL AIGUILLÉ : n'importe quel portail que son quai
 ## dessert, sauf le sien. On préfère CONTINUER — un portail de l'autre côté —
 ## plutôt que de ressortir par où l'on est entré : c'est ce qu'on voit faire à
@@ -477,13 +489,12 @@ func _sortie_de_secours(t: Train) -> String:
 	for p in portals:
 		if p == t.to:
 			continue
-		var id: String = "out:%s:%d" % [p, int(t.platform)]
-		if not paths.has(id):
+		if not paths.has("out:%s:%d" % [p, int(t.platform)]):
 			continue
 		if portals[p]["side"] != portals[t.from]["side"]:
-			return id
+			return p
 		if repli == "":
-			repli = id
+			repli = p
 	return repli
 
 
@@ -586,16 +597,18 @@ func tick(dt: float) -> void:
 					# longue en demande une demie.
 					if game_min < float(t.actual_arr) + Geo.MIN_DWELL:
 						continue
-					var sortie := _sortie_de_secours(t)
+					var vers := _sortie_de_secours(t)
+					var sortie: String = "out:%s:%d" % [vers, int(t.platform)] if vers != "" else ""
 					if sortie != "" and can_grant(sortie):
 						grant(sortie, t)
 						t.exit_path = sortie
+						t.exit_to = vers
 						t.perdu = true
 						t.state = S_MOVING_OUT
 						t.progress = 0.0
 						t.back_s = 0.0
 						trains_perdus += 1
-					elif sortie == "":
+					elif vers == "":
 						# aucun quai n'est à ce point fermé dans les 401 fiches,
 						# mais si l'on en écrivait un, le refoulement reste le
 						# seul recours
@@ -657,7 +670,7 @@ func tick(dt: float) -> void:
 				var head_s: float = (1 - eff_p) * (path["len"] + t.back_s)
 				if head_s + tail < -Geo.PORTAL_CLEAR and active_routes.get(t.exit_path) == t:
 					release(t.exit_path)
-				var off_map: bool = head_s + tail < -(depart[t.to]["len"] + 20)
+				var off_map: bool = head_s + tail < -(depart[_portail_de_sortie(t)]["len"] + 20)
 				if t.progress >= gone_p or off_map:
 					t.state = S_DONE
 			S_MOVING_THROUGH:

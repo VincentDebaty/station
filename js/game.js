@@ -1067,6 +1067,9 @@ function tick(dtMin) {
           if (sortie && canGrant(sortie)) {
             grant(sortie, t);
             t.exitPath = sortie;
+            // la voie de départ à prendre est celle de CE portail-là : DEPART
+            // est lu par exitTo partout où le convoi sort de l'écran
+            t.exitTo = sortie.split(":")[1];
             t.perdu = true;
             t.state = "movingOut";
             t.progress = 0;

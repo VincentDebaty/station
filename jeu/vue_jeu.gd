@@ -1548,7 +1548,10 @@ func _positions_de(t) -> Array:
 				out.append(Geo.path_point(path, s) if s >= 0 else Geo.path_point(ap, ap["len"] + s))
 		Enc.S_MOVING_OUT:
 			var path: Dictionary = enc.paths[t.exit_path]
-			var dep: Dictionary = enc.depart[t.to]
+			# LA VOIE DE DÉPART EST CELLE DU PORTAIL PAR LEQUEL IL SORT, pas celle
+			# de sa destination : un convoi perdu s'en va ailleurs, et sa queue
+			# se dessinait sur une voie à l'autre bout du plan.
+			var dep: Dictionary = enc.depart[t.exit_to if t.exit_to != "" else t.to]
 			var tail: float = (t.cars - 1) * cs
 			var gone_p: float = 1 + (tail + Geo.EXIT_RUN) / path["len"]
 			var eff_p: float = Enc.ease_run(t.progress / gone_p, 0.16, 0) * gone_p
