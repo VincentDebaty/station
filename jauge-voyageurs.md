@@ -404,6 +404,14 @@ deux — on ne vide pas une voiture d'un bloc. Le décalage coûte au plus 0,4
 minute, soit moins que ce qui reste de la marge de trois minutes qui garantit
 les correspondances.
 
+**On descend d'abord, on monte ensuite** (même jour) : « à l'arrivée du train,
+les passagers qui étaient dans le train sortent en premier et dès qu'ils sont
+tous sortis, les passagers sur le quai entrent dans le train ». C'est la règle de
+tous les quais du monde, et les deux flux se croisaient. Le convoi n'embarque
+donc plus tant qu'il lui reste quelqu'un d'assis — au plus le temps de la file
+de descente, quatre dixièmes de minute, sur un arrêt qui en dure deux. Mesuré à
+Gand et à Landen, graine 3 : un point d'écart sur Landen, rien sur Gand.
+
 Mesuré, 21 services : de **84 à 184 voyageurs** par service, embarquement
 médian 81 %, retard médian 5,8 min, étoiles 5 · 8 · 5 · 3.
 

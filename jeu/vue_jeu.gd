@@ -190,7 +190,6 @@ var mode_jauge: bool = OS.get_environment("STATION_JAUGE") != "0"   # la branche
 var jauge_parti: Dictionary = {}          # id -> le convoi est parti (et a emporté ses unités)
 var jauge_eclats: Array = []              # les « +X » en vol : {id, pts, t0, pos}
 var jauge_unites: Array = []              # les voyageurs : {dest, quai, train (id ou ""), rang, montee}
-var jauge_affecte: Dictionary = {}        # id -> le convoi a déjà pris ce qu'il pouvait à son quai
 var jauge_vols: Array = []                # les voyageurs en vol vers leur wagon, recalculés à chaque image
 var jauge_ordre: Dictionary = {}          # quai -> ses unités, dans un ordre tiré au sort une fois
 var jauge_descendu: Dictionary = {}       # id -> son apport a été débarqué
@@ -641,7 +640,6 @@ func _marcheurs() -> Array:
 func _preparer_jauge() -> void:
 	jauge_parti = {}
 	jauge_eclats = []
-	jauge_affecte = {}
 	jauge_descendu = {}
 	jauge_bord = {}
 	jauge_pic = 0
@@ -892,8 +890,15 @@ func _affecter_unites() -> void:
 	for tr in enc.trains:
 		if not _embarque(tr):
 			continue
-		var premiere := not jauge_affecte.has(tr.id)
-		jauge_affecte[tr.id] = true
+		# ON DESCEND D'ABORD, ON MONTE ENSUITE (Vincent, 23 septembre 2026) :
+		# « à l'arrivée du train, les passagers qui étaient dans le train sortent
+		# en premier et dès qu'ils sont tous sortis, les passagers sur le quai
+		# entrent dans le train ». C'est la règle de tous les quais du monde, et
+		# les deux flux se croisaient. Le convoi n'embarque donc pas tant qu'il
+		# lui reste quelqu'un d'assis — au plus le temps de la file de descente,
+		# quatre dixièmes de minute, sur un arrêt qui en dure deux.
+		if _descente_en_cours(tr):
+			continue
 		var deja: Array = _unites_prises(tr.id)
 		var place: int = _unites_de(tr) - deja.size()
 		if place <= 0:
@@ -1003,6 +1008,16 @@ func _wagons_occupes(tr) -> Dictionary:
 		if parti or _avancement(u, tr) >= 1.0:
 			occ[int(u.get("rang", 0))] = true
 	return occ
+
+
+## Reste-t-il quelqu'un à descendre de ce convoi ? Celui qui attend son tour
+## dans la file est encore assis : il n'est pas sorti.
+func _descente_en_cours(tr) -> bool:
+	for u in jauge_unites:
+		if u.get("source", "") == tr.id and not u["montee"] \
+				and enc.game_min < float(u.get("marche", INF)):
+			return true
+	return false
 
 
 ## Reste-t-il, quelque part dans la gare, un voyageur pour cette destination
