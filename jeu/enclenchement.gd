@@ -474,6 +474,17 @@ func clic_quai(pid: Variant) -> String:
 ## LES DIXIÈMES COMPTENT (10 septembre 2026, js/game.js liveDelay) : le retard
 ## brut s'additionne, tolérance de départ déduite par lateness ; c'est le total
 ## qui s'arrondit, une fois, dans fin_de_service.
+## LES ÉTOILES ENCORE ALLUMÉES, à cet instant : trois au départ, une de moins
+## par seuil de retard franchi et une de moins par convoi perdu. C'est le compte
+## que le bandeau affiche, celui qui décide de la fin du service, et celui que
+## `fin_de_service` enregistre — un seul endroit pour les trois.
+func etoiles_vives() -> int:
+	var d := live_delay()
+	var s := seuils_de_service()
+	var par_le_retard: int = 3 if d < float(s["trois"]) else (2 if d < float(s["deux"]) else (1 if d < float(s["une"]) else 0))
+	return max(0, par_le_retard - trains_perdus)
+
+
 ## LE PORTAIL PAR LEQUEL UN CONVOI S'EN VA : le sien, sauf s'il est perdu.
 func _portail_de_sortie(t: Train) -> String:
 	return t.exit_to if t.exit_to != "" else t.to
@@ -694,8 +705,13 @@ func tick(dt: float) -> void:
 						t.platform = null
 					t.state = S_DONE
 	# LE SERVICE S'ARRÊTE À LA TROISIÈME ÉTOILE ÉTEINTE, qu'elle le soit par le
-	# retard ou par un convoi perdu.
-	if not ended and (live_delay() > max_delay() or trains_perdus >= 3):
+	# retard, par un convoi perdu, ou par les deux. On testait les deux causes
+	# SÉPARÉMENT — plafond de retard d'un côté, trois convois perdus de l'autre
+	# — et deux pertes plus un retard moyen faisaient zéro étoile sans rien
+	# déclencher : « je n'avais plus d'étoile et j'ai pu continuer » (Vincent,
+	# 23 septembre 2026). C'est le COMPTE qui décide, puisque c'est lui qu'on
+	# montre.
+	if not ended and (etoiles_vives() <= 0 or live_delay() > max_delay()):
 		fin_de_service(true)
 		return
 	if not ended:

@@ -820,6 +820,16 @@ function sortieDeSecours(t) {
 // et le joueur le voit au moment où il le paie.
 let trainsPerdus = 0;
 
+// LES ÉTOILES ENCORE ALLUMÉES, à cet instant : trois au départ, une de moins
+// par seuil de retard franchi et une de moins par convoi perdu.
+function etoilesVives() {
+  const d = liveDelay();
+  const s = typeof seuilsDeService === "function"
+    ? seuilsDeService(STATION) : { trois: 6, deux: 15, une: 30 };
+  const parLeRetard = d < s.trois ? 3 : d < s.deux ? 2 : d < s.une ? 1 : 0;
+  return Math.max(0, parLeRetard - trainsPerdus);
+}
+
 function liveDelay() {
   let d = totalDelay;
   for (const t of trains)
@@ -1343,8 +1353,10 @@ function tick(dtMin) {
 
   // retard plafond dépassé : on arrête tout, service interrompu
   // LE SERVICE S'ARRÊTE À LA TROISIÈME ÉTOILE ÉTEINTE, qu'elle le soit par le
-  // retard ou par un convoi perdu.
-  if (!ended && (liveDelay() > maxDelay() || trainsPerdus >= 3)) { endGame(true); return; }
+  // retard, par un convoi perdu, ou par les deux. On testait les deux causes
+  // séparément, et deux pertes plus un retard moyen faisaient zéro étoile sans
+  // rien déclencher : c'est le COMPTE qui décide, puisque c'est lui qu'on montre.
+  if (!ended && (etoilesVives() <= 0 || liveDelay() > maxDelay())) { endGame(true); return; }
   // Fin de service : dès que chaque train a QUITTÉ LE GRIL (itinéraire relâché),
   // le score est figé — inutile d'attendre qu'il ait fini de glisser hors écran.
   // La modale sort donc plus tôt ; le dernier convoi termine sa sortie derrière

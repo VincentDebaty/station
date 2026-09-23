@@ -1145,11 +1145,10 @@ func _points_live() -> float:
 ## barème que l'enclenchement applique à la fin ; on ne fait que le lire en
 ## cours de route, pour que le joueur voie partir ce qu'il perd.
 func _etoiles_vives() -> int:
-	var d := enc.live_delay()
-	var s: Dictionary = enc.seuils_de_service()
-	var par_le_retard: int = 3 if d < float(s["trois"]) else (2 if d < float(s["deux"]) else (1 if d < float(s["une"]) else 0))
-	# et une de moins par convoi perdu : le mauvais quai se paie en étoile
-	return maxi(0, par_le_retard - enc.trains_perdus)
+	# le compte est celui de l'enclenchement, pas une copie : c'est lui qui
+	# décide de la fin du service, et deux barèmes finissent toujours par se
+	# désaccorder
+	return enc.etoiles_vives()
 
 
 ## CE QUI RESTE DE L'ÉTOILE EN DANGER, de 1 à 0 (Vincent, 23 septembre 2026 :
