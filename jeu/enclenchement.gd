@@ -575,6 +575,17 @@ func tick(dt: float) -> void:
 					# et le convoi lui roulait dessus. Il repart donc vers une
 					# AUTRE destination que la sienne, et ses voyageurs restent
 					# à quai.
+					# IL LAISSE DESCENDRE AVANT DE PARTIR (Vincent, 23 septembre
+					# 2026 : « le train part trop vite quand on se trompe ; s'il
+					# y a des passagers à l'intérieur, il faut au moins qu'ils
+					# prennent le temps de descendre »). L'enclenchement ne sait
+					# rien des voyageurs — c'est la vue qui les compte — mais il
+					# sait ce qu'est un arrêt : le convoi perdu tient donc son
+					# ARRÊT MINIMUM comme n'importe quel autre, portes ouvertes,
+					# et s'en va ensuite. Deux minutes, là où la descente la plus
+					# longue en demande une demie.
+					if game_min < float(t.actual_arr) + Geo.MIN_DWELL:
+						continue
 					var sortie := _sortie_de_secours(t)
 					if sortie != "" and can_grant(sortie):
 						grant(sortie, t)

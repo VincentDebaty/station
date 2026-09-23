@@ -1370,15 +1370,18 @@ func _dessiner_correspondances() -> void:
 	for v in _marcheurs():
 		var u: Dictionary = v["u"]
 		var e: Dictionary = _point_du_chemin(u["chemin"], float(v["p"]))
+		# SOUS LES QUAIS, ON NE SE VOIT PAS (Vincent, 23 septembre 2026 : « dans
+		# le tunnel il ne faut pas voir les passagers passer sous les voies »).
+		# Ils y passaient en demi-teinte, pour qu'on les suive des yeux d'un bout
+		# à l'autre — mais un couloir souterrain ne se regarde pas par-dessus. Le
+		# voyageur entre par un escalier et ressort par l'autre ; entre les deux,
+		# la gare ne le montre pas.
+		if e["sous"]:
+			continue
 		var pos: Vector2 = e["pos"]
-		# SOUS LES QUAIS, ON SE VOIT MOINS. Le voyageur ne disparaît pas — on le
-		# suit des yeux d'un bout à l'autre de sa traversée —, mais il passe en
-		# demi-teinte tant qu'il est dans le couloir : c'est ce qui dit qu'il est
-		# dessous, et non sur les voies.
-		var a: float = 0.45 if e["sous"] else 1.0
 		var col := Color(String(G["dest_color"][u["dest"]]))
-		draw_circle(pos, r_u, Color(col, a))
-		draw_arc(pos, r_u, 0.0, TAU, 16, Color(0, 0, 0, 0.45 * a), max(1.0, 0.9 * k), true)
+		draw_circle(pos, r_u, col)
+		draw_arc(pos, r_u, 0.0, TAU, 16, Color(0, 0, 0, 0.45), max(1.0, 0.9 * k), true)
 
 
 ## LE « +X » : au-dessus de la machine du convoi qui vient d'emporter ses

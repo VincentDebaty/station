@@ -1056,6 +1056,13 @@ function tick(dtMin) {
           // rien ne la protégeait, et le convoi lui roulait dessus. Il repart
           // donc vers une AUTRE destination que la sienne, ce qui est ce que
           // ferait un vrai train mal aiguillé, et ses voyageurs restent à quai.
+          // IL LAISSE DESCENDRE AVANT DE PARTIR (Vincent, 23 septembre 2026 :
+          // « le train part trop vite quand on se trompe ; s'il y a des
+          // passagers à l'intérieur, il faut au moins qu'ils prennent le temps
+          // de descendre »). Le moteur ne sait rien des voyageurs, mais il sait
+          // ce qu'est un arrêt : le convoi perdu tient son ARRÊT MINIMUM comme
+          // n'importe quel autre, portes ouvertes, et s'en va ensuite.
+          if (gameMin < t.actualArr + MIN_DWELL) break;
           const sortie = sortieDeSecours(t);
           if (sortie && canGrant(sortie)) {
             grant(sortie, t);
