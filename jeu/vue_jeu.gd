@@ -79,12 +79,28 @@ const VOILE := Color(0.110, 0.086, 0.063, 0.86)
 ## restent calculées pour le ruban, les grades et les pièces — dérivées de la
 ## jauge — pour que rien en aval ne bouge tant que l'idée n'est pas validée.
 const JAUGE_POINTS_PAR_WAGON := 1
-## Les secondes de JEU que coûte un point de retard : soixante, soit un point
-## par minute de retard CUMULÉE sur les convois (`Enclenchement.live_delay`).
-## Le compte était à quinze — « le jeu paraît plus dur qu'avant » (Vincent, 20
-## septembre 2026) — et le commentaire l'a dit quatre fois plus cher qu'il ne
-## l'était jusqu'au 22 septembre.
-const JAUGE_SECONDES_PAR_POINT := 60.0
+## QUATRE VOYAGEURS PAR WAGON (Vincent, 23 septembre 2026 : « les passagers
+## pourraient être plus nombreux ; le but est de mettre plus d'animation dans
+## la gare »). Un wagon en portait un, et la gare était vide entre deux
+## convois.
+##
+## LE BARÈME SUIT LE FACTEUR, SINON LE JEU CHANGE SANS QU'ON L'AIT DÉCIDÉ : une
+## minute de retard coûte désormais quatre points (JAUGE_SECONDES_PAR_POINT
+## repasse à quinze, sa valeur d'origine), et les seuils d'étoiles sont
+## multipliés d'autant. Un wagon laissé derrière vaut toujours exactement ce
+## qu'il valait hier, et une minute de retard aussi : tout est quadruplé, donc
+## rien ne bouge — seuls les nombres sont plus gros, ce qui ne nuit pas.
+const JAUGE_PAR_WAGON := 4
+## Les secondes de JEU que coûte un point de retard : quinze, soit quatre
+## points par minute de retard CUMULÉE sur les convois
+## (`Enclenchement.live_delay`), c'est-à-dire UN WAGON de voyageurs la minute.
+##
+## C'est la valeur d'origine du proto, et elle avait été jugée trop dure le 20
+## septembre — « le jeu paraît plus dur qu'avant » — parce qu'un wagon ne
+## valait alors qu'un point : la minute coûtait quatre wagons. Depuis que le
+## wagon en vaut quatre, quinze secondes rendent exactement l'équilibre du 22
+## septembre, où la minute valait un wagon.
+const JAUGE_SECONDES_PAR_POINT := 15.0
 ## LES VOYAGEURS MARCHENT À LA VITESSE D'UN TRAIN DE CINQ WAGONS (Vincent, 20
 ## septembre 2026) : la vitesse de base des convois, 700 unités en TRAVEL
 ## minutes, ralentie comme un convoi de cinq voitures. Tous partent à l'arrêt
@@ -445,7 +461,7 @@ func _enregistrer_fin() -> void:
 ## unité par voiture machine comprise, et un train à un wagon embarquait deux
 ## voyageurs — le second montait dans le même wagon (Vincent, 20 septembre).
 func _unites_de(tr) -> int:
-	return 0 if tr.freight or tr.hint == null else max(0, int(tr.cars) - 1)
+	return 0 if tr.freight or tr.hint == null else JAUGE_PAR_WAGON * max(0, int(tr.cars) - 1)
 
 
 ## Les convois partis, notés une fois pour toutes à l'instant où ils quittent
@@ -491,7 +507,7 @@ func _noter_les_descentes() -> void:
 		for u in jauge_unites:
 			if u.get("source", "") != tr.id or u.get("descente") != null:
 				continue
-			var i: int = mini(int(u.get("source_rang", 0)) + 1, maxi(0, cases.size() - 1))
+			var i: int = mini(_case_de(int(u.get("source_rang", 0))), maxi(0, cases.size() - 1))
 			var de := Vector2(float(cases[i]["x"]), float(cases[i]["y"])) if not cases.is_empty() \
 				else Vector2(Geo.PLAT_MID, float(u["pos"].y))
 			var chemin := _chemin_vers(de, u["pos"])
@@ -704,6 +720,14 @@ func _construire_unites() -> void:
 			continue
 		var yc: float = float(q["cy"]) + Geo.PLAT_H / 2.0 - JAUGE_BANDE / 2.0
 		var x: float = Geo.PLAT_X1 + 12.0
+		# LE RAYON D'UNE PASTILLE SUIT LA DENSITÉ DU QUAI. À quatre voyageurs
+		# par wagon, un quai de Clapham porte vingt-deux places sur deux cent
+		# trente-huit unités : à cinq de rayon elles se chevauchaient. Chacun
+		# emporte donc le sien, mesuré sur le pas de son quai — les gares
+		# tranquilles gardent de grosses pastilles, les gares chargées en ont
+		# de petites, ce qui est aussi ce qu'on veut voir.
+		var pas_quai: float = large / float(n_tot)
+		var r_quai: float = clampf(pas_quai * 0.34, 2.0, minf(3.4 * Sty.UIK, 5.0))
 		for d in couleurs:
 			var groupe: Array = paquets[d]
 			var w: float = large * float(groupe.size()) / float(n_tot)
@@ -721,6 +745,7 @@ func _construire_unites() -> void:
 				# tanguaient pour rien.
 				var gx: float = x + (float(j) + 0.5 + hasard.randf_range(-0.35, 0.35)) * pas_g
 				u["pos"] = Vector2(gx, yc)
+				u["r"] = r_quai
 			x += w
 	# ET SEULEMENT MAINTENANT LES CHEMINS D'ENTRÉE : ils vont à une place, et
 	# la place vient d'être posée. Tracés plus haut, ils menaient tous à
@@ -773,7 +798,7 @@ func _tirer_les_correspondances(hasard: RandomNumberGenerator) -> void:
 		arr[tr.id] = tr.heure_arrivee()
 		venant[tr.id] = tr.from
 		if not tr.freight:
-			reste[tr.id] = maxi(0, int(tr.cars) - 1)
+			reste[tr.id] = JAUGE_PAR_WAGON * maxi(0, int(tr.cars) - 1)
 			convois.append(tr.id)
 	for u in jauge_unites:
 		if hasard.randf() > JAUGE_PART_CORRESPONDANCE:
@@ -857,15 +882,17 @@ func _affecter_unites() -> void:
 		for u in deja:
 			occupes[int(u.get("rang", 0))] = true
 		var cases: Array = positions.get(tr.id, [])
-		var wagons: Array = []
-		for i in range(1, cases.size()):
-			if not occupes.has(i - 1):
-				wagons.append({"i": i, "x": float(cases[i]["x"])})
-		wagons.sort_custom(func(a, b): return a["x"] < b["x"])
+		var places: Array = []
+		for r in range(_unites_de(tr)):
+			var i: int = _case_de(r)
+			if occupes.has(r) or i >= cases.size():
+				continue
+			places.append({"r": r, "x": float(cases[i]["x"])})
+		places.sort_custom(func(a, b): return a["x"] < b["x"])
 		candidats.sort_custom(func(a, b): return Vector2(a["pos"]).x < Vector2(b["pos"]).x)
 		for j in range(candidats.size()):
 			candidats[j]["train"] = tr.id
-			candidats[j]["rang"] = (int(wagons[j]["i"]) - 1) if j < wagons.size() else j
+			candidats[j]["rang"] = int(places[j]["r"]) if j < places.size() else j
 		# L'EMBARQUEMENT SONNE, une fois par convoi : une note grave quand il
 		# prend du monde. Le « dommage » d'un convoi qui part à vide se joue au
 		# départ, puisque c'est là seulement qu'on sait qu'il n'a pris personne.
@@ -879,8 +906,29 @@ func _wagon_de(u: Dictionary, tr) -> Vector2:
 	var cases: Array = positions.get(tr.id, [])
 	if cases.is_empty():
 		return Vector2(u["pos"])
-	var i: int = mini(int(u.get("rang", 0)) + 1, cases.size() - 1)
-	return Vector2(float(cases[i]["x"]), float(cases[i]["y"]))
+	var i: int = mini(_case_de(int(u.get("rang", 0))), cases.size() - 1)
+	var ang := deg_to_rad(float(cases[i].get("ang", 0.0)))
+	return Vector2(float(cases[i]["x"]), float(cases[i]["y"])) + _coin_de(int(u.get("rang", 0)), ang)
+
+
+## LA CASE D'UNE PLACE : quatre places par wagon, la machine n'en porte aucune.
+func _case_de(rang: int) -> int:
+	return int(rang / JAUGE_PAR_WAGON) + 1
+
+
+## OÙ L'ON S'ASSIED DANS SON WAGON : les quatre places d'une caisse, en carré.
+## Un seul point au milieu ne disait plus rien quand ils sont quatre.
+##
+## LE CARRÉ TOURNE AVEC LA CAISSE (Vincent, 23 septembre 2026 : « les 4
+## passagers dans un wagon ne suivent pas le mouvement du wagon, cela reste
+## figé »). Il était posé dans le repère de l'écran : sur une courbe d'approche
+## ou de sortie, la caisse s'inclinait et ses quatre voyageurs restaient à
+## plat, débordant d'un côté. L'angle de la case le redresse.
+func _coin_de(rang: int, angle: float = 0.0) -> Vector2:
+	var k := Sty.UIK
+	var i: int = rang % JAUGE_PAR_WAGON
+	var v := Vector2(-3.6 if i % 2 == 0 else 3.6, -3.4 if i < 2 else 3.4) * k
+	return v if angle == 0.0 else v.rotated(angle)
 
 
 ## L'AVANCEMENT D'UN VOYAGEUR VERS SON WAGON, de 0 à 1 : il part à l'arrêt du
@@ -909,12 +957,12 @@ func _wagons_occupes(tr) -> Dictionary:
 	if tr.actual_arr == null:
 		for u in jauge_unites:
 			if u.get("source", "") == tr.id and u.get("descente") == null:
-				occ[mini(int(u.get("source_rang", 0)) + 1, maxi(1, int(tr.cars) - 1))] = true
+				occ[int(u.get("source_rang", 0))] = true
 		return occ
 	var parti: bool = jauge_parti.get(tr.id, false) or tr.state != Enc.S_DWELL
 	for u in _unites_prises(tr.id):
 		if parti or _avancement(u, tr) >= 1.0:
-			occ[int(u.get("rang", 0)) + 1] = true
+			occ[int(u.get("rang", 0))] = true
 	return occ
 
 
@@ -989,7 +1037,11 @@ func _appliquer_jauge() -> void:
 	var s: Dictionary = enc.seuils_de_service()
 	var stars := 0
 	if not bool(r.get("failed", false)) and maxi > 0:
-		stars = 3 if perte < float(s["trois"]) else (2 if perte < float(s["deux"]) else (1 if perte < float(s["une"]) else 0))
+		# les seuils sont en MINUTES de retard ; une minute vaut un wagon, donc
+		# JAUGE_PAR_WAGON points — le barème se lit dans la même monnaie que la
+		# perte sans qu'aucun de ses trois nombres n'ait bougé
+		var f := float(JAUGE_PAR_WAGON)
+		stars = 3 if perte < float(s["trois"]) * f else (2 if perte < float(s["deux"]) * f else (1 if perte < float(s["une"]) * f else 0))
 	r["stars"] = stars
 	r["win"] = stars >= 1
 	# LE SANS-FAUTE, EN MODE JAUGE : personne n'est resté, et pas une minute.
@@ -1043,7 +1095,7 @@ func _dessiner_unites() -> void:
 	# LA PLACE DE CHACUN EST TIRÉE UNE FOIS (_construire_unites) : cette
 	# fonction ne fait plus que dessiner. Personne ne se décale quand un
 	# voisin arrive ou monte.
-	var r_u := minf(3.4 * k, 5.0)
+	var r_defaut := minf(3.4 * k, 5.0)
 	jauge_vols = []
 	var a_quai: Dictionary = {}   # id -> le convoi à quai qui embarque
 	for tr in enc.trains:
@@ -1083,10 +1135,11 @@ func _dessiner_unites() -> void:
 					jauge_vols.append({"u": u, "tr": a_quai[u["train"]], "p": p})
 					continue
 			var col := Color(String(G["dest_color"][u["dest"]]))
+			var r_u: float = float(u.get("r", r_defaut))
 			draw_circle(pos, r_u, col)
 			draw_arc(pos, r_u, 0.0, TAU, 16, Color(0, 0, 0, 0.45), max(1.0, 0.9 * k), true)
 			if prise:   # « ceux-là montent » : un cerne blanc
-				draw_arc(pos, r_u * 1.4, 0.0, TAU, 20, Color(1, 1, 1, 0.85), max(1.0, 1.1 * k), true)
+				draw_arc(pos, r_u * 1.45, 0.0, TAU, 20, Color(1, 1, 1, 0.85), max(1.0, 1.1 * k), true)
 
 
 ## LE VOYAGEUR QUI MONTE : il quitte sa place sur la bande, MARCHE LE LONG DU
@@ -1096,6 +1149,7 @@ func _dessiner_unites() -> void:
 ## arche ; « on dirait qu'il vole », Vincent, 20 septembre 2026.)
 func _dessiner_vols() -> void:
 	var k := Sty.UIK
+	var r_defaut := minf(3.4 * k, 5.0)
 	for v in jauge_vols:
 		var u: Dictionary = v["u"]
 		var de: Vector2 = u["pos"]
@@ -1109,8 +1163,9 @@ func _dessiner_vols() -> void:
 		else:
 			pos = Vector2(vers.x, move_toward(de.y, vers.y, parcouru - dx))
 		var col := Color(String(G["dest_color"][u["dest"]]))
-		draw_circle(pos, 3.4 * k, col)
-		draw_arc(pos, 4.8 * k, 0.0, TAU, 20, Color(1, 1, 1, 0.85), max(1.0, 1.1 * k), true)
+		var r_u: float = float(u.get("r", r_defaut))
+		draw_circle(pos, r_u, col)
+		draw_arc(pos, r_u * 1.45, 0.0, TAU, 20, Color(1, 1, 1, 0.85), max(1.0, 1.1 * k), true)
 
 
 ## LE COULOIR, DANS LES INTERVALLES. Un creux sombre bordé de deux filets de
@@ -1157,9 +1212,10 @@ func _dessiner_tunnel() -> void:
 ## et c'est le même dessin en deux temps que celui qui monte, à l'envers.
 func _dessiner_correspondances() -> void:
 	var k := Sty.UIK
-	var r_u := minf(3.4 * k, 5.0)
+	var r_defaut := minf(3.4 * k, 5.0)
 	for v in _marcheurs():
 		var u: Dictionary = v["u"]
+		var r_u: float = float(u.get("r", r_defaut))
 		var e: Dictionary = _point_du_chemin(u["chemin"], float(v["p"]))
 		var pos: Vector2 = e["pos"]
 		# SOUS LES QUAIS, ON SE VOIT MOINS. Le voyageur ne disparaît pas — on le
@@ -1791,6 +1847,11 @@ func _dessiner_convois(sel, t: float) -> void:
 		# son embarquement : elle demande à chaque wagon s'il est occupé.
 		var jauge_ici: bool = mode_jauge and not tr.freight
 		var occupes: Dictionary = _wagons_occupes(tr) if jauge_ici else {}
+		# les CAISSES occupées se déduisent des places : une caisse est en
+		# couleur dès qu'une seule de ses quatre places est prise
+		var caisses: Dictionary = {}
+		for r in occupes:
+			caisses[_case_de(int(r))] = true
 		# UN VÉHICULE PAR CASE, ET RIEN QUE DES FOURGONS DERRIÈRE LA MACHINE.
 		# Les voitures de deux cases donnaient une rame mieux proportionnée, mais
 		# Vincent leur préfère la lecture de la rame courte, où chaque véhicule
@@ -1808,7 +1869,7 @@ func _dessiner_convois(sel, t: float) -> void:
 			# — « le train de fret ressemble aux autres » (Vincent, 20 sept.).
 			if tr.freight and i > 0 and mode_jauge:
 				teinte = FRET_BLANC
-			if i > 0 and jauge_ici and not occupes.has(i):
+			if i > 0 and jauge_ici and not caisses.has(i):
 				teinte = col.lerp(Sty.FRET, 0.80)   # grisé : personne à bord
 			var lavis := Color(teinte.lerp(Sty.PAPIER, 0.06), vie)
 			for j in SOUS_CASES:
@@ -1869,13 +1930,19 @@ func _dessiner_convois(sel, t: float) -> void:
 							Vector2(f0, 0), Vector2(f1, 0), Vector2(f1, 1), Vector2(f0, 1)]), tex)
 					else:
 						draw_colored_polygon(quad, eteint)
-		# LE VOYAGEUR À BORD : un point noir au milieu de son wagon, un par
-		# unité montée, la machine n'en porte pas (Vincent, 20 septembre 2026).
+		# LE VOYAGEUR À BORD : un point noir à sa place dans son wagon, la
+		# machine n'en porte aucun (Vincent, 20 septembre 2026). Ils sont quatre
+		# par caisse depuis le 23, rangés en carré : un point au milieu ne
+		# disait plus combien ils étaient, et une caisse pleine doit se voir
+		# pleine.
 		if jauge_ici:
-			for i in occupes:
-				if int(i) < n:
-					draw_circle(axe[int(i)], 3.2 * Sty.UIK, Color(0.04, 0.04, 0.05, vie))
-					draw_circle(axe[int(i)] + Vector2(-0.8, -0.8) * Sty.UIK, 1.0 * Sty.UIK, Color(1, 1, 1, 0.18 * vie))
+			var r_p: float = (3.2 if JAUGE_PAR_WAGON == 1 else 2.0) * Sty.UIK
+			for r in occupes:
+				var i: int = _case_de(int(r))
+				if i < n:
+					var c: Vector2 = axe[i] + _coin_de(int(r), angles[i])
+					draw_circle(c, r_p, Color(0.04, 0.04, 0.05, vie))
+					draw_circle(c + Vector2(-0.6, -0.6) * Sty.UIK, 0.7 * Sty.UIK, Color(1, 1, 1, 0.18 * vie))
 
 
 ## LES COUPURES ENTRE CASES, avec leur normale : une case commence à mi-chemin

@@ -361,7 +361,50 @@ journée. Ils restent donc valides, et conservateurs.
 
 ---
 
-## 8. Ce qui reste à trancher
+## 8. Quatre voyageurs par wagon
+
+Demandé le 23 septembre 2026 : « les passagers pourraient être plus nombreux.
+Si on mettait 4 passagers par wagon ? Le but est de mettre plus d'animation
+dans la gare. » Un wagon en portait un, et la gare était vide entre deux
+convois.
+
+**Le barème suit le facteur, sinon le jeu change sans qu'on l'ait décidé.** Une
+minute de retard coûte désormais quatre points — `JAUGE_SECONDES_PAR_POINT`
+repasse à quinze, sa valeur d'origine — et les trois seuils d'étoiles sont
+multipliés d'autant. Un wagon laissé derrière vaut donc exactement ce qu'il
+valait la veille, et une minute de retard aussi : tout est quadruplé, rien ne
+bouge. Vérifié à Gand, graine 3 : perte de 37 points pour 36 voyageurs manqués
+et 0,2 minute de retard, soit 9,25 wagons — quand le compte à un voyageur par
+wagon aurait donné 9 wagons manqués plus 0,2, c'est-à-dire 9,2. La granularité
+est quatre fois plus fine, l'équilibre est le même.
+
+Ce que quinze secondes par point avaient d'insupportable le 20 septembre n'était
+pas leur valeur : c'était qu'un wagon ne valait alors qu'un point, si bien qu'une
+minute de retard coûtait quatre wagons. Elle en coûte un.
+
+**Deux ajustements de dessin** que le nombre imposait :
+
+- **le rayon d'une pastille suit la densité du quai.** Un quai de Clapham porte
+  vingt-deux places sur deux cent trente-huit unités : à cinq de rayon, elles se
+  chevauchaient. Chacun emporte le sien, mesuré sur le pas de son quai — les
+  gares tranquilles gardent de grosses pastilles, les gares chargées en ont de
+  petites, ce qui est aussi ce qu'on veut voir ;
+- **les quatre places d'une caisse sont en carré, et le carré tourne avec
+  elle.** Posé dans le repère de l'écran, il restait à plat quand la caisse
+  s'inclinait sur une courbe — « cela reste figé » (Vincent, le jour même).
+
+Mesuré, 21 services : de **84 à 184 voyageurs** par service, embarquement
+médian 81 %, retard médian 5,8 min, étoiles 5 · 8 · 5 · 3.
+
+**Et une découverte au passage** : depuis que le fret a disparu (§7), le joueur
+au plus court **ne se bloque plus jamais** — zéro service au plafond de retard
+sur 21, contre quinze sur trente-neuf auparavant, et un retard médian qui tombe
+de 19,6 à 5,8 minutes. Ce n'était donc pas une impression : le fret était bien
+ce qui faisait s'effondrer les journées.
+
+---
+
+## 9. Ce qui reste à trancher
 
 1. **La jauge reste-t-elle ?** Le §4 la rend lisible et discriminante ; c'est
    sur cette version-là qu'il faut rejouer trois ou quatre chapitres avant de
@@ -413,3 +456,6 @@ journée. Ils restent donc valides, et conservateurs.
 - **22 septembre 2026, au soir** — le fret et les fermetures de quai sont
   retirés (§7), après une partie de Vincent. Quatre balayages de `gen-check`,
   les deux oracles, `carte-check`.
+- **23 septembre 2026** — quatre voyageurs par wagon (§8), et le barème
+  quadruplé avec eux. La gare est pleine, et le banc montre que le retrait du
+  fret avait déjà supprimé les effondrements.
