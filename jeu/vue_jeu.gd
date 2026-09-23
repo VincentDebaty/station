@@ -1215,9 +1215,15 @@ func _dessiner_unites() -> void:
 					continue
 			var col := Color(String(G["dest_color"][u["dest"]]))
 			draw_circle(pos, r_u, col)
-			draw_arc(pos, r_u, 0.0, TAU, 16, Color(0, 0, 0, 0.45), max(1.0, 0.9 * k), true)
-			if prise:   # « ceux-là montent » : un cerne blanc
-				draw_arc(pos, r_u * 1.45, 0.0, TAU, 20, Color(1, 1, 1, 0.85), max(1.0, 1.1 * k), true)
+			# « CEUX-LÀ MONTENT » : le cerne blanc REMPLACE le trait sombre, il
+			# ne s'ajoute pas autour. Tracé à 1,45 fois le rayon, il grossissait
+			# le voyageur au moment précis où on le regardait — « au moment où
+			# ils montent dans le train, ils sont plus grands » (Vincent, 23
+			# septembre 2026). Un voyageur fait la même taille du premier au
+			# dernier instant ; seule son encre change.
+			draw_arc(pos, r_u, 0.0, TAU, 16,
+				Color(1, 1, 1, 0.85) if prise else Color(0, 0, 0, 0.45),
+				max(1.0, (1.3 if prise else 0.9) * k), true)
 
 
 ## LE VOYAGEUR QUI MONTE : il quitte sa place sur la bande, MARCHE LE LONG DU
@@ -1242,7 +1248,8 @@ func _dessiner_vols() -> void:
 			pos = Vector2(vers.x, move_toward(de.y, vers.y, parcouru - dx))
 		var col := Color(String(G["dest_color"][u["dest"]]))
 		draw_circle(pos, r_u, col)
-		draw_arc(pos, r_u * 1.45, 0.0, TAU, 20, Color(1, 1, 1, 0.85), max(1.0, 1.1 * k), true)
+		# le même cerne blanc, à la même taille que tout le monde
+		draw_arc(pos, r_u, 0.0, TAU, 16, Color(1, 1, 1, 0.85), max(1.0, 1.3 * k), true)
 
 
 ## LE COULOIR, DANS LES INTERVALLES. Un creux sombre bordé de deux filets de

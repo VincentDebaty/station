@@ -413,6 +413,14 @@ légèrement plus petit pour que ça passe dans le wagon à 4 ». Les quatre pla
 d'une caisse sont mesurées en unités du plan et non de l'écran tactile, faute de
 quoi elles se chevauchaient au bureau.
 
+Restait un voyageur plus gros que les autres, et c'était le cerne blanc de
+« ceux-là montent », tracé à 1,45 fois le rayon : il grossissait le voyageur au
+moment précis où on le regardait — « au moment où ils montent dans le train, ils
+sont plus grands ». Le cerne **remplace** désormais le trait sombre au lieu de
+s'ajouter autour : un voyageur fait la même taille du premier au dernier
+instant, seule son encre change. Vérifié au pixel sur une capture de
+Lille-Flandres : sept à huit pixels de diamètre sur le quai comme dans le wagon.
+
 Et l'on monte **un par un, porte par porte** : ils partaient tous à l'instant de
 l'arrêt, donc ensemble — « ils doivent rentrer un à un dans chaque wagon ; tout
 doit sembler naturel ». Chacun attend son rang dans SA voiture, les quatre d'une
