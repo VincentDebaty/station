@@ -490,8 +490,20 @@ qui se lisait dans la fiche, se lit maintenant dans cette paire : le plafond
 d'une gare n'est plus une constante, puisque la foule d'une journée est tirée
 au sort.
 
-**Le schéma passe à 10**, et la migration convertit ce que chaque gare valait
-en étoiles en autant de points, **arrondi en faveur du joueur** : le bonus
-d'avance, qu'on ne peut pas recalculer sans la fiche, est compté au maximum.
-Personne ne perd une pièce au passage. `oracle-sauvegarde` rejoue les onze
-schémas des deux côtés, `oracle-ruban` vérifie les deux barèmes.
+**Le schéma passe à 11**, et chaque gare garde en plus son `heritage` : ce
+qu'elle avait rapporté sous l'ancien barème, en pièces, figé. Les points
+comptent **par-dessus**, à partir de zéro.
+
+Le schéma 10, qui convertissait les étoiles en points, a vécu une heure : une
+gare à trois étoiles s'y retrouvait créditée de 760 points — plus qu'un très
+bon service n'en rapporte —, si bien que toute gare déjà jouée paraissait
+moissonnée. On y refaisait 680 points et le relevé annonçait zéro pièce : « le
+nombre de pièces gagné ne correspondait pas » (Vincent). Le maximum des deux,
+essayé ensuite, refaisait le même défaut sous un autre nom. C'est donc la
+**somme** : l'acquis reste acquis, le nouveau s'ajoute, et rejouer une gare
+d'avant paie une première fois puis seulement le progrès. Une générosité
+bornée, qui ne dure que le temps de repasser sur ce qu'on avait déjà joué —
+et personne ne perd une pièce dans aucun des deux sens.
+
+`oracle-sauvegarde` rejoue les schémas des deux côtés, `oracle-ruban` vérifie
+les deux barèmes.

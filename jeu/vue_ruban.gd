@@ -3899,9 +3899,6 @@ func _bloc_bilan(avec_medailles: bool = true) -> Control:
 		if laisses > 0:
 			dit += " · %d resté%s à quai" % [laisses, "s" if laisses > 1 else ""]
 		v.add_child(_label(dit, 13, P_ENCRE, false, false))
-		# LE SCORE DU SERVICE, EN GROS : c'est lui qui fera les pièces, et il
-		# n'a rien à voir avec les étoiles — celles-ci disent l'heure tenue.
-		v.add_child(_label("%s points" % Sty.nombre(int(b.get("points", 0))), 16, P_ACCENT, false, false))
 
 	# CE QUE LE SERVICE A RAPPORTÉ, EN PIÈCES. La ligne est la CIBLE DE DÉPART
 	# du quatrième temps : les pièces s'en élèvent vers la barre. Pendant une
@@ -3919,17 +3916,20 @@ func _bloc_bilan(avec_medailles: bool = true) -> Control:
 		if rendu > 0:
 			lbl_rendu = _label("Mise rendue · + %s pièces" % Sty.nombre(rendu), 12, P_ACCENT, false, false)
 			v.add_child(lbl_rendu)
+		# CE QU'ON A GAGNÉ, ET RIEN D'AUTRE (Vincent, 23 septembre 2026 : « trop
+		# de blabla dans la fiche de récapitulatif, allons à l'essentiel : voir
+		# ce qu'on a gagné »). Le détail poste par poste — « voyageurs 34 ·
+		# sans-faute 50 · médailles 50 » — était de la comptabilité : il
+		# expliquait un total qu'on n'avait pas le temps de lire, et sur un
+		# téléphone il débordait. Le score mène la ligne, les pièces la
+		# terminent en gros ; le détail est parti.
 		if montant > 0:
 			var hg := HBoxContainer.new()
-			hg.add_theme_constant_override("separation", int(round(8 * Sty.HUD_K)))
-			lbl_gain = _label("+ %s pièces" % Sty.nombre(montant), 15, P_OR, true, false)
+			hg.add_theme_constant_override("separation", int(round(10 * Sty.HUD_K)))
+			hg.add_child(_label("%s points" % Sty.nombre(int(b.get("points", 0))), 14, P_ACCENT, false, false))
+			lbl_gain = _label("+ %s pièces" % Sty.nombre(montant), 19, P_OR, true, false)
 			lbl_gain.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 			hg.add_child(lbl_gain)
-			var dit_det := _dire_detail(det, postes)
-			if dit_det != "":
-				var ld := _label(dit_det, 11, P_MUET)
-				ld.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-				hg.add_child(ld)
 			v.add_child(hg)
 
 	# le record d'un côté, l'objectif de l'autre — sur la même ligne
@@ -3940,20 +3940,14 @@ func _bloc_bilan(avec_medailles: bool = true) -> Control:
 		dit = ""
 	elif not b["win"]:
 		dit = "objectif manqué"
-	elif pb == null:
-		dit = "premier service"
-		teinte = P_ACCENT
-	elif float(b["d"]) < float(pb):
+	elif pb != null and float(b["d"]) < float(pb):
 		dit = "record battu · −%d min" % int(float(pb) - float(b["d"]))
 		teinte = P_ACCENT
-	elif float(b["d"]) == float(pb):
-		dit = "record égalé"
-	else:
-		dit = "record : %d min" % int(pb)
-	var seuils: Dictionary = b.get("seuils", {})
+	# « premier service », « record égalé », « record : 7 min » et l'objectif
+	# « 3 ★ sous 8 min » ont quitté le relevé le 23 septembre 2026 : aucun n'est
+	# un GAIN, et c'est ce que la fiche doit montrer. Le record ne s'affiche
+	# plus que lorsqu'il vient d'être battu.
 	var vise := ""
-	if not seuils.is_empty() and b["win"] and not b.get("perfect", false) and st < 3:
-		vise = "3 ★ sous %d min" % int(seuils["trois"])
 	if dit != "" or vise != "":
 		var h2 := HBoxContainer.new()
 		h2.add_theme_constant_override("separation", int(round(10 * Sty.HUD_K)))

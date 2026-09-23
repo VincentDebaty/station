@@ -376,9 +376,19 @@ static func avance_de(r: Dictionary, seuils: Dictionary) -> int:
 
 ## Ce qu'UNE gare rapporte, et ce qu'elle peut rapporter au plus. La
 ## différence est le manque à gagner : ce que « rejouer Doncaster » rend encore.
-## Ce qu'une gare a rapporté : son meilleur score converti, plus le sans-faute.
+## CE QU'UNE GARE A RAPPORTÉ : ce que ses points valent, PLUS ce qu'elle avait
+## déjà rapporté sous l'ancien barème (`heritage`, en pièces, figé).
+##
+## LA SOMME, ET NON LE MAXIMUM. Le maximum, essayé d'abord, refaisait le défaut
+## qu'il devait corriger : une gare tenue à trois étoiles valait 38 pièces sous
+## l'ancien barème, donc il aurait fallu 760 points — presque un service
+## parfait — pour en tirer une pièce de plus. Toutes les gares d'avant seraient
+## restées mortes. L'héritage est donc un acquis qui ne bouge plus, et les
+## points comptent à partir de zéro par-dessus : rejouer une ancienne gare paie
+## une première fois, et ensuite seulement le progrès. C'est une générosité
+## bornée, et qui ne dure que le temps de repasser sur ce qu'on avait déjà joué.
 static func pieces_des_points(r: Dictionary) -> int:
-	return int(floor(float(r.get("bestPoints", 0)) / float(POINTS_PAR_PIECE)))
+	return int(floor(float(r.get("bestPoints", 0)) / float(POINTS_PAR_PIECE))) + int(r.get("heritage", 0))
 
 
 static func pieces_de_gare(r: Dictionary, _seuils: Dictionary) -> int:

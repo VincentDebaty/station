@@ -29,15 +29,24 @@ extends Node
 ##   getCartesEnregistrees → cartes_enregistrees · isBought → Ruban.est_tenue
 ##   getMuted / setMuted → get_muet / set_muet · getOnboarded → get_accueilli
 
-## SCHÉMA 10 (23 septembre 2026) : chaque gare garde son MEILLEUR SCORE en
-## points — `bestPoints` — et le total de voyageurs de ce service-là,
-## `bestMax`. Ce sont eux qui font les pièces depuis que les étoiles n'en
-## paient plus. La migration convertit ce que chaque gare valait en étoiles en
-## autant de points, ARRONDI EN FAVEUR DU JOUEUR (le bonus d'avance, qu'on ne
-## peut pas recalculer sans la fiche, est compté au maximum) : personne ne perd
-## une pièce au passage. `bestMax` est posé égal à `bestPoints`, ce qui laisse
-## ces gares « déjà moissonnées » plutôt que de promettre un gain imaginaire.
-const SCHEMA_VERSION := 10
+## SCHÉMA 11 (23 septembre 2026) : chaque gare garde son MEILLEUR SCORE en
+## points — `bestPoints` —, le total de voyageurs de ce service-là (`bestMax`),
+## et ce qu'elle a rapporté AVANT que les pièces ne viennent des voyageurs
+## (`heritage`, en pièces). Ce sont les points qui paient désormais.
+##
+## LE 10 CONVERTISSAIT LES ÉTOILES EN POINTS, ET C'ÉTAIT UNE FAUTE : une gare à
+## trois étoiles se retrouvait créditée de 760 points, c'est-à-dire plus qu'un
+## très bon service n'en rapporte. Toutes les gares déjà jouées paraissaient
+## donc « moissonnées » — on y refaisait 680 points et le relevé annonçait zéro
+## pièce, « le nombre de pièces gagné ne correspondait pas » (Vincent). Le
+## solde est sauf dans les deux cas, mais le joueur ne pouvait plus progresser
+## là où il avait déjà joué.
+##
+## Le 11 sépare les deux : ce qui a été gagné AVANT reste acquis, en pièces, et
+## ne bouge plus ; les points repartent de zéro et ne paient que ce qu'ils
+## dépassent. Une gare rend donc toujours le plus grand des deux, et rejouer
+## paie le progrès — sans qu'un seul crédit soit perdu au passage.
+const SCHEMA_VERSION := 11
 ## La carte de tout joueur d'avant les cartes : l'Europe, et elle est gratuite.
 const CARTE_PAR_DEFAUT := "europe"
 ## Ce que vaut une gare héritée, au-delà de ses étoiles : le bonus d'avance ne
@@ -213,11 +222,23 @@ static func _stations_migrees(brut: Variant) -> Dictionary:
 		if not (p is Dictionary):
 			continue
 		var st: Dictionary = p.duplicate()
-		if not _nombre(st.get("bestPoints")):
+		if not _nombre(st.get("heritage")):
+			# d'un schéma 10 : le score gonflé redevient ce qu'il valait en
+			# pièces ; d'un schéma plus ancien : les étoiles, avec le bonus
+			# d'avance compté au maximum puisqu'on ne peut pas le recalculer
+			# sans la fiche. Dans les deux cas la conversion rend, jamais ne
+			# retire.
 			var etoiles: int = int(st["stars"]) if _nombre(st.get("stars")) else 0
-			st["bestPoints"] = (etoiles * PIECES_PAR_ETOILE + AVANCE_MAX_HERITEE) * POINTS_PAR_PIECE if etoiles > 0 else 0
+			var acquis: int = int(floor(float(st["bestPoints"]) / float(POINTS_PAR_PIECE))) \
+				if _nombre(st.get("bestPoints")) \
+				else (etoiles * PIECES_PAR_ETOILE + AVANCE_MAX_HERITEE if etoiles > 0 else 0)
+			st["heritage"] = acquis
+			st["bestPoints"] = 0
+			st["bestMax"] = 0
+		if not _nombre(st.get("bestPoints")):
+			st["bestPoints"] = 0
 		if not _nombre(st.get("bestMax")):
-			st["bestMax"] = st["bestPoints"]
+			st["bestMax"] = 0
 		out[id] = st
 	return out
 
@@ -469,6 +490,7 @@ func enregistrer_resultat(id: Variant, stars: Variant, delay: Variant,
 		"bestDelay": delay if bd == null else min(bd, delay),
 		"bestPoints": max(bp, pts),
 		"bestMax": (int(points_max) if _nombre(points_max) else 0) if pts > bp else bm,
+		"heritage": int(cur["heritage"]) if _nombre(cur.get("heritage")) else 0,
 	}
 	persister()
 

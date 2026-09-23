@@ -333,8 +333,13 @@ function avanceDe(r, seuils) {
   if (typeof bd !== "number" || !(r.stars >= 1)) return 0;
   return Math.max(0, Math.floor(seuils.trois - bd));
 }
-// Ce qu'une gare a rapporté : son meilleur score converti, plus le sans-faute.
-function piecesDesPoints(r) { return Math.floor((r.bestPoints || 0) / POINTS_PAR_PIECE); }
+// CE QU'UNE GARE A RAPPORTÉ : ce que ses points valent, PLUS ce qu'elle avait
+// déjà rapporté sous l'ancien barème (`heritage`, en pièces, figé). La somme et
+// non le maximum : celui-ci refaisait le défaut qu'il devait corriger, une gare
+// à trois étoiles valant 38 pièces qu'il aurait fallu 760 points pour dépasser.
+function piecesDesPoints(r) {
+  return Math.floor((r.bestPoints || 0) / POINTS_PAR_PIECE) + (r.heritage || 0);
+}
 function piecesDeGare(r, seuils) {
   if (!r) return 0;
   return piecesDesPoints(r) +

@@ -20,15 +20,17 @@
 // serie }`, la carte courante, et les cartes possédées (avec leur mode
 // d'acquisition : gratuite, crédits, achat). Tout le reste — grade, crédits,
 // rangs, médailles — se déduit.
-// SCHÉMA 10 (23 septembre 2026) : chaque gare garde son MEILLEUR SCORE en
+// SCHÉMA 11 (23 septembre 2026) : chaque gare garde son MEILLEUR SCORE en
 // points — `bestPoints` — et le total de voyageurs de ce service-là,
 // `bestMax`. Ce sont eux qui font les pièces depuis que les étoiles n'en
 // paient plus. La migration convertit ce que chaque gare valait en étoiles en
-// autant de points, ARRONDI EN FAVEUR DU JOUEUR (le bonus d'avance, qu'on ne
-// peut pas recalculer sans la fiche, est compté au maximum) : personne ne perd
-// une pièce au passage. `bestMax` est posé égal à `bestPoints`, ce qui laisse
-// ces gares « déjà moissonnées » plutôt que de promettre un gain imaginaire.
-const SCHEMA_VERSION = 10;
+// autant de points, et C'ÉTAIT UNE FAUTE : une gare à trois étoiles se
+// retrouvait créditée de 760 points, plus qu'un très bon service n'en rapporte,
+// si bien que toute gare déjà jouée paraissait moissonnée — on y refaisait 680
+// points et le relevé annonçait zéro pièce. Le 11 sépare les deux : ce qui a
+// été gagné AVANT reste acquis en pièces (`heritage`) et ne bouge plus, les
+// points repartent de zéro, et une gare rend le plus grand des deux.
+const SCHEMA_VERSION = 11;
 const AVANCE_MAX_HERITEE = 8, POINTS_PAR_PIECE_STORE = 20, PIECES_PAR_ETOILE_STORE = 10;
 // La carte de tout joueur d'avant les cartes : l'Europe, et elle est gratuite.
 const CARTE_PAR_DEFAUT = "europe";
@@ -139,12 +141,20 @@ function stationsMigrees(brut) {
     const p = brut[id];
     if (!p || typeof p !== "object") continue;
     const st = Object.assign({}, p);
-    if (typeof st.bestPoints !== "number") {
+    if (typeof st.heritage !== "number") {
+      // d'un schéma 10 : le score gonflé redevient ce qu'il valait en pièces ;
+      // d'un schéma plus ancien : les étoiles, avec le bonus d'avance compté au
+      // maximum puisqu'on ne peut pas le recalculer sans la fiche. Dans les deux
+      // cas la conversion rend, jamais ne retire.
       const etoiles = typeof st.stars === "number" ? st.stars : 0;
-      st.bestPoints = etoiles > 0
-        ? (etoiles * PIECES_PAR_ETOILE_STORE + AVANCE_MAX_HERITEE) * POINTS_PAR_PIECE_STORE : 0;
+      st.heritage = typeof st.bestPoints === "number"
+        ? Math.floor(st.bestPoints / POINTS_PAR_PIECE_STORE)
+        : (etoiles > 0 ? etoiles * PIECES_PAR_ETOILE_STORE + AVANCE_MAX_HERITEE : 0);
+      st.bestPoints = 0;
+      st.bestMax = 0;
     }
-    if (typeof st.bestMax !== "number") st.bestMax = st.bestPoints;
+    if (typeof st.bestPoints !== "number") st.bestPoints = 0;
+    if (typeof st.bestMax !== "number") st.bestMax = 0;
     out[id] = st;
   }
   return out;
@@ -392,7 +402,8 @@ function saveResult(id, stars, delay, points, pointsMax) {
     stars: Math.max(cur.stars, stars),                                   // on ne garde que le meilleur score
     bestDelay: cur.bestDelay == null ? delay : Math.min(cur.bestDelay, delay),
     bestPoints: Math.max(bp, pts),
-    bestMax: pts > bp ? (typeof pointsMax === "number" ? pointsMax : 0) : bm
+    bestMax: pts > bp ? (typeof pointsMax === "number" ? pointsMax : 0) : bm,
+    heritage: typeof cur.heritage === "number" ? cur.heritage : 0
   };
   persistProgress();
 }
