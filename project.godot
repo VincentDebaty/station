@@ -15,6 +15,10 @@ config/description="Jeu d'aiguillage ferroviaire. Le poste d'aiguillage."
 run/main_scene="res://jeu/app.tscn"
 config/features=PackedStringArray("4.7", "Mobile")
 config/icon="res://jeu/icone.png"
+boot_splash/bg_color=Color(0.13, 0.08, 0.05, 1)
+boot_splash/image="res://jeu/demarrage.png"
+boot_splash/stretch_mode=4
+boot_splash/minimum_display_time=1200
 
 [autoload]
 
