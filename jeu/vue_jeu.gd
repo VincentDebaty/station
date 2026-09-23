@@ -1131,6 +1131,30 @@ func _etoiles_vives() -> int:
 	return 3 if d < float(s["trois"]) else (2 if d < float(s["deux"]) else (1 if d < float(s["une"]) else 0))
 
 
+## CE QUI RESTE DE L'ÉTOILE EN DANGER, de 1 à 0 (Vincent, 23 septembre 2026 :
+## « il faudrait une petite jauge pour voir quand une étoile risque de
+## disparaître »). C'est la part de retard qu'il reste à faire avant le
+## prochain seuil : pleine au sortir du précédent, vide à l'instant où elle
+## s'éteint. La jauge est l'étoile elle-même, qui se vide par le haut — un
+## voyant de plus dans un bandeau déjà chargé n'aurait rien dit de mieux, et
+## la barre du bas y compte déjà les convois partis.
+func _reste_de_l_etoile() -> float:
+	var vives := _etoiles_vives()
+	if vives <= 0:
+		return 0.0
+	var d := enc.live_delay()
+	var s: Dictionary = enc.seuils_de_service()
+	var bas := 0.0
+	var haut := float(s["trois"])
+	if vives == 2:
+		bas = float(s["trois"])
+		haut = float(s["deux"])
+	elif vives == 1:
+		bas = float(s["deux"])
+		haut = float(s["une"])
+	return clampf(1.0 - (d - bas) / maxf(0.1, haut - bas), 0.0, 1.0)
+
+
 ## À LA FIN DU SERVICE, LA JAUGE NE DÉCIDE PLUS RIEN : les étoiles sont celles
 ## que l'enclenchement a calculées sur le retard, et cette vue ne fait
 ## qu'ajouter ce qu'elle sait — le score en points, le compte des voyageurs, et
@@ -2353,13 +2377,34 @@ func _chip(r: Rect2, bord: Color = Sty.POSTE_BORD, k: float = 1.0) -> void:
 
 ## UNE ÉTOILE À CINQ BRANCHES, pleine. Le bandeau n'en avait pas : celles du
 ## relevé sont des glyphes de police, et un glyphe ne s'éteint pas à moitié.
-func _etoile(centre: Vector2, r: float, col: Color) -> void:
+func _branches(centre: Vector2, r: float) -> PackedVector2Array:
 	var pts := PackedVector2Array()
 	for i in 10:
 		var a: float = -PI / 2.0 + float(i) * PI / 5.0
 		var rr: float = r if i % 2 == 0 else r * 0.42
 		pts.append(centre + Vector2(cos(a), sin(a)) * rr)
-	draw_colored_polygon(pts, col)
+	return pts
+
+
+func _etoile(centre: Vector2, r: float, col: Color) -> void:
+	draw_colored_polygon(_branches(centre, r), col)
+
+
+## L'ÉTOILE QUI SE VIDE : éteinte, puis rallumée sur la part qui lui reste, du
+## bas vers le haut. L'intersection de l'étoile et d'un rectangle fait le
+## découpage — pas de masque à poser, et la silhouette reste exacte.
+func _etoile_jauge(centre: Vector2, r: float, col: Color, eteinte: Color, reste: float) -> void:
+	_etoile(centre, r, eteinte)
+	if reste <= 0.01:
+		return
+	if reste >= 0.99:
+		_etoile(centre, r, col)
+		return
+	var plein := PackedVector2Array([
+		Vector2(centre.x - r, centre.y + r - 2.0 * r * reste), Vector2(centre.x + r, centre.y + r - 2.0 * r * reste),
+		Vector2(centre.x + r, centre.y + r), Vector2(centre.x - r, centre.y + r)])
+	for morceau in Geometry2D.intersect_polygons(_branches(centre, r), plein):
+		draw_colored_polygon(morceau, col)
 
 
 func _dessiner_hud(t: float) -> void:
@@ -2505,15 +2550,24 @@ func _dessiner_hud(t: float) -> void:
 		var vives := _etoiles_vives()
 		var x0: float = ch.position.x + 14.0 * k + w_h + 9.0 * k
 		var yc: float = ch.position.y + utile / 2.0
+		var reste := _reste_de_l_etoile()
+		var sourde := Color(Sty.POSTE_BORD, 0.28)
 		for i in 3:
 			var allumee: bool = i < vives
-			var teinte: Color = Sty.LAITON_CLAIR if allumee else Color(Sty.POSTE_BORD, 0.28)
+			var teinte: Color = Sty.LAITON_CLAIR if allumee else sourde
+			var centre_e := Vector2(x0 + (float(i) + 0.5) * w_etoiles / 3.0, yc)
 			if not allumee and i == vives and etoile_perdue_a > 0.0:
 				# le battement de la dernière perdue, une seconde et demie
 				var age: float = (Time.get_ticks_msec() / 1000.0 - etoile_perdue_a) / 1.5
 				if age < 1.0:
-					teinte = Sty.ROUGE.lerp(Color(Sty.POSTE_BORD, 0.30), age)
-			_etoile(Vector2(x0 + (float(i) + 0.5) * w_etoiles / 3.0, yc), 8.0 * k, teinte)
+					teinte = Sty.ROUGE.lerp(sourde, age)
+			if allumee and i == vives - 1 and not enc.ended:
+				# CELLE-CI EST EN DANGER : elle se vide à mesure que le retard
+				# approche du seuil, et vire à l'ambre sur le dernier tiers.
+				_etoile_jauge(centre_e, 8.0 * k,
+					Sty.LAITON_CLAIR if reste > 0.34 else Sty.AMBRE, sourde, reste)
+			else:
+				_etoile(centre_e, 8.0 * k, teinte)
 		col_r = Sty.VERT
 		# le score est CENTRÉ dans sa place, sinon il se décollerait des étoiles
 		# à mesure qu'il grandit
