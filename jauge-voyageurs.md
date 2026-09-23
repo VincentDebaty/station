@@ -404,6 +404,20 @@ deux — on ne vide pas une voiture d'un bloc. Le décalage coûte au plus 0,4
 minute, soit moins que ce qui reste de la marge de trois minutes qui garantit
 les correspondances.
 
+**Une seule taille, et une file à chaque porte** (même jour). Le rayon d'une
+pastille suivait la densité de son quai : bonne idée de géomètre, mauvaise idée
+de jeu — « la taille des voyageurs est très différente d'un quai à l'autre, il
+faut uniformiser ; j'en vois des trop petits ». Tout le monde fait désormais
+quatre unités de rayon, sur le quai comme à bord : « la taille de départ mais
+légèrement plus petit pour que ça passe dans le wagon à 4 ». Les quatre places
+d'une caisse sont mesurées en unités du plan et non de l'écran tactile, faute de
+quoi elles se chevauchaient au bureau.
+
+Et l'on monte **un par un, porte par porte** : ils partaient tous à l'instant de
+l'arrêt, donc ensemble — « ils doivent rentrer un à un dans chaque wagon ; tout
+doit sembler naturel ». Chacun attend son rang dans SA voiture, les quatre d'une
+caisse se suivent, et les caisses se remplissent en même temps.
+
 **On descend d'abord, on monte ensuite** (même jour) : « à l'arrivée du train,
 les passagers qui étaient dans le train sortent en premier et dès qu'ils sont
 tous sortis, les passagers sur le quai entrent dans le train ». C'est la règle de

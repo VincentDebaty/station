@@ -182,6 +182,28 @@ const TUNNEL_HAUT := 26.0
 ## marge du quai laisse libre (PLAT_MARGIN vaut 11). Le placement des
 ## voyageurs et son dessin la partagent.
 const JAUGE_BANDE := 12.0
+## LA TAILLE D'UN VOYAGEUR, LA MÊME PARTOUT (Vincent, 23 septembre 2026 : « la
+## taille des voyageurs est très différente d'un quai à l'autre, il faut
+## uniformiser ; j'en vois des trop petits »). Elle suivait la densité du quai
+## — une bonne idée de géomètre et une mauvaise idée de jeu : deux quais
+## voisins n'avaient pas les mêmes gens.
+##
+## Quatre unités de rayon : « la taille de départ mais légèrement plus petit
+## pour que ça passe dans le wagon à 4 ». La taille de départ était de cinq sur
+## un écran tactile. Quatre tient dans une caisse de 30 × 20 avec ses trois
+## voisins — les quatre places occupent 18 × 17,4 —, et sur la bande d'un quai,
+## haute de douze, il en reste deux de part et d'autre.
+const JAUGE_RAYON := 4.0
+## Les quatre places d'une caisse, en unités du plan et non de l'écran tactile :
+## à l'échelle du bureau, l'ancien écart les faisait se chevaucher.
+const JAUGE_PLACE_X := 5.0
+const JAUGE_PLACE_Y := 4.7
+## LA FILE : on descend un par un, on monte un par un. Le pas, en minutes de
+## jeu, entre deux voyageurs d'une même voiture. À la descente il s'applique à
+## tout le convoi (par paquets de six), à la montée à chaque wagon séparément —
+## chaque porte a sa file, et les wagons se remplissent en parallèle.
+const JAUGE_FILE_DESCENTE := 0.10
+const JAUGE_FILE_MONTEE := 0.15
 ## Les paquets de cinq ont vécu du 22 septembre au soir : une rangée serrée au
 ## milieu du quai se comptait par paquets, une foule éparpillée n'a plus de
 ## rangée. C'est la bande par destination qui porte maintenant la lisibilité —
@@ -523,7 +545,7 @@ func _noter_les_descentes() -> void:
 			# ET ILS DESCENDENT L'UN APRÈS L'AUTRE : on ne vide pas une voiture
 			# d'un bloc. Quelques secondes de jeu entre deux, ce qui suffit à en
 			# faire une file au lieu d'une tache.
-			var retenu: float = enc.game_min + float(k % 8) * 0.06
+			var retenu: float = enc.game_min + float(k % 6) * JAUGE_FILE_DESCENTE
 			k += 1
 			u["chemin"] = chemin
 			u["marche"] = retenu
@@ -754,14 +776,6 @@ func _construire_unites() -> void:
 			continue
 		var yc: float = float(q["cy"]) + Geo.PLAT_H / 2.0 - JAUGE_BANDE / 2.0
 		var x: float = Geo.PLAT_X1 + 12.0
-		# LE RAYON D'UNE PASTILLE SUIT LA DENSITÉ DU QUAI. À quatre voyageurs
-		# par wagon, un quai de Clapham porte vingt-deux places sur deux cent
-		# trente-huit unités : à cinq de rayon elles se chevauchaient. Chacun
-		# emporte donc le sien, mesuré sur le pas de son quai — les gares
-		# tranquilles gardent de grosses pastilles, les gares chargées en ont
-		# de petites, ce qui est aussi ce qu'on veut voir.
-		var pas_quai: float = large / float(n_tot)
-		var r_quai: float = clampf(pas_quai * 0.34, 2.0, minf(3.4 * Sty.UIK, 5.0))
 		for d in couleurs:
 			var groupe: Array = paquets[d]
 			var w: float = large * float(groupe.size()) / float(n_tot)
@@ -779,7 +793,6 @@ func _construire_unites() -> void:
 				# tanguaient pour rien.
 				var gx: float = x + (float(j) + 0.5 + hasard.randf_range(-0.35, 0.35)) * pas_g
 				u["pos"] = Vector2(gx, yc)
-				u["r"] = r_quai
 			x += w
 	# ET SEULEMENT MAINTENANT LES CHEMINS D'ENTRÉE : ils vont à une place, et
 	# la place vient d'être posée. Tracés plus haut, ils menaient tous à
@@ -933,7 +946,15 @@ func _affecter_unites() -> void:
 		candidats.sort_custom(func(a, b): return Vector2(a["pos"]).x < Vector2(b["pos"]).x)
 		for j in range(candidats.size()):
 			candidats[j]["train"] = tr.id
-			candidats[j]["rang"] = int(places[j]["r"]) if j < places.size() else j
+			var rang: int = int(places[j]["r"]) if j < places.size() else j
+			candidats[j]["rang"] = rang
+			# ON MONTE UN PAR UN, PORTE PAR PORTE (Vincent, 23 septembre 2026 :
+			# « j'ai remarqué que les voyageurs entrent parfois tous d'un coup ;
+			# ils doivent rentrer un à un dans chaque wagon »). Ils partaient
+			# tous à l'instant de l'arrêt, donc ensemble. Chacun attend son rang
+			# DANS SA VOITURE : les quatre d'une caisse se suivent, et les
+			# caisses se remplissent en même temps — chaque porte a sa file.
+			candidats[j]["monte_a"] = enc.game_min + float(rang % JAUGE_PAR_WAGON) * JAUGE_FILE_MONTEE
 		# L'EMBARQUEMENT SONNE, une fois par convoi : une note grave quand il
 		# prend du monde. Le « dommage » d'un convoi qui part à vide se joue au
 		# départ, puisque c'est là seulement qu'on sait qu'il n'a pris personne.
@@ -968,7 +989,8 @@ func _case_de(rang: int) -> int:
 func _coin_de(rang: int, angle: float = 0.0) -> Vector2:
 	var k := Sty.UIK
 	var i: int = rang % JAUGE_PAR_WAGON
-	var v := Vector2(-3.6 if i % 2 == 0 else 3.6, -3.4 if i < 2 else 3.4) * k
+	var v := Vector2(-JAUGE_PLACE_X if i % 2 == 0 else JAUGE_PLACE_X,
+		-JAUGE_PLACE_Y if i < 2 else JAUGE_PLACE_Y)
 	return v if angle == 0.0 else v.rotated(angle)
 
 
@@ -979,12 +1001,15 @@ func _coin_de(rang: int, angle: float = 0.0) -> Vector2:
 func _avancement(u: Dictionary, tr) -> float:
 	if tr.actual_arr == null or Vector2(u["pos"]) == Vector2.ZERO:
 		return 0.0
+	var depart: float = float(u.get("monte_a", tr.actual_arr))
+	if enc.game_min < depart:
+		return 0.0          # il attend son tour sur le quai, cerné de blanc
 	var de: Vector2 = u["pos"]
 	var vers := _wagon_de(u, tr)
 	var d: float = abs(vers.x - de.x) + abs(vers.y - de.y)
 	if d < 1.0:
 		return 1.0
-	return clampf((enc.game_min - float(tr.actual_arr)) * JAUGE_VITESSE_MARCHE / d, 0.0, 1.0)
+	return clampf((enc.game_min - depart) * JAUGE_VITESSE_MARCHE / d, 0.0, 1.0)
 
 
 ## Les wagons occupés d'un convoi — l'indice de case de chacun : tous ceux
@@ -1149,7 +1174,7 @@ func _dessiner_unites() -> void:
 	# LA PLACE DE CHACUN EST TIRÉE UNE FOIS (_construire_unites) : cette
 	# fonction ne fait plus que dessiner. Personne ne se décale quand un
 	# voisin arrive ou monte.
-	var r_defaut := minf(3.4 * k, 5.0)
+	var r_u := JAUGE_RAYON
 	jauge_vols = []
 	var a_quai: Dictionary = {}   # id -> le convoi à quai qui embarque
 	for tr in enc.trains:
@@ -1189,7 +1214,6 @@ func _dessiner_unites() -> void:
 					jauge_vols.append({"u": u, "tr": a_quai[u["train"]], "p": p})
 					continue
 			var col := Color(String(G["dest_color"][u["dest"]]))
-			var r_u: float = float(u.get("r", r_defaut))
 			draw_circle(pos, r_u, col)
 			draw_arc(pos, r_u, 0.0, TAU, 16, Color(0, 0, 0, 0.45), max(1.0, 0.9 * k), true)
 			if prise:   # « ceux-là montent » : un cerne blanc
@@ -1203,7 +1227,7 @@ func _dessiner_unites() -> void:
 ## arche ; « on dirait qu'il vole », Vincent, 20 septembre 2026.)
 func _dessiner_vols() -> void:
 	var k := Sty.UIK
-	var r_defaut := minf(3.4 * k, 5.0)
+	var r_u := JAUGE_RAYON
 	for v in jauge_vols:
 		var u: Dictionary = v["u"]
 		var de: Vector2 = u["pos"]
@@ -1217,7 +1241,6 @@ func _dessiner_vols() -> void:
 		else:
 			pos = Vector2(vers.x, move_toward(de.y, vers.y, parcouru - dx))
 		var col := Color(String(G["dest_color"][u["dest"]]))
-		var r_u: float = float(u.get("r", r_defaut))
 		draw_circle(pos, r_u, col)
 		draw_arc(pos, r_u * 1.45, 0.0, TAU, 20, Color(1, 1, 1, 0.85), max(1.0, 1.1 * k), true)
 
@@ -1266,10 +1289,9 @@ func _dessiner_tunnel() -> void:
 ## et c'est le même dessin en deux temps que celui qui monte, à l'envers.
 func _dessiner_correspondances() -> void:
 	var k := Sty.UIK
-	var r_defaut := minf(3.4 * k, 5.0)
+	var r_u := JAUGE_RAYON
 	for v in _marcheurs():
 		var u: Dictionary = v["u"]
-		var r_u: float = float(u.get("r", r_defaut))
 		var e: Dictionary = _point_du_chemin(u["chemin"], float(v["p"]))
 		var pos: Vector2 = e["pos"]
 		# SOUS LES QUAIS, ON SE VOIT MOINS. Le voyageur ne disparaît pas — on le
@@ -1990,13 +2012,15 @@ func _dessiner_convois(sel, t: float) -> void:
 		# disait plus combien ils étaient, et une caisse pleine doit se voir
 		# pleine.
 		if jauge_ici:
-			var r_p: float = (3.2 if JAUGE_PAR_WAGON == 1 else 2.0) * Sty.UIK
+			# LE VOYAGEUR À BORD A LA MÊME TAILLE QUE SUR LE QUAI : c'est la
+			# même personne, et deux tailles pour un même point ne se
+			# justifiaient pas une fois le rayon uniformisé.
 			for r in occupes:
 				var i: int = _case_de(int(r))
 				if i < n:
 					var c: Vector2 = axe[i] + _coin_de(int(r), angles[i])
-					draw_circle(c, r_p, Color(0.04, 0.04, 0.05, vie))
-					draw_circle(c + Vector2(-0.6, -0.6) * Sty.UIK, 0.7 * Sty.UIK, Color(1, 1, 1, 0.18 * vie))
+					draw_circle(c, JAUGE_RAYON, Color(0.04, 0.04, 0.05, vie))
+					draw_circle(c + Vector2(-1.1, -1.1), 0.9, Color(1, 1, 1, 0.18 * vie))
 
 
 ## LES COUPURES ENTRE CASES, avec leur normale : une case commence à mi-chemin
