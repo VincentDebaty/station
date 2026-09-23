@@ -20,7 +20,16 @@
 // serie }`, la carte courante, et les cartes possédées (avec leur mode
 // d'acquisition : gratuite, crédits, achat). Tout le reste — grade, crédits,
 // rangs, médailles — se déduit.
-const SCHEMA_VERSION = 9;
+// SCHÉMA 10 (23 septembre 2026) : chaque gare garde son MEILLEUR SCORE en
+// points — `bestPoints` — et le total de voyageurs de ce service-là,
+// `bestMax`. Ce sont eux qui font les pièces depuis que les étoiles n'en
+// paient plus. La migration convertit ce que chaque gare valait en étoiles en
+// autant de points, ARRONDI EN FAVEUR DU JOUEUR (le bonus d'avance, qu'on ne
+// peut pas recalculer sans la fiche, est compté au maximum) : personne ne perd
+// une pièce au passage. `bestMax` est posé égal à `bestPoints`, ce qui laisse
+// ces gares « déjà moissonnées » plutôt que de promettre un gain imaginaire.
+const SCHEMA_VERSION = 10;
+const AVANCE_MAX_HERITEE = 8, POINTS_PAR_PIECE_STORE = 20, PIECES_PAR_ETOILE_STORE = 10;
 // La carte de tout joueur d'avant les cartes : l'Europe, et elle est gratuite.
 const CARTE_PAR_DEFAUT = "europe";
 const KEY_PROGRESS = "station-progress";
@@ -93,13 +102,18 @@ function migrate(raw) {
   // passée reste passée, rien n'est perdu — et les pierres achetées, qui
   // n'existaient chez personne, sont abandonnées. Reste `possessions` (le
   // pack), le seul champ du 8 qui ait survécu.
-  if (raw && (raw.version === 6 || raw.version === 7 || raw.version === 8 || raw.version === 9) && raw.cartes && typeof raw.cartes === "object") {
+  // LE TYPE COMPTE AUTANT QUE LA VALEUR : une version écrite en CHAÎNE ne
+  // passe pas — Godot ne la reconnaît pas comme un nombre, et les deux
+  // migrations doivent tomber sur le même chemin (oracle-sauvegarde le
+  // vérifie ; la comparaison lâche « "9" >= 6 » les faisait diverger).
+  if (raw && typeof raw.version === "number" && raw.version >= 6 && raw.version <= SCHEMA_VERSION
+      && raw.cartes && typeof raw.cartes === "object") {
     const cartes = {};
     for (const id in raw.cartes) {
       const c = raw.cartes[id] || {};
       const passees = Array.isArray(c.passees) ? c.passees.slice() : [];
       if (Array.isArray(c.passeesEnPierres)) for (const g of c.passeesEnPierres) if (g && passees.indexOf(g) < 0) passees.push(g);
-      cartes[id] = { stations: c.stations || {}, passees, serie: lireSerie(c) };
+      cartes[id] = { stations: stationsMigrees(c.stations), passees, serie: lireSerie(c) };
     }
     const possedees = raw.possedees && typeof raw.possedees === "object" ? raw.possedees : {};
     if (!possedees[CARTE_PAR_DEFAUT]) possedees[CARTE_PAR_DEFAUT] = "gratuite";
@@ -114,6 +128,28 @@ function migrate(raw) {
     cartes: { [CARTE_PAR_DEFAUT]: { stations: v5.stations, passees: [], serie: v5.serie } },
     possedees: { [CARTE_PAR_DEFAUT]: "gratuite" }, possessions: {} };
 }
+// LES GARES D'UNE CARTE, AVEC LEUR SCORE. Une gare d'avant le schéma 10 n'a
+// pas de `bestPoints` : on lui en donne autant que ses étoiles valaient de
+// pièces, plus le bonus d'avance au maximum — la conversion ne peut alors que
+// rendre, jamais retirer.
+function stationsMigrees(brut) {
+  const out = {};
+  if (!brut || typeof brut !== "object") return out;
+  for (const id in brut) {
+    const p = brut[id];
+    if (!p || typeof p !== "object") continue;
+    const st = Object.assign({}, p);
+    if (typeof st.bestPoints !== "number") {
+      const etoiles = typeof st.stars === "number" ? st.stars : 0;
+      st.bestPoints = etoiles > 0
+        ? (etoiles * PIECES_PAR_ETOILE_STORE + AVANCE_MAX_HERITEE) * POINTS_PAR_PIECE_STORE : 0;
+    }
+    if (typeof st.bestMax !== "number") st.bestMax = st.bestPoints;
+    out[id] = st;
+  }
+  return out;
+}
+
 // Les possessions : un objet dont les valeurs sont des chaînes (« achat »),
 // et rien d'autre.
 function lirePossessions(r) {
@@ -343,12 +379,20 @@ function markTentee(id) {
   persistProgress();
 }
 
-function saveResult(id, stars, delay) {
+// LE MEILLEUR SCORE SE GARDE COMME LE RESTE : un cliquet. `bestMax` suit le
+// score, pas son propre maximum — c'est le total de voyageurs de LA journée où
+// l'on a fait ce score, donc la seule mesure honnête de ce qu'on y a laissé.
+function saveResult(id, stars, delay, points, pointsMax) {
   const stations = _carte().stations;
   const cur = stations[id] || { stars: 0, bestDelay: null };
+  const bp = typeof cur.bestPoints === "number" ? cur.bestPoints : 0;
+  const bm = typeof cur.bestMax === "number" ? cur.bestMax : 0;
+  const pts = typeof points === "number" ? points : 0;
   stations[id] = {
     stars: Math.max(cur.stars, stars),                                   // on ne garde que le meilleur score
-    bestDelay: cur.bestDelay == null ? delay : Math.min(cur.bestDelay, delay)
+    bestDelay: cur.bestDelay == null ? delay : Math.min(cur.bestDelay, delay),
+    bestPoints: Math.max(bp, pts),
+    bestMax: pts > bp ? (typeof pointsMax === "number" ? pointsMax : 0) : bm
   };
   persistProgress();
 }

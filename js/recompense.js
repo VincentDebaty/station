@@ -273,6 +273,17 @@ function medaillesNouvelles(avant, apres) {
 // dépense (lot 2, schéma 8) a vécu quelques heures le 10 septembre 2026 —
 // « pas une bonne idée » (Vincent) : un sans-faute vaut 50 pièces, un
 // chapitre de diamant 500, et le diamant ne s'échange contre rien.
+// LES PIÈCES VIENNENT DES VOYAGEURS, PLUS DES ÉTOILES (Vincent, 23 septembre
+// 2026). Le retard ne fait plus perdre de pièces : il éteint les étoiles, et
+// les étoiles ne paient plus rien — elles disent l'heure tenue, pas la bourse.
+// Vingt points, c'est-à-dire quatre voyageurs emmenés, valent une pièce : un
+// service en rapporte de vingt à quarante-cinq, exactement l'ordre de grandeur
+// de l'ancien barème (10 par étoile, 1 par minute d'avance).
+//
+// LE REJEU NE PAIE QUE LE PROGRÈS, sans qu'on ait rien à écrire : le solde est
+// DÉDUIT de la progression, et la progression ne garde que le meilleur score.
+// Rejouer une gare déjà tenue au mieux rend zéro, comme avant.
+const POINTS_PAR_PIECE = 20;
 const PIECES_PAR_ETOILE = 10, PIECES_PAR_MINUTE = 1, PIECES_PAR_DIAMANT = 50,
       PIECES_PAR_CHAPITRE_DOR = 200, PIECES_PAR_CHAPITRE_DIAMANT = 500,
       PIECES_PAR_ZONE = 1000, PIECES_PAR_CARTE = 5000;
@@ -322,15 +333,23 @@ function avanceDe(r, seuils) {
   if (typeof bd !== "number" || !(r.stars >= 1)) return 0;
   return Math.max(0, Math.floor(seuils.trois - bd));
 }
+// Ce qu'une gare a rapporté : son meilleur score converti, plus le sans-faute.
+function piecesDesPoints(r) { return Math.floor((r.bestPoints || 0) / POINTS_PAR_PIECE); }
 function piecesDeGare(r, seuils) {
   if (!r) return 0;
-  return (r.stars || 0) * PIECES_PAR_ETOILE + avanceDe(r, seuils) * PIECES_PAR_MINUTE +
+  return piecesDesPoints(r) +
     (r.bestDelay === 0 ? PIECES_PAR_DIAMANT : 0);
 }
-function plafondDeGare(seuils) {
-  return 3 * PIECES_PAR_ETOILE + seuils.trois * PIECES_PAR_MINUTE + PIECES_PAR_DIAMANT;
+// CE QU'UNE GARE POUVAIT RAPPORTER ne se lit plus dans sa fiche : le nombre de
+// voyageurs d'une journée est tiré au sort, donc le plafond n'est pas une
+// constante de gare. C'est la MEILLEURE JOURNÉE JOUÉE qui sert de repère —
+// `bestMax`, le total de voyageurs de ce service-là. « Rejouer Doncaster peut
+// rapporter 20 pièces » veut alors dire : voilà ce que tu as laissé sur la
+// table la dernière fois que tu y as été bon.
+function plafondDeGare(seuils, r) {
+  return Math.floor(((r && r.bestMax) || 0) / POINTS_PAR_PIECE) + PIECES_PAR_DIAMANT;
 }
-function manqueAGagner(r, seuils) { return plafondDeGare(seuils) - piecesDeGare(r, seuils); }
+function manqueAGagner(r, seuils) { return Math.max(0, plafondDeGare(seuils, r) - piecesDeGare(r, seuils)); }
 
 // L'ÉTAT D'UNE CARTE QUI N'EST PAS LA COURANTE — le même instantané que
 // `etatRecompenses`, calculé sur un ruban éphémère. C'est ce qui permet de
@@ -401,19 +420,15 @@ function bourseDesMedailles(etat) {
 // enregistrée pour elle, et sa série. Rien n'est stocké de plus — le solde
 // reste entièrement déduit. Le détail sert au relevé : c'est en recevant les
 // pièces poste par poste que le joueur apprend le barème.
-const POSTES = ["etoiles", "avance", "sansFaute", "or", "diamant", "zones", "carte", "medailles"];
+const POSTES = ["voyageurs", "sansFaute", "or", "diamant", "zones", "carte", "medailles"];
 function detailPiecesDUneCarte(def, stations, passees, serie) {
   const st = stations || {}, paye = passees || [];
   const rb = rubanDe(def);
-  const d = { etoiles: 0, avance: 0, sansFaute: 0, or: 0, diamant: 0, zones: 0, carte: 0, medailles: 0, total: 0 };
+  const d = { voyageurs: 0, sansFaute: 0, or: 0, diamant: 0, zones: 0, carte: 0, medailles: 0, total: 0 };
   for (const id in st) {
     const r = st[id] || {};
-    d.etoiles += (r.stars || 0) * PIECES_PAR_ETOILE;
+    d.voyageurs += piecesDesPoints(r);
     if (r.bestDelay === 0) d.sansFaute += PIECES_PAR_DIAMANT;
-    // la précision ne se lit que sur une gare dont on connaît la fiche : le
-    // barème dépend de sa géométrie
-    const cfg = typeof cardOf === "function" ? cardOf(id) : null;
-    if (cfg) d.avance += avanceDe(r, seuilsDansRuban(rb, id, cfg)) * PIECES_PAR_MINUTE;
   }
   // Mêmes crans que niveauDeGare, mais lus dans la table qu'on nous donne.
   // Une gare PAYÉE reste à zéro : elle est franchie, pas tenue, et le rang de
@@ -460,7 +475,7 @@ function cartesDuCompte() {
 }
 // La somme sur TOUTES les cartes jouées, poste par poste.
 function detailPiecesGagnees() {
-  const t = { etoiles: 0, avance: 0, sansFaute: 0, or: 0, diamant: 0, zones: 0, carte: 0, medailles: 0, total: 0 };
+  const t = { voyageurs: 0, sansFaute: 0, or: 0, diamant: 0, zones: 0, carte: 0, medailles: 0, total: 0 };
   for (const c of cartesDuCompte()) {
     const def = typeof defDeCarte === "function" ? defDeCarte(c.id) : null;
     const d = detailPiecesDUneCarte(def, c.stations, c.passees, c.serie);

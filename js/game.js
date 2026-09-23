@@ -1395,7 +1395,10 @@ function endGame(failed) {
   // estFranchie), et il faut pouvoir la distinguer d'une gare jamais jouée.
   if (!STATION.adhoc) {
     if (failed) markTentee(STATION.id);
-    else saveResult(STATION.id, stars, d);
+    // Le prototype web ne compte pas de voyageurs : il enregistre un score nul,
+    // ce qui laisse `bestPoints` intact plutôt que de l'écraser. La jauge est
+    // une affaire de Godot.
+    else saveResult(STATION.id, stars, d, 0, 0);
   }
   // LA SÉRIE SE TIENT APRÈS L'ENREGISTREMENT. La démo « limites » ne compte
   // pas. Un ÉCHEC, lui, compte : il casse la série — le seul endroit du jeu où

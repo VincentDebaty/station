@@ -445,7 +445,37 @@ ce qui faisait s'effondrer les journées.
 
 ---
 
-## 9. Ce qui reste à trancher
+## 9. Le comptage refait — tranché le 23 septembre 2026
+
+« Il faut revoir le comptage des points et des récompenses. Pour le moment rien
+n'est clair » (Vincent). La jauge mêlait dans un seul nombre ce qu'on gagne et
+ce qu'on risque. Les deux axes se séparent, et les cinq questions posées ont été
+tranchées :
+
+1. **Les étoiles ne paient plus de pièces.** Elles disent l'heure tenue, rien
+   d'autre — sans quoi le retard aurait continué d'en coûter, indirectement.
+2. **Le rejeu ne paie que le progrès.** Rien à écrire : le solde est déduit de
+   la progression, qui ne garde que le meilleur score.
+3. **L'échec à trente minutes** — le seuil `une` de la fiche remplace le
+   plafond de 120, qui laissait la partie continuer une heure et demie après
+   qu'elle était perdue. On recommence le niveau.
+4. **Le diamant demande les deux** : pas une minute de retard ET personne resté
+   à quai.
+5. **Vingt points pour une pièce**, soit quatre voyageurs.
+
+Ce qui en découle est écrit dans `economie-du-jeu.md` §9 : le schéma de
+sauvegarde passe à 10, chaque gare garde `bestPoints` et `bestMax`, et la
+migration convertit les étoiles acquises en points, arrondie en faveur du
+joueur.
+
+Reste **l'impatience** (§5 du plan) : faire partir les voyageurs quand un train
+tarde. Non fait, et volontairement — cela remettrait le retard à se payer en
+points, c'est-à-dire à punir deux fois. Si l'on veut la lecture dans le hall,
+le voyageur peut changer d'encre sans partir.
+
+---
+
+## 10. Ce qui reste à trancher
 
 1. **La jauge reste-t-elle ?** Le §4 la rend lisible et discriminante ; c'est
    sur cette version-là qu'il faut rejouer trois ou quatre chapitres avant de

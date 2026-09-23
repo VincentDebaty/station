@@ -39,6 +39,19 @@ const RANGS := [
 ## dépense (lot 2, schéma 8) a vécu quelques heures le 10 septembre 2026 —
 ## « pas une bonne idée » (Vincent) : un sans-faute vaut 50 pièces, un
 ## chapitre de diamant 500, et le diamant ne s'échange contre rien.
+## LES PIÈCES VIENNENT DES VOYAGEURS, PLUS DES ÉTOILES (Vincent, 23 septembre
+## 2026). Le retard ne fait plus perdre de pièces : il éteint les étoiles, et
+## les étoiles ne paient plus rien — elles disent l'heure tenue, pas la bourse.
+## Vingt points, c'est-à-dire quatre voyageurs emmenés, valent une pièce : un
+## service en rapporte de vingt à quarante-cinq, exactement l'ordre de grandeur
+## de l'ancien barème (10 par étoile, 1 par minute d'avance).
+##
+## LE REJEU NE PAIE QUE LE PROGRÈS, sans qu'on ait rien à écrire : le solde est
+## DÉDUIT de la progression, et la progression ne garde que le meilleur score.
+## Rejouer une gare déjà tenue au mieux rend zéro, comme avant.
+const POINTS_PAR_PIECE := 20
+## Gardés pour la migration des sauvegardes d'avant le schéma 10, qui convertit
+## les étoiles acquises en points pour que personne ne perde une pièce.
 const PIECES_PAR_ETOILE := 10
 const PIECES_PAR_MINUTE := 1
 const PIECES_PAR_DIAMANT := 50
@@ -51,7 +64,7 @@ const PASSAGE_PAR_CHAPITRE := 30
 const SEUIL_OR := 3        # RANGS « or »
 const SEUIL_DIAMANT := 4   # RANGS « diamant »
 ## Les postes du détail, dans l'ordre où le relevé les dit.
-const POSTES := ["etoiles", "avance", "sansFaute", "or", "diamant", "zones", "carte", "medailles"]
+const POSTES := ["voyageurs", "sansFaute", "or", "diamant", "zones", "carte", "medailles"]
 
 ## Les vingt-six médailles, dans l'ordre de la plus commune à la plus rare.
 ## Le prédicat de chacune est dans medaille_tenue() : GDScript n'a pas de
@@ -363,19 +376,29 @@ static func avance_de(r: Dictionary, seuils: Dictionary) -> int:
 
 ## Ce qu'UNE gare rapporte, et ce qu'elle peut rapporter au plus. La
 ## différence est le manque à gagner : ce que « rejouer Doncaster » rend encore.
-static func pieces_de_gare(r: Dictionary, seuils: Dictionary) -> int:
+## Ce qu'une gare a rapporté : son meilleur score converti, plus le sans-faute.
+static func pieces_des_points(r: Dictionary) -> int:
+	return int(floor(float(r.get("bestPoints", 0)) / float(POINTS_PAR_PIECE)))
+
+
+static func pieces_de_gare(r: Dictionary, _seuils: Dictionary) -> int:
 	if r.is_empty():
 		return 0
-	return Rub.etoiles_de(r) * PIECES_PAR_ETOILE + avance_de(r, seuils) * PIECES_PAR_MINUTE \
-		+ (PIECES_PAR_DIAMANT if est_diamant(r) else 0)
+	return pieces_des_points(r) + (PIECES_PAR_DIAMANT if est_diamant(r) else 0)
 
 
-static func plafond_de_gare(seuils: Dictionary) -> int:
-	return 3 * PIECES_PAR_ETOILE + int(seuils["trois"]) * PIECES_PAR_MINUTE + PIECES_PAR_DIAMANT
+## CE QU'UNE GARE POUVAIT RAPPORTER ne se lit plus dans sa fiche : le nombre de
+## voyageurs d'une journée est tiré au sort, donc le plafond n'est pas une
+## constante de gare. C'est la MEILLEURE JOURNÉE JOUÉE qui sert de repère —
+## `bestMax`, le total de voyageurs de ce service-là. « Rejouer Doncaster peut
+## rapporter 20 pièces » veut alors dire : voilà ce que tu as laissé sur la
+## table la dernière fois que tu y as été bon.
+static func plafond_de_gare(_seuils: Dictionary, r: Dictionary = {}) -> int:
+	return int(floor(float(r.get("bestMax", 0)) / float(POINTS_PAR_PIECE))) + PIECES_PAR_DIAMANT
 
 
 static func manque_a_gagner(r: Dictionary, seuils: Dictionary) -> int:
-	return plafond_de_gare(seuils) - pieces_de_gare(r, seuils)
+	return max(0, plafond_de_gare(seuils, r) - pieces_de_gare(r, seuils))
 
 
 ## La bourse des médailles tenues dans un état.
@@ -410,13 +433,9 @@ static func detail_pieces_d_une_carte(def: Dictionary, fiches: Dictionary, stati
 		var p: Variant = stations[id]
 		if not (p is Dictionary):
 			continue
-		d["etoiles"] += Rub.etoiles_de(p) * PIECES_PAR_ETOILE
+		d["voyageurs"] += pieces_des_points(p)
 		if est_diamant(p):
 			d["sansFaute"] += PIECES_PAR_DIAMANT
-		# la précision ne se lit que sur une gare dont on connaît la fiche
-		var cfg: Dictionary = r.fiche_de(String(id))
-		if not cfg.is_empty():
-			d["avance"] += avance_de(p, _seuils_dans(r, String(id), cfg)) * PIECES_PAR_MINUTE
 	var chs: Array = def["chapitres"] if def.get("chapitres") is Array else []
 	var finis := 0
 	for ch in chs:

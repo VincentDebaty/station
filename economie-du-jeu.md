@@ -456,3 +456,42 @@ et §8 (le schéma 8) ; `plan-de-dev` lot G point 6, clos par ce document ;
 Les quatre premières se livrent ensemble, sans migration, et suffisent à ce
 que le joueur *voie* qu'il gagne. Les deux dernières engagent la sauvegarde et
 le commerce : elles peuvent attendre.
+
+---
+
+## 9. Le barème refait le 23 septembre 2026 : les pièces viennent des voyageurs
+
+Décidé pendant l'essai de la jauge (`jauge-voyageurs.md` §8 et suivants), sur
+un constat de Vincent : « il faut revoir le comptage des points et des
+récompenses, pour le moment rien n'est clair ». Les deux axes du jeu se
+séparent, et le barème de ce document en est refait.
+
+**Ce qui paie.** Un voyageur emmené vaut **5 points**, et **20 points valent
+une pièce** — c'est-à-dire quatre voyageurs. Un service en rapporte de vingt à
+quarante-cinq, exactement l'ordre de grandeur de l'ancien barème (10 par
+étoile, 1 par minute d'avance, soit 20 à 88 avec le sans-faute).
+
+**Ce qui ne paie plus.** L'étoile (`PIECES_PAR_ETOILE`) et l'avance
+(`PIECES_PAR_MINUTE`). Le retard ne coûte plus une pièce, ni directement ni par
+les étoiles : **il éteint les trois étoiles du service**, et la troisième
+éteinte l'interrompt. Les étoiles disent l'heure tenue, la bourse dit les
+voyageurs.
+
+**Ce qui ne bouge pas.** Le sans-faute vaut toujours 50 pièces — mais il
+demande désormais les deux : pas une minute de retard ET personne resté à quai.
+Les chapitres d'or et de diamant, les zones, la carte, les médailles et le prix
+d'un passage gardent leurs nombres.
+
+**Le rejeu ne paie que le progrès, et il n'y avait rien à écrire pour ça** : le
+solde est DÉDUIT de la progression (§5), et la progression ne garde que le
+meilleur. Une gare stocke donc `bestPoints` — son meilleur score — et
+`bestMax`, le nombre de voyageurs de cette journée-là. Le « manque à gagner »,
+qui se lisait dans la fiche, se lit maintenant dans cette paire : le plafond
+d'une gare n'est plus une constante, puisque la foule d'une journée est tirée
+au sort.
+
+**Le schéma passe à 10**, et la migration convertit ce que chaque gare valait
+en étoiles en autant de points, **arrondi en faveur du joueur** : le bonus
+d'avance, qu'on ne peut pas recalculer sans la fiche, est compté au maximum.
+Personne ne perd une pièce au passage. `oracle-sauvegarde` rejoue les onze
+schémas des deux côtés, `oracle-ruban` vérifie les deux barèmes.

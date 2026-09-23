@@ -469,7 +469,7 @@ func _enregistrer_fin() -> void:
 	if r["failed"]:
 		Sauvegarde.marquer_tentee(id)
 	else:
-		Sauvegarde.enregistrer_resultat(id, stars, r["d"])
+		Sauvegarde.enregistrer_resultat(id, stars, r["d"], r.get("points", 0), r.get("pointsMax", 0))
 	var serie: Dictionary = Sauvegarde.pousser_serie((not r["failed"]) and stars >= Rec.SERIE_SEUIL)
 	var texte := "enregistré : %s %d★, retard %d, série %d (record %d)" % [id, stars, int(r["d"]), serie["n"], serie["record"]]
 	if ruban != null:

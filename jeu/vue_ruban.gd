@@ -308,13 +308,11 @@ func _remise_pour_voir() -> void:
 			rendu = int(mot.substr(6))
 	# la bourse de ce faux service : ce que le barème lui donnerait, ou ce
 	# qu'on a demandé
-	var avance: int = int(seuils["trois"]) if dia else max(0, int(seuils["trois"]) - 7)
-	var det := {"etoiles": etoiles * Rec.PIECES_PAR_ETOILE, "avance": avance,
-		"sansFaute": Rec.PIECES_PAR_DIAMANT if dia else 0}
+	var det := {"voyageurs": etoiles * 12, "sansFaute": Rec.PIECES_PAR_DIAMANT if dia else 0}
 	if butin > 0:
 		det["or"] = butin
 	if gain < 0:
-		gain = int(det["etoiles"]) + int(det["avance"]) + int(det["sansFaute"]) + butin + rendu
+		gain = int(det["voyageurs"]) + int(det["sansFaute"]) + butin + rendu
 	var solde: int = app.solde() if app != null else 0
 	var faux := {"gare": gare, "stars": etoiles, "prevStars": 0, "d": 0 if dia else 7,
 		"prevBest": null, "perfect": dia, "failed": false, "win": true, "seuils": seuils,
@@ -3915,7 +3913,7 @@ func _bloc_bilan(avec_medailles: bool = true) -> Control:
 	if b["win"] and not bp.is_empty():
 		var det: Dictionary = bp["detail"] if bp.get("detail") is Dictionary else {}
 		var rendu: int = int(bp.get("rendu", 0))
-		var postes: Array = ["etoiles", "avance", "sansFaute"] if not fete.is_empty() else Rec.POSTES
+		var postes: Array = ["voyageurs", "sansFaute"] if not fete.is_empty() else Rec.POSTES
 		# la mise rendue a sa propre ligne : le gain du service se dit sans elle
 		var montant: int = _somme(det, postes) if not fete.is_empty() else (int(bp.get("gain", 0)) - rendu)
 		if rendu > 0:
@@ -4198,7 +4196,7 @@ static func _somme(det: Dictionary, postes: Array) -> int:
 
 
 ## Le détail d'une bourse, en mots courts : « étoiles 30 · avance 3 ».
-const NOMS_POSTES := {"etoiles": "étoiles", "avance": "avance", "sansFaute": "sans-faute",
+const NOMS_POSTES := {"voyageurs": "voyageurs", "sansFaute": "sans-faute",
 	"or": "chapitre d'or", "diamant": "chapitre de diamant", "zones": "région", "carte": "carte",
 	"medailles": "médailles"}
 

@@ -29,9 +29,23 @@ extends Node
 ##   getCartesEnregistrees → cartes_enregistrees · isBought → Ruban.est_tenue
 ##   getMuted / setMuted → get_muet / set_muet · getOnboarded → get_accueilli
 
-const SCHEMA_VERSION := 9
+## SCHÉMA 10 (23 septembre 2026) : chaque gare garde son MEILLEUR SCORE en
+## points — `bestPoints` — et le total de voyageurs de ce service-là,
+## `bestMax`. Ce sont eux qui font les pièces depuis que les étoiles n'en
+## paient plus. La migration convertit ce que chaque gare valait en étoiles en
+## autant de points, ARRONDI EN FAVEUR DU JOUEUR (le bonus d'avance, qu'on ne
+## peut pas recalculer sans la fiche, est compté au maximum) : personne ne perd
+## une pièce au passage. `bestMax` est posé égal à `bestPoints`, ce qui laisse
+## ces gares « déjà moissonnées » plutôt que de promettre un gain imaginaire.
+const SCHEMA_VERSION := 10
 ## La carte de tout joueur d'avant les cartes : l'Europe, et elle est gratuite.
 const CARTE_PAR_DEFAUT := "europe"
+## Ce que vaut une gare héritée, au-delà de ses étoiles : le bonus d'avance ne
+## se recalcule pas sans la fiche, on le compte donc au plus haut (8, le seuil
+## des trois étoiles au niveau 1).
+const AVANCE_MAX_HERITEE := 8
+const POINTS_PAR_PIECE := 20
+const PIECES_PAR_ETOILE := 10
 const CLE_PROGRESSION := "station-progress"
 const CLE_MUET := "station-muted"
 const CLE_ACCUEILLI := "station-onboarded"
@@ -155,7 +169,7 @@ static func lire_serie(r: Variant) -> Dictionary:
 ## progression de la carte « europe », intacte.
 static func migrer(raw: Variant) -> Dictionary:
 	if raw is Dictionary and _nombre(raw.get("version")) \
-			and float(raw["version"]) >= 6.0 and float(raw["version"]) <= 9.0 \
+			and float(raw["version"]) >= 6.0 and float(raw["version"]) <= float(SCHEMA_VERSION) \
 			and _objet(raw.get("cartes")):
 		var brutes: Dictionary = _en_dictionnaire(raw["cartes"])
 		var cartes := {}
@@ -169,7 +183,7 @@ static func migrer(raw: Variant) -> Dictionary:
 					if _vrai(g) and not passees.has(g):
 						passees.append(g)
 			cartes[id] = {
-				"stations": c["stations"].duplicate() if c.get("stations") is Dictionary else {},
+				"stations": _stations_migrees(c.get("stations")),
 				"passees": passees,
 				"serie": lire_serie(c),
 			}
@@ -184,6 +198,28 @@ static func migrer(raw: Variant) -> Dictionary:
 	return {"version": SCHEMA_VERSION, "carteCourante": CARTE_PAR_DEFAUT,
 		"cartes": {CARTE_PAR_DEFAUT: {"stations": v5["stations"], "passees": [], "serie": v5["serie"]}},
 		"possedees": {CARTE_PAR_DEFAUT: "gratuite"}, "possessions": {}}
+
+
+## LES GARES D'UNE CARTE, AVEC LEUR SCORE. Une gare d'avant le schéma 10 n'a
+## pas de `bestPoints` : on lui en donne autant que ses étoiles valaient de
+## pièces, plus le bonus d'avance au maximum — la conversion ne peut alors que
+## rendre, jamais retirer.
+static func _stations_migrees(brut: Variant) -> Dictionary:
+	var out := {}
+	if not (brut is Dictionary):
+		return out
+	for id in brut:
+		var p: Variant = brut[id]
+		if not (p is Dictionary):
+			continue
+		var st: Dictionary = p.duplicate()
+		if not _nombre(st.get("bestPoints")):
+			var etoiles: int = int(st["stars"]) if _nombre(st.get("stars")) else 0
+			st["bestPoints"] = (etoiles * PIECES_PAR_ETOILE + AVANCE_MAX_HERITEE) * POINTS_PAR_PIECE if etoiles > 0 else 0
+		if not _nombre(st.get("bestMax")):
+			st["bestMax"] = st["bestPoints"]
+		out[id] = st
+	return out
 
 
 ## Les possessions : un dictionnaire dont les valeurs sont des chaînes non
@@ -414,16 +450,25 @@ func marquer_tentee(id: Variant) -> void:
 
 
 ## On ne garde que le meilleur score et le meilleur retard.
-func enregistrer_resultat(id: Variant, stars: Variant, delay: Variant) -> void:
+## LE MEILLEUR SCORE SE GARDE COMME LE RESTE : un cliquet. `bestMax` suit le
+## score, pas son propre maximum — c'est le total de voyageurs de LA journée où
+## l'on a fait ce score, donc la seule mesure honnête de ce qu'on y a laissé.
+func enregistrer_resultat(id: Variant, stars: Variant, delay: Variant,
+		points: Variant = 0, points_max: Variant = 0) -> void:
 	var stations: Dictionary = _carte()["stations"]
 	var cur: Variant = stations.get(id)
 	if not (cur is Dictionary):
 		cur = {"stars": 0, "bestDelay": null}
 	var bd: Variant = cur.get("bestDelay")
 	var cs: Variant = cur.get("stars")
+	var bp: int = int(cur["bestPoints"]) if _nombre(cur.get("bestPoints")) else 0
+	var bm: int = int(cur["bestMax"]) if _nombre(cur.get("bestMax")) else 0
+	var pts: int = int(points) if _nombre(points) else 0
 	stations[id] = {
 		"stars": max(cs if _nombre(cs) else 0, stars),      # Math.max(null, s) vaut s
 		"bestDelay": delay if bd == null else min(bd, delay),
+		"bestPoints": max(bp, pts),
+		"bestMax": (int(points_max) if _nombre(points_max) else 0) if pts > bp else bm,
 	}
 	persister()
 
