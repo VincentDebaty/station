@@ -76,6 +76,10 @@ const MER := Color("#33403f")
 # épaisseurs. Toujours multipliés par k : un rayon fixe rétrécit à l'œil dès
 # que l'écran grossit, ce qui est exactement le défaut qu'on corrige.
 const R_PETIT := 6.0     # ce qui se pose : plaques de la carte, pastilles, vignettes
+## LE NUMÉRO DE QUAI MONTE DE TROIS UNITÉS au-dessus du centre de la plaque
+## (Vincent, 23 septembre 2026) : centré, son pied mordait sur la bordure basse
+## où attendent les voyageurs. Le plan et la vue le peignent tous deux.
+const NUMERO_QUAI_LEVE := 3.0
 const R := 10.0          # le cas courant : boutons, chips, jauges à bord franc
 const R_GRAND := 16.0    # les grandes surfaces : fiches, bannières, tuiles, cartons
 const TRAIT := 1.0       # le liseré ordinaire
