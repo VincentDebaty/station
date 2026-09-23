@@ -393,6 +393,17 @@ minute de retard coûtait quatre wagons. Elle en coûte un.
   elle.** Posé dans le repère de l'écran, il restait à plat quand la caisse
   s'inclinait sur une courbe — « cela reste figé » (Vincent, le jour même).
 
+**Et trois défauts de descente que le nombre a révélés** (Vincent, le jour
+même) : les quatre voyageurs d'une caisse partaient tous de son centre — « ils
+sont les uns sur les autres et cela n'a pas de sens » —, ils marchaient ensuite
+comme un seul point, et ils longeaient l'axe du quai au lieu de sa bordure, « pas
+le long du quai comme les autres voyageurs qui attendent ». Chacun sort
+désormais de SA place, met pied à terre sur la bordure et marche où marchent les
+autres ; et ils descendent l'un après l'autre, quelques secondes de jeu entre
+deux — on ne vide pas une voiture d'un bloc. Le décalage coûte au plus 0,4
+minute, soit moins que ce qui reste de la marge de trois minutes qui garantit
+les correspondances.
+
 Mesuré, 21 services : de **84 à 184 voyageurs** par service, embarquement
 médian 81 %, retard médian 5,8 min, étoiles 5 · 8 · 5 · 3.
 

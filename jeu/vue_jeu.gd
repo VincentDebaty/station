@@ -504,17 +504,40 @@ func _noter_les_descentes() -> void:
 			continue
 		jauge_descendu[tr.id] = true
 		var cases: Array = positions.get(tr.id, [])
+		var bande: float = _bande_de_quai(tr.platform)
+		var k := 0
 		for u in jauge_unites:
 			if u.get("source", "") != tr.id or u.get("descente") != null:
 				continue
-			var i: int = mini(_case_de(int(u.get("source_rang", 0))), maxi(0, cases.size() - 1))
-			var de := Vector2(float(cases[i]["x"]), float(cases[i]["y"])) if not cases.is_empty() \
-				else Vector2(Geo.PLAT_MID, float(u["pos"].y))
-			var chemin := _chemin_vers(de, u["pos"])
+			# CHACUN SORT DE SA PLACE, PAS DU MILIEU DE LA CAISSE. Ils partaient
+			# tous du centre du wagon : quatre voyageurs empilés qui marchaient
+			# ensuite comme un seul point — « ils sont les uns sur les autres et
+			# cela n'a pas de sens » (Vincent, 23 septembre 2026).
+			var de: Vector2
+			if cases.is_empty():
+				de = Vector2(Geo.PLAT_MID, bande)
+			else:
+				var i: int = mini(_case_de(int(u.get("source_rang", 0))), cases.size() - 1)
+				de = Vector2(float(cases[i]["x"]), float(cases[i]["y"])) \
+					+ _coin_de(int(u.get("source_rang", 0)), deg_to_rad(float(cases[i].get("ang", 0.0))))
+			var chemin := _chemin_depuis_le_train(de, bande, u["pos"])
+			# ET ILS DESCENDENT L'UN APRÈS L'AUTRE : on ne vide pas une voiture
+			# d'un bloc. Quelques secondes de jeu entre deux, ce qui suffit à en
+			# faire une file au lieu d'une tache.
+			var retenu: float = enc.game_min + float(k % 8) * 0.06
+			k += 1
 			u["chemin"] = chemin
-			u["marche"] = enc.game_min
+			u["marche"] = retenu
 			u["descente"] = enc.game_min
-			u["arrivee"] = enc.game_min + _longueur(chemin) / JAUGE_VITESSE_CORRESPONDANCE
+			u["arrivee"] = retenu + _longueur(chemin) / JAUGE_VITESSE_CORRESPONDANCE
+
+
+## LA HAUTEUR DE LA BANDE D'UN QUAI — là où l'on attend, et là où l'on marche.
+func _bande_de_quai(pid) -> float:
+	for q in G["platforms"]:
+		if pid != null and int(q["id"]) == int(pid):
+			return float(q["cy"]) + Geo.PLAT_H / 2.0 - JAUGE_BANDE / 2.0
+	return Geo.CENTER_Y
 
 
 ## L'ABSCISSE DU COULOIR, et l'ordonnée de sa bouche : le milieu des quais, et
@@ -534,6 +557,19 @@ func _tunnel_bouche() -> float:
 ## du quai où il se trouve jusqu'à l'escalier, le couloir jusqu'à son quai, puis
 ## le quai jusqu'à sa place. Personne ne coupe en diagonale, et personne ne
 ## traverse une voie. Sur son propre quai, il marche tout droit.
+## LE CHEMIN DE CELUI QUI DESCEND : il met pied à terre SUR LA BORDURE de son
+## quai, pas au milieu de la voie, puis marche comme tout le monde. Il longeait
+## l'axe du quai — « il se déplace au milieu du quai en sortie et pas le long du
+## quai comme les autres voyageurs » (Vincent, 23 septembre 2026).
+func _chemin_depuis_le_train(de: Vector2, bande: float, vers: Vector2) -> PackedVector2Array:
+	var pied := Vector2(de.x, bande)
+	var suite := _chemin_vers(pied, vers)
+	var pts := PackedVector2Array([de])
+	for p in suite:
+		pts.append(p)
+	return pts
+
+
 func _chemin_vers(de: Vector2, vers: Vector2) -> PackedVector2Array:
 	if absf(vers.y - de.y) < 1.0:
 		return PackedVector2Array([de, vers])
@@ -954,10 +990,13 @@ func _wagons_occupes(tr) -> Dictionary:
 	# n'arrive plus forcément à vide, et on doit voir d'où sort la foule qui
 	# traversera la gare. Elles descendent à l'arrêt, à l'instant précis où les
 	# voyageurs d'ici commencent à monter : les deux ne se chevauchent pas.
+	# CEUX QUI SONT ENCORE DEDANS : arrivés avec lui, et pas encore descendus —
+	# y compris ceux qui attendent leur tour dans la file de descente.
+	for u in jauge_unites:
+		if u.get("source", "") == tr.id and not u["montee"] \
+				and enc.game_min < float(u.get("marche", INF)):
+			occ[int(u.get("source_rang", 0))] = true
 	if tr.actual_arr == null:
-		for u in jauge_unites:
-			if u.get("source", "") == tr.id and u.get("descente") == null:
-				occ[int(u.get("source_rang", 0))] = true
 		return occ
 	var parti: bool = jauge_parti.get(tr.id, false) or tr.state != Enc.S_DWELL
 	for u in _unites_prises(tr.id):
