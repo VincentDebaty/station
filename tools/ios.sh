@@ -236,7 +236,13 @@ if [ -z "$ID" ]; then
   rouge "aucun appareil connecté"
   exit 1
 fi
-echo "→ installation sur $ID…"
+# LES ACCOLADES NE SONT PAS UNE COQUETTERIE ICI. « $ID… » : hors d'une locale
+# UTF-8, bash prend les octets de l'ellipse pour la suite du nom de la variable
+# et meurt sur « ID… : unbound variable » avec set -u — juste après avoir
+# exporté et signé, donc au pire moment (Vincent, 23 septembre 2026, depuis son
+# terminal ; le mien, en UTF-8, ne le voyait pas). Toute variable suivie d'un
+# caractère non ASCII se ferme désormais par des accolades.
+echo "→ installation sur ${ID}…"
 xcrun devicectl device install app --device "$ID" "$APP" || exit 1
 echo "→ lancement…"
 xcrun devicectl device process launch --device "$ID" "$BUNDLE"
