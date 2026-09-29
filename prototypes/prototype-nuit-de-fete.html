@@ -154,8 +154,10 @@ button:focus-visible { outline: 2px solid var(--laiton-clair); outline-offset: 2
 .train .caisse { stroke-width: 1.8; }
 .train .lettre { font: 800 12px var(--f-ui); fill: #140c05; text-anchor: middle; dominant-baseline: central; pointer-events: none; }
 .train .anneau { fill: none; stroke: #fff; stroke-width: 2.6; opacity: 0; pointer-events: none; }
-.train.invite .anneau { stroke: var(--laiton-clair); animation: pouls 1.3s ease-in-out infinite; }
-.train.choisi .anneau { stroke: #fff; animation: pouls .7s ease-in-out infinite; }
+.train.invite .anneau { stroke: var(--laiton-clair); stroke-width: 1.4; animation: invite 1.8s ease-in-out infinite; }
+.train.choisi .anneau { stroke: #fff; stroke-width: 3.6; animation: choisi .55s ease-in-out infinite; }
+@keyframes invite { 0%, 100% { opacity: .06; } 50% { opacity: .4; } }
+@keyframes choisi { 0%, 100% { opacity: .6; } 50% { opacity: 1; } }
 .train.bloque .anneau { stroke: var(--plein); animation: pouls .6s ease-in-out infinite; }
 .train.renfort .caisse { stroke: var(--laiton-clair) !important; stroke-width: 2.6; }
 .train.eclat .caisse { animation: eclat .6s ease-out; }
@@ -508,7 +510,7 @@ details.mesures summary { cursor: pointer; color: var(--laiton-clair); font-weig
       ],
       "combo": { "actif": false, "seuilBon": 0.8, "seuilVide": 0.3, "max": 10, "casseSurPlein": false },
       "renfort": { "actif": false, "jauge": 100, "delaiArrivee": 5, "gains": { "bienRempli": 20, "ponctuel": 6, "calme": 0.8 } },
-      "score": { "voyageur": 10, "ponctuel": 100, "evacuation": 1500, "refoule": 10, "reste": 5, "sansEvacuation": 2000, "etoiles": [5000, 7000, 11500] }
+      "score": { "voyageur": 10, "ponctuel": 100, "evacuation": 1500, "refoule": 10, "reste": 5, "sansEvacuation": 2000, "etoiles": [5000, 7000, 11800] }
     }
   }
 }
@@ -1136,21 +1138,30 @@ const Fete = (function () {
     }
 
     // --- les commandes du joueur -------------------------------------------
-    affecter(tr, qid) {
+    // Désigner un quai où un train EMBARQUE encore, avec `liberer`, le fait
+    // partir : le train choisi prendra sa place dès que la voie sera libre
+    // (Vincent, 29 septembre 2026 : « il faudrait simplement faire partir le
+    // train à quai et faire arriver le train sélectionné à ce quai »). Un quai
+    // promis à un train qui n'y est pas encore, lui, reste refusé.
+    affecter(tr, qid, { liberer = false } = {}) {
       if (this.fini || !tr) return { ok: false, raison: "fini" };
       if (tr.etat !== "approche" && tr.etat !== "attente") return { ok: false, raison: "mouvement" };
       const q = this.quai(qid);
       if (!q) return { ok: false, raison: "inconnu" };
-      const r = this.reserveDe(qid);
-      if (r && r !== tr) return { ok: false, raison: "occupe", par: r };
+      let r = this.reserveDe(qid), libere = null;
+      if (r && r !== tr && liberer && r.etat === "quai" && !r.partant) {
+        this.fairePartir(r, "joueur");
+        libere = r; r = this.reserveDe(qid);
+      }
+      if (r && r !== tr) return { ok: false, raison: r.etat === "quai" ? "occupe" : "promis", par: r };
       // la mesure du choix : ce quai avait-il le plus de voyageurs pour lui ?
       let maxi = 0;
       for (const x of this.quais) maxi = Math.max(maxi, x.file.n[tr.dest]);
       this.stats.choix++;
       if (maxi > 0 && q.file.n[tr.dest] === maxi) this.stats.choixPourVoyageurs++;
       tr.quai = qid; tr.bloque = null;
-      this.emettre({ type: "affectation", train: tr, quai: qid });
-      return { ok: true };
+      this.emettre({ type: "affectation", train: tr, quai: qid, libere });
+      return { ok: true, libere };
     }
     desaffecter(tr) {
       if (!tr || (tr.etat !== "approche" && tr.etat !== "attente") || tr.quai == null) return false;
@@ -1589,6 +1600,7 @@ const Fete = (function () {
       s.connect(f); f.connect(g); g.connect(this.maitre); s.start(at);
     },
     selection() { this.ton(880, 0, 0.06, "triangle", 0.05); },
+    deselection() { this.ton(700, 0, 0.05, "triangle", 0.04); this.ton(520, 0.05, 0.08, "triangle", 0.035); },
     affectation() { this.ton(660, 0, 0.07, "triangle", 0.05); this.ton(990, 0.07, 0.1, "triangle", 0.05); },
     refus() { this.ton(220, 0, 0.14, "square", 0.03); },
     depart() { this.ton(1250, 0, 0.18, "sine", 0.035, 900); },
@@ -1881,6 +1893,7 @@ const Fete = (function () {
       if (selection !== tr && partie.file(tr.origine)[0] !== tr) cache = true;
       x = tete.x; y = tete.y + 33;
       const quoi = tr.renfort ? "RENFORT " + tr.cap : (tr.type === "omnibus" ? "OMN " : "EXP ") + tr.cap;
+      if (selection === tr) bord = "#fff";
       if (tr.bloque === "voie" || tr.bloque === "quai") { texte = "<tspan class='tard'>■ voie occupée</tspan>"; bord = "var(--plein)"; }
       else if (tr.quai != null) texte = "→ Q" + tr.quai + " · " + horloge;
       else texte = quoi + " · " + horloge;
@@ -2258,7 +2271,7 @@ const Fete = (function () {
     Son.reveil();
     if (!enJeu()) return;
     if (tr.etat === "approche" || tr.etat === "attente") {
-      if (selection === tr) { selection = null; return; }
+      if (selection === tr) { selection = null; Son.deselection(); return; }
       selection = tr; Son.selection();
       return;
     }
@@ -2280,10 +2293,11 @@ const Fete = (function () {
       pilule("Touchez d'abord un train à l'entrée", c.x, c.y - 2); Son.refus();
       return;
     }
-    const r = partie.affecter(selection, qid);
+    const r = partie.affecter(selection, qid, { liberer: true });
     if (r.ok) { selection = null; return; }
     Son.refus();
-    if (r.raison === "occupe") pilule("Quai " + qid + " déjà pris", c.x, c.y - 2, true);
+    if (r.raison === "promis") pilule("Le quai " + qid + " attend déjà un train", c.x, c.y - 2, true);
+    else if (r.raison === "occupe") pilule("Quai " + qid + " déjà pris", c.x, c.y - 2, true);
     else if (r.raison === "mouvement") selection = null;
   }
   function toucherPortail(dest) {

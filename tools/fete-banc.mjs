@@ -40,7 +40,8 @@
 // glouton médiane à 30 600 et p90 à 36 600. La boucle a deux bosses — une
 // évacuation coûte cher, pénalité et prime perdue — : glouton médiane à
 // 8 300 puis p70 à 11 700, stratège p20 à 11 100 ; trois étoiles y veulent
-// une soirée sans évacuation.
+// une soirée sans évacuation ET bien menée (11 800 : à 11 500, le glouton
+// tombait pile sur la barre d'E4 selon l'échantillon).
 // Changer le jeu déplace ces centiles : le banc le dira.
 // ------------------------------------------------------------------
 import { readFileSync } from "node:fs";
