@@ -332,7 +332,7 @@ details.mesures summary { cursor: pointer; color: var(--laiton-clair); font-weig
       <div>
         <p class="but">Le concert, le feu d'artifice, puis le grand spectacle se terminent : la foule déferle sur les quais par vagues. Aiguillez les trains vers les bons quais, remplissez-les, et gardez la gare fluide jusqu'à la fin du service.</p>
         <ol class="gestes">
-          <li><b>Touchez un train</b> qui attend à l'entrée, puis <b>un quai</b> : il s'y rend.</li>
+          <li><b>Touchez un train</b> qui attend à l'entrée, puis <b>un quai</b> : il s'y rend, puis traverse la gare vers la ville de sa couleur.</li>
           <li>Il embarque les voyageurs <b>de sa couleur</b>. <b>Touchez-le</b> pour le faire partir, ou laissez-le se remplir. Plein, il part seul.</li>
           <li>Un quai <b>plein</b> lance un compte à rebours : libérez des places avant l'évacuation.</li>
           <li id="geste-bonus">Des trains <b>bien remplis</b> à la suite font monter la <b>fluidité</b>. La jauge <b>renfort</b> vous donne un grand train, à envoyer là où la foule déborde.</li>
@@ -418,7 +418,7 @@ details.mesures summary { cursor: pointer; color: var(--laiton-clair); font-weig
     "nuit": {
       "titre": "Nuit de fête",
       "gare": "Rivièreville",
-      "resume": "6 quais · 5 destinations · 5 minutes · 3 grosses vagues",
+      "resume": "6 quais · 5 destinations · 5 minutes · 3 grosses vagues, 6 trains à la fois",
       "duree": 300,
       "delaiFinal": 35,
       "plan": { "largeur": 1600, "hauteur": 700, "quaiX1": 560, "quaiX2": 1040, "centreY": 362, "pasQuais": 100, "jonctionG": 230, "jonctionD": 1370, "decalageApproche": 36 },
@@ -432,22 +432,22 @@ details.mesures summary { cursor: pointer; color: var(--laiton-clair); font-weig
         { "id": "BERCY", "nom": "Bercy", "court": "Bercy", "lettre": "B", "couleur": "#b07cff", "cote": "D", "y": 574 }
       ],
       "trains": {
-        "actifsMax": 4,
-        "vitesse": 320, "vitesseApproche": 220, "acceleration": 420, "freinage": 480,
-        "ouverturePortes": 0.6,
+        "actifsMax": 6,
+        "vitesse": 380, "vitesseApproche": 260, "acceleration": 520, "freinage": 600,
+        "ouverturePortes": 0.5,
         "tolerance": 0, "retardImportant": 10, "retardMax": 25,
         "departAutoSiComplet": true, "departAutoALHeure": false,
         "types": {
-          "express": { "nom": "Express", "capacite": 60, "voitures": 3, "embarquement": 18, "delai": 28 },
-          "omnibus": { "nom": "Omnibus", "capacite": 120, "voitures": 6, "embarquement": 6, "delai": 42 },
-          "renfort": { "nom": "Renfort", "capacite": 180, "voitures": 7, "embarquement": 15, "delai": 50 }
+          "express": { "nom": "Express", "capacite": 60, "voitures": 3, "embarquement": 22, "delai": 24 },
+          "omnibus": { "nom": "Omnibus", "capacite": 120, "voitures": 6, "embarquement": 8, "delai": 36 },
+          "renfort": { "nom": "Renfort", "capacite": 180, "voitures": 7, "embarquement": 18, "delai": 45 }
         }
       },
-      "horaire": { "premier": 3, "preavis": 8, "horizon": 12, "prise": 0.8, "seuil": 30, "seuilOmnibus": 90, "partOmnibusForte": 0.8, "partOmnibusFaible": 0.25, "intervalleMin": 5, "calmeMax": 15, "silenceFinal": 16, "densite": 1 },
+      "horaire": { "premier": 3, "preavis": 6, "horizon": 12, "prise": 0.8, "seuil": 30, "seuilOmnibus": 90, "partOmnibusForte": 0.8, "partOmnibusFaible": 0.25, "intervalleMin": 4, "calmeMax": 8, "silenceFinal": 14, "densite": 1 },
       "voyageurs": {
         "premiereGrappe": 46,
-        "initiaux": 30,
-        "fond": [[0, 1.2], [55, 1.6], [120, 1.4], [200, 2.0], [285, 1.6], [300, 0]],
+        "initiaux": 50,
+        "fond": [[0, 2.2], [55, 2.8], [120, 2.5], [200, 3.2], [285, 2.8], [300, 0]],
         "couleurs": { "MONTMARTRE": 1, "SAINT_DENIS": 1, "GARE_EST": 1, "NATION": 1, "BERCY": 1 },
         "groupe": [2, 6],
         "attraction": 0.8,
@@ -456,14 +456,14 @@ details.mesures summary { cursor: pointer; color: var(--laiton-clair); font-weig
         "grappe": 0.15
       },
       "vagues": [
-        { "titre": "Fin du concert", "t": 60, "annonce": 15, "duree": 22, "voyageurs": 240, "quais": 3, "groupe": [6, 14], "couleurs": { "GARE_EST": 3, "NATION": 2, "MONTMARTRE": 1 } },
-        { "titre": "Fin du feu d'artifice", "t": 150, "annonce": 15, "duree": 25, "voyageurs": 320, "quais": 4, "groupe": [6, 16], "couleurs": { "MONTMARTRE": 3, "SAINT_DENIS": 2, "BERCY": 2, "GARE_EST": 1 } },
-        { "titre": "Fin du spectacle", "t": 210, "annonce": 15, "duree": 32, "voyageurs": 460, "quais": 5, "groupe": [8, 18], "couleurs": { "GARE_EST": 2, "NATION": 2, "MONTMARTRE": 2, "SAINT_DENIS": 2, "BERCY": 2 } },
-        { "titre": "Fermeture des bars", "t": 272, "annonce": 10, "duree": 18, "voyageurs": 150, "quais": 3, "groupe": [4, 10], "couleurs": { "BERCY": 3, "SAINT_DENIS": 2 } }
+        { "titre": "Fin du concert", "t": 60, "annonce": 15, "duree": 24, "voyageurs": 330, "quais": 3, "groupe": [6, 14], "couleurs": { "GARE_EST": 3, "NATION": 2, "MONTMARTRE": 1 } },
+        { "titre": "Fin du feu d'artifice", "t": 150, "annonce": 15, "duree": 26, "voyageurs": 430, "quais": 4, "groupe": [6, 16], "couleurs": { "MONTMARTRE": 3, "SAINT_DENIS": 2, "BERCY": 2, "GARE_EST": 1 } },
+        { "titre": "Fin du spectacle", "t": 210, "annonce": 15, "duree": 34, "voyageurs": 620, "quais": 5, "groupe": [8, 18], "couleurs": { "GARE_EST": 2, "NATION": 2, "MONTMARTRE": 2, "SAINT_DENIS": 2, "BERCY": 2 } },
+        { "titre": "Fermeture des bars", "t": 272, "annonce": 10, "duree": 18, "voyageurs": 230, "quais": 3, "groupe": [4, 10], "couleurs": { "BERCY": 3, "SAINT_DENIS": 2 } }
       ],
       "combo": { "actif": true, "seuilBon": 0.8, "seuilVide": 0.3, "max": 10, "casseSurPlein": false },
-      "renfort": { "actif": true, "jauge": 100, "delaiArrivee": 5, "gains": { "bienRempli": 18, "ponctuel": 6, "calme": 0.6 } },
-      "score": { "voyageur": 10, "ponctuel": 100, "evacuation": 1500, "refoule": 10, "reste": 5, "sansEvacuation": 2000, "etoiles": [11000, 17000, 28000] }
+      "renfort": { "actif": true, "jauge": 100, "delaiArrivee": 5, "gains": { "bienRempli": 12, "ponctuel": 4, "calme": 0.5 } },
+      "score": { "voyageur": 10, "ponctuel": 100, "evacuation": 1500, "refoule": 10, "reste": 5, "sansEvacuation": 2000, "etoiles": [20000, 32000, 48000] }
     },
     "boucle": {
       "titre": "Boucle minimale",
@@ -480,22 +480,22 @@ details.mesures summary { cursor: pointer; color: var(--laiton-clair); font-weig
         { "id": "GARE_EST", "nom": "Gare de l'Est", "court": "Gare de l'Est", "lettre": "E", "couleur": "#4aa8ff", "cote": "D", "y": 362 }
       ],
       "trains": {
-        "actifsMax": 3,
-        "vitesse": 320, "vitesseApproche": 220, "acceleration": 420, "freinage": 480,
-        "ouverturePortes": 0.6,
+        "actifsMax": 4,
+        "vitesse": 380, "vitesseApproche": 260, "acceleration": 520, "freinage": 600,
+        "ouverturePortes": 0.5,
         "tolerance": 0, "retardImportant": 10, "retardMax": 25,
         "departAutoSiComplet": true, "departAutoALHeure": false,
         "types": {
-          "express": { "nom": "Express", "capacite": 60, "voitures": 3, "embarquement": 18, "delai": 28 },
-          "omnibus": { "nom": "Omnibus", "capacite": 120, "voitures": 6, "embarquement": 6, "delai": 42 },
-          "renfort": { "nom": "Renfort", "capacite": 180, "voitures": 7, "embarquement": 15, "delai": 50 }
+          "express": { "nom": "Express", "capacite": 60, "voitures": 3, "embarquement": 22, "delai": 24 },
+          "omnibus": { "nom": "Omnibus", "capacite": 120, "voitures": 6, "embarquement": 8, "delai": 36 },
+          "renfort": { "nom": "Renfort", "capacite": 180, "voitures": 7, "embarquement": 18, "delai": 45 }
         }
       },
-      "horaire": { "premier": 3, "preavis": 8, "horizon": 12, "prise": 0.8, "seuil": 26, "seuilOmnibus": 90, "partOmnibusForte": 0.8, "partOmnibusFaible": 0.25, "intervalleMin": 6, "calmeMax": 15, "silenceFinal": 14, "densite": 1 },
+      "horaire": { "premier": 3, "preavis": 6, "horizon": 12, "prise": 0.8, "seuil": 28, "seuilOmnibus": 90, "partOmnibusForte": 0.8, "partOmnibusFaible": 0.25, "intervalleMin": 4.5, "calmeMax": 9, "silenceFinal": 14, "densite": 1 },
       "voyageurs": {
         "premiereGrappe": 46,
-        "initiaux": 20,
-        "fond": [[0, 1.0], [70, 1.3], [120, 1.1], [180, 0]],
+        "initiaux": 34,
+        "fond": [[0, 1.6], [70, 2.1], [120, 1.8], [180, 0]],
         "couleurs": { "MONTMARTRE": 1, "SAINT_DENIS": 1, "GARE_EST": 1 },
         "groupe": [2, 5],
         "attraction": 0.8,
@@ -504,11 +504,11 @@ details.mesures summary { cursor: pointer; color: var(--laiton-clair); font-weig
         "grappe": 0.15
       },
       "vagues": [
-        { "titre": "Fin du concert", "t": 80, "annonce": 15, "duree": 25, "voyageurs": 360, "quais": 3, "groupe": [6, 14], "couleurs": { "GARE_EST": 2, "MONTMARTRE": 1, "SAINT_DENIS": 1 } }
+        { "titre": "Fin du concert", "t": 80, "annonce": 15, "duree": 26, "voyageurs": 460, "quais": 3, "groupe": [6, 14], "couleurs": { "GARE_EST": 2, "MONTMARTRE": 1, "SAINT_DENIS": 1 } }
       ],
       "combo": { "actif": false, "seuilBon": 0.8, "seuilVide": 0.3, "max": 10, "casseSurPlein": false },
       "renfort": { "actif": false, "jauge": 100, "delaiArrivee": 5, "gains": { "bienRempli": 20, "ponctuel": 6, "calme": 0.8 } },
-      "score": { "voyageur": 10, "ponctuel": 100, "evacuation": 1500, "refoule": 10, "reste": 5, "sansEvacuation": 2000, "etoiles": [2500, 4000, 8600] }
+      "score": { "voyageur": 10, "ponctuel": 100, "evacuation": 1500, "refoule": 10, "reste": 5, "sansEvacuation": 2000, "etoiles": [5000, 7000, 11500] }
     }
   }
 }
@@ -635,10 +635,18 @@ const Fete = (function () {
   }
 
   // --- Le plan : les quais au milieu, un faisceau par destination ---------
-  // Une voie par couple destination-quai : une courbe de la jonction au bout
-  // du quai, puis le quai lui-même jusqu'au heurtoir de tête. Chaque
-  // destination a deux voies de ligne : l'arrivée (en bas, où la file
-  // attend) et le départ (en haut), qui se rejoignent à la jonction.
+  // Une voie par couple portail-quai : une courbe de la jonction au bout du
+  // quai, puis le quai lui-même jusqu'à l'autre bout. Chaque portail a deux
+  // voies de ligne : l'arrivée (en bas, où la file attend) et le départ (en
+  // haut), qui se rejoignent à la jonction.
+  //
+  // Les trains TRAVERSENT (Vincent, 29 septembre 2026 : « le train ne devrait
+  // pas arriver depuis sa gare de destination, il fait demi-tour à chaque
+  // fois, ce n'est pas naturel »). Un train pour la Gare de l'Est entre par un
+  // portail de gauche, sur la voie de CE portail vers son quai, s'arrête tête
+  // au bout droit du quai, puis continue tout droit : il sort par la voie de
+  // la Gare de l'Est vers ce quai, parcourue à rebours. Une même voie sert
+  // donc aux trains qui entrent par son portail et à ceux qui en sortent.
   class Plan {
     constructor(cfg) {
       const P = cfg.plan, n = cfg.quais.nombre;
@@ -657,6 +665,7 @@ const Fete = (function () {
           for (let i = 1; i <= 20; i++) quai.push({ x: bord + (fond - bord) * i / 20, y: q.y });
           const v = new Voie(this.lienId(d.id, q.id), courbe.concat(quai));
           v.dest = d.id; v.quai = q.id; v.courbe = courbe;
+          v.longueurCourbe = v.cum[courbe.length - 1];   // où commence le quai, sur cette voie
           this.liens[v.id] = v;
         }
         const bordX = G ? -60 : this.largeur + 60, yA = d.y + P.decalageApproche;
@@ -723,8 +732,10 @@ const Fete = (function () {
   }
 
   // --- Train ----------------------------------------------------------------
-  // États : approche → attente (file du portail) → entree → quai → sortie →
-  // parti ; ou supprime, s'il a trop attendu à la porte.
+  // États : approche → attente (file du portail d'ORIGINE) → entree → quai →
+  // sortie → parti ; ou supprime, s'il a trop attendu à la porte. `lien` est
+  // la voie parcourue en ce moment : celle de son origine en entrant, celle de
+  // sa destination en sortant.
   class Train {
     constructor(o) {
       Object.assign(this, o);
@@ -903,7 +914,7 @@ const Fete = (function () {
         const fort = besoin[best] >= H.seuilOmnibus;
         type = p.rng() < (fort ? H.partOmnibusForte : H.partOmnibusFaible) ? "omnibus" : "express";
       }
-      this.annonces.push({ prevu: p.t + preavis, dest: best, type });
+      this.annonces.push({ prevu: p.t + preavis, dest: best, type, origine: p.origineDe(best) });
       this.derniere = p.t;
       this.prochain = p.t + (H.intervalleMin / densite) * p.rng.entre(0.85, 1.3);
     }
@@ -981,10 +992,10 @@ const Fete = (function () {
       this.jauge = Math.min(this.max, this.jauge + k);
       if (this.pret) this.emettre({ type: "renfortPret" });
     }
-    appeler(dest, t) {
+    appeler(dest, t, origine) {
       if (!this.pret) return false;
       this.jauge = 0; this.nbAppels++;
-      this.appels.push({ dest, t: t + (this.c.delaiArrivee ?? 5), venu: false });
+      this.appels.push({ dest, origine, t: t + (this.c.delaiArrivee ?? 5), venu: false });
       return true;
     }
   }
@@ -1044,8 +1055,33 @@ const Fete = (function () {
     }
     enGare() { let n = 0; for (const q of this.quais) n += q.file.total; return n; }
     actifs() { let n = 0; for (const tr of this.trains) if (tr.enGare) n++; return n; }
-    file(dest) {
-      return this.trains.filter(tr => tr.dest === dest && (tr.etat === "approche" || tr.etat === "attente")).sort((a, b) => a.rang - b.rang);
+    // La file d'attente d'un portail : les trains qui y attendent pour ENTRER,
+    // quelle que soit leur destination.
+    file(portail) {
+      return this.trains.filter(tr => tr.origine === portail && (tr.etat === "approche" || tr.etat === "attente")).sort((a, b) => a.rang - b.rang);
+    }
+    // D'où vient un train : un portail d'en face, le moins chargé — sa file,
+    // plus les trains déjà annoncés par là. Sans portail en face (un plan à un
+    // seul côté), il entre par sa destination et y rebrousse.
+    origineDe(dest) {
+      const d = this.parDest[dest], cands = this.destinations.filter(o => o.cote !== d.cote);
+      if (!cands.length) return dest;
+      let best = cands[0].id, bc = Infinity;
+      for (const o of cands) {
+        let charge = this.file(o.id).length + this.rng() * 0.5;
+        for (const a of this.horaire) if (a.origine === o.id) charge++;
+        for (const a of this.renfort.appels) if (!a.venu && a.origine === o.id) charge++;
+        if (charge < bc) { bc = charge; best = o.id; }
+      }
+      return best;
+    }
+    // Où repart un train à quai : la voie de sa destination vers ce quai. Il
+    // TRAVERSE — la tête, au bout du quai côté destination, mène la sortie. Venu
+    // du même côté que sa destination, il rebrousse : la loco change de bout.
+    sortiePrevue(tr) {
+      const L = this.plan.liens[this.plan.lienId(tr.dest, tr.quai)];
+      const traverse = this.parDest[tr.origine].cote !== this.parDest[tr.dest].cote;
+      return { lien: L, s: traverse ? L.longueurCourbe + MARGE_ARRET : L.len - (tr.voitures - 1) * PAS, traverse };
     }
     // Le train qui tient un quai : celui qui y est affecté, y entre, ou y
     // embarque. Un train à qui l'on a donné l'ordre de départ ne le tient plus :
@@ -1075,23 +1111,24 @@ const Fete = (function () {
       }
       return true;
     }
-    prochains(dest, n = 2) {
+    // Les prochains trains à entrer par un portail.
+    prochains(portail, n = 2) {
       const out = [];
-      for (const a of this.renfort.appels) if (!a.venu && a.dest === dest) out.push({ prevu: a.t, dest, type: "renfort" });
-      for (const h of this.horaire) if (h.dest === dest && out.length < n) out.push(h);
+      for (const a of this.renfort.appels) if (!a.venu && a.origine === portail) out.push({ prevu: a.t, dest: a.dest, origine: portail, type: "renfort" });
+      for (const h of this.horaire) if (h.origine === portail && out.length < n) out.push(h);
       return out;
     }
     // Les voitures d'un convoi, de la loco à la queue : {x, y, ang}.
     voitures(tr) {
       const P = this.plan, out = new Array(tr.voitures);
       if (tr.etat === "approche" || tr.etat === "attente" || tr.etat === "supprime") {
-        const ap = P.approche[tr.dest];
+        const ap = P.approche[tr.origine];
         for (let i = 0; i < tr.voitures; i++) out[i] = ap.point(tr.s - i * PAS);
       } else if (tr.etat === "entree" || tr.etat === "quai") {
-        const L = P.liens[tr.lien], ap = P.approche[tr.dest];
+        const L = P.liens[tr.lien], ap = P.approche[tr.origine];
         for (let i = 0; i < tr.voitures; i++) { const s = tr.s - i * PAS; out[i] = s >= 0 ? L.point(s) : ap.point(ap.len + s); }
       } else {
-        // au départ, la loco change de bout : la tête est la voiture côté portail
+        // en sortie, on compte depuis la voiture de tête, côté destination
         const L = P.liens[tr.lien], dep = P.depart[tr.dest];
         for (let i = 0; i < tr.voitures; i++) { const s = tr.s + i * PAS; out[i] = s >= 0 ? L.point(s) : dep.point(-s); }
       }
@@ -1135,7 +1172,7 @@ const Fete = (function () {
     }
     appelerRenfort(dest) {
       if (this.fini || !this.parDest[dest]) return { ok: false };
-      if (!this.renfort.appeler(dest, this.t)) return { ok: false, raison: "jauge" };
+      if (!this.renfort.appeler(dest, this.t, this.origineDe(dest))) return { ok: false, raison: "jauge" };
       this.emettre({ type: "renfortAppele", dest, arrivee: this.t + (this.cfg.renfort.delaiArrivee ?? 5) });
       return { ok: true };
     }
@@ -1237,22 +1274,23 @@ const Fete = (function () {
         this.apparaitre(this.horaire.shift());
       // le renfort passe outre la limite : c'est tout son intérêt
       for (const a of this.renfort.appels)
-        if (!a.venu && this.t >= a.t) { a.venu = true; this.apparaitre({ dest: a.dest, type: "renfort", prevu: a.t }); }
+        if (!a.venu && this.t >= a.t) { a.venu = true; this.apparaitre({ dest: a.dest, origine: a.origine, type: "renfort", prevu: a.t }); }
     }
     apparaitre(h) {
       const ty = this.cfg.trains.types[h.type];
       // il paraît au loin, derrière le dernier convoi de sa file s'il y en a un
       // — ou derrière la queue de celui qui entre en gare et traîne encore sur
       // la voie d'approche (un omnibus de six voitures y reste longtemps)
+      const origine = h.origine || this.origineDe(h.dest);
       let s = -(ty.voitures * PAS) - 20;
-      const file = this.file(h.dest), dernier = file[file.length - 1], ap = this.plan.approche[h.dest];
+      const file = this.file(origine), dernier = file[file.length - 1], ap = this.plan.approche[origine];
       if (dernier) s = Math.min(s, dernier.s - dernier.longueur - INTERVALLE_FILE);
-      for (const o of this.trains) if (o.dest === h.dest && o.etat === "entree") {
+      for (const o of this.trains) if (o.origine === origine && o.etat === "entree") {
         const queue = o.s - (o.voitures - 1) * PAS;
         if (queue < 0) s = Math.min(s, ap.len + queue - 44);
       }
       const tr = new Train({
-        id: ++this.numero, dest: h.dest, type: h.type, nomType: ty.nom, cap: ty.capacite, voitures: ty.voitures,
+        id: ++this.numero, dest: h.dest, origine, type: h.type, nomType: ty.nom, cap: ty.capacite, voitures: ty.voitures,
         taux: ty.embarquement, prevu: h.prevu ?? this.t, apparu: this.t, echeance: this.t + ty.delai,
         rang: ++this.rang, s, v: this.cfg.trains.vitesseApproche
       });
@@ -1276,7 +1314,7 @@ const Fete = (function () {
       for (const d of this.destinations) {
         const ap = this.plan.approche[d.id], file = this.file(d.id);
         let limite = ap.len - RECUL_SIGNAL;
-        for (const o of this.trains) if (o.dest === d.id && o.etat === "entree") {
+        for (const o of this.trains) if (o.origine === d.id && o.etat === "entree") {
           const queue = o.s - (o.voitures - 1) * PAS;
           if (queue < 0) limite = Math.min(limite, ap.len + queue - 44);
         }
@@ -1305,7 +1343,7 @@ const Fete = (function () {
           const L = this.plan.liens[tr.lien];
           if (this.avancer(tr, L.len, dt, T.vitesse)) {
             tr.etat = "quai"; tr.s = L.len; tr.v = 0; tr.accoste = this.t; tr.bloque = null;
-            this.aiguillages[tr.dest].lacher(tr);
+            this.aiguillages[tr.origine].lacher(tr);
             this.habitude[tr.dest] = tr.quai;
             this.emettre({ type: "accostage", train: tr });
           }
@@ -1318,9 +1356,10 @@ const Fete = (function () {
             else if (this.t >= tr.echeance + T.retardMax) this.fairePartir(tr, "retard");
           }
           if (tr.partant) {
-            const L = this.plan.liens[tr.lien];
-            if (this.accordable(L.id, tr)) {
-              tr.etat = "sortie"; tr.s = L.len - (tr.voitures - 1) * PAS; tr.v = 0; tr.bloque = null;
+            const S = this.sortiePrevue(tr);
+            if (this.accordable(S.lien.id, tr)) {
+              tr.etat = "sortie"; tr.lien = S.lien.id; tr.s = S.s; tr.v = 0; tr.bloque = null;
+              tr.rebrousse = !S.traverse;
               this.aiguillages[tr.dest].poser(tr.quai, tr);
               this.emettre({ type: "depart", train: tr });
             } else tr.bloque = "voie";
@@ -1448,7 +1487,7 @@ const Fete = (function () {
           const n = q.file.n[tr.dest];
           let s = n;
           if (q.taux >= danger && n > 0) s += 30;
-          if (!p.accordable(p.plan.lienId(tr.dest, q.id), tr)) s -= 6;
+          if (!p.accordable(p.plan.lienId(tr.origine, q.id), tr)) s -= 6;
           if (s > bs) { bs = s; best = q; }
         }
         if (best) p.affecter(tr, best.id);
@@ -1839,7 +1878,7 @@ const Fete = (function () {
     if (tr.etat === "approche" || tr.etat === "attente") {
       const tete = pos[0];
       if (tete.x < -20 || tete.x > partie.plan.largeur + 20) cache = true;
-      if (selection !== tr && partie.file(tr.dest)[0] !== tr) cache = true;
+      if (selection !== tr && partie.file(tr.origine)[0] !== tr) cache = true;
       x = tete.x; y = tete.y + 33;
       const quoi = tr.renfort ? "RENFORT " + tr.cap : (tr.type === "omnibus" ? "OMN " : "EXP ") + tr.cap;
       if (tr.bloque === "voie" || tr.bloque === "quai") { texte = "<tspan class='tard'>■ voie occupée</tspan>"; bord = "var(--plein)"; }
@@ -1875,15 +1914,16 @@ const Fete = (function () {
     for (const tr of partie.trains) {
       let pts = null, attente = false;
       if ((tr.etat === "approche" || tr.etat === "attente") && tr.quai != null) {
-        const ap = P.approche[tr.dest];
-        pts = ap.tranche(Math.max(0, tr.s), ap.len).concat(P.liens[P.lienId(tr.dest, tr.quai)].pts);
+        const ap = P.approche[tr.origine];
+        pts = ap.tranche(Math.max(0, tr.s), ap.len).concat(P.liens[P.lienId(tr.origine, tr.quai)].pts);
         attente = true;
       } else if (tr.etat === "entree") {
-        const L = P.liens[tr.lien], ap = P.approche[tr.dest];
+        const L = P.liens[tr.lien], ap = P.approche[tr.origine];
         pts = tr.s < 0 ? ap.tranche(ap.len + tr.s, ap.len).concat(L.pts) : L.tranche(tr.s, L.len);
       } else if (tr.etat === "sortie" || (tr.etat === "quai" && tr.partant)) {
-        const L = P.liens[tr.lien], dep = P.depart[tr.dest];
-        const s = tr.etat === "quai" ? L.len - (tr.voitures - 1) * PAS : tr.s;
+        // devant le train : de sa tête jusqu'à la jonction de sa destination, puis la ligne
+        const S = tr.etat === "quai" ? partie.sortiePrevue(tr) : { lien: P.liens[tr.lien], s: tr.s };
+        const L = S.lien, dep = P.depart[tr.dest], s = S.s;
         pts = s > 0 ? L.tranche(0, s).reverse().concat(dep.pts) : dep.tranche(-s, dep.len);
         attente = tr.etat === "quai";
       }
@@ -1976,24 +2016,25 @@ const Fete = (function () {
   function majPortails() {
     for (const d of partie.destinations) {
       const n = nPortails.get(d.id), file = partie.file(d.id);
+      const pastille = dest => "<tspan style='fill:" + partie.parDest[dest].couleur + "'>● </tspan>";
       let texte;
       if (file.length) {
         const visibles = file.filter(tr => tr.s > -40).length;
-        texte = file.length > 1 ? "en attente · +" + (file.length - 1) : "en attente";
-        if (!visibles) texte = "arrive…";
+        texte = pastille(file[0].dest) + (file.length > 1 ? "en attente · +" + (file.length - 1) : "en attente");
+        if (!visibles) texte = pastille(file[0].dest) + "arrive…";
       } else {
         const p = partie.prochains(d.id, 1)[0];
         if (!p) texte = partie.phase === "service" ? "—" : "fin de service";
         else {
           const dans = p.prevu - partie.t, quoi = p.type === "renfort" ? "RENFORT" : p.type === "omnibus" ? "OMN" : "EXP";
-          texte = dans > 0.5 ? "dans " + Math.ceil(dans) + " s · " + quoi : "arrive · " + quoi;
+          texte = pastille(p.dest) + (dans > 0.5 ? "dans " + Math.ceil(dans) + " s · " + quoi : "arrive · " + quoi);
         }
       }
-      if (texte !== n.texte) { n.info.textContent = texte; n.texte = texte; }
+      if (texte !== n.texte) { n.info.innerHTML = texte; n.texte = texte; }
       const tete = file[0];
       const lampe = !tete ? "" : (tete.bloque === "voie" || tete.bloque === "quai" || tete.quai == null) && tete.s > -40 ? "rouge"
-        : partie.trains.some(o => o.dest === d.id && o.etat === "entree") ? "verte" : "";
-      const lampeFinale = partie.trains.some(o => o.dest === d.id && o.etat === "entree") ? "verte" : lampe;
+        : partie.trains.some(o => o.origine === d.id && o.etat === "entree") ? "verte" : "";
+      const lampeFinale = partie.trains.some(o => o.origine === d.id && o.etat === "entree") ? "verte" : lampe;
       if (lampeFinale !== n.lampeEtat) { n.lampe.setAttribute("class", "lampe " + lampeFinale); n.lampeEtat = lampeFinale; }
     }
   }
@@ -2160,7 +2201,7 @@ const Fete = (function () {
       case "renfortPret": Son.renfortPret(); break;
       case "renfortAppele": { const d = partie.parDest[e.dest]; pilule("Renfort vers " + d.nom + " dans " + Math.round(e.arrivee - partie.t) + " s", (partie.plan.x1 + partie.plan.x2) / 2, 26); break; }
       case "apparition": if (e.train.renfort) { Son.renfortArrive(); grand("Train de renfort"); Decor.tir(1.4); Decor.tir(1.1); } break;
-      case "suppression": { const d = partie.parDest[e.train.dest], G = d.cote === "G"; pilule("Train supprimé", G ? 260 : partie.plan.largeur - 260, d.y + 70, true); Son.refus(); break; }
+      case "suppression": { const d = partie.parDest[e.train.origine], G = d.cote === "G"; pilule("Train supprimé", G ? 260 : partie.plan.largeur - 260, d.y + 70, true); Son.refus(); break; }
       case "finArrivees": break;
       case "fin": finDePartie(e.bilan); break;
     }
