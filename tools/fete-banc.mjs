@@ -35,13 +35,13 @@
 //       glouton : la tension existe
 //
 // Les seuils d'étoiles du bloc JSON ont été posés sur les centiles de ces
-// automates (29 septembre 2026, trains traversants, soirée densifiée,
-// graines 1001 à 1040) : nuit, stratège p20 à 35 800 et médiane à 41 400,
-// glouton médiane à 30 600 et p90 à 36 600. La boucle a deux bosses — une
-// évacuation coûte cher, pénalité et prime perdue — : glouton médiane à
-// 8 300 puis p70 à 11 700, stratège p20 à 11 100 ; trois étoiles y veulent
-// une soirée sans évacuation ET bien menée (11 800 : à 11 500, le glouton
-// tombait pile sur la barre d'E4 selon l'échantillon).
+// automates (29 septembre 2026, trains traversants, soirée densifiée, fin de
+// service balayée, graines 1001 à 1040) : nuit, stratège p10 à 36 000 et
+// médiane à 43 000, glouton médiane à 32 200 et p90 à 38 200. La boucle a
+// deux bosses — une évacuation coûte cher, pénalité et prime perdue — :
+// glouton médiane à 8 900 puis p70 à 12 100, stratège p20 à 11 300 et
+// médiane à 12 000 ; trois étoiles y veulent une soirée sans évacuation ET
+// bien menée (12 200).
 // Changer le jeu déplace ces centiles : le banc le dira.
 // ------------------------------------------------------------------
 import { readFileSync } from "node:fs";

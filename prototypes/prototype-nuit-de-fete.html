@@ -445,7 +445,8 @@ details.mesures summary { cursor: pointer; color: var(--laiton-clair); font-weig
           "renfort": { "nom": "Renfort", "capacite": 180, "voitures": 7, "embarquement": 18, "delai": 45 }
         }
       },
-      "horaire": { "premier": 3, "preavis": 6, "horizon": 12, "prise": 0.8, "seuil": 30, "seuilOmnibus": 90, "partOmnibusForte": 0.8, "partOmnibusFaible": 0.25, "intervalleMin": 4, "calmeMax": 8, "silenceFinal": 14, "densite": 1 },
+      "horaire": { "premier": 3, "preavis": 6, "horizon": 12, "prise": 0.8, "seuil": 30, "seuilOmnibus": 90, "partOmnibusForte": 0.8, "partOmnibusFaible": 0.25, "intervalleMin": 4, "calmeMax": 8, "silenceFinal": 14, "densite": 1,
+        "finale": { "seuil": 8, "seuilOmnibus": 70, "intervalle": 2.5, "preavis": 3, "silence": 8 } },
       "voyageurs": {
         "premiereGrappe": 46,
         "initiaux": 50,
@@ -463,7 +464,7 @@ details.mesures summary { cursor: pointer; color: var(--laiton-clair); font-weig
         { "titre": "Fin du spectacle", "t": 210, "annonce": 15, "duree": 34, "voyageurs": 620, "quais": 5, "groupe": [8, 18], "couleurs": { "GARE_EST": 2, "NATION": 2, "MONTMARTRE": 2, "SAINT_DENIS": 2, "BERCY": 2 } },
         { "titre": "Fermeture des bars", "t": 272, "annonce": 10, "duree": 18, "voyageurs": 230, "quais": 3, "groupe": [4, 10], "couleurs": { "BERCY": 3, "SAINT_DENIS": 2 } }
       ],
-      "combo": { "actif": true, "seuilBon": 0.8, "seuilVide": 0.3, "max": 10, "casseSurPlein": false },
+      "combo": { "actif": true, "seuilBon": 0.8, "seuilVide": 0.3, "max": 10, "casseSurPlein": false, "pardonFinal": true },
       "renfort": { "actif": true, "jauge": 100, "delaiArrivee": 5, "gains": { "bienRempli": 12, "ponctuel": 4, "calme": 0.5 } },
       "score": { "voyageur": 10, "ponctuel": 100, "evacuation": 1500, "refoule": 10, "reste": 5, "sansEvacuation": 2000, "etoiles": [20000, 32000, 48000] }
     },
@@ -493,7 +494,8 @@ details.mesures summary { cursor: pointer; color: var(--laiton-clair); font-weig
           "renfort": { "nom": "Renfort", "capacite": 180, "voitures": 7, "embarquement": 18, "delai": 45 }
         }
       },
-      "horaire": { "premier": 3, "preavis": 6, "horizon": 12, "prise": 0.8, "seuil": 28, "seuilOmnibus": 90, "partOmnibusForte": 0.8, "partOmnibusFaible": 0.25, "intervalleMin": 4.5, "calmeMax": 9, "silenceFinal": 14, "densite": 1 },
+      "horaire": { "premier": 3, "preavis": 6, "horizon": 12, "prise": 0.8, "seuil": 28, "seuilOmnibus": 90, "partOmnibusForte": 0.8, "partOmnibusFaible": 0.25, "intervalleMin": 4.5, "calmeMax": 9, "silenceFinal": 14, "densite": 1,
+        "finale": { "seuil": 8, "seuilOmnibus": 70, "intervalle": 2.5, "preavis": 3, "silence": 8 } },
       "voyageurs": {
         "premiereGrappe": 46,
         "initiaux": 34,
@@ -508,9 +510,9 @@ details.mesures summary { cursor: pointer; color: var(--laiton-clair); font-weig
       "vagues": [
         { "titre": "Fin du concert", "t": 80, "annonce": 15, "duree": 26, "voyageurs": 460, "quais": 3, "groupe": [6, 14], "couleurs": { "GARE_EST": 2, "MONTMARTRE": 1, "SAINT_DENIS": 1 } }
       ],
-      "combo": { "actif": false, "seuilBon": 0.8, "seuilVide": 0.3, "max": 10, "casseSurPlein": false },
+      "combo": { "actif": false, "seuilBon": 0.8, "seuilVide": 0.3, "max": 10, "casseSurPlein": false, "pardonFinal": true },
       "renfort": { "actif": false, "jauge": 100, "delaiArrivee": 5, "gains": { "bienRempli": 20, "ponctuel": 6, "calme": 0.8 } },
-      "score": { "voyageur": 10, "ponctuel": 100, "evacuation": 1500, "refoule": 10, "reste": 5, "sansEvacuation": 2000, "etoiles": [5000, 7000, 11800] }
+      "score": { "voyageur": 10, "ponctuel": 100, "evacuation": 1500, "refoule": 10, "reste": 5, "sansEvacuation": 2000, "etoiles": [5000, 7000, 12200] }
     }
   }
 }
@@ -892,8 +894,29 @@ const Fete = (function () {
       }
       return out;
     }
+    // LE BALAYAGE DE FIN DE SERVICE. Quand les arrivées cessent, il ne reste
+    // sur les quais que des grappes éparses : sur le besoin ordinaire, le
+    // régulateur n'y voyait plus rien à faire, et la dernière demi-minute se
+    // jouait sans un train (Vincent, 29 septembre 2026, mesuré : moins d'un
+    // train toutes les 5 s après 300 s, aucun après 325 s, 150 à 220 voyageurs
+    // encore à quai). Désormais chaque grappe d'au moins `finale.seuil`
+    // voyageurs appelle son train, grappe par grappe : une couleur n'attend
+    // que ceux déjà annoncés pour elle et pas encore affectés — un train
+    // affecté tient son quai, et `grappe` passe alors au suivant.
+    besoinsFinale(p) {
+      const out = {};
+      for (const d of p.idsDest) {
+        let pendants = 0;
+        for (const a of this.annonces) if (a.dest === d) pendants++;
+        for (const a of p.renfort.appels) if (!a.venu && a.dest === d) pendants++;
+        for (const tr of p.trains) if (tr.dest === d && tr.quai == null && (tr.etat === "approche" || tr.etat === "attente")) pendants++;
+        out[d] = this.grappe(p, d) - 1000 * pendants;
+      }
+      return out;
+    }
     tick(p) {
-      const H = this.H, densite = H.densite || 1;
+      const H = this.H, densite = H.densite || 1, F = H.finale;
+      if (F && p.phase !== "service") return this.tickFinale(p, F);
       if (p.t < this.prochain || p.t > p.cfg.duree + p.cfg.delaiFinal - H.silenceFinal) return;
       const besoin = this.besoins(p);
       let best = p.idsDest[0];
@@ -920,6 +943,17 @@ const Fete = (function () {
       this.derniere = p.t;
       this.prochain = p.t + (H.intervalleMin / densite) * p.rng.entre(0.85, 1.3);
     }
+    tickFinale(p, F) {
+      if (p.t < this.prochain || p.t > p.cfg.duree + p.cfg.delaiFinal - F.silence) return;
+      const besoin = this.besoinsFinale(p);
+      let best = p.idsDest[0];
+      for (const d of p.idsDest) if (besoin[d] > besoin[best]) best = d;
+      if (besoin[best] < F.seuil) { this.prochain = p.t + 0.5; return; }
+      const type = besoin[best] >= F.seuilOmnibus ? "omnibus" : "express";
+      this.annonces.push({ prevu: p.t + F.preavis, dest: best, type, origine: p.origineDe(best) });
+      this.derniere = p.t;
+      this.prochain = p.t + F.intervalle * p.rng.entre(0.85, 1.3);
+    }
   }
 
   // --- Score (ScoreManager) -------------------------------------------------
@@ -927,7 +961,9 @@ const Fete = (function () {
   // seuilBon), il allonge la série de fluidité, et ses voyageurs comptent
   // autant de fois que la série est longue : ×1, ×2, ×3… Presque vide (sous
   // seuilVide), en gros retard, supprimé, ou un quai évacué : la série
-  // tombe. Entre les deux, elle ne bouge pas.
+  // tombe. Entre les deux, elle ne bouge pas. En fin de service, les trains
+  // qui balaient les dernières grappes partent presque vides par nature :
+  // avec `pardonFinal`, ce vide-là ne casse pas la série.
   class Score {
     constructor(cfg, emettre) {
       this.c = cfg.score; this.combo = cfg.combo; this.T = cfg.trains; this.emettre = emettre;
@@ -942,8 +978,8 @@ const Fete = (function () {
       if (this.serie > 0) this.emettre({ type: "comboCasse", raison, serie: this.serie });
       this.serie = 0;
     }
-    depart(tr, retard, remplissage) {
-      const bon = remplissage >= this.combo.seuilBon, vide = remplissage < this.combo.seuilVide;
+    depart(tr, retard, remplissage, pardon) {
+      const bon = remplissage >= this.combo.seuilBon, vide = remplissage < this.combo.seuilVide && !pardon;
       const ponctuel = retard <= this.T.tolerance, gros = retard >= this.T.retardImportant;
       this.trains++; if (ponctuel) this.ponctuels++;
       this.sommeRemplissage += remplissage; this.nbRemplissage++; if (bon) this.bienRemplis++;
@@ -1174,7 +1210,7 @@ const Fete = (function () {
       tr.partant = true; tr.ordre = this.t; tr.raisonDepart = raison;
       tr.retard = Math.max(0, this.t - tr.echeance);
       tr.remplissage = tr.aBord / tr.cap;
-      const r = this.score.depart(tr, tr.retard, tr.remplissage);
+      const r = this.score.depart(tr, tr.retard, tr.remplissage, this.phase !== "service" && !!this.cfg.combo.pardonFinal);
       const G = (this.cfg.renfort && this.cfg.renfort.gains) || {};
       if (r.bon) this.renfort.gagner(G.bienRempli);
       if (r.ponctuel) this.renfort.gagner(G.ponctuel);
@@ -1510,7 +1546,7 @@ const Fete = (function () {
         // plein, ou à l'heure ; sinon, tari et assez rempli pour ne rien casser —
         // mais pendant une vague on retient : la foule vient au train affiché
         if (tr.aBord >= tr.cap || resteT <= 0.6) p.fairePartir(tr);
-        else if (tari && !vague && (r >= p.cfg.combo.seuilVide || !p.cfg.combo.actif)) p.fairePartir(tr);
+        else if (tari && !vague && (r >= p.cfg.combo.seuilVide || !p.cfg.combo.actif || p.phase !== "service")) p.fairePartir(tr);
       }
       // le renfort se garde pour la foule : vague annoncée ou en cours, ou quai
       // en danger — vers la grappe la plus grosse qu'aucun train ne tient
@@ -2037,7 +2073,7 @@ const Fete = (function () {
         if (!visibles) texte = pastille(file[0].dest) + "arrive…";
       } else {
         const p = partie.prochains(d.id, 1)[0];
-        if (!p) texte = partie.phase === "service" ? "—" : "fin de service";
+        if (!p) texte = "—";
         else {
           const dans = p.prevu - partie.t, quoi = p.type === "renfort" ? "RENFORT" : p.type === "omnibus" ? "OMN" : "EXP";
           texte = pastille(p.dest) + (dans > 0.5 ? "dans " + Math.ceil(dans) + " s · " + quoi : "arrive · " + quoi);
@@ -2103,7 +2139,7 @@ const Fete = (function () {
       texte = v.titre.toUpperCase() + " · " + Math.max(1, Math.ceil(v.t - partie.t)) + " s";
       foule = partie.idsDest.filter(d => v.poids[d] > 0).sort((a, c) => v.poids[c] - v.poids[a])
         .map(d => "<i style='--c:" + partie.parDest[d].couleur + "'></i>").join("");
-    } else if (partie.phase === "final" && !partie.fini) { texte = "DERNIERS TRAINS · VIDEZ LA GARE"; fin = true; }
+    } else if (partie.phase === "final" && !partie.fini) { texte = "VIDEZ LA GARE"; fin = true; }
     if (texte !== b._texte) {
       b.innerHTML = texte ? "<div class='annonce" + (fin ? " fin" : "") + "'><span>" + texte + "</span>" + (foule ? "<span class='foule'>" + foule + "</span>" : "") + "</div>" : "";
       b._texte = texte;
