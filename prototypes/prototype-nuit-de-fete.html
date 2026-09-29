@@ -1,0 +1,2499 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#110b06">
+<title>Nuit de fête</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;900&display=swap">
+<style>
+/* ------------------------------------------------------------------
+   NUIT DE FÊTE — prototype jouable d'un mode de Station 7.
+
+   Mise en page : un écran de jeu couché — le bandeau de bord en haut, la
+   gare dessous, qui prend tout le reste. Une seule ambiance, c'est la nuit :
+   le noyer et le laiton du jeu Godot (jeu/style.gd, palette du 4 septembre
+   2026), et des voies aux couleurs vives de leurs destinations.
+   ------------------------------------------------------------------ */
+:root {
+  color-scheme: dark;
+  --nuit: #110b06;
+  --nuit-haute: #1b120a;
+  --noyer: #2a1c10;
+  --noyer-clair: #3b2816;
+  --laiton: #d9a441;
+  --laiton-clair: #f3cf78;
+  --laiton-sombre: #7a5a24;
+  --parchemin: #f1e6cc;
+  --muet: #a8957a;
+  --rail: #6a5234;
+  --ballast: #1d130a;
+  --alerte: #f5b23c;
+  --danger: #ff8a3d;
+  --plein: #ff4a4a;
+  --bon: #8ce3a0;
+  --voile: rgba(9, 5, 2, .82);
+  --f-titre: "Cinzel", "Trajan Pro", "Iowan Old Style", Georgia, serif;
+  --f-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  --f-chiffres: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  padding-block: env(safe-area-inset-top, 0px) env(safe-area-inset-bottom, 0px);
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0; overflow: hidden;
+  background: var(--nuit); color: var(--parchemin);
+  font: 14px/1.45 var(--f-ui);
+  user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+button { font: inherit; color: inherit; }
+[hidden] { display: none !important; }
+#app {
+  height: 100%; display: flex; flex-direction: column;
+  padding-inline: max(16px, env(safe-area-inset-left, 0px)) max(16px, env(safe-area-inset-right, 0px));
+}
+
+/* --- le bandeau de bord --------------------------------------------- */
+#hud { flex: none; display: flex; align-items: center; gap: 6px; height: 46px; padding-block: 5px; }
+.plaque {
+  flex: none; display: flex; align-items: center; gap: 6px; height: 36px; padding: 0 10px;
+  border-radius: 10px; border: 1px solid var(--laiton-sombre);
+  background: linear-gradient(180deg, var(--noyer-clair), var(--noyer));
+  box-shadow: inset 0 1px 0 rgba(243, 207, 120, .16), 0 2px 6px rgba(0, 0, 0, .45);
+}
+button.plaque { cursor: pointer; }
+button:focus-visible { outline: 2px solid var(--laiton-clair); outline-offset: 2px; }
+#b-pause { width: 38px; justify-content: center; padding: 0; font-weight: 800; letter-spacing: -1px; }
+#temps { font: 700 21px/1 var(--f-chiffres); font-variant-numeric: tabular-nums; min-width: 58px; text-align: center; }
+#h-temps.final #temps { color: var(--alerte); }
+#h-affluence { flex: 1 1 auto; min-width: 64px; padding: 4px 6px; position: relative; }
+#h-affluence.annonce { border-color: var(--laiton-clair); animation: appel 1.1s ease-in-out infinite; }
+#affluence { width: 100%; height: 100%; display: block; }
+#h-foule b { font: 700 16px/1 var(--f-chiffres); font-variant-numeric: tabular-nums; min-width: 28px; }
+#h-foule svg { width: 16px; height: 16px; fill: var(--muet); }
+#h-foule.monte { animation: bosse .5s ease-out 2; }
+#h-score { gap: 8px; }
+#etoiles { color: var(--laiton-clair); font-size: 15px; letter-spacing: 1px; }
+.eteinte { color: rgba(241, 230, 204, .16); text-shadow: none; }
+#score { font: 700 16px/1 var(--f-chiffres); font-variant-numeric: tabular-nums; min-width: 52px; text-align: right; }
+.petit { font: 700 9px/1 var(--f-ui); letter-spacing: 1.2px; color: var(--muet); text-transform: uppercase; }
+#h-fluidite { gap: 5px; }
+#fluidite { font: 900 19px/1 var(--f-chiffres); color: var(--muet); min-width: 28px; }
+#h-fluidite.vive #fluidite { color: var(--laiton-clair); }
+#h-fluidite.saute { animation: bosse .45s ease-out; }
+#h-fluidite.casse { animation: tremble .4s linear; }
+#b-renfort { gap: 7px; padding: 0 10px 0 6px; }
+#b-renfort[disabled] { cursor: default; }
+#b-renfort svg { width: 26px; height: 26px; }
+#b-renfort .anneau-fond { fill: none; stroke: rgba(241, 230, 204, .14); stroke-width: 4; }
+#b-renfort .anneau-jauge { fill: none; stroke: var(--laiton); stroke-width: 4; stroke-linecap: round; transform: rotate(-90deg); transform-origin: 50% 50%; }
+#b-renfort.pret { border-color: var(--laiton-clair); animation: appel 1.1s ease-in-out infinite; }
+#b-renfort.pret .anneau-jauge { stroke: var(--laiton-clair); }
+#b-renfort.pret .petit { color: var(--laiton-clair); }
+#b-renfort.enroute .petit { color: var(--bon); }
+@keyframes bosse { 40% { transform: scale(1.14); } }
+@keyframes tremble { 20%, 60% { transform: translateX(-3px); } 40%, 80% { transform: translateX(3px); } }
+@keyframes appel { 50% { box-shadow: inset 0 1px 0 rgba(243, 207, 120, .3), 0 0 0 3px rgba(243, 207, 120, .35), 0 0 18px rgba(243, 207, 120, .45); } }
+
+/* --- la scène --------------------------------------------------------- */
+#scene { position: relative; flex: 1 1 auto; min-height: 0; overflow: hidden; border-radius: 12px; margin-bottom: 6px; background: var(--nuit-haute); }
+#decor, #plateau { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+#plateau { touch-action: none; }
+#scene.secousse #plateau { animation: secousse .55s linear; }
+@keyframes secousse { 10%, 50%, 90% { transform: translate(-4px, 1px); } 30%, 70% { transform: translate(4px, -2px); } }
+
+.voies, .effets, .routes { pointer-events: none; }
+.ballast { fill: none; stroke: var(--ballast); stroke-width: 12; stroke-linecap: round; opacity: .9; }
+.rail { fill: none; stroke: var(--rail); stroke-width: 3; stroke-linecap: round; }
+.route path { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.route .halo { stroke-width: 16; opacity: .24; }
+.route .coeur { stroke-width: 4.5; }
+.route.attente .coeur { stroke-dasharray: 12 9; animation: defile .7s linear infinite; }
+.route.attente .halo { opacity: .1; }
+@keyframes defile { to { stroke-dashoffset: -21; } }
+
+.zone-quai { fill: transparent; cursor: pointer; }
+.boite { fill: rgba(28, 18, 9, .92); stroke: var(--laiton-sombre); stroke-width: 1.6; }
+.halo-etat, .halo-sel, .halo-vague { fill: none; opacity: 0; pointer-events: none; }
+.halo-etat { stroke-width: 3.5; }
+.quai.alerte .halo-etat { stroke: var(--alerte); opacity: .6; }
+.quai.danger .halo-etat { stroke: var(--danger); animation: pouls .9s ease-in-out infinite; }
+.quai.plein .halo-etat { stroke: var(--plein); stroke-width: 5; animation: pouls .42s ease-in-out infinite; }
+.halo-sel { stroke-width: 3; stroke-dasharray: 11 7; }
+.quai.eligible .halo-sel { animation: pouls 1s ease-in-out infinite; }
+.quai.refuse .boite { opacity: .45; }
+.halo-vague { stroke: var(--laiton-clair); stroke-width: 3; stroke-dasharray: 5 6; }
+.quai.cible .halo-vague { animation: pouls .7s ease-in-out infinite; }
+@keyframes pouls { 0%, 100% { opacity: .2; } 50% { opacity: 1; } }
+.place { fill: rgba(241, 230, 204, .06); stroke: rgba(241, 230, 204, .13); stroke-width: .8; }
+.place.pris { stroke: none; }
+.plaque-quai { fill: var(--laiton); stroke: #3a2610; stroke-width: 1.5; transition: fill .3s; }
+.num-quai { font: 800 20px var(--f-chiffres); fill: #1a1007; text-anchor: middle; dominant-baseline: central; pointer-events: none; }
+.compte { font: 700 25px var(--f-chiffres); fill: var(--parchemin); text-anchor: end; dominant-baseline: central; pointer-events: none; }
+.compte .sur { font-size: 15px; fill: var(--muet); }
+.quai.alerte .compte { fill: var(--alerte); }
+.quai.danger .compte, .quai.plein .compte { fill: var(--danger); }
+.plein-voile { fill: rgba(255, 74, 74, .16); }
+.plein-texte { font: 900 25px var(--f-titre); letter-spacing: 1px; fill: #ffd1c9; text-anchor: middle; dominant-baseline: central; paint-order: stroke; stroke: rgba(60, 5, 5, .9); stroke-width: 5px; }
+
+.plaque-portail { fill: rgba(20, 13, 7, .9); stroke-width: 1.6; }
+.nom-portail { font: 700 21px var(--f-titre); letter-spacing: .5px; dominant-baseline: central; pointer-events: none; }
+.info-portail { font: 600 16px var(--f-chiffres); fill: var(--muet); dominant-baseline: central; pointer-events: none; }
+.portail { cursor: pointer; }
+.lampe { fill: #3a2a1a; stroke: #0c0703; stroke-width: 2; }
+.lampe.rouge { fill: var(--plein); }
+.lampe.verte { fill: var(--bon); }
+.mat { stroke: #0c0703; stroke-width: 3; }
+
+.train { cursor: pointer; }
+.train .cible { fill: transparent; }
+.train .caisse { stroke-width: 1.8; }
+.train .lettre { font: 800 12px var(--f-ui); fill: #140c05; text-anchor: middle; dominant-baseline: central; pointer-events: none; }
+.train .anneau { fill: none; stroke: #fff; stroke-width: 2.6; opacity: 0; pointer-events: none; }
+.train.invite .anneau { stroke: var(--laiton-clair); animation: pouls 1.3s ease-in-out infinite; }
+.train.choisi .anneau { stroke: #fff; animation: pouls .7s ease-in-out infinite; }
+.train.bloque .anneau { stroke: var(--plein); animation: pouls .6s ease-in-out infinite; }
+.train.renfort .caisse { stroke: var(--laiton-clair) !important; stroke-width: 2.6; }
+.train.eclat .caisse { animation: eclat .6s ease-out; }
+@keyframes eclat { 30% { stroke: #fff; stroke-width: 5; } }
+.train.part { transition: opacity .6s; opacity: 0; }
+.badge { cursor: pointer; }
+.badge-fond { fill: rgba(17, 11, 6, .94); stroke-width: 1.5; }
+.badge-jauge { opacity: .9; }
+.badge-texte { font: 700 16px var(--f-chiffres); text-anchor: middle; dominant-baseline: central; fill: var(--parchemin); }
+.badge-texte .tard { fill: var(--plein); }
+.badge-texte .bientot { fill: var(--alerte); }
+.badge-texte .etoile { fill: var(--laiton-clair); }
+
+.flotte { font: 900 26px var(--f-chiffres); text-anchor: middle; dominant-baseline: central; paint-order: stroke; stroke: rgba(10, 6, 3, .9); stroke-width: 6px; stroke-linejoin: round; pointer-events: none; }
+.flotte.titre { font-family: var(--f-titre); font-size: 28px; letter-spacing: 1px; }
+.pilule rect { fill: rgba(17, 11, 6, .95); stroke: var(--laiton); stroke-width: 1.6; }
+.pilule.alerte rect { stroke: var(--plein); }
+.pilule text { font: 600 18px var(--f-ui); fill: var(--parchemin); text-anchor: middle; dominant-baseline: central; }
+.aide rect { fill: var(--laiton-clair); }
+.aide text { font: 800 18px var(--f-ui); fill: #1a1007; text-anchor: middle; dominant-baseline: central; }
+.aide { animation: flotte 1.2s ease-in-out infinite; pointer-events: none; }
+@keyframes flotte { 50% { transform: translateY(-5px); } }
+
+/* --- annonces ------------------------------------------------------- */
+#bandeau { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; }
+#bandeau:empty { display: none; }
+#bandeau .annonce {
+  display: flex; align-items: center; gap: 6px; max-width: 100%; overflow: hidden;
+  font: 700 clamp(10px, 1.55vw, 15px)/1 var(--f-titre); letter-spacing: .8px; white-space: nowrap;
+  color: var(--laiton-clair); padding: 5px 8px; border-radius: 7px; background: rgba(17, 11, 6, .86);
+}
+#bandeau .annonce.fin { color: var(--parchemin); }
+#bandeau .foule { display: inline-flex; gap: 3px; }
+#bandeau .foule i { width: 8px; height: 8px; border-radius: 50%; background: var(--c); }
+#grand { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; z-index: 4; }
+#grand span {
+  font: 900 clamp(26px, 6vw, 60px)/1 var(--f-titre); letter-spacing: 3px; color: #fff3d4; text-align: center;
+  text-shadow: 0 0 20px rgba(255, 180, 70, .85), 0 3px 0 #5a3a10; animation: surgit 1.7s ease-out forwards;
+}
+#grand span.rouge { color: #ffe0da; text-shadow: 0 0 20px rgba(255, 60, 60, .9), 0 3px 0 #5a1010; }
+@keyframes surgit { 0% { transform: scale(.6); opacity: 0; } 15% { transform: scale(1.08); opacity: 1; } 25% { transform: scale(1); } 80% { opacity: 1; } 100% { opacity: 0; transform: scale(1.04); } }
+#demo-bandeau {
+  position: absolute; left: 50%; bottom: 6px; transform: translateX(-50%); z-index: 3;
+  font: 700 12px/1 var(--f-ui); padding: 6px 12px; border-radius: 999px; cursor: pointer; white-space: nowrap; opacity: .9;
+  background: rgba(17, 11, 6, .92); border: 1px solid var(--laiton); color: var(--laiton-clair);
+}
+
+/* --- écrans --------------------------------------------------------- */
+.ecran {
+  position: fixed; inset: 0; z-index: 20; display: flex; align-items: center; justify-content: center;
+  padding: max(10px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) max(10px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
+  background: var(--voile);
+}
+.carte {
+  width: min(900px, 100%); max-height: 100%; overflow: auto; -webkit-overflow-scrolling: touch;
+  padding: 20px 24px; border-radius: 18px; border: 1px solid var(--laiton);
+  background: linear-gradient(180deg, #2c1d10, #170f07);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, .65), inset 0 1px 0 rgba(243, 207, 120, .22);
+  user-select: text; -webkit-user-select: text;
+}
+.carte.etroite { width: min(440px, 100%); text-align: center; }
+.surtitre { margin: 0; font: 700 11px/1 var(--f-ui); letter-spacing: 2.5px; text-transform: uppercase; color: var(--muet); }
+.carte h1 {
+  margin: 6px 0 2px; font: 900 clamp(30px, 5.4vw, 50px)/1.05 var(--f-titre); letter-spacing: 3px;
+  color: var(--laiton-clair); text-shadow: 0 0 24px rgba(243, 207, 120, .35); text-wrap: balance;
+}
+.carte h2 { margin: 4px 0 12px; font: 700 22px/1.2 var(--f-titre); letter-spacing: 1.5px; color: var(--laiton-clair); }
+.gare { margin: 0 0 12px; color: var(--muet); font-style: italic; }
+.colonnes { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 18px 26px; }
+@media (max-width: 640px) { .colonnes { grid-template-columns: minmax(0, 1fr); } }
+.but { margin: 0 0 10px; max-width: 62ch; }
+.gestes { margin: 0; padding-left: 20px; display: grid; gap: 6px; }
+.gestes li::marker { color: var(--laiton); font-weight: 800; }
+.gestes b { color: var(--laiton-clair); }
+.modes { display: grid; gap: 8px; margin-bottom: 10px; }
+.mode {
+  display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; align-items: center; cursor: pointer;
+  padding: 10px 12px; border-radius: 12px; border: 1px solid var(--laiton-sombre); background: rgba(0, 0, 0, .22);
+}
+.mode input { grid-row: span 2; accent-color: var(--laiton); width: 18px; height: 18px; }
+.mode b { font: 700 16px/1.2 var(--f-titre); letter-spacing: 1px; color: var(--parchemin); }
+.mode span { color: var(--muet); font-size: 13px; }
+.mode:has(input:checked) { border-color: var(--laiton-clair); background: rgba(217, 164, 65, .12); }
+.actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
+.carte.etroite .actions { justify-content: center; }
+.bouton {
+  cursor: pointer; padding: 10px 18px; border-radius: 12px; font-weight: 700;
+  border: 1px solid var(--laiton-sombre); background: linear-gradient(180deg, var(--noyer-clair), var(--noyer));
+}
+.bouton.principal {
+  color: #1a1007; border-color: var(--laiton-clair);
+  background: linear-gradient(180deg, var(--laiton-clair), var(--laiton));
+  box-shadow: 0 0 20px rgba(243, 207, 120, .3);
+}
+details.reglages { margin-top: 10px; border-top: 1px solid rgba(217, 164, 65, .25); padding-top: 8px; }
+details.reglages summary { cursor: pointer; color: var(--laiton-clair); font-weight: 700; }
+.grille-reglages { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 12px; margin-top: 8px; font-size: 13px; align-items: center; }
+.grille-reglages label { color: var(--muet); }
+.grille-reglages input[type=number], .grille-reglages input[type=text] {
+  width: 92px; padding: 4px 8px; border-radius: 7px; border: 1px solid var(--laiton-sombre);
+  background: #120b05; color: var(--parchemin); font: 600 13px var(--f-chiffres);
+}
+.grille-reglages input[type=checkbox] { accent-color: var(--laiton); width: 18px; height: 18px; justify-self: end; }
+.note { color: var(--muet); font-size: 12px; margin: 6px 0 0; }
+
+#bilan-etoiles { font-size: 44px; letter-spacing: 8px; color: var(--laiton-clair); text-shadow: 0 0 18px rgba(243, 207, 120, .5); line-height: 1.1; }
+#bilan-score { font: 800 30px/1.1 var(--f-chiffres); margin: 2px 0 10px; font-variant-numeric: tabular-nums; }
+.releve { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 5px 18px; margin: 0 auto; max-width: 360px; text-align: left; }
+.releve dt { color: var(--muet); }
+.releve dd { margin: 0; font: 700 15px var(--f-chiffres); text-align: right; font-variant-numeric: tabular-nums; }
+.releve dd.mal { color: var(--danger); }
+details.mesures { margin: 10px auto 0; max-width: 380px; text-align: left; font-size: 13px; }
+details.mesures summary { cursor: pointer; color: var(--laiton-clair); font-weight: 700; text-align: center; }
+.grille-dest { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; margin: 10px 0 4px; }
+.choix-dest {
+  cursor: pointer; display: grid; gap: 2px; padding: 10px 12px; border-radius: 12px; text-align: left;
+  background: rgba(0, 0, 0, .3); border: 2px solid var(--c);
+}
+.choix-dest b { font: 700 15px/1.2 var(--f-titre); color: var(--c); letter-spacing: .5px; }
+.choix-dest span { font: 600 13px var(--f-chiffres); color: var(--muet); }
+.bascules { display: flex; flex-wrap: wrap; gap: 10px 16px; justify-content: center; margin-top: 12px; color: var(--muet); }
+.bascules label { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+.bascules input { accent-color: var(--laiton); width: 17px; height: 17px; }
+.pile { display: grid; gap: 8px; }
+
+#tourner { position: fixed; inset: 0; z-index: 40; display: flex; flex-direction: column; gap: 14px; align-items: center; justify-content: center; padding: 24px; text-align: center; background: var(--nuit); }
+#tourner p { max-width: 30ch; font: 700 18px/1.4 var(--f-titre); color: var(--laiton-clair); }
+#tourner .tel { width: 64px; height: 38px; border: 3px solid var(--laiton); border-radius: 8px; animation: pivote 2s ease-in-out infinite; }
+@keyframes pivote { 0%, 30% { transform: rotate(-90deg); } 60%, 100% { transform: rotate(0); } }
+
+@media (prefers-reduced-motion: reduce) {
+  #scene.secousse #plateau, .aide, #grand span, #b-renfort.pret, #h-foule.monte, .route.attente .coeur { animation: none; }
+}
+@media (max-height: 420px) {
+  .carte { padding: 14px 18px; }
+  .carte h1 { font-size: 30px; }
+  .gestes { gap: 3px; font-size: 13px; }
+  .mode { padding: 7px 10px; }
+  .actions { margin-top: 8px; gap: 8px; }
+  .bouton { padding: 8px 12px; font-size: 13px; }
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <header id="hud">
+    <button class="plaque" id="b-pause" aria-label="Pause">II</button>
+    <div class="plaque" id="h-temps" title="Temps de service restant"><span id="temps">5:00</span></div>
+    <div class="plaque" id="h-affluence" title="Affluence prévue de la soirée"><svg id="affluence" viewBox="0 0 300 30" preserveAspectRatio="none" aria-hidden="true"></svg><div id="bandeau"></div></div>
+    <div class="plaque" id="h-foule" title="Voyageurs qui attendent sur les quais">
+      <svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="5" cy="4.5" r="2.4"/><circle cx="11" cy="4.5" r="2.4"/><path d="M1 14c0-3 1.8-5 4-5s4 2 4 5zM7 14c0-3 1.8-5 4-5s4 2 4 5z"/></svg><b id="foule">0</b>
+    </div>
+    <div class="plaque" id="h-score"><span id="etoiles"><span class="eteinte">★★★</span></span><span id="score">0</span></div>
+    <div class="plaque" id="h-fluidite" title="Trains bien remplis à la suite"><span class="petit">Fluidité</span><b id="fluidite">×0</b></div>
+    <button class="plaque" id="b-renfort" disabled title="Train de renfort">
+      <svg viewBox="0 0 30 30" aria-hidden="true"><circle class="anneau-fond" cx="15" cy="15" r="11"/><circle class="anneau-jauge" id="jauge-renfort" cx="15" cy="15" r="11" stroke-dasharray="0 69.2"/></svg>
+      <span class="petit" id="renfort-texte">Renfort</span>
+    </button>
+  </header>
+  <main id="scene">
+    <canvas id="decor" aria-hidden="true"></canvas>
+    <svg id="plateau" viewBox="0 0 1600 700" preserveAspectRatio="xMidYMid meet" role="img" aria-label="La gare : quais, voies et trains"></svg>
+    <div id="grand"></div>
+    <button id="demo-bandeau" hidden>L'automate joue · reprendre la main</button>
+  </main>
+</div>
+
+<section class="ecran" id="accueil">
+  <div class="carte">
+    <p class="surtitre">Station 7 · événement de soirée</p>
+    <h1>Nuit de fête</h1>
+    <p class="gare" id="accueil-gare">Rivièreville — la gare centrale, un soir de fête</p>
+    <div class="colonnes">
+      <div>
+        <p class="but">Le concert, le feu d'artifice, puis le grand spectacle se terminent : la foule déferle sur les quais par vagues. Aiguillez les trains vers les bons quais, remplissez-les, et gardez la gare fluide jusqu'à la fin du service.</p>
+        <ol class="gestes">
+          <li><b>Touchez un train</b> qui attend à l'entrée, puis <b>un quai</b> : il s'y rend.</li>
+          <li>Il embarque les voyageurs <b>de sa couleur</b>. <b>Touchez-le</b> pour le faire partir, ou laissez-le se remplir. Plein, il part seul.</li>
+          <li>Un quai <b>plein</b> lance un compte à rebours : libérez des places avant l'évacuation.</li>
+          <li id="geste-bonus">Des trains <b>bien remplis</b> à la suite font monter la <b>fluidité</b>. La jauge <b>renfort</b> vous donne un grand train, à envoyer là où la foule déborde.</li>
+        </ol>
+      </div>
+      <div>
+        <div class="modes" id="modes"></div>
+        <details class="reglages" id="reglages-panneau">
+          <summary>Réglages de la partie</summary>
+          <div class="grille-reglages" id="grille-reglages"></div>
+          <p class="note">Les valeurs par défaut viennent du bloc « reglages » de ce fichier. Ici, elles ne valent que pour la prochaine partie.</p>
+          <div class="actions"><button class="bouton" id="b-defauts">Valeurs par défaut</button></div>
+        </details>
+        <div class="actions">
+          <button class="bouton principal" id="b-jouer">Prendre le service</button>
+          <button class="bouton" id="b-regarder">Regarder l'automate</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="ecran" id="pause" hidden>
+  <div class="carte etroite">
+    <h2>Service suspendu</h2>
+    <div class="pile">
+      <button class="bouton principal" id="b-reprendre">Reprendre</button>
+      <button class="bouton" id="b-recommencer">Recommencer la soirée</button>
+      <button class="bouton" id="b-menu">Retour au menu</button>
+    </div>
+    <div class="bascules">
+      <label><input type="checkbox" id="o-sons" checked> Sons</label>
+      <label><input type="checkbox" id="o-effets" checked> Feux et secousses</label>
+      <label><input type="checkbox" id="o-rapide"> Vitesse ×2</label>
+    </div>
+  </div>
+</section>
+
+<section class="ecran" id="choix-renfort" hidden>
+  <div class="carte etroite">
+    <h2>Appeler un renfort</h2>
+    <p id="renfort-explication">Un train de renfort arrive dans quelques secondes. Vers quelle destination ?</p>
+    <div class="grille-dest" id="grille-dest"></div>
+    <div class="actions"><button class="bouton" id="b-plus-tard">Plus tard</button></div>
+  </div>
+</section>
+
+<section class="ecran" id="bilan" hidden>
+  <div class="carte etroite">
+    <p class="surtitre">Fin de service</p>
+    <div id="bilan-etoiles"><span class="eteinte">★★★</span></div>
+    <div id="bilan-score">0</div>
+    <dl class="releve" id="bilan-releve"></dl>
+    <details class="mesures"><summary>Détail du score et mesures du test</summary><dl class="releve" id="bilan-detail"></dl></details>
+    <div class="actions">
+      <button class="bouton principal" id="b-rejouer">Rejouer</button>
+      <button class="bouton" id="b-menu-bilan">Menu</button>
+    </div>
+  </div>
+</section>
+
+<div id="tourner" hidden>
+  <div class="tel" aria-hidden="true"></div>
+  <p>Tournez le téléphone : la gare se joue à l'horizontale.</p>
+  <button class="bouton" id="b-tourner">Jouer quand même</button>
+</div>
+
+<!-- ==================================================================
+     LES RÉGLAGES — toutes les valeurs de jeu, et rien d'autre. Du JSON pur :
+     le moteur ci-dessous ne contient aucun nombre de gameplay, et un portage
+     sous Godot lira ce bloc tel quel. Deux modes :
+       nuit    le mode demandé : 6 quais, 5 destinations, 5 minutes, trois
+               grosses vagues et une dernière, fluidité et renfort ;
+       boucle  la version minimale de la fiche (§14) : 4 quais,
+               3 destinations, une vague, ni fluidité ni renfort — pour juger
+               la boucle nue avant d'y ajouter quoi que ce soit.
+     Les temps sont en secondes de jeu, les débits en voyageurs par seconde,
+     les distances en unités du plan (1600 × 700).
+     ================================================================== -->
+<script type="application/json" id="reglages">
+{
+  "modes": {
+    "nuit": {
+      "titre": "Nuit de fête",
+      "gare": "Rivièreville",
+      "resume": "6 quais · 5 destinations · 5 minutes · 3 grosses vagues",
+      "duree": 300,
+      "delaiFinal": 35,
+      "plan": { "largeur": 1600, "hauteur": 700, "quaiX1": 560, "quaiX2": 1040, "centreY": 362, "pasQuais": 100, "jonctionG": 230, "jonctionD": 1370, "decalageApproche": 36 },
+      "quais": { "nombre": 6, "capacite": 100, "seuils": { "alerte": 0.6, "danger": 0.85, "reouverture": 0.95 }, "pleinDelai": 8 },
+      "evacuation": { "part": 0.3 },
+      "destinations": [
+        { "id": "MONTMARTRE", "nom": "Montmartre", "court": "Montmartre", "lettre": "M", "couleur": "#ff5fa2", "cote": "G", "y": 196 },
+        { "id": "SAINT_DENIS", "nom": "Saint-Denis", "court": "Saint-Denis", "lettre": "SD", "couleur": "#35e08a", "cote": "G", "y": 520 },
+        { "id": "GARE_EST", "nom": "Gare de l'Est", "court": "Gare de l'Est", "lettre": "E", "couleur": "#4aa8ff", "cote": "D", "y": 150 },
+        { "id": "NATION", "nom": "Nation", "court": "Nation", "lettre": "N", "couleur": "#ffc53d", "cote": "D", "y": 362 },
+        { "id": "BERCY", "nom": "Bercy", "court": "Bercy", "lettre": "B", "couleur": "#b07cff", "cote": "D", "y": 574 }
+      ],
+      "trains": {
+        "actifsMax": 4,
+        "vitesse": 320, "vitesseApproche": 220, "acceleration": 420, "freinage": 480,
+        "ouverturePortes": 0.6,
+        "tolerance": 0, "retardImportant": 10, "retardMax": 25,
+        "departAutoSiComplet": true, "departAutoALHeure": false,
+        "types": {
+          "express": { "nom": "Express", "capacite": 60, "voitures": 3, "embarquement": 18, "delai": 28 },
+          "omnibus": { "nom": "Omnibus", "capacite": 120, "voitures": 6, "embarquement": 6, "delai": 42 },
+          "renfort": { "nom": "Renfort", "capacite": 180, "voitures": 7, "embarquement": 15, "delai": 50 }
+        }
+      },
+      "horaire": { "premier": 3, "preavis": 8, "horizon": 12, "prise": 0.8, "seuil": 30, "seuilOmnibus": 90, "partOmnibusForte": 0.8, "partOmnibusFaible": 0.25, "intervalleMin": 5, "calmeMax": 15, "silenceFinal": 16, "densite": 1 },
+      "voyageurs": {
+        "premiereGrappe": 46,
+        "initiaux": 30,
+        "fond": [[0, 1.2], [55, 1.6], [120, 1.4], [200, 2.0], [285, 1.6], [300, 0]],
+        "couleurs": { "MONTMARTRE": 1, "SAINT_DENIS": 1, "GARE_EST": 1, "NATION": 1, "BERCY": 1 },
+        "groupe": [2, 6],
+        "attraction": 0.8,
+        "habitude": 0.7,
+        "prefere": 4,
+        "grappe": 0.15
+      },
+      "vagues": [
+        { "titre": "Fin du concert", "t": 60, "annonce": 15, "duree": 22, "voyageurs": 240, "quais": 3, "groupe": [6, 14], "couleurs": { "GARE_EST": 3, "NATION": 2, "MONTMARTRE": 1 } },
+        { "titre": "Fin du feu d'artifice", "t": 150, "annonce": 15, "duree": 25, "voyageurs": 320, "quais": 4, "groupe": [6, 16], "couleurs": { "MONTMARTRE": 3, "SAINT_DENIS": 2, "BERCY": 2, "GARE_EST": 1 } },
+        { "titre": "Fin du spectacle", "t": 210, "annonce": 15, "duree": 32, "voyageurs": 460, "quais": 5, "groupe": [8, 18], "couleurs": { "GARE_EST": 2, "NATION": 2, "MONTMARTRE": 2, "SAINT_DENIS": 2, "BERCY": 2 } },
+        { "titre": "Fermeture des bars", "t": 272, "annonce": 10, "duree": 18, "voyageurs": 150, "quais": 3, "groupe": [4, 10], "couleurs": { "BERCY": 3, "SAINT_DENIS": 2 } }
+      ],
+      "combo": { "actif": true, "seuilBon": 0.8, "seuilVide": 0.3, "max": 10, "casseSurPlein": false },
+      "renfort": { "actif": true, "jauge": 100, "delaiArrivee": 5, "gains": { "bienRempli": 18, "ponctuel": 6, "calme": 0.6 } },
+      "score": { "voyageur": 10, "ponctuel": 100, "evacuation": 1500, "refoule": 10, "reste": 5, "sansEvacuation": 2000, "etoiles": [11000, 17000, 28000] }
+    },
+    "boucle": {
+      "titre": "Boucle minimale",
+      "gare": "Rivièreville",
+      "resume": "4 quais · 3 destinations · 3 minutes · une vague",
+      "duree": 180,
+      "delaiFinal": 28,
+      "plan": { "largeur": 1600, "hauteur": 700, "quaiX1": 560, "quaiX2": 1040, "centreY": 362, "pasQuais": 118, "jonctionG": 230, "jonctionD": 1370, "decalageApproche": 36 },
+      "quais": { "nombre": 4, "capacite": 100, "seuils": { "alerte": 0.6, "danger": 0.85, "reouverture": 0.95 }, "pleinDelai": 8 },
+      "evacuation": { "part": 0.3 },
+      "destinations": [
+        { "id": "MONTMARTRE", "nom": "Montmartre", "court": "Montmartre", "lettre": "M", "couleur": "#ff5fa2", "cote": "G", "y": 244 },
+        { "id": "SAINT_DENIS", "nom": "Saint-Denis", "court": "Saint-Denis", "lettre": "SD", "couleur": "#35e08a", "cote": "G", "y": 480 },
+        { "id": "GARE_EST", "nom": "Gare de l'Est", "court": "Gare de l'Est", "lettre": "E", "couleur": "#4aa8ff", "cote": "D", "y": 362 }
+      ],
+      "trains": {
+        "actifsMax": 3,
+        "vitesse": 320, "vitesseApproche": 220, "acceleration": 420, "freinage": 480,
+        "ouverturePortes": 0.6,
+        "tolerance": 0, "retardImportant": 10, "retardMax": 25,
+        "departAutoSiComplet": true, "departAutoALHeure": false,
+        "types": {
+          "express": { "nom": "Express", "capacite": 60, "voitures": 3, "embarquement": 18, "delai": 28 },
+          "omnibus": { "nom": "Omnibus", "capacite": 120, "voitures": 6, "embarquement": 6, "delai": 42 },
+          "renfort": { "nom": "Renfort", "capacite": 180, "voitures": 7, "embarquement": 15, "delai": 50 }
+        }
+      },
+      "horaire": { "premier": 3, "preavis": 8, "horizon": 12, "prise": 0.8, "seuil": 26, "seuilOmnibus": 90, "partOmnibusForte": 0.8, "partOmnibusFaible": 0.25, "intervalleMin": 6, "calmeMax": 15, "silenceFinal": 14, "densite": 1 },
+      "voyageurs": {
+        "premiereGrappe": 46,
+        "initiaux": 20,
+        "fond": [[0, 1.0], [70, 1.3], [120, 1.1], [180, 0]],
+        "couleurs": { "MONTMARTRE": 1, "SAINT_DENIS": 1, "GARE_EST": 1 },
+        "groupe": [2, 5],
+        "attraction": 0.8,
+        "habitude": 0.7,
+        "prefere": 4,
+        "grappe": 0.15
+      },
+      "vagues": [
+        { "titre": "Fin du concert", "t": 80, "annonce": 15, "duree": 25, "voyageurs": 360, "quais": 3, "groupe": [6, 14], "couleurs": { "GARE_EST": 2, "MONTMARTRE": 1, "SAINT_DENIS": 1 } }
+      ],
+      "combo": { "actif": false, "seuilBon": 0.8, "seuilVide": 0.3, "max": 10, "casseSurPlein": false },
+      "renfort": { "actif": false, "jauge": 100, "delaiArrivee": 5, "gains": { "bienRempli": 20, "ponctuel": 6, "calme": 0.8 } },
+      "score": { "voyageur": 10, "ponctuel": 100, "evacuation": 1500, "refoule": 10, "reste": 5, "sansEvacuation": 2000, "etoiles": [2500, 4000, 8600] }
+    }
+  }
+}
+</script>
+
+<!-- ==================================================================
+     LE MOTEUR — aucune ligne de DOM. Il tourne tel quel dans la page et
+     sous Node : tools/fete-banc.mjs l'extrait de ce fichier et joue des
+     soirées entières sans navigateur. Les systèmes demandés par la fiche,
+     et leur nom ici :
+
+       Train                → Train          PassengerQueue → FileVoyageurs
+       Platform             → Quai           Destination    → Destination
+       Track                → Voie           Switch         → Aiguillage
+       WaveManager          → Vagues         ScoreManager   → Score
+       ReinforcementManager → Renfort        GameManager    → Partie
+
+     Aucune valeur de jeu n'est écrite ici : elles viennent du bloc JSON
+     « reglages ». Les seules constantes sont le GABARIT — la taille d'une
+     voiture, la distance à laquelle deux voies se touchent —, qui est de la
+     géométrie, pas du réglage.
+     ================================================================== -->
+<script id="moteur">
+"use strict";
+const Fete = (function () {
+
+  // --- Le gabarit, en unités du plan ----------------------------------------
+  // Un peu plus gros que celui du jeu (js/engine.js : 30) : sur un téléphone
+  // couché, le plan tient à 0,45 pixel par unité, et un wagon de 30 × 16 n'y
+  // faisait plus que 14 × 7 pixels.
+  const VOITURE = 34, ECART = 5, PAS = VOITURE + ECART;
+  const MARGE_ARRET = 16;      // la tête s'arrête à ça du bout du quai
+  const PROCHE = 22;           // deux voies à moins de ça se touchent
+  const MARGE_ZONE = 26;       // marge de sécurité autour d'une zone partagée
+  const DEGAGEMENT = 120;      // un convoi sortant doit avoir dégagé la jonction de ça
+  const RECUL_SIGNAL = 90;     // le signal d'entrée, avant la jonction
+  const INTERVALLE_FILE = 16;  // entre deux convois qui attendent l'un derrière l'autre
+  const APPROCHE_ENGAGEE = 160; // un convoi plus loin que ça du signal n'est pas encore « bloqué »
+
+  // --- Le hasard, graîné : une même graine rejoue la même soirée ----------
+  function Hasard(graine) {
+    let a = (graine >>> 0) || 1;
+    const r = () => {
+      a = (a + 0x6D2B79F5) | 0;
+      let t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+    r.entre = (x, y) => x + r() * (y - x);
+    r.entier = (x, y) => x + Math.floor(r() * (y - x + 1));
+    r.pondere = (items, poids) => {
+      let tot = 0;
+      const w = items.map((it, i) => { const p = Math.max(0, poids(it, i)); tot += p; return p; });
+      if (tot <= 0) return null;
+      let x = r() * tot;
+      for (let i = 0; i < items.length; i++) { x -= w[i]; if (x < 0) return items[i]; }
+      return items[items.length - 1];
+    };
+    r.melanger = arr => {
+      for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [arr[i], arr[j]] = [arr[j], arr[i]]; }
+      return arr;
+    };
+    return r;
+  }
+
+  function bezier(p0, c1, c2, p1, n) {
+    const pts = [];
+    for (let i = 0; i <= n; i++) {
+      const t = i / n, u = 1 - t;
+      pts.push({
+        x: u * u * u * p0.x + 3 * u * u * t * c1.x + 3 * u * t * t * c2.x + t * t * t * p1.x,
+        y: u * u * u * p0.y + 3 * u * u * t * c1.y + 3 * u * t * t * c2.y + t * t * t * p1.y
+      });
+    }
+    return pts;
+  }
+
+  // --- Voie (Track) : une polyligne mesurée en abscisse curviligne ---------
+  class Voie {
+    constructor(id, pts) {
+      this.id = id; this.pts = pts; this.cum = [0];
+      for (let i = 1; i < pts.length; i++)
+        this.cum.push(this.cum[i - 1] + Math.hypot(pts[i].x - pts[i - 1].x, pts[i].y - pts[i - 1].y));
+      this.len = this.cum[this.cum.length - 1];
+    }
+    // Le point à l'abscisse s. Au-delà des deux bouts, on prolonge le dernier
+    // segment : c'est ce qui fait entrer et sortir les voitures du plan.
+    point(s) {
+      const pts = this.pts, cum = this.cum, sc = Math.min(Math.max(s, 0), this.len);
+      let lo = 0, hi = cum.length - 1;
+      while (hi - lo > 1) { const m = (lo + hi) >> 1; if (cum[m] <= sc) lo = m; else hi = m; }
+      const seg = cum[hi] - cum[lo] || 1, f = (sc - cum[lo]) / seg;
+      const dx = (pts[hi].x - pts[lo].x) / seg, dy = (pts[hi].y - pts[lo].y) / seg, over = s - sc;
+      return { x: pts[lo].x + (pts[hi].x - pts[lo].x) * f + dx * over, y: pts[lo].y + (pts[hi].y - pts[lo].y) * f + dy * over, ang: Math.atan2(dy, dx) };
+    }
+    // Les points entre deux abscisses, pour dessiner un bout d'itinéraire.
+    tranche(a, b) {
+      const lo = Math.max(0, Math.min(a, b)), hi = Math.min(this.len, Math.max(a, b));
+      if (hi <= lo) return [];
+      const out = [this.point(lo)];
+      for (let i = 0; i < this.pts.length; i++) if (this.cum[i] > lo && this.cum[i] < hi) out.push(this.pts[i]);
+      out.push(this.point(hi));
+      return out;
+    }
+  }
+
+  // --- Destination : un bord du plan, une couleur, et ses voyageurs -------
+  class Destination {
+    constructor(d, P) {
+      this.id = d.id; this.nom = d.nom; this.court = d.court || d.nom; this.lettre = d.lettre || d.nom[0];
+      this.couleur = d.couleur; this.cote = d.cote; this.y = d.y;
+      this.jx = d.cote === "G" ? P.jonctionG : P.jonctionD;   // où le faisceau s'ouvre
+    }
+  }
+
+  // --- Aiguillage (Switch) : la tête du faisceau d'une destination ---------
+  // Le joueur ne le manœuvre pas à la main : il désigne un quai, et
+  // l'itinéraire accordé pose l'aiguille. Elle reste où le dernier convoi l'a
+  // laissée — c'est ce que la vue dessine.
+  class Aiguillage {
+    constructor(dest) { this.dest = dest; this.vers = null; this.tenuPar = null; }
+    poser(quai, train) { this.vers = quai; this.tenuPar = train; }
+    lacher(train) { if (this.tenuPar === train) this.tenuPar = null; }
+  }
+
+  // --- Le plan : les quais au milieu, un faisceau par destination ---------
+  // Une voie par couple destination-quai : une courbe de la jonction au bout
+  // du quai, puis le quai lui-même jusqu'au heurtoir de tête. Chaque
+  // destination a deux voies de ligne : l'arrivée (en bas, où la file
+  // attend) et le départ (en haut), qui se rejoignent à la jonction.
+  class Plan {
+    constructor(cfg) {
+      const P = cfg.plan, n = cfg.quais.nombre;
+      this.largeur = P.largeur; this.hauteur = P.hauteur; this.x1 = P.quaiX1; this.x2 = P.quaiX2;
+      this.quais = [];
+      for (let i = 0; i < n; i++) this.quais.push({ id: i + 1, y: P.centreY + (i - (n - 1) / 2) * P.pasQuais });
+      this.destinations = cfg.destinations.map(d => new Destination(d, P));
+      this.liens = {}; this.approche = {}; this.depart = {};
+      for (const d of this.destinations) {
+        const G = d.cote === "G", sgn = G ? 1 : -1;
+        for (const q of this.quais) {
+          const bord = G ? this.x1 : this.x2, fond = G ? this.x2 - MARGE_ARRET : this.x1 + MARGE_ARRET;
+          const k = Math.abs(bord - d.jx) * 0.5;
+          const courbe = bezier({ x: d.jx, y: d.y }, { x: d.jx + sgn * k, y: d.y }, { x: bord - sgn * k, y: q.y }, { x: bord, y: q.y }, 40);
+          const quai = [];
+          for (let i = 1; i <= 20; i++) quai.push({ x: bord + (fond - bord) * i / 20, y: q.y });
+          const v = new Voie(this.lienId(d.id, q.id), courbe.concat(quai));
+          v.dest = d.id; v.quai = q.id; v.courbe = courbe;
+          this.liens[v.id] = v;
+        }
+        const bordX = G ? -60 : this.largeur + 60, yA = d.y + P.decalageApproche;
+        const mergeX = d.jx - sgn * 130, midX = d.jx - sgn * 65;
+        this.approche[d.id] = new Voie("A:" + d.id, [{ x: bordX, y: yA }].concat(
+          bezier({ x: mergeX, y: yA }, { x: midX, y: yA }, { x: midX, y: d.y }, { x: d.jx, y: d.y }, 24)));
+        this.depart[d.id] = new Voie("D:" + d.id, [{ x: d.jx, y: d.y }, { x: bordX, y: d.y }]);
+      }
+      this.conflits = this.calculerConflits();
+    }
+    lienId(dest, quai) { return dest + ":" + quai; }
+    // Deux voies qui passent à moins de PROCHE l'une de l'autre partagent une
+    // zone : l'intervalle d'abscisse, sur chacune, où elles se touchent —
+    // croisement, tronc commun d'un faisceau ou quai partagé. Une zone qui
+    // touche la jonction s'étend jusqu'au DÉGAGEMENT : un convoi qui sort doit
+    // avoir quitté la jonction avant qu'un autre s'y engage.
+    calculerConflits() {
+      const ids = Object.keys(this.liens), out = {};
+      for (const id of ids) out[id] = {};
+      const bas = v => v - MARGE_ZONE <= 0 ? -DEGAGEMENT : v - MARGE_ZONE;
+      for (let i = 0; i < ids.length; i++) {
+        const A = this.liens[ids[i]];
+        out[A.id][A.id] = { lo: -DEGAGEMENT, hi: A.len + MARGE_ZONE };
+        for (let j = i + 1; j < ids.length; j++) {
+          const B = this.liens[ids[j]];
+          let aLo = Infinity, aHi = -Infinity, bLo = Infinity, bHi = -Infinity;
+          for (let p = 0; p < A.pts.length; p++) {
+            const pa = A.pts[p];
+            for (let q = 0; q < B.pts.length; q++) {
+              const dx = pa.x - B.pts[q].x, dy = pa.y - B.pts[q].y;
+              if (dx * dx + dy * dy < PROCHE * PROCHE) {
+                if (A.cum[p] < aLo) aLo = A.cum[p]; if (A.cum[p] > aHi) aHi = A.cum[p];
+                if (B.cum[q] < bLo) bLo = B.cum[q]; if (B.cum[q] > bHi) bHi = B.cum[q];
+              }
+            }
+          }
+          if (aHi < 0) continue;
+          out[A.id][B.id] = { lo: bas(aLo), hi: aHi + MARGE_ZONE };
+          out[B.id][A.id] = { lo: bas(bLo), hi: bHi + MARGE_ZONE };
+        }
+      }
+      return out;
+    }
+  }
+
+  // --- FileVoyageurs (PassengerQueue) : qui attend, et pour où -------------
+  class FileVoyageurs {
+    constructor(ids) { this.n = {}; for (const d of ids) this.n[d] = 0; this.total = 0; }
+    ajouter(d, k) { this.n[d] += k; this.total += k; }
+    retirer(d, k) { k = Math.max(0, Math.min(k, this.n[d])); this.n[d] -= k; this.total -= k; return k; }
+  }
+
+  // --- Quai (Platform) ------------------------------------------------------
+  class Quai {
+    constructor(id, y, capacite, ids) {
+      this.id = id; this.y = y; this.capacite = capacite; this.file = new FileVoyageurs(ids);
+      this.ferme = false;       // plein : le compte à rebours court, plus personne n'entre
+      this.pleinDepuis = null;
+      this.evacuations = 0;
+      this.affiche = null;      // la destination du train qui tient le quai : son tableau
+    }
+    get taux() { return this.file.total / this.capacite; }
+    place() { return this.ferme ? 0 : Math.max(0, this.capacite - this.file.total); }
+  }
+
+  // --- Train ----------------------------------------------------------------
+  // États : approche → attente (file du portail) → entree → quai → sortie →
+  // parti ; ou supprime, s'il a trop attendu à la porte.
+  class Train {
+    constructor(o) {
+      Object.assign(this, o);
+      this.etat = "approche"; this.quai = null; this.lien = null;
+      this.aBord = 0; this.reste = 0; this.accoste = null; this.dernierEmbarquement = null;
+      this.partant = false; this.ordre = null; this.retard = 0; this.remplissage = 0; this.raisonDepart = null;
+      this.bloque = null;       // null | "voie" | "quai" | "file" — ce qui le retient au signal
+      this.bienRempliSignale = false;
+      this.renfort = o.type === "renfort";
+    }
+    get longueur() { return this.voitures * PAS - ECART; }
+    get enGare() { return this.etat === "approche" || this.etat === "attente" || this.etat === "entree" || this.etat === "quai"; }
+  }
+
+  // --- Vagues (WaveManager) : le fond de la soirée et ses vagues ----------
+  // Le fond est un débit qui varie par paliers linéaires ; une vague est un
+  // trapèze — la foule monte vite, tient, puis s'étire — dont l'aire est son
+  // nombre de voyageurs. Annoncée à l'avance, elle se déverse sur quelques
+  // quais tirés au moment de l'annonce.
+  class Vagues {
+    constructor(cfg, rng) {
+      this.cfg = cfg; this.rng = rng;
+      this.ids = cfg.destinations.map(d => d.id);
+      this.poidsFond = this.normaliser(cfg.voyageurs.couleurs);
+      this.liste = (cfg.vagues || []).map((v, i) => ({
+        i, titre: v.titre, t: v.t, annonce: v.annonce ?? 15, duree: v.duree, voyageurs: v.voyageurs,
+        nbQuais: v.quais, groupe: v.groupe || [6, 14], poids: this.normaliser(v.couleurs),
+        etat: "attente", cibles: null, accu: 0, prochain: 0
+      }));
+      this.accuFond = 0; this.prochainFond = 0;
+    }
+    normaliser(poids) {
+      const out = {}; let tot = 0;
+      for (const d of this.ids) { out[d] = Math.max(0, (poids && poids[d]) || 0); tot += out[d]; }
+      for (const d of this.ids) out[d] = tot > 0 ? out[d] / tot : 1 / this.ids.length;
+      return out;
+    }
+    debitFond(t) {
+      const f = this.cfg.voyageurs.fond;
+      if (t >= this.cfg.duree || !f || !f.length) return 0;
+      if (t <= f[0][0]) return f[0][1];
+      for (let i = 1; i < f.length; i++)
+        if (t <= f[i][0]) { const [t0, d0] = f[i - 1], [t1, d1] = f[i]; return d0 + (d1 - d0) * (t - t0) / (t1 - t0 || 1); }
+      return f[f.length - 1][1];
+    }
+    static forme(u) { return u < 0.15 ? u / 0.15 : u < 0.6 ? 1 : Math.max(0, (1 - u) / 0.4); }
+    debitVague(v, t) {
+      if (t < v.t || t >= v.t + v.duree || t >= this.cfg.duree) return 0;
+      return v.voyageurs * Vagues.forme((t - v.t) / v.duree) / (v.duree * 0.725);   // 0,725 : l'aire du trapèze
+    }
+    debitAttendu(t, d) {
+      let r = this.debitFond(t) * this.poidsFond[d];
+      for (const v of this.liste) r += this.debitVague(v, t) * v.poids[d];
+      return r;
+    }
+    debitTotal(t) { let r = this.debitFond(t); for (const v of this.liste) r += this.debitVague(v, t); return r; }
+    active() { return this.liste.some(v => v.etat === "active"); }
+    tirerDest(poids) { return this.rng.pondere(this.ids, d => poids[d]); }
+    tick(t, dt, partie) {
+      const service = partie.phase === "service";
+      for (const v of this.liste) {
+        if (v.etat === "attente" && t >= v.t - v.annonce) {
+          v.etat = "annoncee";
+          const ids = partie.quais.map(q => q.id);
+          v.cibles = this.rng.melanger(ids.slice()).slice(0, Math.min(v.nbQuais, ids.length));
+          // chaque destination de la foule a son quai de prédilection parmi les
+          // cibles : la plus nombreuse d'abord, un quai chacune tant qu'il y en a
+          const dests = this.ids.filter(d => v.poids[d] > 0).sort((a, b) => v.poids[b] - v.poids[a]);
+          v.pref = {};
+          dests.forEach((d, i) => { v.pref[d] = v.cibles[i % v.cibles.length]; });
+          v.cibles.sort((a, b) => a - b);
+          v.prochain = this.rng.entier(v.groupe[0], v.groupe[1]);
+          partie.emettre({ type: "annonceVague", vague: v });
+        }
+        if (v.etat === "annoncee" && t >= v.t) { v.etat = "active"; partie.emettre({ type: "vague", vague: v }); }
+        if (v.etat === "active") {
+          if (service) {
+            v.accu += this.debitVague(v, t) * dt;
+            while (v.accu >= v.prochain) {
+              v.accu -= v.prochain;
+              const d = this.tirerDest(v.poids);
+              partie.arriveeGroupe(d, v.prochain, v.cibles, v.pref[d]);
+              v.prochain = this.rng.entier(v.groupe[0], v.groupe[1]);
+            }
+          }
+          if (t >= v.t + v.duree || !service) { v.etat = "finie"; partie.emettre({ type: "finVague", vague: v }); }
+        }
+      }
+      if (service) {
+        const g = this.cfg.voyageurs.groupe;
+        if (!this.prochainFond) this.prochainFond = this.rng.entier(g[0], g[1]);
+        this.accuFond += this.debitFond(t) * dt;
+        while (this.accuFond >= this.prochainFond) {
+          this.accuFond -= this.prochainFond;
+          partie.arriveeGroupe(this.tirerDest(this.poidsFond), this.prochainFond, null);
+          this.prochainFond = this.rng.entier(g[0], g[1]);
+        }
+      }
+    }
+  }
+
+  // --- Le régulateur : quels trains, et quand -----------------------------
+  // Le régulateur annonce chaque train quelques secondes d'avance (le
+  // préavis), vers la destination qui en a le plus BESOIN : ses voyageurs sur
+  // les quais, plus ceux que le programme de la soirée promet dans les
+  // secondes qui viennent, moins la place des trains déjà en route pour elle.
+  // Un gros besoin appelle plutôt un omnibus, un petit plutôt un express.
+  //
+  // Pourquoi pas un horaire tiré d'avance : essayé en premier (29 septembre
+  // 2026), un horaire calculé sur l'affluence ATTENDUE laissait derrière lui
+  // tout voyageur qu'un train n'avait pas pris — il le croyait parti — et la
+  // gare s'engorgeait sans que le joueur y puisse rien. Et des trains au
+  // hasard partent à vide en période calme puis manquent pendant la vague
+  // (mesuré sur le prototype des voyageurs le 19 septembre : une destination
+  // sans train pendant treize minutes).
+  //
+  // Le besoin se mesure sur la plus grosse GRAPPE d'une destination — ses
+  // voyageurs sur un seul quai que ne tient aucun train de sa couleur —, plus
+  // une part de ce que le programme promet et un quart des épars. Mesuré le
+  // 29 septembre 2026 : sur le total, le régulateur envoyait un express dès
+  // que quarante voyageurs attendaient en trois petits groupes, et le train en
+  // trouvait quinze. Un quai en danger fait exception : sa couleur dominante
+  // passe devant, à demi-seuil — l'exploitant voit la foule s'entasser.
+  //
+  // Le renfort compte dans la place en route, comme les autres : compté à
+  // part, il se retrouvait en concurrence avec un train ordinaire pour la même
+  // petite foule, et les deux partaient à moitié vides.
+  class Regulateur {
+    constructor(cfg) { this.H = cfg.horaire; this.prochain = this.H.premier ?? 4; this.annonces = []; this.premier = true; this.derniere = 0; }
+    attendus(p, d) { let r = 0; for (let k = 0; k < this.H.horizon; k++) r += p.vagues.debitAttendu(p.t + k + 0.5, d); return r; }
+    grappe(p, d) {
+      let max = 0;
+      for (const q of p.quais) {
+        const r = p.reserveDe(q.id);
+        if (r && r.dest === d) continue;
+        if (q.file.n[d] > max) max = q.file.n[d];
+      }
+      return max;
+    }
+    enRoute(p, d) {
+      let place = 0;
+      for (const tr of p.trains) if (tr.enGare && tr.dest === d) place += tr.cap - tr.aBord;
+      for (const a of this.annonces) if (a.dest === d) place += p.cfg.trains.types[a.type].capacite;
+      for (const a of p.renfort.appels) if (!a.venu && a.dest === d) place += p.cfg.trains.types.renfort.capacite;
+      return place * this.H.prise;
+    }
+    besoins(p) {
+      const att = p.attenteParDest(), out = {};
+      for (const d of p.idsDest) {
+        const g = this.grappe(p, d);
+        out[d] = g + 0.25 * (att[d] - g) + 0.6 * this.attendus(p, d) - this.enRoute(p, d);
+      }
+      return out;
+    }
+    tick(p) {
+      const H = this.H, densite = H.densite || 1;
+      if (p.t < this.prochain || p.t > p.cfg.duree + p.cfg.delaiFinal - H.silenceFinal) return;
+      const besoin = this.besoins(p);
+      let best = p.idsDest[0];
+      for (const d of p.idsDest) if (besoin[d] > besoin[best]) best = d;
+      let seuil = H.seuil / densite;
+      // un quai en danger : sa couleur dominante passe devant
+      for (const q of p.quais) if (q.taux >= p.cfg.quais.seuils.danger) {
+        let dom = p.idsDest[0];
+        for (const d of p.idsDest) if (q.file.n[d] > q.file.n[dom]) dom = d;
+        if (besoin[dom] >= H.seuil / densite / 2 && besoin[dom] + 20 > besoin[best]) { best = dom; seuil = H.seuil / densite / 2; }
+      }
+      // En période calme, au moins un train toutes les calmeMax secondes, à
+      // demi-seuil : sans cela, mesuré le 29 septembre 2026, la première
+      // minute laissait le joueur 25 s sans rien à toucher.
+      if (H.calmeMax && p.t - this.derniere >= H.calmeMax) seuil = Math.min(seuil, H.seuil / densite / 2);
+      let type, preavis = H.preavis;
+      if (this.premier) { type = "express"; preavis = 1; this.premier = false; }   // le premier vient tout de suite, et petit
+      else {
+        if (besoin[best] < seuil) { this.prochain = p.t + 0.5; return; }
+        const fort = besoin[best] >= H.seuilOmnibus;
+        type = p.rng() < (fort ? H.partOmnibusForte : H.partOmnibusFaible) ? "omnibus" : "express";
+      }
+      this.annonces.push({ prevu: p.t + preavis, dest: best, type });
+      this.derniere = p.t;
+      this.prochain = p.t + (H.intervalleMin / densite) * p.rng.entre(0.85, 1.3);
+    }
+  }
+
+  // --- Score (ScoreManager) -------------------------------------------------
+  // Un train qui part rapporte ses voyageurs. Parti BIEN REMPLI (au-dessus de
+  // seuilBon), il allonge la série de fluidité, et ses voyageurs comptent
+  // autant de fois que la série est longue : ×1, ×2, ×3… Presque vide (sous
+  // seuilVide), en gros retard, supprimé, ou un quai évacué : la série
+  // tombe. Entre les deux, elle ne bouge pas.
+  class Score {
+    constructor(cfg, emettre) {
+      this.c = cfg.score; this.combo = cfg.combo; this.T = cfg.trains; this.emettre = emettre;
+      this.points = 0; this.serie = 0; this.serieMax = 0;
+      this.transportes = 0; this.trains = 0; this.ponctuels = 0; this.sommeRemplissage = 0; this.nbRemplissage = 0;
+      this.bienRemplis = 0; this.evacuations = 0; this.evacues = 0; this.refoules = 0; this.supprimes = 0; this.restes = 0;
+      this.detail = { voyageurs: 0, fluidite: 0, ponctualite: 0, evacuations: 0, refoules: 0, restes: 0, bonus: 0 };
+    }
+    ajouter(poste, pts) { this.detail[poste] += pts; this.points += pts; }
+    casser(raison) {
+      if (!this.combo.actif) return;
+      if (this.serie > 0) this.emettre({ type: "comboCasse", raison, serie: this.serie });
+      this.serie = 0;
+    }
+    depart(tr, retard, remplissage) {
+      const bon = remplissage >= this.combo.seuilBon, vide = remplissage < this.combo.seuilVide;
+      const ponctuel = retard <= this.T.tolerance, gros = retard >= this.T.retardImportant;
+      this.trains++; if (ponctuel) this.ponctuels++;
+      this.sommeRemplissage += remplissage; this.nbRemplissage++; if (bon) this.bienRemplis++;
+      this.transportes += tr.aBord;
+      let mult = 1;
+      if (this.combo.actif) {
+        if (gros) this.casser("retard");
+        else if (vide) this.casser("vide");
+        else if (bon) {
+          this.serie = Math.min(this.combo.max, this.serie + 1);
+          this.serieMax = Math.max(this.serieMax, this.serie);
+          mult = this.serie;
+        }
+      }
+      const base = tr.aBord * this.c.voyageur;
+      this.ajouter("voyageurs", base);
+      if (mult > 1) this.ajouter("fluidite", base * (mult - 1));
+      if (ponctuel) this.ajouter("ponctualite", this.c.ponctuel);
+      return { points: base * mult + (ponctuel ? this.c.ponctuel : 0), mult, bon, vide, ponctuel, gros, serie: this.serie };
+    }
+    suppression() { this.trains++; this.supprimes++; this.casser("supprime"); }
+    evacuation(n) { this.evacuations++; this.evacues += n; this.ajouter("evacuations", -this.c.evacuation); this.casser("evacuation"); }
+    refus(n) { this.refoules += n; this.ajouter("refoules", -this.c.refoule * n); }
+    cloture(restes) {
+      this.restes = restes;
+      this.ajouter("restes", -this.c.reste * restes);
+      if (this.evacuations === 0) this.ajouter("bonus", this.c.sansEvacuation);
+    }
+    get ponctualite() { return this.trains ? this.ponctuels / this.trains : 1; }
+    get remplissageMoyen() { return this.nbRemplissage ? this.sommeRemplissage / this.nbRemplissage : 0; }
+    etoiles(p = this.points) { let n = 0; for (const s of this.c.etoiles) if (p >= s) n++; return n; }
+  }
+
+  // --- Renfort (ReinforcementManager) ---------------------------------------
+  // La jauge se remplit quand on joue bien : train bien rempli, départ à
+  // l'heure, et chaque seconde où aucun quai n'est en danger. Pleine, elle
+  // donne UN grand train vers la destination qu'on choisit, puis repart de
+  // zéro. Elle ne se remplit pas au-delà : un renfort non appelé est un
+  // renfort perdu.
+  class Renfort {
+    constructor(cfg, emettre) { this.c = cfg.renfort || {}; this.emettre = emettre; this.jauge = 0; this.appels = []; this.nbAppels = 0; }
+    get actif() { return !!this.c.actif; }
+    get max() { return this.c.jauge || 100; }
+    get pret() { return this.actif && this.jauge >= this.max; }
+    get enRoute() { return this.appels.some(a => !a.venu); }
+    gagner(k) {
+      if (!this.actif || this.pret || !(k > 0)) return;
+      this.jauge = Math.min(this.max, this.jauge + k);
+      if (this.pret) this.emettre({ type: "renfortPret" });
+    }
+    appeler(dest, t) {
+      if (!this.pret) return false;
+      this.jauge = 0; this.nbAppels++;
+      this.appels.push({ dest, t: t + (this.c.delaiArrivee ?? 5), venu: false });
+      return true;
+    }
+  }
+
+  // --- Partie (GameManager) -------------------------------------------------
+  class Partie {
+    constructor(cfg, options = {}) {
+      this.cfg = cfg; this.options = options;
+      this.graine = options.graine != null ? options.graine >>> 0 : (Math.random() * 4294967296) >>> 0;
+      this.rng = Hasard(this.graine);
+      this.silencieux = !!options.silencieux;
+      this.plan = new Plan(cfg);
+      this.destinations = this.plan.destinations;
+      this.idsDest = this.destinations.map(d => d.id);
+      this.parDest = Object.fromEntries(this.destinations.map(d => [d.id, d]));
+      this.quais = this.plan.quais.map(q => new Quai(q.id, q.y, cfg.quais.capacite, this.idsDest));
+      this.aiguillages = Object.fromEntries(this.idsDest.map(d => [d, new Aiguillage(d)]));
+      this.trains = []; this.partis = [];
+      this.t = 0; this.phase = "service"; this.fini = false;
+      this.evenements = [];
+      this.numero = 0; this.rang = 0;
+      this.stats = { generes: 0, arrives: 0, embarques: 0, pic: 0, tempsDanger: 0, choix: 0, choixPourVoyageurs: 0, pleins: 0, sauves: 0 };
+      this.score = new Score(cfg, e => this.emettre(e));
+      this.renfort = new Renfort(cfg, e => this.emettre(e));
+      this.vagues = new Vagues(cfg, this.rng);
+      this.regulateur = new Regulateur(cfg);
+      this.habitude = {};   // destination → le quai où son dernier train a accosté
+      // Au coup d'envoi, la gare n'est pas vide. Une première grappe attend
+      // déjà sur un quai — c'est elle que le premier train viendra chercher,
+      // et il repartira bien rempli : la première chose qu'on apprend est ce
+      // qu'est un bon départ. Autour, quelques groupes épars.
+      const V = cfg.voyageurs;
+      if (V.premiereGrappe) {
+        const d0 = this.vagues.tirerDest(this.vagues.poidsFond), q0 = this.rng.entier(1, this.quais.length);
+        const k = Math.min(V.premiereGrappe, this.quai(q0).capacite);
+        this.stats.generes += k; this.stats.arrives += k;
+        this.quai(q0).file.ajouter(d0, k);
+        this.habitude[d0] = q0;
+      }
+      let n = V.initiaux || 0;
+      while (n > 0) {
+        const k = Math.min(n, this.rng.entier(3, 6));
+        this.arriveeGroupe(this.vagues.tirerDest(this.vagues.poidsFond), k, null);
+        n -= k;
+      }
+      this.horaire = this.regulateur.annonces;   // les trains annoncés, pas encore là
+      this.evenements.length = 0;
+    }
+
+    emettre(e) { if (this.silencieux) return; e.t = this.t; this.evenements.push(e); }
+    quai(id) { return this.quais[id - 1]; }
+    attenteParDest() {
+      const out = {};
+      for (const d of this.idsDest) out[d] = 0;
+      for (const q of this.quais) for (const d of this.idsDest) out[d] += q.file.n[d];
+      return out;
+    }
+    enGare() { let n = 0; for (const q of this.quais) n += q.file.total; return n; }
+    actifs() { let n = 0; for (const tr of this.trains) if (tr.enGare) n++; return n; }
+    file(dest) {
+      return this.trains.filter(tr => tr.dest === dest && (tr.etat === "approche" || tr.etat === "attente")).sort((a, b) => a.rang - b.rang);
+    }
+    // Le train qui tient un quai : celui qui y est affecté, y entre, ou y
+    // embarque. Un train à qui l'on a donné l'ordre de départ ne le tient plus :
+    // on peut déjà y envoyer le suivant, qui attendra que la voie soit libre.
+    reserveDe(qid) {
+      for (const tr of this.trains)
+        if (tr.quai === qid && (tr.etat === "approche" || tr.etat === "attente" || tr.etat === "entree" || (tr.etat === "quai" && !tr.partant))) return tr;
+      return null;
+    }
+    affectable(qid, tr) { const r = this.reserveDe(qid); return !r || r === tr; }
+    quaiLibrePhysiquement(qid, tr) {
+      return !this.trains.some(o => o !== tr && o.quai === qid && (o.etat === "entree" || o.etat === "quai"));
+    }
+    occupe(o) {
+      const L = (o.voitures - 1) * PAS;
+      return o.etat === "entree" ? { lo: o.s - L, hi: o.s } : { lo: o.s, hi: o.s + L };
+    }
+    // L'enclenchement : un itinéraire ne s'accorde que si chaque convoi en
+    // mouvement a entièrement dégagé la zone qu'il partage avec lui.
+    accordable(lienId, tr) {
+      for (const o of this.trains) {
+        if (o === tr || (o.etat !== "entree" && o.etat !== "sortie")) continue;
+        const z = this.plan.conflits[o.lien][lienId];
+        if (!z) continue;
+        const occ = this.occupe(o);
+        if (o.etat === "entree" ? !(occ.lo > z.hi) : !(occ.hi < z.lo)) return false;
+      }
+      return true;
+    }
+    prochains(dest, n = 2) {
+      const out = [];
+      for (const a of this.renfort.appels) if (!a.venu && a.dest === dest) out.push({ prevu: a.t, dest, type: "renfort" });
+      for (const h of this.horaire) if (h.dest === dest && out.length < n) out.push(h);
+      return out;
+    }
+    // Les voitures d'un convoi, de la loco à la queue : {x, y, ang}.
+    voitures(tr) {
+      const P = this.plan, out = new Array(tr.voitures);
+      if (tr.etat === "approche" || tr.etat === "attente" || tr.etat === "supprime") {
+        const ap = P.approche[tr.dest];
+        for (let i = 0; i < tr.voitures; i++) out[i] = ap.point(tr.s - i * PAS);
+      } else if (tr.etat === "entree" || tr.etat === "quai") {
+        const L = P.liens[tr.lien], ap = P.approche[tr.dest];
+        for (let i = 0; i < tr.voitures; i++) { const s = tr.s - i * PAS; out[i] = s >= 0 ? L.point(s) : ap.point(ap.len + s); }
+      } else {
+        // au départ, la loco change de bout : la tête est la voiture côté portail
+        const L = P.liens[tr.lien], dep = P.depart[tr.dest];
+        for (let i = 0; i < tr.voitures; i++) { const s = tr.s + i * PAS; out[i] = s >= 0 ? L.point(s) : dep.point(-s); }
+      }
+      return out;
+    }
+
+    // --- les commandes du joueur -------------------------------------------
+    affecter(tr, qid) {
+      if (this.fini || !tr) return { ok: false, raison: "fini" };
+      if (tr.etat !== "approche" && tr.etat !== "attente") return { ok: false, raison: "mouvement" };
+      const q = this.quai(qid);
+      if (!q) return { ok: false, raison: "inconnu" };
+      const r = this.reserveDe(qid);
+      if (r && r !== tr) return { ok: false, raison: "occupe", par: r };
+      // la mesure du choix : ce quai avait-il le plus de voyageurs pour lui ?
+      let maxi = 0;
+      for (const x of this.quais) maxi = Math.max(maxi, x.file.n[tr.dest]);
+      this.stats.choix++;
+      if (maxi > 0 && q.file.n[tr.dest] === maxi) this.stats.choixPourVoyageurs++;
+      tr.quai = qid; tr.bloque = null;
+      this.emettre({ type: "affectation", train: tr, quai: qid });
+      return { ok: true };
+    }
+    desaffecter(tr) {
+      if (!tr || (tr.etat !== "approche" && tr.etat !== "attente") || tr.quai == null) return false;
+      tr.quai = null; tr.bloque = null;
+      this.emettre({ type: "desaffectation", train: tr });
+      return true;
+    }
+    fairePartir(tr, raison = "joueur") {
+      if (!tr || tr.etat !== "quai" || tr.partant) return { ok: false };
+      tr.partant = true; tr.ordre = this.t; tr.raisonDepart = raison;
+      tr.retard = Math.max(0, this.t - tr.echeance);
+      tr.remplissage = tr.aBord / tr.cap;
+      const r = this.score.depart(tr, tr.retard, tr.remplissage);
+      const G = (this.cfg.renfort && this.cfg.renfort.gains) || {};
+      if (r.bon) this.renfort.gagner(G.bienRempli);
+      if (r.ponctuel) this.renfort.gagner(G.ponctuel);
+      this.emettre({ type: "ordreDepart", train: tr, raison, ...r });
+      return { ok: true, ...r };
+    }
+    appelerRenfort(dest) {
+      if (this.fini || !this.parDest[dest]) return { ok: false };
+      if (!this.renfort.appeler(dest, this.t)) return { ok: false, raison: "jauge" };
+      this.emettre({ type: "renfortAppele", dest, arrivee: this.t + (this.cfg.renfort.delaiArrivee ?? 5) });
+      return { ok: true };
+    }
+
+    // --- les voyageurs ---------------------------------------------------------
+    // Un groupe choisit son quai, dans cet ordre :
+    //  1. LE TABLEAU — un train pour sa destination est annoncé ou à quai, avec
+    //     de la place : la plupart des gens y vont (réglage « attraction »).
+    //     C'est le levier du joueur : désigner un quai y appelle la foule.
+    //  2. L'HABITUDE — hors vague, on retourne là d'où le dernier train pour
+    //     chez soi est parti. Envoyer toujours les bleus au quai 2 finit par
+    //     faire du quai 2 celui des bleus.
+    //  3. LA VAGUE — une vague se déverse sur ses quais cibles, et chacune de
+    //     ses destinations y a un quai de prédilection, que l'annonce montre.
+    //  4. LES GRAPPES — sinon n'importe quel quai, avec un penchant pour ceux
+    //     où les siens attendent déjà.
+    // Ce qui ne trouve plus de place nulle part est refoulé et rentre à pied.
+    // Sans les règles 2 et 3, mesuré le 29 septembre 2026 : les voyageurs
+    // d'une couleur s'éparpillaient sur quatre ou cinq quais et un train n'en
+    // ramassait qu'un — trains remplis à 50 %, quais pleins quand même.
+    arriveeGroupe(dest, taille, cibles, pref) {
+      this.stats.generes += taille;
+      let reste = taille;
+      for (let essai = 0; essai < 4 && reste > 0; essai++) {
+        const q = this.choisirQuai(dest, cibles, essai, pref);
+        if (!q) break;
+        const k = Math.min(reste, q.place());
+        if (k <= 0) break;
+        q.file.ajouter(dest, k); reste -= k; this.stats.arrives += k;
+        this.emettre({ type: "arrivee", quai: q.id, dest, n: k });
+      }
+      if (reste > 0) { this.score.refus(reste); this.emettre({ type: "refus", dest, n: reste }); }
+    }
+    choisirQuai(dest, cibles, essai, pref) {
+      const V = this.cfg.voyageurs;
+      const libres = this.quais.filter(q => q.place() > 0);
+      if (!libres.length) return null;
+      if (essai === 0) {
+        if (V.attraction > 0 && this.rng() < V.attraction) {
+          let best = null, bp = 0;
+          for (const q of libres) {
+            if (q.affiche !== dest) continue;
+            const r = this.reserveDe(q.id);
+            const libre = r ? r.cap - r.aBord - q.file.n[dest] : 0;
+            if (libre > bp) { bp = libre; best = q; }
+          }
+          if (best) return best;
+        }
+        if (!cibles && V.habitude > 0 && this.habitude[dest] && this.rng() < V.habitude) {
+          const h = this.quai(this.habitude[dest]);
+          if (h.place() > 0) return h;
+        }
+      }
+      let pool = cibles ? libres.filter(q => cibles.includes(q.id)) : libres;
+      if (!pool.length) pool = libres;
+      return this.rng.pondere(pool, q => (1 + V.grappe * q.file.n[dest]) * (pref && q.id === pref ? V.prefere : 1));
+    }
+    embarquer(tr, q, dt) {
+      const dispo = q.file.n[tr.dest], place = tr.cap - tr.aBord;
+      tr.reste = dispo > 0 && place > 0 ? tr.reste + tr.taux * dt : 0;
+      const k = Math.min(Math.floor(tr.reste), dispo, place);
+      if (k <= 0) return;
+      q.file.retirer(tr.dest, k); tr.aBord += k; tr.reste -= k;
+      tr.dernierEmbarquement = this.t; this.stats.embarques += k;
+      this.emettre({ type: "embarquement", train: tr, quai: q.id, n: k });
+      if (!tr.bienRempliSignale && tr.aBord >= tr.cap * this.cfg.combo.seuilBon) {
+        tr.bienRempliSignale = true;
+        this.emettre({ type: "bienRempli", train: tr });
+      }
+    }
+    evacuer(q) {
+      let n = 0;
+      for (const d of this.idsDest) n += q.file.retirer(d, Math.round(q.file.n[d] * this.cfg.evacuation.part));
+      q.ferme = false; q.pleinDepuis = null; q.evacuations++;
+      this.score.evacuation(n);
+      this.emettre({ type: "evacuation", quai: q.id, n });
+    }
+
+    // --- le temps --------------------------------------------------------------
+    tick(dt) {
+      if (this.fini) return;
+      this.t += dt;
+      const cfg = this.cfg;
+      if (this.phase === "service" && this.t >= cfg.duree) { this.phase = "final"; this.emettre({ type: "finArrivees" }); }
+      this.vagues.tick(this.t, dt, this);
+      this.regulateur.tick(this);
+      this.faireVenirTrains();
+      this.bougerTrains(dt);
+      this.surveillerQuais(dt);
+      if (this.renfort.actif && !this.quais.some(q => q.taux >= cfg.quais.seuils.danger))
+        this.renfort.gagner(cfg.renfort.gains.calme * dt);
+      const n = this.enGare();
+      if (n > this.stats.pic) this.stats.pic = n;
+      if (this.t >= cfg.duree + cfg.delaiFinal) this.terminer();
+    }
+    faireVenirTrains() {
+      const max = this.cfg.trains.actifsMax;
+      while (this.horaire.length && this.horaire[0].prevu <= this.t && this.actifs() < max)
+        this.apparaitre(this.horaire.shift());
+      // le renfort passe outre la limite : c'est tout son intérêt
+      for (const a of this.renfort.appels)
+        if (!a.venu && this.t >= a.t) { a.venu = true; this.apparaitre({ dest: a.dest, type: "renfort", prevu: a.t }); }
+    }
+    apparaitre(h) {
+      const ty = this.cfg.trains.types[h.type];
+      // il paraît au loin, derrière le dernier convoi de sa file s'il y en a un
+      // — ou derrière la queue de celui qui entre en gare et traîne encore sur
+      // la voie d'approche (un omnibus de six voitures y reste longtemps)
+      let s = -(ty.voitures * PAS) - 20;
+      const file = this.file(h.dest), dernier = file[file.length - 1], ap = this.plan.approche[h.dest];
+      if (dernier) s = Math.min(s, dernier.s - dernier.longueur - INTERVALLE_FILE);
+      for (const o of this.trains) if (o.dest === h.dest && o.etat === "entree") {
+        const queue = o.s - (o.voitures - 1) * PAS;
+        if (queue < 0) s = Math.min(s, ap.len + queue - 44);
+      }
+      const tr = new Train({
+        id: ++this.numero, dest: h.dest, type: h.type, nomType: ty.nom, cap: ty.capacite, voitures: ty.voitures,
+        taux: ty.embarquement, prevu: h.prevu ?? this.t, apparu: this.t, echeance: this.t + ty.delai,
+        rang: ++this.rang, s, v: this.cfg.trains.vitesseApproche
+      });
+      this.trains.push(tr);
+      this.emettre({ type: "apparition", train: tr });
+      return tr;
+    }
+    avancer(tr, cible, dt, vmax) {
+      const T = this.cfg.trains, reste = cible - tr.s;
+      if (reste <= 0.5) { tr.v = 0; return true; }
+      tr.v = Math.min(vmax, tr.v + T.acceleration * dt, Math.sqrt(2 * T.freinage * reste));
+      tr.s += Math.max(tr.v, 6) * dt;
+      if (tr.s >= cible - 0.5) { tr.s = Math.min(tr.s, cible); tr.v = 0; return true; }
+      return false;
+    }
+    bougerTrains(dt) {
+      const T = this.cfg.trains;
+      // 1. Les files d'approche, portail par portail : chacun avance jusqu'au
+      //    signal ou jusqu'à la queue du précédent, et seule la tête de file
+      //    entre — jamais de dépassement sur la voie d'approche.
+      for (const d of this.destinations) {
+        const ap = this.plan.approche[d.id], file = this.file(d.id);
+        let limite = ap.len - RECUL_SIGNAL;
+        for (const o of this.trains) if (o.dest === d.id && o.etat === "entree") {
+          const queue = o.s - (o.voitures - 1) * PAS;
+          if (queue < 0) limite = Math.min(limite, ap.len + queue - 44);
+        }
+        for (let k = 0; k < file.length; k++) {
+          const tr = file[k];
+          if (this.avancer(tr, limite, dt, T.vitesseApproche) && tr.etat === "approche") tr.etat = "attente";
+          limite = tr.s - tr.longueur - INTERVALLE_FILE;
+          if (k > 0) tr.bloque = tr.quai != null ? "file" : null;
+        }
+        const tete = file[0];
+        if (tete && tete.quai != null) {
+          const L = this.plan.liens[this.plan.lienId(d.id, tete.quai)];
+          if (tete.s < ap.len - RECUL_SIGNAL - APPROCHE_ENGAGEE) tete.bloque = null;
+          else if (!this.quaiLibrePhysiquement(tete.quai, tete)) tete.bloque = "quai";
+          else if (!this.accordable(L.id, tete)) tete.bloque = "voie";
+          else {
+            tete.etat = "entree"; tete.lien = L.id; tete.s -= ap.len; tete.bloque = null;
+            this.aiguillages[d.id].poser(tete.quai, tete);
+            this.emettre({ type: "entree", train: tete });
+          }
+        } else if (tete) tete.bloque = null;
+      }
+      // 2. Les convois engagés dans le gril, à quai, ou qui s'en vont.
+      for (const tr of this.trains) {
+        if (tr.etat === "entree") {
+          const L = this.plan.liens[tr.lien];
+          if (this.avancer(tr, L.len, dt, T.vitesse)) {
+            tr.etat = "quai"; tr.s = L.len; tr.v = 0; tr.accoste = this.t; tr.bloque = null;
+            this.aiguillages[tr.dest].lacher(tr);
+            this.habitude[tr.dest] = tr.quai;
+            this.emettre({ type: "accostage", train: tr });
+          }
+        } else if (tr.etat === "quai") {
+          const q = this.quai(tr.quai);
+          if (!tr.partant) {
+            if (this.t - tr.accoste >= T.ouverturePortes) this.embarquer(tr, q, dt);
+            if (tr.aBord >= tr.cap && T.departAutoSiComplet) this.fairePartir(tr, "complet");
+            else if (T.departAutoALHeure && this.t >= tr.echeance) this.fairePartir(tr, "heure");
+            else if (this.t >= tr.echeance + T.retardMax) this.fairePartir(tr, "retard");
+          }
+          if (tr.partant) {
+            const L = this.plan.liens[tr.lien];
+            if (this.accordable(L.id, tr)) {
+              tr.etat = "sortie"; tr.s = L.len - (tr.voitures - 1) * PAS; tr.v = 0; tr.bloque = null;
+              this.aiguillages[tr.dest].poser(tr.quai, tr);
+              this.emettre({ type: "depart", train: tr });
+            } else tr.bloque = "voie";
+          }
+        } else if (tr.etat === "sortie") {
+          const dep = this.plan.depart[tr.dest];
+          tr.v = Math.min(T.vitesse, tr.v + T.acceleration * dt);
+          tr.s -= tr.v * dt;
+          if (tr.s + (tr.voitures - 1) * PAS < -(dep.len + 40)) {
+            tr.etat = "parti";
+            this.aiguillages[tr.dest].lacher(tr);
+            this.emettre({ type: "parti", train: tr });
+          }
+        }
+      }
+      // 3. Un train qui attend à la porte bien au-delà de son heure est supprimé.
+      for (const tr of this.trains)
+        if ((tr.etat === "approche" || tr.etat === "attente") && this.t >= tr.echeance + T.retardMax) {
+          tr.etat = "supprime";
+          this.score.suppression(tr);
+          this.emettre({ type: "suppression", train: tr });
+        }
+      if (this.trains.some(tr => tr.etat === "parti" || tr.etat === "supprime")) {
+        for (const tr of this.trains) if (tr.etat === "parti" || tr.etat === "supprime") this.partis.push(tr);
+        this.trains = this.trains.filter(tr => tr.etat !== "parti" && tr.etat !== "supprime");
+      }
+    }
+    // Un quai qui atteint sa capacité se FERME : plus personne n'y entre, et
+    // un compte à rebours part. Libérer quelques places (sous le seuil de
+    // réouverture) le sauve ; sinon, au bout du délai, la police évacue une
+    // part des voyageurs — pénalité lourde, série cassée, mais la partie
+    // continue.
+    surveillerQuais(dt) {
+      const Q = this.cfg.quais;
+      let danger = false;
+      for (const q of this.quais) {
+        if (!q.ferme && q.file.total >= q.capacite) {
+          q.ferme = true; q.pleinDepuis = this.t; this.stats.pleins++;
+          this.emettre({ type: "plein", quai: q.id });
+          if (this.cfg.combo.casseSurPlein) this.score.casser("plein");
+        } else if (q.ferme) {
+          if (q.file.total <= q.capacite * Q.seuils.reouverture) {
+            q.ferme = false; q.pleinDepuis = null; this.stats.sauves++;
+            this.emettre({ type: "sauve", quai: q.id });
+          } else if (this.t - q.pleinDepuis >= Q.pleinDelai) this.evacuer(q);
+        }
+        const r = this.reserveDe(q.id);
+        q.affiche = r ? r.dest : null;
+        if (q.taux >= Q.seuils.danger) danger = true;
+      }
+      if (danger) this.stats.tempsDanger += dt;
+    }
+    terminer() {
+      // fin de service : les trains à quai partent avec ce qu'ils ont
+      for (const tr of this.trains) if (tr.etat === "quai" && !tr.partant) this.fairePartir(tr, "fin");
+      this.score.cloture(this.enGare());
+      this.fini = true; this.phase = "fini";
+      this.emettre({ type: "fin", bilan: this.bilan() });
+    }
+    bilan() {
+      const s = this.score, st = this.stats;
+      return {
+        transportes: s.transportes, ponctualite: s.ponctualite, remplissage: s.remplissageMoyen, comboMax: s.serieMax,
+        evacuations: s.evacuations, evacues: s.evacues, refoules: s.refoules, restes: s.restes,
+        score: s.points, etoiles: s.etoiles(), detail: { ...s.detail },
+        trains: s.trains, supprimes: s.supprimes, bienRemplis: s.bienRemplis,
+        generes: st.generes, renforts: this.renfort.nbAppels, pic: st.pic, tempsDanger: st.tempsDanger,
+        pleins: st.pleins, sauves: st.sauves,
+        choixPourVoyageurs: st.choix ? st.choixPourVoyageurs / st.choix : 0
+      };
+    }
+    // La matière se conserve : de quoi le vérifier sans rien savoir du jeu.
+    matiere() {
+      let aBord = 0;
+      for (const tr of this.trains.concat(this.partis)) aBord += tr.aBord;
+      return { generes: this.stats.generes, arrives: this.stats.arrives, refoules: this.score.refoules,
+        surQuais: this.enGare(), embarques: this.stats.embarques, aBord, evacues: this.score.evacues };
+    }
+  }
+
+  // --- Les automates -----------------------------------------------------------
+  // Trois joueurs sans mains, pour le banc d'essai et la démonstration. Ils
+  // passent par les MÊMES commandes que le doigt, toutes les 0,4 s de jeu.
+  //   inerte   ne touche à rien : la preuve que la soirée mord ;
+  //   glouton  envoie chaque train au quai qui a le plus de ses voyageurs et
+  //            le fait partir dès qu'il n'y a plus personne à prendre ;
+  //   stratege soulage d'abord les quais en danger, évite un itinéraire pris,
+  //            et retient ses trains pendant les vagues pour les remplir.
+  function aAffecter(p) {
+    const out = [];
+    for (const d of p.idsDest) { const f = p.file(d); if (f.length && f[0].quai == null) out.push(f[0]); }
+    return out.sort((a, b) => a.echeance - b.echeance);
+  }
+  function destLaPlusChargee(p) {
+    const att = p.attenteParDest();
+    let best = p.idsDest[0];
+    for (const d of p.idsDest) if (att[d] > att[best]) best = d;
+    return best;
+  }
+  const PILOTES = {
+    inerte() {},
+    glouton(p) {
+      for (const tr of aAffecter(p)) {
+        let best = null, bs = -1;
+        for (const q of p.quais) {
+          if (!p.affectable(q.id, tr)) continue;
+          const s = q.file.n[tr.dest] * 1000 + q.file.total;
+          if (s > bs) { bs = s; best = q; }
+        }
+        if (best) p.affecter(tr, best.id);
+      }
+      for (const tr of p.trains) {
+        if (tr.etat !== "quai" || tr.partant) continue;
+        const q = p.quai(tr.quai), depuis = p.t - (tr.dernierEmbarquement ?? tr.accoste);
+        if (tr.aBord >= tr.cap || p.t >= tr.echeance || (q.file.n[tr.dest] === 0 && depuis > 1.5)) p.fairePartir(tr);
+      }
+      if (p.renfort.pret) p.appelerRenfort(destLaPlusChargee(p));
+    },
+    stratege(p) {
+      const danger = p.cfg.quais.seuils.danger, vague = p.vagues.active();
+      for (const tr of aAffecter(p)) {
+        let best = null, bs = -Infinity;
+        for (const q of p.quais) {
+          if (!p.affectable(q.id, tr)) continue;
+          const n = q.file.n[tr.dest];
+          let s = n;
+          if (q.taux >= danger && n > 0) s += 30;
+          if (!p.accordable(p.plan.lienId(tr.dest, q.id), tr)) s -= 6;
+          if (s > bs) { bs = s; best = q; }
+        }
+        if (best) p.affecter(tr, best.id);
+      }
+      for (const tr of p.trains) {
+        if (tr.etat !== "quai" || tr.partant) continue;
+        const q = p.quai(tr.quai), r = tr.aBord / tr.cap, resteT = tr.echeance - p.t;
+        const tari = q.file.n[tr.dest] === 0 && p.t - (tr.dernierEmbarquement ?? tr.accoste) > 2;
+        // plein, ou à l'heure ; sinon, tari et assez rempli pour ne rien casser —
+        // mais pendant une vague on retient : la foule vient au train affiché
+        if (tr.aBord >= tr.cap || resteT <= 0.6) p.fairePartir(tr);
+        else if (tari && !vague && (r >= p.cfg.combo.seuilVide || !p.cfg.combo.actif)) p.fairePartir(tr);
+      }
+      // le renfort se garde pour la foule : vague annoncée ou en cours, ou quai
+      // en danger — vers la grappe la plus grosse qu'aucun train ne tient
+      if (p.renfort.pret) {
+        const annonce = p.vagues.liste.some(v => v.etat === "annoncee" && v.t - p.t < 6);
+        const enDanger = p.quais.some(q => q.taux >= danger);
+        if (vague || annonce || enDanger) {
+          let best = null, bn = 0;
+          for (const d of p.idsDest) { const g = p.regulateur.grappe(p, d) + p.regulateur.attendus(p, d) * 0.5; if (g > bn) { bn = g; best = d; } }
+          if (best && bn >= 50) p.appelerRenfort(best);
+        }
+      }
+    }
+  };
+
+  return { Partie, Plan, Voie, Hasard, PILOTES, GABARIT: { VOITURE, ECART, PAS, RECUL_SIGNAL } };
+})();
+</script>
+
+<!-- ==================================================================
+     LA VUE — le dessin, les gestes, les sons. Elle lit la partie et lui
+     transmet les ordres du doigt ; elle ne décide d'aucune règle.
+     ================================================================== -->
+<script id="vue">
+"use strict";
+(function () {
+  const REGLAGES = JSON.parse(document.getElementById("reglages").textContent);
+  const SVGNS = "http://www.w3.org/2000/svg";
+  const $ = id => document.getElementById(id);
+  const { VOITURE, PAS, RECUL_SIGNAL } = Fete.GABARIT;
+  const PAR_POINT = 2;   // un point sur le quai = deux voyageurs
+  const reduit = !!(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches);
+  const lireLocal = (k, d) => { try { const v = localStorage.getItem(k); return v == null ? d : v; } catch (e) { return d; } };
+  const ecrireLocal = (k, v) => { try { localStorage.setItem(k, v); } catch (e) { /* stockage refusé : tant pis */ } };
+
+  const plateau = $("plateau"), scene = $("scene");
+  let partie = null, cfg = null, modeId = lireLocal("fete-mode", "nuit");
+  if (!REGLAGES.modes[modeId]) modeId = "nuit";
+  let enPause = true, vitesse = 1, demo = null, horlogePilote = 0, selection = null;
+  const options = { sons: lireLocal("fete-sons", "1") === "1", effets: lireLocal("fete-effets", "1") === "1" };
+  let calques = {}, nTrains = new Map(), nQuais = new Map(), nPortails = new Map(), nRoutes = new Map();
+  let particules = [], aide = null, finAffichee = false;
+
+  function el(tag, attrs, parent) {
+    const e = document.createElementNS(SVGNS, tag);
+    if (attrs) for (const k in attrs) e.setAttribute(k, attrs[k]);
+    if (parent) parent.appendChild(e);
+    return e;
+  }
+  const chemin = pts => pts.length ? "M" + pts.map(p => p.x.toFixed(1) + " " + p.y.toFixed(1)).join("L") : "";
+  const mmss = s => { s = Math.max(0, Math.ceil(s)); return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); };
+  const milliers = n => Math.round(n).toLocaleString("fr-FR");
+  const pct = x => Math.round(x * 100) + " %";
+  const copie = o => JSON.parse(JSON.stringify(o));
+  const etoiles = n => "★".repeat(n) + "<span class='eteinte'>" + "★".repeat(3 - n) + "</span>";
+
+  // ------------------------------------------------------------------
+  // Les sons : de petites signatures synthétisées, aucun fichier.
+  // ------------------------------------------------------------------
+  const Son = {
+    ctx: null, maitre: null,
+    reveil() {
+      if (!this.ctx) {
+        try {
+          this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+          this.maitre = this.ctx.createGain(); this.maitre.gain.value = 0.55; this.maitre.connect(this.ctx.destination);
+        } catch (e) { this.ctx = null; }
+      }
+      if (this.ctx && this.ctx.state === "suspended") this.ctx.resume();
+    },
+    ton(f, t0, dur, type, vol, f2) {
+      if (!options.sons || !this.ctx) return;
+      const c = this.ctx, o = c.createOscillator(), g = c.createGain(), at = c.currentTime + (t0 || 0);
+      o.type = type || "sine"; o.frequency.setValueAtTime(f, at);
+      if (f2) o.frequency.exponentialRampToValueAtTime(f2, at + dur);
+      g.gain.setValueAtTime(0.0001, at);
+      g.gain.linearRampToValueAtTime(vol || 0.06, at + 0.015);
+      g.gain.exponentialRampToValueAtTime(0.0001, at + dur);
+      o.connect(g); g.connect(this.maitre); o.start(at); o.stop(at + dur + 0.05);
+    },
+    bruit(t0, dur, vol, freq) {
+      if (!options.sons || !this.ctx) return;
+      const c = this.ctx, n = Math.floor(c.sampleRate * dur), buf = c.createBuffer(1, n, c.sampleRate), d = buf.getChannelData(0);
+      for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / n);
+      const s = c.createBufferSource(), f = c.createBiquadFilter(), g = c.createGain(), at = c.currentTime + (t0 || 0);
+      s.buffer = buf; f.type = "bandpass"; f.frequency.value = freq || 900; f.Q.value = 0.8; g.gain.value = vol || 0.05;
+      s.connect(f); f.connect(g); g.connect(this.maitre); s.start(at);
+    },
+    selection() { this.ton(880, 0, 0.06, "triangle", 0.05); },
+    affectation() { this.ton(660, 0, 0.07, "triangle", 0.05); this.ton(990, 0.07, 0.1, "triangle", 0.05); },
+    refus() { this.ton(220, 0, 0.14, "square", 0.03); },
+    depart() { this.ton(1250, 0, 0.18, "sine", 0.035, 900); },
+    bienRempli() { this.ton(1319, 0, 0.12, "triangle", 0.05); this.ton(1760, 0.08, 0.18, "triangle", 0.045); },
+    combo(n) { const b = 523 * Math.pow(1.0595, Math.min(n, 10) * 2); [1, 1.26, 1.5].forEach((k, i) => this.ton(b * k, i * 0.06, 0.16, "triangle", 0.05)); },
+    casse() { [523, 392, 262].forEach((f, i) => this.ton(f, i * 0.09, 0.16, "sawtooth", 0.025)); },
+    plein() { this.ton(740, 0, 0.12, "square", 0.035); this.ton(740, 0.18, 0.12, "square", 0.035); },
+    tic() { this.ton(1100, 0, 0.04, "square", 0.02); },
+    sauve() { this.ton(523, 0, 0.1, "triangle", 0.05); this.ton(784, 0.09, 0.2, "triangle", 0.05); },
+    evacuation() { this.ton(110, 0, 0.55, "sawtooth", 0.05, 70); this.bruit(0, 0.4, 0.05, 400); },
+    annonce() { this.ton(659, 0, 0.35, "sine", 0.06); this.ton(523, 0.32, 0.5, "sine", 0.06); },
+    vague() { this.bruit(0, 1.1, 0.07, 500); this.ton(98, 0, 0.5, "sine", 0.08, 70); },
+    renfortPret() { [784, 988, 1175].forEach((f, i) => this.ton(f, i * 0.07, 0.14, "triangle", 0.045)); },
+    renfortArrive() { [523, 659, 784, 1047].forEach((f, i) => this.ton(f, i * 0.1, 0.24, "triangle", 0.05)); },
+    feu() { this.bruit(0, 0.25, 0.018, 1800); },
+    fin() { [784, 659, 523, 659, 784, 1047].forEach((f, i) => this.ton(f, i * 0.12, 0.26, "triangle", 0.045)); }
+  };
+
+  // ------------------------------------------------------------------
+  // Le décor : la ville la nuit, des faisceaux, des feux d'artifice. Sur
+  // un canevas SOUS le plan, et tenu sombre : il ne doit jamais gêner la
+  // lecture des quais.
+  // ------------------------------------------------------------------
+  const Decor = {
+    cv: $("decor"), ctx: null, w: 0, h: 0, dpr: 1, ville: null, feux: [], prochain: 2, vif: 0, t: 0,
+    redimensionner() {
+      const r = scene.getBoundingClientRect();
+      this.dpr = Math.min(2, window.devicePixelRatio || 1);
+      this.w = Math.max(1, r.width); this.h = Math.max(1, r.height);
+      this.cv.width = Math.round(this.w * this.dpr); this.cv.height = Math.round(this.h * this.dpr);
+      this.ctx = this.cv.getContext("2d");
+      this.ville = this.dessinerVille();
+    },
+    dessinerVille() {
+      const W = this.cv.width, H = this.cv.height, k = this.dpr, c = document.createElement("canvas");
+      c.width = W; c.height = H;
+      const g = c.getContext("2d"), rng = Fete.Hasard(20260929);
+      const ciel = g.createLinearGradient(0, 0, 0, H);
+      ciel.addColorStop(0, "#0d0805"); ciel.addColorStop(0.62, "#1c1209"); ciel.addColorStop(1, "#2c1b0c");
+      g.fillStyle = ciel; g.fillRect(0, 0, W, H);
+      const halo = g.createRadialGradient(W * 0.5, H * 1.05, 0, W * 0.5, H * 1.05, H * 0.9);
+      halo.addColorStop(0, "rgba(255, 160, 70, .16)"); halo.addColorStop(1, "rgba(255, 160, 70, 0)");
+      g.fillStyle = halo; g.fillRect(0, 0, W, H);
+      for (let i = 0; i < 70; i++) {   // quelques étoiles, discrètes
+        g.fillStyle = "rgba(255, 236, 200," + (0.08 + rng() * 0.18) + ")";
+        g.fillRect(rng() * W, rng() * H * 0.45, k, k);
+      }
+      // la silhouette de la ville, au pied de l'écran
+      const base = H * 0.985, hMax = H * 0.2;
+      g.fillStyle = "#0a0603";
+      let x = 0;
+      while (x < W) {
+        const w = (18 + rng() * 46) * k, h = hMax * (0.25 + rng() * 0.75);
+        g.fillRect(x, base - h, w + 1, h);
+        if (rng() < 0.18) { g.beginPath(); g.arc(x + w / 2, base - h, w * 0.42, Math.PI, 0); g.fill(); }
+        else if (rng() < 0.15) { g.beginPath(); g.moveTo(x + w * 0.3, base - h); g.lineTo(x + w / 2, base - h - hMax * 0.35); g.lineTo(x + w * 0.7, base - h); g.fill(); }
+        for (let j = 0; j < 7; j++) if (rng() < 0.5) {
+          g.fillStyle = "rgba(255, 196, 110," + (0.25 + rng() * 0.45) + ")";
+          g.fillRect(x + rng() * (w - 3 * k), base - rng() * h * 0.9, 2 * k, 2.5 * k);
+          g.fillStyle = "#0a0603";
+        }
+        x += w;
+      }
+      // la basilique sur sa butte, à gauche ; la grande roue, à droite
+      const bx = W * 0.07, by = base - hMax * 0.95;
+      g.beginPath(); g.ellipse(bx, base, W * 0.12, hMax * 0.9, 0, Math.PI, 0); g.fill();
+      [[0, 1], [-0.028, 0.62], [0.028, 0.62]].forEach(([dx, s]) => {
+        g.beginPath(); g.arc(bx + dx * W, by - hMax * 0.1, hMax * 0.2 * s, Math.PI, 0); g.fill();
+        g.fillRect(bx + dx * W - 2 * k, by - hMax * 0.1 - hMax * 0.2 * s - 10 * k, 4 * k, 10 * k);
+      });
+      const rx = W * 0.93, ry = base - hMax * 1.25, rr = hMax * 0.95;
+      g.strokeStyle = "rgba(255, 190, 110, .35)"; g.lineWidth = 1.5 * k;
+      g.beginPath(); g.arc(rx, ry, rr, 0, Math.PI * 2); g.stroke();
+      for (let a = 0; a < 16; a++) { const t = a * Math.PI / 8; g.beginPath(); g.moveTo(rx, ry); g.lineTo(rx + Math.cos(t) * rr, ry + Math.sin(t) * rr); g.stroke(); }
+      g.fillStyle = "#0a0603"; g.beginPath(); g.moveTo(rx - rr * 0.5, base); g.lineTo(rx, ry); g.lineTo(rx + rr * 0.5, base); g.fill();
+      return c;
+    },
+    tir(force) {
+      if (!options.effets || reduit) return;
+      const couleurs = partie ? partie.destinations.map(d => d.couleur) : ["#f3cf78"];
+      couleurs.push("#f3cf78", "#fff1c9");
+      const cx = (0.1 + Math.random() * 0.8) * this.cv.width, cy = (0.08 + Math.random() * 0.4) * this.cv.height;
+      const coul = couleurs[Math.floor(Math.random() * couleurs.length)], n = 50 + Math.floor(Math.random() * 40);
+      const v0 = (90 + Math.random() * 80) * this.dpr * (force || 1);
+      for (let i = 0; i < n; i++) {
+        const a = Math.random() * Math.PI * 2, v = v0 * (0.4 + Math.random() * 0.6);
+        this.feux.push({ x: cx, y: cy, vx: Math.cos(a) * v, vy: Math.sin(a) * v, vie: 1, duree: 1.1 + Math.random() * 0.8, c: coul });
+      }
+      if (this.feux.length > 900) this.feux.splice(0, this.feux.length - 900);
+      if (Math.random() < 0.5) Son.feu();
+    },
+    frame(dt) {
+      if (!this.ctx || !this.ville) return;
+      const g = this.ctx, W = this.cv.width, H = this.cv.height;
+      this.t += dt;
+      g.globalCompositeOperation = "source-over"; g.globalAlpha = 1;
+      g.drawImage(this.ville, 0, 0);
+      // des faisceaux qui balaient le ciel, plus vifs pendant les vagues
+      const fort = 0.05 + this.vif * 0.07;
+      for (let i = 0; i < 4; i++) {
+        const bx = W * (0.15 + i * 0.24), ang = -Math.PI / 2 + Math.sin(this.t * 0.35 + i * 1.7) * 0.45;
+        const L = H * 1.1, lx = bx + Math.cos(ang) * L, ly = H + Math.sin(ang) * L, e = 0.07;
+        const gr = g.createLinearGradient(bx, H, lx, ly);
+        gr.addColorStop(0, "rgba(255, 214, 150," + fort + ")"); gr.addColorStop(1, "rgba(255, 214, 150, 0)");
+        g.fillStyle = gr; g.beginPath(); g.moveTo(bx, H);
+        g.lineTo(bx + Math.cos(ang - e) * L, H + Math.sin(ang - e) * L); g.lineTo(bx + Math.cos(ang + e) * L, H + Math.sin(ang + e) * L); g.fill();
+      }
+      if (!options.effets || reduit) return;
+      this.prochain -= dt;
+      if (this.prochain <= 0 && partie && !partie.fini && !enPause) {
+        this.tir(1);
+        this.prochain = this.vif > 0.5 ? 0.5 + Math.random() * 0.6 : 3.5 + Math.random() * 4;
+      }
+      g.globalCompositeOperation = "lighter";
+      const grav = 55 * this.dpr, r = 1.6 * this.dpr;
+      for (let i = this.feux.length - 1; i >= 0; i--) {
+        const p = this.feux[i];
+        p.vie -= dt / p.duree;
+        if (p.vie <= 0) { this.feux.splice(i, 1); continue; }
+        p.vx *= 1 - 1.4 * dt; p.vy = p.vy * (1 - 1.4 * dt) + grav * dt;
+        p.x += p.vx * dt; p.y += p.vy * dt;
+        g.globalAlpha = Math.max(0, p.vie) * 0.5;
+        g.fillStyle = p.c; g.fillRect(p.x - r / 2, p.y - r / 2, r, r);
+      }
+      g.globalAlpha = 1; g.globalCompositeOperation = "source-over";
+    }
+  };
+
+  // ------------------------------------------------------------------
+  // Le plateau : voies, quais, portails. Construit une fois par partie.
+  // ------------------------------------------------------------------
+  function construirePlateau() {
+    plateau.innerHTML = "";
+    nTrains = new Map(); nQuais = new Map(); nPortails = new Map(); nRoutes = new Map(); particules = [];
+    const P = partie.plan;
+    plateau.setAttribute("viewBox", "0 0 " + P.largeur + " " + P.hauteur);
+    calques.voies = el("g", { class: "voies" }, plateau);
+    calques.routes = el("g", { class: "routes" }, plateau);
+    calques.quais = el("g", {}, plateau);
+    calques.portails = el("g", {}, plateau);
+    calques.trains = el("g", {}, plateau);
+    calques.effets = el("g", { class: "effets" }, plateau);
+    // les voies : ballast sombre, rail de laiton
+    const traces = [];
+    for (const L of Object.values(P.liens)) traces.push(chemin(L.courbe));
+    for (const d of partie.destinations) { traces.push(chemin(P.approche[d.id].pts)); traces.push(chemin(P.depart[d.id].pts)); }
+    for (const q of P.quais) traces.push("M" + P.x1 + " " + q.y + "L" + P.x2 + " " + q.y);
+    for (const t of traces) el("path", { d: t, class: "ballast" }, calques.voies);
+    for (const t of traces) el("path", { d: t, class: "rail" }, calques.voies);
+
+    // les quais
+    for (const q of partie.quais) {
+      const y = q.y, x1 = P.x1, x2 = P.x2;
+      const g = el("g", { class: "quai normal" }, calques.quais);
+      el("rect", { x: x1 - 8, y: y - 60, width: x2 - x1 + 16, height: 84, class: "zone-quai" }, g);
+      el("rect", { x: x1, y: y - 54, width: x2 - x1, height: 42, rx: 10, class: "boite" }, g);
+      const haloVague = el("rect", { x: x1 - 6, y: y - 60, width: x2 - x1 + 12, height: 54, rx: 13, class: "halo-vague" }, g);
+      const halo = el("rect", { x: x1 - 3, y: y - 57, width: x2 - x1 + 6, height: 48, rx: 12, class: "halo-etat" }, g);
+      const haloSel = el("rect", { x: x1 - 3, y: y - 57, width: x2 - x1 + 6, height: 48, rx: 12, class: "halo-sel" }, g);
+      const plaque = el("circle", { cx: x1 + 23, cy: y - 33, r: 16, class: "plaque-quai" }, g);
+      el("text", { x: x1 + 23, y: y - 32, class: "num-quai" }, g).textContent = q.id;
+      const nb = Math.ceil(q.capacite / PAR_POINT), rangs = nb <= 50 ? 2 : 3, cols = Math.ceil(nb / rangs);
+      const gx0 = x1 + 52, gx1 = x2 - 92, dx = (gx1 - gx0) / Math.max(1, cols - 1);
+      const gy0 = rangs === 2 ? y - 41 : y - 45, dy = rangs === 2 ? 17 : 12, r = rangs === 2 ? 5.4 : 4.4;
+      const points = [];
+      for (let k = 0; k < nb; k++) {
+        const c = Math.floor(k / rangs), rr = k % rangs;
+        points.push(el("circle", { cx: (gx0 + c * dx).toFixed(1), cy: gy0 + rr * dy, r, class: "place" }, g));
+      }
+      const compte = el("text", { x: x2 - 12, y: y - 32, class: "compte" }, g);
+      const pleinG = el("g", { visibility: "hidden" }, g);
+      el("rect", { x: x1, y: y - 54, width: x2 - x1, height: 42, rx: 10, class: "plein-voile" }, pleinG);
+      const pleinT = el("text", { x: (x1 + x2) / 2 - 10, y: y - 33, class: "plein-texte" }, pleinG);
+      // sur le groupe entier : la boîte, les points et la plaque sont posés
+      // par-dessus la zone, et c'est eux que le doigt touche
+      g.addEventListener("pointerdown", e => { e.stopPropagation(); e.preventDefault(); toucherQuai(q.id); });
+      nQuais.set(q.id, { g, halo, haloSel, haloVague, plaque, points, compte, pleinG, pleinT, sig: "", etat: "normal", affiche: null, texte: "", dernierTic: 0 });
+    }
+
+    // les portails : une plaque au bord, et le signal d'entrée
+    for (const d of partie.destinations) {
+      const G = d.cote === "G", w = 210, h = 52, x = G ? 6 : P.largeur - 6 - w, y = d.y - 74;
+      const g = el("g", { class: "portail" }, calques.portails);
+      const fond = el("rect", { x, y, width: w, height: h, rx: 11, class: "plaque-portail" }, g);
+      fond.style.stroke = d.couleur;
+      const ax = G ? x + 13 : x + w - 13, anc = G ? "start" : "end";
+      const nom = el("text", { x: ax, y: y + 17, class: "nom-portail", "text-anchor": anc }, g);
+      nom.textContent = d.court.toUpperCase(); nom.style.fill = d.couleur;
+      const info = el("text", { x: ax, y: y + 38, class: "info-portail", "text-anchor": anc }, g);
+      const ap = P.approche[d.id], ps = ap.point(ap.len - RECUL_SIGNAL + 14);
+      el("line", { x1: ps.x, y1: ps.y - 9, x2: ps.x, y2: ps.y - 24, class: "mat" }, g);
+      const lampe = el("circle", { cx: ps.x, cy: ps.y - 29, r: 7, class: "lampe" }, g);
+      g.addEventListener("pointerdown", e => { e.stopPropagation(); e.preventDefault(); toucherPortail(d.id); });
+      nPortails.set(d.id, { info, lampe, texte: "", lampeEtat: "" });
+    }
+    Decor.redimensionner();
+  }
+
+  // Le petit graphique d'affluence du bandeau : le programme de la soirée.
+  function construireAffluence() {
+    const svg = $("affluence"); svg.innerHTML = "";
+    const D = cfg.duree, n = 120, pts = [];
+    let max = 0;
+    for (let i = 0; i <= n; i++) { const t = D * i / n, v = partie.vagues.debitTotal(t); pts.push(v); if (v > max) max = v; }
+    const y = v => 28 - 25 * v / (max || 1);
+    let d = "M0 30";
+    pts.forEach((v, i) => { d += "L" + (300 * i / n).toFixed(1) + " " + y(v).toFixed(1); });
+    d += "L300 30Z";
+    el("path", { d, fill: "rgba(217, 164, 65, .55)" }, svg);
+    for (const v of partie.vagues.liste) el("line", { x1: 300 * (v.t - v.annonce) / D, x2: 300 * (v.t - v.annonce) / D, y1: 0, y2: 30, stroke: "rgba(243, 207, 120, .45)", "stroke-width": 1, "stroke-dasharray": "2 2" }, svg);
+    el("rect", { id: "aff-passe", x: 0, y: 0, width: 0, height: 30, fill: "rgba(17, 11, 6, .6)" }, svg);
+    el("line", { id: "aff-curseur", x1: 0, x2: 0, y1: 0, y2: 30, stroke: "#fff3d4", "stroke-width": 2 }, svg);
+  }
+
+  // ------------------------------------------------------------------
+  // Les trains
+  // ------------------------------------------------------------------
+  function creerTrain(tr) {
+    const d = partie.parDest[tr.dest];
+    const g = el("g", { class: "train " + tr.type + (tr.renfort ? " renfort" : "") }, calques.trains);
+    const voitures = [];
+    for (let i = 0; i < tr.voitures; i++) {
+      const vg = el("g", {}, g);
+      el("rect", { x: -PAS / 2 - 2, y: -30, width: PAS + 4, height: 60, class: "cible" }, vg);
+      el("rect", { x: -VOITURE / 2 - 5, y: -17, width: VOITURE + 10, height: 34, rx: 10, class: "anneau" }, vg);
+      const loco = i === 0;
+      const caisse = el("rect", { x: -VOITURE / 2, y: loco ? -11 : -9, width: VOITURE, height: loco ? 22 : 18, rx: loco ? 8 : 5, class: "caisse" }, vg);
+      caisse.style.stroke = d.couleur;
+      caisse.style.fill = d.couleur;
+      if (!loco) caisse.style.fillOpacity = "0.28";
+      let remplir = null;
+      if (loco) el("text", { y: 0.5, class: "lettre" }, vg).textContent = d.lettre;
+      else { remplir = el("rect", { x: -VOITURE / 2 + 2.5, y: -6.5, width: 0, height: 13, rx: 2.5, class: "remplir" }, vg); remplir.style.fill = d.couleur; }
+      voitures.push({ g: vg, remplir });
+    }
+    const badge = el("g", { class: "badge", visibility: "hidden" }, g);
+    const bFond = el("rect", { x: -70, y: -15, width: 140, height: 30, rx: 9, class: "badge-fond" }, badge);
+    const bJauge = el("rect", { x: -64, y: 10, width: 0, height: 3, rx: 1.5, class: "badge-jauge" }, badge);
+    bJauge.style.fill = d.couleur;
+    const bTexte = el("text", { y: 0.5, class: "badge-texte" }, badge);
+    g.addEventListener("pointerdown", e => { e.stopPropagation(); e.preventDefault(); toucherTrain(tr); });
+    return { g, voitures, badge, bFond, bJauge, bTexte, aBord: -1, texte: "", couleur: d.couleur, accuFantome: 0 };
+  }
+
+  function majTrains() {
+    const vus = new Set();
+    for (const tr of partie.trains) {
+      vus.add(tr);
+      let n = nTrains.get(tr);
+      if (!n) { n = creerTrain(tr); nTrains.set(tr, n); }
+      const pos = partie.voitures(tr);
+      for (let i = 0; i < pos.length; i++) {
+        const p = pos[i];
+        let a = p.ang * 180 / Math.PI;
+        if (a > 90) a -= 180; else if (a < -90) a += 180;
+        n.voitures[i].g.setAttribute("transform", "translate(" + p.x.toFixed(1) + " " + p.y.toFixed(1) + ") rotate(" + a.toFixed(1) + ")");
+      }
+      n.pos = pos;
+      if (tr.aBord !== n.aBord) {
+        const capV = tr.cap / Math.max(1, tr.voitures - 1);
+        for (let i = 1; i < tr.voitures; i++) {
+          const f = Math.max(0, Math.min(1, (tr.aBord - (i - 1) * capV) / capV));
+          n.voitures[i].remplir.setAttribute("width", ((VOITURE - 5) * f).toFixed(1));
+        }
+        n.aBord = tr.aBord;
+      }
+      const attend = (tr.etat === "approche" || tr.etat === "attente");
+      n.g.classList.toggle("choisi", selection === tr);
+      n.g.classList.toggle("invite", attend && tr.quai == null && selection !== tr);
+      n.g.classList.toggle("bloque", !!tr.bloque && tr.bloque !== "file" && selection !== tr);
+      majBadge(tr, n, pos);
+    }
+    for (const [tr, n] of nTrains) if (!vus.has(tr)) {
+      nTrains.delete(tr);
+      if (tr.etat === "supprime") { n.g.classList.add("part"); setTimeout(() => n.g.remove(), 650); }
+      else n.g.remove();
+      const r = nRoutes.get(tr); if (r) { r.g.remove(); nRoutes.delete(tr); }
+    }
+  }
+
+  function majBadge(tr, n, pos) {
+    let texte = "", bord = n.couleur, jauge = null, x = 0, y = 0, cache = false;
+    const reste = tr.echeance - partie.t;
+    const horloge = reste >= 0
+      ? "<tspan class='" + (reste < 6 ? "bientot" : "") + "'>" + Math.ceil(reste) + " s</tspan>"
+      : "<tspan class='tard'>+" + Math.ceil(-reste) + " s</tspan>";
+    if (tr.etat === "approche" || tr.etat === "attente") {
+      const tete = pos[0];
+      if (tete.x < -20 || tete.x > partie.plan.largeur + 20) cache = true;
+      if (selection !== tr && partie.file(tr.dest)[0] !== tr) cache = true;
+      x = tete.x; y = tete.y + 33;
+      const quoi = tr.renfort ? "RENFORT " + tr.cap : (tr.type === "omnibus" ? "OMN " : "EXP ") + tr.cap;
+      if (tr.bloque === "voie" || tr.bloque === "quai") { texte = "<tspan class='tard'>■ voie occupée</tspan>"; bord = "var(--plein)"; }
+      else if (tr.quai != null) texte = "→ Q" + tr.quai + " · " + horloge;
+      else texte = quoi + " · " + horloge;
+    } else if (tr.etat === "quai") {
+      const mi = pos[Math.floor(pos.length / 2)];
+      x = mi.x; y = mi.y + 30;
+      const r = tr.aBord / tr.cap, bon = r >= cfg.combo.seuilBon;
+      jauge = r;
+      if (tr.partant) texte = tr.bloque ? "<tspan class='bientot'>départ retenu</tspan>" : "départ";
+      else texte = (bon ? "<tspan class='etoile'>★ </tspan>" : "") + tr.aBord + "/" + tr.cap + " · " + horloge;
+      if (bon) bord = "var(--laiton-clair)";
+    } else cache = true;
+    if (cache) { if (!n.cache) { n.badge.setAttribute("visibility", "hidden"); n.cache = true; } return; }
+    if (n.cache !== false) { n.badge.setAttribute("visibility", "visible"); n.cache = false; }
+    n.badge.setAttribute("transform", "translate(" + x.toFixed(1) + " " + y.toFixed(1) + ")");
+    if (texte !== n.texte) {
+      n.bTexte.innerHTML = texte; n.texte = texte;
+      let w = 140;
+      try { w = Math.max(96, n.bTexte.getComputedTextLength() + 26); } catch (e) { /* pas encore rendu */ }
+      n.bFond.setAttribute("x", (-w / 2).toFixed(1)); n.bFond.setAttribute("width", w.toFixed(1));
+      n.bJauge.setAttribute("x", (-w / 2 + 6).toFixed(1)); n.largeur = w;
+    }
+    n.bFond.style.stroke = bord;
+    n.bJauge.setAttribute("width", jauge == null ? 0 : ((n.largeur || 140) - 12) * jauge);
+  }
+
+  // Les itinéraires : ce que le train va parcourir, en couleur vive devant
+  // lui ; en pointillés tant que la voie n'est pas accordée.
+  function majRoutes() {
+    const P = partie.plan;
+    for (const tr of partie.trains) {
+      let pts = null, attente = false;
+      if ((tr.etat === "approche" || tr.etat === "attente") && tr.quai != null) {
+        const ap = P.approche[tr.dest];
+        pts = ap.tranche(Math.max(0, tr.s), ap.len).concat(P.liens[P.lienId(tr.dest, tr.quai)].pts);
+        attente = true;
+      } else if (tr.etat === "entree") {
+        const L = P.liens[tr.lien], ap = P.approche[tr.dest];
+        pts = tr.s < 0 ? ap.tranche(ap.len + tr.s, ap.len).concat(L.pts) : L.tranche(tr.s, L.len);
+      } else if (tr.etat === "sortie" || (tr.etat === "quai" && tr.partant)) {
+        const L = P.liens[tr.lien], dep = P.depart[tr.dest];
+        const s = tr.etat === "quai" ? L.len - (tr.voitures - 1) * PAS : tr.s;
+        pts = s > 0 ? L.tranche(0, s).reverse().concat(dep.pts) : dep.tranche(-s, dep.len);
+        attente = tr.etat === "quai";
+      }
+      let r = nRoutes.get(tr);
+      if (!pts || pts.length < 2) { if (r) { r.g.remove(); nRoutes.delete(tr); } continue; }
+      if (!r) {
+        const g = el("g", { class: "route" }, calques.routes), c = partie.parDest[tr.dest].couleur;
+        const halo = el("path", { class: "halo" }, g), coeur = el("path", { class: "coeur" }, g);
+        halo.style.stroke = c; coeur.style.stroke = c;
+        r = { g, halo, coeur }; nRoutes.set(tr, r);
+      }
+      const d = chemin(pts);
+      r.halo.setAttribute("d", d); r.coeur.setAttribute("d", d);
+      r.g.classList.toggle("attente", attente);
+    }
+    for (const [tr, r] of nRoutes) if (!partie.trains.includes(tr)) { r.g.remove(); nRoutes.delete(tr); }
+  }
+
+  // ------------------------------------------------------------------
+  // Les quais : points, compteur, état, compte à rebours
+  // ------------------------------------------------------------------
+  function dessinerPoints(q, n) {
+    let cumul = 0, k = 0;
+    for (const d of partie.destinations) {
+      const avant = Math.round(cumul / PAR_POINT);
+      cumul += q.file.n[d.id];
+      const combien = Math.round(cumul / PAR_POINT) - avant;
+      for (let j = 0; j < combien && k < n.points.length; j++, k++) {
+        const p = n.points[k];
+        if (p._c !== d.couleur) { p.style.fill = d.couleur; p.setAttribute("class", "place pris"); p._c = d.couleur; }
+      }
+    }
+    for (; k < n.points.length; k++) {
+      const p = n.points[k];
+      if (p._c) { p.style.fill = ""; p.setAttribute("class", "place"); p._c = null; }
+    }
+  }
+  // Où sont, sur le quai, les points d'une couleur (pour les faire s'envoler).
+  function pointsDe(qid, dest) {
+    const q = partie.quai(qid), n = nQuais.get(qid);
+    let cumul = 0, debut = 0, fin = 0;
+    for (const d of partie.destinations) {
+      const avant = Math.round(cumul / PAR_POINT);
+      cumul += q.file.n[d.id];
+      if (d.id === dest) { debut = avant; fin = Math.round(cumul / PAR_POINT); }
+    }
+    return n.points.slice(debut, fin);
+  }
+
+  function majQuais() {
+    const S = cfg.quais.seuils;
+    for (const q of partie.quais) {
+      const n = nQuais.get(q.id);
+      const sig = partie.idsDest.map(d => q.file.n[d]).join(",");
+      if (sig !== n.sig) { dessinerPoints(q, n); n.sig = sig; }
+      const etat = q.ferme ? "plein" : q.taux >= S.danger ? "danger" : q.taux >= S.alerte ? "alerte" : "normal";
+      if (etat !== n.etat) { n.g.classList.remove(n.etat); n.g.classList.add(etat); n.etat = etat; }
+      const choisi = selection && (selection.etat === "approche" || selection.etat === "attente");
+      const elig = choisi && partie.affectable(q.id, selection);
+      n.g.classList.toggle("eligible", !!elig);
+      n.g.classList.toggle("refuse", !!choisi && !elig);
+      if (elig) n.haloSel.style.stroke = partie.parDest[selection.dest].couleur;
+      // le compteur : le total ; avec un train choisi, SES voyageurs sur ce quai
+      let texte;
+      if (choisi) {
+        const c = partie.parDest[selection.dest].couleur;
+        texte = "<tspan style='fill:" + c + "'>" + q.file.n[selection.dest] + "</tspan><tspan class='sur'> /" + q.file.total + "</tspan>";
+      } else texte = String(q.file.total);
+      if (texte !== n.texte) { n.compte.innerHTML = texte; n.texte = texte; }
+      if (q.affiche !== n.affiche) {
+        n.plaque.style.fill = q.affiche ? partie.parDest[q.affiche].couleur : "";
+        n.affiche = q.affiche;
+      }
+      if (q.ferme) {
+        const r = Math.max(0, cfg.quais.pleinDelai - (partie.t - q.pleinDepuis)), s = Math.ceil(r);
+        n.pleinT.textContent = "PLEIN ! " + s;
+        if (n.pleinG.getAttribute("visibility") !== "visible") n.pleinG.setAttribute("visibility", "visible");
+        if (s <= 3 && s !== n.dernierTic && !enPause) { n.dernierTic = s; Son.tic(); }
+      } else if (n.pleinG.getAttribute("visibility") !== "hidden") { n.pleinG.setAttribute("visibility", "hidden"); n.dernierTic = 0; }
+      const vague = partie.vagues.liste.find(v => (v.etat === "annoncee" || v.etat === "active") && v.cibles && v.cibles.includes(q.id));
+      n.g.classList.toggle("cible", !!vague);
+      if (vague) {
+        const d = partie.idsDest.find(x => vague.pref[x] === q.id);
+        const c = d ? partie.parDest[d].couleur : "var(--laiton-clair)";
+        if (n.couleurVague !== c) { n.haloVague.style.stroke = c; n.couleurVague = c; }
+      }
+    }
+  }
+
+  function majPortails() {
+    for (const d of partie.destinations) {
+      const n = nPortails.get(d.id), file = partie.file(d.id);
+      let texte;
+      if (file.length) {
+        const visibles = file.filter(tr => tr.s > -40).length;
+        texte = file.length > 1 ? "en attente · +" + (file.length - 1) : "en attente";
+        if (!visibles) texte = "arrive…";
+      } else {
+        const p = partie.prochains(d.id, 1)[0];
+        if (!p) texte = partie.phase === "service" ? "—" : "fin de service";
+        else {
+          const dans = p.prevu - partie.t, quoi = p.type === "renfort" ? "RENFORT" : p.type === "omnibus" ? "OMN" : "EXP";
+          texte = dans > 0.5 ? "dans " + Math.ceil(dans) + " s · " + quoi : "arrive · " + quoi;
+        }
+      }
+      if (texte !== n.texte) { n.info.textContent = texte; n.texte = texte; }
+      const tete = file[0];
+      const lampe = !tete ? "" : (tete.bloque === "voie" || tete.bloque === "quai" || tete.quai == null) && tete.s > -40 ? "rouge"
+        : partie.trains.some(o => o.dest === d.id && o.etat === "entree") ? "verte" : "";
+      const lampeFinale = partie.trains.some(o => o.dest === d.id && o.etat === "entree") ? "verte" : lampe;
+      if (lampeFinale !== n.lampeEtat) { n.lampe.setAttribute("class", "lampe " + lampeFinale); n.lampeEtat = lampeFinale; }
+    }
+  }
+
+  // ------------------------------------------------------------------
+  // Le bandeau de bord
+  // ------------------------------------------------------------------
+  const hud = { temps: "", foule: -1, score: -1, affiche: 0, etoiles: -1, serie: -1, jauge: -1, pret: null };
+  function majHud(dt) {
+    const final = partie.phase !== "service";
+    const t = final ? Math.max(0, cfg.duree + cfg.delaiFinal - partie.t) : Math.max(0, cfg.duree - partie.t);
+    const txt = mmss(t);
+    if (txt !== hud.temps) { $("temps").textContent = txt; hud.temps = txt; }
+    $("h-temps").classList.toggle("final", final);
+    const n = partie.enGare();
+    if (n !== hud.foule) { $("foule").textContent = n; hud.foule = n; }
+    // le score monte en roulant, pas d'un coup
+    const cible = partie.score.points;
+    hud.affiche += (cible - hud.affiche) * Math.min(1, dt * 8);
+    if (Math.abs(cible - hud.affiche) < 1) hud.affiche = cible;
+    const aff = Math.round(hud.affiche);
+    if (aff !== hud.score) { $("score").textContent = milliers(aff); hud.score = aff; }
+    const et = partie.score.etoiles();
+    if (et !== hud.etoiles) { $("etoiles").innerHTML = etoiles(et); hud.etoiles = et; }
+    if (cfg.combo.actif) {
+      const s = partie.score.serie;
+      if (s !== hud.serie) { $("fluidite").textContent = "×" + s; $("h-fluidite").classList.toggle("vive", s > 0); hud.serie = s; }
+    }
+    if (partie.renfort.actif) {
+      const R = partie.renfort, j = R.jauge / R.max;
+      if (Math.abs(j - hud.jauge) > 0.004 || R.pret !== hud.pret || R.enRoute !== hud.enRoute) {
+        $("jauge-renfort").setAttribute("stroke-dasharray", (69.1 * j).toFixed(1) + " 69.2");
+        const b = $("b-renfort");
+        b.disabled = !R.pret; b.classList.toggle("pret", R.pret); b.classList.toggle("enroute", R.enRoute);
+        $("renfort-texte").textContent = R.pret ? "Appeler un renfort" : R.enRoute ? "Renfort en route" : "Renfort";
+        hud.jauge = j; hud.pret = R.pret; hud.enRoute = R.enRoute;
+      }
+    }
+    const u = Math.min(1, partie.t / cfg.duree) * 300;
+    const cur = $("aff-curseur"), passe = $("aff-passe");
+    if (cur) { cur.setAttribute("x1", u); cur.setAttribute("x2", u); passe.setAttribute("width", u); }
+  }
+
+  // Les annonces : « FIN DU CONCERT DANS 12 s » tant qu'une vague approche.
+  // Elle se pose sur le graphique d'affluence du bandeau de bord : posée sur
+  // le plan, elle cachait le quai 1 sur un téléphone. Les pastilles disent
+  // vers où part la foule qui arrive, la plus nombreuse d'abord.
+  function majBandeau() {
+    const b = $("bandeau");
+    let texte = "", fin = false, foule = "";
+    const v = partie.vagues.liste.find(x => x.etat === "annoncee");
+    if (v) {
+      texte = v.titre.toUpperCase() + " · " + Math.max(1, Math.ceil(v.t - partie.t)) + " s";
+      foule = partie.idsDest.filter(d => v.poids[d] > 0).sort((a, c) => v.poids[c] - v.poids[a])
+        .map(d => "<i style='--c:" + partie.parDest[d].couleur + "'></i>").join("");
+    } else if (partie.phase === "final" && !partie.fini) { texte = "DERNIERS TRAINS · VIDEZ LA GARE"; fin = true; }
+    if (texte !== b._texte) {
+      b.innerHTML = texte ? "<div class='annonce" + (fin ? " fin" : "") + "'><span>" + texte + "</span>" + (foule ? "<span class='foule'>" + foule + "</span>" : "") + "</div>" : "";
+      b._texte = texte;
+      $("h-affluence").classList.toggle("annonce", !!v);
+    }
+  }
+  function grand(texte, rouge) {
+    const g = $("grand");
+    g.innerHTML = "";
+    const s = document.createElement("span");
+    s.textContent = texte; if (rouge) s.className = "rouge";
+    g.appendChild(s);
+    clearTimeout(g._h); g._h = setTimeout(() => { g.innerHTML = ""; }, 1800);
+  }
+  function secousse() {
+    if (!options.effets || reduit) return;
+    scene.classList.remove("secousse"); void scene.offsetWidth; scene.classList.add("secousse");
+  }
+
+  // ------------------------------------------------------------------
+  // Les effets sur le plateau : textes qui montent, points qui s'envolent,
+  // pilules de message. Animés à la main (opacité et position) : sur iPhone,
+  // les filtres et transitions SVG animés ne s'affichent pas de façon fiable.
+  // ------------------------------------------------------------------
+  function flotter(texte, x, y, couleur, grandTexte) {
+    const t = el("text", { x, y, class: "flotte" + (grandTexte ? " titre" : "") }, calques.effets);
+    t.textContent = texte; t.style.fill = couleur || "var(--parchemin)";
+    particules.push({ el: t, x, y, vie: 0, duree: 1.3, sorte: "texte" });
+  }
+  function pilule(texte, x, y, alerte) {
+    const g = el("g", { class: "pilule" + (alerte ? " alerte" : "") }, calques.effets);
+    const r = el("rect", { rx: 10, height: 34 }, g), t = el("text", {}, g);
+    t.textContent = texte;
+    let w = 220; try { w = t.getComputedTextLength() + 28; } catch (e) { /* pas encore rendu */ }
+    const P = partie.plan;
+    x = Math.max(w / 2 + 4, Math.min(P.largeur - w / 2 - 4, x));
+    r.setAttribute("x", x - w / 2); r.setAttribute("y", y - 17); r.setAttribute("width", w);
+    t.setAttribute("x", x); t.setAttribute("y", y);
+    particules.push({ el: g, vie: 0, duree: 1.6, sorte: "pilule" });
+  }
+  function envol(qid, dest, n, versX, versY) {
+    const pts = pointsDe(qid, dest), c = partie.parDest[dest].couleur;
+    for (let i = 0; i < n && i < pts.length && particules.length < 140; i++) {
+      const p = pts[pts.length - 1 - i];
+      const x = +p.getAttribute("cx"), y = +p.getAttribute("cy");
+      const e = el("circle", { cx: x, cy: y, r: 5, fill: c }, calques.effets);
+      particules.push({ el: e, x0: x, y0: y, x1: versX, y1: versY, vie: 0, duree: 0.45 + Math.random() * 0.15, sorte: "point" });
+    }
+  }
+  function majParticules(dt) {
+    for (let i = particules.length - 1; i >= 0; i--) {
+      const p = particules[i];
+      p.vie += dt / p.duree;
+      if (p.vie >= 1) { p.el.remove(); particules.splice(i, 1); continue; }
+      const u = p.vie;
+      if (p.sorte === "texte") { p.el.setAttribute("y", (p.y - 46 * u).toFixed(1)); p.el.style.opacity = u < 0.7 ? 1 : (1 - u) / 0.3; }
+      else if (p.sorte === "pilule") p.el.style.opacity = u < 0.8 ? 1 : (1 - u) / 0.2;
+      else { const e = u * u; p.el.setAttribute("cx", (p.x0 + (p.x1 - p.x0) * e).toFixed(1)); p.el.setAttribute("cy", (p.y0 + (p.y1 - p.y0) * e).toFixed(1)); p.el.style.opacity = 1 - u * 0.6; }
+    }
+  }
+
+  // ------------------------------------------------------------------
+  // Les événements de la partie → ce qu'on voit et ce qu'on entend
+  // ------------------------------------------------------------------
+  function centreQuai(qid) { const P = partie.plan, q = partie.quai(qid); return { x: (P.x1 + P.x2) / 2, y: q.y - 33 }; }
+  function traiterEvenements() {
+    const evs = partie.evenements.splice(0);
+    for (const e of evs) switch (e.type) {
+      case "arrivee": if (e.n >= 8) { const c = centreQuai(e.quai); flotter("+" + e.n, c.x + 150, c.y - 8, partie.parDest[e.dest].couleur); } break;
+      case "embarquement": {
+        const n = nTrains.get(e.train);
+        if (!n || !n.pos) break;
+        n.accuFantome += e.n;
+        const k = Math.floor(n.accuFantome / PAR_POINT);
+        if (k > 0) { n.accuFantome -= k * PAR_POINT; const mi = n.pos[Math.floor(n.pos.length / 2)]; envol(e.quai, e.train.dest, k, mi.x, mi.y); }
+        break;
+      }
+      case "bienRempli": { const n = nTrains.get(e.train); if (n) { n.g.classList.remove("eclat"); void n.g.getBBox; n.g.classList.add("eclat"); } Son.bienRempli(); break; }
+      case "affectation": Son.affectation(); break;
+      case "ordreDepart": {
+        const n = nTrains.get(e.train), p = n && n.pos ? n.pos[Math.floor(n.pos.length / 2)] : centreQuai(e.train.quai);
+        const c = partie.parDest[e.train.dest].couleur;
+        if (e.train.aBord > 0 || e.ponctuel) flotter("+" + milliers(e.points), p.x, p.y - 44, e.bon ? "var(--laiton-clair)" : "var(--parchemin)");
+        if (cfg.combo.actif && e.bon) {
+          flotter("×" + e.serie, p.x + 90, p.y - 70, c, true);
+          $("h-fluidite").classList.remove("saute"); void $("h-fluidite").offsetWidth; $("h-fluidite").classList.add("saute");
+          Son.combo(e.serie);
+          if (e.serie >= 3) Decor.tir(1.2);
+        } else Son.depart();
+        if (e.gros) pilule("Retard important", p.x, p.y + 60, true);
+        if (e.raison === "joueur" && aide) aide.etape = 99;
+        break;
+      }
+      case "comboCasse": {
+        const h = $("h-fluidite"); h.classList.remove("casse"); void h.offsetWidth; h.classList.add("casse");
+        Son.casse();
+        const P = partie.plan;
+        const pourquoi = { vide: "train presque vide", retard: "gros retard", evacuation: "quai évacué", supprime: "train supprimé", plein: "quai plein" }[e.raison] || "";
+        pilule("Fluidité perdue · " + pourquoi, (P.x1 + P.x2) / 2, 26, true);
+        break;
+      }
+      case "plein": { const c = centreQuai(e.quai); Son.plein(); flotter("PLEIN !", c.x, c.y - 30, "var(--plein)", true); break; }
+      case "sauve": { const c = centreQuai(e.quai); Son.sauve(); flotter("Sauvé !", c.x, c.y - 30, "var(--bon)", true); break; }
+      case "evacuation": { const c = centreQuai(e.quai); Son.evacuation(); secousse(); flotter("Évacuation · −" + milliers(cfg.score.evacuation), c.x, c.y - 30, "var(--plein)", true); break; }
+      case "refus": break;
+      case "annonceVague": Son.annonce(); break;
+      case "vague": grand("Vague de foule !"); secousse(); Son.vague(); Decor.tir(1.3); Decor.tir(1); $("h-foule").classList.remove("monte"); void $("h-foule").offsetWidth; $("h-foule").classList.add("monte"); break;
+      case "renfortPret": Son.renfortPret(); break;
+      case "renfortAppele": { const d = partie.parDest[e.dest]; pilule("Renfort vers " + d.nom + " dans " + Math.round(e.arrivee - partie.t) + " s", (partie.plan.x1 + partie.plan.x2) / 2, 26); break; }
+      case "apparition": if (e.train.renfort) { Son.renfortArrive(); grand("Train de renfort"); Decor.tir(1.4); Decor.tir(1.1); } break;
+      case "suppression": { const d = partie.parDest[e.train.dest], G = d.cote === "G"; pilule("Train supprimé", G ? 260 : partie.plan.largeur - 260, d.y + 70, true); Son.refus(); break; }
+      case "finArrivees": break;
+      case "fin": finDePartie(e.bilan); break;
+    }
+  }
+
+  // ------------------------------------------------------------------
+  // L'aide des premières secondes : où toucher, puis où toucher ensuite.
+  // ------------------------------------------------------------------
+  function majAide() {
+    if (!aide) return;
+    if (!aide.g) {
+      aide.g = el("g", { class: "aide", visibility: "hidden" }, calques.effets);
+      aide.r = el("rect", { rx: 12, height: 36 }, aide.g);
+      aide.t = el("text", {}, aide.g);
+    }
+    let texte = "", x = 0, y = 0;
+    if (!demo && aide.etape < 99 && !partie.fini) {
+      if (selection && (selection.etat === "approche" || selection.etat === "attente")) {
+        let best = null;
+        for (const q of partie.quais) if (partie.affectable(q.id, selection) && (!best || q.file.n[selection.dest] > best.file.n[selection.dest])) best = q;
+        if (best) { const c = centreQuai(best.id); texte = "Puis touchez un quai"; x = c.x; y = c.y - 50; }
+      } else {
+        const aQuai = partie.trains.find(tr => tr.etat === "quai" && !tr.partant && partie.t - tr.accoste > 2.5);
+        const libre = partie.trains.find(tr => (tr.etat === "attente" || tr.etat === "approche") && tr.quai == null && tr.s > 40);
+        if (aQuai && aide.etape >= 1) {
+          const n = nTrains.get(aQuai), p = n && n.pos ? n.pos[Math.floor(n.pos.length / 2)] : null;
+          if (p) { texte = "Touchez le train pour le faire partir"; x = p.x; y = p.y + 72; }
+        } else if (libre) {
+          const n = nTrains.get(libre), p = n && n.pos ? n.pos[0] : null;
+          if (p) { texte = "Touchez le train"; x = p.x; y = p.y - 34; }
+        }
+      }
+      if (partie.trains.some(tr => tr.quai != null)) aide.etape = Math.max(aide.etape, 1);
+    }
+    if (!texte) { aide.g.setAttribute("visibility", "hidden"); return; }
+    aide.g.setAttribute("visibility", "visible");
+    if (aide.texte !== texte) {
+      aide.t.textContent = texte; aide.texte = texte;
+      let w = 200; try { w = aide.t.getComputedTextLength() + 30; } catch (e) { /* pas encore rendu */ }
+      aide.w = w;
+    }
+    const P = partie.plan, w = aide.w;
+    x = Math.max(w / 2 + 4, Math.min(P.largeur - w / 2 - 4, x));
+    aide.r.setAttribute("x", x - w / 2); aide.r.setAttribute("y", y - 18); aide.r.setAttribute("width", w);
+    aide.t.setAttribute("x", x); aide.t.setAttribute("y", y);
+    calques.effets.appendChild(aide.g);
+  }
+
+  // ------------------------------------------------------------------
+  // Les gestes
+  // ------------------------------------------------------------------
+  const enJeu = () => partie && !partie.fini && !enPause && !demo;
+  function toucherTrain(tr) {
+    Son.reveil();
+    if (!enJeu()) return;
+    if (tr.etat === "approche" || tr.etat === "attente") {
+      if (selection === tr) { selection = null; return; }
+      selection = tr; Son.selection();
+      return;
+    }
+    if (tr.etat === "quai") {
+      if (selection && selection !== tr) { toucherQuai(tr.quai); return; }
+      if (tr.partant) return;
+      partie.fairePartir(tr, "joueur");
+      return;
+    }
+    if (tr.etat === "entree") { const n = nTrains.get(tr), p = n.pos[0]; pilule("En route vers le quai " + tr.quai, p.x, p.y - 40); }
+  }
+  function toucherQuai(qid) {
+    Son.reveil();
+    if (!enJeu()) return;
+    const c = centreQuai(qid);
+    if (!selection) {
+      const aQuai = partie.trains.find(tr => tr.etat === "quai" && tr.quai === qid && !tr.partant);
+      if (aQuai) { partie.fairePartir(aQuai, "joueur"); return; }
+      pilule("Touchez d'abord un train à l'entrée", c.x, c.y - 2); Son.refus();
+      return;
+    }
+    const r = partie.affecter(selection, qid);
+    if (r.ok) { selection = null; return; }
+    Son.refus();
+    if (r.raison === "occupe") pilule("Quai " + qid + " déjà pris", c.x, c.y - 2, true);
+    else if (r.raison === "mouvement") selection = null;
+  }
+  function toucherPortail(dest) {
+    Son.reveil();
+    if (!enJeu()) return;
+    const file = partie.file(dest), tr = file.find(o => o.quai == null) || file[0];
+    if (tr) toucherTrain(tr);
+    else { const d = partie.parDest[dest]; pilule("Aucun train n'attend à " + d.nom, d.cote === "G" ? 260 : partie.plan.largeur - 260, d.y - 100); }
+  }
+  plateau.addEventListener("pointerdown", e => { if (enJeu() && e.target === plateau) selection = null; });
+  document.addEventListener("gesturestart", e => e.preventDefault());
+  document.addEventListener("dblclick", e => e.preventDefault());
+
+  // ------------------------------------------------------------------
+  // Le renfort : la jauge pleine, on choisit la destination
+  // ------------------------------------------------------------------
+  $("b-renfort").addEventListener("click", () => {
+    Son.reveil();
+    if (!enJeu() || !partie.renfort.pret) return;
+    const grille = $("grille-dest"), att = partie.attenteParDest();
+    grille.innerHTML = "";
+    const ty = cfg.trains.types.renfort;
+    $("renfort-explication").textContent = "Un train de " + ty.capacite + " places arrive dans " + (cfg.renfort.delaiArrivee ?? 5) + " s. Vers quelle destination ?";
+    for (const d of partie.destinations) {
+      const b = document.createElement("button");
+      b.className = "choix-dest"; b.style.setProperty("--c", d.couleur);
+      b.innerHTML = "<b></b><span></span>";
+      b.querySelector("b").textContent = d.nom;
+      b.querySelector("span").textContent = att[d.id] + " en attente";
+      b.addEventListener("click", () => { partie.appelerRenfort(d.id); fermerRenfort(); });
+      grille.appendChild(b);
+    }
+    enPause = true; $("choix-renfort").hidden = false;
+  });
+  function fermerRenfort() { $("choix-renfort").hidden = true; enPause = false; }
+  $("b-plus-tard").addEventListener("click", fermerRenfort);
+
+  // ------------------------------------------------------------------
+  // Démarrer, suspendre, finir
+  // ------------------------------------------------------------------
+  function lancer(id, opts = {}) {
+    modeId = id; ecrireLocal("fete-mode", id);
+    cfg = opts.cfg || copie(REGLAGES.modes[id]);
+    partie = new Fete.Partie(cfg, { graine: opts.graine });
+    selection = null; demo = opts.demo || null; horlogePilote = 0; finAffichee = false;
+    aide = demo ? null : { etape: 0 };
+    hud.temps = ""; hud.foule = -1; hud.score = -1; hud.affiche = 0; hud.etoiles = -1; hud.serie = -1; hud.jauge = -1; hud.pret = null;
+    $("h-fluidite").hidden = !cfg.combo.actif;
+    $("b-renfort").hidden = !(cfg.renfort && cfg.renfort.actif);
+    $("demo-bandeau").hidden = !demo;
+    $("bandeau")._texte = null; $("grand").innerHTML = "";
+    for (const id2 of ["accueil", "bilan", "pause", "choix-renfort"]) $(id2).hidden = true;
+    construirePlateau();
+    construireAffluence();
+    enPause = false;
+  }
+  function suspendre() {
+    if (!partie || partie.fini || enPause) return;
+    enPause = true; $("pause").hidden = false;
+  }
+  function reprendre() { $("pause").hidden = true; if (partie && !partie.fini) enPause = false; }
+  function menu() {
+    enPause = true; demo = null; partie = null;
+    for (const id of ["bilan", "pause", "choix-renfort"]) $(id).hidden = true;
+    $("demo-bandeau").hidden = true;
+    remplirAccueil(); $("accueil").hidden = false;
+  }
+  $("b-pause").addEventListener("click", () => { Son.reveil(); suspendre(); });
+  $("b-reprendre").addEventListener("click", reprendre);
+  $("b-recommencer").addEventListener("click", () => lancer(modeId, { cfg: copie(cfg), demo }));
+  $("b-menu").addEventListener("click", menu);
+  $("b-menu-bilan").addEventListener("click", menu);
+  $("b-rejouer").addEventListener("click", () => lancer(modeId, { cfg: copie(derniereCfg || REGLAGES.modes[modeId]), demo: dernierDemo }));
+  $("demo-bandeau").addEventListener("click", () => { demo = null; aide = null; $("demo-bandeau").hidden = true; });
+  document.addEventListener("visibilitychange", () => { if (document.hidden) suspendre(); });
+  for (const [id, cle] of [["o-sons", "sons"], ["o-effets", "effets"]]) {
+    $(id).checked = options[cle];
+    $(id).addEventListener("change", e => { options[cle] = e.target.checked; ecrireLocal("fete-" + cle, e.target.checked ? "1" : "0"); });
+  }
+  $("o-rapide").addEventListener("change", e => { vitesse = e.target.checked ? 2 : 1; });
+
+  let derniereCfg = null, dernierDemo = null;
+  function finDePartie(b) {
+    if (finAffichee) return;
+    finAffichee = true; derniereCfg = cfg; dernierDemo = demo;
+    selection = null;
+    grand("Fin de service");
+    Son.fin();
+    setTimeout(() => {
+      $("bilan-etoiles").innerHTML = etoiles(b.etoiles);
+      $("bilan-score").textContent = milliers(b.score) + " points";
+      const lignes = [
+        ["Voyageurs transportés", milliers(b.transportes)],
+        ["Ponctualité", pct(b.ponctualite), b.ponctualite < 0.8],
+        ["Remplissage moyen", pct(b.remplissage)],
+        cfg.combo.actif ? ["Combo maximum", "×" + b.comboMax] : null,
+        ["Quais saturés", String(b.evacuations), b.evacuations > 0],
+        ["Voyageurs perdus", milliers(b.evacues + b.refoules), b.evacues + b.refoules > 0],
+        ["Restés à quai", milliers(b.restes)]
+      ].filter(Boolean);
+      $("bilan-releve").innerHTML = lignes.map(([k, v, mal]) => "<dt>" + k + "</dt><dd" + (mal ? " class='mal'" : "") + ">" + v + "</dd>").join("");
+      const D = b.detail, detail = [
+        ["Voyageurs", D.voyageurs], cfg.combo.actif ? ["Fluidité", D.fluidite] : null, ["Ponctualité", D.ponctualite],
+        ["Évacuations", D.evacuations], ["Refoulés", D.refoules], ["Restés à quai", D.restes], ["Aucune évacuation", D.bonus],
+        ["—", null],
+        ["Trains servis", b.trains], ["dont supprimés", b.supprimes], ["Trains bien remplis", b.bienRemplis],
+        cfg.renfort && cfg.renfort.actif ? ["Renforts appelés", b.renforts] : null,
+        ["Pic de voyageurs en gare", b.pic], ["Temps avec un quai en danger", Math.round(b.tempsDanger) + " s"],
+        ["Quais pleins / sauvés", b.pleins + " / " + b.sauves],
+        ["Quai choisi pour ses voyageurs", pct(b.choixPourVoyageurs)],
+        ["Graine de la soirée", partie ? partie.graine : "—"]
+      ].filter(Boolean);
+      $("bilan-detail").innerHTML = detail.map(([k, v]) => v == null ? "<dt>&nbsp;</dt><dd></dd>" : "<dt>" + k + "</dt><dd>" + (typeof v === "number" && Math.abs(v) >= 1000 ? milliers(v) : v) + "</dd>").join("");
+      $("bilan").hidden = false;
+      $("demo-bandeau").hidden = true;
+    }, 1900);
+  }
+
+  // ------------------------------------------------------------------
+  // L'accueil : le mode, et les réglages de la prochaine partie
+  // ------------------------------------------------------------------
+  const CHAMPS = [
+    { id: "duree", label: "Durée du service (s)", type: "nombre", min: 60, max: 900, pas: 10, lire: c => c.duree, ecrire: (c, v) => echelonnerDuree(c, v) },
+    { id: "capacite", label: "Capacité d'un quai", type: "nombre", min: 40, max: 150, pas: 10, lire: c => c.quais.capacite, ecrire: (c, v) => { c.quais.capacite = v; } },
+    { id: "plein", label: "Compte à rebours « plein » (s)", type: "nombre", min: 3, max: 30, pas: 1, lire: c => c.quais.pleinDelai, ecrire: (c, v) => { c.quais.pleinDelai = v; } },
+    { id: "vagues", label: "Taille des vagues (%)", type: "nombre", min: 0, max: 300, pas: 10, lire: () => 100, ecrire: (c, v) => { for (const w of c.vagues) w.voyageurs = Math.round(w.voyageurs * v / 100); } },
+    { id: "fond", label: "Voyageurs hors vagues (%)", type: "nombre", min: 0, max: 300, pas: 10, lire: () => 100, ecrire: (c, v) => { for (const f of c.voyageurs.fond) f[1] = f[1] * v / 100; } },
+    { id: "trains", label: "Fréquence des trains (%)", type: "nombre", min: 30, max: 300, pas: 10, lire: c => Math.round((c.horaire.densite || 1) * 100), ecrire: (c, v) => { c.horaire.densite = v / 100; } },
+    { id: "actifs", label: "Trains actifs au plus", type: "nombre", min: 1, max: 8, pas: 1, lire: c => c.trains.actifsMax, ecrire: (c, v) => { c.trains.actifsMax = v; } },
+    { id: "attraction", label: "Voyageurs qui suivent le tableau (%)", type: "nombre", min: 0, max: 100, pas: 5, lire: c => Math.round(c.voyageurs.attraction * 100), ecrire: (c, v) => { c.voyageurs.attraction = v / 100; } },
+    { id: "auto", label: "Le train part seul à son heure", type: "case", lire: c => c.trains.departAutoALHeure, ecrire: (c, v) => { c.trains.departAutoALHeure = v; } },
+    { id: "combo", label: "Fluidité (combo)", type: "case", lire: c => c.combo.actif, ecrire: (c, v) => { c.combo.actif = v; } },
+    { id: "renfort", label: "Train de renfort", type: "case", lire: c => c.renfort.actif, ecrire: (c, v) => { c.renfort.actif = v; } },
+    { id: "graine", label: "Graine (vide : au hasard)", type: "texte", lire: () => "", ecrire: () => {} }
+  ];
+  function echelonnerDuree(c, v) {
+    const k = v / c.duree;
+    for (const w of c.vagues) w.t = Math.round(w.t * k);
+    for (const f of c.voyageurs.fond) f[0] = Math.round(f[0] * k);
+    c.duree = v;
+  }
+  function remplirAccueil() {
+    const modes = $("modes");
+    if (!modes.childElementCount) {
+      for (const [id, m] of Object.entries(REGLAGES.modes)) {
+        const l = document.createElement("label");
+        l.className = "mode";
+        l.innerHTML = "<input type='radio' name='mode' autocomplete='off'><b></b><span></span>";
+        l.querySelector("input").value = id;
+        l.querySelector("b").textContent = m.titre;
+        l.querySelector("span").textContent = m.resume;
+        l.querySelector("input").addEventListener("change", () => { modeId = id; remplirReglages(); });
+        modes.appendChild(l);
+      }
+    }
+    for (const i of modes.querySelectorAll("input")) i.checked = i.value === modeId;
+    remplirReglages();
+  }
+  function remplirReglages() {
+    const m = REGLAGES.modes[modeId], g = $("grille-reglages");
+    $("accueil-gare").textContent = m.gare + " — la gare centrale, un soir de fête";
+    $("geste-bonus").hidden = !m.combo.actif && !m.renfort.actif;
+    g.innerHTML = "";
+    for (const c of CHAMPS) {
+      const lab = document.createElement("label"), inp = document.createElement("input");
+      lab.textContent = c.label; lab.htmlFor = "r-" + c.id;
+      inp.id = "r-" + c.id; inp.autocomplete = "off";
+      if (c.type === "case") { inp.type = "checkbox"; inp.checked = !!c.lire(m); }
+      else if (c.type === "texte") { inp.type = "text"; inp.value = ""; inp.inputMode = "numeric"; }
+      else { inp.type = "number"; inp.min = c.min; inp.max = c.max; inp.step = c.pas; inp.value = c.lire(m); }
+      g.appendChild(lab); g.appendChild(inp);
+    }
+  }
+  function lireReglages() {
+    const c = copie(REGLAGES.modes[modeId]);
+    let graine;
+    for (const ch of CHAMPS) {
+      const inp = $("r-" + ch.id);
+      if (!inp) continue;
+      if (ch.id === "graine") { const v = inp.value.trim(); if (v !== "" && !isNaN(+v)) graine = +v; continue; }
+      const v = ch.type === "case" ? inp.checked : +inp.value;
+      if (ch.type === "case" ? v !== !!ch.lire(REGLAGES.modes[modeId]) : v !== ch.lire(REGLAGES.modes[modeId]) && !isNaN(v))
+        ch.ecrire(c, ch.type === "case" ? v : Math.max(ch.min, Math.min(ch.max, v)));
+    }
+    return { cfg: c, graine };
+  }
+  $("b-defauts").addEventListener("click", remplirReglages);
+  $("b-jouer").addEventListener("click", () => { Son.reveil(); const r = lireReglages(); lancer(modeId, { cfg: r.cfg, graine: r.graine }); });
+  $("b-regarder").addEventListener("click", () => { Son.reveil(); const r = lireReglages(); lancer(modeId, { cfg: r.cfg, graine: r.graine, demo: "stratege" }); });
+
+  // Le téléphone debout : on propose de le tourner.
+  const debout = window.matchMedia ? matchMedia("(orientation: portrait) and (max-width: 760px)") : null;
+  let tourneOk = false;
+  function majTourner() { $("tourner").hidden = tourneOk || !debout || !debout.matches; }
+  if (debout) { (debout.addEventListener ? debout.addEventListener("change", majTourner) : debout.addListener(majTourner)); }
+  $("b-tourner").addEventListener("click", () => { tourneOk = true; majTourner(); });
+  majTourner();
+  window.addEventListener("resize", () => { if (partie) Decor.redimensionner(); });
+
+  // ------------------------------------------------------------------
+  // L'horloge : le temps de jeu avance par petits pas, sous le rendu
+  // ------------------------------------------------------------------
+  let dernier = null;
+  function pas(dt) {
+    let reste = dt;
+    while (reste > 1e-6 && !partie.fini) {
+      const p = Math.min(reste, 1 / 30);
+      partie.tick(p); reste -= p;
+      if (demo) { horlogePilote -= p; if (horlogePilote <= 0) { Fete.PILOTES[demo](partie); horlogePilote = 0.4; } }
+    }
+  }
+  function dessiner(dt) {
+    if (selection && !(selection.etat === "approche" || selection.etat === "attente") ) selection = null;
+    if (selection && !partie.trains.includes(selection)) selection = null;
+    traiterEvenements();
+    majTrains(); majRoutes(); majQuais(); majPortails(); majHud(dt); majBandeau(); majAide(); majParticules(dt);
+    Decor.vif = Math.max(0, Math.min(1, Decor.vif + (partie.vagues.active() ? dt : -dt * 0.5)));
+  }
+  function frame(ts) {
+    requestAnimationFrame(frame);
+    const dt = dernier == null ? 0 : Math.min(0.1, (ts - dernier) / 1000);
+    dernier = ts;
+    if (partie) {
+      if (!enPause && !partie.fini) pas(dt * vitesse);
+      dessiner(dt);
+    }
+    Decor.frame(dt);
+  }
+
+  // Une poignée pour vérifier sans les doigts (console, capture headless).
+  window.FETE = {
+    get partie() { return partie; },
+    lancer(id, opts) { lancer(id || "nuit", opts || {}); },
+    avancer(secondes, pilote) {
+      for (let t = 0; t < secondes && partie && !partie.fini; t += 1 / 30) {
+        partie.tick(1 / 30);
+        if (pilote) { horlogePilote -= 1 / 30; if (horlogePilote <= 0) { Fete.PILOTES[pilote](partie); horlogePilote = 0.4; } }
+      }
+      if (partie) {
+        partie.evenements = partie.evenements.filter(e => e.type === "fin");
+        dessiner(1 / 30);
+      }
+    },
+    pause(b) { enPause = b !== false; },
+    Fete
+  };
+
+  remplirAccueil();
+  Decor.redimensionner();
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

@@ -154,7 +154,11 @@ jour qui perd la partie d'un joueur est un bug bloquant, pas un détail.
 ## À ne pas toucher
 
 - `prototypes/` — anciennes versions (Namur, gare centrale v2), gardées pour
-  mémoire, hors du jeu.
+  mémoire, hors du jeu. Le dossier reçoit aussi les prototypes de mécanique,
+  une page autonome chacun (`prototype-voyageurs.html`,
+  `prototype-nuit-de-fete.html`) : on y ajoute, on ne réécrit pas les anciens.
+  Nuit de fête a son banc, `node tools/fete-banc.mjs`, qui refuse comme les
+  contrôles : il extrait le moteur et les réglages de la page elle-même.
 - `data/worldmap.js` — généré depuis Natural Earth, jamais édité à la main.
 
 ## Détail connu

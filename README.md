@@ -87,7 +87,9 @@ tools/                        Serveur local, contrôles (gen-check, carte-check,
                               net-check), procédures d'écriture
                               (AUTHORING-STATIONS.md pour une gare, AUTHORING-CARTES.md pour une carte)
 assets/                       Images concept
-prototypes/                   Anciennes versions (prototype Namur, gare centrale v2)
+prototypes/                   Prototypes de mécanique, une page chacun, hors du jeu :
+                              Namur et gare centrale v2 (anciens), voyageurs, et
+                              « Nuit de fête » (banc d'essai : node tools/fete-banc.mjs)
 ```
 
 ## Ajouter une gare
