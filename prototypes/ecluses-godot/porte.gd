@@ -120,11 +120,16 @@ func _process(dt: float) -> void:
 		if is_zero_approx(_rotation):
 			_rotation = 0.0
 			roue_finie.emit()
-	# le vantail démarre doucement, file, et ralentit en arrivant
+	# le vantail démarre doucement, file, et ralentit en arrivant ; la roue
+	# tourne avec lui, comme un treuil qui enroule ses chaînes (Vincent : « la
+	# roue ne tourne pas toujours en même temps que la porte »)
 	var ecart := _cible() - bas_y
 	if absf(ecart) > 0.01:
 		var vitesse := clampf(absf(ecart) * 3.0, 30.0, 170.0)
+		var avant := bas_y
 		bas_y = move_toward(bas_y, _cible(), vitesse * dt)
+		_angle += (avant - bas_y) / 11.0
+		roue.queue_redraw()
 		_maj_vantail()
 
 func _maj_vantail() -> void:

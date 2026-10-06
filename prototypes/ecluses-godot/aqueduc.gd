@@ -17,6 +17,12 @@ var debit := 0.0
 var sens := 1
 var vanne := 0.0          # 0 fermée, 1 levée : suit la roue de la porte
 var ouverte := false
+# Le niveau de l'eau des deux bassins reliés, en y monde : chaque moitié du
+# conduit, de part et d'autre de la vanne, est pleine jusqu'au niveau de son
+# bassin (Vincent : « l'eau dans les aqueducs doit rester et respecter les
+# niveaux des bassins adjacents »). Sous le fond, elle est toujours pleine.
+var niveau_g := 1e9
+var niveau_d := 1e9
 var bulles: CPUParticles2D
 var _eau: Line2D           # l'eau dans le conduit, dessinée par shaders/courant.gdshader
 var _mat_eau: ShaderMaterial
@@ -95,12 +101,33 @@ func _process(dt: float) -> void:
 	if not is_equal_approx(vanne, cible):
 		vanne = move_toward(vanne, cible, dt / 0.5)
 		_dessus.queue_redraw()
-	# vanne ouverte, le conduit est plein ; l'eau y glisse au rythme du débit
-	_eau.visible = vanne > 0.5 or debit > 0.02
+	# le conduit garde son eau : il n'est sec que là où il monte plus haut que
+	# l'eau du bassin auquel il est relié. Partout ailleurs, l'eau y dort, et
+	# elle glisse au rythme du débit quand la vanne laisse passer.
+	var sec := _parties_seches()
+	_eau.visible = not sec
+	if sec != _sec_avant:
+		_sec_avant = sec
+		queue_redraw()
 	_mat_eau.set_shader_parameter("debit", debit)
 	_mat_eau.set_shader_parameter("sens", float(sens))
 	_mat_eau.set_shader_parameter("contraste", Reglages.v("courant_contraste"))
 	_mat_eau.set_shader_parameter("allure", Reglages.v("courant_vitesse"))
+
+var _sec_avant := false
+
+# Une partie du conduit est-elle plus haute que l'eau de son bassin ? (Jamais
+# avec des aqueducs sous le fond ; la règle reste juste si un tracé change.)
+func _parties_seches() -> bool:
+	if vanne > 0.5: return false     # vanne ouverte : l'eau remplit tout le conduit
+	var milieu := _milieu_x()
+	for p in chemin:
+		var niveau := niveau_g if p.x <= milieu else niveau_d
+		if p.y < niveau - 0.5: return true
+	return false
+
+func _milieu_x() -> float:
+	return (chemin[1].x + chemin[2].x) * 0.5 if chemin.size() >= 3 else (chemin[0].x + chemin[chemin.size() - 1].x) * 0.5
 
 func _draw() -> void:
 	if chemin.size() < 2: return
@@ -108,6 +135,17 @@ func _draw() -> void:
 	draw_polyline(chemin, Color("#8c7f69"), rayon * 2.0 + 9.0, true)
 	draw_polyline(chemin, Color("#b8a988"), rayon * 2.0 + 4.0, true)
 	draw_polyline(chemin, Color("#1c2327"), rayon * 2.0, true)
+	if _sec_avant:
+		# l'eau dormante, tronçon par tronçon, jusqu'au niveau de son bassin
+		var milieu := _milieu_x()
+		for k in chemin.size() - 1:
+			var a := chemin[k]
+			var b := chemin[k + 1]
+			var niveau := niveau_g if (a.x + b.x) * 0.5 <= milieu else niveau_d
+			if a.y < niveau and b.y < niveau: continue
+			if a.y < niveau: a = a.lerp(b, (niveau - a.y) / (b.y - a.y))
+			if b.y < niveau: b = b.lerp(a, (niveau - b.y) / (a.y - b.y))
+			draw_line(a, b, Color(0.12, 0.52, 0.68), rayon * 2.0 - 3.0, true)
 
 func _dessiner_dessus() -> void:
 	# la vanne : une plaque de fer au milieu du conduit, sous la porte, qui se

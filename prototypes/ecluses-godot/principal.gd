@@ -23,11 +23,11 @@ var occupe := false
 var fini := false
 
 var _lab_coups: Label
-var _etoiles: Label
+var _etoiles: Etoiles
 var _b_annuler: Button
 var _fin: PanelContainer
 var _lab_fin: Label
-var _etoiles_fin: Label
+var _etoiles_fin: Etoiles
 var _images := 0
 var _secondes := 0.0
 var _ips: Label
@@ -95,7 +95,8 @@ func _cadrer() -> void:
 		_sure.offset_right = -m["d"]; _sure.offset_bottom = -m["b"]
 	var r := canal.rect_monde()
 	# la coupe tient entre les marges, sous les pastilles du haut et au-dessus des boutons
-	var dispo := Rect2(m["g"], m["h"] + 70.0, ecran.x - m["g"] - m["d"], ecran.y - m["h"] - m["b"] - 70.0 - 60.0)
+	# sous les pastilles du haut (88 px) et au-dessus des boutons du bas (58 px)
+	var dispo := Rect2(m["g"], m["h"] + 92.0, ecran.x - m["g"] - m["d"], ecran.y - m["h"] - m["b"] - 92.0 - 64.0)
 	var z := minf(dispo.size.x / r.size.x, dispo.size.y / r.size.y)
 	camera.zoom = Vector2(z, z)
 	camera.position = r.get_center() - (dispo.get_center() - ecran * 0.5) / z
@@ -157,16 +158,34 @@ func annuler() -> void:
 	_maj()
 
 # --- L'interface ----------------------------------------------------------------------
-func _style(fond: Color, rayon := 18, ombre := true) -> StyleBoxFlat:
+# L'interface suit la maquette du niveau 14 (Vincent, 6 octobre 2026) : une
+# pastille bleue pour le numéro, collée à une pastille crème pour les coups ;
+# une pastille crème pour les étoiles ; des boutons du même crème. Toutes ont
+# un liseré blanc et une ombre douce. Police arrondie : Arial Rounded MT Bold,
+# présente d'origine sur iOS et macOS — rien à embarquer.
+const CREME := Color("#f8f3ea")
+const ENCRE := Color("#3d3b38")
+const BLEU := Color("#2b7de0")
+
+func _style(fond: Color, rayon := 26, ombre := true) -> StyleBoxFlat:
 	var s := StyleBoxFlat.new()
 	s.bg_color = fond
 	s.set_corner_radius_all(rayon)
-	s.content_margin_left = 16; s.content_margin_right = 16
-	s.content_margin_top = 6; s.content_margin_bottom = 6
+	s.content_margin_left = 22; s.content_margin_right = 22
+	s.content_margin_top = 8; s.content_margin_bottom = 8
 	if ombre:
-		s.shadow_color = Color(0, 0, 0, 0.22); s.shadow_size = 6; s.shadow_offset = Vector2(0, 3)
-	s.border_color = Color(1, 1, 1, 0.9); s.set_border_width_all(2)
+		s.shadow_color = Color(0, 0, 0, 0.25); s.shadow_size = 8; s.shadow_offset = Vector2(0, 4)
+	s.border_color = Color(1, 1, 1, 0.95); s.set_border_width_all(3)
+	s.anti_aliasing = true
 	return s
+
+func _theme() -> Theme:
+	var t := Theme.new()
+	var f := SystemFont.new()
+	f.font_names = PackedStringArray(["Arial Rounded MT Bold", "Arial Rounded MT", "Avenir Next", "Helvetica Neue"])
+	f.font_weight = 700
+	t.default_font = f
+	return t
 
 func _interface() -> void:
 	var couche := CanvasLayer.new()
@@ -174,6 +193,7 @@ func _interface() -> void:
 	var racine := Control.new()
 	racine.set_anchors_preset(Control.PRESET_FULL_RECT)
 	racine.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	racine.theme = _theme()
 	couche.add_child(racine)
 	_sure = Control.new()
 	_sure.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -181,25 +201,34 @@ func _interface() -> void:
 	racine.add_child(_sure)
 	# en haut à gauche : le numéro du niveau, puis les coups
 	var gauche := HBoxContainer.new()
-	gauche.add_theme_constant_override("separation", -10)
+	gauche.add_theme_constant_override("separation", -20)
 	_sure.add_child(gauche)
 	var badge := PanelContainer.new()
-	badge.add_theme_stylebox_override("panel", _style(Color("#1f6fd1"), 16))
-	badge.custom_minimum_size = Vector2(76, 60)
-	var num := _label(N["id"], 30, Color.WHITE)
+	var st_badge := _style(BLEU, 20)
+	st_badge.content_margin_left = 14; st_badge.content_margin_right = 14
+	badge.add_theme_stylebox_override("panel", st_badge)
+	badge.custom_minimum_size = Vector2(100, 88)
+	var num := _label(N["id"], 44, Color.WHITE)
 	num.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	badge.add_child(num)
 	var pilule := PanelContainer.new()
-	pilule.add_theme_stylebox_override("panel", _style(Color("#f6f1e6"), 18))
-	_lab_coups = _label("", 22, Color("#2a3a40"))
+	var st_pil := _style(CREME, 28)
+	st_pil.content_margin_left = 40; st_pil.content_margin_right = 26
+	pilule.add_theme_stylebox_override("panel", st_pil)
+	pilule.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	pilule.custom_minimum_size = Vector2(0, 70)
+	_lab_coups = _label("", 34, ENCRE)
 	pilule.add_child(_lab_coups)
-	pilule.z_index = -1
+	pilule.z_index = -1      # la pastille des coups passe sous le numéro, comme sur la maquette
 	gauche.add_child(badge)
 	gauche.add_child(pilule)
 	# en haut à droite : les étoiles
 	var cadre_et := PanelContainer.new()
-	cadre_et.add_theme_stylebox_override("panel", _style(Color("#f6f1e6"), 18))
-	_etoiles = _label("", 32, Color("#f2b705"))
+	var st_et := _style(CREME, 28)
+	st_et.content_margin_left = 16; st_et.content_margin_right = 16
+	cadre_et.add_theme_stylebox_override("panel", st_et)
+	_etoiles = Etoiles.new()
+	_etoiles.taille = 52.0
 	cadre_et.add_child(_etoiles)
 	_sure.add_child(cadre_et)
 	cadre_et.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT, Control.PRESET_MODE_MINSIZE, 0)
@@ -216,17 +245,21 @@ func _interface() -> void:
 	boutons.grow_vertical = Control.GROW_DIRECTION_BEGIN
 	# la fin
 	_fin = PanelContainer.new()
-	_fin.add_theme_stylebox_override("panel", _style(Color("#f6f1e6"), 22))
+	var st_fin := _style(CREME, 30)
+	st_fin.content_margin_left = 40; st_fin.content_margin_right = 40
+	st_fin.content_margin_top = 26; st_fin.content_margin_bottom = 26
+	_fin.add_theme_stylebox_override("panel", st_fin)
 	_fin.set_anchors_preset(Control.PRESET_CENTER)
 	_fin.grow_horizontal = Control.GROW_DIRECTION_BOTH
 	_fin.grow_vertical = Control.GROW_DIRECTION_BOTH
 	var col := VBoxContainer.new()
 	col.alignment = BoxContainer.ALIGNMENT_CENTER
-	col.add_theme_constant_override("separation", 12)
-	_etoiles_fin = _label("", 54, Color("#f2b705"))
-	_etoiles_fin.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	col.add_theme_constant_override("separation", 14)
+	_etoiles_fin = Etoiles.new()
+	_etoiles_fin.taille = 72.0
+	_etoiles_fin.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	col.add_child(_etoiles_fin)
-	_lab_fin = _label("", 26, Color("#2a3a40"))
+	_lab_fin = _label("", 28, ENCRE)
 	_lab_fin.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	col.add_child(_lab_fin)
 	col.add_child(_bouton("Rejouer", _lancer))
@@ -310,13 +343,17 @@ func _label(t: String, taille: int, c: Color) -> Label:
 func _bouton(t: String, f: Callable) -> Button:
 	var b := Button.new()
 	b.text = t
-	b.add_theme_font_size_override("font_size", 20)
-	b.add_theme_color_override("font_color", Color("#2a3a40"))
-	b.add_theme_color_override("font_hover_color", Color("#1f6fd1"))
-	b.add_theme_color_override("font_disabled_color", Color("#a8a39a"))
+	b.add_theme_font_size_override("font_size", 24)
+	b.add_theme_color_override("font_color", ENCRE)
+	b.add_theme_color_override("font_hover_color", ENCRE)
+	b.add_theme_color_override("font_pressed_color", ENCRE)
+	b.add_theme_color_override("font_focus_color", ENCRE)
+	b.add_theme_color_override("font_disabled_color", Color("#b3ada3"))
 	for etat_b in ["normal", "hover", "pressed", "disabled", "focus"]:
-		b.add_theme_stylebox_override(etat_b, _style(Color("#f6f1e6") if etat_b != "pressed" else Color("#e6dfcf"), 16))
-	b.custom_minimum_size = Vector2(0, 52)
+		var st := _style(CREME if etat_b != "pressed" else Color("#ebe3d4"), 28)
+		if etat_b == "focus": st.draw_center = false; st.shadow_size = 0
+		b.add_theme_stylebox_override(etat_b, st)
+	b.custom_minimum_size = Vector2(0, 58)
 	b.pressed.connect(f)
 	return b
 
@@ -327,14 +364,13 @@ func _nb_etoiles() -> int:
 
 func _maj() -> void:
 	if _lab_coups == null or etat.is_empty(): return
-	_lab_coups.text = "      Coups : %d   ·   par %d" % [etat["coups"], int(N["par"])]
-	var n := _nb_etoiles()
-	_etoiles.text = "★".repeat(n) + "☆".repeat(3 - n)
+	_lab_coups.text = "Coups : %d" % etat["coups"]
+	_etoiles.regler(_nb_etoiles())
 	_b_annuler.disabled = histoire.is_empty() or occupe
 
 func _montrer_fin() -> void:
 	var n := _nb_etoiles()
-	_etoiles_fin.text = "★".repeat(n) + "☆".repeat(3 - n)
+	_etoiles_fin.regler(n)
 	_lab_fin.text = "Passé !\n%d coups — la meilleure solution en demande %d." % [etat["coups"], int(N["par"])]
 	_fin.show()
 

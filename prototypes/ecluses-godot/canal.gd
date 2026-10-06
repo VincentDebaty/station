@@ -167,6 +167,7 @@ func construire(niveau: Dictionary, e: Dictionary) -> void:
 		flotte.add_child(bt)
 		bateaux.append(bt)
 	positions = e["bateaux"].duplicate()
+	_preparer_places()
 	for k in bateaux.size():
 		bat_x.append(place(positions[k], "b%d" % k, positions))
 	_maj_passages()
@@ -352,27 +353,43 @@ func porte_sous(p: Vector2) -> int:
 		if p.x > X(gl[i][0]) - 0.7 * U and p.x < X(gl[i][1]) + 0.7 * U and p.y > c.y - 0.6 * U and p.y < Y(BAS): return i
 	return -1
 
-# Les places d'un bassin : les bateaux qui y sont et les places réservées des
-# bateaux qui doivent y finir, réparties sur la largeur. Un bateau qui repart
-# vers la gauche attend à gauche, vers la droite à droite ; les arrivés et les
-# places réservées au milieu. Ainsi un bateau n'a presque jamais à passer
-# devant un autre pour sortir.
-func place(i: int, cle: String, pos: Array) -> float:
-	var L := []
-	for k in pos.size():
-		if pos[k] == i: L.append("b%d" % k)
-	for k in N["bateaux"].size():
-		if int(N["bateaux"][k]["vers"]) == i and pos[k] != i: L.append("f%d" % k)
-	if not L.has(cle): L.append(cle)
-	L.sort_custom(func(a, b): return _rang_place(a, pos) < _rang_place(b, pos))
-	return lerpf(X(gb[i][0]), X(gb[i][1]), float(L.find(cle) + 1) / float(L.size() + 1))
+# Les places d'un bassin sont FIXES pour toute la partie : autant de places
+# que de bateaux qui passeront par ce bassin, chacun la sienne. Avant, elles
+# se recalculaient selon les bateaux présents, et un bateau seul se recentrait
+# puis se poussait quand un autre arrivait (Vincent, 6 octobre 2026). Un sas
+# n'a qu'une place, au milieu. Dans un bief, un bateau qui en repart vers la
+# droite, ou qui y arrive par la droite, se range à droite ; vers la gauche, à
+# gauche ; un bateau qui ne fait que passer, au milieu. La place réservée
+# (pointillés) d'un bateau est sa place dans son bassin d'arrivée.
+var _places := {}    # bassin -> liste ordonnée des bateaux qui y ont une place
 
-func _rang_place(cle: String, pos: Array) -> float:
+func _preparer_places() -> void:
+	var B: Array = N["bassins"]
+	for i in B.size():
+		var L := []
+		for k in N["bateaux"].size():
+			var de := int(N["bateaux"][k]["de"])
+			var vers := int(N["bateaux"][k]["vers"])
+			if i >= mini(de, vers) and i <= maxi(de, vers): L.append(k)
+		L.sort_custom(func(a, b): return _cote(a, i) < _cote(b, i) or (_cote(a, i) == _cote(b, i) and a < b))
+		_places[i] = L
+
+func _cote(k: int, i: int) -> int:
+	var de := int(N["bateaux"][k]["de"])
+	var vers := int(N["bateaux"][k]["vers"])
+	var sens := signi(vers - de)
+	if i == de: return sens          # il repartira de ce côté
+	if i == vers: return -sens       # il est arrivé par ce côté
+	return 0                         # il ne fait que passer
+
+func place(i: int, cle: String, _pos: Array = []) -> float:
 	var k := int(cle.substr(1))
-	var cap := 0
-	if cle[0] == "b":
-		cap = signi(int(N["bateaux"][k]["vers"]) - int(pos[k]))
-	return cap * 100.0 + k
+	if Moteur.capacite(N, i) <= 1 or not _places.has(i):
+		return (X(gb[i][0]) + X(gb[i][1])) * 0.5
+	var L: Array = _places[i]
+	var j := L.find(k)
+	if j < 0: return (X(gb[i][0]) + X(gb[i][1])) * 0.5
+	return lerpf(X(gb[i][0]), X(gb[i][1]), float(j + 1) / float(L.size() + 1))
 
 # --- Le temps qui passe ---------------------------------------------------------------
 func _process(dt: float) -> void:
@@ -383,7 +400,10 @@ func _process(dt: float) -> void:
 		eaux[i].repos = Y(vue_niv[i])
 	for i in portes: portes[i].bas_ouvert_y = _bas_ouvert(i)
 	_maj_passages()
-	for i in aqueducs: aqueducs[i].ouverte = portes[i].vanne_ouverte
+	for i in aqueducs:
+		aqueducs[i].ouverte = portes[i].vanne_ouverte
+		aqueducs[i].niveau_g = Y(vue_niv[i])
+		aqueducs[i].niveau_d = Y(vue_niv[i + 1])
 	_poser_bateaux(dt)
 	_reperes.queue_redraw()
 
