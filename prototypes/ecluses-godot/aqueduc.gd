@@ -131,7 +131,12 @@ func _milieu_x() -> float:
 
 func _draw() -> void:
 	if chemin.size() < 2: return
-	# le corps de pierre, puis l'intérieur sombre du conduit
+	# l'ombre du conduit sur la terre, décalée vers le bas à droite, en deux
+	# passes pour l'adoucir ; puis le corps de pierre et l'intérieur sombre
+	var ombre := PackedVector2Array()
+	for p in chemin: ombre.append(p + Vector2(5.0, 7.0))
+	draw_polyline(ombre, Color(0.1, 0.04, 0.0, 0.14), rayon * 2.0 + 24.0, true)
+	draw_polyline(ombre, Color(0.1, 0.04, 0.0, 0.22), rayon * 2.0 + 12.0, true)
 	draw_polyline(chemin, Color("#8c7f69"), rayon * 2.0 + 9.0, true)
 	draw_polyline(chemin, Color("#b8a988"), rayon * 2.0 + 4.0, true)
 	draw_polyline(chemin, Color("#1c2327"), rayon * 2.0, true)

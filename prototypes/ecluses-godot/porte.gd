@@ -59,11 +59,27 @@ func preparer(ax0: float, ax1: float, aseuil: float, acrete: float, aportique: f
 	_chaines = Node2D.new()
 	_chaines.draw.connect(_dessiner_chaines)
 	add_child(_chaines)
+	# Les ombres de contact (analyse graphique du 6 octobre 2026 : les portes
+	# faisaient « sprite posé par-dessus ») : sur le vantail, l'ombre des
+	# tours de chaque côté ; sur le mur à droite, l'ombre portée de la tour
+	# (la lumière vient d'en haut à gauche).
+	var haut_ombre := y_portique - 0.2 * u
+	add_child(_degrade(gx0 + 9, haut_ombre, gx0 + 21, y_seuil, 0.42, 0.0))
+	add_child(_degrade(gx1 - 21, haut_ombre, gx1 - 9, y_seuil, 0.0, 0.3))
+	add_child(_degrade(gx1 + 6, y_portique, gx1 + 20, y_seuil, 0.26, 0.0))
 	# le radier, sous le seuil
 	add_child(_rect(gx0, y_seuil, gx1, abas, mp))
 	# les deux tours du portique, du radier jusque sous la traverse
 	add_child(_rect(gx0 - 6, y_portique, gx0 + 9, y_seuil, mp))
 	add_child(_rect(gx1 - 9, y_portique, gx1 + 6, y_seuil, mp))
+	# la rainure où coulisse le vantail, au bord intérieur de chaque tour, et
+	# l'ombre de la traverse sur ce qui est dessous
+	add_child(_degrade(gx0 + 6, y_portique, gx0 + 9, y_seuil, 0.15, 0.55))
+	add_child(_degrade(gx1 - 9, y_portique, gx1 - 6, y_seuil, 0.55, 0.15))
+	var sous_traverse := Polygon2D.new()
+	sous_traverse.polygon = _quad(gx0 - 16, y_portique + 4, gx1 + 16, y_portique + 16)
+	sous_traverse.vertex_colors = PackedColorArray([Color(0.08, 0.04, 0.0, 0.34), Color(0.08, 0.04, 0.0, 0.34), Color(0.08, 0.04, 0.0, 0.0), Color(0.08, 0.04, 0.0, 0.0)])
+	add_child(sous_traverse)
 	# la traverse, où le vantail levé vient se ranger
 	var tx := Peint.traverse()
 	if tx:
@@ -101,6 +117,15 @@ func _rect(ax0: float, ay0: float, ax1: float, ay1: float, mat: Material) -> Pol
 	var p := Polygon2D.new()
 	p.polygon = _quad(ax0, ay0, ax1, ay1)
 	p.material = mat
+	return p
+
+# Une ombre en dégradé horizontal : « a0 » d'opacité à gauche, « a1 » à droite.
+func _degrade(ax0: float, ay0: float, ax1: float, ay1: float, a0: float, a1: float) -> Polygon2D:
+	var p := Polygon2D.new()
+	p.polygon = _quad(ax0, ay0, ax1, ay1)
+	var g := Color(0.08, 0.04, 0.0, a0)
+	var d := Color(0.08, 0.04, 0.0, a1)
+	p.vertex_colors = PackedColorArray([g, d, d, g])
 	return p
 
 func _quad(ax0: float, ay0: float, ax1: float, ay1: float) -> PackedVector2Array:

@@ -10,6 +10,7 @@ uniform vec3 profond : source_color = vec3(0.02, 0.36, 0.56);
 uniform vec3 ecume : source_color = vec3(0.86, 0.98, 1.0);
 uniform float epaisseur = 120.0;   // hauteur d'eau en pixels, pour doser
 uniform float remous = 0.0;        // 0 au repos, 1 quand l'eau bouillonne
+uniform float largeur = 300.0;     // largeur du bassin en pixels, pour le liseré des parois
 
 varying vec2 monde;
 
@@ -37,13 +38,32 @@ float caustique(vec2 p, float t) {
 void fragment() {
 	float prof = clamp(UV.y, 0.0, 1.0);
 	float px = prof * epaisseur;                       // distance à la surface, en pixels
-	vec3 c = mix(clair, profond, pow(prof, 0.75) * clamp(epaisseur / 260.0, 0.35, 1.0));
+	// La profondeur se lit en PIXELS, plus en proportion du bassin : une eau
+	// peu profonde restait d'un bleu presque uniforme, et le grand bief du 1-4
+	// faisait « un rectangle bleu posé devant le décor » (analyse graphique,
+	// 6 octobre 2026). Le bleu fonce vite sous la surface, puis lentement.
+	float fonce = 1.0 - exp(-px / 95.0);
+	vec3 c = mix(clair, profond, clamp(fonce * 0.92 + prof * 0.08, 0.0, 1.0));
 
-	// ce qui est derrière, vu à travers une eau qui ondule
+	// ce qui est derrière, vu à travers une eau qui ondule : le mur du fond,
+	// bleui, et de plus en plus sombre en descendant
 	vec2 d = vec2(sin(monde.y * 0.09 + TIME * 2.1), cos(monde.x * 0.07 + TIME * 1.6)) * (0.0035 + 0.004 * remous);
-	vec3 derriere = texture(ecran, SCREEN_UV + d).rgb;
-	float transparence = mix(0.34, 0.06, clamp(px / 140.0, 0.0, 1.0));
+	vec3 derriere = texture(ecran, SCREEN_UV + d).rgb * mix(1.0, 0.55, fonce);
+	float transparence = mix(0.36, 0.05, clamp(px / 130.0, 0.0, 1.0));
 	c = mix(c, derriere * vec3(0.30, 0.70, 0.84), transparence);
+
+	// des ondulations claires, couchées, qui glissent juste sous la surface
+	float onde = sin(px * 0.42 - TIME * 1.4 + sin(monde.x * 0.035 + TIME * 0.8) * 2.2 + bruit(monde / 60.0) * 3.0);
+	float ondulations = smoothstep(0.86, 1.0, onde) * (1.0 - smoothstep(10.0, 46.0, px)) * smoothstep(4.0, 9.0, px);
+	c += vec3(0.75, 0.95, 1.0) * ondulations * 0.16;
+
+	// l'ombre du fond : l'eau s'assombrit en touchant le radier
+	c *= 1.0 - 0.16 * (1.0 - smoothstep(0.0, 22.0, epaisseur - px));
+
+	// contre les parois de pierre : un mince liseré clair, puis une ombre douce
+	float bord = min(UV.x, 1.0 - UV.x) * largeur;
+	c *= 1.0 - 0.12 * (1.0 - smoothstep(3.0, 16.0, bord));
+	c = mix(c, ecume, (1.0 - smoothstep(0.8, 2.6, bord)) * 0.4 * (1.0 - prof * 0.6));
 
 	// reflets mouvants, plus forts près de la surface
 	float k = caustique(monde / 46.0, TIME * 1.1);

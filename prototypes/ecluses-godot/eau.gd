@@ -132,4 +132,5 @@ func _construire() -> void:
 	tableaux[Mesh.ARRAY_TEX_UV] = uvs
 	am.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLE_STRIP, tableaux)
 	_mat.set_shader_parameter("epaisseur", ep)
+	_mat.set_shader_parameter("largeur", x1 - x0)
 	_mat.set_shader_parameter("remous", remous)

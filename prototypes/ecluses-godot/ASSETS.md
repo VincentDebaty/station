@@ -233,6 +233,17 @@ comme sur la maquette.
 A horizontal strip of grass edge seen exactly from the side, like the grassy top of the canal banks in the reference image: a lush band of bright green grass with a few tiny white and yellow flowers, the top edge made of irregular grass blades, the bottom edge hanging slightly with a few short roots. Long horizontal strip, ratio about 8:1, tileable seamlessly from left to right, isolated on a transparent background, no soil, no shadow.
 ```
 
+### `art/bouee.png` — la destination d'un bateau (lot 3 de PLAN-RENDU.md)
+
+Vincent a choisi la bouée pour remplacer la coque en pointillés. Elle flotte à
+la place visée et suit l'eau. Comme le bateau, elle est peinte **en rouge** :
+le jeu la repeint en jaune, bleu ou vert pour les autres bateaux. Le blanc
+reste blanc.
+
+```text
+Same art style as before. A small canal marker buoy seen exactly from the side, like a toy: a rounded red float with one broad white horizontal band, a short dark mast on top carrying a small red triangular pennant, thin dark outline, soft highlight on the top-left. The lower third of the float is where it will sit in the water. Square image, the buoy centred and filling about 80% of the height, isolated on a transparent background, no water, no reflection, no shadow.
+```
+
 ### Plus tard, peut-être
 
 - `premier_plan.png` : un buisson flou et des marguerites au premier plan,

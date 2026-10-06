@@ -156,11 +156,23 @@ Seulement si le code ne suffit pas, sauf la bouée :
 | `chaine.png` | 6 | si la chaîne dessinée ne convainc pas |
 | `terre_b/c.png`, `herbe_bord_b/c.png` | 5 | si la répétition se voit encore |
 
+## Fait en chemin : un bateau coincé dit pourquoi
+
+Le 6 octobre 2026, Vincent se trouvait « bloqué alors que cela semble être le
+contraire » : porte levée, eaux égales, bateau immobile. Le bief d'arrivée n'avait
+plus assez de fond. La pancarte nomme maintenant la raison (eau qui manque,
+face-à-face). Quand c'est l'eau, la coupe montre le niveau qu'il aurait fallu.
+
+Piste à décider, pour prévenir plutôt qu'expliquer : une **échelle de
+navigation** sur le mur de chaque bassin, c'est-à-dire un trait peint au
+niveau minimal qui porte un bateau. Quand l'eau descend sous le trait, on le
+voit avant qu'il soit trop tard.
+
 ## Où on en est
 
-- [ ] 1. Ombres de contact
-- [ ] 2. Profondeur de l'eau
-- [ ] 3. Destinations — en attente du choix A / B / C
+- [x] 1. Ombres de contact (6 octobre 2026)
+- [x] 2. Profondeur de l'eau (6 octobre 2026)
+- [ ] 3. Destinations — Vincent a choisi A, la bouée ; attend `art/bouee.png`
 - [ ] 4. Masse rectangulaire
 - [ ] 5. Répétition terre / herbe
 - [ ] 6. Chaînes

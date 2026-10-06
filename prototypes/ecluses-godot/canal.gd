@@ -261,6 +261,8 @@ func _decor() -> void:
 func _murs_du_fond() -> void:
 	var B: Array = N["bassins"]
 	var fond_pierre := _mat(SH_PIERRE, {"ombre": 0.74, "teinte": Color("#d6c7a8")})
+	# derrière une porte, le mur est dans l'ombre du portique : plus sombre
+	var fond_porte := _mat(SH_PIERRE, {"ombre": 0.5, "teinte": Color("#d6c7a8")})
 	for i in B.size():
 		var b: Dictionary = B[i]
 		var f := float(b["fond"])
@@ -276,6 +278,13 @@ func _murs_du_fond() -> void:
 			# ne se voit qu'en haut, comme une pente qui s'éloigne
 			sommet = maxf(maxf(f + 2.5, berge - 1.6), float(b.get("niveau", f)) + 0.8)
 		_poly(_quad(X(gb[i][0]) - 8, Y(sommet), X(gb[i][1]) + 8, Y(f)), fond_pierre)
+		# les ombres de contact du mur : au pied, sur le radier, et dans les
+		# deux angles du bassin — on les voit à travers l'eau
+		var fonce := Color(0.06, 0.03, 0.0, 0.32)
+		var clair := Color(0.06, 0.03, 0.0, 0.0)
+		_poly(_quad(X(gb[i][0]), Y(f) - 22.0, X(gb[i][1]), Y(f)), null, PackedColorArray([clair, clair, fonce, fonce]))
+		_poly(_quad(X(gb[i][0]), Y(sommet), X(gb[i][0]) + 16.0, Y(f)), null, PackedColorArray([fonce, clair, clair, fonce]))
+		_poly(_quad(X(gb[i][1]) - 16.0, Y(sommet), X(gb[i][1]), Y(f)), null, PackedColorArray([clair, fonce, fonce, clair]))
 		# l'ombre que le couronnement jette sur le haut du mur
 		_poly(_quad(X(gb[i][0]) - 8, Y(sommet), X(gb[i][1]) + 8, Y(sommet) + 16), null,
 			PackedColorArray([Color(0, 0, 0, 0.22), Color(0, 0, 0, 0.22), Color(0, 0, 0, 0), Color(0, 0, 0, 0)]))
@@ -289,7 +298,7 @@ func _murs_du_fond() -> void:
 		var l: Dictionary = N["liaisons"][i]
 		var c := float(l.get("crete", maxf(float(B[i]["fond"]), float(B[i + 1]["fond"]))))
 		var bas := minf(float(B[i]["fond"]), float(B[i + 1]["fond"]))
-		_poly(_quad(X(gl[i][0]), Y(c + 0.2), X(gl[i][1]), Y(bas)), fond_pierre)
+		_poly(_quad(X(gl[i][0]), Y(c + 0.2), X(gl[i][1]), Y(bas)), fond_porte)
 
 func _coupe_avant() -> void:
 	var B: Array = N["bassins"]
