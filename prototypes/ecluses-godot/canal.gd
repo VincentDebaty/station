@@ -148,7 +148,11 @@ func construire(niveau: Dictionary, e: Dictionary) -> void:
 			po.arriere = arriere
 			po.voile = voiles.get(i)
 			var bas_radier := Y(minf(float(B[i]["fond"]), float(B[i + 1]["fond"])) - 0.32)
-			po.preparer(X(gl[i][0]), X(gl[i][1]), Y(float(l["seuil"])), Y(float(l["crete"])), Y(haut - 0.85), bas_radier, U,
+			# trois hauteurs de portique, pour ne pas aligner trois colonnes
+			# identiques (lot 4) ; plus bas seulement : le vantail levé garde
+			# ~1,4 unité de place sous la traverse
+			var decale: float = [0.0, -0.3, -0.15][i % 3]
+			po.preparer(X(gl[i][0]), X(gl[i][1]), Y(float(l["seuil"])), Y(float(l["crete"])), Y(haut - 0.85 + decale), bas_radier, U,
 				SH_PIERRE, SH_BOIS, e["ouvert"][i], _vantail_leve(e, i), _bas_ouvert(i))
 			add_child(po)
 			portes[i] = po
@@ -224,7 +228,10 @@ func _poly(points: PackedVector2Array, mat: Material = null, couleurs := PackedC
 	var p := Polygon2D.new()
 	p.polygon = points
 	if mat: p.material = mat
-	if not couleurs.is_empty(): p.vertex_colors = couleurs
+	# une seule couleur : tout le polygone (en vertex_colors, les sommets sans
+	# couleur passeraient en blanc)
+	if couleurs.size() == 1: p.color = couleurs[0]
+	elif not couleurs.is_empty(): p.vertex_colors = couleurs
 	add_child(p)
 	return p
 
@@ -314,6 +321,7 @@ func _murs_du_fond() -> void:
 		# l'ombre que le couronnement jette sur le haut du mur
 		_poly(_quad(X(gb[i][0]) - 8, Y(sommet), X(gb[i][1]) + 8, Y(sommet) + 16), null,
 			PackedColorArray([Color(0, 0, 0, 0.22), Color(0, 0, 0, 0.22), Color(0, 0, 0, 0), Color(0, 0, 0, 0)]))
+		_couronnement(X(gb[i][0]) - 8, X(gb[i][1]) + 8, Y(sommet), i)
 		# le couronnement herbu du mur
 		if not _bande_herbe(X(gb[i][0]) - 10, X(gb[i][1]) + 10, Y(sommet) + 2, 24.0):
 			_poly(_quad(X(gb[i][0]) - 10, Y(sommet) - 7, X(gb[i][1]) + 10, Y(sommet) + 3), null,
@@ -352,10 +360,12 @@ func _coupe_avant() -> void:
 		_poly(_quad(-LOIN, Y(berge), g0, tres_bas), terre)
 		_poly(_quad(g0 - 0.3 * U, Y(berge), g0, Y(float(B[0]["fond"]) - 0.32)), pierre)
 		_herbe(-LOIN, g0, Y(berge))
+		_empattement(g0 - 0.3 * U, Y(float(B[0]["fond"]) - 0.32), -1.0, pierre)
 	if not B[B.size() - 1].get("fixe", false):
 		_poly(_quad(g1, Y(berge), W + LOIN, tres_bas), terre)
 		_poly(_quad(g1, Y(berge), g1 + 0.3 * U, Y(float(B[B.size() - 1]["fond"]) - 0.32)), pierre)
 		_herbe(g1, W + LOIN, Y(berge))
+		_empattement(g1 + 0.3 * U, Y(float(B[B.size() - 1]["fond"]) - 0.32), 1.0, pierre)
 	# la terre vit : une ombre douce sous tout ce qui la couvre (radiers, herbe
 	# des berges, parements), et des pousses vertes, comme sur la maquette
 	var tops := []      # [x0, x1, y] : le haut de chaque morceau de terre
@@ -479,6 +489,47 @@ func _pousses(x0: float, x1: float, y: float) -> void:
 			_poly(PackedVector2Array([base - cote * 0.4, milieu - cote, base + d * lg, milieu + cote, base + cote * 0.4]), null,
 				PackedColorArray([Color("#3f6e22"), Color("#5f9a35"), Color("#a8d866"), Color("#5f9a35"), Color("#3f6e22")]))
 		x += rng.randf_range(90.0, 230.0)
+
+# L'empattement au pied d'un parement extérieur : deux assises de pierre en
+# escalier, dans la terre, côté « sens » (lot 4 : casser la silhouette sur les
+# bords extérieurs seulement, jamais dans l'eau).
+func _empattement(x: float, y_bas: float, sens: float, pierre: Material) -> void:
+	for k in 2:
+		var large := 22.0 - k * 10.0
+		var y0 := y_bas - 26.0 - k * 24.0
+		var y1 := y_bas - k * 24.0
+		var xa := x if sens > 0 else x - large
+		var xb := x + large if sens > 0 else x
+		_poly(_quad(xa, y0, xb, y1), pierre)
+		var fonce := Color(0.08, 0.04, 0, 0.3)
+		var nul := Color(0.08, 0.04, 0, 0)
+		# l'ombre sur la terre, côté opposé à la lumière, et l'arête du dessus
+		_poly(_quad(xa, y1, xb, y1 + 6.0), null, PackedColorArray([fonce, fonce, nul, nul]))
+		_poly(_quad(xa, y0, xb, y0 + 2.0), null, PackedColorArray([Color(1, 0.96, 0.85, 0.22)]))
+
+# Les pierres de couronnement en haut d'un mur (lot 4 de PLAN-RENDU.md : la
+# grande maçonnerie formait « un énorme rectangle ») : une rangée de pierres
+# plus claires, de longueurs et de hauteurs un peu inégales, qui débordent de
+# quelques pixels. L'herbe retombe par-dessus leur haut.
+func _couronnement(x0: float, x1: float, y: float, graine: int) -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 7919 * (graine + 1) + int(x0)
+	var bas := y + 26.0               # le bas de la rangée ; l'herbe couvre son haut
+	# l'ombre que la rangée jette sur le mur
+	_poly(_quad(x0, bas, x1, bas + 12.0), null,
+		PackedColorArray([Color(0.08, 0.04, 0, 0.3), Color(0.08, 0.04, 0, 0.3), Color(0.08, 0.04, 0, 0), Color(0.08, 0.04, 0, 0)]))
+	var x := x0 - 5.0
+	while x < x1 + 5.0:
+		var w := minf(rng.randf_range(38.0, 66.0), x1 + 5.0 - x)
+		var h := 24.0 + rng.randf_range(-2.0, 2.0) + (4.0 if rng.randf() < 0.2 else 0.0)
+		var pierre := Color("#d9c093").darkened(rng.randf_range(0.0, 0.12))
+		var haut_y := bas - h
+		_poly(_quad(x, haut_y, x + w, bas), null,
+			PackedColorArray([pierre.lightened(0.1), pierre.lightened(0.04), pierre.darkened(0.14), pierre.darkened(0.08)]))
+		# les joints, à droite, et l'arête basse dans l'ombre
+		_poly(_quad(x + w - 2.0, haut_y, x + w, bas), null, PackedColorArray([Color("#86704f")]))
+		_poly(_quad(x, bas - 3.0, x + w, bas), null, PackedColorArray([Color(0.4, 0.3, 0.18, 0.55)]))
+		x += w
 
 func _herbe(x0: float, x1: float, y: float) -> void:
 	if _bande_herbe(x0, x1, y, 34.0): return
