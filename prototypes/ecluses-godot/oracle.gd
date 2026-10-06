@@ -19,6 +19,7 @@ func _init() -> void:
 	var coups := 0
 	var impasses := 0
 	var ms_max := 0
+	var ms_bloque := 0
 	var ecarts := []
 	for partie in parties:
 		var N: Dictionary = niveaux[partie["niveau"]]
@@ -37,13 +38,19 @@ func _init() -> void:
 				impasses += 1
 				if mien != int(pas["impasse"]):
 					ecart = "impasse %d, attendu %d" % [mien, int(pas["impasse"])]
+			if ecart == "" and pas.has("bloque"):
+				var t1 := Time.get_ticks_msec()
+				var bloque := Moteur.bloque(N, e)
+				ms_bloque = maxi(ms_bloque, Time.get_ticks_msec() - t1)
+				if bloque != int(pas["bloque"]):
+					ecart = "bloqué %d, attendu %d" % [bloque, int(pas["bloque"])]
 			if ecart != "":
 				ecarts.append("%s, coup %d : %s" % [partie["niveau"], e["coups"], ecart])
 				break
 		if ecarts.size() >= 5:
 			break
 	if ecarts.is_empty():
-		print("Oracle : %d parties, %d coups rejoués à l'identique ; %d verdicts d'impasse identiques (le plus long : %d ms)." % [parties.size(), coups, impasses, ms_max])
+		print("Oracle : %d parties, %d coups rejoués à l'identique ; %d verdicts d'impasse et de blocage identiques (le plus long : impasse %d ms, blocage %d ms)." % [parties.size(), coups, impasses, ms_max, ms_bloque])
 		quit(0)
 	else:
 		for x in ecarts:

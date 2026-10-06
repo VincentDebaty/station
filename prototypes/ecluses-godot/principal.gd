@@ -148,19 +148,21 @@ func jouer(a: Dictionary) -> void:
 	else:
 		_chercher_impasse()
 
-# Reste-t-il une solution ? Le solveur (Moteur.impasse, le même que la page
-# web, vérifié par l'oracle) tourne dans un fil de travail : sur le niveau 1-2
-# il répond en 2 ms, sur 1-3 et 1-4 il peut mettre quelques secondes, et
-# l'écran ne doit pas se figer pendant ce temps. S'il n'y a plus de solution,
-# les bateaux qui n'arriveront plus reçoivent leur « ! », et le niveau est
-# perdu : on propose de rejouer (Vincent, 6 octobre 2026).
+# Un bateau peut-il encore avancer ? (Moteur.bloque, le même que la page web,
+# vérifié par l'oracle.) Une partie qui ne peut plus être gagnée continue tant
+# qu'un bateau peut encore avancer ; elle n'est perdue que quand plus aucun ne
+# le peut (Vincent, 6 octobre 2026 — d'abord, l'échec tombait dès que la
+# victoire devenait impossible, alors que le bateau jaune pouvait encore
+# descendre). La recherche tourne dans un fil de travail pour ne pas figer
+# l'écran. Bloqué : les bateaux non arrivés reçoivent leur « ! », et on propose
+# de rejouer.
 func _chercher_impasse() -> void:
 	_calcul += 1
 	var mon_calcul := _calcul
 	var niveau := N.duplicate(true)
 	var e := etat.duplicate(true)
 	var reponse := [-1]
-	var tache := WorkerThreadPool.add_task(func(): reponse[0] = Moteur.impasse(niveau, e))
+	var tache := WorkerThreadPool.add_task(func(): reponse[0] = Moteur.bloque(niveau, e))
 	while not WorkerThreadPool.is_task_completed(tache):
 		await get_tree().process_frame
 	WorkerThreadPool.wait_for_task_completion(tache)
@@ -179,7 +181,7 @@ func _coince() -> void:
 	if not fini: return     # on a annulé entre-temps
 	_etoiles_fin.hide()
 	_b_annuler_fin.show()
-	_lab_fin.text = "Bateau coincé !\nD'ici, il n'y a plus de solution."
+	_lab_fin.text = "Bateaux coincés !\nPlus aucun bateau ne peut avancer." if coinces.size() > 1 else "Bateau coincé !\nPlus aucun bateau ne peut avancer."
 	_fin.show()
 
 func annuler() -> void:

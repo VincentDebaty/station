@@ -326,3 +326,31 @@ static func impasse(N: Dictionary, depart: Dictionary, limite := 25000, q := 0.0
 				suivante.append(r["etat"])
 		file = suivante
 	return 1
+
+# Bloqué : plus aucun bateau ne pourra bouger, quoi qu'on fasse — la règle
+# d'échec de la tranche (Vincent, 6 octobre 2026 : une partie qui ne peut plus
+# être gagnée continue tant qu'un bateau peut encore avancer). Les bateaux
+# n'avancent que vers leur destination : il suffit de chercher, en largeur, un
+# coup qui en fasse bouger un. Même fonction que bloque() dans la page web,
+# vérifiée par l'oracle. Rend 1 (bloqué), 0 (un bateau peut encore avancer, ou
+# c'est gagné), -1 (limite atteinte sans conclure).
+static func bloque(N: Dictionary, depart: Dictionary, limite := 25000, q := 0.01) -> int:
+	var v0 := verdict(N, depart)
+	if not v0.is_empty(): return 0 if v0["fin"] == "gagne" else 1
+	var vus := {cle(depart, q): true}
+	var file := [depart]
+	while not file.is_empty():
+		var suivante := []
+		for e in file:
+			for a in actions(N, e):
+				var r := jouer(N, e, a)
+				var v := verdict(N, r["etat"])
+				if not r["dep"].is_empty() or v.get("fin", "") == "gagne": return 0
+				if not v.is_empty(): continue
+				var k := cle(r["etat"], q)
+				if vus.has(k): continue
+				vus[k] = true
+				if vus.size() > limite: return -1
+				suivante.append(r["etat"])
+		file = suivante
+	return 1

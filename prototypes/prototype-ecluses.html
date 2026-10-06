@@ -761,7 +761,42 @@ const Ecluses = (function () {
     return { chemin: null, etats: vus.size, epuise: true };
   }
 
-  return { charger, copie, actions, jouer, verdict, resoudre, cle, seuil, seuilBateau, profondeur, flotte, abreuve, eauTotale, capacite };
+  // Bloqué : plus aucun bateau ne pourra bouger, quoi qu'on fasse. C'est la
+  // règle d'échec de la tranche Godot (Vincent, 6 octobre 2026) : une partie
+  // qui ne peut plus être gagnée continue tant qu'un bateau peut encore
+  // avancer ; elle n'est perdue que quand tous sont immobilisés. Les bateaux
+  // n'avancent que vers leur destination, si bien qu'il suffit de chercher,
+  // en largeur, un coup qui en fasse bouger un. Rend 1 (bloqué), 0 (un
+  // bateau peut encore avancer, ou la partie est gagnée) ou -1 (limite
+  // atteinte sans conclure).
+  function bloque(N, depart, limite, options) {
+    limite = limite || 25000;
+    const q = options && options.quantum;
+    const e0 = depart || charger(N);
+    const v0 = verdict(N, e0);
+    if (v0) return v0.fin === "gagne" ? 0 : 1;
+    const vus = new Set([cle(e0, q)]);
+    let file = [e0];
+    while (file.length) {
+      const suivante = [];
+      for (const e of file) {
+        for (const a of actions(N, e)) {
+          const r = jouer(N, e, a), v = verdict(N, r.etat);
+          if (r.dep.length || (v && v.fin === "gagne")) return 0;
+          if (v) continue;
+          const k = cle(r.etat, q);
+          if (vus.has(k)) continue;
+          vus.add(k);
+          if (vus.size > limite) return -1;
+          suivante.push(r.etat);
+        }
+      }
+      file = suivante;
+    }
+    return 1;
+  }
+
+  return { charger, copie, actions, jouer, verdict, resoudre, bloque, cle, seuil, seuilBateau, profondeur, flotte, abreuve, eauTotale, capacite };
 })();
 </script>
 

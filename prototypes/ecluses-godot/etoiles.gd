@@ -19,18 +19,26 @@ var _pleine: Texture2D = null
 var _vide: Texture2D = null
 
 func _ready() -> void:
-	if ResourceLoader.exists("res://art/etoile_pleine.png"): _pleine = load("res://art/etoile_pleine.png")
-	if ResourceLoader.exists("res://art/etoile_vide.png"): _vide = load("res://art/etoile_vide.png")
+	if ResourceLoader.exists("res://art/etoile_pleine.png"): _pleine = _reduire(load("res://art/etoile_pleine.png"))
+	if ResourceLoader.exists("res://art/etoile_vide.png"): _vide = _reduire(load("res://art/etoile_vide.png"))
 	elif _pleine: _vide = _griser(_pleine)
+
+# L'image livrée fait plus de 1 200 px pour s'afficher à 50 : réduite d'un coup
+# à l'écran, elle crénèle. On la réduit une fois, proprement (Lanczos).
+func _reduire(tex: Texture2D) -> Texture2D:
+	var img := tex.get_image()
+	if img.is_compressed(): img.decompress()
+	img.convert(Image.FORMAT_RGBA8)
+	var cote := int(clampf(taille * 2.5, 64.0, 256.0))
+	if img.get_width() > cote:
+		img.resize(cote, int(float(cote) * img.get_height() / img.get_width()), Image.INTERPOLATE_LANCZOS)
+	return ImageTexture.create_from_image(img)
 
 # L'étoile vide : la même image, en gris un peu plus sombre, reflets gardés.
 func _griser(tex: Texture2D) -> Texture2D:
 	var img := tex.get_image()
 	if img.is_compressed(): img.decompress()
 	img.convert(Image.FORMAT_RGBA8)
-	# une étoile s'affiche à moins de 80 px : inutile de griser un million de pixels
-	if img.get_width() > 192:
-		img.resize(192, int(192.0 * img.get_height() / img.get_width()), Image.INTERPOLATE_LANCZOS)
 	for y in img.get_height():
 		for x in img.get_width():
 			var c := img.get_pixel(x, y)

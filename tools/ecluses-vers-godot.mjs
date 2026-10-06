@@ -12,7 +12,9 @@
 //                  graînées, avec l'état complet après chaque coup — et,
 //                  pour les niveaux à portes sans fleuve, le verdict
 //                  d'impasse du solveur (1 impasse, 0 soluble, -1 sans
-//                  conclusion), que la tranche affiche par un « ! »
+//                  conclusion) et celui de blocage (1 : plus aucun bateau
+//                  ne pourra bouger — c'est lui que la tranche affiche par
+//                  un « ! » et une carte d'échec)
 // puis oracle.gd (godot --headless --path prototypes/ecluses-godot
 // --script res://oracle.gd) vérifie que le moteur GDScript rejoue chacune au
 // millionième près. Relancer après avoir touché aux niveaux ou au moteur JS.
@@ -69,12 +71,13 @@ for (const N of D.niveaux) {
       const r = E.resoudre(N, e, 25000, null, { quantum: 0.01 });
       return r.chemin ? 0 : (r.epuise ? 1 : -1);
     };
-    if (avecImpasse) pas[0].impasse = impasse(e);
+    const bloque = e => E.bloque(N, e, 25000, { quantum: 0.01 });
+    if (avecImpasse) { pas[0].impasse = impasse(e); pas[0].bloque = bloque(e); }
     for (const a of seq) {
       const r = E.jouer(N, e, a);
       e = r.etat;
       const p = { action: a, ...photo(e, r), verdict: E.verdict(N, e) || {} };
-      if (avecImpasse) p.impasse = impasse(e);
+      if (avecImpasse) { p.impasse = impasse(e); p.bloque = bloque(e); }
       pas.push(p);
     }
     parties.push({ niveau: N.id, pas });
