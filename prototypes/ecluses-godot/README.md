@@ -55,6 +55,19 @@ ECLUSES_DEMO=1 ECLUSES_CAPTURE=/tmp/ecluses godot --path prototypes/ecluses-godo
 
 `--headless` ne rend rien : la démo se lance en fenêtre.
 
+## Sur l'iPhone
+
+```bash
+tools/ios-ecluses.sh --etat     # compte Xcode, iPhone branché, dernier export
+tools/ios-ecluses.sh            # exporte, signe, installe et lance
+```
+
+Le préréglage d'export (`export_presets.cfg`) est ignoré par git : il porte
+l'équipe Apple de la machine. Il a été dérivé de celui de Station 7 (seuls
+changent le chemin d'export et l'identifiant `be.vincentdebaty.ecluses`).
+Compte gratuit : l'app expire au bout de sept jours, relancer le script.
+Les versions de test affichent les images par seconde en bas à gauche.
+
 ## Les images
 
 `art/maquette.webp` est la maquette du niveau 14 générée par ChatGPT ; on en

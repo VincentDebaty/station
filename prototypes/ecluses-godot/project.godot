@@ -10,10 +10,11 @@ config_version=5
 
 [application]
 
-config/name="Écluses — tranche"
+config/name="Écluses"
 config/description="Un puzzle d'eau en coupe. Tranche verticale du niveau 1-2."
 run/main_scene="res://principal.tscn"
 config/features=PackedStringArray("4.7", "Mobile")
+config/icon="res://art/icone.png"
 boot_splash/bg_color=Color(0.07, 0.23, 0.27, 1)
 
 [display]
