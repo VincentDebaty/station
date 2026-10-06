@@ -17,12 +17,33 @@ var debit := 0.0
 var sens := 1
 var vanne := 0.0          # 0 fermée, 1 levée : suit la roue de la porte
 var ouverte := false
-var _phase := 0.0
 var bulles: CPUParticles2D
+var _eau: Line2D           # l'eau dans le conduit, dessinée par shaders/courant.gdshader
+var _mat_eau: ShaderMaterial
+var _dessus: Node2D        # la vanne et les grilles, par-dessus l'eau du conduit
 
 func preparer(points: PackedVector2Array, r: float) -> void:
 	chemin = points
 	rayon = r
+	var longueur := 0.0
+	for k in chemin.size() - 1: longueur += chemin[k].distance_to(chemin[k + 1])
+	_mat_eau = ShaderMaterial.new()
+	_mat_eau.shader = preload("res://shaders/courant.gdshader")
+	_mat_eau.set_shader_parameter("longueur", longueur)
+	_eau = Line2D.new()
+	_eau.points = chemin
+	_eau.width = rayon * 2.0 - 3.0
+	_eau.joint_mode = Line2D.LINE_JOINT_ROUND
+	_eau.texture_mode = Line2D.LINE_TEXTURE_STRETCH
+	var blanc := GradientTexture2D.new()
+	blanc.width = 4; blanc.height = 4
+	_eau.texture = blanc              # sans texture, la ligne n'a pas d'UV
+	_eau.material = _mat_eau
+	_eau.visible = false
+	add_child(_eau)
+	_dessus = Node2D.new()
+	_dessus.draw.connect(_dessiner_dessus)
+	add_child(_dessus)
 	var rond := GradientTexture2D.new()
 	rond.width = 16; rond.height = 16
 	rond.fill = GradientTexture2D.FILL_RADIAL
@@ -73,10 +94,11 @@ func _process(dt: float) -> void:
 	var cible := 1.0 if ouverte else 0.0
 	if not is_equal_approx(vanne, cible):
 		vanne = move_toward(vanne, cible, dt / 0.5)
-		queue_redraw()
-	if debit > 0.0:
-		_phase += dt * (60.0 + 220.0 * debit) * sens
-		queue_redraw()
+		_dessus.queue_redraw()
+	# vanne ouverte, le conduit est plein ; l'eau y glisse au rythme du débit
+	_eau.visible = vanne > 0.5 or debit > 0.02
+	_mat_eau.set_shader_parameter("debit", debit)
+	_mat_eau.set_shader_parameter("sens", float(sens))
 
 func _draw() -> void:
 	if chemin.size() < 2: return
@@ -84,38 +106,19 @@ func _draw() -> void:
 	draw_polyline(chemin, Color("#8c7f69"), rayon * 2.0 + 9.0, true)
 	draw_polyline(chemin, Color("#b8a988"), rayon * 2.0 + 4.0, true)
 	draw_polyline(chemin, Color("#1c2327"), rayon * 2.0, true)
-	if vanne > 0.5 or debit > 0.02:
-		# vanne ouverte, le conduit est plein ; s'il coule, des filets clairs
-		# avancent avec l'eau
-		draw_polyline(chemin, Color(0.20, 0.70, 0.85, 0.55 + 0.4 * debit), rayon * 2.0 - 3.0, true)
-		if debit > 0.02: _filets()
+
+func _dessiner_dessus() -> void:
 	# la vanne : une plaque de fer au milieu du conduit, sous la porte, qui se
 	# lève dans un logement quand on tourne la roue
 	if chemin.size() >= 3:
 		var m := (chemin[1] + chemin[2]) * 0.5
 		var h := rayon * 2.0 + 2.0
-		draw_rect(Rect2(m.x - 5.0, m.y - rayon - h - 2.0, 10.0, h + 2.0), Color("#5e554b"))
+		_dessus.draw_rect(Rect2(m.x - 5.0, m.y - rayon - h - 2.0, 10.0, h + 2.0), Color("#5e554b"))
 		var y := m.y - rayon - 1.0 - vanne * h
-		draw_rect(Rect2(m.x - 3.5, y, 7.0, h), Color("#2e2f33"))
-		draw_rect(Rect2(m.x - 3.5, y, 7.0, 3.0), Color("#6d6f75"))
+		_dessus.draw_rect(Rect2(m.x - 3.5, y, 7.0, h), Color("#2e2f33"))
+		_dessus.draw_rect(Rect2(m.x - 3.5, y, 7.0, 3.0), Color("#6d6f75"))
 	# la grille de chaque bouche, dans le fond du bassin
 	for bout in [chemin[0], chemin[chemin.size() - 1]]:
-		draw_rect(Rect2(bout.x - rayon - 5.0, bout.y - 3.0, 2.0 * rayon + 10.0, 6.0), Color("#3d3833"))
+		_dessus.draw_rect(Rect2(bout.x - rayon - 5.0, bout.y - 3.0, 2.0 * rayon + 10.0, 6.0), Color("#3d3833"))
 		for k in range(-2, 3):
-			draw_line(bout + Vector2(k * rayon * 0.42, -3.0), bout + Vector2(k * rayon * 0.42, 3.0), Color("#8a8178"), 2.0)
-
-func _filets() -> void:
-	var pas := 26.0
-	var longueur := 0.0
-	for k in chemin.size() - 1:
-		var a := chemin[k]
-		var b := chemin[k + 1]
-		var seg := a.distance_to(b)
-		var dir := (b - a) / maxf(seg, 0.001)
-		# la phase grandit dans le sens du courant : les filets avancent avec lui
-		var t := fposmod(_phase - longueur, pas)
-		while t < seg:
-			var fin := minf(t + 10.0 + 6.0 * debit, seg)
-			draw_line(a + dir * t, a + dir * fin, Color(0.85, 0.98, 1.0, 0.8), 2.4, true)
-			t += pas
-		longueur += seg
+			_dessus.draw_line(bout + Vector2(k * rayon * 0.42, -3.0), bout + Vector2(k * rayon * 0.42, 3.0), Color("#8a8178"), 2.0)
