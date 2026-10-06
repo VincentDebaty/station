@@ -318,6 +318,57 @@ func _coupe_avant() -> void:
 		_poly(_quad(g1, Y(berge), W + LOIN, tres_bas), terre)
 		_poly(_quad(g1, Y(berge), g1 + 0.3 * U, Y(float(B[B.size() - 1]["fond"]) - 0.32)), pierre)
 		_herbe(g1, W + LOIN, Y(berge))
+	# la terre vit : une ombre douce sous tout ce qui la couvre (radiers, herbe
+	# des berges, parements), et des pousses vertes, comme sur la maquette
+	var tops := []      # [x0, x1, y] : le haut de chaque morceau de terre
+	for i in B.size():
+		tops.append([X(gb[i][0]) - 2, X(gb[i][1]) + 2, Y(float(B[i]["fond"]) - 0.32)])
+	for i in N["liaisons"].size():
+		tops.append([X(gl[i][0]), X(gl[i][1]), Y(minf(float(B[i]["fond"]), float(B[i + 1]["fond"])) - 0.32)])
+	if not B[0].get("fixe", false):
+		tops.append([-LOIN, g0 - 0.3 * U, Y(berge) + 6])
+		_ombre_cote(g0 - 0.3 * U, Y(berge) + 6, Y(float(B[0]["fond"]) - 0.32), -1.0)
+	if not B[B.size() - 1].get("fixe", false):
+		tops.append([g1 + 0.3 * U, W + LOIN, Y(berge) + 6])
+		_ombre_cote(g1 + 0.3 * U, Y(berge) + 6, Y(float(B[B.size() - 1]["fond"]) - 0.32), 1.0)
+	for t in tops:
+		_poly(_quad(t[0], t[2], t[1], t[2] + 26.0), null,
+			PackedColorArray([Color(0.12, 0.05, 0, 0.32), Color(0.12, 0.05, 0, 0.32), Color(0.12, 0.05, 0, 0), Color(0.12, 0.05, 0, 0)]))
+	for t in tops:
+		_pousses(maxf(t[0], -300.0), minf(t[1], W + 300.0), t[2])
+
+# L'ombre que fait un parement de pierre sur la terre à côté de lui (sens : -1,
+# la terre est à gauche).
+func _ombre_cote(x: float, y0: float, y1: float, sens: float) -> void:
+	var fonce := Color(0.12, 0.05, 0, 0.28)
+	var clair := Color(0.12, 0.05, 0, 0)
+	var xe := x + sens * 20.0
+	if sens < 0:
+		_poly(_quad(xe, y0, x, y1), null, PackedColorArray([clair, fonce, fonce, clair]))
+	else:
+		_poly(_quad(x, y0, xe, y1), null, PackedColorArray([fonce, clair, clair, fonce]))
+
+# Des pousses dans la terre, sous un bord : de petites touffes de feuilles
+# pointues, vert sombre au pied et clair au bout, semées au hasard — mais
+# toujours le même hasard pour un même niveau.
+func _pousses(x0: float, x1: float, y: float) -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = int(absf(x0) * 7.0 + y * 13.0) + 1
+	var x := x0 + rng.randf_range(10.0, 60.0)
+	while x < x1 - 10.0:
+		var py := y + rng.randf_range(30.0, 110.0)
+		var n := rng.randi_range(3, 5)
+		var taille := rng.randf_range(1.3, 2.0)
+		for k in n:
+			var ang := lerpf(-1.0, 1.0, (float(k) + 0.5) / n) * 0.75 + rng.randf_range(-0.12, 0.12)
+			var lg := (10.0 + 6.0 * (1.0 - absf(ang))) * taille
+			var d := Vector2(sin(ang), -cos(ang))
+			var cote := Vector2(-d.y, d.x) * 2.3 * taille
+			var base := Vector2(x, py)
+			var milieu := base + d * lg * 0.5
+			_poly(PackedVector2Array([base - cote * 0.4, milieu - cote, base + d * lg, milieu + cote, base + cote * 0.4]), null,
+				PackedColorArray([Color("#3f6e22"), Color("#5f9a35"), Color("#a8d866"), Color("#5f9a35"), Color("#3f6e22")]))
+		x += rng.randf_range(90.0, 230.0)
 
 func _herbe(x0: float, x1: float, y: float) -> void:
 	_poly(_quad(x0, y - 8, x1, y + 6), null,

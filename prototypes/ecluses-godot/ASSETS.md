@@ -133,19 +133,101 @@ recopier l'engrenage de la référence), un cercle bien rond et pas ovale, une
 face assez unie au centre pour que le pictogramme crème s'y lise, et une vraie
 transparence autour (pas de damier peint).
 
-## Pas encore branché — à faire quand le style sera validé
+## Le décor de la coupe — pour que tout soit beau (6 octobre 2026)
 
-Ces éléments sont dessinés par des shaders aujourd'hui. Ils deviendront des
-images quand on passera à la production ; je n'écris pas le code de
-chargement tant qu'on n'a pas une image qui tient la comparaison.
+Vincent veut que la coupe soit aussi belle que la maquette du niveau 14 : la
+terre, les pierres des murs, les portes, la roue. Les shaders font un dessin
+correct, mais pas peint. Chaque image ci-dessous remplacera un dessin. Le code
+de chargement s'écrit à la réception de chaque image : les marges de découpe
+dépendent de l'image reçue.
 
-| Fichier | Ce que c'est | Prompt (après le bloc de style) |
-|---|---|---|
-| `pierre.png` | les blocs de pierre des murs, **en motif raccordable** | `Seamless tileable texture of light sandstone blocks laid in a running bond, warm beige, soft bevels, thin mortar joints, front view, square 1024×1024, no perspective.` |
-| `terre.png` | la terre en coupe, raccordable | `Seamless tileable texture of brown soil cross-section with small rounded pebbles and faint layers, front view, square 1024×1024.` |
-| `vantail.png` | une porte d'écluse fermée | `A wooden canal lock gate leaf seen exactly from the front: vertical oak planks, three black iron bands with rivets, tall rectangle about 1:5, isolated on transparent background.` |
-| `roue.png` | la roue de manœuvre | `A red cast-iron valve handwheel with six spokes and a central hub, seen exactly from the front, isolated on transparent background, square.` |
-| `prairie.png` | la pente herbue derrière les bassins, raccordable | `Seamless tileable texture of a grassy meadow seen from the side, short grass with a few tiny white and yellow flowers, front view, square 1024×1024.` |
+Pour toutes : **une conversation ChatGPT unique**, en joignant d'abord la
+maquette du niveau 14 (`art/maquette.webp`), puis le bloc de style en tête de
+chaque prompt. Une texture « raccordable » (seamless) doit pouvoir se poser
+bord à bord sans couture visible. Si ChatGPT en laisse une, le jeu sait
+l'estomper, mais une vraie texture raccordable rend mieux.
+
+### `art/terre.png` — la terre en coupe (raccordable)
+
+Elle couvre tout le bas de l'écran et le tour des bassins. Elle se répète en
+damier, donc **pas de gros caillou** dedans (on le verrait revenir) : les
+rochers sont une image à part.
+
+```text
+Seamless tileable texture of warm reddish-brown soil seen in side cross-section, exactly like the soil under the canal in the reference image: hand-painted soft patches of darker brown and lighter ochre with soft brush strokes, a few tiny pebbles and grains, subtle horizontal layering. No large rocks, no plants, no grass, no roots, no lighting gradient (the same brightness at the top and the bottom). Front view, flat, square 1024×1024, edges must tile seamlessly.
+```
+
+### `art/rochers.png` — trois rochers à semer dans la terre
+
+Le jeu les sème lui-même dans la terre, à des tailles variées, avec leur
+ombre.
+
+```text
+Three separate rounded rocks half-buried in soil style, like the grey-brown rocks embedded in the soil of the reference image: smooth, slightly flattened, warm grey-brown with a soft highlight on the top-left and a darker bottom-right, thin dark outline. Three different shapes and sizes, side by side in a single row with wide empty gaps between them, isolated on a transparent background, no soil around them, no shadow.
+```
+
+### `art/pousses.png` — trois petites pousses vertes
+
+```text
+Three small separate green sprouts growing from the soil, like the little plants in the soil of the reference image: a tuft of pointed leaves, a two-leaf seedling, and a tiny clover-like plant, bright fresh green with darker bases. Side by side in a single row with wide empty gaps, isolated on a transparent background, no soil, no shadow.
+```
+
+### `art/pierre.png` — les pierres taillées des écluses (raccordable)
+
+La même pierre partout : les tours des portes, les radiers sous l'eau, les
+parements des berges, et le mur du fond derrière l'eau (le jeu l'assombrit).
+Un appareil régulier de blocs, pour que les joints tombent juste en bord de
+bassin.
+
+```text
+Seamless tileable texture of light sandstone masonry exactly like the beige stone blocks around the lock basins in the reference image: rectangular blocks twice as wide as high laid in a running bond, warm beige and cream with slight variations from block to block, softly bevelled edges (lit top-left, shaded bottom-right), thin darker mortar joints, a few subtle cracks and tiny chips, no moss. Front view, flat, no perspective, exactly 4 rows of blocks, square 1024×1024, edges must tile seamlessly.
+```
+
+### `art/vantail.png` — la porte de l'écluse
+
+Le vantail est **étroit et haut** (environ 1 de large pour 6 de haut) et sa
+hauteur change d'un niveau à l'autre. Le jeu étire donc le milieu et garde
+intacts le haut et le bas. Il faut des ferrures régulières, pas un motif
+unique au centre.
+
+```text
+A wooden canal lock gate leaf seen exactly from the front, like the wooden gates with dark iron bands in the reference image: vertical oak planks in warm brown, a dark iron strap across the top and across the bottom, and evenly spaced dark iron bands with rivets in between, a slightly darker wooden frame on the left and right edges. Very tall and narrow rectangle, ratio 1:6, filling the image, isolated on a transparent background, no shadow, no hinges, no handle.
+```
+
+### `art/traverse.png` — la poutre du portique
+
+La poutre horizontale en haut de la porte, où le vantail levé vient se
+ranger. Le jeu l'étire en largeur.
+
+```text
+A heavy horizontal wooden beam reinforced with dark iron plates and big rivets at both ends, seen exactly from the front, like the wooden and iron parts of the lock gates in the reference image. Long thin rectangle, ratio about 6:1, filling the image, isolated on a transparent background, no shadow.
+```
+
+### `art/roue.png` — la roue de manœuvre
+
+Le jeu la fait tourner : elle doit être **vue de face, parfaitement ronde et
+centrée**, sans axe ni support (le jeu dessine la tige).
+
+```text
+A red cast-iron valve handwheel seen exactly from the front, like the red wheels on top of the lock gates in the reference image: a thick round rim with small knobs, six spokes, a central hub with a bolt, glossy red paint with a dark outline and a soft highlight on the top-left. Perfectly circular and centred, square image, isolated on a transparent background, no stem, no support, no shadow.
+```
+
+### `art/herbe_bord.png` — le bord d'herbe (raccordable en largeur)
+
+Il ourle le haut des berges et des murs, et retombe un peu sur la terre,
+comme sur la maquette.
+
+```text
+A horizontal strip of grass edge seen exactly from the side, like the grassy top of the canal banks in the reference image: a lush band of bright green grass with a few tiny white and yellow flowers, the top edge made of irregular grass blades, the bottom edge hanging slightly with a few short roots. Long horizontal strip, ratio about 8:1, tileable seamlessly from left to right, isolated on a transparent background, no soil, no shadow.
+```
+
+### Plus tard, peut-être
+
+- `premier_plan.png` : un buisson flou et des marguerites au premier plan,
+  dans un coin, comme sur la maquette. Ça donne de la profondeur, mais ça
+  gênerait les boutons : à voir une fois le reste en place.
+- Les aqueducs : ce sont des tracés qui tournent, avec de l'eau animée
+  dedans. Une image s'y plie mal, ils restent dessinés.
 
 ## Ce qu'il faut regarder en recevant une image
 
