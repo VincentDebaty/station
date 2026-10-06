@@ -200,15 +200,11 @@ func annuler() -> void:
 	_chercher_impasse()      # l'état d'avant peut lui-même être une impasse
 
 # --- L'interface ----------------------------------------------------------------------
-# L'interface suit la maquette du niveau 14 (Vincent, 6 octobre 2026) : une
-# pastille bleue pour le numéro, collée à une pastille crème pour les coups ;
-# une pastille crème pour les étoiles ; des boutons du même crème. Toutes ont
-# un liseré blanc et une ombre douce. Police arrondie : Arial Rounded MT Bold,
-# présente d'origine sur iOS et macOS — rien à embarquer.
-const CREME := Color("#f8f3ea")
-const ENCRE := Color("#3d3b38")
-const BLEU := Color("#2b7de0")
-
+# L'interface suit la maquette du panneau d'éclusier (Vincent, 6 octobre
+# 2026) : tout ce qui se touche ou se lit autour du jeu est en bois — le
+# numéro, les coups, les boutons du bas, la pancarte de fin. Seul le panneau des
+# réglages, outil de test, reste une pastille claire. Police arrondie : Arial
+# Rounded MT Bold, présente d'origine sur iOS et macOS — rien à embarquer.
 func _style(fond: Color, rayon := 26, ombre := true) -> StyleBoxFlat:
 	var s := StyleBoxFlat.new()
 	s.bg_color = fond
@@ -222,8 +218,8 @@ func _style(fond: Color, rayon := 26, ombre := true) -> StyleBoxFlat:
 	return s
 
 # Une plaque de bois : l'image art/plaque_bois.png si elle existe (découpée en
-# neuf, recadrée sur ses pixels visibles), sinon un bois uni dessiné — brun,
-# liseré de bois clair, ombre douce.
+# neuf, recadrée sur ses pixels visibles), sinon le bois en relief dessiné
+# (relief.gd), le même que celui des boutons.
 var _tex_plaque: Texture2D = null
 func _style_bois(rayon: int, marge: int) -> StyleBox:
 	if _tex_plaque == null and ResourceLoader.exists("res://art/plaque_bois.png"):
@@ -235,15 +231,7 @@ func _style_bois(rayon: int, marge: int) -> StyleBox:
 		t.content_margin_left = marge; t.content_margin_right = marge
 		t.content_margin_top = 6; t.content_margin_bottom = 8
 		return t
-	var s := StyleBoxFlat.new()
-	s.bg_color = Color("#8b5a2b")
-	s.set_corner_radius_all(rayon)
-	s.border_color = Color("#c98f52"); s.set_border_width_all(4)
-	s.shadow_color = Color(0, 0, 0, 0.3); s.shadow_size = 7; s.shadow_offset = Vector2(0, 4)
-	s.content_margin_left = marge; s.content_margin_right = marge
-	s.content_margin_top = 6; s.content_margin_bottom = 8
-	s.anti_aliasing = true
-	return s
+	return Relief.plaque(rayon, marge)
 
 # Le texte sur le bois : crème cerclé de brun foncé, comme sur la pancarte.
 func _label_bois(t: String, taille: int) -> Label:
@@ -303,10 +291,10 @@ func _interface() -> void:
 	droite.grow_horizontal = Control.GROW_DIRECTION_BEGIN
 	# en bas à droite : annuler, recommencer
 	var boutons := HBoxContainer.new()
-	boutons.add_theme_constant_override("separation", 10)
-	_b_annuler = _bouton("Annuler", annuler)
+	boutons.add_theme_constant_override("separation", 14)
+	_b_annuler = _medaillon(Images.pictogramme("res://art/icone_annuler.png", 128, 8), annuler)
 	boutons.add_child(_b_annuler)
-	boutons.add_child(_bouton("Recommencer", _lancer))
+	boutons.add_child(_medaillon(Images.pictogramme("res://art/icone_rejouer.png", 128, 8), _lancer))
 	_sure.add_child(boutons)
 	boutons.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_RIGHT, Control.PRESET_MODE_MINSIZE, 0)
 	boutons.grow_horizontal = Control.GROW_DIRECTION_BEGIN
@@ -334,7 +322,7 @@ func _interface() -> void:
 	if not OS.has_feature("movie"):
 		var defaut := _bouton("Valeurs de départ", func(): Reglages.remettre(); _maj_valeurs(true))
 		defaut.hide()
-		ligne.add_child(_bouton("Réglages", func():
+		ligne.add_child(_medaillon(Images.engrenage(128, 8), func():
 			_panneau.visible = not _panneau.visible
 			defaut.visible = _panneau.visible))
 		ligne.add_child(defaut)
@@ -392,22 +380,43 @@ func _label(t: String, taille: int, c: Color) -> Label:
 	l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	return l
 
+# Un bouton à texte en bois en relief (le « Valeurs de départ » des réglages).
 func _bouton(t: String, f: Callable) -> Button:
 	var b := Button.new()
 	b.text = t
+	var creme := Color("#fff3dc")
 	b.add_theme_font_size_override("font_size", 24)
-	b.add_theme_color_override("font_color", ENCRE)
-	b.add_theme_color_override("font_hover_color", ENCRE)
-	b.add_theme_color_override("font_pressed_color", ENCRE)
-	b.add_theme_color_override("font_focus_color", ENCRE)
-	b.add_theme_color_override("font_disabled_color", Color("#b3ada3"))
-	for etat_b in ["normal", "hover", "pressed", "disabled", "focus"]:
-		var st := _style(CREME if etat_b != "pressed" else Color("#ebe3d4"), 28)
-		if etat_b == "focus": st.draw_center = false; st.shadow_size = 0
-		b.add_theme_stylebox_override(etat_b, st)
-	b.custom_minimum_size = Vector2(0, 58)
+	for nom in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color"]:
+		b.add_theme_color_override(nom, creme)
+	b.add_theme_color_override("font_outline_color", Color("#3e210d"))
+	b.add_theme_constant_override("outline_size", 8)
+	_habiller(b, 22.0, 22.0)
+	b.custom_minimum_size = Vector2(0, 66)
 	b.pressed.connect(f)
 	return b
+
+# Les boutons du bas de l'écran, comme sur l'image d'exemple de Vincent
+# (6 octobre 2026) : des médaillons ronds en bois épais, un pictogramme crème
+# cerclé de brun au milieu, sans texte. Enfoncé, la face descend sur sa
+# tranche et le pictogramme avec elle ; indisponible (rien à annuler), tout
+# pâlit.
+func _medaillon(picto: Texture2D, f: Callable) -> Button:
+	var b := Button.new()
+	b.icon = picto
+	b.expand_icon = true
+	b.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	b.add_theme_color_override("icon_disabled_color", Color(1, 1, 1, 0.45))
+	_habiller(b, 70.0, 27.0)
+	b.custom_minimum_size = Vector2(120, 120)
+	b.pressed.connect(f)
+	return b
+
+func _habiller(b: Button, rayon: float, marge: float) -> void:
+	b.add_theme_stylebox_override("normal", Relief.plaque(rayon, marge))
+	b.add_theme_stylebox_override("hover", Relief.plaque(rayon, marge))
+	b.add_theme_stylebox_override("pressed", Relief.plaque(rayon, marge, true))
+	b.add_theme_stylebox_override("disabled", Relief.plaque(rayon, marge, false, true))
+	b.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
 
 func _nb_etoiles() -> int:
 	var c: int = etat["coups"]
