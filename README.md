@@ -89,7 +89,9 @@ tools/                        Serveur local, contrôles (gen-check, carte-check,
 assets/                       Images concept
 prototypes/                   Prototypes de mécanique, une page chacun, hors du jeu :
                               Namur et gare centrale v2 (anciens), voyageurs, et
-                              « Nuit de fête » (banc d'essai : node tools/fete-banc.mjs)
+                              « Nuit de fête » (banc d'essai : node tools/fete-banc.mjs) ;
+                              « Écluses », une autre idée de jeu, un puzzle d'eau
+                              (banc d'essai : node tools/ecluses-banc.mjs)
 ```
 
 ## Ajouter une gare

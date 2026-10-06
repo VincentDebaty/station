@@ -159,6 +159,10 @@ jour qui perd la partie d'un joueur est un bug bloquant, pas un détail.
   `prototype-nuit-de-fete.html`) : on y ajoute, on ne réécrit pas les anciens.
   Nuit de fête a son banc, `node tools/fete-banc.mjs`, qui refuse comme les
   contrôles : il extrait le moteur et les réglages de la page elle-même.
+  `prototype-ecluses.html` n'est pas une mécanique de Station mais une autre
+  idée de jeu (un puzzle d'eau en coupe), rangée ici faute de dépôt à elle.
+  Son banc, `node tools/ecluses-banc.mjs`, résout chaque niveau et refuse si
+  le `par` écrit n'est pas la meilleure solution.
 - `data/worldmap.js` — généré depuis Natural Earth, jamais édité à la main.
 
 ## Détail connu
