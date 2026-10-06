@@ -466,5 +466,6 @@ func _demo() -> void:
 		await _photo("99-coince")
 	if OS.get_environment("ECLUSES_CAPTURE") != "":
 		await get_tree().create_timer(3.2).timeout     # le temps de voir la pancarte s'animer
+		await _photo("99-pancarte")
 		print("images par seconde (moyenne) : %.1f" % (_images / maxf(_secondes, 0.001)))
 		get_tree().quit()

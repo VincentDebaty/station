@@ -21,6 +21,9 @@ var taille := 40.0
 # étoiles gagnées, et elles battent doucement. Les étoiles du haut de l'écran,
 # elles, ne s'animent pas.
 var _anime := false
+# En arc, comme sur la maquette de victoire : celle du milieu plus grande et
+# plus haute, les deux autres plus bas sur les côtés, des paillettes autour.
+var en_arc := false
 var _t := 0.0
 const DEBUT := 0.35          # après la chute de la pancarte
 const ECART := 0.32          # entre deux étoiles
@@ -81,12 +84,29 @@ func _echelle(i: int) -> float:
 	if i < n: return 1.0 + 0.035 * sin((t - 0.38) * 3.2 + i)
 	return 1.0
 
+func _cote(i: int) -> float:
+	return taille * (1.3 if en_arc and i == 1 else 1.0)
+
+func _centre(i: int) -> Vector2:
+	if not en_arc:
+		return Vector2(taille * 0.5 + i * taille * 1.15, taille * 0.5)
+	var ecart := taille * 0.04
+	var x := 0.0
+	for j in i: x += _cote(j) + ecart
+	x += _cote(i) * 0.5
+	var y := _cote(1) * 0.5 + (0.0 if i == 1 else taille * 0.22)
+	return Vector2(x, y)
+
 func _get_minimum_size() -> Vector2:
+	if en_arc:
+		return Vector2(_cote(0) + _cote(1) + _cote(2) + taille * 0.08, _cote(1) * 0.5 + taille * 0.22 + taille * 0.5)
 	return Vector2(taille * 3.0 + taille * 0.15 * 2.0, taille)
 
 func _draw() -> void:
+	if _anime and en_arc: _paillettes()
 	for i in 3:
-		var c := Vector2(taille * 0.5 + i * taille * 1.15, taille * 0.5)
+		var c := _centre(i)
+		var cote := _cote(i)
 		var e := _echelle(i)
 		if e <= 0.01: continue
 		var tour := 0.0
@@ -95,11 +115,27 @@ func _draw() -> void:
 		draw_set_transform(c, tour, Vector2(e, e))
 		var tex := _pleine if i < n else _vide
 		if tex:
-			draw_texture_rect(tex, Rect2(-Vector2(taille, taille) * 0.5, Vector2(taille, taille)), false)
+			draw_texture_rect(tex, Rect2(-Vector2(cote, cote) * 0.5, Vector2(cote, cote)), false)
 		else:
-			_etoile(Vector2.ZERO, taille * 0.52, i < n)
+			_etoile(Vector2.ZERO, cote * 0.52, i < n)
 		draw_set_transform(Vector2.ZERO)
 	if _anime: _eclats()
+
+# Les paillettes : de petits points dorés qui clignotent autour des étoiles,
+# chacun à son rythme, une fois les étoiles apparues.
+func _paillettes() -> void:
+	var depart := DEBUT + 0.2
+	if _t < depart: return
+	var l := get_combined_minimum_size()
+	var points := [Vector2(-0.06, 0.62), Vector2(0.05, 0.25), Vector2(0.3, 0.02), Vector2(0.7, 0.04),
+		Vector2(0.95, 0.28), Vector2(1.05, 0.66), Vector2(0.22, 0.9), Vector2(0.8, 0.92)]
+	for j in points.size():
+		var a := 0.5 + 0.5 * sin((_t - depart) * (2.3 + j * 0.37) + j * 1.7)
+		a *= clampf((_t - depart) / 0.6, 0.0, 1.0)
+		var p: Vector2 = points[j] * l
+		var r := taille * (0.05 + 0.03 * a)
+		draw_colored_polygon(PackedVector2Array([p + Vector2(0, -r * 2.2), p + Vector2(r * 0.5, 0), p + Vector2(0, r * 2.2), p + Vector2(-r * 0.5, 0)]), Color(1, 0.92, 0.55, a))
+		draw_colored_polygon(PackedVector2Array([p + Vector2(-r * 2.2, 0), p + Vector2(0, r * 0.5), p + Vector2(r * 2.2, 0), p + Vector2(0, -r * 0.5)]), Color(1, 0.92, 0.55, a))
 
 # Les éclats : une petite croix de lumière à quatre branches qui s'allume et
 # s'éteint, à tour de rôle sur chaque étoile gagnée, une fois toutes posées.
@@ -110,8 +146,8 @@ func _eclats() -> void:
 	var rang := int((_t - depart) / cycle)
 	var phase := fmod(_t - depart, cycle) / cycle
 	var i := rang % n
-	var c := Vector2(taille * 0.5 + i * taille * 1.15, taille * 0.5)
-	var o := c + Vector2(taille * (0.12 if rang % 2 == 0 else -0.18), -taille * (0.2 if rang % 3 == 0 else 0.05))
+	var c := _centre(i)
+	var o := c + Vector2(_cote(i) * (0.12 if rang % 2 == 0 else -0.18), -_cote(i) * (0.2 if rang % 3 == 0 else 0.05))
 	var a := sin(phase * PI)
 	var r := taille * 0.32 * (0.6 + 0.4 * a)
 	var blanc := Color(1, 1, 0.94, a)
