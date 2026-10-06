@@ -19,7 +19,9 @@ float bruit(vec2 p) {
 void fragment() {
 	float x = UV.x * longueur;                      // en pixels le long du conduit
 	float v = UV.y;
-	float vitesse = sens * (8.0 + 150.0 * debit);   // pixels par seconde
+	// pixels par seconde : 158 au plus fort était bien trop vif (Vincent) ;
+	// l'eau d'un aqueduc avance, elle ne file pas
+	float vitesse = sens * (4.0 + 38.0 * debit);
 	// un motif qui glisse vers les x croissants s'écrit f(x - v·t)… mais mesuré
 	// sur la démo filmée, la ligne de Godot fait défiler le motif à l'envers :
 	// le signe est donc retourné ici, et vérifié à l'image (filets qui descendent
