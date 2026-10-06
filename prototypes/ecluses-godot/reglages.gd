@@ -9,6 +9,12 @@ extends Node
 # (user://reglages.json — le téléphone, pas le dépôt). Quand les bons chiffres
 # sont trouvés, ils deviennent les DEFAUTS ci-dessous.
 #
+# Défauts choisis par Vincent sur son iPhone le 6 octobre 2026 : un courant à
+# peine visible et lent, peu de sillage, une surface qui se calme vite. Deux
+# de ses valeurs touchaient la borne de leur curseur (vitesse au minimum,
+# amortissement au maximum) : les bornes ont été élargies pour qu'il puisse
+# aller plus loin s'il le veut. Le bouton « Réglages » reste, à sa demande.
+#
 # Ce sont des dosages du RENDU : aucun ne touche au moteur ni aux niveaux.
 # ------------------------------------------------------------------
 
@@ -18,12 +24,12 @@ const FICHIER := "user://reglages.json"
 
 # clé : [nom affiché, défaut, minimum, maximum, pas]
 const CURSEURS := {
-	"courant_contraste": ["Aqueduc : contraste", 0.35, 0.0, 1.0, 0.05],
-	"courant_vitesse": ["Aqueduc : vitesse", 0.6, 0.1, 2.0, 0.05],
-	"sillage": ["Sillage des bateaux", 0.35, 0.0, 1.5, 0.05],
-	"bouillon": ["Bouillon à la sortie", 0.5, 0.0, 1.5, 0.05],
-	"houle": ["Houle", 0.8, 0.0, 2.0, 0.05],
-	"amortissement": ["Amortissement", 0.07, 0.02, 0.2, 0.01],
+	"courant_contraste": ["Aqueduc : contraste", 0.10, 0.0, 1.0, 0.05],
+	"courant_vitesse": ["Aqueduc : vitesse", 0.10, 0.0, 2.0, 0.05],
+	"sillage": ["Sillage des bateaux", 0.20, 0.0, 1.5, 0.05],
+	"bouillon": ["Bouillon à la sortie", 0.25, 0.0, 1.5, 0.05],
+	"houle": ["Houle", 0.90, 0.0, 2.0, 0.05],
+	"amortissement": ["Amortissement", 0.20, 0.02, 0.4, 0.01],
 }
 
 var valeurs := {}
