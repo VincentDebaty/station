@@ -425,7 +425,7 @@ func _habiller_image(b: Button) -> bool:
 		st.texture = _tex_medaillon
 		var bas := 4.0 if etat_b == "pressed" else 0.0
 		st.content_margin_left = 28; st.content_margin_right = 28
-		st.content_margin_top = 24 + bas; st.content_margin_bottom = 32 - bas
+		st.content_margin_top = 28 + bas; st.content_margin_bottom = 28 - bas
 		if etat_b == "pressed": st.modulate_color = Color(0.8, 0.76, 0.72)
 		if etat_b == "disabled": st.modulate_color = Color(1, 1, 1, 0.55)
 		b.add_theme_stylebox_override(etat_b, st)

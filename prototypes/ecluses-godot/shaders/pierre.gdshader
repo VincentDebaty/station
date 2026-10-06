@@ -7,6 +7,11 @@ uniform vec3 teinte : source_color = vec3(0.90, 0.84, 0.72);
 uniform vec3 mortier : source_color = vec3(0.60, 0.53, 0.43);
 uniform float ombre = 1.0;
 uniform vec2 bloc = vec2(62.0, 31.0);
+// la pierre peinte (art/pierre.png, voir peint.gd), quand elle existe : elle
+// remplace le dessin, teintée et assombrie comme lui
+uniform bool avec_image = false;
+uniform sampler2D image : source_color, repeat_enable, filter_linear_mipmap;
+uniform vec2 tuile = vec2(171.0, 144.0);
 
 varying vec2 monde;
 
@@ -22,15 +27,20 @@ float bruit(vec2 p) {
 }
 
 void fragment() {
-	vec2 p = monde / bloc;
-	p.x += mod(floor(p.y), 2.0) * 0.5;
-	vec2 id = floor(p);
-	vec2 f = fract(p) * bloc;               // position dans le bloc, en pixels
-	vec2 g = bloc - f;
-	float bord = min(min(f.x, g.x), min(f.y, g.y));
-	vec3 c = teinte * (0.9 + 0.2 * hash(id)) * (0.92 + 0.12 * bruit(monde / 9.0));
-	c += vec3(0.07) * (1.0 - smoothstep(0.0, 5.0, f.y)) + vec3(0.05) * (1.0 - smoothstep(0.0, 5.0, f.x));
-	c -= vec3(0.10) * (1.0 - smoothstep(0.0, 6.0, g.y)) + vec3(0.06) * (1.0 - smoothstep(0.0, 5.0, g.x));
-	c = mix(mortier, c, smoothstep(1.0, 2.6, bord));
-	COLOR = vec4(c * ombre, 1.0);
+	if (avec_image) {
+		vec3 ci = texture(image, monde / tuile).rgb * (teinte / vec3(0.90, 0.84, 0.72));
+		COLOR = vec4(ci * ombre, 1.0);
+	} else {
+		vec2 p = monde / bloc;
+		p.x += mod(floor(p.y), 2.0) * 0.5;
+		vec2 id = floor(p);
+		vec2 f = fract(p) * bloc;               // position dans le bloc, en pixels
+		vec2 g = bloc - f;
+		float bord = min(min(f.x, g.x), min(f.y, g.y));
+		vec3 c = teinte * (0.9 + 0.2 * hash(id)) * (0.92 + 0.12 * bruit(monde / 9.0));
+		c += vec3(0.07) * (1.0 - smoothstep(0.0, 5.0, f.y)) + vec3(0.05) * (1.0 - smoothstep(0.0, 5.0, f.x));
+		c -= vec3(0.10) * (1.0 - smoothstep(0.0, 6.0, g.y)) + vec3(0.06) * (1.0 - smoothstep(0.0, 5.0, g.x));
+		c = mix(mortier, c, smoothstep(1.0, 2.6, bord));
+		COLOR = vec4(c * ombre, 1.0);
+	}
 }

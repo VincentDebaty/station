@@ -137,9 +137,21 @@ transparence autour (pas de damier peint).
 
 Vincent veut que la coupe soit aussi belle que la maquette du niveau 14 : la
 terre, les pierres des murs, les portes, la roue. Les shaders font un dessin
-correct, mais pas peint. Chaque image ci-dessous remplacera un dessin. Le code
-de chargement s'écrit à la réception de chaque image : les marges de découpe
-dépendent de l'image reçue.
+correct, mais pas peint. Chaque image ci-dessous remplace un dessin.
+
+**Toutes branchées le 6 octobre 2026** par `peint.gd`, qui les charge une fois.
+Pour chacune, ce que fait le jeu :
+- **terre.png** : en tuiles de 512 px.
+- **pierre.png** : recoupée sur un nombre pair de rangées entières (l'image en
+  avait 4,7 et la quinconce cassait au raccord), à 36 px par rangée.
+- **vantail.png** : posé sur le cadre entier du vantail.
+- **traverse.png** : découpée en trois, les bouts ferrés intacts.
+- **roue.png** : tourne sur son moyeu.
+- **herbe_bord.png** : répétée en largeur, son pied sur le bord.
+- **rochers.png** et **pousses.png** : découpées en trois images, semées dans
+  la terre hors du trajet des aqueducs.
+
+Sans l'image, le dessin d'avant reprend.
 
 Pour toutes : **une conversation ChatGPT unique**, en joignant d'abord la
 maquette du niveau 14 (`art/maquette.webp`), puis le bloc de style en tête de

@@ -48,9 +48,11 @@ func preparer(ax0: float, ax1: float, aseuil: float, acrete: float, aportique: f
 	bas_y = bas_ouvert_y if leve else y_seuil
 	var mp := ShaderMaterial.new()
 	mp.shader = pierre
+	Peint.habiller(mp, "pierre")
 	# le vantail d'abord : les tours et la traverse passent devant lui
 	_mat_bois = ShaderMaterial.new()
 	_mat_bois.shader = bois
+	Peint.habiller(_mat_bois, "bois")
 	_vantail = Polygon2D.new()
 	_vantail.material = _mat_bois
 	add_child(_vantail)
@@ -63,14 +65,29 @@ func preparer(ax0: float, ax1: float, aseuil: float, acrete: float, aportique: f
 	add_child(_rect(gx0 - 6, y_portique, gx0 + 9, y_seuil, mp))
 	add_child(_rect(gx1 - 9, y_portique, gx1 + 6, y_seuil, mp))
 	# la traverse, où le vantail levé vient se ranger
-	var traverse := Polygon2D.new()
-	traverse.color = Color("#3b2a1e")
-	traverse.polygon = _quad(gx0 - 16, y_portique - 0.2 * u, gx1 + 16, y_portique + 4)
-	add_child(traverse)
-	var filet := Polygon2D.new()
-	filet.color = Color("#5a4330")
-	filet.polygon = _quad(gx0 - 16, y_portique - 0.2 * u, gx1 + 16, y_portique - 0.2 * u + 4)
-	add_child(filet)
+	var tx := Peint.traverse()
+	if tx:
+		# la poutre peinte, découpée en trois : ses deux bouts ferrés gardent
+		# leur forme, le bois du milieu s'étire à la largeur de la porte
+		var np := NinePatchRect.new()
+		np.texture = tx
+		var bout := int(tx.get_width() * 0.11)
+		np.patch_margin_left = bout; np.patch_margin_right = bout
+		var e := (0.2 * u + 4.0) / tx.get_height()
+		np.position = Vector2(gx0 - 16, y_portique - 0.2 * u)
+		np.size = Vector2((gx1 - gx0 + 32) / e, tx.get_height())
+		np.scale = Vector2(e, e)
+		np.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		add_child(np)
+	else:
+		var traverse := Polygon2D.new()
+		traverse.color = Color("#3b2a1e")
+		traverse.polygon = _quad(gx0 - 16, y_portique - 0.2 * u, gx1 + 16, y_portique + 4)
+		add_child(traverse)
+		var filet := Polygon2D.new()
+		filet.color = Color("#5a4330")
+		filet.polygon = _quad(gx0 - 16, y_portique - 0.2 * u, gx1 + 16, y_portique - 0.2 * u + 4)
+		add_child(filet)
 	roue = Node2D.new()
 	roue.z_index = 6
 	roue.draw.connect(_dessiner_roue)
@@ -167,6 +184,16 @@ func _dessiner_roue() -> void:
 	# le pied, de la traverse à l'axe
 	roue.draw_rect(Rect2(c.x - 4, c.y, 8, (y_portique - 0.2 * u) - c.y), Color("#2d2a28"))
 	roue.draw_circle(c + Vector2(2, 3), r + 5, Color(0, 0, 0, 0.18))
+	var tr := Peint.roue()
+	if tr:
+		# la roue peinte, qui tourne sur son moyeu ; ses boutons dépassent
+		# du cercle dessiné d'avant, d'où le rayon un peu plus grand
+		var R := r + 7.5
+		roue.draw_set_transform(c, _angle)
+		roue.draw_texture_rect(tr, Rect2(-R, -R, 2.0 * R, 2.0 * R), false)
+		roue.draw_set_transform(Vector2.ZERO)
+		_pastille(c, r)
+		return
 	roue.draw_arc(c, r, 0, TAU, 40, sombre, 10.0, true)
 	roue.draw_arc(c, r, 0, TAU, 40, rouge, 7.0, true)
 	roue.draw_arc(c, r - 1.5, PI * 1.1, PI * 1.6, 12, Color(1, 0.6, 0.5, 0.7), 2.0, true)
@@ -179,7 +206,10 @@ func _dessiner_roue() -> void:
 			roue.draw_circle(c + d * (r + 4.0), 3.5, sombre)
 	roue.draw_circle(c, 7.0, sombre)
 	roue.draw_circle(c, 4.0, Color("#e9e2d8"))
-	# la vanne : une pastille verte quand elle est ouverte, à côté de la roue
+	_pastille(c, r)
+
+# la vanne : une pastille verte quand elle est ouverte, à côté de la roue
+func _pastille(c: Vector2, r: float) -> void:
 	var p := c + Vector2(r + 13, 0)
 	roue.draw_circle(p, 6.0, Color(1, 1, 1, 0.9))
 	roue.draw_circle(p, 4.0, Color("#2f9e58") if vanne_ouverte else Color("#8a8f92"))

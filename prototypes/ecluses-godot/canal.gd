@@ -209,6 +209,8 @@ func _mat(shader: Shader, params := {}) -> ShaderMaterial:
 	var m := ShaderMaterial.new()
 	m.shader = shader
 	for k in params: m.set_shader_parameter(k, params[k])
+	if shader == SH_PIERRE: Peint.habiller(m, "pierre")
+	elif shader == SH_TERRE: Peint.habiller(m, "terre")
 	return m
 
 func _decor() -> void:
@@ -278,8 +280,9 @@ func _murs_du_fond() -> void:
 		_poly(_quad(X(gb[i][0]) - 8, Y(sommet), X(gb[i][1]) + 8, Y(sommet) + 16), null,
 			PackedColorArray([Color(0, 0, 0, 0.22), Color(0, 0, 0, 0.22), Color(0, 0, 0, 0), Color(0, 0, 0, 0)]))
 		# le couronnement herbu du mur
-		_poly(_quad(X(gb[i][0]) - 10, Y(sommet) - 7, X(gb[i][1]) + 10, Y(sommet) + 3), null,
-			PackedColorArray([Color("#9ccc63"), Color("#9ccc63"), Color("#6f9a40"), Color("#6f9a40")]))
+		if not _bande_herbe(X(gb[i][0]) - 10, X(gb[i][1]) + 10, Y(sommet) + 2, 24.0):
+			_poly(_quad(X(gb[i][0]) - 10, Y(sommet) - 7, X(gb[i][1]) + 10, Y(sommet) + 3), null,
+				PackedColorArray([Color("#9ccc63"), Color("#9ccc63"), Color("#6f9a40"), Color("#6f9a40")]))
 
 	# derrière chaque porte aussi : sinon l'ouverture laisse voir la prairie
 	for i in N["liaisons"].size():
@@ -335,7 +338,64 @@ func _coupe_avant() -> void:
 		_poly(_quad(t[0], t[2], t[1], t[2] + 26.0), null,
 			PackedColorArray([Color(0.12, 0.05, 0, 0.32), Color(0.12, 0.05, 0, 0.32), Color(0.12, 0.05, 0, 0), Color(0.12, 0.05, 0, 0)]))
 	for t in tops:
+		_rochers(maxf(t[0], -300.0), minf(t[1], W + 300.0), t[2])
+	for t in tops:
 		_pousses(maxf(t[0], -300.0), minf(t[1], W + 300.0), t[2])
+
+# Le bord d'herbe peint (art/herbe_bord.png), s'il existe : une bande de
+# « hauteur » px qui se répète en largeur. Son pied — là où les brins sortent
+# de la terre, aux deux tiers de l'image — tombe sur y ; les racines pendent
+# dessous. Renvoie faux sans image (le dessin d'avant reprend).
+func _bande_herbe(x0: float, x1: float, y: float, hauteur: float) -> bool:
+	var t := Peint.herbe()
+	if t == null: return false
+	var haut_y := y - 0.64 * hauteur
+	var k := t.get_height() / hauteur          # pixels de texture par pixel du monde
+	var p := Polygon2D.new()
+	p.texture = t
+	p.texture_repeat = CanvasItem.TEXTURE_REPEAT_ENABLED
+	p.polygon = _quad(x0, haut_y, x1, haut_y + hauteur)
+	p.uv = PackedVector2Array([Vector2(x0 * k, 0), Vector2(x1 * k, 0), Vector2(x1 * k, t.get_height()), Vector2(x0 * k, t.get_height())])
+	add_child(p)
+	return true
+
+# Des rochers peints (art/rochers.png) à demi enfouis dans la terre, sous un
+# bord : rares, de tailles variées, chacun avec son ombre, jamais sur le trajet
+# d'un aqueduc. Sans image, ce sont les cailloux du shader de la terre.
+func _rochers(x0: float, x1: float, y: float) -> void:
+	var images := Peint.rochers()
+	if images.is_empty(): return
+	var traces := []
+	for i in N["liaisons"].size():
+		if N["liaisons"][i]["type"] == "porte": traces.append(_trace_aqueduc(i))
+	var rng := RandomNumberGenerator.new()
+	rng.seed = int(absf(x0) * 3.0 + y * 17.0) + 5
+	var x := x0 + rng.randf_range(40.0, 200.0)
+	while x < x1 - 30.0:
+		var t: Texture2D = images[rng.randi() % images.size()]
+		var w := rng.randf_range(36.0, 74.0)
+		var h := w * t.get_height() / t.get_width()
+		var c := Vector2(x, y + rng.randf_range(70.0, 300.0))
+		var libre := true
+		for tr in traces:
+			for j in tr.size() - 1:
+				if Geometry2D.get_closest_point_to_segment(c, tr[j], tr[j + 1]).distance_to(c) < w * 0.6 + 16.0:
+					libre = false
+		if libre:
+			# l'ombre dans la terre, en bas à droite
+			var ombre := PackedVector2Array()
+			for a in 20:
+				var ang := TAU * a / 20.0
+				ombre.append(c + Vector2(4.0, h * 0.28) + Vector2(cos(ang) * w * 0.52, sin(ang) * h * 0.32))
+			var po := _poly(ombre)
+			po.color = Color(0.12, 0.05, 0.0, 0.3)
+			var sp := Sprite2D.new()
+			sp.texture = t
+			sp.scale = Vector2(w / t.get_width(), h / t.get_height())
+			sp.flip_h = rng.randf() < 0.5
+			sp.position = c
+			add_child(sp)
+		x += rng.randf_range(180.0, 380.0)
 
 # L'ombre que fait un parement de pierre sur la terre à côté de lui (sens : -1,
 # la terre est à gauche).
@@ -354,9 +414,24 @@ func _ombre_cote(x: float, y0: float, y1: float, sens: float) -> void:
 func _pousses(x0: float, x1: float, y: float) -> void:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = int(absf(x0) * 7.0 + y * 13.0) + 1
+	var images := Peint.pousses()
 	var x := x0 + rng.randf_range(10.0, 60.0)
 	while x < x1 - 10.0:
 		var py := y + rng.randf_range(30.0, 110.0)
+		if not images.is_empty():
+			# une pousse peinte, posée sur son pied
+			var t: Texture2D = images[rng.randi() % images.size()]
+			var h := rng.randf_range(20.0, 30.0)
+			var w := h * t.get_width() / t.get_height()
+			var sp := Sprite2D.new()
+			sp.texture = t
+			sp.centered = false
+			sp.scale = Vector2(w / t.get_width(), h / t.get_height())
+			sp.flip_h = rng.randf() < 0.5
+			sp.position = Vector2(x - w * 0.5, py - h)
+			add_child(sp)
+			x += rng.randf_range(90.0, 230.0)
+			continue
 		var n := rng.randi_range(3, 5)
 		var taille := rng.randf_range(1.3, 2.0)
 		for k in n:
@@ -371,6 +446,7 @@ func _pousses(x0: float, x1: float, y: float) -> void:
 		x += rng.randf_range(90.0, 230.0)
 
 func _herbe(x0: float, x1: float, y: float) -> void:
+	if _bande_herbe(x0, x1, y, 34.0): return
 	_poly(_quad(x0, y - 8, x1, y + 6), null,
 		PackedColorArray([Color("#a6d46a"), Color("#a6d46a"), Color("#5f8d37"), Color("#5f8d37")]))
 	var touffes := PackedVector2Array()
