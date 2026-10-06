@@ -100,6 +100,10 @@ func construire(niveau: Dictionary, e: Dictionary) -> void:
 
 	_decor()
 	_murs_du_fond()
+	# le plan des tours de gauche des portes : derrière les bateaux et l'eau
+	var arriere := Node2D.new()
+	arriere.name = "ToursDuFond"
+	add_child(arriere)
 	var flotte := Node2D.new()
 	flotte.name = "Bateaux"
 	add_child(flotte)
@@ -121,6 +125,7 @@ func construire(niveau: Dictionary, e: Dictionary) -> void:
 		var l: Dictionary = N["liaisons"][i]
 		if l["type"] == "porte":
 			var po := Porte.new()
+			po.arriere = arriere
 			var bas_radier := Y(minf(float(B[i]["fond"]), float(B[i + 1]["fond"])) - 0.32)
 			po.preparer(X(gl[i][0]), X(gl[i][1]), Y(float(l["seuil"])), Y(float(l["crete"])), Y(haut - 0.85), bas_radier, U,
 				SH_PIERRE, SH_BOIS, e["ouvert"][i], _vantail_leve(e, i), _bas_ouvert(i))

@@ -38,6 +38,12 @@ var _vantail: Polygon2D
 var _mat_bois: ShaderMaterial
 var _chaines: Node2D
 var roue: Node2D
+# Le plan où poser la tour de GAUCHE, derrière les bateaux et l'eau (le canal
+# le donne avant preparer). Vincent, 6 octobre 2026 : l'écluse entière passait
+# devant, et le bateau semblait passer derrière elle ; avec la tour de gauche
+# au fond et celle de droite devant, il passe ENTRE les deux piliers. Sans ce
+# plan, la tour reste avec le reste de la porte.
+var arriere: Node2D = null
 
 func preparer(ax0: float, ax1: float, aseuil: float, acrete: float, aportique: float, abas: float, au: float,
 		pierre: Shader, bois: Shader, vanne: bool, leve: bool, abas_ouvert: float) -> void:
@@ -70,11 +76,13 @@ func preparer(ax0: float, ax1: float, aseuil: float, acrete: float, aportique: f
 	# le radier, sous le seuil
 	add_child(_rect(gx0, y_seuil, gx1, abas, mp))
 	# les deux tours du portique, du radier jusque sous la traverse
-	add_child(_rect(gx0 - 6, y_portique, gx0 + 9, y_seuil, mp))
+	var fond := arriere if arriere else self
+	var tour_fond := _rect(gx0 - 6, y_portique, gx0 + 9, y_seuil, mp)
+	fond.add_child(tour_fond)
 	add_child(_rect(gx1 - 9, y_portique, gx1 + 6, y_seuil, mp))
 	# la rainure où coulisse le vantail, au bord intérieur de chaque tour, et
 	# l'ombre de la traverse sur ce qui est dessous
-	add_child(_degrade(gx0 + 6, y_portique, gx0 + 9, y_seuil, 0.15, 0.55))
+	fond.add_child(_degrade(gx0 + 6, y_portique, gx0 + 9, y_seuil, 0.15, 0.55))
 	add_child(_degrade(gx1 - 9, y_portique, gx1 - 6, y_seuil, 0.55, 0.15))
 	var sous_traverse := Polygon2D.new()
 	sous_traverse.polygon = _quad(gx0 - 16, y_portique + 4, gx1 + 16, y_portique + 16)
