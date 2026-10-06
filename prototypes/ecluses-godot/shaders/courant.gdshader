@@ -31,8 +31,10 @@ void fragment() {
 	float u = (x + TIME * vitesse) / 34.0;
 	// des nappes étirées dans le sens du courant
 	float n = bruit(vec2(u, v * 2.5)) * 0.6 + bruit(vec2(u * 2.3 + 7.0, v * 5.0)) * 0.4;
-	vec3 sombre = vec3(0.05, 0.36, 0.52);
-	vec3 clair = vec3(0.36, 0.80, 0.92);
+	// moins cyan, tirant sur l'ardoise : les tuyaux paraissaient plus
+	// « techniques » que la pierre et le bois (lot 7 de PLAN-RENDU.md)
+	vec3 sombre = vec3(0.08, 0.27, 0.38);
+	vec3 clair = vec3(0.38, 0.60, 0.70);
 	vec3 moyen = mix(sombre, clair, 0.45);
 	vec3 c = mix(moyen, mix(sombre, clair, smoothstep(0.3, 0.9, n)), contraste * (0.35 + 0.65 * debit));
 	// des bulles entraînées, d'autant plus nombreuses que le débit est fort

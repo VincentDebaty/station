@@ -137,8 +137,26 @@ func _draw() -> void:
 	for p in chemin: ombre.append(p + Vector2(5.0, 7.0))
 	draw_polyline(ombre, Color(0.1, 0.04, 0.0, 0.14), rayon * 2.0 + 24.0, true)
 	draw_polyline(ombre, Color(0.1, 0.04, 0.0, 0.22), rayon * 2.0 + 12.0, true)
+	# l'enveloppe : un cerne sombre, la pierre, puis un grain peint — de
+	# petites taches plus sombres et plus claires semées le long du conduit
+	draw_polyline(chemin, Color("#4a3d2e"), rayon * 2.0 + 12.0, true)
 	draw_polyline(chemin, Color("#8c7f69"), rayon * 2.0 + 9.0, true)
 	draw_polyline(chemin, Color("#b8a988"), rayon * 2.0 + 4.0, true)
+	var rng := RandomNumberGenerator.new()
+	rng.seed = int(chemin[0].x * 13.0 + chemin[0].y)
+	for k in chemin.size() - 1:
+		var a := chemin[k]
+		var b := chemin[k + 1]
+		var d := (b - a).normalized()
+		var nrm := Vector2(-d.y, d.x)
+		var l := a.distance_to(b)
+		var t := rng.randf_range(4.0, 12.0)
+		while t < l:
+			var cote := 1.0 if rng.randf() < 0.5 else -1.0
+			var p := a + d * t + nrm * cote * (rayon + rng.randf_range(1.5, 4.0))
+			var c := Color(0.32, 0.25, 0.17, 0.35) if rng.randf() < 0.6 else Color(1, 0.96, 0.86, 0.3)
+			draw_line(p, p + d * rng.randf_range(3.0, 7.0), c, 1.5, true)
+			t += rng.randf_range(5.0, 11.0)
 	draw_polyline(chemin, Color("#1c2327"), rayon * 2.0, true)
 	if _sec_avant:
 		# l'eau dormante, tronçon par tronçon, jusqu'au niveau de son bassin
@@ -150,7 +168,7 @@ func _draw() -> void:
 			if a.y < niveau and b.y < niveau: continue
 			if a.y < niveau: a = a.lerp(b, (niveau - a.y) / (b.y - a.y))
 			if b.y < niveau: b = b.lerp(a, (niveau - b.y) / (a.y - b.y))
-			draw_line(a, b, Color(0.12, 0.52, 0.68), rayon * 2.0 - 3.0, true)
+			draw_line(a, b, Color(0.13, 0.42, 0.54), rayon * 2.0 - 3.0, true)
 
 func _dessiner_dessus() -> void:
 	# la vanne : une plaque de fer au milieu du conduit, sous la porte, qui se
@@ -162,6 +180,24 @@ func _dessiner_dessus() -> void:
 		var y := m.y - rayon - 1.0 - vanne * h
 		_dessus.draw_rect(Rect2(m.x - 3.5, y, 7.0, h), Color("#2e2f33"))
 		_dessus.draw_rect(Rect2(m.x - 3.5, y, 7.0, 3.0), Color("#6d6f75"))
+	# les brides : un collier de fer boulonné au milieu de chaque tronçon droit
+	# (lot 7 : des raccords plus épais, comme le reste du décor) ; aux coudes,
+	# en biais, elles faisaient bizarre
+	var brides := []
+	for k in chemin.size() - 1:
+		var l := chemin[k].distance_to(chemin[k + 1])
+		if l > 40.0: brides.append([(chemin[k] + chemin[k + 1]) * 0.5, (chemin[k + 1] - chemin[k]).normalized()])
+	for br in brides:
+		var m: Vector2 = br[0]
+		var d: Vector2 = br[1]
+		if chemin.size() >= 3 and m.distance_to((chemin[1] + chemin[2]) * 0.5) < 14.0: continue   # la vanne est là
+		var nrm := Vector2(-d.y, d.x)
+		var demi := rayon + 7.0
+		_dessus.draw_line(m - nrm * demi, m + nrm * demi, Color("#2c2622"), 9.0, true)
+		_dessus.draw_line(m - nrm * demi, m + nrm * demi, Color("#4e4640"), 6.0, true)
+		_dessus.draw_line(m - nrm * demi + d * -1.5, m + nrm * demi + d * -1.5, Color(1, 1, 1, 0.18), 1.2, true)
+		for cote in [-1.0, 1.0]:
+			_dessus.draw_circle(m + nrm * cote * (demi - 2.5), 2.2, Color("#8a8178"))
 	# la grille de chaque bouche, dans le fond du bassin
 	for bout in [chemin[0], chemin[chemin.size() - 1]]:
 		_dessus.draw_rect(Rect2(bout.x - rayon - 5.0, bout.y - 3.0, 2.0 * rayon + 10.0, 6.0), Color("#3d3833"))
