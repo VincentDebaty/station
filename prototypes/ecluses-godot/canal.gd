@@ -331,6 +331,7 @@ func _murs_du_fond() -> void:
 		# l'ombre que le couronnement jette sur le haut du mur
 		_poly(_quad(X(gb[i][0]) - 8, Y(sommet), X(gb[i][1]) + 8, Y(sommet) + 16), null,
 			PackedColorArray([Color(0, 0, 0, 0.22), Color(0, 0, 0, 0.22), Color(0, 0, 0, 0), Color(0, 0, 0, 0)]))
+		_vie_du_mur(i, X(gb[i][0]), X(gb[i][1]), Y(sommet), Y(f), float(b.get("niveau", f)))
 		_couronnement(X(gb[i][0]) - 8, X(gb[i][1]) + 8, Y(sommet), i)
 		# le couronnement herbu du mur
 		if not _bande_herbe(X(gb[i][0]) - 10, X(gb[i][1]) + 10, Y(sommet) + 2, 24.0):
@@ -444,7 +445,7 @@ func _rochers(x0: float, x1: float, y: float) -> void:
 		var w := rng.randf_range(36.0, 74.0)
 		var h := w * t.get_height() / t.get_width()
 		var c := Vector2(x, y + rng.randf_range(70.0, 300.0))
-		var libre := true
+		var libre := rng.randf() < 0.2 + 0.8 * _pres(x)
 		for tr in traces:
 			for j in tr.size() - 1:
 				if Geometry2D.get_closest_point_to_segment(c, tr[j], tr[j + 1]).distance_to(c) < w * 0.6 + 16.0:
@@ -463,7 +464,7 @@ func _rochers(x0: float, x1: float, y: float) -> void:
 			sp.flip_h = rng.randf() < 0.5
 			sp.position = c
 			add_child(sp)
-		x += rng.randf_range(180.0, 380.0)
+		x += lerpf(380.0, 160.0, _pres(x)) * rng.randf_range(0.7, 1.3)
 
 # L'ombre que fait un parement de pierre sur la terre à côté de lui (sens : -1,
 # la terre est à gauche).
@@ -479,6 +480,14 @@ func _ombre_cote(x: float, y0: float, y1: float, sens: float) -> void:
 # Des pousses dans la terre, sous un bord : de petites touffes de feuilles
 # pointues, vert sombre au pied et clair au bout, semées au hasard — mais
 # toujours le même hasard pour un même niveau.
+# 1 contre la maçonnerie, puis de moins en moins en s'éloignant (lot 10 :
+# « un peu plus près des constructions, pas uniformément »).
+func _pres(x: float) -> float:
+	var a := X(gb[0][0]) - 0.3 * U
+	var b := X(gb[gb.size() - 1][1]) + 0.3 * U
+	var d := maxf(maxf(a - x, x - b), 0.0)
+	return exp(-d / 320.0)
+
 func _pousses(x0: float, x1: float, y: float) -> void:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = int(absf(x0) * 7.0 + y * 13.0) + 1
@@ -486,6 +495,9 @@ func _pousses(x0: float, x1: float, y: float) -> void:
 	var x := x0 + rng.randf_range(10.0, 60.0)
 	while x < x1 - 10.0:
 		var py := y + rng.randf_range(30.0, 110.0)
+		if rng.randf() > 0.15 + 0.85 * _pres(x):
+			x += rng.randf_range(60.0, 140.0)
+			continue
 		if not images.is_empty():
 			# une pousse peinte, posée sur son pied
 			var t: Texture2D = images[rng.randi() % images.size()]
@@ -498,7 +510,7 @@ func _pousses(x0: float, x1: float, y: float) -> void:
 			sp.flip_h = rng.randf() < 0.5
 			sp.position = Vector2(x - w * 0.5, py - h)
 			add_child(sp)
-			x += rng.randf_range(90.0, 230.0)
+			x += lerpf(240.0, 70.0, _pres(x)) * rng.randf_range(0.6, 1.4)
 			continue
 		var n := rng.randi_range(3, 5)
 		var taille := rng.randf_range(1.3, 2.0)
@@ -529,6 +541,48 @@ func _empattement(x: float, y_bas: float, sens: float, pierre: Material) -> void
 		# l'ombre sur la terre, côté opposé à la lumière, et l'arête du dessus
 		_poly(_quad(xa, y1, xb, y1 + 6.0), null, PackedColorArray([fonce, fonce, nul, nul]))
 		_poly(_quad(xa, y0, xb, y0 + 2.0), null, PackedColorArray([Color(1, 0.96, 0.85, 0.22)]))
+
+# La vie d'un mur du fond (lot 10 de PLAN-RENDU.md), très discrète :
+#   la trace d'humidité : la pierre un peu plus sombre du fond jusqu'au niveau
+#     de DÉPART de l'eau, et un fin dépôt clair à cette hauteur. Le niveau de
+#     départ et pas le plus haut possible : une marque plus haute suggérerait
+#     au joueur un niveau atteignable, et pourrait le tromper ;
+#   deux ou trois taches de pierre plus foncée et une fissure, au hasard (le
+#     même d'une partie à l'autre).
+# On les voit à travers l'eau, comme le reste du mur.
+func _vie_du_mur(i: int, x0: float, x1: float, y_haut: float, y_fond: float, niveau: float) -> void:
+	var y_eau := Y(niveau)
+	if y_eau < y_fond - 4.0:
+		var humide := Color(0.16, 0.12, 0.06, 0.16)
+		var sec := Color(0.16, 0.12, 0.06, 0.0)
+		_poly(_quad(x0, y_eau - 10.0, x1, y_eau + 6.0), null, PackedColorArray([sec, sec, humide, humide]))
+		_poly(_quad(x0, y_eau + 6.0, x1, y_fond), null, PackedColorArray([humide]))
+		_poly(_quad(x0, y_eau - 1.5, x1, y_eau + 1.0), null, PackedColorArray([Color(0.95, 0.92, 0.8, 0.22)]))
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 104729 * (i + 1) + int(x0)
+	var h := y_fond - y_haut
+	if h < 40.0: return
+	for _k in rng.randi_range(2, 3):
+		var c := Vector2(rng.randf_range(x0 + 20.0, x1 - 20.0), rng.randf_range(y_haut + 30.0, y_fond - 10.0))
+		var r := Vector2(rng.randf_range(18.0, 34.0), rng.randf_range(10.0, 18.0))
+		var tache := PackedVector2Array()
+		for j in 18:
+			var a := TAU * j / 18.0
+			tache.append(c + Vector2(cos(a) * r.x, sin(a) * r.y) * (1.0 + 0.12 * sin(a * 3.0 + c.x)))
+		var po := _poly(tache)
+		po.color = Color(0.2, 0.15, 0.08, 0.12)
+	# la fissure : une ligne brisée qui descend en zigzag
+	var p := Vector2(rng.randf_range(x0 + 30.0, x1 - 30.0), rng.randf_range(y_haut + 30.0, y_haut + h * 0.4))
+	var fissure := PackedVector2Array([p])
+	for _j in rng.randi_range(4, 6):
+		p += Vector2(rng.randf_range(-7.0, 7.0), rng.randf_range(6.0, 12.0))
+		fissure.append(p)
+	var ligne := Line2D.new()
+	ligne.points = fissure
+	ligne.width = 1.6
+	ligne.default_color = Color(0.22, 0.16, 0.1, 0.45)
+	ligne.antialiased = true
+	add_child(ligne)
 
 # Les pierres de couronnement en haut d'un mur (lot 4 de PLAN-RENDU.md : la
 # grande maçonnerie formait « un énorme rectangle ») : une rangée de pierres

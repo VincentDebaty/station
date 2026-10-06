@@ -179,4 +179,14 @@ voit avant qu'il soit trop tard.
 - [x] 7. Tuyaux (6 octobre 2026)
 - [x] 8. Arrière-plan et moulin (6 octobre 2026 : le moulin est retiré du cadre, pas recadré)
 - [x] 9. Interface (6 octobre 2026)
-- [ ] 10. Micro-vie et façade
+- [x] 10. Micro-vie et façade (6 octobre 2026)
+
+## À vérifier sur l'iPhone (déploiement du 7 octobre 2026)
+
+Les lots 3 à 10 ont été faits le 6 au soir, sans iPhone : vérifiés sur des
+photos fenêtrées à la taille de l'iPhone, l'oracle et le banc verts. Avant d'en
+juger :
+- le compteur d'images par seconde (ouvrir Réglages) : la terre lit
+  maintenant 4 fois sa texture, et le panorama passe par un shader ;
+- la bouée dessinée, en attendant `art/bouee.png` ;
+- le moulin retiré du panorama : à remettre autrement si Vincent le regrette.
