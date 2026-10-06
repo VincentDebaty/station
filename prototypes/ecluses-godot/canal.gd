@@ -41,6 +41,15 @@ const SH_TERRE := preload("res://shaders/terre.gdshader")
 const SH_BOIS := preload("res://shaders/bois.gdshader")
 const SH_JET := preload("res://shaders/jet.gdshader")
 const SH_HERBE := preload("res://shaders/herbe.gdshader")
+const SH_TEINTE := preload("res://shaders/teinte.gdshader")
+# Comment repeindre le rouge vif du bateau modèle pour chaque bateau du niveau :
+# teinte, puis facteurs de saturation et de luminosité. Le rouge reste tel quel.
+const REPEINTS := [
+	null,
+	[0.135, 1.0, 1.05],   # jaune
+	[0.60, 0.95, 0.95],   # bleu
+	[0.34, 0.85, 0.82],   # vert
+]
 
 var N: Dictionary
 var gb := []          # [x0, x1] en unités, par bassin
@@ -131,10 +140,15 @@ func construire(niveau: Dictionary, e: Dictionary) -> void:
 		bt.tirant = float(b["tirant"]) * UY * 0.92
 		bt.longueur = 1.75 * U
 		bt.sens = 1.0 if int(b["vers"]) >= int(b["de"]) else -1.0
-		var chemin := "res://art/bateau_%d.png" % k
+		# un seul modèle, le bateau rouge, repeint pour les autres : ChatGPT
+		# redessine au lieu de recolorier, et la taille changeait à chaque fois
+		var chemin := "res://art/bateau_0.png"
 		if ResourceLoader.exists(chemin):
 			bt.image = _recadrer(load(chemin))
-			bt.ligne = float(_reglages_bateaux().get("bateau_%d" % k, {}).get("ligne", 0.71))
+			bt.ligne = float(_reglages_bateaux().get("bateau_0", {}).get("ligne", 0.71))
+			var repeint = REPEINTS[k % REPEINTS.size()]
+			if repeint != null:
+				bt.material = _mat(SH_TEINTE, {"actif": true, "teinte": repeint[0], "saturation": repeint[1], "luminosite": repeint[2]})
 			# l'image est mise à l'échelle pour que sa partie immergée soit le
 			# tirant du moteur ; si elle devient alors plus longue que le sas
 			# n'en contient, on la plafonne, et sa coque plonge moins que la règle
@@ -142,7 +156,7 @@ func construire(niveau: Dictionary, e: Dictionary) -> void:
 			var h := bt.tirant / maxf(1.0 - bt.ligne, 0.05)
 			var plafond := 1.12 * bt.longueur
 			if h * aspect > plafond:
-				push_warning("bateau_%d.png : coque trop plate pour son tirant (il faudrait %d px de long, le sas en tient %d)" % [k, int(h * aspect), int(plafond)])
+				if k == 0: print("bateau_0.png : la coque plonge de %d px pour un tirant de %d (il faudrait %d px de long, le sas en tient %d)" % [int((1.0 - bt.ligne) * plafond / aspect), int(bt.tirant), int(h * aspect), int(plafond)])
 				h = plafond / aspect
 			bt.largeur_image = h * aspect
 			bt.tirant = (1.0 - bt.ligne) * h

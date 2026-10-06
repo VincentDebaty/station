@@ -1,5 +1,6 @@
 {
-  "_": "Où tombe la ligne de flottaison de chaque image de bateau, en fraction de la hauteur de sa partie opaque, depuis le haut (la limite entre la couleur de la coque et l'antifouling). Mesuré à la main le 6 octobre 2026.",
-  "bateau_0": { "ligne": 0.71 },
-  "bateau_1": { "ligne": 0.71 }
+  "_": "Où tombe la ligne de flottaison du bateau modèle (art/bateau_0.png), en fraction de la hauteur de sa partie opaque, depuis le haut : le bas de la bande blanche. Mesuré le 6 octobre 2026 sur le modèle à coque profonde. Les autres bateaux sont ce modèle repeint (canal.gd, REPEINTS).",
+  "bateau_0": {
+    "ligne": 0.635
+  }
 }
