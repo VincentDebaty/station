@@ -112,7 +112,8 @@ func _filets() -> void:
 		var b := chemin[k + 1]
 		var seg := a.distance_to(b)
 		var dir := (b - a) / maxf(seg, 0.001)
-		var t := fposmod(-longueur - _phase, pas)
+		# la phase grandit dans le sens du courant : les filets avancent avec lui
+		var t := fposmod(_phase - longueur, pas)
 		while t < seg:
 			var fin := minf(t + 10.0 + 6.0 * debit, seg)
 			draw_line(a + dir * t, a + dir * fin, Color(0.85, 0.98, 1.0, 0.8), 2.4, true)
