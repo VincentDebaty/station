@@ -121,8 +121,8 @@ func construire(niveau: Dictionary, e: Dictionary) -> void:
 		if l["type"] == "porte":
 			var po := Porte.new()
 			var bas_radier := Y(minf(float(B[i]["fond"]), float(B[i + 1]["fond"])) - 0.32)
-			po.preparer(X(gl[i][0]), X(gl[i][1]), Y(float(l["seuil"])), Y(float(l["crete"])), bas_radier, U, SH_PIERRE, SH_BOIS,
-				_mat(SH_TERRE, {"sol_y": Y(0.0)}), e["ouvert"][i], _vantail_baisse(e, i))
+			po.preparer(X(gl[i][0]), X(gl[i][1]), Y(float(l["seuil"])), Y(float(l["crete"])), Y(haut - 0.85), bas_radier, U,
+				SH_PIERRE, SH_BOIS, e["ouvert"][i], _vantail_leve(e, i), _bas_ouvert(i))
 			add_child(po)
 			portes[i] = po
 	# les aqueducs, dans la terre de la coupe, par-dessus le radier des portes
@@ -381,6 +381,7 @@ func _process(dt: float) -> void:
 	if not _depl.is_empty(): _avancer_bateaux(dt)
 	for i in eaux.size():
 		eaux[i].repos = Y(vue_niv[i])
+	for i in portes: portes[i].bas_ouvert_y = _bas_ouvert(i)
 	_maj_passages()
 	for i in aqueducs: aqueducs[i].ouverte = portes[i].vanne_ouverte
 	_poser_bateaux()
@@ -389,7 +390,7 @@ func _process(dt: float) -> void:
 func _maj_passages() -> void:
 	for i in passages:
 		var s := float(N["liaisons"][i]["seuil"])
-		var ouvert: float = portes[i].abaisse if portes.has(i) else 0.0
+		var ouvert: float = portes[i].ouverture() if portes.has(i) else 0.0
 		passages[i].visible_eau = ouvert > 0.15 and maxf(vue_niv[i], vue_niv[i + 1]) > s + 0.03
 		passages[i].remous = maxf(eaux[i].remous, eaux[i + 1].remous)
 
@@ -408,23 +409,29 @@ func _trace_aqueduc(i: int) -> PackedVector2Array:
 	var xd := X(gl[i][1]) + 0.5 * U
 	return PackedVector2Array([Vector2(xg, Y(fg)), Vector2(xg, Y(bas)), Vector2(xd, Y(bas)), Vector2(xd, Y(fd))])
 
-# Le vantail d'une porte s'efface quand sa vanne est ouverte ET que les deux
+# Le vantail d'une porte se lève quand sa vanne est ouverte ET que les deux
 # eaux sont au même niveau — c'est exactement quand le moteur laisse passer
 # un bateau.
-func _vantail_baisse(e: Dictionary, i: int) -> bool:
+func _vantail_leve(e: Dictionary, i: int) -> bool:
 	return bool(e["ouvert"][i]) and absf(float(e["niv"][i]) - float(e["niv"][i + 1])) < 1e-6
 
-# Pose chaque vantail selon l'état e ; rend la main quand tous ont fini.
+# Où monte le bas d'un vantail levé : au-dessus de l'eau, de quoi laisser
+# passer un bateau cheminée comprise (une unité au-dessus de sa flottaison,
+# plus une marge). Il suit l'eau si elle bouge pendant que la porte est levée.
+const DEGAGEMENT := 1.35
+func _bas_ouvert(i: int) -> float:
+	return Y(maxf(vue_niv[i], vue_niv[i + 1]) + DEGAGEMENT)
+
+# Pose chaque vantail selon l'état e ; rend la main quand tous sont arrivés.
 func placer_vantaux(e: Dictionary) -> void:
 	for i in portes:
-		portes[i].placer_vantail(_vantail_baisse(e, i))
+		portes[i].placer_vantail(_vantail_leve(e, i))
 	var bouge := true
 	while bouge:
 		await get_tree().process_frame
 		bouge = false
 		for i in portes:
-			var cible := 1.0 if _vantail_baisse(e, i) else 0.0
-			if not is_equal_approx(portes[i].abaisse, cible): bouge = true
+			if not portes[i].arrive(): bouge = true
 
 # Un écoulement : de l'état « avant » à l'état « après », niveaux et aqueducs.
 func ecouler(avant: Array, apres: Array, flux: Array) -> void:

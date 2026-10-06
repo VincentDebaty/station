@@ -115,8 +115,8 @@ func jouer(a: Dictionary) -> void:
 	etat = r["etat"]
 	_maj()
 	# Comme une vraie écluse. Ouvrir : la roue ouvre la vanne, l'eau passe par
-	# l'aqueduc, et quand les deux eaux sont au même niveau le vantail s'efface.
-	# Fermer : le vantail remonte d'abord, puis la roue ferme la vanne.
+	# l'aqueduc, et quand les deux eaux sont au même niveau le vantail se lève.
+	# Fermer : le vantail redescend d'abord, puis la roue ferme la vanne.
 	if a["type"] == "porte":
 		var p: Porte = canal.portes[int(a["i"])]
 		if etat["ouvert"][int(a["i"])]:

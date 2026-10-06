@@ -34,14 +34,17 @@ elle va où le moteur l'a décidé :
 - **les niveaux** suivent Torricelli : l'écart fond comme le carré du temps qui
   reste, l'eau ralentit en se posant (`canal.gd`, `ecouler`) ;
 - **une porte se manœuvre comme une vraie écluse** (retours de Vincent, 6 octobre
-  2026) : la roue ouvre une vanne, l'eau passe par un **aqueduc** sous le fond
-  des bassins — on la voit courir dans le conduit, puis bouillonner à la grille
-  du bassin qui se remplit — et c'est seulement quand les deux eaux sont au même
-  niveau que le **vantail** s'efface dans le radier. Fermer, c'est l'inverse :
-  le vantail remonte, puis la vanne se ferme (`porte.gd`, `aqueduc.gd`). Aucun
-  jet ne passe par la porte : rien ne semble devoir entraîner les bateaux. Le
-  moteur n'a pas changé — il exigeait déjà deux eaux au même niveau pour qu'un
-  bateau passe, et c'est exactement quand le vantail s'efface ;
+  2026) : la roue, en haut d'un portique, ouvre une vanne ; l'eau passe par un
+  **aqueduc** sous le fond des bassins — on la voit avancer dans le conduit,
+  puis bouillonner à la grille du bassin qui se remplit — et c'est seulement
+  quand les deux eaux sont au même niveau que le **vantail** monte entre les
+  deux tours du portique, juste assez pour qu'un bateau passe dessous. Fermer,
+  c'est l'inverse : le vantail redescend, puis la vanne se ferme (`porte.gd`,
+  `aqueduc.gd`). Une porte levante parce que, vue de côté, c'est la seule dont
+  le mouvement est vrai ; une porte qui pivotait puis une qui s'enfonçait dans
+  le radier ont été essayées et écartées. Le moteur n'a pas changé — il
+  exigeait déjà deux eaux au même niveau pour qu'un bateau passe, et c'est
+  exactement quand le vantail se lève ;
 - **l'eau** réfracte ce qui est derrière elle, s'assombrit avec la profondeur,
   porte des reflets mouvants et une ligne d'écume (`shaders/eau.gdshader`).
 
