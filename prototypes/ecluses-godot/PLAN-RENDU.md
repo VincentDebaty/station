@@ -178,5 +178,5 @@ voit avant qu'il soit trop tard.
 - [x] 6. Chaînes (6 octobre 2026 : maillons accrochés au vantail, qui montent avec lui)
 - [x] 7. Tuyaux (6 octobre 2026)
 - [x] 8. Arrière-plan et moulin (6 octobre 2026 : le moulin est retiré du cadre, pas recadré)
-- [ ] 9. Interface
+- [x] 9. Interface (6 octobre 2026)
 - [ ] 10. Micro-vie et façade

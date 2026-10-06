@@ -319,7 +319,10 @@ func _interface() -> void:
 	pilule.add_child(_lab_coups)
 	droite.add_child(pilule)
 	_etoiles = Etoiles.new()
-	_etoiles.taille = 62.0
+	# un peu plus petites et moins jaunes qu'avant (lot 9 de PLAN-RENDU.md :
+	# « un peu grosses et très jaunes par rapport au reste »)
+	_etoiles.taille = 52.0
+	_etoiles.modulate = Color(1.0, 0.94, 0.82)
 	_etoiles.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	droite.add_child(_etoiles)
 	_sure.add_child(droite)
@@ -360,10 +363,14 @@ func _interface() -> void:
 		defaut.hide()
 		ligne.add_child(_medaillon(Images.engrenage(128, 8), func():
 			_panneau.visible = not _panneau.visible
-			defaut.visible = _panneau.visible))
+			defaut.visible = _panneau.visible
+			if _ips: _ips.visible = _panneau.visible))
 		ligne.add_child(defaut)
 	if OS.is_debug_build() and not OS.has_feature("movie"):
+		# seulement quand le panneau des réglages est ouvert (lot 9) : il sert
+		# à mesurer, pas à jouer
 		_ips = _label("", 16, Color(1, 1, 1, 0.85))
+		_ips.visible = false
 		ligne.add_child(_ips)
 	_maj()
 
