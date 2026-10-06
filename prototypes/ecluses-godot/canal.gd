@@ -135,6 +135,9 @@ func construire(niveau: Dictionary, e: Dictionary) -> void:
 			var v := Eau.new()
 			v.passage = true
 			v.gauche = eaux[i]
+			# une eau mince : on y devine le vantail et le pilier, comme la
+			# coque immergée d'un bateau (Vincent)
+			v.clarte = 1.0
 			v.preparer(X(gl[i][0]), X(gl[i][1]) - 9.0, Y(float(N["liaisons"][i]["seuil"])), 0.0, SH_EAU)
 			voiles[i] = v
 	_coupe_avant()
@@ -560,8 +563,6 @@ func _process(dt: float) -> void:
 		eaux[i].repos = Y(vue_niv[i])
 	for i in portes: portes[i].bas_ouvert_y = _bas_ouvert(i)
 	_maj_passages()
-	# la tour du fond s'arrête à la surface de l'eau de gauche, qui est devant elle
-	for i in portes: portes[i].noyer_tour(eaux[i].hauteur_a(X(gb[i][1])))
 	_maj_voiles()
 	for i in aqueducs:
 		aqueducs[i].ouverte = portes[i].vanne_ouverte

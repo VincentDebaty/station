@@ -29,6 +29,7 @@ var droite: Eau = null
 var visible_eau := true
 var paroi_g := true        # une paroi de pierre de ce côté (pas une porte)
 var paroi_d := true
+var clarte := 0.0          # l'eau mince devant une porte : plus limpide
 
 var _h := PackedFloat32Array()
 var _v := PackedFloat32Array()
@@ -137,4 +138,5 @@ func _construire() -> void:
 	_mat.set_shader_parameter("largeur", x1 - x0)
 	_mat.set_shader_parameter("paroi_g", 1.0 if paroi_g and not passage else 0.0)
 	_mat.set_shader_parameter("paroi_d", 1.0 if paroi_d and not passage else 0.0)
+	_mat.set_shader_parameter("clarte", clarte)
 	_mat.set_shader_parameter("remous", remous)

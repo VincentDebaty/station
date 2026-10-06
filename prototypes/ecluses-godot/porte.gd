@@ -44,11 +44,9 @@ var roue: Node2D
 # au fond et celle de droite devant, il passe ENTRE les deux piliers. Sans ce
 # plan, la tour reste avec le reste de la porte.
 var arriere: Node2D = null
-var _tour_fond: Polygon2D
 # L'eau du bassin de gauche, que le canal donne avant preparer : posée juste
 # devant le vantail, derrière le pilier de droite (voir canal.gd, « voiles »).
 var voile: Eau = null
-var _rainure_fond: Polygon2D
 
 func preparer(ax0: float, ax1: float, aseuil: float, acrete: float, aportique: float, abas: float, au: float,
 		pierre: Shader, bois: Shader, vanne: bool, leve: bool, abas_ouvert: float) -> void:
@@ -83,21 +81,18 @@ func preparer(ax0: float, ax1: float, aseuil: float, acrete: float, aportique: f
 	# encore le vantail — on la refait sur la porte
 	if voile:
 		var copie := BackBufferCopy.new()
-		copie.copy_mode = BackBufferCopy.COPY_MODE_RECT
-		copie.rect = Rect2(gx0 - 20, y_portique - 20, gx1 - gx0 + 40, y_seuil - y_portique + 40)
+		copie.copy_mode = BackBufferCopy.COPY_MODE_VIEWPORT
 		add_child(copie)
 		add_child(voile)
 	# le radier, sous le seuil
 	add_child(_rect(gx0, y_seuil, gx1, abas, mp))
 	# les deux tours du portique, du radier jusque sous la traverse
 	var fond := arriere if arriere else self
-	_tour_fond = _rect(gx0 - 6, y_portique, gx0 + 9, y_seuil, mp)
-	fond.add_child(_tour_fond)
+	fond.add_child(_rect(gx0 - 6, y_portique, gx0 + 9, y_seuil, mp))
 	add_child(_rect(gx1 - 9, y_portique, gx1 + 6, y_seuil, mp))
 	# la rainure où coulisse le vantail, au bord intérieur de chaque tour, et
 	# l'ombre de la traverse sur ce qui est dessous
-	_rainure_fond = _degrade(gx0 + 6, y_portique, gx0 + 9, y_seuil, 0.15, 0.55)
-	fond.add_child(_rainure_fond)
+	fond.add_child(_degrade(gx0 + 6, y_portique, gx0 + 9, y_seuil, 0.15, 0.55))
 	add_child(_degrade(gx1 - 9, y_portique, gx1 - 6, y_seuil, 0.55, 0.15))
 	var sous_traverse := Polygon2D.new()
 	sous_traverse.polygon = _quad(gx0 - 16, y_portique + 4, gx1 + 16, y_portique + 16)
@@ -132,18 +127,6 @@ func preparer(ax0: float, ax1: float, aseuil: float, acrete: float, aportique: f
 	roue.draw.connect(_dessiner_roue)
 	add_child(roue)
 	_maj_vantail()
-
-# La tour du fond s'arrête à la surface de l'eau qui est devant elle (celle du
-# bassin de gauche, qui baigne la face de la porte quand elle est fermée, ou
-# celle de l'ouverture porte levée — au même niveau). Dessous, on ne voit que de l'eau :
-# derrière une eau un peu transparente, sa partie immergée réapparaissait et
-# disparaissait (Vincent : « s'il est immergé, il ne doit plus apparaître »).
-# Le canal donne la surface à chaque image.
-func noyer_tour(y_eau: float) -> void:
-	if _tour_fond == null: return
-	var bas := clampf(y_eau + 2.0, y_portique, y_seuil)
-	_tour_fond.polygon = _quad(gx0 - 6, y_portique, gx0 + 9, bas)
-	_rainure_fond.polygon = _quad(gx0 + 6, y_portique, gx0 + 9, bas)
 
 func _hauteur() -> float:
 	return y_seuil - y_crete     # le vantail fermé va du seuil à la crête

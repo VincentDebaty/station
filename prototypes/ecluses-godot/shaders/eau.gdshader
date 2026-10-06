@@ -13,6 +13,7 @@ uniform float remous = 0.0;        // 0 au repos, 1 quand l'eau bouillonne
 uniform float largeur = 300.0;     // largeur du bassin en pixels, pour le liseré des parois
 uniform float paroi_g = 1.0;       // 1 : une paroi de pierre à gauche ; 0 : le bassin s'ouvre sur une porte
 uniform float paroi_d = 1.0;
+uniform float clarte = 0.0;        // 1 : l'eau mince devant une porte, plus limpide (on y devine le vantail)
 
 varying vec2 monde;
 
@@ -51,7 +52,10 @@ void fragment() {
 	// bleui, et de plus en plus sombre en descendant
 	vec2 d = vec2(sin(monde.y * 0.09 + TIME * 2.1), cos(monde.x * 0.07 + TIME * 1.6)) * (0.0035 + 0.004 * remous);
 	vec3 derriere = texture(ecran, SCREEN_UV + d).rgb * mix(1.0, 0.55, fonce);
-	float transparence = mix(0.36, 0.05, clamp(px / 130.0, 0.0, 1.0));
+	// on devine ce qui est immergé jusqu'au fond, comme la coque d'un bateau
+	// (Vincent, 6 octobre 2026, pour la porte et le pilier sous l'eau)
+	float transparence = mix(0.42, 0.18, clamp(px / 170.0, 0.0, 1.0));
+	transparence = mix(transparence, 0.62, clarte);
 	c = mix(c, derriere * vec3(0.30, 0.70, 0.84), transparence);
 
 	// des ondulations claires, couchées, qui glissent juste sous la surface
