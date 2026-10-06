@@ -85,6 +85,9 @@ func _init() -> void:
 	_titre = _texte(58, 14)
 	col.add_child(_titre)
 	_sous_titre = _texte(30, 9)
+	# la raison d'un échec peut tenir sur deux lignes
+	_sous_titre.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_sous_titre.custom_minimum_size = Vector2(640, 0)
 	col.add_child(_sous_titre)
 	var air := Control.new()
 	air.custom_minimum_size = Vector2(0, 14)
@@ -147,11 +150,13 @@ func _bouton(texte: String, fond: String, icone: String, encre: Color, contour: 
 	b.custom_minimum_size = Vector2(270, 90)
 	return b
 
-func montrer_echec(plusieurs: bool) -> void:
+# « pourquoi » : la raison, en une phrase (principal.gd la trouve) ; sans
+# elle, le constat seul.
+func montrer_echec(plusieurs: bool, pourquoi := "") -> void:
 	_etoiles.hide()
 	_sous_etoiles.hide()
 	_titre.text = "Bateaux coincés !" if plusieurs else "Bateau coincé !"
-	_sous_titre.text = "Plus aucun bateau ne peut avancer."
+	_sous_titre.text = pourquoi if pourquoi != "" else "Plus aucun bateau ne peut avancer."
 	for b in [_b_suivant, _b_rejouer_creme]: b.hide()
 	for b in [_b_annuler, _b_rejouer]: b.show()
 	_descendre()

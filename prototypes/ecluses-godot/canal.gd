@@ -730,6 +730,58 @@ func _poser_bateaux(dt := 1.0) -> void:
 func alerter(bateaux_coinces: Array) -> void:
 	for k in bateaux_coinces: alertes[k] = _t
 
+# Quand c'est l'eau qui manque : le niveau qu'il faudrait dans ce bassin pour
+# porter le bateau k, en pointillés à sa couleur, la bande d'eau manquante
+# hachurée, et « Il manque de l'eau » écrit au-dessus. Effacé quand on
+# reconstruit la coupe (annuler, rejouer).
+var _manque := {}
+func signaler_manque(bassin: int, niveau: float, k: int) -> void:
+	_manque = {"bassin": bassin, "y": Y(niveau), "couleur": COULEURS[k % COULEURS.size()], "t": _t}
+
+func manque_signale() -> bool:
+	return not _manque.is_empty()
+
+var _police_manque: Font = null
+func _dessiner_manque() -> void:
+	if _manque.is_empty(): return
+	var i: int = _manque["bassin"]
+	var x0 := X(gb[i][0]) + 4.0
+	var x1 := X(gb[i][1]) - 4.0
+	var y: float = _manque["y"]
+	var c: Color = _manque["couleur"]
+	var age := _t - float(_manque["t"])
+	var a := clampf(age / 0.4, 0.0, 1.0)
+	var bat := 0.75 + 0.25 * sin(age * 4.0)
+	# l'eau qui manque : la bande entre la surface et le niveau qu'il faudrait,
+	# hachurée à la couleur du bateau
+	var surface := surface_a((x0 + x1) * 0.5)
+	if surface > y + 1.0:
+		_reperes.draw_rect(Rect2(x0, y, x1 - x0, surface - y), Color(c, 0.22 * a * bat))
+		var pas := 14.0
+		var x := x0 - (surface - y)
+		while x < x1:
+			var p0 := Vector2(x, surface)
+			var p1 := Vector2(x + (surface - y), y)
+			# rogner le trait au bassin
+			if p0.x < x0: p0 = Vector2(x0, surface - (x0 - p0.x))
+			if p1.x > x1: p1 = Vector2(x1, y + (p1.x - x1))
+			if p1.x > p0.x: _reperes.draw_line(p0, p1, Color(c, 0.55 * a * bat), 2.0, true)
+			x += pas
+	_reperes.draw_dashed_line(Vector2(x0, y), Vector2(x1, y), Color(1, 1, 1, 0.9 * a), 7.0, 14.0)
+	_reperes.draw_dashed_line(Vector2(x0, y), Vector2(x1, y), Color(c, a), 4.0, 14.0)
+	# l'inscription, au-dessus de la ligne
+	if _police_manque == null:
+		var f := SystemFont.new()
+		f.font_names = PackedStringArray(["Arial Rounded MT Bold", "Arial Rounded MT", "Avenir Next", "Helvetica Neue"])
+		f.font_weight = 700
+		_police_manque = f
+	var texte := "Il manque de l'eau"
+	var taille := 22
+	var l := _police_manque.get_string_size(texte, HORIZONTAL_ALIGNMENT_LEFT, -1, taille).x
+	var pos := Vector2((x0 + x1 - l) * 0.5, y - 14.0)
+	_reperes.draw_string_outline(_police_manque, pos, texte, HORIZONTAL_ALIGNMENT_LEFT, -1, taille, 8, Color(0.24, 0.13, 0.05, a))
+	_reperes.draw_string(_police_manque, pos, texte, HORIZONTAL_ALIGNMENT_LEFT, -1, taille, Color(1, 0.95, 0.86, a))
+
 func _exclamation(c: Vector2, age: float) -> void:
 	var t := clampf(age / 0.32, 0.0, 1.0)
 	var u := t - 1.0
@@ -758,6 +810,7 @@ func _exclamation(c: Vector2, age: float) -> void:
 				_reperes.draw_line(o + d * 6.0 * s, o + d * 15.0 * s, Color(1.0, 0.68, 0.12, a), 3.0, true)
 
 func _dessiner_reperes() -> void:
+	_dessiner_manque()
 	for k in alertes:
 		var bt: Bateau = bateaux[k]
 		_exclamation(Vector2(bt.position.x, bt.position.y - 64.0), _t - float(alertes[k]))

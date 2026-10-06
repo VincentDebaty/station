@@ -175,11 +175,47 @@ func _coince() -> void:
 	for k in N["bateaux"].size():
 		var vers := int(N["bateaux"][k]["vers"])
 		if etat["bateaux"][k] != vers or not Moteur.flotte(N, etat, k, vers): coinces.append(k)
+	var pourquoi := _pourquoi(coinces)
 	canal.alerter(coinces)
 	_maj()
-	await get_tree().create_timer(1.3).timeout
+	# quand la coupe montre l'eau qui manque, on laisse le temps de la voir
+	# avant que la pancarte ne la couvre
+	await get_tree().create_timer(2.4 if canal.manque_signale() else 1.3).timeout
 	if not fini: return     # on a annulé entre-temps
-	_pancarte.montrer_echec(coinces.size() > 1)
+	_pancarte.montrer_echec(coinces.size() > 1, pourquoi)
+
+# La raison d'un blocage, en une phrase, et sur la coupe quand c'est l'eau qui
+# manque : le niveau qu'il aurait fallu, en pointillés. Vincent voyait une
+# porte levée et deux eaux égales, et ne comprenait pas que le bief d'arrivée
+# n'avait plus assez de fond pour porter le bateau.
+const NOMS_COULEURS := ["rouge", "jaune", "bleu", "vert"]
+func _pourquoi(coinces: Array) -> String:
+	var nom := func(k: int) -> String: return "bateau " + NOMS_COULEURS[k % NOMS_COULEURS.size()]
+	var bassin := func(i: int) -> String: return String(N["bassins"][i].get("nom", "bassin"))
+	# le face-à-face d'abord : c'est lui qui fige tout, même porte fermée (la
+	# raison immédiate serait alors « porte », qui n'explique rien)
+	var suivant := func(k: int) -> int:
+		var p: int = etat["bateaux"][k]
+		return p + signi(int(N["bateaux"][k]["vers"]) - p)
+	for k in coinces:
+		for j in coinces:
+			var p: int = etat["bateaux"][k]
+			var q: int = etat["bateaux"][j]
+			if j != k and suivant.call(k) == q and suivant.call(j) == p \
+					and etat["bateaux"].count(p) >= Moteur.capacite(N, p) and etat["bateaux"].count(q) >= Moteur.capacite(N, q):
+				return "Le %s et le %s se font face, et un sas ne tient qu'un bateau." % [nom.call(k), nom.call(j)]
+	for k in coinces:
+		var r := Moteur.raison(N, etat, k)
+		match r["quoi"]:
+			"fond_la", "seuil":
+				canal.signaler_manque(int(r["bassin"]), float(r["niveau"]), k)
+				return "Le %s n'a plus assez d'eau pour porter le %s, et l'eau ne remonte jamais." % [bassin.call(int(r["bassin"])), nom.call(k)]
+			"fond_ici":
+				canal.signaler_manque(int(r["bassin"]), float(r["niveau"]), k)
+				return "Le %s touche le fond du %s." % [nom.call(k), bassin.call(int(r["bassin"]))]
+			"plein":
+				return "Le %s attend une place dans le %s, qui ne se libérera plus." % [nom.call(k), bassin.call(int(r["bassin"]))]
+	return ""
 
 func annuler() -> void:
 	if occupe or histoire.is_empty(): return

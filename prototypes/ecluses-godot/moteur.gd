@@ -195,6 +195,42 @@ static func peut_passer(N: Dictionary, e: Dictionary, k: int, p: int, q: int) ->
 		return false
 	return e["bateaux"].count(q) < capacite(N, q)
 
+# Pourquoi le bateau k n'avance pas d'un bassin vers sa destination : les
+# tests de peut_passer(), dans le même ordre. Ne décide de rien, sert à
+# l'expliquer au joueur (Vincent, 6 octobre 2026 : « je suis bloqué alors que
+# cela semble être le contraire » — porte levée, eaux égales, mais le bief
+# d'arrivée n'avait plus assez de fond). Rend {"quoi", "bassin", "niveau"} :
+#   arrive      il est arrivé
+#   porte       la porte vers le bassin suivant est fermée
+#   niveaux     les deux eaux ne sont pas au même niveau
+#   fond_ici    il n'a plus assez d'eau sous lui (« bassin » = le sien)
+#   fond_la     le bassin suivant n'a pas assez de fond (« bassin »)
+#   seuil       pas assez d'eau au-dessus du seuil de la porte
+#   plein       le bassin suivant n'a plus de place
+#   passe       il peut passer
+# « niveau » : le niveau d'eau qu'il faudrait dans « bassin » (cas de fond).
+static func raison(N: Dictionary, e: Dictionary, k: int) -> Dictionary:
+	var p: int = e["bateaux"][k]
+	var vers := int(N["bateaux"][k]["vers"])
+	if p == vers: return {"quoi": "arrive", "bassin": p}
+	var q := p + signi(vers - p)
+	var i := mini(p, q)
+	var t := float(N["bateaux"][k]["tirant"])
+	var l: Dictionary = N["liaisons"][i]
+	if not (l["type"] == "libre" or (l["type"] == "porte" and e["ouvert"][i])):
+		return {"quoi": "porte", "bassin": q}
+	if absf(e["niv"][p] - e["niv"][q]) > EPS:
+		return {"quoi": "niveaux", "bassin": q}
+	if not flotte(N, e, k, p):
+		return {"quoi": "fond_ici", "bassin": p, "niveau": float(N["bassins"][p]["fond"]) + t}
+	if not flotte(N, e, k, q):
+		return {"quoi": "fond_la", "bassin": q, "niveau": float(N["bassins"][q]["fond"]) + t}
+	if e["niv"][q] - seuil_bateau(N, i) < t - EPS:
+		return {"quoi": "seuil", "bassin": q, "niveau": seuil_bateau(N, i) + t}
+	if e["bateaux"].count(q) >= capacite(N, q):
+		return {"quoi": "plein", "bassin": q}
+	return {"quoi": "passe", "bassin": q}
+
 static func bouger(N: Dictionary, e: Dictionary) -> Array:
 	var dep := []
 	for tour in 60:
