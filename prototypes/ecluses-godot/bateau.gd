@@ -6,8 +6,11 @@ extends Node2D
 # grandeur que le tirant d'eau du moteur, si bien qu'un bateau qui s'échoue
 # touche le fond pour de vrai à l'écran.
 #
-# Si art/bateau_<k>.png existe, l'image remplace le dessin : son bas est posé
-# sur la quille, sa largeur sur la longueur de la coque.
+# Si art/bateau_<k>.png existe, l'image remplace le dessin. Le canal la
+# recadre sur ses pixels opaques (les marges d'une image générée varient) et
+# la cale sur la longueur de coque ; « ligne » dit où tombe sa flottaison,
+# en fraction de sa hauteur (art/bateaux.json). Son tirant visible est alors
+# celui de l'image, plus celui du moteur : voir ASSETS.md.
 # ------------------------------------------------------------------
 
 var couleur := Color.RED
@@ -15,13 +18,15 @@ var longueur := 112.0
 var tirant := 58.0          # pixels sous la ligne de flottaison
 var sens := 1.0             # 1 : la proue à droite
 var image: Texture2D = null
+var ligne := 0.71
 
 func _draw() -> void:
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2(sens, 1.0))
 	var L := longueur * 0.5
 	if image:
-		var h := longueur * 1.12 * image.get_height() / image.get_width()
-		draw_texture_rect(image, Rect2(-L * 1.12, tirant - h, longueur * 1.12, h), false)
+		var w := longueur * 1.12
+		var h := w * image.get_height() / image.get_width()
+		draw_texture_rect(image, Rect2(-w * 0.5, -ligne * h, w, h), false)
 		return
 	var fonce := Color("#4a2a26")
 	var franc := 0.3 * longueur

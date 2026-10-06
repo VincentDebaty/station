@@ -126,13 +126,38 @@ func construire(niveau: Dictionary, e: Dictionary) -> void:
 		bt.longueur = 1.75 * U
 		bt.sens = 1.0 if int(b["vers"]) >= int(b["de"]) else -1.0
 		var chemin := "res://art/bateau_%d.png" % k
-		if ResourceLoader.exists(chemin): bt.image = load(chemin)
+		if ResourceLoader.exists(chemin):
+			bt.image = _recadrer(load(chemin))
+			bt.ligne = float(_reglages_bateaux().get("bateau_%d" % k, {}).get("ligne", 0.71))
+			var h := bt.longueur * 1.12 * bt.image.get_height() / bt.image.get_width()
+			bt.tirant = (1.0 - bt.ligne) * h
 		flotte.add_child(bt)
 		bateaux.append(bt)
 	positions = e["bateaux"].duplicate()
 	for k in bateaux.size():
 		bat_x.append(place(positions[k], "b%d" % k, positions))
 	_maj_passages()
+
+# La partie opaque d'une image : les marges d'une image générée varient d'une
+# image à l'autre, et c'est elles qui faisaient des bateaux de tailles différentes.
+func _recadrer(tex: Texture2D) -> Texture2D:
+	var img := tex.get_image()
+	if img.is_compressed(): img.decompress()
+	var x0 := img.get_width(); var y0 := img.get_height(); var x1 := 0; var y1 := 0
+	for y in range(0, img.get_height(), 2):
+		for x in range(0, img.get_width(), 2):
+			if img.get_pixel(x, y).a > 0.5:
+				x0 = mini(x0, x); y0 = mini(y0, y); x1 = maxi(x1, x); y1 = maxi(y1, y)
+	if x1 <= x0 or y1 <= y0: return tex
+	var at := AtlasTexture.new()
+	at.atlas = tex
+	at.region = Rect2(x0, y0, x1 - x0 + 1, y1 - y0 + 1)
+	return at
+
+func _reglages_bateaux() -> Dictionary:
+	if not FileAccess.file_exists("res://art/bateaux.json"): return {}
+	var d = JSON.parse_string(FileAccess.get_file_as_string("res://art/bateaux.json"))
+	return d if d is Dictionary else {}
 
 func _poly(points: PackedVector2Array, mat: Material = null, couleurs := PackedColorArray()) -> Polygon2D:
 	var p := Polygon2D.new()
@@ -160,7 +185,14 @@ func _decor() -> void:
 	# le panorama : art/fond.png s'il existe, sinon un bandeau découpé dans la maquette
 	var tex: Texture2D = null
 	if ResourceLoader.exists("res://art/fond.png"):
-		tex = load("res://art/fond.png")
+		# au-dessus de la berge il n'y a que ~200 px de ciel : on garde la bande
+		# de l'image où sont les collines (34 % à 72 % de sa hauteur, ASSETS.md),
+		# le reste serait du ciel vide en haut et de la prairie cachée en bas
+		var brut: Texture2D = load("res://art/fond.png")
+		var bande := AtlasTexture.new()
+		bande.atlas = brut
+		bande.region = Rect2(0, brut.get_height() * 0.34, brut.get_width(), brut.get_height() * 0.38)
+		tex = bande
 	elif ResourceLoader.exists("res://art/maquette.webp"):
 		var at := AtlasTexture.new()
 		at.atlas = load("res://art/maquette.webp")
@@ -170,9 +202,9 @@ func _decor() -> void:
 		var s := Sprite2D.new()
 		s.texture = tex
 		s.centered = false
-		var echelle := (W + 500.0) / tex.get_width()
+		var echelle := (W + 160.0) / tex.get_width()
 		s.scale = Vector2(echelle, echelle)
-		s.position = Vector2(-250, yb + 70 - tex.get_height() * echelle)
+		s.position = Vector2(-80, yb + 60 - tex.get_height() * echelle)
 		add_child(s)
 	# la prairie, qui descend derrière les bassins
 	var pts := PackedVector2Array()
@@ -509,7 +541,7 @@ func _dessiner_reperes() -> void:
 		var v := int(b["vers"])
 		if positions[k] == v: continue
 		var x := place(v, "f%d" % k, positions)
-		var tirant := float(b["tirant"]) * U * 0.92
+		var tirant: float = bateaux[k].tirant
 		var y := minf(surface_a(x), Y(float(N["bassins"][v]["fond"])) - tirant)
 		var c: Color = COULEURS[k % COULEURS.size()]
 		var L := 1.75 * U * 0.5
