@@ -190,16 +190,39 @@ func _maj_vantail() -> void:
 	_mat_bois.set_shader_parameter("tranche", 0.0)
 	_chaines.queue_redraw()
 
+# Les deux chaînes, de la traverse au haut du vantail. Elles sont ACCROCHÉES
+# AU VANTAIL : quand il monte, les maillons montent avec lui et rentrent dans la
+# traverse, au lieu d'une chaîne fixe qui raccourcit (Vincent : « ce serait
+# bien que les chaînes bougent »). De vrais maillons, alternés de face et de
+# profil, plutôt qu'un collier de points (analyse graphique, lot 6).
+const MAILLON := 9.0
 func _dessiner_chaines() -> void:
-	# deux chaînes, de la traverse au haut du vantail tant qu'il est visible dessous
 	var haut := bas_y - _hauteur()
-	var cache := y_portique
+	var cache := y_portique              # au-dessus, la traverse cache la chaîne
 	if haut <= cache: return
+	var acier := Color("#34353a")
+	var reflet := Color("#9a9ca3")
 	for x in [gx0 + 16.0, gx1 - 16.0]:
-		var y := cache
-		while y < haut:
-			_chaines.draw_circle(Vector2(x, y + 3.0), 2.6, Color("#3a3a3e"))
-			y += 7.0
+		# la manille, sur le haut du vantail
+		_chaines.draw_rect(Rect2(x - 4.0, haut - 3.0, 8.0, 4.0), acier)
+		var y := haut - 2.0
+		var j := 0
+		while y > cache - MAILLON:
+			var m := Vector2(x, y - MAILLON * 0.5)
+			if j % 2 == 0:
+				# de face : un anneau ovale
+				var anneau := PackedVector2Array()
+				for k in 13:
+					var t := TAU * k / 12.0
+					anneau.append(m + Vector2(cos(t) * 3.4, sin(t) * MAILLON * 0.62))
+				_chaines.draw_polyline(anneau, acier, 2.4, true)
+				_chaines.draw_line(m + Vector2(-1.6, -MAILLON * 0.35), m + Vector2(-1.6, MAILLON * 0.05), reflet, 1.0, true)
+			else:
+				# de profil : une barre
+				_chaines.draw_line(m + Vector2(0, -MAILLON * 0.62), m + Vector2(0, MAILLON * 0.62), acier, 2.8, true)
+				_chaines.draw_line(m + Vector2(-0.6, -MAILLON * 0.4), m + Vector2(-0.6, MAILLON * 0.1), reflet, 0.9, true)
+			y -= MAILLON
+			j += 1
 
 func _dessiner_roue() -> void:
 	var c := centre_roue()
@@ -217,7 +240,6 @@ func _dessiner_roue() -> void:
 		roue.draw_set_transform(c, _angle)
 		roue.draw_texture_rect(tr, Rect2(-R, -R, 2.0 * R, 2.0 * R), false)
 		roue.draw_set_transform(Vector2.ZERO)
-		_pastille(c, r)
 		return
 	roue.draw_arc(c, r, 0, TAU, 40, sombre, 10.0, true)
 	roue.draw_arc(c, r, 0, TAU, 40, rouge, 7.0, true)
@@ -231,10 +253,3 @@ func _dessiner_roue() -> void:
 			roue.draw_circle(c + d * (r + 4.0), 3.5, sombre)
 	roue.draw_circle(c, 7.0, sombre)
 	roue.draw_circle(c, 4.0, Color("#e9e2d8"))
-	_pastille(c, r)
-
-# la vanne : une pastille verte quand elle est ouverte, à côté de la roue
-func _pastille(c: Vector2, r: float) -> void:
-	var p := c + Vector2(r + 13, 0)
-	roue.draw_circle(p, 6.0, Color(1, 1, 1, 0.9))
-	roue.draw_circle(p, 4.0, Color("#2f9e58") if vanne_ouverte else Color("#8a8f92"))

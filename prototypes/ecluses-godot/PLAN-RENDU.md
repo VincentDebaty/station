@@ -175,7 +175,7 @@ voit avant qu'il soit trop tard.
 - [ ] 3. Destinations — Vincent a choisi A, la bouée ; attend `art/bouee.png`
 - [ ] 4. Masse rectangulaire
 - [ ] 5. Répétition terre / herbe
-- [ ] 6. Chaînes
+- [x] 6. Chaînes (6 octobre 2026 : maillons accrochés au vantail, qui montent avec lui)
 - [ ] 7. Tuyaux
 - [ ] 8. Arrière-plan et moulin
 - [ ] 9. Interface
