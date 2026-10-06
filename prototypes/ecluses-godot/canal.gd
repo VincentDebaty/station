@@ -396,12 +396,25 @@ func _bande_herbe(x0: float, x1: float, y: float, hauteur: float) -> bool:
 	if t == null: return false
 	var haut_y := y - 0.64 * hauteur
 	var k := t.get_height() / hauteur          # pixels de texture par pixel du monde
-	var p := Polygon2D.new()
-	p.texture = t
-	p.texture_repeat = CanvasItem.TEXTURE_REPEAT_ENABLED
-	p.polygon = _quad(x0, haut_y, x1, haut_y + hauteur)
-	p.uv = PackedVector2Array([Vector2(x0 * k, 0), Vector2(x1 * k, 0), Vector2(x1 * k, t.get_height()), Vector2(x0 * k, t.get_height())])
-	add_child(p)
+	# en tronçons de 260 à 560 px, chacun lu à un endroit pris au hasard de la
+	# bande et retourné une fois sur deux : la répétition ne se voit plus
+	# (lot 5) ; même hasard d'une partie à l'autre
+	var rng := RandomNumberGenerator.new()
+	rng.seed = int(absf(x0)) * 31 + int(y) * 7 + 3
+	var x := x0
+	while x < x1:
+		var fin := minf(x + rng.randf_range(260.0, 560.0), x1)
+		var u0 := rng.randf_range(0.0, t.get_width())
+		var u1 := u0 + (fin - x) * k
+		if rng.randf() < 0.5:
+			var tmp := u0; u0 = u1; u1 = tmp
+		var p := Polygon2D.new()
+		p.texture = t
+		p.texture_repeat = CanvasItem.TEXTURE_REPEAT_ENABLED
+		p.polygon = _quad(x, haut_y, fin, haut_y + hauteur)
+		p.uv = PackedVector2Array([Vector2(u0, 0), Vector2(u1, 0), Vector2(u1, t.get_height()), Vector2(u0, t.get_height())])
+		add_child(p)
+		x = fin
 	return true
 
 # Des rochers peints (art/rochers.png) à demi enfouis dans la terre, sous un

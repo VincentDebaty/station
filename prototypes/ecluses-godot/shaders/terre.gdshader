@@ -76,7 +76,31 @@ vec4 cailloux(vec2 p, float pas, float proba, float rmin, float rmax, float grai
 void fragment() {
 	float profond = mix(1.0, 0.7, clamp((monde.y - sol_y) / 420.0, 0.0, 1.0));
 	if (avec_image) {
-		COLOR = vec4(texture(image, monde / tuile).rgb * profond, 1.0);
+		// la répétition se voyait (lot 5 de PLAN-RENDU.md) : le sol est
+		// découpé en cellules ; chacune lit la tuile décalée au hasard, et
+		// retournée une fois sur deux, avec un fondu étroit entre voisines.
+		// Le gradient est pris sur les coordonnées continues, pour que les
+		// mipmaps ne tracent pas de couture aux bords des cellules.
+		vec2 p0 = monde / tuile;
+		vec2 dx = dFdx(p0), dy = dFdy(p0);
+		vec2 q = p0 * 1.35;
+		vec2 cel = floor(q);
+		vec2 f = fract(q);
+		vec2 w = smoothstep(0.38, 0.62, f);
+		vec3 acc = vec3(0.0);
+		for (int j = 0; j <= 1; j++) {
+			for (int i = 0; i <= 1; i++) {
+				vec2 id = cel + vec2(float(i), float(j));
+				vec2 uv = p0 + vec2(hash(id), hash(id + 3.7)) * 7.0;
+				vec2 gx = dx, gy = dy;
+				if (hash(id + 9.1) < 0.5) { uv.x = -uv.x; gx.x = -gx.x; gy.x = -gy.x; }
+				float poids = (i == 0 ? 1.0 - w.x : w.x) * (j == 0 ? 1.0 - w.y : w.y);
+				acc += textureGrad(image, uv, gx, gy).rgb * poids;
+			}
+		}
+		// et une teinte qui varie lentement, à grande échelle
+		acc *= 0.9 + 0.16 * fbm(monde / 520.0);
+		COLOR = vec4(acc * profond, 1.0);
 	} else {
 		vec2 p = monde / 64.0;
 		// les taches : un bruit déformé par un autre, seuillé doucement
