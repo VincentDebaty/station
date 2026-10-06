@@ -46,7 +46,8 @@ func _reduire(tex: Texture2D) -> Texture2D:
 		img.resize(cote, int(float(cote) * img.get_height() / img.get_width()), Image.INTERPOLATE_LANCZOS)
 	return ImageTexture.create_from_image(img)
 
-# L'étoile vide : la même image, en gris un peu plus sombre, reflets gardés.
+# L'étoile vide : la même image, en brun foncé — le bois de la maquette, où
+# l'étoile non gagnée est sombre et brune, pas grise. Reflets gardés.
 func _griser(tex: Texture2D) -> Texture2D:
 	var img := tex.get_image()
 	if img.is_compressed(): img.decompress()
@@ -54,8 +55,9 @@ func _griser(tex: Texture2D) -> Texture2D:
 	for y in img.get_height():
 		for x in img.get_width():
 			var c := img.get_pixel(x, y)
-			var l := (0.30 * c.r + 0.59 * c.g + 0.11 * c.b) * 0.78
-			img.set_pixel(x, y, Color(l, l, l * 0.98, c.a))
+			var l := 0.30 * c.r + 0.59 * c.g + 0.11 * c.b
+			var b := Color(0.16, 0.08, 0.03).lerp(Color(0.62, 0.38, 0.18), l)
+			img.set_pixel(x, y, Color(b.r, b.g, b.b, c.a))
 	return ImageTexture.create_from_image(img)
 
 func regler(nombre: int) -> void:
@@ -176,9 +178,9 @@ func _contour(c: Vector2, r: float) -> PackedVector2Array:
 	return pts
 
 func _etoile(c: Vector2, r: float, pleine: bool) -> void:
-	var bord := Color("#8f5a0c") if pleine else Color("#66645f")
-	var fonce := Color("#f0a81c") if pleine else Color("#8e8c86")
-	var clair := Color("#ffd94a") if pleine else Color("#b5b3ad")
+	var bord := Color("#8f5a0c") if pleine else Color("#2e1808")
+	var fonce := Color("#f0a81c") if pleine else Color("#4a2b12")
+	var clair := Color("#ffd94a") if pleine else Color("#7a4d26")
 	var exterieur := _contour(c, r * 1.12)
 	draw_colored_polygon(exterieur, bord)                     # le cerne épais
 	var corps := _contour(c, r)

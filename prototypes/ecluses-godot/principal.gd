@@ -221,6 +221,37 @@ func _style(fond: Color, rayon := 26, ombre := true) -> StyleBoxFlat:
 	s.anti_aliasing = true
 	return s
 
+# Une plaque de bois : l'image art/plaque_bois.png si elle existe (découpée en
+# neuf, recadrée sur ses pixels visibles), sinon un bois uni dessiné — brun,
+# liseré de bois clair, ombre douce.
+var _tex_plaque: Texture2D = null
+func _style_bois(rayon: int, marge: int) -> StyleBox:
+	if _tex_plaque == null and ResourceLoader.exists("res://art/plaque_bois.png"):
+		_tex_plaque = Images.reduire("res://art/plaque_bois.png", 300)
+	if _tex_plaque:
+		var t := StyleBoxTexture.new()
+		t.texture = _tex_plaque
+		t.set_texture_margin_all(30.0)
+		t.content_margin_left = marge; t.content_margin_right = marge
+		t.content_margin_top = 6; t.content_margin_bottom = 8
+		return t
+	var s := StyleBoxFlat.new()
+	s.bg_color = Color("#8b5a2b")
+	s.set_corner_radius_all(rayon)
+	s.border_color = Color("#c98f52"); s.set_border_width_all(4)
+	s.shadow_color = Color(0, 0, 0, 0.3); s.shadow_size = 7; s.shadow_offset = Vector2(0, 4)
+	s.content_margin_left = marge; s.content_margin_right = marge
+	s.content_margin_top = 6; s.content_margin_bottom = 8
+	s.anti_aliasing = true
+	return s
+
+# Le texte sur le bois : crème cerclé de brun foncé, comme sur la pancarte.
+func _label_bois(t: String, taille: int) -> Label:
+	var l := _label(t, taille, Color("#fff3dc"))
+	l.add_theme_color_override("font_outline_color", Color("#3e210d"))
+	l.add_theme_constant_override("outline_size", 10)
+	return l
+
 func _theme() -> Theme:
 	var t := Theme.new()
 	var f := SystemFont.new()
@@ -241,41 +272,35 @@ func _interface() -> void:
 	_sure.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_sure.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	racine.add_child(_sure)
-	# en haut à gauche : le numéro du niveau, puis les coups
-	var gauche := HBoxContainer.new()
-	gauche.add_theme_constant_override("separation", -20)
-	_sure.add_child(gauche)
+	# Le haut de l'écran en bois, comme sur la maquette du panneau d'éclusier
+	# (Vincent, 6 octobre 2026) : à gauche, le numéro du niveau sur une plaque
+	# de bois ; à droite, les coups sur une plaque (à la place du chronomètre
+	# de la maquette : le jeu compte les coups), puis les étoiles posées sur le
+	# décor, sans pastille.
 	var badge := PanelContainer.new()
-	var st_badge := _style(BLEU, 20)
-	st_badge.content_margin_left = 14; st_badge.content_margin_right = 14
-	badge.add_theme_stylebox_override("panel", st_badge)
-	badge.custom_minimum_size = Vector2(100, 88)
-	var num := _label(N["id"], 44, Color.WHITE)
+	badge.add_theme_stylebox_override("panel", _style_bois(18, 14))
+	badge.custom_minimum_size = Vector2(112, 80)
+	var num := _label_bois(N["id"], 46)
 	_lab_num = num
 	num.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	badge.add_child(num)
+	_sure.add_child(badge)
+	var droite := HBoxContainer.new()
+	droite.add_theme_constant_override("separation", 18)
 	var pilule := PanelContainer.new()
-	var st_pil := _style(CREME, 28)
-	st_pil.content_margin_left = 40; st_pil.content_margin_right = 26
-	pilule.add_theme_stylebox_override("panel", st_pil)
+	pilule.add_theme_stylebox_override("panel", _style_bois(22, 24))
 	pilule.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	pilule.custom_minimum_size = Vector2(0, 70)
-	_lab_coups = _label("", 34, ENCRE)
+	pilule.custom_minimum_size = Vector2(0, 66)
+	_lab_coups = _label_bois("", 34)
 	pilule.add_child(_lab_coups)
-	pilule.z_index = -1      # la pastille des coups passe sous le numéro, comme sur la maquette
-	gauche.add_child(badge)
-	gauche.add_child(pilule)
-	# en haut à droite : les étoiles
-	var cadre_et := PanelContainer.new()
-	var st_et := _style(CREME, 28)
-	st_et.content_margin_left = 16; st_et.content_margin_right = 16
-	cadre_et.add_theme_stylebox_override("panel", st_et)
+	droite.add_child(pilule)
 	_etoiles = Etoiles.new()
-	_etoiles.taille = 52.0
-	cadre_et.add_child(_etoiles)
-	_sure.add_child(cadre_et)
-	cadre_et.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT, Control.PRESET_MODE_MINSIZE, 0)
-	cadre_et.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	_etoiles.taille = 62.0
+	_etoiles.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	droite.add_child(_etoiles)
+	_sure.add_child(droite)
+	droite.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT, Control.PRESET_MODE_MINSIZE, 0)
+	droite.grow_horizontal = Control.GROW_DIRECTION_BEGIN
 	# en bas à droite : annuler, recommencer
 	var boutons := HBoxContainer.new()
 	boutons.add_theme_constant_override("separation", 10)

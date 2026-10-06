@@ -100,6 +100,18 @@ d'une autre taille — comme pour les bateaux). Sans image, le jeu dessine des
 2D casual mobile game UI icon, same art style as the reference image (look at the three stars in its top-right corner). A single plump five-pointed star with softly rounded tips, glossy golden-yellow with a warm gradient (light yellow on top, deeper orange-gold at the bottom), a thick dark brown-orange outline, a soft white highlight on the upper left. Front view, centered, square image, the star fills about 90 % of the image, transparent background. No text, no glow, no shadow outside the star.
 ```
 
+### `art/plaque_bois.png` — les plaques du haut de l'écran
+
+Le numéro du niveau et le compteur de coups sont posés sur des plaques de bois,
+comme le « 47 » de la maquette du panneau d'éclusier. Sans image, le jeu
+dessine un bois uni (brun, liseré clair) ; avec elle, la plaque est recadrée
+et découpée en neuf pour s'étirer à la largeur du texte. Joindre la maquette
+du panneau d'éclusier comme référence.
+
+```text
+Using the attached image as the exact style reference (look at the wooden badge holding the number "47" in the top-left corner), draw the same wooden badge EMPTY, with no text: a rounded rectangle of warm brown polished wood with a fine grain, a lighter wooden rim all around, soft cel shading and a subtle highlight on top. Wide format about 2:1, the badge fills the image, transparent background, no shadow outside the badge.
+```
+
 ## Pas encore branché — à faire quand le style sera validé
 
 Ces éléments sont dessinés par des shaders aujourd'hui. Ils deviendront des
