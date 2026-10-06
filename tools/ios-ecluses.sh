@@ -118,4 +118,4 @@ echo "→ installation sur ${ID}…"
 xcrun devicectl device install app --device "${ID}" "${APP}" || exit 1
 echo "→ lancement…"
 xcrun devicectl device process launch --device "${ID}" "${BUNDLE}"
-vert "posé sur l'iPhone. Le compteur d'images par seconde est en bas à gauche."
+vert "posé sur l'iPhone. Le compteur d'images par seconde s'affiche en ouvrant Réglages (l'engrenage)."
