@@ -15,7 +15,6 @@ extends MeshInstance2D
 
 const PAS := 8.0          # une colonne tous les 8 pixels
 const RAIDEUR := 0.028     # rappel vers le repos, par pas de 1/60 s
-const AMORTI := 0.045
 const ETALEMENT := 0.22    # ce qu'une colonne transmet à ses voisines
 const PASSES := 4
 
@@ -52,7 +51,7 @@ func x_de(i: int) -> float:
 	return lerpf(x0, x1, float(i) / float(_h.size() - 1))
 
 func _houle(x: float) -> float:
-	return 1.5 * sin(x * 0.043 + _t * 1.55) + 0.9 * sin(x * 0.107 - _t * 2.25) + 0.5 * sin(x * 0.21 + _t * 3.1)
+	return Reglages.v("houle") * (1.5 * sin(x * 0.043 + _t * 1.55) + 0.9 * sin(x * 0.107 - _t * 2.25) + 0.5 * sin(x * 0.21 + _t * 3.1))
 
 # La surface à l'abscisse x, en y monde.
 func hauteur_a(x: float) -> float:
@@ -86,9 +85,10 @@ func _process(dt: float) -> void:
 	_construire()
 
 func _pas_ressorts() -> void:
+	var amorti := Reglages.v("amortissement")     # plus haut, la surface se calme plus vite
 	var n := _h.size()
 	for i in n:
-		_v[i] += -RAIDEUR * _h[i] - AMORTI * _v[i]
+		_v[i] += -RAIDEUR * _h[i] - amorti * _v[i]
 		_h[i] += _v[i]
 	for _p in PASSES:
 		var g := PackedFloat32Array(); g.resize(n)

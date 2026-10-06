@@ -31,6 +31,8 @@ var _etoiles_fin: Label
 var _images := 0
 var _secondes := 0.0
 var _ips: Label
+var _panneau: PanelContainer   # les curseurs du rendu de l'eau (reglages.gd)
+var _valeurs := {}             # clé -> [HSlider, Label de la valeur]
 var _sure: Control      # la zone sûre : tout ce qu'on touche ou qu'on lit y reste
 
 func _ready() -> void:
@@ -231,14 +233,71 @@ func _interface() -> void:
 	_fin.add_child(col)
 	_fin.hide()
 	racine.add_child(_fin)
-	# les images par seconde, en bas à gauche, dans les versions de test : c'est
-	# la mesure qu'on vient chercher sur l'iPhone
+	# en bas à gauche : le panneau des réglages (replié), son bouton, et les
+	# images par seconde dans les versions de test
+	var coin := VBoxContainer.new()
+	coin.add_theme_constant_override("separation", 8)
+	_sure.add_child(coin)
+	coin.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT, Control.PRESET_MODE_MINSIZE, 0)
+	coin.grow_vertical = Control.GROW_DIRECTION_BEGIN
+	_panneau = _panneau_reglages()
+	_panneau.hide()
+	coin.add_child(_panneau)
+	var ligne := HBoxContainer.new()
+	ligne.add_theme_constant_override("separation", 14)
+	coin.add_child(ligne)
+	if not OS.has_feature("movie"):
+		var defaut := _bouton("Valeurs de départ", func(): Reglages.remettre(); _maj_valeurs(true))
+		defaut.hide()
+		ligne.add_child(_bouton("Réglages", func():
+			_panneau.visible = not _panneau.visible
+			defaut.visible = _panneau.visible))
+		ligne.add_child(defaut)
 	if OS.is_debug_build() and not OS.has_feature("movie"):
-		_ips = _label("", 16, Color(1, 1, 1, 0.8))
-		_sure.add_child(_ips)
-		_ips.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT, Control.PRESET_MODE_MINSIZE, 0)
-		_ips.grow_vertical = Control.GROW_DIRECTION_BEGIN
+		_ips = _label("", 16, Color(1, 1, 1, 0.85))
+		ligne.add_child(_ips)
 	_maj()
+
+# Un curseur par réglage de reglages.gd, sa valeur affichée à côté : Vincent
+# cherche le bon dosage au doigt et n'a qu'à recopier les chiffres.
+func _panneau_reglages() -> PanelContainer:
+	var p := PanelContainer.new()
+	var st := _style(Color(0.97, 0.95, 0.9, 0.8), 16)
+	st.content_margin_left = 16; st.content_margin_right = 16
+	st.content_margin_top = 8; st.content_margin_bottom = 8
+	p.add_theme_stylebox_override("panel", st)
+	# deux colonnes de curseurs : le panneau reste bas, posé sur la terre du bas
+	# de l'écran, et laisse voir l'eau qu'on règle
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override("separation", 6)
+	p.add_child(col)
+	var grille := GridContainer.new()
+	grille.columns = 6
+	grille.add_theme_constant_override("h_separation", 10)
+	grille.add_theme_constant_override("v_separation", 0)
+	col.add_child(grille)
+	for k in Reglages.CURSEURS:
+		var c: Array = Reglages.CURSEURS[k]
+		var nom := _label(c[0], 16, Color("#2a3a40"))
+		nom.custom_minimum_size = Vector2(170, 0)
+		var curseur := HSlider.new()
+		curseur.min_value = c[2]; curseur.max_value = c[3]; curseur.step = c[4]
+		curseur.value = Reglages.v(k)
+		curseur.custom_minimum_size = Vector2(190, 42)
+		curseur.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		var val := _label("", 16, Color("#1f6fd1"))
+		val.custom_minimum_size = Vector2(48, 0)
+		curseur.value_changed.connect(func(x): Reglages.regler(k, x); _maj_valeurs())
+		grille.add_child(nom); grille.add_child(curseur); grille.add_child(val)
+		_valeurs[k] = [curseur, val]
+	_maj_valeurs()
+	return p
+
+func _maj_valeurs(curseurs_aussi := false) -> void:
+	for k in _valeurs:
+		var x := Reglages.v(k)
+		if curseurs_aussi: _valeurs[k][0].set_value_no_signal(x)
+		_valeurs[k][1].text = ("%.2f" % x).replace(".", ",")
 
 func _label(t: String, taille: int, c: Color) -> Label:
 	var l := Label.new()
@@ -302,6 +361,12 @@ func _demo() -> void:
 			break
 	await get_tree().create_timer(1.2).timeout
 	await _photo("00-repos")
+	# ECLUSES_PANNEAU=1 : photographie aussi le panneau des réglages déplié
+	if OS.get_environment("ECLUSES_PANNEAU") != "" and _panneau:
+		_panneau.show()
+		await get_tree().create_timer(0.3).timeout
+		await _photo("00-reglages")
+		_panneau.hide()
 	var rang := 0
 	for a in solution:
 		rang += 1

@@ -8,6 +8,8 @@ shader_type canvas_item;
 uniform float longueur = 400.0;   // longueur du conduit, en pixels
 uniform float debit = 0.0;        // 0 à l'arrêt, 1 au plus fort
 uniform float sens = 1.0;         // 1 : l'eau va dans le sens du tracé
+uniform float contraste = 0.35;   // réglage : à quel point les reflets ressortent
+uniform float allure = 0.6;       // réglage : facteur de vitesse
 
 float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
 float bruit(vec2 p) {
@@ -21,7 +23,7 @@ void fragment() {
 	float v = UV.y;
 	// pixels par seconde : 158 au plus fort était bien trop vif (Vincent) ;
 	// l'eau d'un aqueduc avance, elle ne file pas
-	float vitesse = sens * (4.0 + 38.0 * debit);
+	float vitesse = sens * (4.0 + 38.0 * debit) * allure;
 	// un motif qui glisse vers les x croissants s'écrit f(x - v·t)… mais mesuré
 	// sur la démo filmée, la ligne de Godot fait défiler le motif à l'envers :
 	// le signe est donc retourné ici, et vérifié à l'image (filets qui descendent
@@ -31,13 +33,14 @@ void fragment() {
 	float n = bruit(vec2(u, v * 2.5)) * 0.6 + bruit(vec2(u * 2.3 + 7.0, v * 5.0)) * 0.4;
 	vec3 sombre = vec3(0.05, 0.36, 0.52);
 	vec3 clair = vec3(0.36, 0.80, 0.92);
-	vec3 c = mix(sombre, clair, smoothstep(0.35, 0.85, n) * (0.35 + 0.65 * debit));
+	vec3 moyen = mix(sombre, clair, 0.45);
+	vec3 c = mix(moyen, mix(sombre, clair, smoothstep(0.3, 0.9, n)), contraste * (0.35 + 0.65 * debit));
 	// des bulles entraînées, d'autant plus nombreuses que le débit est fort
 	vec2 cel = vec2(floor(u * 1.6), floor(v * 3.0));
 	vec2 f = vec2(fract(u * 1.6), fract(v * 3.0));
 	vec2 centre = vec2(hash(cel), 0.3 + 0.4 * hash(cel + 3.7));
 	float bulle = 1.0 - smoothstep(0.06, 0.11, length((f - centre) * vec2(1.0, 0.5)));
-	c = mix(c, vec3(0.88, 0.98, 1.0), bulle * step(hash(cel + 9.1), 0.18 + 0.4 * debit) * debit);
+	c = mix(c, vec3(0.88, 0.98, 1.0), bulle * step(hash(cel + 9.1), 0.18 + 0.4 * debit) * debit * contraste);
 	// l'ombrage d'un tuyau rond : plus sombre sur les bords
 	c *= 0.62 + 0.45 * sin(v * 3.14159);
 	COLOR = vec4(c, 1.0);

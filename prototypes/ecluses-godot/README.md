@@ -48,6 +48,15 @@ elle va où le moteur l'a décidé :
 - **l'eau** réfracte ce qui est derrière elle, s'assombrit avec la profondeur,
   porte des reflets mouvants et une ligne d'écume (`shaders/eau.gdshader`).
 
+## Régler l'eau au doigt
+
+Le bouton **Réglages**, en bas à gauche, déplie six curseurs qui dosent le
+rendu de l'eau en direct : contraste et vitesse du courant dans l'aqueduc,
+sillage des bateaux, bouillon à la sortie de l'aqueduc, houle, amortissement
+des vagues. Chaque valeur s'affiche à côté de son curseur et se garde d'un
+lancement à l'autre (sur le téléphone, `user://reglages.json`). Quand Vincent
+a trouvé le bon dosage, ses chiffres deviennent les défauts de `reglages.gd`.
+
 ## Vérifier sans les doigts
 
 ```bash

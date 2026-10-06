@@ -384,7 +384,7 @@ func _process(dt: float) -> void:
 	for i in portes: portes[i].bas_ouvert_y = _bas_ouvert(i)
 	_maj_passages()
 	for i in aqueducs: aqueducs[i].ouverte = portes[i].vanne_ouverte
-	_poser_bateaux()
+	_poser_bateaux(dt)
 	_reperes.queue_redraw()
 
 func _maj_passages() -> void:
@@ -480,12 +480,13 @@ func _aqueduc(i: int, flux: float, dt: float) -> void:
 	if force <= 0.03: return
 	var recoit: Eau = eaux[l]
 	var donne: Eau = eaux[h]
-	recoit.remous = maxf(recoit.remous, force * 0.55)
+	var bouillon := Reglages.v("bouillon")
+	recoit.remous = maxf(recoit.remous, force * 0.55 * minf(bouillon, 1.0))
 	var sortie := aq.sortie()
 	var entree := aq.entree()
 	# au-dessus du débouché, la surface se soulève par bouffées
 	if randf() < 0.5:
-		recoit.impulsion(sortie.x + randf_range(-0.5, 0.5) * U, randf_range(-1.1, 0.4) * force, 26.0)
+		recoit.impulsion(sortie.x + randf_range(-0.5, 0.5) * U, randf_range(-1.1, 0.4) * force * bouillon, 26.0)
 	# au-dessus de l'entrée, elle se creuse un peu
 	donne.impulsion(entree.x, 0.25 * force * dt * 60.0 * 0.1, 40.0)
 
@@ -549,14 +550,15 @@ func _avancer_bateaux(dt: float) -> void:
 		# le sillage : la poupe pousse l'eau
 		var poupe: float = bat_x[k] - signf(vitesse) * bateaux[k].longueur * 0.45
 		var i := bassin_sous(poupe)
-		eaux[i].impulsion(poupe, absf(vitesse) * 0.0045, 26.0)
-		eaux[i].impulsion(bat_x[k] + signf(vitesse) * bateaux[k].longueur * 0.55, -absf(vitesse) * 0.002, 20.0)
+		var sillage := Reglages.v("sillage")
+		eaux[i].impulsion(poupe, absf(vitesse) * 0.0045 * sillage, 34.0)
+		eaux[i].impulsion(bat_x[k] + signf(vitesse) * bateaux[k].longueur * 0.55, -absf(vitesse) * 0.002 * sillage, 28.0)
 		if p >= 0.5: positions[k] = m["vers"]
 	if p >= 1.0:
 		positions = _depl["apres"].duplicate()
 		_tour_suivant()
 
-func _poser_bateaux() -> void:
+func _poser_bateaux(dt := 1.0) -> void:
 	for k in bateaux.size():
 		var bt: Bateau = bateaux[k]
 		var x: float = bat_x[k]
@@ -568,7 +570,9 @@ func _poser_bateaux() -> void:
 		var yb := minf(surface_a(x + demi), echoue_y)
 		var echoue := surface_a(x) > echoue_y + 1.0
 		bt.position = Vector2(x, (ya + yb) * 0.5 + (2.0 if not echoue else 0.0))
-		bt.rotation = clampf(atan2(yb - ya, 2.0 * demi) * 0.8, -0.12, 0.12) + (0.11 * bt.sens if echoue else 0.0)
+		# le bateau s'incline en douceur : il ne suit pas chaque ride au coup par coup
+		var cible := clampf(atan2(yb - ya, 2.0 * demi) * 0.8, -0.12, 0.12) + (0.11 * bt.sens if echoue else 0.0)
+		bt.rotation = lerp_angle(bt.rotation, cible, minf(1.0, dt * 4.0))
 		bt.queue_redraw()
 
 # --- Les repères : la place où chaque bateau doit finir ------------------------------------

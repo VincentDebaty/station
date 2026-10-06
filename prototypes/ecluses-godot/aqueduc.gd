@@ -87,7 +87,7 @@ func couler(force: float, asens: int) -> void:
 	bulles.emitting = force > 0.03
 	if bulles.emitting:
 		bulles.global_position = sortie()
-		bulles.modulate.a = clampf(force * 1.2, 0.2, 1.0)
+		bulles.modulate.a = clampf(force * 1.2, 0.2, 1.0) * clampf(Reglages.v("bouillon") * 1.5, 0.0, 1.0)
 	queue_redraw()
 
 func _process(dt: float) -> void:
@@ -99,6 +99,8 @@ func _process(dt: float) -> void:
 	_eau.visible = vanne > 0.5 or debit > 0.02
 	_mat_eau.set_shader_parameter("debit", debit)
 	_mat_eau.set_shader_parameter("sens", float(sens))
+	_mat_eau.set_shader_parameter("contraste", Reglages.v("courant_contraste"))
+	_mat_eau.set_shader_parameter("allure", Reglages.v("courant_vitesse"))
 
 func _draw() -> void:
 	if chemin.size() < 2: return
