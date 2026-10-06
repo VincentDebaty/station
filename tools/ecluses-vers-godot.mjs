@@ -9,7 +9,10 @@
 //   niveaux.json   le bloc JSON « niveaux », tel quel
 //   oracle.json    des parties de référence jouées par le moteur JS : la
 //                  solution de chaque niveau, puis des parties au hasard
-//                  graînées, avec l'état complet après chaque coup
+//                  graînées, avec l'état complet après chaque coup — et,
+//                  pour les niveaux à portes sans fleuve, le verdict
+//                  d'impasse du solveur (1 impasse, 0 soluble, -1 sans
+//                  conclusion), que la tranche affiche par un « ! »
 // puis oracle.gd (godot --headless --path prototypes/ecluses-godot
 // --script res://oracle.gd) vérifie que le moteur GDScript rejoue chacune au
 // millionième près. Relancer après avoir touché aux niveaux ou au moteur JS.
@@ -61,10 +64,18 @@ for (const N of D.niveaux) {
   for (const seq of jeux) {
     let e = E.charger(N);
     const pas = [{ action: null, ...photo(e, null), verdict: E.verdict(N, e) || {} }];
+    const avecImpasse = N.mode === "pas" && !N.bassins.some(b => b.apport);
+    const impasse = e => {
+      const r = E.resoudre(N, e, 25000, null, { quantum: 0.01 });
+      return r.chemin ? 0 : (r.epuise ? 1 : -1);
+    };
+    if (avecImpasse) pas[0].impasse = impasse(e);
     for (const a of seq) {
       const r = E.jouer(N, e, a);
       e = r.etat;
-      pas.push({ action: a, ...photo(e, r), verdict: E.verdict(N, e) || {} });
+      const p = { action: a, ...photo(e, r), verdict: E.verdict(N, e) || {} };
+      if (avecImpasse) p.impasse = impasse(e);
+      pas.push(p);
     }
     parties.push({ niveau: N.id, pas });
   }

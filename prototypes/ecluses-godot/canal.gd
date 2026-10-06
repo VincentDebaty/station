@@ -68,6 +68,7 @@ var vue_ouvert := []
 var _ecou := {}
 var _depl := {}
 var _reperes: Node2D
+var alertes := {}     # bateau coincé -> l'instant où son « ! » est apparu
 var _t := 0.0
 
 func X(x: float) -> float: return x * U
@@ -595,8 +596,44 @@ func _poser_bateaux(dt := 1.0) -> void:
 		bt.rotation = lerp_angle(bt.rotation, cible, minf(1.0, dt * 4.0))
 		bt.queue_redraw()
 
-# --- Les repères : la place où chaque bateau doit finir ------------------------------------
+# --- Les repères : la place où chaque bateau doit finir, et les « ! » --------------------
+# Un bateau coincé (plus d'eau, ou plus moyen de passer) : un point
+# d'exclamation rouge surgit au-dessus de lui, rebondit, lance de petits
+# éclats, puis bat doucement — comme sur la maquette du niveau 47.
+func alerter(bateaux_coinces: Array) -> void:
+	for k in bateaux_coinces: alertes[k] = _t
+
+func _exclamation(c: Vector2, age: float) -> void:
+	var t := clampf(age / 0.32, 0.0, 1.0)
+	var u := t - 1.0
+	var s := 1.0 + 2.7 * u * u * u + 1.7 * u * u        # surgit en dépassant un peu, puis se pose
+	if age > 0.32: s = 1.0 + 0.06 * sin((age - 0.32) * 6.0)
+	if s <= 0.01: return
+	var h := 40.0 * s
+	var w := 13.0 * s
+	var barre := PackedVector2Array([c + Vector2(-w * 0.62, -h), c + Vector2(w * 0.62, -h),
+		c + Vector2(w * 0.34, -h * 0.34), c + Vector2(-w * 0.34, -h * 0.34)])
+	var tour := PackedVector2Array()
+	var centre := c + Vector2(0, -h * 0.66)
+	for p in barre: tour.append(centre + (p - centre) * 1.32)
+	_reperes.draw_colored_polygon(tour, Color.WHITE)
+	_reperes.draw_circle(c + Vector2(0, -h * 0.1), w * 0.62, Color.WHITE)
+	_reperes.draw_colored_polygon(barre, Color("#e2332a"))
+	_reperes.draw_circle(c + Vector2(0, -h * 0.1), w * 0.44, Color("#e2332a"))
+	# les éclats, de part et d'autre
+	if age > 0.12:
+		var a := clampf((age - 0.12) / 0.2, 0.0, 1.0) * (0.75 + 0.25 * sin(age * 7.0))
+		for cote in [-1.0, 1.0]:
+			for j in 3:
+				var ang := deg_to_rad(-35.0 + j * 35.0)
+				var d := Vector2(cos(ang) * cote, sin(ang))
+				var o := c + Vector2(cote * w * 1.1, -h * 0.62)
+				_reperes.draw_line(o + d * 6.0 * s, o + d * 15.0 * s, Color(1.0, 0.68, 0.12, a), 3.0, true)
+
 func _dessiner_reperes() -> void:
+	for k in alertes:
+		var bt: Bateau = bateaux[k]
+		_exclamation(Vector2(bt.position.x, bt.position.y - 64.0), _t - float(alertes[k]))
 	for k in N["bateaux"].size():
 		var b: Dictionary = N["bateaux"][k]
 		var v := int(b["vers"])

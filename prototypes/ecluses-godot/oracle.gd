@@ -7,7 +7,8 @@ extends SceneTree
 #
 # oracle.json contient des parties jouées par le moteur de la page web, avec
 # l'état complet après chaque coup. On les rejoue ici, coup pour coup, et on
-# REFUSE (code de sortie 1) au premier écart de plus d'un millionième.
+# REFUSE (code de sortie 1) au premier écart de plus d'un millionième — ou au
+# premier verdict d'impasse (Moteur.impasse) qui diffère de celui de la page.
 # ------------------------------------------------------------------
 
 func _init() -> void:
@@ -16,6 +17,8 @@ func _init() -> void:
 		niveaux[N["id"]] = N
 	var parties: Array = _lire("res://oracle.json")["parties"]
 	var coups := 0
+	var impasses := 0
+	var ms_max := 0
 	var ecarts := []
 	for partie in parties:
 		var N: Dictionary = niveaux[partie["niveau"]]
@@ -27,13 +30,20 @@ func _init() -> void:
 				e = r["etat"]
 				coups += 1
 			var ecart := _compare(N, e, r, pas)
+			if ecart == "" and pas.has("impasse"):
+				var t0 := Time.get_ticks_msec()
+				var mien := Moteur.impasse(N, e)
+				ms_max = maxi(ms_max, Time.get_ticks_msec() - t0)
+				impasses += 1
+				if mien != int(pas["impasse"]):
+					ecart = "impasse %d, attendu %d" % [mien, int(pas["impasse"])]
 			if ecart != "":
 				ecarts.append("%s, coup %d : %s" % [partie["niveau"], e["coups"], ecart])
 				break
 		if ecarts.size() >= 5:
 			break
 	if ecarts.is_empty():
-		print("Oracle : %d parties, %d coups rejoués à l'identique." % [parties.size(), coups])
+		print("Oracle : %d parties, %d coups rejoués à l'identique ; %d verdicts d'impasse identiques (le plus long : %d ms)." % [parties.size(), coups, impasses, ms_max])
 		quit(0)
 	else:
 		for x in ecarts:

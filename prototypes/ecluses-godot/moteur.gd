@@ -285,3 +285,44 @@ static func verdict(N: Dictionary, e: Dictionary) -> Dictionary:
 	if N["mode"] == "chantier":
 		return {"fin": "rate"}
 	return {}
+
+# --- L'impasse -----------------------------------------------------------------
+# Reste-t-il une solution d'ici ? Le même solveur que la page web (en largeur,
+# niveaux d'eau arrondis au centième dans la clé des états vus : l'eau est
+# continue, et sans arrondi la fouille ne s'épuiserait jamais). Rend :
+#    1  impasse : tout l'atteignable a été fouillé, aucune victoire
+#    0  il reste au moins une solution
+#   -1  la fouille a touché sa limite sans conclure : on ne dit rien
+# Pur (aucun nœud, aucune scène) : se lance dans un fil de travail.
+static func cle(e: Dictionary, q: float) -> String:
+	var t := PackedStringArray()
+	for h in e["niv"]:
+		t.append(str(int(floor(h / q + 0.5))) if q > 0.0 else str(h))
+	var s := ",".join(t) + "|"
+	for o in e["ouvert"]: s += "1" if o else "0"
+	s += "|"
+	for c in e["crete"]: s += ("" if c == null else str(c)) + ","
+	s += "|"
+	for b in e["bateaux"]: s += str(b) + ","
+	return s + ("|1" if e["lache"] else "|0")
+
+static func impasse(N: Dictionary, depart: Dictionary, limite := 25000, q := 0.01) -> int:
+	var v0 := verdict(N, depart)
+	if not v0.is_empty(): return 0 if v0["fin"] == "gagne" else 1
+	var vus := {cle(depart, q): true}
+	var file := [depart]
+	while not file.is_empty():
+		var suivante := []
+		for e in file:
+			for a in actions(N, e):
+				var r := jouer(N, e, a)
+				var v := verdict(N, r["etat"])
+				if v.get("fin", "") == "gagne": return 0
+				if not v.is_empty(): continue
+				var k := cle(r["etat"], q)
+				if vus.has(k): continue
+				vus[k] = true
+				if vus.size() > limite: return -1
+				suivante.append(r["etat"])
+		file = suivante
+	return 1

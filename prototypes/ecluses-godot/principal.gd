@@ -10,6 +10,8 @@ extends Node2D
 #   ECLUSES_CAPTURE=<dossier> photographie l'écran à des instants choisis
 #                             (avec la démo), puis quitte en donnant les
 #                             images par seconde moyennes
+#   ECLUSES_COUPS=0,1         la démo joue ces portes-là au lieu de la solution
+#                             (pour voir un bateau se coincer)
 #   ECLUSES_SURE=g,h,d,b      simule les bords d'un téléphone (en pixels de
 #                             fenêtre), pour vérifier les marges sur le Mac
 # ------------------------------------------------------------------
@@ -28,6 +30,8 @@ var _b_annuler: Button
 var _fin: PanelContainer
 var _lab_fin: Label
 var _etoiles_fin: Etoiles
+var _b_annuler_fin: Button
+var _calcul := 0          # numéro de la dernière recherche d'impasse : une réponse périmée est ignorée
 var _images := 0
 var _secondes := 0.0
 var _ips: Label
@@ -49,6 +53,7 @@ func _ready() -> void:
 		_demo()
 
 func _lancer() -> void:
+	_calcul += 1
 	if canal: canal.queue_free()
 	etat = Moteur.charger(N)
 	histoire = []
@@ -140,9 +145,46 @@ func jouer(a: Dictionary) -> void:
 	if v.get("fin", "") == "gagne":
 		fini = true
 		_montrer_fin()
+	else:
+		_chercher_impasse()
+
+# Reste-t-il une solution ? Le solveur (Moteur.impasse, le même que la page
+# web, vérifié par l'oracle) tourne dans un fil de travail : sur le niveau 1-2
+# il répond en 2 ms, sur 1-3 et 1-4 il peut mettre quelques secondes, et
+# l'écran ne doit pas se figer pendant ce temps. S'il n'y a plus de solution,
+# les bateaux qui n'arriveront plus reçoivent leur « ! », et le niveau est
+# perdu : on propose de rejouer (Vincent, 6 octobre 2026).
+func _chercher_impasse() -> void:
+	_calcul += 1
+	var mon_calcul := _calcul
+	var niveau := N.duplicate(true)
+	var e := etat.duplicate(true)
+	var reponse := [-1]
+	var tache := WorkerThreadPool.add_task(func(): reponse[0] = Moteur.impasse(niveau, e))
+	while not WorkerThreadPool.is_task_completed(tache):
+		await get_tree().process_frame
+	WorkerThreadPool.wait_for_task_completion(tache)
+	if mon_calcul != _calcul or fini or occupe: return
+	if reponse[0] == 1: _coince()
+
+func _coince() -> void:
+	fini = true
+	var coinces := []
+	for k in N["bateaux"].size():
+		var vers := int(N["bateaux"][k]["vers"])
+		if etat["bateaux"][k] != vers or not Moteur.flotte(N, etat, k, vers): coinces.append(k)
+	canal.alerter(coinces)
+	_maj()
+	await get_tree().create_timer(1.3).timeout
+	if not fini: return     # on a annulé entre-temps
+	_etoiles_fin.hide()
+	_b_annuler_fin.show()
+	_lab_fin.text = "Bateau coincé !\nD'ici, il n'y a plus de solution."
+	_fin.show()
 
 func annuler() -> void:
 	if occupe or histoire.is_empty(): return
+	_calcul += 1
 	var e: Dictionary = histoire.pop_back()
 	# on reconstruit la coupe sur l'état d'avant : pas d'animation à rebours
 	etat = e
@@ -156,6 +198,7 @@ func annuler() -> void:
 	fini = false
 	_fin.hide()
 	_maj()
+	_chercher_impasse()      # l'état d'avant peut lui-même être une impasse
 
 # --- L'interface ----------------------------------------------------------------------
 # L'interface suit la maquette du niveau 14 (Vincent, 6 octobre 2026) : une
@@ -249,9 +292,12 @@ func _interface() -> void:
 	st_fin.content_margin_left = 40; st_fin.content_margin_right = 40
 	st_fin.content_margin_top = 26; st_fin.content_margin_bottom = 26
 	_fin.add_theme_stylebox_override("panel", st_fin)
-	_fin.set_anchors_preset(Control.PRESET_CENTER)
+	# en bas, sur la terre, au-dessus des boutons : les bateaux et leurs « ! »
+	# restent visibles au-dessus de la carte
+	_fin.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
 	_fin.grow_horizontal = Control.GROW_DIRECTION_BOTH
-	_fin.grow_vertical = Control.GROW_DIRECTION_BOTH
+	_fin.grow_vertical = Control.GROW_DIRECTION_BEGIN
+	_fin.offset_bottom = -80.0
 	var col := VBoxContainer.new()
 	col.alignment = BoxContainer.ALIGNMENT_CENTER
 	col.add_theme_constant_override("separation", 14)
@@ -262,10 +308,16 @@ func _interface() -> void:
 	_lab_fin = _label("", 28, ENCRE)
 	_lab_fin.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	col.add_child(_lab_fin)
-	col.add_child(_bouton("Rejouer", _lancer))
+	var actions := HBoxContainer.new()
+	actions.alignment = BoxContainer.ALIGNMENT_CENTER
+	actions.add_theme_constant_override("separation", 14)
+	_b_annuler_fin = _bouton("Annuler le coup", annuler)
+	actions.add_child(_b_annuler_fin)
+	actions.add_child(_bouton("Rejouer", _lancer))
+	col.add_child(actions)
 	_fin.add_child(col)
 	_fin.hide()
-	racine.add_child(_fin)
+	_sure.add_child(_fin)
 	# en bas à gauche : le panneau des réglages (replié), son bouton, et les
 	# images par seconde dans les versions de test
 	var coin := VBoxContainer.new()
@@ -371,6 +423,8 @@ func _maj() -> void:
 func _montrer_fin() -> void:
 	var n := _nb_etoiles()
 	_etoiles_fin.regler(n)
+	_etoiles_fin.show()
+	_b_annuler_fin.hide()
 	_lab_fin.text = "Passé !\n%d coups — la meilleure solution en demande %d." % [etat["coups"], int(N["par"])]
 	_fin.show()
 
@@ -395,6 +449,8 @@ func _demo() -> void:
 			for pas in p["pas"]:
 				if pas["action"] != null: solution.append(pas["action"])
 			break
+	if OS.get_environment("ECLUSES_COUPS") != "":
+		solution = Array(OS.get_environment("ECLUSES_COUPS").split(",")).map(func(x): return {"type": "porte", "i": int(x)})
 	await get_tree().create_timer(1.2).timeout
 	await _photo("00-repos")
 	# ECLUSES_PANNEAU=1 : photographie aussi le panneau des réglages déplié
@@ -414,6 +470,11 @@ func _demo() -> void:
 		await _photo("%02d-apres" % rang)
 	await get_tree().create_timer(0.8).timeout
 	await _photo("99-fin")
+	if OS.get_environment("ECLUSES_COUPS") != "":
+		await get_tree().create_timer(0.25).timeout
+		await _photo("99-alerte")
+		await get_tree().create_timer(1.6).timeout
+		await _photo("99-coince")
 	if OS.get_environment("ECLUSES_CAPTURE") != "":
 		print("images par seconde (moyenne) : %.1f" % (_images / maxf(_secondes, 0.001)))
 		get_tree().quit()

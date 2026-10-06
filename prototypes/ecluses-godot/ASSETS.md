@@ -88,6 +88,18 @@ un bateau **échoué** (niveaux 1-1, 1-3) semblerait flotter encore dans 30 px
 d'eau, et la règle deviendrait illisible. L'autre voie — bateaux réalistes et
 tirant réduit dans les niveaux — obligeait à réaccorder tous les niveaux.
 
+### `art/etoile_pleine.png` — l'étoile de score
+
+Pour être fidèle à la maquette (Vincent, 6 octobre 2026) : une étoile
+peinte, dodue, aux pointes arrondies. **Une seule image** : le jeu en tire
+l'étoile vide en la passant au gris (ChatGPT redessinerait une autre étoile,
+d'une autre taille — comme pour les bateaux). Sans image, le jeu dessine des
+étoiles arrondies. À faire en joignant la maquette du niveau 14.
+
+```text
+2D casual mobile game UI icon, same art style as the reference image (look at the three stars in its top-right corner). A single plump five-pointed star with softly rounded tips, glossy golden-yellow with a warm gradient (light yellow on top, deeper orange-gold at the bottom), a thick dark brown-orange outline, a soft white highlight on the upper left. Front view, centered, square image, the star fills about 90 % of the image, transparent background. No text, no glow, no shadow outside the star.
+```
+
 ## Pas encore branché — à faire quand le style sera validé
 
 Ces éléments sont dessinés par des shaders aujourd'hui. Ils deviendront des
