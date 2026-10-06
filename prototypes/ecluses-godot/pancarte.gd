@@ -129,6 +129,7 @@ func montrer_echec(plusieurs: bool) -> void:
 func montrer_victoire(etoiles: int, texte: String, avec_suivant: bool) -> void:
 	_etoiles.show()
 	_etoiles.regler(etoiles)
+	_etoiles.animer()
 	_titre.text = "Passé !"
 	_sous_titre.text = texte
 	_b_annuler.hide(); _b_rejouer.show(); _b_suivant.visible = avec_suivant
@@ -145,10 +146,20 @@ func _descendre() -> void:
 	var cadre := (get_parent() as Control).size
 	size = get_combined_minimum_size()
 	var y := cadre.y - size.y - MARGE_BAS
-	position = Vector2((cadre.x - size.x) * 0.5, y - 70.0)
+	position = Vector2((cadre.x - size.x) * 0.5, y - 110.0)
 	pivot_offset = Vector2(size.x * 0.5, 0.0)
-	rotation = 0.05
+	_balance_t = 0.0
 	var t := create_tween().set_parallel(true)
-	t.tween_property(self, "modulate:a", 1.0, 0.2)
-	t.tween_property(self, "position:y", y, 0.45).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	t.tween_property(self, "rotation", 0.0, 1.1).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
+	t.tween_property(self, "modulate:a", 1.0, 0.18)
+	t.tween_property(self, "position:y", y, 0.5).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+
+# Le balancement : une oscillation de pendule qui s'amortit, accrochée au milieu
+# du bord haut (là où pendent les cordes). Amplitude de départ ~8°, ~2,5 s.
+var _balance_t := -1.0
+func _process(dt: float) -> void:
+	if _balance_t < 0.0: return
+	_balance_t += dt
+	rotation = 0.14 * exp(-_balance_t * 1.5) * sin(_balance_t * 6.2 + 0.4)
+	if _balance_t > 3.5:
+		rotation = 0.0
+		_balance_t = -1.0
