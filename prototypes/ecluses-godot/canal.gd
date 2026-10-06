@@ -868,18 +868,73 @@ func _dessiner_reperes() -> void:
 	for k in N["bateaux"].size():
 		var b: Dictionary = N["bateaux"][k]
 		var v := int(b["vers"])
-		if positions[k] == v: continue
+		var arrive: bool = positions[k] == v
+		var sp: Sprite2D = _bouees_img.get(k)
+		if sp: sp.visible = not arrive
+		if arrive: continue
 		var x := place(v, "f%d" % k, positions)
-		var tirant: float = bateaux[k].tirant
-		var y := minf(surface_a(x), Y(float(N["bassins"][v]["fond"])) - tirant)
-		var c: Color = COULEURS[k % COULEURS.size()]
-		var L := 1.75 * U * 0.5
-		var pts := [Vector2(-L, -14), Vector2(L, -18), Vector2(L * 0.82, tirant * 0.55), Vector2(L * 0.55, tirant), Vector2(-L * 0.72, tirant), Vector2(-L * 0.96, tirant * 0.45), Vector2(-L, -14)]
 		var sens := 1.0 if v >= int(b["de"]) else -1.0
-		for j in pts.size() - 1:
-			var a: Vector2 = Vector2(x, y) + pts[j] * Vector2(sens, 1)
-			var z: Vector2 = Vector2(x, y) + pts[j + 1] * Vector2(sens, 1)
-			_reperes.draw_dashed_line(a, z, c, 3.0, 9.0)
-		var mat := Vector2(x - sens * L * 0.82, y - 14)
-		_reperes.draw_line(mat, mat + Vector2(0, -0.7 * U), c, 3.0)
-		_reperes.draw_colored_polygon(PackedVector2Array([mat + Vector2(0, -0.7 * U), mat + Vector2(sens * 28, -0.6 * U), mat + Vector2(0, -0.5 * U)]), c)
+		_bouee(k, x, sens)
+
+# La DESTINATION d'un bateau : une bouée à sa couleur, qui flotte à la place
+# qu'il doit atteindre et suit l'eau (lot 3 de PLAN-RENDU.md, choix A de
+# Vincent, 6 octobre 2026 — la coque en pointillés faisait calque de mise au
+# point). Elle monte et descend avec la houle et penche avec la pente de la
+# surface ; le tiers bas de son flotteur est sous l'eau. Bassin à sec, elle
+# repose sur le fond. art/bouee.png, si elle existe, remplace le dessin
+# (peinte en rouge, repeinte comme les bateaux).
+var _bouees_img := {}
+func _bouee(k: int, x: float, sens: float) -> void:
+	var v := int(N["bateaux"][k]["vers"])
+	var fond := Y(float(N["bassins"][v]["fond"]))
+	var surf := minf(surface_a(x), fond)
+	var pente := (surface_a(x + 10.0) - surface_a(x - 10.0)) / 20.0
+	var y := surf + 1.2 * sin(_t * 2.2 + k * 1.7)
+	var rot := clampf(pente, -0.3, 0.3) * 0.8 + 0.07 * sin(_t * 1.6 + k)
+	var c: Color = COULEURS[k % COULEURS.size()]
+	if _bouees_img.has(k) or ResourceLoader.exists("res://art/bouee.png"):
+		if not _bouees_img.has(k):
+			var s := Sprite2D.new()
+			s.texture = _recadrer(load("res://art/bouee.png"))
+			var h := 52.0
+			s.scale = Vector2.ONE * h / s.texture.get_height()
+			s.offset = Vector2(0, -s.texture.get_height() * (0.5 - 0.27))    # le tiers bas sous l'eau
+			s.flip_h = sens < 0.0
+			var repeint = REPEINTS[k % REPEINTS.size()]
+			if repeint != null:
+				s.material = _mat(SH_TEINTE, {"actif": true, "teinte": repeint[0], "saturation": repeint[1], "luminosite": repeint[2]})
+			s.z_index = 3
+			add_child(s)
+			_bouees_img[k] = s
+		var sp: Sprite2D = _bouees_img[k]
+		sp.position = Vector2(x, y)
+		sp.rotation = rot
+		return
+	var t := Transform2D(rot, Vector2(1.25, 1.25), 0.0, Vector2(x, y))
+	_reperes.draw_set_transform_matrix(t)
+	var sombre := Color(0.17, 0.09, 0.05)
+	# le mât, le fanion, la boule du sommet
+	_reperes.draw_line(Vector2(0, -14), Vector2(0, -40), sombre, 3.0, true)
+	_reperes.draw_colored_polygon(PackedVector2Array([Vector2(1, -40), Vector2(1 + sens * 18, -35), Vector2(1, -30)]), c)
+	_reperes.draw_polyline(PackedVector2Array([Vector2(1, -40), Vector2(1 + sens * 18, -35), Vector2(1, -30)]), sombre, 1.5, true)
+	_reperes.draw_circle(Vector2(0, -41), 2.6, sombre)
+	# le flotteur : un œuf couché, cerné, avec sa bande blanche et un reflet
+	var corps := PackedVector2Array()
+	for j in 28:
+		var a := TAU * j / 28.0
+		corps.append(Vector2(cos(a) * 15.0, -4.0 + sin(a) * (11.0 if sin(a) < 0.0 else 12.0)))
+	var cerne := PackedVector2Array()
+	for p in corps: cerne.append(p * 1.0 + (p - Vector2(0, -4)).normalized() * 2.2)
+	_reperes.draw_colored_polygon(cerne, sombre)
+	_reperes.draw_colored_polygon(corps, c)
+	var bande := PackedVector2Array()
+	for p in corps:
+		bande.append(Vector2(p.x, clampf(p.y, -9.0, -3.0)))
+	_reperes.draw_colored_polygon(bande, Color(1, 0.98, 0.94))
+	_reperes.draw_circle(Vector2(-6, -11), 3.0, Color(1, 1, 1, 0.5))
+	# la part immergée, vue à travers l'eau
+	var dessous := PackedVector2Array()
+	for p in cerne:
+		dessous.append(Vector2(p.x, maxf(p.y, 0.0)))
+	_reperes.draw_colored_polygon(dessous, Color(0.08, 0.45, 0.6, 0.55))
+	_reperes.draw_set_transform_matrix(Transform2D.IDENTITY)

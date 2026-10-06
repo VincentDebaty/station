@@ -172,7 +172,7 @@ voit avant qu'il soit trop tard.
 
 - [x] 1. Ombres de contact (6 octobre 2026)
 - [x] 2. Profondeur de l'eau (6 octobre 2026)
-- [ ] 3. Destinations — Vincent a choisi A, la bouée ; attend `art/bouee.png`
+- [x] 3. Destinations — bouée dessinée (6 octobre 2026) ; `art/bouee.png` la remplacera
 - [ ] 4. Masse rectangulaire
 - [ ] 5. Répétition terre / herbe
 - [x] 6. Chaînes (6 octobre 2026 : maillons accrochés au vantail, qui montent avec lui)
