@@ -44,6 +44,8 @@ var roue: Node2D
 # au fond et celle de droite devant, il passe ENTRE les deux piliers. Sans ce
 # plan, la tour reste avec le reste de la porte.
 var arriere: Node2D = null
+var _tour_fond: Polygon2D
+var _rainure_fond: Polygon2D
 
 func preparer(ax0: float, ax1: float, aseuil: float, acrete: float, aportique: float, abas: float, au: float,
 		pierre: Shader, bois: Shader, vanne: bool, leve: bool, abas_ouvert: float) -> void:
@@ -77,12 +79,13 @@ func preparer(ax0: float, ax1: float, aseuil: float, acrete: float, aportique: f
 	add_child(_rect(gx0, y_seuil, gx1, abas, mp))
 	# les deux tours du portique, du radier jusque sous la traverse
 	var fond := arriere if arriere else self
-	var tour_fond := _rect(gx0 - 6, y_portique, gx0 + 9, y_seuil, mp)
-	fond.add_child(tour_fond)
+	_tour_fond = _rect(gx0 - 6, y_portique, gx0 + 9, y_seuil, mp)
+	fond.add_child(_tour_fond)
 	add_child(_rect(gx1 - 9, y_portique, gx1 + 6, y_seuil, mp))
 	# la rainure où coulisse le vantail, au bord intérieur de chaque tour, et
 	# l'ombre de la traverse sur ce qui est dessous
-	fond.add_child(_degrade(gx0 + 6, y_portique, gx0 + 9, y_seuil, 0.15, 0.55))
+	_rainure_fond = _degrade(gx0 + 6, y_portique, gx0 + 9, y_seuil, 0.15, 0.55)
+	fond.add_child(_rainure_fond)
 	add_child(_degrade(gx1 - 9, y_portique, gx1 - 6, y_seuil, 0.55, 0.15))
 	var sous_traverse := Polygon2D.new()
 	sous_traverse.polygon = _quad(gx0 - 16, y_portique + 4, gx1 + 16, y_portique + 16)
@@ -117,6 +120,16 @@ func preparer(ax0: float, ax1: float, aseuil: float, acrete: float, aportique: f
 	roue.draw.connect(_dessiner_roue)
 	add_child(roue)
 	_maj_vantail()
+
+# La tour du fond s'arrête à la surface de l'eau : derrière une eau un peu
+# transparente, sa partie immergée réapparaissait et disparaissait au gré des
+# vagues et du sillage (Vincent : « s'il est immergé, il ne doit plus
+# apparaître »). Le canal donne la surface à chaque image.
+func noyer_tour(y_eau: float) -> void:
+	if _tour_fond == null: return
+	var bas := clampf(y_eau + 2.0, y_portique, y_seuil)
+	_tour_fond.polygon = _quad(gx0 - 6, y_portique, gx0 + 9, bas)
+	_rainure_fond.polygon = _quad(gx0 + 6, y_portique, gx0 + 9, bas)
 
 func _hauteur() -> float:
 	return y_seuil - y_crete     # le vantail fermé va du seuil à la crête

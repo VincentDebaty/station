@@ -110,6 +110,8 @@ func construire(niveau: Dictionary, e: Dictionary) -> void:
 	for i in n:
 		var w := Eau.new()
 		w.preparer(X(gb[i][0]), X(gb[i][1]), Y(float(B[i]["fond"])), Y(vue_niv[i]), SH_EAU)
+		w.paroi_g = i == 0 or N["liaisons"][i - 1]["type"] != "porte"
+		w.paroi_d = i == n - 1 or N["liaisons"][i]["type"] != "porte"
 		add_child(w)
 		eaux.append(w)
 	for i in N["liaisons"].size():
@@ -542,6 +544,8 @@ func _process(dt: float) -> void:
 		eaux[i].repos = Y(vue_niv[i])
 	for i in portes: portes[i].bas_ouvert_y = _bas_ouvert(i)
 	_maj_passages()
+	# la tour du fond de chaque porte s'arrête à la surface, au pied de la tour
+	for i in portes: portes[i].noyer_tour(surface_a(X(gl[i][0]) + 1.0))
 	for i in aqueducs:
 		aqueducs[i].ouverte = portes[i].vanne_ouverte
 		aqueducs[i].niveau_g = Y(vue_niv[i])

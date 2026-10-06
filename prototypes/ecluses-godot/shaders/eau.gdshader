@@ -11,6 +11,8 @@ uniform vec3 ecume : source_color = vec3(0.86, 0.98, 1.0);
 uniform float epaisseur = 120.0;   // hauteur d'eau en pixels, pour doser
 uniform float remous = 0.0;        // 0 au repos, 1 quand l'eau bouillonne
 uniform float largeur = 300.0;     // largeur du bassin en pixels, pour le liseré des parois
+uniform float paroi_g = 1.0;       // 1 : une paroi de pierre à gauche ; 0 : le bassin s'ouvre sur une porte
+uniform float paroi_d = 1.0;
 
 varying vec2 monde;
 
@@ -61,9 +63,14 @@ void fragment() {
 	c *= 1.0 - 0.16 * (1.0 - smoothstep(0.0, 22.0, epaisseur - px));
 
 	// contre les parois de pierre : un mince liseré clair, puis une ombre douce
-	float bord = min(UV.x, 1.0 - UV.x) * largeur;
-	c *= 1.0 - 0.12 * (1.0 - smoothstep(3.0, 16.0, bord));
-	c = mix(c, ecume, (1.0 - smoothstep(0.8, 2.6, bord)) * 0.4 * (1.0 - prof * 0.6));
+	// (pas du côté d'une porte : il n'y a pas de pierre, et le trait clair
+	// passait pour un fantôme du pilier)
+	float bg = UV.x * largeur;
+	float bd = (1.0 - UV.x) * largeur;
+	float ombre_bord = max(paroi_g * (1.0 - smoothstep(3.0, 16.0, bg)), paroi_d * (1.0 - smoothstep(3.0, 16.0, bd)));
+	float lisere = max(paroi_g * (1.0 - smoothstep(0.8, 2.6, bg)), paroi_d * (1.0 - smoothstep(0.8, 2.6, bd)));
+	c *= 1.0 - 0.12 * ombre_bord;
+	c = mix(c, ecume, lisere * 0.4 * (1.0 - prof * 0.6));
 
 	// reflets mouvants, plus forts près de la surface
 	float k = caustique(monde / 46.0, TIME * 1.1);
