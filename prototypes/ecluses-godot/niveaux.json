@@ -1,0 +1,236 @@
+{
+  "chapitres": [
+    {"n": 1, "titre": "Les écluses", "decor": "campagne", "resume": "Ouvrir et fermer des portes. L'eau ne se crée pas : elle passe d'un bassin à l'autre."},
+    {"n": 2, "titre": "Les canaux", "decor": "collines", "resume": "Creuser les digues, puis lâcher l'eau et regarder où elle va."},
+    {"n": 3, "titre": "Le fleuve", "decor": "estuaire", "resume": "L'eau arrive toute seule, à chaque coup. Il faut la conduire avant qu'elle déborde."}
+  ],
+  "niveaux": [
+    {
+      "id": "1-1",
+      "chapitre": 1,
+      "titre": "Premier passage",
+      "mode": "pas",
+      "par": 3,
+      "conseil": "Touche la vanne d'une porte pour l'ouvrir : l'eau s'égalise des deux côtés. Le bateau passe tout seul dès qu'il peut.",
+      "bassins": [
+        {"type": "bief", "fond": 0, "largeur": 8, "niveau": 1, "nom": "bief aval"},
+        {"type": "sas", "fond": 0, "largeur": 2, "niveau": 1, "nom": "sas"},
+        {"type": "bief", "fond": 3, "largeur": 8, "niveau": 5, "nom": "bief amont"}
+      ],
+      "liaisons": [
+        {"type": "porte", "seuil": 0, "crete": 6},
+        {"type": "porte", "seuil": 3, "crete": 6}
+      ],
+      "bateaux": [
+        {"de": 0, "vers": 2, "tirant": 1}
+      ]
+    },
+    {
+      "id": "1-2",
+      "chapitre": 1,
+      "titre": "Croisement",
+      "mode": "pas",
+      "par": 5,
+      "conseil": "Deux bateaux, un seul sas. Un sas ne prend qu'un bateau à la fois.",
+      "bassins": [
+        {"type": "bief", "fond": 0, "largeur": 7, "niveau": 1, "nom": "bief aval"},
+        {"type": "sas", "fond": 0, "largeur": 2, "niveau": 1, "nom": "sas"},
+        {"type": "bief", "fond": 3, "largeur": 7, "niveau": 5, "nom": "bief amont"}
+      ],
+      "liaisons": [
+        {"type": "porte", "seuil": 0, "crete": 6},
+        {"type": "porte", "seuil": 3, "crete": 6}
+      ],
+      "bateaux": [
+        {"de": 0, "vers": 2, "tirant": 1},
+        {"de": 2, "vers": 0, "tirant": 1}
+      ]
+    },
+    {
+      "id": "1-3",
+      "chapitre": 1,
+      "titre": "L'escalier",
+      "mode": "pas",
+      "par": 7,
+      "conseil": "Le bief amont n'a pas d'eau à perdre. Ce qui coule vers l'aval ne remonte jamais.",
+      "bassins": [
+        {"type": "bief", "fond": 0, "largeur": 6, "niveau": 1, "nom": "bief aval"},
+        {"type": "sas", "fond": 0, "largeur": 2, "niveau": 1, "nom": "sas"},
+        {"type": "sas", "fond": 2, "largeur": 2, "niveau": 2, "nom": "sas"},
+        {"type": "bief", "fond": 4, "largeur": 6, "niveau": 6.9, "nom": "bief amont"}
+      ],
+      "liaisons": [
+        {"type": "porte", "seuil": 0, "crete": 8},
+        {"type": "porte", "seuil": 2, "crete": 8},
+        {"type": "porte", "seuil": 4, "crete": 8}
+      ],
+      "bateaux": [
+        {"de": 0, "vers": 3, "tirant": 1}
+      ]
+    },
+    {
+      "id": "1-4",
+      "chapitre": 1,
+      "titre": "Le passage étroit",
+      "mode": "pas",
+      "par": 6,
+      "conseil": "Deux bateaux se croisent dans l'escalier, et un seul bief amont remplit tout.",
+      "bassins": [
+        {"type": "bief", "fond": 0, "largeur": 6, "niveau": 1, "nom": "bief aval"},
+        {"type": "sas", "fond": 0, "largeur": 2, "niveau": 1, "nom": "sas"},
+        {"type": "sas", "fond": 2, "largeur": 2, "niveau": 2, "nom": "sas"},
+        {"type": "bief", "fond": 4, "largeur": 6, "niveau": 7.5, "nom": "bief amont"}
+      ],
+      "liaisons": [
+        {"type": "porte", "seuil": 0, "crete": 8},
+        {"type": "porte", "seuil": 2, "crete": 8},
+        {"type": "porte", "seuil": 4, "crete": 8}
+      ],
+      "bateaux": [
+        {"de": 0, "vers": 3, "tirant": 1},
+        {"de": 3, "vers": 0, "tirant": 1}
+      ]
+    },
+    {
+      "id": "2-1",
+      "chapitre": 2,
+      "titre": "Le premier sillon",
+      "mode": "chantier",
+      "par": 4,
+      "conseil": "Chantier : chaque coup de pelle abaisse la digue d'un cran. Puis lâche l'eau. Assez pour le champ, rien pour le village.",
+      "requis": ["creuser"],
+      "bassins": [
+        {"type": "reservoir", "fond": 3, "largeur": 4, "niveau": 7},
+        {"type": "champ", "fond": 0, "largeur": 6, "cible": 1},
+        {"type": "village", "fond": 0, "largeur": 5}
+      ],
+      "liaisons": [
+        {"type": "digue", "crete": 8, "min": 3},
+        {"type": "mur", "crete": 2}
+      ],
+      "bateaux": []
+    },
+    {
+      "id": "2-2",
+      "chapitre": 2,
+      "titre": "Les rizières",
+      "mode": "chantier",
+      "par": 5,
+      "conseil": "Chaque terrasse garde l'eau sous sa digue et laisse passer le reste à la suivante.",
+      "requis": ["creuser"],
+      "bassins": [
+        {"type": "reservoir", "fond": 5, "largeur": 5, "niveau": 8},
+        {"type": "champ", "fond": 4, "largeur": 3, "cible": 1},
+        {"type": "champ", "fond": 2, "largeur": 3, "cible": 1},
+        {"type": "champ", "fond": 0, "largeur": 3, "cible": 1},
+        {"type": "village", "fond": 0, "largeur": 4}
+      ],
+      "liaisons": [
+        {"type": "digue", "crete": 8, "min": 5},
+        {"type": "digue", "crete": 6, "min": 4},
+        {"type": "digue", "crete": 4, "min": 2},
+        {"type": "mur", "crete": 2}
+      ],
+      "bateaux": []
+    },
+    {
+      "id": "2-3",
+      "chapitre": 2,
+      "titre": "Remettre à flot",
+      "mode": "chantier",
+      "par": 6,
+      "conseil": "Le bateau est échoué. Remets-le à flot sans assécher le champ ni noyer le village.",
+      "requis": ["creuser"],
+      "bassins": [
+        {"type": "reservoir", "fond": 5, "largeur": 4, "niveau": 9, "nom": "réservoir"},
+        {"type": "champ", "fond": 3, "largeur": 4, "cible": 1, "nom": "champ"},
+        {"type": "bief", "fond": 1, "largeur": 5, "niveau": 1.5, "nom": "bief"},
+        {"type": "bief", "fond": 1, "largeur": 4, "niveau": 1.5, "nom": "port"},
+        {"type": "village", "fond": 0, "largeur": 4, "nom": "village"}
+      ],
+      "liaisons": [
+        {"type": "digue", "crete": 9, "min": 5},
+        {"type": "digue", "crete": 6, "min": 3},
+        {"type": "libre"},
+        {"type": "mur", "crete": 3}
+      ],
+      "bateaux": [
+        {"de": 2, "vers": 3, "tirant": 1}
+      ]
+    },
+    {
+      "id": "3-1",
+      "chapitre": 3,
+      "titre": "Le fleuve monte",
+      "mode": "pas",
+      "par": 5,
+      "conseil": "Le fleuve monte un peu à chaque coup. Il faut assez d'eau pour le bateau, mais le village est juste derrière le mur.",
+      "bassins": [
+        {"type": "village", "fond": 0, "largeur": 3, "nom": "village"},
+        {"type": "fleuve", "fond": 3, "largeur": 6, "niveau": 3.4, "apport": 2, "nom": "fleuve"},
+        {"type": "sas", "fond": 0, "largeur": 2, "niveau": 1, "nom": "sas"},
+        {"type": "bief", "fond": 0, "largeur": 6, "niveau": 1, "nom": "bief"}
+      ],
+      "liaisons": [
+        {"type": "mur", "crete": 5.5},
+        {"type": "porte", "seuil": 3, "crete": 7},
+        {"type": "porte", "seuil": 0, "crete": 7}
+      ],
+      "bateaux": [
+        {"de": 3, "vers": 1, "tirant": 1}
+      ]
+    },
+    {
+      "id": "3-2",
+      "chapitre": 3,
+      "titre": "Le déversoir",
+      "mode": "pas",
+      "par": 8,
+      "conseil": "Chaque coup fait monter le fleuve, et chaque passage d'écluse envoie son eau vers le village. La mer, elle, boit tout.",
+      "requis": ["creuser"],
+      "bassins": [
+        {"type": "mer", "fond": 0, "largeur": 3, "niveau": 1, "fixe": true, "nom": "mer"},
+        {"type": "fleuve", "fond": 3, "largeur": 5, "niveau": 4.4, "apport": 5, "nom": "fleuve"},
+        {"type": "sas", "fond": 0, "largeur": 2, "niveau": 1, "nom": "sas"},
+        {"type": "bief", "fond": 0, "largeur": 6, "niveau": 2, "nom": "bief"},
+        {"type": "village", "fond": 0, "largeur": 3, "nom": "village"}
+      ],
+      "liaisons": [
+        {"type": "digue", "crete": 8, "min": 3},
+        {"type": "porte", "seuil": 3, "crete": 8},
+        {"type": "porte", "seuil": 0, "crete": 8},
+        {"type": "mur", "crete": 2.5}
+      ],
+      "bateaux": [
+        {"de": 3, "vers": 1, "tirant": 1},
+        {"de": 1, "vers": 3, "tirant": 1}
+      ]
+    },
+    {
+      "id": "3-3",
+      "chapitre": 3,
+      "titre": "La crue",
+      "mode": "pas",
+      "par": 6,
+      "conseil": "La crue : un bateau à monter, un champ à arroser, un village à garder au sec.",
+      "bassins": [
+        {"type": "mer", "fond": 0, "largeur": 3, "niveau": 1, "fixe": true, "nom": "mer"},
+        {"type": "fleuve", "fond": 3, "largeur": 5, "niveau": 4.4, "apport": 5, "nom": "fleuve"},
+        {"type": "sas", "fond": 0, "largeur": 2, "niveau": 1, "nom": "sas"},
+        {"type": "bief", "fond": 0, "largeur": 5, "niveau": 2, "nom": "bief"},
+        {"type": "champ", "fond": 0, "largeur": 3, "cible": 2, "nom": "champ"},
+        {"type": "village", "fond": 0, "largeur": 3, "nom": "village"}
+      ],
+      "liaisons": [
+        {"type": "digue", "crete": 8, "min": 3},
+        {"type": "porte", "seuil": 3, "crete": 8},
+        {"type": "porte", "seuil": 0, "crete": 8},
+        {"type": "digue", "crete": 3, "min": 0.5},
+        {"type": "mur", "crete": 2.5}
+      ],
+      "bateaux": [
+        {"de": 3, "vers": 1, "tirant": 1}
+      ]
+    }
+  ]
+}

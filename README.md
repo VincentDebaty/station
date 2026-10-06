@@ -91,7 +91,8 @@ prototypes/                   Prototypes de mécanique, une page chacun, hors du
                               Namur et gare centrale v2 (anciens), voyageurs, et
                               « Nuit de fête » (banc d'essai : node tools/fete-banc.mjs) ;
                               « Écluses », une autre idée de jeu, un puzzle d'eau
-                              (banc d'essai : node tools/ecluses-banc.mjs)
+                              (banc d'essai : node tools/ecluses-banc.mjs), et sa
+                              tranche Godot, ecluses-godot/ (voir son README)
 ```
 
 ## Ajouter une gare

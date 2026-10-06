@@ -1,0 +1,36 @@
+; Engine configuration file.
+; It's best edited using the editor UI and not directly,
+; since the parameters that go here are not all obvious.
+;
+; Format:
+;   [section] ; section goes between []
+;   param=value ; assign values to parameters
+
+config_version=5
+
+[application]
+
+config/name="Écluses — tranche"
+config/description="Un puzzle d'eau en coupe. Tranche verticale du niveau 1-2."
+run/main_scene="res://principal.tscn"
+config/features=PackedStringArray("4.7", "Mobile")
+boot_splash/bg_color=Color(0.07, 0.23, 0.27, 1)
+
+[display]
+
+window/size/viewport_width=1600
+window/size/viewport_height=900
+window/stretch/mode="canvas_items"
+window/stretch/aspect="expand"
+; paysage, dans les deux sens (cf. le projet Station 7 : 0 est le paysage
+; imposé, 1 le portrait, 4 le paysage libre)
+window/handheld/orientation=4
+
+[rendering]
+
+; sans compression de texture mobile, l'export iOS refuse sans message
+; (appris sur Station 7 le 3 septembre 2026)
+textures/vram_compression/import_etc2_astc=true
+renderer/rendering_method="mobile"
+environment/defaults/default_clear_color=Color(0.07, 0.23, 0.27, 1)
+anti_aliasing/quality/msaa_2d=2

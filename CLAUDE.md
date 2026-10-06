@@ -162,7 +162,11 @@ jour qui perd la partie d'un joueur est un bug bloquant, pas un détail.
   `prototype-ecluses.html` n'est pas une mécanique de Station mais une autre
   idée de jeu (un puzzle d'eau en coupe), rangée ici faute de dépôt à elle.
   Son banc, `node tools/ecluses-banc.mjs`, résout chaque niveau et refuse si
-  le `par` écrit n'est pas la meilleure solution.
+  le `par` écrit n'est pas la meilleure solution. Sa tranche Godot,
+  `prototypes/ecluses-godot/`, est un projet Godot séparé (le `.gdignore` de
+  `prototypes/` le tient hors de Station 7) : elle lit `niveaux.json` et
+  `oracle.json`, que `node tools/ecluses-vers-godot.mjs` DÉRIVE de la page web
+  — ne jamais les éditer à la main.
 - `data/worldmap.js` — généré depuis Natural Earth, jamais édité à la main.
 
 ## Détail connu
