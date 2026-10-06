@@ -50,7 +50,7 @@ void fragment() {
 
 	// ce qui est derrière, vu à travers une eau qui ondule : le mur du fond,
 	// bleui, et de plus en plus sombre en descendant
-	vec2 d = vec2(sin(monde.y * 0.09 + TIME * 2.1), cos(monde.x * 0.07 + TIME * 1.6)) * (0.0035 + 0.004 * remous);
+	vec2 d = vec2(sin(monde.y * 0.09 + TIME * 2.1), cos(monde.x * 0.07 + TIME * 1.6)) * (0.0012 + 0.0016 * remous);   // léger : Vincent trouvait la déformation exagérée
 	vec3 derriere = texture(ecran, SCREEN_UV + d).rgb * mix(1.0, 0.55, fonce);
 	// on devine ce qui est immergé jusqu'au fond, comme la coque d'un bateau
 	// (Vincent, 6 octobre 2026, pour la porte et le pilier sous l'eau)

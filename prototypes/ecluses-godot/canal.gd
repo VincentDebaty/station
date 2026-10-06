@@ -571,14 +571,20 @@ func _process(dt: float) -> void:
 	_poser_bateaux(dt)
 	_reperes.queue_redraw()
 
-# L'eau de gauche devant le vantail, porte fermée, au niveau du bassin de
-# gauche ; porte levée, c'est celle de l'ouverture (les deux ensemble, l'une
-# sur l'autre, foncerait).
+# L'eau devant le vantail : la SEULE qu'on voit dans l'ouverture d'une porte,
+# fermée comme ouverte. Porte fermée, au niveau du bassin de gauche ; porte
+# levée, de bord à bord entre les deux bassins. L'eau de l'ouverture
+# (passages) reste pour le calcul (surface_a) mais n'est plus dessinée : elle
+# était derrière le vantail, et en prenant le relais pendant que la porte
+# bougeait, elle laissait le bas du vantail apparaître d'un coup puis
+# replonger à la fin (Vincent).
 func _maj_voiles() -> void:
 	for i in voiles:
 		var v: Eau = voiles[i]
-		v.visible_eau = not passages[i].visible_eau
+		passages[i].visible = false
+		v.droite = eaux[i + 1] if passages[i].visible_eau else null
 		v.repos = eaux[i].hauteur_a(X(gb[i][1]))
+		v.visible_eau = vue_niv[i] > float(N["liaisons"][i]["seuil"]) + 0.03 or passages[i].visible_eau
 
 func _maj_passages() -> void:
 	for i in passages:
