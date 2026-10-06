@@ -15,6 +15,11 @@ extends Node
 # amortissement au maximum) : les bornes ont été élargies pour qu'il puisse
 # aller plus loin s'il le veut. Le bouton « Réglages » reste, à sa demande.
 #
+# Second réglage, le même jour, sur l'eau plus profonde des lots 1 et 2 de
+# PLAN-RENDU.md : un courant bien plus contrasté dans l'aqueduc (0,75, toujours
+# lent), un peu moins de sillage, un peu plus de bouillon, et une surface qui
+# ondule plus longtemps (amortissement 0,08).
+#
 # Ce sont des dosages du RENDU : aucun ne touche au moteur ni aux niveaux.
 # ------------------------------------------------------------------
 
@@ -24,12 +29,12 @@ const FICHIER := "user://reglages.json"
 
 # clé : [nom affiché, défaut, minimum, maximum, pas]
 const CURSEURS := {
-	"courant_contraste": ["Aqueduc : contraste", 0.10, 0.0, 1.0, 0.05],
+	"courant_contraste": ["Aqueduc : contraste", 0.75, 0.0, 1.0, 0.05],
 	"courant_vitesse": ["Aqueduc : vitesse", 0.10, 0.0, 2.0, 0.05],
-	"sillage": ["Sillage des bateaux", 0.20, 0.0, 1.5, 0.05],
-	"bouillon": ["Bouillon à la sortie", 0.25, 0.0, 1.5, 0.05],
+	"sillage": ["Sillage des bateaux", 0.15, 0.0, 1.5, 0.05],
+	"bouillon": ["Bouillon à la sortie", 0.30, 0.0, 1.5, 0.05],
 	"houle": ["Houle", 0.90, 0.0, 2.0, 0.05],
-	"amortissement": ["Amortissement", 0.20, 0.02, 0.4, 0.01],
+	"amortissement": ["Amortissement", 0.08, 0.02, 0.4, 0.01],
 }
 
 var valeurs := {}
