@@ -20,21 +20,21 @@ var rayon := 20.0
 var enfonce := false
 var pale := false
 
-const EPAIS := 7.0      # la tranche visible sous la face, au repos
+const EPAIS := 4.0      # la tranche visible sous la face, au repos (7 : trop épais pour Vincent)
 const CERNE := Color("#3a1d0a")
 const TRANCHE := Color("#6b3a16")
 const FACE := Color("#b0733a")
-const FACE_OMBRE := Color("#8a5124")
+const FACE_OMBRE := Color("#9c602d")
 const REFLET := Color("#dca06a")
-const VEINE := Color(0.33, 0.16, 0.05, 0.28)
+const VEINE := Color(0.33, 0.16, 0.05, 0.18)
 
 static func plaque(r: float, marge_x: float, enfoncee := false, pal := false) -> Relief:
 	var s := Relief.new()
 	s.rayon = r; s.enfonce = enfoncee; s.pale = pal
 	s.content_margin_left = marge_x; s.content_margin_right = marge_x
 	# le contenu suit la face : centré sur elle, et il descend avec elle
-	s.content_margin_top = 8.0 + (5.0 if enfoncee else 0.0)
-	s.content_margin_bottom = 14.0 - (5.0 if enfoncee else 0.0)
+	s.content_margin_top = 8.0 + (3.0 if enfoncee else 0.0)
+	s.content_margin_bottom = 11.0 - (3.0 if enfoncee else 0.0)
 	return s
 
 func _a(c: Color) -> Color:
@@ -51,12 +51,12 @@ func _boite(couleur: Color, r: float) -> StyleBoxFlat:
 func _draw(ci: RID, rect: Rect2) -> void:
 	var r := minf(rayon, minf(rect.size.x, rect.size.y) * 0.5)
 	var rond := r >= rect.size.y * 0.5 - 0.5 and absf(rect.size.x - rect.size.y) < 1.0
-	var bas := 5.0 if enfonce else 0.0          # enfoncée, la face descend sur sa tranche
+	var bas := 3.0 if enfonce else 0.0          # enfoncée, la face descend sur sa tranche
 	# l'ombre portée et le cerne
 	var cerne := _boite(CERNE, r)
-	cerne.shadow_color = _a(Color(0, 0, 0, 0.38))
-	cerne.shadow_size = 5 if enfonce else 8
-	cerne.shadow_offset = Vector2(0, 2 if enfonce else 5)
+	cerne.shadow_color = _a(Color(0, 0, 0, 0.22))
+	cerne.shadow_size = 3 if enfonce else 5
+	cerne.shadow_offset = Vector2(0, 1 if enfonce else 3)
 	cerne.draw(ci, rect)
 	# la tranche
 	var t := rect.grow(-3.0)
@@ -68,8 +68,8 @@ func _draw(ci: RID, rect: Rect2) -> void:
 	# la face : un fond plus sombre, puis la face claire un peu plus courte,
 	# remontée — il reste en bas un croissant d'ombre, qui la bombe
 	_boite(FACE_OMBRE, rf).draw(ci, f)
-	var fc := Rect2(f.position, f.size - Vector2(0, f.size.y * 0.14))
-	if rond: fc = Rect2(f.position + Vector2(f.size.x * 0.05, 0), f.size * 0.9)
+	var fc := Rect2(f.position, f.size - Vector2(0, f.size.y * 0.08))
+	if rond: fc = Rect2(f.position + Vector2(f.size.x * 0.03, 0), f.size * 0.94)
 	var face := _boite(FACE, rf if not rond else fc.size.x * 0.5)
 	face.border_color = _a(REFLET)
 	face.border_width_top = 3

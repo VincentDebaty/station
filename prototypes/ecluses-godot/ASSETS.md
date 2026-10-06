@@ -112,6 +112,27 @@ du panneau d'éclusier comme référence.
 Using the attached image as the exact style reference (look at the wooden badge holding the number "47" in the top-left corner), draw the same wooden badge EMPTY, with no text: a rounded rectangle of warm brown polished wood with a fine grain, a lighter wooden rim all around, soft cel shading and a subtle highlight on top. Wide format about 2:1, the badge fills the image, transparent background, no shadow outside the badge.
 ```
 
+### `art/medaillon_bois.png` — les boutons ronds du bas de l'écran
+
+Réglages, Annuler et Recommencer sont des médaillons ronds en bois épais,
+comme les boutons de l'image d'exemple de Vincent (l'engrenage et la carte en
+bas à gauche). Sans image, le jeu les dessine (`relief.gd`). Avec elle, il pose
+le médaillon tel quel et dessine lui-même le pictogramme crème au milieu. Le
+médaillon doit donc être **vide**. Le jeu le fonce quand on appuie et le pâlit
+quand le bouton est indisponible : une seule image suffit.
+
+Joindre l'image d'exemple (le panneau « Passé ! » au coucher du soleil) comme
+référence.
+
+```text
+Using the attached image as the exact style reference (look at the round wooden buttons in the bottom-left and bottom-right corners, the ones holding a gear and a map), draw ONE of those round wooden buttons EMPTY, with no icon and no symbol at all: a thick circular medallion of warm brown polished wood, seen exactly from the front, slightly from above so that the darker side thickness shows only at the bottom. A very dark brown outline all around, a lighter domed wooden face with fine concentric wood grain rings, a soft highlight on the upper edge, gentle cel shading. Square image, the medallion centred and filling about 90% of the frame, transparent background, no drop shadow outside the medallion, no text.
+```
+
+À vérifier en la recevant : **aucun pictogramme** (ChatGPT a tendance à
+recopier l'engrenage de la référence), un cercle bien rond et pas ovale, une
+face assez unie au centre pour que le pictogramme crème s'y lise, et une vraie
+transparence autour (pas de damier peint).
+
 ## Pas encore branché — à faire quand le style sera validé
 
 Ces éléments sont dessinés par des shaders aujourd'hui. Ils deviendront des

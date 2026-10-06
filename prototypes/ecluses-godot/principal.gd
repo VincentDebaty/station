@@ -406,10 +406,31 @@ func _medaillon(picto: Texture2D, f: Callable) -> Button:
 	b.expand_icon = true
 	b.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	b.add_theme_color_override("icon_disabled_color", Color(1, 1, 1, 0.45))
-	_habiller(b, 70.0, 27.0)
+	if not _habiller_image(b): _habiller(b, 70.0, 27.0)
 	b.custom_minimum_size = Vector2(120, 120)
 	b.pressed.connect(f)
 	return b
+
+# Le médaillon peint, si art/medaillon_bois.png existe (prompt dans
+# ASSETS.md) : posé tel quel, foncé quand on appuie, pâli quand le bouton est
+# indisponible. Le pictogramme reste dessiné par le jeu, et il descend un peu
+# quand on appuie.
+var _tex_medaillon: Texture2D = null
+func _habiller_image(b: Button) -> bool:
+	if _tex_medaillon == null and ResourceLoader.exists("res://art/medaillon_bois.png"):
+		_tex_medaillon = Images.reduire("res://art/medaillon_bois.png", 240)
+	if _tex_medaillon == null: return false
+	for etat_b in ["normal", "hover", "pressed", "disabled"]:
+		var st := StyleBoxTexture.new()
+		st.texture = _tex_medaillon
+		var bas := 4.0 if etat_b == "pressed" else 0.0
+		st.content_margin_left = 28; st.content_margin_right = 28
+		st.content_margin_top = 24 + bas; st.content_margin_bottom = 32 - bas
+		if etat_b == "pressed": st.modulate_color = Color(0.8, 0.76, 0.72)
+		if etat_b == "disabled": st.modulate_color = Color(1, 1, 1, 0.55)
+		b.add_theme_stylebox_override(etat_b, st)
+	b.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+	return true
 
 func _habiller(b: Button, rayon: float, marge: float) -> void:
 	b.add_theme_stylebox_override("normal", Relief.plaque(rayon, marge))
