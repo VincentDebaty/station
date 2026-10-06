@@ -121,15 +121,23 @@ func preparer(ax0: float, ax1: float, aseuil: float, acrete: float, aportique: f
 	add_child(roue)
 	_maj_vantail()
 
-# La tour du fond s'arrête à la surface de l'eau : derrière une eau un peu
-# transparente, sa partie immergée réapparaissait et disparaissait au gré des
-# vagues et du sillage (Vincent : « s'il est immergé, il ne doit plus
-# apparaître »). Le canal donne la surface à chaque image.
-func noyer_tour(y_eau: float) -> void:
+# La tour du fond s'arrête là où l'eau passe devant elle : derrière une eau un
+# peu transparente, sa partie immergée réapparaissait et disparaissait au gré
+# des vagues et du sillage (Vincent : « s'il est immergé, il ne doit plus
+# apparaître »). Elle a deux moitiés, qui n'ont pas la même eau devant :
+#   gx0-6 … gx0    devant le bassin de gauche : coupée à sa surface (y_bassin)
+#   gx0 … gx0+9    dans l'ouverture de la porte : coupée à l'eau qui la remplit
+#                  quand la porte est levée (y_passage) ; porte fermée, il n'y
+#                  a pas d'eau devant, et elle descend jusqu'au seuil — coupée
+#                  au bassin, elle laissait voir un mur sombre (Vincent).
+# Le canal donne ces surfaces à chaque image ; INF pour « pas d'eau ».
+func noyer_tour(y_bassin: float, y_passage: float) -> void:
 	if _tour_fond == null: return
-	var bas := clampf(y_eau + 2.0, y_portique, y_seuil)
-	_tour_fond.polygon = _quad(gx0 - 6, y_portique, gx0 + 9, bas)
-	_rainure_fond.polygon = _quad(gx0 + 6, y_portique, gx0 + 9, bas)
+	var b1 := clampf(y_bassin + 2.0, y_portique, y_seuil)
+	var b2 := clampf(y_passage + 2.0, y_portique, y_seuil)
+	_tour_fond.polygon = PackedVector2Array([Vector2(gx0 - 6, y_portique), Vector2(gx0 + 9, y_portique),
+		Vector2(gx0 + 9, b2), Vector2(gx0, b2), Vector2(gx0, b1), Vector2(gx0 - 6, b1)])
+	_rainure_fond.polygon = _quad(gx0 + 6, y_portique, gx0 + 9, b2)
 
 func _hauteur() -> float:
 	return y_seuil - y_crete     # le vantail fermé va du seuil à la crête

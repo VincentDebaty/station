@@ -544,8 +544,12 @@ func _process(dt: float) -> void:
 		eaux[i].repos = Y(vue_niv[i])
 	for i in portes: portes[i].bas_ouvert_y = _bas_ouvert(i)
 	_maj_passages()
-	# la tour du fond de chaque porte s'arrête à la surface, au pied de la tour
-	for i in portes: portes[i].noyer_tour(surface_a(X(gl[i][0]) + 1.0))
+	# la tour du fond de chaque porte s'arrête où l'eau passe devant elle :
+	# le bassin de gauche, et l'eau de l'ouverture quand la porte est levée
+	for i in portes:
+		var y_passage := INF
+		if passages.has(i) and passages[i].visible_eau: y_passage = passages[i].hauteur_a(X(gl[i][0]) + 4.0)
+		portes[i].noyer_tour(eaux[i].hauteur_a(X(gb[i][1])), y_passage)
 	for i in aqueducs:
 		aqueducs[i].ouverte = portes[i].vanne_ouverte
 		aqueducs[i].niveau_g = Y(vue_niv[i])
