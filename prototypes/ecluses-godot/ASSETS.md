@@ -56,7 +56,7 @@ puis demander les autres **en recoloriant celui-là** (« recolor this exact
 boat in yellow, keep exactly the same shape, size and framing »).
 
 ```text
-[bloc de style] A small canal tugboat, exact side profile facing right, isolated on a transparent background. Hull painted bright RED above the waterline, dark brown-red antifouling paint below it, a white stripe, three round portholes, a cream wooden cabin with two blue windows, a black chimney with a red band, a small mast with a red pennant at the stern, a red-and-white life ring on the cabin. The whole hull is visible, including the part that sits underwater. The keel touches the bottom edge of the image, the boat fills the width of the image. No water, no shadow on the ground, no text.
+[bloc de style] A small canal tugboat with a DEEP rounded hull, exact side profile facing right, isolated on a transparent background. Proportions: the whole boat (keel to top of the chimney) is about 1.4 times longer than it is tall. The waterline is at mid-height: the dark red antifouling part of the hull below the waterline is as tall as everything above it (colored hull, cabin and chimney together). Above the waterline: hull painted bright RED with a white stripe on the waterline, three round portholes, a cream wooden cabin with two blue windows, a black chimney with a red band, a small mast with a red pennant at the stern, a red-and-white life ring on the cabin. The keel touches the bottom edge of the image, the boat fills the width of the image. No water, no shadow, no glow, no text.
 ```
 
 Pour les autres, remplacer RED / red par YELLOW / yellow, puis BLUE / blue
@@ -66,21 +66,21 @@ pont).
 
 ---
 
-### Le tirant d'eau : une question à trancher
+### Le tirant d'eau : tranché le 6 octobre 2026
 
-Le moteur dit qu'un bateau flotte s'il a au moins **une unité** d'eau sous
-lui, et une unité fait 64 px à l'écran — autant que la moitié de la longueur
-d'un bateau. Un bateau réaliste n'enfonce que 10 à 20 % de sa longueur : sa
-coque visible plonge de 13 à 25 px, pas de 59. Tant que l'eau est profonde,
-personne ne le voit (le niveau 1-2). Mais un bateau **échoué** (1-1, 1-3)
-semblera flotter encore dans 30 px d'eau. Deux façons d'en sortir :
+**Coque profonde, mais pas trop** (Vincent). Le jeu dessine une unité de
+hauteur sur 48 px (une unité de largeur sur 64) : le tirant du moteur fait
+44 px sous l'eau pour une coque de 125 px de long, un bon tiers. D'où le
+prompt ci-dessus : 1,4 pour 1, flottaison à mi-hauteur. Une image trop plate
+est quand même affichée, mais sa coque plonge moins que la règle — et Godot
+le dit dans sa console (« coque trop plate pour son tirant ») avec la
+longueur qu'il lui faudrait.
 
-- des bateaux-jouets à **coque très profonde**, la partie sous l'eau aussi
-  haute que la partie au-dessus (prompt : « chunky toy boat with an unusually
-  deep rounded hull, the dark underwater part as tall as the colored part
-  above it, proportions about 1.3 : 1 ») — rien ne change dans les niveaux ;
-- garder des bateaux réalistes et **réduire le tirant** dans les niveaux
-  (0,3 unité), ce qui oblige à les réaccorder : le banc le dira.
+Pourquoi ce n'est pas un détail : la profondeur d'eau est le cœur des
+puzzles. Un bateau réaliste n'enfonce que 10 à 20 % de sa longueur ; avec lui,
+un bateau **échoué** (niveaux 1-1, 1-3) semblerait flotter encore dans 30 px
+d'eau, et la règle deviendrait illisible. L'autre voie — bateaux réalistes et
+tirant réduit dans les niveaux — obligeait à réaccorder tous les niveaux.
 
 ## Pas encore branché — à faire quand le style sera validé
 

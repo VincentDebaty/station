@@ -21,7 +21,13 @@ extends Node2D
 signal ecoulement_fini
 signal bateaux_arrives
 
-const U := 64.0
+const U := 64.0       # une unité en largeur, en pixels
+# Une unité en HAUTEUR est plus courte qu'en largeur. Le moteur exige une
+# unité d'eau sous un bateau pour qu'il flotte, et la coque doit montrer ce
+# tirant : à 64 px, elle plongeait de près de la moitié de sa longueur — un
+# jouet de baignoire. À 48 px, un bon tiers : profonde, mais crédible
+# (Vincent, 6 octobre 2026). Les niveaux et le moteur n'en savent rien.
+const UY := 48.0
 const MUR := 0.9
 const MARGE := 1.4
 const BAS := -1.6
@@ -57,7 +63,7 @@ var _reperes: Node2D
 var _t := 0.0
 
 func X(x: float) -> float: return x * U
-func Y(h: float) -> float: return (haut - h) * U
+func Y(h: float) -> float: return (haut - h) * UY
 func rect_monde() -> Rect2: return Rect2(0, 0, X(largeur), Y(BAS))
 
 # --- La construction ---------------------------------------------------------------
@@ -122,14 +128,23 @@ func construire(niveau: Dictionary, e: Dictionary) -> void:
 		var bt := Bateau.new()
 		var b: Dictionary = N["bateaux"][k]
 		bt.couleur = COULEURS[k % COULEURS.size()]
-		bt.tirant = float(b["tirant"]) * U * 0.92
+		bt.tirant = float(b["tirant"]) * UY * 0.92
 		bt.longueur = 1.75 * U
 		bt.sens = 1.0 if int(b["vers"]) >= int(b["de"]) else -1.0
 		var chemin := "res://art/bateau_%d.png" % k
 		if ResourceLoader.exists(chemin):
 			bt.image = _recadrer(load(chemin))
 			bt.ligne = float(_reglages_bateaux().get("bateau_%d" % k, {}).get("ligne", 0.71))
-			var h := bt.longueur * 1.12 * bt.image.get_height() / bt.image.get_width()
+			# l'image est mise à l'échelle pour que sa partie immergée soit le
+			# tirant du moteur ; si elle devient alors plus longue que le sas
+			# n'en contient, on la plafonne, et sa coque plonge moins que la règle
+			var aspect := float(bt.image.get_width()) / bt.image.get_height()
+			var h := bt.tirant / maxf(1.0 - bt.ligne, 0.05)
+			var plafond := 1.12 * bt.longueur
+			if h * aspect > plafond:
+				push_warning("bateau_%d.png : coque trop plate pour son tirant (il faudrait %d px de long, le sas en tient %d)" % [k, int(h * aspect), int(plafond)])
+				h = plafond / aspect
+			bt.largeur_image = h * aspect
 			bt.tirant = (1.0 - bt.ligne) * h
 		flotte.add_child(bt)
 		bateaux.append(bt)
@@ -199,13 +214,18 @@ func _decor() -> void:
 		at.region = Rect2(0, 104, 1050, 196)
 		tex = at
 	if tex:
-		var s := Sprite2D.new()
-		s.texture = tex
-		s.centered = false
 		var echelle := (W + 160.0) / tex.get_width()
-		s.scale = Vector2(echelle, echelle)
-		s.position = Vector2(-80, yb + 60 - tex.get_height() * echelle)
-		add_child(s)
+		var large := tex.get_width() * echelle
+		# au centre, puis une copie en miroir de chaque côté : un écran plus
+		# allongé que la coupe ne voit jamais le bord du panorama
+		for k in [-1, 0, 1]:
+			var s := Sprite2D.new()
+			s.texture = tex
+			s.centered = false
+			s.flip_h = k != 0
+			s.scale = Vector2(echelle, echelle)
+			s.position = Vector2(-80 + k * large, yb + 60 - tex.get_height() * echelle)
+			add_child(s)
 	# la prairie, qui descend derrière les bassins
 	var pts := PackedVector2Array()
 	var y_pre := yb + 46
@@ -419,7 +439,7 @@ func _jet(i: int, flux: float, dt: float) -> void:
 	# libre : une nappe sort de l'ouverture et tombe en parabole
 	var y_haut := Y(vue_niv[h])
 	var epais := clampf((y_seuil - y_haut) * 0.6, 14.0, 0.7 * U)
-	var vx := sqrt(2.0 * GRAVITE * maxf(tete, 0.02) * U) * 0.42
+	var vx := sqrt(2.0 * GRAVITE * maxf(tete, 0.02) * UY) * 0.48
 	var dessus := _parabole(sortie, y_seuil - epais, vx, sens, y_bas)
 	var dessous := _parabole(sortie, y_seuil, vx, sens, y_bas)
 	var contour := PackedVector2Array()

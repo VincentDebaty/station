@@ -19,12 +19,13 @@ var tirant := 58.0          # pixels sous la ligne de flottaison
 var sens := 1.0             # 1 : la proue à droite
 var image: Texture2D = null
 var ligne := 0.71
+var largeur_image := 0.0
 
 func _draw() -> void:
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2(sens, 1.0))
 	var L := longueur * 0.5
 	if image:
-		var w := longueur * 1.12
+		var w := largeur_image if largeur_image > 0.0 else longueur * 1.12
 		var h := w * image.get_height() / image.get_width()
 		draw_texture_rect(image, Rect2(-w * 0.5, -ligne * h, w, h), false)
 		return

@@ -10,6 +10,8 @@ extends Node2D
 #   ECLUSES_CAPTURE=<dossier> photographie l'écran à des instants choisis
 #                             (avec la démo), puis quitte en donnant les
 #                             images par seconde moyennes
+#   ECLUSES_SURE=g,h,d,b      simule les bords d'un téléphone (en pixels de
+#                             fenêtre), pour vérifier les marges sur le Mac
 # ------------------------------------------------------------------
 
 var N: Dictionary
@@ -29,6 +31,7 @@ var _etoiles_fin: Label
 var _images := 0
 var _secondes := 0.0
 var _ips: Label
+var _sure: Control      # la zone sûre : tout ce qu'on touche ou qu'on lit y reste
 
 func _ready() -> void:
 	var tous: Array = JSON.parse_string(FileAccess.get_file_as_string("res://niveaux.json"))["niveaux"]
@@ -60,15 +63,40 @@ func _lancer() -> void:
 	_maj()
 	_cadrer()
 
+# Les bords que l'écran mange : encoche, barre d'accueil, coins arrondis.
+# iOS donne la zone sûre ; les coins arrondis mordent encore un peu dedans
+# (l'iPhone de Vincent rognait le numéro du niveau et les boutons), d'où la
+# marge en plus. Sur ordinateur, une simple marge.
+func _marges() -> Dictionary:
+	var m := {"g": 16.0, "h": 12.0, "d": 16.0, "b": 12.0}
+	var vis := get_viewport().get_visible_rect().size
+	var fen := Vector2(DisplayServer.window_get_size())
+	var force := OS.get_environment("ECLUSES_SURE")
+	var bords := []
+	if force != "":
+		bords = Array(force.split(",")).map(func(x): return float(x))
+	elif OS.has_feature("mobile"):
+		var sur := Rect2(DisplayServer.get_display_safe_area())
+		if sur.size.x > 0:
+			bords = [sur.position.x, sur.position.y, fen.x - sur.end.x, fen.y - sur.end.y]
+	if bords.size() == 4 and fen.x > 0:
+		var k := vis.x / fen.x
+		m = {"g": bords[0] * k + 24.0, "h": bords[1] * k + 16.0, "d": bords[2] * k + 24.0, "b": bords[3] * k + 16.0}
+	return m
+
 func _cadrer() -> void:
 	if canal == null or camera == null: return
-	var ecran := get_viewport_rect().size
+	var ecran := get_viewport().get_visible_rect().size
+	var m := _marges()
+	if _sure:
+		_sure.offset_left = m["g"]; _sure.offset_top = m["h"]
+		_sure.offset_right = -m["d"]; _sure.offset_bottom = -m["b"]
 	var r := canal.rect_monde()
-	var haut_hud := 84.0
-	var bas_hud := 70.0
-	var z := minf((ecran.x - 24.0) / r.size.x, (ecran.y - haut_hud - bas_hud) / r.size.y)
+	# la coupe tient entre les marges, sous les pastilles du haut et au-dessus des boutons
+	var dispo := Rect2(m["g"], m["h"] + 70.0, ecran.x - m["g"] - m["d"], ecran.y - m["h"] - m["b"] - 70.0 - 60.0)
+	var z := minf(dispo.size.x / r.size.x, dispo.size.y / r.size.y)
 	camera.zoom = Vector2(z, z)
-	camera.position = r.get_center() - Vector2(0, (haut_hud - bas_hud) * 0.5 / z)
+	camera.position = r.get_center() - (dispo.get_center() - ecran * 0.5) / z
 
 # --- Le toucher et les coups ----------------------------------------------------------
 func _unhandled_input(ev: InputEvent) -> void:
@@ -137,11 +165,14 @@ func _interface() -> void:
 	racine.set_anchors_preset(Control.PRESET_FULL_RECT)
 	racine.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	couche.add_child(racine)
+	_sure = Control.new()
+	_sure.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_sure.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	racine.add_child(_sure)
 	# en haut à gauche : le numéro du niveau, puis les coups
 	var gauche := HBoxContainer.new()
-	gauche.position = Vector2(18, 14)
 	gauche.add_theme_constant_override("separation", -10)
-	racine.add_child(gauche)
+	_sure.add_child(gauche)
 	var badge := PanelContainer.new()
 	badge.add_theme_stylebox_override("panel", _style(Color("#1f6fd1"), 16))
 	badge.custom_minimum_size = Vector2(76, 60)
@@ -160,19 +191,19 @@ func _interface() -> void:
 	cadre_et.add_theme_stylebox_override("panel", _style(Color("#f6f1e6"), 18))
 	_etoiles = _label("", 32, Color("#f2b705"))
 	cadre_et.add_child(_etoiles)
-	cadre_et.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT, Control.PRESET_MODE_MINSIZE, 16)
+	_sure.add_child(cadre_et)
+	cadre_et.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT, Control.PRESET_MODE_MINSIZE, 0)
 	cadre_et.grow_horizontal = Control.GROW_DIRECTION_BEGIN
-	racine.add_child(cadre_et)
 	# en bas à droite : annuler, recommencer
 	var boutons := HBoxContainer.new()
 	boutons.add_theme_constant_override("separation", 10)
 	_b_annuler = _bouton("Annuler", annuler)
 	boutons.add_child(_b_annuler)
 	boutons.add_child(_bouton("Recommencer", _lancer))
-	boutons.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_RIGHT, Control.PRESET_MODE_MINSIZE, 16)
+	_sure.add_child(boutons)
+	boutons.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_RIGHT, Control.PRESET_MODE_MINSIZE, 0)
 	boutons.grow_horizontal = Control.GROW_DIRECTION_BEGIN
 	boutons.grow_vertical = Control.GROW_DIRECTION_BEGIN
-	racine.add_child(boutons)
 	# la fin
 	_fin = PanelContainer.new()
 	_fin.add_theme_stylebox_override("panel", _style(Color("#f6f1e6"), 22))
@@ -196,9 +227,9 @@ func _interface() -> void:
 	# la mesure qu'on vient chercher sur l'iPhone
 	if OS.is_debug_build() and not OS.has_feature("movie"):
 		_ips = _label("", 16, Color(1, 1, 1, 0.8))
-		_ips.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT, Control.PRESET_MODE_MINSIZE, 14)
+		_sure.add_child(_ips)
+		_ips.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT, Control.PRESET_MODE_MINSIZE, 0)
 		_ips.grow_vertical = Control.GROW_DIRECTION_BEGIN
-		racine.add_child(_ips)
 	_maj()
 
 func _label(t: String, taille: int, c: Color) -> Label:
