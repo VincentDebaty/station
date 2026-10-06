@@ -114,13 +114,21 @@ func jouer(a: Dictionary) -> void:
 	histoire.append(avant)
 	etat = r["etat"]
 	_maj()
+	# Comme une vraie écluse. Ouvrir : la roue ouvre la vanne, l'eau passe par
+	# l'aqueduc, et quand les deux eaux sont au même niveau le vantail s'efface.
+	# Fermer : le vantail remonte d'abord, puis la roue ferme la vanne.
 	if a["type"] == "porte":
 		var p: Porte = canal.portes[int(a["i"])]
-		p.manoeuvrer(etat["ouvert"][int(a["i"])])
-		# l'eau part quand la porte est à moitié ouverte ; à la fermeture, on attend qu'elle soit close
-		await get_tree().create_timer(0.3 if etat["ouvert"][int(a["i"])] else 0.62).timeout
+		if etat["ouvert"][int(a["i"])]:
+			p.manoeuvrer_vanne(true)
+			await get_tree().create_timer(0.4).timeout
+		else:
+			await canal.placer_vantaux(etat)
+			p.manoeuvrer_vanne(false)
+			await p.roue_finie
 	canal.ecouler(avant["niv"], etat["niv"], r["flux"])
 	await canal.ecoulement_fini
+	await canal.placer_vantaux(etat)
 	canal.deplacer(r["dep"])
 	await canal.bateaux_arrives
 	occupe = false

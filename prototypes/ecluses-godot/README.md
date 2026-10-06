@@ -23,19 +23,25 @@ champs et le fleuve ne sont pas encore dessinés).
 | | ce qu'elle fait | fichiers |
 |---|---|---|
 | **La logique** | décide des niveaux d'eau et des bateaux, au millionième — c'est le moteur de la page web, porté fonction pour fonction | `moteur.gd` |
-| **Le rendu** | fait vivre l'eau *entre* deux états du moteur, sans jamais rien décider | `canal.gd`, `eau.gd`, `porte.gd`, `jet.gd`, `bateau.gd`, `shaders/` |
+| **Le rendu** | fait vivre l'eau *entre* deux états du moteur, sans jamais rien décider | `canal.gd`, `eau.gd`, `porte.gd`, `aqueduc.gd`, `bateau.gd`, `shaders/` |
 
 Le rendu n'a pas de simulation de fluide, exprès : un niveau doit rester
 déterministe pour que le solveur puisse le vérifier. L'eau a l'air libre, mais
 elle va où le moteur l'a décidé :
 
 - **la surface** est une rangée de colonnes reliées par des ressorts, plus une
-  houle douce ; jets, sillages et remous lui donnent des impulsions (`eau.gd`) ;
+  houle douce ; sillages et bouillons lui donnent des impulsions (`eau.gd`) ;
 - **les niveaux** suivent Torricelli : l'écart fond comme le carré du temps qui
   reste, l'eau ralentit en se posant (`canal.gd`, `ecouler`) ;
-- **le jet** sort de la porte en nappe et tombe en parabole quand le bassin qui
-  reçoit est sous le seuil ; s'il le couvre déjà, l'eau bouillonne au lieu de
-  tomber (`jet.gd`) ;
+- **une porte se manœuvre comme une vraie écluse** (retours de Vincent, 6 octobre
+  2026) : la roue ouvre une vanne, l'eau passe par un **aqueduc** sous le fond
+  des bassins — on la voit courir dans le conduit, puis bouillonner à la grille
+  du bassin qui se remplit — et c'est seulement quand les deux eaux sont au même
+  niveau que le **vantail** s'efface dans le radier. Fermer, c'est l'inverse :
+  le vantail remonte, puis la vanne se ferme (`porte.gd`, `aqueduc.gd`). Aucun
+  jet ne passe par la porte : rien ne semble devoir entraîner les bateaux. Le
+  moteur n'a pas changé — il exigeait déjà deux eaux au même niveau pour qu'un
+  bateau passe, et c'est exactement quand le vantail s'efface ;
 - **l'eau** réfracte ce qui est derrière elle, s'assombrit avec la profondeur,
   porte des reflets mouvants et une ligne d'écume (`shaders/eau.gdshader`).
 

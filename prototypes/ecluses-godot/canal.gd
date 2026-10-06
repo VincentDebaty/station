@@ -7,7 +7,8 @@ extends Node2D
 #   murs du fond des bassins           la pierre derrière l'eau, plus sombre
 #   bateaux, puis l'eau                l'eau réfracte la coque immergée
 #   terre et radiers, portes           la coupe au premier plan
-#   jets, places réservées, roues      ce qui bouge et ce qu'on touche
+#   aqueducs                           sous le fond, dans la terre de la coupe
+#   places réservées, roues            ce qu'on touche et ce qu'on vise
 #
 # Le canal ne décide de rien. Il reçoit des états du moteur et anime le
 # passage de l'un à l'autre : les niveaux suivent Torricelli (l'écart fond
@@ -32,14 +33,12 @@ const MUR := 0.9
 const MARGE := 1.4
 const BAS := -1.6
 const LOIN := 2600.0   # le décor déborde : aucun bord vide autour de la coupe
-const GRAVITE := 1800.0
 const COULEURS := [Color("#e5462f"), Color("#f2b705"), Color("#2b7be0"), Color("#2ea65a")]
 
 const SH_EAU := preload("res://shaders/eau.gdshader")
 const SH_PIERRE := preload("res://shaders/pierre.gdshader")
 const SH_TERRE := preload("res://shaders/terre.gdshader")
 const SH_BOIS := preload("res://shaders/bois.gdshader")
-const SH_JET := preload("res://shaders/jet.gdshader")
 const SH_HERBE := preload("res://shaders/herbe.gdshader")
 const SH_TEINTE := preload("res://shaders/teinte.gdshader")
 # Comment repeindre le rouge vif du bateau modèle pour chaque bateau du niveau :
@@ -60,7 +59,7 @@ var berge := 0.0
 var eaux := []        # une Eau par bassin
 var passages := {}    # liaison -> Eau qui remplit l'ouverture d'une porte
 var portes := {}      # liaison -> Porte
-var jets := {}        # liaison -> Jet
+var aqueducs := {}    # liaison -> Aqueduc, le conduit par où passe l'eau d'une porte
 var bateaux := []     # un Bateau par bateau du niveau
 var positions := []   # bassin de chaque bateau, tel qu'affiché
 var bat_x := []       # abscisse courante de chaque bateau
@@ -122,13 +121,18 @@ func construire(niveau: Dictionary, e: Dictionary) -> void:
 		if l["type"] == "porte":
 			var po := Porte.new()
 			var bas_radier := Y(minf(float(B[i]["fond"]), float(B[i + 1]["fond"])) - 0.32)
-			po.preparer(X(gl[i][0]), X(gl[i][1]), Y(float(l["seuil"])), Y(float(l["crete"])), bas_radier, U, SH_PIERRE, SH_BOIS, e["ouvert"][i])
+			po.preparer(X(gl[i][0]), X(gl[i][1]), Y(float(l["seuil"])), Y(float(l["crete"])), bas_radier, U, SH_PIERRE, SH_BOIS,
+				_mat(SH_TERRE, {"sol_y": Y(0.0)}), e["ouvert"][i], _vantail_baisse(e, i))
 			add_child(po)
 			portes[i] = po
-			var j := Jet.new()
-			j.preparer(SH_JET)
-			add_child(j)
-			jets[i] = j
+	# les aqueducs, dans la terre de la coupe, par-dessus le radier des portes
+	for i in portes:
+		var aq := Aqueduc.new()
+		aq.preparer(_trace_aqueduc(i), 0.2 * UY)
+		aq.ouverte = e["ouvert"][i]
+		aq.vanne = 1.0 if aq.ouverte else 0.0
+		add_child(aq)
+		aqueducs[i] = aq
 	_reperes = Node2D.new()
 	_reperes.z_index = 3
 	_reperes.draw.connect(_dessiner_reperes)
@@ -378,17 +382,51 @@ func _process(dt: float) -> void:
 	for i in eaux.size():
 		eaux[i].repos = Y(vue_niv[i])
 	_maj_passages()
+	for i in aqueducs: aqueducs[i].ouverte = portes[i].vanne_ouverte
 	_poser_bateaux()
 	_reperes.queue_redraw()
 
 func _maj_passages() -> void:
 	for i in passages:
 		var s := float(N["liaisons"][i]["seuil"])
-		var ouvert: float = portes[i].ouverture if portes.has(i) else 0.0
+		var ouvert: float = portes[i].abaisse if portes.has(i) else 0.0
 		passages[i].visible_eau = ouvert > 0.15 and maxf(vue_niv[i], vue_niv[i + 1]) > s + 0.03
 		passages[i].remous = maxf(eaux[i].remous, eaux[i + 1].remous)
 
-# Un écoulement : de l'état « avant » à l'état « après », niveaux et jets.
+# Le tracé d'un aqueduc : il part d'une grille dans le fond du bassin de
+# gauche, près de la porte, plonge sous le radier, passe sous la porte et
+# remonte par une grille dans le fond du bassin de droite. Les vraies écluses
+# ont souvent leurs aqueducs sous le radier ; ici, ça le montre en entier
+# dans la coupe, et il ne croise jamais un bateau. (Dans le mur du fond, il
+# disparaissait sous une eau presque opaque.)
+func _trace_aqueduc(i: int) -> PackedVector2Array:
+	var B: Array = N["bassins"]
+	var fg := float(B[i]["fond"])
+	var fd := float(B[i + 1]["fond"])
+	var bas := minf(fg, fd) - 0.75
+	var xg := X(gl[i][0]) - 0.5 * U
+	var xd := X(gl[i][1]) + 0.5 * U
+	return PackedVector2Array([Vector2(xg, Y(fg)), Vector2(xg, Y(bas)), Vector2(xd, Y(bas)), Vector2(xd, Y(fd))])
+
+# Le vantail d'une porte s'efface quand sa vanne est ouverte ET que les deux
+# eaux sont au même niveau — c'est exactement quand le moteur laisse passer
+# un bateau.
+func _vantail_baisse(e: Dictionary, i: int) -> bool:
+	return bool(e["ouvert"][i]) and absf(float(e["niv"][i]) - float(e["niv"][i + 1])) < 1e-6
+
+# Pose chaque vantail selon l'état e ; rend la main quand tous ont fini.
+func placer_vantaux(e: Dictionary) -> void:
+	for i in portes:
+		portes[i].placer_vantail(_vantail_baisse(e, i))
+	var bouge := true
+	while bouge:
+		await get_tree().process_frame
+		bouge = false
+		for i in portes:
+			var cible := 1.0 if _vantail_baisse(e, i) else 0.0
+			if not is_equal_approx(portes[i].abaisse, cible): bouge = true
+
+# Un écoulement : de l'état « avant » à l'état « après », niveaux et aqueducs.
 func ecouler(avant: Array, apres: Array, flux: Array) -> void:
 	var dh := 0.0
 	for i in avant.size(): dh = maxf(dh, absf(apres[i] - avant[i]))
@@ -409,82 +447,40 @@ func _avancer_ecoulement(dt: float) -> void:
 		vue_niv[i] = _ecou["apres"][i] + (_ecou["avant"][i] - _ecou["apres"][i]) * f
 	for i in eaux.size(): eaux[i].remous = move_toward(eaux[i].remous, 0.0, dt * 0.8)
 	for i in _ecou["flux"].size():
-		if jets.has(i): _jet(i, _ecou["flux"][i], dt)
+		if aqueducs.has(i): _aqueduc(i, _ecou["flux"][i], dt)
 	if p >= 1.0:
 		_ecou = {}
-		for j in jets.values(): j.eteindre()
+		for aq in aqueducs.values(): aq.couler(0.0, 1)
 		ecoulement_fini.emit()
 
-func _jet(i: int, flux: float, dt: float) -> void:
-	var jet: Jet = jets[i]
+# L'eau qui passe par l'aqueduc d'une porte : elle court dans le conduit,
+# creuse un peu la surface au-dessus de l'entrée, et bouillonne doucement au
+# débouché, près du fond du bassin qui se remplit. La force suit Torricelli :
+# le débit va comme la racine de la hauteur d'eau qui pousse.
+func _aqueduc(i: int, flux: float, dt: float) -> void:
+	var aq: Aqueduc = aqueducs[i]
 	if absf(flux) <= 0.01:
-		jet.eteindre()
+		aq.couler(0.0, 1)
 		return
-	var sens := 1.0 if flux > 0 else -1.0
+	var sens := 1 if flux > 0 else -1
 	var h := i if flux > 0 else i + 1
 	var l := i + 1 if flux > 0 else i
 	var s := float(N["liaisons"][i]["seuil"])
 	var tete: float = vue_niv[h] - maxf(vue_niv[l], s)
 	var tete0: float = maxf(_ecou["tetes"].get(i, 1.0), 0.05)
 	var force := clampf(sqrt(maxf(tete, 0.0) / tete0), 0.0, 1.0)
-	if force < 0.03:
-		jet.eteindre()
-		return
-	var sortie := X(gl[i][1]) if sens > 0 else X(gl[i][0])
-	var y_seuil := Y(s)
-	var y_bas := surface_a(sortie + sens * 14.0)
+	aq.couler(force if force > 0.03 else 0.0, sens)
+	if force <= 0.03: return
 	var recoit: Eau = eaux[l]
 	var donne: Eau = eaux[h]
-	# du côté qui se vide, la surface se creuse vers la porte
-	donne.impulsion(sortie - sens * (X(MUR) + 16.0), 0.9 * force * dt * 60.0 * 0.08, 46.0)
-	recoit.remous = maxf(recoit.remous, force)
-	if y_bas < y_seuil - 6.0:
-		# noyé : l'eau bouillonne devant la porte
-		jet.libre = false
-		jet.poser(PackedVector2Array(), PackedVector2Array(), force, false)
-		jet.eclaboussures.emitting = false
-		jet.bulles.emitting = true
-		jet.bulles.direction = Vector2(sens, -0.5)
-		jet.bulles.global_position = Vector2(sortie + sens * 10.0, lerpf(y_seuil, y_bas, 0.3))
-		jet.bulles.modulate.a = force
-		for k in 3:
-			recoit.impulsion(sortie + sens * randf_range(10.0, 1.6 * U), randf_range(-1.6, 1.2) * force, 18.0)
-		return
-	# libre : une nappe sort de l'ouverture et tombe en parabole
-	var y_haut := Y(vue_niv[h])
-	var epais := clampf((y_seuil - y_haut) * 0.6, 14.0, 0.7 * U)
-	var vx := sqrt(2.0 * GRAVITE * maxf(tete, 0.02) * UY) * 0.48
-	var dessus := _parabole(sortie, y_seuil - epais, vx, sens, y_bas)
-	var dessous := _parabole(sortie, y_seuil, vx, sens, y_bas)
-	var contour := PackedVector2Array()
-	var uvs := PackedVector2Array()
-	for k in dessus.size():
-		contour.append(dessus[k]); uvs.append(Vector2(float(k) / (dessus.size() - 1), 0.0))
-	for k in range(dessous.size() - 1, -1, -1):
-		contour.append(dessous[k]); uvs.append(Vector2(float(k) / (dessous.size() - 1), 1.0))
-	jet.poser(contour, uvs, force, true)
-	var impact := dessous[dessous.size() - 1].lerp(dessus[dessus.size() - 1], 0.5)
-	jet.eclaboussures.global_position = impact
-	jet.eclaboussures.emitting = true
-	jet.eclaboussures.modulate.a = 0.4 + 0.6 * force
-	jet.eclaboussures.initial_velocity_max = 120.0 + 200.0 * force
-	jet.bulles.emitting = true
-	jet.bulles.direction = Vector2(sens * 0.4, 1)
-	jet.bulles.global_position = impact + Vector2(0, 18)
-	jet.bulles.modulate.a = force * 0.6
-	recoit.impulsion(impact.x, 2.2 * force, 22.0)
-	recoit.impulsion(impact.x + sens * 30.0, -0.8 * force, 30.0)
-
-func _parabole(x0: float, y0: float, vx: float, sens: float, y_fin: float) -> PackedVector2Array:
-	var pts := PackedVector2Array()
-	var t := 0.0
-	var y := y0
-	while y < y_fin and pts.size() < 40:
-		pts.append(Vector2(x0 + sens * vx * t, y))
-		t += 0.016
-		y = y0 + 0.5 * GRAVITE * t * t
-	pts.append(Vector2(x0 + sens * vx * t, y_fin))
-	return pts
+	recoit.remous = maxf(recoit.remous, force * 0.55)
+	var sortie := aq.sortie()
+	var entree := aq.entree()
+	# au-dessus du débouché, la surface se soulève par bouffées
+	if randf() < 0.5:
+		recoit.impulsion(sortie.x + randf_range(-0.5, 0.5) * U, randf_range(-1.1, 0.4) * force, 26.0)
+	# au-dessus de l'entrée, elle se creuse un peu
+	donne.impulsion(entree.x, 0.25 * force * dt * 60.0 * 0.1, 40.0)
 
 # Les bateaux : un tour de déplacements après l'autre, comme le moteur les a rendus.
 func deplacer(dep: Array) -> void:
