@@ -27,10 +27,9 @@ var fini := false
 var _lab_coups: Label
 var _etoiles: Etoiles
 var _b_annuler: Button
-var _fin: PanelContainer
-var _lab_fin: Label
-var _etoiles_fin: Etoiles
-var _b_annuler_fin: Button
+var _pancarte: Pancarte   # le panneau d'éclusier de fin (pancarte.gd)
+var _lab_num: Label
+var _tous := []
 var _calcul := 0          # numéro de la dernière recherche d'impasse : une réponse périmée est ignorée
 var _images := 0
 var _secondes := 0.0
@@ -40,10 +39,10 @@ var _valeurs := {}             # clé -> [HSlider, Label de la valeur]
 var _sure: Control      # la zone sûre : tout ce qu'on touche ou qu'on lit y reste
 
 func _ready() -> void:
-	var tous: Array = JSON.parse_string(FileAccess.get_file_as_string("res://niveaux.json"))["niveaux"]
+	_tous = JSON.parse_string(FileAccess.get_file_as_string("res://niveaux.json"))["niveaux"]
 	var id := OS.get_environment("ECLUSES_NIVEAU")
 	if id == "": id = "1-2"
-	for n in tous:
+	for n in _tous:
 		if n["id"] == id: N = n
 	_lancer()
 	_interface()
@@ -66,7 +65,8 @@ func _lancer() -> void:
 	if camera == null:
 		camera = Camera2D.new()
 		add_child(camera)
-	if _fin: _fin.hide()
+	if _pancarte: _pancarte.hide()
+	if _lab_num: _lab_num.text = N["id"]
 	_maj()
 	_cadrer()
 
@@ -179,10 +179,7 @@ func _coince() -> void:
 	_maj()
 	await get_tree().create_timer(1.3).timeout
 	if not fini: return     # on a annulé entre-temps
-	_etoiles_fin.hide()
-	_b_annuler_fin.show()
-	_lab_fin.text = "Bateaux coincés !\nPlus aucun bateau ne peut avancer." if coinces.size() > 1 else "Bateau coincé !\nPlus aucun bateau ne peut avancer."
-	_fin.show()
+	_pancarte.montrer_echec(coinces.size() > 1)
 
 func annuler() -> void:
 	if occupe or histoire.is_empty(): return
@@ -198,7 +195,7 @@ func annuler() -> void:
 	canal.construire(N, etat)
 	histoire = h
 	fini = false
-	_fin.hide()
+	_pancarte.hide()
 	_maj()
 	_chercher_impasse()      # l'état d'avant peut lui-même être une impasse
 
@@ -254,6 +251,7 @@ func _interface() -> void:
 	badge.add_theme_stylebox_override("panel", st_badge)
 	badge.custom_minimum_size = Vector2(100, 88)
 	var num := _label(N["id"], 44, Color.WHITE)
+	_lab_num = num
 	num.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	badge.add_child(num)
 	var pilule := PanelContainer.new()
@@ -288,38 +286,13 @@ func _interface() -> void:
 	boutons.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_RIGHT, Control.PRESET_MODE_MINSIZE, 0)
 	boutons.grow_horizontal = Control.GROW_DIRECTION_BEGIN
 	boutons.grow_vertical = Control.GROW_DIRECTION_BEGIN
-	# la fin
-	_fin = PanelContainer.new()
-	var st_fin := _style(CREME, 30)
-	st_fin.content_margin_left = 40; st_fin.content_margin_right = 40
-	st_fin.content_margin_top = 26; st_fin.content_margin_bottom = 26
-	_fin.add_theme_stylebox_override("panel", st_fin)
-	# en bas, sur la terre, au-dessus des boutons : les bateaux et leurs « ! »
-	# restent visibles au-dessus de la carte
-	_fin.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
-	_fin.grow_horizontal = Control.GROW_DIRECTION_BOTH
-	_fin.grow_vertical = Control.GROW_DIRECTION_BEGIN
-	_fin.offset_bottom = -80.0
-	var col := VBoxContainer.new()
-	col.alignment = BoxContainer.ALIGNMENT_CENTER
-	col.add_theme_constant_override("separation", 14)
-	_etoiles_fin = Etoiles.new()
-	_etoiles_fin.taille = 72.0
-	_etoiles_fin.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	col.add_child(_etoiles_fin)
-	_lab_fin = _label("", 28, ENCRE)
-	_lab_fin.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	col.add_child(_lab_fin)
-	var actions := HBoxContainer.new()
-	actions.alignment = BoxContainer.ALIGNMENT_CENTER
-	actions.add_theme_constant_override("separation", 14)
-	_b_annuler_fin = _bouton("Annuler le coup", annuler)
-	actions.add_child(_b_annuler_fin)
-	actions.add_child(_bouton("Rejouer", _lancer))
-	col.add_child(actions)
-	_fin.add_child(col)
-	_fin.hide()
-	_sure.add_child(_fin)
+	# la fin : le panneau d'éclusier, en bas, sur la terre, au-dessus des
+	# boutons — les bateaux et leurs « ! » restent visibles au-dessus
+	_pancarte = Pancarte.new()
+	_sure.add_child(_pancarte)
+	_pancarte.annuler.connect(annuler)
+	_pancarte.rejouer.connect(_lancer)
+	_pancarte.suivant.connect(_niveau_suivant)
 	# en bas à gauche : le panneau des réglages (replié), son bouton, et les
 	# images par seconde dans les versions de test
 	var coin := VBoxContainer.new()
@@ -423,12 +396,26 @@ func _maj() -> void:
 	_b_annuler.disabled = histoire.is_empty() or occupe
 
 func _montrer_fin() -> void:
-	var n := _nb_etoiles()
-	_etoiles_fin.regler(n)
-	_etoiles_fin.show()
-	_b_annuler_fin.hide()
-	_lab_fin.text = "Passé !\n%d coups — la meilleure solution en demande %d." % [etat["coups"], int(N["par"])]
-	_fin.show()
+	_pancarte.montrer_victoire(_nb_etoiles(), "%d coups — la meilleure solution en demande %d." % [etat["coups"], int(N["par"])], not _suivant().is_empty())
+
+# Le niveau d'après, s'il est de ceux que la tranche sait dessiner : des
+# portes et des biefs, sans digue, champ ni fleuve (chapitre 1).
+func _suivant() -> Dictionary:
+	var i := _tous.find(N)
+	if i < 0 or i + 1 >= _tous.size(): return {}
+	var n: Dictionary = _tous[i + 1]
+	if n["mode"] != "pas": return {}
+	for b in n["bassins"]:
+		if not (b["type"] in ["bief", "sas"]): return {}
+	for l in n["liaisons"]:
+		if not (l["type"] in ["porte", "libre"]): return {}
+	return n
+
+func _niveau_suivant() -> void:
+	var n := _suivant()
+	if n.is_empty(): return
+	N = n
+	_lancer()
 
 # --- La démo et les photos ------------------------------------------------------------
 func _process(dt: float) -> void:
