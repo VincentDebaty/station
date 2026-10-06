@@ -769,12 +769,34 @@ const Ecluses = (function () {
   // en largeur, un coup qui en fasse bouger un. Rend 1 (bloqué), 0 (un
   // bateau peut encore avancer, ou la partie est gagnée) ou -1 (limite
   // atteinte sans conclure).
+  // Le face-à-face : deux bassins voisins pleins, dont aucun bateau ne peut
+  // sortir que vers l'autre (ou ne sort plus : il est arrivé). Plus rien n'en
+  // sortira jamais, quoi qu'on fasse de l'eau. Rend vrai si TOUS les bateaux
+  // pas encore arrivés sont pris dans de tels face-à-face : c'est bloqué, sans
+  // rien fouiller. (Sur le 1-4, deux bateaux qui se croisent dans l'escalier :
+  // la fouille tournait 5 s et touchait sa limite sans conclure.)
+  function figes(N, e) {
+    const pris = new Set();
+    const dans = i => N.bateaux.map((b, k) => k).filter(k => e.bateaux[k] === i);
+    for (let p = 0; p + 1 < N.bassins.length; p++) {
+      const A = dans(p), B = dans(p + 1);
+      if (A.length < capacite(N, p) || B.length < capacite(N, p + 1)) continue;
+      if (!A.every(k => N.bateaux[k].vers >= p)) continue;
+      if (!B.every(k => N.bateaux[k].vers <= p + 1)) continue;
+      A.concat(B).forEach(k => pris.add(k));
+    }
+    let restent = 0;
+    N.bateaux.forEach((b, k) => { if (e.bateaux[k] !== b.vers) restent += pris.has(k) ? 0 : 1; });
+    return pris.size > 0 && restent === 0 && N.bateaux.some((b, k) => e.bateaux[k] !== b.vers);
+  }
+
   function bloque(N, depart, limite, options) {
     limite = limite || 25000;
     const q = options && options.quantum;
     const e0 = depart || charger(N);
     const v0 = verdict(N, e0);
     if (v0) return v0.fin === "gagne" ? 0 : 1;
+    if (figes(N, e0)) return 1;
     const vus = new Set([cle(e0, q)]);
     let file = [e0];
     while (file.length) {

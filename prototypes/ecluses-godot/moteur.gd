@@ -327,6 +327,33 @@ static func impasse(N: Dictionary, depart: Dictionary, limite := 25000, q := 0.0
 		file = suivante
 	return 1
 
+# Le face-à-face : deux bassins voisins pleins, dont aucun bateau ne peut
+# sortir que vers l'autre (ou ne sort plus : il est arrivé). Plus rien n'en
+# sortira jamais, quoi qu'on fasse de l'eau. Vrai si TOUS les bateaux pas
+# encore arrivés sont pris dans de tels face-à-face : c'est bloqué, sans rien
+# fouiller. (Sur le 1-4, deux bateaux qui se croisent dans l'escalier : la
+# fouille tournait 5 s et touchait sa limite sans conclure — Vincent voyait
+# le panneau d'échec arriver bien après.) Même fonction que figes() de la page.
+static func figes(N: Dictionary, e: Dictionary) -> bool:
+	var pris := {}
+	for p in N["bassins"].size() - 1:
+		var A := []
+		var B := []
+		for k in N["bateaux"].size():
+			if e["bateaux"][k] == p: A.append(k)
+			if e["bateaux"][k] == p + 1: B.append(k)
+		if A.size() < capacite(N, p) or B.size() < capacite(N, p + 1): continue
+		if not A.all(func(k): return int(N["bateaux"][k]["vers"]) >= p): continue
+		if not B.all(func(k): return int(N["bateaux"][k]["vers"]) <= p + 1): continue
+		for k in A + B: pris[k] = true
+	var restent := 0
+	var pas_arrives := 0
+	for k in N["bateaux"].size():
+		if e["bateaux"][k] != int(N["bateaux"][k]["vers"]):
+			pas_arrives += 1
+			if not pris.has(k): restent += 1
+	return not pris.is_empty() and restent == 0 and pas_arrives > 0
+
 # Bloqué : plus aucun bateau ne pourra bouger, quoi qu'on fasse — la règle
 # d'échec de la tranche (Vincent, 6 octobre 2026 : une partie qui ne peut plus
 # être gagnée continue tant qu'un bateau peut encore avancer). Les bateaux
@@ -337,6 +364,7 @@ static func impasse(N: Dictionary, depart: Dictionary, limite := 25000, q := 0.0
 static func bloque(N: Dictionary, depart: Dictionary, limite := 25000, q := 0.01) -> int:
 	var v0 := verdict(N, depart)
 	if not v0.is_empty(): return 0 if v0["fin"] == "gagne" else 1
+	if figes(N, depart): return 1
 	var vus := {cle(depart, q): true}
 	var file := [depart]
 	while not file.is_empty():
