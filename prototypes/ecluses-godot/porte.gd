@@ -45,7 +45,6 @@ var roue: Node2D
 # plan, la tour reste avec le reste de la porte.
 var arriere: Node2D = null
 var _tour_fond: Polygon2D
-var _rainure_fond: Polygon2D
 
 func preparer(ax0: float, ax1: float, aseuil: float, acrete: float, aportique: float, abas: float, au: float,
 		pierre: Shader, bois: Shader, vanne: bool, leve: bool, abas_ouvert: float) -> void:
@@ -84,8 +83,7 @@ func preparer(ax0: float, ax1: float, aseuil: float, acrete: float, aportique: f
 	add_child(_rect(gx1 - 9, y_portique, gx1 + 6, y_seuil, mp))
 	# la rainure où coulisse le vantail, au bord intérieur de chaque tour, et
 	# l'ombre de la traverse sur ce qui est dessous
-	_rainure_fond = _degrade(gx0 + 6, y_portique, gx0 + 9, y_seuil, 0.15, 0.55)
-	fond.add_child(_rainure_fond)
+	fond.add_child(_degrade(gx0 + 6, y_portique, gx0 + 9, y_seuil, 0.15, 0.55))
 	add_child(_degrade(gx1 - 9, y_portique, gx1 - 6, y_seuil, 0.55, 0.15))
 	var sous_traverse := Polygon2D.new()
 	sous_traverse.polygon = _quad(gx0 - 16, y_portique + 4, gx1 + 16, y_portique + 16)
@@ -121,23 +119,20 @@ func preparer(ax0: float, ax1: float, aseuil: float, acrete: float, aportique: f
 	add_child(roue)
 	_maj_vantail()
 
-# La tour du fond s'arrête là où l'eau passe devant elle : derrière une eau un
-# peu transparente, sa partie immergée réapparaissait et disparaissait au gré
-# des vagues et du sillage (Vincent : « s'il est immergé, il ne doit plus
-# apparaître »). Elle a deux moitiés, qui n'ont pas la même eau devant :
-#   gx0-6 … gx0    devant le bassin de gauche : coupée à sa surface (y_bassin)
-#   gx0 … gx0+9    dans l'ouverture de la porte : coupée à l'eau qui la remplit
-#                  quand la porte est levée (y_passage) ; porte fermée, il n'y
-#                  a pas d'eau devant, et elle descend jusqu'au seuil — coupée
-#                  au bassin, elle laissait voir un mur sombre (Vincent).
-# Le canal donne ces surfaces à chaque image ; INF pour « pas d'eau ».
-func noyer_tour(y_bassin: float, y_passage: float) -> void:
+# La tour du fond a deux moitiés, qui n'ont pas la même eau devant elles :
+#   gx0-6 … gx0    devant le bassin de gauche, dont l'eau un peu transparente
+#                  la laissait réapparaître et disparaître au gré des vagues
+#                  (Vincent : « s'il est immergé, il ne doit plus apparaître ») :
+#                  coupée à la surface du bassin, que le canal donne à chaque
+#                  image ;
+#   gx0 … gx0+9    dans l'ouverture de la porte : aucune eau devant elle (l'eau
+#                  de l'ouverture commence après elle), elle descend toujours
+#                  jusqu'au seuil — porte ouverte comme fermée.
+func noyer_tour(y_bassin: float) -> void:
 	if _tour_fond == null: return
 	var b1 := clampf(y_bassin + 2.0, y_portique, y_seuil)
-	var b2 := clampf(y_passage + 2.0, y_portique, y_seuil)
 	_tour_fond.polygon = PackedVector2Array([Vector2(gx0 - 6, y_portique), Vector2(gx0 + 9, y_portique),
-		Vector2(gx0 + 9, b2), Vector2(gx0, b2), Vector2(gx0, b1), Vector2(gx0 - 6, b1)])
-	_rainure_fond.polygon = _quad(gx0 + 6, y_portique, gx0 + 9, b2)
+		Vector2(gx0 + 9, y_seuil), Vector2(gx0, y_seuil), Vector2(gx0, b1), Vector2(gx0 - 6, b1)])
 
 func _hauteur() -> float:
 	return y_seuil - y_crete     # le vantail fermé va du seuil à la crête
