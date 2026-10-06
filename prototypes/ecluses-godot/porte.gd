@@ -45,6 +45,10 @@ var roue: Node2D
 # plan, la tour reste avec le reste de la porte.
 var arriere: Node2D = null
 var _tour_fond: Polygon2D
+# L'eau du bassin de gauche, que le canal donne avant preparer : posée juste
+# devant le vantail, derrière le pilier de droite (voir canal.gd, « voiles »).
+var voile: Eau = null
+var _rainure_fond: Polygon2D
 
 func preparer(ax0: float, ax1: float, aseuil: float, acrete: float, aportique: float, abas: float, au: float,
 		pierre: Shader, bois: Shader, vanne: bool, leve: bool, abas_ouvert: float) -> void:
@@ -74,6 +78,15 @@ func preparer(ax0: float, ax1: float, aseuil: float, acrete: float, aportique: f
 	add_child(_degrade(gx0 + 9, haut_ombre, gx0 + 21, y_seuil, 0.42, 0.0))
 	add_child(_degrade(gx1 - 21, haut_ombre, gx1 - 9, y_seuil, 0.0, 0.3))
 	add_child(_degrade(gx1 + 6, y_portique, gx1 + 20, y_seuil, 0.26, 0.0))
+	# l'eau de gauche, devant le vantail : elle réfracte ce qui est derrière
+	# elle, et la copie de l'écran faite pour les bassins ne contient pas
+	# encore le vantail — on la refait sur la porte
+	if voile:
+		var copie := BackBufferCopy.new()
+		copie.copy_mode = BackBufferCopy.COPY_MODE_RECT
+		copie.rect = Rect2(gx0 - 20, y_portique - 20, gx1 - gx0 + 40, y_seuil - y_portique + 40)
+		add_child(copie)
+		add_child(voile)
 	# le radier, sous le seuil
 	add_child(_rect(gx0, y_seuil, gx1, abas, mp))
 	# les deux tours du portique, du radier jusque sous la traverse
@@ -83,7 +96,8 @@ func preparer(ax0: float, ax1: float, aseuil: float, acrete: float, aportique: f
 	add_child(_rect(gx1 - 9, y_portique, gx1 + 6, y_seuil, mp))
 	# la rainure où coulisse le vantail, au bord intérieur de chaque tour, et
 	# l'ombre de la traverse sur ce qui est dessous
-	fond.add_child(_degrade(gx0 + 6, y_portique, gx0 + 9, y_seuil, 0.15, 0.55))
+	_rainure_fond = _degrade(gx0 + 6, y_portique, gx0 + 9, y_seuil, 0.15, 0.55)
+	fond.add_child(_rainure_fond)
 	add_child(_degrade(gx1 - 9, y_portique, gx1 - 6, y_seuil, 0.55, 0.15))
 	var sous_traverse := Polygon2D.new()
 	sous_traverse.polygon = _quad(gx0 - 16, y_portique + 4, gx1 + 16, y_portique + 16)
@@ -119,20 +133,17 @@ func preparer(ax0: float, ax1: float, aseuil: float, acrete: float, aportique: f
 	add_child(roue)
 	_maj_vantail()
 
-# La tour du fond a deux moitiés, qui n'ont pas la même eau devant elles :
-#   gx0-6 … gx0    devant le bassin de gauche, dont l'eau un peu transparente
-#                  la laissait réapparaître et disparaître au gré des vagues
-#                  (Vincent : « s'il est immergé, il ne doit plus apparaître ») :
-#                  coupée à la surface du bassin, que le canal donne à chaque
-#                  image ;
-#   gx0 … gx0+9    dans l'ouverture de la porte : aucune eau devant elle (l'eau
-#                  de l'ouverture commence après elle), elle descend toujours
-#                  jusqu'au seuil — porte ouverte comme fermée.
-func noyer_tour(y_bassin: float) -> void:
+# La tour du fond s'arrête à la surface de l'eau qui est devant elle (celle du
+# bassin de gauche, qui baigne la face de la porte quand elle est fermée, ou
+# celle de l'ouverture porte levée — au même niveau). Dessous, on ne voit que de l'eau :
+# derrière une eau un peu transparente, sa partie immergée réapparaissait et
+# disparaissait (Vincent : « s'il est immergé, il ne doit plus apparaître »).
+# Le canal donne la surface à chaque image.
+func noyer_tour(y_eau: float) -> void:
 	if _tour_fond == null: return
-	var b1 := clampf(y_bassin + 2.0, y_portique, y_seuil)
-	_tour_fond.polygon = PackedVector2Array([Vector2(gx0 - 6, y_portique), Vector2(gx0 + 9, y_portique),
-		Vector2(gx0 + 9, y_seuil), Vector2(gx0, y_seuil), Vector2(gx0, b1), Vector2(gx0 - 6, b1)])
+	var bas := clampf(y_eau + 2.0, y_portique, y_seuil)
+	_tour_fond.polygon = _quad(gx0 - 6, y_portique, gx0 + 9, bas)
+	_rainure_fond.polygon = _quad(gx0 + 6, y_portique, gx0 + 9, bas)
 
 func _hauteur() -> float:
 	return y_seuil - y_crete     # le vantail fermé va du seuil à la crête

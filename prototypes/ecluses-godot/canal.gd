@@ -58,7 +58,7 @@ var haut := 0.0
 var berge := 0.0
 var eaux := []        # une Eau par bassin
 var passages := {}    # liaison -> Eau qui remplit l'ouverture d'une porte
-var voiles := {}      # liaison -> Eau devant la tour du fond, le temps qu'un bateau passe
+var voiles := {}      # liaison -> l'eau du bassin de gauche devant le vantail, porte fermée
 var portes := {}      # liaison -> Porte
 var aqueducs := {}    # liaison -> Aqueduc, le conduit par où passe l'eau d'une porte
 var bateaux := []     # un Bateau par bateau du niveau
@@ -120,23 +120,22 @@ func construire(niveau: Dictionary, e: Dictionary) -> void:
 			var p := Eau.new()
 			p.passage = true
 			p.gauche = eaux[i]; p.droite = eaux[i + 1]
-			# l'eau de l'ouverture commence APRÈS la tour du fond (9 px dans
-			# l'ouverture) : la tour se tient dans l'eau, entière jusqu'au seuil,
-			# porte ouverte comme fermée (Vincent : porte ouverte, l'eau passait
-			# devant elle et la coupait, porte fermée non)
-			p.preparer(X(gl[i][0]) + 9.0, X(gl[i][1]), Y(float(N["liaisons"][i]["seuil"])), 0.0, SH_EAU)
+			p.preparer(X(gl[i][0]), X(gl[i][1]), Y(float(N["liaisons"][i]["seuil"])), 0.0, SH_EAU)
 			add_child(p)
 			passages[i] = p
-			# Devant la tour du fond, il n'y a pas d'eau : elle descend entière
-			# jusqu'au seuil. Mais un bateau qui passe devant elle montrait là
-			# sa coque immergée sans eau, sur 9 px. Ce voile d'eau-ci ne
-			# couvre que la hauteur de sa coque, et seulement pendant qu'il
-			# passe (_maj_voiles).
+			# Porte FERMÉE, l'eau du bassin de gauche passe DEVANT le vantail,
+			# jusqu'au pilier de droite. Vincent, 6 octobre 2026 : « soyons
+			# logiques : il y a de l'eau des deux côtés, la porte devrait être
+			# immergée au niveau du bassin de gauche. On a une vue transversale,
+			# mais faussement de gauche. » L'écluse est vue un peu de biais : le
+			# pilier de gauche est au fond, celui de droite devant, et l'eau de
+			# gauche baigne la face de la porte. La porte la place juste devant
+			# son vantail (porte.gd) ; porte levée, c'est l'eau de l'ouverture
+			# qui la remplace.
 			var v := Eau.new()
 			v.passage = true
-			v.gauche = eaux[i]; v.droite = p
-			v.preparer(X(gl[i][0]), X(gl[i][0]) + 9.0, Y(float(N["liaisons"][i]["seuil"])), 0.0, SH_EAU)
-			add_child(v)
+			v.gauche = eaux[i]
+			v.preparer(X(gl[i][0]), X(gl[i][1]) - 9.0, Y(float(N["liaisons"][i]["seuil"])), 0.0, SH_EAU)
 			voiles[i] = v
 	_coupe_avant()
 	for i in N["liaisons"].size():
@@ -144,6 +143,7 @@ func construire(niveau: Dictionary, e: Dictionary) -> void:
 		if l["type"] == "porte":
 			var po := Porte.new()
 			po.arriere = arriere
+			po.voile = voiles.get(i)
 			var bas_radier := Y(minf(float(B[i]["fond"]), float(B[i + 1]["fond"])) - 0.32)
 			po.preparer(X(gl[i][0]), X(gl[i][1]), Y(float(l["seuil"])), Y(float(l["crete"])), Y(haut - 0.85), bas_radier, U,
 				SH_PIERRE, SH_BOIS, e["ouvert"][i], _vantail_leve(e, i), _bas_ouvert(i))
@@ -560,8 +560,7 @@ func _process(dt: float) -> void:
 		eaux[i].repos = Y(vue_niv[i])
 	for i in portes: portes[i].bas_ouvert_y = _bas_ouvert(i)
 	_maj_passages()
-	# la moitié de la tour du fond qui est devant le bassin de gauche s'arrête
-	# à sa surface
+	# la tour du fond s'arrête à la surface de l'eau de gauche, qui est devant elle
 	for i in portes: portes[i].noyer_tour(eaux[i].hauteur_a(X(gb[i][1])))
 	_maj_voiles()
 	for i in aqueducs:
@@ -571,20 +570,14 @@ func _process(dt: float) -> void:
 	_poser_bateaux(dt)
 	_reperes.queue_redraw()
 
-# Le voile d'eau devant la tour du fond : vide (le fond à la surface), sauf
-# quand un bateau passe devant ; il descend alors jusque sous sa coque.
+# L'eau de gauche devant le vantail, porte fermée, au niveau du bassin de
+# gauche ; porte levée, c'est celle de l'ouverture (les deux ensemble, l'une
+# sur l'autre, foncerait).
 func _maj_voiles() -> void:
 	for i in voiles:
 		var v: Eau = voiles[i]
-		v.visible_eau = passages[i].visible_eau
-		var milieu := X(gl[i][0]) + 4.5
-		var surface := v.hauteur_a(milieu)
-		var fond := surface
-		for k in bateaux.size():
-			var bt: Bateau = bateaux[k]
-			if absf(bat_x[k] - milieu) < bt.longueur * 0.62:
-				fond = maxf(fond, surface + bt.tirant + 6.0)
-		v.fond_y = minf(fond, Y(float(N["liaisons"][i]["seuil"])))
+		v.visible_eau = not passages[i].visible_eau
+		v.repos = eaux[i].hauteur_a(X(gb[i][1]))
 
 func _maj_passages() -> void:
 	for i in passages:
