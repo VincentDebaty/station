@@ -38,7 +38,7 @@ tombe juste : sa prairie commence à 70 %.
 [bloc de style] Wide panoramic countryside background for a side-view game, landscape format 3:2. Top half: soft blue sky with a few fluffy clouds. Middle: rolling green hills, a windmill on the far left, a small stone farmhouse with a red tile roof, cypress trees and round trees, distant blue mountains. The bottom third must be a plain, flat green meadow with nothing on it. No water, no canal, no boats, no people, no text, no user interface.
 ```
 
-### `art/bateau_0.png`, `bateau_1.png`, `bateau_2.png` — les bateaux
+### `art/bateau_0.png` à `bateau_3.png` — les bateaux
 
 Un fichier par bateau du niveau, dans l'ordre du JSON : 0 rouge, 1 jaune,
 2 bleu (3 vert). Le jeu **recadre l'image sur ses pixels opaques** (les marges
@@ -49,20 +49,43 @@ le haut, où la couleur de la coque cède à l'antifouling. Elle se mesure à
 l'œil sur chaque nouvelle image (0,71 pour les deux premières).
 
 **Pour que deux bateaux aient la même taille, ils doivent avoir les mêmes
-proportions.** Les deux premiers ne les ont pas : le rouge est un bateau long
-et bas (3 pour 1), le jaune un remorqueur trapu (1,5 pour 1) — à longueur
-égale, le jaune est deux fois plus haut. Le plus sûr : générer le premier,
-puis demander les autres **en recoloriant celui-là** (« recolor this exact
-boat in yellow, keep exactly the same shape, size and framing »).
+proportions.** Les deux premiers ne les avaient pas : le rouge était long et
+bas (3 pour 1), le jaune trapu (1,5 pour 1) — à longueur égale, le jaune
+était deux fois plus haut. D'où la méthode ci-dessous : un seul bateau
+dessiné, les autres recoloriés.
+
+Les quatre prompts ci-dessous sont **prêts à copier tels quels** (le bloc de
+style y est déjà). Les faire dans **une seule conversation**, dans l'ordre :
+d'abord joindre la maquette du niveau 14 comme référence, puis le rouge, puis
+les trois autres, qui recolorient le rouge sans toucher à sa forme — c'est ce
+qui garantit quatre bateaux de la même taille.
+
+**Bateau rouge → `art/bateau_0.png`**
 
 ```text
-[bloc de style] A small canal tugboat with a DEEP rounded hull, exact side profile facing right, isolated on a transparent background. Proportions: the whole boat (keel to top of the chimney) is about 1.4 times longer than it is tall. The waterline is at mid-height: the dark red antifouling part of the hull below the waterline is as tall as everything above it (colored hull, cabin and chimney together). Above the waterline: hull painted bright RED with a white stripe on the waterline, three round portholes, a cream wooden cabin with two blue windows, a black chimney with a red band, a small mast with a red pennant at the stern, a red-and-white life ring on the cabin. The keel touches the bottom edge of the image, the boat fills the width of the image. No water, no shadow, no glow, no text.
+2D casual mobile game asset, hand-painted look with soft cel shading, warm sunny afternoon light from the top-left, clean readable shapes, bright friendly palette, same art style as the reference image (a canal lock puzzle game seen in side cross-section). A small canal tugboat with a DEEP rounded hull, exact side profile facing right, isolated on a transparent background. Proportions: the whole boat (keel to top of the chimney) is about 1.4 times longer than it is tall. The waterline is at mid-height: the dark red-brown antifouling part of the hull below the waterline is as tall as everything above it (colored hull, cabin and chimney together). Above the waterline: hull painted bright red with a white stripe on the waterline, three round portholes, a cream wooden cabin with two blue windows, a black chimney with a red band, a small mast with a red pennant at the stern, a red-and-white life ring on the cabin. The keel touches the bottom edge of the image, the boat fills the width of the image. No water, no shadow, no glow, no text.
 ```
 
-Pour les autres, remplacer RED / red par YELLOW / yellow, puis BLUE / blue
-(une péniche plus longue et plus basse pour le bleu : « a long low canal
-barge » au lieu de « a small canal tugboat », avec des caisses en bois sur le
-pont).
+**Bateau jaune → `art/bateau_1.png`** — dans la même conversation, après le rouge :
+
+```text
+Take the RED tugboat you made earlier in this conversation (not the last image) and recolor it into yellow. Keep EXACTLY the same boat: same shape, same deep hull, same size, same framing, same position in the image, same transparent background. Only change the colors: the hull above the waterline becomes bright yellow, the band on the chimney becomes yellow, the pennant on the mast becomes yellow, the life ring becomes yellow-and-white. The dark red-brown antifouling below the waterline, the white stripe, the cream cabin, the blue windows and the black chimney stay unchanged. No water, no shadow, no glow, no text.
+```
+
+**Bateau bleu → `art/bateau_2.png`** — dans la même conversation, après le rouge :
+
+```text
+Take the RED tugboat you made earlier in this conversation (not the last image) and recolor it into blue. Keep EXACTLY the same boat: same shape, same deep hull, same size, same framing, same position in the image, same transparent background. Only change the colors: the hull above the waterline becomes bright blue, the band on the chimney becomes blue, the pennant on the mast becomes blue, the life ring becomes blue-and-white. The dark red-brown antifouling below the waterline, the white stripe, the cream cabin, the blue windows and the black chimney stay unchanged. No water, no shadow, no glow, no text.
+```
+
+**Bateau vert → `art/bateau_3.png`** — dans la même conversation, après le rouge :
+
+```text
+Take the RED tugboat you made earlier in this conversation (not the last image) and recolor it into green. Keep EXACTLY the same boat: same shape, same deep hull, same size, same framing, same position in the image, same transparent background. Only change the colors: the hull above the waterline becomes bright green, the band on the chimney becomes green, the pennant on the mast becomes green, the life ring becomes green-and-white. The dark red-brown antifouling below the waterline, the white stripe, the cream cabin, the blue windows and the black chimney stay unchanged. No water, no shadow, no glow, no text.
+```
+
+Le niveau 1-2 n'a que deux bateaux (rouge et jaune) ; le bleu et le vert
+serviront dès qu'un niveau en aura trois ou quatre.
 
 ---
 
