@@ -246,6 +246,7 @@ func _mat(shader: Shader, params := {}) -> ShaderMaterial:
 	elif shader == SH_TERRE: Peint.habiller(m, "terre")
 	return m
 
+var _lointain: ShaderMaterial
 func _decor() -> void:
 	var W := X(largeur)
 	var yb := Y(berge)
@@ -258,18 +259,26 @@ func _decor() -> void:
 		# au-dessus de la berge il n'y a que ~200 px de ciel : on garde la bande
 		# de l'image où sont les collines (34 % à 72 % de sa hauteur, ASSETS.md),
 		# le reste serait du ciel vide en haut et de la prairie cachée en bas
-		var brut: Texture2D = load("res://art/fond.png")
-		var bande := AtlasTexture.new()
-		bande.atlas = brut
-		bande.region = Rect2(0, brut.get_height() * 0.34, brut.get_width(), brut.get_height() * 0.38)
-		tex = bande
+		# On part aussi après le moulin (17 % de la largeur) : selon la largeur
+		# du niveau, le haut de l'écran le coupait par le milieu, ce qui
+		# « paraît accidentel » (lot 8). Découpée une fois en image, la bande
+		# a ses UV de 0 à 1, dont la brume du shader « lointain » a besoin.
+		var brut: Image = (load("res://art/fond.png") as Texture2D).get_image()
+		if brut.is_compressed(): brut.decompress()
+		var w := brut.get_width()
+		var h := brut.get_height()
+		tex = ImageTexture.create_from_image(brut.get_region(Rect2i(int(w * 0.17), int(h * 0.34), int(w * 0.83), int(h * 0.38))))
 	elif ResourceLoader.exists("res://art/maquette.webp"):
 		var at := AtlasTexture.new()
 		at.atlas = load("res://art/maquette.webp")
 		at.region = Rect2(0, 104, 1050, 196)
 		tex = at
 	if tex:
-		var echelle := (W + 160.0) / tex.get_width()
+		_lointain = ShaderMaterial.new()
+		_lointain.shader = preload("res://shaders/lointain.gdshader")
+		# l'échelle de l'image entière, même sans le moulin : les copies en
+		# miroir comblent la largeur
+		var echelle := (W + 160.0) / (tex.get_width() / (0.83 if ResourceLoader.exists("res://art/fond.png") else 1.0))
 		var large := tex.get_width() * echelle
 		# au centre, puis une copie en miroir de chaque côté : un écran plus
 		# allongé que la coupe ne voit jamais le bord du panorama
@@ -280,6 +289,7 @@ func _decor() -> void:
 			s.flip_h = k != 0
 			s.scale = Vector2(echelle, echelle)
 			s.position = Vector2(-80 + k * large, yb + 60 - tex.get_height() * echelle)
+			s.material = _lointain
 			add_child(s)
 	# la prairie, qui descend derrière les bassins
 	var pts := PackedVector2Array()

@@ -177,6 +177,6 @@ voit avant qu'il soit trop tard.
 - [x] 5. Répétition terre / herbe (6 octobre 2026, sans nouvelle image)
 - [x] 6. Chaînes (6 octobre 2026 : maillons accrochés au vantail, qui montent avec lui)
 - [x] 7. Tuyaux (6 octobre 2026)
-- [ ] 8. Arrière-plan et moulin
+- [x] 8. Arrière-plan et moulin (6 octobre 2026 : le moulin est retiré du cadre, pas recadré)
 - [ ] 9. Interface
 - [ ] 10. Micro-vie et façade
