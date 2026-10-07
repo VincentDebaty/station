@@ -289,6 +289,29 @@ Same art style as the attached image. One clump of pond reeds and bulrushes: lon
 Same art style as the attached image. A single water lily pad seen from slightly above, flat and round with its little notch, glossy green with lighter veins, and one small white and pink lily flower on it, thin dark outline. Square image, centred, filling about 80% of the frame, isolated on a transparent background, no water, no shadow.
 ```
 
+### L'habillage du 3-1 (7 octobre 2026)
+
+D'après la seconde image cible de Vincent (le 3-1 retravaillé par ChatGPT) :
+la même scène, habillée. Trois images, à semer par le jeu.
+
+#### `art/buisson.png` — un buisson fleuri
+
+```text
+Same art style as the attached image. One small rounded bush with green leaves and a few small pink, white and yellow flowers, like the flowery bushes around the pond and the cottages in the reference. Square image, the bush centred and filling about 85% of the frame, isolated on a transparent background, no ground, no shadow.
+```
+
+#### `art/cloture.png` — un tronçon de clôture de bois
+
+```text
+Same art style as the attached image. A short section of a rustic wooden fence seen exactly from the front, like the fences in the reference: three posts and two horizontal rails, weathered brown wood, thin dark outline. Long horizontal image, ratio about 3:1, the fence filling the image, tileable left to right, isolated on a transparent background, no ground, no shadow.
+```
+
+#### `art/arbre.png` — un arbre, près du village
+
+```text
+Same art style as the attached image. One round leafy deciduous tree, like the tree next to the cottages in the reference: a short brown trunk and a full, round, bright green crown with soft shading. Portrait image, the tree centred and filling about 90% of the height, isolated on a transparent background, no ground, no shadow.
+```
+
 ### Plus tard, peut-être
 
 - `premier_plan.png` : un buisson flou et des marguerites au premier plan,
