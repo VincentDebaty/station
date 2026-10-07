@@ -1515,17 +1515,19 @@ func _bouee(k: int, x: float, sens: float) -> void:
 			s.texture = _recadrer(load("res://art/bouee.png"))
 			var h := 60.0
 			s.scale = Vector2.ONE * h / s.texture.get_height()
-			# la boule plonge d'un tiers : la flottaison juste sous la bande blanche
-			s.offset = Vector2(0, -s.texture.get_height() * (0.5 - 0.16))
+			# la boule plonge : la flottaison au bas de la bande blanche
+			s.offset = Vector2(0, -s.texture.get_height() * (0.5 - 0.2))
 			s.flip_h = sens < 0.0
 			var repeint = REPEINTS[k % REPEINTS.size()]
 			if repeint != null:
 				s.material = _mat(SH_TEINTE, {"actif": true, "teinte": repeint[0], "saturation": repeint[1], "luminosite": repeint[2]})
-			s.z_index = 3
-			add_child(s)
+			# dans le plan des bateaux, derrière l'eau : sa partie immergée se
+			# voit à travers elle, sous une ligne de flottaison (Vincent : posée
+			# par-dessus tout, elle flottait au-dessus de l'eau)
+			_flotte.add_child(s)
 			_bouees_img[k] = s
 		var sp: Sprite2D = _bouees_img[k]
-		sp.position = Vector2(x, y) + D * 0.5      # à mi-profondeur, comme les bateaux
+		sp.position = Vector2(x, y)      # le plan des bateaux est déjà à mi-profondeur
 		sp.rotation = rot
 		return
 	var t := Transform2D(rot, Vector2(1.25, 1.25), 0.0, Vector2(x, y))
