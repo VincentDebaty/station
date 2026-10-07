@@ -421,14 +421,35 @@ func _dessous_des_bassins() -> void:
 	var sol := _mat(SH_PIERRE, {"ombre": 0.82, "teinte": Color("#d6c7a8")})
 	var paroi := _mat(SH_PIERRE, {"ombre": 0.66, "teinte": Color("#d6c7a8")})
 	for i in B.size():
-		var xb := _x_bassin(i)
+		# le fond, d'un mur à l'autre (pas jusqu'au milieu des portes : sous
+		# la porte, c'est le bloc du seuil)
 		var y := Y(float(B[i]["fond"]))
-		_poly(PackedVector2Array([Vector2(xb.x, y), Vector2(xb.y, y), Vector2(xb.y + D.x, y + D.y), Vector2(xb.x + D.x, y + D.y)]), sol)
-		if i < B.size() - 1 and float(B[i + 1]["fond"]) > float(B[i]["fond"]):
-			var yh := Y(float(B[i + 1]["fond"]))
-			_poly(PackedVector2Array([Vector2(xb.y + D.x, yh + D.y), Vector2(xb.y, yh), Vector2(xb.y, y), Vector2(xb.y + D.x, y + D.y)]), paroi)
-		if i > 0 and float(B[i - 1]["fond"]) > float(B[i]["fond"]):
-			pass   # la contremarche d'un bassin de gauche plus haut nous tourne le dos
+		var f0 := X(gb[i][0]) - (DEBORD if i == 0 and B[i].get("fixe", false) else 0.0)
+		var f1 := X(gb[i][1]) + (DEBORD if i == B.size() - 1 and B[i].get("fixe", false) else 0.0)
+		_poly(PackedVector2Array([Vector2(f0, y), Vector2(f1, y), Vector2(f1 + D.x, y + D.y), Vector2(f0 + D.x, y + D.y)]), sol)
+	# Le bloc de maçonnerie entre deux bassins, en volume (Vincent, 7 octobre
+	# 2026 : sous la porte de droite du 1-2, « le mur qui relie les deux
+	# bassins n'a pas de volume, la porte flotte en l'air ») : son dessus, le
+	# seuil où la porte se pose, éclairé ; et sa face gauche, dans l'ombre,
+	# quand il domine le bassin de gauche. Sa face droite nous tourne le dos.
+	var dessus := _mat(SH_PIERRE, {"ombre": 0.98, "teinte": Color("#e3d4b4")})
+	var face := _mat(SH_PIERRE, {"ombre": 0.55, "teinte": Color("#d6c7a8")})
+	for i in N["liaisons"].size():
+		var l: Dictionary = N["liaisons"][i]
+		var haut: float
+		match String(l["type"]):
+			"porte": haut = float(l["seuil"])
+			"libre": haut = maxf(float(B[i]["fond"]), float(B[i + 1]["fond"]))
+			_: haut = float(l.get("crete", 0.0))
+		var a := X(gl[i][0])
+		var b := X(gl[i][1])
+		var yh := Y(haut)
+		_poly(PackedVector2Array([Vector2(a, yh), Vector2(b, yh), Vector2(b + D.x, yh + D.y), Vector2(a + D.x, yh + D.y)]), dessus)
+		var yg := Y(float(B[i]["fond"]))
+		if yg > yh + 0.5:
+			_poly(PackedVector2Array([Vector2(a + D.x, yh + D.y), Vector2(a, yh), Vector2(a, yg), Vector2(a + D.x, yg + D.y)]), face)
+		# l'arête du dessus, claire, côté coupe
+		_poly(_quad(a, yh - 1.0, b, yh + 1.5), null, PackedColorArray([Color(1, 0.97, 0.88, 0.45)]))
 	var n := B.size()
 	if not B[n - 1].get("fixe", false):
 		var xb := _x_bassin(n - 1)
