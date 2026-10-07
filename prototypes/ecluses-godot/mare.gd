@@ -52,9 +52,17 @@ func _contour(s: float, dy := 0.0, n := 40) -> PackedVector2Array:
 		pts.append(_ovale(t, s * bosse, dy))
 	return pts
 
+# 0 à sec, 1 pleine jusqu'au pré
+func plein() -> float:
+	return clampf((canal.vue_niv[i] - fond) / maxf(rive - fond, 0.01), 0.0, 1.0)
+
+# Le bord gauche de l'eau, côté rigole : deux points, à la hauteur de l'eau.
+func bord_eau(ecart: float) -> PackedVector2Array:
+	var s := 0.92 * sqrt(plein())
+	return PackedVector2Array([_ovale(PI - ecart, s), _ovale(PI + ecart, s)])
+
 func _draw() -> void:
-	var niv: float = canal.vue_niv[i]
-	var f := clampf((niv - fond) / maxf(rive - fond, 0.01), 0.0, 1.0)
+	var f := plein()
 	# la rive d'herbe, puis la cuvette de boue
 	draw_colored_polygon(_contour(1.08), Color("#7fb04a"))
 	draw_colored_polygon(_contour(1.0), Color("#6b4e2c"))
@@ -62,8 +70,10 @@ func _draw() -> void:
 	# les roseaux du fond, plantés sur la rive arrière
 	_roseaux([2.3, 2.75, 1.85], 1.0)
 	# l'eau : elle baisse un peu et rétrécit dans sa cuvette
-	if f > 0.02:
-		var s := 0.32 + 0.6 * f
+	if f > 0.005:
+		# elle rétrécit jusqu'à rien, sans palier (Vincent : diminuer jusqu'au
+		# bout, au plus fin possible)
+		var s := 0.92 * sqrt(f)
 		# elle rétrécit sans descendre : décalée vers le bas, elle sortait de
 		# sa cuvette et passait devant la terre de la coupe (Vincent)
 		var dy := 0.0

@@ -114,10 +114,17 @@ func _draw() -> void:
 		draw_colored_polygon(PackedVector2Array([_pt(0, -1, yb), _pt(1, -1, yb), _pt(1, 1, yb), _pt(0, 1, yb)]), Color("#5e3a1c"))
 		# l'eau de la mare qui la descend
 		var niv_mare: float = canal.vue_niv[i + 1]
-		if niv_mare > vue + 0.02:
+		var mare: Mare = canal.mares.get(i + 1)
+		if niv_mare > vue + 0.02 and (mare == null or mare.plein() > 0.005):
 			var h := minf((niv_mare - vue) * canal.UY * ECHELLE, prof)
 			var e := PackedVector2Array([_pt(0, -1, yb - h), _pt(1, -1, yb - h), _pt(1, 1, yb - h), _pt(0, 1, yb - h)])
 			draw_colored_polygon(e, Color(0.36, 0.7, 0.88, 0.92))
+			# l'eau qui relie la mare à la rigole, jusqu'au bord de son eau
+			# (sans elle, une cassure séparait l'étang de la cascade)
+			if mare:
+				var bd := mare.bord_eau(0.18)
+				var lien := PackedVector2Array([_pt(1, -1, yb - h), bd[1], bd[0], _pt(1, 1, yb - h)])
+				draw_colored_polygon(lien, Color(0.36, 0.7, 0.88, 0.92))
 			for k in 5:
 				var f := fmod(_t * 0.9 + k / 5.0, 1.0)
 				var q := _pt(1.0 - f, 0.0, yb - h)

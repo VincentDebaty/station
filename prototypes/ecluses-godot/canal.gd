@@ -76,6 +76,7 @@ var _flotte: Node2D
 var hausses := {}     # liaison -> Hausse, ses planches et ses poteaux
 var rigoles := {}     # liaison -> Rigole, la berge de terre que l'on creuse
 var mares := {}       # bassin -> Mare, la cuvette naturelle sur le pré
+var debordements := {} # liaison -> vrai : une levée que l'eau peut franchir
 var jets := {}        # liaison -> Jet, l'eau sous une porte simple entrouverte
 var bateaux := []     # un Bateau par bateau du niveau
 var positions := []   # bassin de chaque bateau, tel qu'affiché
@@ -244,6 +245,17 @@ func construire(niveau: Dictionary, e: Dictionary) -> void:
 			add_child(jt)
 			move_child(jt, _flotte.get_index())
 			jets[i] = jt
+	# le débordement d'une levée de terre : quand le bief passe sa crête,
+	# l'eau la franchit en nappe et coule dans le village (Vincent : « il faut
+	# voir l'eau couler dans celui-ci »)
+	for i in N["liaisons"].size():
+		if N["liaisons"][i]["type"] == "mur" and _terrestre(i):
+			var jt := Jet.new()
+			jt.profondeur = D
+			add_child(jt)
+			move_child(jt, _flotte.get_index())
+			jets[i] = jt
+			debordements[i] = true
 	# les hausses : leurs planches dans la couche des vantaux (vues à travers
 	# l'eau), leurs poteaux devant et au fond
 	for i in N["liaisons"].size():
@@ -1410,6 +1422,7 @@ func _avancer_ecoulement(dt: float) -> void:
 	for i in _ecou["flux"].size():
 		if aqueducs.has(i): _aqueduc(i, _ecou["flux"][i], dt)
 		elif rigoles.has(i): _jet_rigole(i, _ecou["flux"][i], dt)
+		elif debordements.has(i): _jet_mur(i, _ecou["flux"][i], dt)
 		elif jets.has(i): _jet(i, _ecou["flux"][i], dt)
 	if p >= 1.0:
 		_ecou = {}
@@ -1530,6 +1543,40 @@ func _jet_rigole(i: int, flux: float, dt: float) -> void:
 	eaux[l].remous = maxf(eaux[l].remous, jt.force * 0.5)
 	if randf() < 0.5:
 		eaux[l].impulsion(jt.chute().x, randf_range(-0.5, 1.0) * jt.force * Reglages.v("bouillon") * 2.0, 20.0)
+
+# L'eau qui franchit une levée : une nappe sur toute la largeur, de la crête
+# jusqu'au pré d'en bas.
+func _jet_mur(i: int, flux: float, dt: float) -> void:
+	var jt: Jet = jets[i]
+	if absf(flux) <= 0.01:
+		jt.force = 0.0
+		return
+	var sens := 1.0 if flux > 0 else -1.0
+	var h := i if flux > 0 else i + 1
+	var l := i + 1 if flux > 0 else i
+	var crete := float(N["liaisons"][i]["crete"])
+	# Les niveaux affichés glissent chacun de leur départ à leur arrivée : le
+	# village monte pendant que le bief, lui, n'a pas encore atteint la crête.
+	# La nappe suit donc l'eau qui passera (l'arrivée du bief au-dessus de la
+	# crête) tant que le village n'a pas fini de monter.
+	var dessus := maxf(float(_ecou["apres"][h]) - crete, maxf(vue_niv[h] - crete, 0.0))
+	var reste: float = float(_ecou["apres"][l]) - vue_niv[l]
+	if dessus < 0.005 or reste < 0.003:
+		jt.force = 0.0
+		return
+	# il en faut peu pour inonder un village : la nappe reste bien visible
+	# même pour quelques centimètres d'eau (6 px et demi-force au moins)
+	jt.force = clampf(maxf(sqrt(dessus / 0.6), 0.55), 0.0, 1.0)
+	jt.sens = sens
+	jt.fente = clampf(dessus * UY, 6.0, 18.0)
+	var bord_x := X(gl[i][1]) + 0.15 * U if sens > 0 else X(gl[i][0]) - 0.15 * U
+	jt.depart_x = X(gl[i][1]) if sens < 0 else X(gl[i][0])
+	jt.origine = Vector2(bord_x, Y(crete) - jt.fente * 0.5)
+	jt.vantail_x = jt.depart_x
+	jt.y_seuil = 0.0
+	jt.haut_veine = 0.0
+	jt.surface_bas = minf(eaux[l].hauteur_a(bord_x + sens * 50.0), eaux[l].fond_y)
+	eaux[l].remous = maxf(eaux[l].remous, jt.force * 0.5)
 
 # La berge de terre sous le doigt (une rigole), ou -1.
 func rigole_sous(p: Vector2) -> int:
