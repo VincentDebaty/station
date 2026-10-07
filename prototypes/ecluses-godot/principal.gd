@@ -118,6 +118,10 @@ func _cadrer() -> void:
 # --- Le toucher et les coups ----------------------------------------------------------
 func _unhandled_input(ev: InputEvent) -> void:
 	if ev is InputEventMouseButton and ev.pressed and ev.button_index == MOUSE_BUTTON_LEFT:
+		var ir := canal.rigole_sous(get_global_mouse_position())
+		if ir >= 0:
+			jouer({"type": "creuser", "i": ir})
+			return
 		var hs: Dictionary = canal.hausse_sous(get_global_mouse_position())
 		if not hs.is_empty():
 			jouer({"type": hs["quoi"], "i": int(hs["i"])})
@@ -147,7 +151,13 @@ func jouer(a: Dictionary) -> void:
 	# passer l'eau par son aqueduc, porte close), et quand les deux eaux sont
 	# au même niveau la porte se lève en grand. Fermer : elle redescend
 	# d'abord, puis la roue se referme.
-	if a["type"] == "hausser" or a["type"] == "abaisser":
+	if a["type"] == "creuser" and canal.rigoles.has(int(a["i"])):
+		# un coup de pelle : l'entaille se creuse, des mottes volent, puis
+		# l'eau file
+		var rg: Rigole = canal.rigoles[int(a["i"])]
+		rg.regler(etat["crete"][int(a["i"])])
+		while not rg.arrive(): await get_tree().process_frame
+	elif a["type"] == "hausser" or a["type"] == "abaisser":
 		# la planche glisse dans ses rainures, puis l'eau passe par-dessus
 		var h: Hausse = canal.hausses[int(a["i"])]
 		h.regler(etat["crete"][int(a["i"])])
@@ -562,7 +572,7 @@ func _jouable(n: Dictionary) -> bool:
 	for b in n["bassins"]:
 		if not (b["type"] in ["bief", "sas", "reservoir", "village"]): return false
 	for l in n["liaisons"]:
-		if not (l["type"] in ["porte", "libre", "hausse", "mur"]): return false
+		if not (l["type"] in ["porte", "libre", "hausse", "mur", "digue"]): return false
 	return true
 
 # Le niveau d'après, s'il est jouable.

@@ -74,6 +74,7 @@ var portes := {}      # liaison -> Porte
 var aqueducs := {}    # liaison -> Aqueduc, le conduit par où passe l'eau d'une porte à vanne
 var _flotte: Node2D
 var hausses := {}     # liaison -> Hausse, ses planches et ses poteaux
+var rigoles := {}     # liaison -> Rigole, la berge de terre que l'on creuse
 var jets := {}        # liaison -> Jet, l'eau sous une porte simple entrouverte
 var bateaux := []     # un Bateau par bateau du niveau
 var positions := []   # bassin de chaque bateau, tel qu'affiché
@@ -218,6 +219,19 @@ func construire(niveau: Dictionary, e: Dictionary) -> void:
 				SH_PIERRE, SH_BOIS, e["vanne"][i] if l.get("vanne", false) else e["ouvert"][i], _vantail_leve(e, i), _bas_ouvert(i))
 			add_child(po)
 			portes[i] = po
+	# les rigoles : chaque digue est une berge de terre où l'on creuse
+	for i in N["liaisons"].size():
+		if N["liaisons"][i]["type"] == "digue":
+			var rg := Rigole.new()
+			rg.preparer(self, i, e["crete"][i])
+			add_child(rg)
+			rigoles[i] = rg
+			var jt := Jet.new()
+			jt.profondeur = D * 0.3          # un filet étroit, au milieu de la berge
+			jt.position = D * 0.35
+			add_child(jt)
+			move_child(jt, _flotte.get_index())
+			jets[i] = jt
 	# les hausses : leurs planches dans la couche des vantaux (vues à travers
 	# l'eau), leurs poteaux devant et au fond
 	for i in N["liaisons"].size():
@@ -396,6 +410,8 @@ func _murs_du_fond() -> void:
 	var fond_pierre := _mat(SH_PIERRE, {"ombre": 0.74, "teinte": Color("#d6c7a8")})
 	# derrière une porte, le mur est dans l'ombre du portique : plus sombre
 	var fond_porte := _mat(SH_PIERRE, {"ombre": 0.5, "teinte": Color("#d6c7a8")})
+	var terre_fond := _mat(SH_TERRE, {"sol_y": Y(0.0)})
+	var herbe_fond := _mat(SH_HERBE, {"y_haut": Y(berge), "y_bas": Y(0.0)})
 	if D != Vector2.ZERO:
 		_cible = Node2D.new()
 		_cible.name = "PlanDuFond"
@@ -419,6 +435,15 @@ func _murs_du_fond() -> void:
 			# un bief a des quais de pierre presque jusqu'à la berge : la prairie
 			# ne se voit qu'en haut, comme une pente qui s'éloigne
 			sommet = maxf(maxf(f + 2.5, berge - 1.6), float(b.get("niveau", f)) + 0.8)
+		if _naturel(i):
+			# derrière un pré, la prairie continue (rien à dessiner, le décor
+			# est là) ; derrière un étang, une berge de terre qui le tient,
+			# coiffée d'herbe
+			var haut_b := f + 0.9 if b["type"] == "village" else float(b.get("niveau", f)) + 0.6
+			sommets.append(haut_b)
+			_poly(_quad(mx0 - 8, Y(haut_b), mx1 + 8, Y(f)), terre_fond if b["type"] != "village" else herbe_fond)
+			_bande_herbe(mx0 - 10, mx1 + 10, Y(haut_b) + 2, 26.0)
+			continue
 		sommets.append(sommet)
 		_poly(_quad(mx0 - 8, Y(sommet), mx1 + 8, Y(f)), fond_pierre)
 		# les ombres de contact du mur : au pied, sur le radier, et dans les
@@ -445,12 +470,14 @@ func _murs_du_fond() -> void:
 	for i in N["liaisons"].size():
 		var l: Dictionary = N["liaisons"][i]
 		if D != Vector2.ZERO and l["type"] == "porte": continue
+		# une digue : la rigole dessine toute la berge, entaille comprise
+		if D != Vector2.ZERO and l["type"] == "digue": continue
 		var c := float(l.get("max", l.get("crete", maxf(float(B[i]["fond"]), float(B[i + 1]["fond"])))))
 		var bas := minf(float(B[i]["fond"]), float(B[i + 1]["fond"]))
 		# aussi haut que le plus bas des deux murs voisins : derrière un mur
 		# bas, on voyait une fente de prairie
 		var haut_fente := maxf(c + 0.2, minf(sommets[i], sommets[i + 1]))
-		_poly(_quad(X(gl[i][0]), Y(haut_fente), X(gl[i][1]), Y(bas)), fond_porte)
+		_poly(_quad(X(gl[i][0]), Y(haut_fente), X(gl[i][1]), Y(bas)), terre_fond if _terrestre(i) else fond_porte)
 	_cible = null
 
 # En oblique : ce qu'on voit à travers l'eau entre la coupe et le mur du
@@ -473,6 +500,11 @@ func _dessous_des_bassins() -> void:
 		# de mur, et un bateau échoué semblait flotter devant (Vincent).
 		var prof := D.length()
 		var fond_pts := PackedVector2Array([Vector2(f0, y), Vector2(f1, y), Vector2(f1 + D.x, y + D.y), Vector2(f0 + D.x, y + D.y)])
+		if _naturel(i):
+			# un pré (le village) ou un fond de vase (l'étang)
+			_poly(fond_pts, null, PackedColorArray([Color("#86b84f"), Color("#86b84f"), Color("#5f8f37"), Color("#5f8f37")]) if B[i]["type"] == "village"
+				else PackedColorArray([Color("#6e5130"), Color("#6e5130"), Color("#4f3920"), Color("#4f3920")]))
+			continue
 		_face(fond_pts, PackedVector2Array([Vector2(0, prof), Vector2(f1 - f0, prof), Vector2(f1 - f0, 0), Vector2(0, 0)]), Color(1.04, 1.0, 0.92), sol)
 		_poly(fond_pts, null, PackedColorArray([Color(0, 0, 0, 0), Color(0, 0, 0, 0), Color(0.08, 0.04, 0, 0.28), Color(0.08, 0.04, 0, 0.28)]))
 		# l'arête de devant, claire
@@ -496,6 +528,16 @@ func _dessous_des_bassins() -> void:
 		var b := X(gl[i][1])
 		var yh := Y(haut)
 		var prof := D.length()
+		if _terrestre(i):
+			# une levée de terre : le dessus en herbe, la face gauche en terre
+			# (une digue, c'est la rigole qui la dessine)
+			if l["type"] == "digue": continue
+			_poly(PackedVector2Array([Vector2(a, yh), Vector2(b, yh), Vector2(b + D.x, yh + D.y), Vector2(a + D.x, yh + D.y)]), null,
+				PackedColorArray([Color("#9ccc63"), Color("#9ccc63"), Color("#6f9a40"), Color("#6f9a40")]))
+			var yg2 := Y(float(B[i]["fond"]))
+			if yg2 > yh + 0.5:
+				_poly(PackedVector2Array([Vector2(a + D.x, yh + D.y), Vector2(a, yh), Vector2(a, yg2), Vector2(a + D.x, yg2 + D.y)]), _mat(SH_TERRE, {"sol_y": Y(0.0)}))
+			continue
 		# Chaque face porte la pierre dans SES coordonnées (les joints suivent la
 		# profondeur) : posée à l'échelle du monde, elle prolongeait les joints
 		# du mur du fond, et le bloc paraissait creux (Vincent).
@@ -629,6 +671,18 @@ func _maj_surfaces() -> void:
 		f.vertex_colors = _degrade_bande(bord.size(), Color(0.34, 0.76, 0.88, 0.96 * mince), Color(0.64, 0.88, 0.95, 0.96 * mince))
 		a.vertex_colors = _degrade_bande(bord.size(), Color(0.17, 0.6, 0.78, 0.78 * mince), Color(0.34, 0.76, 0.88, 0.78 * mince))
 
+# Un bassin NATUREL : pas de maçonnerie, de la terre et de l'herbe (Vincent,
+# 7 octobre 2026 : un village au fond d'un bassin de pierre vide, « c'est très
+# bizarre »). Le village est un pré, l'étang a des berges de terre.
+func _naturel(i: int) -> bool:
+	return String(N["bassins"][i]["type"]) in ["village", "reservoir", "champ"]
+
+# Une liaison de TERRE : une digue, ou un mur qui borde un bassin naturel (une
+# levée herbeuse).
+func _terrestre(g: int) -> bool:
+	var t := String(N["liaisons"][g]["type"])
+	return t == "digue" or (t == "mur" and (_naturel(g) or _naturel(g + 1)))
+
 # Le dessus du bloc de pierre au pied d'une porte (son seuil) ou d'une hausse
 # (son « min ») : sous lui, l'eau s'arrête contre sa face ; INF ailleurs.
 func _pied(g: int) -> float:
@@ -644,8 +698,22 @@ func _maisons(i: int, plan: Node2D) -> void:
 	var x0 := X(gb[i][0])
 	var x1 := X(gb[i][1])
 	var y := Y(float(N["bassins"][i]["fond"]))
+	var tex: Texture2D = null
+	if ResourceLoader.exists("res://art/maison.png"): tex = Images.reduire("res://art/maison.png", 300)
 	n.draw.connect(func():
 		var larg := (x1 - x0) / 2.0
+		if tex:
+			# l'image peinte de Vincent : deux maisons, la seconde retournée et
+			# un peu plus petite, posées dans le pré
+			for k in 2:
+				var w := larg * (1.05 if k == 0 else 0.88)
+				var h := w * tex.get_height() / tex.get_width()
+				var cx := x0 + larg * (k + 0.5) + (4.0 if k == 0 else -2.0)
+				var base := y - (1.0 if k == 0 else 7.0)
+				n.draw_set_transform(Vector2(cx, base), 0.0, Vector2(-1.0 if k == 1 else 1.0, 1.0))
+				n.draw_texture_rect(tex, Rect2(-w * 0.5, -h, w, h), false)
+			n.draw_set_transform(Vector2.ZERO)
+			return
 		for k in 2:
 			var cx := x0 + larg * (k + 0.5) + (6.0 if k == 0 else -4.0)
 			var w := larg * (0.78 if k == 0 else 0.66)
@@ -773,7 +841,11 @@ func _coupe_avant() -> void:
 		var xb := _x_bassin(i)
 		var x0 := minf(xb.x, X(gb[i][0]))
 		var x1 := maxf(xb.y, X(gb[i][1]))
-		# le radier du bassin, puis la terre dessous
+		# le radier du bassin, puis la terre dessous (un bassin naturel n'a
+		# que la terre)
+		if _naturel(i):
+			_poly(_quad(x0 - 2, Y(f), x1 + 2, tres_bas), terre)
+			continue
 		_poly(_quad(x0 - 2, Y(f), x1 + 2, Y(f - 0.32)), pierre)
 		_poly(_quad(x0 - 2, Y(f - 0.32), x1 + 2, tres_bas), terre)
 	for i in N["liaisons"].size():
@@ -782,17 +854,36 @@ func _coupe_avant() -> void:
 		if N["liaisons"][i]["type"] != "porte":
 			var c: float = float(N["liaisons"][i].get("crete", maxf(float(B[i]["fond"]), float(B[i + 1]["fond"]))))
 			if N["liaisons"][i]["type"] == "hausse": c = float(N["liaisons"][i]["min"])
-			_poly(_quad(X(gl[i][0]), Y(c), X(gl[i][1]), Y(bas - 0.32)), pierre)
+			if _terrestre(i):
+				# une levée de terre, un peu évasée en bas, coiffée d'herbe (la
+				# digue d'une rigole est dessinée par la rigole)
+				if N["liaisons"][i]["type"] != "digue":
+					_poly(PackedVector2Array([Vector2(X(gl[i][0]) - 0.15 * U, Y(bas)), Vector2(X(gl[i][0]) + 0.05 * U, Y(c)), Vector2(X(gl[i][1]) - 0.05 * U, Y(c)), Vector2(X(gl[i][1]) + 0.15 * U, Y(bas))]), terre)
+					_herbe(X(gl[i][0]), X(gl[i][1]), Y(c) + 3.0)
+			else:
+				_poly(_quad(X(gl[i][0]), Y(c), X(gl[i][1]), Y(bas - 0.32)), pierre)
 	# les berges, aux deux bouts : terre, parement de pierre côté eau, herbe
 	var g0 := X(gb[0][0])
 	var g1 := X(gb[B.size() - 1][1])
-	if not B[0].get("fixe", false):
+	if not B[0].get("fixe", false) and _naturel(0):
+		# un bassin naturel au bout : la plaine à son niveau, en herbe — le
+		# village est posé dans la campagne, pas au fond d'un trou (Vincent)
+		var yf0 := Y(float(B[0]["fond"]))
+		_poly(_quad(-LOIN, yf0, g0, tres_bas), terre)
+		_herbe(-LOIN, g0, yf0)
+	elif not B[0].get("fixe", false):
 		_poly(_quad(-LOIN, Y(berge), g0, tres_bas), terre)
 		_poly(_quad(g0 - 0.3 * U, Y(berge), g0, Y(float(B[0]["fond"]) - 0.32)), pierre)
 		if D != Vector2.ZERO: _dessus_de_mur(g0 - 0.3 * U, g0, Y(berge) + 4.0)
 		_herbe(-LOIN, g0, Y(berge))
 		_empattement(g0 - 0.3 * U, Y(float(B[0]["fond"]) - 0.32), -1.0, pierre)
-	if not B[B.size() - 1].get("fixe", false):
+	var dn := B.size() - 1
+	if not B[dn].get("fixe", false) and _naturel(dn):
+		# au bout, un étang : sa berge de terre monte jusqu'à la campagne
+		var yb1 := Y(maxf(float(B[dn].get("niveau", B[dn]["fond"])) + 0.6, float(B[dn]["fond"])))
+		_poly(PackedVector2Array([Vector2(g1, tres_bas), Vector2(g1, yb1), Vector2(g1 + 0.4 * U, yb1 - 6.0), Vector2(W + LOIN, yb1 - 6.0), Vector2(W + LOIN, tres_bas)]), terre)
+		_herbe(g1, W + LOIN, yb1 - 4.0)
+	elif not B[B.size() - 1].get("fixe", false):
 		_poly(_quad(g1, Y(berge), W + LOIN, tres_bas), terre)
 		_poly(_quad(g1, Y(berge), g1 + 0.3 * U, Y(float(B[B.size() - 1]["fond"]) - 0.32)), pierre)
 		if D != Vector2.ZERO: _dessus_de_mur(g1, g1 + 0.3 * U, Y(berge) + 4.0)
@@ -802,15 +893,15 @@ func _coupe_avant() -> void:
 	# des berges, parements), et des pousses vertes, comme sur la maquette
 	var tops := []      # [x0, x1, y] : le haut de chaque morceau de terre
 	for i in B.size():
-		tops.append([X(gb[i][0]) - 2, X(gb[i][1]) + 2, Y(float(B[i]["fond"]) - 0.32)])
+		tops.append([X(gb[i][0]) - 2, X(gb[i][1]) + 2, Y(float(B[i]["fond"]) - (0.0 if _naturel(i) else 0.32))])
 	for i in N["liaisons"].size():
 		tops.append([X(gl[i][0]), X(gl[i][1]), Y(minf(float(B[i]["fond"]), float(B[i + 1]["fond"])) - 0.32)])
 	if not B[0].get("fixe", false):
-		tops.append([-LOIN, g0 - 0.3 * U, Y(berge) + 6])
-		_ombre_cote(g0 - 0.3 * U, Y(berge) + 6, Y(float(B[0]["fond"]) - 0.32), -1.0)
+		tops.append([-LOIN, g0 - 0.3 * U, (Y(float(B[0]["fond"])) if _naturel(0) else Y(berge)) + 6])
+		if not _naturel(0): _ombre_cote(g0 - 0.3 * U, Y(berge) + 6, Y(float(B[0]["fond"]) - 0.32), -1.0)
 	if not B[B.size() - 1].get("fixe", false):
 		tops.append([g1 + 0.3 * U, W + LOIN, Y(berge) + 6])
-		_ombre_cote(g1 + 0.3 * U, Y(berge) + 6, Y(float(B[B.size() - 1]["fond"]) - 0.32), 1.0)
+		if not _naturel(B.size() - 1): _ombre_cote(g1 + 0.3 * U, Y(berge) + 6, Y(float(B[B.size() - 1]["fond"]) - 0.32), 1.0)
 	for t in tops:
 		_poly(_quad(t[0], t[2], t[1], t[2] + 26.0), null,
 			PackedColorArray([Color(0.12, 0.05, 0, 0.32), Color(0.12, 0.05, 0, 0.32), Color(0.12, 0.05, 0, 0), Color(0.12, 0.05, 0, 0)]))
@@ -1273,6 +1364,7 @@ func _avancer_ecoulement(dt: float) -> void:
 	for i in eaux.size(): eaux[i].remous = move_toward(eaux[i].remous, 0.0, dt * 0.8)
 	for i in _ecou["flux"].size():
 		if aqueducs.has(i): _aqueduc(i, _ecou["flux"][i], dt)
+		elif rigoles.has(i): _jet_rigole(i, _ecou["flux"][i], dt)
 		elif jets.has(i): _jet(i, _ecou["flux"][i], dt)
 	if p >= 1.0:
 		_ecou = {}
@@ -1360,6 +1452,43 @@ func _jet(i: int, flux: float, dt: float) -> void:
 	if randf() < 0.5:
 		recoit.impulsion(jt.chute().x + randf_range(-0.4, 0.4) * U, randf_range(-0.6, 1.2) * jt.force * bouillon * 2.0, 22.0)
 	eaux[h].impulsion(x - sens * 20.0, 0.25 * jt.force * dt * 6.0, 40.0)
+
+# L'eau qui file par la rigole : une lame qui sort de l'entaille, du côté
+# haut, et retombe dans le bassin d'en bas ; son épaisseur suit l'eau qui
+# reste au-dessus du fond de la rigole.
+func _jet_rigole(i: int, flux: float, dt: float) -> void:
+	var jt: Jet = jets[i]
+	var rg: Rigole = rigoles[i]
+	if absf(flux) <= 0.01:
+		jt.force = 0.0
+		return
+	var sens := 1.0 if flux > 0 else -1.0
+	var h := i if flux > 0 else i + 1
+	var l := i + 1 if flux > 0 else i
+	var crete := rg.vue
+	var tete: float = vue_niv[h] - maxf(vue_niv[l], crete)
+	jt.force = clampf(sqrt(maxf(tete, 0.0) / 1.5), 0.0, 1.0)
+	jt.sens = sens
+	jt.fente = minf(maxf(vue_niv[h] - crete, 0.0) * UY, 26.0)
+	if jt.fente < 1.0: jt.force = 0.0
+	var bord_x := X(gl[i][1]) if sens > 0 else X(gl[i][0])
+	jt.depart_x = X(gl[i][0] + gl[i][1]) * 0.5
+	# (en coordonnées de la coupe : le filet est déjà placé à mi-berge)
+	jt.origine = Vector2(bord_x, Y(crete) - jt.fente * 0.5)
+	jt.vantail_x = jt.depart_x
+	jt.y_seuil = Y(crete)
+	jt.haut_veine = Y(crete)
+	jt.surface_bas = eaux[l].hauteur_a(bord_x + sens * 60.0)
+	if jt.force <= 0.03: return
+	eaux[l].remous = maxf(eaux[l].remous, jt.force * 0.5)
+	if randf() < 0.5:
+		eaux[l].impulsion(jt.chute().x, randf_range(-0.5, 1.0) * jt.force * Reglages.v("bouillon") * 2.0, 20.0)
+
+# La berge de terre sous le doigt (une rigole), ou -1.
+func rigole_sous(p: Vector2) -> int:
+	for i in rigoles:
+		if rigoles[i].sous(p): return i
+	return -1
 
 # Les bateaux : un tour de déplacements après l'autre, comme le moteur les a rendus.
 func deplacer(dep: Array) -> void:

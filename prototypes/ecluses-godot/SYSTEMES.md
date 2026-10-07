@@ -40,7 +40,8 @@ Tout système nouveau se range dans l'une de ces familles :
 | 6 | Fleuve et crue | attendre un coup | le temps : l'eau arrive toute seule | **existe** (chap. 3) | — |
 | 7 | Mer | aucun | rien : une source et un puits sans fond | **existe** (chap. 3) | — |
 | 8 | Porte à vanne | vanne, puis porte | égaliser sans laisser passer, retenir un bateau | **écrite** (chap. 2, niveau 2-1, 7 octobre 2026) | moyen |
-| 9 | Hausses mobiles | monter ou baisser un cran | un seuil réglable, réversible | **écrite** (chap. 3, niveau 3-1, 7 octobre 2026) | faible |
+| 9 | Hausses mobiles | monter ou baisser un cran | un seuil réglable, réversible | **écartée** par Vincent le 7 octobre 2026 (« pratiquement la même chose qu'une porte ») ; la règle reste au moteur | faible |
+| 9 bis | Rigole | un coup de pelle dans une berge de terre | doser l'eau d'un étang, sans retour | **écrite** (chap. 3, niveau 3-1, 7 octobre 2026) : la digue du moteur, jouée en direct | faible |
 | 10 | Clapet | aucun | rien : l'eau ne passe que dans un sens | à écrire | faible |
 | 11 | Pompe | un coup = une unité qui monte | quand dépenser un coup pour remonter de l'eau | à écrire | faible |
 | 12 | Marée | aucun (la mer monte et descend) | le bon moment | à écrire | faible |

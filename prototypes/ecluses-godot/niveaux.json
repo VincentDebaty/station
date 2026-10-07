@@ -2,7 +2,7 @@
   "chapitres": [
     {"n": 1, "titre": "Les écluses", "decor": "campagne", "resume": "Ouvrir et fermer des portes. L'eau ne se crée pas : elle passe d'un bassin à l'autre."},
     {"n": 2, "titre": "Les vannes", "decor": "campagne", "resume": "Une porte à vanne a deux commandes : la vanne fait passer l'eau, la porte laisse passer les bateaux, et ne se lève qu'entre deux eaux égales."},
-    {"n": 3, "titre": "Les hausses", "decor": "campagne", "resume": "Des planches sur un mur : on en retire pour lâcher l'eau, on en remet pour la retenir. Lâcher juste ce qu'il faut."},
+    {"n": 3, "titre": "La rigole", "decor": "campagne", "resume": "Un coup de pelle dans la berge de l'étang, et l'eau file par la rigole. On ne rebouche pas : juste ce qu'il faut."},
     {"n": 4, "titre": "Les canaux", "decor": "collines", "resume": "Creuser les digues, puis lâcher l'eau et regarder où elle va."},
     {"n": 5, "titre": "Le fleuve", "decor": "estuaire", "resume": "L'eau arrive toute seule, à chaque coup. Il faut la conduire avant qu'elle déborde."}
   ],
@@ -118,23 +118,23 @@
     {
       "id": "3-1",
       "chapitre": 3,
-      "titre": "Les planches",
+      "titre": "La rigole",
       "mode": "pas",
       "par": 8,
-      "conseil": "Chaque planche retirée lâche l'eau du réservoir. Juste assez pour remettre le bateau à flot ; trop, et le village a les pieds dans l'eau.",
-      "requis": ["abaisser"],
+      "conseil": "Chaque coup de pelle creuse la rigole et lâche l'eau de l'étang. Juste assez pour remettre le bateau à flot ; trop, et le village a les pieds dans l'eau.",
+      "requis": ["creuser"],
       "bassins": [
         {"type": "village", "fond": 0, "largeur": 3, "nom": "village"},
         {"type": "bief", "fond": 0, "largeur": 6, "niveau": 1, "nom": "bief aval"},
         {"type": "sas", "fond": 0, "largeur": 2, "niveau": 1, "nom": "sas"},
         {"type": "bief", "fond": 3, "largeur": 6, "niveau": 3.6, "nom": "bief amont"},
-        {"type": "reservoir", "fond": 3, "largeur": 4, "niveau": 8, "nom": "réservoir"}
+        {"type": "reservoir", "fond": 3, "largeur": 4, "niveau": 8, "nom": "étang"}
       ],
       "liaisons": [
         {"type": "mur", "crete": 2},
         {"type": "porte", "seuil": 0, "crete": 4.5},
         {"type": "porte", "seuil": 3, "crete": 4.5},
-        {"type": "hausse", "crete": 8, "min": 3, "max": 8}
+        {"type": "digue", "crete": 8, "min": 3}
       ],
       "bateaux": [
         {"de": 1, "vers": 3, "tirant": 1},
