@@ -1128,11 +1128,18 @@ func _jet(i: int, flux: float, dt: float) -> void:
 	var h := i if flux > 0 else i + 1
 	var l := i + 1 if flux > 0 else i
 	var s := float(N["liaisons"][i]["seuil"])
+	# La force suit la hauteur d'eau qui pousse, dans l'absolu (Torricelli,
+	# pleine force à 1,5 unité). Rapportée à l'écart du DÉBUT du coup, elle
+	# valait 1 dès qu'un bassin recoulait alors que les deux étaient égaux au
+	# départ : une nappe pleine réapparaissait pour quelques gouttes (Vincent).
 	var tete: float = vue_niv[h] - maxf(vue_niv[l], s)
-	var tete0: float = maxf(_ecou["tetes"].get(i, 1.0), 0.05)
-	jt.force = clampf(sqrt(maxf(tete, 0.0) / tete0), 0.0, 1.0)
+	jt.force = clampf(sqrt(maxf(tete, 0.0) / 1.5), 0.0, 1.0)
 	jt.sens = sens
-	jt.fente = po.fente()
+	# L'épaisseur de la nappe : l'eau qui reste au-dessus du seuil en amont,
+	# jamais plus que la fente. Elle s'amincit à mesure que le bassin d'en haut
+	# se vide, jusqu'à rien quand il atteint le seuil (Vincent).
+	jt.fente = minf(po.fente(), maxf(vue_niv[h] - s, 0.0) * UY)
+	if jt.fente < 1.0: jt.force = 0.0
 	# la fente : sous le vantail (au milieu de la porte en oblique, contre sa
 	# face côté bas de profil)
 	# L'eau sort sous la porte, glisse sur le dessus du bloc du seuil, et tombe
@@ -1142,7 +1149,7 @@ func _jet(i: int, flux: float, dt: float) -> void:
 	var x := X(gl[i][0] + gl[i][1]) * 0.5 if D != Vector2.ZERO else (X(gl[i][1]) - 9.0 if sens > 0 else X(gl[i][0]) + 9.0)
 	var bord_x := X(gl[i][1]) if sens > 0 else X(gl[i][0])
 	jt.depart_x = x
-	jt.origine = Vector2(bord_x, po.y_seuil - maxf(jt.fente, 4.0) * 0.4)
+	jt.origine = Vector2(bord_x, po.y_seuil - jt.fente * 0.4)
 	jt.surface_bas = eaux[l].hauteur_a(x + sens * 60.0)
 	jt.fond_bas = eaux[l].fond_y
 	if jt.force <= 0.03: return

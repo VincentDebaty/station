@@ -108,7 +108,7 @@ func _lame() -> void:
 		t += 0.02
 	_point_chute = p
 	if pts.size() < 2: return
-	var ep := maxf(fente, 4.0) * (0.55 + 0.25 * force)
+	var ep := fente * (0.7 + 0.3 * force)
 	var D := profondeur
 	if D == Vector2.ZERO:
 		# de profil, pas de largeur à montrer : un simple ruban
