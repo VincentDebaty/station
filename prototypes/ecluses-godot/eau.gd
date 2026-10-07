@@ -56,6 +56,17 @@ func x_de(i: int) -> float:
 func _houle(x: float) -> float:
 	return Reglages.v("houle") * (1.5 * sin(x * 0.043 + _t * 1.55) + 0.9 * sin(x * 0.107 - _t * 2.25) + 0.5 * sin(x * 0.21 + _t * 3.1))
 
+# 1 dans une eau d'au moins 12 px, 0 dans un bassin vide : les vagues
+# meurent avec l'eau. Sans cela, un bassin vidé jusqu'à son fond (le bief
+# amont du 1-2, vidé jusqu'au seuil de sa porte) ondulait autour de zéro, et
+# un plan d'eau réapparaissait par instants (Vincent).
+func calme() -> float:
+	return clampf((fond_y - repos) / 12.0, 0.0, 1.0)
+
+# Vide au repos, vagues comprises ou non.
+func vide() -> bool:
+	return fond_y - repos < 1.5
+
 # La surface à l'abscisse x, en y monde.
 func hauteur_a(x: float) -> float:
 	if passage:
@@ -66,7 +77,7 @@ func hauteur_a(x: float) -> float:
 	var i := int(floor(f))
 	var j := mini(i + 1, _h.size() - 1)
 	var h := lerpf(_h[i], _h[j], f - float(i))
-	return minf(repos + h + _houle(x), fond_y)
+	return minf(repos + (h + _houle(x)) * calme(), fond_y)
 
 # Une poussée sur la surface, centrée en x, étalée sur « largeur » pixels.
 # Positive : la surface descend ; négative : elle monte.
@@ -118,7 +129,7 @@ func _construire() -> void:
 		haut_moyen += y
 	haut_moyen /= float(n)
 	var ep := fond_y - haut_moyen
-	if not visible_eau or ep < 1.5:
+	if not visible_eau or ep < 1.5 or (not passage and vide()):
 		return
 	var sommets := PackedVector2Array()
 	var uvs := PackedVector2Array()

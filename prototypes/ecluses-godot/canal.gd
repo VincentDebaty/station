@@ -559,7 +559,7 @@ func _maj_surfaces() -> void:
 			_raccorder(bord, _jonction(i - 1), true)
 		if passages.has(i) and passages[i].visible_eau and not bloc_d:
 			_raccorder(bord, _jonction(i), false)
-		var sec := w.fond_y - bord[0].y < 1.5
+		var sec := w.vide()
 		var f: Polygon2D = _bandes[i][0]
 		var a: Polygon2D = _bandes[i][1]
 		f.visible = not sec
