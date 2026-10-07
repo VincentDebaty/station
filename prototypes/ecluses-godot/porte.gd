@@ -47,6 +47,10 @@ var arriere: Node2D = null
 # L'eau du bassin de gauche, que le canal donne avant preparer : posée juste
 # devant le vantail, derrière le pilier de droite (voir canal.gd, « voiles »).
 var voile: Eau = null
+# La roue se touche-t-elle maintenant ? Pendant une manœuvre ou une fois la
+# partie finie, elle pâlit et s'éteint un peu (seconde analyse graphique : les
+# roues sont les commandes, il faut voir quand elles répondent).
+var actif := true
 # La projection oblique : le décalage du plan du fond (zéro : la vue de profil)
 # et la couche, avant l'eau, où poser le vantail.
 var oblique := Vector2.ZERO
@@ -301,6 +305,9 @@ func _cible() -> float:
 	return y_seuil - ENTREBAIL if _entrouvert else y_seuil
 
 func _process(dt: float) -> void:
+	if roue:
+		var cible := Color(1, 1, 1) if actif else Color(0.68, 0.64, 0.64, 0.85)
+		roue.modulate = roue.modulate.lerp(cible, minf(1.0, dt * 6.0))
 	if _rotation != 0.0:
 		var pas := signf(_rotation) * minf(absf(_rotation), dt * TAU * 2.6)
 		_rotation -= pas

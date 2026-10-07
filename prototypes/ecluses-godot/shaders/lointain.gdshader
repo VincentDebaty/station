@@ -4,11 +4,11 @@
 // en haut de l'image. Les éléments jouables ressortent sans devenir criards.
 shader_type canvas_item;
 
-uniform float desature = 0.18;
-uniform float contraste = 0.84;
+uniform float desature = 0.28;   // 0,18 puis 0,28 (seconde analyse : le décor attirait encore l'œil)
+uniform float contraste = 0.78;
 uniform vec3 brume : source_color = vec3(0.80, 0.89, 0.97);
-uniform float brume_haut = 0.42;    // force de la brume en haut de l'image
-uniform float brume_bas = 0.06;     // et en bas, sur la prairie
+uniform float brume_haut = 0.48;    // force de la brume en haut de l'image
+uniform float brume_bas = 0.12;     // et en bas, sur la prairie
 
 void fragment() {
 	vec4 t = texture(TEXTURE, UV);

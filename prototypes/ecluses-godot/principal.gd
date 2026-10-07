@@ -623,6 +623,8 @@ func _niveau_suivant() -> void:
 
 # --- La démo et les photos ------------------------------------------------------------
 func _process(dt: float) -> void:
+	if canal:
+		for p in canal.portes.values(): p.actif = not occupe and not fini
 	_images += 1
 	_secondes += dt
 	if _ips and Engine.get_process_frames() % 15 == 0:

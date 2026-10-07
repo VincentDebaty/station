@@ -153,6 +153,9 @@ func construire(niveau: Dictionary, e: Dictionary) -> void:
 		# couvrait la ligne d'eau qui monte en diagonale le long de la porte.
 		_surface_dessus = Node2D.new()
 		add_child(_surface_dessus)
+		_contacts = Node2D.new()
+		_contacts.draw.connect(_dessiner_contacts)
+		add_child(_contacts)
 	for i in n:
 		var w := Eau.new()
 		var xb := _x_bassin(i)
@@ -571,6 +574,7 @@ func _maj_surfaces() -> void:
 		if passages.has(i) and passages[i].visible_eau and not bloc_d:
 			_raccorder(bord, _jonction(i), false)
 		var sec := w.vide()
+		_maj_mouille(i, sec)
 		var f: Polygon2D = _bandes[i][0]
 		var a: Polygon2D = _bandes[i][1]
 		f.visible = not sec
@@ -620,6 +624,74 @@ func _raccorder(bord: PackedVector2Array, y: float, debut: bool) -> void:
 		if d < 36.0:
 			var f := 1.0 - d / 36.0
 			bord[k] = Vector2(bord[k].x, lerpf(bord[k].y, y, f * f * (3.0 - 2.0 * f)))
+
+# Un bassin VIDE garde la trace de l'eau (analyse graphique : vide, la grande
+# surface claire passait pour un quai) : son fond est sombre et mouillé, avec
+# deux ou trois flaques qui luisent. Le mur du fond porte déjà la ligne de
+# niveau (_vie_du_mur).
+var _mouilles := {}
+func _maj_mouille(i: int, sec: bool) -> void:
+	if not _mouilles.has(i):
+		var n := Node2D.new()
+		n.draw.connect(_dessiner_mouille.bind(i))
+		_surface_fond.add_child(n)
+		_mouilles[i] = n
+	var n: Node2D = _mouilles[i]
+	var etait: bool = n.visible
+	n.visible = sec
+	if sec and not etait: n.set_meta("t", _t)
+	if sec: n.queue_redraw()
+
+func _dessiner_mouille(i: int) -> void:
+	var n: Node2D = _mouilles[i]
+	var a := clampf((_t - float(n.get_meta("t", _t))) / 0.8, 0.0, 1.0)
+	var x0 := X(gb[i][0]) + 4.0
+	var x1 := X(gb[i][1]) - 4.0
+	var y: float = eaux[i].fond_y
+	n.draw_colored_polygon(PackedVector2Array([Vector2(x0, y), Vector2(x1, y), Vector2(x1 + D.x, y + D.y), Vector2(x0 + D.x, y + D.y)]),
+		Color(0.18, 0.13, 0.08, 0.32 * a))
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 991 * (i + 1)
+	for _j in 3:
+		var z := rng.randf_range(0.25, 0.75)
+		var c := Vector2(rng.randf_range(x0 + 30.0, x1 - 30.0), y) + D * z
+		var rx := rng.randf_range(18.0, 40.0)
+		var flaque := PackedVector2Array()
+		for j in 20:
+			var t := TAU * j / 20.0
+			flaque.append(c + Vector2(cos(t) * rx, sin(t) * rx * 0.28) * (1.0 + 0.1 * sin(t * 3.0 + c.x)))
+		n.draw_colored_polygon(flaque, Color(0.32, 0.62, 0.72, 0.55 * a))
+		n.draw_line(c + Vector2(-rx * 0.5, -1.5), c + Vector2(rx * 0.1, -2.5), Color(0.92, 1, 1, 0.55 * a), 1.5, true)
+
+# Le CONTACT de l'eau (analyse graphique : les bateaux semblaient posés sur
+# l'eau, et l'eau sur le décor). Autour de chaque coque et de chaque bouée, à
+# leur flottaison et à mi-profondeur, un cerne clair sur la surface vue d'en
+# haut, l'avant un peu plus marqué que l'arrière, qui respire doucement.
+var _contacts: Node2D
+func _dessiner_contacts() -> void:
+	if D == Vector2.ZERO: return
+	for k in bateaux.size():
+		var bt: Bateau = bateaux[k]
+		var x: float = bat_x[k]
+		var i := bassin_sous(x)
+		if eaux[i].vide(): continue
+		var y := minf(surface_a(x), eaux[i].fond_y)
+		if bt.position.y < y - 4.0: continue        # échoué : pas de cerne
+		_cerne(Vector2(x, y) + D * 0.5, bt.longueur * 0.56, absf(D.y) * 0.42, 1.0)
+	for k in _bouees_vues:
+		var p: Vector2 = _bouees_vues[k]
+		_cerne(p + D * 0.5, 17.0, absf(D.y) * 0.22, 0.7)
+
+func _cerne(c: Vector2, rx: float, ry: float, force: float) -> void:
+	var pts := PackedVector2Array()
+	for j in 33:
+		var a := TAU * j / 32.0
+		pts.append(c + Vector2(cos(a) * rx, sin(a) * ry))
+	var r := 0.85 + 0.15 * sin(_t * 2.4 + c.x * 0.05)
+	_contacts.draw_polyline(pts, Color(0.92, 1.0, 1.0, 0.42 * force * r), 2.0, true)
+	var pts2 := PackedVector2Array()
+	for p in pts: pts2.append(c + (p - c) * 1.18)
+	_contacts.draw_polyline(pts2, Color(0.92, 1.0, 1.0, 0.16 * force * r), 1.4, true)
 
 func _bande(bord: PackedVector2Array, z0: float, z1: float) -> PackedVector2Array:
 	var pts := PackedVector2Array()
@@ -1006,6 +1078,7 @@ func _process(dt: float) -> void:
 		aqueducs[i].niveau_d = Y(vue_niv[i + 1])
 	_poser_bateaux(dt)
 	_reperes.queue_redraw()
+	if _contacts: _contacts.queue_redraw()
 
 # L'eau devant le vantail : la SEULE qu'on voit dans l'ouverture d'une porte,
 # fermée comme ouverte. Porte fermée, au niveau du bassin de gauche ; porte
@@ -1336,6 +1409,12 @@ func _exclamation(c: Vector2, age: float) -> void:
 	var tour := PackedVector2Array()
 	var centre := c + Vector2(0, -h * 0.66)
 	for p in barre: tour.append(centre + (p - centre) * 1.32)
+	# une bulle crème cerclée de brun, comme les plaques de l'interface : seul
+	# sur le décor, le « ! » faisait pictogramme provisoire (analyse graphique)
+	var bulle := c + Vector2(0, -h * 0.5)
+	_reperes.draw_circle(bulle + Vector2(1.5, 2.5), h * 0.74, Color(0, 0, 0, 0.18))
+	_reperes.draw_circle(bulle, h * 0.74, Color("#5b3416"))
+	_reperes.draw_circle(bulle, h * 0.74 - 3.0, Color("#fff3dc"))
 	_reperes.draw_colored_polygon(tour, Color.WHITE)
 	_reperes.draw_circle(c + Vector2(0, -h * 0.1), w * 0.62, Color.WHITE)
 	_reperes.draw_colored_polygon(barre, Color("#e2332a"))
@@ -1359,6 +1438,7 @@ func _dessiner_reperes() -> void:
 		var b: Dictionary = N["bateaux"][k]
 		var v := int(b["vers"])
 		var arrive: bool = positions[k] == v
+		if arrive: _bouees_vues.erase(k)
 		var sp: Sprite2D = _bouees_img.get(k)
 		if sp: sp.visible = not arrive
 		if arrive: continue
@@ -1374,6 +1454,7 @@ func _dessiner_reperes() -> void:
 # repose sur le fond. art/bouee.png, si elle existe, remplace le dessin
 # (peinte en rouge, repeinte comme les bateaux).
 var _bouees_img := {}
+var _bouees_vues := {}     # bouée -> sa flottaison (pour le cerne d'eau)
 func _bouee(k: int, x: float, sens: float) -> void:
 	var v := int(N["bateaux"][k]["vers"])
 	var fond := Y(float(N["bassins"][v]["fond"]))
@@ -1381,6 +1462,8 @@ func _bouee(k: int, x: float, sens: float) -> void:
 	var pente := (surface_a(x + 10.0) - surface_a(x - 10.0)) / 20.0
 	var y := surf + 1.2 * sin(_t * 2.2 + k * 1.7)
 	var rot := clampf(pente, -0.3, 0.3) * 0.8 + 0.07 * sin(_t * 1.6 + k)
+	if surf < fond - 2.0: _bouees_vues[k] = Vector2(x, surf)
+	else: _bouees_vues.erase(k)
 	var c: Color = COULEURS[k % COULEURS.size()]
 	if _bouees_img.has(k) or ResourceLoader.exists("res://art/bouee.png"):
 		if not _bouees_img.has(k):
