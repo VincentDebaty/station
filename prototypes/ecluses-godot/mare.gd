@@ -19,6 +19,7 @@ var fond := 0.0          # en unités
 var rive := 0.0
 var _roseau: Texture2D
 var _nenuphar: Texture2D
+var _buisson: Texture2D
 var _t := 0.0
 
 func preparer(c: Canal, ai: int, arive: float) -> void:
@@ -31,6 +32,7 @@ func preparer(c: Canal, ai: int, arive: float) -> void:
 	rx = c.X(c.gb[ai][1] - c.gb[ai][0]) * 0.36
 	if ResourceLoader.exists("res://art/roseaux.png"): _roseau = Images.reduire("res://art/roseaux.png", 160)
 	if ResourceLoader.exists("res://art/nenuphar.png"): _nenuphar = Images.reduire("res://art/nenuphar.png", 120)
+	if ResourceLoader.exists("res://art/buisson.png"): _buisson = Images.reduire("res://art/buisson.png", 200)
 
 func _process(dt: float) -> void:
 	_t += dt
@@ -67,7 +69,13 @@ func _draw() -> void:
 	draw_colored_polygon(_contour(1.08), Color("#7fb04a"))
 	draw_colored_polygon(_contour(1.0), Color("#6b4e2c"))
 	draw_colored_polygon(_contour(0.92, 3.0), Color("#5a3f22"))
-	# les roseaux du fond, plantés sur la rive arrière
+	# des buissons fleuris sur la rive du fond, puis les roseaux
+	if _buisson:
+		for b in [[1.5, 30.0], [2.55, 26.0], [5.9, 22.0]]:
+			var p := _ovale(b[0], 1.12)
+			var h: float = b[1]
+			var w := h * _buisson.get_width() / _buisson.get_height()
+			draw_texture_rect(_buisson, Rect2(p.x - w * 0.5, p.y - h * 0.85, w, h), false)
 	_roseaux([2.3, 2.75, 1.85], 1.0)
 	# l'eau : elle baisse un peu et rétrécit dans sa cuvette
 	if f > 0.005:

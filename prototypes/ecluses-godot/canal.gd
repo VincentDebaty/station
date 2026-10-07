@@ -147,7 +147,9 @@ func construire(niveau: Dictionary, e: Dictionary) -> void:
 	add_child(flotte)
 	_flotte = flotte
 	for i in n:
-		if B[i]["type"] == "village": _maisons(i, flotte)
+		if B[i]["type"] == "village":
+			_habiller_village(i, flotte)
+			_maisons(i, flotte)
 	var vantaux: Node2D = null
 	if D != Vector2.ZERO:
 		_surface_avant = Node2D.new()
@@ -739,6 +741,45 @@ func _pied(g: int) -> float:
 	if l["type"] == "porte": return float(l["seuil"])
 	if l["type"] == "hausse": return float(l["min"])
 	return INF
+
+# L'habillage du village (seconde image cible de Vincent) : un arbre derrière
+# les maisons, une clôture au fond du pré, des buissons fleuris. Dans le plan
+# des bateaux, derrière l'eau : si le village est inondé, l'eau passe devant.
+func _habiller_village(i: int, plan: Node2D) -> void:
+	var x0 := X(gb[i][0])
+	var x1 := X(gb[i][1])
+	var y := Y(float(N["bassins"][i]["fond"]))
+	var o := -D * 0.5                # le plan des bateaux est à mi-profondeur
+	var cl := _sprite("res://art/cloture.png", 34.0)
+	if cl:
+		# la clôture, au fond du pré, répétée sur toute sa largeur et au-delà
+		var w := cl.texture.get_width() * cl.scale.x
+		var x := x0 - 3.0 * w
+		while x + w < x1:                 # jamais au-dessus du canal
+			var c := _sprite("res://art/cloture.png", 34.0)
+			c.position = Vector2(x + w * 0.5, y - 17.0) + o + D * 0.95
+			plan.add_child(c)
+			x += w * 0.98
+	var ar := _sprite("res://art/arbre.png", 210.0)
+	if ar:
+		ar.position = Vector2(x0 - 0.35 * U, y - 105.0) + o + D * 0.85
+		plan.add_child(ar)
+	for b in [[x0 - 0.05 * U, 0.25, 30.0], [x1 + 0.05 * U, 0.3, 26.0], [(x0 + x1) * 0.5, 0.9, 22.0]]:
+		var bu := _sprite("res://art/buisson.png", b[2])
+		if bu:
+			bu.position = Vector2(b[0], y - b[2] * 0.42) + o + D * b[1]
+			plan.add_child(bu)
+
+# Un sprite d'image de art/, à « hauteur » px, ou null.
+func _sprite(chemin: String, hauteur: float) -> Sprite2D:
+	if not ResourceLoader.exists(chemin): return null
+	if not _textures.has(chemin): _textures[chemin] = Images.reduire(chemin, 400)
+	var t: Texture2D = _textures[chemin]
+	var sp := Sprite2D.new()
+	sp.texture = t
+	sp.scale = Vector2.ONE * hauteur / t.get_height()
+	return sp
+var _textures := {}
 
 # Le VILLAGE à épargner : deux maisons au fond de son bassin, à mi-profondeur
 # comme les bateaux, derrière l'eau (si elle monte, on les voit à travers).
