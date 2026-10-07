@@ -190,3 +190,36 @@ juger :
   maintenant 4 fois sa texture, et le panorama passe par un shader ;
 - la bouée dessinée, en attendant `art/bouee.png` ;
 - le moulin retiré du panorama : à remettre autrement si Vincent le regrette.
+
+## La projection oblique — maquette (branche `ecluses-oblique`, 7 octobre 2026)
+
+Vincent : « on voit tout de profil, mais les écluses sont dans un faux angle
+de gauche, et visuellement c'est perturbant ». Une image ChatGPT en
+projection oblique a validé la direction. Une maquette jouable est sur la
+branche `ecluses-oblique`, pas sur `main`. `ECLUSES_PROFIL=1` rend l'ancienne
+vue, pour comparer.
+
+Ce que fait la maquette :
+- **Le plan du fond** est décalé de D = (-34, -30) px (vers le haut à gauche,
+  environ un quart de la hauteur d'un bassin) : murs, couronnement, herbe et
+  pilier arrière des portes.
+- **L'eau** de chaque bassin va jusqu'au milieu des portes voisines : le
+  vantail est en travers du canal. La surface est une bande vue d'en haut, en
+  deux moitiés : celle du fond passe derrière les bateaux, celle de devant
+  devant leur coque, transparente. Le fond de chaque bassin et la contremarche
+  se voient à travers l'eau.
+- **Les bateaux et les bouées** voguent à mi-profondeur (D/2).
+- **Chaque porte** : pilier avant dans la coupe, pilier arrière dans le plan
+  du fond, vantail peint posé en biais entre les deux (avant l'eau, donc vu à
+  travers elle), traverse en volume d'un pilier à l'autre, chaînes à
+  mi-chemin.
+- **Rendu seulement.** Le moteur ne change pas.
+
+Ce qui reste si Vincent valide :
+- la pancarte « Il manque de l'eau » et le face-à-face, à recaler sur D/2 ;
+- les places des bateaux dans le sas, peut-être à resserrer : le sas paraît
+  plus étroit avec le vantail au milieu de la porte ;
+- la roue, à poser sur le haut de la traverse en volume ;
+- les ombres de contact des portes (lot 1), à refaire pour le volume ;
+- tous les niveaux, pas seulement le 1-2 et le 1-4 ;
+- le coût sur l'iPhone (bandes de surface reconstruites à chaque image).

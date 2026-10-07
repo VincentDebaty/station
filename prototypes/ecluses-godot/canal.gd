@@ -35,6 +35,15 @@ const BAS := -1.6
 const LOIN := 2600.0   # le décor déborde : aucun bord vide autour de la coupe
 const COULEURS := [Color("#e5462f"), Color("#f2b705"), Color("#2b7be0"), Color("#2ea65a")]
 
+# LA PROJECTION OBLIQUE (branche ecluses-oblique, 7 octobre 2026). Vincent :
+# tout est vu de profil sauf les écluses, dans un « faux angle de gauche » —
+# perturbant. On voit maintenant toute la coupe un peu de la gauche et d'en
+# haut : le plan de la coupe reste un profil exact (les niveaux d'eau restent
+# horizontaux et se comparent), et la profondeur part en diagonale, vers le
+# haut et la gauche. D est le décalage du plan du fond ; les bateaux et les
+# bouées voguent à mi-profondeur (D/2). ECLUSES_PROFIL=1 rend la vue de profil.
+var D := Vector2(-34.0, -30.0)
+
 const SH_EAU := preload("res://shaders/eau.gdshader")
 const SH_PIERRE := preload("res://shaders/pierre.gdshader")
 const SH_TERRE := preload("res://shaders/terre.gdshader")
@@ -99,18 +108,32 @@ func construire(niveau: Dictionary, e: Dictionary) -> void:
 	vue_niv = e["niv"].duplicate()
 	vue_ouvert = e["ouvert"].duplicate()
 
+	if OS.get_environment("ECLUSES_PROFIL") != "": D = Vector2.ZERO
 	_decor()
 	_murs_du_fond()
 	# le plan des tours de gauche des portes : derrière les bateaux et l'eau
 	var arriere := Node2D.new()
 	arriere.name = "ToursDuFond"
 	add_child(arriere)
+	if D != Vector2.ZERO:
+		_dessous_des_bassins()
+		_surface_fond = Node2D.new()
+		add_child(_surface_fond)
 	var flotte := Node2D.new()
 	flotte.name = "Bateaux"
+	flotte.position = D * 0.5          # à mi-profondeur
 	add_child(flotte)
+	var vantaux: Node2D = null
+	if D != Vector2.ZERO:
+		_surface_avant = Node2D.new()
+		add_child(_surface_avant)
+		vantaux = Node2D.new()
+		vantaux.name = "Vantaux"
+		add_child(vantaux)
 	for i in n:
 		var w := Eau.new()
-		w.preparer(X(gb[i][0]), X(gb[i][1]), Y(float(B[i]["fond"])), Y(vue_niv[i]), SH_EAU)
+		var xb := _x_bassin(i)
+		w.preparer(xb.x, xb.y, Y(float(B[i]["fond"])), Y(vue_niv[i]), SH_EAU)
 		w.paroi_g = i == 0 or N["liaisons"][i - 1]["type"] != "porte"
 		w.paroi_d = i == n - 1 or N["liaisons"][i]["type"] != "porte"
 		add_child(w)
@@ -123,6 +146,11 @@ func construire(niveau: Dictionary, e: Dictionary) -> void:
 			p.preparer(X(gl[i][0]), X(gl[i][1]), Y(float(N["liaisons"][i]["seuil"])), 0.0, SH_EAU)
 			add_child(p)
 			passages[i] = p
+			if D != Vector2.ZERO:
+				# en oblique, l'eau des bassins va jusqu'au vantail : celle de
+				# l'ouverture ne sert plus qu'au calcul de la surface
+				p.visible = false
+				continue
 			# Porte FERMÉE, l'eau du bassin de gauche passe DEVANT le vantail,
 			# jusqu'au pilier de droite. Vincent, 6 octobre 2026 : « soyons
 			# logiques : il y a de l'eau des deux côtés, la porte devrait être
@@ -147,6 +175,8 @@ func construire(niveau: Dictionary, e: Dictionary) -> void:
 			var po := Porte.new()
 			po.arriere = arriere
 			po.voile = voiles.get(i)
+			po.oblique = D
+			po.couche_vantail = vantaux
 			var bas_radier := Y(minf(float(B[i]["fond"]), float(B[i + 1]["fond"])) - 0.32)
 			# trois hauteurs de portique, pour ne pas aligner trois colonnes
 			# identiques (lot 4) ; plus bas seulement : le vantail levé garde
@@ -165,6 +195,7 @@ func construire(niveau: Dictionary, e: Dictionary) -> void:
 		add_child(aq)
 		aqueducs[i] = aq
 	_reperes = Node2D.new()
+	_reperes.position = D * 0.5        # les bouées voguent avec les bateaux
 	_reperes.z_index = 3
 	_reperes.draw.connect(_dessiner_reperes)
 	add_child(_reperes)
@@ -224,6 +255,12 @@ func _reglages_bateaux() -> Dictionary:
 	var d = JSON.parse_string(FileAccess.get_file_as_string("res://art/bateaux.json"))
 	return d if d is Dictionary else {}
 
+# Le plan où ajouter ce qu'on dessine (le plan du fond, en oblique) ; sinon
+# la coupe elle-même.
+var _cible: Node2D = null
+func _ajouter(n: Node) -> void:
+	(_cible if _cible else self).add_child(n)
+
 func _poly(points: PackedVector2Array, mat: Material = null, couleurs := PackedColorArray()) -> Polygon2D:
 	var p := Polygon2D.new()
 	p.polygon = points
@@ -232,7 +269,7 @@ func _poly(points: PackedVector2Array, mat: Material = null, couleurs := PackedC
 	# couleur passeraient en blanc)
 	if couleurs.size() == 1: p.color = couleurs[0]
 	elif not couleurs.is_empty(): p.vertex_colors = couleurs
-	add_child(p)
+	_ajouter(p)
 	return p
 
 func _quad(x0: float, y0: float, x1: float, y1: float) -> PackedVector2Array:
@@ -306,9 +343,17 @@ func _murs_du_fond() -> void:
 	var fond_pierre := _mat(SH_PIERRE, {"ombre": 0.74, "teinte": Color("#d6c7a8")})
 	# derrière une porte, le mur est dans l'ombre du portique : plus sombre
 	var fond_porte := _mat(SH_PIERRE, {"ombre": 0.5, "teinte": Color("#d6c7a8")})
+	if D != Vector2.ZERO:
+		_cible = Node2D.new()
+		_cible.name = "PlanDuFond"
+		_cible.position = D
+		add_child(_cible)
 	for i in B.size():
 		var b: Dictionary = B[i]
 		var f := float(b["fond"])
+		var xb := _x_bassin(i)
+		var mx0 := xb.x if D != Vector2.ZERO else X(gb[i][0])
+		var mx1 := xb.y if D != Vector2.ZERO else X(gb[i][1])
 		var sommet: float
 		if b["type"] == "sas":
 			sommet = 0.0
@@ -320,30 +365,101 @@ func _murs_du_fond() -> void:
 			# un bief a des quais de pierre presque jusqu'à la berge : la prairie
 			# ne se voit qu'en haut, comme une pente qui s'éloigne
 			sommet = maxf(maxf(f + 2.5, berge - 1.6), float(b.get("niveau", f)) + 0.8)
-		_poly(_quad(X(gb[i][0]) - 8, Y(sommet), X(gb[i][1]) + 8, Y(f)), fond_pierre)
+		_poly(_quad(mx0 - 8, Y(sommet), mx1 + 8, Y(f)), fond_pierre)
 		# les ombres de contact du mur : au pied, sur le radier, et dans les
 		# deux angles du bassin — on les voit à travers l'eau
 		var fonce := Color(0.06, 0.03, 0.0, 0.32)
 		var clair := Color(0.06, 0.03, 0.0, 0.0)
-		_poly(_quad(X(gb[i][0]), Y(f) - 22.0, X(gb[i][1]), Y(f)), null, PackedColorArray([clair, clair, fonce, fonce]))
-		_poly(_quad(X(gb[i][0]), Y(sommet), X(gb[i][0]) + 16.0, Y(f)), null, PackedColorArray([fonce, clair, clair, fonce]))
-		_poly(_quad(X(gb[i][1]) - 16.0, Y(sommet), X(gb[i][1]), Y(f)), null, PackedColorArray([clair, fonce, fonce, clair]))
+		_poly(_quad(mx0, Y(f) - 22.0, mx1, Y(f)), null, PackedColorArray([clair, clair, fonce, fonce]))
+		_poly(_quad(mx0, Y(sommet), mx0 + 16.0, Y(f)), null, PackedColorArray([fonce, clair, clair, fonce]))
+		_poly(_quad(mx1 - 16.0, Y(sommet), mx1, Y(f)), null, PackedColorArray([clair, fonce, fonce, clair]))
 		# l'ombre que le couronnement jette sur le haut du mur
-		_poly(_quad(X(gb[i][0]) - 8, Y(sommet), X(gb[i][1]) + 8, Y(sommet) + 16), null,
+		_poly(_quad(mx0 - 8, Y(sommet), mx1 + 8, Y(sommet) + 16), null,
 			PackedColorArray([Color(0, 0, 0, 0.22), Color(0, 0, 0, 0.22), Color(0, 0, 0, 0), Color(0, 0, 0, 0)]))
-		_vie_du_mur(i, X(gb[i][0]), X(gb[i][1]), Y(sommet), Y(f), float(b.get("niveau", f)))
-		_couronnement(X(gb[i][0]) - 8, X(gb[i][1]) + 8, Y(sommet), i)
+		_vie_du_mur(i, mx0, mx1, Y(sommet), Y(f), float(b.get("niveau", f)))
+		_couronnement(mx0 - 8, mx1 + 8, Y(sommet), i)
 		# le couronnement herbu du mur
-		if not _bande_herbe(X(gb[i][0]) - 10, X(gb[i][1]) + 10, Y(sommet) + 2, 24.0):
-			_poly(_quad(X(gb[i][0]) - 10, Y(sommet) - 7, X(gb[i][1]) + 10, Y(sommet) + 3), null,
+		if not _bande_herbe(mx0 - 10, mx1 + 10, Y(sommet) + 2, 24.0):
+			_poly(_quad(mx0 - 10, Y(sommet) - 7, mx1 + 10, Y(sommet) + 3), null,
 				PackedColorArray([Color("#9ccc63"), Color("#9ccc63"), Color("#6f9a40"), Color("#6f9a40")]))
 
+	_cible = null
+	if D != Vector2.ZERO: return      # en oblique, les murs vont d'une porte à l'autre
 	# derrière chaque porte aussi : sinon l'ouverture laisse voir la prairie
 	for i in N["liaisons"].size():
 		var l: Dictionary = N["liaisons"][i]
 		var c := float(l.get("crete", maxf(float(B[i]["fond"]), float(B[i + 1]["fond"]))))
 		var bas := minf(float(B[i]["fond"]), float(B[i + 1]["fond"]))
 		_poly(_quad(X(gl[i][0]), Y(c + 0.2), X(gl[i][1]), Y(bas)), fond_porte)
+
+# En oblique : ce qu'on voit à travers l'eau entre la coupe et le mur du
+# fond — le fond de chaque bassin (vu d'en haut), la contremarche quand le
+# bassin de droite est plus haut, et la paroi du bout du canal, à droite.
+func _dessous_des_bassins() -> void:
+	var B: Array = N["bassins"]
+	var sol := _mat(SH_PIERRE, {"ombre": 0.82, "teinte": Color("#d6c7a8")})
+	var paroi := _mat(SH_PIERRE, {"ombre": 0.66, "teinte": Color("#d6c7a8")})
+	for i in B.size():
+		var xb := _x_bassin(i)
+		var y := Y(float(B[i]["fond"]))
+		_poly(PackedVector2Array([Vector2(xb.x, y), Vector2(xb.y, y), Vector2(xb.y + D.x, y + D.y), Vector2(xb.x + D.x, y + D.y)]), sol)
+		if i < B.size() - 1 and float(B[i + 1]["fond"]) > float(B[i]["fond"]):
+			var yh := Y(float(B[i + 1]["fond"]))
+			_poly(PackedVector2Array([Vector2(xb.y + D.x, yh + D.y), Vector2(xb.y, yh), Vector2(xb.y, y), Vector2(xb.y + D.x, y + D.y)]), paroi)
+		if i > 0 and float(B[i - 1]["fond"]) > float(B[i]["fond"]):
+			pass   # la contremarche d'un bassin de gauche plus haut nous tourne le dos
+	var n := B.size()
+	if not B[n - 1].get("fixe", false):
+		var xb := _x_bassin(n - 1)
+		var y := Y(float(B[n - 1]["fond"]))
+		_poly(PackedVector2Array([Vector2(xb.y + D.x, Y(berge) + D.y), Vector2(xb.y, Y(berge)), Vector2(xb.y, y), Vector2(xb.y + D.x, y + D.y)]), paroi)
+
+# La surface de l'eau vue d'en haut, en oblique : une bande de la coupe au mur
+# du fond, en deux moitiés. Celle du fond passe derrière les bateaux ; celle de
+# devant passe devant leur coque, un peu transparente — sous leur flottaison,
+# la coque est dans l'eau. Elle suit la surface de la coupe, vagues comprises.
+var _surface_fond: Node2D
+var _surface_avant: Node2D
+var _bandes := []          # par bassin : [moitié du fond, moitié de devant]
+func _maj_surfaces() -> void:
+	if _surface_fond == null: return
+	if _bandes.is_empty():
+		for i in eaux.size():
+			var f := Polygon2D.new()
+			var a := Polygon2D.new()
+			_surface_fond.add_child(f)
+			_surface_avant.add_child(a)
+			_bandes.append([f, a])
+	for i in eaux.size():
+		var w: Eau = eaux[i]
+		var bord := PackedVector2Array()
+		var x := w.x0
+		while true:
+			bord.append(Vector2(x, minf(w.hauteur_a(x), w.fond_y)))
+			if x >= w.x1: break
+			x = minf(x + 12.0, w.x1)
+		var sec := w.fond_y - bord[0].y < 1.5
+		var f: Polygon2D = _bandes[i][0]
+		var a: Polygon2D = _bandes[i][1]
+		f.visible = not sec
+		a.visible = not sec
+		if sec: continue
+		f.polygon = _bande(bord, 0.5, 1.0)
+		a.polygon = _bande(bord, 0.0, 0.5)
+		f.vertex_colors = _degrade_bande(bord.size(), Color(0.34, 0.76, 0.88, 0.96), Color(0.64, 0.88, 0.95, 0.96))
+		a.vertex_colors = _degrade_bande(bord.size(), Color(0.17, 0.6, 0.78, 0.78), Color(0.34, 0.76, 0.88, 0.78))
+
+func _bande(bord: PackedVector2Array, z0: float, z1: float) -> PackedVector2Array:
+	var pts := PackedVector2Array()
+	for p in bord: pts.append(p + D * z0)
+	for k in range(bord.size() - 1, -1, -1): pts.append(bord[k] + D * z1)
+	return pts
+
+func _degrade_bande(n: int, devant: Color, fond: Color) -> PackedColorArray:
+	var c := PackedColorArray()
+	for _k in n: c.append(devant)
+	for _k in n: c.append(fond)
+	return c
 
 func _coupe_avant() -> void:
 	var B: Array = N["bassins"]
@@ -424,7 +540,7 @@ func _bande_herbe(x0: float, x1: float, y: float, hauteur: float) -> bool:
 		p.texture_repeat = CanvasItem.TEXTURE_REPEAT_ENABLED
 		p.polygon = _quad(x, haut_y, fin, haut_y + hauteur)
 		p.uv = PackedVector2Array([Vector2(u0, 0), Vector2(u1, 0), Vector2(u1, t.get_height()), Vector2(u0, t.get_height())])
-		add_child(p)
+		_ajouter(p)
 		x = fin
 	return true
 
@@ -582,7 +698,7 @@ func _vie_du_mur(i: int, x0: float, x1: float, y_haut: float, y_fond: float, niv
 	ligne.width = 1.6
 	ligne.default_color = Color(0.22, 0.16, 0.1, 0.45)
 	ligne.antialiased = true
-	add_child(ligne)
+	_ajouter(ligne)
 
 # Les pierres de couronnement en haut d'un mur (lot 4 de PLAN-RENDU.md : la
 # grande maçonnerie formait « un énorme rectangle ») : une rangée de pierres
@@ -622,6 +738,17 @@ func _herbe(x0: float, x1: float, y: float) -> void:
 		_poly(touffes, null, PackedColorArray([Color("#7fb04a"), Color("#b8e07a"), Color("#7fb04a")]))
 		x += 9.0 + 7.0 * absf(sin(x * 1.3))
 		k += 1
+
+# L'étendue d'un bassin dans le plan de la coupe : en oblique, l'eau va
+# jusqu'au milieu de chaque porte voisine (le vantail est en travers du canal,
+# au milieu de la porte) ; de profil, entre les murs.
+func _x_bassin(i: int) -> Vector2:
+	var a := X(gb[i][0])
+	var b := X(gb[i][1])
+	if D != Vector2.ZERO:
+		if i > 0 and N["liaisons"][i - 1]["type"] == "porte": a = X(gl[i - 1][0] + gl[i - 1][1]) * 0.5
+		if i < gl.size() and N["liaisons"][i]["type"] == "porte": b = X(gl[i][0] + gl[i][1]) * 0.5
+	return Vector2(a, b)
 
 # --- Où sont les choses ---------------------------------------------------------------
 func bassin_sous(x: float) -> int:
@@ -691,6 +818,7 @@ func _process(dt: float) -> void:
 		eaux[i].repos = Y(vue_niv[i])
 	for i in portes: portes[i].bas_ouvert_y = _bas_ouvert(i)
 	_maj_passages()
+	_maj_surfaces()
 	_maj_voiles()
 	for i in aqueducs:
 		aqueducs[i].ouverte = portes[i].vanne_ouverte
