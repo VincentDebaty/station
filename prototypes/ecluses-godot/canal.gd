@@ -80,6 +80,7 @@ var jets_pompe := {}  # pompe -> Jet, l'eau qui sort du bec
 var _pompage := -1    # la pompe en train de pomper, pendant l'écoulement
 var rigoles := {}     # liaison -> Rigole, la berge de terre que l'on creuse
 var mares := {}       # bassin -> Mare, la cuvette naturelle sur le pré
+var trop_pleins := {}  # porte -> Jet, l'eau qui passe par-dessus une porte fermée
 var debordements := {} # liaison -> vrai : une levée que l'eau peut franchir
 var levees_noyees := {} # liaison -> le nœud qui dessine l'eau sur sa crête (vue d'en haut)
 var coupes_noyees := {} # liaison -> l'Eau de sa coupe
@@ -314,6 +315,15 @@ func construire(niveau: Dictionary, e: Dictionary) -> void:
 		jt.z_index = 2
 		add_child(jt)
 		jets_pompe[i] = jt
+	# le trop-plein d'une porte fermée : quand l'amont atteint sa crête, l'eau
+	# passe par-dessus le vantail et tombe de l'autre côté (Vincent : on
+	# remplissait le bief amont sans voir que le surplus filait au sas)
+	for i in portes:
+		var tp := Jet.new()
+		tp.profondeur = D
+		tp.z_index = 2
+		add_child(tp)
+		trop_pleins[i] = tp
 	# les hausses : leurs planches dans la couche des vantaux (vues à travers
 	# l'eau), leurs poteaux devant et au fond
 	for i in N["liaisons"].size():
@@ -1544,7 +1554,10 @@ func _avancer_ecoulement(dt: float) -> void:
 	# Le bassin derrière une levée ne se remplit qu'une fois l'eau arrivée à sa
 	# crête : avant, tous les niveaux glissaient ensemble, et le village
 	# s'inondait avant que l'eau ne déborde (Vincent).
-	for g in debordements:
+	var par_dessus: Array = debordements.keys()
+	for g in portes:
+		if _porte_close(g): par_dessus.append(g)
+	for g in par_dessus:
 		var crete := float(N["liaisons"][g]["crete"])
 		for c in [[g + 1, g], [g, g + 1]]:          # [qui monte au-dessus de la crête, qui reçoit]
 			var h: int = c[0]
@@ -1553,7 +1566,8 @@ func _avancer_ecoulement(dt: float) -> void:
 			var ap_h: float = _ecou["apres"][h]
 			var ap_l: float = _ecou["apres"][l]
 			var av_l: float = _ecou["avant"][l]
-			if ap_l - av_l < 1e-4 or av_h >= crete or ap_h <= crete: continue
+			# (une porte fermée qui déborde : l'amont s'arrête AU ras de la crête)
+			if ap_l - av_l < 1e-4 or av_h >= crete - 1e-6 or ap_h < crete - 1e-6: continue
 			# l'instant où le niveau affiché de h passe la crête, ramené à 0,75
 			# au plus pour que l'inondation ait le temps de se voir
 			var p0 := 1.0 - sqrt(clampf((crete - ap_h) / (av_h - ap_h), 0.0, 1.0))
@@ -1582,7 +1596,11 @@ func _avancer_ecoulement(dt: float) -> void:
 		var film := 0.1 * minf(1.0, p * 8.0) * minf(1.0, (1.0 - p) * 5.0)
 		vue_niv[i] = maxf(vue_niv[i], fond + film)
 	for i in eaux.size(): eaux[i].remous = move_toward(eaux[i].remous, 0.0, dt * 0.8)
+	for i in trop_pleins: trop_pleins[i].force = 0.0
 	for i in _ecou["flux"].size():
+		if portes.has(i) and _porte_close(i) and absf(float(_ecou["flux"][i])) > 0.01 and _deborde(i):
+			_trop_plein(i, float(_ecou["flux"][i]))
+			continue
 		if aqueducs.has(i): _aqueduc(i, _ecou["flux"][i], dt)
 		elif rigoles.has(i): _jet_rigole(i, _ecou["flux"][i], dt)
 		elif debordements.has(i): _jet_mur(i, _ecou["flux"][i], dt)
@@ -1616,6 +1634,7 @@ func _avancer_ecoulement(dt: float) -> void:
 		_ecou = {}
 		for aq in aqueducs.values(): aq.couler(0.0, 1)
 		for jt in jets.values(): jt.force = 0.0
+		for jt in trop_pleins.values(): jt.force = 0.0
 		for rg in rigoles.values(): rg.debit = 0.0
 		ecoulement_fini.emit()
 
@@ -1734,6 +1753,40 @@ func _jet_rigole(i: int, flux: float, dt: float) -> void:
 	eaux[l].remous = maxf(eaux[l].remous, jt.force * 0.5)
 	if randf() < 0.5:
 		eaux[l].impulsion(jt.chute().x, randf_range(-0.5, 1.0) * jt.force * Reglages.v("bouillon") * 2.0, 20.0)
+
+# Une porte fermée : ni levée, ni entrouverte, ni vanne ouverte.
+func _porte_close(g: int) -> bool:
+	var po: Porte = portes[g]
+	return not po._leve and not po._entrouvert and not (po.a_vanne and po.vanne_ouverte)
+
+# L'écoulement de ce coup passe-t-il par-dessus la crête de la porte g ? (un
+# des deux côtés atteint la crête à l'arrivée)
+func _deborde(g: int) -> bool:
+	var crete := float(N["liaisons"][g]["crete"])
+	return maxf(float(_ecou["apres"][g]), float(_ecou["apres"][g + 1])) >= crete - 1e-6
+
+# La nappe qui passe par-dessus le vantail fermé : de la crête, sur toute la
+# largeur du canal, jusqu'à l'eau d'en bas ; tant que le bassin d'en bas monte.
+func _trop_plein(g: int, flux: float) -> void:
+	var jt: Jet = trop_pleins[g]
+	var sens := 1.0 if flux > 0 else -1.0
+	var l := g + 1 if flux > 0 else g
+	var reste: float = float(_ecou["apres"][l]) - vue_niv[l]
+	if reste < 0.003:
+		jt.force = 0.0
+		return
+	var crete := float(N["liaisons"][g]["crete"])
+	var xc := X(gl[g][0] + gl[g][1]) * 0.5
+	jt.force = 0.75
+	jt.sens = sens
+	jt.fente = 9.0
+	jt.depart_x = xc
+	jt.origine = Vector2(xc + sens * 10.0, Y(crete) - 4.0)
+	jt.vantail_x = xc
+	jt.y_seuil = 0.0
+	jt.haut_veine = 0.0
+	jt.surface_bas = minf(eaux[l].hauteur_a(xc + sens * 50.0), eaux[l].fond_y)
+	eaux[l].remous = maxf(eaux[l].remous, 0.4)
 
 # L'eau sur une levée noyée : la coupe (de la crête à la surface, au moins
 # 5 px pour qu'on la voie) et sa surface vue d'en haut, de bord à bord. Elle
