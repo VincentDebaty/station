@@ -439,7 +439,7 @@
       "par": 7,
       "conseil": "La grange brûle ! Fais monter le bief aval par-dessus la levée, jusqu'au trait bleu de la cour : l'eau éteindra le feu. Et les deux bateaux doivent quand même passer.",
       "bassins": [
-        {"type": "champ", "fond": 2, "largeur": 3, "cible": 0.5, "nom": "cour de la ferme"},
+        {"type": "champ", "fond": 2, "largeur": 3, "cible": 0.5, "feu": true, "nom": "cour de la ferme"},
         {"type": "bief", "fond": 0, "largeur": 4, "niveau": 1, "nom": "bief aval"},
         {"type": "sas", "fond": 0, "largeur": 2, "niveau": 2, "nom": "sas"},
         {"type": "bief", "fond": 3, "largeur": 6, "niveau": 5.5, "nom": "bief amont"}

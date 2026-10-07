@@ -207,7 +207,9 @@ func construire(niveau: Dictionary, e0: Dictionary) -> void:
 		if B[i]["type"] == "village":
 			_habiller_village(i, flotte)
 			_maisons(i, flotte)
-		if B[i]["type"] == "champ" and B[i].has("cible"):
+		# (seulement une cour en feu : les champs à irriguer des chapitres Canaux
+		# et Fleuve sont aussi des « champ » du moteur)
+		if B[i]["type"] == "champ" and B[i].get("feu", false):
 			_habiller_village(i, flotte)
 			var fe := Ferme.new()
 			var o := -D * 0.5
@@ -747,7 +749,7 @@ func _murs_du_fond() -> void:
 			sommets_fond.append(haut_b)
 			# la cour d'une ferme : rien au fond, le pré continue (une haie
 			# flottait au-dessus de la cour, 15-1) ; la clôture la borde
-			if b["type"] == "champ":
+			if b["type"] == "champ" and b.get("feu", false):
 				sommets[sommets.size() - 1] = f
 				continue
 			_poly(_quad(mx0 - 8, Y(haut_b), mx1 + 8, Y(f)), terre_fond if not (b["type"] in ["village", "champ"]) else herbe_fond)

@@ -106,6 +106,8 @@ func _draw() -> void:
 		draw_circle(v[0] + Vector2(-v[2] * 0.3, -v[2] * 0.3), v[2] * 0.55, Color(col.lightened(0.15), 0.5 * a))
 
 func _flamme(pied_f: Vector2, hauteur: float, largeur: float, k: int) -> void:
+	# trop petite, elle ne se triangule plus (et ne se verrait pas)
+	if hauteur < 3.0 or largeur < 1.5: return
 	for c in [[Color("#e2421b"), 1.0], [Color("#ff8a1f"), 0.72], [Color("#ffd447"), 0.45]]:
 		var s: float = c[1]
 		var pts := PackedVector2Array()
