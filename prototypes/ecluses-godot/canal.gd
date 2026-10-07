@@ -133,8 +133,8 @@ func construire(niveau: Dictionary, e: Dictionary) -> void:
 		vantaux = Node2D.new()
 		vantaux.name = "Vantaux"
 		add_child(vantaux)
-		# le bout de la surface du bassin de gauche, contre chaque vantail,
-		# redessiné PAR-DESSUS lui : l'eau de gauche est devant la porte (on la
+		# la bande de la surface du bassin de gauche où se tient chaque vantail,
+		# redessinée PAR-DESSUS lui : l'eau de gauche est devant la porte (on la
 		# voit de la gauche), celle de droite derrière. Sans lui, le vantail
 		# couvrait la ligne d'eau qui monte en diagonale le long de la porte.
 		_surface_dessus = Node2D.new()
@@ -536,6 +536,15 @@ func _maj_surfaces() -> void:
 			bord.append(Vector2(x, minf(w.hauteur_a(x), w.fond_y)))
 			if x >= x1: break
 			x = minf(x + 12.0, x1)
+		# Porte levée, les deux eaux n'en font qu'une : chaque bassin a pourtant
+		# ses propres vagues, et leurs bandes de surface se rejoignaient en
+		# marche d'escalier au milieu de la porte — le plan d'eau « se cassait
+		# en deux » au passage d'un bateau (Vincent). Les deux bandes se raccordent
+		# à la même hauteur, en fondu sur les 36 derniers pixels.
+		if i > 0 and passages.has(i - 1) and passages[i - 1].visible_eau and not bloc_g:
+			_raccorder(bord, _jonction(i - 1), true)
+		if passages.has(i) and passages[i].visible_eau and not bloc_d:
+			_raccorder(bord, _jonction(i), false)
 		var sec := w.fond_y - bord[0].y < 1.5
 		var f: Polygon2D = _bandes[i][0]
 		var a: Polygon2D = _bandes[i][1]
@@ -552,21 +561,34 @@ func _maj_surfaces() -> void:
 		# le bout contre le vantail de droite, s'il y a une porte et que l'eau
 		# va jusqu'à lui
 		var bout: Polygon2D = _bandes[i][4]
-		bout.visible = not sec and not bloc_d and i < gl.size() and N["liaisons"][i]["type"] == "porte"
+		# Seulement la mince bande où se tient le vantail (8 px), et seulement
+		# tant que son bas trempe : plus large, elle s'empilait sur la surface
+		# et la cassait en deux ; porte levée, elle passait sur les bateaux.
+		bout.visible = not sec and not bloc_d and i < gl.size() and N["liaisons"][i]["type"] == "porte" \
+			and portes.has(i) and portes[i].bas_y > bord[bord.size() - 1].y + 1.0
 		if bout.visible:
-			var morceau := PackedVector2Array()
-			for q in bord:
-				if q.x >= x1 - 48.0: morceau.append(q)
-			if morceau.size() < 2:
-				bout.visible = false
-			else:
-				bout.polygon = _bande(morceau, 0.0, 1.0)
-				bout.vertex_colors = _degrade_bande(morceau.size(), Color(0.2, 0.62, 0.8, 0.86), Color(0.6, 0.86, 0.94, 0.9))
+			var morceau := PackedVector2Array([Vector2(x1 - 8.0, minf(w.hauteur_a(x1 - 8.0), w.fond_y)), bord[bord.size() - 1]])
+			bout.polygon = _bande(morceau, 0.0, 1.0)
+			bout.vertex_colors = _degrade_bande(2, Color(0.17, 0.6, 0.78, 0.78), Color(0.64, 0.88, 0.95, 0.96))
 		if sec: continue
 		f.polygon = _bande(bord, 0.5, 1.0)
 		a.polygon = _bande(bord, 0.0, 0.5)
 		f.vertex_colors = _degrade_bande(bord.size(), Color(0.34, 0.76, 0.88, 0.96), Color(0.64, 0.88, 0.95, 0.96))
 		a.vertex_colors = _degrade_bande(bord.size(), Color(0.17, 0.6, 0.78, 0.78), Color(0.34, 0.76, 0.88, 0.78))
+
+# La hauteur commune de deux eaux au milieu d'une porte levée.
+func _jonction(g: int) -> float:
+	var xc := X(gl[g][0] + gl[g][1]) * 0.5
+	return (minf(eaux[g].hauteur_a(xc), eaux[g].fond_y) + minf(eaux[g + 1].hauteur_a(xc), eaux[g + 1].fond_y)) * 0.5
+
+func _raccorder(bord: PackedVector2Array, y: float, debut: bool) -> void:
+	var n := bord.size()
+	var bout := bord[0] if debut else bord[n - 1]
+	for k in n:
+		var d := absf(bord[k].x - bout.x)
+		if d < 36.0:
+			var f := 1.0 - d / 36.0
+			bord[k] = Vector2(bord[k].x, lerpf(bord[k].y, y, f * f * (3.0 - 2.0 * f)))
 
 func _bande(bord: PackedVector2Array, z0: float, z1: float) -> PackedVector2Array:
 	var pts := PackedVector2Array()
