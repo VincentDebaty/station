@@ -33,18 +33,30 @@ var _mottes := []
 # règle « debit » (0..1) pendant l'écoulement.
 var debit := 0.0
 var _pelle: Texture2D
+# LE CASTOR (chapitre 14, nuit du 7 au 8 octobre 2026) : sur une digue à
+# « castor », il rebouche la rigole d'une demi-unité à chaque coup où l'on
+# n'y creuse pas. On le voit assis sur la butte, derrière la rigole ; il
+# travaille (il plonge une branche dans l'entaille) à chaque fois qu'il la
+# remonte, et le lit de la rigole se couvre de branches.
+var castor := false
+var _travail := 0.0        # 1 → 0 : le castor pose une branche
+var _plus_creux := 0.0     # le lit le plus bas qu'on ait vu creusé (unités)
+var _castor_img: Texture2D  # art/castor.png, s'il existe (prompt dans ASSETS.md)
 var _coup := 0.0          # la pelle plonge (1 → 0)
 var _t := 0.0
 
 func preparer(c: Canal, ai: int, crete: float, rive: float, mare_x: float) -> void:
 	canal = c; i = ai
-	vue = crete; cible = crete; crete0 = crete
+	vue = crete; cible = crete; crete0 = float(c.N["liaisons"][ai].get("crete", crete))
+	_plus_creux = crete
+	castor = c.N["liaisons"][ai].has("castor")
 	y_rive = c.Y(rive)
 	var B: Array = c.N["bassins"]
 	y_bas = c.Y(minf(float(B[ai]["fond"]), float(B[ai + 1]["fond"])))
 	x_bord = c.X(c.gl[ai][0])
 	x_mare = mare_x
 	if ResourceLoader.exists("res://art/pelle.png"): _pelle = Images.reduire("res://art/pelle.png", 140)
+	if ResourceLoader.exists("res://art/castor.png"): _castor_img = Images.reduire("res://art/castor.png", 200)
 	z_index = 1
 	# La face de terre de la butte, dans la coupe, redessinée PAR-DESSUS la
 	# rigole : vue un peu d'en haut, une rigole creusée près de la coupe
@@ -65,6 +77,7 @@ func preparer(c: Canal, ai: int, crete: float, rive: float, mare_x: float) -> vo
 	add_child(bord)
 
 func regler(crete: float) -> void:
+	if crete > cible + 0.01: _travail = 1.0
 	if crete < cible - 0.01:
 		_coup = 1.0
 		for k in 10:
@@ -84,6 +97,8 @@ func sous(p: Vector2) -> bool:
 func _process(dt: float) -> void:
 	_t += dt
 	_coup = maxf(_coup - dt * 2.2, 0.0)
+	_travail = maxf(_travail - dt * 1.4, 0.0)
+	_plus_creux = minf(_plus_creux, vue)
 	if not is_equal_approx(vue, cible) and _coup < 0.5:
 		vue = move_toward(vue, cible, dt * 2.0)
 	for m in _mottes:
@@ -136,6 +151,16 @@ func _draw() -> void:
 				var q := _pt(1.0 - f, 0.0, yb - h)
 				var q2 := _pt(maxf(1.0 - f - 0.06, 0.0), 0.0, yb - h)
 				draw_line(q, q2, Color(0.92, 1, 1, 0.65), 1.6, true)
+	# les branches du castor : le lit remonté au-dessus du plus creux est fait
+	# de branches entremêlées
+	if castor and prof > 0.5 and vue > _plus_creux + 0.05:
+		for k in 9:
+			var f := (k + 0.5) / 9.0
+			var a0 := _pt(clampf(f - 0.08, 0.0, 1.0), -0.9, yb)
+			var a1 := _pt(clampf(f + 0.08, 0.0, 1.0), 0.9, yb)
+			draw_line(a0, a1, Color("#3b2414"), 4.0, true)
+			draw_line(a0, a1, Color("#8a5a33") if k % 2 == 0 else Color("#6e4524"), 2.6, true)
+	if castor: _dessiner_castor()
 	# le pré devant la rigole, qui cache son flanc avant
 	var devant := PackedVector2Array([Vector2(x_bord, y_rive), Vector2(x_mare + 20.0, y_rive), _pt(1, -1, y_rive) + Vector2(20.0, 0), _pt(1, -1, y_rive), _pt(0, -1, y_rive)])
 	draw_colored_polygon(devant, herbe_c)
@@ -162,6 +187,69 @@ func _draw() -> void:
 		draw_set_transform(Vector2.ZERO)
 	for m in _mottes:
 		draw_circle(m[0], 3.2 * (1.0 - m[2]), Color(0.4, 0.25, 0.12, 1.0 - m[2]))
+
+# Le castor, assis sur la butte derrière la rigole, tourné vers elle : corps
+# brun en poire, ventre clair, tête ronde, deux grandes dents, queue plate
+# quadrillée. Quand il travaille, il se penche et plonge une branche dans
+# l'entaille ; au repos, sa queue bat doucement et il cligne des yeux.
+func _dessiner_castor() -> void:
+	# assez grand pour qu'on le voie, et à côté de la pelle, pas derrière
+	var pied := _pt(1.0, 1.2, y_rive) + Vector2(10.0, 0.0)
+	const S := 1.6
+	var pench := sin(_travail * PI) * 0.45
+	if _castor_img:
+		# l'image peinte, tournée vers la mare, qui se penche quand il travaille
+		var h := 74.0
+		var w := h * _castor_img.get_width() / _castor_img.get_height()
+		draw_set_transform(pied, pench * 0.6, Vector2.ONE)
+		draw_texture_rect(_castor_img, Rect2(-w * 0.5, -h, w, h), false)
+		draw_set_transform(Vector2.ZERO)
+		return
+	var brun := Color("#7a4a26")
+	var sombre := Color("#4e2c14")
+	var clair := Color("#c49a6c")
+	var contour := Color("#2e1a0b")
+	# la queue, derrière, qui bat
+	# (courte et couchée sur l'herbe : plus longue, elle débordait sur la mare
+	# comme une planche qui flotte)
+	# (il regarde la mare : sa queue est derrière lui, sur l'herbe, du côté de
+	# la rigole ; tourné vers la rigole, elle tombait dans la mare)
+	var q := pied + Vector2(-12.0, -3.0) * S
+	var ang := -(0.45 + 0.15 * sin(_t * 3.0))
+	draw_set_transform(q, ang, Vector2(-S * 0.65, S * 0.8))
+	draw_colored_polygon(PackedVector2Array([Vector2(0, -4), Vector2(22, -9), Vector2(30, -3), Vector2(30, 5), Vector2(22, 9), Vector2(0, 4)]), sombre)
+	for k in 3:
+		draw_line(Vector2(8 + k * 7, -6), Vector2(8 + k * 7, 6), Color(0, 0, 0, 0.35), 1.0)
+	draw_polyline(PackedVector2Array([Vector2(0, -4), Vector2(22, -9), Vector2(30, -3), Vector2(30, 5), Vector2(22, 9), Vector2(0, 4)]), contour, 1.5, true)
+	draw_set_transform(Vector2.ZERO)
+	# le corps, qui se penche vers la rigole quand il travaille
+	draw_set_transform(pied, pench, Vector2(-S, S))
+	draw_circle(Vector2(0, -16), 16.0, contour)
+	draw_circle(Vector2(0, -16), 14.5, brun)
+	draw_circle(Vector2(-5, -12), 8.5, clair)
+	# la tête
+	var t := Vector2(-10, -36)
+	draw_circle(t, 11.5, contour)
+	draw_circle(t, 10.0, brun)
+	draw_circle(t + Vector2(6, -9), 3.5, sombre)        # l'oreille
+	draw_circle(t + Vector2(-7, 3), 5.0, clair)         # le museau
+	draw_circle(t + Vector2(-10, 1), 2.2, Color("#1b0f06"))   # le nez
+	var cligne := fmod(_t, 3.7) < 0.12
+	if cligne:
+		draw_line(t + Vector2(-3, -3), t + Vector2(1, -3), Color("#1b0f06"), 1.5)
+	else:
+		draw_circle(t + Vector2(-1, -3), 2.0, Color("#1b0f06"))
+		draw_circle(t + Vector2(-1.6, -3.6), 0.7, Color.WHITE)
+	# les deux grandes dents
+	draw_rect(Rect2(t.x - 9.0, t.y + 7.0, 3.0, 4.5), Color.WHITE)
+	draw_rect(Rect2(t.x - 5.8, t.y + 7.0, 3.0, 4.5), Color.WHITE)
+	draw_rect(Rect2(t.x - 9.0, t.y + 7.0, 6.2, 4.5), contour, false, 0.8)
+	# la branche qu'il tient (et qu'il plonge quand il travaille)
+	var b0 := t + Vector2(-12, 10 + 10 * _travail)
+	draw_line(b0, b0 + Vector2(-20, 6), Color("#3b2414"), 4.0, true)
+	draw_line(b0, b0 + Vector2(-20, 6), Color("#8a5a33"), 2.5, true)
+	draw_line(b0 + Vector2(-12, 4), b0 + Vector2(-16, -2), Color("#4f8a3a"), 2.0, true)
+	draw_set_transform(Vector2.ZERO)
 
 # La surface de l'eau à la bouche de la rigole (sur sa paroi avant) : la
 # cascade part exactement de là. Partie plus bas, elle laissait voir l'entaille

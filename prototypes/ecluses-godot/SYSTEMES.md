@@ -52,6 +52,7 @@ Tout système nouveau se range dans l'une de ces familles :
 | 19 | Orage (tempête) | aucun, ou attendre | profiter de l'eau qui tombe sans laisser monter le bief du village | **écrit** (chap. 7, niveau 7-1, nuit du 7 au 8 octobre 2026) | faible |
 | 20 | Pont bas | aucun | garder l'eau assez basse pour la cheminée des bateaux | **écrit** (chap. 11, niveau 11-1, nuit du 7 au 8 octobre 2026) | moyen |
 | 21 | Moulin | la vanne du moulin (une porte) | quand faire passer l'eau par la roue, sachant que les bateaux en ont besoin | **écrit** (chap. 12, niveau 12-1, nuit du 7 au 8 octobre 2026) | moyen |
+| 23 | Castor | creuser, d'une traite | ne pas laisser un travail en plan | **écrit** (chap. 13, niveau 13-1, nuit du 7 au 8 octobre 2026) | faible |
 | 17 | Chaudière (vapeur) | un coup = un volume qui part en fumée | quand se débarrasser d'une eau qui menace le village | **écrite** (chap. 5, niveau 5-1, nuit du 7 au 8 octobre 2026) | faible |
 
 Les **objectifs** ne déplacent pas l'eau mais s'y ajoutent : bateau à
@@ -307,6 +308,18 @@ d'écluses, le lien ne raccourcit ni n'allonge jamais la meilleure solution
   que l'eau OUVRE et qui reste ouverte) : c'était un piège sans solution.
   Sur le trajet des bateaux, elle se referme toujours avant que les eaux ne
   soient égales : elle ne peut que nourrir un bief, de côté.
+
+### 23. Le castor (nuit du 7 au 8 octobre 2026)
+- **On voit :** la rigole du chapitre 3, et un castor assis sur la butte,
+  tourné vers la mare, une branche à la patte. Chaque fois qu'il remonte sa
+  digue, il se penche, et le lit de la rigole se couvre de branches.
+- **La règle :** digue à `castor` {max, pas} : à chaque coup où l'on ne
+  creuse pas cette digue, sa crête remonte de `pas` (0,5) jusqu'à `max`.
+- **Ce qu'il change :** pas la meilleure solution (on creuse d'une traite de
+  toute façon), mais il défait le travail laissé en plan : au hasard, il
+  divise par deux les parties gagnées. La leçon : finir ce qu'on a commencé.
+- **Le niveau 13-1 :** trois coups de pelle d'affilée pour vider l'étang dans
+  le bief amont et le sas, deux bateaux qui se croisent. Par 8.
 
 ### Écartés pour l'instant
 - **Moulin, roue à aubes** qui actionnerait autre chose quand l'eau y passe :

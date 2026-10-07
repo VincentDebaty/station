@@ -1263,7 +1263,10 @@ func _coupe_avant() -> void:
 	# des berges, parements), et des pousses vertes, comme sur la maquette
 	var tops := []      # [x0, x1, y] : le haut de chaque morceau de terre
 	for i in B.size():
-		tops.append([X(gb[i][0]) - 2, X(gb[i][1]) + 2, Y(float(B[i]["fond"]) - (0.0 if _naturel(i) else 0.32))])
+		# (la terre d'une mare monte jusqu'au pré : son ombre est là, pas à son
+		# fond — elle traçait un trait sombre au milieu de la terre)
+		var haut_terre := Y(_rive()) if B[i]["type"] == "reservoir" else Y(float(B[i]["fond"]) - (0.0 if _naturel(i) else 0.32))
+		tops.append([X(gb[i][0]) - 2, X(gb[i][1]) + 2, haut_terre])
 	for i in N["liaisons"].size():
 		tops.append([X(gl[i][0]), X(gl[i][1]), Y(minf(float(B[i]["fond"]), float(B[i + 1]["fond"])) - 0.32)])
 	if not B[0].get("fixe", false):
@@ -2254,6 +2257,9 @@ func glacon_sous(p: Vector2) -> int:
 
 # Avant l'écoulement d'un coup : les glaçons qui fondent pendant ce coup-ci.
 func objets_changent(avant: Dictionary, apres: Dictionary) -> void:
+	# le castor a remonté sa digue : la rigole se rebouche
+	for g in rigoles:
+		if rigoles[g].castor and apres["crete"][g] != null: rigoles[g].regler(float(apres["crete"][g]))
 	_mouture = [float(avant.get("moulu", 0.0)), float(apres.get("moulu", 0.0))]
 	_declenches = []
 	for g in flotteurs:

@@ -488,6 +488,11 @@ static func jouer(N: Dictionary, e0: Dictionary, a: Dictionary) -> Dictionary:
 	var dep := []
 	var apport := 0.0
 	if e["lache"]:
+		# le castor rebouche sa digue, sauf si on vient d'y creuser
+		for i in N["liaisons"].size():
+			var lc: Dictionary = N["liaisons"][i]
+			if not lc.has("castor") or (a["type"] == "creuser" and ai == i): continue
+			e["crete"][i] = minf(float(lc["castor"]["max"]), arrondi(float(e["crete"][i]) + float(lc["castor"].get("pas", 0.5))))
 		# la glace qui fond verse sa part d'eau
 		var objets: Array = N.get("objets", [])
 		for k in objets.size():

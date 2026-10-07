@@ -12,8 +12,9 @@
     {"n": 10, "titre": "Le siphon", "decor": "campagne", "resume": "Un tuyau en U renversé, par-dessus une levée ou une porte. Amorcé, il fait passer l'eau du plus haut au plus bas, jusqu'à ce que son bout sorte de l'eau."},
     {"n": 11, "titre": "Le pont bas", "decor": "campagne", "resume": "Un pont de pierre enjambe le canal. Les bateaux passent dessous, si l'eau est assez basse pour leur cheminée : trop d'eau, cette fois, c'est un obstacle."},
     {"n": 12, "titre": "Le moulin", "decor": "campagne", "resume": "L'eau qui passe par la vanne du moulin fait tourner sa roue et remplit des sacs de farine. Mais c'est la même eau que celle des bateaux."},
-    {"n": 13, "titre": "Les canaux", "decor": "collines", "resume": "Creuser les digues, puis lâcher l'eau et regarder où elle va."},
-    {"n": 14, "titre": "Le fleuve", "decor": "estuaire", "resume": "L'eau arrive toute seule, à chaque coup. Il faut la conduire avant qu'elle déborde."}
+    {"n": 13, "titre": "Le castor", "decor": "campagne", "resume": "Un castor rebouche la rigole, une branche à chaque coup où l'on n'y creuse pas. Ce qui est commencé doit être fini d'une traite."},
+    {"n": 14, "titre": "Les canaux", "decor": "collines", "resume": "Creuser les digues, puis lâcher l'eau et regarder où elle va."},
+    {"n": 15, "titre": "Le fleuve", "decor": "estuaire", "resume": "L'eau arrive toute seule, à chaque coup. Il faut la conduire avant qu'elle déborde."}
   ],
   "niveaux": [
     {
@@ -378,9 +379,33 @@
         {"de": 2, "vers": 0, "tirant": 1}
       ]
     },
-    {
+{
       "id": "13-1",
       "chapitre": 13,
+      "titre": "Le castor",
+      "mode": "pas",
+      "par": 8,
+      "conseil": "Creuse la rigole pour faire couler l'étang. Mais à chaque coup où tu ne creuses pas, le castor la rebouche avec une branche : il faut creuser d'une traite.",
+      "requis": ["creuser"],
+      "bassins": [
+        {"type": "bief", "fond": 0, "largeur": 6, "niveau": 1, "nom": "bief aval"},
+        {"type": "sas", "fond": 0, "largeur": 2, "niveau": 1, "nom": "sas"},
+        {"type": "bief", "fond": 3, "largeur": 6, "niveau": 4, "nom": "bief amont"},
+        {"type": "reservoir", "fond": 4, "largeur": 6, "niveau": 6, "nom": "étang"}
+      ],
+      "liaisons": [
+        {"type": "porte", "seuil": 0, "crete": 6},
+        {"type": "porte", "seuil": 3, "crete": 6},
+        {"type": "digue", "crete": 7.5, "min": 4, "castor": {"max": 7.5, "pas": 0.5}}
+      ],
+      "bateaux": [
+        {"de": 0, "vers": 2, "tirant": 1},
+        {"de": 2, "vers": 0, "tirant": 1}
+      ]
+    },
+    {
+      "id": "14-1",
+      "chapitre": 14,
       "titre": "Le premier sillon",
       "mode": "chantier",
       "par": 4,
@@ -398,8 +423,8 @@
       "bateaux": []
     },
     {
-      "id": "13-2",
-      "chapitre": 13,
+      "id": "14-2",
+      "chapitre": 14,
       "titre": "Les rizières",
       "mode": "chantier",
       "par": 5,
@@ -421,8 +446,8 @@
       "bateaux": []
     },
     {
-      "id": "13-3",
-      "chapitre": 13,
+      "id": "14-3",
+      "chapitre": 14,
       "titre": "Remettre à flot",
       "mode": "chantier",
       "par": 6,
@@ -446,8 +471,8 @@
       ]
     },
     {
-      "id": "14-1",
-      "chapitre": 14,
+      "id": "15-1",
+      "chapitre": 15,
       "titre": "Le fleuve monte",
       "mode": "pas",
       "par": 5,
@@ -468,8 +493,8 @@
       ]
     },
     {
-      "id": "14-2",
-      "chapitre": 14,
+      "id": "15-2",
+      "chapitre": 15,
       "titre": "Le déversoir",
       "mode": "pas",
       "par": 8,
@@ -494,8 +519,8 @@
       ]
     },
     {
-      "id": "14-3",
-      "chapitre": 14,
+      "id": "15-3",
+      "chapitre": 15,
       "titre": "La crue",
       "mode": "pas",
       "par": 6,

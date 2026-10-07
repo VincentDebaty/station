@@ -344,6 +344,15 @@ Same art style as the attached image. A big cute block of clear blue ice, roughl
 Same art style as the attached image. A small round iron fire basket (brazier) standing on three thin legs, with two crossed wooden logs sticking out of it, unlit (no flame, no smoke, just grey ash and a hint of dark embers), seen exactly from the side, thin dark outline, soft highlight on the top-left. Square image, centred, filling about 85% of the frame, isolated on a transparent background, no ground, no shadow.
 ```
 
+#### `art/castor.png` — le castor qui rebouche la rigole (chapitre 13)
+
+Le jeu le pose sur la butte, tourné vers la mare, et le penche quand il
+travaille ; il dessine lui-même les branches dans la rigole.
+
+```text
+Same art style as the attached image. A cute cartoon beaver sitting upright, seen from the side and facing RIGHT, holding a small leafy branch in its front paws, big friendly eye, two large white front teeth, round brown body with a lighter belly, flat dark scaly tail lying on the ground behind it (to the left), thin dark outline, soft cel shading. Square image, the beaver centred and filling about 85% of the frame, isolated on a transparent background, no ground, no shadow.
+```
+
 ### Plus tard, peut-être
 
 - `premier_plan.png` : un buisson flou et des marguerites au premier plan,
