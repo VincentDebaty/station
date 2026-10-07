@@ -1923,11 +1923,23 @@ func _dessiner_manque() -> void:
 		if positions[k] != v or _a_flot(k, v) or (not _manque.is_empty() and int(_manque["bassin"]) == v): continue
 		if not _echoues_a_quai.has(k): _echoues_a_quai[k] = _t
 		_tracer_manque(v, Y(float(N["bassins"][v]["fond"]) + float(N["bateaux"][k]["tirant"])), COULEURS[k % COULEURS.size()], _t - float(_echoues_a_quai[k]), k)
+	for k in _indices:
+		var d: Dictionary = _indices[k]
+		_tracer_manque(int(d["bassin"]), float(d["y"]), COULEURS[k % COULEURS.size()], _t - float(d["t"]), k)
 	for k in _echoues_a_quai.keys():
 		var v2 := int(N["bateaux"][k]["vers"])
 		if positions[k] != v2 or _a_flot(k, v2): _echoues_a_quai.erase(k)
 
 var _echoues_a_quai := {}   # bateau -> l'instant où on l'a vu échoué à sa place
+# Les indices : un bateau arrêté devant une porte ouverte, eaux égales, faute
+# de fond (Vincent : « on a l'impression que le bateau peut avancer »).
+# principal.gd les pose après 5 s sans coup ; le prochain coup les efface.
+var _indices := {}   # bateau -> {bassin, y, t}
+func indiquer_manque(k: int, bassin: int, niveau: float) -> void:
+	if not _indices.has(k): _indices[k] = {"bassin": bassin, "y": Y(niveau), "t": _t}
+
+func effacer_indices() -> void:
+	_indices.clear()
 func _a_flot(k: int, i: int) -> bool:
 	return vue_niv[i] - float(N["bassins"][i]["fond"]) >= float(N["bateaux"][k]["tirant"]) - 1e-6
 

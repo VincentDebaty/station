@@ -146,6 +146,7 @@ func jouer(a: Dictionary) -> void:
 		if a["type"] == "porte" and canal.portes.has(int(a["i"])): canal.portes[int(a["i"])].refuser()
 		return
 	occupe = true
+	canal.effacer_indices()
 	var avant := etat
 	var r := Moteur.jouer(N, etat, a)
 	histoire.append(avant)
@@ -679,7 +680,23 @@ func _niveau_suivant() -> void:
 	_lancer()
 
 # --- La démo et les photos ------------------------------------------------------------
+# Après 5 s sans coup, un bateau qui semble pouvoir avancer (porte ouverte,
+# eaux égales) mais n'a pas assez de fond reçoit son indice : le niveau qu'il
+# lui faudrait, et la bulle du manque.
+var _calme := 0.0
+func _indices_de_fond(dt: float) -> void:
+	if occupe or fini or canal == null:
+		_calme = 0.0
+		return
+	_calme += dt
+	if _calme < 5.0: return
+	for k in N["bateaux"].size():
+		var r := Moteur.raison(N, etat, k)
+		if r["quoi"] in ["fond_ici", "fond_la", "seuil"]:
+			canal.indiquer_manque(k, int(r["bassin"]), float(r["niveau"]))
+
 func _process(dt: float) -> void:
+	_indices_de_fond(dt)
 	if canal:
 		for p in canal.portes.values(): p.actif = not occupe and not fini
 		# une pompe dont la source est à sec ne répond plus : elle pâlit et
