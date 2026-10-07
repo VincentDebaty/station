@@ -1907,14 +1907,29 @@ func manque_signale() -> bool:
 
 var _police_manque: Font = null
 func _dessiner_manque() -> void:
-	if _manque.is_empty(): return
-	var i: int = _manque["bassin"]
+	if not _manque.is_empty():
+		_tracer_manque(int(_manque["bassin"]), float(_manque["y"]), _manque["couleur"], _t - float(_manque["t"]))
+	# Un bateau à sa place mais échoué : pour le jeu, il n'est pas arrivé (il
+	# faut qu'il flotte). Rien ne le disait, et Vincent croyait le niveau fini
+	# sans que rien ne se passe. On montre le niveau qu'il lui faut, comme pour
+	# un échec, tant que la partie continue.
+	for k in N["bateaux"].size():
+		var v := int(N["bateaux"][k]["vers"])
+		if positions[k] != v or _a_flot(k, v) or (not _manque.is_empty() and int(_manque["bassin"]) == v): continue
+		if not _echoues_a_quai.has(k): _echoues_a_quai[k] = _t
+		_tracer_manque(v, Y(float(N["bassins"][v]["fond"]) + float(N["bateaux"][k]["tirant"])), COULEURS[k % COULEURS.size()], _t - float(_echoues_a_quai[k]))
+	for k in _echoues_a_quai.keys():
+		var v2 := int(N["bateaux"][k]["vers"])
+		if positions[k] != v2 or _a_flot(k, v2): _echoues_a_quai.erase(k)
+
+var _echoues_a_quai := {}   # bateau -> l'instant où on l'a vu échoué à sa place
+func _a_flot(k: int, i: int) -> bool:
+	return vue_niv[i] - float(N["bassins"][i]["fond"]) >= float(N["bateaux"][k]["tirant"]) - 1e-6
+
+func _tracer_manque(i: int, y: float, c: Color, age: float) -> void:
 	var xb := _x_bassin(i)                 # en oblique, l'eau va jusqu'aux vantaux
 	var x0 := xb.x + 4.0
 	var x1 := xb.y - 4.0
-	var y: float = _manque["y"]
-	var c: Color = _manque["couleur"]
-	var age := _t - float(_manque["t"])
 	var a := clampf(age / 0.4, 0.0, 1.0)
 	var bat := 0.75 + 0.25 * sin(age * 4.0)
 	# l'eau qui manque : la bande entre la surface et le niveau qu'il faudrait,
@@ -1988,7 +2003,9 @@ func _dessiner_reperes() -> void:
 	for k in N["bateaux"].size():
 		var b: Dictionary = N["bateaux"][k]
 		var v := int(b["vers"])
-		var arrive: bool = positions[k] == v
+		# arrivé, c'est à sa place ET à flot (la règle du moteur) : échoué à
+		# sa place, la bouée reste, couchée si le bassin est à sec
+		var arrive: bool = positions[k] == v and _a_flot(k, v)
 		if arrive: _bouees_vues.erase(k)
 		var sp: Sprite2D = _bouees_img.get(k)
 		if sp: sp.visible = not arrive

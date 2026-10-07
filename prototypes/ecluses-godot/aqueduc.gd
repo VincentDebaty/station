@@ -115,7 +115,11 @@ func _process(dt: float) -> void:
 	# Le motif avance d'un pas à chaque image, dans le sens du courant. Mesuré
 	# sur le film du 4-1 : une phase qui croît fait reculer le motif vers le
 	# début du tracé ; elle décroît donc quand l'eau suit le tracé (sens 1).
-	_phase -= float(sens) * (4.0 + 38.0 * debit) * Reglages.v("courant_vitesse") * dt
+	# Vitesse : environ 2 px/s au repos, 38 px/s au plus fort avec le réglage
+	# de Vincent (0,10). L'ancienne écriture TIME × vitesse ajoutait un
+	# mouvement parasite qui donnait l'illusion du débit ; sans lui, l'eau
+	# paraissait figée (Vincent : « on doit voir le débit »).
+	_phase -= float(sens) * (8.0 + 120.0 * debit) * Reglages.v("courant_vitesse") * 3.0 * dt
 	_mat_eau.set_shader_parameter("phase", _phase)
 	_mat_eau.set_shader_parameter("debit", debit)
 	_mat_eau.set_shader_parameter("sens", float(sens))
