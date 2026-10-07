@@ -9,8 +9,9 @@
     {"n": 7, "titre": "L'orage", "decor": "campagne", "resume": "Il pleut à chaque coup, dans tous les bassins. L'eau qui manquait arrive toute seule, mais elle ne s'arrête pas quand il y en a assez."},
     {"n": 8, "titre": "La marée", "decor": "campagne", "resume": "La mer monte et descend d'un cran à chaque coup, et l'on sait d'avance jusqu'où. Une porte ouverte à marée haute remplit le sas pour rien."},
     {"n": 9, "titre": "L'ascenseur", "decor": "campagne", "resume": "Un bac d'acier monte et descend avec son eau et le bateau, sans écluse. Mais l'eau qu'il emporte se mélange à celle du bief où il s'arrête."},
-    {"n": 10, "titre": "Les canaux", "decor": "collines", "resume": "Creuser les digues, puis lâcher l'eau et regarder où elle va."},
-    {"n": 11, "titre": "Le fleuve", "decor": "estuaire", "resume": "L'eau arrive toute seule, à chaque coup. Il faut la conduire avant qu'elle déborde."}
+    {"n": 10, "titre": "Le siphon", "decor": "campagne", "resume": "Un tuyau en U renversé, par-dessus une levée ou une porte. Amorcé, il fait passer l'eau du plus haut au plus bas, jusqu'à ce que son bout sorte de l'eau."},
+    {"n": 11, "titre": "Les canaux", "decor": "collines", "resume": "Creuser les digues, puis lâcher l'eau et regarder où elle va."},
+    {"n": 12, "titre": "Le fleuve", "decor": "estuaire", "resume": "L'eau arrive toute seule, à chaque coup. Il faut la conduire avant qu'elle déborde."}
   ],
   "niveaux": [
     {
@@ -301,9 +302,36 @@
         {"de": 2, "vers": 4, "tirant": 1}
       ]
     },
-    {
+{
       "id": "10-1",
       "chapitre": 10,
+      "titre": "Le siphon",
+      "mode": "pas",
+      "par": 6,
+      "conseil": "Touche la roue rouge sur le tuyau : le siphon s'amorce, et l'eau de l'étang passe par-dessus la levée jusqu'au sas. Elle coule jusqu'à ce que le bout du tuyau sorte de l'eau.",
+      "requis": ["amorcer"],
+      "bassins": [
+        {"type": "reservoir", "fond": 4, "largeur": 6, "niveau": 6, "nom": "étang"},
+        {"type": "bief", "fond": 3, "largeur": 6, "niveau": 4, "nom": "bief amont"},
+        {"type": "sas", "fond": 0, "largeur": 2, "niveau": 1, "nom": "sas"},
+        {"type": "bief", "fond": 0, "largeur": 6, "niveau": 1, "nom": "bief aval"}
+      ],
+      "liaisons": [
+        {"type": "mur", "crete": 6.2},
+        {"type": "porte", "seuil": 3, "crete": 6},
+        {"type": "porte", "seuil": 0, "crete": 6}
+      ],
+      "objets": [
+        {"type": "siphon", "a": 0, "b": 2, "ha": 4.5, "hb": 0.3}
+      ],
+      "bateaux": [
+        {"de": 3, "vers": 1, "tirant": 1},
+        {"de": 1, "vers": 3, "tirant": 1}
+      ]
+    },
+    {
+      "id": "11-1",
+      "chapitre": 11,
       "titre": "Le premier sillon",
       "mode": "chantier",
       "par": 4,
@@ -321,8 +349,8 @@
       "bateaux": []
     },
     {
-      "id": "10-2",
-      "chapitre": 10,
+      "id": "11-2",
+      "chapitre": 11,
       "titre": "Les rizières",
       "mode": "chantier",
       "par": 5,
@@ -344,8 +372,8 @@
       "bateaux": []
     },
     {
-      "id": "10-3",
-      "chapitre": 10,
+      "id": "11-3",
+      "chapitre": 11,
       "titre": "Remettre à flot",
       "mode": "chantier",
       "par": 6,
@@ -369,8 +397,8 @@
       ]
     },
     {
-      "id": "11-1",
-      "chapitre": 11,
+      "id": "12-1",
+      "chapitre": 12,
       "titre": "Le fleuve monte",
       "mode": "pas",
       "par": 5,
@@ -391,8 +419,8 @@
       ]
     },
     {
-      "id": "11-2",
-      "chapitre": 11,
+      "id": "12-2",
+      "chapitre": 12,
       "titre": "Le déversoir",
       "mode": "pas",
       "par": 8,
@@ -417,8 +445,8 @@
       ]
     },
     {
-      "id": "11-3",
-      "chapitre": 11,
+      "id": "12-3",
+      "chapitre": 12,
       "titre": "La crue",
       "mode": "pas",
       "par": 6,

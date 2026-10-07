@@ -181,29 +181,102 @@ static func poser(N: Dictionary, e: Dictionary) -> void:
 				else: e["sortie"] -= d
 		i = j + 1
 
+# Les siphons amorcés : des liaisons de plus, entre deux bassins voisins ou
+# non. Le bassin qui se vide ne descend pas sous sa crépine.
+static func paire_siphon(N: Dictionary, e: Dictionary, k: int) -> float:
+	var o: Dictionary = N["objets"][k]
+	var ia := int(o["a"])
+	var ib := int(o["b"])
+	var a: float = e["niv"][ia]
+	var c: float = e["niv"][ib]
+	if absf(a - c) < 1e-12:
+		return 0.0
+	var h := ia if a > c else ib
+	var l := ib if a > c else ia
+	var s := float(o["ha"]) if a > c else float(o["hb"])
+	var H: Dictionary = N["bassins"][h]
+	var L: Dictionary = N["bassins"][l]
+	var nh: float = e["niv"][h]
+	var nl: float = e["niv"][l]
+	var hf := bool(H.get("fixe", false))
+	var lf := bool(L.get("fixe", false))
+	if nh <= s + 1e-12 or (hf and lf):
+		return 0.0
+	var vol: float
+	if hf:
+		vol = (nh - nl) * float(L["largeur"])
+	elif lf:
+		vol = (nh - s) * float(H["largeur"])
+	else:
+		var m := (float(H["largeur"]) * nh + float(L["largeur"]) * nl) / (float(H["largeur"]) + float(L["largeur"]))
+		vol = (nh - maxf(m, s)) * float(H["largeur"])
+	return vol if h == ia else -vol
+
+static func verser_siphon(N: Dictionary, e: Dictionary, k: int, vol: float, flux: Array, j: int) -> void:
+	if vol == 0.0:
+		return
+	flux[j] += vol
+	var o: Dictionary = N["objets"][k]
+	var ia := int(o["a"])
+	var ib := int(o["b"])
+	var A: Dictionary = N["bassins"][ia]
+	var C: Dictionary = N["bassins"][ib]
+	if A.get("fixe", false):
+		if vol > 0: e["entree"] += vol
+		else: e["sortie"] -= vol
+	else:
+		e["niv"][ia] -= vol / float(A["largeur"])
+	if C.get("fixe", false):
+		if vol > 0: e["sortie"] += vol
+		else: e["entree"] -= vol
+	else:
+		e["niv"][ib] += vol / float(C["largeur"])
+
 static func equilibrer(N: Dictionary, e: Dictionary) -> Array:
 	var n: int = N["liaisons"].size()
+	var objets: Array = N.get("objets", [])
+	var rang := {}
+	var r := n
+	var S := []
+	for k in objets.size():
+		if objets[k]["type"] == "siphon":
+			rang[k] = r
+			r += 1
+			if int(e["obj"][k]) == 1: S.append(k)
 	var flux := []
-	flux.resize(n)
+	flux.resize(r)
 	flux.fill(0.0)
 	for _tour in 20000:
 		var v := []
+		var w := []
 		var mx := 0.0
 		for i in n:
 			v.append(paire(N, e, i) / 2.0)
 			mx = maxf(mx, absf(v[i]))
+		for k in S:
+			w.append(paire_siphon(N, e, k) / 2.0)
+			mx = maxf(mx, absf(w[w.size() - 1]))
 		if mx < 1e-10:
 			break
 		if mx < 1e-4:
 			for i in n:
 				verser(N, e, i, paire(N, e, i), flux)
+			for k in S:
+				verser_siphon(N, e, k, paire_siphon(N, e, k), flux, rang[k])
 			poser(N, e)
 			continue
 		for i in n:
 			verser(N, e, i, v[i], flux)
+		for j in S.size():
+			verser_siphon(N, e, S[j], w[j], flux, rang[S[j]])
 	for i in e["niv"].size():
 		e["niv"][i] = arrondi(e["niv"][i])
-	for i in n:
+	# une crépine hors de l'eau : l'air entre, le siphon se désamorce
+	for k in S:
+		var o: Dictionary = objets[k]
+		if e["niv"][int(o["a"])] <= float(o["ha"]) + 1e-6 or e["niv"][int(o["b"])] <= float(o["hb"]) + 1e-6:
+			e["obj"][k] = 0
+	for i in flux.size():
 		flux[i] = arrondi(flux[i])
 	return flux
 
@@ -321,6 +394,8 @@ static func actions(N: Dictionary, e: Dictionary) -> Array:
 			A.append({"type": "allumer", "i": i})
 		if o["type"] == "ascenseur":
 			A.append({"type": "ascenseur", "i": i})
+		if o["type"] == "siphon" and int(e["obj"][i]) == 0 and (e["niv"][int(o["a"])] > float(o["ha"]) + EPS or e["niv"][int(o["b"])] > float(o["hb"]) + EPS):
+			A.append({"type": "amorcer", "i": i})
 	if not e["lache"]:
 		A.append({"type": "lacher"})
 	elif temps(N) or feu:
@@ -359,6 +434,8 @@ static func jouer(N: Dictionary, e0: Dictionary, a: Dictionary) -> Dictionary:
 			e["sortie"] += vol
 		"allumer":
 			e["obj"][ai] = int(N["objets"][ai]["fonte"])
+		"amorcer":
+			e["obj"][ai] = 1
 		"ascenseur":
 			# le bac monte ou descend avec son eau : son niveau suit son fond
 			var oa: Dictionary = N["objets"][ai]

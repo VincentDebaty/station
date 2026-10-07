@@ -86,6 +86,10 @@ var _fontes := {}     # objet -> [part avant, part après] : le glaçon qui fond
 var orage: Orage = null # la pluie, les nuages et les éclairs d'un niveau à « pluie »
 var marees := {}      # bassin -> Maree : l'échelle, les algues et la flèche de la marée
 var bacs := {}        # objet -> Bac : le bac d'un ascenseur à bateaux, ses câbles et sa tête
+var siphons := {}     # objet -> Siphon : son tuyau sur la berge du fond, sa roue d'amorçage
+var _rang_siphon := {} # objet -> son rang dans le tableau des flux (après les liaisons)
+var _cible_arriere: Node2D # le plan des tours du fond (derrière les bateaux et l'eau)
+var _siphons_apres := {} # objet -> amorcé à la fin du coup (appliqué quand l'eau s'est posée)
 var fonds_vus := {}   # bassin -> le fond affiché du bac (unités) : il glisse pendant un voyage
 var sommets_fond := [] # le haut du mur du fond de chaque bassin, en unités
 var rigoles := {}     # liaison -> Rigole, la berge de terre que l'on creuse
@@ -182,6 +186,7 @@ func construire(niveau: Dictionary, e0: Dictionary) -> void:
 	var arriere := Node2D.new()
 	arriere.name = "ToursDuFond"
 	add_child(arriere)
+	_cible_arriere = arriere
 	if D != Vector2.ZERO:
 		_dessous_des_bassins()
 		_surface_fond = Node2D.new()
@@ -283,6 +288,7 @@ func construire(niveau: Dictionary, e0: Dictionary) -> void:
 			m.preparer(self, i, _rive())
 			add_child(m)
 			mares[i] = m
+	_construire_siphons(e)
 	for i in N["liaisons"].size():
 		if N["liaisons"][i]["type"] == "digue":
 			var x_mare := X(gl[i][1]) + 0.3 * U
@@ -691,6 +697,9 @@ func _murs_du_fond() -> void:
 		if D != Vector2.ZERO and l["type"] == "porte": continue
 		# une digue : la rigole dessine toute la berge, entaille comprise
 		if D != Vector2.ZERO and l["type"] == "digue": continue
+		# la levée d'une mare : rien derrière elle, c'est le pré (le morceau de
+		# terre dépassait en carré au-dessus de la rive, 10-1)
+		if D != Vector2.ZERO and l["type"] == "mur" and (B[i]["type"] == "reservoir" or B[i + 1]["type"] == "reservoir"): continue
 		var c := float(l.get("max", l.get("crete", maxf(float(B[i]["fond"]), float(B[i + 1]["fond"])))))
 		var bas := minf(float(B[i]["fond"]), float(B[i + 1]["fond"]))
 		# aussi haut que le plus bas des deux murs voisins : derrière un mur
@@ -764,6 +773,11 @@ func _dessous_des_bassins() -> void:
 			# (une digue : la rigole dessine sa butte ; ici, sa face gauche en
 			# terre, du pré au fond du bassin, derrière l'eau — sans elle, on
 			# voyait la prairie entre le mur du fond et la butte)
+			# une levée qui borde la mare : la coupe la dessine jusqu'au pré
+			# (_coupe_avant) ; son dessus, posé sur rien derrière elle — la mare
+			# n'a pas de fond dessiné —, flottait comme une marche (siphon, 10-1)
+			if l["type"] == "mur" and (B[i]["type"] == "reservoir" or B[i + 1]["type"] == "reservoir"):
+				continue
 			if l["type"] == "digue":
 				var yr := Y(_rive())
 				var yf := Y(float(B[i]["fond"]))
@@ -1159,8 +1173,9 @@ func _coupe_avant() -> void:
 			if _terrestre(i):
 				# une levée de terre, un peu évasée en bas, coiffée d'herbe (la
 				# digue d'une rigole est dessinée par la rigole)
-				if N["liaisons"][i]["type"] == "digue":
-					# la butte de la rigole : de la terre jusqu'au pré
+				if N["liaisons"][i]["type"] == "digue" or B[i]["type"] == "reservoir" or B[i + 1]["type"] == "reservoir":
+					# la butte de la rigole, ou la levée de la mare : de la terre
+					# jusqu'au pré
 					_poly(_quad(X(gl[i][0]), Y(_rive()), X(gl[i][1]), Y(bas)), terre)
 					_herbe(X(gl[i][0]), X(gl[i][1]), Y(_rive()))
 				else:
@@ -1594,6 +1609,10 @@ func _process(dt: float) -> void:
 		tuyaux_pompe[i].niveau_d = -1e9 if a_eau else Y(vue_niv[de])
 	for k in glacons:
 		glacons[k].y_eau = Y(vue_niv[int(N["objets"][k]["bassin"])]) + D.y
+	for k in siphons:
+		var so: Dictionary = N["objets"][k]
+		siphons[k].tuyau.niveau_g = Y(vue_niv[int(so["a"])]) + D.y
+		siphons[k].tuyau.niveau_d = Y(vue_niv[int(so["b"])]) + D.y
 	for k in bacs:
 		var ibc: int = bacs[k].ib
 		bacs[k].fond_vu = fonds_vus[ibc]
@@ -1688,7 +1707,7 @@ func ecouler(avant: Array, apres: Array, flux: Array) -> void:
 		ecoulement_fini.emit.call_deferred()
 		return
 	var tetes := {}
-	for i in flux.size():
+	for i in mini(flux.size(), N["liaisons"].size()):
 		if absf(flux[i]) > 0.01: tetes[i] = absf(avant[i] - avant[i + 1])
 	_ecou = {"t": 0.0, "T": maxf(1.1 + 1.25 * sqrt(dh), 1.6 if fl_max >= 0.01 or _pompage >= 0 else 0.0), "avant": avant.duplicate(), "apres": apres.duplicate(), "flux": flux.duplicate(), "tetes": tetes}
 
@@ -1727,7 +1746,7 @@ func _avancer_ecoulement(dt: float) -> void:
 	# pas, et l'on ne voyait pas l'eau passer (Vincent). Pendant l'écoulement,
 	# une pellicule d'eau court sur son fond — quelques pixels, trop peu pour
 	# remettre un bateau à flot — et franchit le seuil de la porte.
-	var fl: Array = _ecou["flux"]
+	var fl: Array = _ecou["flux"].slice(0, N["liaisons"].size())
 	for i in vue_niv.size():
 		var entre_d := i < fl.size() and float(fl[i]) < -0.01
 		var sort_g := i > 0 and float(fl[i - 1]) < -0.01
@@ -1744,7 +1763,22 @@ func _avancer_ecoulement(dt: float) -> void:
 		vue_niv[i] = maxf(vue_niv[i], fond + film)
 	for i in eaux.size(): eaux[i].remous = move_toward(eaux[i].remous, 0.0, dt * 0.8)
 	for i in trop_pleins: trop_pleins[i].force = 0.0
-	for i in _ecou["flux"].size():
+	for k in siphons:
+		# l'eau court dans le tuyau du siphon, dans le sens du débit
+		var fs := float(_ecou["flux"][_rang_siphon[k]]) if _rang_siphon[k] < _ecou["flux"].size() else 0.0
+		var sp: Siphon = siphons[k]
+		if absf(fs) > 0.01:
+			var force := clampf(minf(p * 5.0, (1.0 - p) * 2.5), 0.0, 1.0)
+			sp.tuyau.ouverte = true
+			sp.tuyau.couler(force * 0.9, 1 if fs > 0 else -1)
+			var o: Dictionary = N["objets"][k]
+			var recoit := int(o["b"]) if fs > 0 else int(o["a"])
+			var bout: Vector2 = sp.tuyau.chemin[sp.tuyau.chemin.size() - 1] if fs > 0 else sp.tuyau.chemin[0]
+			if force > 0.2 and randf() < 0.3 and not mares.has(recoit):
+				eaux[recoit].impulsion(bout.x - D.x * 0.5, randf_range(-0.5, 0.4) * force, 22.0)
+		else:
+			sp.tuyau.couler(0.0, 1)
+	for i in mini(_ecou["flux"].size(), N["liaisons"].size()):
 		if portes.has(i) and _porte_close(i) and absf(float(_ecou["flux"][i])) > 0.01 and _deborde(i):
 			_trop_plein(i, float(_ecou["flux"][i]))
 			continue
@@ -1796,6 +1830,10 @@ func _avancer_ecoulement(dt: float) -> void:
 			eaux[int(N["objets"][k]["bassin"])].impulsion(gl_.base.x - D.x * 0.5, randf_range(-0.4, 0.6) * gl_.coule, 20.0)
 	if p >= 1.0:
 		if orage: orage.averse = 0.0
+		for k in _siphons_apres:
+			siphons[k].regler(_siphons_apres[k])
+			siphons[k].tuyau.couler(0.0, 1)
+		_siphons_apres = {}
 		for k in _fontes:
 			glacons[k].coule = 0.0
 			glacons[k].reste = _fontes[k][1]
@@ -2039,6 +2077,56 @@ func pomper(i: int) -> void:
 	pompes[i].pomper()
 	await pompes[i].coup_fini
 
+# Les siphons : un tuyau en U renversé, de sa crépine dans un bassin à sa
+# crépine dans l'autre, par-dessus tout ce qui est entre eux. L'arche passe
+# une unité au-dessus de la plus haute crête qu'elle enjambe, sur la berge du
+# fond, derrière les tours des portes ; la roue d'amorçage est au-dessus de
+# la première liaison enjambée.
+func _bout_siphon(ib: int, crepine: float, vers_droite: bool) -> Vector2:
+	if mares.has(ib):
+		var m: Mare = mares[ib]
+		return Vector2(m.cx + m.rx * (0.45 if vers_droite else -0.45), m.y_rive) + D * 1.15
+	var xb := _x_bassin(ib)
+	var x := lerpf(xb.x, xb.y, 0.62 if vers_droite else 0.38) if N["bassins"][ib]["type"] != "sas" else lerpf(xb.x, xb.y, 0.5)
+	return Vector2(x, Y(crepine)) + D
+
+func _construire_siphons(e: Dictionary) -> void:
+	var objets: Array = N.get("objets", [])
+	var r: int = N["liaisons"].size()
+	for k in objets.size():
+		if objets[k]["type"] != "siphon": continue
+		_rang_siphon[k] = r
+		r += 1
+		var o: Dictionary = objets[k]
+		var ia := int(o["a"])
+		var ib := int(o["b"])
+		var g := mini(ia, ib)
+		var d := maxi(ia, ib)
+		var haut_ := berge
+		for j in range(g, d):
+			var l: Dictionary = N["liaisons"][j]
+			haut_ = maxf(haut_, float(l.get("crete", 0.0)) + 0.6)
+		var y_arche := Y(haut_ + 0.4) + D.y
+		var pa := _bout_siphon(ia, float(o["ha"]), ia < ib)
+		var pb := _bout_siphon(ib, float(o["hb"]), ib < ia)
+		var chemin := PackedVector2Array([pa, Vector2(pa.x, y_arche), Vector2(pb.x, y_arche), pb])
+		var xs := X(gl[g][0] + gl[g][1]) * 0.5 + D.x
+		var sp := Siphon.new()
+		sp.preparer(self, k, chemin, Vector2(xs, y_arche - 0.16 * UY), int(e["obj"][k]) == 1)
+		# des poteaux tous les 2,3 unités environ, sur la berge du fond des
+		# bassins de pierre (pas sur une porte, ni au-dessus de la mare)
+		var xp := minf(pa.x, pb.x) + 1.2 * U
+		while xp < maxf(pa.x, pb.x) - 0.8 * U:
+			var x_coupe := xp - D.x
+			var ib_ := bassin_sous(x_coupe)
+			var sur_bassin := x_coupe > X(gb[ib_][0]) + 10.0 and x_coupe < X(gb[ib_][1]) - 10.0
+			if sur_bassin and not _naturel(ib_) and absf(xp - xs) > 0.6 * U:
+				sp.poteaux.append([xp, y_arche + 0.16 * UY, Y(sommets_fond[ib_]) + D.y + 2.0])
+			xp += 2.3 * U
+		_cible_arriere.add_child(sp)
+		add_child(sp.roue)
+		siphons[k] = sp
+
 # Un voyage du bac : le quai ouvert se ferme, le bac monte ou descend avec
 # son eau et son bateau (le treuil tourne, les contrepoids filent à l'envers),
 # puis le quai d'arrivée s'entrouvre ; l'écoulement qui suit égalise l'eau du
@@ -2075,6 +2163,16 @@ func voyage_bac(k: int, avant: Dictionary, apres: Dictionary) -> void:
 	portes[q].vanne_ouverte = true
 	portes[q].entrouvrir(true)
 
+# Amorcer : la roue tourne, le tuyau se remplit.
+func amorcer(k: int) -> void:
+	siphons[k].regler(true)
+	await get_tree().create_timer(0.45).timeout
+
+func siphon_sous(p: Vector2) -> int:
+	for k in siphons:
+		if siphons[k].sous(p): return k
+	return -1
+
 func bac_sous(p: Vector2) -> int:
 	for k in bacs:
 		if bacs[k].sous(p): return k
@@ -2092,6 +2190,10 @@ func glacon_sous(p: Vector2) -> int:
 
 # Avant l'écoulement d'un coup : les glaçons qui fondent pendant ce coup-ci.
 func objets_changent(avant: Dictionary, apres: Dictionary) -> void:
+	for k in siphons:
+		# désamorcé pendant le coup : le tuyau reste plein tant que l'eau
+		# coule, et se vide une fois l'eau posée
+		_siphons_apres[k] = int(apres["obj"][k]) == 1
 	for i in marees: marees[i].regler(int(apres["phase"]), int(apres["coups"]))
 	for k in glacons:
 		var a := int(avant["obj"][k])

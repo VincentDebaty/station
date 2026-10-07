@@ -28,7 +28,7 @@ func preparer(c: Canal, ai: int, arive: float) -> void:
 	fond = float(b["fond"]); rive = arive
 	y_rive = c.Y(rive)
 	# un peu en retrait du canal, pour que la rigole ait de la longueur
-	cx = c.X(c.gb[ai][0] + c.gb[ai][1]) * 0.5 + 0.6 * c.U
+	cx = c.X(c.gb[ai][0] + c.gb[ai][1]) * 0.5 + (0.6 if ai > 0 else -0.6) * c.U
 	rx = c.X(c.gb[ai][1] - c.gb[ai][0]) * 0.36
 	if ResourceLoader.exists("res://art/roseaux.png"): _roseau = Images.reduire("res://art/roseaux.png", 160)
 	if ResourceLoader.exists("res://art/nenuphar.png"): _nenuphar = Images.reduire("res://art/nenuphar.png", 120)

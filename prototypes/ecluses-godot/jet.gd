@@ -143,15 +143,17 @@ func _lame() -> void:
 		return
 	# le dessus de la nappe : du bord de devant au bord du fond, plus clair au
 	# fond (il reçoit le ciel), un peu transparent
-	var dessus := PackedVector2Array()
-	var couleurs := PackedColorArray()
-	for q in pts:
-		dessus.append(q)
-		couleurs.append(Color(0.3, 0.68, 0.84, 0.82))
-	for k in range(pts.size() - 1, -1, -1):
-		dessus.append(pts[k] + D)
-		couleurs.append(Color(0.55, 0.85, 0.95, 0.82))
-	draw_polygon(dessus, couleurs)
+	# segment par segment : d'un seul tenant, le polygone se recoupait quand
+	# l'eau coulait vers la gauche (la profondeur part aussi vers la gauche),
+	# et Godot refusait de le trianguler — la nappe disparaissait
+	var avant_c := Color(0.3, 0.68, 0.84, 0.82)
+	var fond_c := Color(0.55, 0.85, 0.95, 0.82)
+	for k in pts.size() - 1:
+		var q0 := pts[k]
+		var q1 := pts[k + 1]
+		# un segment parallèle à la profondeur donne un quadrilatère plat
+		if absf((q1 - q0).cross(D)) < 0.5: continue
+		draw_polygon(PackedVector2Array([q0, q1, q1 + D, q0 + D]), PackedColorArray([avant_c, avant_c, fond_c, fond_c]))
 	# des filets clairs, à plusieurs profondeurs, qui glissent avec le courant
 	for z in [0.15, 0.35, 0.55, 0.75, 0.92]:
 		for k in 3:
@@ -167,10 +169,9 @@ func _lame() -> void:
 	for q in pts:
 		if q.y > origine.y + 6.0: chute.append(q)
 	if chute.size() >= 2:
-		var tranche := PackedVector2Array()
-		for q in chute: tranche.append(q + Vector2(0, -ep * 0.5))
-		for k in range(chute.size() - 1, -1, -1): tranche.append(chute[k] + Vector2(0, ep * 0.5))
-		draw_colored_polygon(tranche, Color(0.22, 0.6, 0.78, 0.85))
+		# un trait épais plutôt qu'un ruban décalé en hauteur : là où la chute
+		# devient verticale, le ruban s'aplatissait et ne se triangulait plus
+		draw_polyline(chute, Color(0.22, 0.6, 0.78, 0.85), maxf(ep, 1.5), true)
 	draw_polyline(pts, Color(0.85, 0.97, 1.0, 0.5), 1.2, true)
 	# l'écume le long de la ligne de chute, sur toute la largeur
 	for z in [0.0, 0.25, 0.5, 0.75, 1.0]:

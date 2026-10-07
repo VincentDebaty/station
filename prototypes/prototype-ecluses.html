@@ -272,8 +272,9 @@ button:focus-visible, [role="button"]:focus-visible { outline: 3px solid var(--o
     {"n": 7, "titre": "L'orage", "decor": "campagne", "resume": "Il pleut à chaque coup, dans tous les bassins. L'eau qui manquait arrive toute seule, mais elle ne s'arrête pas quand il y en a assez."},
     {"n": 8, "titre": "La marée", "decor": "campagne", "resume": "La mer monte et descend d'un cran à chaque coup, et l'on sait d'avance jusqu'où. Une porte ouverte à marée haute remplit le sas pour rien."},
     {"n": 9, "titre": "L'ascenseur", "decor": "campagne", "resume": "Un bac d'acier monte et descend avec son eau et le bateau, sans écluse. Mais l'eau qu'il emporte se mélange à celle du bief où il s'arrête."},
-    {"n": 10, "titre": "Les canaux", "decor": "collines", "resume": "Creuser les digues, puis lâcher l'eau et regarder où elle va."},
-    {"n": 11, "titre": "Le fleuve", "decor": "estuaire", "resume": "L'eau arrive toute seule, à chaque coup. Il faut la conduire avant qu'elle déborde."}
+    {"n": 10, "titre": "Le siphon", "decor": "campagne", "resume": "Un tuyau en U renversé, par-dessus une levée ou une porte. Amorcé, il fait passer l'eau du plus haut au plus bas, jusqu'à ce que son bout sorte de l'eau."},
+    {"n": 11, "titre": "Les canaux", "decor": "collines", "resume": "Creuser les digues, puis lâcher l'eau et regarder où elle va."},
+    {"n": 12, "titre": "Le fleuve", "decor": "estuaire", "resume": "L'eau arrive toute seule, à chaque coup. Il faut la conduire avant qu'elle déborde."}
   ],
   "niveaux": [
     {
@@ -564,9 +565,36 @@ button:focus-visible, [role="button"]:focus-visible { outline: 3px solid var(--o
         {"de": 2, "vers": 4, "tirant": 1}
       ]
     },
-    {
+{
       "id": "10-1",
       "chapitre": 10,
+      "titre": "Le siphon",
+      "mode": "pas",
+      "par": 6,
+      "conseil": "Touche la roue rouge sur le tuyau : le siphon s'amorce, et l'eau de l'étang passe par-dessus la levée jusqu'au sas. Elle coule jusqu'à ce que le bout du tuyau sorte de l'eau.",
+      "requis": ["amorcer"],
+      "bassins": [
+        {"type": "reservoir", "fond": 4, "largeur": 6, "niveau": 6, "nom": "étang"},
+        {"type": "bief", "fond": 3, "largeur": 6, "niveau": 4, "nom": "bief amont"},
+        {"type": "sas", "fond": 0, "largeur": 2, "niveau": 1, "nom": "sas"},
+        {"type": "bief", "fond": 0, "largeur": 6, "niveau": 1, "nom": "bief aval"}
+      ],
+      "liaisons": [
+        {"type": "mur", "crete": 6.2},
+        {"type": "porte", "seuil": 3, "crete": 6},
+        {"type": "porte", "seuil": 0, "crete": 6}
+      ],
+      "objets": [
+        {"type": "siphon", "a": 0, "b": 2, "ha": 4.5, "hb": 0.3}
+      ],
+      "bateaux": [
+        {"de": 3, "vers": 1, "tirant": 1},
+        {"de": 1, "vers": 3, "tirant": 1}
+      ]
+    },
+    {
+      "id": "11-1",
+      "chapitre": 11,
       "titre": "Le premier sillon",
       "mode": "chantier",
       "par": 4,
@@ -584,8 +612,8 @@ button:focus-visible, [role="button"]:focus-visible { outline: 3px solid var(--o
       "bateaux": []
     },
     {
-      "id": "10-2",
-      "chapitre": 10,
+      "id": "11-2",
+      "chapitre": 11,
       "titre": "Les rizières",
       "mode": "chantier",
       "par": 5,
@@ -607,8 +635,8 @@ button:focus-visible, [role="button"]:focus-visible { outline: 3px solid var(--o
       "bateaux": []
     },
     {
-      "id": "10-3",
-      "chapitre": 10,
+      "id": "11-3",
+      "chapitre": 11,
       "titre": "Remettre à flot",
       "mode": "chantier",
       "par": 6,
@@ -632,8 +660,8 @@ button:focus-visible, [role="button"]:focus-visible { outline: 3px solid var(--o
       ]
     },
     {
-      "id": "11-1",
-      "chapitre": 11,
+      "id": "12-1",
+      "chapitre": 12,
       "titre": "Le fleuve monte",
       "mode": "pas",
       "par": 5,
@@ -654,8 +682,8 @@ button:focus-visible, [role="button"]:focus-visible { outline: 3px solid var(--o
       ]
     },
     {
-      "id": "11-2",
-      "chapitre": 11,
+      "id": "12-2",
+      "chapitre": 12,
       "titre": "Le déversoir",
       "mode": "pas",
       "par": 8,
@@ -680,8 +708,8 @@ button:focus-visible, [role="button"]:focus-visible { outline: 3px solid var(--o
       ]
     },
     {
-      "id": "11-3",
-      "chapitre": 11,
+      "id": "12-3",
+      "chapitre": 12,
       "titre": "La crue",
       "mode": "pas",
       "par": 6,
@@ -763,6 +791,14 @@ const Ecluses = (function () {
   //                arrêté, qui s'ouvre comme un passage libre (l'eau du bac et
   //                celle du bief s'égalisent, les bateaux passent). « en_haut » :
   //                le bac part d'en haut.
+  //     siphon     un tuyau en U renversé entre deux bassins « a » et « b »,
+  //                voisins ou non, par-dessus ce qui les sépare. Ses crépines
+  //                sont à « ha » et « hb ». « amorcer » (état 0 → 1) : tant
+  //                qu'il est amorcé, l'eau va du plus haut au plus bas, et le
+  //                bassin qui se vide ne descend pas sous sa crépine. Quand
+  //                une crépine sort de l'eau, l'air entre : le siphon se
+  //                désamorce (état 0). Son débit s'ajoute, dans le tableau
+  //                des flux, après ceux des liaisons.
   //   pluie      l'orage : chaque coup, chaque bassin (sauf la mer et le
   //              village, où elle s'infiltre) monte de « pluie »
   //   maree      la mer suit une suite de niveaux connue d'avance, un pas
@@ -884,22 +920,66 @@ const Ecluses = (function () {
       i = j + 1;
     }
   }
+  // Les siphons amorcés, comme des liaisons de plus : [a, b, seuil vers b, seuil vers a].
+  function siphons(N, e) {
+    const S = [];
+    (N.objets || []).forEach((o, k) => { if (o.type === "siphon" && e.obj[k] === 1) S.push(k); });
+    return S;
+  }
+  function paireSiphon(N, e, k) {
+    const o = N.objets[k], a = e.niv[o.a], c = e.niv[o.b];
+    if (Math.abs(a - c) < 1e-12) return 0;
+    const h = a > c ? o.a : o.b, l = a > c ? o.b : o.a;
+    const s = a > c ? o.ha : o.hb;             // le bassin qui se vide ne descend pas sous sa crépine
+    const H = N.bassins[h], L = N.bassins[l], nh = e.niv[h], nl = e.niv[l];
+    if (nh <= s + 1e-12 || (H.fixe && L.fixe)) return 0;
+    let vol;
+    if (H.fixe) vol = (nh - nl) * L.largeur;
+    else if (L.fixe) vol = (nh - s) * H.largeur;
+    else {
+      const m = (H.largeur * nh + L.largeur * nl) / (H.largeur + L.largeur);
+      vol = (nh - Math.max(m, s)) * H.largeur;
+    }
+    return h === o.a ? vol : -vol;
+  }
+  function verserSiphon(N, e, k, vol, flux, j) {
+    if (!vol) return;
+    flux[j] += vol;
+    const o = N.objets[k], A = N.bassins[o.a], C = N.bassins[o.b];
+    if (A.fixe) { if (vol > 0) e.entree += vol; else e.sortie -= vol; } else e.niv[o.a] -= vol / A.largeur;
+    if (C.fixe) { if (vol > 0) e.sortie += vol; else e.entree -= vol; } else e.niv[o.b] += vol / C.largeur;
+  }
   function equilibrer(N, e) {
-    const n = N.liaisons.length, flux = new Array(n).fill(0);
+    const n = N.liaisons.length;
+    const nS = (N.objets || []).filter(o => o.type === "siphon").length;
+    const flux = new Array(n + nS).fill(0);
+    // le rang de chaque siphon dans le tableau des flux
+    const rang = {};
+    let r = n;
+    (N.objets || []).forEach((o, k) => { if (o.type === "siphon") rang[k] = r++; });
+    const S = siphons(N, e);
     for (let tour = 0; tour < 20000; tour++) {
-      const v = [];
+      const v = [], w = [];
       let max = 0;
       for (let i = 0; i < n; i++) { v.push(paire(N, e, i) / 2); max = Math.max(max, Math.abs(v[i])); }
+      for (const k of S) { w.push(paireSiphon(N, e, k) / 2); max = Math.max(max, Math.abs(w[w.length - 1])); }
       if (max < 1e-10) break;
       if (max < 1e-4) {
         // les restes sont infimes : on les verse en entier, puis on pose les groupes
         for (let i = 0; i < n; i++) verser(N, e, i, paire(N, e, i), flux);
+        for (const k of S) verserSiphon(N, e, k, paireSiphon(N, e, k), flux, rang[k]);
         poser(N, e);
         continue;
       }
       for (let i = 0; i < n; i++) verser(N, e, i, v[i], flux);
+      S.forEach((k, j) => verserSiphon(N, e, k, w[j], flux, rang[k]));
     }
     e.niv = e.niv.map(arrondi);
+    // une crépine hors de l'eau : l'air entre, le siphon se désamorce
+    for (const k of S) {
+      const o = N.objets[k];
+      if (e.niv[o.a] <= o.ha + 1e-6 || e.niv[o.b] <= o.hb + 1e-6) e.obj[k] = 0;
+    }
     return flux.map(arrondi);
   }
 
@@ -967,6 +1047,7 @@ const Ecluses = (function () {
       if (o.type === "chaudiere" && profondeur(N, e, o.bassin) > EPS) A.push({ type: "chauffer", i });
       if (o.type === "glacon" && e.obj[i] === -1) A.push({ type: "allumer", i });
       if (o.type === "ascenseur") A.push({ type: "ascenseur", i });
+      if (o.type === "siphon" && e.obj[i] === 0 && (e.niv[o.a] > o.ha + EPS || e.niv[o.b] > o.hb + EPS)) A.push({ type: "amorcer", i });
     });
     if (!e.lache) A.push({ type: "lacher" });
     else if (temps(N) || e.obj.some((x, k) => N.objets[k].type === "glacon" && x > 0)) A.push({ type: "attendre" });
@@ -990,6 +1071,7 @@ const Ecluses = (function () {
       e.sortie += vol;
     }
     else if (a.type === "allumer") e.obj[a.i] = N.objets[a.i].fonte;
+    else if (a.type === "amorcer") e.obj[a.i] = 1;
     else if (a.type === "ascenseur") {
       // le bac monte ou descend avec son eau : son niveau suit son fond
       const o = N.objets[a.i];

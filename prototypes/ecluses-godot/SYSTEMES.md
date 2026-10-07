@@ -45,7 +45,7 @@ Tout système nouveau se range dans l'une de ces familles :
 | 10 | Clapet | aucun | rien : l'eau ne passe que dans un sens | à écrire | faible |
 | 11 | Pompe | un coup = un volume qui monte | quand dépenser un coup pour remonter de l'eau | **écrite** (chap. 4, niveau 4-1, 7 octobre 2026) | faible |
 | 12 | Marée | aucun (la mer monte et descend), ou attendre | le bon moment | **écrite** (chap. 8, niveau 8-1, nuit du 7 au 8 octobre 2026) | faible |
-| 13 | Siphon | l'amorcer | faire passer l'eau par-dessus un mur | à écrire | moyen |
+| 13 | Siphon | l'amorcer (la roue rouge sur le tuyau) | faire passer l'eau par-dessus une levée, jusqu'à un bassin qui n'est pas voisin | **écrit** (chap. 10, niveau 10-1, nuit du 7 au 8 octobre 2026) | moyen |
 | 14 | Ascenseur à bateaux | un coup (la roue du treuil) | combien d'eau le bac emporte | **écrit** (chap. 9, niveau 9-1, nuit du 7 au 8 octobre 2026) | moyen |
 | 15 | Bassin d'épargne | une vanne latérale | garder de l'eau pour plus tard | à écrire | fort |
 | 18 | Glaçon et brasero (gel, feu) | allumer une fois, puis le temps passe | quand allumer : l'eau arrive en trois coups, là où elle est posée | **écrite** (chap. 6, niveau 6-1, nuit du 7 au 8 octobre 2026) | moyen |
@@ -123,7 +123,24 @@ trois planches exactement, sinon le village est inondé.
   **Risque :** le joueur doit voir venir la marée (une jauge, ou la suite
   affichée).
 
-### 13. Siphon
+### 13. Siphon — écrit le 8 octobre 2026 (chapitre 10, niveau 10-1)
+- **Ce qui a été fait :** `objets`, type `siphon`, entre deux bassins `a` et
+  `b` quelconques, crépines à `ha` et `hb`. Amorcé, il égalise les deux
+  bassins comme une liaison de plus (le moteur le traite dans
+  `equilibrer()`, son débit vient après ceux des liaisons) ; le bassin qui se
+  vide ne descend pas sous sa crépine, et quand une crépine sort de l'eau, il
+  se désamorce.
+- **On voit :** un tuyau sur des poteaux de bois, le long de la berge du
+  fond, derrière les tours des portes ; ses bouts plongent dans la mare et
+  dans le sas ; une roue rouge sur l'arche, et une goutte bleue qui invite à
+  l'amorcer. L'eau court dans le tuyau, la mare rétrécit.
+- **Le niveau 10-1 :** une mare derrière une levée, plus haute que le canal.
+  Le siphon la vide dans le sas — par-dessus la levée et le bief amont —
+  jusqu'à sa crépine : juste de quoi monter le bateau rouge, si la porte du
+  bief amont est ouverte au bon moment pour partager l'eau. Par 6 ; au
+  hasard, moins d'une partie sur cent est gagnée.
+
+### 13 bis. Siphon — l'idée de départ
 - **On voit :** un tuyau en U renversé, par-dessus un mur, avec un robinet
   d'amorçage.
 - **La règle :** une fois amorcé, il égalise deux bassins par-dessus leur

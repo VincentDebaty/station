@@ -47,7 +47,7 @@ var _sure: Control      # la zone sûre : tout ce qu'on touche ou qu'on lit y re
 # Le niveau sur lequel le jeu s'ouvre : celui qu'on est en train d'essayer
 # (Vincent, 7 octobre 2026 : « quand tu déploies sur l'iPhone, tu proposes le
 # nouveau niveau à chaque fois »). À changer à chaque nouveauté.
-const NIVEAU_EN_TEST := "9-1"
+const NIVEAU_EN_TEST := "10-1"
 
 func _ready() -> void:
 	_tous = JSON.parse_string(FileAccess.get_file_as_string("res://niveaux.json"))["niveaux"]
@@ -120,6 +120,10 @@ func _cadrer() -> void:
 # --- Le toucher et les coups ----------------------------------------------------------
 func _unhandled_input(ev: InputEvent) -> void:
 	if ev is InputEventMouseButton and ev.pressed and ev.button_index == MOUSE_BUTTON_LEFT:
+		var isi := canal.siphon_sous(get_global_mouse_position())
+		if isi >= 0:
+			jouer({"type": "amorcer", "i": isi})
+			return
 		var ia := canal.bac_sous(get_global_mouse_position())
 		if ia >= 0:
 			jouer({"type": "ascenseur", "i": ia})
@@ -178,6 +182,8 @@ func jouer(a: Dictionary) -> void:
 		await canal.allumer(int(a["i"]))
 	elif a["type"] == "ascenseur":
 		await canal.voyage_bac(int(a["i"]), avant, etat)
+	elif a["type"] == "amorcer":
+		await canal.amorcer(int(a["i"]))
 	elif a["type"] == "creuser" and canal.rigoles.has(int(a["i"])):
 		# un coup de pelle : l'entaille se creuse, des mottes volent, puis
 		# l'eau file
@@ -733,6 +739,10 @@ func _process(dt: float) -> void:
 			var A := Moteur.actions(N, etat) if not occupe and not fini else []
 			for ip in canal.pompes:
 				canal.pompes[ip].actif = A.any(func(x): return x["type"] == "pomper" and int(x["i"]) == ip)
+		if not canal.siphons.is_empty():
+			var A6 := Moteur.actions(N, etat) if not occupe and not fini else []
+			for isi in canal.siphons:
+				canal.siphons[isi].actif = A6.any(func(x): return x["type"] == "amorcer" and int(x["i"]) == isi)
 		if not canal.bacs.is_empty():
 			var A5 := Moteur.actions(N, etat) if not occupe and not fini else []
 			for ia in canal.bacs:
