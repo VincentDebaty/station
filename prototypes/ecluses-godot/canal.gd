@@ -444,17 +444,47 @@ func _dessous_des_bassins() -> void:
 		var a := X(gl[i][0])
 		var b := X(gl[i][1])
 		var yh := Y(haut)
-		_poly(PackedVector2Array([Vector2(a, yh), Vector2(b, yh), Vector2(b + D.x, yh + D.y), Vector2(a + D.x, yh + D.y)]), dessus)
+		var prof := D.length()
+		# Chaque face porte la pierre dans SES coordonnées (les joints suivent la
+		# profondeur) : posée à l'échelle du monde, elle prolongeait les joints
+		# du mur du fond, et le bloc paraissait creux (Vincent).
+		_face(PackedVector2Array([Vector2(a, yh), Vector2(b, yh), Vector2(b + D.x, yh + D.y), Vector2(a + D.x, yh + D.y)]),
+			PackedVector2Array([Vector2(0, prof), Vector2(b - a, prof), Vector2(b - a, 0), Vector2(0, 0)]), Color(1.08, 1.04, 0.96), dessus)
 		var yg := Y(float(B[i]["fond"]))
 		if yg > yh + 0.5:
-			_poly(PackedVector2Array([Vector2(a + D.x, yh + D.y), Vector2(a, yh), Vector2(a, yg), Vector2(a + D.x, yg + D.y)]), face)
-		# l'arête du dessus, claire, côté coupe
-		_poly(_quad(a, yh - 1.0, b, yh + 1.5), null, PackedColorArray([Color(1, 0.97, 0.88, 0.45)]))
+			_face(PackedVector2Array([Vector2(a + D.x, yh + D.y), Vector2(a, yh), Vector2(a, yg), Vector2(a + D.x, yg + D.y)]),
+				PackedVector2Array([Vector2(0, 0), Vector2(prof, 0), Vector2(prof, yg - yh), Vector2(0, yg - yh)]), Color(0.62, 0.58, 0.54), face)
+			# l'arête verticale de devant, claire, et celle du fond, sombre
+			_poly(_quad(a - 1.5, yh, a + 0.5, yg), null, PackedColorArray([Color(1, 0.96, 0.86, 0.5)]))
+			var fond_arete := PackedVector2Array([Vector2(a + D.x, yh + D.y), Vector2(a + D.x + 2.0, yh + D.y), Vector2(a + D.x + 2.0, yg + D.y), Vector2(a + D.x, yg + D.y)])
+			_poly(fond_arete, null, PackedColorArray([Color(0.2, 0.13, 0.07, 0.55)]))
+		# l'arête du dessus, claire, côté coupe, et celle du fond, sombre
+		_poly(_quad(a, yh - 1.0, b, yh + 1.5), null, PackedColorArray([Color(1, 0.97, 0.88, 0.5)]))
+		_poly(PackedVector2Array([Vector2(a + D.x, yh + D.y - 1.0), Vector2(b + D.x, yh + D.y - 1.0), Vector2(b + D.x, yh + D.y + 1.0), Vector2(a + D.x, yh + D.y + 1.0)]), null, PackedColorArray([Color(0.2, 0.13, 0.07, 0.45)]))
 	var n := B.size()
 	if not B[n - 1].get("fixe", false):
 		var xb := _x_bassin(n - 1)
 		var y := Y(float(B[n - 1]["fond"]))
 		_poly(PackedVector2Array([Vector2(xb.y + D.x, Y(berge) + D.y), Vector2(xb.y, Y(berge)), Vector2(xb.y, y), Vector2(xb.y + D.x, y + D.y)]), paroi)
+
+# Une face de maçonnerie en biais : la pierre peinte plaquée dans les
+# coordonnées de la face (« plan », en pixels), teintée ; sans image, le
+# matériau dessiné du shader.
+func _face(points: PackedVector2Array, plan: PackedVector2Array, teinte: Color, secours: Material) -> void:
+	var t := Peint.pierre()
+	if t == null:
+		_poly(points, secours)
+		return
+	var p := Polygon2D.new()
+	p.polygon = points
+	p.texture = t
+	p.texture_repeat = CanvasItem.TEXTURE_REPEAT_ENABLED
+	var k := float(t.get_width()) / Peint.tuile_pierre().x      # pixels de texture par pixel du monde
+	var uv := PackedVector2Array()
+	for q in plan: uv.append(q * k)
+	p.uv = uv
+	p.color = teinte
+	_ajouter(p)
 
 # La surface de l'eau vue d'en haut, en oblique : une bande de la coupe au mur
 # du fond, en deux moitiés. Celle du fond passe derrière les bateaux ; celle de
