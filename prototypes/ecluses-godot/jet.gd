@@ -71,6 +71,10 @@ func chute() -> Vector2:
 
 func _process(dt: float) -> void:
 	_t += dt
+	# la nappe pâlit à mesure que l'eau d'amont s'épuise, jusqu'à rien : sans
+	# cela, sa face vue d'en haut gardait toute la largeur du canal et
+	# disparaissait d'un coup (Vincent)
+	modulate.a = clampf(fente / 10.0, 0.0, 1.0)
 	bulles.emitting = force > 0.05 and noye()
 	if bulles.emitting:
 		bulles.global_position = to_global(origine + profondeur * 0.5 + Vector2(sens * (26.0 + 30.0 * force), 0))

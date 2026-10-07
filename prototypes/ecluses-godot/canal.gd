@@ -591,8 +591,10 @@ func _maj_surfaces() -> void:
 		if sec: continue
 		f.polygon = _bande(bord, 0.5, 1.0)
 		a.polygon = _bande(bord, 0.0, 0.5)
-		f.vertex_colors = _degrade_bande(bord.size(), Color(0.34, 0.76, 0.88, 0.96), Color(0.64, 0.88, 0.95, 0.96))
-		a.vertex_colors = _degrade_bande(bord.size(), Color(0.17, 0.6, 0.78, 0.78), Color(0.34, 0.76, 0.88, 0.78))
+		# un bassin presque vide : sa surface pâlit avec la profondeur (8 px)
+		var mince := clampf((w.fond_y - w.repos) / 8.0, 0.0, 1.0)
+		f.vertex_colors = _degrade_bande(bord.size(), Color(0.34, 0.76, 0.88, 0.96 * mince), Color(0.64, 0.88, 0.95, 0.96 * mince))
+		a.vertex_colors = _degrade_bande(bord.size(), Color(0.17, 0.6, 0.78, 0.78 * mince), Color(0.34, 0.76, 0.88, 0.78 * mince))
 
 # La hauteur commune de deux eaux au milieu d'une porte levée.
 func _jonction(g: int) -> float:
