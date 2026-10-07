@@ -88,7 +88,9 @@ func _draw() -> void:
 # tranche de devant, plus sombre, de l'épaisseur de la fente. Elle tombe sur
 # toute la largeur, et l'écume court le long de la ligne de chute.
 func _lame() -> void:
-	var vx := (55.0 + 120.0 * force) * sens
+	# presque verticale : l'eau tombe le long de la porte, sans arroser le
+	# bateau qui attend dans le sas (Vincent : « la cascade noie le bateau »)
+	var vx := (14.0 + 34.0 * force) * sens
 	var g := 900.0
 	var pts := PackedVector2Array()
 	var t := 0.0

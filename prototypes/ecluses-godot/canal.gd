@@ -87,6 +87,19 @@ func X(x: float) -> float: return x * U
 func Y(h: float) -> float: return (haut - h) * UY
 func rect_monde() -> Rect2: return Rect2(0, 0, X(largeur), Y(BAS))
 
+# La largeur DESSINÉE d'un bassin, en unités. Le moteur calcule les volumes
+# avec la largeur du niveau, et le dessin n'a pas à la suivre : un sas de 2
+# unités tenait tout juste un bateau de 1,75, qui y paraissait coincé, et la
+# cascade de la porte lui tombait dessus (Vincent, 7 octobre 2026 : « il faut
+# toujours un peu d'espace en plus pour qu'un bateau ne soit pas coincé »).
+# Chaque place de bateau a donc son jeu de JEU unités de chaque côté.
+const LONG_BATEAU := 1.75
+const JEU := 0.45
+func _largeur_vue(i: int) -> float:
+	var l := float(N["bassins"][i]["largeur"])
+	var places := mini(Moteur.capacite(N, i), maxi(N["bateaux"].size(), 1))
+	return maxf(l, places * LONG_BATEAU + (places + 1) * JEU)
+
 # --- La construction ---------------------------------------------------------------
 func construire(niveau: Dictionary, e: Dictionary) -> void:
 	N = niveau
@@ -95,8 +108,9 @@ func construire(niveau: Dictionary, e: Dictionary) -> void:
 	var x := 0.0 if B[0].get("fixe", false) else MARGE
 	var crete_max := 0.0
 	for i in n:
-		gb.append([x, x + float(B[i]["largeur"])])
-		x += float(B[i]["largeur"])
+		var l := _largeur_vue(i)
+		gb.append([x, x + l])
+		x += l
 		if i < n - 1:
 			gl.append([x, x + MUR])
 			x += MUR
@@ -224,7 +238,7 @@ func construire(niveau: Dictionary, e: Dictionary) -> void:
 		var b: Dictionary = N["bateaux"][k]
 		bt.couleur = COULEURS[k % COULEURS.size()]
 		bt.tirant = float(b["tirant"]) * UY * 0.92
-		bt.longueur = 1.75 * U
+		bt.longueur = LONG_BATEAU * U
 		bt.sens = 1.0 if int(b["vers"]) >= int(b["de"]) else -1.0
 		# un seul modèle, le bateau rouge, repeint pour les autres : ChatGPT
 		# redessine au lieu de recolorier, et la taille changeait à chaque fois
