@@ -142,6 +142,20 @@ trois planches exactement, sinon le village est inondé.
 - **Coût :** fort. Un bassin hors de la rangée oblige à étendre le modèle,
   comme le siphon.
 
+### 16. Déversoir et débordement hors du canal (idée du 7 octobre 2026)
+- **Né d'un essai de Vincent :** il voulait faire déborder le bief amont du
+  4-1 en pompant. Aujourd'hui, le surplus passe par-dessus la porte fermée
+  (c'est la règle, rendue visible le 7 octobre) et rien ne quitte le canal.
+- **Variante A, le déversoir :** une échancrure dans le mur d'un bassin, avec
+  une rigole vers un fossé. Le niveau ne dépasse jamais le déversoir, et
+  l'excès est perdu. C'est une liaison vers un bassin « puits ».
+- **Variante B, le débordement sur le pré :** l'eau passe par-dessus le mur du
+  bassin et s'étale. S'il y a un village de ce côté, il est inondé. C'est un
+  piège pour un niveau de pompe : pomper trop inonde le village.
+- **Coût :** faible pour A (un bassin fixe comme puits, comme la mer) ;
+  moyen pour B (de l'eau qui sort du jeu, le banc doit l'admettre comme une
+  « sortie »).
+
 ### Écartés pour l'instant
 - **Moulin, roue à aubes** qui actionnerait autre chose quand l'eau y passe :
   un enchaînement de causes, trop loin de « sans complexité ».
