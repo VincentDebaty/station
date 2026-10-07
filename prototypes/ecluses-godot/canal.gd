@@ -1773,8 +1773,14 @@ func _trop_plein(g: int, flux: float) -> void:
 	var jt: Jet = trop_pleins[g]
 	var sens := 1.0 if flux > 0 else -1.0
 	var l := g + 1 if flux > 0 else g
+	# Visible tant que le bassin d'en bas monte ; ou, s'il ne monte pas du tout
+	# (l'eau y passe et repart, par exemple par une porte ouverte vers le
+	# bassin d'où la pompe la reprend), pendant tout l'écoulement — sinon le
+	# trop-plein ne se voyait que dans un cas sur deux (Vincent).
 	var reste: float = float(_ecou["apres"][l]) - vue_niv[l]
-	if reste < 0.003:
+	var circule: bool = absf(float(_ecou["apres"][l]) - float(_ecou["avant"][l])) < 1e-4
+	var p := clampf(float(_ecou["t"]) / float(_ecou["T"]), 0.0, 1.0)
+	if (not circule and reste < 0.003) or (circule and p > 0.92):
 		jt.force = 0.0
 		return
 	var crete := float(N["liaisons"][g]["crete"])
