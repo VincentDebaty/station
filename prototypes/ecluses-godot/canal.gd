@@ -446,7 +446,17 @@ func _dessous_des_bassins() -> void:
 		var y := Y(float(B[i]["fond"]))
 		var f0 := X(gb[i][0]) - (DEBORD if i == 0 and B[i].get("fixe", false) else 0.0)
 		var f1 := X(gb[i][1]) + (DEBORD if i == B.size() - 1 and B[i].get("fixe", false) else 0.0)
-		_poly(PackedVector2Array([Vector2(f0, y), Vector2(f1, y), Vector2(f1 + D.x, y + D.y), Vector2(f0 + D.x, y + D.y)]), sol)
+		# Le fond, vu d'en haut comme la surface de l'eau : un plan qui part en
+		# diagonale vers le mur du fond, ses dalles dans SES coordonnées (les
+		# joints suivent la profondeur), éclairé et un peu plus sombre au fond.
+		# Avec la pierre du mur à l'échelle du monde, il passait pour un bout
+		# de mur, et un bateau échoué semblait flotter devant (Vincent).
+		var prof := D.length()
+		var fond_pts := PackedVector2Array([Vector2(f0, y), Vector2(f1, y), Vector2(f1 + D.x, y + D.y), Vector2(f0 + D.x, y + D.y)])
+		_face(fond_pts, PackedVector2Array([Vector2(0, prof), Vector2(f1 - f0, prof), Vector2(f1 - f0, 0), Vector2(0, 0)]), Color(1.04, 1.0, 0.92), sol)
+		_poly(fond_pts, null, PackedColorArray([Color(0, 0, 0, 0), Color(0, 0, 0, 0), Color(0.08, 0.04, 0, 0.28), Color(0.08, 0.04, 0, 0.28)]))
+		# l'arête de devant, claire
+		_poly(_quad(f0, y - 1.0, f1, y + 1.0), null, PackedColorArray([Color(1, 0.97, 0.88, 0.4)]))
 	# Le bloc de maçonnerie entre deux bassins, en volume (Vincent, 7 octobre
 	# 2026 : sous la porte de droite du 1-2, « le mur qui relie les deux
 	# bassins n'a pas de volume, la porte flotte en l'air ») : son dessus, le
@@ -485,7 +495,8 @@ func _dessous_des_bassins() -> void:
 	if not B[n - 1].get("fixe", false):
 		var xb := _x_bassin(n - 1)
 		var y := Y(float(B[n - 1]["fond"]))
-		_poly(PackedVector2Array([Vector2(xb.y + D.x, Y(berge) + D.y), Vector2(xb.y, Y(berge)), Vector2(xb.y, y), Vector2(xb.y + D.x, y + D.y)]), paroi)
+		_face(PackedVector2Array([Vector2(xb.y + D.x, Y(berge) + D.y), Vector2(xb.y, Y(berge)), Vector2(xb.y, y), Vector2(xb.y + D.x, y + D.y)]),
+			PackedVector2Array([Vector2(0, 0), Vector2(D.length(), 0), Vector2(D.length(), y - Y(berge)), Vector2(0, y - Y(berge))]), Color(0.66, 0.62, 0.58), paroi)
 
 # Une face de maçonnerie en biais : la pierre peinte plaquée dans les
 # coordonnées de la face (« plan », en pixels), teintée ; sans image, le
