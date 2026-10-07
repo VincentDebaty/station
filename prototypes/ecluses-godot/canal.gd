@@ -75,6 +75,7 @@ var aqueducs := {}    # liaison -> Aqueduc, le conduit par où passe l'eau d'une
 var _flotte: Node2D
 var hausses := {}     # liaison -> Hausse, ses planches et ses poteaux
 var rigoles := {}     # liaison -> Rigole, la berge de terre que l'on creuse
+var mares := {}       # bassin -> Mare, la cuvette naturelle sur le pré
 var jets := {}        # liaison -> Jet, l'eau sous une porte simple entrouverte
 var bateaux := []     # un Bateau par bateau du niveau
 var positions := []   # bassin de chaque bateau, tel qu'affiché
@@ -220,15 +221,26 @@ func construire(niveau: Dictionary, e: Dictionary) -> void:
 			add_child(po)
 			portes[i] = po
 	# les rigoles : chaque digue est une berge de terre où l'on creuse
+	# la mare : une cuvette sur le pré, vue d'en haut (son eau de bassin n'est
+	# plus dessinée dans la coupe)
+	for i in n:
+		if B[i]["type"] == "reservoir":
+			eaux[i].visible_eau = false
+			var m := Mare.new()
+			m.preparer(self, i, _rive())
+			add_child(m)
+			mares[i] = m
 	for i in N["liaisons"].size():
 		if N["liaisons"][i]["type"] == "digue":
+			var x_mare := X(gl[i][1]) + 0.3 * U
+			if mares.has(i + 1): x_mare = mares[i + 1].cx - mares[i + 1].rx * 0.9
 			var rg := Rigole.new()
-			rg.preparer(self, i, e["crete"][i])
+			rg.preparer(self, i, e["crete"][i], _rive(), x_mare)
 			add_child(rg)
 			rigoles[i] = rg
 			var jt := Jet.new()
-			jt.profondeur = D * 0.3          # un filet étroit, au milieu de la berge
-			jt.position = D * 0.35
+			jt.profondeur = D * Rigole.LARGE          # la largeur de la rigole
+			jt.position = D * (Rigole.Z_BORD - Rigole.LARGE * 0.5)
 			add_child(jt)
 			move_child(jt, _flotte.get_index())
 			jets[i] = jt
@@ -435,6 +447,9 @@ func _murs_du_fond() -> void:
 			# un bief a des quais de pierre presque jusqu'à la berge : la prairie
 			# ne se voit qu'en haut, comme une pente qui s'éloigne
 			sommet = maxf(maxf(f + 2.5, berge - 1.6), float(b.get("niveau", f)) + 0.8)
+		if b["type"] == "reservoir":
+			sommets.append(_rive())
+			continue
 		if _naturel(i):
 			# derrière un pré, la prairie continue (rien à dessiner, le décor
 			# est là) ; derrière un étang, une berge de terre qui le tient,
@@ -500,6 +515,7 @@ func _dessous_des_bassins() -> void:
 		# de mur, et un bateau échoué semblait flotter devant (Vincent).
 		var prof := D.length()
 		var fond_pts := PackedVector2Array([Vector2(f0, y), Vector2(f1, y), Vector2(f1 + D.x, y + D.y), Vector2(f0 + D.x, y + D.y)])
+		if B[i]["type"] == "reservoir": continue
 		if _naturel(i):
 			# un pré (le village) ou un fond de vase (l'étang)
 			_poly(fond_pts, null, PackedColorArray([Color("#86b84f"), Color("#86b84f"), Color("#5f8f37"), Color("#5f8f37")]) if B[i]["type"] == "village"
@@ -530,8 +546,16 @@ func _dessous_des_bassins() -> void:
 		var prof := D.length()
 		if _terrestre(i):
 			# une levée de terre : le dessus en herbe, la face gauche en terre
-			# (une digue, c'est la rigole qui la dessine)
-			if l["type"] == "digue": continue
+			# (une digue : la rigole dessine sa butte ; ici, sa face gauche en
+			# terre, du pré au fond du bassin, derrière l'eau — sans elle, on
+			# voyait la prairie entre le mur du fond et la butte)
+			if l["type"] == "digue":
+				var yr := Y(_rive())
+				var yf := Y(float(B[i]["fond"]))
+				_poly(PackedVector2Array([Vector2(a, yr), Vector2(a, yr) + D, Vector2(a, yf) + D, Vector2(a, yf)]), _mat(SH_TERRE, {"sol_y": Y(0.0)}))
+				_poly(PackedVector2Array([Vector2(a, yr), Vector2(a, yr) + D, Vector2(a, yf) + D, Vector2(a, yf)]), null,
+					PackedColorArray([Color(0.1, 0.05, 0, 0.25), Color(0.1, 0.05, 0, 0.45), Color(0.1, 0.05, 0, 0.45), Color(0.1, 0.05, 0, 0.25)]))
+				continue
 			_poly(PackedVector2Array([Vector2(a, yh), Vector2(b, yh), Vector2(b + D.x, yh + D.y), Vector2(a + D.x, yh + D.y)]), null,
 				PackedColorArray([Color("#9ccc63"), Color("#9ccc63"), Color("#6f9a40"), Color("#6f9a40")]))
 			var yg2 := Y(float(B[i]["fond"]))
@@ -608,6 +632,9 @@ func _maj_surfaces() -> void:
 			_bandes.append([f, a, g, d, bout])
 	for i in eaux.size():
 		var w: Eau = eaux[i]
+		if mares.has(i):
+			for nd in _bandes[i]: nd.visible = false
+			continue
 		# La surface s'arrête contre la face du bloc d'une porte tant que l'eau
 		# est sous son seuil : son bord trace alors, sur la face, la ligne d'eau
 		# en diagonale jusqu'au mur du fond (Vincent). Au-dessus du seuil, elle
@@ -670,6 +697,16 @@ func _maj_surfaces() -> void:
 		var mince := clampf((w.fond_y - w.repos) / 8.0, 0.0, 1.0)
 		f.vertex_colors = _degrade_bande(bord.size(), Color(0.34, 0.76, 0.88, 0.96 * mince), Color(0.64, 0.88, 0.95, 0.96 * mince))
 		a.vertex_colors = _degrade_bande(bord.size(), Color(0.17, 0.6, 0.78, 0.78 * mince), Color(0.34, 0.76, 0.88, 0.78 * mince))
+
+# Le pré au bord de la mare (unités) : un peu au-dessus de son eau et de la
+# crête de sa digue.
+func _rive() -> float:
+	var r := 0.0
+	for i in N["bassins"].size():
+		if N["bassins"][i]["type"] == "reservoir": r = maxf(r, float(N["bassins"][i].get("niveau", N["bassins"][i]["fond"])) + 0.3)
+	for l in N["liaisons"]:
+		if l["type"] == "digue": r = maxf(r, float(l["crete"]) + 0.3)
+	return r
 
 # Un bassin NATUREL : pas de maçonnerie, de la terre et de l'herbe (Vincent,
 # 7 octobre 2026 : un village au fond d'un bassin de pierre vide, « c'est très
@@ -843,6 +880,10 @@ func _coupe_avant() -> void:
 		var x1 := maxf(xb.y, X(gb[i][1]))
 		# le radier du bassin, puis la terre dessous (un bassin naturel n'a
 		# que la terre)
+		if B[i]["type"] == "reservoir":
+			_poly(_quad(x0 - 2, Y(_rive()), x1 + 2, tres_bas), terre)
+			_herbe(x0 - 2, x1 + 2, Y(_rive()))
+			continue
 		if _naturel(i):
 			_poly(_quad(x0 - 2, Y(f), x1 + 2, tres_bas), terre)
 			continue
@@ -857,7 +898,11 @@ func _coupe_avant() -> void:
 			if _terrestre(i):
 				# une levée de terre, un peu évasée en bas, coiffée d'herbe (la
 				# digue d'une rigole est dessinée par la rigole)
-				if N["liaisons"][i]["type"] != "digue":
+				if N["liaisons"][i]["type"] == "digue":
+					# la butte de la rigole : de la terre jusqu'au pré
+					_poly(_quad(X(gl[i][0]), Y(_rive()), X(gl[i][1]), Y(bas)), terre)
+					_herbe(X(gl[i][0]), X(gl[i][1]), Y(_rive()))
+				else:
 					_poly(PackedVector2Array([Vector2(X(gl[i][0]) - 0.15 * U, Y(bas)), Vector2(X(gl[i][0]) + 0.05 * U, Y(c)), Vector2(X(gl[i][1]) - 0.05 * U, Y(c)), Vector2(X(gl[i][1]) + 0.15 * U, Y(bas))]), terre)
 					_herbe(X(gl[i][0]), X(gl[i][1]), Y(c) + 3.0)
 			else:
@@ -880,9 +925,9 @@ func _coupe_avant() -> void:
 	var dn := B.size() - 1
 	if not B[dn].get("fixe", false) and _naturel(dn):
 		# au bout, un étang : sa berge de terre monte jusqu'à la campagne
-		var yb1 := Y(maxf(float(B[dn].get("niveau", B[dn]["fond"])) + 0.6, float(B[dn]["fond"])))
-		_poly(PackedVector2Array([Vector2(g1, tres_bas), Vector2(g1, yb1), Vector2(g1 + 0.4 * U, yb1 - 6.0), Vector2(W + LOIN, yb1 - 6.0), Vector2(W + LOIN, tres_bas)]), terre)
-		_herbe(g1, W + LOIN, yb1 - 4.0)
+		var yb1 := Y(_rive()) if B[dn]["type"] == "reservoir" else Y(maxf(float(B[dn].get("niveau", B[dn]["fond"])) + 0.6, float(B[dn]["fond"])))
+		_poly(_quad(g1, yb1, W + LOIN, tres_bas), terre)
+		_herbe(g1, W + LOIN, yb1)
 	elif not B[B.size() - 1].get("fixe", false):
 		_poly(_quad(g1, Y(berge), W + LOIN, tres_bas), terre)
 		_poly(_quad(g1, Y(berge), g1 + 0.3 * U, Y(float(B[B.size() - 1]["fond"]) - 0.32)), pierre)
@@ -1472,12 +1517,14 @@ func _jet_rigole(i: int, flux: float, dt: float) -> void:
 	jt.fente = minf(maxf(vue_niv[h] - crete, 0.0) * UY, 26.0)
 	if jt.fente < 1.0: jt.force = 0.0
 	var bord_x := X(gl[i][1]) if sens > 0 else X(gl[i][0])
-	jt.depart_x = X(gl[i][0] + gl[i][1]) * 0.5
-	# (en coordonnées de la coupe : le filet est déjà placé à mi-berge)
-	jt.origine = Vector2(bord_x, Y(crete) - jt.fente * 0.5)
+	jt.depart_x = bord_x + 1.0          # la rigole elle-même dessine l'eau qui la descend
+	# elle tombe de la bouche de la rigole, au bord du canal (le filet est
+	# déjà placé à sa profondeur)
+	jt.fente = minf(jt.fente * Rigole.ECHELLE + 3.0, 14.0)
+	jt.origine = rg.bouche(crete) - Vector2(0, jt.fente * 0.5)
 	jt.vantail_x = jt.depart_x
-	jt.y_seuil = Y(crete)
-	jt.haut_veine = Y(crete)
+	jt.y_seuil = 0.0
+	jt.haut_veine = 0.0
 	jt.surface_bas = eaux[l].hauteur_a(bord_x + sens * 60.0)
 	if jt.force <= 0.03: return
 	eaux[l].remous = maxf(eaux[l].remous, jt.force * 0.5)

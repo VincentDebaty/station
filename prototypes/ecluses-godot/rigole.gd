@@ -1,63 +1,68 @@
 class_name Rigole
 extends Node2D
 # ------------------------------------------------------------------
-# LA RIGOLE (chapitre 3, 7 octobre 2026) : une digue de terre herbeuse entre
-# deux bassins, où l'on creuse au doigt. Chaque coup de pelle approfondit
-# l'entaille d'une unité (le moteur : « creuser », la crête baisse jusqu'à
-# « min ») ; l'eau du côté haut file par l'entaille. On ne rebouche pas.
-# Vincent préférait « creuser un petit canal pour déverser l'eau » aux planches
-# d'une hausse, trop proches d'une porte.
+# LA RIGOLE (chapitre 3, 7 octobre 2026, d'après l'image cible validée par
+# Vincent) : entre le bord du canal et la mare, une butte d'herbe. Son tracé
+# est marqué en pointillés, une pelle y est plantée : on devine qu'on peut
+# creuser. Chaque coup de pelle (le moteur : « creuser », la crête de la digue
+# baisse d'une unité) approfondit la rigole le long du tracé, de la mare au
+# bord du canal ; l'eau de la mare la descend et tombe en cascade dans le
+# bassin. On ne rebouche pas.
 #
-# Vue de la gauche comme le reste : la berge a sa face de terre dans la coupe,
-# son dessus en herbe vers le fond, et l'entaille la traverse au milieu de la
-# berge (là où file l'eau), visible sur la face et sur le dessus.
+# La rigole court SUR la butte, à mi-profondeur : la face de terre dans la
+# coupe reste entière. On voit son flanc du fond et son lit ; le pré devant
+# elle cache son flanc avant.
 # ------------------------------------------------------------------
 
 var canal: Canal
 var i := 0
-var vue := 0.0           # le fond de l'entaille affiché, qui descend vers « cible »
+var vue := 0.0           # le lit de la rigole affiché (unités), qui descend vers « cible »
 var cible := 0.0
-var y_max := 0.0          # le haut de la berge (crête de départ)
+var crete0 := 0.0         # la crête de départ : le tracé, pas encore creusé
+var y_rive := 0.0         # le dessus de la butte (y monde, plan de la coupe)
 var y_bas := 0.0
-var x0 := 0.0
-var x1 := 0.0
-var xc := 0.0
-var _mottes := []         # [position, vitesse, âge] des mottes de terre qui volent
-var _terre: ShaderMaterial
+var x_bord := 0.0         # le bord du canal, où l'eau tombe
+var x_mare := 0.0         # l'entrée de la rigole, côté mare
+const Z := 1.15           # la rigole arrive au milieu de la mare, loin dans la profondeur
+const LARGE := 0.5        # sa largeur, en part de la profondeur
+var _mottes := []
+var _pelle: Texture2D
+var _coup := 0.0          # la pelle plonge (1 → 0)
+var _t := 0.0
 
-func preparer(c: Canal, ai: int, crete: float) -> void:
+func preparer(c: Canal, ai: int, crete: float, rive: float, mare_x: float) -> void:
 	canal = c; i = ai
+	vue = crete; cible = crete; crete0 = crete
+	y_rive = c.Y(rive)
 	var B: Array = c.N["bassins"]
-	vue = crete; cible = crete
-	y_max = c.Y(crete)
 	y_bas = c.Y(minf(float(B[ai]["fond"]), float(B[ai + 1]["fond"])))
-	x0 = c.X(c.gl[ai][0]); x1 = c.X(c.gl[ai][1])
-	xc = (x0 + x1) * 0.5
-	_terre = ShaderMaterial.new()
-	_terre.shader = preload("res://shaders/terre.gdshader")
-	_terre.set_shader_parameter("sol_y", c.Y(0.0))
-	Peint.habiller(_terre, "terre")
+	x_bord = c.X(c.gl[ai][0])
+	x_mare = mare_x
+	if ResourceLoader.exists("res://art/pelle.png"): _pelle = Images.reduire("res://art/pelle.png", 140)
 	z_index = 1
 
 func regler(crete: float) -> void:
 	if crete < cible - 0.01:
-		# un coup de pelle : des mottes volent de l'entaille
-		for k in 9:
-			var a := randf_range(-PI * 0.85, -PI * 0.15)
-			_mottes.append([Vector2(xc + randf_range(-6, 6), canal.Y(cible)) + canal.D * 0.5, Vector2(cos(a), sin(a)) * randf_range(80, 170), 0.0])
+		_coup = 1.0
+		for k in 10:
+			var a := randf_range(-PI * 0.9, -PI * 0.1)
+			var x := randf_range(x_bord + 10.0, x_mare - 10.0)
+			_mottes.append([_pt(randf(), 0.0, y_rive), Vector2(cos(a), sin(a)) * randf_range(70, 160), 0.0])
 	cible = crete
 
 func arrive() -> bool:
-	return absf(vue - cible) < 0.01
+	return absf(vue - cible) < 0.01 and _coup <= 0.0
 
-# Le doigt sur la berge ?
+# Le doigt sur la butte ou sur la pelle ?
 func sous(p: Vector2) -> bool:
 	var D := canal.D
-	return p.x > x0 + minf(D.x, 0.0) - 10.0 and p.x < x1 + 10.0 and p.y > y_max + minf(D.y, 0.0) - 0.6 * canal.UY and p.y < y_bas
+	return p.x > x_bord + minf(D.x, 0.0) - 20.0 and p.x < x_mare + 30.0 and p.y > y_rive + D.y * 1.6 - 60.0 and p.y < y_rive + 30.0
 
 func _process(dt: float) -> void:
-	if not is_equal_approx(vue, cible):
-		vue = move_toward(vue, cible, dt * 2.2)
+	_t += dt
+	_coup = maxf(_coup - dt * 2.2, 0.0)
+	if not is_equal_approx(vue, cible) and _coup < 0.5:
+		vue = move_toward(vue, cible, dt * 2.0)
 	for m in _mottes:
 		m[2] += dt
 		m[1] += Vector2(0, 520) * dt
@@ -65,54 +70,67 @@ func _process(dt: float) -> void:
 	_mottes = _mottes.filter(func(m): return m[2] < 0.9)
 	queue_redraw()
 
-# La largeur de l'entaille à la hauteur y : un V évasé, de 0,35 unité au fond.
-func _entaille(prof: float) -> float:
-	return 0.35 * canal.U + prof * 0.55
+# Les points de la rigole, vue d'en haut : son axe va en diagonale de la rive
+# de la mare (loin dans la profondeur) au bord du canal (à mi-profondeur du
+# bassin, où l'eau tombe), comme sur l'image cible. Sa profondeur est dessinée
+# réduite (ECHELLE) : 3 unités de crête creusées feraient une tranchée de
+# 144 px ; la mare, elle aussi, montre sa baisse en rétrécissant.
+const Z_BORD := 0.5
+const ECHELLE := 0.32
+func _pt(x_frac: float, cote: float, y: float) -> Vector2:
+	var D := canal.D
+	var z := lerpf(Z_BORD, Z, x_frac) + cote * LARGE * 0.5
+	return Vector2(lerpf(x_bord, x_mare, x_frac), y) + D * z
 
 func _draw() -> void:
 	var D := canal.D
-	var yv := canal.Y(vue)
-	var prof := maxf(yv - y_max, 0.0)
-	# l'entaille ne dépasse jamais la berge : en V tant qu'elle est peu
-	# profonde, puis en fente droite
-	var largeur_max := (x1 - x0) * 0.5 - 0.1 * canal.U - 3.0
-	var dem := minf(_entaille(prof) * 0.5, largeur_max)
-	var bas_dem := minf(0.35 * canal.U * 0.5, dem - 1.0)
-	var g := x0 - 0.15 * canal.U
-	var d := x1 + 0.15 * canal.U
-	# la face de terre, dans la coupe, avec l'entaille en V
-	var face := PackedVector2Array([Vector2(g, y_bas), Vector2(x0 + 0.05 * canal.U, y_max)])
-	if prof > 0.5:
-		face.append_array([Vector2(xc - dem, y_max), Vector2(xc - bas_dem, yv), Vector2(xc + bas_dem, yv), Vector2(xc + dem, y_max)])
-	face.append_array([Vector2(x1 - 0.05 * canal.U, y_max), Vector2(d, y_bas)])
-	draw_colored_polygon(face, Color("#8a5a32"))
-	# le dessus en herbe, de la face vers le fond, de part et d'autre de l'entaille
+	var prof := maxf(canal.Y(vue) - y_rive, 0.0) * ECHELLE
+	var yb := y_rive + prof
 	var herbe_c := Color("#8fc456")
 	var herbe_f := Color("#6a9c3c")
-	var gauche := PackedVector2Array([Vector2(x0 + 0.05 * canal.U, y_max), Vector2(xc - dem, y_max), Vector2(xc - dem, y_max) + D, Vector2(x0 + 0.05 * canal.U, y_max) + D])
-	var droite := PackedVector2Array([Vector2(xc + dem, y_max), Vector2(x1 - 0.05 * canal.U, y_max), Vector2(x1 - 0.05 * canal.U, y_max) + D, Vector2(xc + dem, y_max) + D])
-	if prof <= 0.5:
-		gauche = PackedVector2Array([Vector2(x0 + 0.05 * canal.U, y_max), Vector2(x1 - 0.05 * canal.U, y_max), Vector2(x1 - 0.05 * canal.U, y_max) + D, Vector2(x0 + 0.05 * canal.U, y_max) + D])
-	draw_polygon(gauche, PackedColorArray([herbe_c, herbe_c, herbe_f, herbe_f]))
+	# la butte, vue d'en haut, du bord du canal à la mare
+	var butte := PackedVector2Array([Vector2(x_bord, y_rive), Vector2(x_mare + 20.0, y_rive), Vector2(x_mare + 20.0, y_rive) + D * (Z + 0.45), Vector2(x_bord, y_rive) + D * (Z + 0.45)])
+	draw_polygon(butte, PackedColorArray([herbe_c, herbe_c, herbe_f, herbe_f]))
 	if prof > 0.5:
-		draw_polygon(droite, PackedColorArray([herbe_c, herbe_c, herbe_f, herbe_f]))
-		# l'intérieur de l'entaille : son flanc gauche (terre fraîche, plus
-		# sombre) qui file vers le fond, et son lit
-		draw_colored_polygon(PackedVector2Array([Vector2(xc - dem, y_max), Vector2(xc - bas_dem, yv), Vector2(xc - bas_dem, yv) + D, Vector2(xc - dem, y_max) + D]), Color("#7a4c26"))
-		draw_colored_polygon(PackedVector2Array([Vector2(xc - bas_dem, yv), Vector2(xc + bas_dem, yv), Vector2(xc + bas_dem, yv) + D, Vector2(xc - bas_dem, yv) + D]), Color("#6f4826"))
-		# les bords de l'entaille, en terre fraîche
-		draw_polyline(PackedVector2Array([Vector2(xc - dem, y_max), Vector2(xc - bas_dem, yv), Vector2(xc + bas_dem, yv), Vector2(xc + dem, y_max)]), Color("#3e2410"), 2.0, true)
-	# le liseré d'herbe sur l'arête de la face, et quelques touffes
-	var fin_g := xc - dem if prof > 0.5 else x1 - 0.05 * canal.U
-	draw_line(Vector2(x0 + 0.05 * canal.U, y_max), Vector2(fin_g, y_max), Color("#5f8f37"), 3.0)
-	if prof > 0.5: draw_line(Vector2(xc + dem, y_max), Vector2(x1 - 0.05 * canal.U, y_max), Color("#5f8f37"), 3.0)
-	# des grains dans la terre de la face
-	var rng := RandomNumberGenerator.new()
-	rng.seed = 31 * (i + 1)
-	for k in 22:
-		var p := Vector2(rng.randf_range(g + 6.0, d - 6.0), rng.randf_range(y_max + 6.0, y_bas - 4.0))
-		if prof > 0.5 and absf(p.x - xc) < dem + 2.0 and p.y < yv + 3.0: continue
-		draw_circle(p, rng.randf_range(1.2, 2.6), Color(0.3, 0.18, 0.08, 0.5))
-	# les mottes qui volent
+		# le flanc du fond (terre fraîche) et le lit
+		draw_colored_polygon(PackedVector2Array([_pt(0, 1, y_rive), _pt(1, 1, y_rive), _pt(1, 1, yb), _pt(0, 1, yb)]), Color("#7a4c26"))
+		draw_colored_polygon(PackedVector2Array([_pt(0, -1, yb), _pt(1, -1, yb), _pt(1, 1, yb), _pt(0, 1, yb)]), Color("#5e3a1c"))
+		# l'eau de la mare qui la descend
+		var niv_mare: float = canal.vue_niv[i + 1]
+		if niv_mare > vue + 0.02:
+			var h := minf((niv_mare - vue) * canal.UY * ECHELLE, prof)
+			var e := PackedVector2Array([_pt(0, -1, yb - h), _pt(1, -1, yb - h), _pt(1, 1, yb - h), _pt(0, 1, yb - h)])
+			draw_colored_polygon(e, Color(0.36, 0.7, 0.88, 0.92))
+			for k in 5:
+				var f := fmod(_t * 0.9 + k / 5.0, 1.0)
+				var q := _pt(1.0 - f, 0.0, yb - h)
+				var q2 := _pt(maxf(1.0 - f - 0.06, 0.0), 0.0, yb - h)
+				draw_line(q, q2, Color(0.92, 1, 1, 0.65), 1.6, true)
+	# le pré devant la rigole, qui cache son flanc avant
+	var devant := PackedVector2Array([Vector2(x_bord, y_rive), Vector2(x_mare + 20.0, y_rive), _pt(1, -1, y_rive) + Vector2(20.0, 0), _pt(1, -1, y_rive), _pt(0, -1, y_rive)])
+	draw_colored_polygon(devant, herbe_c)
+	if prof > 0.5:
+		draw_line(_pt(0, -1, y_rive), _pt(1, -1, y_rive), Color("#4a2c12"), 2.0, true)
+		draw_line(_pt(0, 1, y_rive), _pt(1, 1, y_rive), Color("#4a2c12"), 1.5, true)
+	# le tracé en pointillés, tant qu'on peut creuser
+	if vue > float(canal.N["liaisons"][i]["min"]) + 0.01:
+		for c in [-1.0, 1.0]:
+			draw_dashed_line(_pt(0, c, y_rive), _pt(1, c, y_rive), Color(1, 0.98, 0.9, 0.9), 2.5, 8.0)
+		draw_dashed_line(_pt(1, -1, y_rive), _pt(1, 1, y_rive), Color(1, 0.98, 0.9, 0.9), 2.5, 8.0)
+	# la pelle, plantée au bord du tracé ; elle plonge à chaque coup, et
+	# se balance doucement tant qu'on n'a pas creusé, pour inviter le doigt
+	if _pelle:
+		var h2 := 150.0
+		var w := h2 * _pelle.get_width() / _pelle.get_height()
+		var p := _pt(0.55, -1.3, y_rive) + Vector2(0, 8.0 + 14.0 * sin(_coup * PI))
+		var inv := 0.0 if _coup > 0.0 else 0.06 * sin(_t * 2.2) * (1.0 if vue >= crete0 - 0.01 else 0.3)
+		draw_set_transform(p, -0.15 + inv)
+		draw_texture_rect(_pelle, Rect2(-w * 0.5, -h2, w, h2), false)
+		draw_set_transform(Vector2.ZERO)
 	for m in _mottes:
 		draw_circle(m[0], 3.2 * (1.0 - m[2]), Color(0.4, 0.25, 0.12, 1.0 - m[2]))
+
+# Le bas de la rigole, au bord du canal : d'où tombe la cascade.
+func bouche(vue_crete: float) -> Vector2:
+	var prof := maxf(canal.Y(vue_crete) - y_rive, 0.0) * ECHELLE
+	return Vector2(x_bord, y_rive + prof)
