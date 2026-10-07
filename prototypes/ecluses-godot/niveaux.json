@@ -3,8 +3,9 @@
     {"n": 1, "titre": "Les écluses", "decor": "campagne", "resume": "Ouvrir et fermer des portes. L'eau ne se crée pas : elle passe d'un bassin à l'autre."},
     {"n": 2, "titre": "Les vannes", "decor": "campagne", "resume": "Une porte à vanne a deux commandes : la vanne fait passer l'eau, la porte laisse passer les bateaux, et ne se lève qu'entre deux eaux égales."},
     {"n": 3, "titre": "La rigole", "decor": "campagne", "resume": "Un coup de pelle dans la butte, et l'eau de la mare file par la rigole. On ne rebouche pas : juste ce qu'il faut, au bon moment."},
-    {"n": 4, "titre": "Les canaux", "decor": "collines", "resume": "Creuser les digues, puis lâcher l'eau et regarder où elle va."},
-    {"n": 5, "titre": "Le fleuve", "decor": "estuaire", "resume": "L'eau arrive toute seule, à chaque coup. Il faut la conduire avant qu'elle déborde."}
+    {"n": 4, "titre": "La pompe", "decor": "campagne", "resume": "Chaque coup de pompe fait monter un peu d'eau du bas vers le haut. La seule eau qui remonte, et elle coûte un coup."},
+    {"n": 5, "titre": "Les canaux", "decor": "collines", "resume": "Creuser les digues, puis lâcher l'eau et regarder où elle va."},
+    {"n": 6, "titre": "Le fleuve", "decor": "estuaire", "resume": "L'eau arrive toute seule, à chaque coup. Il faut la conduire avant qu'elle déborde."}
   ],
   "niveaux": [
     {
@@ -144,6 +145,31 @@
     {
       "id": "4-1",
       "chapitre": 4,
+      "titre": "La pompe",
+      "mode": "pas",
+      "par": 7,
+      "conseil": "Le bief du haut manque d'eau : la pompe en remonte du grand bassin. Mais une porte ouverte au mauvais moment la laisse redescendre.",
+      "requis": ["pomper"],
+      "bassins": [
+        {"type": "bief", "fond": 0, "largeur": 6, "niveau": 2, "nom": "bief aval"},
+        {"type": "sas", "fond": 0, "largeur": 2, "niveau": 2, "nom": "sas"},
+        {"type": "bief", "fond": 3, "largeur": 6, "niveau": 3.4, "nom": "bief amont"}
+      ],
+      "liaisons": [
+        {"type": "porte", "seuil": 0, "crete": 5},
+        {"type": "porte", "seuil": 3, "crete": 5}
+      ],
+      "pompes": [
+        {"de": 0, "vers": 2, "debit": 4}
+      ],
+      "bateaux": [
+        {"de": 0, "vers": 2, "tirant": 1},
+        {"de": 2, "vers": 0, "tirant": 1}
+      ]
+    },
+    {
+      "id": "5-1",
+      "chapitre": 5,
       "titre": "Le premier sillon",
       "mode": "chantier",
       "par": 4,
@@ -161,8 +187,8 @@
       "bateaux": []
     },
     {
-      "id": "4-2",
-      "chapitre": 4,
+      "id": "5-2",
+      "chapitre": 5,
       "titre": "Les rizières",
       "mode": "chantier",
       "par": 5,
@@ -184,8 +210,8 @@
       "bateaux": []
     },
     {
-      "id": "4-3",
-      "chapitre": 4,
+      "id": "5-3",
+      "chapitre": 5,
       "titre": "Remettre à flot",
       "mode": "chantier",
       "par": 6,
@@ -209,8 +235,8 @@
       ]
     },
     {
-      "id": "5-1",
-      "chapitre": 5,
+      "id": "6-1",
+      "chapitre": 6,
       "titre": "Le fleuve monte",
       "mode": "pas",
       "par": 5,
@@ -231,8 +257,8 @@
       ]
     },
     {
-      "id": "5-2",
-      "chapitre": 5,
+      "id": "6-2",
+      "chapitre": 6,
       "titre": "Le déversoir",
       "mode": "pas",
       "par": 8,
@@ -257,8 +283,8 @@
       ]
     },
     {
-      "id": "5-3",
-      "chapitre": 5,
+      "id": "6-3",
+      "chapitre": 6,
       "titre": "La crue",
       "mode": "pas",
       "par": 6,

@@ -252,6 +252,8 @@ button:focus-visible, [role="button"]:focus-visible { outline: 3px solid var(--o
        liaisons  entre deux bassins voisins : porte (seuil, crete), digue
                  (crete, min), mur (crete), libre
        bateaux   de, vers (indices de bassins), tirant d'eau
+       pompes    de, vers (indices de bassins, voisins ou non), debit : le
+                 volume qu'un coup de pompe fait monter (chapitre 4)
        par       le nombre de coups de la meilleure solution — le banc
                  (node tools/ecluses-banc.mjs) refuse s'il ne le retrouve pas
        requis    les coups sans lesquels le niveau doit devenir impossible
@@ -264,8 +266,9 @@ button:focus-visible, [role="button"]:focus-visible { outline: 3px solid var(--o
     {"n": 1, "titre": "Les écluses", "decor": "campagne", "resume": "Ouvrir et fermer des portes. L'eau ne se crée pas : elle passe d'un bassin à l'autre."},
     {"n": 2, "titre": "Les vannes", "decor": "campagne", "resume": "Une porte à vanne a deux commandes : la vanne fait passer l'eau, la porte laisse passer les bateaux, et ne se lève qu'entre deux eaux égales."},
     {"n": 3, "titre": "La rigole", "decor": "campagne", "resume": "Un coup de pelle dans la butte, et l'eau de la mare file par la rigole. On ne rebouche pas : juste ce qu'il faut, au bon moment."},
-    {"n": 4, "titre": "Les canaux", "decor": "collines", "resume": "Creuser les digues, puis lâcher l'eau et regarder où elle va."},
-    {"n": 5, "titre": "Le fleuve", "decor": "estuaire", "resume": "L'eau arrive toute seule, à chaque coup. Il faut la conduire avant qu'elle déborde."}
+    {"n": 4, "titre": "La pompe", "decor": "campagne", "resume": "Chaque coup de pompe fait monter un peu d'eau du bas vers le haut. La seule eau qui remonte, et elle coûte un coup."},
+    {"n": 5, "titre": "Les canaux", "decor": "collines", "resume": "Creuser les digues, puis lâcher l'eau et regarder où elle va."},
+    {"n": 6, "titre": "Le fleuve", "decor": "estuaire", "resume": "L'eau arrive toute seule, à chaque coup. Il faut la conduire avant qu'elle déborde."}
   ],
   "niveaux": [
     {
@@ -405,6 +408,31 @@ button:focus-visible, [role="button"]:focus-visible { outline: 3px solid var(--o
     {
       "id": "4-1",
       "chapitre": 4,
+      "titre": "La pompe",
+      "mode": "pas",
+      "par": 7,
+      "conseil": "Le bief du haut manque d'eau : la pompe en remonte du grand bassin. Mais une porte ouverte au mauvais moment la laisse redescendre.",
+      "requis": ["pomper"],
+      "bassins": [
+        {"type": "bief", "fond": 0, "largeur": 6, "niveau": 2, "nom": "bief aval"},
+        {"type": "sas", "fond": 0, "largeur": 2, "niveau": 2, "nom": "sas"},
+        {"type": "bief", "fond": 3, "largeur": 6, "niveau": 3.4, "nom": "bief amont"}
+      ],
+      "liaisons": [
+        {"type": "porte", "seuil": 0, "crete": 5},
+        {"type": "porte", "seuil": 3, "crete": 5}
+      ],
+      "pompes": [
+        {"de": 0, "vers": 2, "debit": 4}
+      ],
+      "bateaux": [
+        {"de": 0, "vers": 2, "tirant": 1},
+        {"de": 2, "vers": 0, "tirant": 1}
+      ]
+    },
+    {
+      "id": "5-1",
+      "chapitre": 5,
       "titre": "Le premier sillon",
       "mode": "chantier",
       "par": 4,
@@ -422,8 +450,8 @@ button:focus-visible, [role="button"]:focus-visible { outline: 3px solid var(--o
       "bateaux": []
     },
     {
-      "id": "4-2",
-      "chapitre": 4,
+      "id": "5-2",
+      "chapitre": 5,
       "titre": "Les rizières",
       "mode": "chantier",
       "par": 5,
@@ -445,8 +473,8 @@ button:focus-visible, [role="button"]:focus-visible { outline: 3px solid var(--o
       "bateaux": []
     },
     {
-      "id": "4-3",
-      "chapitre": 4,
+      "id": "5-3",
+      "chapitre": 5,
       "titre": "Remettre à flot",
       "mode": "chantier",
       "par": 6,
@@ -470,8 +498,8 @@ button:focus-visible, [role="button"]:focus-visible { outline: 3px solid var(--o
       ]
     },
     {
-      "id": "5-1",
-      "chapitre": 5,
+      "id": "6-1",
+      "chapitre": 6,
       "titre": "Le fleuve monte",
       "mode": "pas",
       "par": 5,
@@ -492,8 +520,8 @@ button:focus-visible, [role="button"]:focus-visible { outline: 3px solid var(--o
       ]
     },
     {
-      "id": "5-2",
-      "chapitre": 5,
+      "id": "6-2",
+      "chapitre": 6,
       "titre": "Le déversoir",
       "mode": "pas",
       "par": 8,
@@ -518,8 +546,8 @@ button:focus-visible, [role="button"]:focus-visible { outline: 3px solid var(--o
       ]
     },
     {
-      "id": "5-3",
-      "chapitre": 5,
+      "id": "6-3",
+      "chapitre": 6,
       "titre": "La crue",
       "mode": "pas",
       "par": 6,
@@ -726,6 +754,10 @@ const Ecluses = (function () {
   //   porte     ouvrir ou fermer une écluse (une porte à vanne ne s'ouvre
   //             qu'entre deux eaux au même niveau)
   //   vanne     ouvrir ou fermer la vanne d'une porte à vanne
+  //   pomper    un coup de pompe : « debit » d'eau passe du bassin « de » au
+  //             bassin « vers » (s'il y en a), par un tuyau ; puis l'eau se
+  //             répand comme après n'importe quel coup. La seule façon de faire
+  //             REMONTER l'eau (chapitre 4, 7 octobre 2026).
   //   creuser   abaisser une digue d'une unité (jusqu'à son « min »)
   //   hausser   ajouter une planche à une hausse (jusqu'à son « max »)
   //   abaisser  en retirer une (jusqu'à son « min »)
@@ -742,6 +774,10 @@ const Ecluses = (function () {
       if (l.type === "hausse" && e.lache && e.crete[i] < l.max - EPS) A.push({ type: "hausser", i });
       if (l.type === "hausse" && e.lache && e.crete[i] > l.min + EPS) A.push({ type: "abaisser", i });
     });
+    (N.pompes || []).forEach((p, i) => {
+      const b = N.bassins[p.de];
+      if (e.lache && (b.fixe || e.niv[p.de] - b.fond > EPS)) A.push({ type: "pomper", i });
+    });
     if (!e.lache) A.push({ type: "lacher" });
     else if (N.bassins.some(b => b.apport)) A.push({ type: "attendre" });
     return A;
@@ -751,6 +787,12 @@ const Ecluses = (function () {
     e.coups++;
     if (a.type === "porte") e.ouvert[a.i] = !e.ouvert[a.i];
     else if (a.type === "vanne") e.vanne[a.i] = !e.vanne[a.i];
+    else if (a.type === "pomper") {
+      const p = N.pompes[a.i], D = N.bassins[p.de], V = N.bassins[p.vers];
+      const vol = D.fixe ? p.debit : Math.min(p.debit, (e.niv[p.de] - D.fond) * D.largeur);
+      if (D.fixe) e.entree += vol; else e.niv[p.de] = arrondi(e.niv[p.de] - vol / D.largeur);
+      if (V.fixe) e.sortie += vol; else e.niv[p.vers] = arrondi(e.niv[p.vers] + vol / V.largeur);
+    }
     else if (a.type === "creuser") e.crete[a.i] = Math.max(N.liaisons[a.i].min, arrondi(e.crete[a.i] - 1));
     else if (a.type === "hausser") e.crete[a.i] = Math.min(N.liaisons[a.i].max, arrondi(e.crete[a.i] + 1));
     else if (a.type === "abaisser") e.crete[a.i] = Math.max(N.liaisons[a.i].min, arrondi(e.crete[a.i] - 1));

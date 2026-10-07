@@ -269,6 +269,12 @@ static func actions(N: Dictionary, e: Dictionary) -> Array:
 			A.append({"type": "hausser", "i": i})
 		if l["type"] == "hausse" and e["lache"] and e["crete"][i] > float(l["min"]) + EPS:
 			A.append({"type": "abaisser", "i": i})
+	var pompes: Array = N.get("pompes", [])
+	for i in pompes.size():
+		var p: Dictionary = pompes[i]
+		var b: Dictionary = N["bassins"][int(p["de"])]
+		if e["lache"] and (b.get("fixe", false) or e["niv"][int(p["de"])] - float(b["fond"]) > EPS):
+			A.append({"type": "pomper", "i": i})
 	if not e["lache"]:
 		A.append({"type": "lacher"})
 	elif N["bassins"].any(func(b): return b.has("apport") and b["apport"]):
@@ -284,6 +290,19 @@ static func jouer(N: Dictionary, e0: Dictionary, a: Dictionary) -> Dictionary:
 			e["ouvert"][ai] = not e["ouvert"][ai]
 		"vanne":
 			e["vanne"][ai] = not e["vanne"][ai]
+		"pomper":
+			# un coup de pompe : « debit » d'eau monte de « de » à « vers » par
+			# le tuyau (chapitre 4) ; même ordre d'opérations que la page web
+			var p: Dictionary = N["pompes"][ai]
+			var de := int(p["de"])
+			var vers := int(p["vers"])
+			var Db: Dictionary = N["bassins"][de]
+			var Vb: Dictionary = N["bassins"][vers]
+			var vol := float(p["debit"]) if Db.get("fixe", false) else minf(float(p["debit"]), (e["niv"][de] - float(Db["fond"])) * float(Db["largeur"]))
+			if Db.get("fixe", false): e["entree"] += vol
+			else: e["niv"][de] = arrondi(e["niv"][de] - vol / float(Db["largeur"]))
+			if Vb.get("fixe", false): e["sortie"] += vol
+			else: e["niv"][vers] = arrondi(e["niv"][vers] + vol / float(Vb["largeur"]))
 		"creuser":
 			e["crete"][ai] = maxf(float(N["liaisons"][ai]["min"]), arrondi(e["crete"][ai] - 1.0))
 		"hausser":

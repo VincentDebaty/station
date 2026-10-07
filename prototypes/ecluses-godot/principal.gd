@@ -46,7 +46,7 @@ var _sure: Control      # la zone sûre : tout ce qu'on touche ou qu'on lit y re
 # Le niveau sur lequel le jeu s'ouvre : celui qu'on est en train d'essayer
 # (Vincent, 7 octobre 2026 : « quand tu déploies sur l'iPhone, tu proposes le
 # nouveau niveau à chaque fois »). À changer à chaque nouveauté.
-const NIVEAU_EN_TEST := "3-1"
+const NIVEAU_EN_TEST := "4-1"
 
 func _ready() -> void:
 	_tous = JSON.parse_string(FileAccess.get_file_as_string("res://niveaux.json"))["niveaux"]
@@ -119,6 +119,10 @@ func _cadrer() -> void:
 # --- Le toucher et les coups ----------------------------------------------------------
 func _unhandled_input(ev: InputEvent) -> void:
 	if ev is InputEventMouseButton and ev.pressed and ev.button_index == MOUSE_BUTTON_LEFT:
+		var ip := canal.pompe_sous(get_global_mouse_position())
+		if ip >= 0:
+			jouer({"type": "pomper", "i": ip})
+			return
 		var ir := canal.rigole_sous(get_global_mouse_position())
 		if ir >= 0:
 			jouer({"type": "creuser", "i": ir})
@@ -152,7 +156,9 @@ func jouer(a: Dictionary) -> void:
 	# passer l'eau par son aqueduc, porte close), et quand les deux eaux sont
 	# au même niveau la porte se lève en grand. Fermer : elle redescend
 	# d'abord, puis la roue se referme.
-	if a["type"] == "creuser" and canal.rigoles.has(int(a["i"])):
+	if a["type"] == "pomper":
+		await canal.pomper(int(a["i"]))
+	elif a["type"] == "creuser" and canal.rigoles.has(int(a["i"])):
 		# un coup de pelle : l'entaille se creuse, des mottes volent, puis
 		# l'eau file
 		var rg: Rigole = canal.rigoles[int(a["i"])]
@@ -676,6 +682,7 @@ func _niveau_suivant() -> void:
 func _process(dt: float) -> void:
 	if canal:
 		for p in canal.portes.values(): p.actif = not occupe and not fini
+		for p in canal.pompes.values(): p.actif = not occupe and not fini
 	_images += 1
 	_secondes += dt
 	if _ips and Engine.get_process_frames() % 15 == 0:
@@ -697,7 +704,7 @@ func _demo() -> void:
 			break
 	if OS.get_environment("ECLUSES_COUPS") != "":
 		# « 1 » : la porte 1 ; « v1 » : la vanne de la porte 1
-		solution = Array(OS.get_environment("ECLUSES_COUPS").split(",")).map(func(x): return {"type": "vanne", "i": int(x.substr(1))} if x.begins_with("v") else ({"type": "creuser", "i": int(x.substr(1))} if x.begins_with("c") else {"type": "porte", "i": int(x)}))
+		solution = Array(OS.get_environment("ECLUSES_COUPS").split(",")).map(func(x): return {"type": "vanne", "i": int(x.substr(1))} if x.begins_with("v") else ({"type": "creuser", "i": int(x.substr(1))} if x.begins_with("c") else ({"type": "pomper", "i": int(x.substr(1))} if x.begins_with("P") else {"type": "porte", "i": int(x)})))
 	await get_tree().create_timer(1.2).timeout
 	await _photo("00-repos")
 	if OS.get_environment("ECLUSES_LISTE") != "":

@@ -27,6 +27,9 @@ var bulles: CPUParticles2D
 var _eau: Line2D           # l'eau dans le conduit, dessinée par shaders/courant.gdshader
 var _mat_eau: ShaderMaterial
 var _dessus: Node2D        # la vanne et les grilles, par-dessus l'eau du conduit
+# Le tuyau d'une POMPE (chapitre 4) : pas de vanne, une seule grille (côté
+# bassin, au début du tracé), le bout de l'autre côté entre dans la pompe.
+var tuyau_de_pompe := false
 
 func preparer(points: PackedVector2Array, r: float) -> void:
 	chemin = points
@@ -184,7 +187,7 @@ func _dessiner_dessus() -> void:
 	# sombre au-dessus du tuyau. Fermée, elle barre le tuyau ; ouverte, elle
 	# monte dans son logement. (Vincent, 7 octobre 2026 : la petite plaque de
 	# 7 px « n'est pas claire pour le joueur ».)
-	if chemin.size() >= 3:
+	if chemin.size() >= 3 and not tuyau_de_pompe:
 		var m := haut_vanne_point()
 		var h := rayon * 2.0 + 8.0
 		var larg := 20.0
@@ -212,7 +215,7 @@ func _dessiner_dessus() -> void:
 	for br in brides:
 		var m: Vector2 = br[0]
 		var d: Vector2 = br[1]
-		if chemin.size() >= 3 and m.distance_to((chemin[1] + chemin[2]) * 0.5) < 14.0: continue   # la vanne est là
+		if chemin.size() >= 3 and not tuyau_de_pompe and m.distance_to((chemin[1] + chemin[2]) * 0.5) < 14.0: continue   # la vanne est là
 		var nrm := Vector2(-d.y, d.x)
 		var demi := rayon + 7.0
 		_dessus.draw_line(m - nrm * demi, m + nrm * demi, Color("#2c2622"), 9.0, true)
@@ -221,7 +224,7 @@ func _dessiner_dessus() -> void:
 		for cote in [-1.0, 1.0]:
 			_dessus.draw_circle(m + nrm * cote * (demi - 2.5), 2.2, Color("#8a8178"))
 	# la grille de chaque bouche, dans le fond du bassin
-	for bout in [chemin[0], chemin[chemin.size() - 1]]:
+	for bout in ([chemin[0]] if tuyau_de_pompe else [chemin[0], chemin[chemin.size() - 1]]):
 		_dessus.draw_rect(Rect2(bout.x - rayon - 5.0, bout.y - 3.0, 2.0 * rayon + 10.0, 6.0), Color("#3d3833"))
 		for k in range(-2, 3):
 			_dessus.draw_line(bout + Vector2(k * rayon * 0.42, -3.0), bout + Vector2(k * rayon * 0.42, 3.0), Color("#8a8178"), 2.0)

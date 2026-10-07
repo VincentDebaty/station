@@ -74,6 +74,10 @@ var portes := {}      # liaison -> Porte
 var aqueducs := {}    # liaison -> Aqueduc, le conduit par où passe l'eau d'une porte à vanne
 var _flotte: Node2D
 var hausses := {}     # liaison -> Hausse, ses planches et ses poteaux
+var pompes := {}      # pompe -> Pompe, sa pompe à bras
+var tuyaux_pompe := {} # pompe -> Aqueduc, son tuyau
+var jets_pompe := {}  # pompe -> Jet, l'eau qui sort du bec
+var _pompage := -1    # la pompe en train de pomper, pendant l'écoulement
 var rigoles := {}     # liaison -> Rigole, la berge de terre que l'on creuse
 var mares := {}       # bassin -> Mare, la cuvette naturelle sur le pré
 var debordements := {} # liaison -> vrai : une levée que l'eau peut franchir
@@ -284,6 +288,32 @@ func construire(niveau: Dictionary, e: Dictionary) -> void:
 			nv.draw.connect(_dessiner_levee_noyee.bind(i, nv))
 			add_child(nv)
 			levees_noyees[i] = nv
+	# les pompes : sur la berge du bassin qu'elles remplissent, leur tuyau
+	# depuis une grille au fond du bassin d'en bas, et leur jet
+	var pp: Array = N.get("pompes", [])
+	for i in pp.size():
+		var de := int(pp[i]["de"])
+		var vers := int(pp[i]["vers"])
+		# juste derrière le parement de pierre (0,3 unité) : le tuyau monte dans
+		# la terre, et le bec avance au-dessus du bassin
+		var x_pompe := X(gb[vers][1]) + 0.42 * U if vers >= int(pp[i]["de"]) else X(gb[vers][0]) - 0.42 * U
+		var y_pompe := Y(berge)
+		var po := Pompe.new()
+		po.preparer(self, i, Vector2(x_pompe, y_pompe))
+		add_child(po)
+		pompes[i] = po
+		var bas := Y(minf(float(B[de]["fond"]), float(B[vers]["fond"])) - 0.75)
+		for k in range(mini(de, vers), maxi(de, vers) + 1): bas = maxf(bas, Y(float(B[k]["fond"]) - 0.75))
+		var xg := X(gb[de][0]) + 0.7 * U
+		var aq := Aqueduc.new()
+		aq.tuyau_de_pompe = true
+		aq.preparer(PackedVector2Array([Vector2(xg, Y(float(B[de]["fond"]))), Vector2(xg, bas), Vector2(x_pompe, bas), Vector2(x_pompe, y_pompe - 6.0)]), 0.2 * UY)
+		add_child(aq)
+		tuyaux_pompe[i] = aq
+		var jt := Jet.new()
+		jt.z_index = 2
+		add_child(jt)
+		jets_pompe[i] = jt
 	# les hausses : leurs planches dans la couche des vantaux (vues à travers
 	# l'eau), leurs poteaux devant et au fond
 	for i in N["liaisons"].size():
@@ -1408,6 +1438,10 @@ func _process(dt: float) -> void:
 	for i in levees_noyees:
 		levees_noyees[i].queue_redraw()
 		coupes_noyees[i].visible_eau = minf(vue_niv[i], vue_niv[i + 1]) > float(N["liaisons"][i]["crete"])
+	for i in tuyaux_pompe:
+		var de := int(N["pompes"][i]["de"])
+		tuyaux_pompe[i].niveau_g = Y(vue_niv[de])
+		tuyaux_pompe[i].niveau_d = Y(vue_niv[de])
 	for i in aqueducs:
 		aqueducs[i].ouverte = portes[i].vanne_ouverte
 		aqueducs[i].niveau_g = Y(vue_niv[i])
@@ -1538,7 +1572,32 @@ func _avancer_ecoulement(dt: float) -> void:
 		elif rigoles.has(i): _jet_rigole(i, _ecou["flux"][i], dt)
 		elif debordements.has(i): _jet_mur(i, _ecou["flux"][i], dt)
 		elif jets.has(i): _jet(i, _ecou["flux"][i], dt)
+	if _pompage >= 0:
+		var jt: Jet = jets_pompe[_pompage]
+		var po: Pompe = pompes[_pompage]
+		var aq: Aqueduc = tuyaux_pompe[_pompage]
+		var vers := int(N["pompes"][_pompage]["vers"])
+		var force := clampf(minf(p * 6.0, (1.0 - p) * 3.0), 0.0, 1.0)
+		jt.force = force
+		jt.sens = -1.0
+		jt.fente = 7.0
+		jt.depart_x = po.bec().x + 1.0
+		jt.origine = po.bec()
+		jt.y_seuil = 0.0
+		jt.haut_veine = 0.0
+		jt.surface_bas = minf(eaux[vers].hauteur_a(po.bec().x - 14.0), eaux[vers].fond_y)
+		aq.ouverte = force > 0.05
+		aq.couler(force * 0.8, 1)
+		aq.bulles.global_position = aq.chemin[0]
+		if force > 0.1:
+			eaux[vers].remous = maxf(eaux[vers].remous, force * 0.5)
+			if randf() < 0.4: eaux[vers].impulsion(jt.chute().x, randf_range(-0.3, 1.0) * force, 18.0)
 	if p >= 1.0:
+		if _pompage >= 0:
+			jets_pompe[_pompage].force = 0.0
+			tuyaux_pompe[_pompage].ouverte = false
+			tuyaux_pompe[_pompage].couler(0.0, 1)
+			_pompage = -1
 		_ecou = {}
 		for aq in aqueducs.values(): aq.couler(0.0, 1)
 		for jt in jets.values(): jt.force = 0.0
@@ -1716,6 +1775,17 @@ func _jet_mur(i: int, flux: float, dt: float) -> void:
 	jt.haut_veine = 0.0
 	jt.surface_bas = minf(eaux[l].hauteur_a(bord_x + sens * 50.0), eaux[l].fond_y)
 	eaux[l].remous = maxf(eaux[l].remous, jt.force * 0.5)
+
+# Un coup de pompe : le levier, puis l'eau pendant l'écoulement qui suit.
+func pomper(i: int) -> void:
+	_pompage = i
+	pompes[i].pomper()
+	await pompes[i].coup_fini
+
+func pompe_sous(p: Vector2) -> int:
+	for i in pompes:
+		if pompes[i].sous(p): return i
+	return -1
 
 # La berge de terre sous le doigt (une rigole), ou -1.
 func rigole_sous(p: Vector2) -> int:

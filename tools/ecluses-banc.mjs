@@ -74,7 +74,7 @@ function Hasard(graine) {
   };
 }
 const nom = a => a.type === "porte" ? "porte " + a.i : a.type === "vanne" ? "vanne " + a.i : a.type === "creuser" ? "pelle " + a.i :
-  a.type === "hausser" ? "planche + " + a.i : a.type === "abaisser" ? "planche − " + a.i : a.type;
+  a.type === "hausser" ? "planche + " + a.i : a.type === "abaisser" ? "planche − " + a.i : a.type === "pomper" ? "pompe " + a.i : a.type;
 let echecs = 0;
 const dire = (ok, texte) => { console.log((ok ? "  ✓ " : "  ✗ ") + texte); if (!ok) echecs++; };
 
