@@ -264,6 +264,31 @@ la seconde retournée et un peu plus petite).
 Same art style as before, like the stone cottage in the background of the reference image. A small cosy village cottage seen exactly from the front: cream stone walls, a red tiled roof, a wooden door, two small windows with blue shutters, a little chimney, a few flowers at the foot of the wall. Square image, the cottage centred and filling about 85% of the frame, isolated on a transparent background, no ground, no shadow.
 ```
 
+### La rigole du chapitre 3 (7 octobre 2026)
+
+D'après l'image cible validée par Vincent : la berge est une butte d'herbe
+entre le bassin du haut et une mare naturelle, une pelle plantée et le tracé
+de la rigole en pointillés invitent à creuser. Trois images, dans la même
+conversation, en joignant cette image cible.
+
+#### `art/pelle.png` — la pelle plantée dans la berge
+
+```text
+Same art style as the attached image. A single garden spade standing upright, as if stuck in the ground at a slight angle: a worn wooden handle with a T-grip, a dark iron blade with a little earth on it, thin dark outline, soft highlight on the top-left. The lower part of the blade is where it enters the ground. Tall portrait image, the spade centred and filling about 90% of the height, isolated on a transparent background, no ground, no shadow.
+```
+
+#### `art/roseaux.png` — une touffe de roseaux, pour les bords de la mare
+
+```text
+Same art style as the attached image. One clump of pond reeds and bulrushes: long thin green leaves, three or four brown cattail heads on tall stems, a few shorter blades at the base, thin dark outline, soft cel shading. Portrait image, the clump centred and filling about 90% of the height, isolated on a transparent background, no water, no ground, no shadow.
+```
+
+#### `art/nenuphar.png` — un nénuphar, posé sur la mare
+
+```text
+Same art style as the attached image. A single water lily pad seen from slightly above, flat and round with its little notch, glossy green with lighter veins, and one small white and pink lily flower on it, thin dark outline. Square image, centred, filling about 80% of the frame, isolated on a transparent background, no water, no shadow.
+```
+
 ### Plus tard, peut-être
 
 - `premier_plan.png` : un buisson flou et des marguerites au premier plan,
