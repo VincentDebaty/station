@@ -1149,6 +1149,11 @@ func _jet(i: int, flux: float, dt: float) -> void:
 	var x := X(gl[i][0] + gl[i][1]) * 0.5 if D != Vector2.ZERO else (X(gl[i][1]) - 9.0 if sens > 0 else X(gl[i][0]) + 9.0)
 	var bord_x := X(gl[i][1]) if sens > 0 else X(gl[i][0])
 	jt.depart_x = x
+	# la veine sous le vantail : du bas de la porte (ou de la surface amont si
+	# elle est plus basse) jusqu'au seuil, dans le plan du vantail
+	jt.vantail_x = x - 5.0 if D != Vector2.ZERO else x
+	jt.y_seuil = po.y_seuil
+	jt.haut_veine = maxf(po.bas_y, minf(eaux[h].hauteur_a(x - sens * 30.0), eaux[h].fond_y))
 	jt.origine = Vector2(bord_x, po.y_seuil - jt.fente * 0.4)
 	jt.surface_bas = eaux[l].hauteur_a(x + sens * 60.0)
 	jt.fond_bas = eaux[l].fond_y

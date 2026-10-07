@@ -23,7 +23,10 @@ var fente := 10.0               # la hauteur de la fente, en pixels
 var surface_bas := 0.0          # y de la surface d'en bas, sous le jet
 var fond_bas := 0.0             # y du fond d'en bas
 var depart_x := 0.0             # sous la porte : l'eau glisse de là jusqu'au bord du bloc
-var profondeur := Vector2.ZERO  # la largeur du canal en vue oblique (le D du canal)
+var profondeur := Vector2.ZERO
+var vantail_x := 0.0            # la fente sous le vantail : son plan,
+var haut_veine := 0.0           # le haut de l'eau qui y passe,
+var y_seuil := 0.0              # et le seuil  # la largeur du canal en vue oblique (le D du canal)
 var _t := 0.0
 var _point_chute := Vector2.ZERO
 var bulles: CPUParticles2D
@@ -77,10 +80,28 @@ func _process(dt: float) -> void:
 
 func _draw() -> void:
 	if force <= 0.03: return
+	_veine()
 	if noye():
 		_panache()
 	else:
 		_lame()
+
+# L'eau qui passe SOUS le vantail, dans la fente, sur toute la largeur du
+# canal : sans elle, on voyait le mur du fond entre le bas de la porte et le
+# seuil, et la nappe paraissait coupée de son bassin (Vincent).
+func _veine() -> void:
+	if profondeur == Vector2.ZERO or y_seuil - haut_veine < 1.0: return
+	var D := profondeur
+	var a := Vector2(vantail_x, haut_veine)
+	var b := Vector2(vantail_x, y_seuil)
+	draw_polygon(PackedVector2Array([a, a + D, b + D, b]),
+		PackedColorArray([Color(0.4, 0.78, 0.92, 0.95), Color(0.55, 0.86, 0.95, 0.95), Color(0.12, 0.45, 0.62, 0.95), Color(0.1, 0.42, 0.6, 0.95)]))
+	# des filets qui filent sous la porte
+	for k in 3:
+		var f := fmod(_t * 1.8 + k / 3.0, 1.0)
+		var y := lerpf(haut_veine, y_seuil, 0.2 + 0.6 * float(k) / 2.0)
+		var p := Vector2(vantail_x, y) + D * f
+		draw_line(p, p + D * 0.18, Color(0.9, 1, 1, 0.5), 1.4, true)
 
 # La lame d'eau, de la fente à la surface d'en bas. En vue oblique, la fente
 # sous la porte traverse tout le canal, de la coupe au mur du fond : l'eau en
