@@ -1438,10 +1438,15 @@ func _process(dt: float) -> void:
 	for i in levees_noyees:
 		levees_noyees[i].queue_redraw()
 		coupes_noyees[i].visible_eau = minf(vue_niv[i], vue_niv[i + 1]) > float(N["liaisons"][i]["crete"])
+	# le tuyau d'une pompe est plein jusqu'à la pompe (elle est amorcée) tant
+	# que sa source a de l'eau ; l'eau n'y court que pendant un coup de pompe
+	# (Vincent : un tuyau à moitié plein qui coulait faisait une animation
+	# incohérente)
 	for i in tuyaux_pompe:
 		var de := int(N["pompes"][i]["de"])
+		var a_eau: bool = vue_niv[de] > float(N["bassins"][de]["fond"]) + 0.01
 		tuyaux_pompe[i].niveau_g = Y(vue_niv[de])
-		tuyaux_pompe[i].niveau_d = Y(vue_niv[de])
+		tuyaux_pompe[i].niveau_d = -1e9 if a_eau else Y(vue_niv[de])
 	for i in aqueducs:
 		aqueducs[i].ouverte = portes[i].vanne_ouverte
 		aqueducs[i].niveau_g = Y(vue_niv[i])
@@ -1561,7 +1566,11 @@ func _avancer_ecoulement(dt: float) -> void:
 		var sort_g := i > 0 and float(fl[i - 1]) < -0.01
 		var entre_g := i > 0 and float(fl[i - 1]) > 0.01
 		var sort_d := i < fl.size() and float(fl[i]) > 0.01
-		if not ((entre_d and sort_g) or (entre_g and sort_d)): continue
+		# (l'eau d'une pompe qui arrive dans un bassin vide et en ressort par
+		# une porte ouverte le traverse aussi : sans cette pellicule, le bassin
+		# restait sec et l'on croyait que la pompe ne marchait pas, Vincent)
+		var par_pompe := _pompage >= 0 and int(N["pompes"][_pompage]["vers"]) == i and (sort_g or sort_d)
+		if not ((entre_d and sort_g) or (entre_g and sort_d) or par_pompe): continue
 		var fond := float(N["bassins"][i]["fond"])
 		if vue_niv[i] > fond + 0.12: continue
 		var film := 0.1 * minf(1.0, p * 8.0) * minf(1.0, (1.0 - p) * 5.0)
@@ -1997,6 +2006,7 @@ func _dessiner_reperes() -> void:
 # (peinte en rouge, repeinte comme les bateaux).
 var _bouees_img := {}
 var _bouees_vues := {}     # bouée -> sa flottaison (pour le cerne d'eau)
+var _bouees_couchees := {} # bouée -> 0 à flot … 1 couchée sur le fond
 func _bouee(k: int, x: float, sens: float) -> void:
 	var v := int(N["bateaux"][k]["vers"])
 	var fond := Y(float(N["bassins"][v]["fond"]))
@@ -2004,6 +2014,17 @@ func _bouee(k: int, x: float, sens: float) -> void:
 	var pente := (surface_a(x + 10.0) - surface_a(x - 10.0)) / 20.0
 	var y := surf + 1.2 * sin(_t * 2.2 + k * 1.7)
 	var rot := clampf(pente, -0.3, 0.3) * 0.8 + 0.07 * sin(_t * 1.6 + k)
+	# Échouée dans un bassin à sec : elle ne bouge plus et se couche sur le
+	# fond, fanion vers le sol, du côté où il pointait (Vincent). Elle se
+	# couche et se relève en douceur.
+	var sec: bool = eaux[v].vide() or surf >= fond - 2.0
+	var couche: float = _bouees_couchees.get(k, 0.0)
+	couche = move_toward(couche, 1.0 if sec else 0.0, get_process_delta_time() * 2.5)
+	_bouees_couchees[k] = couche
+	if couche > 0.0:
+		var c := couche * couche * (3.0 - 2.0 * couche)
+		y = lerpf(y, fond - 9.0, c)
+		rot = lerpf(rot, sens * 1.35, c)
 	if surf < fond - 2.0: _bouees_vues[k] = Vector2(x, surf)
 	else: _bouees_vues.erase(k)
 	var c: Color = COULEURS[k % COULEURS.size()]

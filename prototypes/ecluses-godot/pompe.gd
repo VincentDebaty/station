@@ -33,8 +33,10 @@ func _w() -> float:
 	return HAUT * _corps.get_width() / _corps.get_height() if _corps else 40.0
 
 # Le bout du bec, d'où sort le jet.
+# (mesuré sur art/pompe.png : le bec est au bord gauche de l'image, à 41 % de
+# sa hauteur ; l'eau sort du dessous de son bout, vers 45 %)
 func bec() -> Vector2:
-	return base + Vector2(-_w() * 0.5 + 2.0, -HAUT * 0.66)
+	return base + Vector2(-_w() * 0.5 + 5.0, -HAUT * 0.55)
 
 # Le pivot du levier, sur le haut de la pompe.
 func pivot() -> Vector2:
