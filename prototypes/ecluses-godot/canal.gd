@@ -220,7 +220,11 @@ func construire(niveau: Dictionary, e: Dictionary) -> void:
 			# identiques (lot 4) ; plus bas seulement : le vantail levé garde
 			# ~1,4 unité de place sous la traverse
 			var decale: float = [0.0, -0.3, -0.15][i % 3]
-			po.preparer(X(gl[i][0]), X(gl[i][1]), Y(float(l["seuil"])), Y(float(l["crete"])), Y(haut - 0.85 + decale), bas_radier, U,
+			# le portique se règle sur la crête de SA porte, pas sur le plus haut
+			# du niveau (la mare du 3-1 le montait bien trop haut) : 2,15 unités
+			# au-dessus, comme sur les niveaux où toutes les crêtes sont égales
+			var portique := minf(haut - 0.85, float(l["crete"]) + 2.15) + decale
+			po.preparer(X(gl[i][0]), X(gl[i][1]), Y(float(l["seuil"])), Y(float(l["crete"])), Y(portique), bas_radier, U,
 				SH_PIERRE, SH_BOIS, e["vanne"][i] if l.get("vanne", false) else e["ouvert"][i], _vantail_leve(e, i), _bas_ouvert(i))
 			add_child(po)
 			portes[i] = po
@@ -469,6 +473,14 @@ func _murs_du_fond() -> void:
 			# un bief a des quais de pierre presque jusqu'à la berge : la prairie
 			# ne se voit qu'en haut, comme une pente qui s'éloigne
 			sommet = maxf(maxf(f + 2.5, berge - 1.6), float(b.get("niveau", f)) + 0.8)
+			# jamais plus haut que les ouvrages qui le bordent : sur le 3-1, la
+			# berge haute de la mare montait le mur du bief aval à 7,25, bien
+			# au-dessus du sas (Vincent : « aligner au mur du milieu »)
+			var bord := -INF
+			for j in [i - 1, i]:
+				if j >= 0 and j < N["liaisons"].size() and N["liaisons"][j].has("crete") and not _terrestre(j):
+					bord = maxf(bord, float(N["liaisons"][j]["crete"]) + 0.2)
+			if bord > -INF: sommet = maxf(minf(sommet, bord), float(b.get("niveau", f)) + 0.8)
 		if b["type"] == "reservoir":
 			sommets.append(_rive())
 			continue
