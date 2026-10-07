@@ -1900,15 +1900,14 @@ func alerter(bateaux_coinces: Array) -> void:
 # reconstruit la coupe (annuler, rejouer).
 var _manque := {}
 func signaler_manque(bassin: int, niveau: float, k: int) -> void:
-	_manque = {"bassin": bassin, "y": Y(niveau), "couleur": COULEURS[k % COULEURS.size()], "t": _t}
+	_manque = {"bassin": bassin, "y": Y(niveau), "couleur": COULEURS[k % COULEURS.size()], "t": _t, "k": k}
 
 func manque_signale() -> bool:
 	return not _manque.is_empty()
 
-var _police_manque: Font = null
 func _dessiner_manque() -> void:
 	if not _manque.is_empty():
-		_tracer_manque(int(_manque["bassin"]), float(_manque["y"]), _manque["couleur"], _t - float(_manque["t"]))
+		_tracer_manque(int(_manque["bassin"]), float(_manque["y"]), _manque["couleur"], _t - float(_manque["t"]), int(_manque.get("k", -1)))
 	# Un bateau à sa place mais échoué : pour le jeu, il n'est pas arrivé (il
 	# faut qu'il flotte). Rien ne le disait, et Vincent croyait le niveau fini
 	# sans que rien ne se passe. On montre le niveau qu'il lui faut, comme pour
@@ -1917,7 +1916,7 @@ func _dessiner_manque() -> void:
 		var v := int(N["bateaux"][k]["vers"])
 		if positions[k] != v or _a_flot(k, v) or (not _manque.is_empty() and int(_manque["bassin"]) == v): continue
 		if not _echoues_a_quai.has(k): _echoues_a_quai[k] = _t
-		_tracer_manque(v, Y(float(N["bassins"][v]["fond"]) + float(N["bateaux"][k]["tirant"])), COULEURS[k % COULEURS.size()], _t - float(_echoues_a_quai[k]))
+		_tracer_manque(v, Y(float(N["bassins"][v]["fond"]) + float(N["bateaux"][k]["tirant"])), COULEURS[k % COULEURS.size()], _t - float(_echoues_a_quai[k]), k)
 	for k in _echoues_a_quai.keys():
 		var v2 := int(N["bateaux"][k]["vers"])
 		if positions[k] != v2 or _a_flot(k, v2): _echoues_a_quai.erase(k)
@@ -1926,41 +1925,64 @@ var _echoues_a_quai := {}   # bateau -> l'instant où on l'a vu échoué à sa p
 func _a_flot(k: int, i: int) -> bool:
 	return vue_niv[i] - float(N["bassins"][i]["fond"]) >= float(N["bateaux"][k]["tirant"]) - 1e-6
 
-func _tracer_manque(i: int, y: float, c: Color, age: float) -> void:
+# Le niveau qu'il faudrait, en pointillés à la couleur du bateau, une bande
+# d'eau qui manque à peine teintée, et une BULLE sans texte au-dessus du
+# bateau (Vincent : « évitons du texte, cela doit être enfantin ») : une
+# goutte, une flèche rouge vers le bas, des tirets — il manque de l'eau.
+func _tracer_manque(i: int, y: float, c: Color, age: float, k := -1) -> void:
 	var xb := _x_bassin(i)                 # en oblique, l'eau va jusqu'aux vantaux
 	var x0 := xb.x + 4.0
 	var x1 := xb.y - 4.0
 	var a := clampf(age / 0.4, 0.0, 1.0)
-	var bat := 0.75 + 0.25 * sin(age * 4.0)
-	# l'eau qui manque : la bande entre la surface et le niveau qu'il faudrait,
-	# hachurée à la couleur du bateau
 	var surface := surface_a((x0 + x1) * 0.5)
 	if surface > y + 1.0:
-		_reperes.draw_rect(Rect2(x0, y, x1 - x0, surface - y), Color(c, 0.22 * a * bat))
-		var pas := 14.0
-		var x := x0 - (surface - y)
-		while x < x1:
-			var p0 := Vector2(x, surface)
-			var p1 := Vector2(x + (surface - y), y)
-			# rogner le trait au bassin
-			if p0.x < x0: p0 = Vector2(x0, surface - (x0 - p0.x))
-			if p1.x > x1: p1 = Vector2(x1, y + (p1.x - x1))
-			if p1.x > p0.x: _reperes.draw_line(p0, p1, Color(c, 0.55 * a * bat), 2.0, true)
-			x += pas
+		_reperes.draw_rect(Rect2(x0, y, x1 - x0, surface - y), Color(c, 0.12 * a))
 	_reperes.draw_dashed_line(Vector2(x0, y), Vector2(x1, y), Color(1, 1, 1, 0.9 * a), 7.0, 14.0)
 	_reperes.draw_dashed_line(Vector2(x0, y), Vector2(x1, y), Color(c, a), 4.0, 14.0)
-	# l'inscription, au-dessus de la ligne
-	if _police_manque == null:
-		var f := SystemFont.new()
-		f.font_names = PackedStringArray(["Arial Rounded MT Bold", "Arial Rounded MT", "Avenir Next", "Helvetica Neue"])
-		f.font_weight = 700
-		_police_manque = f
-	var texte := "Il manque de l'eau"
-	var taille := 22
-	var l := _police_manque.get_string_size(texte, HORIZONTAL_ALIGNMENT_LEFT, -1, taille).x
-	var pos := Vector2((x0 + x1 - l) * 0.5, y - 60.0)     # au-dessus de la bouée
-	_reperes.draw_string_outline(_police_manque, pos, texte, HORIZONTAL_ALIGNMENT_LEFT, -1, taille, 8, Color(0.24, 0.13, 0.05, a))
-	_reperes.draw_string(_police_manque, pos, texte, HORIZONTAL_ALIGNMENT_LEFT, -1, taille, Color(1, 0.95, 0.86, a))
+	# la bulle, au-dessus du bateau (ou au milieu du bassin), qui surgit puis
+	# flotte doucement
+	var bx: float = bat_x[k] if k >= 0 and k < bat_x.size() else (x0 + x1) * 0.5
+	var t := clampf(age / 0.3, 0.0, 1.0)
+	var u := t - 1.0
+	var sc := 1.0 + 2.7 * u * u * u + 1.7 * u * u
+	if sc <= 0.01: return
+	var centre := Vector2(bx + 18.0, y - 44.0 + 2.5 * sin(age * 2.6))
+	var w := 62.0 * sc
+	var h := 50.0 * sc
+	var r := Rect2(centre - Vector2(w, h) * 0.5, Vector2(w, h))
+	var st := StyleBoxFlat.new()
+	st.bg_color = Color("#fff3dc")
+	st.border_color = Color("#5b3416")
+	st.set_border_width_all(3)
+	st.set_corner_radius_all(int(14 * sc))
+	st.shadow_color = Color(0, 0, 0, 0.2); st.shadow_size = 4; st.shadow_offset = Vector2(1, 2)
+	st.anti_aliasing = true
+	# la queue de la bulle, vers le bateau
+	var q0 := Vector2(r.position.x + w * 0.22, r.end.y - 2.0)
+	var q1 := Vector2(r.position.x + w * 0.44, r.end.y - 2.0)
+	var q2 := Vector2(bx - 4.0, r.end.y + 14.0 * sc)
+	_reperes.draw_colored_polygon(PackedVector2Array([q0 + Vector2(-2, 0), q2 + Vector2(-1, 2), q1 + Vector2(2, 0)]), Color("#5b3416"))
+	st.draw(_reperes.get_canvas_item(), r)
+	_reperes.draw_colored_polygon(PackedVector2Array([q0 + Vector2(1, -3), q2, q1 + Vector2(-1, -3)]), Color("#fff3dc"))
+	# la goutte
+	var g := centre + Vector2(-w * 0.17, -h * 0.02)
+	var gr := 9.0 * sc
+	var goutte := PackedVector2Array()
+	for j in 21:
+		var an := PI * j / 20.0
+		goutte.append(g + Vector2(cos(an) * gr, sin(an) * gr))
+	goutte.append(g + Vector2(0, -gr * 2.1))
+	_reperes.draw_colored_polygon(goutte, Color("#2f8fd8"))
+	_reperes.draw_polyline(goutte + PackedVector2Array([goutte[0]]), Color("#1d5c94"), 1.5, true)
+	_reperes.draw_circle(g + Vector2(-gr * 0.35, -gr * 0.1), gr * 0.25, Color(1, 1, 1, 0.7))
+	# la flèche rouge vers le bas
+	var f := centre + Vector2(w * 0.2, -h * 0.12)
+	_reperes.draw_line(f + Vector2(0, -9 * sc), f + Vector2(0, 3 * sc), Color("#d9412d"), 4.0 * sc, true)
+	_reperes.draw_colored_polygon(PackedVector2Array([f + Vector2(-7, 2) * sc, f + Vector2(7, 2) * sc, f + Vector2(0, 11) * sc]), Color("#d9412d"))
+	# les tirets du niveau, sous la goutte et la flèche
+	for j in 3:
+		var dx := (-0.32 + 0.24 * j) * w
+		_reperes.draw_line(centre + Vector2(dx, h * 0.3), centre + Vector2(dx + w * 0.15, h * 0.3), Color("#5b3416"), 3.0 * sc, true)
 
 func _exclamation(c: Vector2, age: float) -> void:
 	var t := clampf(age / 0.32, 0.0, 1.0)
@@ -2005,7 +2027,9 @@ func _dessiner_reperes() -> void:
 		var v := int(b["vers"])
 		# arrivé, c'est à sa place ET à flot (la règle du moteur) : échoué à
 		# sa place, la bouée reste, couchée si le bassin est à sec
-		var arrive: bool = positions[k] == v and _a_flot(k, v)
+		# (à sa place mais échoué, la bulle du manque suffit : la bouée, au même
+		# endroit, chevauchait le bateau)
+		var arrive: bool = positions[k] == v
 		if arrive: _bouees_vues.erase(k)
 		var sp: Sprite2D = _bouees_img.get(k)
 		if sp: sp.visible = not arrive

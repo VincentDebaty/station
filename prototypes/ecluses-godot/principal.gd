@@ -682,7 +682,12 @@ func _niveau_suivant() -> void:
 func _process(dt: float) -> void:
 	if canal:
 		for p in canal.portes.values(): p.actif = not occupe and not fini
-		for p in canal.pompes.values(): p.actif = not occupe and not fini
+		# une pompe dont la source est à sec ne répond plus : elle pâlit et
+		# cesse d'inviter le doigt (Vincent)
+		if not canal.pompes.is_empty():
+			var A := Moteur.actions(N, etat) if not occupe and not fini else []
+			for ip in canal.pompes:
+				canal.pompes[ip].actif = A.any(func(x): return x["type"] == "pomper" and int(x["i"]) == ip)
 	_images += 1
 	_secondes += dt
 	if _ips and Engine.get_process_frames() % 15 == 0:
