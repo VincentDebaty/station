@@ -21,6 +21,49 @@ var image: Texture2D = null
 var ligne := 0.71
 var largeur_image := 0.0
 
+# Le haut de la cheminée, en coordonnées du bateau (l'image : à 13 % de la
+# largeur derrière le milieu, tout en haut).
+func cheminee() -> Vector2:
+	if image == null: return Vector2(-0.2 * longueur * sens, -0.55 * longueur)
+	var w := largeur_image if largeur_image > 0.0 else longueur * 1.12
+	var h := w * image.get_height() / image.get_width()
+	return Vector2(-0.13 * w * sens, -ligne * h + 2.0)
+
+# La fumée de la cheminée (image cible de Vincent, 7 octobre 2026) : de
+# petites bouffées grises qui montent, s'élargissent et s'effacent, poussées
+# vers l'arrière quand le bateau avance.
+var fumee: CPUParticles2D
+func allumer() -> void:
+	var rond := GradientTexture2D.new()
+	rond.width = 32; rond.height = 32
+	rond.fill = GradientTexture2D.FILL_RADIAL
+	rond.fill_from = Vector2(0.5, 0.5); rond.fill_to = Vector2(1.0, 0.5)
+	var g := Gradient.new()
+	g.set_color(0, Color(1, 1, 1, 1)); g.set_color(1, Color(1, 1, 1, 0))
+	rond.gradient = g
+	fumee = CPUParticles2D.new()
+	fumee.texture = rond
+	fumee.local_coords = false
+	fumee.amount = 9
+	fumee.lifetime = 2.6
+	fumee.direction = Vector2(-0.25 * sens, -1)
+	fumee.spread = 12.0
+	fumee.gravity = Vector2(0, -6)
+	fumee.initial_velocity_min = 16.0
+	fumee.initial_velocity_max = 24.0
+	fumee.damping_min = 4.0; fumee.damping_max = 8.0
+	var taille := Curve.new()
+	taille.add_point(Vector2(0, 0.35)); taille.add_point(Vector2(1, 1.3))
+	fumee.scale_amount_curve = taille
+	fumee.scale_amount_min = 0.9; fumee.scale_amount_max = 1.2
+	var teinte := Gradient.new()
+	teinte.set_color(0, Color(0.95, 0.95, 0.93, 0.0))
+	teinte.add_point(0.12, Color(0.94, 0.94, 0.92, 0.75))
+	teinte.set_color(teinte.get_point_count() - 1, Color(0.85, 0.86, 0.88, 0.0))
+	fumee.color_ramp = teinte
+	fumee.position = cheminee()
+	add_child(fumee)
+
 func _draw() -> void:
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2(sens, 1.0))
 	var L := longueur * 0.5

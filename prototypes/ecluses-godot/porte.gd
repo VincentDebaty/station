@@ -35,6 +35,7 @@ var _leve := false
 var _angle := 0.0
 var _rotation := 0.0       # ce qui reste à tourner de la roue
 var _vantail: Polygon2D
+var _tranche: Polygon2D
 var _mat_bois: ShaderMaterial
 var _chaines: Node2D
 var roue: Node2D
@@ -152,7 +153,8 @@ func _construire_profil(mp: ShaderMaterial, abas: float, bois: Shader) -> void:
 # les deux, dont on voit la face de biais ; la traverse relie les deux piliers.
 # Le vantail se pose dans « couche_vantail », avant l'eau : on le voit à travers
 # l'eau du bassin de gauche, sans rien de plus.
-const PILIER := 12.0
+const PILIER := 15.0          # demi-largeur d'un pilier (12 avant l'image cible)
+const EPAISSEUR := 7.0        # l'épaisseur du vantail, vue de face sur sa tranche
 func _xc() -> float:
 	return (gx0 + gx1) * 0.5
 
@@ -167,6 +169,9 @@ func _construire_oblique(mp: ShaderMaterial, abas: float) -> void:
 	else:
 		_vantail.color = Color("#8a5a2e")
 	(couche_vantail if couche_vantail else self).add_child(_vantail)
+	_tranche = Polygon2D.new()
+	_tranche.color = Color("#5c3818")
+	(couche_vantail if couche_vantail else self).add_child(_tranche)
 	_chaines = Node2D.new()
 	_chaines.draw.connect(_dessiner_chaines)
 	add_child(_chaines)
@@ -225,10 +230,13 @@ func _maj_oblique() -> void:
 	var haut_vu := maxf(haut, cache)
 	if bas_y <= haut_vu + 1.0:
 		_vantail.polygon = PackedVector2Array()
+		_tranche.polygon = PackedVector2Array()
 		_chaines.queue_redraw()
 		return
 	var xf := xc - 5.0
 	_vantail.polygon = PackedVector2Array([Vector2(xf + D.x, haut_vu + D.y), Vector2(xf, haut_vu), Vector2(xf, bas_y), Vector2(xf + D.x, bas_y + D.y)])
+	# sa tranche, de face, contre le pilier avant : le vantail a une épaisseur
+	_tranche.polygon = _quad(xf, haut_vu, xf + EPAISSEUR, bas_y)
 	# le vantail s'assombrit vers le pilier avant, qui lui fait de l'ombre, et
 	# sous la traverse quand il est fermé (son haut y est rangé)
 	var sous_t := 0.82 if haut_vu <= cache + 1.0 else 1.0

@@ -42,7 +42,9 @@ const COULEURS := [Color("#e5462f"), Color("#f2b705"), Color("#2b7be0"), Color("
 # horizontaux et se comparent), et la profondeur part en diagonale, vers le
 # haut et la gauche. D est le décalage du plan du fond ; les bateaux et les
 # bouées voguent à mi-profondeur (D/2). ECLUSES_PROFIL=1 rend la vue de profil.
-var D := Vector2(-34.0, -30.0)
+# Approfondie le 7 octobre (34, 30 → 46, 40), d'après l'image cible de
+# Vincent : les portes et les murs y gagnent leur volume.
+var D := Vector2(-46.0, -40.0)
 
 const SH_EAU := preload("res://shaders/eau.gdshader")
 const SH_PIERRE := preload("res://shaders/pierre.gdshader")
@@ -265,6 +267,7 @@ func construire(niveau: Dictionary, e: Dictionary) -> void:
 			bt.tirant = (1.0 - bt.ligne) * h
 		flotte.add_child(bt)
 		bateaux.append(bt)
+		bt.allumer()
 	positions = e["bateaux"].duplicate()
 	_preparer_places()
 	for k in bateaux.size():
@@ -416,6 +419,7 @@ func _murs_du_fond() -> void:
 		_poly(_quad(mx0 - 8, Y(sommet), mx1 + 8, Y(sommet) + 16), null,
 			PackedColorArray([Color(0, 0, 0, 0.22), Color(0, 0, 0, 0.22), Color(0, 0, 0, 0), Color(0, 0, 0, 0)]))
 		_vie_du_mur(i, mx0, mx1, Y(sommet), Y(f), float(b.get("niveau", f)))
+		if D != Vector2.ZERO: _dessus_de_mur(mx0 - 8, mx1 + 8, Y(sommet) + 26.0 - 28.0)
 		_couronnement(mx0 - 8, mx1 + 8, Y(sommet), i)
 		# le couronnement herbu du mur
 		if not _bande_herbe(mx0 - 10, mx1 + 10, Y(sommet) + 2, 24.0):
@@ -661,6 +665,10 @@ func _dessiner_mouille(i: int) -> void:
 			var t := TAU * j / 20.0
 			flaque.append(c + Vector2(cos(t) * rx, sin(t) * rx * 0.28) * (1.0 + 0.1 * sin(t * 3.0 + c.x)))
 		n.draw_colored_polygon(flaque, Color(0.32, 0.62, 0.72, 0.55 * a))
+		# de la mousse au bord de la flaque
+		for m in 3:
+			var q := c + Vector2(rng.randf_range(-rx, rx), rng.randf_range(-3.0, 3.0))
+			n.draw_circle(q, rng.randf_range(2.5, 5.0), Color(0.3, 0.45, 0.17, 0.55 * a))
 		n.draw_line(c + Vector2(-rx * 0.5, -1.5), c + Vector2(rx * 0.1, -2.5), Color(0.92, 1, 1, 0.55 * a), 1.5, true)
 
 # Le CONTACT de l'eau (analyse graphique : les bateaux semblaient posés sur
@@ -731,11 +739,13 @@ func _coupe_avant() -> void:
 	if not B[0].get("fixe", false):
 		_poly(_quad(-LOIN, Y(berge), g0, tres_bas), terre)
 		_poly(_quad(g0 - 0.3 * U, Y(berge), g0, Y(float(B[0]["fond"]) - 0.32)), pierre)
+		if D != Vector2.ZERO: _dessus_de_mur(g0 - 0.3 * U, g0, Y(berge) + 4.0)
 		_herbe(-LOIN, g0, Y(berge))
 		_empattement(g0 - 0.3 * U, Y(float(B[0]["fond"]) - 0.32), -1.0, pierre)
 	if not B[B.size() - 1].get("fixe", false):
 		_poly(_quad(g1, Y(berge), W + LOIN, tres_bas), terre)
 		_poly(_quad(g1, Y(berge), g1 + 0.3 * U, Y(float(B[B.size() - 1]["fond"]) - 0.32)), pierre)
+		if D != Vector2.ZERO: _dessus_de_mur(g1, g1 + 0.3 * U, Y(berge) + 4.0)
 		_herbe(g1, W + LOIN, Y(berge))
 		_empattement(g1 + 0.3 * U, Y(float(B[B.size() - 1]["fond"]) - 0.32), 1.0, pierre)
 	# la terre vit : une ombre douce sous tout ce qui la couvre (radiers, herbe
@@ -919,6 +929,12 @@ func _vie_du_mur(i: int, x0: float, x1: float, y_haut: float, y_fond: float, niv
 		_poly(_quad(x0, y_eau - 10.0, x1, y_eau + 6.0), null, PackedColorArray([sec, sec, humide, humide]))
 		_poly(_quad(x0, y_eau + 6.0, x1, y_fond), null, PackedColorArray([humide]))
 		_poly(_quad(x0, y_eau - 1.5, x1, y_eau + 1.0), null, PackedColorArray([Color(0.95, 0.92, 0.8, 0.22)]))
+	# la mousse (image cible de Vincent) : des touffes vertes au pied du mur,
+	# et plus clairsemées le long de la ligne d'humidité
+	var rm := RandomNumberGenerator.new()
+	rm.seed = 7177 * (i + 1) + int(x0)
+	_mousse(rm, x0, x1, y_fond - 3.0, 1.0)
+	if y_eau < y_fond - 4.0: _mousse(rm, x0, x1, y_eau + 2.0, 0.45)
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 104729 * (i + 1) + int(x0)
 	var h := y_fond - y_haut
@@ -944,6 +960,34 @@ func _vie_du_mur(i: int, x0: float, x1: float, y_haut: float, y_fond: float, niv
 	ligne.default_color = Color(0.22, 0.16, 0.1, 0.45)
 	ligne.antialiased = true
 	_ajouter(ligne)
+
+# Le DESSUS d'un mur, vu d'en haut (image cible de Vincent : chaque mur a son
+# épaisseur, une bande de pierre dans la même perspective que l'eau). Dans le
+# plan où l'on dessine, de y vers l'arrière, sur une demi-profondeur, sous
+# l'herbe qui le borde. Éclairé, un peu plus sombre au fond.
+func _dessus_de_mur(x0: float, x1: float, y: float) -> void:
+	var e := D * 0.45
+	var pts := PackedVector2Array([Vector2(x0, y), Vector2(x1, y), Vector2(x1 + e.x, y + e.y), Vector2(x0 + e.x, y + e.y)])
+	_face(pts, PackedVector2Array([Vector2(0, e.length()), Vector2(x1 - x0, e.length()), Vector2(x1 - x0, 0), Vector2(0, 0)]),
+		Color(1.1, 1.06, 0.98), _mat(SH_PIERRE, {"teinte": Color("#e3d4b4")}))
+	_poly(pts, null, PackedColorArray([Color(0, 0, 0, 0), Color(0, 0, 0, 0), Color(0.1, 0.05, 0, 0.22), Color(0.1, 0.05, 0, 0.22)]))
+
+# Une frange de mousse le long de y : des taches vert sombre et vert tendre,
+# serrées selon « densite », plus épaisses par endroits.
+func _mousse(rng: RandomNumberGenerator, x0: float, x1: float, y: float, densite: float) -> void:
+	var x := x0 + rng.randf_range(0.0, 12.0)
+	while x < x1 - 4.0:
+		if rng.randf() < densite:
+			var r := Vector2(rng.randf_range(5.0, 14.0), rng.randf_range(2.5, 6.0))
+			var c := Vector2(x, y - r.y * 0.4 + rng.randf_range(-2.0, 2.0))
+			var tache := PackedVector2Array()
+			for j in 12:
+				var a := TAU * j / 12.0
+				tache.append(c + Vector2(cos(a) * r.x, sin(a) * r.y) * (1.0 + 0.2 * sin(a * 3.0 + x)))
+			var vert := Color(0.28, 0.42, 0.16, 0.55) if rng.randf() < 0.6 else Color(0.45, 0.6, 0.22, 0.5)
+			var po := _poly(tache)
+			po.color = vert
+		x += rng.randf_range(6.0, 16.0)
 
 # Les pierres de couronnement en haut d'un mur (lot 4 de PLAN-RENDU.md : la
 # grande maçonnerie formait « un énorme rectangle ») : une rangée de pierres
