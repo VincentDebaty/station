@@ -50,6 +50,7 @@ Tout système nouveau se range dans l'une de ces familles :
 | 15 | Bassin d'épargne | une vanne latérale | garder de l'eau pour plus tard | à écrire | fort |
 | 18 | Glaçon et brasero (gel, feu) | allumer une fois, puis le temps passe | quand allumer : l'eau arrive en trois coups, là où elle est posée | **écrite** (chap. 6, niveau 6-1, nuit du 7 au 8 octobre 2026) | moyen |
 | 19 | Orage (tempête) | aucun, ou attendre | profiter de l'eau qui tombe sans laisser monter le bief du village | **écrit** (chap. 7, niveau 7-1, nuit du 7 au 8 octobre 2026) | faible |
+| 20 | Pont bas | aucun | garder l'eau assez basse pour la cheminée des bateaux | **écrit** (chap. 11, niveau 11-1, nuit du 7 au 8 octobre 2026) | moyen |
 | 17 | Chaudière (vapeur) | un coup = un volume qui part en fumée | quand se débarrasser d'une eau qui menace le village | **écrite** (chap. 5, niveau 5-1, nuit du 7 au 8 octobre 2026) | faible |
 
 Les **objectifs** ne déplacent pas l'eau mais s'y ajoutent : bateau à
@@ -250,6 +251,25 @@ trois planches exactement, sinon le village est inondé.
   Mais chaque coup monte aussi le bief aval vers le haut de la levée du
   village ; la solution finit à 3,98 pour une levée à 4. Neuf coups de trop
   et le village est inondé. Par 6.
+
+### 20. Le pont bas (nuit du 7 au 8 octobre 2026)
+- **On voit :** un pont de pierre sur un passage libre entre deux biefs,
+  dessiné comme une porte (pilier devant, pilier au fond, tablier avec sa
+  route pavée et ses parapets) ; sous le tablier, une plaque ronde de hauteur
+  limitée. Un bateau bloqué par le pont montre, au bout de cinq secondes, le
+  niveau qu'il faudrait en pointillés et une bulle « goutte, flèche vers le
+  haut » : il y a trop d'eau.
+- **La règle :** `pont` sur une liaison (le dessous du tablier) : un bateau
+  ne passe dessous que si l'eau plus sa `hauteur` (0,6 par défaut, mesurée
+  sur l'image des bateaux) n'y touche pas. Avec 1, on voyait le bateau tenir
+  sous le pont alors que le moteur le refusait : la règle doit coller à
+  l'image.
+- **Le niveau 11-1 :** les deux biefs du haut sont trop pleins pour passer
+  sous le pont ; l'écluse sert de seau, on l'emplit en haut et on la vide en
+  bas, et l'on fait passer les deux bateaux dans le même mouvement. Par 7
+  (5 sans le pont) ; au hasard, deux parties sur cent.
+- **Rendu Godot du passage libre**, écrit pour l'occasion : les deux eaux se
+  rejoignent au milieu de la liaison, sous le pilier avant.
 
 ### Écartés pour l'instant
 - **Moulin, roue à aubes** qui actionnerait autre chose quand l'eau y passe :

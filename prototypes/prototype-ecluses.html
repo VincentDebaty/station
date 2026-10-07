@@ -273,8 +273,9 @@ button:focus-visible, [role="button"]:focus-visible { outline: 3px solid var(--o
     {"n": 8, "titre": "La marée", "decor": "campagne", "resume": "La mer monte et descend d'un cran à chaque coup, et l'on sait d'avance jusqu'où. Une porte ouverte à marée haute remplit le sas pour rien."},
     {"n": 9, "titre": "L'ascenseur", "decor": "campagne", "resume": "Un bac d'acier monte et descend avec son eau et le bateau, sans écluse. Mais l'eau qu'il emporte se mélange à celle du bief où il s'arrête."},
     {"n": 10, "titre": "Le siphon", "decor": "campagne", "resume": "Un tuyau en U renversé, par-dessus une levée ou une porte. Amorcé, il fait passer l'eau du plus haut au plus bas, jusqu'à ce que son bout sorte de l'eau."},
-    {"n": 11, "titre": "Les canaux", "decor": "collines", "resume": "Creuser les digues, puis lâcher l'eau et regarder où elle va."},
-    {"n": 12, "titre": "Le fleuve", "decor": "estuaire", "resume": "L'eau arrive toute seule, à chaque coup. Il faut la conduire avant qu'elle déborde."}
+    {"n": 11, "titre": "Le pont bas", "decor": "campagne", "resume": "Un pont de pierre enjambe le canal. Les bateaux passent dessous, si l'eau est assez basse pour leur cheminée : trop d'eau, cette fois, c'est un obstacle."},
+    {"n": 12, "titre": "Les canaux", "decor": "collines", "resume": "Creuser les digues, puis lâcher l'eau et regarder où elle va."},
+    {"n": 13, "titre": "Le fleuve", "decor": "estuaire", "resume": "L'eau arrive toute seule, à chaque coup. Il faut la conduire avant qu'elle déborde."}
   ],
   "niveaux": [
     {
@@ -592,9 +593,32 @@ button:focus-visible, [role="button"]:focus-visible { outline: 3px solid var(--o
         {"de": 1, "vers": 3, "tirant": 1}
       ]
     },
-    {
+{
       "id": "11-1",
       "chapitre": 11,
+      "titre": "Le pont bas",
+      "mode": "pas",
+      "par": 7,
+      "conseil": "Sous le pont, la cheminée des bateaux touche le tablier si l'eau est trop haute. Il faut faire baisser le bief d'en haut, et l'écluse peut l'emporter seau par seau.",
+      "bassins": [
+        {"type": "bief", "fond": 0, "largeur": 6, "niveau": 2, "nom": "bief aval"},
+        {"type": "sas", "fond": 0, "largeur": 2, "niveau": 4, "nom": "sas"},
+        {"type": "bief", "fond": 3, "largeur": 3, "niveau": 4.6, "nom": "bief du pont"},
+        {"type": "bief", "fond": 3, "largeur": 6, "niveau": 4.6, "nom": "bief amont"}
+      ],
+      "liaisons": [
+        {"type": "porte", "seuil": 0, "crete": 6},
+        {"type": "porte", "seuil": 3, "crete": 6},
+        {"type": "libre", "pont": 4.8}
+      ],
+      "bateaux": [
+        {"de": 0, "vers": 3, "tirant": 1},
+        {"de": 3, "vers": 0, "tirant": 1}
+      ]
+    },
+    {
+      "id": "12-1",
+      "chapitre": 12,
       "titre": "Le premier sillon",
       "mode": "chantier",
       "par": 4,
@@ -612,8 +636,8 @@ button:focus-visible, [role="button"]:focus-visible { outline: 3px solid var(--o
       "bateaux": []
     },
     {
-      "id": "11-2",
-      "chapitre": 11,
+      "id": "12-2",
+      "chapitre": 12,
       "titre": "Les rizières",
       "mode": "chantier",
       "par": 5,
@@ -635,8 +659,8 @@ button:focus-visible, [role="button"]:focus-visible { outline: 3px solid var(--o
       "bateaux": []
     },
     {
-      "id": "11-3",
-      "chapitre": 11,
+      "id": "12-3",
+      "chapitre": 12,
       "titre": "Remettre à flot",
       "mode": "chantier",
       "par": 6,
@@ -660,8 +684,8 @@ button:focus-visible, [role="button"]:focus-visible { outline: 3px solid var(--o
       ]
     },
     {
-      "id": "12-1",
-      "chapitre": 12,
+      "id": "13-1",
+      "chapitre": 13,
       "titre": "Le fleuve monte",
       "mode": "pas",
       "par": 5,
@@ -682,8 +706,8 @@ button:focus-visible, [role="button"]:focus-visible { outline: 3px solid var(--o
       ]
     },
     {
-      "id": "12-2",
-      "chapitre": 12,
+      "id": "13-2",
+      "chapitre": 13,
       "titre": "Le déversoir",
       "mode": "pas",
       "par": 8,
@@ -708,8 +732,8 @@ button:focus-visible, [role="button"]:focus-visible { outline: 3px solid var(--o
       ]
     },
     {
-      "id": "12-3",
-      "chapitre": 12,
+      "id": "13-3",
+      "chapitre": 13,
       "titre": "La crue",
       "mode": "pas",
       "par": 6,
@@ -799,6 +823,9 @@ const Ecluses = (function () {
   //                une crépine sort de l'eau, l'air entre : le siphon se
   //                désamorce (état 0). Son débit s'ajoute, dans le tableau
   //                des flux, après ceux des liaisons.
+  //   pont       sur une liaison : la hauteur du DESSOUS du tablier d'un
+  //              pont. Un bateau ne passe dessous que si l'eau, plus sa
+  //              « hauteur » (cheminée comprise, 0,6 par défaut), n'y touche pas.
   //   pluie      l'orage : chaque coup, chaque bassin (sauf la mer et le
   //              village, où elle s'infiltre) monte de « pluie »
   //   maree      la mer suit une suite de niveaux connue d'avance, un pas
@@ -989,6 +1016,10 @@ const Ecluses = (function () {
   // son tirant (dans le bassin d'arrivée et au-dessus du seuil), et de la
   // place (un sas ne prend qu'un bateau). Deux bateaux ne se croisent donc
   // jamais dans un sas.
+  // 0,6 : la hauteur des bateaux du jeu au-dessus de l'eau, cheminée comprise,
+  // mesurée sur leur image (avec 1, un bateau qu'on voyait passer sous le pont
+  // était refusé)
+  const hauteurBateau = (N, k) => N.bateaux[k].hauteur != null ? N.bateaux[k].hauteur : 0.6;
   function capacite(N, i) { const b = N.bassins[i]; return b.cap || (b.type === "sas" || b.type === "bac" ? 1 : 3); }
   function flotte(N, e, k, i) { return profondeur(N, e, i) >= N.bateaux[k].tirant - EPS; }
   function peutPasser(N, e, k, p, q) {
@@ -997,6 +1028,7 @@ const Ecluses = (function () {
     if (Math.abs(e.niv[p] - e.niv[q]) > EPS) return false;
     if (!flotte(N, e, k, p) || !flotte(N, e, k, q)) return false;
     if (e.niv[q] - seuilBateau(N, i, e) < N.bateaux[k].tirant - EPS) return false;
+    if (l.pont != null && e.niv[q] + hauteurBateau(N, k) > l.pont + EPS) return false;
     return e.bateaux.filter(x => x === q).length < capacite(N, q);
   }
   function bouger(N, e) {

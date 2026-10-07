@@ -301,7 +301,15 @@ static func peut_passer(N: Dictionary, e: Dictionary, k: int, p: int, q: int) ->
 		return false
 	if e["niv"][q] - seuil_bateau(N, i, e) < float(N["bateaux"][k]["tirant"]) - EPS:
 		return false
+	if l.has("pont") and l["pont"] != null and e["niv"][q] + hauteur_bateau(N, k) > float(l["pont"]) + EPS:
+		return false
 	return e["bateaux"].count(q) < capacite(N, q)
+
+# La hauteur d'un bateau au-dessus de l'eau, cheminée comprise (0,6 par
+# défaut : mesurée sur l'image des bateaux).
+static func hauteur_bateau(N: Dictionary, k: int) -> float:
+	var b: Dictionary = N["bateaux"][k]
+	return float(b["hauteur"]) if b.has("hauteur") and b["hauteur"] != null else 0.6
 
 # Pourquoi le bateau k n'avance pas d'un bassin vers sa destination : les
 # tests de peut_passer(), dans le même ordre. Ne décide de rien, sert à
@@ -335,6 +343,8 @@ static func raison(N: Dictionary, e: Dictionary, k: int) -> Dictionary:
 		return {"quoi": "fond_la", "bassin": q, "niveau": fond_de(N, e, q) + t}
 	if e["niv"][q] - seuil_bateau(N, i, e) < t - EPS:
 		return {"quoi": "seuil", "bassin": q, "niveau": seuil_bateau(N, i, e) + t}
+	if l.has("pont") and l["pont"] != null and e["niv"][q] + hauteur_bateau(N, k) > float(l["pont"]) + EPS:
+		return {"quoi": "pont", "bassin": q, "niveau": float(l["pont"]) - hauteur_bateau(N, k)}
 	if e["bateaux"].count(q) >= capacite(N, q):
 		return {"quoi": "plein", "bassin": q}
 	return {"quoi": "passe", "bassin": q}

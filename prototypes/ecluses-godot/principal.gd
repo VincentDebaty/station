@@ -47,7 +47,7 @@ var _sure: Control      # la zone sûre : tout ce qu'on touche ou qu'on lit y re
 # Le niveau sur lequel le jeu s'ouvre : celui qu'on est en train d'essayer
 # (Vincent, 7 octobre 2026 : « quand tu déploies sur l'iPhone, tu proposes le
 # nouveau niveau à chaque fois »). À changer à chaque nouveauté.
-const NIVEAU_EN_TEST := "10-1"
+const NIVEAU_EN_TEST := "11-1"
 
 func _ready() -> void:
 	_tous = JSON.parse_string(FileAccess.get_file_as_string("res://niveaux.json"))["niveaux"]
@@ -312,6 +312,9 @@ func _pourquoi(coinces: Array) -> String:
 				return "Le %s touche le fond du %s." % [nom.call(k), bassin.call(int(r["bassin"]))]
 			"plein":
 				return "Le %s attend une place dans le %s, qui ne se libérera plus." % [nom.call(k), bassin.call(int(r["bassin"]))]
+			"pont":
+				canal.signaler_manque(int(r["bassin"]), float(r["niveau"]), k, true)
+				return "L'eau est trop haute : la cheminée du %s ne passe plus sous le pont." % nom.call(k)
 	return ""
 
 func annuler() -> void:
@@ -726,8 +729,8 @@ func _indices_de_fond(dt: float) -> void:
 	if _calme < 5.0: return
 	for k in N["bateaux"].size():
 		var r := Moteur.raison(N, etat, k)
-		if r["quoi"] in ["fond_ici", "fond_la", "seuil"]:
-			canal.indiquer_manque(k, int(r["bassin"]), float(r["niveau"]))
+		if r["quoi"] in ["fond_ici", "fond_la", "seuil", "pont"]:
+			canal.indiquer_manque(k, int(r["bassin"]), float(r["niveau"]), r["quoi"] == "pont")
 
 func _process(dt: float) -> void:
 	_indices_de_fond(dt)

@@ -220,8 +220,8 @@ func construire(niveau: Dictionary, e0: Dictionary) -> void:
 		var w := Eau.new()
 		var xb := _x_bassin(i)
 		w.preparer(xb.x, xb.y, Y(float(B[i]["fond"])), Y(vue_niv[i]), SH_EAU)
-		w.paroi_g = i == 0 or N["liaisons"][i - 1]["type"] != "porte"
-		w.paroi_d = i == n - 1 or N["liaisons"][i]["type"] != "porte"
+		w.paroi_g = i == 0 or not (N["liaisons"][i - 1]["type"] in ["porte", "libre"])
+		w.paroi_d = i == n - 1 or not (N["liaisons"][i]["type"] in ["porte", "libre"])
 		add_child(w)
 		eaux.append(w)
 	for i in N["liaisons"].size():
@@ -411,6 +411,15 @@ func construire(niveau: Dictionary, e0: Dictionary) -> void:
 		# pilier avant, dessiné par la porte (Vincent : elle passait devant)
 		move_child(tp, portes[i].get_index())
 		trop_pleins[i] = tp
+	# les ponts bas : sur un passage libre, le pilier du fond derrière l'eau et
+	# les bateaux, le pilier avant et le tablier devant
+	for i in N["liaisons"].size():
+		var lp: Dictionary = N["liaisons"][i]
+		if not lp.has("pont"): continue
+		var pt := Pont.new()
+		pt.preparer(self, X(gl[i][0] + gl[i][1]) * 0.5, Y(float(lp["pont"])), Y(maxf(float(B[i]["fond"]), float(B[i + 1]["fond"])) - 0.32))
+		arriere.add_child(pt.fond)
+		add_child(pt)
 	# les hausses : leurs planches dans la couche des vantaux (vues à travers
 	# l'eau), leurs poteaux devant et au fond
 	for i in N["liaisons"].size():
@@ -885,9 +894,9 @@ func _maj_surfaces() -> void:
 		# marche d'escalier au milieu de la porte — le plan d'eau « se cassait
 		# en deux » au passage d'un bateau (Vincent). Les deux bandes se raccordent
 		# à la même hauteur, en fondu sur les 36 derniers pixels.
-		if i > 0 and passages.has(i - 1) and passages[i - 1].visible_eau and not bloc_g:
+		if i > 0 and ((passages.has(i - 1) and passages[i - 1].visible_eau) or N["liaisons"][i - 1]["type"] == "libre") and not bloc_g:
 			_raccorder(bord, _jonction(i - 1), true)
-		if passages.has(i) and passages[i].visible_eau and not bloc_d:
+		if ((passages.has(i) and passages[i].visible_eau) or (i < gl.size() and N["liaisons"][i]["type"] == "libre")) and not bloc_d:
 			_raccorder(bord, _jonction(i), false)
 		var sec := w.vide()
 		_maj_mouille(i, sec)
@@ -1505,8 +1514,9 @@ func _x_bassin(i: int) -> Vector2:
 		if i == gb.size() - 1: b += DEBORD
 	if D != Vector2.ZERO:
 		# (une hausse aussi : ses planches sont au milieu du mur, l'eau les touche)
-		if i > 0 and N["liaisons"][i - 1]["type"] in ["porte", "hausse"]: a = X(gl[i - 1][0] + gl[i - 1][1]) * 0.5
-		if i < gl.size() and N["liaisons"][i]["type"] in ["porte", "hausse"]: b = X(gl[i][0] + gl[i][1]) * 0.5
+		# (un passage libre aussi : les deux eaux se rejoignent au milieu)
+		if i > 0 and N["liaisons"][i - 1]["type"] in ["porte", "hausse", "libre"]: a = X(gl[i - 1][0] + gl[i - 1][1]) * 0.5
+		if i < gl.size() and N["liaisons"][i]["type"] in ["porte", "hausse", "libre"]: b = X(gl[i][0] + gl[i][1]) * 0.5
 	return Vector2(a, b)
 
 # --- Où sont les choses ---------------------------------------------------------------
@@ -2321,15 +2331,15 @@ func alerter(bateaux_coinces: Array) -> void:
 # hachurée, et « Il manque de l'eau » écrit au-dessus. Effacé quand on
 # reconstruit la coupe (annuler, rejouer).
 var _manque := {}
-func signaler_manque(bassin: int, niveau: float, k: int) -> void:
-	_manque = {"bassin": bassin, "y": Y(niveau), "couleur": COULEURS[k % COULEURS.size()], "t": _t, "k": k}
+func signaler_manque(bassin: int, niveau: float, k: int, trop := false) -> void:
+	_manque = {"bassin": bassin, "y": Y(niveau), "couleur": COULEURS[k % COULEURS.size()], "t": _t, "k": k, "trop": trop}
 
 func manque_signale() -> bool:
 	return not _manque.is_empty()
 
 func _dessiner_manque() -> void:
 	if not _manque.is_empty():
-		_tracer_manque(int(_manque["bassin"]), float(_manque["y"]), _manque["couleur"], _t - float(_manque["t"]), int(_manque.get("k", -1)))
+		_tracer_manque(int(_manque["bassin"]), float(_manque["y"]), _manque["couleur"], _t - float(_manque["t"]), int(_manque.get("k", -1)), bool(_manque.get("trop", false)))
 	# Un bateau à sa place mais échoué : pour le jeu, il n'est pas arrivé (il
 	# faut qu'il flotte). Rien ne le disait, et Vincent croyait le niveau fini
 	# sans que rien ne se passe. On montre le niveau qu'il lui faut, comme pour
@@ -2341,7 +2351,7 @@ func _dessiner_manque() -> void:
 		_tracer_manque(v, Y(float(N["bassins"][v]["fond"]) + float(N["bateaux"][k]["tirant"])), COULEURS[k % COULEURS.size()], _t - float(_echoues_a_quai[k]), k)
 	for k in _indices:
 		var d: Dictionary = _indices[k]
-		_tracer_manque(int(d["bassin"]), float(d["y"]), COULEURS[k % COULEURS.size()], _t - float(d["t"]), k)
+		_tracer_manque(int(d["bassin"]), float(d["y"]), COULEURS[k % COULEURS.size()], _t - float(d["t"]), k, bool(d.get("trop", false)))
 	for k in _echoues_a_quai.keys():
 		var v2 := int(N["bateaux"][k]["vers"])
 		if positions[k] != v2 or _a_flot(k, v2): _echoues_a_quai.erase(k)
@@ -2350,9 +2360,11 @@ var _echoues_a_quai := {}   # bateau -> l'instant où on l'a vu échoué à sa p
 # Les indices : un bateau arrêté devant une porte ouverte, eaux égales, faute
 # de fond (Vincent : « on a l'impression que le bateau peut avancer »).
 # principal.gd les pose après 5 s sans coup ; le prochain coup les efface.
-var _indices := {}   # bateau -> {bassin, y, t}
-func indiquer_manque(k: int, bassin: int, niveau: float) -> void:
-	if not _indices.has(k): _indices[k] = {"bassin": bassin, "y": Y(niveau), "t": _t}
+var _indices := {}   # bateau -> {bassin, y, t, trop}
+# « trop » : il y a TROP d'eau (un pont bas) — la flèche de la bulle monte,
+# et la bande teintée est celle de l'eau en trop.
+func indiquer_manque(k: int, bassin: int, niveau: float, trop := false) -> void:
+	if not _indices.has(k): _indices[k] = {"bassin": bassin, "y": Y(niveau), "t": _t, "trop": trop}
 
 func effacer_indices() -> void:
 	_indices.clear()
@@ -2363,7 +2375,7 @@ func _a_flot(k: int, i: int) -> bool:
 # d'eau qui manque à peine teintée, et une BULLE sans texte au-dessus du
 # bateau (Vincent : « évitons du texte, cela doit être enfantin ») : une
 # goutte, une flèche rouge vers le bas, des tirets — il manque de l'eau.
-func _tracer_manque(i: int, y: float, c: Color, age: float, k := -1) -> void:
+func _tracer_manque(i: int, y: float, c: Color, age: float, k := -1, trop := false) -> void:
 	var xb := _x_bassin(i)                 # en oblique, l'eau va jusqu'aux vantaux
 	var x0 := xb.x + 4.0
 	var x1 := xb.y - 4.0
@@ -2371,6 +2383,9 @@ func _tracer_manque(i: int, y: float, c: Color, age: float, k := -1) -> void:
 	var surface := surface_a((x0 + x1) * 0.5)
 	if surface > y + 1.0:
 		_reperes.draw_rect(Rect2(x0, y, x1 - x0, surface - y), Color(c, 0.12 * a))
+	if trop and surface < y - 1.0:
+		# l'eau en trop, au-dessus du niveau qu'il faudrait
+		_reperes.draw_rect(Rect2(x0, surface, x1 - x0, y - surface), Color(c, 0.16 * a))
 	_reperes.draw_dashed_line(Vector2(x0, y), Vector2(x1, y), Color(1, 1, 1, 0.9 * a), 7.0, 14.0)
 	_reperes.draw_dashed_line(Vector2(x0, y), Vector2(x1, y), Color(c, a), 4.0, 14.0)
 	# la bulle, au-dessus du bateau (ou au milieu du bassin), qui surgit puis
@@ -2409,10 +2424,13 @@ func _tracer_manque(i: int, y: float, c: Color, age: float, k := -1) -> void:
 	_reperes.draw_colored_polygon(goutte, Color("#2f8fd8"))
 	_reperes.draw_polyline(goutte + PackedVector2Array([goutte[0]]), Color("#1d5c94"), 1.5, true)
 	_reperes.draw_circle(g + Vector2(-gr * 0.35, -gr * 0.1), gr * 0.25, Color(1, 1, 1, 0.7))
-	# la flèche rouge vers le bas
+	# la flèche rouge vers le bas (il manque de l'eau) ou vers le haut (il y en
+	# a trop : un pont bas)
 	var f := centre + Vector2(w * 0.2, -h * 0.12)
-	_reperes.draw_line(f + Vector2(0, -9 * sc), f + Vector2(0, 3 * sc), Color("#d9412d"), 4.0 * sc, true)
-	_reperes.draw_colored_polygon(PackedVector2Array([f + Vector2(-7, 2) * sc, f + Vector2(7, 2) * sc, f + Vector2(0, 11) * sc]), Color("#d9412d"))
+	var sg := -1.0 if trop else 1.0
+	var fy := 0.0 if not trop else 2.0
+	_reperes.draw_line(f + Vector2(0, (-9 * sg + fy) * sc), f + Vector2(0, (3 * sg + fy) * sc), Color("#d9412d"), 4.0 * sc, true)
+	_reperes.draw_colored_polygon(PackedVector2Array([f + Vector2(-7, 2 * sg + fy) * sc, f + Vector2(7, 2 * sg + fy) * sc, f + Vector2(0, 11 * sg + fy) * sc]), Color("#d9412d"))
 	# les tirets du niveau, sous la goutte et la flèche
 	for j in 3:
 		var dx := (-0.32 + 0.24 * j) * w
