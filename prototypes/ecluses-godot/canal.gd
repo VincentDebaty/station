@@ -321,8 +321,10 @@ func construire(niveau: Dictionary, e: Dictionary) -> void:
 	for i in portes:
 		var tp := Jet.new()
 		tp.profondeur = D
-		tp.z_index = 2
 		add_child(tp)
+		# devant le vantail (l'eau tombe sur sa face aval), mais derrière le
+		# pilier avant, dessiné par la porte (Vincent : elle passait devant)
+		move_child(tp, portes[i].get_index())
 		trop_pleins[i] = tp
 	# les hausses : leurs planches dans la couche des vantaux (vues à travers
 	# l'eau), leurs poteaux devant et au fond
@@ -1777,11 +1779,14 @@ func _trop_plein(g: int, flux: float) -> void:
 		return
 	var crete := float(N["liaisons"][g]["crete"])
 	var xc := X(gl[g][0] + gl[g][1]) * 0.5
-	jt.force = 0.75
+	# contre la face aval du vantail, et presque droite : sur le plan de
+	# devant, elle reste derrière le pilier avant, qu'elle ne doit pas
+	# dépasser ; on la voit en profondeur, le long du vantail
+	jt.force = 0.3
 	jt.sens = sens
-	jt.fente = 9.0
-	jt.depart_x = xc
-	jt.origine = Vector2(xc + sens * 10.0, Y(crete) - 4.0)
+	jt.fente = 8.0
+	jt.depart_x = xc - 5.0 + 1.0
+	jt.origine = Vector2(xc - 5.0 + sens * 3.0, Y(crete) - 4.0)
 	jt.vantail_x = xc
 	jt.y_seuil = 0.0
 	jt.haut_veine = 0.0
