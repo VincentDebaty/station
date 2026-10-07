@@ -120,6 +120,10 @@ func _cadrer() -> void:
 # --- Le toucher et les coups ----------------------------------------------------------
 func _unhandled_input(ev: InputEvent) -> void:
 	if ev is InputEventMouseButton and ev.pressed and ev.button_index == MOUSE_BUTTON_LEFT:
+		var idr := canal.drague_sous(get_global_mouse_position())
+		if idr >= 0:
+			jouer({"type": "draguer", "i": idr})
+			return
 		var isi := canal.siphon_sous(get_global_mouse_position())
 		if isi >= 0:
 			jouer({"type": "amorcer", "i": isi})
@@ -184,6 +188,8 @@ func jouer(a: Dictionary) -> void:
 		await canal.voyage_bac(int(a["i"]), avant, etat)
 	elif a["type"] == "amorcer":
 		await canal.amorcer(int(a["i"]))
+	elif a["type"] == "draguer":
+		await canal.draguer(int(a["i"]))
 	elif a["type"] == "creuser" and canal.rigoles.has(int(a["i"])):
 		# un coup de pelle : l'entaille se creuse, des mottes volent, puis
 		# l'eau file
@@ -763,6 +769,10 @@ func _process(dt: float) -> void:
 			var A := Moteur.actions(N, etat) if not occupe and not fini else []
 			for ip in canal.pompes:
 				canal.pompes[ip].actif = A.any(func(x): return x["type"] == "pomper" and int(x["i"]) == ip)
+		if not canal.dragues.is_empty():
+			var A7 := Moteur.actions(N, etat) if not occupe and not fini else []
+			for idr in canal.dragues:
+				canal.dragues[idr].actif = A7.any(func(x): return x["type"] == "draguer" and int(x["i"]) == idr)
 		if not canal.siphons.is_empty():
 			var A6 := Moteur.actions(N, etat) if not occupe and not fini else []
 			for isi in canal.siphons:

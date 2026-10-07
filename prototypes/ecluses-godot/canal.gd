@@ -88,6 +88,8 @@ var marees := {}      # bassin -> Maree : l'échelle, les algues et la flèche d
 var bacs := {}        # objet -> Bac : le bac d'un ascenseur à bateaux, ses câbles et sa tête
 var siphons := {}     # objet -> Siphon : son tuyau sur la berge du fond, sa roue d'amorçage
 var flotteurs := {}   # porte -> Flotteur : la porte que l'eau ouvre toute seule
+var dragues := {}     # objet -> Drague : la vase d'un bassin et la grue qui la drague
+var _vases := {}      # objet -> [fond avant, fond après] pendant l'écoulement
 var fermes := {}      # bassin -> Ferme : la grange en feu de la cour (un « champ » à abreuver)
 var moulins := {}     # porte -> Moulin : la roue à aubes, la maison du meunier et ses sacs
 var _mouture := []    # [farine avant, farine après] pendant l'écoulement
@@ -495,6 +497,24 @@ func construire(niveau: Dictionary, e0: Dictionary) -> void:
 		move_child(bc.tranche, portes[mini(ib - 1, ib)].get_index())
 		add_child(bc.devant)
 		bacs[k] = bc
+	# la vase : sa couche avant l'eau, la grue sur la berge du fond
+	for k in objets.size():
+		if objets[k]["type"] != "vase": continue
+		var ibv := int(objets[k]["bassin"])
+		var xbv := _x_bassin(ibv)
+		var fv := Moteur.fond_de(N, e, ibv)
+		var dg := Drague.new()
+		dg.preparer(self, ibv, xbv.x, xbv.y, Y(float(B[ibv]["fond"])), fv, int(e["obj"][k]),
+			# à droite du bassin : la benne descend loin de la place du bateau
+			Vector2(X(gb[ibv][1]) + D.x - 0.75 * U, Y(sommets_fond[ibv]) + D.y - 2.0))
+		fonds_vus[ibv] = fv
+		eaux[ibv].fond_y = Y(fv)
+		arriere.add_child(dg)
+		# sous les bandes de surface (vue d'en haut) : posée après elles, son
+		# dessus brun passait par-dessus l'eau
+		add_child(dg.couche)
+		move_child(dg.couche, (_surface_fond.get_index() if _surface_fond else eaux[ibv].get_index()))
+		dragues[k] = dg
 	# les aqueducs, dans la terre de la coupe, par-dessus le radier des portes
 	for i in portes:
 		# porte simple : pas de tuyau, l'eau passe sous la porte entrouverte
@@ -770,7 +790,9 @@ func _murs_du_fond() -> void:
 		# aussi haut que le plus bas des deux murs voisins : derrière un mur
 		# bas, on voyait une fente de prairie
 		var haut_fente := maxf(c + 0.2, minf(sommets[i], sommets[i + 1]))
-		_poly(_quad(X(gl[i][0]), Y(haut_fente), X(gl[i][1]), Y(bas)), terre_fond if _terrestre(i) else fond_porte)
+		# (un passage libre : la même pierre que le mur des bassins — dans
+		# l'ombre d'un portique qui n'existe pas, il traçait une bande sombre)
+		_poly(_quad(X(gl[i][0]), Y(haut_fente), X(gl[i][1]), Y(bas)), terre_fond if _terrestre(i) else (fond_pierre if l["type"] == "libre" else fond_porte))
 	_cible = null
 
 # En oblique : ce qu'on voit à travers l'eau entre la coupe et le mur du
@@ -1685,6 +1707,10 @@ func _process(dt: float) -> void:
 		var so: Dictionary = N["objets"][k]
 		siphons[k].tuyau.niveau_g = Y(vue_niv[int(so["a"])]) + D.y
 		siphons[k].tuyau.niveau_d = Y(vue_niv[int(so["b"])]) + D.y
+	for k in dragues:
+		var ibd: int = dragues[k].ib
+		dragues[k].fond_vu = fonds_vus[ibd]
+		eaux[ibd].fond_y = Y(fonds_vus[ibd])
 	for k in bacs:
 		var ibc: int = bacs[k].ib
 		bacs[k].fond_vu = fonds_vus[ibc]
@@ -1774,7 +1800,7 @@ func ecouler(avant: Array, apres: Array, flux: Array) -> void:
 	# montre l'écoulement dès qu'il y a du débit, ou un coup de pompe.
 	var fl_max := 0.0
 	for f in flux: fl_max = maxf(fl_max, absf(float(f)))
-	if dh < 1e-4 and fl_max < 0.01 and _pompage < 0 and _chauffe < 0 and _fontes.is_empty():
+	if dh < 1e-4 and fl_max < 0.01 and _pompage < 0 and _chauffe < 0 and _fontes.is_empty() and _vases.is_empty():
 		vue_niv = apres.duplicate()
 		ecoulement_fini.emit.call_deferred()
 		return
@@ -1899,6 +1925,9 @@ func _avancer_ecoulement(dt: float) -> void:
 			moulins[g].vitesse = maxf(moulins[g].vitesse, 3.5 * clampf(minf(p * 6.0, (1.0 - p) * 2.0), 0.0, 1.0))
 		if _mouture.size() == 2:
 			moulins[g].moulu = lerpf(_mouture[0], _mouture[1], clampf(p * 1.2, 0.0, 1.0))
+	for k in _vases:
+		# la vase baisse pendant l'écoulement
+		fonds_vus[dragues[k].ib] = lerpf(_vases[k][0], _vases[k][1], clampf(p * 1.5, 0.0, 1.0))
 	if orage:
 		# chaque coup, l'averse redouble puis retombe en bruine
 		orage.averse = clampf(minf(p * 4.0, (1.0 - p) * 2.0), 0.0, 1.0)
@@ -1910,6 +1939,8 @@ func _avancer_ecoulement(dt: float) -> void:
 		if gl_.coule > 0.2 and randf() < 0.25:
 			eaux[int(N["objets"][k]["bassin"])].impulsion(gl_.base.x - D.x * 0.5, randf_range(-0.4, 0.6) * gl_.coule, 20.0)
 	if p >= 1.0:
+		for k in _vases: fonds_vus[dragues[k].ib] = _vases[k][1]
+		_vases = {}
 		if orage: orage.averse = 0.0
 		# le flotteur a atteint sa bague : il referme sa porte
 		for g in _declenches:
@@ -2276,6 +2307,10 @@ func glacon_sous(p: Vector2) -> int:
 
 # Avant l'écoulement d'un coup : les glaçons qui fondent pendant ce coup-ci.
 func objets_changent(avant: Dictionary, apres: Dictionary) -> void:
+	for k in dragues:
+		if int(avant["obj"][k]) != int(apres["obj"][k]):
+			_vases[k] = [Moteur.fond_de(N, avant, dragues[k].ib), Moteur.fond_de(N, apres, dragues[k].ib)]
+			dragues[k].godets = int(apres["obj"][k])
 	# le castor a remonté sa digue : la rigole se rebouche
 	for g in rigoles:
 		if rigoles[g].castor and apres["crete"][g] != null: rigoles[g].regler(float(apres["crete"][g]))
@@ -2294,6 +2329,17 @@ func objets_changent(avant: Dictionary, apres: Dictionary) -> void:
 		if a == b: continue
 		var f := float(N["objets"][k]["fonte"])
 		_fontes[k] = [1.0 if a < 0 else a / f, b / f]
+
+# Un coup de drague : la benne descend dans l'eau (la vase baisse ensuite,
+# pendant l'écoulement).
+func draguer(i: int) -> void:
+	dragues[i].draguer()
+	await dragues[i].coup_fini
+
+func drague_sous(p: Vector2) -> int:
+	for i in dragues:
+		if dragues[i].sous(p): return i
+	return -1
 
 # Un coup de chaudière : le feu flambe, puis l'eau part pendant l'écoulement.
 func chauffer(i: int) -> void:
@@ -2391,7 +2437,7 @@ func _poser_bateaux(dt := 1.0) -> void:
 		var x: float = bat_x[k]
 		var demi := bt.longueur * 0.4
 		var i := bassin_sous(x)
-		var f := float(N["bassins"][i]["fond"])
+		var f := fond_vu(i)
 		var echoue_y := Y(f) - bt.tirant          # ligne de flottaison d'une coque posée au fond
 		var ya := minf(surface_a(x - demi), echoue_y)
 		var yb := minf(surface_a(x + demi), echoue_y)
@@ -2431,7 +2477,7 @@ func _dessiner_manque() -> void:
 		var v := int(N["bateaux"][k]["vers"])
 		if positions[k] != v or _a_flot(k, v) or (not _manque.is_empty() and int(_manque["bassin"]) == v): continue
 		if not _echoues_a_quai.has(k): _echoues_a_quai[k] = _t
-		_tracer_manque(v, Y(float(N["bassins"][v]["fond"]) + float(N["bateaux"][k]["tirant"])), COULEURS[k % COULEURS.size()], _t - float(_echoues_a_quai[k]), k)
+		_tracer_manque(v, Y(fond_vu(v) + float(N["bateaux"][k]["tirant"])), COULEURS[k % COULEURS.size()], _t - float(_echoues_a_quai[k]), k)
 	for k in _indices:
 		var d: Dictionary = _indices[k]
 		_tracer_manque(int(d["bassin"]), float(d["y"]), COULEURS[k % COULEURS.size()], _t - float(d["t"]), k, bool(d.get("trop", false)))
@@ -2452,7 +2498,12 @@ func indiquer_manque(k: int, bassin: int, niveau: float, trop := false) -> void:
 func effacer_indices() -> void:
 	_indices.clear()
 func _a_flot(k: int, i: int) -> bool:
-	return vue_niv[i] - float(N["bassins"][i]["fond"]) >= float(N["bateaux"][k]["tirant"]) - 1e-6
+	return vue_niv[i] - fond_vu(i) >= float(N["bateaux"][k]["tirant"]) - 1e-6
+
+# Le fond affiché d'un bassin : celui du niveau, ou celui du bac d'un
+# ascenseur, ou le dessus de la vase.
+func fond_vu(i: int) -> float:
+	return float(fonds_vus.get(i, float(N["bassins"][i]["fond"])))
 
 # Le niveau qu'il faudrait, en pointillés à la couleur du bateau, une bande
 # d'eau qui manque à peine teintée, et une BULLE sans texte au-dessus du

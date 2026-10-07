@@ -55,6 +55,7 @@ Tout système nouveau se range dans l'une de ces familles :
 | 23 | Castor | creuser, d'une traite | ne pas laisser un travail en plan | **écrit** (chap. 13, niveau 13-1, nuit du 7 au 8 octobre 2026) | faible |
 | 22 | Porte à flotteur | la roue ; le flotteur referme | une eau dosée toute seule | **écrite** (chap. 14, niveau 14-1, nuit du 7 au 8 octobre 2026) | moyen |
 | 24 | Au feu ! (champ à abreuver) | aucun | faire passer de l'eau en plus vers la ferme | **écrit** (chap. 15, niveau 15-1, nuit du 7 au 8 octobre 2026) | faible |
+| 25 | Vase et drague | un godet par coup | approfondir, en sachant que l'eau baisse avec la vase | **écrite** (chap. 16, niveau 16-1, nuit du 7 au 8 octobre 2026) | moyen |
 | 17 | Chaudière (vapeur) | un coup = un volume qui part en fumée | quand se débarrasser d'une eau qui menace le village | **écrite** (chap. 5, niveau 5-1, nuit du 7 au 8 octobre 2026) | faible |
 
 Les **objectifs** ne déplacent pas l'eau mais s'y ajoutent : bateau à
@@ -343,6 +344,21 @@ d'écluses, le lien ne raccourcit ni n'allonge jamais la meilleure solution
 - **Le niveau 15-1 :** deux bateaux qui se croisent, et il faut deux sas
   d'eau en plus pour noyer la cour (7 coups, 5 sans le feu). Au hasard, deux
   parties sur cent.
+
+### 25. La vase et la drague (nuit du 7 au 8 octobre 2026)
+- **On voit :** un port envasé, une couche de vase brune sous l'eau, le
+  bateau rouge échoué dessus ; sur la berge du fond, une grue de bois et sa
+  benne, avec la roue rouge de son treuil. Chaque coup, la benne plonge,
+  remonte pleine de vase qui dégoutte et la vide sur un tas qui grossit.
+- **La règle :** `objets`, type `vase` {bassin, epaisseur, pas} : le fond
+  du bassin est la pierre plus la vase restante (fondDe). « draguer » enlève
+  un godet ; l'eau prend la place de la vase et baisse d'autant : draguer
+  seul n'approfondit rien. Il faut de l'eau en plus — ici la mer, qui refait
+  le niveau du port par un passage libre. (Au milieu du canal, le solveur
+  n'a trouvé aucun niveau : l'eau d'amont relevait toujours le bateau.)
+- **Le niveau 16-1 :** deux godets, porte du sas ouverte vers le port pour
+  que la mer remette l'eau, puis les deux bateaux se croisent. Par 7 ; au
+  hasard, une partie sur cent.
 
 ### Écartés pour l'instant
 - **Moulin, roue à aubes** qui actionnerait autre chose quand l'eau y passe :

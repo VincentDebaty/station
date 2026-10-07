@@ -87,8 +87,14 @@ static func ascenseur_de(N: Dictionary, i: int) -> int:
 
 static func fond_de(N: Dictionary, e: Dictionary, i: int) -> float:
 	var k := ascenseur_de(N, i)
-	if k < 0: return float(N["bassins"][i]["fond"])
-	return float(N["objets"][k]["haut"]) if int(e["obj"][k]) == 1 else float(N["objets"][k]["bas"])
+	if k >= 0:
+		return float(N["objets"][k]["haut"]) if int(e["obj"][k]) == 1 else float(N["objets"][k]["bas"])
+	# un bassin envasé : la vase sur le fond de pierre, moins les godets dragués
+	var O: Array = N.get("objets", [])
+	for j in O.size():
+		if O[j]["type"] == "vase" and int(O[j]["bassin"]) == i:
+			return arrondi(float(N["bassins"][i]["fond"]) + float(O[j]["epaisseur"]) - float(O[j]["pas"]) * int(e["obj"][j]))
+	return float(N["bassins"][i]["fond"])
 
 # Un quai est ouvert quand le bac est arrêté de son côté.
 static func quai_ouvert(N: Dictionary, e: Dictionary, i: int) -> bool:
@@ -423,6 +429,8 @@ static func actions(N: Dictionary, e: Dictionary) -> Array:
 			A.append({"type": "allumer", "i": i})
 		if o["type"] == "ascenseur":
 			A.append({"type": "ascenseur", "i": i})
+		if o["type"] == "vase" and float(o["pas"]) * (int(e["obj"][i]) + 1) <= float(o["epaisseur"]) + EPS:
+			A.append({"type": "draguer", "i": i})
 		if o["type"] == "siphon" and int(e["obj"][i]) == 0 and (e["niv"][int(o["a"])] > float(o["ha"]) + EPS or e["niv"][int(o["b"])] > float(o["hb"]) + EPS):
 			A.append({"type": "amorcer", "i": i})
 	if not e["lache"]:
@@ -465,6 +473,11 @@ static func jouer(N: Dictionary, e0: Dictionary, a: Dictionary) -> Dictionary:
 			e["obj"][ai] = int(N["objets"][ai]["fonte"])
 		"amorcer":
 			e["obj"][ai] = 1
+		"draguer":
+			# l'eau prend la place de la vase enlevée : elle baisse d'autant
+			var ov: Dictionary = N["objets"][ai]
+			e["obj"][ai] = int(e["obj"][ai]) + 1
+			e["niv"][int(ov["bassin"])] = arrondi(e["niv"][int(ov["bassin"])] - float(ov["pas"]))
 		"ascenseur":
 			# le bac monte ou descend avec son eau : son niveau suit son fond
 			var oa: Dictionary = N["objets"][ai]

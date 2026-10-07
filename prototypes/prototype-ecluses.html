@@ -278,8 +278,9 @@ button:focus-visible, [role="button"]:focus-visible { outline: 3px solid var(--o
     {"n": 13, "titre": "Le castor", "decor": "campagne", "resume": "Un castor rebouche la rigole, une branche à chaque coup où l'on n'y creuse pas. Ce qui est commencé doit être fini d'une traite."},
     {"n": 14, "titre": "Le flotteur", "decor": "campagne", "resume": "Une porte à flotteur, comme le robinet d'une chasse d'eau : on l'ouvre, et l'eau s'arrête toute seule à la bonne hauteur."},
     {"n": 15, "titre": "Au feu !", "decor": "campagne", "resume": "Une grange brûle au bord du canal. Il faut y faire monter l'eau, jusqu'au trait bleu, sans oublier les bateaux."},
-    {"n": 16, "titre": "Les canaux", "decor": "collines", "resume": "Creuser les digues, puis lâcher l'eau et regarder où elle va."},
-    {"n": 17, "titre": "Le fleuve", "decor": "estuaire", "resume": "L'eau arrive toute seule, à chaque coup. Il faut la conduire avant qu'elle déborde."}
+    {"n": 16, "titre": "La vase", "decor": "campagne", "resume": "Le port s'est envasé. La grue drague la vase godet par godet, et l'eau en prend la place : près de la mer, c'est elle qui refait le niveau."},
+    {"n": 17, "titre": "Les canaux", "decor": "collines", "resume": "Creuser les digues, puis lâcher l'eau et regarder où elle va."},
+    {"n": 18, "titre": "Le fleuve", "decor": "estuaire", "resume": "L'eau arrive toute seule, à chaque coup. Il faut la conduire avant qu'elle déborde."}
   ],
   "niveaux": [
     {
@@ -716,9 +717,36 @@ button:focus-visible, [role="button"]:focus-visible { outline: 3px solid var(--o
         {"de": 3, "vers": 1, "tirant": 1}
       ]
     },
-    {
+{
       "id": "16-1",
       "chapitre": 16,
+      "titre": "La vase",
+      "mode": "pas",
+      "par": 7,
+      "conseil": "Le port s'est envasé : le bateau rouge est échoué. Touche la grue pour draguer la vase, un godet à la fois. L'eau prend sa place, et la mer remet le niveau.",
+      "requis": ["draguer"],
+      "bassins": [
+        {"type": "mer", "fond": -1, "largeur": 6, "fixe": true, "niveau": 1, "nom": "mer"},
+        {"type": "bief", "fond": -0.2, "largeur": 4, "niveau": 1, "nom": "port"},
+        {"type": "sas", "fond": 0, "largeur": 2, "niveau": 1.5, "nom": "sas"},
+        {"type": "bief", "fond": 3, "largeur": 6, "niveau": 5, "nom": "bief amont"}
+      ],
+      "liaisons": [
+        {"type": "libre"},
+        {"type": "porte", "seuil": 0, "crete": 6},
+        {"type": "porte", "seuil": 3, "crete": 6}
+      ],
+      "objets": [
+        {"type": "vase", "bassin": 1, "epaisseur": 1, "pas": 0.5}
+      ],
+      "bateaux": [
+        {"de": 1, "vers": 3, "tirant": 1},
+        {"de": 3, "vers": 1, "tirant": 1}
+      ]
+    },
+    {
+      "id": "17-1",
+      "chapitre": 17,
       "titre": "Le premier sillon",
       "mode": "chantier",
       "par": 4,
@@ -736,8 +764,8 @@ button:focus-visible, [role="button"]:focus-visible { outline: 3px solid var(--o
       "bateaux": []
     },
     {
-      "id": "16-2",
-      "chapitre": 16,
+      "id": "17-2",
+      "chapitre": 17,
       "titre": "Les rizières",
       "mode": "chantier",
       "par": 5,
@@ -759,8 +787,8 @@ button:focus-visible, [role="button"]:focus-visible { outline: 3px solid var(--o
       "bateaux": []
     },
     {
-      "id": "16-3",
-      "chapitre": 16,
+      "id": "17-3",
+      "chapitre": 17,
       "titre": "Remettre à flot",
       "mode": "chantier",
       "par": 6,
@@ -784,8 +812,8 @@ button:focus-visible, [role="button"]:focus-visible { outline: 3px solid var(--o
       ]
     },
     {
-      "id": "17-1",
-      "chapitre": 17,
+      "id": "18-1",
+      "chapitre": 18,
       "titre": "Le fleuve monte",
       "mode": "pas",
       "par": 5,
@@ -806,8 +834,8 @@ button:focus-visible, [role="button"]:focus-visible { outline: 3px solid var(--o
       ]
     },
     {
-      "id": "17-2",
-      "chapitre": 17,
+      "id": "18-2",
+      "chapitre": 18,
       "titre": "Le déversoir",
       "mode": "pas",
       "par": 8,
@@ -832,8 +860,8 @@ button:focus-visible, [role="button"]:focus-visible { outline: 3px solid var(--o
       ]
     },
     {
-      "id": "17-3",
-      "chapitre": 17,
+      "id": "18-3",
+      "chapitre": 18,
       "titre": "La crue",
       "mode": "pas",
       "par": 6,
@@ -919,6 +947,10 @@ const Ecluses = (function () {
   //                arrêté, qui s'ouvre comme un passage libre (l'eau du bac et
   //                celle du bief s'égalisent, les bateaux passent). « en_haut » :
   //                le bac part d'en haut.
+  //     vase       un bassin envasé : « epaisseur » de vase sur son fond de
+  //                pierre. « draguer » enlève « pas » de vase (état : le nombre
+  //                de godets). L'eau descend d'autant — elle prend la place de
+  //                la vase — : draguer n'approfondit qu'avec de l'eau en plus.
   //     siphon     un tuyau en U renversé entre deux bassins « a » et « b »,
   //                voisins ou non, par-dessus ce qui les sépare. Ses crépines
   //                sont à « ha » et « hb ». « amorcer » (état 0 → 1) : tant
@@ -996,7 +1028,10 @@ const Ecluses = (function () {
   }
   function fondDe(N, e, i) {
     const k = ascenseurDe(N, i);
-    return k < 0 ? N.bassins[i].fond : (e.obj[k] ? N.objets[k].haut : N.objets[k].bas);
+    if (k >= 0) return e.obj[k] ? N.objets[k].haut : N.objets[k].bas;
+    const O = N.objets;
+    if (O) for (let j = 0; j < O.length; j++) if (O[j].type === "vase" && O[j].bassin === i) return arrondi(N.bassins[i].fond + O[j].epaisseur - O[j].pas * e.obj[j]);
+    return N.bassins[i].fond;
   }
   // Un quai est ouvert quand le bac est arrêté de son côté.
   function quaiOuvert(N, e, i) {
@@ -1209,6 +1244,7 @@ const Ecluses = (function () {
       if (o.type === "chaudiere" && profondeur(N, e, o.bassin) > EPS) A.push({ type: "chauffer", i });
       if (o.type === "glacon" && e.obj[i] === -1) A.push({ type: "allumer", i });
       if (o.type === "ascenseur") A.push({ type: "ascenseur", i });
+      if (o.type === "vase" && o.pas * (e.obj[i] + 1) <= o.epaisseur + EPS) A.push({ type: "draguer", i });
       if (o.type === "siphon" && e.obj[i] === 0 && (e.niv[o.a] > o.ha + EPS || e.niv[o.b] > o.hb + EPS)) A.push({ type: "amorcer", i });
     });
     if (!e.lache) A.push({ type: "lacher" });
@@ -1234,6 +1270,12 @@ const Ecluses = (function () {
     }
     else if (a.type === "allumer") e.obj[a.i] = N.objets[a.i].fonte;
     else if (a.type === "amorcer") e.obj[a.i] = 1;
+    else if (a.type === "draguer") {
+      // l'eau prend la place de la vase enlevée : elle baisse d'autant
+      const o = N.objets[a.i];
+      e.obj[a.i]++;
+      e.niv[o.bassin] = arrondi(e.niv[o.bassin] - o.pas);
+    }
     else if (a.type === "ascenseur") {
       // le bac monte ou descend avec son eau : son niveau suit son fond
       const o = N.objets[a.i];
