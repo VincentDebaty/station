@@ -29,7 +29,9 @@ var _point_chute := Vector2.ZERO
 var bulles: CPUParticles2D
 
 func _ready() -> void:
-	z_index = 2
+	# pas de z_index : le canal range la nappe avant les bateaux et les portes,
+	# pour qu'elle passe derrière le pilier avant (Vincent : « de l'eau
+	# apparaît devant le pilier de la porte, ça passe derrière uniquement »)
 	var rond := GradientTexture2D.new()
 	rond.width = 16; rond.height = 16
 	rond.fill = GradientTexture2D.FILL_RADIAL
