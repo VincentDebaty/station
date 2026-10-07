@@ -664,18 +664,39 @@ func _ouvrir_liste() -> void:
 	var titre := _label_bois("Les niveaux", 42)
 	titre.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	col.add_child(titre)
+	# Les chapitres défilent au doigt (Vincent, 8 octobre 2026 : une douzaine
+	# de chapitres de plus ne tenaient plus sur l'écran) : une ligne par
+	# chapitre, son nom à gauche, ses niveaux à droite ; la liste s'ouvre sur
+	# le niveau en cours.
+	var vis := get_viewport().get_visible_rect().size
+	var defile := ScrollContainer.new()
+	defile.custom_minimum_size = Vector2(minf(vis.x * 0.74, 1300.0), vis.y * 0.6)
+	defile.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	defile.scroll_deadzone = 14          # un doigt qui glisse sur un bouton fait défiler
+	col.add_child(defile)
+	var lignes := VBoxContainer.new()
+	lignes.add_theme_constant_override("separation", 14)
+	lignes.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	defile.add_child(lignes)
+	var courant: Control = null
 	var chapitres: Array = JSON.parse_string(FileAccess.get_file_as_string("res://niveaux.json"))["chapitres"]
 	for ch in chapitres:
-		var bloc := VBoxContainer.new()
-		bloc.add_theme_constant_override("separation", 6)
-		col.add_child(bloc)
-		var nom := _label_bois("%d · %s" % [int(ch["n"]), ch["titre"]], 24)
-		bloc.add_child(nom)
 		var rang := HBoxContainer.new()
 		rang.add_theme_constant_override("separation", 14)
-		bloc.add_child(rang)
+		lignes.add_child(rang)
+		var nom := _label_bois("%d · %s" % [int(ch["n"]), ch["titre"]], 26)
+		nom.custom_minimum_size = Vector2(360, 0)
+		nom.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		nom.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		rang.add_child(nom)
 		for n in _tous:
-			if int(n["chapitre"]) == int(ch["n"]): rang.add_child(_case_niveau(n))
+			if int(n["chapitre"]) == int(ch["n"]):
+				var c := _case_niveau(n)
+				rang.add_child(c)
+				if n == N: courant = c
+	if courant:
+		await get_tree().process_frame
+		if is_instance_valid(defile) and is_instance_valid(courant): defile.ensure_control_visible(courant)
 
 func _case_niveau(n: Dictionary) -> Control:
 	var case := VBoxContainer.new()
