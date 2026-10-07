@@ -1,8 +1,9 @@
 {
   "chapitres": [
     {"n": 1, "titre": "Les écluses", "decor": "campagne", "resume": "Ouvrir et fermer des portes. L'eau ne se crée pas : elle passe d'un bassin à l'autre."},
-    {"n": 2, "titre": "Les canaux", "decor": "collines", "resume": "Creuser les digues, puis lâcher l'eau et regarder où elle va."},
-    {"n": 3, "titre": "Le fleuve", "decor": "estuaire", "resume": "L'eau arrive toute seule, à chaque coup. Il faut la conduire avant qu'elle déborde."}
+    {"n": 2, "titre": "Les vannes", "decor": "campagne", "resume": "Une porte à vanne a deux commandes : la vanne fait passer l'eau, la porte laisse passer les bateaux, et ne se lève qu'entre deux eaux égales."},
+    {"n": 3, "titre": "Les canaux", "decor": "collines", "resume": "Creuser les digues, puis lâcher l'eau et regarder où elle va."},
+    {"n": 4, "titre": "Le fleuve", "decor": "estuaire", "resume": "L'eau arrive toute seule, à chaque coup. Il faut la conduire avant qu'elle déborde."}
   ],
   "niveaux": [
     {
@@ -94,6 +95,28 @@
     {
       "id": "2-1",
       "chapitre": 2,
+      "titre": "La vanne",
+      "mode": "pas",
+      "par": 8,
+      "conseil": "La porte ne se lève qu'entre deux eaux égales : c'est la vanne qui les égalise. Et une vanne restée ouverte laisse filer l'eau.",
+      "requis": ["vanne"],
+      "bassins": [
+        {"type": "bief", "fond": 0, "largeur": 7, "niveau": 1, "nom": "bief aval"},
+        {"type": "sas", "fond": 0, "largeur": 2, "niveau": 1, "nom": "sas"},
+        {"type": "bief", "fond": 3, "largeur": 7, "niveau": 5, "nom": "bief amont"}
+      ],
+      "liaisons": [
+        {"type": "porte", "seuil": 0, "crete": 6, "vanne": true},
+        {"type": "porte", "seuil": 3, "crete": 6, "vanne": true}
+      ],
+      "bateaux": [
+        {"de": 0, "vers": 2, "tirant": 1},
+        {"de": 2, "vers": 0, "tirant": 1}
+      ]
+    },
+    {
+      "id": "3-1",
+      "chapitre": 3,
       "titre": "Le premier sillon",
       "mode": "chantier",
       "par": 4,
@@ -111,8 +134,8 @@
       "bateaux": []
     },
     {
-      "id": "2-2",
-      "chapitre": 2,
+      "id": "3-2",
+      "chapitre": 3,
       "titre": "Les rizières",
       "mode": "chantier",
       "par": 5,
@@ -134,8 +157,8 @@
       "bateaux": []
     },
     {
-      "id": "2-3",
-      "chapitre": 2,
+      "id": "3-3",
+      "chapitre": 3,
       "titre": "Remettre à flot",
       "mode": "chantier",
       "par": 6,
@@ -159,8 +182,8 @@
       ]
     },
     {
-      "id": "3-1",
-      "chapitre": 3,
+      "id": "4-1",
+      "chapitre": 4,
       "titre": "Le fleuve monte",
       "mode": "pas",
       "par": 5,
@@ -181,8 +204,8 @@
       ]
     },
     {
-      "id": "3-2",
-      "chapitre": 3,
+      "id": "4-2",
+      "chapitre": 4,
       "titre": "Le déversoir",
       "mode": "pas",
       "par": 8,
@@ -207,8 +230,8 @@
       ]
     },
     {
-      "id": "3-3",
-      "chapitre": 3,
+      "id": "4-3",
+      "chapitre": 4,
       "titre": "La crue",
       "mode": "pas",
       "par": 6,

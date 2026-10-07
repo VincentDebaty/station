@@ -29,13 +29,14 @@ static func _num(d: Dictionary, k: String, defaut := 0.0) -> float:
 
 static func charger(N: Dictionary) -> Dictionary:
 	var e := {
-		"niv": [], "ouvert": [], "crete": [], "bateaux": [],
+		"niv": [], "ouvert": [], "vanne": [], "crete": [], "bateaux": [],
 		"lache": N["mode"] != "chantier", "coups": 0, "entree": 0.0, "sortie": 0.0,
 	}
 	for b in N["bassins"]:
 		e["niv"].append(float(b["niveau"]) if b.has("niveau") else float(b["fond"]))
 	for l in N["liaisons"]:
 		e["ouvert"].append(l["type"] == "libre" or (l["type"] == "porte" and bool(l.get("ouvert", false))))
+		e["vanne"].append(bool(l.get("vanne", false)) and bool(l.get("vanne_ouverte", false)))
 		e["crete"].append(float(l["crete"]) if l.has("crete") else null)
 	for b in N["bateaux"]:
 		e["bateaux"].append(int(b["de"]))
@@ -46,7 +47,7 @@ static func charger(N: Dictionary) -> Dictionary:
 
 static func copie(e: Dictionary) -> Dictionary:
 	return {
-		"niv": e["niv"].duplicate(), "ouvert": e["ouvert"].duplicate(), "crete": e["crete"].duplicate(),
+		"niv": e["niv"].duplicate(), "ouvert": e["ouvert"].duplicate(), "vanne": e["vanne"].duplicate(), "crete": e["crete"].duplicate(),
 		"bateaux": e["bateaux"].duplicate(), "lache": e["lache"], "coups": e["coups"],
 		"entree": e["entree"], "sortie": e["sortie"],
 	}
@@ -56,7 +57,7 @@ static func seuil(N: Dictionary, e: Dictionary, i: int) -> float:
 	if l["type"] == "libre":
 		return maxf(float(N["bassins"][i]["fond"]), float(N["bassins"][i + 1]["fond"]))
 	if l["type"] == "porte":
-		return float(l["seuil"]) if e["ouvert"][i] else float(l["crete"])
+		return float(l["seuil"]) if e["ouvert"][i] or e["vanne"][i] else float(l["crete"])
 	return float(e["crete"][i])
 
 static func seuil_bateau(N: Dictionary, i: int) -> float:
@@ -256,8 +257,12 @@ static func actions(N: Dictionary, e: Dictionary) -> Array:
 	var A := []
 	for i in N["liaisons"].size():
 		var l: Dictionary = N["liaisons"][i]
-		if l["type"] == "porte" and not l.get("barrage", false) and e["lache"]:
+		# une porte à vanne ne s'ouvre qu'entre deux eaux au même niveau
+		if l["type"] == "porte" and not l.get("barrage", false) and e["lache"] \
+				and (not l.get("vanne", false) or e["ouvert"][i] or absf(e["niv"][i] - e["niv"][i + 1]) < EPS):
 			A.append({"type": "porte", "i": i})
+		if l["type"] == "porte" and l.get("vanne", false) and e["lache"]:
+			A.append({"type": "vanne", "i": i})
 		if l["type"] == "digue" and e["crete"][i] > float(l["min"]) + EPS:
 			A.append({"type": "creuser", "i": i})
 	if not e["lache"]:
@@ -273,6 +278,8 @@ static func jouer(N: Dictionary, e0: Dictionary, a: Dictionary) -> Dictionary:
 	match a["type"]:
 		"porte":
 			e["ouvert"][ai] = not e["ouvert"][ai]
+		"vanne":
+			e["vanne"][ai] = not e["vanne"][ai]
 		"creuser":
 			e["crete"][ai] = maxf(float(N["liaisons"][ai]["min"]), arrondi(e["crete"][ai] - 1.0))
 		"lacher":
@@ -336,6 +343,8 @@ static func cle(e: Dictionary, q: float) -> String:
 		t.append(str(int(floor(h / q + 0.5))) if q > 0.0 else str(h))
 	var s := ",".join(t) + "|"
 	for o in e["ouvert"]: s += "1" if o else "0"
+	s += "|"
+	for o in e["vanne"]: s += "1" if o else "0"
 	s += "|"
 	for c in e["crete"]: s += ("" if c == null else str(c)) + ","
 	s += "|"

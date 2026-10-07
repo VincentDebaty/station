@@ -73,7 +73,7 @@ function Hasard(graine) {
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
 }
-const nom = a => a.type === "porte" ? "porte " + a.i : a.type === "creuser" ? "pelle " + a.i : a.type;
+const nom = a => a.type === "porte" ? "porte " + a.i : a.type === "vanne" ? "vanne " + a.i : a.type === "creuser" ? "pelle " + a.i : a.type;
 let echecs = 0;
 const dire = (ok, texte) => { console.log((ok ? "  ✓ " : "  ✗ ") + texte); if (!ok) echecs++; };
 

@@ -262,8 +262,9 @@ button:focus-visible, [role="button"]:focus-visible { outline: 3px solid var(--o
 {
   "chapitres": [
     {"n": 1, "titre": "Les écluses", "decor": "campagne", "resume": "Ouvrir et fermer des portes. L'eau ne se crée pas : elle passe d'un bassin à l'autre."},
-    {"n": 2, "titre": "Les canaux", "decor": "collines", "resume": "Creuser les digues, puis lâcher l'eau et regarder où elle va."},
-    {"n": 3, "titre": "Le fleuve", "decor": "estuaire", "resume": "L'eau arrive toute seule, à chaque coup. Il faut la conduire avant qu'elle déborde."}
+    {"n": 2, "titre": "Les vannes", "decor": "campagne", "resume": "Une porte à vanne a deux commandes : la vanne fait passer l'eau, la porte laisse passer les bateaux, et ne se lève qu'entre deux eaux égales."},
+    {"n": 3, "titre": "Les canaux", "decor": "collines", "resume": "Creuser les digues, puis lâcher l'eau et regarder où elle va."},
+    {"n": 4, "titre": "Le fleuve", "decor": "estuaire", "resume": "L'eau arrive toute seule, à chaque coup. Il faut la conduire avant qu'elle déborde."}
   ],
   "niveaux": [
     {
@@ -355,6 +356,28 @@ button:focus-visible, [role="button"]:focus-visible { outline: 3px solid var(--o
     {
       "id": "2-1",
       "chapitre": 2,
+      "titre": "La vanne",
+      "mode": "pas",
+      "par": 8,
+      "conseil": "La porte ne se lève qu'entre deux eaux égales : c'est la vanne qui les égalise. Et une vanne restée ouverte laisse filer l'eau.",
+      "requis": ["vanne"],
+      "bassins": [
+        {"type": "bief", "fond": 0, "largeur": 7, "niveau": 1, "nom": "bief aval"},
+        {"type": "sas", "fond": 0, "largeur": 2, "niveau": 1, "nom": "sas"},
+        {"type": "bief", "fond": 3, "largeur": 7, "niveau": 5, "nom": "bief amont"}
+      ],
+      "liaisons": [
+        {"type": "porte", "seuil": 0, "crete": 6, "vanne": true},
+        {"type": "porte", "seuil": 3, "crete": 6, "vanne": true}
+      ],
+      "bateaux": [
+        {"de": 0, "vers": 2, "tirant": 1},
+        {"de": 2, "vers": 0, "tirant": 1}
+      ]
+    },
+    {
+      "id": "3-1",
+      "chapitre": 3,
       "titre": "Le premier sillon",
       "mode": "chantier",
       "par": 4,
@@ -372,8 +395,8 @@ button:focus-visible, [role="button"]:focus-visible { outline: 3px solid var(--o
       "bateaux": []
     },
     {
-      "id": "2-2",
-      "chapitre": 2,
+      "id": "3-2",
+      "chapitre": 3,
       "titre": "Les rizières",
       "mode": "chantier",
       "par": 5,
@@ -395,8 +418,8 @@ button:focus-visible, [role="button"]:focus-visible { outline: 3px solid var(--o
       "bateaux": []
     },
     {
-      "id": "2-3",
-      "chapitre": 2,
+      "id": "3-3",
+      "chapitre": 3,
       "titre": "Remettre à flot",
       "mode": "chantier",
       "par": 6,
@@ -420,8 +443,8 @@ button:focus-visible, [role="button"]:focus-visible { outline: 3px solid var(--o
       ]
     },
     {
-      "id": "3-1",
-      "chapitre": 3,
+      "id": "4-1",
+      "chapitre": 4,
       "titre": "Le fleuve monte",
       "mode": "pas",
       "par": 5,
@@ -442,8 +465,8 @@ button:focus-visible, [role="button"]:focus-visible { outline: 3px solid var(--o
       ]
     },
     {
-      "id": "3-2",
-      "chapitre": 3,
+      "id": "4-2",
+      "chapitre": 4,
       "titre": "Le déversoir",
       "mode": "pas",
       "par": 8,
@@ -468,8 +491,8 @@ button:focus-visible, [role="button"]:focus-visible { outline: 3px solid var(--o
       ]
     },
     {
-      "id": "3-3",
-      "chapitre": 3,
+      "id": "4-3",
+      "chapitre": 4,
       "titre": "La crue",
       "mode": "pas",
       "par": 6,
@@ -518,6 +541,11 @@ const Ecluses = (function () {
   //   digue   un mur de terre : seuil = sa crête, qu'on abaisse en creusant
   //   mur     un mur de pierre : seuil = sa crête, fixe
   //   libre   la même eau des deux côtés ; les bateaux passent
+  // Une porte peut avoir une VANNE (« vanne »: true, chapitre 2, 7 octobre
+  // 2026) : deux commandes. La vanne ouverte laisse passer l'eau par son
+  // aqueduc, sous la porte fermée, sans laisser passer les bateaux ; la porte
+  // ne se lève que si les deux eaux sont au même niveau (la pression la tient
+  // fermée sinon). Sans vanne, une porte fait les deux à la fois.
   // L'eau ne se crée pas et ne se perd pas : seuls le fleuve (« apport » à
   // chaque coup) et la mer (bassin « fixe », niveau constant) font entrer ou
   // sortir de l'eau, et le moteur tient les comptes (entree, sortie).
@@ -529,6 +557,7 @@ const Ecluses = (function () {
     const e = {
       niv: N.bassins.map(b => b.niveau != null ? b.niveau : b.fond),
       ouvert: N.liaisons.map(l => l.type === "libre" || (l.type === "porte" && !!l.ouvert)),
+      vanne: N.liaisons.map(l => !!(l.vanne && l.vanne_ouverte)),
       crete: N.liaisons.map(l => l.crete != null ? l.crete : null),
       bateaux: N.bateaux.map(b => b.de),
       lache: N.mode !== "chantier",
@@ -538,7 +567,7 @@ const Ecluses = (function () {
     return e;
   }
   function copie(e) {
-    return { niv: e.niv.slice(), ouvert: e.ouvert.slice(), crete: e.crete.slice(), bateaux: e.bateaux.slice(),
+    return { niv: e.niv.slice(), ouvert: e.ouvert.slice(), vanne: e.vanne.slice(), crete: e.crete.slice(), bateaux: e.bateaux.slice(),
       lache: e.lache, coups: e.coups, entree: e.entree, sortie: e.sortie };
   }
 
@@ -546,7 +575,7 @@ const Ecluses = (function () {
   function seuil(N, e, i) {
     const l = N.liaisons[i];
     if (l.type === "libre") return Math.max(N.bassins[i].fond, N.bassins[i + 1].fond);
-    if (l.type === "porte") return e.ouvert[i] ? l.seuil : l.crete;
+    if (l.type === "porte") return e.ouvert[i] || e.vanne[i] ? l.seuil : l.crete;
     return e.crete[i];
   }
   function seuilBateau(N, i) {
@@ -662,7 +691,9 @@ const Ecluses = (function () {
   }
 
   // --- Les coups ---------------------------------------------------------------
-  //   porte     ouvrir ou fermer une écluse
+  //   porte     ouvrir ou fermer une écluse (une porte à vanne ne s'ouvre
+  //             qu'entre deux eaux au même niveau)
+  //   vanne     ouvrir ou fermer la vanne d'une porte à vanne
   //   creuser   abaisser une digue d'une unité (jusqu'à son « min »)
   //   attendre  laisser couler le fleuve un coup
   //   lacher    (chantier) ouvrir le barrage : l'eau part, on regarde
@@ -671,7 +702,8 @@ const Ecluses = (function () {
     if (verdict(N, e)) return [];
     const A = [];
     N.liaisons.forEach((l, i) => {
-      if (l.type === "porte" && !l.barrage && e.lache) A.push({ type: "porte", i });
+      if (l.type === "porte" && !l.barrage && e.lache && (!l.vanne || e.ouvert[i] || Math.abs(e.niv[i] - e.niv[i + 1]) < EPS)) A.push({ type: "porte", i });
+      if (l.type === "porte" && l.vanne && e.lache) A.push({ type: "vanne", i });
       if (l.type === "digue" && e.crete[i] > l.min + EPS) A.push({ type: "creuser", i });
     });
     if (!e.lache) A.push({ type: "lacher" });
@@ -682,6 +714,7 @@ const Ecluses = (function () {
     const e = copie(e0);
     e.coups++;
     if (a.type === "porte") e.ouvert[a.i] = !e.ouvert[a.i];
+    else if (a.type === "vanne") e.vanne[a.i] = !e.vanne[a.i];
     else if (a.type === "creuser") e.crete[a.i] = Math.max(N.liaisons[a.i].min, arrondi(e.crete[a.i] - 1));
     else if (a.type === "lacher") {
       e.lache = true;
@@ -732,7 +765,7 @@ const Ecluses = (function () {
   // « budget » coupe la fouille au bout de tant de millisecondes, sans verdict.
   function cle(e, q) {
     const niv = q ? e.niv.map(h => Math.round(h / q)) : e.niv;
-    return niv.join(",") + "|" + e.ouvert.map(Number).join("") + "|" + e.crete.join(",") + "|" + e.bateaux.join(",") + "|" + (e.lache ? 1 : 0);
+    return niv.join(",") + "|" + e.ouvert.map(Number).join("") + "|" + e.vanne.map(Number).join("") + "|" + e.crete.join(",") + "|" + e.bateaux.join(",") + "|" + (e.lache ? 1 : 0);
   }
   function resoudre(N, depart, limite, interdits, options) {
     limite = limite || 300000;

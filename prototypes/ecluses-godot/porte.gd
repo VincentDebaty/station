@@ -52,6 +52,13 @@ var voile: Eau = null
 # partie finie, elle pâlit et s'éteint un peu (seconde analyse graphique : les
 # roues sont les commandes, il faut voir quand elles répondent).
 var actif := true
+# PORTE À VANNE (chapitre 2, 7 octobre 2026) : une seconde commande, la vanne
+# de l'aqueduc, que l'on tourne par un petit volant d'acier sur le pilier
+# avant, relié à l'aqueduc par sa tige. La grande roue rouge lève la porte.
+var a_vanne := false
+var _angle_vanne := 0.0
+var _rotation_vanne := 0.0
+var _secousse := 0.0         # la grande roue refuse : la porte est tenue par l'eau
 # La projection oblique : le décalage du plan du fond (zéro : la vue de profil)
 # et la couche, avant l'eau, où poser le vantail.
 var oblique := Vector2.ZERO
@@ -143,6 +150,34 @@ func _construire_profil(mp: ShaderMaterial, abas: float, bois: Shader) -> void:
 		filet.color = Color("#5a4330")
 		filet.polygon = _quad(gx0 - 16, y_portique - 0.2 * u, gx1 + 16, y_portique - 0.2 * u + 4)
 		add_child(filet)
+
+# Le volant de la vanne : acier bleuté, plus petit que la roue rouge, sa tige
+# descend le long du pilier avant jusqu'au seuil (l'aqueduc passe dessous).
+# Quand la grande roue refuse, il s'illumine.
+func _dessiner_volant() -> void:
+	var c := centre_vanne()
+	var r := 0.24 * u
+	var acier := Color("#4f6d86")
+	var sombre := Color("#26323d")
+	roue.draw_line(c, Vector2(c.x, y_seuil), sombre, 5.0, true)
+	roue.draw_line(c, Vector2(c.x, y_seuil), Color("#6d7a85"), 2.5, true)
+	if _secousse > 0.0:
+		var a := clampf(_secousse / 0.4, 0.0, 1.0) * (0.65 + 0.35 * sin(_secousse * 14.0))
+		roue.draw_circle(c, r + 11.0, Color(1.0, 0.85, 0.3, 0.6 * a))
+	roue.draw_circle(c + Vector2(1.5, 2.5), r + 4, Color(0, 0, 0, 0.2))
+	roue.draw_arc(c, r, 0, TAU, 32, sombre, 7.0, true)
+	roue.draw_arc(c, r, 0, TAU, 32, acier, 4.5, true)
+	for k in 4:
+		var a := _angle_vanne + k * TAU / 4.0
+		var d := Vector2(cos(a), sin(a))
+		roue.draw_line(c, c + d * (r - 2.0), sombre, 4.0, true)
+		roue.draw_line(c, c + d * (r - 2.0), acier, 2.2, true)
+		roue.draw_circle(c + d * (r + 3.0), 2.8, sombre)
+	roue.draw_circle(c, 5.0, sombre)
+	roue.draw_circle(c, 2.8, Color("#c9d2d8"))
+	# la vanne ouverte : un filet bleu sur la tige
+	if vanne_ouverte:
+		roue.draw_line(c + Vector2(0, r + 6.0), Vector2(c.x, y_seuil), Color(0.4, 0.75, 0.9, 0.8), 2.0, true)
 
 # --- La porte en projection oblique (branche ecluses-oblique) -----------------
 # Vincent, 7 octobre 2026 : tout est vu de profil, sauf les écluses, dans un
@@ -293,7 +328,25 @@ func _pied_roue() -> float:
 # La vanne : la roue fait un tour et demi. Émet roue_finie.
 func manoeuvrer_vanne(ouvrir: bool) -> void:
 	vanne_ouverte = ouvrir
-	_rotation = 1.5 * TAU * (1.0 if ouvrir else -1.0)
+	if a_vanne:
+		_rotation_vanne = 1.5 * TAU * (1.0 if ouvrir else -1.0)
+	else:
+		_rotation = 1.5 * TAU * (1.0 if ouvrir else -1.0)
+
+# La grande roue d'une porte à vanne : elle ne fait que lever ou baisser la
+# porte (le treuil suit le vantail, dans _process).
+func tourner_roue(lever: bool) -> void:
+	_rotation = 0.5 * TAU * (1.0 if lever else -1.0)
+
+# Toucher la grande roue quand les deux eaux diffèrent : elle tressaille sans
+# tourner, et le volant de la vanne s'illumine (c'est lui qu'il faut ouvrir).
+func refuser() -> void:
+	_secousse = 1.6          # la roue tressaille 0,5 s, le volant luit 1,6 s
+
+# Le petit volant de la vanne : sur le pilier avant, sous la traverse.
+func centre_vanne() -> Vector2:
+	var xc := (gx0 + gx1) * 0.5
+	return Vector2(xc, y_portique + 0.62 * u)
 
 # Le vantail : levé (au-dessus de l'eau, assez pour un bateau) ou baissé.
 func placer_vantail(lever: bool) -> void:
@@ -325,6 +378,17 @@ func _cible() -> float:
 	return y_seuil - ENTREBAIL if _entrouvert else y_seuil
 
 func _process(dt: float) -> void:
+	if _rotation_vanne != 0.0:
+		var pv := signf(_rotation_vanne) * minf(absf(_rotation_vanne), dt * TAU * 2.6)
+		_rotation_vanne -= pv
+		_angle_vanne += pv
+		roue.queue_redraw()
+		if is_zero_approx(_rotation_vanne):
+			_rotation_vanne = 0.0
+			roue_finie.emit()
+	if _secousse > 0.0:
+		_secousse = maxf(_secousse - dt, 0.0)
+		roue.queue_redraw()
 	if roue:
 		var cible := Color(1, 1, 1) if actif else Color(0.68, 0.64, 0.64, 0.85)
 		roue.modulate = roue.modulate.lerp(cible, minf(1.0, dt * 6.0))
@@ -413,7 +477,9 @@ func _maillons(x: float, y_haut: float, y_bas: float) -> void:
 		j += 1
 
 func _dessiner_roue() -> void:
+	if a_vanne: _dessiner_volant()
 	var c := centre_roue()
+	var tressaille := sin(_secousse * 40.0) * 0.12 * clampf((_secousse - 1.1) / 0.5, 0.0, 1.0)
 	var r := 0.4 * u
 	var rouge := Color("#c8321f")
 	var sombre := Color("#7c1f13")
@@ -425,7 +491,7 @@ func _dessiner_roue() -> void:
 		# la roue peinte, qui tourne sur son moyeu ; ses boutons dépassent
 		# du cercle dessiné d'avant, d'où le rayon un peu plus grand
 		var R := r + 7.5
-		roue.draw_set_transform(c, _angle)
+		roue.draw_set_transform(c, _angle + tressaille)
 		roue.draw_texture_rect(tr, Rect2(-R, -R, 2.0 * R, 2.0 * R), false)
 		roue.draw_set_transform(Vector2.ZERO)
 		return

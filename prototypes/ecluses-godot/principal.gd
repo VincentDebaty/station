@@ -11,7 +11,8 @@ extends Node2D
 #                             (avec la démo), puis quitte en donnant les
 #                             images par seconde moyennes
 #   ECLUSES_LISTE=1           photographie aussi la liste des niveaux
-#   ECLUSES_COUPS=0,1         la démo joue ces portes-là au lieu de la solution
+#   ECLUSES_COUPS=0,v1,1      la démo joue ces coups-là au lieu de la solution
+#                             (« v1 » : la vanne de la porte 1)
 #                             (pour voir un bateau se coincer)
 #   ECLUSES_SURE=g,h,d,b      simule les bords d'un téléphone (en pixels de
 #                             fenêtre), pour vérifier les marges sur le Mac
@@ -41,10 +42,15 @@ var _racine: Control
 var _liste: Control     # la liste des niveaux, ouverte par le numéro
 var _sure: Control      # la zone sûre : tout ce qu'on touche ou qu'on lit y reste
 
+# Le niveau sur lequel le jeu s'ouvre : celui qu'on est en train d'essayer
+# (Vincent, 7 octobre 2026 : « quand tu déploies sur l'iPhone, tu proposes le
+# nouveau niveau à chaque fois »). À changer à chaque nouveauté.
+const NIVEAU_EN_TEST := "2-1"
+
 func _ready() -> void:
 	_tous = JSON.parse_string(FileAccess.get_file_as_string("res://niveaux.json"))["niveaux"]
 	var id := OS.get_environment("ECLUSES_NIVEAU")
-	if id == "": id = "1-2"
+	if id == "": id = NIVEAU_EN_TEST
 	for n in _tous:
 		if n["id"] == id: N = n
 	_lancer()
@@ -112,13 +118,20 @@ func _cadrer() -> void:
 # --- Le toucher et les coups ----------------------------------------------------------
 func _unhandled_input(ev: InputEvent) -> void:
 	if ev is InputEventMouseButton and ev.pressed and ev.button_index == MOUSE_BUTTON_LEFT:
+		var iv := canal.vanne_sous(get_global_mouse_position())
+		if iv >= 0:
+			jouer({"type": "vanne", "i": iv})
+			return
 		var i := canal.porte_sous(get_global_mouse_position())
 		if i >= 0: jouer({"type": "porte", "i": i})
 
 func jouer(a: Dictionary) -> void:
 	if occupe or fini: return
 	var permis := Moteur.actions(N, etat).any(func(x): return x["type"] == a["type"] and int(x.get("i", -1)) == int(a.get("i", -1)))
-	if not permis: return
+	if not permis:
+		# une porte à vanne tenue par l'eau : la roue le dit
+		if a["type"] == "porte" and canal.portes.has(int(a["i"])): canal.portes[int(a["i"])].refuser()
+		return
 	occupe = true
 	var avant := etat
 	var r := Moteur.jouer(N, etat, a)
@@ -130,7 +143,19 @@ func jouer(a: Dictionary) -> void:
 	# passer l'eau par son aqueduc, porte close), et quand les deux eaux sont
 	# au même niveau la porte se lève en grand. Fermer : elle redescend
 	# d'abord, puis la roue se referme.
-	if a["type"] == "porte":
+	if a["type"] == "vanne":
+		# la vanne : le petit volant tourne, puis l'eau passe par l'aqueduc,
+		# porte close
+		var pv: Porte = canal.portes[int(a["i"])]
+		pv.manoeuvrer_vanne(etat["vanne"][int(a["i"])])
+		await get_tree().create_timer(0.4).timeout
+	elif a["type"] == "porte" and canal.portes[int(a["i"])].a_vanne:
+		# la porte d'une porte à vanne : la grande roue la lève ou la baisse,
+		# entre deux eaux déjà égales
+		var pp: Porte = canal.portes[int(a["i"])]
+		pp.tourner_roue(etat["ouvert"][int(a["i"])])
+		if not etat["ouvert"][int(a["i"])]: await canal.placer_vantaux(etat)
+	elif a["type"] == "porte":
 		var p: Porte = canal.portes[int(a["i"])]
 		if etat["ouvert"][int(a["i"])]:
 			# la roue tourne, et une porte simple se soulève tout de suite d'une
@@ -645,7 +670,8 @@ func _demo() -> void:
 				if pas["action"] != null: solution.append(pas["action"])
 			break
 	if OS.get_environment("ECLUSES_COUPS") != "":
-		solution = Array(OS.get_environment("ECLUSES_COUPS").split(",")).map(func(x): return {"type": "porte", "i": int(x)})
+		# « 1 » : la porte 1 ; « v1 » : la vanne de la porte 1
+		solution = Array(OS.get_environment("ECLUSES_COUPS").split(",")).map(func(x): return {"type": "vanne", "i": int(x.substr(1))} if x.begins_with("v") else {"type": "porte", "i": int(x)})
 	await get_tree().create_timer(1.2).timeout
 	await _photo("00-repos")
 	if OS.get_environment("ECLUSES_LISTE") != "":

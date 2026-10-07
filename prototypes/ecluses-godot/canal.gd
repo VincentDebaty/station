@@ -205,13 +205,14 @@ func construire(niveau: Dictionary, e: Dictionary) -> void:
 			po.voile = voiles.get(i)
 			po.oblique = D
 			po.couche_vantail = vantaux
+			po.a_vanne = bool(l.get("vanne", false))
 			var bas_radier := Y(minf(float(B[i]["fond"]), float(B[i + 1]["fond"])) - 0.32)
 			# trois hauteurs de portique, pour ne pas aligner trois colonnes
 			# identiques (lot 4) ; plus bas seulement : le vantail levé garde
 			# ~1,4 unité de place sous la traverse
 			var decale: float = [0.0, -0.3, -0.15][i % 3]
 			po.preparer(X(gl[i][0]), X(gl[i][1]), Y(float(l["seuil"])), Y(float(l["crete"])), Y(haut - 0.85 + decale), bas_radier, U,
-				SH_PIERRE, SH_BOIS, e["ouvert"][i], _vantail_leve(e, i), _bas_ouvert(i))
+				SH_PIERRE, SH_BOIS, e["vanne"][i] if l.get("vanne", false) else e["ouvert"][i], _vantail_leve(e, i), _bas_ouvert(i))
 			add_child(po)
 			portes[i] = po
 	# les aqueducs, dans la terre de la coupe, par-dessus le radier des portes
@@ -229,7 +230,7 @@ func construire(niveau: Dictionary, e: Dictionary) -> void:
 			continue
 		var aq := Aqueduc.new()
 		aq.preparer(_trace_aqueduc(i), 0.2 * UY)
-		aq.ouverte = e["ouvert"][i]
+		aq.ouverte = e["vanne"][i]
 		aq.vanne = 1.0 if aq.ouverte else 0.0
 		add_child(aq)
 		aqueducs[i] = aq
@@ -1059,6 +1060,13 @@ func surface_a(x: float) -> float:
 		if x > X(gl[i][0]) and x < X(gl[i][1]) and passages[i].visible_eau: return passages[i].hauteur_a(x)
 	var i2 := bassin_sous(x)
 	return eaux[i2].hauteur_a(clampf(x, X(gb[i2][0]), X(gb[i2][1])))
+
+# Le volant de vanne sous le doigt (porte à vanne), ou -1. Cherché avant la
+# porte : il est sur son pilier.
+func vanne_sous(p: Vector2) -> int:
+	for i in portes:
+		if portes[i].a_vanne and p.distance_to(portes[i].centre_vanne()) < 0.6 * U: return i
+	return -1
 
 func porte_sous(p: Vector2) -> int:
 	for i in portes:

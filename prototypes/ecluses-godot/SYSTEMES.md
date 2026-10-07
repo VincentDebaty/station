@@ -39,7 +39,7 @@ Tout système nouveau se range dans l'une de ces familles :
 | 5 | Barrage à lâcher | un coup, une fois | quand le chantier est prêt | **existe** (chap. 2) | — |
 | 6 | Fleuve et crue | attendre un coup | le temps : l'eau arrive toute seule | **existe** (chap. 3) | — |
 | 7 | Mer | aucun | rien : une source et un puits sans fond | **existe** (chap. 3) | — |
-| 8 | Porte à vanne | vanne, puis porte | égaliser sans laisser passer, retenir un bateau | à écrire | moyen |
+| 8 | Porte à vanne | vanne, puis porte | égaliser sans laisser passer, retenir un bateau | **écrite** (chap. 2, niveau 2-1, 7 octobre 2026) | moyen |
 | 9 | Hausses mobiles | monter ou baisser un cran | un seuil réglable, réversible | à écrire | faible |
 | 10 | Clapet | aucun | rien : l'eau ne passe que dans un sens | à écrire | faible |
 | 11 | Pompe | un coup = une unité qui monte | quand dépenser un coup pour remonter de l'eau | à écrire | faible |
