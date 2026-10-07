@@ -43,7 +43,7 @@ function Hasard(graine) {
   };
 }
 const photo = (e, r) => ({
-  niv: e.niv, ouvert: e.ouvert, crete: e.crete, bateaux: e.bateaux, coups: e.coups,
+  niv: e.niv, ouvert: e.ouvert, crete: e.crete, bateaux: e.bateaux, coups: e.coups, obj: e.obj, phase: e.phase,
   entree: e.entree, sortie: e.sortie, lache: e.lache,
   flux: r ? r.flux : null, dep: r ? r.dep : null
 });

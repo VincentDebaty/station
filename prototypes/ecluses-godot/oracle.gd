@@ -70,6 +70,11 @@ func _compare(N: Dictionary, e: Dictionary, r: Dictionary, attendu: Dictionary) 
 	for k in e["bateaux"].size():
 		if e["bateaux"][k] != int(attendu["bateaux"][k]):
 			return "bateau %d au bassin %d, attendu %d" % [k, e["bateaux"][k], int(attendu["bateaux"][k])]
+	for k in e["obj"].size():
+		if int(e["obj"][k]) != int(attendu["obj"][k]):
+			return "objet %d dans l'état %d, attendu %d" % [k, int(e["obj"][k]), int(attendu["obj"][k])]
+	if int(e["phase"]) != int(attendu["phase"]):
+		return "phase de la marée %d, attendu %d" % [int(e["phase"]), int(attendu["phase"])]
 	for cle in ["entree", "sortie"]:
 		if absf(float(e[cle]) - float(attendu[cle])) > 1e-6:
 			return "%s = %f, attendu %f" % [cle, e[cle], attendu[cle]]

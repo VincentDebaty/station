@@ -312,6 +312,24 @@ Same art style as the attached image. A short section of a rustic wooden fence s
 Same art style as the attached image. One round leafy deciduous tree, like the tree next to the cottages in the reference: a short brown trunk and a full, round, bright green crown with soft shading. Portrait image, the tree centred and filling about 90% of the height, isolated on a transparent background, no ground, no shadow.
 ```
 
+### Les nouveautés de la nuit du 7 au 8 octobre 2026
+
+Une douzaine de mécaniques écrites en une nuit, chacune sur un seul niveau.
+Elles sont **dessinées par le jeu** en attendant leurs images : chaque prompt
+ci-dessous remplace un dessin fait au code, sans rien toucher d'autre. Pas
+d'image cible validée cette fois (Vincent dormait) : joindre une capture du
+niveau concerné pour le style et le cadrage.
+
+#### `art/chaudiere.png` — la chaudière à vapeur (chapitre 5)
+
+Le jeu garde dessinés le feu dans la porte du foyer, la fumée, la vapeur et
+l'aiguille du manomètre : l'image ne doit montrer ni flamme, ni fumée, ni
+vapeur.
+
+```text
+Same art style as the attached image. A small cute vertical steam boiler standing on the ground, seen exactly from the side: a low base of red bricks with a small arched cast-iron firebox door in the middle at the bottom (the opening of the door painted plain black, no fire), a stone slab on top of the bricks, then an upright copper boiler drum with two brass bands and rivets, a round pressure gauge with a white dial on the front, a dark cast-iron dome on top, a thin black chimney rising from the right of the dome and a small brass steam whistle on the left of the dome. Thin dark outline, soft highlight on the top-left. Portrait image, the boiler centred and filling about 90% of the height, isolated on a transparent background, no smoke, no steam, no fire, no ground, no shadow.
+```
+
 ### Plus tard, peut-être
 
 - `premier_plan.png` : un buisson flou et des marguerites au premier plan,

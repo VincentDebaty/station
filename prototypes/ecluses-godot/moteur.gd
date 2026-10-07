@@ -31,7 +31,10 @@ static func charger(N: Dictionary) -> Dictionary:
 	var e := {
 		"niv": [], "ouvert": [], "vanne": [], "crete": [], "bateaux": [],
 		"lache": N["mode"] != "chantier", "coups": 0, "entree": 0.0, "sortie": 0.0,
+		"obj": [], "phase": 0,
 	}
+	for o in N.get("objets", []):
+		e["obj"].append(-1 if o["type"] == "brasero" else 0)
 	for b in N["bassins"]:
 		e["niv"].append(float(b["niveau"]) if b.has("niveau") else float(b["fond"]))
 	for l in N["liaisons"]:
@@ -40,6 +43,8 @@ static func charger(N: Dictionary) -> Dictionary:
 		e["crete"].append(float(l["crete"]) if l.has("crete") else null)
 	for b in N["bateaux"]:
 		e["bateaux"].append(int(b["de"]))
+	for i in N["bassins"].size():
+		if N["bassins"][i].has("maree"): e["niv"][i] = float(N["bassins"][i]["maree"][0])
 	if e["lache"]:
 		equilibrer(N, e)
 		bouger(N, e)
@@ -49,7 +54,7 @@ static func copie(e: Dictionary) -> Dictionary:
 	return {
 		"niv": e["niv"].duplicate(), "ouvert": e["ouvert"].duplicate(), "vanne": e["vanne"].duplicate(), "crete": e["crete"].duplicate(),
 		"bateaux": e["bateaux"].duplicate(), "lache": e["lache"], "coups": e["coups"],
-		"entree": e["entree"], "sortie": e["sortie"],
+		"entree": e["entree"], "sortie": e["sortie"], "obj": e["obj"].duplicate(), "phase": e["phase"],
 	}
 
 static func seuil(N: Dictionary, e: Dictionary, i: int) -> float:
@@ -69,11 +74,24 @@ static func seuil_bateau(N: Dictionary, i: int) -> float:
 static func profondeur(N: Dictionary, e: Dictionary, i: int) -> float:
 	return e["niv"][i] - float(N["bassins"][i]["fond"])
 
+# Le bassin i est-il pris dans la glace ? (un brasero qui n'a pas fini)
+static func gele(N: Dictionary, e: Dictionary, i: int) -> bool:
+	var O: Array = N.get("objets", [])
+	for k in O.size():
+		if O[k]["type"] == "brasero" and int(O[k]["bassin"]) == i and int(e["obj"][k]) != 0: return true
+	return false
+
+static func temps(N: Dictionary) -> bool:
+	if N.has("pluie") and N["pluie"]: return true
+	return N["bassins"].any(func(b): return (b.has("apport") and b["apport"]) or b.has("maree"))
+
 # --- L'eau -------------------------------------------------------------------
 static func paire(N: Dictionary, e: Dictionary, i: int) -> float:
 	var a: float = e["niv"][i]
 	var c: float = e["niv"][i + 1]
 	if absf(a - c) < 1e-12:
+		return 0.0
+	if gele(N, e, i) or gele(N, e, i + 1):
 		return 0.0
 	var h := i if a > c else i + 1
 	var l := i + 1 if a > c else i
@@ -120,7 +138,7 @@ static func poser(N: Dictionary, e: Dictionary) -> void:
 		var j := i
 		while j < n - 1:
 			var s := seuil(N, e, j)
-			if e["niv"][j] > s + 1e-6 and e["niv"][j + 1] > s + 1e-6 and absf(e["niv"][j] - e["niv"][j + 1]) < 1e-3:
+			if e["niv"][j] > s + 1e-6 and e["niv"][j + 1] > s + 1e-6 and absf(e["niv"][j] - e["niv"][j + 1]) < 1e-3 and not gele(N, e, j) and not gele(N, e, j + 1):
 				j += 1
 			else:
 				break
@@ -188,6 +206,8 @@ static func peut_passer(N: Dictionary, e: Dictionary, k: int, p: int, q: int) ->
 	var l: Dictionary = N["liaisons"][i]
 	if not (l["type"] == "libre" or (l["type"] == "porte" and e["ouvert"][i])):
 		return false
+	if gele(N, e, p) or gele(N, e, q):
+		return false
 	if absf(e["niv"][p] - e["niv"][q]) > EPS:
 		return false
 	if not flotte(N, e, k, p) or not flotte(N, e, k, q):
@@ -220,6 +240,8 @@ static func raison(N: Dictionary, e: Dictionary, k: int) -> Dictionary:
 	var l: Dictionary = N["liaisons"][i]
 	if not (l["type"] == "libre" or (l["type"] == "porte" and e["ouvert"][i])):
 		return {"quoi": "porte", "bassin": q}
+	if gele(N, e, p) or gele(N, e, q):
+		return {"quoi": "glace", "bassin": p if gele(N, e, p) else q}
 	if absf(e["niv"][p] - e["niv"][q]) > EPS:
 		return {"quoi": "niveaux", "bassin": q}
 	if not flotte(N, e, k, p):
@@ -275,9 +297,19 @@ static func actions(N: Dictionary, e: Dictionary) -> Array:
 		var b: Dictionary = N["bassins"][int(p["de"])]
 		if e["lache"] and (b.get("fixe", false) or e["niv"][int(p["de"])] - float(b["fond"]) > EPS):
 			A.append({"type": "pomper", "i": i})
+	var objets: Array = N.get("objets", [])
+	var feu := false
+	for i in objets.size():
+		var o: Dictionary = objets[i]
+		if o["type"] == "brasero" and int(e["obj"][i]) > 0: feu = true
+		if not e["lache"]: continue
+		if o["type"] == "chaudiere" and profondeur(N, e, int(o["bassin"])) > EPS:
+			A.append({"type": "chauffer", "i": i})
+		if o["type"] == "brasero" and int(e["obj"][i]) == -1:
+			A.append({"type": "allumer", "i": i})
 	if not e["lache"]:
 		A.append({"type": "lacher"})
-	elif N["bassins"].any(func(b): return b.has("apport") and b["apport"]):
+	elif temps(N) or feu:
 		A.append({"type": "attendre"})
 	return A
 
@@ -303,6 +335,16 @@ static func jouer(N: Dictionary, e0: Dictionary, a: Dictionary) -> Dictionary:
 			else: e["niv"][de] = arrondi(e["niv"][de] - vol / float(Db["largeur"]))
 			if Vb.get("fixe", false): e["sortie"] += vol
 			else: e["niv"][vers] = arrondi(e["niv"][vers] + vol / float(Vb["largeur"]))
+		"chauffer":
+			# la chaudière : « debit » d'eau du bassin part en vapeur
+			var o: Dictionary = N["objets"][ai]
+			var ib := int(o["bassin"])
+			var bb: Dictionary = N["bassins"][ib]
+			var vol := minf(float(o["debit"]), (e["niv"][ib] - float(bb["fond"])) * float(bb["largeur"]))
+			e["niv"][ib] = arrondi(e["niv"][ib] - vol / float(bb["largeur"]))
+			e["sortie"] += vol
+		"allumer":
+			e["obj"][ai] = int(N["objets"][ai]["fonte"])
 		"creuser":
 			e["crete"][ai] = maxf(float(N["liaisons"][ai]["min"]), arrondi(e["crete"][ai] - 1.0))
 		"hausser":
@@ -320,6 +362,11 @@ static func jouer(N: Dictionary, e0: Dictionary, a: Dictionary) -> Dictionary:
 	var dep := []
 	var apport := 0.0
 	if e["lache"]:
+		# le feu avance d'un coup : la glace fond quand il arrive à zéro
+		var objets: Array = N.get("objets", [])
+		for k in objets.size():
+			if objets[k]["type"] == "brasero" and int(e["obj"][k]) > 0: e["obj"][k] = int(e["obj"][k]) - 1
+		var pluie := float(N.get("pluie", 0.0)) if N.get("pluie") != null else 0.0
 		if a["type"] != "lacher":
 			for i in N["bassins"].size():
 				var b: Dictionary = N["bassins"][i]
@@ -327,6 +374,12 @@ static func jouer(N: Dictionary, e0: Dictionary, a: Dictionary) -> Dictionary:
 					e["niv"][i] = arrondi(e["niv"][i] + float(b["apport"]) / float(b["largeur"]))
 					e["entree"] += float(b["apport"])
 					apport += float(b["apport"])
+				if pluie != 0.0 and not b.get("fixe", false) and b["type"] != "village":
+					e["niv"][i] = arrondi(e["niv"][i] + pluie)
+					e["entree"] += pluie * float(b["largeur"])
+				if b.has("maree"):
+					e["phase"] = int(e["coups"]) % b["maree"].size()
+					e["niv"][i] = float(b["maree"][e["phase"]])
 		flux = equilibrer(N, e)
 		dep = bouger(N, e)
 	return {"etat": e, "flux": flux, "dep": dep, "apport": apport}
@@ -376,7 +429,9 @@ static func cle(e: Dictionary, q: float) -> String:
 	for c in e["crete"]: s += ("" if c == null else str(c)) + ","
 	s += "|"
 	for b in e["bateaux"]: s += str(b) + ","
-	return s + ("|1" if e["lache"] else "|0")
+	s += "|"
+	for o in e["obj"]: s += str(int(o)) + ","
+	return s + ("|1" if e["lache"] else "|0") + "|" + str(int(e["phase"]))
 
 static func impasse(N: Dictionary, depart: Dictionary, limite := 25000, q := 0.01) -> int:
 	var v0 := verdict(N, depart)

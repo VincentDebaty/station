@@ -46,7 +46,7 @@ var _sure: Control      # la zone sûre : tout ce qu'on touche ou qu'on lit y re
 # Le niveau sur lequel le jeu s'ouvre : celui qu'on est en train d'essayer
 # (Vincent, 7 octobre 2026 : « quand tu déploies sur l'iPhone, tu proposes le
 # nouveau niveau à chaque fois »). À changer à chaque nouveauté.
-const NIVEAU_EN_TEST := "4-1"
+const NIVEAU_EN_TEST := "5-1"
 
 func _ready() -> void:
 	_tous = JSON.parse_string(FileAccess.get_file_as_string("res://niveaux.json"))["niveaux"]
@@ -119,6 +119,10 @@ func _cadrer() -> void:
 # --- Le toucher et les coups ----------------------------------------------------------
 func _unhandled_input(ev: InputEvent) -> void:
 	if ev is InputEventMouseButton and ev.pressed and ev.button_index == MOUSE_BUTTON_LEFT:
+		var ic := canal.chaudiere_sous(get_global_mouse_position())
+		if ic >= 0:
+			jouer({"type": "chauffer", "i": ic})
+			return
 		var ip := canal.pompe_sous(get_global_mouse_position())
 		if ip >= 0:
 			jouer({"type": "pomper", "i": ip})
@@ -159,6 +163,8 @@ func jouer(a: Dictionary) -> void:
 	# d'abord, puis la roue se referme.
 	if a["type"] == "pomper":
 		await canal.pomper(int(a["i"]))
+	elif a["type"] == "chauffer":
+		await canal.chauffer(int(a["i"]))
 	elif a["type"] == "creuser" and canal.rigoles.has(int(a["i"])):
 		# un coup de pelle : l'entaille se creuse, des mottes volent, puis
 		# l'eau file
@@ -705,6 +711,10 @@ func _process(dt: float) -> void:
 			var A := Moteur.actions(N, etat) if not occupe and not fini else []
 			for ip in canal.pompes:
 				canal.pompes[ip].actif = A.any(func(x): return x["type"] == "pomper" and int(x["i"]) == ip)
+		if not canal.chaudieres.is_empty():
+			var A2 := Moteur.actions(N, etat) if not occupe and not fini else []
+			for ic in canal.chaudieres:
+				canal.chaudieres[ic].actif = A2.any(func(x): return x["type"] == "chauffer" and int(x["i"]) == ic)
 	_images += 1
 	_secondes += dt
 	if _ips and Engine.get_process_frames() % 15 == 0:
@@ -726,7 +736,8 @@ func _demo() -> void:
 			break
 	if OS.get_environment("ECLUSES_COUPS") != "":
 		# « 1 » : la porte 1 ; « v1 » : la vanne de la porte 1
-		solution = Array(OS.get_environment("ECLUSES_COUPS").split(",")).map(func(x): return {"type": "vanne", "i": int(x.substr(1))} if x.begins_with("v") else ({"type": "creuser", "i": int(x.substr(1))} if x.begins_with("c") else ({"type": "pomper", "i": int(x.substr(1))} if x.begins_with("P") else {"type": "porte", "i": int(x)})))
+		# « type:i » pour tous les autres gestes (« chauffer:0 », « attendre »)
+		solution = Array(OS.get_environment("ECLUSES_COUPS").split(",")).map(func(x): return {"type": x.split(":")[0], "i": int(x.split(":")[1])} if ":" in x else ({"type": x} if x.length() > 3 else ({"type": "vanne", "i": int(x.substr(1))} if x.begins_with("v") else ({"type": "creuser", "i": int(x.substr(1))} if x.begins_with("c") else ({"type": "pomper", "i": int(x.substr(1))} if x.begins_with("P") else {"type": "porte", "i": int(x)})))))
 	await get_tree().create_timer(1.2).timeout
 	await _photo("00-repos")
 	if OS.get_environment("ECLUSES_LISTE") != "":

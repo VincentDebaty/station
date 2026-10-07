@@ -48,6 +48,7 @@ Tout système nouveau se range dans l'une de ces familles :
 | 13 | Siphon | l'amorcer | faire passer l'eau par-dessus un mur | à écrire | moyen |
 | 14 | Ascenseur à bateaux | un coup | monter un bateau sans dépenser d'eau | à écrire | moyen |
 | 15 | Bassin d'épargne | une vanne latérale | garder de l'eau pour plus tard | à écrire | fort |
+| 17 | Chaudière (vapeur) | un coup = un volume qui part en fumée | quand se débarrasser d'une eau qui menace le village | **écrite** (chap. 5, niveau 5-1, nuit du 7 au 8 octobre 2026) | faible |
 
 Les **objectifs** ne déplacent pas l'eau mais s'y ajoutent : bateau à
 conduire, champ à irriguer (« cible »), village à épargner (« tolere »).
@@ -155,6 +156,17 @@ trois planches exactement, sinon le village est inondé.
 - **Coût :** faible pour A (un bassin fixe comme puits, comme la mer) ;
   moyen pour B (de l'eau qui sort du jeu, le banc doit l'admettre comme une
   « sortie »).
+
+### 17. La chaudière — la vapeur (nuit du 7 au 8 octobre 2026)
+- **On voit :** une petite chaudière de cuivre sur la berge du fond, son
+  tuyau qui descend dans le bief, le feu qui couve, un filet de fumée.
+- **La règle :** un coup (« chauffer ») fait partir « debit » d'eau du
+  bassin en vapeur (`objets`, type `chaudiere`). Le pendant de la pompe :
+  elle ne remonte pas l'eau, elle la fait disparaître.
+- **Le niveau 5-1 :** un bateau descend, l'autre monte, et le bief aval est
+  au ras de la levée du village. Vidé tel quel, le sas l'inonde : il faut
+  faire bouillir juste assez du bief aval (deux coups), et pas plus, car le
+  bateau qui monte a besoin de cette eau.
 
 ### Écartés pour l'instant
 - **Moulin, roue à aubes** qui actionnerait autre chose quand l'eau y passe :

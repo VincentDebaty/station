@@ -78,6 +78,10 @@ var pompes := {}      # pompe -> Pompe, sa pompe à bras
 var tuyaux_pompe := {} # pompe -> Aqueduc, son tuyau
 var jets_pompe := {}  # pompe -> Jet, l'eau qui sort du bec
 var _pompage := -1    # la pompe en train de pomper, pendant l'écoulement
+var chaudieres := {}  # objet -> Chaudiere, sur la berge du fond
+var tuyaux_chaudiere := {} # objet -> Aqueduc, le tuyau qui descend le long du mur du fond
+var _chauffe := -1    # la chaudière en train de chauffer, pendant l'écoulement
+var sommets_fond := [] # le haut du mur du fond de chaque bassin, en unités
 var rigoles := {}     # liaison -> Rigole, la berge de terre que l'on creuse
 var mares := {}       # bassin -> Mare, la cuvette naturelle sur le pré
 var trop_pleins := {}  # porte -> Jet, l'eau qui passe par-dessus une porte fermée
@@ -315,6 +319,27 @@ func construire(niveau: Dictionary, e: Dictionary) -> void:
 		jt.z_index = 2
 		add_child(jt)
 		jets_pompe[i] = jt
+	# les chaudières : sur la berge du fond, au-dessus du bassin qu'elles
+	# boivent, dans le plan des tours du fond (derrière les bateaux et l'eau) ;
+	# leur tuyau descend le long du mur du fond jusque près du fond, où l'eau
+	# le cache à demi
+	var objets: Array = N.get("objets", [])
+	for k in objets.size():
+		if objets[k]["type"] != "chaudiere": continue
+		var ib := int(objets[k]["bassin"])
+		var xb := _x_bassin(ib)
+		var pied := Vector2(lerpf(xb.x, xb.y, 0.62), Y(sommets_fond[ib])) + D + Vector2(0, -3.0)
+		var tu := Aqueduc.new()
+		tu.tuyau_de_pompe = true
+		var ch := Chaudiere.new()
+		ch.preparer(pied)
+		var x_t := ch.entree_tuyau().x - 26.0
+		tu.preparer(PackedVector2Array([Vector2(x_t, Y(float(B[ib]["fond"])) + D.y - 18.0), Vector2(x_t, ch.entree_tuyau().y), ch.entree_tuyau()]), 0.14 * UY)
+		tu.bulles.visible = false
+		arriere.add_child(tu)
+		arriere.add_child(ch)
+		chaudieres[k] = ch
+		tuyaux_chaudiere[k] = tu
 	# le trop-plein d'une porte fermée : quand l'amont atteint sa crête, l'eau
 	# passe par-dessus le vantail et tombe de l'autre côté (Vincent : on
 	# remplissait le bief amont sans voir que le surplus filait au sas)
@@ -539,6 +564,7 @@ func _murs_du_fond() -> void:
 			if bord > -INF: sommet = maxf(minf(sommet, bord), float(b.get("niveau", f)) + 0.8)
 		if b["type"] == "reservoir":
 			sommets.append(_rive())
+			sommets_fond.append(_rive())
 			continue
 		if _naturel(i):
 			# derrière un pré, la prairie continue (rien à dessiner, le décor
@@ -546,10 +572,12 @@ func _murs_du_fond() -> void:
 			# coiffée d'herbe
 			var haut_b := f + 0.9 if b["type"] == "village" else float(b.get("niveau", f)) + 0.6
 			sommets.append(haut_b)
+			sommets_fond.append(haut_b)
 			_poly(_quad(mx0 - 8, Y(haut_b), mx1 + 8, Y(f)), terre_fond if b["type"] != "village" else herbe_fond)
 			_bande_herbe(mx0 - 10, mx1 + 10, Y(haut_b) + 2, 26.0)
 			continue
 		sommets.append(sommet)
+		sommets_fond.append(sommet)
 		_poly(_quad(mx0 - 8, Y(sommet), mx1 + 8, Y(f)), fond_pierre)
 		# les ombres de contact du mur : au pied, sur le radier, et dans les
 		# deux angles du bassin — on les voit à travers l'eau
@@ -1459,6 +1487,11 @@ func _process(dt: float) -> void:
 		var a_eau: bool = vue_niv[de] > float(N["bassins"][de]["fond"]) + 0.01
 		tuyaux_pompe[i].niveau_g = Y(vue_niv[de])
 		tuyaux_pompe[i].niveau_d = -1e9 if a_eau else Y(vue_niv[de])
+	for k in tuyaux_chaudiere:
+		var ib := int(N["objets"][k]["bassin"])
+		var a_eau: bool = vue_niv[ib] > float(N["bassins"][ib]["fond"]) + 0.01
+		tuyaux_chaudiere[k].niveau_g = Y(vue_niv[ib]) + D.y
+		tuyaux_chaudiere[k].niveau_d = -1e9 if a_eau else Y(vue_niv[ib]) + D.y
 	for i in aqueducs:
 		aqueducs[i].ouverte = portes[i].vanne_ouverte
 		aqueducs[i].niveau_g = Y(vue_niv[i])
@@ -1538,7 +1571,7 @@ func ecouler(avant: Array, apres: Array, flux: Array) -> void:
 	# montre l'écoulement dès qu'il y a du débit, ou un coup de pompe.
 	var fl_max := 0.0
 	for f in flux: fl_max = maxf(fl_max, absf(float(f)))
-	if dh < 1e-4 and fl_max < 0.01 and _pompage < 0:
+	if dh < 1e-4 and fl_max < 0.01 and _pompage < 0 and _chauffe < 0:
 		vue_niv = apres.duplicate()
 		ecoulement_fini.emit.call_deferred()
 		return
@@ -1627,7 +1660,24 @@ func _avancer_ecoulement(dt: float) -> void:
 		if force > 0.1:
 			eaux[vers].remous = maxf(eaux[vers].remous, force * 0.5)
 			if randf() < 0.4: eaux[vers].impulsion(jt.chute().x, randf_range(-0.3, 1.0) * force, 18.0)
+	if _chauffe >= 0:
+		# la chaudière boit : l'eau court dans son tuyau, la surface se creuse
+		# un peu au-dessus de la crépine, la vapeur part par le sifflet
+		var chf: Chaudiere = chaudieres[_chauffe]
+		var tch: Aqueduc = tuyaux_chaudiere[_chauffe]
+		var ibc := int(N["objets"][_chauffe]["bassin"])
+		var fc := clampf(minf(p * 5.0, (1.0 - p) * 2.5), 0.0, 1.0)
+		chf.force = fc
+		tch.ouverte = fc > 0.05
+		tch.couler(fc * 0.8, 1)
+		if fc > 0.1 and randf() < 0.3:
+			eaux[ibc].impulsion(tch.chemin[0].x - D.x * 0.5, 0.25 * fc, 40.0)
 	if p >= 1.0:
+		if _chauffe >= 0:
+			chaudieres[_chauffe].force = 0.0
+			tuyaux_chaudiere[_chauffe].ouverte = false
+			tuyaux_chaudiere[_chauffe].couler(0.0, 1)
+			_chauffe = -1
 		if _pompage >= 0:
 			jets_pompe[_pompage].force = 0.0
 			tuyaux_pompe[_pompage].ouverte = false
@@ -1860,6 +1910,17 @@ func pomper(i: int) -> void:
 	_pompage = i
 	pompes[i].pomper()
 	await pompes[i].coup_fini
+
+# Un coup de chaudière : le feu flambe, puis l'eau part pendant l'écoulement.
+func chauffer(i: int) -> void:
+	_chauffe = i
+	chaudieres[i].chauffer()
+	await chaudieres[i].coup_fini
+
+func chaudiere_sous(p: Vector2) -> int:
+	for i in chaudieres:
+		if chaudieres[i].sous(p): return i
+	return -1
 
 func pompe_sous(p: Vector2) -> int:
 	for i in pompes:
