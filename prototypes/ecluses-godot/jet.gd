@@ -160,10 +160,17 @@ func _lame() -> void:
 			var j := mini(i + 2, pts.size() - 1)
 			if j > i: draw_line(pts[i] + D * z, pts[j] + D * z, Color(0.92, 1, 1, 0.45), 1.6, true)
 	# la tranche de devant : l'épaisseur de la nappe, plus sombre
-	var tranche := PackedVector2Array()
-	for q in pts: tranche.append(q + Vector2(0, -ep * 0.5))
-	for k in range(pts.size() - 1, -1, -1): tranche.append(pts[k] + Vector2(0, ep * 0.5))
-	draw_colored_polygon(tranche, Color(0.14, 0.5, 0.68, 0.9))
+	# (seulement dans la chute, à partir de 6 px sous le bord, et d'un bleu
+	# proche de la nappe : foncée dès le bord, elle traçait un trait entre
+	# l'eau qui arrive et la cascade — la « cassure » que voyait Vincent)
+	var chute := PackedVector2Array()
+	for q in pts:
+		if q.y > origine.y + 6.0: chute.append(q)
+	if chute.size() >= 2:
+		var tranche := PackedVector2Array()
+		for q in chute: tranche.append(q + Vector2(0, -ep * 0.5))
+		for k in range(chute.size() - 1, -1, -1): tranche.append(chute[k] + Vector2(0, ep * 0.5))
+		draw_colored_polygon(tranche, Color(0.22, 0.6, 0.78, 0.85))
 	draw_polyline(pts, Color(0.85, 0.97, 1.0, 0.5), 1.2, true)
 	# l'écume le long de la ligne de chute, sur toute la largeur
 	for z in [0.0, 0.25, 0.5, 0.75, 1.0]:

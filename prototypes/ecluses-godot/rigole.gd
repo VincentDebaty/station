@@ -140,7 +140,10 @@ func _draw() -> void:
 	var devant := PackedVector2Array([Vector2(x_bord, y_rive), Vector2(x_mare + 20.0, y_rive), _pt(1, -1, y_rive) + Vector2(20.0, 0), _pt(1, -1, y_rive), _pt(0, -1, y_rive)])
 	draw_colored_polygon(devant, herbe_c)
 	if prof > 0.5:
-		draw_line(_pt(0, -1, y_rive), _pt(1, -1, y_rive), Color("#4a2c12"), 2.0, true)
+		# les bords de la rigole ; celui de devant s'arrête avant la bouche,
+		# sinon il barrait le départ de la cascade (Vincent : « une cassure au
+		# début de la cascade »)
+		draw_line(_pt(0.14, -1, y_rive), _pt(1, -1, y_rive), Color("#4a2c12"), 2.0, true)
 		draw_line(_pt(0, 1, y_rive), _pt(1, 1, y_rive), Color("#4a2c12"), 1.5, true)
 	# le tracé en pointillés, tant qu'on peut creuser
 	if vue > float(canal.N["liaisons"][i]["min"]) + 0.01:
@@ -159,6 +162,15 @@ func _draw() -> void:
 		draw_set_transform(Vector2.ZERO)
 	for m in _mottes:
 		draw_circle(m[0], 3.2 * (1.0 - m[2]), Color(0.4, 0.25, 0.12, 1.0 - m[2]))
+
+# La surface de l'eau à la bouche de la rigole (sur sa paroi avant) : la
+# cascade part exactement de là. Partie plus bas, elle laissait voir l'entaille
+# sombre entre l'eau de la rigole et elle (Vincent : « une cassure »).
+func surface_bouche() -> Vector2:
+	var prof := maxf(canal.Y(vue) - y_rive, 0.0) * ECHELLE
+	var yb := y_rive + prof
+	var h := minf(maxf(float(canal.vue_niv[i + 1]) - vue, 0.0) * canal.UY * ECHELLE, prof)
+	return Vector2(x_bord, yb - h)
 
 # Le bas de la rigole, au bord du canal : d'où tombe la cascade.
 func bouche(vue_crete: float) -> Vector2:

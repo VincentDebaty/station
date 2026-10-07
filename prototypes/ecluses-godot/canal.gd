@@ -1634,7 +1634,7 @@ func _jet_rigole(i: int, flux: float, dt: float) -> void:
 	# elle tombe de la bouche de la rigole, au bord du canal (le filet est
 	# déjà placé à sa profondeur)
 	jt.fente = minf(jt.fente * Rigole.ECHELLE + 3.0, 14.0)
-	jt.origine = rg.bouche(crete) - Vector2(0, jt.fente * 0.5)
+	jt.origine = rg.surface_bouche()
 	jt.vantail_x = jt.depart_x
 	jt.y_seuil = 0.0
 	jt.haut_veine = 0.0
