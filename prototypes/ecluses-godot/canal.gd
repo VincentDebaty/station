@@ -84,6 +84,7 @@ var _chauffe := -1    # la chaudière en train de chauffer, pendant l'écoulemen
 var glacons := {}     # objet -> Glacon, le bloc de glace et son brasero, sur la berge du fond
 var _fontes := {}     # objet -> [part avant, part après] : le glaçon qui fond pendant l'écoulement
 var orage: Orage = null # la pluie, les nuages et les éclairs d'un niveau à « pluie »
+var marees := {}      # bassin -> Maree : l'échelle, les algues et la flèche de la marée
 var sommets_fond := [] # le haut du mur du fond de chaque bassin, en unités
 var rigoles := {}     # liaison -> Rigole, la berge de terre que l'on creuse
 var mares := {}       # bassin -> Mare, la cuvette naturelle sur le pré
@@ -440,6 +441,17 @@ func construire(niveau: Dictionary, e: Dictionary) -> void:
 		flotte.add_child(bt)
 		bateaux.append(bt)
 		bt.allumer()
+	# la marée : sur le mur du fond de la mer, près de la porte du port
+	for i in n:
+		if not B[i].has("maree"): continue
+		var mr := Maree.new()
+		var xb := _x_bassin(i)
+		var a := maxf(xb.x, X(gb[i][1]) - 14.0 * U) + D.x
+		var bb := X(gb[i][1]) + D.x
+		mr.preparer(self, i, a, bb, bb - 0.9 * U)
+		mr.regler(int(e["phase"]), int(e["coups"]))
+		arriere.add_child(mr)
+		marees[i] = mr
 	if N.get("pluie"):
 		orage = Orage.new()
 		add_child(orage)
@@ -664,6 +676,17 @@ func _dessous_des_bassins() -> void:
 		var prof := D.length()
 		var fond_pts := PackedVector2Array([Vector2(f0, y), Vector2(f1, y), Vector2(f1 + D.x, y + D.y), Vector2(f0 + D.x, y + D.y)])
 		if B[i]["type"] == "reservoir": continue
+		if B[i]["type"] == "mer":
+			# la mer : un fond de sable, ridé, plus sombre vers le large
+			_poly(fond_pts, null, PackedColorArray([Color("#e2cf9c"), Color("#e2cf9c"), Color("#b9a46f"), Color("#b9a46f")]))
+			var rg := RandomNumberGenerator.new()
+			rg.seed = 5
+			for k in 60:
+				var t := rg.randf()
+				var x := lerpf(f0 + 40.0, f1 - 20.0, rg.randf()) + D.x * t
+				var yy := y + D.y * t
+				_poly(PackedVector2Array([Vector2(x - 9.0, yy), Vector2(x, yy - 1.6), Vector2(x + 9.0, yy), Vector2(x, yy + 0.8)]), null, PackedColorArray([Color(0.55, 0.45, 0.25, 0.35)]))
+			continue
 		if _naturel(i):
 			# un pré (le village) ou un fond de vase (l'étang)
 			_poly(fond_pts, null, PackedColorArray([Color("#86b84f"), Color("#86b84f"), Color("#5f8f37"), Color("#5f8f37")]) if B[i]["type"] == "village"
@@ -1971,6 +1994,7 @@ func glacon_sous(p: Vector2) -> int:
 
 # Avant l'écoulement d'un coup : les glaçons qui fondent pendant ce coup-ci.
 func objets_changent(avant: Dictionary, apres: Dictionary) -> void:
+	for i in marees: marees[i].regler(int(apres["phase"]), int(apres["coups"]))
 	for k in glacons:
 		var a := int(avant["obj"][k])
 		var b := int(apres["obj"][k])

@@ -44,7 +44,7 @@ Tout système nouveau se range dans l'une de ces familles :
 | 9 bis | Rigole | un coup de pelle dans une berge de terre | doser l'eau d'un étang, sans retour | **écrite** (chap. 3, niveau 3-1, 7 octobre 2026) : la digue du moteur, jouée en direct | faible |
 | 10 | Clapet | aucun | rien : l'eau ne passe que dans un sens | à écrire | faible |
 | 11 | Pompe | un coup = un volume qui monte | quand dépenser un coup pour remonter de l'eau | **écrite** (chap. 4, niveau 4-1, 7 octobre 2026) | faible |
-| 12 | Marée | aucun (la mer monte et descend) | le bon moment | à écrire | faible |
+| 12 | Marée | aucun (la mer monte et descend), ou attendre | le bon moment | **écrite** (chap. 8, niveau 8-1, nuit du 7 au 8 octobre 2026) | faible |
 | 13 | Siphon | l'amorcer | faire passer l'eau par-dessus un mur | à écrire | moyen |
 | 14 | Ascenseur à bateaux | un coup | monter un bateau sans dépenser d'eau | à écrire | moyen |
 | 15 | Bassin d'épargne | une vanne latérale | garder de l'eau pour plus tard | à écrire | fort |
@@ -104,7 +104,17 @@ trois planches exactement, sinon le village est inondé.
   trois coups, ou une seule par niveau.
 - **Coût :** faible, une action.
 
-### 12. Marée
+### 12. Marée — écrite le 8 octobre 2026 (chapitre 8, niveau 8-1)
+- **Ce qui a été fait :** la mer (bassin `mer`, `fixe`) suit `maree`, une
+  suite de niveaux, un pas par coup ; l'état garde la phase. Sur le mur du
+  port : une échelle de marée rouge et blanche, la bande d'algues entre basse
+  et haute mer, et une flèche jaune (devant l'eau) avec un chevron qui monte
+  ou descend, à la hauteur de la mer au coup suivant. Un fond de sable.
+- **Le niveau 8-1 :** suite 1, 2, 3, 2. Il manque de l'eau au bief amont
+  pour que le bateau rouge y monte : la marée haute, porte ouverte, remplit
+  le sas pour rien ; il faut l'attendre (requis). Par 6.
+
+### 12 bis. Marée — l'idée de départ
 - **On voit :** la mer qui monte et descend, avec une échelle de marée.
 - **La règle :** la mer reste un bassin fixe, mais son niveau suit une suite
   connue d'avance, un pas par coup (par exemple 1, 2, 3, 2, 1…).

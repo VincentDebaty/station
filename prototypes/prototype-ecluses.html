@@ -270,8 +270,9 @@ button:focus-visible, [role="button"]:focus-visible { outline: 3px solid var(--o
     {"n": 5, "titre": "La chaudière", "decor": "campagne", "resume": "Le feu change l'eau en vapeur : chaque coup de chaudière fait baisser le bief. La seule eau qui s'en va sans la mer."},
     {"n": 6, "titre": "La glace et le feu", "decor": "campagne", "resume": "Le brasero fait fondre le gros glaçon en trois coups, et chacun verse sa part d'eau là où il est posé. Le feu prend son temps : à toi de choisir quand l'allumer."},
     {"n": 7, "titre": "L'orage", "decor": "campagne", "resume": "Il pleut à chaque coup, dans tous les bassins. L'eau qui manquait arrive toute seule, mais elle ne s'arrête pas quand il y en a assez."},
-    {"n": 8, "titre": "Les canaux", "decor": "collines", "resume": "Creuser les digues, puis lâcher l'eau et regarder où elle va."},
-    {"n": 9, "titre": "Le fleuve", "decor": "estuaire", "resume": "L'eau arrive toute seule, à chaque coup. Il faut la conduire avant qu'elle déborde."}
+    {"n": 8, "titre": "La marée", "decor": "campagne", "resume": "La mer monte et descend d'un cran à chaque coup, et l'on sait d'avance jusqu'où. Une porte ouverte à marée haute remplit le sas pour rien."},
+    {"n": 9, "titre": "Les canaux", "decor": "collines", "resume": "Creuser les digues, puis lâcher l'eau et regarder où elle va."},
+    {"n": 10, "titre": "Le fleuve", "decor": "estuaire", "resume": "L'eau arrive toute seule, à chaque coup. Il faut la conduire avant qu'elle déborde."}
   ],
   "niveaux": [
     {
@@ -510,9 +511,31 @@ button:focus-visible, [role="button"]:focus-visible { outline: 3px solid var(--o
         {"de": 3, "vers": 1, "tirant": 1}
       ]
     },
-    {
+{
       "id": "8-1",
       "chapitre": 8,
+      "titre": "La marée",
+      "mode": "pas",
+      "par": 6,
+      "conseil": "La mer monte et descend d'un cran à chaque coup. La flèche jaune sur l'échelle montre où elle sera au coup suivant : la marée haute remplit le sas sans rien coûter au bief.",
+      "requis": ["attendre"],
+      "bassins": [
+        {"type": "mer", "fond": 0, "largeur": 6, "fixe": true, "niveau": 1, "maree": [1, 2, 3, 2], "nom": "mer"},
+        {"type": "sas", "fond": 0, "largeur": 2, "niveau": 2, "nom": "sas"},
+        {"type": "bief", "fond": 3, "largeur": 6, "niveau": 4.5, "nom": "bief amont"}
+      ],
+      "liaisons": [
+        {"type": "porte", "seuil": 0, "crete": 6},
+        {"type": "porte", "seuil": 3, "crete": 6}
+      ],
+      "bateaux": [
+        {"de": 0, "vers": 2, "tirant": 1},
+        {"de": 2, "vers": 0, "tirant": 1}
+      ]
+    },
+    {
+      "id": "9-1",
+      "chapitre": 9,
       "titre": "Le premier sillon",
       "mode": "chantier",
       "par": 4,
@@ -530,8 +553,8 @@ button:focus-visible, [role="button"]:focus-visible { outline: 3px solid var(--o
       "bateaux": []
     },
     {
-      "id": "8-2",
-      "chapitre": 8,
+      "id": "9-2",
+      "chapitre": 9,
       "titre": "Les rizières",
       "mode": "chantier",
       "par": 5,
@@ -553,8 +576,8 @@ button:focus-visible, [role="button"]:focus-visible { outline: 3px solid var(--o
       "bateaux": []
     },
     {
-      "id": "8-3",
-      "chapitre": 8,
+      "id": "9-3",
+      "chapitre": 9,
       "titre": "Remettre à flot",
       "mode": "chantier",
       "par": 6,
@@ -578,8 +601,8 @@ button:focus-visible, [role="button"]:focus-visible { outline: 3px solid var(--o
       ]
     },
     {
-      "id": "9-1",
-      "chapitre": 9,
+      "id": "10-1",
+      "chapitre": 10,
       "titre": "Le fleuve monte",
       "mode": "pas",
       "par": 5,
@@ -600,8 +623,8 @@ button:focus-visible, [role="button"]:focus-visible { outline: 3px solid var(--o
       ]
     },
     {
-      "id": "9-2",
-      "chapitre": 9,
+      "id": "10-2",
+      "chapitre": 10,
       "titre": "Le déversoir",
       "mode": "pas",
       "par": 8,
@@ -626,8 +649,8 @@ button:focus-visible, [role="button"]:focus-visible { outline: 3px solid var(--o
       ]
     },
     {
-      "id": "9-3",
-      "chapitre": 9,
+      "id": "10-3",
+      "chapitre": 10,
       "titre": "La crue",
       "mode": "pas",
       "par": 6,

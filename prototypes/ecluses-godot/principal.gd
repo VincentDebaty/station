@@ -47,7 +47,7 @@ var _sure: Control      # la zone sûre : tout ce qu'on touche ou qu'on lit y re
 # Le niveau sur lequel le jeu s'ouvre : celui qu'on est en train d'essayer
 # (Vincent, 7 octobre 2026 : « quand tu déploies sur l'iPhone, tu proposes le
 # nouveau niveau à chaque fois »). À changer à chaque nouveauté.
-const NIVEAU_EN_TEST := "7-1"
+const NIVEAU_EN_TEST := "8-1"
 
 func _ready() -> void:
 	_tous = JSON.parse_string(FileAccess.get_file_as_string("res://niveaux.json"))["niveaux"]
@@ -597,7 +597,7 @@ func _montrer_fin() -> void:
 func _jouable(n: Dictionary) -> bool:
 	if n["mode"] != "pas": return false
 	for b in n["bassins"]:
-		if not (b["type"] in ["bief", "sas", "reservoir", "village"]): return false
+		if not (b["type"] in ["bief", "sas", "reservoir", "village", "mer"]): return false
 	for l in n["liaisons"]:
 		if not (l["type"] in ["porte", "libre", "hausse", "mur", "digue"]): return false
 	return true
