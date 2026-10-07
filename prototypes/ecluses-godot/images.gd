@@ -87,6 +87,30 @@ static func engrenage(cote: int, bord := 5) -> Texture2D:
 			e[y * cote + x] = clampf(rayon - bord - l + 0.5, 0.0, 1.0) * clampf(l - trou - bord + 0.5, 0.0, 1.0)
 	return _composer(a, e, cote)
 
+# Le sablier du bouton « attendre » : deux ampoules en triangle reliées par
+# un col, une traverse en haut et en bas. Le cœur crème est la silhouette
+# rongée de « bord » (le col, plus fin, reste brun).
+static func sablier(cote: int, bord := 5) -> Texture2D:
+	var a := PackedFloat32Array(); a.resize(cote * cote)
+	var c := cote * 0.5
+	var haut := cote * 0.36        # demi-hauteur des ampoules
+	var large := cote * 0.30       # demi-largeur des ampoules, à leur base
+	var col := cote * 0.045
+	for y in cote:
+		for x in cote:
+			var dx := absf(x + 0.5 - c)
+			var dy := absf(y + 0.5 - c)
+			var v := 0.0
+			if dy < haut:
+				var t := dy / haut
+				var demi := lerpf(col, large, pow(t, 0.8))
+				v = clampf(demi - dx + 0.5, 0.0, 1.0)
+			# les traverses
+			if dy >= haut - 2.0 and dy < haut + cote * 0.08:
+				v = maxf(v, clampf(large + cote * 0.07 - dx + 0.5, 0.0, 1.0))
+			a[y * cote + x] = v
+	return _peindre(a, cote, bord)
+
 # Silhouette (alpha) → crème au cœur, brun sur le liseré ; le liseré est
 # l'écart entre la silhouette et sa version rongée de « bord » pixels.
 static func _peindre(a: PackedFloat32Array, cote: int, bord: int) -> Texture2D:

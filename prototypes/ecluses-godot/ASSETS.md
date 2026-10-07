@@ -330,6 +330,20 @@ vapeur.
 Same art style as the attached image. A small cute vertical steam boiler standing on the ground, seen exactly from the side: a low base of red bricks with a small arched cast-iron firebox door in the middle at the bottom (the opening of the door painted plain black, no fire), a stone slab on top of the bricks, then an upright copper boiler drum with two brass bands and rivets, a round pressure gauge with a white dial on the front, a dark cast-iron dome on top, a thin black chimney rising from the right of the dome and a small brass steam whistle on the left of the dome. Thin dark outline, soft highlight on the top-left. Portrait image, the boiler centred and filling about 90% of the height, isolated on a transparent background, no smoke, no steam, no fire, no ground, no shadow.
 ```
 
+#### `art/glacon.png` et `art/brasero.png` — le gros glaçon et son feu (chapitre 6)
+
+Le jeu fait fondre le bloc en le rétrécissant : une seule image, celle du
+bloc entier. Il garde dessinés la flamme, les étincelles, l'eau de fonte et
+la flaque : le brasero se peint **éteint**.
+
+```text
+Same art style as the attached image. A big cute block of clear blue ice, roughly cubic with slightly rounded edges, seen from the front and a little from above-left (we see its front face, its top and its left side), glossy highlights, a few air bubbles and a thin crack inside, a little cap of snow on top, thin dark blue outline. Square image, the block centred and filling about 85% of the frame, isolated on a transparent background, no water, no puddle, no ground, no shadow.
+```
+
+```text
+Same art style as the attached image. A small round iron fire basket (brazier) standing on three thin legs, with two crossed wooden logs sticking out of it, unlit (no flame, no smoke, just grey ash and a hint of dark embers), seen exactly from the side, thin dark outline, soft highlight on the top-left. Square image, centred, filling about 85% of the frame, isolated on a transparent background, no ground, no shadow.
+```
+
 ### Plus tard, peut-être
 
 - `premier_plan.png` : un buisson flou et des marguerites au premier plan,

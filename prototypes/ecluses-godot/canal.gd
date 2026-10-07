@@ -81,6 +81,8 @@ var _pompage := -1    # la pompe en train de pomper, pendant l'écoulement
 var chaudieres := {}  # objet -> Chaudiere, sur la berge du fond
 var tuyaux_chaudiere := {} # objet -> Aqueduc, le tuyau qui descend le long du mur du fond
 var _chauffe := -1    # la chaudière en train de chauffer, pendant l'écoulement
+var glacons := {}     # objet -> Glacon, le bloc de glace et son brasero, sur la berge du fond
+var _fontes := {}     # objet -> [part avant, part après] : le glaçon qui fond pendant l'écoulement
 var sommets_fond := [] # le haut du mur du fond de chaque bassin, en unités
 var rigoles := {}     # liaison -> Rigole, la berge de terre que l'on creuse
 var mares := {}       # bassin -> Mare, la cuvette naturelle sur le pré
@@ -115,6 +117,10 @@ const JEU := 0.45
 func _largeur_vue(i: int) -> float:
 	var l := float(N["bassins"][i]["largeur"])
 	var places := mini(Moteur.capacite(N, i), maxi(N["bateaux"].size(), 1))
+	# un sas qui porte un objet sur sa berge du fond (glaçon, chaudière) : de
+	# la place entre les tours des portes pour qu'on le voie et qu'on le touche
+	for o in N.get("objets", []):
+		if int(o.get("bassin", -1)) == i and N["bassins"][i]["type"] == "sas": l = maxf(l, 3.9)
 	return maxf(l, places * LONG_BATEAU + (places + 1) * JEU)
 
 # --- La construction ---------------------------------------------------------------
@@ -340,6 +346,25 @@ func construire(niveau: Dictionary, e: Dictionary) -> void:
 		arriere.add_child(ch)
 		chaudieres[k] = ch
 		tuyaux_chaudiere[k] = tu
+	# les glaçons : le bloc et son brasero sur la berge du fond, au-dessus du
+	# bassin qu'ils rempliront, entre les tours du fond des portes voisines
+	for k in objets.size():
+		if objets[k]["type"] != "glacon": continue
+		var ib := int(objets[k]["bassin"])
+		var xb := _x_bassin(ib)
+		# la place libre sur la berge du fond : du pilier avant de la porte de
+		# gauche au pilier du fond de la porte de droite
+		var g0 := X(gb[ib][0]) + 12.0
+		var g1 := X(gb[ib][1]) + D.x - 30.0
+		if g1 - g0 < 110.0:
+			g0 = xb.x + D.x; g1 = xb.y + D.x
+		var ob: int = e["obj"][k]
+		var gl_ := Glacon.new()
+		gl_.preparer(Vector2(lerpf(g0, g1, 0.32), Y(sommets_fond[ib]) + D.y - 2.0), lerpf(g0, g1, 0.82),
+			1.0 if ob < 0 else float(ob) / float(objets[k]["fonte"]), ob >= 0)
+		gl_.y_eau = Y(vue_niv[ib]) + D.y
+		arriere.add_child(gl_)
+		glacons[k] = gl_
 	# le trop-plein d'une porte fermée : quand l'amont atteint sa crête, l'eau
 	# passe par-dessus le vantail et tombe de l'autre côté (Vincent : on
 	# remplissait le bief amont sans voir que le surplus filait au sas)
@@ -1487,6 +1512,8 @@ func _process(dt: float) -> void:
 		var a_eau: bool = vue_niv[de] > float(N["bassins"][de]["fond"]) + 0.01
 		tuyaux_pompe[i].niveau_g = Y(vue_niv[de])
 		tuyaux_pompe[i].niveau_d = -1e9 if a_eau else Y(vue_niv[de])
+	for k in glacons:
+		glacons[k].y_eau = Y(vue_niv[int(N["objets"][k]["bassin"])]) + D.y
 	for k in tuyaux_chaudiere:
 		var ib := int(N["objets"][k]["bassin"])
 		var a_eau: bool = vue_niv[ib] > float(N["bassins"][ib]["fond"]) + 0.01
@@ -1571,7 +1598,7 @@ func ecouler(avant: Array, apres: Array, flux: Array) -> void:
 	# montre l'écoulement dès qu'il y a du débit, ou un coup de pompe.
 	var fl_max := 0.0
 	for f in flux: fl_max = maxf(fl_max, absf(float(f)))
-	if dh < 1e-4 and fl_max < 0.01 and _pompage < 0 and _chauffe < 0:
+	if dh < 1e-4 and fl_max < 0.01 and _pompage < 0 and _chauffe < 0 and _fontes.is_empty():
 		vue_niv = apres.duplicate()
 		ecoulement_fini.emit.call_deferred()
 		return
@@ -1672,7 +1699,19 @@ func _avancer_ecoulement(dt: float) -> void:
 		tch.couler(fc * 0.8, 1)
 		if fc > 0.1 and randf() < 0.3:
 			eaux[ibc].impulsion(tch.chemin[0].x - D.x * 0.5, 0.25 * fc, 40.0)
+	for k in _fontes:
+		# le bloc rapetisse et son eau coule pendant tout l'écoulement
+		var gl_: Glacon = glacons[k]
+		gl_.reste = lerpf(_fontes[k][0], _fontes[k][1], clampf(p * 1.15, 0.0, 1.0))
+		gl_.coule = clampf(minf(p * 6.0, (1.0 - p) * 3.0), 0.0, 1.0)
+		if gl_.coule > 0.2 and randf() < 0.25:
+			eaux[int(N["objets"][k]["bassin"])].impulsion(gl_.base.x - D.x * 0.5, randf_range(-0.4, 0.6) * gl_.coule, 20.0)
 	if p >= 1.0:
+		for k in _fontes:
+			glacons[k].coule = 0.0
+			glacons[k].reste = _fontes[k][1]
+			if _fontes[k][1] <= 0.0: glacons[k].feu_cible = 0.22     # fondu : il ne reste que des braises
+		_fontes = {}
 		if _chauffe >= 0:
 			chaudieres[_chauffe].force = 0.0
 			tuyaux_chaudiere[_chauffe].ouverte = false
@@ -1910,6 +1949,25 @@ func pomper(i: int) -> void:
 	_pompage = i
 	pompes[i].pomper()
 	await pompes[i].coup_fini
+
+# Le brasero d'un glaçon s'allume (le coup lui-même verse la première part).
+func allumer(i: int) -> void:
+	glacons[i].allumer()
+	await glacons[i].allume_fini
+
+func glacon_sous(p: Vector2) -> int:
+	for i in glacons:
+		if glacons[i].sous(p): return i
+	return -1
+
+# Avant l'écoulement d'un coup : les glaçons qui fondent pendant ce coup-ci.
+func objets_changent(avant: Dictionary, apres: Dictionary) -> void:
+	for k in glacons:
+		var a := int(avant["obj"][k])
+		var b := int(apres["obj"][k])
+		if a == b: continue
+		var f := float(N["objets"][k]["fonte"])
+		_fontes[k] = [1.0 if a < 0 else a / f, b / f]
 
 # Un coup de chaudière : le feu flambe, puis l'eau part pendant l'écoulement.
 func chauffer(i: int) -> void:

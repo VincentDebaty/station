@@ -30,6 +30,7 @@ var fini := false
 var _lab_coups: Label
 var _etoiles: Etoiles
 var _b_annuler: Button
+var _b_attendre: Button   # le sablier : laisser passer un coup (glace qui fond, marée, orage)
 var _pancarte: Pancarte   # le panneau d'éclusier de fin (pancarte.gd)
 var _lab_num: Label
 var _tous := []
@@ -46,7 +47,7 @@ var _sure: Control      # la zone sûre : tout ce qu'on touche ou qu'on lit y re
 # Le niveau sur lequel le jeu s'ouvre : celui qu'on est en train d'essayer
 # (Vincent, 7 octobre 2026 : « quand tu déploies sur l'iPhone, tu proposes le
 # nouveau niveau à chaque fois »). À changer à chaque nouveauté.
-const NIVEAU_EN_TEST := "5-1"
+const NIVEAU_EN_TEST := "6-1"
 
 func _ready() -> void:
 	_tous = JSON.parse_string(FileAccess.get_file_as_string("res://niveaux.json"))["niveaux"]
@@ -119,6 +120,10 @@ func _cadrer() -> void:
 # --- Le toucher et les coups ----------------------------------------------------------
 func _unhandled_input(ev: InputEvent) -> void:
 	if ev is InputEventMouseButton and ev.pressed and ev.button_index == MOUSE_BUTTON_LEFT:
+		var ig := canal.glacon_sous(get_global_mouse_position())
+		if ig >= 0:
+			jouer({"type": "allumer", "i": ig})
+			return
 		var ic := canal.chaudiere_sous(get_global_mouse_position())
 		if ic >= 0:
 			jouer({"type": "chauffer", "i": ic})
@@ -165,6 +170,8 @@ func jouer(a: Dictionary) -> void:
 		await canal.pomper(int(a["i"]))
 	elif a["type"] == "chauffer":
 		await canal.chauffer(int(a["i"]))
+	elif a["type"] == "allumer":
+		await canal.allumer(int(a["i"]))
 	elif a["type"] == "creuser" and canal.rigoles.has(int(a["i"])):
 		# un coup de pelle : l'entaille se creuse, des mottes volent, puis
 		# l'eau file
@@ -202,6 +209,7 @@ func jouer(a: Dictionary) -> void:
 			await canal.placer_vantaux(etat)
 			p.manoeuvrer_vanne(false)
 			await p.roue_finie
+	canal.objets_changent(avant, etat)
 	canal.ecouler(avant["niv"], etat["niv"], r["flux"])
 	await canal.ecoulement_fini
 	await canal.placer_vantaux(etat)
@@ -412,6 +420,11 @@ func _interface() -> void:
 	# en bas à droite : annuler, recommencer
 	var boutons := HBoxContainer.new()
 	boutons.add_theme_constant_override("separation", 14)
+	# le sablier, quand le temps fait quelque chose tout seul : on le laisse
+	# passer d'un coup sans toucher à rien
+	_b_attendre = _medaillon(Images.sablier(128, 8), func(): jouer({"type": "attendre"}))
+	_b_attendre.visible = false
+	boutons.add_child(_b_attendre)
 	_b_annuler = _medaillon(Images.pictogramme("res://art/icone_annuler.png", 128, 8), annuler)
 	boutons.add_child(_b_annuler)
 	boutons.add_child(_medaillon(Images.pictogramme("res://art/icone_rejouer.png", 128, 8), _lancer))
@@ -711,6 +724,14 @@ func _process(dt: float) -> void:
 			var A := Moteur.actions(N, etat) if not occupe and not fini else []
 			for ip in canal.pompes:
 				canal.pompes[ip].actif = A.any(func(x): return x["type"] == "pomper" and int(x["i"]) == ip)
+		if not canal.glacons.is_empty():
+			var A3 := Moteur.actions(N, etat) if not occupe and not fini else []
+			for ig in canal.glacons:
+				canal.glacons[ig].actif = A3.any(func(x): return x["type"] == "allumer" and int(x["i"]) == ig)
+		if _b_attendre:
+			var A4 := Moteur.actions(N, etat) if not fini else []
+			_b_attendre.visible = A4.any(func(x): return x["type"] == "attendre")
+			_b_attendre.disabled = occupe
 		if not canal.chaudieres.is_empty():
 			var A2 := Moteur.actions(N, etat) if not occupe and not fini else []
 			for ic in canal.chaudieres:

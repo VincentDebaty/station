@@ -48,6 +48,7 @@ Tout système nouveau se range dans l'une de ces familles :
 | 13 | Siphon | l'amorcer | faire passer l'eau par-dessus un mur | à écrire | moyen |
 | 14 | Ascenseur à bateaux | un coup | monter un bateau sans dépenser d'eau | à écrire | moyen |
 | 15 | Bassin d'épargne | une vanne latérale | garder de l'eau pour plus tard | à écrire | fort |
+| 18 | Glaçon et brasero (gel, feu) | allumer une fois, puis le temps passe | quand allumer : l'eau arrive en trois coups, là où elle est posée | **écrite** (chap. 6, niveau 6-1, nuit du 7 au 8 octobre 2026) | moyen |
 | 17 | Chaudière (vapeur) | un coup = un volume qui part en fumée | quand se débarrasser d'une eau qui menace le village | **écrite** (chap. 5, niveau 5-1, nuit du 7 au 8 octobre 2026) | faible |
 
 Les **objectifs** ne déplacent pas l'eau mais s'y ajoutent : bateau à
@@ -167,6 +168,25 @@ trois planches exactement, sinon le village est inondé.
   au ras de la levée du village. Vidé tel quel, le sas l'inonde : il faut
   faire bouillir juste assez du bief aval (deux coups), et pas plus, car le
   bateau qui monte a besoin de cette eau.
+
+### 18. Le glaçon et son brasero — le gel et le feu (nuit du 7 au 8 octobre 2026)
+- **On voit :** un gros bloc de glace sur la berge du fond, et à côté un
+  brasero. Allumé, le feu danse, le bloc goutte et rapetisse ; des filets
+  d'eau descendent le long du mur dans le bassin.
+- **La règle :** « allumer » (une fois) ; le bloc fond en « fonte » coups,
+  et chacun, celui de l'allumage compris, verse « volume »/« fonte » d'eau
+  dans son bassin (`objets`, type `glacon`). Un **sablier** apparaît dans les
+  boutons du bas tant que la glace fond : laisser passer un coup sans rien
+  toucher (« attendre »).
+- **Le niveau 6-1 :** le glaçon fond dans le sas. Allumé tout de suite, son
+  eau file dans le bief aval par la porte ouverte, ou remplit le sas trop
+  tôt : le niveau devient impossible. Il faut faire entrer le bateau rouge,
+  allumer, fermer derrière lui : la fonte le monte. Par 6.
+- **Essayé et écarté la même nuit :** un bassin GELÉ (bateau pris dans la
+  glace, portes bloquées) que le brasero dégèle. Le solveur n'y trouvait que
+  « allumer, attendre, puis jouer normalement » : pas de décision. Et le
+  rendu d'une glace dans le canal, avec les vantaux qui la traversent,
+  promettait des défauts graphiques.
 
 ### Écartés pour l'instant
 - **Moulin, roue à aubes** qui actionnerait autre chose quand l'eau y passe :

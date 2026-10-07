@@ -268,8 +268,9 @@ button:focus-visible, [role="button"]:focus-visible { outline: 3px solid var(--o
     {"n": 3, "titre": "La rigole", "decor": "campagne", "resume": "Un coup de pelle dans la butte, et l'eau de la mare file par la rigole. On ne rebouche pas : juste ce qu'il faut, au bon moment."},
     {"n": 4, "titre": "La pompe", "decor": "campagne", "resume": "Chaque coup de pompe fait monter un peu d'eau du bas vers le haut. La seule eau qui remonte, et elle coûte un coup."},
     {"n": 5, "titre": "La chaudière", "decor": "campagne", "resume": "Le feu change l'eau en vapeur : chaque coup de chaudière fait baisser le bief. La seule eau qui s'en va sans la mer."},
-    {"n": 6, "titre": "Les canaux", "decor": "collines", "resume": "Creuser les digues, puis lâcher l'eau et regarder où elle va."},
-    {"n": 7, "titre": "Le fleuve", "decor": "estuaire", "resume": "L'eau arrive toute seule, à chaque coup. Il faut la conduire avant qu'elle déborde."}
+    {"n": 6, "titre": "La glace et le feu", "decor": "campagne", "resume": "Le brasero fait fondre le gros glaçon en trois coups, et chacun verse sa part d'eau là où il est posé. Le feu prend son temps : à toi de choisir quand l'allumer."},
+    {"n": 7, "titre": "Les canaux", "decor": "collines", "resume": "Creuser les digues, puis lâcher l'eau et regarder où elle va."},
+    {"n": 8, "titre": "Le fleuve", "decor": "estuaire", "resume": "L'eau arrive toute seule, à chaque coup. Il faut la conduire avant qu'elle déborde."}
   ],
   "niveaux": [
     {
@@ -458,9 +459,34 @@ button:focus-visible, [role="button"]:focus-visible { outline: 3px solid var(--o
         {"de": 1, "vers": 3, "tirant": 1}
       ]
     },
-    {
+{
       "id": "6-1",
       "chapitre": 6,
+      "titre": "Le glaçon",
+      "mode": "pas",
+      "par": 6,
+      "conseil": "Allume le brasero : le gros glaçon fond en trois coups, et à chacun un peu de son eau coule dans le sas. Allume-le quand le sas est prêt à la garder.",
+      "requis": ["allumer"],
+      "bassins": [
+        {"type": "bief", "fond": 0, "largeur": 6, "niveau": 2, "nom": "bief aval"},
+        {"type": "sas", "fond": 0, "largeur": 2, "niveau": 2, "nom": "sas"},
+        {"type": "bief", "fond": 3, "largeur": 6, "niveau": 4.2, "nom": "bief amont"}
+      ],
+      "liaisons": [
+        {"type": "porte", "seuil": 0, "crete": 5},
+        {"type": "porte", "seuil": 3, "crete": 5}
+      ],
+      "objets": [
+        {"type": "glacon", "bassin": 1, "volume": 4, "fonte": 3}
+      ],
+      "bateaux": [
+        {"de": 0, "vers": 2, "tirant": 1},
+        {"de": 2, "vers": 0, "tirant": 1}
+      ]
+    },
+    {
+      "id": "7-1",
+      "chapitre": 7,
       "titre": "Le premier sillon",
       "mode": "chantier",
       "par": 4,
@@ -478,8 +504,8 @@ button:focus-visible, [role="button"]:focus-visible { outline: 3px solid var(--o
       "bateaux": []
     },
     {
-      "id": "6-2",
-      "chapitre": 6,
+      "id": "7-2",
+      "chapitre": 7,
       "titre": "Les rizières",
       "mode": "chantier",
       "par": 5,
@@ -501,8 +527,8 @@ button:focus-visible, [role="button"]:focus-visible { outline: 3px solid var(--o
       "bateaux": []
     },
     {
-      "id": "6-3",
-      "chapitre": 6,
+      "id": "7-3",
+      "chapitre": 7,
       "titre": "Remettre à flot",
       "mode": "chantier",
       "par": 6,
@@ -526,8 +552,8 @@ button:focus-visible, [role="button"]:focus-visible { outline: 3px solid var(--o
       ]
     },
     {
-      "id": "7-1",
-      "chapitre": 7,
+      "id": "8-1",
+      "chapitre": 8,
       "titre": "Le fleuve monte",
       "mode": "pas",
       "par": 5,
@@ -548,8 +574,8 @@ button:focus-visible, [role="button"]:focus-visible { outline: 3px solid var(--o
       ]
     },
     {
-      "id": "7-2",
-      "chapitre": 7,
+      "id": "8-2",
+      "chapitre": 8,
       "titre": "Le déversoir",
       "mode": "pas",
       "par": 8,
@@ -574,8 +600,8 @@ button:focus-visible, [role="button"]:focus-visible { outline: 3px solid var(--o
       ]
     },
     {
-      "id": "7-3",
-      "chapitre": 7,
+      "id": "8-3",
+      "chapitre": 8,
       "titre": "La crue",
       "mode": "pas",
       "par": 6,
@@ -644,10 +670,11 @@ const Ecluses = (function () {
   //              coup) :
   //     chaudiere  « chauffer » : « debit » d'eau du bassin part en vapeur
   //                (la seule eau qui quitte le canal sans la mer)
-  //     brasero    « allumer » : le feu fait fondre la glace du « bassin »
-  //                en « fonte » coups ; tant qu'il est gelé, l'eau n'y entre
-  //                ni n'en sort, et aucun bateau n'y passe. État : -1 éteint,
-  //                n > 0 coups avant la fonte, 0 fondu.
+  //     glacon     un gros bloc de glace sur la berge, et son brasero.
+  //                « allumer » : le feu le fait fondre en « fonte » coups, et à
+  //                chacun (celui de l'allumage compris) « volume »/« fonte »
+  //                d'eau coule dans le « bassin ». État : -1 éteint, n > 0
+  //                coups de fonte restants, 0 fondu.
   //   pluie      l'orage : chaque coup, chaque bassin (sauf la mer et le
   //              village, où elle s'infiltre) monte de « pluie »
   //   maree      la mer suit une suite de niveaux connue d'avance, un pas
@@ -665,7 +692,7 @@ const Ecluses = (function () {
       vanne: N.liaisons.map(l => !!(l.vanne && l.vanne_ouverte)),
       crete: N.liaisons.map(l => l.crete != null ? l.crete : null),
       bateaux: N.bateaux.map(b => b.de),
-      obj: (N.objets || []).map(o => o.type === "brasero" ? -1 : 0),
+      obj: (N.objets || []).map(o => o.type === "glacon" ? -1 : 0),
       phase: 0,
       lache: N.mode !== "chantier",
       coups: 0, entree: 0, sortie: 0
@@ -691,13 +718,6 @@ const Ecluses = (function () {
     return l.type === "porte" ? l.seuil : Math.max(N.bassins[i].fond, N.bassins[i + 1].fond);
   }
   const profondeur = (N, e, i) => e.niv[i] - N.bassins[i].fond;
-  // Le bassin i est-il pris dans la glace ? (un brasero qui n'a pas fini)
-  function gele(N, e, i) {
-    const O = N.objets;
-    if (!O) return false;
-    for (let k = 0; k < O.length; k++) if (O[k].type === "brasero" && O[k].bassin === i && e.obj[k] !== 0) return true;
-    return false;
-  }
   const temps = N => N.bassins.some(b => b.apport || b.maree) || !!N.pluie;
 
   // --- L'eau -----------------------------------------------------------------
@@ -708,7 +728,6 @@ const Ecluses = (function () {
   function paire(N, e, i) {
     const a = e.niv[i], c = e.niv[i + 1];
     if (Math.abs(a - c) < 1e-12) return 0;
-    if (gele(N, e, i) || gele(N, e, i + 1)) return 0;
     const h = a > c ? i : i + 1, l = a > c ? i + 1 : i;
     const H = N.bassins[h], L = N.bassins[l];
     const s = seuil(N, e, i), nh = e.niv[h], nl = e.niv[l];
@@ -744,7 +763,7 @@ const Ecluses = (function () {
       let j = i;
       while (j < n - 1) {
         const s = seuil(N, e, j);
-        if (e.niv[j] > s + 1e-6 && e.niv[j + 1] > s + 1e-6 && Math.abs(e.niv[j] - e.niv[j + 1]) < 1e-3 && !gele(N, e, j) && !gele(N, e, j + 1)) j++; else break;
+        if (e.niv[j] > s + 1e-6 && e.niv[j + 1] > s + 1e-6 && Math.abs(e.niv[j] - e.niv[j + 1]) < 1e-3) j++; else break;
       }
       if (j > i) {
         let fixe = -1, sv = 0, sw = 0;
@@ -787,7 +806,6 @@ const Ecluses = (function () {
   function peutPasser(N, e, k, p, q) {
     const i = Math.min(p, q), l = N.liaisons[i];
     if (!(l.type === "libre" || (l.type === "porte" && e.ouvert[i]))) return false;
-    if (gele(N, e, p) || gele(N, e, q)) return false;
     if (Math.abs(e.niv[p] - e.niv[q]) > EPS) return false;
     if (!flotte(N, e, k, p) || !flotte(N, e, k, q)) return false;
     if (e.niv[q] - seuilBateau(N, i) < N.bateaux[k].tirant - EPS) return false;
@@ -839,10 +857,10 @@ const Ecluses = (function () {
     (N.objets || []).forEach((o, i) => {
       if (!e.lache) return;
       if (o.type === "chaudiere" && profondeur(N, e, o.bassin) > EPS) A.push({ type: "chauffer", i });
-      if (o.type === "brasero" && e.obj[i] === -1) A.push({ type: "allumer", i });
+      if (o.type === "glacon" && e.obj[i] === -1) A.push({ type: "allumer", i });
     });
     if (!e.lache) A.push({ type: "lacher" });
-    else if (temps(N) || e.obj.some((x, k) => N.objets[k].type === "brasero" && x > 0)) A.push({ type: "attendre" });
+    else if (temps(N) || e.obj.some((x, k) => N.objets[k].type === "glacon" && x > 0)) A.push({ type: "attendre" });
     return A;
   }
   function jouer(N, e0, a) {
@@ -872,8 +890,14 @@ const Ecluses = (function () {
     }
     let flux = new Array(N.liaisons.length).fill(0), dep = [], apport = 0;
     if (e.lache) {
-      // le feu avance d'un coup : la glace fond quand il arrive à zéro
-      (N.objets || []).forEach((o, k) => { if (o.type === "brasero" && e.obj[k] > 0) e.obj[k]--; });
+      // la glace qui fond verse sa part d'eau
+      (N.objets || []).forEach((o, k) => {
+        if (o.type !== "glacon" || e.obj[k] <= 0) return;
+        const v = o.volume / o.fonte, b = N.bassins[o.bassin];
+        e.niv[o.bassin] = arrondi(e.niv[o.bassin] + v / b.largeur);
+        e.entree += v;
+        e.obj[k]--;
+      });
       if (a.type !== "lacher") N.bassins.forEach((b, i) => {
         if (b.apport) { e.niv[i] = arrondi(e.niv[i] + b.apport / b.largeur); e.entree += b.apport; apport += b.apport; }
         if (N.pluie && !b.fixe && b.type !== "village") { e.niv[i] = arrondi(e.niv[i] + N.pluie); e.entree += N.pluie * b.largeur; }

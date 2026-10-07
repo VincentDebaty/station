@@ -34,7 +34,7 @@ static func charger(N: Dictionary) -> Dictionary:
 		"obj": [], "phase": 0,
 	}
 	for o in N.get("objets", []):
-		e["obj"].append(-1 if o["type"] == "brasero" else 0)
+		e["obj"].append(-1 if o["type"] == "glacon" else 0)
 	for b in N["bassins"]:
 		e["niv"].append(float(b["niveau"]) if b.has("niveau") else float(b["fond"]))
 	for l in N["liaisons"]:
@@ -74,13 +74,6 @@ static func seuil_bateau(N: Dictionary, i: int) -> float:
 static func profondeur(N: Dictionary, e: Dictionary, i: int) -> float:
 	return e["niv"][i] - float(N["bassins"][i]["fond"])
 
-# Le bassin i est-il pris dans la glace ? (un brasero qui n'a pas fini)
-static func gele(N: Dictionary, e: Dictionary, i: int) -> bool:
-	var O: Array = N.get("objets", [])
-	for k in O.size():
-		if O[k]["type"] == "brasero" and int(O[k]["bassin"]) == i and int(e["obj"][k]) != 0: return true
-	return false
-
 static func temps(N: Dictionary) -> bool:
 	if N.has("pluie") and N["pluie"]: return true
 	return N["bassins"].any(func(b): return (b.has("apport") and b["apport"]) or b.has("maree"))
@@ -90,8 +83,6 @@ static func paire(N: Dictionary, e: Dictionary, i: int) -> float:
 	var a: float = e["niv"][i]
 	var c: float = e["niv"][i + 1]
 	if absf(a - c) < 1e-12:
-		return 0.0
-	if gele(N, e, i) or gele(N, e, i + 1):
 		return 0.0
 	var h := i if a > c else i + 1
 	var l := i + 1 if a > c else i
@@ -138,7 +129,7 @@ static func poser(N: Dictionary, e: Dictionary) -> void:
 		var j := i
 		while j < n - 1:
 			var s := seuil(N, e, j)
-			if e["niv"][j] > s + 1e-6 and e["niv"][j + 1] > s + 1e-6 and absf(e["niv"][j] - e["niv"][j + 1]) < 1e-3 and not gele(N, e, j) and not gele(N, e, j + 1):
+			if e["niv"][j] > s + 1e-6 and e["niv"][j + 1] > s + 1e-6 and absf(e["niv"][j] - e["niv"][j + 1]) < 1e-3:
 				j += 1
 			else:
 				break
@@ -206,8 +197,6 @@ static func peut_passer(N: Dictionary, e: Dictionary, k: int, p: int, q: int) ->
 	var l: Dictionary = N["liaisons"][i]
 	if not (l["type"] == "libre" or (l["type"] == "porte" and e["ouvert"][i])):
 		return false
-	if gele(N, e, p) or gele(N, e, q):
-		return false
 	if absf(e["niv"][p] - e["niv"][q]) > EPS:
 		return false
 	if not flotte(N, e, k, p) or not flotte(N, e, k, q):
@@ -240,8 +229,6 @@ static func raison(N: Dictionary, e: Dictionary, k: int) -> Dictionary:
 	var l: Dictionary = N["liaisons"][i]
 	if not (l["type"] == "libre" or (l["type"] == "porte" and e["ouvert"][i])):
 		return {"quoi": "porte", "bassin": q}
-	if gele(N, e, p) or gele(N, e, q):
-		return {"quoi": "glace", "bassin": p if gele(N, e, p) else q}
 	if absf(e["niv"][p] - e["niv"][q]) > EPS:
 		return {"quoi": "niveaux", "bassin": q}
 	if not flotte(N, e, k, p):
@@ -301,11 +288,11 @@ static func actions(N: Dictionary, e: Dictionary) -> Array:
 	var feu := false
 	for i in objets.size():
 		var o: Dictionary = objets[i]
-		if o["type"] == "brasero" and int(e["obj"][i]) > 0: feu = true
+		if o["type"] == "glacon" and int(e["obj"][i]) > 0: feu = true
 		if not e["lache"]: continue
 		if o["type"] == "chaudiere" and profondeur(N, e, int(o["bassin"])) > EPS:
 			A.append({"type": "chauffer", "i": i})
-		if o["type"] == "brasero" and int(e["obj"][i]) == -1:
+		if o["type"] == "glacon" and int(e["obj"][i]) == -1:
 			A.append({"type": "allumer", "i": i})
 	if not e["lache"]:
 		A.append({"type": "lacher"})
@@ -362,10 +349,16 @@ static func jouer(N: Dictionary, e0: Dictionary, a: Dictionary) -> Dictionary:
 	var dep := []
 	var apport := 0.0
 	if e["lache"]:
-		# le feu avance d'un coup : la glace fond quand il arrive à zéro
+		# la glace qui fond verse sa part d'eau
 		var objets: Array = N.get("objets", [])
 		for k in objets.size():
-			if objets[k]["type"] == "brasero" and int(e["obj"][k]) > 0: e["obj"][k] = int(e["obj"][k]) - 1
+			var o: Dictionary = objets[k]
+			if o["type"] != "glacon" or int(e["obj"][k]) <= 0: continue
+			var v := float(o["volume"]) / float(o["fonte"])
+			var ib := int(o["bassin"])
+			e["niv"][ib] = arrondi(e["niv"][ib] + v / float(N["bassins"][ib]["largeur"]))
+			e["entree"] += v
+			e["obj"][k] = int(e["obj"][k]) - 1
 		var pluie := float(N.get("pluie", 0.0)) if N.get("pluie") != null else 0.0
 		if a["type"] != "lacher":
 			for i in N["bassins"].size():
