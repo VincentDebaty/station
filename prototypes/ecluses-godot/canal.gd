@@ -348,12 +348,13 @@ func _murs_du_fond() -> void:
 		_cible.name = "PlanDuFond"
 		_cible.position = D
 		add_child(_cible)
+	var sommets := []
 	for i in B.size():
 		var b: Dictionary = B[i]
 		var f := float(b["fond"])
 		var xb := _x_bassin(i)
-		var mx0 := xb.x if D != Vector2.ZERO else X(gb[i][0])
-		var mx1 := xb.y if D != Vector2.ZERO else X(gb[i][1])
+		var mx0 := xb.x
+		var mx1 := xb.y
 		var sommet: float
 		if b["type"] == "sas":
 			sommet = 0.0
@@ -365,6 +366,7 @@ func _murs_du_fond() -> void:
 			# un bief a des quais de pierre presque jusqu'à la berge : la prairie
 			# ne se voit qu'en haut, comme une pente qui s'éloigne
 			sommet = maxf(maxf(f + 2.5, berge - 1.6), float(b.get("niveau", f)) + 0.8)
+		sommets.append(sommet)
 		_poly(_quad(mx0 - 8, Y(sommet), mx1 + 8, Y(f)), fond_pierre)
 		# les ombres de contact du mur : au pied, sur le radier, et dans les
 		# deux angles du bassin — on les voit à travers l'eau
@@ -383,14 +385,19 @@ func _murs_du_fond() -> void:
 			_poly(_quad(mx0 - 10, Y(sommet) - 7, mx1 + 10, Y(sommet) + 3), null,
 				PackedColorArray([Color("#9ccc63"), Color("#9ccc63"), Color("#6f9a40"), Color("#6f9a40")]))
 
-	_cible = null
-	if D != Vector2.ZERO: return      # en oblique, les murs vont d'une porte à l'autre
-	# derrière chaque porte aussi : sinon l'ouverture laisse voir la prairie
+	# derrière chaque liaison aussi : sinon l'ouverture laisse voir la prairie
+	# (en oblique, le mur du fond passe déjà derrière les portes : seules les
+	# digues, murs et passages libres restent à boucher)
 	for i in N["liaisons"].size():
 		var l: Dictionary = N["liaisons"][i]
+		if D != Vector2.ZERO and l["type"] == "porte": continue
 		var c := float(l.get("crete", maxf(float(B[i]["fond"]), float(B[i + 1]["fond"]))))
 		var bas := minf(float(B[i]["fond"]), float(B[i + 1]["fond"]))
-		_poly(_quad(X(gl[i][0]), Y(c + 0.2), X(gl[i][1]), Y(bas)), fond_porte)
+		# aussi haut que le plus bas des deux murs voisins : derrière un mur
+		# bas, on voyait une fente de prairie
+		var haut_fente := maxf(c + 0.2, minf(sommets[i], sommets[i + 1]))
+		_poly(_quad(X(gl[i][0]), Y(haut_fente), X(gl[i][1]), Y(bas)), fond_porte)
+	_cible = null
 
 # En oblique : ce qu'on voit à travers l'eau entre la coupe et le mur du
 # fond — le fond de chaque bassin (vu d'en haut), la contremarche quand le
@@ -469,8 +476,9 @@ func _coupe_avant() -> void:
 	var tres_bas := Y(BAS) + LOIN
 	for i in B.size():
 		var f := float(B[i]["fond"])
-		var x0 := X(gb[i][0])
-		var x1 := X(gb[i][1])
+		var xb := _x_bassin(i)
+		var x0 := minf(xb.x, X(gb[i][0]))
+		var x1 := maxf(xb.y, X(gb[i][1]))
 		# le radier du bassin, puis la terre dessous
 		_poly(_quad(x0 - 2, Y(f), x1 + 2, Y(f - 0.32)), pierre)
 		_poly(_quad(x0 - 2, Y(f - 0.32), x1 + 2, tres_bas), terre)
@@ -742,9 +750,16 @@ func _herbe(x0: float, x1: float, y: float) -> void:
 # L'étendue d'un bassin dans le plan de la coupe : en oblique, l'eau va
 # jusqu'au milieu de chaque porte voisine (le vantail est en travers du canal,
 # au milieu de la porte) ; de profil, entre les murs.
+# Un bassin « fixe » au bout du niveau (la mer) n'a pas de bord : il continue
+# hors de l'écran, de DEBORD px — avant, l'eau, le mur et la terre
+# s'arrêtaient au bord du niveau, et l'écran montrait le vide à côté.
+const DEBORD := 900.0
 func _x_bassin(i: int) -> Vector2:
 	var a := X(gb[i][0])
 	var b := X(gb[i][1])
+	if N["bassins"][i].get("fixe", false):
+		if i == 0: a -= DEBORD
+		if i == gb.size() - 1: b += DEBORD
 	if D != Vector2.ZERO:
 		if i > 0 and N["liaisons"][i - 1]["type"] == "porte": a = X(gl[i - 1][0] + gl[i - 1][1]) * 0.5
 		if i < gl.size() and N["liaisons"][i]["type"] == "porte": b = X(gl[i][0] + gl[i][1]) * 0.5
@@ -1052,8 +1067,9 @@ var _police_manque: Font = null
 func _dessiner_manque() -> void:
 	if _manque.is_empty(): return
 	var i: int = _manque["bassin"]
-	var x0 := X(gb[i][0]) + 4.0
-	var x1 := X(gb[i][1]) - 4.0
+	var xb := _x_bassin(i)                 # en oblique, l'eau va jusqu'aux vantaux
+	var x0 := xb.x + 4.0
+	var x1 := xb.y - 4.0
 	var y: float = _manque["y"]
 	var c: Color = _manque["couleur"]
 	var age := _t - float(_manque["t"])
@@ -1085,7 +1101,7 @@ func _dessiner_manque() -> void:
 	var texte := "Il manque de l'eau"
 	var taille := 22
 	var l := _police_manque.get_string_size(texte, HORIZONTAL_ALIGNMENT_LEFT, -1, taille).x
-	var pos := Vector2((x0 + x1 - l) * 0.5, y - 14.0)
+	var pos := Vector2((x0 + x1 - l) * 0.5, y - 60.0)     # au-dessus de la bouée
 	_reperes.draw_string_outline(_police_manque, pos, texte, HORIZONTAL_ALIGNMENT_LEFT, -1, taille, 8, Color(0.24, 0.13, 0.05, a))
 	_reperes.draw_string(_police_manque, pos, texte, HORIZONTAL_ALIGNMENT_LEFT, -1, taille, Color(1, 0.95, 0.86, a))
 

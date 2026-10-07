@@ -170,6 +170,16 @@ func _construire_oblique(mp: ShaderMaterial, abas: float) -> void:
 	var arr := _rect(xc - PILIER + D.x, y_portique + D.y, xc + PILIER + D.x, y_seuil + D.y, mp)
 	arr.modulate = Color(0.86, 0.84, 0.8)
 	fond.add_child(arr)
+	# les ombres de contact (lot 1, refait pour le volume) : le pilier arrière
+	# jette son ombre sur le mur du fond, à sa droite (lumière d'en haut à
+	# gauche), et la traverse sur le haut du pilier arrière
+	fond.add_child(_degrade(xc + PILIER + D.x, y_portique + D.y, xc + PILIER + 16.0 + D.x, y_seuil + D.y, 0.3, 0.0))
+	var sous := Polygon2D.new()
+	sous.polygon = _quad(xc - PILIER + D.x, y_portique + 4.0 + D.y, xc + PILIER + D.x, y_portique + 18.0 + D.y)
+	var o := Color(0.08, 0.04, 0.0, 0.35)
+	var z := Color(0.08, 0.04, 0.0, 0.0)
+	sous.vertex_colors = PackedColorArray([o, o, z, z])
+	fond.add_child(sous)
 	# le radier sous le seuil, dans le plan de la coupe
 	add_child(_rect(gx0, y_seuil, gx1, abas, mp))
 	# le pilier avant, et l'arête sombre de son côté gauche (sa face en biais)
@@ -214,6 +224,10 @@ func _maj_oblique() -> void:
 		return
 	var xf := xc - 5.0
 	_vantail.polygon = PackedVector2Array([Vector2(xf + D.x, haut_vu + D.y), Vector2(xf, haut_vu), Vector2(xf, bas_y), Vector2(xf + D.x, bas_y + D.y)])
+	# le vantail s'assombrit vers le pilier avant, qui lui fait de l'ombre, et
+	# sous la traverse quand il est fermé (son haut y est rangé)
+	var sous_t := 0.82 if haut_vu <= cache + 1.0 else 1.0
+	_vantail.vertex_colors = PackedColorArray([Color(0.95 * sous_t, 0.95 * sous_t, 0.95 * sous_t), Color(0.66 * sous_t, 0.66 * sous_t, 0.66 * sous_t), Color(0.7, 0.7, 0.7), Color(0.92, 0.92, 0.92)])
 	if _vantail.texture:
 		var w := _vantail.texture.get_width()
 		var h := _vantail.texture.get_height()
@@ -242,8 +256,14 @@ func _degrade(ax0: float, ay0: float, ax1: float, ay1: float, a0: float, a1: flo
 func _quad(ax0: float, ay0: float, ax1: float, ay1: float) -> PackedVector2Array:
 	return PackedVector2Array([Vector2(ax0, ay0), Vector2(ax1, ay0), Vector2(ax1, ay1), Vector2(ax0, ay1)])
 
+# En oblique, la roue est posée au milieu du dessus de la traverse, à
+# mi-profondeur ; le doigt la trouve là (canal.porte_sous).
 func centre_roue() -> Vector2:
-	return Vector2((gx0 + gx1) / 2.0, y_portique - 0.2 * u - 0.5 * u)
+	return Vector2((gx0 + gx1) / 2.0, y_portique - 0.2 * u - 0.5 * u) + oblique * 0.5
+
+# Le haut du pied de la roue : le dessus de la traverse, sous l'axe.
+func _pied_roue() -> float:
+	return y_portique - 0.2 * u + oblique.y * 0.5
 
 # La vanne : la roue fait un tour et demi. Émet roue_finie.
 func manoeuvrer_vanne(ouvrir: bool) -> void:
@@ -355,7 +375,7 @@ func _dessiner_roue() -> void:
 	var rouge := Color("#c8321f")
 	var sombre := Color("#7c1f13")
 	# le pied, de la traverse à l'axe
-	roue.draw_rect(Rect2(c.x - 4, c.y, 8, (y_portique - 0.2 * u) - c.y), Color("#2d2a28"))
+	roue.draw_rect(Rect2(c.x - 4, c.y, 8, _pied_roue() - c.y), Color("#2d2a28"))
 	roue.draw_circle(c + Vector2(2, 3), r + 5, Color(0, 0, 0, 0.18))
 	var tr := Peint.roue()
 	if tr:

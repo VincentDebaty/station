@@ -215,11 +215,22 @@ Ce que fait la maquette :
   mi-chemin.
 - **Rendu seulement.** Le moteur ne change pas.
 
-Ce qui reste si Vincent valide :
-- la pancarte « Il manque de l'eau » et le face-à-face, à recaler sur D/2 ;
-- les places des bateaux dans le sas, peut-être à resserrer : le sas paraît
-  plus étroit avec le vantail au milieu de la porte ;
-- la roue, à poser sur le haut de la traverse en volume ;
-- les ombres de contact des portes (lot 1), à refaire pour le volume ;
-- tous les niveaux, pas seulement le 1-2 et le 1-4 ;
-- le coût sur l'iPhone (bandes de surface reconstruites à chaque image).
+**Validée par Vincent le 7 octobre 2026 et généralisée à tous les niveaux**,
+puis fusionnée dans `main` :
+- la roue est posée au milieu du dessus de la traverse, à mi-profondeur ;
+  le doigt la trouve là ;
+- les ombres de contact sont refaites pour le volume : l'ombre du pilier
+  arrière sur le mur du fond, celle de la traverse sur le pilier arrière, et
+  le vantail qui fonce vers le pilier avant et sous la traverse ;
+- le marqueur « Il manque de l'eau » couvre l'eau jusqu'aux vantaux, son
+  texte au-dessus de la bouée ;
+- les dix niveaux sont photographiés en oblique, de 102 à 135 images/s sur
+  le Mac.
+
+Deux défauts trouvés en passant, présents aussi dans la vue de profil :
+- la mer (bassin « fixe ») s'arrêtait au bord du niveau, et l'écran montrait
+  du vide à côté. Elle continue maintenant hors de l'écran ;
+- derrière une digue ou un mur bas, une fente laissait voir la prairie. Le
+  fond est maintenant bouché à la hauteur du plus bas des deux murs voisins.
+
+Reste à mesurer : les images par seconde sur l'iPhone.
