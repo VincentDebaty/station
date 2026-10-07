@@ -112,12 +112,18 @@ func _process(dt: float) -> void:
 	if sec != _sec_avant:
 		_sec_avant = sec
 		queue_redraw()
+	# Le motif avance d'un pas à chaque image, dans le sens du courant. Mesuré
+	# sur le film du 4-1 : une phase qui croît fait reculer le motif vers le
+	# début du tracé ; elle décroît donc quand l'eau suit le tracé (sens 1).
+	_phase -= float(sens) * (4.0 + 38.0 * debit) * Reglages.v("courant_vitesse") * dt
+	_mat_eau.set_shader_parameter("phase", _phase)
 	_mat_eau.set_shader_parameter("debit", debit)
 	_mat_eau.set_shader_parameter("sens", float(sens))
 	_mat_eau.set_shader_parameter("contraste", Reglages.v("courant_contraste"))
 	_mat_eau.set_shader_parameter("allure", Reglages.v("courant_vitesse"))
 
 var _sec_avant := false
+var _phase := 0.0
 
 # Une partie du conduit est-elle plus haute que l'eau de son bassin ? (Jamais
 # avec des aqueducs sous le fond ; la règle reste juste si un tracé change.)

@@ -10,6 +10,7 @@ uniform float debit = 0.0;        // 0 à l'arrêt, 1 au plus fort
 uniform float sens = 1.0;         // 1 : l'eau va dans le sens du tracé
 uniform float contraste = 0.35;   // réglage : à quel point les reflets ressortent
 uniform float allure = 0.6;       // réglage : facteur de vitesse
+uniform float phase = 0.0;        // le chemin parcouru par le motif, en pixels
 
 float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
 float bruit(vec2 p) {
@@ -21,14 +22,13 @@ float bruit(vec2 p) {
 void fragment() {
 	float x = UV.x * longueur;                      // en pixels le long du conduit
 	float v = UV.y;
-	// pixels par seconde : 158 au plus fort était bien trop vif (Vincent) ;
-	// l'eau d'un aqueduc avance, elle ne file pas
-	float vitesse = sens * (4.0 + 38.0 * debit) * allure;
-	// un motif qui glisse vers les x croissants s'écrit f(x - v·t)… mais mesuré
-	// sur la démo filmée, la ligne de Godot fait défiler le motif à l'envers :
-	// le signe est donc retourné ici, et vérifié à l'image (filets qui descendent
-	// du bief amont vers le sas).
-	float u = (x + TIME * vitesse) / 34.0;
+	// La position du motif, « phase », est cumulée par aqueduc.gd image après
+	// image, à sens × (4 + 38 × débit) × allure pixels par seconde (158 au
+	// plus fort était bien trop vif, Vincent). Écrite TIME × vitesse, elle
+	// reculait dès que la vitesse baissait : le flux semblait repartir vers la
+	// source à la fin d'un coup de pompe (Vincent). Le sens est réglé dans
+	// aqueduc.gd, mesuré sur film.
+	float u = (x + phase) / 34.0;
 	// des nappes étirées dans le sens du courant
 	float n = bruit(vec2(u, v * 2.5)) * 0.6 + bruit(vec2(u * 2.3 + 7.0, v * 5.0)) * 0.4;
 	// moins cyan, tirant sur l'ardoise : les tuyaux paraissaient plus
