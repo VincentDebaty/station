@@ -40,6 +40,23 @@ func preparer(c: Canal, ai: int, crete: float, rive: float, mare_x: float) -> vo
 	x_mare = mare_x
 	if ResourceLoader.exists("res://art/pelle.png"): _pelle = Images.reduire("res://art/pelle.png", 140)
 	z_index = 1
+	# La face de terre de la butte, dans la coupe, redessinée PAR-DESSUS la
+	# rigole : vue un peu d'en haut, une rigole creusée près de la coupe
+	# descend plus bas que le bord avant de la butte, et son eau dépassait
+	# sous le pré comme une bande bleue flottante (Vincent). La terre la cache.
+	var m := ShaderMaterial.new()
+	m.shader = preload("res://shaders/terre.gdshader")
+	m.set_shader_parameter("sol_y", c.Y(0.0))
+	Peint.habiller(m, "terre")
+	var face := Polygon2D.new()
+	face.polygon = PackedVector2Array([Vector2(x_bord, y_rive), Vector2(x_mare + 60.0, y_rive), Vector2(x_mare + 60.0, y_bas), Vector2(x_bord, y_bas)])
+	face.material = m
+	add_child(face)
+	var bord := Line2D.new()
+	bord.points = PackedVector2Array([Vector2(x_bord, y_rive + 1.0), Vector2(x_mare + 60.0, y_rive + 1.0)])
+	bord.width = 4.0
+	bord.default_color = Color("#6a9c3c")
+	add_child(bord)
 
 func regler(crete: float) -> void:
 	if crete < cible - 0.01:

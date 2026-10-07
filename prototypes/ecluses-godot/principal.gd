@@ -12,7 +12,8 @@ extends Node2D
 #                             images par seconde moyennes
 #   ECLUSES_LISTE=1           photographie aussi la liste des niveaux
 #   ECLUSES_COUPS=0,v1,1      la démo joue ces coups-là au lieu de la solution
-#                             (« v1 » : la vanne de la porte 1)
+#                             (« v1 » : la vanne de la porte 1 ; « c3 » : un
+#                             coup de pelle dans la digue 3)
 #                             (pour voir un bateau se coincer)
 #   ECLUSES_SURE=g,h,d,b      simule les bords d'un téléphone (en pixels de
 #                             fenêtre), pour vérifier les marges sur le Mac
@@ -696,7 +697,7 @@ func _demo() -> void:
 			break
 	if OS.get_environment("ECLUSES_COUPS") != "":
 		# « 1 » : la porte 1 ; « v1 » : la vanne de la porte 1
-		solution = Array(OS.get_environment("ECLUSES_COUPS").split(",")).map(func(x): return {"type": "vanne", "i": int(x.substr(1))} if x.begins_with("v") else {"type": "porte", "i": int(x)})
+		solution = Array(OS.get_environment("ECLUSES_COUPS").split(",")).map(func(x): return {"type": "vanne", "i": int(x.substr(1))} if x.begins_with("v") else ({"type": "creuser", "i": int(x.substr(1))} if x.begins_with("c") else {"type": "porte", "i": int(x)}))
 	await get_tree().create_timer(1.2).timeout
 	await _photo("00-repos")
 	if OS.get_environment("ECLUSES_LISTE") != "":

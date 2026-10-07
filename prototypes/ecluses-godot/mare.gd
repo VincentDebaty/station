@@ -64,7 +64,9 @@ func _draw() -> void:
 	# l'eau : elle baisse un peu et rétrécit dans sa cuvette
 	if f > 0.02:
 		var s := 0.32 + 0.6 * f
-		var dy := (1.0 - f) * 0.35 * canal.UY * (rive - fond)
+		# elle rétrécit sans descendre : décalée vers le bas, elle sortait de
+		# sa cuvette et passait devant la terre de la coupe (Vincent)
+		var dy := 0.0
 		var eau := _contour(s, dy)
 		var couleurs := PackedColorArray()
 		for k in eau.size():
