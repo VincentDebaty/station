@@ -1515,6 +1515,23 @@ func _avancer_ecoulement(dt: float) -> void:
 			p0 = minf(p0, 0.75)
 			var q := clampf((p - p0) / maxf(1.0 - p0, 0.01), 0.0, 1.0)
 			vue_niv[l] = ap_l + (av_l - ap_l) * (1.0 - q) * (1.0 - q)
+	# Un bassin TRAVERSÉ : l'eau y entre d'un côté et en ressort de l'autre
+	# sans s'y arrêter (sur le 3-1, la mare se vide dans le bief amont vide, qui
+	# se vide aussitôt dans le sas par sa porte ouverte). Son niveau ne bouge
+	# pas, et l'on ne voyait pas l'eau passer (Vincent). Pendant l'écoulement,
+	# une pellicule d'eau court sur son fond — quelques pixels, trop peu pour
+	# remettre un bateau à flot — et franchit le seuil de la porte.
+	var fl: Array = _ecou["flux"]
+	for i in vue_niv.size():
+		var entre_d := i < fl.size() and float(fl[i]) < -0.01
+		var sort_g := i > 0 and float(fl[i - 1]) < -0.01
+		var entre_g := i > 0 and float(fl[i - 1]) > 0.01
+		var sort_d := i < fl.size() and float(fl[i]) > 0.01
+		if not ((entre_d and sort_g) or (entre_g and sort_d)): continue
+		var fond := float(N["bassins"][i]["fond"])
+		if vue_niv[i] > fond + 0.12: continue
+		var film := 0.1 * minf(1.0, p * 8.0) * minf(1.0, (1.0 - p) * 5.0)
+		vue_niv[i] = maxf(vue_niv[i], fond + film)
 	for i in eaux.size(): eaux[i].remous = move_toward(eaux[i].remous, 0.0, dt * 0.8)
 	for i in _ecou["flux"].size():
 		if aqueducs.has(i): _aqueduc(i, _ecou["flux"][i], dt)
