@@ -10,6 +10,7 @@ extends Node2D
 #   ECLUSES_CAPTURE=<dossier> photographie l'écran à des instants choisis
 #                             (avec la démo), puis quitte en donnant les
 #                             images par seconde moyennes
+#   ECLUSES_LISTE=1           photographie aussi la liste des niveaux
 #   ECLUSES_COUPS=0,1         la démo joue ces portes-là au lieu de la solution
 #                             (pour voir un bateau se coincer)
 #   ECLUSES_SURE=g,h,d,b      simule les bords d'un téléphone (en pixels de
@@ -36,6 +37,8 @@ var _secondes := 0.0
 var _ips: Label
 var _panneau: PanelContainer   # les curseurs du rendu de l'eau (reglages.gd)
 var _valeurs := {}             # clé -> [HSlider, Label de la valeur]
+var _racine: Control
+var _liste: Control     # la liste des niveaux, ouverte par le numéro
 var _sure: Control      # la zone sûre : tout ce qu'on touche ou qu'on lit y reste
 
 func _ready() -> void:
@@ -309,6 +312,13 @@ func _interface() -> void:
 	num.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	badge.add_child(num)
 	_sure.add_child(badge)
+	# toucher le numéro ouvre la liste des niveaux (Vincent, 7 octobre 2026 :
+	# tester un niveau sans refaire tous ceux d'avant)
+	badge.mouse_filter = Control.MOUSE_FILTER_STOP
+	badge.gui_input.connect(func(ev: InputEvent):
+		if ev is InputEventMouseButton and ev.pressed and ev.button_index == MOUSE_BUTTON_LEFT:
+			_ouvrir_liste())
+	_racine = racine
 	var droite := HBoxContainer.new()
 	droite.add_theme_constant_override("separation", 18)
 	var pilule := PanelContainer.new()
@@ -496,18 +506,107 @@ func _maj() -> void:
 func _montrer_fin() -> void:
 	_pancarte.montrer_victoire(_nb_etoiles(), "%d coups — la meilleure solution en demande %d." % [etat["coups"], int(N["par"])], not _suivant().is_empty())
 
-# Le niveau d'après, s'il est de ceux que la tranche sait dessiner : des
-# portes et des biefs, sans digue, champ ni fleuve (chapitre 1).
+# Un niveau que la tranche sait faire JOUER : des portes et des biefs, sans
+# digue, champ ni fleuve (chapitre 1). Les autres se dessinent, mais leurs
+# gestes (creuser une digue, lâcher l'eau, attendre la crue) n'existent pas
+# encore au doigt.
+func _jouable(n: Dictionary) -> bool:
+	if n["mode"] != "pas": return false
+	for b in n["bassins"]:
+		if not (b["type"] in ["bief", "sas"]): return false
+	for l in n["liaisons"]:
+		if not (l["type"] in ["porte", "libre"]): return false
+	return true
+
+# Le niveau d'après, s'il est jouable.
 func _suivant() -> Dictionary:
 	var i := _tous.find(N)
 	if i < 0 or i + 1 >= _tous.size(): return {}
 	var n: Dictionary = _tous[i + 1]
-	if n["mode"] != "pas": return {}
-	for b in n["bassins"]:
-		if not (b["type"] in ["bief", "sas"]): return {}
-	for l in n["liaisons"]:
-		if not (l["type"] in ["porte", "libre"]): return {}
-	return n
+	return n if _jouable(n) else {}
+
+# --- La liste des niveaux -------------------------------------------------------------
+# Toucher le numéro du niveau ouvre une planche de bois avec tous les niveaux,
+# rangés par chapitre ; en toucher un le lance. Le niveau en cours est en
+# jaune ; ceux qu'on ne sait pas encore jouer sont pâles, marqués « bientôt ».
+# Toucher à côté de la planche la referme.
+func _ouvrir_liste() -> void:
+	if _liste: _liste.queue_free()
+	_liste = Control.new()
+	_liste.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_racine.add_child(_liste)
+	var voile := ColorRect.new()
+	voile.color = Color(0.05, 0.03, 0.0, 0.5)
+	voile.set_anchors_preset(Control.PRESET_FULL_RECT)
+	voile.gui_input.connect(func(ev: InputEvent):
+		if ev is InputEventMouseButton and ev.pressed: _fermer_liste())
+	_liste.add_child(voile)
+	var centre := CenterContainer.new()
+	centre.set_anchors_preset(Control.PRESET_FULL_RECT)
+	centre.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_liste.add_child(centre)
+	var planche := PanelContainer.new()
+	var st := StyleBoxTexture.new()
+	st.texture = Images.reduire("res://art/panneau_bois.png", 900)
+	if st.texture:
+		st.set_texture_margin_all(100)
+		st.content_margin_left = 96; st.content_margin_right = 96
+		st.content_margin_top = 64; st.content_margin_bottom = 70
+		planche.add_theme_stylebox_override("panel", st)
+	else:
+		planche.add_theme_stylebox_override("panel", _style_bois(24, 40))
+	centre.add_child(planche)
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override("separation", 18)
+	planche.add_child(col)
+	var titre := _label_bois("Les niveaux", 42)
+	titre.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	col.add_child(titre)
+	var chapitres: Array = JSON.parse_string(FileAccess.get_file_as_string("res://niveaux.json"))["chapitres"]
+	for ch in chapitres:
+		var bloc := VBoxContainer.new()
+		bloc.add_theme_constant_override("separation", 6)
+		col.add_child(bloc)
+		var nom := _label_bois("%d · %s" % [int(ch["n"]), ch["titre"]], 24)
+		bloc.add_child(nom)
+		var rang := HBoxContainer.new()
+		rang.add_theme_constant_override("separation", 14)
+		bloc.add_child(rang)
+		for n in _tous:
+			if int(n["chapitre"]) == int(ch["n"]): rang.add_child(_case_niveau(n))
+
+func _case_niveau(n: Dictionary) -> Control:
+	var case := VBoxContainer.new()
+	case.add_theme_constant_override("separation", 2)
+	var b := Button.new()
+	b.text = n["id"]
+	b.add_theme_font_size_override("font_size", 32)
+	var encre := Color("#ffd75a") if n == N else Color("#fff3dc")
+	for nom in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color"]:
+		b.add_theme_color_override(nom, encre)
+	b.add_theme_color_override("font_disabled_color", Color(1, 0.95, 0.86, 0.5))
+	b.add_theme_color_override("font_outline_color", Color("#3e210d"))
+	b.add_theme_constant_override("outline_size", 8)
+	_habiller(b, 18.0, 16.0)
+	b.custom_minimum_size = Vector2(150, 66)
+	b.disabled = not _jouable(n)
+	b.pressed.connect(func():
+		_fermer_liste()
+		N = n
+		_lancer())
+	case.add_child(b)
+	var t := _label(n["titre"] if not b.disabled else "bientôt", 17, Color("#fff3dc") if not b.disabled else Color(1, 0.95, 0.86, 0.6))
+	t.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	t.add_theme_color_override("font_outline_color", Color("#3e210d"))
+	t.add_theme_constant_override("outline_size", 6)
+	t.custom_minimum_size = Vector2(150, 0)
+	t.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	case.add_child(t)
+	return case
+
+func _fermer_liste() -> void:
+	if _liste: _liste.queue_free()
+	_liste = null
 
 func _niveau_suivant() -> void:
 	var n := _suivant()
@@ -540,6 +639,11 @@ func _demo() -> void:
 		solution = Array(OS.get_environment("ECLUSES_COUPS").split(",")).map(func(x): return {"type": "porte", "i": int(x)})
 	await get_tree().create_timer(1.2).timeout
 	await _photo("00-repos")
+	if OS.get_environment("ECLUSES_LISTE") != "":
+		_ouvrir_liste()
+		await get_tree().create_timer(0.3).timeout
+		await _photo("00-liste")
+		_fermer_liste()
 	# ECLUSES_PANNEAU=1 : photographie aussi le panneau des réglages déplié
 	if OS.get_environment("ECLUSES_PANNEAU") != "" and _panneau:
 		_panneau.show()
