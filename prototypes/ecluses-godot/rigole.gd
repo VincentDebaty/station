@@ -26,6 +26,12 @@ var x_mare := 0.0         # l'entrée de la rigole, côté mare
 const Z := 1.15           # la rigole arrive au milieu de la mare, loin dans la profondeur
 const LARGE := 0.5        # sa largeur, en part de la profondeur
 var _mottes := []
+# L'eau ne court dans la rigole que pendant un écoulement : une fois les eaux
+# égalisées (sur le 3-1, tout finit à 4,068 au-dessus d'un lit à 4), il ne
+# reste qu'une pellicule immobile, que l'on ne dessine pas — un filet qui
+# défilait encore laissait croire que l'eau coulait (Vincent). Le canal
+# règle « debit » (0..1) pendant l'écoulement.
+var debit := 0.0
 var _pelle: Texture2D
 var _coup := 0.0          # la pelle plonge (1 → 0)
 var _t := 0.0
@@ -115,7 +121,7 @@ func _draw() -> void:
 		# l'eau de la mare qui la descend
 		var niv_mare: float = canal.vue_niv[i + 1]
 		var mare: Mare = canal.mares.get(i + 1)
-		if niv_mare > vue + 0.02 and (mare == null or mare.plein() > 0.005):
+		if debit > 0.03 and niv_mare > vue + 0.02 and (mare == null or mare.plein() > 0.005):
 			var h := minf((niv_mare - vue) * canal.UY * ECHELLE, prof)
 			var e := PackedVector2Array([_pt(0, -1, yb - h), _pt(1, -1, yb - h), _pt(1, 1, yb - h), _pt(0, 1, yb - h)])
 			draw_colored_polygon(e, Color(0.36, 0.7, 0.88, 0.92))

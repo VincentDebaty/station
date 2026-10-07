@@ -250,6 +250,9 @@ func construire(niveau: Dictionary, e: Dictionary) -> void:
 			var jt := Jet.new()
 			jt.profondeur = D * Rigole.LARGE          # la largeur de la rigole
 			jt.position = D * (Rigole.Z_BORD - Rigole.LARGE * 0.5)
+			# au-dessus de la butte (z_index 1) : sa face de terre couvrait le
+			# haut de la cascade, qui semblait coupée de la rigole (Vincent)
+			jt.z_index = 2
 			add_child(jt)
 			move_child(jt, _flotte.get_index())
 			jets[i] = jt
@@ -1493,6 +1496,25 @@ func _avancer_ecoulement(dt: float) -> void:
 	var f := (1.0 - p) * (1.0 - p)
 	for i in vue_niv.size():
 		vue_niv[i] = _ecou["apres"][i] + (_ecou["avant"][i] - _ecou["apres"][i]) * f
+	# Le bassin derrière une levée ne se remplit qu'une fois l'eau arrivée à sa
+	# crête : avant, tous les niveaux glissaient ensemble, et le village
+	# s'inondait avant que l'eau ne déborde (Vincent).
+	for g in debordements:
+		var crete := float(N["liaisons"][g]["crete"])
+		for c in [[g + 1, g], [g, g + 1]]:          # [qui monte au-dessus de la crête, qui reçoit]
+			var h: int = c[0]
+			var l: int = c[1]
+			var av_h: float = _ecou["avant"][h]
+			var ap_h: float = _ecou["apres"][h]
+			var ap_l: float = _ecou["apres"][l]
+			var av_l: float = _ecou["avant"][l]
+			if ap_l - av_l < 1e-4 or av_h >= crete or ap_h <= crete: continue
+			# l'instant où le niveau affiché de h passe la crête, ramené à 0,75
+			# au plus pour que l'inondation ait le temps de se voir
+			var p0 := 1.0 - sqrt(clampf((crete - ap_h) / (av_h - ap_h), 0.0, 1.0))
+			p0 = minf(p0, 0.75)
+			var q := clampf((p - p0) / maxf(1.0 - p0, 0.01), 0.0, 1.0)
+			vue_niv[l] = ap_l + (av_l - ap_l) * (1.0 - q) * (1.0 - q)
 	for i in eaux.size(): eaux[i].remous = move_toward(eaux[i].remous, 0.0, dt * 0.8)
 	for i in _ecou["flux"].size():
 		if aqueducs.has(i): _aqueduc(i, _ecou["flux"][i], dt)
@@ -1503,6 +1525,7 @@ func _avancer_ecoulement(dt: float) -> void:
 		_ecou = {}
 		for aq in aqueducs.values(): aq.couler(0.0, 1)
 		for jt in jets.values(): jt.force = 0.0
+		for rg in rigoles.values(): rg.debit = 0.0
 		ecoulement_fini.emit()
 
 # L'eau qui passe par l'aqueduc d'une porte : elle court dans le conduit,
@@ -1592,6 +1615,7 @@ func _jet(i: int, flux: float, dt: float) -> void:
 func _jet_rigole(i: int, flux: float, dt: float) -> void:
 	var jt: Jet = jets[i]
 	var rg: Rigole = rigoles[i]
+	rg.debit = 0.0
 	if absf(flux) <= 0.01:
 		jt.force = 0.0
 		return
@@ -1604,6 +1628,7 @@ func _jet_rigole(i: int, flux: float, dt: float) -> void:
 	jt.sens = sens
 	jt.fente = minf(maxf(vue_niv[h] - crete, 0.0) * UY, 26.0)
 	if jt.fente < 1.0: jt.force = 0.0
+	rg.debit = jt.force
 	var bord_x := X(gl[i][1]) if sens > 0 else X(gl[i][0])
 	jt.depart_x = bord_x + 1.0          # la rigole elle-même dessine l'eau qui la descend
 	# elle tombe de la bouche de la rigole, au bord du canal (le filet est
