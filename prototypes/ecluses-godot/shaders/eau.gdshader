@@ -84,10 +84,13 @@ void fragment() {
 	float mousse = smoothstep(0.62, 0.9, bruit(monde / 22.0 + vec2(TIME * 1.3, -TIME * 2.0))) * remous;
 	c = mix(c, ecume, mousse * 0.45 * (1.0 - prof));
 
-	// la ligne de surface : un liseré clair, puis une bande plus douce
-	float liser = 1.0 - smoothstep(1.5, 3.5, px);
-	float bande = 1.0 - smoothstep(3.0, 14.0, px);
-	c = mix(c, ecume, liser * 0.9 + bande * 0.18);
+	// la ligne de surface : un reflet clair et fin, puis une bande à peine plus
+	// claire. Le liseré blanc de 3,5 px faisait « trop blanc et épais »
+	// (Vincent, d'après l'image de référence, où la coupe de l'eau n'a qu'un
+	// filet de lumière).
+	float liser = 1.0 - smoothstep(0.6, 1.8, px);
+	float bande = 1.0 - smoothstep(2.0, 10.0, px);
+	c = mix(c, ecume, liser * 0.42 + bande * 0.1);
 
 	COLOR = vec4(c, 0.96);
 }

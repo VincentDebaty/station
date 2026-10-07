@@ -499,22 +499,47 @@ func _maj_surfaces() -> void:
 		for i in eaux.size():
 			var f := Polygon2D.new()
 			var a := Polygon2D.new()
+			var g := Line2D.new()
+			var d := Line2D.new()
+			for l in [g, d]:
+				l.width = 1.3
+				l.default_color = Color(0.85, 0.97, 1.0, 0.45)
+				l.antialiased = true
+				_surface_avant.add_child(l)
 			_surface_fond.add_child(f)
 			_surface_avant.add_child(a)
-			_bandes.append([f, a])
+			_bandes.append([f, a, g, d])
 	for i in eaux.size():
 		var w: Eau = eaux[i]
+		# La surface s'arrête contre la face du bloc d'une porte tant que l'eau
+		# est sous son seuil : son bord trace alors, sur la face, la ligne d'eau
+		# en diagonale jusqu'au mur du fond (Vincent). Au-dessus du seuil, elle
+		# passe sur le bloc jusqu'au vantail.
+		var x0 := w.x0
+		var x1 := w.x1
+		var bloc_g: bool = i > 0 and N["liaisons"][i - 1]["type"] == "porte" and vue_niv[i] < float(N["liaisons"][i - 1]["seuil"]) - 0.01
+		var bloc_d: bool = i < gl.size() and N["liaisons"][i]["type"] == "porte" and vue_niv[i] < float(N["liaisons"][i]["seuil"]) - 0.01
+		if bloc_g: x0 = X(gl[i - 1][1])
+		if bloc_d: x1 = X(gl[i][0])
 		var bord := PackedVector2Array()
-		var x := w.x0
+		var x := x0
 		while true:
 			bord.append(Vector2(x, minf(w.hauteur_a(x), w.fond_y)))
-			if x >= w.x1: break
-			x = minf(x + 12.0, w.x1)
+			if x >= x1: break
+			x = minf(x + 12.0, x1)
 		var sec := w.fond_y - bord[0].y < 1.5
 		var f: Polygon2D = _bandes[i][0]
 		var a: Polygon2D = _bandes[i][1]
 		f.visible = not sec
 		a.visible = not sec
+		# le liseré d'écume là où l'eau touche une face de bloc (seule la face
+		# gauche d'un bloc se voit : celle de droite du bassin)
+		var ld: Line2D = _bandes[i][3]
+		ld.visible = bloc_d and not sec
+		if ld.visible:
+			var p := bord[bord.size() - 1]
+			ld.points = PackedVector2Array([p, p + D])
+		_bandes[i][2].visible = false
 		if sec: continue
 		f.polygon = _bande(bord, 0.5, 1.0)
 		a.polygon = _bande(bord, 0.0, 0.5)
