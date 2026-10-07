@@ -77,6 +77,7 @@ var hausses := {}     # liaison -> Hausse, ses planches et ses poteaux
 var rigoles := {}     # liaison -> Rigole, la berge de terre que l'on creuse
 var mares := {}       # bassin -> Mare, la cuvette naturelle sur le pré
 var debordements := {} # liaison -> vrai : une levée que l'eau peut franchir
+var levees_noyees := {} # liaison -> le nœud qui dessine l'eau sur sa crête
 var jets := {}        # liaison -> Jet, l'eau sous une porte simple entrouverte
 var bateaux := []     # un Bateau par bateau du niveau
 var positions := []   # bassin de chaque bateau, tel qu'affiché
@@ -258,6 +259,13 @@ func construire(niveau: Dictionary, e: Dictionary) -> void:
 			move_child(jt, _flotte.get_index())
 			jets[i] = jt
 			debordements[i] = true
+			# la levée noyée : quand l'eau est au-dessus de sa crête des deux
+			# côtés, une nappe la couvre et relie le bief à la flaque du
+			# village (Vincent : il restait une « séparation » d'herbe)
+			var nv := Node2D.new()
+			nv.draw.connect(_dessiner_levee_noyee.bind(i, nv))
+			add_child(nv)
+			levees_noyees[i] = nv
 	# les hausses : leurs planches dans la couche des vantaux (vues à travers
 	# l'eau), leurs poteaux devant et au fond
 	for i in N["liaisons"].size():
@@ -1371,6 +1379,7 @@ func _process(dt: float) -> void:
 	_maj_passages()
 	_maj_surfaces()
 	_maj_voiles()
+	for i in levees_noyees: levees_noyees[i].queue_redraw()
 	for i in aqueducs:
 		aqueducs[i].ouverte = portes[i].vanne_ouverte
 		aqueducs[i].niveau_g = Y(vue_niv[i])
@@ -1584,6 +1593,26 @@ func _jet_rigole(i: int, flux: float, dt: float) -> void:
 	eaux[l].remous = maxf(eaux[l].remous, jt.force * 0.5)
 	if randf() < 0.5:
 		eaux[l].impulsion(jt.chute().x, randf_range(-0.5, 1.0) * jt.force * Reglages.v("bouillon") * 2.0, 20.0)
+
+# L'eau sur une levée noyée : la coupe (de la crête à la surface, au moins
+# 5 px pour qu'on la voie) et sa surface vue d'en haut, de bord à bord. Elle
+# apparaît en fondu dès que les deux eaux dépassent la crête.
+func _dessiner_levee_noyee(i: int, n: Node2D) -> void:
+	var crete := float(N["liaisons"][i]["crete"])
+	var dessus := minf(vue_niv[i], vue_niv[i + 1]) - crete
+	if dessus <= 0.0: return
+	var a := clampf(dessus / 0.01, 0.0, 1.0)
+	var x0 := X(gl[i][0]) - 0.17 * U
+	var x1 := X(gl[i][1]) + 0.17 * U
+	var yg := minf(eaux[i].hauteur_a(x0), Y(crete) - 1.0)
+	var yd := minf(eaux[i + 1].hauteur_a(x1), Y(crete) - 1.0)
+	var bas := Y(crete) + 4.0
+	var coupe := PackedVector2Array([Vector2(x0, yg), Vector2(x1, yd), Vector2(x1, bas), Vector2(x0, bas)])
+	n.draw_colored_polygon(coupe, Color(0.22, 0.62, 0.8, 0.9 * a))
+	n.draw_line(Vector2(x0, yg), Vector2(x1, yd), Color(0.86, 0.98, 1.0, 0.45 * a), 1.5, true)
+	if D != Vector2.ZERO:
+		var haut := PackedVector2Array([Vector2(x0, yg), Vector2(x1, yd), Vector2(x1, yd) + D, Vector2(x0, yg) + D])
+		n.draw_polygon(haut, PackedColorArray([Color(0.34, 0.76, 0.88, 0.9 * a), Color(0.34, 0.76, 0.88, 0.9 * a), Color(0.64, 0.88, 0.95, 0.9 * a), Color(0.64, 0.88, 0.95, 0.9 * a)]))
 
 # L'eau qui franchit une levée : une nappe sur toute la largeur, de la crête
 # jusqu'au pré d'en bas.
