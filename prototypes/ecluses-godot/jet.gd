@@ -22,6 +22,7 @@ var origine := Vector2.ZERO     # le milieu de la fente, côté bas de la porte
 var fente := 10.0               # la hauteur de la fente, en pixels
 var surface_bas := 0.0          # y de la surface d'en bas, sous le jet
 var fond_bas := 0.0             # y du fond d'en bas
+var profondeur := Vector2.ZERO  # la largeur du canal en vue oblique (le D du canal)
 var _t := 0.0
 var _point_chute := Vector2.ZERO
 var bulles: CPUParticles2D
@@ -66,7 +67,8 @@ func _process(dt: float) -> void:
 	_t += dt
 	bulles.emitting = force > 0.05 and noye()
 	if bulles.emitting:
-		bulles.global_position = to_global(origine + Vector2(sens * (26.0 + 30.0 * force), 0))
+		bulles.global_position = to_global(origine + profondeur * 0.5 + Vector2(sens * (26.0 + 30.0 * force), 0))
+		bulles.emission_rect_extents = Vector2(14, 6) + profondeur.abs() * 0.5
 		bulles.modulate.a = clampf(force * 1.3, 0.25, 1.0)
 	queue_redraw()
 
@@ -77,10 +79,16 @@ func _draw() -> void:
 	else:
 		_lame()
 
-# La lame d'eau, de la fente à la surface d'en bas : une parabole, plus
-# épaisse au départ, avec des filets clairs qui courent dessus.
+# La lame d'eau, de la fente à la surface d'en bas. En vue oblique, la fente
+# sous la porte traverse tout le canal, de la coupe au mur du fond : l'eau en
+# sort en NAPPE sur toute cette largeur (Vincent : « on dirait un jet d'eau,
+# alors que ce devrait être un flux qui prend toute la largeur de l'ouverture
+# de porte »). La nappe est la parabole balayée sur la profondeur : son dessus,
+# vu d'en haut, avec des filets qui courent dans le sens du courant, et sa
+# tranche de devant, plus sombre, de l'épaisseur de la fente. Elle tombe sur
+# toute la largeur, et l'écume court le long de la ligne de chute.
 func _lame() -> void:
-	var vx := (70.0 + 150.0 * force) * sens
+	var vx := (55.0 + 120.0 * force) * sens
 	var g := 900.0
 	var pts := PackedVector2Array()
 	var t := 0.0
@@ -92,33 +100,60 @@ func _lame() -> void:
 		t += 0.02
 	_point_chute = p
 	if pts.size() < 2: return
-	var ep := maxf(fente, 4.0) * (0.75 + 0.35 * force)
-	# un voile d'embruns autour, la lame, puis son cœur plus clair
-	draw_polyline(pts, Color(0.85, 0.97, 1.0, 0.18), ep + 10.0, true)
-	draw_polyline(pts, Color(0.2, 0.58, 0.74, 0.88), ep + 2.0, true)
-	draw_polyline(pts, Color(0.42, 0.8, 0.92, 0.9), ep * 0.6, true)
-	# des reflets doux qui glissent dans le sens du jet
-	for k in 6:
-		var f := fmod(_t * 1.4 + k / 6.0, 1.0)
-		var i := int(f * (pts.size() - 1))
-		var j := mini(i + 1, pts.size() - 1)
-		if j > i: draw_line(pts[i], pts[j], Color(0.92, 1, 1, 0.4), maxf(ep * 0.25, 1.2), true)
-	# les gerbes là où elle frappe
-	for k in 6:
-		var f := fmod(_t * 2.3 + k / 6.0, 1.0)
-		var a := -PI * (0.2 + 0.6 * (float(k) / 5.0))
-		var v := Vector2(cos(a) * sens * 0.6 + cos(a) * 0.4, sin(a)) * (14.0 + 26.0 * force)
-		var q := _point_chute + v * f + Vector2(0, 40.0 * f * f)
-		draw_circle(q, (1.0 - f) * (2.0 + 2.5 * force), Color(0.92, 1, 1, 0.8 * (1.0 - f)))
-	draw_arc(_point_chute, 10.0 + 8.0 * force, PI, TAU, 16, Color(0.92, 1, 1, 0.5), 2.5, true)
+	var ep := maxf(fente, 4.0) * (0.8 + 0.3 * force)
+	var D := profondeur
+	if D == Vector2.ZERO:
+		# de profil, pas de largeur à montrer : un simple ruban
+		draw_polyline(pts, Color(0.2, 0.58, 0.74, 0.88), ep + 2.0, true)
+		draw_polyline(pts, Color(0.42, 0.8, 0.92, 0.9), ep * 0.6, true)
+		_gerbes(_point_chute)
+		return
+	# le dessus de la nappe : du bord de devant au bord du fond, plus clair au
+	# fond (il reçoit le ciel), un peu transparent
+	var dessus := PackedVector2Array()
+	var couleurs := PackedColorArray()
+	for q in pts:
+		dessus.append(q)
+		couleurs.append(Color(0.3, 0.68, 0.84, 0.82))
+	for k in range(pts.size() - 1, -1, -1):
+		dessus.append(pts[k] + D)
+		couleurs.append(Color(0.55, 0.85, 0.95, 0.82))
+	draw_polygon(dessus, couleurs)
+	# des filets clairs, à plusieurs profondeurs, qui glissent avec le courant
+	for z in [0.15, 0.35, 0.55, 0.75, 0.92]:
+		for k in 3:
+			var f := fmod(_t * 1.5 + k / 3.0 + z * 1.7, 1.0)
+			var i := int(f * (pts.size() - 1))
+			var j := mini(i + 2, pts.size() - 1)
+			if j > i: draw_line(pts[i] + D * z, pts[j] + D * z, Color(0.92, 1, 1, 0.45), 1.6, true)
+	# la tranche de devant : l'épaisseur de la nappe, plus sombre
+	var tranche := PackedVector2Array()
+	for q in pts: tranche.append(q + Vector2(0, -ep * 0.5))
+	for k in range(pts.size() - 1, -1, -1): tranche.append(pts[k] + Vector2(0, ep * 0.5))
+	draw_colored_polygon(tranche, Color(0.14, 0.5, 0.68, 0.9))
+	draw_polyline(pts, Color(0.85, 0.97, 1.0, 0.5), 1.2, true)
+	# l'écume le long de la ligne de chute, sur toute la largeur
+	for z in [0.0, 0.25, 0.5, 0.75, 1.0]:
+		_gerbes(_point_chute + D * z)
+	draw_line(_point_chute, _point_chute + D, Color(0.92, 1, 1, 0.55), 5.0, true)
+
+func _gerbes(c: Vector2) -> void:
+	for k in 5:
+		var f := fmod(_t * 2.3 + k / 5.0 + c.x * 0.013, 1.0)
+		var a := -PI * (0.2 + 0.6 * (float(k) / 4.0))
+		var v := Vector2(cos(a), sin(a)) * (10.0 + 20.0 * force)
+		var q := c + v * f + Vector2(0, 34.0 * f * f)
+		draw_circle(q, (1.0 - f) * (1.8 + 2.2 * force), Color(0.92, 1, 1, 0.75 * (1.0 - f)))
 
 # Le panache sous l'eau : une gerbe plus claire qui pousse depuis la fente et
 # s'évase en se perdant, en bouffées.
 func _panache() -> void:
 	var long := 40.0 + 90.0 * force
-	for k in 5:
-		var f := fmod(_t * 1.2 + k * 0.2, 1.0)
-		var c := origine + Vector2(sens * long * f, -6.0 * f)
-		var r := (fente * 0.5 + 4.0) * (1.0 + 1.6 * f)
-		draw_circle(c, r, Color(0.75, 0.95, 1.0, 0.3 * (1.0 - f) * force))
+	var zs := [0.0] if profondeur == Vector2.ZERO else [0.1, 0.35, 0.6, 0.85]
+	for z in zs:
+		for k in 5:
+			var f := fmod(_t * 1.2 + k * 0.2 + z, 1.0)
+			var c: Vector2 = origine + profondeur * z + Vector2(sens * long * f, -6.0 * f)
+			var r := (fente * 0.5 + 4.0) * (1.0 + 1.6 * f)
+			draw_circle(c, r, Color(0.75, 0.95, 1.0, 0.24 * (1.0 - f) * force))
 	_point_chute = origine + Vector2(sens * long * 0.5, 0)

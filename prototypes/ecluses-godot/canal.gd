@@ -202,7 +202,7 @@ func construire(niveau: Dictionary, e: Dictionary) -> void:
 		# liaison), mécanique à venir.
 		if not N["liaisons"][i].get("vanne", false):
 			var jt := Jet.new()
-			jt.position = D * 0.5
+			jt.profondeur = D            # la nappe traverse tout le canal
 			add_child(jt)
 			# derrière les bateaux : la lame tombe dans le bassin, pas sur eux
 			move_child(jt, _flotte.get_index())
@@ -561,15 +561,19 @@ func _maj_surfaces() -> void:
 		# le bout contre le vantail de droite, s'il y a une porte et que l'eau
 		# va jusqu'à lui
 		var bout: Polygon2D = _bandes[i][4]
-		# Seulement la mince bande où se tient le vantail (8 px), et seulement
-		# tant que son bas trempe : plus large, elle s'empilait sur la surface
-		# et la cassait en deux ; porte levée, elle passait sur les bateaux.
+		# La partie immergée du vantail, vue à travers l'eau de gauche : du
+		# bord de la surface (en diagonale, de la coupe au mur du fond) jusqu'au
+		# bas du vantail, un voile d'eau par-dessus lui. Une simple bande de
+		# surface laissait sous elle un triangle sans eau (Vincent).
 		bout.visible = not sec and not bloc_d and i < gl.size() and N["liaisons"][i]["type"] == "porte" \
 			and portes.has(i) and portes[i].bas_y > bord[bord.size() - 1].y + 1.0
 		if bout.visible:
-			var morceau := PackedVector2Array([Vector2(x1 - 8.0, minf(w.hauteur_a(x1 - 8.0), w.fond_y)), bord[bord.size() - 1]])
-			bout.polygon = _bande(morceau, 0.0, 1.0)
-			bout.vertex_colors = _degrade_bande(2, Color(0.17, 0.6, 0.78, 0.78), Color(0.64, 0.88, 0.95, 0.96))
+			var po: Porte = portes[i]
+			var xf := X(gl[i][0] + gl[i][1]) * 0.5 - 5.0
+			var ys := minf(w.hauteur_a(xf), w.fond_y)
+			var yb: float = po.bas_y
+			bout.polygon = PackedVector2Array([Vector2(xf - 3.0, ys), Vector2(xf - 3.0 + D.x, ys + D.y), Vector2(xf + 3.0 + D.x, yb + D.y), Vector2(xf + 3.0, yb)])
+			bout.vertex_colors = PackedColorArray([Color(0.2, 0.62, 0.8, 0.62), Color(0.45, 0.78, 0.9, 0.62), Color(0.05, 0.36, 0.55, 0.75), Color(0.05, 0.36, 0.55, 0.75)])
 		if sec: continue
 		f.polygon = _bande(bord, 0.5, 1.0)
 		a.polygon = _bande(bord, 0.0, 0.5)
