@@ -276,8 +276,9 @@ button:focus-visible, [role="button"]:focus-visible { outline: 3px solid var(--o
     {"n": 11, "titre": "Le pont bas", "decor": "campagne", "resume": "Un pont de pierre enjambe le canal. Les bateaux passent dessous, si l'eau est assez basse pour leur cheminée : trop d'eau, cette fois, c'est un obstacle."},
     {"n": 12, "titre": "Le moulin", "decor": "campagne", "resume": "L'eau qui passe par la vanne du moulin fait tourner sa roue et remplit des sacs de farine. Mais c'est la même eau que celle des bateaux."},
     {"n": 13, "titre": "Le castor", "decor": "campagne", "resume": "Un castor rebouche la rigole, une branche à chaque coup où l'on n'y creuse pas. Ce qui est commencé doit être fini d'une traite."},
-    {"n": 14, "titre": "Les canaux", "decor": "collines", "resume": "Creuser les digues, puis lâcher l'eau et regarder où elle va."},
-    {"n": 15, "titre": "Le fleuve", "decor": "estuaire", "resume": "L'eau arrive toute seule, à chaque coup. Il faut la conduire avant qu'elle déborde."}
+    {"n": 14, "titre": "Le flotteur", "decor": "campagne", "resume": "Une porte à flotteur, comme le robinet d'une chasse d'eau : on l'ouvre, et l'eau s'arrête toute seule à la bonne hauteur."},
+    {"n": 15, "titre": "Les canaux", "decor": "collines", "resume": "Creuser les digues, puis lâcher l'eau et regarder où elle va."},
+    {"n": 16, "titre": "Le fleuve", "decor": "estuaire", "resume": "L'eau arrive toute seule, à chaque coup. Il faut la conduire avant qu'elle déborde."}
   ],
   "niveaux": [
     {
@@ -666,9 +667,34 @@ button:focus-visible, [role="button"]:focus-visible { outline: 3px solid var(--o
         {"de": 2, "vers": 0, "tirant": 1}
       ]
     },
-    {
+{
       "id": "14-1",
       "chapitre": 14,
+      "titre": "Le flotteur",
+      "mode": "pas",
+      "par": 6,
+      "conseil": "La porte du réservoir a un flotteur, comme une chasse d'eau : ouverte, elle laisse entrer l'eau jusqu'à la bague jaune, puis se referme toute seule. Juste assez d'eau pour les bateaux, et pas trop pour le pont.",
+      "bassins": [
+        {"type": "bief", "fond": 0, "largeur": 6, "niveau": 1, "nom": "bief aval"},
+        {"type": "sas", "fond": 0, "largeur": 2, "niveau": 1, "nom": "sas"},
+        {"type": "bief", "fond": 3, "largeur": 3, "niveau": 3.5, "nom": "bief du pont"},
+        {"type": "bief", "fond": 3, "largeur": 4, "niveau": 3.5, "nom": "bief amont"},
+        {"type": "bief", "fond": 3, "largeur": 3, "niveau": 8, "nom": "réservoir"}
+      ],
+      "liaisons": [
+        {"type": "porte", "seuil": 0, "crete": 6},
+        {"type": "porte", "seuil": 3, "crete": 6},
+        {"type": "libre", "pont": 4.8},
+        {"type": "porte", "seuil": 3, "crete": 8.5, "flotteur": {"bassin": 3, "niveau": 4.2}}
+      ],
+      "bateaux": [
+        {"de": 0, "vers": 3, "tirant": 1},
+        {"de": 3, "vers": 0, "tirant": 1}
+      ]
+    },
+    {
+      "id": "15-1",
+      "chapitre": 15,
       "titre": "Le premier sillon",
       "mode": "chantier",
       "par": 4,
@@ -686,8 +712,8 @@ button:focus-visible, [role="button"]:focus-visible { outline: 3px solid var(--o
       "bateaux": []
     },
     {
-      "id": "14-2",
-      "chapitre": 14,
+      "id": "15-2",
+      "chapitre": 15,
       "titre": "Les rizières",
       "mode": "chantier",
       "par": 5,
@@ -709,8 +735,8 @@ button:focus-visible, [role="button"]:focus-visible { outline: 3px solid var(--o
       "bateaux": []
     },
     {
-      "id": "14-3",
-      "chapitre": 14,
+      "id": "15-3",
+      "chapitre": 15,
       "titre": "Remettre à flot",
       "mode": "chantier",
       "par": 6,
@@ -734,8 +760,8 @@ button:focus-visible, [role="button"]:focus-visible { outline: 3px solid var(--o
       ]
     },
     {
-      "id": "15-1",
-      "chapitre": 15,
+      "id": "16-1",
+      "chapitre": 16,
       "titre": "Le fleuve monte",
       "mode": "pas",
       "par": 5,
@@ -756,8 +782,8 @@ button:focus-visible, [role="button"]:focus-visible { outline: 3px solid var(--o
       ]
     },
     {
-      "id": "15-2",
-      "chapitre": 15,
+      "id": "16-2",
+      "chapitre": 16,
       "titre": "Le déversoir",
       "mode": "pas",
       "par": 8,
@@ -782,8 +808,8 @@ button:focus-visible, [role="button"]:focus-visible { outline: 3px solid var(--o
       ]
     },
     {
-      "id": "15-3",
-      "chapitre": 15,
+      "id": "16-3",
+      "chapitre": 16,
       "titre": "La crue",
       "mode": "pas",
       "par": 6,
