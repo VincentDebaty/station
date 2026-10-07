@@ -265,6 +265,10 @@ static func actions(N: Dictionary, e: Dictionary) -> Array:
 			A.append({"type": "vanne", "i": i})
 		if l["type"] == "digue" and e["crete"][i] > float(l["min"]) + EPS:
 			A.append({"type": "creuser", "i": i})
+		if l["type"] == "hausse" and e["lache"] and e["crete"][i] < float(l["max"]) - EPS:
+			A.append({"type": "hausser", "i": i})
+		if l["type"] == "hausse" and e["lache"] and e["crete"][i] > float(l["min"]) + EPS:
+			A.append({"type": "abaisser", "i": i})
 	if not e["lache"]:
 		A.append({"type": "lacher"})
 	elif N["bassins"].any(func(b): return b.has("apport") and b["apport"]):
@@ -281,6 +285,10 @@ static func jouer(N: Dictionary, e0: Dictionary, a: Dictionary) -> Dictionary:
 		"vanne":
 			e["vanne"][ai] = not e["vanne"][ai]
 		"creuser":
+			e["crete"][ai] = maxf(float(N["liaisons"][ai]["min"]), arrondi(e["crete"][ai] - 1.0))
+		"hausser":
+			e["crete"][ai] = minf(float(N["liaisons"][ai]["max"]), arrondi(e["crete"][ai] + 1.0))
+		"abaisser":
 			e["crete"][ai] = maxf(float(N["liaisons"][ai]["min"]), arrondi(e["crete"][ai] - 1.0))
 		"lacher":
 			e["lache"] = true

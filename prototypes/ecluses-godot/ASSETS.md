@@ -244,6 +244,26 @@ reste blanc.
 Same art style as before. A small canal marker buoy seen exactly from the side, like a toy: a rounded red float with one broad white horizontal band, a short dark mast on top carrying a small red triangular pennant, thin dark outline, soft highlight on the top-left. The lower third of the float is where it will sit in the water. Square image, the buoy centred and filling about 80% of the height, isolated on a transparent background, no water, no reflection, no shadow.
 ```
 
+### `art/planche.png` — une planche de hausse (chapitre 3)
+
+Les hausses sont des planches empilées entre deux poteaux, que l'on retire ou
+que l'on remet. Le jeu les dessine ; l'image remplacera chaque planche de la
+pile (vue de sa face, en biais comme le vantail).
+
+```text
+Same art style as before. One single thick wooden plank used to dam a canal (a stop log), seen exactly from the front: a long horizontal board of warm brown oak with a visible grain, slightly rounded edges, a dark iron strap at each end with two rivets, thin dark outline, soft highlight on the top edge. Long horizontal rectangle, ratio about 4:1, filling the image, isolated on a transparent background, no shadow.
+```
+
+### `art/maison.png` — une maison du village à épargner (chapitre 3)
+
+Le village est un bassin sec qu'il ne faut pas inonder. Le jeu y dessine deux
+maisons simples ; l'image les remplacera (une seule image, posée deux fois,
+la seconde retournée et un peu plus petite).
+
+```text
+Same art style as before, like the stone cottage in the background of the reference image. A small cosy village cottage seen exactly from the front: cream stone walls, a red tiled roof, a wooden door, two small windows with blue shutters, a little chimney, a few flowers at the foot of the wall. Square image, the cottage centred and filling about 85% of the frame, isolated on a transparent background, no ground, no shadow.
+```
+
 ### Plus tard, peut-être
 
 - `premier_plan.png` : un buisson flou et des marguerites au premier plan,

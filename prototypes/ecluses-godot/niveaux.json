@@ -2,8 +2,9 @@
   "chapitres": [
     {"n": 1, "titre": "Les écluses", "decor": "campagne", "resume": "Ouvrir et fermer des portes. L'eau ne se crée pas : elle passe d'un bassin à l'autre."},
     {"n": 2, "titre": "Les vannes", "decor": "campagne", "resume": "Une porte à vanne a deux commandes : la vanne fait passer l'eau, la porte laisse passer les bateaux, et ne se lève qu'entre deux eaux égales."},
-    {"n": 3, "titre": "Les canaux", "decor": "collines", "resume": "Creuser les digues, puis lâcher l'eau et regarder où elle va."},
-    {"n": 4, "titre": "Le fleuve", "decor": "estuaire", "resume": "L'eau arrive toute seule, à chaque coup. Il faut la conduire avant qu'elle déborde."}
+    {"n": 3, "titre": "Les hausses", "decor": "campagne", "resume": "Des planches sur un mur : on en retire pour lâcher l'eau, on en remet pour la retenir. Lâcher juste ce qu'il faut."},
+    {"n": 4, "titre": "Les canaux", "decor": "collines", "resume": "Creuser les digues, puis lâcher l'eau et regarder où elle va."},
+    {"n": 5, "titre": "Le fleuve", "decor": "estuaire", "resume": "L'eau arrive toute seule, à chaque coup. Il faut la conduire avant qu'elle déborde."}
   ],
   "niveaux": [
     {
@@ -117,6 +118,32 @@
     {
       "id": "3-1",
       "chapitre": 3,
+      "titre": "Les planches",
+      "mode": "pas",
+      "par": 8,
+      "conseil": "Chaque planche retirée lâche l'eau du réservoir. Juste assez pour remettre le bateau à flot ; trop, et le village a les pieds dans l'eau.",
+      "requis": ["abaisser"],
+      "bassins": [
+        {"type": "village", "fond": 0, "largeur": 3, "nom": "village"},
+        {"type": "bief", "fond": 0, "largeur": 6, "niveau": 1, "nom": "bief aval"},
+        {"type": "sas", "fond": 0, "largeur": 2, "niveau": 1, "nom": "sas"},
+        {"type": "bief", "fond": 3, "largeur": 6, "niveau": 3.6, "nom": "bief amont"},
+        {"type": "reservoir", "fond": 3, "largeur": 4, "niveau": 8, "nom": "réservoir"}
+      ],
+      "liaisons": [
+        {"type": "mur", "crete": 2},
+        {"type": "porte", "seuil": 0, "crete": 4.5},
+        {"type": "porte", "seuil": 3, "crete": 4.5},
+        {"type": "hausse", "crete": 8, "min": 3, "max": 8}
+      ],
+      "bateaux": [
+        {"de": 1, "vers": 3, "tirant": 1},
+        {"de": 3, "vers": 1, "tirant": 1}
+      ]
+    },
+    {
+      "id": "4-1",
+      "chapitre": 4,
       "titre": "Le premier sillon",
       "mode": "chantier",
       "par": 4,
@@ -134,8 +161,8 @@
       "bateaux": []
     },
     {
-      "id": "3-2",
-      "chapitre": 3,
+      "id": "4-2",
+      "chapitre": 4,
       "titre": "Les rizières",
       "mode": "chantier",
       "par": 5,
@@ -157,8 +184,8 @@
       "bateaux": []
     },
     {
-      "id": "3-3",
-      "chapitre": 3,
+      "id": "4-3",
+      "chapitre": 4,
       "titre": "Remettre à flot",
       "mode": "chantier",
       "par": 6,
@@ -182,8 +209,8 @@
       ]
     },
     {
-      "id": "4-1",
-      "chapitre": 4,
+      "id": "5-1",
+      "chapitre": 5,
       "titre": "Le fleuve monte",
       "mode": "pas",
       "par": 5,
@@ -204,8 +231,8 @@
       ]
     },
     {
-      "id": "4-2",
-      "chapitre": 4,
+      "id": "5-2",
+      "chapitre": 5,
       "titre": "Le déversoir",
       "mode": "pas",
       "par": 8,
@@ -230,8 +257,8 @@
       ]
     },
     {
-      "id": "4-3",
-      "chapitre": 4,
+      "id": "5-3",
+      "chapitre": 5,
       "titre": "La crue",
       "mode": "pas",
       "par": 6,

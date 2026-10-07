@@ -45,7 +45,7 @@ var _sure: Control      # la zone sûre : tout ce qu'on touche ou qu'on lit y re
 # Le niveau sur lequel le jeu s'ouvre : celui qu'on est en train d'essayer
 # (Vincent, 7 octobre 2026 : « quand tu déploies sur l'iPhone, tu proposes le
 # nouveau niveau à chaque fois »). À changer à chaque nouveauté.
-const NIVEAU_EN_TEST := "2-1"
+const NIVEAU_EN_TEST := "3-1"
 
 func _ready() -> void:
 	_tous = JSON.parse_string(FileAccess.get_file_as_string("res://niveaux.json"))["niveaux"]
@@ -118,6 +118,10 @@ func _cadrer() -> void:
 # --- Le toucher et les coups ----------------------------------------------------------
 func _unhandled_input(ev: InputEvent) -> void:
 	if ev is InputEventMouseButton and ev.pressed and ev.button_index == MOUSE_BUTTON_LEFT:
+		var hs: Dictionary = canal.hausse_sous(get_global_mouse_position())
+		if not hs.is_empty():
+			jouer({"type": hs["quoi"], "i": int(hs["i"])})
+			return
 		var iv := canal.vanne_sous(get_global_mouse_position())
 		if iv >= 0:
 			jouer({"type": "vanne", "i": iv})
@@ -143,7 +147,12 @@ func jouer(a: Dictionary) -> void:
 	# passer l'eau par son aqueduc, porte close), et quand les deux eaux sont
 	# au même niveau la porte se lève en grand. Fermer : elle redescend
 	# d'abord, puis la roue se referme.
-	if a["type"] == "vanne":
+	if a["type"] == "hausser" or a["type"] == "abaisser":
+		# la planche glisse dans ses rainures, puis l'eau passe par-dessus
+		var h: Hausse = canal.hausses[int(a["i"])]
+		h.regler(etat["crete"][int(a["i"])])
+		while not h.arrive(): await get_tree().process_frame
+	elif a["type"] == "vanne":
 		# la vanne : le petit volant tourne, puis l'eau passe par l'aqueduc,
 		# porte close
 		var pv: Porte = canal.portes[int(a["i"])]
@@ -180,6 +189,12 @@ func jouer(a: Dictionary) -> void:
 	if v.get("fin", "") == "gagne":
 		fini = true
 		_montrer_fin()
+	elif v.get("fin", "") == "perdu":
+		# un village inondé : perdu tout de suite (chapitre 3, hausses)
+		fini = true
+		_maj()
+		await get_tree().create_timer(1.0).timeout
+		if fini: _pancarte.montrer_echec(false, "Trop d'eau a passé le mur : le village a les pieds dans l'eau.", "Village inondé !")
 	else:
 		_chercher_impasse()
 
@@ -545,9 +560,9 @@ func _montrer_fin() -> void:
 func _jouable(n: Dictionary) -> bool:
 	if n["mode"] != "pas": return false
 	for b in n["bassins"]:
-		if not (b["type"] in ["bief", "sas"]): return false
+		if not (b["type"] in ["bief", "sas", "reservoir", "village"]): return false
 	for l in n["liaisons"]:
-		if not (l["type"] in ["porte", "libre"]): return false
+		if not (l["type"] in ["porte", "libre", "hausse", "mur"]): return false
 	return true
 
 # Le niveau d'après, s'il est jouable.

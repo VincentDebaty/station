@@ -152,10 +152,10 @@ func _bouton(texte: String, fond: String, icone: String, encre: Color, contour: 
 
 # « pourquoi » : la raison, en une phrase (principal.gd la trouve) ; sans
 # elle, le constat seul.
-func montrer_echec(plusieurs: bool, pourquoi := "") -> void:
+func montrer_echec(plusieurs: bool, pourquoi := "", titre := "") -> void:
 	_etoiles.hide()
 	_sous_etoiles.hide()
-	_titre.text = "Bateaux coincés !" if plusieurs else "Bateau coincé !"
+	_titre.text = titre if titre != "" else ("Bateaux coincés !" if plusieurs else "Bateau coincé !")
 	_sous_titre.text = pourquoi if pourquoi != "" else "Plus aucun bateau ne peut avancer."
 	for b in [_b_suivant, _b_rejouer_creme]: b.hide()
 	for b in [_b_annuler, _b_rejouer]: b.show()

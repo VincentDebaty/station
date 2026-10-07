@@ -73,6 +73,7 @@ var voiles := {}      # liaison -> l'eau du bassin de gauche devant le vantail, 
 var portes := {}      # liaison -> Porte
 var aqueducs := {}    # liaison -> Aqueduc, le conduit par où passe l'eau d'une porte à vanne
 var _flotte: Node2D
+var hausses := {}     # liaison -> Hausse, ses planches et ses poteaux
 var jets := {}        # liaison -> Jet, l'eau sous une porte simple entrouverte
 var bateaux := []     # un Bateau par bateau du niveau
 var positions := []   # bassin de chaque bateau, tel qu'affiché
@@ -142,6 +143,8 @@ func construire(niveau: Dictionary, e: Dictionary) -> void:
 	flotte.position = D * 0.5          # à mi-profondeur
 	add_child(flotte)
 	_flotte = flotte
+	for i in n:
+		if B[i]["type"] == "village": _maisons(i, flotte)
 	var vantaux: Node2D = null
 	if D != Vector2.ZERO:
 		_surface_avant = Node2D.new()
@@ -215,6 +218,14 @@ func construire(niveau: Dictionary, e: Dictionary) -> void:
 				SH_PIERRE, SH_BOIS, e["vanne"][i] if l.get("vanne", false) else e["ouvert"][i], _vantail_leve(e, i), _bas_ouvert(i))
 			add_child(po)
 			portes[i] = po
+	# les hausses : leurs planches dans la couche des vantaux (vues à travers
+	# l'eau), leurs poteaux devant et au fond
+	for i in N["liaisons"].size():
+		if N["liaisons"][i]["type"] == "hausse":
+			var h := Hausse.new()
+			h.preparer(self, i, e["crete"][i], vantaux if vantaux else self, arriere)
+			add_child(h)
+			hausses[i] = h
 	# les aqueducs, dans la terre de la coupe, par-dessus le radier des portes
 	for i in portes:
 		# porte simple : pas de tuyau, l'eau passe sous la porte entrouverte
@@ -434,7 +445,7 @@ func _murs_du_fond() -> void:
 	for i in N["liaisons"].size():
 		var l: Dictionary = N["liaisons"][i]
 		if D != Vector2.ZERO and l["type"] == "porte": continue
-		var c := float(l.get("crete", maxf(float(B[i]["fond"]), float(B[i + 1]["fond"]))))
+		var c := float(l.get("max", l.get("crete", maxf(float(B[i]["fond"]), float(B[i + 1]["fond"])))))
 		var bas := minf(float(B[i]["fond"]), float(B[i + 1]["fond"]))
 		# aussi haut que le plus bas des deux murs voisins : derrière un mur
 		# bas, on voyait une fente de prairie
@@ -479,6 +490,7 @@ func _dessous_des_bassins() -> void:
 		match String(l["type"]):
 			"porte": haut = float(l["seuil"])
 			"libre": haut = maxf(float(B[i]["fond"]), float(B[i + 1]["fond"]))
+			"hausse": haut = float(l["min"])
 			_: haut = float(l.get("crete", 0.0))
 		var a := X(gl[i][0])
 		var b := X(gl[i][1])
@@ -560,8 +572,8 @@ func _maj_surfaces() -> void:
 		# passe sur le bloc jusqu'au vantail.
 		var x0 := w.x0
 		var x1 := w.x1
-		var bloc_g: bool = i > 0 and N["liaisons"][i - 1]["type"] == "porte" and vue_niv[i] < float(N["liaisons"][i - 1]["seuil"]) - 0.01
-		var bloc_d: bool = i < gl.size() and N["liaisons"][i]["type"] == "porte" and vue_niv[i] < float(N["liaisons"][i]["seuil"]) - 0.01
+		var bloc_g: bool = i > 0 and _pied(i - 1) != INF and vue_niv[i] < _pied(i - 1) - 0.01
+		var bloc_d: bool = i < gl.size() and _pied(i) != INF and vue_niv[i] < _pied(i) - 0.01
 		if bloc_g: x0 = X(gl[i - 1][1])
 		if bloc_d: x1 = X(gl[i][0])
 		var bord := PackedVector2Array()
@@ -616,6 +628,41 @@ func _maj_surfaces() -> void:
 		var mince := clampf((w.fond_y - w.repos) / 8.0, 0.0, 1.0)
 		f.vertex_colors = _degrade_bande(bord.size(), Color(0.34, 0.76, 0.88, 0.96 * mince), Color(0.64, 0.88, 0.95, 0.96 * mince))
 		a.vertex_colors = _degrade_bande(bord.size(), Color(0.17, 0.6, 0.78, 0.78 * mince), Color(0.34, 0.76, 0.88, 0.78 * mince))
+
+# Le dessus du bloc de pierre au pied d'une porte (son seuil) ou d'une hausse
+# (son « min ») : sous lui, l'eau s'arrête contre sa face ; INF ailleurs.
+func _pied(g: int) -> float:
+	var l: Dictionary = N["liaisons"][g]
+	if l["type"] == "porte": return float(l["seuil"])
+	if l["type"] == "hausse": return float(l["min"])
+	return INF
+
+# Le VILLAGE à épargner : deux maisons au fond de son bassin, à mi-profondeur
+# comme les bateaux, derrière l'eau (si elle monte, on les voit à travers).
+func _maisons(i: int, plan: Node2D) -> void:
+	var n := Node2D.new()
+	var x0 := X(gb[i][0])
+	var x1 := X(gb[i][1])
+	var y := Y(float(N["bassins"][i]["fond"]))
+	n.draw.connect(func():
+		var larg := (x1 - x0) / 2.0
+		for k in 2:
+			var cx := x0 + larg * (k + 0.5) + (6.0 if k == 0 else -4.0)
+			var w := larg * (0.78 if k == 0 else 0.66)
+			var h := w * 0.62
+			var base := y - (2.0 if k == 0 else 6.0)
+			var mur := Color("#f1e3c4") if k == 0 else Color("#e8d6b2")
+			n.draw_rect(Rect2(cx - w * 0.5, base - h, w, h), mur)
+			n.draw_rect(Rect2(cx - w * 0.5, base - h, w, h), Color("#6b4a2a"), false, 2.0)
+			var toit := PackedVector2Array([Vector2(cx - w * 0.62, base - h + 2.0), Vector2(cx, base - h - w * 0.45), Vector2(cx + w * 0.62, base - h + 2.0)])
+			n.draw_colored_polygon(toit, Color("#c4542e"))
+			n.draw_polyline(toit, Color("#6b2a14"), 2.0)
+			n.draw_rect(Rect2(cx - w * 0.1, base - h * 0.55, w * 0.2, h * 0.55), Color("#6b4426"))
+			n.draw_rect(Rect2(cx + w * 0.18, base - h * 0.78, w * 0.18, h * 0.24), Color("#8fc3d9"))
+			n.draw_rect(Rect2(cx - w * 0.36, base - h * 0.78, w * 0.18, h * 0.24), Color("#8fc3d9"))
+			n.draw_rect(Rect2(cx + w * 0.2, base - h - w * 0.4, w * 0.1, w * 0.22), Color("#8a6a52"))
+	)
+	plan.add_child(n)
 
 # La hauteur commune de deux eaux au milieu d'une porte levée.
 func _jonction(g: int) -> float:
@@ -734,6 +781,7 @@ func _coupe_avant() -> void:
 		_poly(_quad(X(gl[i][0]), Y(bas - 0.32), X(gl[i][1]), tres_bas), terre)
 		if N["liaisons"][i]["type"] != "porte":
 			var c: float = float(N["liaisons"][i].get("crete", maxf(float(B[i]["fond"]), float(B[i + 1]["fond"]))))
+			if N["liaisons"][i]["type"] == "hausse": c = float(N["liaisons"][i]["min"])
 			_poly(_quad(X(gl[i][0]), Y(c), X(gl[i][1]), Y(bas - 0.32)), pierre)
 	# les berges, aux deux bouts : terre, parement de pierre côté eau, herbe
 	var g0 := X(gb[0][0])
@@ -1044,8 +1092,9 @@ func _x_bassin(i: int) -> Vector2:
 		if i == 0: a -= DEBORD
 		if i == gb.size() - 1: b += DEBORD
 	if D != Vector2.ZERO:
-		if i > 0 and N["liaisons"][i - 1]["type"] == "porte": a = X(gl[i - 1][0] + gl[i - 1][1]) * 0.5
-		if i < gl.size() and N["liaisons"][i]["type"] == "porte": b = X(gl[i][0] + gl[i][1]) * 0.5
+		# (une hausse aussi : ses planches sont au milieu du mur, l'eau les touche)
+		if i > 0 and N["liaisons"][i - 1]["type"] in ["porte", "hausse"]: a = X(gl[i - 1][0] + gl[i - 1][1]) * 0.5
+		if i < gl.size() and N["liaisons"][i]["type"] in ["porte", "hausse"]: b = X(gl[i][0] + gl[i][1]) * 0.5
 	return Vector2(a, b)
 
 # --- Où sont les choses ---------------------------------------------------------------
@@ -1061,6 +1110,14 @@ func surface_a(x: float) -> float:
 		if x > X(gl[i][0]) and x < X(gl[i][1]) and passages[i].visible_eau: return passages[i].hauteur_a(x)
 	var i2 := bassin_sous(x)
 	return eaux[i2].hauteur_a(clampf(x, X(gb[i2][0]), X(gb[i2][1])))
+
+# Une hausse sous le doigt : {i, quoi} (« hausser » au-dessus des planches,
+# « abaisser » dessus), ou {} .
+func hausse_sous(p: Vector2) -> Dictionary:
+	for i in hausses:
+		var q: String = hausses[i].geste(p)
+		if q != "": return {"i": i, "quoi": q}
+	return {}
 
 # Le volant de vanne sous le doigt (porte à vanne), ou -1. Cherché avant la
 # porte : il est sur son pilier.

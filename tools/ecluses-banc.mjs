@@ -73,7 +73,8 @@ function Hasard(graine) {
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
 }
-const nom = a => a.type === "porte" ? "porte " + a.i : a.type === "vanne" ? "vanne " + a.i : a.type === "creuser" ? "pelle " + a.i : a.type;
+const nom = a => a.type === "porte" ? "porte " + a.i : a.type === "vanne" ? "vanne " + a.i : a.type === "creuser" ? "pelle " + a.i :
+  a.type === "hausser" ? "planche + " + a.i : a.type === "abaisser" ? "planche − " + a.i : a.type;
 let echecs = 0;
 const dire = (ok, texte) => { console.log((ok ? "  ✓ " : "  ✗ ") + texte); if (!ok) echecs++; };
 
@@ -84,6 +85,7 @@ function donnees(N) {
     if (l.type === "porte" && (l.seuil < fonds - 1e-9 || l.crete < l.seuil)) v.push(`porte ${i} : seuil ${l.seuil}, crête ${l.crete}, fonds ${fonds}`);
     if (l.type === "digue" && (l.min < fonds - 1e-9 || l.min > l.crete)) v.push(`digue ${i} : min ${l.min}, crête ${l.crete}, fonds ${fonds}`);
     if (l.type === "mur" && l.crete < fonds - 1e-9) v.push(`mur ${i} : crête ${l.crete} sous les fonds ${fonds}`);
+    if (l.type === "hausse" && (l.min < fonds - 1e-9 || l.crete < l.min || l.crete > l.max)) v.push(`hausse ${i} : min ${l.min}, crête ${l.crete}, max ${l.max}, fonds ${fonds}`);
   });
   N.bateaux.forEach((b, k) => { if (!(b.de in N.bassins) || !(b.vers in N.bassins)) v.push(`bateau ${k} hors de la rangée`); });
   return v;
