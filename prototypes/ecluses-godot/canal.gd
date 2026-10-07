@@ -133,6 +133,12 @@ func construire(niveau: Dictionary, e: Dictionary) -> void:
 		vantaux = Node2D.new()
 		vantaux.name = "Vantaux"
 		add_child(vantaux)
+		# le bout de la surface du bassin de gauche, contre chaque vantail,
+		# redessiné PAR-DESSUS lui : l'eau de gauche est devant la porte (on la
+		# voit de la gauche), celle de droite derrière. Sans lui, le vantail
+		# couvrait la ligne d'eau qui monte en diagonale le long de la porte.
+		_surface_dessus = Node2D.new()
+		add_child(_surface_dessus)
 	for i in n:
 		var w := Eau.new()
 		var xb := _x_bassin(i)
@@ -492,6 +498,7 @@ func _face(points: PackedVector2Array, plan: PackedVector2Array, teinte: Color, 
 # la coque est dans l'eau. Elle suit la surface de la coupe, vagues comprises.
 var _surface_fond: Node2D
 var _surface_avant: Node2D
+var _surface_dessus: Node2D
 var _bandes := []          # par bassin : [moitié du fond, moitié de devant]
 func _maj_surfaces() -> void:
 	if _surface_fond == null: return
@@ -506,9 +513,11 @@ func _maj_surfaces() -> void:
 				l.default_color = Color(0.85, 0.97, 1.0, 0.45)
 				l.antialiased = true
 				_surface_avant.add_child(l)
+			var bout := Polygon2D.new()
+			_surface_dessus.add_child(bout)
 			_surface_fond.add_child(f)
 			_surface_avant.add_child(a)
-			_bandes.append([f, a, g, d])
+			_bandes.append([f, a, g, d, bout])
 	for i in eaux.size():
 		var w: Eau = eaux[i]
 		# La surface s'arrête contre la face du bloc d'une porte tant que l'eau
@@ -540,6 +549,19 @@ func _maj_surfaces() -> void:
 			var p := bord[bord.size() - 1]
 			ld.points = PackedVector2Array([p, p + D])
 		_bandes[i][2].visible = false
+		# le bout contre le vantail de droite, s'il y a une porte et que l'eau
+		# va jusqu'à lui
+		var bout: Polygon2D = _bandes[i][4]
+		bout.visible = not sec and not bloc_d and i < gl.size() and N["liaisons"][i]["type"] == "porte"
+		if bout.visible:
+			var morceau := PackedVector2Array()
+			for q in bord:
+				if q.x >= x1 - 48.0: morceau.append(q)
+			if morceau.size() < 2:
+				bout.visible = false
+			else:
+				bout.polygon = _bande(morceau, 0.0, 1.0)
+				bout.vertex_colors = _degrade_bande(morceau.size(), Color(0.2, 0.62, 0.8, 0.86), Color(0.6, 0.86, 0.94, 0.9))
 		if sec: continue
 		f.polygon = _bande(bord, 0.5, 1.0)
 		a.polygon = _bande(bord, 0.0, 0.5)
