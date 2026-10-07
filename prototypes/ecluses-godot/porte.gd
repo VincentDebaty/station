@@ -35,7 +35,7 @@ var _leve := false
 var _angle := 0.0
 var _rotation := 0.0       # ce qui reste à tourner de la roue
 var _vantail: Polygon2D
-var _tranche: Polygon2D
+var _cadre: Line2D            # le cadre de fer du vantail (vue oblique)
 var _mat_bois: ShaderMaterial
 var _chaines: Node2D
 var roue: Node2D
@@ -153,8 +153,15 @@ func _construire_profil(mp: ShaderMaterial, abas: float, bois: Shader) -> void:
 # les deux, dont on voit la face de biais ; la traverse relie les deux piliers.
 # Le vantail se pose dans « couche_vantail », avant l'eau : on le voit à travers
 # l'eau du bassin de gauche, sans rien de plus.
-const PILIER := 15.0          # demi-largeur d'un pilier (12 avant l'image cible)
-const EPAISSEUR := 7.0        # l'épaisseur du vantail, vue de face sur sa tranche
+# Vincent, 7 octobre 2026 : « les portes paraissent fines, elles doivent être
+# un peu plus massives ». Piliers plus larges (demi-largeur 12, puis 15, puis
+# 20), traverse plus haute qui déborde des piliers, et un cadre de fer épais
+# sur le pourtour du vantail. Sa tranche, elle, est dans la rainure du pilier :
+# on ne la voit pas.
+const PILIER := 20.0
+const DEBORD_TRAVERSE := 6.0
+func _h_traverse() -> float:
+	return 0.32 * u if oblique != Vector2.ZERO else 0.2 * u
 func _xc() -> float:
 	return (gx0 + gx1) * 0.5
 
@@ -169,9 +176,12 @@ func _construire_oblique(mp: ShaderMaterial, abas: float) -> void:
 	else:
 		_vantail.color = Color("#8a5a2e")
 	(couche_vantail if couche_vantail else self).add_child(_vantail)
-	_tranche = Polygon2D.new()
-	_tranche.color = Color("#5c3818")
-	(couche_vantail if couche_vantail else self).add_child(_tranche)
+	_cadre = Line2D.new()
+	_cadre.width = 5.0
+	_cadre.default_color = Color("#2b2622")
+	_cadre.joint_mode = Line2D.LINE_JOINT_SHARP
+	_cadre.closed = true
+	(couche_vantail if couche_vantail else self).add_child(_cadre)
 	_chaines = Node2D.new()
 	_chaines.draw.connect(_dessiner_chaines)
 	add_child(_chaines)
@@ -197,10 +207,12 @@ func _construire_oblique(mp: ShaderMaterial, abas: float) -> void:
 	add_child(_degrade(xc - PILIER, y_portique, xc - PILIER + 5.0, y_seuil, 0.35, 0.0))
 	# la traverse, d'un pilier à l'autre : sa face de côté (gauche), sa face
 	# du dessus, et son bout avant
-	var y0 := y_portique - 0.2 * u
+	var y0 := y_portique - _h_traverse()
 	var y1 := y_portique + 4.0
-	var gauche := PackedVector2Array([Vector2(xc - 16, y0), Vector2(xc - 16, y1), Vector2(xc - 16 + D.x, y1 + D.y), Vector2(xc - 16 + D.x, y0 + D.y)])
-	var dessus := PackedVector2Array([Vector2(xc - 16, y0), Vector2(xc + 16, y0), Vector2(xc + 16 + D.x, y0 + D.y), Vector2(xc - 16 + D.x, y0 + D.y)])
+	var g := xc - PILIER - DEBORD_TRAVERSE
+	var dr := xc + PILIER + DEBORD_TRAVERSE
+	var gauche := PackedVector2Array([Vector2(g, y0), Vector2(g, y1), Vector2(g + D.x, y1 + D.y), Vector2(g + D.x, y0 + D.y)])
+	var dessus := PackedVector2Array([Vector2(g, y0), Vector2(dr, y0), Vector2(dr + D.x, y0 + D.y), Vector2(g + D.x, y0 + D.y)])
 	var tt := Peint.traverse()
 	var cote := Polygon2D.new()
 	cote.polygon = gauche
@@ -215,10 +227,10 @@ func _construire_oblique(mp: ShaderMaterial, abas: float) -> void:
 	pd.polygon = dessus
 	pd.color = Color("#8a6038")
 	add_child(pd)
-	var bout := _rect(xc - 16, y0, xc + 16, y1, null)
+	var bout := _rect(g, y0, dr, y1, null)
 	bout.color = Color("#6e4524")
 	add_child(bout)
-	var plaque := _rect(xc - 11, y0 + 2, xc + 11, y1 - 2, null)
+	var plaque := _rect(g + 5, y0 + 3, dr - 5, y1 - 3, null)
 	plaque.color = Color("#3a332e")
 	add_child(plaque)
 
@@ -230,13 +242,13 @@ func _maj_oblique() -> void:
 	var haut_vu := maxf(haut, cache)
 	if bas_y <= haut_vu + 1.0:
 		_vantail.polygon = PackedVector2Array()
-		_tranche.polygon = PackedVector2Array()
+		_cadre.points = PackedVector2Array()
 		_chaines.queue_redraw()
 		return
 	var xf := xc - 5.0
 	_vantail.polygon = PackedVector2Array([Vector2(xf + D.x, haut_vu + D.y), Vector2(xf, haut_vu), Vector2(xf, bas_y), Vector2(xf + D.x, bas_y + D.y)])
-	# sa tranche, de face, contre le pilier avant : le vantail a une épaisseur
-	_tranche.polygon = _quad(xf, haut_vu, xf + EPAISSEUR, bas_y)
+	# le cadre de fer, sur tout le pourtour du vantail
+	_cadre.points = _vantail.polygon
 	# le vantail s'assombrit vers le pilier avant, qui lui fait de l'ombre, et
 	# sous la traverse quand il est fermé (son haut y est rangé)
 	var sous_t := 0.82 if haut_vu <= cache + 1.0 else 1.0
@@ -272,11 +284,11 @@ func _quad(ax0: float, ay0: float, ax1: float, ay1: float) -> PackedVector2Array
 # En oblique, la roue est posée au milieu du dessus de la traverse, à
 # mi-profondeur ; le doigt la trouve là (canal.porte_sous).
 func centre_roue() -> Vector2:
-	return Vector2((gx0 + gx1) / 2.0, y_portique - 0.2 * u - 0.5 * u) + oblique * 0.5
+	return Vector2((gx0 + gx1) / 2.0, y_portique - _h_traverse() - 0.5 * u) + oblique * 0.5
 
 # Le haut du pied de la roue : le dessus de la traverse, sous l'axe.
 func _pied_roue() -> float:
-	return y_portique - 0.2 * u + oblique.y * 0.5
+	return y_portique - _h_traverse() + oblique.y * 0.5
 
 # La vanne : la roue fait un tour et demi. Émet roue_finie.
 func manoeuvrer_vanne(ouvrir: bool) -> void:
