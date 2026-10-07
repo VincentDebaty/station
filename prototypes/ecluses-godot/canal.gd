@@ -87,6 +87,10 @@ var orage: Orage = null # la pluie, les nuages et les éclairs d'un niveau à «
 var marees := {}      # bassin -> Maree : l'échelle, les algues et la flèche de la marée
 var bacs := {}        # objet -> Bac : le bac d'un ascenseur à bateaux, ses câbles et sa tête
 var siphons := {}     # objet -> Siphon : son tuyau sur la berge du fond, sa roue d'amorçage
+var flotteurs := {}   # porte -> Flotteur : la porte que l'eau ouvre toute seule
+var moulins := {}     # porte -> Moulin : la roue à aubes, la maison du meunier et ses sacs
+var _mouture := []    # [farine avant, farine après] pendant l'écoulement
+var _declenches := []  # portes à flotteur qui s'ouvrent pendant ce coup
 var _rang_siphon := {} # objet -> son rang dans le tableau des flux (après les liaisons)
 var _cible_arriere: Node2D # le plan des tours du fond (derrière les bateaux et l'eau)
 var _siphons_apres := {} # objet -> amorcé à la fin du coup (appliqué quand l'eau s'est posée)
@@ -411,6 +415,42 @@ func construire(niveau: Dictionary, e0: Dictionary) -> void:
 		# pilier avant, dessiné par la porte (Vincent : elle passait devant)
 		move_child(tp, portes[i].get_index())
 		trop_pleins[i] = tp
+	# les portes à flotteur : la tige, la bague, le flotteur et sa corde, dans
+	# le plan des bateaux, contre le pilier, du côté du bassin qui commande
+	for i in portes:
+		var lf: Dictionary = N["liaisons"][i]
+		if not lf.has("flotteur"): continue
+		var fb := int(lf["flotteur"]["bassin"])
+		var xf := X(gl[i][0]) - 0.4 * U if fb == i else X(gl[i][1]) + 0.4 * U
+		var po2: Porte = portes[i]
+		var fl := Flotteur.new()
+		var o := D * 0.5
+		fl.preparer(self, fb, xf + o.x, po2.y_portique + o.y, Y(float(B[fb]["fond"])) + o.y, Y(float(lf["flotteur"]["niveau"])) + o.y,
+			Vector2(X(gl[i][0] + gl[i][1]) * 0.5 - 22.0, po2.y_portique + 4.0) + o)
+		_flotte.add_child(fl)
+		fl.position = -o
+		flotteurs[i] = fl
+	# les moulins : la roue dans le bassin où tombe l'eau de la vanne, dans le
+	# plan des bateaux ; la maison et les sacs sur la berge du fond
+	for i in portes:
+		var lm: Dictionary = N["liaisons"][i]
+		if not lm.get("moulin", false): continue
+		var bas_: int = i + 1 if float(B[i + 1]["fond"]) < float(B[i]["fond"]) else i
+		var sg := 1.0 if bas_ == i + 1 else -1.0
+		# une grande roue, son axe une unité au-dessus du seuil : sa moitié haute
+		# reste hors de l'eau même bief du moulin plein (à 0,45 sous le seuil,
+		# elle était presque noyée)
+		var r := 1.1 * U
+		var xr := (X(gl[i][1]) if sg > 0 else X(gl[i][0])) + sg * r * 0.95
+		var mo := Moulin.new()
+		var xm := (X(gb[bas_][1]) - 0.75 * U if sg > 0 else X(gb[bas_][0]) + 0.75 * U) + D.x
+		mo.preparer(self, Vector2(xr, Y(float(lm["seuil"]) + 1.0)) + D * 0.5, r,
+			Vector2(xm, Y(sommets_fond[bas_]) + D.y - 2.0), int(ceil(float(N.get("farine", 3)))), float(e.get("moulu", 0.0)))
+		arriere.add_child(mo.fond)
+		_flotte.add_child(mo.roue)
+		mo.roue.position = -D * 0.5
+		add_child(mo)
+		moulins[i] = mo
 	# les ponts bas : sur un passage libre, le pilier du fond derrière l'eau et
 	# les bateaux, le pilier avant et le tablier devant
 	for i in N["liaisons"].size():
@@ -1828,6 +1868,15 @@ func _avancer_ecoulement(dt: float) -> void:
 		tch.couler(fc * 0.8, 1)
 		if fc > 0.1 and randf() < 0.3:
 			eaux[ibc].impulsion(tch.chemin[0].x - D.x * 0.5, 0.25 * fc, 40.0)
+	for g in moulins:
+		# la roue tourne avec l'eau qui passe, les sacs se remplissent
+		# (la roue ne tourne que quand l'eau descend vers le bassin du moulin)
+		var vers_droite := float(N["bassins"][g + 1]["fond"]) < float(N["bassins"][g]["fond"])
+		var fm := float(_ecou["flux"][g]) * (1.0 if vers_droite else -1.0) if g < _ecou["flux"].size() else 0.0
+		if fm > 0.01:
+			moulins[g].vitesse = maxf(moulins[g].vitesse, 3.5 * clampf(minf(p * 6.0, (1.0 - p) * 2.0), 0.0, 1.0))
+		if _mouture.size() == 2:
+			moulins[g].moulu = lerpf(_mouture[0], _mouture[1], clampf(p * 1.2, 0.0, 1.0))
 	if orage:
 		# chaque coup, l'averse redouble puis retombe en bruine
 		orage.averse = clampf(minf(p * 4.0, (1.0 - p) * 2.0), 0.0, 1.0)
@@ -1840,6 +1889,11 @@ func _avancer_ecoulement(dt: float) -> void:
 			eaux[int(N["objets"][k]["bassin"])].impulsion(gl_.base.x - D.x * 0.5, randf_range(-0.4, 0.6) * gl_.coule, 20.0)
 	if p >= 1.0:
 		if orage: orage.averse = 0.0
+		# le flotteur a atteint sa bague : il referme sa porte
+		for g in _declenches:
+			portes[g].entrouvrir(false)
+			portes[g].manoeuvrer_vanne(false)
+		_declenches = []
 		for k in _siphons_apres:
 			siphons[k].regler(_siphons_apres[k])
 			siphons[k].tuyau.couler(0.0, 1)
@@ -2200,6 +2254,10 @@ func glacon_sous(p: Vector2) -> int:
 
 # Avant l'écoulement d'un coup : les glaçons qui fondent pendant ce coup-ci.
 func objets_changent(avant: Dictionary, apres: Dictionary) -> void:
+	_mouture = [float(avant.get("moulu", 0.0)), float(apres.get("moulu", 0.0))]
+	_declenches = []
+	for g in flotteurs:
+		if bool(avant["ouvert"][g]) and not bool(apres["ouvert"][g]) and int(apres["coups"]) > int(avant["coups"]): _declenches.append(g)
 	for k in siphons:
 		# désamorcé pendant le coup : le tuyau reste plein tant que l'eau
 		# coule, et se vide une fois l'eau posée

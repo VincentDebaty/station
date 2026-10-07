@@ -274,8 +274,9 @@ button:focus-visible, [role="button"]:focus-visible { outline: 3px solid var(--o
     {"n": 9, "titre": "L'ascenseur", "decor": "campagne", "resume": "Un bac d'acier monte et descend avec son eau et le bateau, sans écluse. Mais l'eau qu'il emporte se mélange à celle du bief où il s'arrête."},
     {"n": 10, "titre": "Le siphon", "decor": "campagne", "resume": "Un tuyau en U renversé, par-dessus une levée ou une porte. Amorcé, il fait passer l'eau du plus haut au plus bas, jusqu'à ce que son bout sorte de l'eau."},
     {"n": 11, "titre": "Le pont bas", "decor": "campagne", "resume": "Un pont de pierre enjambe le canal. Les bateaux passent dessous, si l'eau est assez basse pour leur cheminée : trop d'eau, cette fois, c'est un obstacle."},
-    {"n": 12, "titre": "Les canaux", "decor": "collines", "resume": "Creuser les digues, puis lâcher l'eau et regarder où elle va."},
-    {"n": 13, "titre": "Le fleuve", "decor": "estuaire", "resume": "L'eau arrive toute seule, à chaque coup. Il faut la conduire avant qu'elle déborde."}
+    {"n": 12, "titre": "Le moulin", "decor": "campagne", "resume": "L'eau qui passe par la vanne du moulin fait tourner sa roue et remplit des sacs de farine. Mais c'est la même eau que celle des bateaux."},
+    {"n": 13, "titre": "Les canaux", "decor": "collines", "resume": "Creuser les digues, puis lâcher l'eau et regarder où elle va."},
+    {"n": 14, "titre": "Le fleuve", "decor": "estuaire", "resume": "L'eau arrive toute seule, à chaque coup. Il faut la conduire avant qu'elle déborde."}
   ],
   "niveaux": [
     {
@@ -616,9 +617,33 @@ button:focus-visible, [role="button"]:focus-visible { outline: 3px solid var(--o
         {"de": 3, "vers": 0, "tirant": 1}
       ]
     },
-    {
+{
       "id": "12-1",
       "chapitre": 12,
+      "titre": "Le moulin",
+      "mode": "pas",
+      "par": 6,
+      "conseil": "La roue rouge de droite ouvre la vanne du moulin : l'eau fait tourner la grande roue, et les sacs de farine se remplissent. Il en faut cinq, et le bateau rouge doit encore pouvoir monter.",
+      "farine": 5,
+      "bassins": [
+        {"type": "bief", "fond": 0, "largeur": 6, "niveau": 2, "nom": "bief aval"},
+        {"type": "sas", "fond": 0, "largeur": 2, "niveau": 1, "nom": "sas"},
+        {"type": "bief", "fond": 3, "largeur": 6, "niveau": 5.5, "nom": "bief amont"},
+        {"type": "bief", "fond": 2, "largeur": 2, "niveau": 2, "nom": "bief du moulin"}
+      ],
+      "liaisons": [
+        {"type": "porte", "seuil": 0, "crete": 6},
+        {"type": "porte", "seuil": 3, "crete": 6},
+        {"type": "porte", "seuil": 3, "crete": 6, "moulin": true}
+      ],
+      "bateaux": [
+        {"de": 0, "vers": 2, "tirant": 1},
+        {"de": 2, "vers": 0, "tirant": 1}
+      ]
+    },
+    {
+      "id": "13-1",
+      "chapitre": 13,
       "titre": "Le premier sillon",
       "mode": "chantier",
       "par": 4,
@@ -636,8 +661,8 @@ button:focus-visible, [role="button"]:focus-visible { outline: 3px solid var(--o
       "bateaux": []
     },
     {
-      "id": "12-2",
-      "chapitre": 12,
+      "id": "13-2",
+      "chapitre": 13,
       "titre": "Les rizières",
       "mode": "chantier",
       "par": 5,
@@ -659,8 +684,8 @@ button:focus-visible, [role="button"]:focus-visible { outline: 3px solid var(--o
       "bateaux": []
     },
     {
-      "id": "12-3",
-      "chapitre": 12,
+      "id": "13-3",
+      "chapitre": 13,
       "titre": "Remettre à flot",
       "mode": "chantier",
       "par": 6,
@@ -684,8 +709,8 @@ button:focus-visible, [role="button"]:focus-visible { outline: 3px solid var(--o
       ]
     },
     {
-      "id": "13-1",
-      "chapitre": 13,
+      "id": "14-1",
+      "chapitre": 14,
       "titre": "Le fleuve monte",
       "mode": "pas",
       "par": 5,
@@ -706,8 +731,8 @@ button:focus-visible, [role="button"]:focus-visible { outline: 3px solid var(--o
       ]
     },
     {
-      "id": "13-2",
-      "chapitre": 13,
+      "id": "14-2",
+      "chapitre": 14,
       "titre": "Le déversoir",
       "mode": "pas",
       "par": 8,
@@ -732,8 +757,8 @@ button:focus-visible, [role="button"]:focus-visible { outline: 3px solid var(--o
       ]
     },
     {
-      "id": "13-3",
-      "chapitre": 13,
+      "id": "14-3",
+      "chapitre": 14,
       "titre": "La crue",
       "mode": "pas",
       "par": 6,
@@ -787,6 +812,10 @@ const Ecluses = (function () {
   //           la même chose qu'une porte ») au profit de la rigole creusée dans
   //           une digue ; la règle reste, aucun niveau ne l'emploie.
   //   libre   la même eau des deux côtés ; les bateaux passent
+  //   clapet  un mur (« crete ») percé en bas d'un volet qui ne s'ouvre que
+  //           dans un sens : « sens » 1, l'eau passe de gauche à droite
+  //           au-dessus de « seuil » ; -1, de droite à gauche. Jamais de
+  //           bateau (nuit du 7 au 8 octobre 2026).
   // Une porte peut avoir une VANNE (« vanne »: true, chapitre 2, 7 octobre
   // 2026) : deux commandes. La vanne ouverte laisse passer l'eau par son
   // aqueduc, sous la porte fermée, sans laisser passer les bateaux ; la porte
@@ -823,6 +852,15 @@ const Ecluses = (function () {
   //                une crépine sort de l'eau, l'air entre : le siphon se
   //                désamorce (état 0). Son débit s'ajoute, dans le tableau
   //                des flux, après ceux des liaisons.
+  //   moulin     sur une porte : c'est la vanne d'un bief de moulin. L'eau
+  //              qui y passe fait tourner la roue, et le moteur la compte
+  //              (e.moulu) ; jamais de bateau. « farine » dans le niveau :
+  //              le volume qu'il faut avoir fait passer pour gagner.
+  //   flotteur   sur une porte : {bassin, niveau}, comme le robinet d'une
+  //              chasse d'eau. On ouvre la porte à la roue ; l'eau qui entre
+  //              dans « bassin » (l'un de ses deux voisins) s'arrête à
+  //              « niveau », et le flotteur referme la porte. Elle ne s'ouvre
+  //              que si l'eau du bassin est sous ce niveau.
   //   pont       sur une liaison : la hauteur du DESSOUS du tablier d'un
   //              pont. Un bateau ne passe dessous que si l'eau, plus sa
   //              « hauteur » (cheminée comprise, 0,6 par défaut), n'y touche pas.
@@ -844,7 +882,7 @@ const Ecluses = (function () {
       crete: N.liaisons.map(l => l.crete != null ? l.crete : null),
       bateaux: N.bateaux.map(b => b.de),
       obj: (N.objets || []).map(o => o.type === "glacon" ? -1 : o.type === "ascenseur" && o.en_haut ? 1 : 0),
-      phase: 0,
+      phase: 0, moulu: 0,
       lache: N.mode !== "chantier",
       coups: 0, entree: 0, sortie: 0
     };
@@ -853,7 +891,7 @@ const Ecluses = (function () {
     return e;
   }
   function copie(e) {
-    return { niv: e.niv.slice(), ouvert: e.ouvert.slice(), vanne: e.vanne.slice(), crete: e.crete.slice(), bateaux: e.bateaux.slice(), obj: e.obj.slice(), phase: e.phase,
+    return { niv: e.niv.slice(), ouvert: e.ouvert.slice(), vanne: e.vanne.slice(), crete: e.crete.slice(), bateaux: e.bateaux.slice(), obj: e.obj.slice(), phase: e.phase, moulu: e.moulu,
       lache: e.lache, coups: e.coups, entree: e.entree, sortie: e.sortie };
   }
 
@@ -862,6 +900,7 @@ const Ecluses = (function () {
     const l = N.liaisons[i];
     if (l.type === "libre") return Math.max(fondDe(N, e, i), fondDe(N, e, i + 1));
     if (l.type === "quai") return quaiOuvert(N, e, i) ? Math.max(fondDe(N, e, i), fondDe(N, e, i + 1)) : 1e9;
+    if (l.type === "clapet") return l.crete;
     if (l.type === "porte") return e.ouvert[i] || e.vanne[i] ? l.seuil : l.crete;
     return e.crete[i];
   }
@@ -901,7 +940,9 @@ const Ecluses = (function () {
     if (Math.abs(a - c) < 1e-12) return 0;
     const h = a > c ? i : i + 1, l = a > c ? i + 1 : i;
     const H = N.bassins[h], L = N.bassins[l];
-    const s = seuil(N, e, i), nh = e.niv[h], nl = e.niv[l];
+    const lia = N.liaisons[i];
+    // un clapet s'ouvre si l'eau va dans son sens ; sinon, c'est un mur
+    const s = lia.type === "clapet" && (h === i ? 1 : -1) === lia.sens ? lia.seuil : seuil(N, e, i), nh = e.niv[h], nl = e.niv[l];
     if (nh <= s + 1e-12 || (H.fixe && L.fixe)) return 0;
     let vol;
     if (H.fixe) vol = (nh - nl) * L.largeur;
@@ -910,6 +951,8 @@ const Ecluses = (function () {
       const m = (H.largeur * nh + L.largeur * nl) / (H.largeur + L.largeur);
       vol = (nh - Math.max(m, s)) * H.largeur;
     }
+    // une porte à flotteur ouverte : l'eau qui entre dans son bassin s'arrête à sa hauteur
+    if (lia.flotteur && lia.flotteur.bassin === l && e.ouvert[i] && !L.fixe) vol = Math.max(0, Math.min(vol, (lia.flotteur.niveau - nl) * L.largeur));
     return h === i ? vol : -vol;
   }
   // Toute la rangée, jusqu'au repos. Chaque tour calcule tous les échanges
@@ -977,6 +1020,14 @@ const Ecluses = (function () {
     if (C.fixe) { if (vol > 0) e.sortie += vol; else e.entree -= vol; } else e.niv[o.b] += vol / C.largeur;
   }
   function equilibrer(N, e) {
+    const flux = equilibrer1(N, e);
+    // le flotteur a atteint sa hauteur : il referme sa porte
+    N.liaisons.forEach((l, i) => {
+      if (l.type === "porte" && l.flotteur && e.ouvert[i] && e.niv[l.flotteur.bassin] >= l.flotteur.niveau - 1e-6) e.ouvert[i] = false;
+    });
+    return flux;
+  }
+  function equilibrer1(N, e) {
     const n = N.liaisons.length;
     const nS = (N.objets || []).filter(o => o.type === "siphon").length;
     const flux = new Array(n + nS).fill(0);
@@ -1024,7 +1075,7 @@ const Ecluses = (function () {
   function flotte(N, e, k, i) { return profondeur(N, e, i) >= N.bateaux[k].tirant - EPS; }
   function peutPasser(N, e, k, p, q) {
     const i = Math.min(p, q), l = N.liaisons[i];
-    if (!(l.type === "libre" || (l.type === "porte" && e.ouvert[i]) || (l.type === "quai" && quaiOuvert(N, e, i)))) return false;
+    if (!(l.type === "libre" || (l.type === "porte" && e.ouvert[i] && !l.moulin) || (l.type === "quai" && quaiOuvert(N, e, i)))) return false;
     if (Math.abs(e.niv[p] - e.niv[q]) > EPS) return false;
     if (!flotte(N, e, k, p) || !flotte(N, e, k, q)) return false;
     if (e.niv[q] - seuilBateau(N, i, e) < N.bateaux[k].tirant - EPS) return false;
@@ -1064,6 +1115,7 @@ const Ecluses = (function () {
     if (verdict(N, e)) return [];
     const A = [];
     N.liaisons.forEach((l, i) => {
+      if (l.type === "porte" && l.flotteur && !e.ouvert[i] && e.niv[l.flotteur.bassin] >= l.flotteur.niveau - EPS) return;
       if (l.type === "porte" && !l.barrage && e.lache && (!l.vanne || e.ouvert[i] || Math.abs(e.niv[i] - e.niv[i + 1]) < EPS)) A.push({ type: "porte", i });
       if (l.type === "porte" && l.vanne && e.lache) A.push({ type: "vanne", i });
       if (l.type === "digue" && e.crete[i] > l.min + EPS) A.push({ type: "creuser", i });
@@ -1133,6 +1185,15 @@ const Ecluses = (function () {
         if (b.maree) { e.phase = e.coups % b.maree.length; e.niv[i] = b.maree[e.phase]; }
       });
       flux = equilibrer(N, e);
+      // l'eau passée par la roue d'un moulin
+      // (seulement l'eau qui DESCEND vers le bassin le plus bas : la roue ne
+      // tourne que dans ce sens, et l'eau qui ferait l'aller-retour ne compte pas)
+      N.liaisons.forEach((l, i) => {
+        if (!l.moulin) return;
+        const versDroite = N.bassins[i + 1].fond < N.bassins[i].fond;
+        const v = versDroite ? flux[i] : -flux[i];
+        if (v > 0) e.moulu = arrondi(e.moulu + v);
+      });
       dep = bouger(N, e);
     }
     return { etat: e, flux, dep, apport };
@@ -1151,7 +1212,8 @@ const Ecluses = (function () {
     // Arrivé, c'est à quai ET à flot : un bief vidé derrière soi ne compte pas.
     const bateaux = N.bateaux.every((b, k) => e.bateaux[k] === b.vers && flotte(N, e, k, b.vers));
     const champs = N.bassins.every((b, i) => b.type !== "champ" || profondeur(N, e, i) >= b.cible - EPS);
-    if (bateaux && champs) return { fin: "gagne" };
+    const farine = !N.farine || e.moulu >= N.farine - EPS;
+    if (bateaux && champs && farine) return { fin: "gagne" };
     if (N.mode === "chantier") return { fin: "rate" };
     return null;
   }
@@ -1172,7 +1234,7 @@ const Ecluses = (function () {
   // « budget » coupe la fouille au bout de tant de millisecondes, sans verdict.
   function cle(e, q) {
     const niv = q ? e.niv.map(h => Math.round(h / q)) : e.niv;
-    return niv.join(",") + "|" + e.ouvert.map(Number).join("") + "|" + e.vanne.map(Number).join("") + "|" + e.crete.join(",") + "|" + e.bateaux.join(",") + "|" + e.obj.join(",") + "|" + (e.lache ? 1 : 0) + "|" + e.phase;
+    return niv.join(",") + "|" + e.ouvert.map(Number).join("") + "|" + e.vanne.map(Number).join("") + "|" + e.crete.join(",") + "|" + e.bateaux.join(",") + "|" + e.obj.join(",") + "|" + (e.lache ? 1 : 0) + "|" + e.phase + "|" + (q ? Math.round(e.moulu / q) : e.moulu);
   }
   function resoudre(N, depart, limite, interdits, options) {
     limite = limite || 300000;

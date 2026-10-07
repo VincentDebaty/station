@@ -42,7 +42,7 @@ Tout système nouveau se range dans l'une de ces familles :
 | 8 | Porte à vanne | vanne, puis porte | égaliser sans laisser passer, retenir un bateau | **écrite** (chap. 2, niveau 2-1, 7 octobre 2026) | moyen |
 | 9 | Hausses mobiles | monter ou baisser un cran | un seuil réglable, réversible | **écartée** par Vincent le 7 octobre 2026 (« pratiquement la même chose qu'une porte ») ; la règle reste au moteur | faible |
 | 9 bis | Rigole | un coup de pelle dans une berge de terre | doser l'eau d'un étang, sans retour | **écrite** (chap. 3, niveau 3-1, 7 octobre 2026) : la digue du moteur, jouée en direct | faible |
-| 10 | Clapet | aucun | rien : l'eau ne passe que dans un sens | à écrire | faible |
+| 10 | Clapet | aucun | rien : l'eau ne passe que dans un sens | **règle écrite, aucun niveau** (nuit du 7 au 8 octobre 2026) : voir plus bas | faible |
 | 11 | Pompe | un coup = un volume qui monte | quand dépenser un coup pour remonter de l'eau | **écrite** (chap. 4, niveau 4-1, 7 octobre 2026) | faible |
 | 12 | Marée | aucun (la mer monte et descend), ou attendre | le bon moment | **écrite** (chap. 8, niveau 8-1, nuit du 7 au 8 octobre 2026) | faible |
 | 13 | Siphon | l'amorcer (la roue rouge sur le tuyau) | faire passer l'eau par-dessus une levée, jusqu'à un bassin qui n'est pas voisin | **écrit** (chap. 10, niveau 10-1, nuit du 7 au 8 octobre 2026) | moyen |
@@ -51,6 +51,7 @@ Tout système nouveau se range dans l'une de ces familles :
 | 18 | Glaçon et brasero (gel, feu) | allumer une fois, puis le temps passe | quand allumer : l'eau arrive en trois coups, là où elle est posée | **écrite** (chap. 6, niveau 6-1, nuit du 7 au 8 octobre 2026) | moyen |
 | 19 | Orage (tempête) | aucun, ou attendre | profiter de l'eau qui tombe sans laisser monter le bief du village | **écrit** (chap. 7, niveau 7-1, nuit du 7 au 8 octobre 2026) | faible |
 | 20 | Pont bas | aucun | garder l'eau assez basse pour la cheminée des bateaux | **écrit** (chap. 11, niveau 11-1, nuit du 7 au 8 octobre 2026) | moyen |
+| 21 | Moulin | la vanne du moulin (une porte) | quand faire passer l'eau par la roue, sachant que les bateaux en ont besoin | **écrit** (chap. 12, niveau 12-1, nuit du 7 au 8 octobre 2026) | moyen |
 | 17 | Chaudière (vapeur) | un coup = un volume qui part en fumée | quand se débarrasser d'une eau qui menace le village | **écrite** (chap. 5, niveau 5-1, nuit du 7 au 8 octobre 2026) | faible |
 
 Les **objectifs** ne déplacent pas l'eau mais s'y ajoutent : bateau à
@@ -87,7 +88,20 @@ trois planches exactement, sinon le village est inondé.
   la digue du chapitre 2, sans l'irréversible.
 - **Coût :** faible, une action de plus sur un seuil qui existe.
 
-### 10. Clapet anti-retour
+### 10. Clapet — essayé la nuit du 7 au 8 octobre 2026, sans niveau
+La règle est au moteur (liaison `clapet`, `sens`, `seuil`, `crete`), mais le
+solveur n'a trouvé aucun niveau où il compte : comparé à un mur et à une
+ouverture dans les deux sens, il ne change jamais la solution. Avec la seule
+gravité, l'eau ne remonte jamais vers lui ; il ne servirait qu'avec une eau
+qui monte d'ailleurs (marée, pluie, pompe) — la « porte de flot » d'un port.
+À reprendre en combinaison, pas en premier niveau.
+
+### 10 bis. Portes jumelles — essayées la même nuit et retirées
+Deux portes reliées par une chaîne, d'états contraires. Sur des escaliers
+d'écluses, le lien ne raccourcit ni n'allonge jamais la meilleure solution
+(4 coups avec ou sans) : il ne change rien au jeu. Retirées du moteur.
+
+### 10 ter. Clapet anti-retour — l'idée de départ
 - **On voit :** un volet sur un passage, qui ne s'ouvre que d'un côté.
 - **La règle :** l'eau ne passe que du bassin A vers le bassin B. Le calcul
   par paire (`paire()`) ignore le sens interdit.
@@ -270,6 +284,29 @@ trois planches exactement, sinon le village est inondé.
   (5 sans le pont) ; au hasard, deux parties sur cent.
 - **Rendu Godot du passage libre**, écrit pour l'occasion : les deux eaux se
   rejoignent au milieu de la liaison, sous le pilier avant.
+
+### 21. Le moulin — un objectif qui n'est pas un bateau (nuit du 7 au 8 octobre 2026)
+- **On voit :** une porte de canal qui sert de vanne au bief du moulin ; en
+  aval, une grande roue à aubes qui tourne quand l'eau descend ; sur la
+  berge du fond, la maison du meunier et une pyramide de sacs en pointillés,
+  qui se remplissent de farine. On compte les sacs, sans un mot.
+- **La règle :** porte avec `moulin` : jamais de bateau ; l'eau qui la
+  traverse en DESCENDANT vers le bassin le plus bas est comptée (`e.moulu`).
+  `farine` dans le niveau : le volume à moudre pour gagner. (Comptée dans les
+  deux sens, l'eau faisait l'aller-retour par la roue et le solveur moulait
+  en 29 coups de va-et-vient.)
+- **Le niveau 12-1 :** cinq sacs, et deux bateaux qui se croisent. Le bief
+  amont a juste assez d'eau pour les deux : il faut ouvrir le moulin au bon
+  moment, et l'eau du bief du moulin revient au bief amont quand on remplit
+  le sas. Par 6 ; au hasard, quatre parties sur cent.
+
+### 22. La porte à flotteur (nuit du 7 au 8 octobre 2026)
+- **La règle, au moteur, sans niveau encore :** comme le robinet d'une chasse
+  d'eau — on ouvre la porte, et l'eau qui entre dans son bassin s'arrête à la
+  hauteur du flotteur, qui la referme. Essayée d'abord à l'envers (une porte
+  que l'eau OUVRE et qui reste ouverte) : c'était un piège sans solution.
+  Sur le trajet des bateaux, elle se referme toujours avant que les eaux ne
+  soient égales : elle ne peut que nourrir un bief, de côté.
 
 ### Écartés pour l'instant
 - **Moulin, roue à aubes** qui actionnerait autre chose quand l'eau y passe :
