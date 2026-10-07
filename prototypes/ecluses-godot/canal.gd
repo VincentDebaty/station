@@ -69,7 +69,9 @@ var eaux := []        # une Eau par bassin
 var passages := {}    # liaison -> Eau qui remplit l'ouverture d'une porte
 var voiles := {}      # liaison -> l'eau du bassin de gauche devant le vantail, porte fermée
 var portes := {}      # liaison -> Porte
-var aqueducs := {}    # liaison -> Aqueduc, le conduit par où passe l'eau d'une porte
+var aqueducs := {}    # liaison -> Aqueduc, le conduit par où passe l'eau d'une porte à vanne
+var _flotte: Node2D
+var jets := {}        # liaison -> Jet, l'eau sous une porte simple entrouverte
 var bateaux := []     # un Bateau par bateau du niveau
 var positions := []   # bassin de chaque bateau, tel qu'affiché
 var bat_x := []       # abscisse courante de chaque bateau
@@ -123,6 +125,7 @@ func construire(niveau: Dictionary, e: Dictionary) -> void:
 	flotte.name = "Bateaux"
 	flotte.position = D * 0.5          # à mi-profondeur
 	add_child(flotte)
+	_flotte = flotte
 	var vantaux: Node2D = null
 	if D != Vector2.ZERO:
 		_surface_avant = Node2D.new()
@@ -188,6 +191,17 @@ func construire(niveau: Dictionary, e: Dictionary) -> void:
 			portes[i] = po
 	# les aqueducs, dans la terre de la coupe, par-dessus le radier des portes
 	for i in portes:
+		# porte simple : pas de tuyau, l'eau passe sous la porte entrouverte
+		# (jet.gd). L'aqueduc reste pour une porte à vanne (« vanne » dans la
+		# liaison), mécanique à venir.
+		if not N["liaisons"][i].get("vanne", false):
+			var jt := Jet.new()
+			jt.position = D * 0.5
+			add_child(jt)
+			# derrière les bateaux : la lame tombe dans le bassin, pas sur eux
+			move_child(jt, _flotte.get_index())
+			jets[i] = jt
+			continue
 		var aq := Aqueduc.new()
 		aq.preparer(_trace_aqueduc(i), 0.2 * UY)
 		aq.ouverte = e["ouvert"][i]
@@ -925,9 +939,11 @@ func _avancer_ecoulement(dt: float) -> void:
 	for i in eaux.size(): eaux[i].remous = move_toward(eaux[i].remous, 0.0, dt * 0.8)
 	for i in _ecou["flux"].size():
 		if aqueducs.has(i): _aqueduc(i, _ecou["flux"][i], dt)
+		elif jets.has(i): _jet(i, _ecou["flux"][i], dt)
 	if p >= 1.0:
 		_ecou = {}
 		for aq in aqueducs.values(): aq.couler(0.0, 1)
+		for jt in jets.values(): jt.force = 0.0
 		ecoulement_fini.emit()
 
 # L'eau qui passe par l'aqueduc d'une porte : elle court dans le conduit,
@@ -959,6 +975,39 @@ func _aqueduc(i: int, flux: float, dt: float) -> void:
 		recoit.impulsion(sortie.x + randf_range(-0.5, 0.5) * U, randf_range(-1.1, 0.4) * force * bouillon, 26.0)
 	# au-dessus de l'entrée, elle se creuse un peu
 	donne.impulsion(entree.x, 0.25 * force * dt * 60.0 * 0.1, 40.0)
+
+# L'eau sous une porte simple entrouverte : une lame qui jaillit de la fente
+# vers le côté bas, en cascade ou noyée. Même force que l'aqueduc
+# (Torricelli). La surface d'en bas bouillonne où la lame tombe ; celle d'en
+# haut se creuse un peu contre la porte.
+func _jet(i: int, flux: float, dt: float) -> void:
+	var jt: Jet = jets[i]
+	var po: Porte = portes[i]
+	if absf(flux) <= 0.01:
+		jt.force = 0.0
+		return
+	var sens := 1.0 if flux > 0 else -1.0
+	var h := i if flux > 0 else i + 1
+	var l := i + 1 if flux > 0 else i
+	var s := float(N["liaisons"][i]["seuil"])
+	var tete: float = vue_niv[h] - maxf(vue_niv[l], s)
+	var tete0: float = maxf(_ecou["tetes"].get(i, 1.0), 0.05)
+	jt.force = clampf(sqrt(maxf(tete, 0.0) / tete0), 0.0, 1.0)
+	jt.sens = sens
+	jt.fente = po.fente()
+	# la fente : sous le vantail (au milieu de la porte en oblique, contre sa
+	# face côté bas de profil)
+	var x := X(gl[i][0] + gl[i][1]) * 0.5 if D != Vector2.ZERO else (X(gl[i][1]) - 9.0 if sens > 0 else X(gl[i][0]) + 9.0)
+	jt.origine = Vector2(x + sens * 4.0, po.y_seuil - jt.fente * 0.5)
+	jt.surface_bas = eaux[l].hauteur_a(x + sens * 60.0)
+	jt.fond_bas = eaux[l].fond_y
+	if jt.force <= 0.03: return
+	var recoit: Eau = eaux[l]
+	var bouillon := Reglages.v("bouillon")
+	recoit.remous = maxf(recoit.remous, jt.force * 0.6 * minf(bouillon * 2.0, 1.0))
+	if randf() < 0.5:
+		recoit.impulsion(jt.chute().x + randf_range(-0.4, 0.4) * U, randf_range(-0.6, 1.2) * jt.force * bouillon * 2.0, 22.0)
+	eaux[h].impulsion(x - sens * 20.0, 0.25 * jt.force * dt * 6.0, 40.0)
 
 # Les bateaux : un tour de déplacements après l'autre, comme le moteur les a rendus.
 func deplacer(dep: Array) -> void:

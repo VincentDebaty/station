@@ -57,8 +57,9 @@ func preparer(ax0: float, ax1: float, aseuil: float, acrete: float, aportique: f
 	gx0 = ax0; gx1 = ax1; y_seuil = aseuil; y_crete = acrete; y_portique = aportique; u = au
 	vanne_ouverte = vanne
 	_leve = leve
+	_entrouvert = vanne and not leve
 	bas_ouvert_y = abas_ouvert
-	bas_y = bas_ouvert_y if leve else y_seuil
+	bas_y = _cible()
 	var mp := ShaderMaterial.new()
 	mp.shader = pierre
 	Peint.habiller(mp, "pierre")
@@ -277,12 +278,27 @@ func placer_vantail(lever: bool) -> void:
 func arrive() -> bool:
 	return absf(bas_y - _cible()) < 0.6
 
-# 0 fermé, 1 assez levé pour que l'eau remplisse l'ouverture
+# La porte SIMPLE (sans aqueduc, Vincent, 7 octobre 2026) : toucher la roue
+# soulève tout de suite la porte d'une fente, et l'eau passe dessous ; quand
+# les deux eaux sont au même niveau, elle se lève en grand. La porte à vanne
+# et aqueduc, elle, reste close tant que la vanne égalise.
+const ENTREBAIL := 20.0
+var _entrouvert := false
+func entrouvrir(oui: bool) -> void:
+	_entrouvert = oui
+
+# La hauteur de la fente sous le vantail, en pixels.
+func fente() -> float:
+	return maxf(y_seuil - bas_y, 0.0)
+
+# 0 fermée (ou seulement entrouverte), 1 assez levée pour que l'eau remplisse
+# l'ouverture
 func ouverture() -> float:
-	return clampf((y_seuil - bas_y) / (0.5 * u), 0.0, 1.0)
+	return clampf((y_seuil - bas_y - ENTREBAIL) / (0.5 * u), 0.0, 1.0)
 
 func _cible() -> float:
-	return bas_ouvert_y if _leve else y_seuil
+	if _leve: return bas_ouvert_y
+	return y_seuil - ENTREBAIL if _entrouvert else y_seuil
 
 func _process(dt: float) -> void:
 	if _rotation != 0.0:
