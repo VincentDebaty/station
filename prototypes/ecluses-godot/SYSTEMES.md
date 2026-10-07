@@ -46,7 +46,7 @@ Tout système nouveau se range dans l'une de ces familles :
 | 11 | Pompe | un coup = un volume qui monte | quand dépenser un coup pour remonter de l'eau | **écrite** (chap. 4, niveau 4-1, 7 octobre 2026) | faible |
 | 12 | Marée | aucun (la mer monte et descend), ou attendre | le bon moment | **écrite** (chap. 8, niveau 8-1, nuit du 7 au 8 octobre 2026) | faible |
 | 13 | Siphon | l'amorcer | faire passer l'eau par-dessus un mur | à écrire | moyen |
-| 14 | Ascenseur à bateaux | un coup | monter un bateau sans dépenser d'eau | à écrire | moyen |
+| 14 | Ascenseur à bateaux | un coup (la roue du treuil) | combien d'eau le bac emporte | **écrit** (chap. 9, niveau 9-1, nuit du 7 au 8 octobre 2026) | moyen |
 | 15 | Bassin d'épargne | une vanne latérale | garder de l'eau pour plus tard | à écrire | fort |
 | 18 | Glaçon et brasero (gel, feu) | allumer une fois, puis le temps passe | quand allumer : l'eau arrive en trois coups, là où elle est posée | **écrite** (chap. 6, niveau 6-1, nuit du 7 au 8 octobre 2026) | moyen |
 | 19 | Orage (tempête) | aucun, ou attendre | profiter de l'eau qui tombe sans laisser monter le bief du village | **écrit** (chap. 7, niveau 7-1, nuit du 7 au 8 octobre 2026) | faible |
@@ -134,7 +134,27 @@ trois planches exactement, sinon le village est inondé.
 - **Coût :** moyen. Une liaison entre bassins non voisins sort de la rangée :
   `equilibrer()` doit traiter un graphe.
 
-### 14. Ascenseur à bateaux, plan incliné
+### 14. Ascenseur à bateaux — écrit le 8 octobre 2026 (chapitre 9, niveau 9-1)
+- **Ce qui a été fait :** le bac est un bassin (`bac`) dont le fond monte et
+  descend (`objets`, type `ascenseur`, fonds `bas` et `haut`). Le geste
+  « ascenseur » le déplace avec son eau et son bateau. Ses deux liaisons sont
+  des `quai` : fermées, sauf celle du côté où il est arrêté, qui s'ouvre comme
+  un passage libre. L'eau du bac et celle du bief s'y égalisent : **le bac
+  emporte de l'eau**, c'est tout le jeu.
+- **On voit :** une chambre de pierre, un bac d'acier (le fond en tranche, la
+  paroi du fond nervurée, les câbles), les deux quais en portes sans roue,
+  une poutre en treillis posée sur eux, la roue rouge du treuil au milieu
+  (la roue rouge est la commande, partout), une flèche jaune qui dit si le
+  bac va monter ou descendre, deux contrepoids qui filent à l'envers.
+- **Le niveau 9-1 :** le bief amont est trop maigre pour le bateau rouge ;
+  le bac doit y monter assez d'eau, mais pas trop, car un village borde ce
+  bief. Le sas, en aval, sert de **mesure** : on le remplit au bief du
+  moulin, on le referme, on le vide dans le bief aval, et le bac emporte
+  juste ce qu'il faut. Ouvrir les deux portes ensemble inonde le village ;
+  n'ouvrir que la seconde laisse le bief amont à 3,89 pour 4. Par 5 ; au
+  hasard, une partie sur sept seulement est gagnée.
+
+### 14 bis. Ascenseur à bateaux, plan incliné — l'idée de départ
 - **On voit :** un bac plein d'eau qui monte et descend entre deux biefs
   (Strépy-Thieu, ou le plan incliné de Ronquières).
 - **La règle :** un coup fait passer le bac d'un bief à l'autre, avec le

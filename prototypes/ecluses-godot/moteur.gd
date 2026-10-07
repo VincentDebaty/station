@@ -34,7 +34,7 @@ static func charger(N: Dictionary) -> Dictionary:
 		"obj": [], "phase": 0,
 	}
 	for o in N.get("objets", []):
-		e["obj"].append(-1 if o["type"] == "glacon" else 0)
+		e["obj"].append(-1 if o["type"] == "glacon" else (1 if o["type"] == "ascenseur" and o.get("en_haut", false) else 0))
 	for b in N["bassins"]:
 		e["niv"].append(float(b["niveau"]) if b.has("niveau") else float(b["fond"]))
 	for l in N["liaisons"]:
@@ -60,19 +60,44 @@ static func copie(e: Dictionary) -> Dictionary:
 static func seuil(N: Dictionary, e: Dictionary, i: int) -> float:
 	var l: Dictionary = N["liaisons"][i]
 	if l["type"] == "libre":
-		return maxf(float(N["bassins"][i]["fond"]), float(N["bassins"][i + 1]["fond"]))
+		return maxf(fond_de(N, e, i), fond_de(N, e, i + 1))
+	if l["type"] == "quai":
+		return maxf(fond_de(N, e, i), fond_de(N, e, i + 1)) if quai_ouvert(N, e, i) else 1e9
 	if l["type"] == "porte":
 		return float(l["seuil"]) if e["ouvert"][i] or e["vanne"][i] else float(l["crete"])
 	return float(e["crete"][i])
 
-static func seuil_bateau(N: Dictionary, i: int) -> float:
+static func seuil_bateau(N: Dictionary, i: int, e := {}) -> float:
 	var l: Dictionary = N["liaisons"][i]
 	if l["type"] == "porte":
 		return float(l["seuil"])
+	if not e.is_empty():
+		return maxf(fond_de(N, e, i), fond_de(N, e, i + 1))
 	return maxf(float(N["bassins"][i]["fond"]), float(N["bassins"][i + 1]["fond"]))
 
+# Le fond d'un bassin : celui du niveau, sauf le bac d'un ascenseur, qui
+# monte et descend.
+static func ascenseur_de(N: Dictionary, i: int) -> int:
+	var O: Array = N.get("objets", [])
+	for k in O.size():
+		if O[k]["type"] == "ascenseur" and int(O[k]["bassin"]) == i: return k
+	return -1
+
+static func fond_de(N: Dictionary, e: Dictionary, i: int) -> float:
+	var k := ascenseur_de(N, i)
+	if k < 0: return float(N["bassins"][i]["fond"])
+	return float(N["objets"][k]["haut"]) if int(e["obj"][k]) == 1 else float(N["objets"][k]["bas"])
+
+# Un quai est ouvert quand le bac est arrêté de son côté.
+static func quai_ouvert(N: Dictionary, e: Dictionary, i: int) -> bool:
+	var g := ascenseur_de(N, i)
+	var d := ascenseur_de(N, i + 1)
+	if d >= 0: return int(e["obj"][d]) == 0
+	if g >= 0: return int(e["obj"][g]) == 1
+	return false
+
 static func profondeur(N: Dictionary, e: Dictionary, i: int) -> float:
-	return e["niv"][i] - float(N["bassins"][i]["fond"])
+	return e["niv"][i] - fond_de(N, e, i)
 
 static func temps(N: Dictionary) -> bool:
 	if N.has("pluie") and N["pluie"]: return true
@@ -187,7 +212,7 @@ static func capacite(N: Dictionary, i: int) -> int:
 	var b: Dictionary = N["bassins"][i]
 	if b.has("cap") and b["cap"]:
 		return int(b["cap"])
-	return 1 if b["type"] == "sas" else 3
+	return 1 if b["type"] == "sas" or b["type"] == "bac" else 3
 
 static func flotte(N: Dictionary, e: Dictionary, k: int, i: int) -> bool:
 	return profondeur(N, e, i) >= float(N["bateaux"][k]["tirant"]) - EPS
@@ -195,13 +220,13 @@ static func flotte(N: Dictionary, e: Dictionary, k: int, i: int) -> bool:
 static func peut_passer(N: Dictionary, e: Dictionary, k: int, p: int, q: int) -> bool:
 	var i := mini(p, q)
 	var l: Dictionary = N["liaisons"][i]
-	if not (l["type"] == "libre" or (l["type"] == "porte" and e["ouvert"][i])):
+	if not (l["type"] == "libre" or (l["type"] == "porte" and e["ouvert"][i]) or (l["type"] == "quai" and quai_ouvert(N, e, i))):
 		return false
 	if absf(e["niv"][p] - e["niv"][q]) > EPS:
 		return false
 	if not flotte(N, e, k, p) or not flotte(N, e, k, q):
 		return false
-	if e["niv"][q] - seuil_bateau(N, i) < float(N["bateaux"][k]["tirant"]) - EPS:
+	if e["niv"][q] - seuil_bateau(N, i, e) < float(N["bateaux"][k]["tirant"]) - EPS:
 		return false
 	return e["bateaux"].count(q) < capacite(N, q)
 
@@ -227,16 +252,16 @@ static func raison(N: Dictionary, e: Dictionary, k: int) -> Dictionary:
 	var i := mini(p, q)
 	var t := float(N["bateaux"][k]["tirant"])
 	var l: Dictionary = N["liaisons"][i]
-	if not (l["type"] == "libre" or (l["type"] == "porte" and e["ouvert"][i])):
+	if not (l["type"] == "libre" or (l["type"] == "porte" and e["ouvert"][i]) or (l["type"] == "quai" and quai_ouvert(N, e, i))):
 		return {"quoi": "porte", "bassin": q}
 	if absf(e["niv"][p] - e["niv"][q]) > EPS:
 		return {"quoi": "niveaux", "bassin": q}
 	if not flotte(N, e, k, p):
-		return {"quoi": "fond_ici", "bassin": p, "niveau": float(N["bassins"][p]["fond"]) + t}
+		return {"quoi": "fond_ici", "bassin": p, "niveau": fond_de(N, e, p) + t}
 	if not flotte(N, e, k, q):
-		return {"quoi": "fond_la", "bassin": q, "niveau": float(N["bassins"][q]["fond"]) + t}
-	if e["niv"][q] - seuil_bateau(N, i) < t - EPS:
-		return {"quoi": "seuil", "bassin": q, "niveau": seuil_bateau(N, i) + t}
+		return {"quoi": "fond_la", "bassin": q, "niveau": fond_de(N, e, q) + t}
+	if e["niv"][q] - seuil_bateau(N, i, e) < t - EPS:
+		return {"quoi": "seuil", "bassin": q, "niveau": seuil_bateau(N, i, e) + t}
 	if e["bateaux"].count(q) >= capacite(N, q):
 		return {"quoi": "plein", "bassin": q}
 	return {"quoi": "passe", "bassin": q}
@@ -294,6 +319,8 @@ static func actions(N: Dictionary, e: Dictionary) -> Array:
 			A.append({"type": "chauffer", "i": i})
 		if o["type"] == "glacon" and int(e["obj"][i]) == -1:
 			A.append({"type": "allumer", "i": i})
+		if o["type"] == "ascenseur":
+			A.append({"type": "ascenseur", "i": i})
 	if not e["lache"]:
 		A.append({"type": "lacher"})
 	elif temps(N) or feu:
@@ -332,6 +359,12 @@ static func jouer(N: Dictionary, e0: Dictionary, a: Dictionary) -> Dictionary:
 			e["sortie"] += vol
 		"allumer":
 			e["obj"][ai] = int(N["objets"][ai]["fonte"])
+		"ascenseur":
+			# le bac monte ou descend avec son eau : son niveau suit son fond
+			var oa: Dictionary = N["objets"][ai]
+			var d := float(oa["bas"]) - float(oa["haut"]) if int(e["obj"][ai]) == 1 else float(oa["haut"]) - float(oa["bas"])
+			e["niv"][int(oa["bassin"])] = arrondi(e["niv"][int(oa["bassin"])] + d)
+			e["obj"][ai] = 0 if int(e["obj"][ai]) == 1 else 1
 		"creuser":
 			e["crete"][ai] = maxf(float(N["liaisons"][ai]["min"]), arrondi(e["crete"][ai] - 1.0))
 		"hausser":

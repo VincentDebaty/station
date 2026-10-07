@@ -47,7 +47,7 @@ var _sure: Control      # la zone sûre : tout ce qu'on touche ou qu'on lit y re
 # Le niveau sur lequel le jeu s'ouvre : celui qu'on est en train d'essayer
 # (Vincent, 7 octobre 2026 : « quand tu déploies sur l'iPhone, tu proposes le
 # nouveau niveau à chaque fois »). À changer à chaque nouveauté.
-const NIVEAU_EN_TEST := "8-1"
+const NIVEAU_EN_TEST := "9-1"
 
 func _ready() -> void:
 	_tous = JSON.parse_string(FileAccess.get_file_as_string("res://niveaux.json"))["niveaux"]
@@ -120,6 +120,10 @@ func _cadrer() -> void:
 # --- Le toucher et les coups ----------------------------------------------------------
 func _unhandled_input(ev: InputEvent) -> void:
 	if ev is InputEventMouseButton and ev.pressed and ev.button_index == MOUSE_BUTTON_LEFT:
+		var ia := canal.bac_sous(get_global_mouse_position())
+		if ia >= 0:
+			jouer({"type": "ascenseur", "i": ia})
+			return
 		var ig := canal.glacon_sous(get_global_mouse_position())
 		if ig >= 0:
 			jouer({"type": "allumer", "i": ig})
@@ -172,6 +176,8 @@ func jouer(a: Dictionary) -> void:
 		await canal.chauffer(int(a["i"]))
 	elif a["type"] == "allumer":
 		await canal.allumer(int(a["i"]))
+	elif a["type"] == "ascenseur":
+		await canal.voyage_bac(int(a["i"]), avant, etat)
 	elif a["type"] == "creuser" and canal.rigoles.has(int(a["i"])):
 		# un coup de pelle : l'entaille se creuse, des mottes volent, puis
 		# l'eau file
@@ -210,7 +216,10 @@ func jouer(a: Dictionary) -> void:
 			p.manoeuvrer_vanne(false)
 			await p.roue_finie
 	canal.objets_changent(avant, etat)
-	canal.ecouler(avant["niv"], etat["niv"], r["flux"])
+	# après un voyage du bac, l'eau part du niveau où le bac l'a emportée
+	var niv_avant: Array = avant["niv"].duplicate()
+	if a["type"] == "ascenseur": niv_avant = canal.vue_niv.duplicate()
+	canal.ecouler(niv_avant, etat["niv"], r["flux"])
 	await canal.ecoulement_fini
 	await canal.placer_vantaux(etat)
 	canal.deplacer(r["dep"])
@@ -597,9 +606,9 @@ func _montrer_fin() -> void:
 func _jouable(n: Dictionary) -> bool:
 	if n["mode"] != "pas": return false
 	for b in n["bassins"]:
-		if not (b["type"] in ["bief", "sas", "reservoir", "village", "mer"]): return false
+		if not (b["type"] in ["bief", "sas", "reservoir", "village", "mer", "bac"]): return false
 	for l in n["liaisons"]:
-		if not (l["type"] in ["porte", "libre", "hausse", "mur", "digue"]): return false
+		if not (l["type"] in ["porte", "libre", "hausse", "mur", "digue", "quai"]): return false
 	return true
 
 # Le niveau d'après, s'il est jouable.
@@ -724,6 +733,10 @@ func _process(dt: float) -> void:
 			var A := Moteur.actions(N, etat) if not occupe and not fini else []
 			for ip in canal.pompes:
 				canal.pompes[ip].actif = A.any(func(x): return x["type"] == "pomper" and int(x["i"]) == ip)
+		if not canal.bacs.is_empty():
+			var A5 := Moteur.actions(N, etat) if not occupe and not fini else []
+			for ia in canal.bacs:
+				canal.bacs[ia].actif = A5.any(func(x): return x["type"] == "ascenseur" and int(x["i"]) == ia)
 		if not canal.glacons.is_empty():
 			var A3 := Moteur.actions(N, etat) if not occupe and not fini else []
 			for ig in canal.glacons:
@@ -776,7 +789,9 @@ func _demo() -> void:
 	for a in solution:
 		rang += 1
 		jouer(a)
-		await get_tree().create_timer(1.15).timeout
+		# ECLUSES_PENDANT : quand prendre la photo « pendant » (1,15 s par défaut)
+		var pendant := float(OS.get_environment("ECLUSES_PENDANT")) if OS.get_environment("ECLUSES_PENDANT") != "" else 1.15
+		await get_tree().create_timer(pendant).timeout
 		await _photo("%02d-pendant" % rang)
 		while occupe: await get_tree().process_frame
 		await get_tree().create_timer(0.4).timeout

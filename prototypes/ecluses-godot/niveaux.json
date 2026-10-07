@@ -8,8 +8,9 @@
     {"n": 6, "titre": "La glace et le feu", "decor": "campagne", "resume": "Le brasero fait fondre le gros glaçon en trois coups, et chacun verse sa part d'eau là où il est posé. Le feu prend son temps : à toi de choisir quand l'allumer."},
     {"n": 7, "titre": "L'orage", "decor": "campagne", "resume": "Il pleut à chaque coup, dans tous les bassins. L'eau qui manquait arrive toute seule, mais elle ne s'arrête pas quand il y en a assez."},
     {"n": 8, "titre": "La marée", "decor": "campagne", "resume": "La mer monte et descend d'un cran à chaque coup, et l'on sait d'avance jusqu'où. Une porte ouverte à marée haute remplit le sas pour rien."},
-    {"n": 9, "titre": "Les canaux", "decor": "collines", "resume": "Creuser les digues, puis lâcher l'eau et regarder où elle va."},
-    {"n": 10, "titre": "Le fleuve", "decor": "estuaire", "resume": "L'eau arrive toute seule, à chaque coup. Il faut la conduire avant qu'elle déborde."}
+    {"n": 9, "titre": "L'ascenseur", "decor": "campagne", "resume": "Un bac d'acier monte et descend avec son eau et le bateau, sans écluse. Mais l'eau qu'il emporte se mélange à celle du bief où il s'arrête."},
+    {"n": 10, "titre": "Les canaux", "decor": "collines", "resume": "Creuser les digues, puis lâcher l'eau et regarder où elle va."},
+    {"n": 11, "titre": "Le fleuve", "decor": "estuaire", "resume": "L'eau arrive toute seule, à chaque coup. Il faut la conduire avant qu'elle déborde."}
   ],
   "niveaux": [
     {
@@ -270,9 +271,39 @@
         {"de": 2, "vers": 0, "tirant": 1}
       ]
     },
-    {
+{
       "id": "9-1",
       "chapitre": 9,
+      "titre": "L'ascenseur",
+      "mode": "pas",
+      "par": 5,
+      "conseil": "Touche la roue rouge du treuil : le bac monte ou descend avec son eau et le bateau. Arrivé en haut, son eau se mélange à celle du bief : assez pour le bateau, pas trop pour le village. Le sas peut servir de mesure.",
+      "requis": ["ascenseur"],
+      "bassins": [
+        {"type": "bief", "fond": 1, "largeur": 6, "niveau": 3.5, "nom": "bief du moulin"},
+        {"type": "sas", "fond": 0, "largeur": 2, "niveau": 2, "nom": "sas"},
+        {"type": "bief", "fond": 0, "largeur": 3, "niveau": 1, "nom": "bief aval"},
+        {"type": "bac", "fond": 0, "largeur": 2, "niveau": 3.6, "nom": "bac"},
+        {"type": "bief", "fond": 3, "largeur": 2, "niveau": 3.6, "nom": "bief amont"},
+        {"type": "village", "fond": 3.8, "largeur": 3, "nom": "village"}
+      ],
+      "liaisons": [
+        {"type": "porte", "seuil": 1, "crete": 6},
+        {"type": "porte", "seuil": 0, "crete": 6},
+        {"type": "quai", "seuil": 0, "crete": 6},
+        {"type": "quai", "seuil": 3, "crete": 6},
+        {"type": "mur", "crete": 4.2}
+      ],
+      "objets": [
+        {"type": "ascenseur", "bassin": 3, "bas": 0, "haut": 3, "en_haut": true}
+      ],
+      "bateaux": [
+        {"de": 2, "vers": 4, "tirant": 1}
+      ]
+    },
+    {
+      "id": "10-1",
+      "chapitre": 10,
       "titre": "Le premier sillon",
       "mode": "chantier",
       "par": 4,
@@ -290,8 +321,8 @@
       "bateaux": []
     },
     {
-      "id": "9-2",
-      "chapitre": 9,
+      "id": "10-2",
+      "chapitre": 10,
       "titre": "Les rizières",
       "mode": "chantier",
       "par": 5,
@@ -313,8 +344,8 @@
       "bateaux": []
     },
     {
-      "id": "9-3",
-      "chapitre": 9,
+      "id": "10-3",
+      "chapitre": 10,
       "titre": "Remettre à flot",
       "mode": "chantier",
       "par": 6,
@@ -338,8 +369,8 @@
       ]
     },
     {
-      "id": "10-1",
-      "chapitre": 10,
+      "id": "11-1",
+      "chapitre": 11,
       "titre": "Le fleuve monte",
       "mode": "pas",
       "par": 5,
@@ -360,8 +391,8 @@
       ]
     },
     {
-      "id": "10-2",
-      "chapitre": 10,
+      "id": "11-2",
+      "chapitre": 11,
       "titre": "Le déversoir",
       "mode": "pas",
       "par": 8,
@@ -386,8 +417,8 @@
       ]
     },
     {
-      "id": "10-3",
-      "chapitre": 10,
+      "id": "11-3",
+      "chapitre": 11,
       "titre": "La crue",
       "mode": "pas",
       "par": 6,

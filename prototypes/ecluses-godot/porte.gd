@@ -64,6 +64,9 @@ var y_bas_tige := 0.0        # le bas de la tige du volant : le logement de la v
 # et la couche, avant l'eau, où poser le vantail.
 var oblique := Vector2.ZERO
 var couche_vantail: Node2D = null
+# Le QUAI d'un ascenseur à bateaux (chapitre 9) : une porte que le bac ouvre
+# et ferme tout seul en s'arrêtant. Ni roue ni volant : on ne la touche pas.
+var sans_roue := false
 
 func preparer(ax0: float, ax1: float, aseuil: float, acrete: float, aportique: float, abas: float, au: float,
 		pierre: Shader, bois: Shader, vanne: bool, leve: bool, abas_ouvert: float) -> void:
@@ -481,6 +484,7 @@ func _maillons(x: float, y_haut: float, y_bas: float) -> void:
 		j += 1
 
 func _dessiner_roue() -> void:
+	if sans_roue: return
 	if a_vanne: _dessiner_volant()
 	var c := centre_roue()
 	var tressaille := sin(_secousse * 40.0) * 0.12 * clampf((_secousse - 1.1) / 0.5, 0.0, 1.0)

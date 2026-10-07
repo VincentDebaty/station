@@ -85,6 +85,8 @@ var glacons := {}     # objet -> Glacon, le bloc de glace et son brasero, sur la
 var _fontes := {}     # objet -> [part avant, part après] : le glaçon qui fond pendant l'écoulement
 var orage: Orage = null # la pluie, les nuages et les éclairs d'un niveau à « pluie »
 var marees := {}      # bassin -> Maree : l'échelle, les algues et la flèche de la marée
+var bacs := {}        # objet -> Bac : le bac d'un ascenseur à bateaux, ses câbles et sa tête
+var fonds_vus := {}   # bassin -> le fond affiché du bac (unités) : il glisse pendant un voyage
 var sommets_fond := [] # le haut du mur du fond de chaque bassin, en unités
 var rigoles := {}     # liaison -> Rigole, la berge de terre que l'on creuse
 var mares := {}       # bassin -> Mare, la cuvette naturelle sur le pré
@@ -126,8 +128,32 @@ func _largeur_vue(i: int) -> float:
 	return maxf(l, places * LONG_BATEAU + (places + 1) * JEU)
 
 # --- La construction ---------------------------------------------------------------
-func construire(niveau: Dictionary, e: Dictionary) -> void:
-	N = niveau
+# Le canal dessine un QUAI d'ascenseur comme une porte sans roue : ses deux
+# piliers, son vantail qui se lève quand le bac est arrêté de son côté. Le
+# niveau et l'état sont donc traduits pour la vue : le quai devient une porte
+# (« quai » : vrai), ouverte quand Moteur.quai_ouvert le dit.
+func _niveau_vu(niveau: Dictionary) -> Dictionary:
+	var a_quai := false
+	for l in niveau["liaisons"]:
+		if l["type"] == "quai": a_quai = true
+	if not a_quai: return niveau
+	var nv := niveau.duplicate(true)
+	for l in nv["liaisons"]:
+		if l["type"] == "quai":
+			l["type"] = "porte"
+			l["quai"] = true
+	return nv
+
+func etat_vu(e: Dictionary) -> Dictionary:
+	if bacs.is_empty() and not N.get("objets", []).any(func(o): return o["type"] == "ascenseur"): return e
+	var ev := e.duplicate(true)
+	for i in N["liaisons"].size():
+		if N["liaisons"][i].get("quai", false): ev["ouvert"][i] = Moteur.quai_ouvert(N, e, i)
+	return ev
+
+func construire(niveau: Dictionary, e0: Dictionary) -> void:
+	N = _niveau_vu(niveau)
+	var e := etat_vu(e0)
 	var B: Array = N["bassins"]
 	var n := B.size()
 	var x := 0.0 if B[0].get("fixe", false) else MARGE
@@ -233,6 +259,7 @@ func construire(niveau: Dictionary, e: Dictionary) -> void:
 			po.oblique = D
 			po.couche_vantail = vantaux
 			po.a_vanne = bool(l.get("vanne", false))
+			po.sans_roue = bool(l.get("quai", false))
 			var bas_radier := Y(minf(float(B[i]["fond"]), float(B[i + 1]["fond"])) - 0.32)
 			# trois hauteurs de portique, pour ne pas aligner trois colonnes
 			# identiques (lot 4) ; plus bas seulement : le vantail levé garde
@@ -386,6 +413,23 @@ func construire(niveau: Dictionary, e: Dictionary) -> void:
 			h.preparer(self, i, e["crete"][i], vantaux if vantaux else self, arriere)
 			add_child(h)
 			hausses[i] = h
+	# l'ascenseur : le bac (fond et paroi derrière l'eau, tranche avant les
+	# portes), la poutre du treuil posée sur les deux quais, après les portes
+	for k in objets.size():
+		if objets[k]["type"] != "ascenseur": continue
+		var ib := int(objets[k]["bassin"])
+		var xb := _x_bassin(ib)
+		var yp := minf(portes[ib - 1].y_portique, portes[ib].y_portique) - 0.32 * U - 2.0
+		var bc := Bac.new()
+		var fv := Moteur.fond_de(N, e, ib)
+		bc.preparer(self, ib, xb.x, xb.y, yp, float(objets[k]["bas"]), float(objets[k]["haut"]), fv)
+		fonds_vus[ib] = fv
+		eaux[ib].fond_y = Y(fv)
+		arriere.add_child(bc)
+		add_child(bc.tranche)
+		move_child(bc.tranche, portes[mini(ib - 1, ib)].get_index())
+		add_child(bc.devant)
+		bacs[k] = bc
 	# les aqueducs, dans la terre de la coupe, par-dessus le radier des portes
 	for i in portes:
 		# porte simple : pas de tuyau, l'eau passe sous la porte entrouverte
@@ -586,7 +630,7 @@ func _murs_du_fond() -> void:
 		var mx0 := xb.x
 		var mx1 := xb.y
 		var sommet: float
-		if b["type"] == "sas":
+		if b["type"] == "sas" or b["type"] == "bac":
 			sommet = 0.0
 			for j in [i - 1, i]:
 				if j >= 0 and j < N["liaisons"].size() and N["liaisons"][j].has("crete"):
@@ -909,17 +953,24 @@ func _habiller_village(i: int, plan: Node2D) -> void:
 	var o := -D * 0.5                # le plan des bateaux est à mi-profondeur
 	var cl := _sprite("res://art/cloture.png", 34.0)
 	if cl:
-		# la clôture, au fond du pré, répétée sur toute sa largeur et au-delà
+		# la clôture, au fond du pré, répétée sur toute sa largeur et au-delà,
+		# du côté où il n'y a pas de canal : un village au bout droit de la
+		# rangée la prolongeait vers la gauche, par-dessus le bief et le bac
+		# de l'ascenseur (9-1)
 		var w := cl.texture.get_width() * cl.scale.x
-		var x := x0 - 3.0 * w
-		while x + w < x1:                 # jamais au-dessus du canal
+		var debut := x0 - 3.0 * w if i == 0 else x0
+		var fin := x1 + 3.0 * w if i == gb.size() - 1 else x1
+		var x := debut
+		while x + w < fin:                 # jamais au-dessus du canal
 			var c := _sprite("res://art/cloture.png", 34.0)
 			c.position = Vector2(x + w * 0.5, y - 17.0) + o + D * 0.95
 			plan.add_child(c)
 			x += w * 0.98
 	var ar := _sprite("res://art/arbre.png", 210.0)
 	if ar:
-		ar.position = Vector2(x0 - 0.35 * U, y - 105.0) + o + D * 0.85
+		# l'arbre, du côté du pré où il n'y a pas de canal
+		var xa := x1 + 0.35 * U if i == gb.size() - 1 and i > 0 else x0 - 0.35 * U
+		ar.position = Vector2(xa, y - 105.0) + o + D * 0.85
 		plan.add_child(ar)
 	for b in [[x0 - 0.05 * U, 0.25, 30.0], [x1 + 0.05 * U, 0.3, 26.0], [(x0 + x1) * 0.5, 0.9, 22.0]]:
 		var bu := _sprite("res://art/buisson.png", b[2])
@@ -1474,6 +1525,7 @@ func vanne_sous(p: Vector2) -> int:
 
 func porte_sous(p: Vector2) -> int:
 	for i in portes:
+		if portes[i].sans_roue: continue
 		var c: Vector2 = portes[i].centre_roue()
 		if p.distance_to(c) < 0.95 * U: return i
 		if p.x > X(gl[i][0]) - 0.7 * U and p.x < X(gl[i][1]) + 0.7 * U and p.y > c.y - 0.6 * U and p.y < Y(BAS): return i
@@ -1542,6 +1594,10 @@ func _process(dt: float) -> void:
 		tuyaux_pompe[i].niveau_d = -1e9 if a_eau else Y(vue_niv[de])
 	for k in glacons:
 		glacons[k].y_eau = Y(vue_niv[int(N["objets"][k]["bassin"])]) + D.y
+	for k in bacs:
+		var ibc: int = bacs[k].ib
+		bacs[k].fond_vu = fonds_vus[ibc]
+		eaux[ibc].fond_y = Y(fonds_vus[ibc])
 	for k in tuyaux_chaudiere:
 		var ib := int(N["objets"][k]["bassin"])
 		var a_eau: bool = vue_niv[ib] > float(N["bassins"][ib]["fond"]) + 0.01
@@ -1606,7 +1662,8 @@ func _bas_ouvert(i: int) -> float:
 	return Y(maxf(vue_niv[i], vue_niv[i + 1]) + DEGAGEMENT)
 
 # Pose chaque vantail selon l'état e ; rend la main quand tous sont arrivés.
-func placer_vantaux(e: Dictionary) -> void:
+func placer_vantaux(e0: Dictionary) -> void:
+	var e := etat_vu(e0)
 	for i in portes:
 		portes[i].placer_vantail(_vantail_leve(e, i))
 	var bouge := true
@@ -1981,6 +2038,47 @@ func pomper(i: int) -> void:
 	_pompage = i
 	pompes[i].pomper()
 	await pompes[i].coup_fini
+
+# Un voyage du bac : le quai ouvert se ferme, le bac monte ou descend avec
+# son eau et son bateau (le treuil tourne, les contrepoids filent à l'envers),
+# puis le quai d'arrivée s'entrouvre ; l'écoulement qui suit égalise l'eau du
+# bac et celle du bief, et le vantail se lève quand elles sont égales.
+func voyage_bac(k: int, avant: Dictionary, apres: Dictionary) -> void:
+	var bc: Bac = bacs[k]
+	var ib := bc.ib
+	for q in [ib - 1, ib]:
+		portes[q].entrouvrir(false)
+		portes[q].placer_vantail(false)
+		portes[q].vanne_ouverte = false
+	var bouge := true
+	while bouge:
+		await get_tree().process_frame
+		bouge = portes[ib - 1].arrive() == false or portes[ib].arrive() == false
+	var f0 := Moteur.fond_de(N, avant, ib)
+	var f1 := Moteur.fond_de(N, apres, ib)
+	var n0: float = vue_niv[ib]
+	var T := 1.2 + 0.35 * absf(f1 - f0)
+	var t := 0.0
+	while t < T:
+		await get_tree().process_frame
+		var dt := get_process_delta_time()
+		t = minf(t + dt, T)
+		var p := t / T
+		var lisse := p * p * (3.0 - 2.0 * p)
+		var avant_f: float = fonds_vus[ib]
+		fonds_vus[ib] = lerpf(f0, f1, lisse)
+		vue_niv[ib] = n0 + (fonds_vus[ib] - f0)
+		bc.tourner((fonds_vus[ib] - avant_f) * 2.2)
+	# le quai d'arrivée s'entrouvre : l'eau passe dessous si elle n'est pas au
+	# même niveau
+	var q := ib - 1 if f1 < f0 else ib
+	portes[q].vanne_ouverte = true
+	portes[q].entrouvrir(true)
+
+func bac_sous(p: Vector2) -> int:
+	for k in bacs:
+		if bacs[k].sous(p): return k
+	return -1
 
 # Le brasero d'un glaçon s'allume (le coup lui-même verse la première part).
 func allumer(i: int) -> void:
