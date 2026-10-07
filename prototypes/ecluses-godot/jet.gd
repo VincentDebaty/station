@@ -22,6 +22,7 @@ var origine := Vector2.ZERO     # le milieu de la fente, côté bas de la porte
 var fente := 10.0               # la hauteur de la fente, en pixels
 var surface_bas := 0.0          # y de la surface d'en bas, sous le jet
 var fond_bas := 0.0             # y du fond d'en bas
+var depart_x := 0.0             # sous la porte : l'eau glisse de là jusqu'au bord du bloc
 var profondeur := Vector2.ZERO  # la largeur du canal en vue oblique (le D du canal)
 var _t := 0.0
 var _point_chute := Vector2.ZERO
@@ -93,6 +94,9 @@ func _lame() -> void:
 	var vx := (14.0 + 34.0 * force) * sens
 	var g := 900.0
 	var pts := PackedVector2Array()
+	# d'abord à plat, de sous la porte jusqu'au bord du bloc
+	if absf(origine.x - depart_x) > 2.0:
+		pts.append(Vector2(depart_x, origine.y))
 	var t := 0.0
 	var p := origine
 	while true:
@@ -102,7 +106,7 @@ func _lame() -> void:
 		t += 0.02
 	_point_chute = p
 	if pts.size() < 2: return
-	var ep := maxf(fente, 4.0) * (0.8 + 0.3 * force)
+	var ep := maxf(fente, 4.0) * (0.55 + 0.25 * force)
 	var D := profondeur
 	if D == Vector2.ZERO:
 		# de profil, pas de largeur à montrer : un simple ruban

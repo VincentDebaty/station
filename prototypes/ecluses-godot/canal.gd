@@ -1135,8 +1135,14 @@ func _jet(i: int, flux: float, dt: float) -> void:
 	jt.fente = po.fente()
 	# la fente : sous le vantail (au milieu de la porte en oblique, contre sa
 	# face côté bas de profil)
+	# L'eau sort sous la porte, glisse sur le dessus du bloc du seuil, et tombe
+	# de son BORD dans le bassin d'en bas — partie du milieu de la porte, la
+	# nappe tombait devant la face du bloc (Vincent : « la cascade est
+	# décalée »).
 	var x := X(gl[i][0] + gl[i][1]) * 0.5 if D != Vector2.ZERO else (X(gl[i][1]) - 9.0 if sens > 0 else X(gl[i][0]) + 9.0)
-	jt.origine = Vector2(x + sens * 4.0, po.y_seuil - jt.fente * 0.5)
+	var bord_x := X(gl[i][1]) if sens > 0 else X(gl[i][0])
+	jt.depart_x = x
+	jt.origine = Vector2(bord_x, po.y_seuil - maxf(jt.fente, 4.0) * 0.4)
 	jt.surface_bas = eaux[l].hauteur_a(x + sens * 60.0)
 	jt.fond_bas = eaux[l].fond_y
 	if jt.force <= 0.03: return
