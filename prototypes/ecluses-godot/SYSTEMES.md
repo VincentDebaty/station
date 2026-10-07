@@ -49,6 +49,7 @@ Tout système nouveau se range dans l'une de ces familles :
 | 14 | Ascenseur à bateaux | un coup | monter un bateau sans dépenser d'eau | à écrire | moyen |
 | 15 | Bassin d'épargne | une vanne latérale | garder de l'eau pour plus tard | à écrire | fort |
 | 18 | Glaçon et brasero (gel, feu) | allumer une fois, puis le temps passe | quand allumer : l'eau arrive en trois coups, là où elle est posée | **écrite** (chap. 6, niveau 6-1, nuit du 7 au 8 octobre 2026) | moyen |
+| 19 | Orage (tempête) | aucun, ou attendre | profiter de l'eau qui tombe sans laisser monter le bief du village | **écrit** (chap. 7, niveau 7-1, nuit du 7 au 8 octobre 2026) | faible |
 | 17 | Chaudière (vapeur) | un coup = un volume qui part en fumée | quand se débarrasser d'une eau qui menace le village | **écrite** (chap. 5, niveau 5-1, nuit du 7 au 8 octobre 2026) | faible |
 
 Les **objectifs** ne déplacent pas l'eau mais s'y ajoutent : bateau à
@@ -187,6 +188,21 @@ trois planches exactement, sinon le village est inondé.
   « allumer, attendre, puis jouer normalement » : pas de décision. Et le
   rendu d'une glace dans le canal, avec les vantaux qui la traversent,
   promettait des défauts graphiques.
+
+### 19. L'orage — la tempête (nuit du 7 au 8 octobre 2026)
+- **On voit :** la lumière baisse, de gros nuages gris en haut, une bruine
+  qui redouble en averse à chaque coup, des ronds sur l'eau, un éclair de
+  temps en temps. Le sablier est toujours là : attendre, c'est laisser
+  pleuvoir.
+- **La règle :** « pluie » dans le niveau : chaque coup, chaque bassin monte
+  d'autant (pas la mer, pas le village, où elle s'infiltre). C'est la pluie
+  qu'on avait écartée (« le joueur ne peut ni la prévoir ni la contrer ») :
+  régulière et connue d'avance, elle se prévoit.
+- **Le niveau 7-1 :** le bateau rouge doit monter, et il manque un quart
+  d'unité au bief amont : il faut attendre une averse (requis : attendre).
+  Mais chaque coup monte aussi le bief aval vers le haut de la levée du
+  village ; la solution finit à 3,98 pour une levée à 4. Neuf coups de trop
+  et le village est inondé. Par 6.
 
 ### Écartés pour l'instant
 - **Moulin, roue à aubes** qui actionnerait autre chose quand l'eau y passe :

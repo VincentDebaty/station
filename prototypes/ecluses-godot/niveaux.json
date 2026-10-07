@@ -6,8 +6,9 @@
     {"n": 4, "titre": "La pompe", "decor": "campagne", "resume": "Chaque coup de pompe fait monter un peu d'eau du bas vers le haut. La seule eau qui remonte, et elle coûte un coup."},
     {"n": 5, "titre": "La chaudière", "decor": "campagne", "resume": "Le feu change l'eau en vapeur : chaque coup de chaudière fait baisser le bief. La seule eau qui s'en va sans la mer."},
     {"n": 6, "titre": "La glace et le feu", "decor": "campagne", "resume": "Le brasero fait fondre le gros glaçon en trois coups, et chacun verse sa part d'eau là où il est posé. Le feu prend son temps : à toi de choisir quand l'allumer."},
-    {"n": 7, "titre": "Les canaux", "decor": "collines", "resume": "Creuser les digues, puis lâcher l'eau et regarder où elle va."},
-    {"n": 8, "titre": "Le fleuve", "decor": "estuaire", "resume": "L'eau arrive toute seule, à chaque coup. Il faut la conduire avant qu'elle déborde."}
+    {"n": 7, "titre": "L'orage", "decor": "campagne", "resume": "Il pleut à chaque coup, dans tous les bassins. L'eau qui manquait arrive toute seule, mais elle ne s'arrête pas quand il y en a assez."},
+    {"n": 8, "titre": "Les canaux", "decor": "collines", "resume": "Creuser les digues, puis lâcher l'eau et regarder où elle va."},
+    {"n": 9, "titre": "Le fleuve", "decor": "estuaire", "resume": "L'eau arrive toute seule, à chaque coup. Il faut la conduire avant qu'elle déborde."}
   ],
   "niveaux": [
     {
@@ -221,9 +222,34 @@
         {"de": 2, "vers": 0, "tirant": 1}
       ]
     },
-    {
+{
       "id": "7-1",
       "chapitre": 7,
+      "titre": "L'orage",
+      "mode": "pas",
+      "par": 6,
+      "conseil": "Il pleut : à chaque coup, tous les bassins montent un peu. La pluie aide le bateau rouge à monter, mais le bief aval touche bientôt le haut de la levée du village.",
+      "pluie": 0.25,
+      "requis": ["attendre"],
+      "bassins": [
+        {"type": "village", "fond": 3, "largeur": 3, "nom": "village"},
+        {"type": "bief", "fond": 0, "largeur": 3, "niveau": 2, "nom": "bief aval"},
+        {"type": "sas", "fond": 0, "largeur": 2, "niveau": 2, "nom": "sas"},
+        {"type": "bief", "fond": 3, "largeur": 6, "niveau": 3.6, "nom": "bief amont"}
+      ],
+      "liaisons": [
+        {"type": "mur", "crete": 4},
+        {"type": "porte", "seuil": 0, "crete": 6},
+        {"type": "porte", "seuil": 3, "crete": 6}
+      ],
+      "bateaux": [
+        {"de": 1, "vers": 3, "tirant": 1},
+        {"de": 3, "vers": 1, "tirant": 1}
+      ]
+    },
+    {
+      "id": "8-1",
+      "chapitre": 8,
       "titre": "Le premier sillon",
       "mode": "chantier",
       "par": 4,
@@ -241,8 +267,8 @@
       "bateaux": []
     },
     {
-      "id": "7-2",
-      "chapitre": 7,
+      "id": "8-2",
+      "chapitre": 8,
       "titre": "Les rizières",
       "mode": "chantier",
       "par": 5,
@@ -264,8 +290,8 @@
       "bateaux": []
     },
     {
-      "id": "7-3",
-      "chapitre": 7,
+      "id": "8-3",
+      "chapitre": 8,
       "titre": "Remettre à flot",
       "mode": "chantier",
       "par": 6,
@@ -289,8 +315,8 @@
       ]
     },
     {
-      "id": "8-1",
-      "chapitre": 8,
+      "id": "9-1",
+      "chapitre": 9,
       "titre": "Le fleuve monte",
       "mode": "pas",
       "par": 5,
@@ -311,8 +337,8 @@
       ]
     },
     {
-      "id": "8-2",
-      "chapitre": 8,
+      "id": "9-2",
+      "chapitre": 9,
       "titre": "Le déversoir",
       "mode": "pas",
       "par": 8,
@@ -337,8 +363,8 @@
       ]
     },
     {
-      "id": "8-3",
-      "chapitre": 8,
+      "id": "9-3",
+      "chapitre": 9,
       "titre": "La crue",
       "mode": "pas",
       "par": 6,

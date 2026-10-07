@@ -47,7 +47,7 @@ var _sure: Control      # la zone sûre : tout ce qu'on touche ou qu'on lit y re
 # Le niveau sur lequel le jeu s'ouvre : celui qu'on est en train d'essayer
 # (Vincent, 7 octobre 2026 : « quand tu déploies sur l'iPhone, tu proposes le
 # nouveau niveau à chaque fois »). À changer à chaque nouveauté.
-const NIVEAU_EN_TEST := "6-1"
+const NIVEAU_EN_TEST := "7-1"
 
 func _ready() -> void:
 	_tous = JSON.parse_string(FileAccess.get_file_as_string("res://niveaux.json"))["niveaux"]

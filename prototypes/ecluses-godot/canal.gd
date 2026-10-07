@@ -83,6 +83,7 @@ var tuyaux_chaudiere := {} # objet -> Aqueduc, le tuyau qui descend le long du m
 var _chauffe := -1    # la chaudière en train de chauffer, pendant l'écoulement
 var glacons := {}     # objet -> Glacon, le bloc de glace et son brasero, sur la berge du fond
 var _fontes := {}     # objet -> [part avant, part après] : le glaçon qui fond pendant l'écoulement
+var orage: Orage = null # la pluie, les nuages et les éclairs d'un niveau à « pluie »
 var sommets_fond := [] # le haut du mur du fond de chaque bassin, en unités
 var rigoles := {}     # liaison -> Rigole, la berge de terre que l'on creuse
 var mares := {}       # bassin -> Mare, la cuvette naturelle sur le pré
@@ -439,6 +440,10 @@ func construire(niveau: Dictionary, e: Dictionary) -> void:
 		flotte.add_child(bt)
 		bateaux.append(bt)
 		bt.allumer()
+	if N.get("pluie"):
+		orage = Orage.new()
+		add_child(orage)
+		orage.preparer(self)
 	positions = e["bateaux"].duplicate()
 	_preparer_places()
 	for k in bateaux.size():
@@ -1699,6 +1704,9 @@ func _avancer_ecoulement(dt: float) -> void:
 		tch.couler(fc * 0.8, 1)
 		if fc > 0.1 and randf() < 0.3:
 			eaux[ibc].impulsion(tch.chemin[0].x - D.x * 0.5, 0.25 * fc, 40.0)
+	if orage:
+		# chaque coup, l'averse redouble puis retombe en bruine
+		orage.averse = clampf(minf(p * 4.0, (1.0 - p) * 2.0), 0.0, 1.0)
 	for k in _fontes:
 		# le bloc rapetisse et son eau coule pendant tout l'écoulement
 		var gl_: Glacon = glacons[k]
@@ -1707,6 +1715,7 @@ func _avancer_ecoulement(dt: float) -> void:
 		if gl_.coule > 0.2 and randf() < 0.25:
 			eaux[int(N["objets"][k]["bassin"])].impulsion(gl_.base.x - D.x * 0.5, randf_range(-0.4, 0.6) * gl_.coule, 20.0)
 	if p >= 1.0:
+		if orage: orage.averse = 0.0
 		for k in _fontes:
 			glacons[k].coule = 0.0
 			glacons[k].reste = _fontes[k][1]
