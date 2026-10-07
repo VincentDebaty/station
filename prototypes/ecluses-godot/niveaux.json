@@ -14,8 +14,9 @@
     {"n": 12, "titre": "Le moulin", "decor": "campagne", "resume": "L'eau qui passe par la vanne du moulin fait tourner sa roue et remplit des sacs de farine. Mais c'est la même eau que celle des bateaux."},
     {"n": 13, "titre": "Le castor", "decor": "campagne", "resume": "Un castor rebouche la rigole, une branche à chaque coup où l'on n'y creuse pas. Ce qui est commencé doit être fini d'une traite."},
     {"n": 14, "titre": "Le flotteur", "decor": "campagne", "resume": "Une porte à flotteur, comme le robinet d'une chasse d'eau : on l'ouvre, et l'eau s'arrête toute seule à la bonne hauteur."},
-    {"n": 15, "titre": "Les canaux", "decor": "collines", "resume": "Creuser les digues, puis lâcher l'eau et regarder où elle va."},
-    {"n": 16, "titre": "Le fleuve", "decor": "estuaire", "resume": "L'eau arrive toute seule, à chaque coup. Il faut la conduire avant qu'elle déborde."}
+    {"n": 15, "titre": "Au feu !", "decor": "campagne", "resume": "Une grange brûle au bord du canal. Il faut y faire monter l'eau, jusqu'au trait bleu, sans oublier les bateaux."},
+    {"n": 16, "titre": "Les canaux", "decor": "collines", "resume": "Creuser les digues, puis lâcher l'eau et regarder où elle va."},
+    {"n": 17, "titre": "Le fleuve", "decor": "estuaire", "resume": "L'eau arrive toute seule, à chaque coup. Il faut la conduire avant qu'elle déborde."}
   ],
   "niveaux": [
     {
@@ -429,9 +430,32 @@
         {"de": 3, "vers": 0, "tirant": 1}
       ]
     },
-    {
+{
       "id": "15-1",
       "chapitre": 15,
+      "titre": "Au feu !",
+      "mode": "pas",
+      "par": 7,
+      "conseil": "La grange brûle ! Fais monter le bief aval par-dessus la levée, jusqu'au trait bleu de la cour : l'eau éteindra le feu. Et les deux bateaux doivent quand même passer.",
+      "bassins": [
+        {"type": "champ", "fond": 2, "largeur": 3, "cible": 0.5, "nom": "cour de la ferme"},
+        {"type": "bief", "fond": 0, "largeur": 4, "niveau": 1, "nom": "bief aval"},
+        {"type": "sas", "fond": 0, "largeur": 2, "niveau": 2, "nom": "sas"},
+        {"type": "bief", "fond": 3, "largeur": 6, "niveau": 5.5, "nom": "bief amont"}
+      ],
+      "liaisons": [
+        {"type": "mur", "crete": 2},
+        {"type": "porte", "seuil": 0, "crete": 6},
+        {"type": "porte", "seuil": 3, "crete": 6}
+      ],
+      "bateaux": [
+        {"de": 1, "vers": 3, "tirant": 1},
+        {"de": 3, "vers": 1, "tirant": 1}
+      ]
+    },
+    {
+      "id": "16-1",
+      "chapitre": 16,
       "titre": "Le premier sillon",
       "mode": "chantier",
       "par": 4,
@@ -449,8 +473,8 @@
       "bateaux": []
     },
     {
-      "id": "15-2",
-      "chapitre": 15,
+      "id": "16-2",
+      "chapitre": 16,
       "titre": "Les rizières",
       "mode": "chantier",
       "par": 5,
@@ -472,8 +496,8 @@
       "bateaux": []
     },
     {
-      "id": "15-3",
-      "chapitre": 15,
+      "id": "16-3",
+      "chapitre": 16,
       "titre": "Remettre à flot",
       "mode": "chantier",
       "par": 6,
@@ -497,8 +521,8 @@
       ]
     },
     {
-      "id": "16-1",
-      "chapitre": 16,
+      "id": "17-1",
+      "chapitre": 17,
       "titre": "Le fleuve monte",
       "mode": "pas",
       "par": 5,
@@ -519,8 +543,8 @@
       ]
     },
     {
-      "id": "16-2",
-      "chapitre": 16,
+      "id": "17-2",
+      "chapitre": 17,
       "titre": "Le déversoir",
       "mode": "pas",
       "par": 8,
@@ -545,8 +569,8 @@
       ]
     },
     {
-      "id": "16-3",
-      "chapitre": 16,
+      "id": "17-3",
+      "chapitre": 17,
       "titre": "La crue",
       "mode": "pas",
       "par": 6,

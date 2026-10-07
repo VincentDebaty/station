@@ -54,6 +54,7 @@ Tout système nouveau se range dans l'une de ces familles :
 | 21 | Moulin | la vanne du moulin (une porte) | quand faire passer l'eau par la roue, sachant que les bateaux en ont besoin | **écrit** (chap. 12, niveau 12-1, nuit du 7 au 8 octobre 2026) | moyen |
 | 23 | Castor | creuser, d'une traite | ne pas laisser un travail en plan | **écrit** (chap. 13, niveau 13-1, nuit du 7 au 8 octobre 2026) | faible |
 | 22 | Porte à flotteur | la roue ; le flotteur referme | une eau dosée toute seule | **écrite** (chap. 14, niveau 14-1, nuit du 7 au 8 octobre 2026) | moyen |
+| 24 | Au feu ! (champ à abreuver) | aucun | faire passer de l'eau en plus vers la ferme | **écrit** (chap. 15, niveau 15-1, nuit du 7 au 8 octobre 2026) | faible |
 | 17 | Chaudière (vapeur) | un coup = un volume qui part en fumée | quand se débarrasser d'une eau qui menace le village | **écrite** (chap. 5, niveau 5-1, nuit du 7 au 8 octobre 2026) | faible |
 
 Les **objectifs** ne déplacent pas l'eau mais s'y ajoutent : bateau à
@@ -329,6 +330,19 @@ d'écluses, le lien ne raccourcit ni n'allonge jamais la meilleure solution
   divise par deux les parties gagnées. La leçon : finir ce qu'on a commencé.
 - **Le niveau 13-1 :** trois coups de pelle d'affilée pour vider l'étang dans
   le bief amont et le sas, deux bateaux qui se croisent. Par 8.
+
+### 24. Au feu ! — éteindre une grange (nuit du 7 au 8 octobre 2026)
+- **On voit :** au bout du canal, une cour de ferme au niveau du pré (clôture,
+  arbre), une grange rouge en flammes, fumée noire ; un trait bleu en
+  pointillés avec une goutte : la hauteur que l'eau doit atteindre. L'eau
+  passe la levée, monte dans la cour, et les flammes s'éteignent dans la
+  vapeur ; la grange garde des traces de suie.
+- **La règle :** rien de neuf au moteur — c'est le « champ » à abreuver
+  (`cible`), qui existait sans être dessiné. Le niveau est gagné quand les
+  bateaux sont arrivés ET le feu éteint.
+- **Le niveau 15-1 :** deux bateaux qui se croisent, et il faut deux sas
+  d'eau en plus pour noyer la cour (7 coups, 5 sans le feu). Au hasard, deux
+  parties sur cent.
 
 ### Écartés pour l'instant
 - **Moulin, roue à aubes** qui actionnerait autre chose quand l'eau y passe :

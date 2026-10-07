@@ -353,6 +353,15 @@ travaille ; il dessine lui-même les branches dans la rigole.
 Same art style as the attached image. A cute cartoon beaver sitting upright, seen from the side and facing RIGHT, holding a small leafy branch in its front paws, big friendly eye, two large white front teeth, round brown body with a lighter belly, flat dark scaly tail lying on the ground behind it (to the left), thin dark outline, soft cel shading. Square image, the beaver centred and filling about 85% of the frame, isolated on a transparent background, no ground, no shadow.
 ```
 
+#### `art/grange.png` — la grange du chapitre 15 (non branchée)
+
+Pour plus tard : le jeu dessine encore la grange, les flammes, la fumée et
+la suie. Si l'image arrive, il faudra la brancher dans ferme.gd.
+
+```text
+Same art style as the attached image. A small cute red wooden barn seen exactly from the front, white cross-braced double door in the middle, dark grey slate roof with two slopes, thin dark outline, soft cel shading, no fire, no smoke. Wide image, ratio about 3:2, the barn centred and filling about 85% of the frame, isolated on a transparent background, no ground, no shadow.
+```
+
 ### Plus tard, peut-être
 
 - `premier_plan.png` : un buisson flou et des marguerites au premier plan,

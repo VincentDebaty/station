@@ -88,6 +88,7 @@ var marees := {}      # bassin -> Maree : l'échelle, les algues et la flèche d
 var bacs := {}        # objet -> Bac : le bac d'un ascenseur à bateaux, ses câbles et sa tête
 var siphons := {}     # objet -> Siphon : son tuyau sur la berge du fond, sa roue d'amorçage
 var flotteurs := {}   # porte -> Flotteur : la porte que l'eau ouvre toute seule
+var fermes := {}      # bassin -> Ferme : la grange en feu de la cour (un « champ » à abreuver)
 var moulins := {}     # porte -> Moulin : la roue à aubes, la maison du meunier et ses sacs
 var _mouture := []    # [farine avant, farine après] pendant l'écoulement
 var _declenches := []  # portes à flotteur qui s'ouvrent pendant ce coup
@@ -204,6 +205,15 @@ func construire(niveau: Dictionary, e0: Dictionary) -> void:
 		if B[i]["type"] == "village":
 			_habiller_village(i, flotte)
 			_maisons(i, flotte)
+		if B[i]["type"] == "champ" and B[i].has("cible"):
+			_habiller_village(i, flotte)
+			var fe := Ferme.new()
+			var o := -D * 0.5
+			var f := float(B[i]["fond"])
+			fe.preparer(self, i, Vector2(X(gb[i][0] + gb[i][1]) * 0.5, Y(f)) + o + D * 0.75, Y(f + float(B[i]["cible"])) + D.y * 0.5 + o.y,
+				X(gb[i][0]) + 6.0 + D.x * 0.5 + o.x, X(gb[i][1]) - 6.0 + D.x * 0.5 + o.x, float(e["niv"][i]) - f >= float(B[i]["cible"]) - 1e-3)
+			flotte.add_child(fe)
+			fermes[i] = fe
 	var vantaux: Node2D = null
 	if D != Vector2.ZERO:
 		_surface_avant = Node2D.new()
@@ -505,6 +515,7 @@ func construire(niveau: Dictionary, e0: Dictionary) -> void:
 		add_child(aq)
 		aqueducs[i] = aq
 		portes[i].y_bas_tige = aq.haut_logement()
+	for i in fermes: add_child(fermes[i].marque)
 	_reperes = Node2D.new()
 	_reperes.position = D * 0.5        # les bouées voguent avec les bateaux
 	_reperes.z_index = 3
@@ -711,10 +722,15 @@ func _murs_du_fond() -> void:
 			# derrière un pré, la prairie continue (rien à dessiner, le décor
 			# est là) ; derrière un étang, une berge de terre qui le tient,
 			# coiffée d'herbe
-			var haut_b := f + 0.9 if b["type"] == "village" else float(b.get("niveau", f)) + 0.6
+			var haut_b := f + 0.9 if b["type"] in ["village", "champ"] else float(b.get("niveau", f)) + 0.6
 			sommets.append(haut_b)
 			sommets_fond.append(haut_b)
-			_poly(_quad(mx0 - 8, Y(haut_b), mx1 + 8, Y(f)), terre_fond if b["type"] != "village" else herbe_fond)
+			# la cour d'une ferme : rien au fond, le pré continue (une haie
+			# flottait au-dessus de la cour, 15-1) ; la clôture la borde
+			if b["type"] == "champ":
+				sommets[sommets.size() - 1] = f
+				continue
+			_poly(_quad(mx0 - 8, Y(haut_b), mx1 + 8, Y(f)), terre_fond if not (b["type"] in ["village", "champ"]) else herbe_fond)
 			_bande_herbe(mx0 - 10, mx1 + 10, Y(haut_b) + 2, 26.0)
 			continue
 		sommets.append(sommet)
@@ -748,7 +764,7 @@ func _murs_du_fond() -> void:
 		if D != Vector2.ZERO and l["type"] == "digue": continue
 		# la levée d'une mare : rien derrière elle, c'est le pré (le morceau de
 		# terre dépassait en carré au-dessus de la rive, 10-1)
-		if D != Vector2.ZERO and l["type"] == "mur" and (B[i]["type"] == "reservoir" or B[i + 1]["type"] == "reservoir"): continue
+		if D != Vector2.ZERO and l["type"] == "mur" and (B[i]["type"] in ["reservoir", "champ"] or B[i + 1]["type"] in ["reservoir", "champ"]): continue
 		var c := float(l.get("max", l.get("crete", maxf(float(B[i]["fond"]), float(B[i + 1]["fond"])))))
 		var bas := minf(float(B[i]["fond"]), float(B[i + 1]["fond"]))
 		# aussi haut que le plus bas des deux murs voisins : derrière un mur
@@ -791,7 +807,7 @@ func _dessous_des_bassins() -> void:
 			continue
 		if _naturel(i):
 			# un pré (le village) ou un fond de vase (l'étang)
-			_poly(fond_pts, null, PackedColorArray([Color("#86b84f"), Color("#86b84f"), Color("#5f8f37"), Color("#5f8f37")]) if B[i]["type"] == "village"
+			_poly(fond_pts, null, PackedColorArray([Color("#86b84f"), Color("#86b84f"), Color("#5f8f37"), Color("#5f8f37")]) if B[i]["type"] in ["village", "champ"]
 				else PackedColorArray([Color("#6e5130"), Color("#6e5130"), Color("#4f3920"), Color("#4f3920")]))
 			continue
 		_face(fond_pts, PackedVector2Array([Vector2(0, prof), Vector2(f1 - f0, prof), Vector2(f1 - f0, 0), Vector2(0, 0)]), Color(1.04, 1.0, 0.92), sol)
@@ -1224,11 +1240,14 @@ func _coupe_avant() -> void:
 				# digue d'une rigole est dessinée par la rigole)
 				if N["liaisons"][i]["type"] == "digue" or B[i]["type"] == "reservoir" or B[i + 1]["type"] == "reservoir":
 					# la butte de la rigole, ou la levée de la mare : de la terre
-					# jusqu'au pré
-					_poly(_quad(X(gl[i][0]), Y(_rive()), X(gl[i][1]), Y(bas)), terre)
+					# jusqu'au pré (et jusqu'à la terre d'en dessous du radier)
+					_poly(_quad(X(gl[i][0]), Y(_rive()), X(gl[i][1]), Y(bas - 0.32)), terre)
 					_herbe(X(gl[i][0]), X(gl[i][1]), Y(_rive()))
 				else:
-					_poly(PackedVector2Array([Vector2(X(gl[i][0]) - 0.15 * U, Y(bas)), Vector2(X(gl[i][0]) + 0.05 * U, Y(c)), Vector2(X(gl[i][1]) - 0.05 * U, Y(c)), Vector2(X(gl[i][1]) + 0.15 * U, Y(bas))]), terre)
+					# (jusqu'à la terre d'en dessous, sous le radier : arrêtée au fond,
+					# elle laissait un jour de 0,32 unité où l'on voyait le pré du
+					# panorama, une bande verte au pied de la levée)
+					_poly(PackedVector2Array([Vector2(X(gl[i][0]) - 0.15 * U, Y(bas)), Vector2(X(gl[i][0]) + 0.05 * U, Y(c)), Vector2(X(gl[i][1]) - 0.05 * U, Y(c)), Vector2(X(gl[i][1]) + 0.15 * U, Y(bas)), Vector2(X(gl[i][1]) + 0.15 * U, Y(bas - 0.32)), Vector2(X(gl[i][0]) - 0.15 * U, Y(bas - 0.32))]), terre)
 					_herbe(X(gl[i][0]), X(gl[i][1]), Y(c) + 3.0)
 			else:
 				_poly(_quad(X(gl[i][0]), Y(c), X(gl[i][1]), Y(bas - 0.32)), pierre)

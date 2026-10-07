@@ -615,7 +615,7 @@ func _montrer_fin() -> void:
 func _jouable(n: Dictionary) -> bool:
 	if n["mode"] != "pas": return false
 	for b in n["bassins"]:
-		if not (b["type"] in ["bief", "sas", "reservoir", "village", "mer", "bac"]): return false
+		if not (b["type"] in ["bief", "sas", "reservoir", "village", "mer", "bac", "champ"]): return false
 	for l in n["liaisons"]:
 		if not (l["type"] in ["porte", "libre", "hausse", "mur", "digue", "quai"]): return false
 	return true
@@ -808,6 +808,22 @@ func _demo() -> void:
 		solution = Array(OS.get_environment("ECLUSES_COUPS").split(",")).map(func(x): return {"type": x.split(":")[0], "i": int(x.split(":")[1])} if ":" in x else ({"type": x} if x.length() > 3 else ({"type": "vanne", "i": int(x.substr(1))} if x.begins_with("v") else ({"type": "creuser", "i": int(x.substr(1))} if x.begins_with("c") else ({"type": "pomper", "i": int(x.substr(1))} if x.begins_with("P") else {"type": "porte", "i": int(x)})))))
 	await get_tree().create_timer(1.2).timeout
 	await _photo("00-repos")
+	# ECLUSES_SONDE="x,y" (pixels de l'écran) : liste les polygones dessinés
+	# sous ce point, pour retrouver d'où vient un défaut
+	if OS.get_environment("ECLUSES_SONDE") != "":
+		var xy := OS.get_environment("ECLUSES_SONDE").split(",")
+		var ecran := Vector2(float(xy[0]), float(xy[1]))
+		var monde := get_viewport().get_canvas_transform().affine_inverse() * ecran
+		print("sonde ", ecran, " → monde ", monde)
+		var pile := [canal]
+		while not pile.is_empty():
+			var nd: Node = pile.pop_back()
+			for c in nd.get_children(): pile.append(c)
+			if nd is Polygon2D and nd.visible:
+				var p2: Polygon2D = nd
+				var loc := p2.get_global_transform().affine_inverse() * monde
+				if p2.polygon.size() >= 3 and Geometry2D.is_point_in_polygon(loc, p2.polygon):
+					print("  ", p2.get_path(), " couleur ", p2.color, " ", p2.polygon)
 	if OS.get_environment("ECLUSES_LISTE") != "":
 		_ouvrir_liste()
 		await get_tree().create_timer(0.3).timeout
