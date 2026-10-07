@@ -53,12 +53,13 @@ var voile: Eau = null
 # roues sont les commandes, il faut voir quand elles répondent).
 var actif := true
 # PORTE À VANNE (chapitre 2, 7 octobre 2026) : une seconde commande, la vanne
-# de l'aqueduc, que l'on tourne par un petit volant d'acier sur le pilier
+# de l'aqueduc, que l'on tourne par un petit volant de laiton sur le pilier
 # avant, relié à l'aqueduc par sa tige. La grande roue rouge lève la porte.
 var a_vanne := false
 var _angle_vanne := 0.0
 var _rotation_vanne := 0.0
 var _secousse := 0.0         # la grande roue refuse : la porte est tenue par l'eau
+var y_bas_tige := 0.0        # le bas de la tige du volant : le logement de la vanne (canal)
 # La projection oblique : le décalage du plan du fond (zéro : la vue de profil)
 # et la couche, avant l'eau, où poser le vantail.
 var oblique := Vector2.ZERO
@@ -151,16 +152,19 @@ func _construire_profil(mp: ShaderMaterial, abas: float, bois: Shader) -> void:
 		filet.polygon = _quad(gx0 - 16, y_portique - 0.2 * u, gx1 + 16, y_portique - 0.2 * u + 4)
 		add_child(filet)
 
-# Le volant de la vanne : acier bleuté, plus petit que la roue rouge, sa tige
-# descend le long du pilier avant jusqu'au seuil (l'aqueduc passe dessous).
+# Le volant de la vanne : en laiton, comme sa tige et la plaque de la vanne
+# dans le tuyau (l'acier bleuté se confondait avec le tuyau, Vincent), plus
+# petit que la roue rouge ; sa tige descend jusqu'au logement de la vanne.
 # Quand la grande roue refuse, il s'illumine.
 func _dessiner_volant() -> void:
 	var c := centre_vanne()
 	var r := 0.24 * u
-	var acier := Color("#4f6d86")
-	var sombre := Color("#26323d")
-	roue.draw_line(c, Vector2(c.x, y_seuil), sombre, 5.0, true)
-	roue.draw_line(c, Vector2(c.x, y_seuil), Color("#6d7a85"), 2.5, true)
+	var acier := Color("#d6a83a")      # laiton : la couleur de tout le système de la vanne
+	var sombre := Color("#5a3f12")
+	# la tige descend jusqu'au logement de la vanne, dans le tuyau sous le fond
+	var bas := y_bas_tige if y_bas_tige > 0.0 else y_seuil
+	roue.draw_line(c, Vector2(c.x, bas), sombre, 5.0, true)
+	roue.draw_line(c, Vector2(c.x, bas), Color("#b8892c"), 2.5, true)
 	if _secousse > 0.0:
 		var a := clampf(_secousse / 0.4, 0.0, 1.0) * (0.65 + 0.35 * sin(_secousse * 14.0))
 		roue.draw_circle(c, r + 11.0, Color(1.0, 0.85, 0.3, 0.6 * a))
@@ -174,10 +178,10 @@ func _dessiner_volant() -> void:
 		roue.draw_line(c, c + d * (r - 2.0), acier, 2.2, true)
 		roue.draw_circle(c + d * (r + 3.0), 2.8, sombre)
 	roue.draw_circle(c, 5.0, sombre)
-	roue.draw_circle(c, 2.8, Color("#c9d2d8"))
+	roue.draw_circle(c, 2.8, Color("#f4e2a8"))
 	# la vanne ouverte : un filet bleu sur la tige
 	if vanne_ouverte:
-		roue.draw_line(c + Vector2(0, r + 6.0), Vector2(c.x, y_seuil), Color(0.4, 0.75, 0.9, 0.8), 2.0, true)
+		roue.draw_line(c + Vector2(0, r + 6.0), Vector2(c.x, bas), Color(0.4, 0.75, 0.9, 0.8), 2.0, true)
 
 # --- La porte en projection oblique (branche ecluses-oblique) -----------------
 # Vincent, 7 octobre 2026 : tout est vu de profil, sauf les écluses, dans un

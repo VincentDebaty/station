@@ -234,6 +234,7 @@ func construire(niveau: Dictionary, e: Dictionary) -> void:
 		aq.vanne = 1.0 if aq.ouverte else 0.0
 		add_child(aq)
 		aqueducs[i] = aq
+		portes[i].y_bas_tige = aq.haut_logement()
 	_reperes = Node2D.new()
 	_reperes.position = D * 0.5        # les bouées voguent avec les bateaux
 	_reperes.z_index = 3

@@ -170,16 +170,38 @@ func _draw() -> void:
 			if b.y < niveau: b = b.lerp(a, (niveau - b.y) / (a.y - b.y))
 			draw_line(a, b, Color(0.13, 0.42, 0.54), rayon * 2.0 - 3.0, true)
 
+# Le point du tuyau sous la porte, où se tient la vanne.
+func haut_vanne_point() -> Vector2:
+	return (chemin[1] + chemin[2]) * 0.5
+
+# Le haut du logement de la vanne : là où arrive la tige du volant.
+func haut_logement() -> float:
+	return haut_vanne_point().y - rayon - (rayon * 2.0 + 8.0) - 4.0
+
 func _dessiner_dessus() -> void:
-	# la vanne : une plaque de fer au milieu du conduit, sous la porte, qui se
-	# lève dans un logement quand on tourne la roue
+	# La vanne : une plaque de laiton, de la couleur du volant qui la
+	# commande, au milieu du conduit sous la porte, dans un logement de pierre
+	# sombre au-dessus du tuyau. Fermée, elle barre le tuyau ; ouverte, elle
+	# monte dans son logement. (Vincent, 7 octobre 2026 : la petite plaque de
+	# 7 px « n'est pas claire pour le joueur ».)
 	if chemin.size() >= 3:
-		var m := (chemin[1] + chemin[2]) * 0.5
-		var h := rayon * 2.0 + 2.0
-		_dessus.draw_rect(Rect2(m.x - 5.0, m.y - rayon - h - 2.0, 10.0, h + 2.0), Color("#5e554b"))
-		var y := m.y - rayon - 1.0 - vanne * h
-		_dessus.draw_rect(Rect2(m.x - 3.5, y, 7.0, h), Color("#2e2f33"))
-		_dessus.draw_rect(Rect2(m.x - 3.5, y, 7.0, 3.0), Color("#6d6f75"))
+		var m := haut_vanne_point()
+		var h := rayon * 2.0 + 8.0
+		var larg := 20.0
+		# le logement, au-dessus du tuyau
+		_dessus.draw_rect(Rect2(m.x - larg * 0.5 - 4.0, m.y - rayon - h - 4.0, larg + 8.0, h + 6.0), Color("#3b342d"))
+		_dessus.draw_rect(Rect2(m.x - larg * 0.5 - 2.0, m.y - rayon - h - 2.0, larg + 4.0, h + 2.0), Color("#1d1a17"))
+		# la plaque, qui monte avec l'ouverture
+		var y := m.y - rayon - 3.0 - vanne * (h - 2.0)
+		_dessus.draw_rect(Rect2(m.x - larg * 0.5, y, larg, h), Color("#5a3f12"))
+		_dessus.draw_rect(Rect2(m.x - larg * 0.5 + 2.0, y + 2.0, larg - 4.0, h - 4.0), Color("#d6a83a"))
+		_dessus.draw_line(Vector2(m.x - larg * 0.5 + 3.0, y + 3.0), Vector2(m.x - larg * 0.5 + 3.0, y + h - 4.0), Color(1, 1, 1, 0.35), 1.5)
+		# deux rivets et une poignée
+		for dy in [0.25, 0.75]:
+			_dessus.draw_circle(Vector2(m.x, y + h * dy), 2.0, Color("#5a3f12"))
+		# la tige, qui remonte vers le volant
+		_dessus.draw_line(Vector2(m.x, y), Vector2(m.x, m.y - rayon - h - 4.0), Color("#b8892c"), 3.0)
+
 	# les brides : un collier de fer boulonné au milieu de chaque tronçon droit
 	# (lot 7 : des raccords plus épais, comme le reste du décor) ; aux coudes,
 	# en biais, elles faisaient bizarre
