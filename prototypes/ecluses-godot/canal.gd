@@ -77,7 +77,8 @@ var hausses := {}     # liaison -> Hausse, ses planches et ses poteaux
 var rigoles := {}     # liaison -> Rigole, la berge de terre que l'on creuse
 var mares := {}       # bassin -> Mare, la cuvette naturelle sur le pré
 var debordements := {} # liaison -> vrai : une levée que l'eau peut franchir
-var levees_noyees := {} # liaison -> le nœud qui dessine l'eau sur sa crête
+var levees_noyees := {} # liaison -> le nœud qui dessine l'eau sur sa crête (vue d'en haut)
+var coupes_noyees := {} # liaison -> l'Eau de sa coupe
 var jets := {}        # liaison -> Jet, l'eau sous une porte simple entrouverte
 var bateaux := []     # un Bateau par bateau du niveau
 var positions := []   # bassin de chaque bateau, tel qu'affiché
@@ -266,6 +267,16 @@ func construire(niveau: Dictionary, e: Dictionary) -> void:
 			# la levée noyée : quand l'eau est au-dessus de sa crête des deux
 			# côtés, une nappe la couvre et relie le bief à la flaque du
 			# village (Vincent : il restait une « séparation » d'herbe)
+			# sa coupe : une Eau de passage, au même shader que les bassins (un
+			# polygone d'une autre teinte faisait « planche », Vincent), qui
+			# descend un peu sous la crête pour se voir
+			var ep := Eau.new()
+			ep.passage = true
+			ep.gauche = eaux[i]; ep.droite = eaux[i + 1]
+			ep.preparer(X(gl[i][0]) - 1.0, X(gl[i][1]) + 1.0, Y(float(N["liaisons"][i]["crete"])) + 6.0, 0.0, SH_EAU)
+			ep.visible_eau = false
+			add_child(ep)
+			coupes_noyees[i] = ep
 			var nv := Node2D.new()
 			nv.draw.connect(_dessiner_levee_noyee.bind(i, nv))
 			add_child(nv)
@@ -1391,7 +1402,9 @@ func _process(dt: float) -> void:
 	_maj_passages()
 	_maj_surfaces()
 	_maj_voiles()
-	for i in levees_noyees: levees_noyees[i].queue_redraw()
+	for i in levees_noyees:
+		levees_noyees[i].queue_redraw()
+		coupes_noyees[i].visible_eau = minf(vue_niv[i], vue_niv[i + 1]) > float(N["liaisons"][i]["crete"])
 	for i in aqueducs:
 		aqueducs[i].ouverte = portes[i].vanne_ouverte
 		aqueducs[i].niveau_g = Y(vue_niv[i])
@@ -1614,17 +1627,19 @@ func _dessiner_levee_noyee(i: int, n: Node2D) -> void:
 	var dessus := minf(vue_niv[i], vue_niv[i + 1]) - crete
 	if dessus <= 0.0: return
 	var a := clampf(dessus / 0.01, 0.0, 1.0)
-	var x0 := X(gl[i][0]) - 0.17 * U
-	var x1 := X(gl[i][1]) + 0.17 * U
-	var yg := minf(eaux[i].hauteur_a(x0), Y(crete) - 1.0)
-	var yd := minf(eaux[i + 1].hauteur_a(x1), Y(crete) - 1.0)
-	var bas := Y(crete) + 4.0
-	var coupe := PackedVector2Array([Vector2(x0, yg), Vector2(x1, yd), Vector2(x1, bas), Vector2(x0, bas)])
-	n.draw_colored_polygon(coupe, Color(0.22, 0.62, 0.8, 0.9 * a))
-	n.draw_line(Vector2(x0, yg), Vector2(x1, yd), Color(0.86, 0.98, 1.0, 0.45 * a), 1.5, true)
+	# exactement entre les deux eaux, à leur hauteur, aux mêmes couleurs que
+	# leurs surfaces : décalée ou plus claire, elle passait pour une planche
+	# posée au bord du bassin (Vincent)
+	var x0 := X(gl[i][0])
+	var x1 := X(gl[i][1])
+	var yg: float = eaux[i].hauteur_a(eaux[i].x1)
+	var yd: float = eaux[i + 1].hauteur_a(eaux[i + 1].x0)
 	if D != Vector2.ZERO:
-		var haut := PackedVector2Array([Vector2(x0, yg), Vector2(x1, yd), Vector2(x1, yd) + D, Vector2(x0, yg) + D])
-		n.draw_polygon(haut, PackedColorArray([Color(0.34, 0.76, 0.88, 0.9 * a), Color(0.34, 0.76, 0.88, 0.9 * a), Color(0.64, 0.88, 0.95, 0.9 * a), Color(0.64, 0.88, 0.95, 0.9 * a)]))
+		var av := Color(0.17, 0.6, 0.78, 0.78 * a)
+		var mi := Color(0.34, 0.76, 0.88, 0.78 * a)
+		var fo := Color(0.64, 0.88, 0.95, 0.96 * a)
+		n.draw_polygon(PackedVector2Array([Vector2(x0, yg), Vector2(x1, yd), Vector2(x1, yd) + D * 0.5, Vector2(x0, yg) + D * 0.5]), PackedColorArray([av, av, mi, mi]))
+		n.draw_polygon(PackedVector2Array([Vector2(x0, yg) + D * 0.5, Vector2(x1, yd) + D * 0.5, Vector2(x1, yd) + D, Vector2(x0, yg) + D]), PackedColorArray([mi, mi, fo, fo]))
 
 # L'eau qui franchit une levée : une nappe sur toute la largeur, de la crête
 # jusqu'au pré d'en bas.
