@@ -1520,14 +1520,20 @@ func placer_vantaux(e: Dictionary) -> void:
 func ecouler(avant: Array, apres: Array, flux: Array) -> void:
 	var dh := 0.0
 	for i in avant.size(): dh = maxf(dh, absf(apres[i] - avant[i]))
-	if dh < 1e-4:
+	# De l'eau peut circuler sans qu'aucun niveau ne change : pompée en haut,
+	# elle redescend par les portes ouvertes jusqu'au bassin d'où elle vient.
+	# Sans animation, on croyait que la pompe ne marchait pas (Vincent). On
+	# montre l'écoulement dès qu'il y a du débit, ou un coup de pompe.
+	var fl_max := 0.0
+	for f in flux: fl_max = maxf(fl_max, absf(float(f)))
+	if dh < 1e-4 and fl_max < 0.01 and _pompage < 0:
 		vue_niv = apres.duplicate()
 		ecoulement_fini.emit.call_deferred()
 		return
 	var tetes := {}
 	for i in flux.size():
 		if absf(flux[i]) > 0.01: tetes[i] = absf(avant[i] - avant[i + 1])
-	_ecou = {"t": 0.0, "T": 1.1 + 1.25 * sqrt(dh), "avant": avant.duplicate(), "apres": apres.duplicate(), "flux": flux.duplicate(), "tetes": tetes}
+	_ecou = {"t": 0.0, "T": maxf(1.1 + 1.25 * sqrt(dh), 1.6 if fl_max >= 0.01 or _pompage >= 0 else 0.0), "avant": avant.duplicate(), "apres": apres.duplicate(), "flux": flux.duplicate(), "tetes": tetes}
 
 func _avancer_ecoulement(dt: float) -> void:
 	_ecou["t"] += dt
@@ -2058,7 +2064,9 @@ func _bouee(k: int, x: float, sens: float) -> void:
 	# Échouée dans un bassin à sec : elle ne bouge plus et se couche sur le
 	# fond, fanion vers le sol, du côté où il pointait (Vincent). Elle se
 	# couche et se relève en douceur.
-	var sec: bool = eaux[v].vide() or surf >= fond - 2.0
+	# elle ne flotte que si l'eau dépasse sa partie immergée (~14 px) : dans
+	# une pellicule d'eau, elle reste couchée (Vincent)
+	var sec: bool = eaux[v].vide() or fond - surf < 14.0
 	var couche: float = _bouees_couchees.get(k, 0.0)
 	couche = move_toward(couche, 1.0 if sec else 0.0, get_process_delta_time() * 2.5)
 	_bouees_couchees[k] = couche
