@@ -2045,6 +2045,15 @@ func _jet(i: int, flux: float, dt: float) -> void:
 	jt.vantail_x = x - 5.0 if D != Vector2.ZERO else x
 	jt.y_seuil = po.y_seuil
 	jt.haut_veine = maxf(po.bas_y, minf(eaux[h].hauteur_a(x - sens * 30.0), eaux[h].fond_y))
+	# La porte levée AU-DESSUS de l'eau d'amont (au doigt maintenu, elle peut
+	# l'être pendant que l'eau passe) : pas de veine sous le vantail — l'eau des
+	# deux bassins va déjà jusqu'au milieu de la porte, et la veine faisait une
+	# vitre d'eau debout dans l'ouverture ; la nappe part de la surface réelle
+	# de l'eau contre la porte, et cette surface ne se creuse plus. Partie de
+	# la surface au repos, au-dessus d'une surface creusée, elle laissait « un
+	# creux plus un petit muret d'eau en haut de la cascade » (Vincent).
+	var surf_h := minf(eaux[h].hauteur_a(x - sens * 6.0), eaux[h].fond_y)
+	var degagee := po.bas_y < surf_h - 2.0
 	# La nappe part de la surface de l'eau d'amont quand la porte est levée
 	# (au doigt maintenu, 1-1, elle peut l'être pendant que l'eau passe) :
 	# partie aux 4/10 de l'épaisseur, elle laissait au-dessus d'elle un mur
@@ -2052,6 +2061,11 @@ func _jet(i: int, flux: float, dt: float) -> void:
 	# avec la cascade »). Sous une fente, elle garde son départ d'avant.
 	var haute := clampf((jt.fente - Porte.ENTREBAIL) / 30.0, 0.0, 1.0)
 	jt.origine = Vector2(bord_x, po.y_seuil - jt.fente * lerpf(0.4, 1.0, haute))
+	if degagee:
+		jt.haut_veine = jt.y_seuil
+		jt.fente = maxf(po.y_seuil - surf_h, 0.0)
+		jt.origine = Vector2(bord_x, surf_h)
+		if jt.fente < 1.0: jt.force = 0.0
 	jt.surface_bas = eaux[l].hauteur_a(x + sens * 60.0)
 	jt.fond_bas = eaux[l].fond_y
 	if jt.force <= 0.03: return
@@ -2060,7 +2074,7 @@ func _jet(i: int, flux: float, dt: float) -> void:
 	recoit.remous = maxf(recoit.remous, jt.force * 0.6 * minf(bouillon * 2.0, 1.0))
 	if randf() < 0.5:
 		recoit.impulsion(jt.chute().x + randf_range(-0.4, 0.4) * U, randf_range(-0.6, 1.2) * jt.force * bouillon * 2.0, 22.0)
-	eaux[h].impulsion(x - sens * 20.0, 0.25 * jt.force * dt * 6.0, 40.0)
+	if not degagee: eaux[h].impulsion(x - sens * 20.0, 0.25 * jt.force * dt * 6.0, 40.0)
 
 # L'eau qui file par la rigole : une lame qui sort de l'entaille, du côté
 # haut, et retombe dans le bassin d'en bas ; son épaisseur suit l'eau qui
