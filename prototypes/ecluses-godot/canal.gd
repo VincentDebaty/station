@@ -977,11 +977,11 @@ func _maj_surfaces() -> void:
 		# (seulement entre deux eaux presque égales : au doigt maintenu, une porte
 		# peut être levée pendant que l'eau passe ; raccordées à mi-hauteur, les
 		# deux surfaces faisaient un bloc d'eau carré contre la porte, Vincent)
-		if i > 0 and ((passages.has(i - 1) and passages[i - 1].visible_eau) or N["liaisons"][i - 1]["type"] == "libre") and not bloc_g \
-				and absf(vue_niv[i] - vue_niv[i - 1]) < 0.15:
+		if i > 0 and (((passages.has(i - 1) and passages[i - 1].visible_eau) and absf(vue_niv[i] - vue_niv[i - 1]) < 0.15) \
+				or N["liaisons"][i - 1]["type"] == "libre" or _fin_d_ecoulement(i - 1)) and not bloc_g:
 			_raccorder(bord, _jonction(i - 1), true)
-		if ((passages.has(i) and passages[i].visible_eau) or (i < gl.size() and N["liaisons"][i]["type"] == "libre")) and not bloc_d \
-				and absf(vue_niv[i] - vue_niv[i + 1]) < 0.15:
+		if (((passages.has(i) and passages[i].visible_eau) and absf(vue_niv[i] - vue_niv[i + 1]) < 0.15) \
+				or (i < gl.size() and (N["liaisons"][i]["type"] == "libre" or _fin_d_ecoulement(i)))) and not bloc_d:
 			_raccorder(bord, _jonction(i), false)
 		var sec := w.vide()
 		_maj_mouille(i, sec)
@@ -1142,6 +1142,16 @@ func _maisons(i: int, plan: Node2D) -> void:
 func _jonction(g: int) -> float:
 	var xc := X(gl[g][0] + gl[g][1]) * 0.5
 	return (minf(eaux[g].hauteur_a(xc), eaux[g].fond_y) + minf(eaux[g + 1].hauteur_a(xc), eaux[g + 1].fond_y)) * 0.5
+
+# Au doigt maintenu, la fin d'un écoulement sous une porte ouverte : les deux
+# eaux sont presque à niveau (moins de 0,35 unité), il ne tombe plus qu'un
+# filet. Plutôt qu'une lame minuscule et une marche entre les deux surfaces
+# (« un creux qui se forme sur la fin », Vincent), les deux surfaces se
+# rejoignent en pente douce sous la porte.
+func _fin_d_ecoulement(g: int) -> bool:
+	if not debit_vu.has(g) or not portes.has(g): return false
+	var e := absf(vue_niv[g] - vue_niv[g + 1])
+	return e < 0.35 and portes[g].fente() > 2.0 and minf(vue_niv[g], vue_niv[g + 1]) > float(N["liaisons"][g]["seuil"]) + 0.05
 
 func _raccorder(bord: PackedVector2Array, y: float, debut: bool) -> void:
 	var n := bord.size()
@@ -2082,7 +2092,9 @@ func _jet(i: int, flux: float, dt: float) -> void:
 		# (Vincent : « elle reste fine alors qu'elle devrait grossir puis
 		# redevenir fine sur la fin »).
 		var dv: float = debit_vu[i]
-		var reste := clampf(tete / 0.8, 0.0, 1.0)
+		# (sous 0,35 unité d'écart, plus de lame : les surfaces se rejoignent en
+		# pente douce, _fin_d_ecoulement)
+		var reste := clampf((tete - 0.35) / 0.45, 0.0, 1.0)
 		jt.fente = jt.fente * lerpf(0.5, 1.0, dv) * reste
 		jt.force *= lerpf(0.4, 1.0, dv) * lerpf(0.4, 1.0, reste)
 		jt.origine = Vector2(bord_x, po.y_seuil - jt.fente * 0.5)
@@ -2108,8 +2120,21 @@ func _jet(i: int, flux: float, dt: float) -> void:
 	var bouillon := Reglages.v("bouillon")
 	recoit.remous = maxf(recoit.remous, jt.force * 0.6 * minf(bouillon * 2.0, 1.0))
 	if randf() < 0.5:
-		recoit.impulsion(jt.chute().x + randf_range(-0.4, 0.4) * U, randf_range(-0.6, 1.2) * jt.force * bouillon * 2.0, 22.0)
-	if not degagee: eaux[h].impulsion(x - sens * 20.0, 0.25 * jt.force * dt * 6.0, 40.0)
+		# Au doigt maintenu, la chute ne pousse la surface d'en bas qu'en
+		# proportion de l'eau qui tombe encore, et autant vers le haut que vers
+		# le bas : à la fin du remplissage, les poussées (surtout vers le bas)
+		# creusaient la surface du sas là où la lame touche, « un creux qui se
+		# forme sur la fin » (Vincent).
+		if debit_vu.has(i):
+			var chute_px := clampf((jt.surface_bas - jt.origine.y) / 40.0, 0.0, 1.0)
+			recoit.impulsion(jt.chute().x + randf_range(-0.4, 0.4) * U, randf_range(-0.7, 0.7) * jt.force * bouillon * 2.0 * chute_px, 22.0)
+		else:
+			recoit.impulsion(jt.chute().x + randf_range(-0.4, 0.4) * U, randf_range(-0.6, 1.2) * jt.force * bouillon * 2.0, 22.0)
+	# la surface d'amont se creuse un peu contre la porte — pas au doigt
+	# maintenu : l'eau y passe longtemps sous une porte à peine ouverte, les
+	# poussées s'accumulaient et la surface faisait « un creux » contre le
+	# vantail (Vincent)
+	if not degagee and not debit_vu.has(i): eaux[h].impulsion(x - sens * 20.0, 0.25 * jt.force * dt * 6.0, 40.0)
 
 # L'eau qui file par la rigole : une lame qui sort de l'entaille, du côté
 # haut, et retombe dans le bassin d'en bas ; son épaisseur suit l'eau qui

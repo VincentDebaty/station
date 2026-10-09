@@ -1095,6 +1095,24 @@ func _photo(nom: String) -> void:
 	await RenderingServer.frame_post_draw
 	get_viewport().get_texture().get_image().save_png(dossier.path_join(nom + ".png"))
 
+func _sonder() -> void:
+	var xy := OS.get_environment("ECLUSES_SONDE").split(",")
+	var ecran := Vector2(float(xy[0]), float(xy[1]))
+	var monde := get_viewport().get_canvas_transform().affine_inverse() * ecran
+	print("sonde ", ecran, " → monde ", monde, " niveaux ", canal.vue_niv)
+	var pile := [canal]
+	while not pile.is_empty():
+		var nd: Node = pile.pop_back()
+		for c in nd.get_children(): pile.append(c)
+		if nd is Polygon2D and nd.visible:
+			var p2: Polygon2D = nd
+			var loc := p2.get_global_transform().affine_inverse() * monde
+			if p2.polygon.size() >= 3 and Geometry2D.is_point_in_polygon(loc, p2.polygon):
+				print("  ", p2.get_path(), " couleur ", p2.color, " ", p2.polygon)
+		if nd is MeshInstance2D and nd.visible and nd is Eau:
+			var w: Eau = nd
+			if monde.x >= w.x0 and monde.x <= w.x1: print("  eau ", w.get_path(), " surface ", w.hauteur_a(monde.x), " fond ", w.fond_y, " repos ", w.repos)
+
 func _demo() -> void:
 	var oracle: Array = JSON.parse_string(FileAccess.get_file_as_string("res://oracle.json"))["parties"]
 	var solution := []
@@ -1110,21 +1128,9 @@ func _demo() -> void:
 	await get_tree().create_timer(1.2).timeout
 	await _photo("00-repos")
 	# ECLUSES_SONDE="x,y" (pixels de l'écran) : liste les polygones dessinés
-	# sous ce point, pour retrouver d'où vient un défaut
-	if OS.get_environment("ECLUSES_SONDE") != "":
-		var xy := OS.get_environment("ECLUSES_SONDE").split(",")
-		var ecran := Vector2(float(xy[0]), float(xy[1]))
-		var monde := get_viewport().get_canvas_transform().affine_inverse() * ecran
-		print("sonde ", ecran, " → monde ", monde)
-		var pile := [canal]
-		while not pile.is_empty():
-			var nd: Node = pile.pop_back()
-			for c in nd.get_children(): pile.append(c)
-			if nd is Polygon2D and nd.visible:
-				var p2: Polygon2D = nd
-				var loc := p2.get_global_transform().affine_inverse() * monde
-				if p2.polygon.size() >= 3 and Geometry2D.is_point_in_polygon(loc, p2.polygon):
-					print("  ", p2.get_path(), " couleur ", p2.color, " ", p2.polygon)
+	# sous ce point, pour retrouver d'où vient un défaut (ECLUSES_SONDE_T : au
+	# bout de tant de secondes après le premier coup, plutôt qu'au repos)
+	if OS.get_environment("ECLUSES_SONDE") != "" and OS.get_environment("ECLUSES_SONDE_T") == "": _sonder()
 	if OS.get_environment("ECLUSES_LISTE") != "":
 		_ouvrir_liste()
 		await get_tree().create_timer(0.3).timeout
@@ -1136,6 +1142,8 @@ func _demo() -> void:
 		await get_tree().create_timer(0.3).timeout
 		await _photo("00-reglages")
 		_panneau.hide()
+	if OS.get_environment("ECLUSES_SONDE_T") != "":
+		get_tree().create_timer(float(OS.get_environment("ECLUSES_SONDE_T")) + 0.5).timeout.connect(_sonder)
 	var rang := 0
 	for a in solution:
 		rang += 1
