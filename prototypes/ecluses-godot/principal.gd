@@ -58,11 +58,12 @@ const VITESSE_OUVERTURE := 0.28  # par seconde
 # L'eau qui passe sous la porte : un volume par seconde qui croît avec
 # l'ouverture, presque constant, et qui ne ralentit qu'à la fin, quand il
 # reste moins de 0,6 unité d'écart. Le sas du 1-1 monte à vitesse régulière
-# et se remplit en 8 s environ en tenant la roue jusqu'au bout. (D'abord une
+# et se remplit en 6 s environ en tenant la roue jusqu'au bout (8 s d'abord :
+# Vincent voulait un peu plus vite). (D'abord une
 # part fixe de ce qui restait à passer, puis Torricelli : presque toute l'eau
 # passait dans la première seconde, Vincent : « l'eau se déverse beaucoup trop
 # rapidement ».)
-const DEBIT := 1.0
+const DEBIT := 1.4
 var _coule := false       # de l'eau passe sous une porte : ni bulle, ni main   # le sablier : laisser passer un coup (glace qui fond, marée, orage)
 var _pancarte: Pancarte   # le panneau d'éclusier de fin (pancarte.gd)
 var _lab_num: Label

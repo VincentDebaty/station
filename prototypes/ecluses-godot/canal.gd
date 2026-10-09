@@ -2045,7 +2045,13 @@ func _jet(i: int, flux: float, dt: float) -> void:
 	jt.vantail_x = x - 5.0 if D != Vector2.ZERO else x
 	jt.y_seuil = po.y_seuil
 	jt.haut_veine = maxf(po.bas_y, minf(eaux[h].hauteur_a(x - sens * 30.0), eaux[h].fond_y))
-	jt.origine = Vector2(bord_x, po.y_seuil - jt.fente * 0.4)
+	# La nappe part de la surface de l'eau d'amont quand la porte est levée
+	# (au doigt maintenu, 1-1, elle peut l'être pendant que l'eau passe) :
+	# partie aux 4/10 de l'épaisseur, elle laissait au-dessus d'elle un mur
+	# d'eau debout dans l'ouverture (Vincent : « un défaut de niveau d'eau
+	# avec la cascade »). Sous une fente, elle garde son départ d'avant.
+	var haute := clampf((jt.fente - Porte.ENTREBAIL) / 30.0, 0.0, 1.0)
+	jt.origine = Vector2(bord_x, po.y_seuil - jt.fente * lerpf(0.4, 1.0, haute))
 	jt.surface_bas = eaux[l].hauteur_a(x + sens * 60.0)
 	jt.fond_bas = eaux[l].fond_y
 	if jt.force <= 0.03: return
