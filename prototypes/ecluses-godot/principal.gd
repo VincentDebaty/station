@@ -57,7 +57,7 @@ var _a_juger := false     # l'eau s'est-elle posée depuis le dernier geste ?
 # (en 1,2 s) ; tant que l'eau passe, lentement (l'eau pousse contre le
 # vantail), et elle accélère à mesure que les niveaux se rejoignent.
 const VITESSE_LIBRE := 0.85      # par seconde, eaux égales
-const VITESSE_POUSSEE := 0.2     # par seconde, sous une forte différence
+const VITESSE_POUSSEE := 0.28    # par seconde, sous une forte différence
 const ECART_LIBRE := 0.5         # en dessous de cet écart (unités), on accélère
 # L'eau qui passe sous la porte : un volume par seconde, qui ne ralentit qu'à
 # la fin, quand il reste moins de 0,6 unité d'écart. (D'abord une part fixe
@@ -66,11 +66,11 @@ const ECART_LIBRE := 0.5         # en dessous de cet écart (unités), on accél
 # rapidement ».)
 # Le débit croît avec l'ouverture de la porte (Vincent : « le flux doit
 # s'accélérer au fur et à mesure que la porte s'ouvre ») : un filet quand
-# elle se décolle, de plus en plus d'eau à mesure qu'elle monte. Sur le 1-1,
-# le sas monte de 0,16 puis 0,35, 0,53, 0,72, 0,9 unité par seconde, et se
-# remplit en 6 s.
-const DEBIT := 2.0
-var _coule := false       # de l'eau passe sous une porte : ni bulle, ni main   # le sablier : laisser passer un coup (glace qui fond, marée, orage)
+# elle se décolle, de plus en plus d'eau à mesure qu'elle monte (au carré de
+# l'ouverture). Sur le 1-1, le sas monte de 0,1 puis 0,3, 0,7, 1,2 unité par
+# seconde, et se remplit en 5 s.
+const DEBIT := 2.6
+var _coule := false       # de l'eau passe sous une porte : ni bulle, ni main
 var _pancarte: Pancarte   # le panneau d'éclusier de fin (pancarte.gd)
 var _lab_num: Label
 var _tous := []
@@ -1008,7 +1008,13 @@ func _pas_continu(dt: float) -> void:
 			var tete := absf(a - c)
 			# (une ouverture d'au moins un quart : à peine entrouverte, il faut que
 			# l'eau se voie couler)
-			var q := DEBIT * (0.06 + 0.94 * clampf(_ouv[i], 0.0, 1.0)) * minf(1.0, sqrt(tete / 0.6)) * dt
+			# (au carré de l'ouverture : l'accélération doit se voir, Vincent :
+			# « cela reste lent et constant » avec un débit simplement
+			# proportionnel, la porte montant lentement)
+			var o := clampf(_ouv[i], 0.0, 1.0)
+			var part := 0.05 + 0.95 * o * o
+			canal.debit_vu[i] = part
+			var q := DEBIT * part * minf(1.0, sqrt(tete / 0.6)) * dt
 			var vide := []
 			vide.resize(N["liaisons"].size()); vide.fill(0.0)
 			Moteur.verser(N, etat, i, signf(v) * minf(absf(v), q), vide)

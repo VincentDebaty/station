@@ -2071,6 +2071,12 @@ func _jet(i: int, flux: float, dt: float) -> void:
 		jt.fente = maxf(po.y_seuil - surf_h, 0.0)
 		jt.origine = Vector2(bord_x, surf_h)
 		if jt.fente < 1.0: jt.force = 0.0
+	if debit_vu.has(i):
+		# la cascade suit le débit : mince et faible quand la porte se décolle,
+		# épaisse et forte quand elle est levée
+		var dv: float = debit_vu[i]
+		jt.force *= lerpf(0.35, 1.0, dv)
+		jt.fente = maxf(jt.fente * lerpf(0.12, 1.0, sqrt(dv)), minf(jt.fente, 4.0))
 	jt.surface_bas = eaux[l].hauteur_a(x + sens * 60.0)
 	jt.fond_bas = eaux[l].fond_y
 	if jt.force <= 0.03: return
@@ -2647,6 +2653,9 @@ func _exclamation(c: Vector2, age: float) -> void:
 # elle reste DUREE_BULLE secondes, puis s'efface.
 const DUREE_BULLE := 3.5
 var _bulles := {}       # bateau -> [quoi, instant d'apparition]
+# Au doigt maintenu : la part du débit d'une porte, de 0,05 (elle se décolle)
+# à 1 (levée) ; la cascade s'épaissit et forcit avec elle.
+var debit_vu := {}
 func montrer_bulle(k: int, quoi: String) -> void:
 	_bulles[k] = [quoi, _t]
 
