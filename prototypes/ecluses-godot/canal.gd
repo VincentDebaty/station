@@ -1149,6 +1149,7 @@ func _jonction(g: int) -> float:
 # (« un creux qui se forme sur la fin », Vincent), les deux surfaces se
 # rejoignent en pente douce sous la porte.
 func _fin_d_ecoulement(g: int) -> bool:
+	if CASCADE_COMME_AU_TOUCHER: return false
 	if not debit_vu.has(g) or not portes.has(g): return false
 	var e := absf(vue_niv[g] - vue_niv[g + 1])
 	return e < 0.35 and portes[g].fente() > 2.0 and minf(vue_niv[g], vue_niv[g + 1]) > float(N["liaisons"][g]["seuil"]) + 0.05
@@ -2100,7 +2101,8 @@ func _jet(i: int, flux: float, dt: float) -> void:
 		jt.origine = Vector2(bord_x, surf_h)
 		if jt.fente < 1.0: jt.force = 0.0
 	pentes.erase(i)
-	if debit_vu.has(i):
+	var maintenu := debit_vu.has(i) and not CASCADE_COMME_AU_TOUCHER
+	if maintenu:
 		# Au doigt maintenu, l'épaisseur de la chute est celle de l'eau qui
 		# passe : l'ouverture sous la porte (bornée par l'eau d'amont au-dessus
 		# du seuil), qui grandit quand la porte monte, et qui s'amincit avec
@@ -2189,7 +2191,7 @@ func _jet(i: int, flux: float, dt: float) -> void:
 		# le bas : à la fin du remplissage, les poussées (surtout vers le bas)
 		# creusaient la surface du sas là où la lame touche, « un creux qui se
 		# forme sur la fin » (Vincent).
-		if debit_vu.has(i):
+		if maintenu:
 			# (aucune poussée au doigt maintenu : même symétriques, elles
 			# creusaient la surface au pied de la chute — l'iPhone affiche 120
 			# images par seconde, deux fois plus de poussées qu'un film à 60 ;
@@ -2201,7 +2203,7 @@ func _jet(i: int, flux: float, dt: float) -> void:
 	# maintenu : l'eau y passe longtemps sous une porte à peine ouverte, les
 	# poussées s'accumulaient et la surface faisait « un creux » contre le
 	# vantail (Vincent)
-	if not degagee and not debit_vu.has(i): eaux[h].impulsion(x - sens * 20.0, 0.25 * jt.force * dt * 6.0, 40.0)
+	if not degagee and not maintenu: eaux[h].impulsion(x - sens * 20.0, 0.25 * jt.force * dt * 6.0, 40.0)
 
 # L'eau qui file par la rigole : une lame qui sort de l'entaille, du côté
 # haut, et retombe dans le bassin d'en bas ; son épaisseur suit l'eau qui
@@ -2772,6 +2774,14 @@ var _bulles := {}       # bateau -> [quoi, instant d'apparition]
 # Au doigt maintenu : la part du débit d'une porte, de 0,05 (elle se décolle)
 # à 1 (levée) ; la cascade s'épaissit et forcit avec elle.
 var debit_vu := {}
+# Au doigt maintenu, la cascade se dessine comme dans les niveaux au toucher
+# (Vincent, 9 octobre 2026, après une journée de retouches du « creux » :
+# « hier ça fonctionnait mieux » ; il a choisi de repartir de la cascade
+# d'avant le doigt maintenu). Le doigt maintenu, la porte qui monte lentement
+# et le débit qui suit l'ouverture restent (principal.gd) ; seuls la lame
+# pleine, ses raccords et ses bosses propres au doigt maintenu sont coupés.
+# false les rétablit tels quels.
+const CASCADE_COMME_AU_TOUCHER := true
 # Au doigt maintenu : les portes où il ne tombe presque plus rien. Plutôt
 # qu'une chute minuscule (une lèvre claire bordée de sombre, que Vincent
 # voyait comme « un creux qui se forme sur la fin »), les deux surfaces se
