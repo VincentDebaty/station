@@ -62,8 +62,13 @@ func _ready() -> void:
 	bulles.color_ramp = fondu
 	add_child(bulles)
 
+# Noyée quand l'eau d'en bas couvre la plus grande partie de l'ouverture : la
+# lame ne tombe pas, elle sort sous la surface et la fait bouillonner. (Une
+# porte levée haut pendant que l'eau passe, au doigt maintenu, fait une
+# ouverture épaisse dont le haut dépasse à peine l'eau d'en bas : dessinée en
+# lame, elle tombait de quelques pixels comme un bloc d'eau, Vincent.)
 func noye() -> bool:
-	return origine.y > surface_bas + 2.0
+	return origine.y + fente * 0.6 > surface_bas + 2.0
 
 # Le point où une lame lancée à l'horizontale retombe sur la surface d'en bas.
 func chute() -> Vector2:
@@ -191,10 +196,12 @@ func _gerbes(c: Vector2) -> void:
 func _panache() -> void:
 	var long := 40.0 + 90.0 * force
 	var zs := [0.0] if profondeur == Vector2.ZERO else [0.1, 0.35, 0.6, 0.85]
+	# le bouillon monte À la surface d'en bas, contre la porte
+	var base := Vector2(origine.x, maxf(origine.y, surface_bas))
 	for z in zs:
 		for k in 5:
 			var f := fmod(_t * 1.2 + k * 0.2 + z, 1.0)
-			var c: Vector2 = origine + profondeur * z + Vector2(sens * long * f, -6.0 * f)
-			var r := (fente * 0.5 + 4.0) * (1.0 + 1.6 * f)
+			var c: Vector2 = base + profondeur * z + Vector2(sens * long * f, -6.0 * f)
+			var r := (minf(fente, 24.0) * 0.5 + 4.0) * (1.0 + 1.6 * f)
 			draw_circle(c, r, Color(0.75, 0.95, 1.0, 0.24 * (1.0 - f) * force))
 	_point_chute = origine + Vector2(sens * long * 0.5, 0)

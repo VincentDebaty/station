@@ -974,9 +974,14 @@ func _maj_surfaces() -> void:
 		# marche d'escalier au milieu de la porte — le plan d'eau « se cassait
 		# en deux » au passage d'un bateau (Vincent). Les deux bandes se raccordent
 		# à la même hauteur, en fondu sur les 36 derniers pixels.
-		if i > 0 and ((passages.has(i - 1) and passages[i - 1].visible_eau) or N["liaisons"][i - 1]["type"] == "libre") and not bloc_g:
+		# (seulement entre deux eaux presque égales : au doigt maintenu, une porte
+		# peut être levée pendant que l'eau passe ; raccordées à mi-hauteur, les
+		# deux surfaces faisaient un bloc d'eau carré contre la porte, Vincent)
+		if i > 0 and ((passages.has(i - 1) and passages[i - 1].visible_eau) or N["liaisons"][i - 1]["type"] == "libre") and not bloc_g \
+				and absf(vue_niv[i] - vue_niv[i - 1]) < 0.15:
 			_raccorder(bord, _jonction(i - 1), true)
-		if ((passages.has(i) and passages[i].visible_eau) or (i < gl.size() and N["liaisons"][i]["type"] == "libre")) and not bloc_d:
+		if ((passages.has(i) and passages[i].visible_eau) or (i < gl.size() and N["liaisons"][i]["type"] == "libre")) and not bloc_d \
+				and absf(vue_niv[i] - vue_niv[i + 1]) < 0.15:
 			_raccorder(bord, _jonction(i), false)
 		var sec := w.vide()
 		_maj_mouille(i, sec)

@@ -57,17 +57,19 @@ var _a_juger := false     # l'eau s'est-elle posée depuis le dernier geste ?
 # (en 1,2 s) ; tant que l'eau passe, lentement (l'eau pousse contre le
 # vantail), et elle accélère à mesure que les niveaux se rejoignent.
 const VITESSE_LIBRE := 0.85      # par seconde, eaux égales
-const VITESSE_POUSSEE := 0.12    # par seconde, sous une forte différence
+const VITESSE_POUSSEE := 0.2     # par seconde, sous une forte différence
 const ECART_LIBRE := 0.5         # en dessous de cet écart (unités), on accélère
-# L'eau qui passe sous la porte : un volume par seconde qui croît avec
-# l'ouverture, presque constant, et qui ne ralentit qu'à la fin, quand il
-# reste moins de 0,6 unité d'écart. Le sas du 1-1 monte à vitesse régulière
-# et se remplit en 6 s environ en tenant la roue jusqu'au bout (8 s d'abord :
-# Vincent voulait un peu plus vite). (D'abord une
-# part fixe de ce qui restait à passer, puis Torricelli : presque toute l'eau
-# passait dans la première seconde, Vincent : « l'eau se déverse beaucoup trop
+# L'eau qui passe sous la porte : un volume par seconde, qui ne ralentit qu'à
+# la fin, quand il reste moins de 0,6 unité d'écart. (D'abord une part fixe
+# de ce qui restait à passer, puis Torricelli : presque toute l'eau passait
+# dans la première seconde, Vincent : « l'eau se déverse beaucoup trop
 # rapidement ».)
-const DEBIT := 2.2   # la porte s'ouvre lentement tant que l'eau pousse : 6 s pour remplir le sas
+# Le débit croît avec l'ouverture de la porte (Vincent : « le flux doit
+# s'accélérer au fur et à mesure que la porte s'ouvre ») : un filet quand
+# elle se décolle, de plus en plus d'eau à mesure qu'elle monte. Sur le 1-1,
+# le sas monte de 0,16 puis 0,35, 0,53, 0,72, 0,9 unité par seconde, et se
+# remplit en 6 s.
+const DEBIT := 2.0
 var _coule := false       # de l'eau passe sous une porte : ni bulle, ni main   # le sablier : laisser passer un coup (glace qui fond, marée, orage)
 var _pancarte: Pancarte   # le panneau d'éclusier de fin (pancarte.gd)
 var _lab_num: Label
@@ -1006,7 +1008,7 @@ func _pas_continu(dt: float) -> void:
 			var tete := absf(a - c)
 			# (une ouverture d'au moins un quart : à peine entrouverte, il faut que
 			# l'eau se voie couler)
-			var q := DEBIT * clampf(0.25 + 0.75 * _ouv[i], 0.0, 1.0) * minf(1.0, sqrt(tete / 0.6)) * dt
+			var q := DEBIT * (0.06 + 0.94 * clampf(_ouv[i], 0.0, 1.0)) * minf(1.0, sqrt(tete / 0.6)) * dt
 			var vide := []
 			vide.resize(N["liaisons"].size()); vide.fill(0.0)
 			Moteur.verser(N, etat, i, signf(v) * minf(absf(v), q), vide)
