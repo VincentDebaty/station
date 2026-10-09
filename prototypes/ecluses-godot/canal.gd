@@ -2123,8 +2123,19 @@ func _jet(i: int, flux: float, dt: float) -> void:
 		# bien là — la couper supprimait la cascade, Vincent)
 		var noyee := surf_b < po.y_seuil - 2.0
 		if noyee and bas_l - haut_l < 8.0:
-			jt.force = 0.0
-			pentes[i] = true
+			if tete < 0.35:
+				# presque à niveau : les deux eaux se raccordent
+				jt.force = 0.0
+				pentes[i] = true
+			else:
+				# L'eau du sas recouvre déjà le bas de la porte, mais celle d'en
+				# haut est encore bien plus haute : l'eau sort sous la surface et
+				# la fait bouillonner contre la porte (panache de jet.gd). Raccorder
+				# les deux surfaces à mi-hauteur relevait celle du sas en un bloc
+				# clair contre la porte — le « creux » de la capture de Vincent.
+				jt.origine = Vector2(bord_x, maxf(haut_l, surf_b + 4.0))
+				jt.fente = minf(maxf(po.y_seuil - haut_l, 4.0), 24.0)
+				jt.plein = false
 		elif noyee:
 			jt.fente = bas_l - haut_l
 			jt.origine = Vector2(bord_x, (haut_l + bas_l) * 0.5)
@@ -2140,7 +2151,7 @@ func _jet(i: int, flux: float, dt: float) -> void:
 			jt.fente = minf(jt.fente, maxf(marche * 0.8, 2.0))
 			jt.origine = Vector2(bord_x, surf_h + jt.fente * 0.5)
 			if marche < 1.5: jt.force = 0.0
-			if marche < 45.0:
+			if marche < 16.0:
 				pentes[i] = true
 				jt.force = 0.0
 		jt.haut_veine = maxf(jt.haut_veine, po.y_seuil - jt.fente)
