@@ -177,10 +177,14 @@ func _lame() -> void:
 	# (seulement dans la chute, à partir de 6 px sous le bord, et d'un bleu
 	# proche de la nappe : foncée dès le bord, elle traçait un trait entre
 	# l'eau qui arrive et la cascade — la « cassure » que voyait Vincent)
+	# Pas de tranche pour une lame pleine (au doigt maintenu) : épaisse comme
+	# toute l'ouverture, cette bande plus sombre se posait là où l'œil attend
+	# la surface claire du sas, et l'eau semblait plonger vers la porte — « le
+	# creux » de Vincent, vu enfin sur sa vidéo d'écran de l'iPhone. Il a
+	# choisi, sur planche, le voile clair sans tranche.
 	var chute := PackedVector2Array()
 	for q in pts:
-		# (pleine, la lame a son épaisseur dès la sortie de la porte)
-		if plein or q.y > origine.y + 6.0: chute.append(q)
+		if not plein and q.y > origine.y + 6.0: chute.append(q)
 	if chute.size() >= 2:
 		# un trait épais plutôt qu'un ruban décalé en hauteur : là où la chute
 		# devient verticale, le ruban s'aplatissait et ne se triangulait plus
