@@ -132,20 +132,24 @@ func _lame() -> void:
 	# bateau qui attend dans le sas (Vincent : « la cascade noie le bateau »)
 	var vx := (14.0 + 34.0 * force) * sens
 	var g := 900.0
+	var ep := fente * (0.7 + 0.3 * force) if not plein else fente
+	# Pleine, sans tranche, la nappe se dessine par son DESSUS, au haut de
+	# l'ouverture, contre le bas du vantail : tracée par son milieu, elle
+	# laissait entre le vantail et la cascade un coin de mur, un creux.
+	var o := origine - Vector2(0, ep * 0.5) if plein else origine
 	var pts := PackedVector2Array()
 	# d'abord à plat, de sous la porte jusqu'au bord du bloc
-	if absf(origine.x - depart_x) > 2.0:
-		pts.append(Vector2(depart_x, origine.y))
+	if absf(o.x - depart_x) > 2.0:
+		pts.append(Vector2(depart_x, o.y))
 	var t := 0.0
-	var p := origine
+	var p := o
 	while true:
-		p = origine + Vector2(vx * t, 0.5 * g * t * t)
+		p = o + Vector2(vx * t, 0.5 * g * t * t)
 		pts.append(p)
 		if p.y >= surface_bas or t > 1.5: break
 		t += 0.02
 	_point_chute = p
 	if pts.size() < 2: return
-	var ep := fente * (0.7 + 0.3 * force) if not plein else fente
 	var D := profondeur
 	if D == Vector2.ZERO:
 		# de profil, pas de largeur à montrer : un simple ruban
