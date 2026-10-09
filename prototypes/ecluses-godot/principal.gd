@@ -1111,7 +1111,14 @@ func _sonder() -> void:
 				print("  ", p2.get_path(), " couleur ", p2.color, " ", p2.polygon)
 		if nd is MeshInstance2D and nd.visible and nd is Eau:
 			var w: Eau = nd
-			if monde.x >= w.x0 and monde.x <= w.x1: print("  eau ", w.get_path(), " surface ", w.hauteur_a(monde.x), " fond ", w.fond_y, " repos ", w.repos)
+			if monde.x >= w.x0 and monde.x <= w.x1:
+				print("  eau ", w.get_path(), " surface ", w.hauteur_a(monde.x), " fond ", w.fond_y, " repos ", w.repos)
+				var prof := PackedStringArray()
+				var xx := w.x0
+				while xx <= w.x1:
+					prof.append("%d:%.1f" % [int(xx), w.hauteur_a(xx) - w.repos])
+					xx += 12.0
+				print("  profil ", " ".join(prof))
 
 func _demo() -> void:
 	var oracle: Array = JSON.parse_string(FileAccess.get_file_as_string("res://oracle.json"))["parties"]

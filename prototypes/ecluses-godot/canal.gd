@@ -978,10 +978,10 @@ func _maj_surfaces() -> void:
 		# peut être levée pendant que l'eau passe ; raccordées à mi-hauteur, les
 		# deux surfaces faisaient un bloc d'eau carré contre la porte, Vincent)
 		if i > 0 and (((passages.has(i - 1) and passages[i - 1].visible_eau) and absf(vue_niv[i] - vue_niv[i - 1]) < 0.15) \
-				or N["liaisons"][i - 1]["type"] == "libre" or _fin_d_ecoulement(i - 1)) and not bloc_g:
+				or N["liaisons"][i - 1]["type"] == "libre") and not bloc_g:
 			_raccorder(bord, _jonction(i - 1), true)
 		if (((passages.has(i) and passages[i].visible_eau) and absf(vue_niv[i] - vue_niv[i + 1]) < 0.15) \
-				or (i < gl.size() and (N["liaisons"][i]["type"] == "libre" or _fin_d_ecoulement(i)))) and not bloc_d:
+				or (i < gl.size() and N["liaisons"][i]["type"] == "libre")) and not bloc_d:
 			_raccorder(bord, _jonction(i), false)
 		var sec := w.vide()
 		_maj_mouille(i, sec)
@@ -1153,13 +1153,13 @@ func _fin_d_ecoulement(g: int) -> bool:
 	var e := absf(vue_niv[g] - vue_niv[g + 1])
 	return e < 0.35 and portes[g].fente() > 2.0 and minf(vue_niv[g], vue_niv[g + 1]) > float(N["liaisons"][g]["seuil"]) + 0.05
 
-func _raccorder(bord: PackedVector2Array, y: float, debut: bool) -> void:
+func _raccorder(bord: PackedVector2Array, y: float, debut: bool, large := 36.0) -> void:
 	var n := bord.size()
 	var bout := bord[0] if debut else bord[n - 1]
 	for k in n:
 		var d := absf(bord[k].x - bout.x)
-		if d < 36.0:
-			var f := 1.0 - d / 36.0
+		if d < large:
+			var f := 1.0 - d / large
 			bord[k] = Vector2(bord[k].x, lerpf(bord[k].y, y, f * f * (3.0 - 2.0 * f)))
 
 # Un bassin VIDE garde la trace de l'eau (analyse graphique : vide, la grande
@@ -1702,6 +1702,16 @@ func _process(dt: float) -> void:
 	if not _depl.is_empty(): _avancer_bateaux(dt)
 	for i in eaux.size():
 		eaux[i].repos = Y(vue_niv[i])
+	# le raccord des deux eaux sous une porte où l'eau finit de passer, à
+	# mi-hauteur de leurs niveaux
+	for i in eaux.size():
+		eaux[i].lien_g = INF
+		eaux[i].lien_d = INF
+	for g in portes:
+		if _fin_d_ecoulement(g) or pentes.has(g):
+			var m := (Y(vue_niv[g]) + Y(vue_niv[g + 1])) * 0.5
+			eaux[g].lien_d = m
+			eaux[g + 1].lien_g = m
 	for i in portes: portes[i].bas_ouvert_y = _bas_ouvert(i)
 	_maj_passages()
 	_maj_surfaces()
@@ -2081,6 +2091,7 @@ func _jet(i: int, flux: float, dt: float) -> void:
 		jt.fente = maxf(po.y_seuil - surf_h, 0.0)
 		jt.origine = Vector2(bord_x, surf_h)
 		if jt.fente < 1.0: jt.force = 0.0
+	pentes.erase(i)
 	if debit_vu.has(i):
 		# Au doigt maintenu, l'épaisseur de la chute est celle de l'eau qui
 		# passe : l'ouverture sous la porte (bornée par l'eau d'amont au-dessus
@@ -2099,6 +2110,20 @@ func _jet(i: int, flux: float, dt: float) -> void:
 		jt.force *= lerpf(0.4, 1.0, dv) * lerpf(0.4, 1.0, reste)
 		jt.origine = Vector2(bord_x, po.y_seuil - jt.fente * 0.5)
 		jt.plein = true
+		# Seule la part de la lame AU-DESSUS de l'eau d'en bas se dessine : sa
+		# moitié noyée, vue à travers l'eau du sas, faisait une tache sombre
+		# sous la surface — « un creux qui se forme sur la fin » (Vincent). S'il
+		# n'en reste presque rien, l'eau d'en bas remonte en pente douce
+		# jusqu'à celle d'en haut (pentes).
+		var surf_b := minf(eaux[l].hauteur_a(bord_x + sens * 20.0), eaux[l].fond_y)
+		var haut_l := po.y_seuil - jt.fente
+		var bas_l := minf(po.y_seuil, surf_b)
+		if bas_l - haut_l < 8.0:
+			jt.force = 0.0
+			pentes[i] = true
+		else:
+			jt.fente = bas_l - haut_l
+			jt.origine = Vector2(bord_x, (haut_l + bas_l) * 0.5)
 		if degagee:
 			# La porte levée au-dessus de l'eau d'amont : l'eau passe par-dessus le
 			# seuil comme sur un déversoir. La lame part de la surface d'amont et
@@ -2111,6 +2136,9 @@ func _jet(i: int, flux: float, dt: float) -> void:
 			jt.fente = minf(jt.fente, maxf(marche * 0.8, 2.0))
 			jt.origine = Vector2(bord_x, surf_h + jt.fente * 0.5)
 			if marche < 1.5: jt.force = 0.0
+			if marche < 45.0:
+				pentes[i] = true
+				jt.force = 0.0
 		jt.haut_veine = maxf(jt.haut_veine, po.y_seuil - jt.fente)
 		if jt.fente < 1.0: jt.force = 0.0
 	jt.surface_bas = eaux[l].hauteur_a(x + sens * 60.0)
@@ -2126,8 +2154,11 @@ func _jet(i: int, flux: float, dt: float) -> void:
 		# creusaient la surface du sas là où la lame touche, « un creux qui se
 		# forme sur la fin » (Vincent).
 		if debit_vu.has(i):
-			var chute_px := clampf((jt.surface_bas - jt.origine.y) / 40.0, 0.0, 1.0)
-			recoit.impulsion(jt.chute().x + randf_range(-0.4, 0.4) * U, randf_range(-0.7, 0.7) * jt.force * bouillon * 2.0 * chute_px, 22.0)
+			# (aucune poussée au doigt maintenu : même symétriques, elles
+			# creusaient la surface au pied de la chute — l'iPhone affiche 120
+			# images par seconde, deux fois plus de poussées qu'un film à 60 ;
+			# le bouillon du shader suffit à montrer l'eau qui tombe)
+			pass
 		else:
 			recoit.impulsion(jt.chute().x + randf_range(-0.4, 0.4) * U, randf_range(-0.6, 1.2) * jt.force * bouillon * 2.0, 22.0)
 	# la surface d'amont se creuse un peu contre la porte — pas au doigt
@@ -2705,6 +2736,11 @@ var _bulles := {}       # bateau -> [quoi, instant d'apparition]
 # Au doigt maintenu : la part du débit d'une porte, de 0,05 (elle se décolle)
 # à 1 (levée) ; la cascade s'épaissit et forcit avec elle.
 var debit_vu := {}
+# Au doigt maintenu : les portes où il ne tombe presque plus rien. Plutôt
+# qu'une chute minuscule (une lèvre claire bordée de sombre, que Vincent
+# voyait comme « un creux qui se forme sur la fin »), les deux surfaces se
+# raccordent à mi-hauteur sous la porte.
+var pentes := {}
 func montrer_bulle(k: int, quoi: String) -> void:
 	_bulles[k] = [quoi, _t]
 

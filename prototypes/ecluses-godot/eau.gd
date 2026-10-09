@@ -30,6 +30,15 @@ var visible_eau := true
 var paroi_g := true        # une paroi de pierre de ce côté (pas une porte)
 var paroi_d := true
 var clarte := 0.0          # l'eau mince devant une porte : plus limpide
+# Le raccord avec le bassin voisin, sous une porte ouverte où l'eau finit de
+# passer (canal.gd) : la surface rejoint cette hauteur (y monde) sur les
+# derniers RACCORD pixels de ce côté. INF : pas de raccord. Dans l'eau
+# elle-même, pour que la coupe et la surface vue d'en haut le suivent
+# ensemble (fait seulement sur la surface vue d'en haut, il laissait une
+# fente entre les deux).
+var lien_g := INF
+var lien_d := INF
+const RACCORD := 40.0
 
 var _h := PackedFloat32Array()
 var _v := PackedFloat32Array()
@@ -77,7 +86,14 @@ func hauteur_a(x: float) -> float:
 	var i := int(floor(f))
 	var j := mini(i + 1, _h.size() - 1)
 	var h := lerpf(_h[i], _h[j], f - float(i))
-	return minf(repos + (h + _houle(x)) * calme(), fond_y)
+	var y := repos + (h + _houle(x)) * calme()
+	if lien_g != INF and x - x0 < RACCORD:
+		var k := 1.0 - clampf((x - x0) / RACCORD, 0.0, 1.0)
+		y = lerpf(y, lien_g, k * k * (3.0 - 2.0 * k))
+	if lien_d != INF and x1 - x < RACCORD:
+		var k := 1.0 - clampf((x1 - x) / RACCORD, 0.0, 1.0)
+		y = lerpf(y, lien_d, k * k * (3.0 - 2.0 * k))
+	return minf(y, fond_y)
 
 # Une poussée sur la surface, centrée en x, étalée sur « largeur » pixels.
 # Positive : la surface descend ; négative : elle monte.
