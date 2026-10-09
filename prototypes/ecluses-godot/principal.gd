@@ -80,7 +80,7 @@ var _sure: Control      # la zone sûre : tout ce qu'on touche ou qu'on lit y re
 # Le niveau sur lequel le jeu s'ouvre : celui qu'on est en train d'essayer
 # (Vincent, 7 octobre 2026 : « quand tu déploies sur l'iPhone, tu proposes le
 # nouveau niveau à chaque fois »). À changer à chaque nouveauté.
-const NIVEAU_EN_TEST := "1-3"
+const NIVEAU_EN_TEST := "1-4"
 
 func _ready() -> void:
 	_tous = JSON.parse_string(FileAccess.get_file_as_string("res://niveaux.json"))["niveaux"]
@@ -980,9 +980,16 @@ func _pas_continu(dt: float) -> void:
 	var B: Array = N["bassins"]
 	if _maintien >= 0:
 		var i := _maintien
-		var a_niveau := absf(float(etat["niv"][i]) - float(etat["niv"][i + 1])) < 0.01
+		# Lente seulement si de l'eau passe VRAIMENT sous cette porte (le
+		# moteur le dit, porte supposée ouverte) : comparer les deux niveaux ne
+		# suffit pas — au 1-3 et au 1-4, entre un sas vide et un sas resté
+		# sous le seuil, les niveaux diffèrent sans qu'une goutte passe, et la
+		# porte mettait dix secondes à monter pour rien.
+		var e_test := etat.duplicate(true)
+		e_test["ouvert"][i] = true
+		var passe := absf(Moteur.paire(N, e_test, i)) > 1e-6
 		if _sens[i] > 0:
-			_ouv[i] = minf(_ouv[i] + (VITESSE_PORTE if a_niveau else VITESSE_LENTE) * dt, 1.0)
+			_ouv[i] = minf(_ouv[i] + (VITESSE_LENTE if passe else VITESSE_PORTE) * dt, 1.0)
 		else:
 			_ouv[i] = maxf(_ouv[i] - VITESSE_PORTE * dt, 0.0)
 	# l'eau : sous chaque porte entrouverte, une part de ce qui reste à passer

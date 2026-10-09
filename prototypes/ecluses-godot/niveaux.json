@@ -92,6 +92,7 @@
       "chapitre": 1,
       "titre": "Le passage étroit",
       "mode": "pas",
+      "continu": true,
       "par": 6,
       "conseil": "Deux bateaux se croisent dans l'escalier, et un seul bief amont remplit tout.",
       "bassins": [
