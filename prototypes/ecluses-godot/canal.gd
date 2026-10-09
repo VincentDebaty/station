@@ -2482,7 +2482,7 @@ func _dessiner_manque() -> void:
 		_tracer_manque(v, Y(fond_vu(v) + float(N["bateaux"][k]["tirant"])), COULEURS[k % COULEURS.size()], _t - float(_echoues_a_quai[k]), k)
 	for k in _indices:
 		var d: Dictionary = _indices[k]
-		_tracer_manque(int(d["bassin"]), float(d["y"]), COULEURS[k % COULEURS.size()], _t - float(d["t"]), k, bool(d.get("trop", false)))
+		_tracer_manque(int(d["bassin"]), float(d["y"]), COULEURS[k % COULEURS.size()], _t - float(d["t"]), k, bool(d.get("trop", false)), not _bulles.has(k))
 	for k in _echoues_a_quai.keys():
 		var v2 := int(N["bateaux"][k]["vers"])
 		if positions[k] != v2 or _a_flot(k, v2): _echoues_a_quai.erase(k)
@@ -2511,7 +2511,7 @@ func fond_vu(i: int) -> float:
 # d'eau qui manque à peine teintée, et une BULLE sans texte au-dessus du
 # bateau (Vincent : « évitons du texte, cela doit être enfantin ») : une
 # goutte, une flèche rouge vers le bas, des tirets — il manque de l'eau.
-func _tracer_manque(i: int, y: float, c: Color, age: float, k := -1, trop := false) -> void:
+func _tracer_manque(i: int, y: float, c: Color, age: float, k := -1, trop := false, bulle := true) -> void:
 	var xb := _x_bassin(i)                 # en oblique, l'eau va jusqu'aux vantaux
 	var x0 := xb.x + 4.0
 	var x1 := xb.y - 4.0
@@ -2524,6 +2524,8 @@ func _tracer_manque(i: int, y: float, c: Color, age: float, k := -1, trop := fal
 		_reperes.draw_rect(Rect2(x0, surface, x1 - x0, y - surface), Color(c, 0.16 * a))
 	_reperes.draw_dashed_line(Vector2(x0, y), Vector2(x1, y), Color(1, 1, 1, 0.9 * a), 7.0, 14.0)
 	_reperes.draw_dashed_line(Vector2(x0, y), Vector2(x1, y), Color(c, a), 4.0, 14.0)
+	# (la bulle des raisons dit déjà « il manque de l'eau » au-dessus du bateau)
+	if not bulle: return
 	# la bulle, au-dessus du bateau (ou au milieu du bassin), qui surgit puis
 	# flotte doucement
 	var bx: float = bat_x[k] if k >= 0 and k < bat_x.size() else (x0 + x1) * 0.5
@@ -2605,7 +2607,155 @@ func _exclamation(c: Vector2, age: float) -> void:
 				var o := c + Vector2(cote * w * 1.1, -h * 0.62)
 				_reperes.draw_line(o + d * 6.0 * s, o + d * 15.0 * s, Color(1.0, 0.68, 0.12, a), 3.0, true)
 
+# --- Les bulles des bateaux (9 octobre 2026) -------------------------------------------
+# Tant que la partie attend le joueur, chaque bateau qui n'est pas arrivé dit
+# dans une bulle, sans un mot, ce qui le retient : « porte » (une roue rouge et
+# sa flèche : touche-la), « eau » (une goutte et une flèche vers le bas : il
+# manque de l'eau), « trop » (flèche vers le haut : le pont bas), « plein »
+# (un autre bateau : la place est prise), « niveaux » (deux eaux inégales) ;
+# avec des bateaux au doigt, « passe » (une flèche verte : touche-moi, je peux
+# avancer). Le joueur les donne (principal.gd, Moteur.raison) ; toucher un
+# bateau refait surgir sa bulle.
+var _bulles := {}       # bateau -> [quoi, instant d'apparition]
+func montrer_raisons(r: Dictionary) -> void:
+	for k in _bulles.keys():
+		if not r.has(k) or r[k] != _bulles[k][0]: _bulles.erase(k)
+	for k in r:
+		if not _bulles.has(k): _bulles[k] = [r[k], _t]
+
+func relancer_bulle(k: int) -> void:
+	if _bulles.has(k): _bulles[k][1] = _t
+
+func refuser_bateau(k: int) -> void:
+	bateaux[k].refuser()
+	relancer_bulle(k)
+
+func bateau_sous(p: Vector2) -> int:
+	for k in bateaux.size():
+		var bt: Bateau = bateaux[k]
+		var c := bt.global_position
+		if Rect2(c.x - bt.longueur * 0.62, c.y - bt.longueur * 0.85, bt.longueur * 1.24, bt.longueur * 1.1).has_point(p): return k
+	return -1
+
+# Un toucher : un rond qui s'élargit sous le doigt (l'enfant voit qu'il a été
+# entendu, même quand rien ne peut se passer).
+var _ondes := []
+func onde(p: Vector2) -> void:
+	_ondes.append([p, _t])
+
+func _dessiner_bulles() -> void:
+	for k in _bulles:
+		var bt: Bateau = bateaux[k]
+		var age: float = _t - float(_bulles[k][1])
+		var centre := bt.position + Vector2(22.0, -bt.longueur * 0.78 - 18.0)
+		_bulle(centre, bt.position.x - 4.0, bt.position.y - bt.longueur * 0.5, age, String(_bulles[k][0]), COULEURS[k % COULEURS.size()])
+
+# Une bulle crème cerclée de brun, sa queue vers le bateau, qui surgit en
+# dépassant puis flotte doucement, et son pictogramme.
+func _bulle(c0: Vector2, x_queue: float, y_queue: float, age: float, quoi: String, couleur: Color) -> void:
+	var t := clampf(age / 0.3, 0.0, 1.0)
+	var u := t - 1.0
+	var sc := 1.0 + 2.7 * u * u * u + 1.7 * u * u
+	if sc <= 0.01: return
+	var centre := c0 + Vector2(0, 2.5 * sin(age * 2.6))
+	var w := 62.0 * sc
+	var h := 50.0 * sc
+	var r := Rect2(centre - Vector2(w, h) * 0.5, Vector2(w, h))
+	var st := StyleBoxFlat.new()
+	st.bg_color = Color("#fff3dc")
+	st.border_color = Color("#5b3416")
+	st.set_border_width_all(3)
+	st.set_corner_radius_all(int(14 * sc))
+	st.shadow_color = Color(0, 0, 0, 0.2); st.shadow_size = 4; st.shadow_offset = Vector2(1, 2)
+	st.anti_aliasing = true
+	var q0 := Vector2(r.position.x + w * 0.22, r.end.y - 2.0)
+	var q1 := Vector2(r.position.x + w * 0.44, r.end.y - 2.0)
+	var q2 := Vector2(x_queue, minf(r.end.y + 14.0 * sc, y_queue))
+	_reperes.draw_colored_polygon(PackedVector2Array([q0 + Vector2(-2, 0), q2 + Vector2(-1, 2), q1 + Vector2(2, 0)]), Color("#5b3416"))
+	st.draw(_reperes.get_canvas_item(), r)
+	_reperes.draw_colored_polygon(PackedVector2Array([q0 + Vector2(1, -3), q2, q1 + Vector2(-1, -3)]), Color("#fff3dc"))
+	match quoi:
+		"eau", "trop": _icone_eau(centre, w, h, sc, quoi == "trop")
+		"porte": _icone_roue(centre, sc, age)
+		"plein": _icone_plein(centre, sc, couleur)
+		"passe": _icone_passe(centre, sc, age, couleur)
+		"niveaux": _icone_niveaux(centre, sc)
+
+func _icone_eau(centre: Vector2, w: float, h: float, sc: float, trop: bool) -> void:
+	var g := centre + Vector2(-w * 0.17, -h * 0.02)
+	var gr := 9.0 * sc
+	var goutte := PackedVector2Array()
+	for j in 21:
+		var an := PI * j / 20.0
+		goutte.append(g + Vector2(cos(an) * gr, sin(an) * gr))
+	goutte.append(g + Vector2(0, -gr * 2.1))
+	_reperes.draw_colored_polygon(goutte, Color("#2f8fd8"))
+	_reperes.draw_polyline(goutte + PackedVector2Array([goutte[0]]), Color("#1d5c94"), 1.5, true)
+	_reperes.draw_circle(g + Vector2(-gr * 0.35, -gr * 0.1), gr * 0.25, Color(1, 1, 1, 0.7))
+	var f := centre + Vector2(w * 0.2, -h * 0.12)
+	var sg := -1.0 if trop else 1.0
+	var fy := 2.0 if trop else 0.0
+	_reperes.draw_line(f + Vector2(0, (-9 * sg + fy) * sc), f + Vector2(0, (3 * sg + fy) * sc), Color("#d9412d"), 4.0 * sc, true)
+	_reperes.draw_colored_polygon(PackedVector2Array([f + Vector2(-7, 2 * sg + fy) * sc, f + Vector2(7, 2 * sg + fy) * sc, f + Vector2(0, 11 * sg + fy) * sc]), Color("#d9412d"))
+	for j in 3:
+		var dx := (-0.32 + 0.24 * j) * w
+		_reperes.draw_line(centre + Vector2(dx, h * 0.3), centre + Vector2(dx + w * 0.15, h * 0.3), Color("#5b3416"), 3.0 * sc, true)
+
+# La roue rouge des portes, qui tourne doucement, et une flèche en arc :
+# « tourne la roue ».
+func _icone_roue(centre: Vector2, sc: float, age: float) -> void:
+	var r := 13.0 * sc
+	var c := centre + Vector2(-3.0 * sc, 0)
+	var tr := Peint.roue()
+	if tr:
+		_reperes.draw_set_transform(c, age * 1.8, Vector2.ONE)
+		_reperes.draw_texture_rect(tr, Rect2(-r - 3, -r - 3, 2 * r + 6, 2 * r + 6), false)
+		_reperes.draw_set_transform(Vector2.ZERO)
+	else:
+		_reperes.draw_arc(c, r, 0.0, TAU, 24, Color("#c8321f"), 4.0 * sc, true)
+	_reperes.draw_arc(c, r + 7.0 * sc, -PI * 0.15, PI * 0.55, 12, Color("#5b3416"), 3.0 * sc, true)
+	var bout := c + Vector2(cos(PI * 0.55), sin(PI * 0.55)) * (r + 7.0 * sc)
+	_reperes.draw_colored_polygon(PackedVector2Array([bout + Vector2(-6, -3) * sc, bout + Vector2(4, -6) * sc, bout + Vector2(0, 5) * sc]), Color("#5b3416"))
+
+# Un autre bateau dans la place : un petit bateau gris barré d'une croix rouge.
+func _icone_plein(centre: Vector2, sc: float, _couleur: Color) -> void:
+	var c := centre + Vector2(0, 4.0 * sc)
+	var coque := PackedVector2Array([c + Vector2(-16, -4) * sc, c + Vector2(16, -6) * sc, c + Vector2(10, 5) * sc, c + Vector2(-12, 5) * sc])
+	_reperes.draw_colored_polygon(coque, Color("#8a8580"))
+	_reperes.draw_rect(Rect2(c + Vector2(-8, -12) * sc, Vector2(12, 8) * sc), Color("#cfc9c0"))
+	_reperes.draw_line(c + Vector2(-14, -16) * sc, c + Vector2(14, 8) * sc, Color("#d9412d"), 4.0 * sc, true)
+	_reperes.draw_line(c + Vector2(14, -16) * sc, c + Vector2(-14, 8) * sc, Color("#d9412d"), 4.0 * sc, true)
+
+# Une flèche verte qui pousse dans le sens du voyage : « touche-moi, j'y vais ».
+func _icone_passe(centre: Vector2, sc: float, age: float, _couleur: Color) -> void:
+	var c := centre + Vector2(3.0 * sin(age * 5.0) * sc, 0)
+	_reperes.draw_circle(c, 16.0 * sc, Color("#2ea65a"))
+	_reperes.draw_arc(c, 16.0 * sc, 0.0, TAU, 24, Color("#1b6b39"), 2.0 * sc, true)
+	var fl := PackedVector2Array([c + Vector2(-8, -4) * sc, c + Vector2(1, -4) * sc, c + Vector2(1, -10) * sc, c + Vector2(10, 0) * sc,
+		c + Vector2(1, 10) * sc, c + Vector2(1, 4) * sc, c + Vector2(-8, 4) * sc])
+	_reperes.draw_colored_polygon(fl, Color.WHITE)
+
+# Deux eaux inégales de part et d'autre d'une porte.
+func _icone_niveaux(centre: Vector2, sc: float) -> void:
+	var b := centre + Vector2(0, 14.0 * sc)
+	_reperes.draw_rect(Rect2(b + Vector2(-18, -10) * sc, Vector2(14, 10) * sc), Color("#2f8fd8"))
+	_reperes.draw_rect(Rect2(b + Vector2(4, -22) * sc, Vector2(14, 22) * sc), Color("#2f8fd8"))
+	_reperes.draw_line(b + Vector2(-1, -26) * sc, b + Vector2(-1, 0), Color("#5b3416"), 3.0 * sc)
+
+func _dessiner_ondes() -> void:
+	var gardees := []
+	for o in _ondes:
+		var age: float = _t - float(o[1])
+		if age > 0.45: continue
+		gardees.append(o)
+		var k := age / 0.45
+		var p: Vector2 = o[0] - _reperes.global_position
+		_reperes.draw_arc(p, 8.0 + 34.0 * k, 0.0, TAU, 32, Color(1, 1, 1, 0.9 * (1.0 - k)), 4.0 * (1.0 - k) + 1.0, true)
+	_ondes = gardees
+
 func _dessiner_reperes() -> void:
+	_dessiner_bulles()
+	_dessiner_ondes()
 	_dessiner_manque()
 	for k in alertes:
 		var bt: Bateau = bateaux[k]

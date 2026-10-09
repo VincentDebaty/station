@@ -288,8 +288,10 @@ button:focus-visible, [role="button"]:focus-visible { outline: 3px solid var(--o
       "chapitre": 1,
       "titre": "Premier passage",
       "mode": "pas",
-      "par": 3,
-      "conseil": "Touche la vanne d'une porte pour l'ouvrir : l'eau s'égalise des deux côtés. Le bateau passe tout seul dès qu'il peut.",
+      "manuel": true,
+      "tuto": true,
+      "par": 5,
+      "conseil": "Touche la roue d'une porte pour l'ouvrir : l'eau s'égalise des deux côtés. Touche le bateau pour qu'il avance.",
       "bassins": [
         {"type": "bief", "fond": 0, "largeur": 8, "niveau": 1, "nom": "bief aval"},
         {"type": "sas", "fond": 0, "largeur": 2, "niveau": 1, "nom": "sas"},
@@ -971,6 +973,11 @@ const Ecluses = (function () {
   //              dans « bassin » (l'un de ses deux voisins) s'arrête à
   //              « niveau », et le flotteur referme la porte. Elle ne s'ouvre
   //              que si l'eau du bassin est sous ce niveau.
+  //   manuel     dans le niveau (9 octobre 2026, d'après le test de la fille
+  //              de Vincent, 10 ans : son premier geste fut de toucher le
+  //              bateau) : les bateaux n'avancent plus tout seuls. Le geste
+  //              « naviguer » (i : le bateau) le fait passer au bassin
+  //              suivant vers sa destination, s'il le peut.
   //   pont       sur une liaison : la hauteur du DESSOUS du tablier d'un
   //              pont. Un bateau ne passe dessous que si l'eau, plus sa
   //              « hauteur » (cheminée comprise, 0,6 par défaut), n'y touche pas.
@@ -997,7 +1004,7 @@ const Ecluses = (function () {
       coups: 0, entree: 0, sortie: 0
     };
     N.bassins.forEach((b, i) => { if (b.maree) e.niv[i] = b.maree[0]; });
-    if (e.lache) { equilibrer(N, e); bouger(N, e); }
+    if (e.lache) { equilibrer(N, e); if (!N.manuel) bouger(N, e); }
     return e;
   }
   function copie(e) {
@@ -1247,6 +1254,10 @@ const Ecluses = (function () {
       if (o.type === "vase" && o.pas * (e.obj[i] + 1) <= o.epaisseur + EPS) A.push({ type: "draguer", i });
       if (o.type === "siphon" && e.obj[i] === 0 && (e.niv[o.a] > o.ha + EPS || e.niv[o.b] > o.hb + EPS)) A.push({ type: "amorcer", i });
     });
+    if (N.manuel && e.lache) N.bateaux.forEach((b, k) => {
+      const p = e.bateaux[k];
+      if (p !== b.vers && peutPasser(N, e, k, p, p + Math.sign(b.vers - p))) A.push({ type: "naviguer", i: k });
+    });
     if (!e.lache) A.push({ type: "lacher" });
     else if (temps(N) || e.obj.some((x, k) => N.objets[k].type === "glacon" && x > 0)) A.push({ type: "attendre" });
     return A;
@@ -1310,6 +1321,11 @@ const Ecluses = (function () {
         if (b.maree) { e.phase = e.coups % b.maree.length; e.niv[i] = b.maree[e.phase]; }
       });
       flux = equilibrer(N, e);
+      if (a.type === "naviguer") {
+        const b = N.bateaux[a.i], p = e.bateaux[a.i];
+        e.bateaux[a.i] = p + Math.sign(b.vers - p);
+        dep = [{ k: a.i, de: p, vers: e.bateaux[a.i], tour: 0 }];
+      }
       // l'eau passée par la roue d'un moulin
       // (seulement l'eau qui DESCEND vers le bassin le plus bas : la roue ne
       // tourne que dans ce sens, et l'eau qui ferait l'aller-retour ne compte pas)
@@ -1319,7 +1335,7 @@ const Ecluses = (function () {
         const v = versDroite ? flux[i] : -flux[i];
         if (v > 0) e.moulu = arrondi(e.moulu + v);
       });
-      dep = bouger(N, e);
+      if (!N.manuel) dep = bouger(N, e);
     }
     return { etat: e, flux, dep, apport };
   }

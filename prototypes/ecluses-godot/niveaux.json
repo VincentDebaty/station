@@ -25,8 +25,10 @@
       "chapitre": 1,
       "titre": "Premier passage",
       "mode": "pas",
-      "par": 3,
-      "conseil": "Touche la vanne d'une porte pour l'ouvrir : l'eau s'égalise des deux côtés. Le bateau passe tout seul dès qu'il peut.",
+      "manuel": true,
+      "tuto": true,
+      "par": 5,
+      "conseil": "Touche la roue d'une porte pour l'ouvrir : l'eau s'égalise des deux côtés. Touche le bateau pour qu'il avance.",
       "bassins": [
         {"type": "bief", "fond": 0, "largeur": 8, "niveau": 1, "nom": "bief aval"},
         {"type": "sas", "fond": 0, "largeur": 2, "niveau": 1, "nom": "sas"},

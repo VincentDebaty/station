@@ -20,6 +20,22 @@ var sens := 1.0             # 1 : la proue à droite
 var image: Texture2D = null
 var ligne := 0.71
 var largeur_image := 0.0
+# « Non ! » : touché alors qu'il ne peut pas avancer, le bateau se secoue
+# (9 octobre 2026 : le premier geste d'une enfant de 10 ans fut de le toucher)
+var _refus := 0.0
+var _joie := 0.0          # touché et il part : un petit bond
+
+func refuser() -> void:
+	_refus = 0.55
+
+func sauter() -> void:
+	_joie = 0.4
+
+func _process(dt: float) -> void:
+	if _refus > 0.0 or _joie > 0.0:
+		_refus = maxf(_refus - dt, 0.0)
+		_joie = maxf(_joie - dt, 0.0)
+		queue_redraw()
 
 # Le haut de la cheminée, en coordonnées du bateau (l'image : à 13 % de la
 # largeur derrière le milieu, tout en haut).
@@ -65,7 +81,8 @@ func allumer() -> void:
 	add_child(fumee)
 
 func _draw() -> void:
-	draw_set_transform(Vector2.ZERO, 0.0, Vector2(sens, 1.0))
+	var secousse := Vector2(sin(_refus * 48.0) * 5.0 * (_refus / 0.55), -sin(_joie / 0.4 * PI) * 8.0)
+	draw_set_transform(secousse, sin(_refus * 48.0) * 0.05 * (_refus / 0.55), Vector2(sens, 1.0))
 	var L := longueur * 0.5
 	if image:
 		var w := largeur_image if largeur_image > 0.0 else longueur * 1.12

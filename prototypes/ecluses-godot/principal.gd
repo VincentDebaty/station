@@ -30,7 +30,11 @@ var fini := false
 var _lab_coups: Label
 var _etoiles: Etoiles
 var _b_annuler: Button
-var _b_attendre: Button   # le sablier : laisser passer un coup (glace qui fond, marée, orage)
+var _b_attendre: Button
+var _main: Main            # la main qui montre quoi toucher (niveaux « tuto »)
+var _solution := []        # la meilleure solution du niveau (oracle.json), pour la main
+var _joues := []           # les gestes joués depuis le début, pour savoir si l'on suit la solution
+var _calme_bulles := 0.0   # le sablier : laisser passer un coup (glace qui fond, marée, orage)
 var _pancarte: Pancarte   # le panneau d'éclusier de fin (pancarte.gd)
 var _lab_num: Label
 var _tous := []
@@ -65,8 +69,12 @@ func _ready() -> void:
 func _lancer() -> void:
 	_calcul += 1
 	if canal: canal.queue_free()
+	_main = null              # la main vivait dans l'ancienne coupe
 	etat = Moteur.charger(N)
 	histoire = []
+	_joues = []
+	Engine.time_scale = 1.0
+	_solution = _solution_de(N["id"])
 	fini = false
 	occupe = false
 	canal = Canal.new()
@@ -120,43 +128,65 @@ func _cadrer() -> void:
 # --- Le toucher et les coups ----------------------------------------------------------
 func _unhandled_input(ev: InputEvent) -> void:
 	if ev is InputEventMouseButton and ev.pressed and ev.button_index == MOUSE_BUTTON_LEFT:
-		var idr := canal.drague_sous(get_global_mouse_position())
+		# le point touché, depuis l'événement lui-même (sur un écran tactile, la
+		# « souris » ne suit pas toujours le doigt)
+		var m: Vector2 = get_canvas_transform().affine_inverse() * ev.position
+		canal.onde(m)
+		# Pendant une manœuvre, l'enfant retape (Vincent, 9 octobre 2026) : au
+		# lieu d'ignorer ses touchers, ils pressent l'eau et les bateaux (le
+		# temps du jeu va jusqu'à trois fois plus vite, jusqu'à la fin du coup)
+		if occupe and not fini:
+			Engine.time_scale = minf(Engine.time_scale + 0.7, 3.0)
+			return
+		# le bateau, d'abord : c'était le premier geste de l'enfant
+		var ib := canal.bateau_sous(m)
+		if ib >= 0 and not fini:
+			if Moteur.actions(N, etat).any(func(x): return x["type"] == "naviguer" and int(x["i"]) == ib):
+				canal.bateaux[ib].sauter()
+				jouer({"type": "naviguer", "i": ib})
+			else:
+				# il ne peut pas avancer (ou il avance tout seul) : il se secoue, et
+				# sa bulle dit pourquoi
+				canal.refuser_bateau(ib)
+				_calme_bulles = 99.0
+			return
+		var idr := canal.drague_sous(m)
 		if idr >= 0:
 			jouer({"type": "draguer", "i": idr})
 			return
-		var isi := canal.siphon_sous(get_global_mouse_position())
+		var isi := canal.siphon_sous(m)
 		if isi >= 0:
 			jouer({"type": "amorcer", "i": isi})
 			return
-		var ia := canal.bac_sous(get_global_mouse_position())
+		var ia := canal.bac_sous(m)
 		if ia >= 0:
 			jouer({"type": "ascenseur", "i": ia})
 			return
-		var ig := canal.glacon_sous(get_global_mouse_position())
+		var ig := canal.glacon_sous(m)
 		if ig >= 0:
 			jouer({"type": "allumer", "i": ig})
 			return
-		var ic := canal.chaudiere_sous(get_global_mouse_position())
+		var ic := canal.chaudiere_sous(m)
 		if ic >= 0:
 			jouer({"type": "chauffer", "i": ic})
 			return
-		var ip := canal.pompe_sous(get_global_mouse_position())
+		var ip := canal.pompe_sous(m)
 		if ip >= 0:
 			jouer({"type": "pomper", "i": ip})
 			return
-		var ir := canal.rigole_sous(get_global_mouse_position())
+		var ir := canal.rigole_sous(m)
 		if ir >= 0:
 			jouer({"type": "creuser", "i": ir})
 			return
-		var hs: Dictionary = canal.hausse_sous(get_global_mouse_position())
+		var hs: Dictionary = canal.hausse_sous(m)
 		if not hs.is_empty():
 			jouer({"type": hs["quoi"], "i": int(hs["i"])})
 			return
-		var iv := canal.vanne_sous(get_global_mouse_position())
+		var iv := canal.vanne_sous(m)
 		if iv >= 0:
 			jouer({"type": "vanne", "i": iv})
 			return
-		var i := canal.porte_sous(get_global_mouse_position())
+		var i := canal.porte_sous(m)
 		if i >= 0: jouer({"type": "porte", "i": i})
 
 func jouer(a: Dictionary) -> void:
@@ -168,9 +198,12 @@ func jouer(a: Dictionary) -> void:
 		return
 	occupe = true
 	canal.effacer_indices()
+	canal.montrer_raisons({})
+	if _main: _main.cacher()
 	var avant := etat
 	var r := Moteur.jouer(N, etat, a)
 	histoire.append(avant)
+	_joues.append({"type": a["type"], "i": int(a.get("i", -1))})
 	etat = r["etat"]
 	_maj()
 	# Comme une vraie écluse. Ouvrir : la roue tourne, la porte se soulève d'une
@@ -237,6 +270,7 @@ func jouer(a: Dictionary) -> void:
 	canal.deplacer(r["dep"])
 	await canal.bateaux_arrives
 	occupe = false
+	Engine.time_scale = 1.0
 	_maj()
 	var v := Moteur.verdict(N, etat)
 	if v.get("fin", "") == "gagne":
@@ -327,10 +361,13 @@ func annuler() -> void:
 	if occupe or histoire.is_empty(): return
 	_calcul += 1
 	var e: Dictionary = histoire.pop_back()
+	if not _joues.is_empty(): _joues.pop_back()
+	Engine.time_scale = 1.0
 	# on reconstruit la coupe sur l'état d'avant : pas d'animation à rebours
 	etat = e
 	var h := histoire.duplicate()
 	canal.queue_free()
+	_main = null
 	canal = Canal.new()
 	add_child(canal)
 	move_child(canal, 0)
@@ -759,7 +796,70 @@ func _indices_de_fond(dt: float) -> void:
 		if r["quoi"] in ["fond_ici", "fond_la", "seuil", "pont"]:
 			canal.indiquer_manque(k, int(r["bassin"]), float(r["niveau"]), r["quoi"] == "pont")
 
+# La meilleure solution d'un niveau, telle que l'oracle l'a jouée.
+func _solution_de(id: String) -> Array:
+	if not N.get("tuto", false): return []
+	var o = JSON.parse_string(FileAccess.get_file_as_string("res://oracle.json"))
+	for p in o["parties"]:
+		if p["niveau"] == id:
+			var sol := []
+			for pas in p["pas"]:
+				if pas["action"] != null: sol.append({"type": pas["action"]["type"], "i": int(pas["action"].get("i", -1))})
+			return sol
+	return []
+
+# Les bulles des bateaux et la main, quand la partie attend le joueur.
+func _guider(dt: float) -> void:
+	if canal == null: return
+	if occupe or fini:
+		_calme_bulles = 0.0
+		if fini: canal.montrer_raisons({})
+		if _main: _main.cacher()
+		return
+	_calme_bulles += dt
+	# les bulles, après un court instant de calme
+	if _calme_bulles > 0.8:
+		var r := {}
+		for k in N["bateaux"].size():
+			var q: String = Moteur.raison(N, etat, k)["quoi"]
+			match q:
+				"porte": r[k] = "porte"
+				"fond_ici", "fond_la", "seuil": r[k] = "eau"
+				"pont": r[k] = "trop"
+				"plein": r[k] = "plein"
+				"niveaux": r[k] = "niveaux"
+				"passe":
+					if N.get("manuel", false): r[k] = "passe"
+		canal.montrer_raisons(r)
+	# la main : tant que l'on suit la solution du niveau tutoriel, elle montre
+	# le geste suivant
+	if _solution.is_empty(): return
+	if _main == null:
+		_main = Main.new()
+		canal.add_child(_main)
+	var n := _joues.size()
+	var suit := n < _solution.size()
+	for j in mini(n, _solution.size()):
+		if _joues[j]["type"] != _solution[j]["type"] or _joues[j]["i"] != _solution[j]["i"]: suit = false
+	if suit and _calme_bulles > 0.5:
+		var p := _cible_de(_solution[n])
+		if p != Vector2.INF: _main.viser(p)
+		else: _main.cacher()
+	else:
+		_main.cacher()
+
+# Où se touche un geste, en coordonnées du monde.
+func _cible_de(a: Dictionary) -> Vector2:
+	var i := int(a["i"])
+	match a["type"]:
+		"porte": return canal.portes[i].centre_roue() if canal.portes.has(i) else Vector2.INF
+		"vanne": return canal.portes[i].centre_vanne() if canal.portes.has(i) else Vector2.INF
+		"naviguer": return canal.bateaux[i].global_position + Vector2(0, -20)
+		"pomper": return canal.pompes[i].pivot() if canal.pompes.has(i) else Vector2.INF
+	return Vector2.INF
+
 func _process(dt: float) -> void:
+	_guider(dt)
 	_indices_de_fond(dt)
 	if canal:
 		for p in canal.portes.values(): p.actif = not occupe and not fini
@@ -848,7 +948,15 @@ func _demo() -> void:
 	var rang := 0
 	for a in solution:
 		rang += 1
-		jouer(a)
+		if a["type"] == "toucher":
+			# un vrai toucher sur un bateau (ECLUSES_COUPS « toucher:k »)
+			var ev := InputEventMouseButton.new()
+			ev.button_index = MOUSE_BUTTON_LEFT
+			ev.pressed = true
+			ev.position = get_canvas_transform() * canal.bateaux[int(a["i"])].global_position
+			_unhandled_input(ev)
+		else:
+			jouer(a)
 		# ECLUSES_PENDANT : quand prendre la photo « pendant » (1,15 s par défaut)
 		var pendant := float(OS.get_environment("ECLUSES_PENDANT")) if OS.get_environment("ECLUSES_PENDANT") != "" else 1.15
 		await get_tree().create_timer(pendant).timeout

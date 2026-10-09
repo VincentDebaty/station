@@ -362,6 +362,16 @@ la suie. Si l'image arrive, il faudra la brancher dans ferme.gd.
 Same art style as the attached image. A small cute red wooden barn seen exactly from the front, white cross-braced double door in the middle, dark grey slate roof with two slopes, thin dark outline, soft cel shading, no fire, no smoke. Wide image, ratio about 3:2, the barn centred and filling about 85% of the frame, isolated on a transparent background, no ground, no shadow.
 ```
 
+#### `art/main.png` — la main qui montre quoi toucher (9 octobre 2026)
+
+Le jeu la fait tapoter et glisser de cible en cible ; il garde dessiné le
+rond qui part du bout du doigt. Le bout de l'index doit être EN HAUT À
+GAUCHE de l'image (c'est lui qui se pose sur la cible).
+
+```text
+Same art style as the attached image. A friendly cartoon hand pointing with the index finger, the index finger stretched towards the TOP-LEFT corner of the image, the other fingers folded, the thumb resting on the side, cream white skin with a soft warm shade, thick dark brown outline like a children's game tutorial hand. Square image, the hand filling about 85% of the frame, the tip of the index finger touching the top-left area, isolated on a transparent background, no shadow.
+```
+
 ### Plus tard, peut-être
 
 - `premier_plan.png` : un buisson flou et des marguerites au premier plan,

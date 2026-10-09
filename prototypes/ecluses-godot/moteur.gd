@@ -47,7 +47,7 @@ static func charger(N: Dictionary) -> Dictionary:
 		if N["bassins"][i].has("maree"): e["niv"][i] = float(N["bassins"][i]["maree"][0])
 	if e["lache"]:
 		equilibrer(N, e)
-		bouger(N, e)
+		if not N.get("manuel", false): bouger(N, e)
 	return e
 
 static func copie(e: Dictionary) -> Dictionary:
@@ -433,6 +433,13 @@ static func actions(N: Dictionary, e: Dictionary) -> Array:
 			A.append({"type": "draguer", "i": i})
 		if o["type"] == "siphon" and int(e["obj"][i]) == 0 and (e["niv"][int(o["a"])] > float(o["ha"]) + EPS or e["niv"][int(o["b"])] > float(o["hb"]) + EPS):
 			A.append({"type": "amorcer", "i": i})
+	# des bateaux au doigt : « naviguer » vers le bassin suivant, s'il le peut
+	if N.get("manuel", false) and e["lache"]:
+		for k in N["bateaux"].size():
+			var pb: int = e["bateaux"][k]
+			var vb := int(N["bateaux"][k]["vers"])
+			if pb != vb and peut_passer(N, e, k, pb, pb + signi(vb - pb)):
+				A.append({"type": "naviguer", "i": k})
 	if not e["lache"]:
 		A.append({"type": "lacher"})
 	elif temps(N) or feu:
@@ -531,6 +538,10 @@ static func jouer(N: Dictionary, e0: Dictionary, a: Dictionary) -> Dictionary:
 					e["phase"] = int(e["coups"]) % b["maree"].size()
 					e["niv"][i] = float(b["maree"][e["phase"]])
 		flux = equilibrer(N, e)
+		if a["type"] == "naviguer":
+			var pn: int = e["bateaux"][ai]
+			e["bateaux"][ai] = pn + signi(int(N["bateaux"][ai]["vers"]) - pn)
+			dep = [{"k": ai, "de": pn, "vers": e["bateaux"][ai], "tour": 0}]
 		# l'eau passée par la roue d'un moulin
 		# (seulement l'eau qui DESCEND vers le bassin le plus bas)
 		for i in N["liaisons"].size():
@@ -538,7 +549,7 @@ static func jouer(N: Dictionary, e0: Dictionary, a: Dictionary) -> Dictionary:
 				var vers_droite := float(N["bassins"][i + 1]["fond"]) < float(N["bassins"][i]["fond"])
 				var v := float(flux[i]) if vers_droite else -float(flux[i])
 				if v > 0.0: e["moulu"] = arrondi(float(e["moulu"]) + v)
-		dep = bouger(N, e)
+		if not N.get("manuel", false): dep = bouger(N, e)
 	return {"etat": e, "flux": flux, "dep": dep, "apport": apport}
 
 # --- La fin ----------------------------------------------------------------------
