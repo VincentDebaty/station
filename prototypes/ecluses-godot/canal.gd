@@ -2485,10 +2485,11 @@ func _dessiner_manque() -> void:
 		var v := int(N["bateaux"][k]["vers"])
 		if positions[k] != v or _a_flot(k, v) or (not _manque.is_empty() and int(_manque["bassin"]) == v): continue
 		if not _echoues_a_quai.has(k): _echoues_a_quai[k] = _t
-		_tracer_manque(v, Y(fond_vu(v) + float(N["bateaux"][k]["tirant"])), COULEURS[k % COULEURS.size()], _t - float(_echoues_a_quai[k]), k)
+		_tracer_manque(v, Y(fond_vu(v) + float(N["bateaux"][k]["tirant"])), COULEURS[k % COULEURS.size()], _t - float(_echoues_a_quai[k]), k, false, false)
 	for k in _indices:
 		var d: Dictionary = _indices[k]
-		_tracer_manque(int(d["bassin"]), float(d["y"]), COULEURS[k % COULEURS.size()], _t - float(d["t"]), k, bool(d.get("trop", false)), not _bulles.has(k))
+		# (le trait seul : la bulle ne vient qu'en touchant le bateau)
+		_tracer_manque(int(d["bassin"]), float(d["y"]), COULEURS[k % COULEURS.size()], _t - float(d["t"]), k, bool(d.get("trop", false)), false)
 	for k in _echoues_a_quai.keys():
 		var v2 := int(N["bateaux"][k]["vers"])
 		if positions[k] != v2 or _a_flot(k, v2): _echoues_a_quai.erase(k)
@@ -2622,19 +2623,16 @@ func _exclamation(c: Vector2, age: float) -> void:
 # avec des bateaux au doigt, « passe » (une flèche verte : touche-moi, je peux
 # avancer). Le joueur les donne (principal.gd, Moteur.raison) ; toucher un
 # bateau refait surgir sa bulle.
+# Vincent, 9 octobre 2026 : la bulle ne s'affiche QUE quand on touche le
+# bateau (affichée d'emblée, elle donnait la réponse avant qu'on cherche) :
+# elle reste DUREE_BULLE secondes, puis s'efface.
+const DUREE_BULLE := 3.5
 var _bulles := {}       # bateau -> [quoi, instant d'apparition]
-func montrer_raisons(r: Dictionary) -> void:
-	for k in _bulles.keys():
-		if not r.has(k) or r[k] != _bulles[k][0]: _bulles.erase(k)
-	for k in r:
-		if not _bulles.has(k): _bulles[k] = [r[k], _t]
+func montrer_bulle(k: int, quoi: String) -> void:
+	_bulles[k] = [quoi, _t]
 
-func relancer_bulle(k: int) -> void:
-	if _bulles.has(k): _bulles[k][1] = _t
-
-func refuser_bateau(k: int) -> void:
-	bateaux[k].refuser()
-	relancer_bulle(k)
+func effacer_bulles() -> void:
+	_bulles.clear()
 
 func bateau_sous(p: Vector2) -> int:
 	for k in bateaux.size():
@@ -2650,6 +2648,8 @@ func onde(p: Vector2) -> void:
 	_ondes.append([p, _t])
 
 func _dessiner_bulles() -> void:
+	for k in _bulles.keys():
+		if _t - float(_bulles[k][1]) > DUREE_BULLE: _bulles.erase(k)
 	for k in _bulles:
 		var bt: Bateau = bateaux[k]
 		var age: float = _t - float(_bulles[k][1])
@@ -2662,6 +2662,9 @@ func _bulle(c0: Vector2, x_queue: float, y_queue: float, age: float, quoi: Strin
 	var t := clampf(age / 0.3, 0.0, 1.0)
 	var u := t - 1.0
 	var sc := 1.0 + 2.7 * u * u * u + 1.7 * u * u
+	# elle se dégonfle à la fin
+	var fin := DUREE_BULLE - age
+	if fin < 0.25: sc *= clampf(fin / 0.25, 0.0, 1.0)
 	if sc <= 0.01: return
 	var centre := c0 + Vector2(0, 2.5 * sin(age * 2.6))
 	var w := 62.0 * sc

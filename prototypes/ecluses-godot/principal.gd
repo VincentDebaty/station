@@ -190,10 +190,13 @@ func _unhandled_input(ev: InputEvent) -> void:
 				canal.bateaux[ib].sauter()
 				jouer({"type": "naviguer", "i": ib})
 			else:
-				# il ne peut pas avancer (ou il avance tout seul) : il se secoue, et
-				# sa bulle dit pourquoi
-				canal.refuser_bateau(ib)
-				_calme_bulles = 99.0
+				# Le bateau est une AIDE (Vincent, 9 octobre 2026) : touché, il se
+				# secoue, et sa bulle dit ce qui le retient, sans un mot — la roue à
+				# tourner, l'eau qui manque… La bulle ne s'affiche que là, plus en
+				# permanence.
+				canal.bateaux[ib].refuser()
+				var quoi := _bulle_de(ib)
+				if quoi != "": canal.montrer_bulle(ib, quoi)
 			return
 		var idr := canal.drague_sous(m)
 		if idr >= 0:
@@ -245,7 +248,7 @@ func jouer(a: Dictionary) -> void:
 		return
 	occupe = true
 	canal.effacer_indices()
-	canal.montrer_raisons({})
+	canal.effacer_bulles()
 	if _main: _main.cacher()
 	var avant := etat
 	var r := Moteur.jouer(N, etat, a)
@@ -872,29 +875,26 @@ func _solution_de(id: String) -> Array:
 			return []
 	return []
 
+# La bulle d'un bateau touché : ce qui le retient (« » s'il peut passer).
+func _bulle_de(k: int) -> String:
+	match String(Moteur.raison(N, etat, k)["quoi"]):
+		"porte": return "porte"
+		"fond_ici", "fond_la", "seuil": return "eau"
+		"pont": return "trop"
+		"plein": return "plein"
+		"niveaux": return "porte"     # eaux inégales : c'est encore la roue qu'il faut tourner
+		"passe": return "passe" if N.get("manuel", false) else ""
+	return ""
+
 # Les bulles des bateaux et la main, quand la partie attend le joueur.
 func _guider(dt: float) -> void:
 	if canal == null: return
 	if occupe or fini or _maintien >= 0 or _coule:
 		_calme_bulles = 0.0
-		if fini: canal.montrer_raisons({})
+		if fini: canal.effacer_bulles()
 		if _main: _main.cacher()
 		return
 	_calme_bulles += dt
-	# les bulles, après un court instant de calme
-	if _calme_bulles > 0.8:
-		var r := {}
-		for k in N["bateaux"].size():
-			var q: String = Moteur.raison(N, etat, k)["quoi"]
-			match q:
-				"porte": r[k] = "porte"
-				"fond_ici", "fond_la", "seuil": r[k] = "eau"
-				"pont": r[k] = "trop"
-				"plein": r[k] = "plein"
-				"niveaux": r[k] = "niveaux"
-				"passe":
-					if N.get("manuel", false): r[k] = "passe"
-		canal.montrer_raisons(r)
 	# la main : tant que l'on suit la solution du niveau tutoriel, elle montre
 	# le geste suivant
 	if _solution.is_empty(): return
@@ -956,7 +956,7 @@ func _tenir(i: int) -> void:
 	_maintien = i
 	_calcul += 1
 	canal.effacer_indices()
-	canal.montrer_raisons({})
+	canal.effacer_bulles()
 	canal.portes[i].tenue = true
 	_a_juger = true
 	_maj()
@@ -1030,13 +1030,26 @@ func _pas_continu(dt: float) -> void:
 	# l'eau posée, plus de doigt : on regarde si c'est gagné, ou bloqué
 	if _a_juger and not coule and _maintien < 0 and not occupe:
 		_a_juger = false
-		_maj()
-		var v := Moteur.verdict(N, etat)
-		if v.get("fin", "") == "gagne":
-			fini = true
-			_montrer_fin()
-		else:
-			_chercher_impasse()
+		_apres_eau()
+
+# L'eau s'est posée et le doigt est levé : les bateaux qui peuvent passer
+# partent d'eux-mêmes (porte levée, eaux égales), puis on regarde si c'est
+# gagné, ou bloqué.
+func _apres_eau() -> void:
+	if not N.get("manuel", false):
+		var dep := Moteur.bouger(N, etat)
+		if not dep.is_empty():
+			occupe = true
+			canal.deplacer(dep)
+			await canal.bateaux_arrives
+			occupe = false
+	_maj()
+	var v := Moteur.verdict(N, etat)
+	if v.get("fin", "") == "gagne":
+		fini = true
+		_montrer_fin()
+	else:
+		_chercher_impasse()
 
 func _process(dt: float) -> void:
 	if _continu: _pas_continu(dt)
