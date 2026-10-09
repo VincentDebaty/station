@@ -2118,10 +2118,14 @@ func _jet(i: int, flux: float, dt: float) -> void:
 		var surf_b := minf(eaux[l].hauteur_a(bord_x + sens * 20.0), eaux[l].fond_y)
 		var haut_l := po.y_seuil - jt.fente
 		var bas_l := minf(po.y_seuil, surf_b)
-		if bas_l - haut_l < 8.0:
+		# (seulement quand l'eau d'en bas recouvre déjà le seuil : au début,
+		# porte à peine décollée au-dessus d'un sas bas, la lame est mince mais
+		# bien là — la couper supprimait la cascade, Vincent)
+		var noyee := surf_b < po.y_seuil - 2.0
+		if noyee and bas_l - haut_l < 8.0:
 			jt.force = 0.0
 			pentes[i] = true
-		else:
+		elif noyee:
 			jt.fente = bas_l - haut_l
 			jt.origine = Vector2(bord_x, (haut_l + bas_l) * 0.5)
 		if degagee:
