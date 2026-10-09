@@ -2087,6 +2087,18 @@ func _jet(i: int, flux: float, dt: float) -> void:
 		jt.force *= lerpf(0.4, 1.0, dv) * lerpf(0.4, 1.0, reste)
 		jt.origine = Vector2(bord_x, po.y_seuil - jt.fente * 0.5)
 		jt.plein = true
+		if degagee:
+			# La porte levée au-dessus de l'eau d'amont : l'eau passe par-dessus le
+			# seuil comme sur un déversoir. La lame part de la surface d'amont et
+			# descend jusqu'à celle d'en bas ; son épaisseur ne dépasse pas la
+			# marche entre les deux. (Centrée dans toute l'ouverture, elle se
+			# noyait dès que l'eau d'en bas montait, et il restait entre les deux
+			# surfaces une marche sans eau qui coule : « un creux qui se forme sur
+			# la fin », Vincent.)
+			var marche := maxf(minf(eaux[l].hauteur_a(x + sens * 60.0), eaux[l].fond_y) - surf_h, 0.0)
+			jt.fente = minf(jt.fente, maxf(marche * 0.8, 2.0))
+			jt.origine = Vector2(bord_x, surf_h + jt.fente * 0.5)
+			if marche < 1.5: jt.force = 0.0
 		jt.haut_veine = maxf(jt.haut_veine, po.y_seuil - jt.fente)
 		if jt.fente < 1.0: jt.force = 0.0
 	jt.surface_bas = eaux[l].hauteur_a(x + sens * 60.0)
