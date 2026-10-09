@@ -39,28 +39,30 @@ var _calme_bulles := 0.0
 # Vincent, après le test de sa fille : « chaque action fonctionne avec le
 # doigt maintenu, et s'arrête quand on relâche ». Les portes ont une
 # ouverture de 0 à 1. Tant que le doigt tient la roue (Vincent, 10 octobre
-# 2026, après plusieurs essais) : la porte s'entrouvre, et reste BLOQUÉE
-# entrouverte tant que les deux eaux ne sont pas à niveau — la roue force,
-# l'eau passe dessous à débit régulier ; une fois les eaux à niveau, elle
-# s'ouvre complètement. Relâchée, elle reste où elle est, et l'eau continue
-# de passer si elle est entrouverte. Le bateau ne passe que porte levée et
+# 2026, après plusieurs essais) : tant que les deux eaux ne sont pas à
+# niveau, la porte monte TRÈS LENTEMENT (l'eau pousse sur le vantail) et
+# l'eau passe dessous ; une fois les eaux à niveau, elle s'ouvre vite et
+# complètement. Relâchée, elle reste où elle est, et l'eau continue de
+# passer si elle est entrouverte. Le bateau ne passe que porte levée et
 # eaux égales (la règle du moteur). Chaque appui compte un coup. Un appui
 # continue le mouvement commencé ; une fois la porte au bout de sa course,
 # l'appui suivant la manœuvre dans l'autre sens.
-# (Essayés avant : une porte qui montait d'un seul mouvement pendant que
-# l'eau passait, avec un débit qui croissait avec l'ouverture — Vincent
-# trouvait le flux « lent et constant » et préfère le blocage.)
+# (Essayés avant : une porte qui montait à vitesse ordinaire pendant que
+# l'eau passait, avec un débit qui croissait avec l'ouverture — « lent et
+# constant » ; puis une porte bloquée entrouverte jusqu'au niveau — « le
+# blocage me gêne ».)
 var _continu := false
 var _ouv := []            # l'ouverture de chaque porte, 0..1
 var _sens := []           # le sens du prochain appui, par porte (+1 ouvrir, -1 fermer)
 var _maintien := -1       # la porte tenue, ou -1
 var _a_juger := false     # l'eau s'est-elle posée depuis le dernier geste ?
-const VITESSE_PORTE := 0.85      # par seconde : de fermée à levée en 1,2 s
-# L'eau qui passe sous la porte entrouverte : un volume par seconde régulier,
-# qui ne ralentit qu'à la fin, quand il reste moins de 0,6 unité d'écart. Sur
-# le 1-1, le sas se remplit en 5 s environ. (Porte levée en grand pendant
-# que l'eau passe — par l'autre porte, sur le 1-2 —, le débit est plus fort.)
-const DEBIT := 1.5
+const VITESSE_PORTE := 0.85      # par seconde : de fermée à levée en 1,2 s, eaux à niveau
+const VITESSE_LENTE := 0.1       # par seconde, tant que l'eau passe : 0,5 d'ouverture au niveau
+# L'eau qui passe sous la porte : un volume par seconde qui croît avec
+# l'ouverture jusqu'à 0,4 puis reste fort, et ne ralentit qu'à la fin, quand
+# il reste moins de 0,6 unité d'écart. Sur le 1-1, le sas se remplit en 5 s
+# environ en tenant la roue.
+const DEBIT := 2.0
 var _coule := false       # de l'eau passe sous une porte : ni bulle, ni main
 var _pancarte: Pancarte   # le panneau d'éclusier de fin (pancarte.gd)
 var _lab_num: Label
@@ -980,10 +982,7 @@ func _pas_continu(dt: float) -> void:
 		var i := _maintien
 		var a_niveau := absf(float(etat["niv"][i]) - float(etat["niv"][i + 1])) < 0.01
 		if _sens[i] > 0:
-			# bloquée entrouverte tant que l'eau n'est pas à niveau
-			var limite := 1.0 if a_niveau else maxf(Porte.FENTE, minf(_ouv[i], 1.0))
-			_ouv[i] = minf(_ouv[i] + VITESSE_PORTE * dt, limite)
-			canal.portes[i].force = not a_niveau and _ouv[i] >= Porte.FENTE - 0.001
+			_ouv[i] = minf(_ouv[i] + (VITESSE_PORTE if a_niveau else VITESSE_LENTE) * dt, 1.0)
 		else:
 			_ouv[i] = maxf(_ouv[i] - VITESSE_PORTE * dt, 0.0)
 	# l'eau : sous chaque porte entrouverte, une part de ce qui reste à passer
@@ -1002,7 +1001,7 @@ func _pas_continu(dt: float) -> void:
 			# (une ouverture d'au moins un quart : à peine entrouverte, il faut que
 			# l'eau se voie couler)
 			var o := clampf(_ouv[i], 0.0, 1.0)
-			var part := minf(o / Porte.FENTE, 1.0) * (1.0 + 1.5 * maxf(o - Porte.FENTE, 0.0) / (1.0 - Porte.FENTE))
+			var part := 0.25 + 0.75 * minf(o / 0.4, 1.0)
 			canal.debit_vu[i] = minf(part, 1.0)
 			var q := DEBIT * part * minf(1.0, sqrt(tete / 0.6)) * dt
 			var vide := []
