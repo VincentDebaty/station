@@ -23,6 +23,9 @@ var fente := 10.0               # la hauteur de la fente, en pixels
 # Au doigt maintenu (canal.gd) : la lame occupe toute l'ouverture, du seuil à
 # son haut, centrée sur sa trajectoire.
 var plein := false
+# 0..1 : la nappe s'efface (sans ses bulles) quand la chute devient trop
+# courte et que la surface d'en bas se relève à sa place (canal.gd, bosses).
+var pale := 1.0
 var surface_bas := 0.0          # y de la surface d'en bas, sous le jet
 var fond_bas := 0.0             # y du fond d'en bas
 var depart_x := 0.0             # sous la porte : l'eau glisse de là jusqu'au bord du bloc
@@ -83,6 +86,7 @@ func _process(dt: float) -> void:
 	# cela, sa face vue d'en haut gardait toute la largeur du canal et
 	# disparaissait d'un coup (Vincent)
 	modulate.a = clampf(fente / 10.0, 0.0, 1.0)
+	self_modulate.a = pale
 	bulles.emitting = force > 0.05 and noye()
 	if bulles.emitting:
 		bulles.global_position = to_global(origine + profondeur * 0.5 + Vector2(sens * (26.0 + 30.0 * force), 0))

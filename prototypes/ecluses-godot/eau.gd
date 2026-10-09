@@ -39,6 +39,13 @@ var clarte := 0.0          # l'eau mince devant une porte : plus limpide
 var lien_g := INF
 var lien_d := INF
 const RACCORD := 40.0
+# Le raccord affiché suit sa cible en douceur, et s'installe ou s'efface en
+# fondu : posé ou retiré d'une image à l'autre, il faisait sauter la surface
+# de plusieurs pixels contre la porte (fin d'un remplissage, Vincent).
+var _lien_g := 0.0
+var _lien_d := 0.0
+var _poids_g := 0.0
+var _poids_d := 0.0
 
 var _h := PackedFloat32Array()
 var _v := PackedFloat32Array()
@@ -76,8 +83,23 @@ func calme() -> float:
 func vide() -> bool:
 	return fond_y - repos < 1.5
 
-# La surface à l'abscisse x, en y monde.
-func hauteur_a(x: float) -> float:
+func _suivre_liens(dt: float) -> void:
+	var v := minf(1.0, dt * 10.0)
+	if lien_g != INF:
+		_lien_g = lien_g if _poids_g <= 0.0 else lerpf(_lien_g, lien_g, v)
+		_poids_g = move_toward(_poids_g, 1.0, dt * 5.0)
+	else:
+		_poids_g = move_toward(_poids_g, 0.0, dt * 5.0)
+	if lien_d != INF:
+		_lien_d = lien_d if _poids_d <= 0.0 else lerpf(_lien_d, lien_d, v)
+		_poids_d = move_toward(_poids_d, 1.0, dt * 5.0)
+	else:
+		_poids_d = move_toward(_poids_d, 0.0, dt * 5.0)
+
+# La surface à l'abscisse x, en y monde. Sans « liens », celle du bassin
+# seul, sans les raccords avec ses voisins (le canal y mesure la chute, que
+# le raccord qu'il pose lui-même ne doit pas fausser).
+func hauteur_a(x: float, liens := true) -> float:
 	if passage:
 		var ya := gauche.hauteur_a(gauche.x1) if gauche else repos
 		var yb := droite.hauteur_a(droite.x0) if droite else repos
@@ -87,12 +109,12 @@ func hauteur_a(x: float) -> float:
 	var j := mini(i + 1, _h.size() - 1)
 	var h := lerpf(_h[i], _h[j], f - float(i))
 	var y := repos + (h + _houle(x)) * calme()
-	if lien_g != INF and x - x0 < RACCORD:
+	if liens and _poids_g > 0.0 and x - x0 < RACCORD:
 		var k := 1.0 - clampf((x - x0) / RACCORD, 0.0, 1.0)
-		y = lerpf(y, lien_g, k * k * (3.0 - 2.0 * k))
-	if lien_d != INF and x1 - x < RACCORD:
+		y = lerpf(y, _lien_g, k * k * (3.0 - 2.0 * k) * _poids_g)
+	if liens and _poids_d > 0.0 and x1 - x < RACCORD:
 		var k := 1.0 - clampf((x1 - x) / RACCORD, 0.0, 1.0)
-		y = lerpf(y, lien_d, k * k * (3.0 - 2.0 * k))
+		y = lerpf(y, _lien_d, k * k * (3.0 - 2.0 * k) * _poids_d)
 	return minf(y, fond_y)
 
 # Une poussée sur la surface, centrée en x, étalée sur « largeur » pixels.
@@ -107,6 +129,7 @@ func impulsion(x: float, force: float, largeur := 24.0) -> void:
 
 func _process(dt: float) -> void:
 	_t += dt
+	_suivre_liens(dt)
 	if not passage:
 		_reste += dt
 		while _reste >= 1.0 / 60.0:

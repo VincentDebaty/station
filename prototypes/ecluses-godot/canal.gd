@@ -1712,6 +1712,13 @@ func _process(dt: float) -> void:
 			var m := (Y(vue_niv[g]) + Y(vue_niv[g + 1])) * 0.5
 			eaux[g].lien_d = m
 			eaux[g + 1].lien_g = m
+	for g in bosses:
+		var b: Array = bosses[g]
+		var e: Eau = eaux[int(b[0])]
+		if float(b[1]) > 0.0:
+			if e.lien_g == INF: e.lien_g = float(b[2])
+		elif e.lien_d == INF: e.lien_d = float(b[2])
+	bosses.clear()
 	for i in portes: portes[i].bas_ouvert_y = _bas_ouvert(i)
 	_maj_passages()
 	_maj_surfaces()
@@ -2037,6 +2044,7 @@ func _aqueduc(i: int, flux: float, dt: float) -> void:
 func _jet(i: int, flux: float, dt: float) -> void:
 	var jt: Jet = jets[i]
 	var po: Porte = portes[i]
+	jt.pale = 1.0
 	if absf(flux) <= 0.01:
 		jt.force = 0.0
 		return
@@ -2115,7 +2123,7 @@ func _jet(i: int, flux: float, dt: float) -> void:
 		# sous la surface — « un creux qui se forme sur la fin » (Vincent). S'il
 		# n'en reste presque rien, l'eau d'en bas remonte en pente douce
 		# jusqu'à celle d'en haut (pentes).
-		var surf_b := minf(eaux[l].hauteur_a(bord_x + sens * 20.0), eaux[l].fond_y)
+		var surf_b := minf(eaux[l].hauteur_a(bord_x + sens * 20.0, false), eaux[l].fond_y)
 		var haut_l := po.y_seuil - jt.fente
 		var bas_l := minf(po.y_seuil, surf_b)
 		# (seulement quand l'eau d'en bas recouvre déjà le seuil : au début,
@@ -2136,6 +2144,9 @@ func _jet(i: int, flux: float, dt: float) -> void:
 				jt.origine = Vector2(bord_x, maxf(haut_l, surf_b + 4.0))
 				jt.fente = minf(maxf(po.y_seuil - haut_l, 4.0), 24.0)
 				jt.plein = false
+				# (seulement ses bulles : ses bouffées claires faisaient elles
+				# aussi un bloc contre la porte ; la surface s'y relève, bosses)
+				jt.pale = 0.0
 		elif noyee:
 			jt.fente = bas_l - haut_l
 			jt.origine = Vector2(bord_x, (haut_l + bas_l) * 0.5)
@@ -2154,6 +2165,16 @@ func _jet(i: int, flux: float, dt: float) -> void:
 			if marche < 16.0:
 				pentes[i] = true
 				jt.force = 0.0
+		# (le haut de l'eau qui passe : la surface d'amont, ou le bas de la porte
+		# s'il est plus bas — pas celui de la nappe, qui s'amincit vers le seuil
+		# sur la fin et faisait monter puis retomber la bosse)
+		var dessus := maxf(minf(eaux[h].hauteur_a(x - sens * 6.0, false), eaux[h].fond_y), po.bas_y)
+		var chute := surf_b - dessus
+		if noyee and not pentes.has(i) and jt.force > 0.0 and chute > 0.0:
+			var k := 1.0 - smoothstep(14.0, 44.0, chute)
+			if k > 0.0:
+				bosses[i] = [l, sens, lerpf(surf_b, dessus, k)]
+				jt.pale = minf(jt.pale, 1.0 - k)
 		jt.haut_veine = maxf(jt.haut_veine, po.y_seuil - jt.fente)
 		if jt.fente < 1.0: jt.force = 0.0
 	jt.surface_bas = eaux[l].hauteur_a(x + sens * 60.0)
@@ -2756,6 +2777,14 @@ var debit_vu := {}
 # voyait comme « un creux qui se forme sur la fin »), les deux surfaces se
 # raccordent à mi-hauteur sous la porte.
 var pentes := {}
+# Au doigt maintenu, quand l'eau du sas a passé le seuil et que la chute
+# devient courte : la surface du sas se relève en pente douce jusqu'au haut
+# de l'eau qui passe sous la porte, et la nappe s'efface à mesure. Une nappe
+# pleine qui ne tombe plus que de quelques pixels faisait un bloc d'eau
+# translucide dressé contre la porte, avec un « V » d'écume à son pied —
+# « le creux à la fin » de Vincent. Posées par _jet, appliquées puis vidées à
+# chaque image par _process : [bassin qui reçoit, sens, y de la bosse].
+var bosses := {}
 func montrer_bulle(k: int, quoi: String) -> void:
 	_bulles[k] = [quoi, _t]
 
