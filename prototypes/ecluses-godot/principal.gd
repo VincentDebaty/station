@@ -50,11 +50,15 @@ var _ouv := []            # l'ouverture de chaque porte, 0..1
 var _sens := []           # le sens du prochain appui, par porte (+1 ouvrir, -1 fermer)
 var _maintien := -1       # la porte tenue, ou -1
 var _a_juger := false     # l'eau s'est-elle posée depuis le dernier geste ?
-# La porte monte d'un seul mouvement tant qu'on tient la roue : en 3,5 s de
-# fermée à levée. (D'abord, elle s'arrêtait entrouverte tant que les eaux
-# différaient, puis repartait une fois égales : Vincent la voyait « s'ouvrir
-# en deux temps ».)
-const VITESSE_OUVERTURE := 0.28  # par seconde
+# La porte bouge d'un seul mouvement tant qu'on tient la roue. (D'abord, elle
+# s'arrêtait entrouverte tant que les eaux différaient, puis repartait une
+# fois égales : Vincent la voyait « s'ouvrir en deux temps ».)
+# Vincent : sans différence de niveau, la porte s'ouvre ou se ferme vite
+# (en 1,2 s) ; tant que l'eau passe, lentement (l'eau pousse contre le
+# vantail), et elle accélère à mesure que les niveaux se rejoignent.
+const VITESSE_LIBRE := 0.85      # par seconde, eaux égales
+const VITESSE_POUSSEE := 0.12    # par seconde, sous une forte différence
+const ECART_LIBRE := 0.5         # en dessous de cet écart (unités), on accélère
 # L'eau qui passe sous la porte : un volume par seconde qui croît avec
 # l'ouverture, presque constant, et qui ne ralentit qu'à la fin, quand il
 # reste moins de 0,6 unité d'écart. Le sas du 1-1 monte à vitesse régulière
@@ -63,7 +67,7 @@ const VITESSE_OUVERTURE := 0.28  # par seconde
 # part fixe de ce qui restait à passer, puis Torricelli : presque toute l'eau
 # passait dans la première seconde, Vincent : « l'eau se déverse beaucoup trop
 # rapidement ».)
-const DEBIT := 1.4
+const DEBIT := 2.2   # la porte s'ouvre lentement tant que l'eau pousse : 6 s pour remplir le sas
 var _coule := false       # de l'eau passe sous une porte : ni bulle, ni main   # le sablier : laisser passer un coup (glace qui fond, marée, orage)
 var _pancarte: Pancarte   # le panneau d'éclusier de fin (pancarte.gd)
 var _lab_num: Label
@@ -980,10 +984,13 @@ func _pas_continu(dt: float) -> void:
 	var B: Array = N["bassins"]
 	if _maintien >= 0:
 		var i := _maintien
+		var ecart := absf(float(etat["niv"][i]) - float(etat["niv"][i + 1]))
+		var k := clampf(ecart / ECART_LIBRE, 0.0, 1.0)
+		var vitesse := lerpf(VITESSE_LIBRE, VITESSE_POUSSEE, k * k * (3.0 - 2.0 * k))
 		if _sens[i] > 0:
-			_ouv[i] = minf(_ouv[i] + VITESSE_OUVERTURE * dt, 1.0)
+			_ouv[i] = minf(_ouv[i] + vitesse * dt, 1.0)
 		else:
-			_ouv[i] = maxf(_ouv[i] - VITESSE_OUVERTURE * 1.3 * dt, 0.0)
+			_ouv[i] = maxf(_ouv[i] - vitesse * dt, 0.0)
 	# l'eau : sous chaque porte entrouverte, une part de ce qui reste à passer
 	var e_eau := etat.duplicate(true)
 	for i in N["liaisons"].size():
