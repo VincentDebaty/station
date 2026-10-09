@@ -55,7 +55,7 @@ func _draw() -> void:
 		var k := (cycle - 0.16) / 0.59
 		draw_arc(_pos, 10.0 + 30.0 * k, 0.0, TAU, 32, Color(1, 1, 1, 0.85 * (1.0 - k)), 4.0, true)
 		draw_arc(_pos, 10.0 + 30.0 * k, 0.0, TAU, 32, Color(BRUN, 0.35 * (1.0 - k)), 1.5, true)
-	var s := 1.4 * (1.0 - 0.06 * appui)      # bien visible pour un enfant
+	var s := 1.15 * (1.0 - 0.06 * appui)     # en pixels de l'écran, bien visible pour un enfant
 	if _image:
 		var h := 110.0 * s
 		var w := h * _image.get_width() / _image.get_height()

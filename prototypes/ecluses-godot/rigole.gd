@@ -251,6 +251,10 @@ func _dessiner_castor() -> void:
 	draw_line(b0 + Vector2(-12, 4), b0 + Vector2(-16, -2), Color("#4f8a3a"), 2.0, true)
 	draw_set_transform(Vector2.ZERO)
 
+# Où la main montre qu'on peut creuser : le milieu du tracé, sur la butte.
+func point_main() -> Vector2:
+	return _pt(0.45, 0.0, y_rive)
+
 # La surface de l'eau à la bouche de la rigole (sur sa paroi avant) : la
 # cascade part exactement de là. Partie plus bas, elle laissait voir l'entaille
 # sombre entre l'eau de la rigole et elle (Vincent : « une cassure »).

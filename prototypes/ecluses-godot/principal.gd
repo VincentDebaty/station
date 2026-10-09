@@ -69,7 +69,6 @@ func _ready() -> void:
 func _lancer() -> void:
 	_calcul += 1
 	if canal: canal.queue_free()
-	_main = null              # la main vivait dans l'ancienne coupe
 	etat = Moteur.charger(N)
 	histoire = []
 	_joues = []
@@ -367,7 +366,6 @@ func annuler() -> void:
 	etat = e
 	var h := histoire.duplicate()
 	canal.queue_free()
-	_main = null
 	canal = Canal.new()
 	add_child(canal)
 	move_child(canal, 0)
@@ -796,16 +794,27 @@ func _indices_de_fond(dt: float) -> void:
 		if r["quoi"] in ["fond_ici", "fond_la", "seuil", "pont"]:
 			canal.indiquer_manque(k, int(r["bassin"]), float(r["niveau"]), r["quoi"] == "pont")
 
-# La meilleure solution d'un niveau, telle que l'oracle l'a jouée.
+# La meilleure solution d'un niveau, telle que l'oracle l'a jouée, pour la
+# main : en entier sur un niveau « tuto » (le 1-1) ; jusqu'au premier usage
+# de la nouveauté du chapitre sur un niveau qui en présente une (« nouveau »,
+# Vincent, 9 octobre 2026 : « une présentation avec la main pour chaque
+# nouvel élément »). La main suit la solution jusque-là plutôt que de
+# montrer la nouveauté d'emblée : sur le 6-1, allumer le brasero tout de
+# suite rend le niveau impossible.
 func _solution_de(id: String) -> Array:
-	if not N.get("tuto", false): return []
+	if not N.get("tuto", false) and not N.has("nouveau"): return []
 	var o = JSON.parse_string(FileAccess.get_file_as_string("res://oracle.json"))
 	for p in o["parties"]:
 		if p["niveau"] == id:
 			var sol := []
 			for pas in p["pas"]:
 				if pas["action"] != null: sol.append({"type": pas["action"]["type"], "i": int(pas["action"].get("i", -1))})
-			return sol
+			if N.get("tuto", false): return sol
+			var nv: Dictionary = N["nouveau"]
+			for j in sol.size():
+				if sol[j]["type"] == nv["type"] and (not nv.has("i") or sol[j]["i"] == int(nv["i"])):
+					return sol.slice(0, j + 1)
+			return []
 	return []
 
 # Les bulles des bateaux et la main, quand la partie attend le joueur.
@@ -835,15 +844,22 @@ func _guider(dt: float) -> void:
 	# le geste suivant
 	if _solution.is_empty(): return
 	if _main == null:
+		# au-dessus de l'interface : elle doit pouvoir montrer le sablier
+		var couche := CanvasLayer.new()
+		couche.layer = 5
+		add_child(couche)
 		_main = Main.new()
-		canal.add_child(_main)
+		couche.add_child(_main)
 	var n := _joues.size()
 	var suit := n < _solution.size()
 	for j in mini(n, _solution.size()):
 		if _joues[j]["type"] != _solution[j]["type"] or _joues[j]["i"] != _solution[j]["i"]: suit = false
 	if suit and _calme_bulles > 0.5:
 		var p := _cible_de(_solution[n])
-		if p != Vector2.INF: _main.viser(p)
+		if p != Vector2.INF:
+			# en pixels de l'écran (la main vit dans sa couche)
+			if _solution[n]["type"] != "attendre": p = get_canvas_transform() * p
+			_main.viser(p)
 		else: _main.cacher()
 	else:
 		_main.cacher()
@@ -856,6 +872,15 @@ func _cible_de(a: Dictionary) -> Vector2:
 		"vanne": return canal.portes[i].centre_vanne() if canal.portes.has(i) else Vector2.INF
 		"naviguer": return canal.bateaux[i].global_position + Vector2(0, -20)
 		"pomper": return canal.pompes[i].pivot() if canal.pompes.has(i) else Vector2.INF
+		"creuser": return canal.rigoles[i].point_main() if canal.rigoles.has(i) else Vector2.INF
+		"chauffer": return canal.chaudieres[i].base + Vector2(0, -60) if canal.chaudieres.has(i) else Vector2.INF
+		"allumer": return Vector2(canal.glacons[i].x_feu, canal.glacons[i].base.y - 34.0) if canal.glacons.has(i) else Vector2.INF
+		"ascenseur": return canal.bacs[i].centre_roue() + canal.D * 0.5 if canal.bacs.has(i) else Vector2.INF
+		"amorcer": return canal.siphons[i].sommet + Vector2(0, -22) if canal.siphons.has(i) else Vector2.INF
+		"draguer": return canal.dragues[i].pied + Vector2(0, -45.0 * Drague.ECHELLE) if canal.dragues.has(i) else Vector2.INF
+		"attendre":
+			# un bouton de l'interface : déjà en pixels de l'écran
+			return _b_attendre.get_global_rect().get_center() if _b_attendre and _b_attendre.visible else Vector2.INF
 	return Vector2.INF
 
 func _process(dt: float) -> void:
