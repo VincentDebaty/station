@@ -47,6 +47,7 @@
       "chapitre": 1,
       "titre": "Croisement",
       "mode": "pas",
+      "continu": true,
       "par": 5,
       "conseil": "Deux bateaux, un seul sas. Un sas ne prend qu'un bateau à la fois.",
       "bassins": [
