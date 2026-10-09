@@ -38,38 +38,29 @@ var _calme_bulles := 0.0
 # --- Au doigt maintenu (niveau « continu », 9 octobre 2026) ----------------
 # Vincent, après le test de sa fille : « chaque action fonctionne avec le
 # doigt maintenu, et s'arrête quand on relâche ». Les portes ont une
-# ouverture de 0 à 1 ; tant que le doigt tient la roue, elle s'ouvre (ou se
-# ferme) d'un seul mouvement, et l'eau passe dessous d'autant plus vite que
-# la porte est ouverte et que l'eau pousse. Relâchée, elle reste où elle
-# est, et l'eau continue de passer si elle est ouverte. Le bateau ne passe
-# que porte levée et eaux égales (la règle du moteur). Chaque appui compte
-# un coup. Un appui continue le mouvement commencé ; une fois la porte au
-# bout de sa course, l'appui suivant la manœuvre dans l'autre sens.
+# ouverture de 0 à 1. Tant que le doigt tient la roue (Vincent, 10 octobre
+# 2026, après plusieurs essais) : la porte s'entrouvre, et reste BLOQUÉE
+# entrouverte tant que les deux eaux ne sont pas à niveau — la roue force,
+# l'eau passe dessous à débit régulier ; une fois les eaux à niveau, elle
+# s'ouvre complètement. Relâchée, elle reste où elle est, et l'eau continue
+# de passer si elle est entrouverte. Le bateau ne passe que porte levée et
+# eaux égales (la règle du moteur). Chaque appui compte un coup. Un appui
+# continue le mouvement commencé ; une fois la porte au bout de sa course,
+# l'appui suivant la manœuvre dans l'autre sens.
+# (Essayés avant : une porte qui montait d'un seul mouvement pendant que
+# l'eau passait, avec un débit qui croissait avec l'ouverture — Vincent
+# trouvait le flux « lent et constant » et préfère le blocage.)
 var _continu := false
 var _ouv := []            # l'ouverture de chaque porte, 0..1
 var _sens := []           # le sens du prochain appui, par porte (+1 ouvrir, -1 fermer)
 var _maintien := -1       # la porte tenue, ou -1
 var _a_juger := false     # l'eau s'est-elle posée depuis le dernier geste ?
-# La porte bouge d'un seul mouvement tant qu'on tient la roue. (D'abord, elle
-# s'arrêtait entrouverte tant que les eaux différaient, puis repartait une
-# fois égales : Vincent la voyait « s'ouvrir en deux temps ».)
-# Vincent : sans différence de niveau, la porte s'ouvre ou se ferme vite
-# (en 1,2 s) ; tant que l'eau passe, lentement (l'eau pousse contre le
-# vantail), et elle accélère à mesure que les niveaux se rejoignent.
-const VITESSE_LIBRE := 0.85      # par seconde, eaux égales
-const VITESSE_POUSSEE := 0.28    # par seconde, sous une forte différence
-const ECART_LIBRE := 0.5         # en dessous de cet écart (unités), on accélère
-# L'eau qui passe sous la porte : un volume par seconde, qui ne ralentit qu'à
-# la fin, quand il reste moins de 0,6 unité d'écart. (D'abord une part fixe
-# de ce qui restait à passer, puis Torricelli : presque toute l'eau passait
-# dans la première seconde, Vincent : « l'eau se déverse beaucoup trop
-# rapidement ».)
-# Le débit croît avec l'ouverture de la porte (Vincent : « le flux doit
-# s'accélérer au fur et à mesure que la porte s'ouvre ») : un filet quand
-# elle se décolle, de plus en plus d'eau à mesure qu'elle monte (au carré de
-# l'ouverture). Sur le 1-1, le sas monte de 0,1 puis 0,3, 0,7, 1,2 unité par
-# seconde, et se remplit en 5 s.
-const DEBIT := 2.6
+const VITESSE_PORTE := 0.85      # par seconde : de fermée à levée en 1,2 s
+# L'eau qui passe sous la porte entrouverte : un volume par seconde régulier,
+# qui ne ralentit qu'à la fin, quand il reste moins de 0,6 unité d'écart. Sur
+# le 1-1, le sas se remplit en 5 s environ. (Porte levée en grand pendant
+# que l'eau passe — par l'autre porte, sur le 1-2 —, le débit est plus fort.)
+const DEBIT := 1.5
 var _coule := false       # de l'eau passe sous une porte : ni bulle, ni main
 var _pancarte: Pancarte   # le panneau d'éclusier de fin (pancarte.gd)
 var _lab_num: Label
@@ -971,6 +962,7 @@ func _relacher() -> void:
 	var i := _maintien
 	_maintien = -1
 	canal.portes[i].tenue = false
+	canal.portes[i].force = false
 	# au bout de sa course, le prochain appui ira dans l'autre sens
 	if (_sens[i] > 0 and _ouv[i] >= 1.0) or (_sens[i] < 0 and _ouv[i] <= 0.0): _sens[i] = -_sens[i]
 
@@ -986,13 +978,14 @@ func _pas_continu(dt: float) -> void:
 	var B: Array = N["bassins"]
 	if _maintien >= 0:
 		var i := _maintien
-		var ecart := absf(float(etat["niv"][i]) - float(etat["niv"][i + 1]))
-		var k := clampf(ecart / ECART_LIBRE, 0.0, 1.0)
-		var vitesse := lerpf(VITESSE_LIBRE, VITESSE_POUSSEE, k * k * (3.0 - 2.0 * k))
+		var a_niveau := absf(float(etat["niv"][i]) - float(etat["niv"][i + 1])) < 0.01
 		if _sens[i] > 0:
-			_ouv[i] = minf(_ouv[i] + vitesse * dt, 1.0)
+			# bloquée entrouverte tant que l'eau n'est pas à niveau
+			var limite := 1.0 if a_niveau else maxf(Porte.FENTE, minf(_ouv[i], 1.0))
+			_ouv[i] = minf(_ouv[i] + VITESSE_PORTE * dt, limite)
+			canal.portes[i].force = not a_niveau and _ouv[i] >= Porte.FENTE - 0.001
 		else:
-			_ouv[i] = maxf(_ouv[i] - vitesse * dt, 0.0)
+			_ouv[i] = maxf(_ouv[i] - VITESSE_PORTE * dt, 0.0)
 	# l'eau : sous chaque porte entrouverte, une part de ce qui reste à passer
 	var e_eau := etat.duplicate(true)
 	for i in N["liaisons"].size():
@@ -1008,12 +1001,9 @@ func _pas_continu(dt: float) -> void:
 			var tete := absf(a - c)
 			# (une ouverture d'au moins un quart : à peine entrouverte, il faut que
 			# l'eau se voie couler)
-			# (au carré de l'ouverture : l'accélération doit se voir, Vincent :
-			# « cela reste lent et constant » avec un débit simplement
-			# proportionnel, la porte montant lentement)
 			var o := clampf(_ouv[i], 0.0, 1.0)
-			var part := 0.05 + 0.95 * o * o
-			canal.debit_vu[i] = part
+			var part := minf(o / Porte.FENTE, 1.0) * (1.0 + 1.5 * maxf(o - Porte.FENTE, 0.0) / (1.0 - Porte.FENTE))
+			canal.debit_vu[i] = minf(part, 1.0)
 			var q := DEBIT * part * minf(1.0, sqrt(tete / 0.6)) * dt
 			var vide := []
 			vide.resize(N["liaisons"].size()); vide.fill(0.0)

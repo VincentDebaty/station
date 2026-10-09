@@ -386,6 +386,7 @@ func ouverture() -> float:
 # lève. -1 : la porte suit les coups, comme avant.
 const FENTE := 0.15
 var ouverture_continue := -1.0
+var force := false        # tenue, mais bloquée entrouverte par l'eau qui pousse
 var tenue := false:       # le doigt est sur la roue (son halo se redessine)
 	set(v):
 		tenue = v
@@ -411,9 +412,9 @@ func _process(dt: float) -> void:
 	if _secousse > 0.0:
 		_secousse = maxf(_secousse - dt, 0.0)
 		roue.queue_redraw()
-	if tenue:
-		# la roue tenue : elle force un peu quand la porte ne peut plus monter
-		_angle += sin(Time.get_ticks_msec() * 0.03) * 0.01
+	if tenue and force:
+		# la porte est bloquée par l'eau : la roue force, par à-coups
+		_angle += sin(Time.get_ticks_msec() * 0.045) * 0.025
 		roue.queue_redraw()
 	if roue:
 		var cible := Color(1, 1, 1) if actif else Color(0.68, 0.64, 0.64, 0.85)
