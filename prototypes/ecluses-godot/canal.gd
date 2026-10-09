@@ -2077,6 +2077,13 @@ func _jet(i: int, flux: float, dt: float) -> void:
 		var dv: float = debit_vu[i]
 		jt.force *= lerpf(0.35, 1.0, dv)
 		jt.fente = maxf(jt.fente * lerpf(0.12, 1.0, sqrt(dv)), minf(jt.fente, 4.0))
+		# et la chute d'eau s'amincit avec l'écart qui reste entre les deux eaux :
+		# elle gardait toute son épaisseur jusqu'au bout, puis disparaissait d'un
+		# coup quand les niveaux se rejoignaient (Vincent)
+		var reste := clampf(tete / 0.8, 0.0, 1.0)
+		jt.fente *= reste
+		jt.force *= lerpf(0.4, 1.0, reste)
+		if jt.fente < 1.0: jt.force = 0.0
 	jt.surface_bas = eaux[l].hauteur_a(x + sens * 60.0)
 	jt.fond_bas = eaux[l].fond_y
 	if jt.force <= 0.03: return
