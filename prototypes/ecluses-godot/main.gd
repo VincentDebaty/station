@@ -15,6 +15,9 @@ extends Node2D
 
 var cible := Vector2.ZERO
 var montree := false
+# Maintenir plutôt que tapoter (porte au doigt maintenu) : la main reste
+# appuyée, et des ronds partent du doigt sans arrêt.
+var maintenir := false
 var _pos := Vector2.ZERO
 var _alpha := 0.0
 var _t := 0.0
@@ -48,7 +51,17 @@ func _draw() -> void:
 	# remonte ; un rond part du bout du doigt au moment où elle appuie
 	var cycle := fmod(_t, 1.1)
 	var appui := 0.0
-	if cycle < 0.18: appui = cycle / 0.18
+	if maintenir:
+		# elle descend, puis reste appuyée ; les ronds partent en continu
+		appui = 1.0
+		for j in 2:
+			var k2 := fmod(_t * 0.9 + j * 0.5, 1.0)
+			draw_arc(_pos, 10.0 + 34.0 * k2, 0.0, TAU, 32, Color(1, 1, 1, 0.8 * (1.0 - k2)), 4.0, true)
+		# un arc qui se remplit : on garde le doigt
+		var tour := fmod(_t * 0.6, 1.0)
+		draw_arc(_pos, 52.0, -PI * 0.5, -PI * 0.5 + TAU * tour, 32, Color(1.0, 0.85, 0.3, 0.9), 5.0, true)
+		cycle = 2.0
+	elif cycle < 0.18: appui = cycle / 0.18
 	elif cycle < 0.36: appui = 1.0 - (cycle - 0.18) / 0.18
 	var bout := _pos + Vector2(0, -10.0 * (1.0 - appui))
 	if cycle > 0.16 and cycle < 0.75:

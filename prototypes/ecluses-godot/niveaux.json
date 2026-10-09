@@ -26,6 +26,7 @@
       "titre": "Premier passage",
       "mode": "pas",
       "manuel": true,
+      "continu": true,
       "tuto": true,
       "par": 5,
       "conseil": "Touche la roue d'une porte pour l'ouvrir : l'eau s'égalise des deux côtés. Touche le bateau pour qu'il avance.",

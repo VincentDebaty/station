@@ -34,7 +34,30 @@ var _b_attendre: Button
 var _main: Main            # la main qui montre quoi toucher (niveaux « tuto »)
 var _solution := []        # la meilleure solution du niveau (oracle.json), pour la main
 var _joues := []           # les gestes joués depuis le début, pour savoir si l'on suit la solution
-var _calme_bulles := 0.0   # le sablier : laisser passer un coup (glace qui fond, marée, orage)
+var _calme_bulles := 0.0
+# --- Au doigt maintenu (niveau « continu », 9 octobre 2026) ----------------
+# Vincent, après le test de sa fille : « chaque action fonctionne avec le
+# doigt maintenu, et s'arrête quand on relâche ». Les portes ont une
+# ouverture de 0 à 1 ; tant que le doigt tient la roue, elle s'ouvre (ou se
+# ferme) ; tant que les eaux diffèrent, la pression ne la laisse que
+# s'entrouvrir (FENTE), et l'eau passe dessous d'autant plus vite que la
+# porte est ouverte ; eaux égales, elle se lève jusqu'en haut. Relâchée, elle
+# reste où elle est, et l'eau continue de passer si elle est entrouverte.
+# Chaque appui compte un coup. Un appui continue le mouvement commencé ; une
+# fois la porte au bout de sa course, l'appui suivant la manœuvre dans
+# l'autre sens.
+var _continu := false
+var _ouv := []            # l'ouverture de chaque porte, 0..1
+var _sens := []           # le sens du prochain appui, par porte (+1 ouvrir, -1 fermer)
+var _maintien := -1       # la porte tenue, ou -1
+var _a_juger := false     # l'eau s'est-elle posée depuis le dernier geste ?
+const VITESSE_OUVERTURE := 0.6   # par seconde
+# L'eau qui passe : chaque seconde, une part exp(-débit × dt) de ce qui reste
+# à passer. Porte entrouverte jusqu'à la fente, l'écluse s'égalise en 2 à 3 s
+# (à 0,45 par seconde, il fallait tenir la roue 12 s : bien trop pour un
+# enfant) ; levée, presque tout de suite.
+const DEBIT_FENTE := 2.2
+const DEBIT_LEVEE := 4.0   # le sablier : laisser passer un coup (glace qui fond, marée, orage)
 var _pancarte: Pancarte   # le panneau d'éclusier de fin (pancarte.gd)
 var _lab_num: Label
 var _tous := []
@@ -72,6 +95,13 @@ func _lancer() -> void:
 	etat = Moteur.charger(N)
 	histoire = []
 	_joues = []
+	_continu = bool(N.get("continu", false))
+	_maintien = -1
+	_ouv = []
+	_sens = []
+	for o in etat["ouvert"]:
+		_ouv.append(1.0 if o else 0.0)
+		_sens.append(-1 if o else 1)
 	Engine.time_scale = 1.0
 	_solution = _solution_de(N["id"])
 	fini = false
@@ -80,6 +110,7 @@ func _lancer() -> void:
 	add_child(canal)
 	move_child(canal, 0)
 	canal.construire(N, etat)
+	_regler_portes()
 	if camera == null:
 		camera = Camera2D.new()
 		add_child(camera)
@@ -126,6 +157,10 @@ func _cadrer() -> void:
 
 # --- Le toucher et les coups ----------------------------------------------------------
 func _unhandled_input(ev: InputEvent) -> void:
+	# le doigt se lève : la porte tenue s'arrête
+	if ev is InputEventMouseButton and not ev.pressed and ev.button_index == MOUSE_BUTTON_LEFT:
+		if _maintien >= 0: _relacher()
+		return
 	if ev is InputEventMouseButton and ev.pressed and ev.button_index == MOUSE_BUTTON_LEFT:
 		# le point touché, depuis l'événement lui-même (sur un écran tactile, la
 		# « souris » ne suit pas toujours le doigt)
@@ -135,7 +170,7 @@ func _unhandled_input(ev: InputEvent) -> void:
 		# lieu d'ignorer ses touchers, ils pressent l'eau et les bateaux (le
 		# temps du jeu va jusqu'à trois fois plus vite, jusqu'à la fin du coup)
 		if occupe and not fini:
-			Engine.time_scale = minf(Engine.time_scale + 0.7, 3.0)
+			if not _continu: Engine.time_scale = minf(Engine.time_scale + 0.7, 3.0)
 			return
 		# le bateau, d'abord : c'était le premier geste de l'enfant
 		var ib := canal.bateau_sous(m)
@@ -186,7 +221,9 @@ func _unhandled_input(ev: InputEvent) -> void:
 			jouer({"type": "vanne", "i": iv})
 			return
 		var i := canal.porte_sous(m)
-		if i >= 0: jouer({"type": "porte", "i": i})
+		if i >= 0:
+			if _continu and not canal.portes[i].a_vanne: _tenir(i)
+			else: jouer({"type": "porte", "i": i})
 
 func jouer(a: Dictionary) -> void:
 	if occupe or fini: return
@@ -361,6 +398,12 @@ func annuler() -> void:
 	_calcul += 1
 	var e: Dictionary = histoire.pop_back()
 	if not _joues.is_empty(): _joues.pop_back()
+	if e.has("_ouv"):
+		_ouv = e["_ouv"]
+		_sens = e["_sens"]
+		e.erase("_ouv")
+		e.erase("_sens")
+	_maintien = -1
 	Engine.time_scale = 1.0
 	# on reconstruit la coupe sur l'état d'avant : pas d'animation à rebours
 	etat = e
@@ -370,6 +413,7 @@ func annuler() -> void:
 	add_child(canal)
 	move_child(canal, 0)
 	canal.construire(N, etat)
+	_regler_portes()
 	histoire = h
 	fini = false
 	_pancarte.hide()
@@ -820,7 +864,7 @@ func _solution_de(id: String) -> Array:
 # Les bulles des bateaux et la main, quand la partie attend le joueur.
 func _guider(dt: float) -> void:
 	if canal == null: return
-	if occupe or fini:
+	if occupe or fini or _maintien >= 0:
 		_calme_bulles = 0.0
 		if fini: canal.montrer_raisons({})
 		if _main: _main.cacher()
@@ -851,12 +895,15 @@ func _guider(dt: float) -> void:
 		_main = Main.new()
 		couche.add_child(_main)
 	var n := _joues.size()
+	# au doigt maintenu, une porte laissée à mi-course : la main y retourne
+	if _continu and n > 0 and _joues[-1]["type"] == "porte" and not _au_bout(_joues[-1]["i"]): n -= 1
 	var suit := n < _solution.size()
 	for j in mini(n, _solution.size()):
 		if _joues[j]["type"] != _solution[j]["type"] or _joues[j]["i"] != _solution[j]["i"]: suit = false
 	if suit and _calme_bulles > 0.5:
 		var p := _cible_de(_solution[n])
 		if p != Vector2.INF:
+			_main.maintenir = _continu and _solution[n]["type"] == "porte"
 			# en pixels de l'écran (la main vit dans sa couche)
 			if _solution[n]["type"] != "attendre": p = get_canvas_transform() * p
 			_main.viser(p)
@@ -883,7 +930,99 @@ func _cible_de(a: Dictionary) -> Vector2:
 			return _b_attendre.get_global_rect().get_center() if _b_attendre and _b_attendre.visible else Vector2.INF
 	return Vector2.INF
 
+# Le doigt se pose sur une roue : un coup de plus, et la porte suit le doigt.
+func _tenir(i: int) -> void:
+	if fini or occupe: return
+	var avant := etat.duplicate(true)
+	avant["_ouv"] = _ouv.duplicate()
+	avant["_sens"] = _sens.duplicate()
+	histoire.append(avant)
+	# reprendre une porte laissée à mi-course, c'est le même geste pour la
+	# main (mais un coup de plus pour les étoiles)
+	if _joues.is_empty() or _joues[-1]["type"] != "porte" or _joues[-1]["i"] != i or _au_bout(i):
+		_joues.append({"type": "porte", "i": i})
+	etat["coups"] = int(etat["coups"]) + 1
+	_maintien = i
+	_calcul += 1
+	canal.effacer_indices()
+	canal.montrer_raisons({})
+	canal.portes[i].tenue = true
+	_a_juger = true
+	_maj()
+
+# La porte est-elle au bout de sa course (tout en haut, ou fermée) ?
+func _au_bout(i: int) -> bool:
+	return _ouv[i] >= 1.0 or _ouv[i] <= 0.0
+
+func _relacher() -> void:
+	var i := _maintien
+	_maintien = -1
+	canal.portes[i].tenue = false
+	# au bout de sa course, le prochain appui ira dans l'autre sens
+	if (_sens[i] > 0 and _ouv[i] >= 1.0) or (_sens[i] < 0 and _ouv[i] <= 0.0): _sens[i] = -_sens[i]
+
+func _regler_portes() -> void:
+	if not _continu or canal == null: return
+	for i in canal.portes:
+		canal.portes[i].ouverture_continue = _ouv[i]
+
+# Un pas de la simulation : la porte tenue s'ouvre ou se ferme, l'eau passe
+# sous les portes entrouvertes, les bateaux suivent l'eau.
+func _pas_continu(dt: float) -> void:
+	if canal == null: return
+	var B: Array = N["bassins"]
+	if _maintien >= 0:
+		var i := _maintien
+		if _sens[i] > 0:
+			var egales := absf(float(etat["niv"][i]) - float(etat["niv"][i + 1])) < 0.02
+			var limite := 1.0 if egales else Porte.FENTE
+			if _ouv[i] < limite: _ouv[i] = minf(_ouv[i] + VITESSE_OUVERTURE * dt, limite)
+		else:
+			_ouv[i] = maxf(_ouv[i] - VITESSE_OUVERTURE * 1.3 * dt, 0.0)
+	# l'eau : sous chaque porte entrouverte, une part de ce qui reste à passer
+	var e_eau := etat.duplicate(true)
+	for i in N["liaisons"].size():
+		if N["liaisons"][i]["type"] == "porte": e_eau["ouvert"][i] = _ouv[i] > 0.001
+	var coule := false
+	for i in N["liaisons"].size():
+		if N["liaisons"][i]["type"] != "porte": continue
+		var v := Moteur.paire(N, e_eau, i)
+		var flux := 0.0
+		if absf(v) > 1e-6:
+			var debit := DEBIT_FENTE * minf(_ouv[i] / Porte.FENTE, 1.0) + DEBIT_LEVEE * maxf(_ouv[i] - Porte.FENTE, 0.0) / (1.0 - Porte.FENTE)
+			var f := 1.0 - exp(-dt * maxf(debit, 0.15))
+			var vide := []
+			vide.resize(N["liaisons"].size()); vide.fill(0.0)
+			Moteur.verser(N, etat, i, v * f, vide)
+			flux = v
+			coule = true
+		# presque égales, porte ouverte : elles le sont (moyenne pondérée, l'eau
+		# se conserve)
+		if _ouv[i] > 0.001 and absf(float(etat["niv"][i]) - float(etat["niv"][i + 1])) < 0.003 \
+				and not B[i].get("fixe", false) and not B[i + 1].get("fixe", false):
+			var la := float(B[i]["largeur"])
+			var lb := float(B[i + 1]["largeur"])
+			var m := Moteur.arrondi((la * float(etat["niv"][i]) + lb * float(etat["niv"][i + 1])) / (la + lb))
+			etat["niv"][i] = m
+			etat["niv"][i + 1] = m
+		etat["ouvert"][i] = _ouv[i] >= 0.98
+		e_eau["niv"] = etat["niv"].duplicate()
+		canal._jet(i, flux if absf(flux) > 0.02 else 0.0, dt)
+	for i in canal.portes: canal.portes[i].ouverture_continue = _ouv[i]
+	canal.vue_niv = etat["niv"].duplicate()
+	# l'eau posée, plus de doigt : on regarde si c'est gagné, ou bloqué
+	if _a_juger and not coule and _maintien < 0 and not occupe:
+		_a_juger = false
+		_maj()
+		var v := Moteur.verdict(N, etat)
+		if v.get("fin", "") == "gagne":
+			fini = true
+			_montrer_fin()
+		else:
+			_chercher_impasse()
+
 func _process(dt: float) -> void:
+	if _continu: _pas_continu(dt)
 	_guider(dt)
 	_indices_de_fond(dt)
 	if canal:
@@ -940,7 +1079,7 @@ func _demo() -> void:
 	if OS.get_environment("ECLUSES_COUPS") != "":
 		# « 1 » : la porte 1 ; « v1 » : la vanne de la porte 1
 		# « type:i » pour tous les autres gestes (« chauffer:0 », « attendre »)
-		solution = Array(OS.get_environment("ECLUSES_COUPS").split(",")).map(func(x): return {"type": x.split(":")[0], "i": int(x.split(":")[1])} if ":" in x else ({"type": x} if x.length() > 3 else ({"type": "vanne", "i": int(x.substr(1))} if x.begins_with("v") else ({"type": "creuser", "i": int(x.substr(1))} if x.begins_with("c") else ({"type": "pomper", "i": int(x.substr(1))} if x.begins_with("P") else {"type": "porte", "i": int(x)})))))
+		solution = Array(OS.get_environment("ECLUSES_COUPS").split(",")).map(func(x): return ({"type": "porte", "i": int(x.split(":")[1]), "duree": float(x.split(":")[2])} if x.begins_with("tenir:") else {"type": x.split(":")[0], "i": int(x.split(":")[1])}) if ":" in x else ({"type": x} if x.length() > 3 else ({"type": "vanne", "i": int(x.substr(1))} if x.begins_with("v") else ({"type": "creuser", "i": int(x.substr(1))} if x.begins_with("c") else ({"type": "pomper", "i": int(x.substr(1))} if x.begins_with("P") else {"type": "porte", "i": int(x)})))))
 	await get_tree().create_timer(1.2).timeout
 	await _photo("00-repos")
 	# ECLUSES_SONDE="x,y" (pixels de l'écran) : liste les polygones dessinés
@@ -973,7 +1112,21 @@ func _demo() -> void:
 	var rang := 0
 	for a in solution:
 		rang += 1
-		if a["type"] == "toucher":
+		if _continu and a["type"] == "porte":
+			# au doigt maintenu : on tient la roue jusqu'au bout de la course
+			# (ou le temps donné : ECLUSES_COUPS « tenir:i:secondes »)
+			var ip := int(a["i"])
+			_tenir(ip)
+			var duree := float(a.get("duree", 12.0))
+			var t0 := Time.get_ticks_msec()
+			while Time.get_ticks_msec() - t0 < duree * 1000.0:
+				await get_tree().process_frame
+				if (_sens[ip] > 0 and _ouv[ip] >= 1.0) or (_sens[ip] < 0 and _ouv[ip] <= 0.0): break
+				if rang <= 9 and Time.get_ticks_msec() - t0 > 700 and not has_meta("photo_%d" % rang):
+					set_meta("photo_%d" % rang, true)
+					await _photo("%02d-tenu" % rang)
+			_relacher()
+		elif a["type"] == "toucher":
 			# un vrai toucher sur un bateau (ECLUSES_COUPS « toucher:k »)
 			var ev := InputEventMouseButton.new()
 			ev.button_index = MOUSE_BUTTON_LEFT

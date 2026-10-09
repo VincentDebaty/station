@@ -380,7 +380,22 @@ func fente() -> float:
 func ouverture() -> float:
 	return clampf((y_seuil - bas_y - ENTREBAIL) / (0.5 * u), 0.0, 1.0)
 
+# AU DOIGT MAINTENU (9 octobre 2026, niveau « continu ») : le jeu donne
+# l'ouverture de la porte, de 0 (fermée) à 1 (levée pour les bateaux) ; de
+# 0 à FENTE, elle s'entrouvre (l'eau passe dessous), au-delà le vantail se
+# lève. -1 : la porte suit les coups, comme avant.
+const FENTE := 0.15
+var ouverture_continue := -1.0
+var tenue := false:       # le doigt est sur la roue (son halo se redessine)
+	set(v):
+		tenue = v
+		if roue: roue.queue_redraw()
+
 func _cible() -> float:
+	if ouverture_continue >= 0.0:
+		var f := ouverture_continue
+		if f <= FENTE: return y_seuil - ENTREBAIL * f / FENTE
+		return lerpf(y_seuil - ENTREBAIL, bas_ouvert_y, (f - FENTE) / (1.0 - FENTE))
 	if _leve: return bas_ouvert_y
 	return y_seuil - ENTREBAIL if _entrouvert else y_seuil
 
@@ -395,6 +410,10 @@ func _process(dt: float) -> void:
 			roue_finie.emit()
 	if _secousse > 0.0:
 		_secousse = maxf(_secousse - dt, 0.0)
+		roue.queue_redraw()
+	if tenue:
+		# la roue tenue : elle force un peu quand la porte ne peut plus monter
+		_angle += sin(Time.get_ticks_msec() * 0.03) * 0.01
 		roue.queue_redraw()
 	if roue:
 		var cible := Color(1, 1, 1) if actif else Color(0.68, 0.64, 0.64, 0.85)
@@ -485,6 +504,11 @@ func _maillons(x: float, y_haut: float, y_bas: float) -> void:
 
 func _dessiner_roue() -> void:
 	if sans_roue: return
+	if tenue:
+		# un halo doré sous le doigt : la roue est tenue
+		var ch := centre_roue()
+		roue.draw_circle(ch, 0.4 * u + 16.0, Color(1.0, 0.85, 0.35, 0.35))
+		roue.draw_arc(ch, 0.4 * u + 14.0, 0.0, TAU, 40, Color(1.0, 0.92, 0.5, 0.8), 3.0, true)
 	if a_vanne: _dessiner_volant()
 	var c := centre_roue()
 	var tressaille := sin(_secousse * 40.0) * 0.12 * clampf((_secousse - 1.1) / 0.5, 0.0, 1.0)

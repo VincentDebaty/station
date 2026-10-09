@@ -289,6 +289,7 @@ button:focus-visible, [role="button"]:focus-visible { outline: 3px solid var(--o
       "titre": "Premier passage",
       "mode": "pas",
       "manuel": true,
+      "continu": true,
       "tuto": true,
       "par": 5,
       "conseil": "Touche la roue d'une porte pour l'ouvrir : l'eau s'égalise des deux côtés. Touche le bateau pour qu'il avance.",
@@ -991,6 +992,11 @@ const Ecluses = (function () {
   //              bateau) : les bateaux n'avancent plus tout seuls. Le geste
   //              « naviguer » (i : le bateau) le fait passer au bassin
   //              suivant vers sa destination, s'il le peut.
+  //   continu    dans le niveau (9 octobre 2026) : dans la tranche Godot, les
+  //              portes se manœuvrent au doigt maintenu et l'eau passe en
+  //              continu. Le moteur, lui, n'en sait rien : une porte tenue
+  //              jusqu'au bout est un coup « porte », et c'est sur ces coups
+  //              que se comptent le par et les étoiles.
   //   pont       sur une liaison : la hauteur du DESSOUS du tablier d'un
   //              pont. Un bateau ne passe dessous que si l'eau, plus sa
   //              « hauteur » (cheminée comprise, 0,6 par défaut), n'y touche pas.
