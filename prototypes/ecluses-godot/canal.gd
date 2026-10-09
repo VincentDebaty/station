@@ -2072,17 +2072,22 @@ func _jet(i: int, flux: float, dt: float) -> void:
 		jt.origine = Vector2(bord_x, surf_h)
 		if jt.fente < 1.0: jt.force = 0.0
 	if debit_vu.has(i):
-		# la cascade suit le débit : mince et faible quand la porte se décolle,
-		# épaisse et forte quand elle est levée
+		# Au doigt maintenu, l'épaisseur de la chute est celle de l'eau qui
+		# passe : l'ouverture sous la porte (bornée par l'eau d'amont au-dessus
+		# du seuil), qui grandit quand la porte monte, et qui s'amincit avec
+		# l'écart qui reste entre les deux eaux (sur la dernière 0,8 unité).
+		# La lame est centrée dans cette ouverture, du seuil à son haut : son
+		# départ était calculé sur l'ouverture avant ces réductions, et la chute
+		# restait une lame fine partie de haut, quelle que soit l'ouverture
+		# (Vincent : « elle reste fine alors qu'elle devrait grossir puis
+		# redevenir fine sur la fin »).
 		var dv: float = debit_vu[i]
-		jt.force *= lerpf(0.35, 1.0, dv)
-		jt.fente = maxf(jt.fente * lerpf(0.12, 1.0, sqrt(dv)), minf(jt.fente, 4.0))
-		# et la chute d'eau s'amincit avec l'écart qui reste entre les deux eaux :
-		# elle gardait toute son épaisseur jusqu'au bout, puis disparaissait d'un
-		# coup quand les niveaux se rejoignaient (Vincent)
 		var reste := clampf(tete / 0.8, 0.0, 1.0)
-		jt.fente *= reste
-		jt.force *= lerpf(0.4, 1.0, reste)
+		jt.fente = jt.fente * lerpf(0.5, 1.0, dv) * reste
+		jt.force *= lerpf(0.4, 1.0, dv) * lerpf(0.4, 1.0, reste)
+		jt.origine = Vector2(bord_x, po.y_seuil - jt.fente * 0.5)
+		jt.plein = true
+		jt.haut_veine = maxf(jt.haut_veine, po.y_seuil - jt.fente)
 		if jt.fente < 1.0: jt.force = 0.0
 	jt.surface_bas = eaux[l].hauteur_a(x + sens * 60.0)
 	jt.fond_bas = eaux[l].fond_y

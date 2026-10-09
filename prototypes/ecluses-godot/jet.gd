@@ -20,6 +20,9 @@ var force := 0.0
 var sens := 1.0
 var origine := Vector2.ZERO     # le milieu de la fente, côté bas de la porte
 var fente := 10.0               # la hauteur de la fente, en pixels
+# Au doigt maintenu (canal.gd) : la lame occupe toute l'ouverture, du seuil à
+# son haut, centrée sur sa trajectoire.
+var plein := false
 var surface_bas := 0.0          # y de la surface d'en bas, sous le jet
 var fond_bas := 0.0             # y du fond d'en bas
 var depart_x := 0.0             # sous la porte : l'eau glisse de là jusqu'au bord du bloc
@@ -138,7 +141,7 @@ func _lame() -> void:
 		t += 0.02
 	_point_chute = p
 	if pts.size() < 2: return
-	var ep := fente * (0.7 + 0.3 * force)
+	var ep := fente * (0.7 + 0.3 * force) if not plein else fente
 	var D := profondeur
 	if D == Vector2.ZERO:
 		# de profil, pas de largeur à montrer : un simple ruban
@@ -172,7 +175,8 @@ func _lame() -> void:
 	# l'eau qui arrive et la cascade — la « cassure » que voyait Vincent)
 	var chute := PackedVector2Array()
 	for q in pts:
-		if q.y > origine.y + 6.0: chute.append(q)
+		# (pleine, la lame a son épaisseur dès la sortie de la porte)
+		if plein or q.y > origine.y + 6.0: chute.append(q)
 	if chute.size() >= 2:
 		# un trait épais plutôt qu'un ruban décalé en hauteur : là où la chute
 		# devient verticale, le ruban s'aplatissait et ne se triangulait plus
