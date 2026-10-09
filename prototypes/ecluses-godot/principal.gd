@@ -39,25 +39,31 @@ var _calme_bulles := 0.0
 # Vincent, après le test de sa fille : « chaque action fonctionne avec le
 # doigt maintenu, et s'arrête quand on relâche ». Les portes ont une
 # ouverture de 0 à 1 ; tant que le doigt tient la roue, elle s'ouvre (ou se
-# ferme) ; tant que les eaux diffèrent, la pression ne la laisse que
-# s'entrouvrir (FENTE), et l'eau passe dessous d'autant plus vite que la
-# porte est ouverte ; eaux égales, elle se lève jusqu'en haut. Relâchée, elle
-# reste où elle est, et l'eau continue de passer si elle est entrouverte.
-# Chaque appui compte un coup. Un appui continue le mouvement commencé ; une
-# fois la porte au bout de sa course, l'appui suivant la manœuvre dans
-# l'autre sens.
+# ferme) d'un seul mouvement, et l'eau passe dessous d'autant plus vite que
+# la porte est ouverte et que l'eau pousse. Relâchée, elle reste où elle
+# est, et l'eau continue de passer si elle est ouverte. Le bateau ne passe
+# que porte levée et eaux égales (la règle du moteur). Chaque appui compte
+# un coup. Un appui continue le mouvement commencé ; une fois la porte au
+# bout de sa course, l'appui suivant la manœuvre dans l'autre sens.
 var _continu := false
 var _ouv := []            # l'ouverture de chaque porte, 0..1
 var _sens := []           # le sens du prochain appui, par porte (+1 ouvrir, -1 fermer)
 var _maintien := -1       # la porte tenue, ou -1
 var _a_juger := false     # l'eau s'est-elle posée depuis le dernier geste ?
-const VITESSE_OUVERTURE := 0.6   # par seconde
-# L'eau qui passe : chaque seconde, une part exp(-débit × dt) de ce qui reste
-# à passer. Porte entrouverte jusqu'à la fente, l'écluse s'égalise en 2 à 3 s
-# (à 0,45 par seconde, il fallait tenir la roue 12 s : bien trop pour un
-# enfant) ; levée, presque tout de suite.
-const DEBIT_FENTE := 2.2
-const DEBIT_LEVEE := 4.0   # le sablier : laisser passer un coup (glace qui fond, marée, orage)
+# La porte monte d'un seul mouvement tant qu'on tient la roue : en 3,5 s de
+# fermée à levée. (D'abord, elle s'arrêtait entrouverte tant que les eaux
+# différaient, puis repartait une fois égales : Vincent la voyait « s'ouvrir
+# en deux temps ».)
+const VITESSE_OUVERTURE := 0.28  # par seconde
+# L'eau qui passe sous la porte : un volume par seconde qui croît avec
+# l'ouverture, presque constant, et qui ne ralentit qu'à la fin, quand il
+# reste moins de 0,6 unité d'écart. Le sas du 1-1 monte à vitesse régulière
+# et se remplit en 8 s environ en tenant la roue jusqu'au bout. (D'abord une
+# part fixe de ce qui restait à passer, puis Torricelli : presque toute l'eau
+# passait dans la première seconde, Vincent : « l'eau se déverse beaucoup trop
+# rapidement ».)
+const DEBIT := 1.0
+var _coule := false       # de l'eau passe sous une porte : ni bulle, ni main   # le sablier : laisser passer un coup (glace qui fond, marée, orage)
 var _pancarte: Pancarte   # le panneau d'éclusier de fin (pancarte.gd)
 var _lab_num: Label
 var _tous := []
@@ -864,7 +870,7 @@ func _solution_de(id: String) -> Array:
 # Les bulles des bateaux et la main, quand la partie attend le joueur.
 func _guider(dt: float) -> void:
 	if canal == null: return
-	if occupe or fini or _maintien >= 0:
+	if occupe or fini or _maintien >= 0 or _coule:
 		_calme_bulles = 0.0
 		if fini: canal.montrer_raisons({})
 		if _main: _main.cacher()
@@ -974,9 +980,7 @@ func _pas_continu(dt: float) -> void:
 	if _maintien >= 0:
 		var i := _maintien
 		if _sens[i] > 0:
-			var egales := absf(float(etat["niv"][i]) - float(etat["niv"][i + 1])) < 0.02
-			var limite := 1.0 if egales else Porte.FENTE
-			if _ouv[i] < limite: _ouv[i] = minf(_ouv[i] + VITESSE_OUVERTURE * dt, limite)
+			_ouv[i] = minf(_ouv[i] + VITESSE_OUVERTURE * dt, 1.0)
 		else:
 			_ouv[i] = maxf(_ouv[i] - VITESSE_OUVERTURE * 1.3 * dt, 0.0)
 	# l'eau : sous chaque porte entrouverte, une part de ce qui reste à passer
@@ -989,16 +993,20 @@ func _pas_continu(dt: float) -> void:
 		var v := Moteur.paire(N, e_eau, i)
 		var flux := 0.0
 		if absf(v) > 1e-6:
-			var debit := DEBIT_FENTE * minf(_ouv[i] / Porte.FENTE, 1.0) + DEBIT_LEVEE * maxf(_ouv[i] - Porte.FENTE, 0.0) / (1.0 - Porte.FENTE)
-			var f := 1.0 - exp(-dt * maxf(debit, 0.15))
+			var a: float = etat["niv"][i]
+			var c: float = etat["niv"][i + 1]
+			var tete := absf(a - c)
+			# (une ouverture d'au moins un quart : à peine entrouverte, il faut que
+			# l'eau se voie couler)
+			var q := DEBIT * clampf(0.25 + 0.75 * _ouv[i], 0.0, 1.0) * minf(1.0, sqrt(tete / 0.6)) * dt
 			var vide := []
 			vide.resize(N["liaisons"].size()); vide.fill(0.0)
-			Moteur.verser(N, etat, i, v * f, vide)
+			Moteur.verser(N, etat, i, signf(v) * minf(absf(v), q), vide)
 			flux = v
 			coule = true
 		# presque égales, porte ouverte : elles le sont (moyenne pondérée, l'eau
 		# se conserve)
-		if _ouv[i] > 0.001 and absf(float(etat["niv"][i]) - float(etat["niv"][i + 1])) < 0.003 \
+		if _ouv[i] > 0.001 and absf(float(etat["niv"][i]) - float(etat["niv"][i + 1])) < 0.008 \
 				and not B[i].get("fixe", false) and not B[i + 1].get("fixe", false):
 			var la := float(B[i]["largeur"])
 			var lb := float(B[i + 1]["largeur"])
@@ -1010,6 +1018,7 @@ func _pas_continu(dt: float) -> void:
 		canal._jet(i, flux if absf(flux) > 0.02 else 0.0, dt)
 	for i in canal.portes: canal.portes[i].ouverture_continue = _ouv[i]
 	canal.vue_niv = etat["niv"].duplicate()
+	_coule = coule
 	# l'eau posée, plus de doigt : on regarde si c'est gagné, ou bloqué
 	if _a_juger and not coule and _maintien < 0 and not occupe:
 		_a_juger = false
@@ -1126,6 +1135,8 @@ func _demo() -> void:
 					set_meta("photo_%d" % rang, true)
 					await _photo("%02d-tenu" % rang)
 			_relacher()
+			# la démo attend que l'eau se pose avant le geste suivant
+			while _a_juger: await get_tree().process_frame
 		elif a["type"] == "toucher":
 			# un vrai toucher sur un bateau (ECLUSES_COUPS « toucher:k »)
 			var ev := InputEventMouseButton.new()
