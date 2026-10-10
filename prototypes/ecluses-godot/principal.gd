@@ -385,7 +385,10 @@ func _pourquoi(coinces: Array) -> String:
 			var q: int = etat["bateaux"][j]
 			if j != k and suivant.call(k) == q and suivant.call(j) == p \
 					and etat["bateaux"].count(p) >= Moteur.capacite(N, p) and etat["bateaux"].count(q) >= Moteur.capacite(N, q):
-				return "Le %s et le %s se font face, et un sas ne tient qu'un bateau." % [nom.call(k), nom.call(j)]
+				# (Vincent, 10 octobre 2026, au 1-4 : « j'ai une erreur alors que je
+				# ne suis pas bloqué » — il pensait qu'un bateau pouvait reculer pour
+				# céder la place ; la phrase dit maintenant la règle, et le piège)
+				return "Le %s et le %s attendent chacun la place de l'autre, et un bateau ne recule jamais. Il fallait laisser l'un traverser avant de faire entrer l'autre." % [nom.call(k), nom.call(j)]
 	for k in coinces:
 		var r := Moteur.raison(N, etat, k)
 		match r["quoi"]:
