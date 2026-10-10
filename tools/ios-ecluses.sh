@@ -36,8 +36,13 @@ if [ -z "${BUNDLE}" ]; then
   exit 1
 fi
 
-# Un iPhone AU BOUT D'UN FIL (pas l'Apple Watch jointe par le réseau), lu en
-# JSON (le tableau de devicectl se découpe mal) — cf. tools/ios.sh.
+# Un VRAI iPhone jumelé, au bout d'un fil ou par le Wi-Fi (Vincent, 10 octobre
+# 2026 : « voir le résultat du jeu sur mon iPhone sans qu'il soit branché au
+# Mac ») — jamais l'Apple Watch, jointe elle aussi par le réseau : on trie sur
+# le type d'appareil, plus sur le seul fil. Le fil passe devant le Wi-Fi.
+# Depuis Xcode 15, un iPhone jumelé une fois par câble est joignable par le
+# réseau sans rien cocher, Mac et iPhone sur le même Wi-Fi. Lu en JSON (le
+# tableau de devicectl se découpe mal) — cf. tools/ios.sh.
 appareil() {
   xcrun devicectl list devices --json-output /tmp/ecluses-ios-dev.json >/dev/null 2>&1
   python3 -c "
@@ -46,17 +51,19 @@ try:
     d = json.load(open('/tmp/ecluses-ios-dev.json'))
 except Exception:
     raise SystemExit
+def iphone(x):
+    h = x.get('hardwareProperties', {})
+    p = x.get('connectionProperties', {})
+    return (h.get('deviceType') == 'iPhone' and h.get('reality') == 'physical'
+            and p.get('pairingState') == 'paired'
+            and p.get('transportType') in ('wired', 'localNetwork'))
 def note(x):
     p = x.get('connectionProperties', {})
-    n = 0
-    if p.get('transportType') == 'wired': n += 4
+    n = 4 if p.get('transportType') == 'wired' else 0
     if p.get('tunnelState') == 'connected': n += 2
-    if 'iPhone' in x.get('deviceProperties', {}).get('name', ''): n += 1
     return n
-cands = [x for x in d['result']['devices']
-         if x.get('connectionProperties', {}).get('pairingState') == 'paired']
-cands.sort(key=note, reverse=True)
-if cands and note(cands[0]) >= 4:
+cands = sorted([x for x in d['result']['devices'] if iphone(x)], key=note, reverse=True)
+if cands:
     print(cands[0]['identifier'])
 " 2>/dev/null
 }
@@ -66,7 +73,7 @@ if [ "${1:-}" = "--etat" ]; then
   n_comptes=$(defaults read com.apple.dt.Xcode DVTDeveloperAccountManagerAppleIDLists 2>/dev/null | grep -c "identifier = ")
   if [ "${n_comptes:-0}" -gt 0 ]; then vert "compte Xcode  : présent"; else rouge "compte Xcode  : AUCUN — Xcode → Réglages → Comptes"; fi
   ID=$(appareil)
-  if [ -n "${ID}" ]; then vert "iPhone        : branché (${ID})"; else rouge "iPhone        : AUCUN — le brancher et le déverrouiller"; fi
+  if [ -n "${ID}" ]; then vert "iPhone        : joignable (${ID})"; else rouge "iPhone        : AUCUN — le brancher, ou le déverrouiller sur le même Wi-Fi que le Mac"; fi
   [ -d "$PROJET" ] && echo "dernier export : $(stat -f '%Sm' "$PROJET")" || echo "dernier export : aucun"
   exit 0
 fi
@@ -111,7 +118,7 @@ if [ -z "${APP}" ]; then
 fi
 ID=$(appareil)
 if [ -z "${ID}" ]; then
-  rouge "aucun iPhone branché : l'export est prêt, il ne reste qu'à installer"
+  rouge "aucun iPhone joignable (ni fil, ni Wi-Fi) : l'export est prêt, il ne reste qu'à installer"
   exit 1
 fi
 echo "→ installation sur ${ID}…"
