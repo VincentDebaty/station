@@ -109,6 +109,7 @@ var jets := {}        # liaison -> Jet, l'eau sous une porte simple entrouverte
 var bateaux := []     # un Bateau par bateau du niveau
 var positions := []   # bassin de chaque bateau, tel qu'affiché
 var bat_x := []       # abscisse courante de chaque bateau
+var bat_voie := []    # sa voie dans la largeur du canal : -1 devant, 0 au milieu, +1 derrière
 var vue_niv := []     # niveaux affichés, en unités
 var vue_ouvert := []
 var _ecou := {}
@@ -131,7 +132,13 @@ const LONG_BATEAU := 1.75
 const JEU := 0.45
 func _largeur_vue(i: int) -> float:
 	var l := float(N["bassins"][i]["largeur"])
-	var places := mini(Moteur.capacite(N, i), maxi(N["bateaux"].size(), 1))
+	# (un sas range ses deux bateaux côte à côte, dans la largeur du canal :
+	# il reste long d'un seul bateau)
+	var places := 1 if N["bassins"][i]["type"] == "sas" else mini(Moteur.capacite(N, i), maxi(N["bateaux"].size(), 1))
+	# un sas où deux bateaux se croisent : un peu plus long, pour les y décaler
+	# en biais (cf. voie)
+	if N["bassins"][i]["type"] == "sas" and _passants(i) >= 2:
+		l = maxf(l, LONG_BATEAU * (1.0 + 2.0 * DECALE_VOIE) + 2.0 * JEU)
 	# un sas qui porte un objet sur sa berge du fond (glaçon, chaudière) : de
 	# la place entre les tours des portes pour qu'on le voie et qu'on le touche
 	for o in N.get("objets", []):
@@ -592,6 +599,7 @@ func construire(niveau: Dictionary, e0: Dictionary) -> void:
 	_preparer_places()
 	for k in bateaux.size():
 		bat_x.append(place(positions[k], "b%d" % k, positions))
+		bat_voie.append(voie(positions[k], k))
 	_maj_passages()
 
 # La partie opaque d'une image : les marges d'une image générée varient d'une
@@ -1219,7 +1227,7 @@ func _dessiner_contacts() -> void:
 		if eaux[i].vide(): continue
 		var y := minf(surface_a(x), eaux[i].fond_y)
 		if bt.position.y < y - 4.0: continue        # échoué : pas de cerne
-		_cerne(Vector2(x, y) + D * 0.5, bt.longueur * 0.56, absf(D.y) * 0.42, 1.0)
+		_cerne(Vector2(x, y) + D * 0.5 + decalage_voie(float(bat_voie[k])), bt.longueur * 0.56, absf(D.y) * 0.42, 1.0)
 	for k in _bouees_vues:
 		var p: Vector2 = _bouees_vues[k]
 		_cerne(p + D * 0.5, 17.0, absf(D.y) * 0.22, 0.7)
@@ -1679,6 +1687,29 @@ func _preparer_places() -> void:
 		L.sort_custom(func(a, b): return _cote(a, i) < _cote(b, i) or (_cote(a, i) == _cote(b, i) and a < b))
 		_places[i] = L
 
+# Dans un sas, deux bateaux se croisent côte à côte (Vincent, 10 octobre
+# 2026 : « deux bateaux se croisent, donc ils peuvent être l'un à côté de
+# l'autre ») : chacun a sa VOIE, fixe pour la partie comme les places d'un
+# bief — l'un devant, l'autre derrière, dans la largeur du canal. Un sas où
+# ne passe qu'un bateau le garde au milieu.
+# (la voie de devant reste au milieu du canal : avancée vers nous, la coque
+# passait derrière la face avant de l'eau et le bateau paraissait coulé ;
+# seule celle de derrière s'éloigne, vers le mur du fond)
+const ECART_VOIE := 0.36    # en fraction de la profondeur du canal
+func decalage_voie(v: float) -> Vector2:
+	return D * ECART_VOIE * maxf(v, 0.0)
+const DECALE_VOIE := 0.28   # en longueurs de bateau : décalés en biais, ils ne se cachent pas
+func _passants(i: int) -> int:
+	var n := 0
+	for b in N["bateaux"]:
+		if i >= mini(int(b["de"]), int(b["vers"])) and i <= maxi(int(b["de"]), int(b["vers"])): n += 1
+	return n
+func voie(i: int, k: int) -> float:
+	if N["bassins"][i]["type"] != "sas" or not _places.has(i) or _places[i].size() < 2: return 0.0
+	var j: int = _places[i].find(k)
+	if j < 0: return 0.0
+	return -1.0 if j % 2 == 0 else 1.0
+
 func _cote(k: int, i: int) -> int:
 	var de := int(N["bateaux"][k]["de"])
 	var vers := int(N["bateaux"][k]["vers"])
@@ -1689,6 +1720,9 @@ func _cote(k: int, i: int) -> int:
 
 func place(i: int, cle: String, _pos: Array = []) -> float:
 	var k := int(cle.substr(1))
+	if N["bassins"][i]["type"] == "sas":
+		# celui de devant un peu à droite, celui de derrière un peu à gauche
+		return (X(gb[i][0]) + X(gb[i][1])) * 0.5 - voie(i, k) * DECALE_VOIE * LONG_BATEAU * U
 	if Moteur.capacite(N, i) <= 1 or not _places.has(i):
 		return (X(gb[i][0]) + X(gb[i][1])) * 0.5
 	var L: Array = _places[i]
@@ -2551,7 +2585,7 @@ func _tour_suivant() -> void:
 	var bougent := {}
 	for d in _depl["tours"][_depl["rang"]]: bougent[int(d["k"])] = true
 	for k in bateaux.size():
-		mvt.append({"k": k, "xa": bat_x[k], "xb": place(int(apres[k]), "b%d" % k, apres), "vers": int(apres[k]), "passe": bougent.has(k)})
+		mvt.append({"k": k, "xa": bat_x[k], "xb": place(int(apres[k]), "b%d" % k, apres), "va": bat_voie[k], "vb": voie(int(apres[k]), k), "vers": int(apres[k]), "passe": bougent.has(k)})
 		# dessiné avant les autres bateaux : il passe derrière eux, pas derrière le décor
 		if bougent.has(k): bateaux[k].get_parent().move_child(bateaux[k], 0)
 	_depl["mouvements"] = mvt
@@ -2566,6 +2600,7 @@ func _avancer_bateaux(dt: float) -> void:
 		var k: int = m["k"]
 		var avant: float = bat_x[k]
 		bat_x[k] = lerpf(m["xa"], m["xb"], e)
+		bat_voie[k] = lerpf(m["va"], m["vb"], e)
 		var vitesse: float = (bat_x[k] - avant) / maxf(dt, 1e-3)
 		# celui qui change de bassin passe derrière les autres, comme plus loin de nous
 		var loin := sin(p * PI) if m["passe"] else 0.0
@@ -2582,6 +2617,26 @@ func _avancer_bateaux(dt: float) -> void:
 		positions = _depl["apres"].duplicate()
 		_tour_suivant()
 
+# Le bateau de la voie de derrière se dessine avant celui de devant ; à voie
+# égale, celui qui change de bassin passe derrière (cf. _tour_suivant).
+func _ranger_voies() -> void:
+	var ordre := range(bateaux.size())
+	var passe := {}
+	if not _depl.is_empty() and _depl.has("mouvements"):
+		for m in _depl["mouvements"]:
+			if m["passe"]: passe[int(m["k"])] = true
+	ordre.sort_custom(func(a, b):
+		var va: float = bat_voie[a]
+		var vb: float = bat_voie[b]
+		if absf(va - vb) > 0.01: return va > vb
+		return passe.has(a) and not passe.has(b))
+	# (à partir de la première place qu'occupe un bateau : ce qui est rangé
+	# avant eux dans le plan des bateaux, les maisons d'un village, y reste)
+	var base: int = bateaux.map(func(b): return b.get_index()).min()
+	for j in ordre.size():
+		var bt: Node = bateaux[ordre[j]]
+		if bt.get_index() != base + j: _flotte.move_child(bt, base + j)
+
 func _poser_bateaux(dt := 1.0) -> void:
 	for k in bateaux.size():
 		var bt: Bateau = bateaux[k]
@@ -2593,11 +2648,12 @@ func _poser_bateaux(dt := 1.0) -> void:
 		var ya := minf(surface_a(x - demi), echoue_y)
 		var yb := minf(surface_a(x + demi), echoue_y)
 		var echoue := surface_a(x) > echoue_y + 1.0
-		bt.position = Vector2(x, (ya + yb) * 0.5 + (2.0 if not echoue else 0.0))
+		bt.position = Vector2(x, (ya + yb) * 0.5 + (2.0 if not echoue else 0.0)) + decalage_voie(float(bat_voie[k]))
 		# le bateau s'incline en douceur : il ne suit pas chaque ride au coup par coup
 		var cible := clampf(atan2(yb - ya, 2.0 * demi) * 0.8, -0.12, 0.12) + (0.11 * bt.sens if echoue else 0.0)
 		bt.rotation = lerp_angle(bt.rotation, cible, minf(1.0, dt * 4.0))
 		bt.queue_redraw()
+	_ranger_voies()
 
 # --- Les repères : la place où chaque bateau doit finir, et les « ! » --------------------
 # Un bateau coincé (plus d'eau, ou plus moyen de passer) : un point

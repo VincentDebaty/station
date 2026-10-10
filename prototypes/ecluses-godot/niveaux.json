@@ -49,7 +49,7 @@
       "mode": "pas",
       "continu": true,
       "par": 5,
-      "conseil": "Deux bateaux, un seul sas. Un sas ne prend qu'un bateau à la fois.",
+      "conseil": "Deux bateaux, un seul sas : ils s'y croisent côte à côte.",
       "bassins": [
         {"type": "bief", "fond": 0, "largeur": 7, "niveau": 1, "nom": "bief aval"},
         {"type": "sas", "fond": 0, "largeur": 2, "niveau": 1, "nom": "sas"},

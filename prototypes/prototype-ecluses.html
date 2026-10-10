@@ -312,7 +312,7 @@ button:focus-visible, [role="button"]:focus-visible { outline: 3px solid var(--o
       "mode": "pas",
       "continu": true,
       "par": 5,
-      "conseil": "Deux bateaux, un seul sas. Un sas ne prend qu'un bateau à la fois.",
+      "conseil": "Deux bateaux, un seul sas : ils s'y croisent côte à côte.",
       "bassins": [
         {"type": "bief", "fond": 0, "largeur": 7, "niveau": 1, "nom": "bief aval"},
         {"type": "sas", "fond": 0, "largeur": 2, "niveau": 1, "nom": "sas"},
@@ -1206,13 +1206,16 @@ const Ecluses = (function () {
   // Un bateau avance tout seul vers sa destination, un bassin à la fois, dès
   // que la liaison est ouverte, les deux eaux au même niveau, assez d'eau pour
   // son tirant (dans le bassin d'arrivée et au-dessus du seuil), et de la
-  // place (un sas ne prend qu'un bateau). Deux bateaux ne se croisent donc
-  // jamais dans un sas.
+  // place : un sas en prend DEUX, côte à côte dans la largeur du canal — deux
+  // bateaux qui se croisent peuvent y être l'un à côté de l'autre (Vincent,
+  // 10 octobre 2026 : avec un seul, deux bateaux se faisaient face entre deux
+  // sas et ne pouvaient plus bouger ; mesuré au banc, aucun niveau n'en
+  // devient plus court). Un bief en prend trois, un bac d'ascenseur un.
   // 0,6 : la hauteur des bateaux du jeu au-dessus de l'eau, cheminée comprise,
   // mesurée sur leur image (avec 1, un bateau qu'on voyait passer sous le pont
   // était refusé)
   const hauteurBateau = (N, k) => N.bateaux[k].hauteur != null ? N.bateaux[k].hauteur : 0.6;
-  function capacite(N, i) { const b = N.bassins[i]; return b.cap || (b.type === "sas" || b.type === "bac" ? 1 : 3); }
+  function capacite(N, i) { const b = N.bassins[i]; return b.cap || (b.type === "bac" ? 1 : b.type === "sas" ? 2 : 3); }
   function flotte(N, e, k, i) { return profondeur(N, e, i) >= N.bateaux[k].tirant - EPS; }
   function peutPasser(N, e, k, p, q) {
     const i = Math.min(p, q), l = N.liaisons[i];

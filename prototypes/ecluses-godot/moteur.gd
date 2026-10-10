@@ -308,7 +308,9 @@ static func capacite(N: Dictionary, i: int) -> int:
 	var b: Dictionary = N["bassins"][i]
 	if b.has("cap") and b["cap"]:
 		return int(b["cap"])
-	return 1 if b["type"] == "sas" or b["type"] == "bac" else 3
+	# un sas : deux bateaux côte à côte (Vincent, 10 octobre 2026 — cf. la page)
+	if b["type"] == "bac": return 1
+	return 2 if b["type"] == "sas" else 3
 
 static func flotte(N: Dictionary, e: Dictionary, k: int, i: int) -> bool:
 	return profondeur(N, e, i) >= float(N["bateaux"][k]["tirant"]) - EPS
