@@ -599,7 +599,7 @@ func construire(niveau: Dictionary, e0: Dictionary) -> void:
 	_preparer_places()
 	for k in bateaux.size():
 		bat_x.append(place(positions[k], "b%d" % k, positions))
-		bat_voie.append(voie(positions[k], k))
+		bat_voie.append(voie(positions[k], k, positions))
 	_maj_passages()
 
 # La partie opaque d'une image : les marges d'une image générée varient d'une
@@ -1704,8 +1704,16 @@ func _passants(i: int) -> int:
 	for b in N["bateaux"]:
 		if i >= mini(int(b["de"]), int(b["vers"])) and i <= maxi(int(b["de"]), int(b["vers"])): n += 1
 	return n
-func voie(i: int, k: int) -> float:
+# (seulement quand l'autre bateau est VRAIMENT dans le sas : seul, un bateau
+# y reste au milieu — rangé d'avance sur sa voie, le jaune du 1-4 se collait
+# à la porte de gauche, Vincent, 10 octobre 2026)
+func voie(i: int, k: int, pos: Array = []) -> float:
 	if N["bassins"][i]["type"] != "sas" or not _places.has(i) or _places[i].size() < 2: return 0.0
+	if pos.is_empty(): pos = positions
+	var n := 0
+	for j2 in pos.size():
+		if j2 != k and int(pos[j2]) == i: n += 1
+	if n == 0: return 0.0
 	var j: int = _places[i].find(k)
 	if j < 0: return 0.0
 	return -1.0 if j % 2 == 0 else 1.0
@@ -1719,10 +1727,11 @@ func _cote(k: int, i: int) -> int:
 	return 0                         # il ne fait que passer
 
 func place(i: int, cle: String, _pos: Array = []) -> float:
+	if _pos.is_empty(): _pos = positions
 	var k := int(cle.substr(1))
 	if N["bassins"][i]["type"] == "sas":
 		# celui de devant un peu à droite, celui de derrière un peu à gauche
-		return (X(gb[i][0]) + X(gb[i][1])) * 0.5 - voie(i, k) * DECALE_VOIE * LONG_BATEAU * U
+		return (X(gb[i][0]) + X(gb[i][1])) * 0.5 - voie(i, k, _pos) * DECALE_VOIE * LONG_BATEAU * U
 	if Moteur.capacite(N, i) <= 1 or not _places.has(i):
 		return (X(gb[i][0]) + X(gb[i][1])) * 0.5
 	var L: Array = _places[i]
@@ -2585,7 +2594,7 @@ func _tour_suivant() -> void:
 	var bougent := {}
 	for d in _depl["tours"][_depl["rang"]]: bougent[int(d["k"])] = true
 	for k in bateaux.size():
-		mvt.append({"k": k, "xa": bat_x[k], "xb": place(int(apres[k]), "b%d" % k, apres), "va": bat_voie[k], "vb": voie(int(apres[k]), k), "vers": int(apres[k]), "passe": bougent.has(k)})
+		mvt.append({"k": k, "xa": bat_x[k], "xb": place(int(apres[k]), "b%d" % k, apres), "va": bat_voie[k], "vb": voie(int(apres[k]), k, apres), "vers": int(apres[k]), "passe": bougent.has(k)})
 		# dessiné avant les autres bateaux : il passe derrière eux, pas derrière le décor
 		if bougent.has(k): bateaux[k].get_parent().move_child(bateaux[k], 0)
 	_depl["mouvements"] = mvt
