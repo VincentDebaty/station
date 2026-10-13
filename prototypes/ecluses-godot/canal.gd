@@ -49,6 +49,8 @@ var D := Vector2(-46.0, -40.0)
 const SH_EAU_REALISTE := preload("res://shaders/eau.gdshader")
 # L'essai d'une eau en dessin animé (planche du 13 octobre 2026) :
 # ECLUSES_STYLE=cartoon.
+# (ou le réglage « Style dessin animé » : principal.gd le pose avant chaque
+# construction)
 static var cartoon := OS.get_environment("ECLUSES_STYLE") == "cartoon"
 var SH_EAU: Shader = load("res://shaders/eau_cartoon.gdshader") if cartoon else SH_EAU_REALISTE
 const SH_PIERRE := preload("res://shaders/pierre.gdshader")

@@ -3,6 +3,7 @@
 // un peu moins contrasté, et une brume bleutée qui monte vers les montagnes,
 // en haut de l'image. Les éléments jouables ressortent sans devenir criards.
 shader_type canvas_item;
+#include "res://shaders/vif.gdshaderinc"
 
 uniform float desature = 0.28;   // 0,18 puis 0,28 (seconde analyse : le décor attirait encore l'œil)
 uniform float contraste = 0.78;
@@ -14,8 +15,11 @@ void fragment() {
 	vec4 t = texture(TEXTURE, UV);
 	vec3 c = t.rgb;
 	float l = dot(c, vec3(0.30, 0.59, 0.11));
-	c = mix(vec3(l), c, 1.0 - desature);
-	c = mix(vec3(0.55), c, contraste);
-	c = mix(c, brume, mix(brume_haut, brume_bas, smoothstep(0.0, 0.85, UV.y)));
+	// (en dessin animé, le lointain garde ses couleurs : moins de brume, pas
+	// de désaturation, comme sur l'image cible)
+	c = mix(vec3(l), c, 1.0 - desature * (1.0 - vif));
+	c = mix(vec3(0.55), c, mix(contraste, 1.0, vif));
+	c = mix(c, brume, mix(brume_haut, brume_bas, smoothstep(0.0, 0.85, UV.y)) * (1.0 - 0.7 * vif));
+	c = vivifier(c);
 	COLOR = vec4(c, t.a);
 }

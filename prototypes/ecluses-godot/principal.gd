@@ -131,6 +131,7 @@ func _lancer() -> void:
 	_solution = _solution_de(N["id"])
 	fini = false
 	occupe = false
+	_appliquer_style()
 	canal = Canal.new()
 	add_child(canal)
 	move_child(canal, 0)
@@ -165,6 +166,14 @@ func _marges() -> Dictionary:
 		var k := vis.x / fen.x
 		m = {"g": bords[0] * k + 24.0, "h": bords[1] * k + 16.0, "d": bords[2] * k + 24.0, "b": bords[3] * k + 16.0}
 	return m
+
+# Le style dessin animé (essai du 13 octobre 2026) : l'eau opaque en aplats
+# (eau_cartoon.gdshader) et des couleurs plus franches sur tout le décor
+# (vif.gdshaderinc). ECLUSES_STYLE=cartoon ou le réglage « Style dessin animé ».
+func _appliquer_style() -> void:
+	var c := _env("ECLUSES_STYLE") == "cartoon" or Reglages.v("style") > 0.5
+	Canal.cartoon = c
+	RenderingServer.global_shader_parameter_set("vif", 1.0 if c else 0.0)
 
 # Le décor fixe cuit en une image (cuisson.gd) ; recuit quand l'écran
 # change, une image plus tard (la caméra n'applique son cadrage qu'alors).
@@ -456,6 +465,7 @@ func annuler() -> void:
 	etat = e
 	var h := histoire.duplicate()
 	canal.queue_free()
+	_appliquer_style()
 	canal = Canal.new()
 	add_child(canal)
 	move_child(canal, 0)
@@ -648,7 +658,11 @@ func _panneau_reglages() -> PanelContainer:
 		curseur.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		var val := _label("", 16, Color("#1f6fd1"))
 		val.custom_minimum_size = Vector2(48, 0)
-		curseur.value_changed.connect(func(x): Reglages.regler(k, x); _maj_valeurs())
+		curseur.value_changed.connect(func(x):
+			Reglages.regler(k, x)
+			_maj_valeurs()
+			# le style change tout le décor : le niveau se reconstruit
+			if k == "style": _lancer())
 		grille.add_child(nom); grille.add_child(curseur); grille.add_child(val)
 		_valeurs[k] = [curseur, val]
 	_maj_valeurs()

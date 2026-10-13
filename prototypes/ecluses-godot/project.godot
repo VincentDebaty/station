@@ -42,3 +42,10 @@ anti_aliasing/quality/msaa_2d=2
 ; pas de MSAA sur Android : sur un Galaxy A12 (entrée de gamme), il coûtait
 ; près d'un tiers des images par seconde (lot 0, Vincent, 13 octobre 2026)
 anti_aliasing/quality/msaa_2d.android=0
+
+[shader_globals]
+
+vif={
+"type": "float",
+"value": 0.0
+}

@@ -2,6 +2,7 @@
 // « cadre » est le rectangle du vantail en y monde (haut, bas) et x monde
 // (gauche, droite) ; « tranche » assombrit un vantail vu de côté (ouvert).
 shader_type canvas_item;
+#include "res://shaders/vif.gdshaderinc"
 
 uniform vec4 cadre = vec4(0.0, 0.0, 100.0, 100.0);   // x0, y0, x1, y1
 uniform float tranche = 0.0;
@@ -29,7 +30,7 @@ void fragment() {
 	vec2 l = (monde - cadre.xy) / max(cadre.zw - cadre.xy, vec2(1.0));   // 0..1 dans le vantail
 	if (avec_image) {
 		vec4 t = texture(image, clamp(l, vec2(0.0), vec2(1.0)));
-		COLOR = vec4(t.rgb * mix(1.0, 0.55, tranche), t.a);
+		COLOR = vec4(vivifier(t.rgb * mix(1.0, 0.55, tranche)), t.a);
 	} else {
 		float largeur = cadre.z - cadre.x;
 		float planches = max(2.0, floor(largeur / 13.0));
@@ -51,6 +52,6 @@ void fragment() {
 			}
 		}
 		c *= mix(1.0, 0.55, tranche);
-		COLOR = vec4(c, 1.0);
+		COLOR = vec4(vivifier(c), 1.0);
 	}
 }

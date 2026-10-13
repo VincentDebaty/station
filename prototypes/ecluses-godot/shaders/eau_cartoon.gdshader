@@ -6,8 +6,8 @@
 // ECLUSES_STYLE=cartoon le met à la place de l'eau réaliste.
 shader_type canvas_item;
 
-uniform vec3 clair : source_color = vec3(0.30, 0.74, 0.95);
-uniform vec3 profond : source_color = vec3(0.13, 0.50, 0.84);
+uniform vec3 clair : source_color = vec3(0.36, 0.80, 0.99);
+uniform vec3 profond : source_color = vec3(0.16, 0.56, 0.90);
 uniform vec3 trait : source_color = vec3(0.05, 0.22, 0.42);
 uniform float epaisseur = 120.0;
 uniform float remous = 0.0;
@@ -26,8 +26,8 @@ void fragment() {
 	float px = clamp(UV.y, 0.0, 1.0) * epaisseur;
 	// deux aplats : l'eau claire en haut, plus foncée en bas, avec une
 	// frontière douce mais nette, qui ondule à peine
-	float frontiere = 34.0 + 6.0 * sin(monde.x * 0.03 + TIME * 0.9);
-	vec3 c = mix(clair, profond, smoothstep(frontiere - 3.0, frontiere + 3.0, px));
+	// (d'après l'image cible : un bleu ciel qui fonce doucement vers le fond)
+	vec3 c = mix(clair, profond, smoothstep(6.0, 150.0, px + 6.0 * sin(monde.x * 0.03 + TIME * 0.9)));
 	// des reflets blancs en tirets, couchés sous la surface, qui glissent
 	float tiret = step(0.62, fract(monde.x / 70.0 + TIME * 0.06 + floor(px / 14.0) * 0.37));
 	float rang1 = step(7.0, px) * (1.0 - step(10.0, px));

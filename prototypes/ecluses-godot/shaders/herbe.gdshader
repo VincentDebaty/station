@@ -1,6 +1,7 @@
 // La prairie derrière les bassins : un vert plus clair en haut, des plaques
 // d'herbe plus sombre, des brins, et quelques fleurs blanches et jaunes.
 shader_type canvas_item;
+#include "res://shaders/vif.gdshaderinc"
 
 uniform vec3 haut : source_color = vec3(0.62, 0.80, 0.39);
 uniform vec3 bas : source_color = vec3(0.38, 0.56, 0.24);
@@ -34,5 +35,5 @@ void fragment() {
 	if (h < 0.09 && length(f) < 0.09) {
 		c = h < 0.045 ? vec3(0.98, 0.97, 0.92) : vec3(0.98, 0.82, 0.25);
 	}
-	COLOR = vec4(c, 1.0);
+	COLOR = vec4(vivifier(c), 1.0);
 }

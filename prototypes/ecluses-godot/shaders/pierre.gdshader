@@ -2,6 +2,7 @@
 // biseautés (haut et gauche éclairés, bas et droite dans l'ombre), joints de
 // mortier. « ombre » assombrit les murs du fond, derrière l'eau.
 shader_type canvas_item;
+#include "res://shaders/vif.gdshaderinc"
 
 uniform vec3 teinte : source_color = vec3(0.90, 0.84, 0.72);
 uniform vec3 mortier : source_color = vec3(0.60, 0.53, 0.43);
@@ -29,7 +30,7 @@ float bruit(vec2 p) {
 void fragment() {
 	if (avec_image) {
 		vec3 ci = texture(image, monde / tuile).rgb * (teinte / vec3(0.90, 0.84, 0.72));
-		COLOR = vec4(ci * ombre, 1.0);
+		COLOR = vec4(vivifier(ci * ombre), 1.0);
 	} else {
 		vec2 p = monde / bloc;
 		p.x += mod(floor(p.y), 2.0) * 0.5;
@@ -41,6 +42,6 @@ void fragment() {
 		c += vec3(0.07) * (1.0 - smoothstep(0.0, 5.0, f.y)) + vec3(0.05) * (1.0 - smoothstep(0.0, 5.0, f.x));
 		c -= vec3(0.10) * (1.0 - smoothstep(0.0, 6.0, g.y)) + vec3(0.06) * (1.0 - smoothstep(0.0, 5.0, g.x));
 		c = mix(mortier, c, smoothstep(1.0, 2.6, bord));
-		COLOR = vec4(c * ombre, 1.0);
+		COLOR = vec4(vivifier(c * ombre), 1.0);
 	}
 }

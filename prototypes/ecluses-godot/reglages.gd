@@ -35,6 +35,8 @@ const CURSEURS := {
 	"bouillon": ["Bouillon à la sortie", 0.30, 0.0, 1.5, 0.05],
 	"houle": ["Houle", 0.90, 0.0, 2.0, 0.05],
 	"amortissement": ["Amortissement", 0.08, 0.02, 0.4, 0.01],
+	# l'essai du style dessin animé (13 octobre 2026) : 0 actuel, 1 dessin animé
+	"style": ["Style dessin animé", 0.0, 0.0, 1.0, 1.0],
 }
 
 var valeurs := {}

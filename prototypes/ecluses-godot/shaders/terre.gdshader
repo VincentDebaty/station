@@ -6,6 +6,7 @@
 // à gauche, cerne foncé, ombre portée dans la terre en bas à droite). La teinte
 // s'assombrit en descendant.
 shader_type canvas_item;
+#include "res://shaders/vif.gdshaderinc"
 
 uniform vec3 brun : source_color = vec3(0.53, 0.32, 0.18);
 uniform vec3 sombre : source_color = vec3(0.41, 0.24, 0.13);
@@ -100,7 +101,7 @@ void fragment() {
 		}
 		// et une teinte qui varie lentement, à grande échelle
 		acc *= 0.9 + 0.16 * fbm(monde / 520.0);
-		COLOR = vec4(acc * profond, 1.0);
+		COLOR = vec4(vivifier(acc * profond), 1.0);
 	} else {
 		vec2 p = monde / 64.0;
 		// les taches : un bruit déformé par un autre, seuillé doucement
@@ -130,6 +131,6 @@ void fragment() {
 		if (graviers.a > 0.0) c = graviers.rgb;
 		if (gros.a > 0.0) c = gros.rgb;
 		c *= profond;
-		COLOR = vec4(c, 1.0);
+		COLOR = vec4(vivifier(c), 1.0);
 	}
 }
