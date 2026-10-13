@@ -119,9 +119,18 @@ Comme dans le genre :
 - **Difficile** — environ 1 niveau sur 5, étiquette orange, récompense ×2 ;
 - **Très difficile** — environ 1 niveau sur 10, étiquette rouge, récompense ×3.
 
-Dans chaque chapitre, la difficulté monte puis retombe : le premier niveau
-**présente** le nouveau mécanisme (la main le montre déjà), les suivants le
-combinent avec les anciens, et le dernier est un « Très difficile ».
+Dans chaque chapitre de 10 niveaux, la difficulté monte puis retombe :
+
+| Niveau | Rôle |
+|---|---|
+| 1 | **présentation** du nouveau mécanisme (la main le montre déjà) |
+| 2 à 8 | le nouveau mécanisme combiné aux anciens, dont **2 Difficile** |
+| 9 | **Très difficile**, le sommet du chapitre |
+| 10 | **respiration**, plus facile, avant le coffre de chapitre |
+
+Le chapitre 1, qui n'a que des portes, aura peut-être du mal à offrir 10
+niveaux vraiment différents : le générateur le dira, et il pourra être plus
+court au profit d'un autre.
 
 **Règle du banc** (refuse, comme les autres contrôles) : un niveau étiqueté
 doit avoir une note dans la plage de son étiquette, et aucun niveau Normal ne
@@ -159,8 +168,9 @@ pas encore essayés par Vincent : ils passent par son essai au lot 3.
 Un chapitre par mécanisme. Chaque chapitre : 1 niveau de présentation, puis
 des niveaux qui combinent le nouveau mécanisme avec les précédents.
 
-- **Au lancement : 10 chapitres × 10 niveaux = 100 niveaux** (à trancher,
-  décision 5). Un niveau dure 1 à 2 minutes (5 à 8 coups, l'eau qui passe) :
+- **Au lancement test : 10 chapitres × 10 niveaux = 100 niveaux** (décidé
+  par Vincent le 13 octobre 2026). **Au lancement mondial : 200**, si le
+  générateur confirme qu'autant de niveaux distincts sont possibles. Un niveau dure 1 à 2 minutes (5 à 8 coups, l'eau qui passe) :
   **2 h 30 à 3 h 30 de jeu**.
 - **Plafond estimé pour le monde 1 : 200 à 250 niveaux**, avant que les
   combinaisons ne se répètent. C'est une **estimation**, à mesurer (§4.3).
@@ -304,7 +314,7 @@ Chaque lot a sa condition de fin, mesurable (comme les contrôles de Station).
 | **3 — Les 10 mécanismes du village** | porter au doigt maintenu ceux qui ne le sont pas encore | chacun a son niveau de présentation, validé par Vincent sur iPhone |
 | **4 — La méta** | carte du village, pièces, étoiles, coffres, collection, série | sauvegarde versionnée qui survit à une mise à jour |
 | **5 — La boutique** | vies, bonus, publicité, achats, sans publicité | achats de test passés sur les deux stores |
-| **6 — Le contenu** | 100 niveaux (décision 5), équilibrés | banc vert ; Vincent a joué chaque chapitre |
+| **6 — Le contenu** | 100 niveaux, équilibrés | banc vert ; Vincent a joué chaque chapitre |
 | **7 — Lancement test** | un ou deux pays, mesures | taux de retour à J1 et J7, taux d'échec par niveau lus et appliqués |
 
 L'autorité reste la même : la page web et son banc pour les règles, Godot pour
@@ -318,7 +328,7 @@ le rendu, l'oracle entre les deux.
 2. ~~L'échec par les coups (§2), plutôt que par le temps ?~~ Oui (13 octobre 2026).
 3. ~~Annuler reste gratuit mais ne rend pas le coup (§2) ?~~ Oui, avec un seul échec : plus de coups.
 4. ~~Les mécanismes du village (§4.1) ?~~ 10 chapitres, sans le flotteur ni les champs (13 octobre 2026).
-5. **Combien de niveaux au lancement** (§4.2), plafond à mesurer avec le générateur ?
+5. ~~Combien de niveaux au lancement (§4.2) ?~~ 100 pour le lancement test, 200 visés au lancement mondial (13 octobre 2026).
 6. **Le public** : tous publics sans viser la catégorie Enfants (§7.2) ?
 7. **Paysage** maintenu malgré le genre en portrait (§8) ?
 8. **L'ordre des lots** : lever d'abord les risques techniques (lot 0) ?
