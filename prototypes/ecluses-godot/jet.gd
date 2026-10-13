@@ -177,8 +177,8 @@ func _lame() -> void:
 	var avant_c := Color(0.3, 0.68, 0.84, 0.82)
 	var fond_c := Color(0.55, 0.85, 0.95, 0.82)
 	if Canal.cartoon:
-		avant_c = Color(0.36, 0.78, 0.97, 1.0)
-		fond_c = Color(0.55, 0.86, 0.98, 1.0)
+		avant_c = Color(0.10, 0.78, 0.98, 1.0)
+		fond_c = Color(0.45, 0.90, 0.99, 1.0)
 	# (en un seul lot de triangles donnés tels quels : dessinés quadrilatère
 	# par quadrilatère, chacun triangulé par Godot, ils coûtaient plusieurs ms
 	# par image sur un Galaxy A12, lot 0)
@@ -216,11 +216,7 @@ func _lame() -> void:
 		# devient verticale, le ruban s'aplatissait et ne se triangulait plus
 		draw_polyline(chute, Color(0.22, 0.6, 0.78, 0.85), maxf(ep, 1.5), true)
 	draw_polyline(pts, Color(0.85, 0.97, 1.0, 0.5), 1.2, true)
-	if Canal.cartoon:
-		draw_polyline(pts, Color(0.05, 0.22, 0.42), 2.5, true)
-		var bas := PackedVector2Array()
-		for q in pts: bas.append(q + D)
-		draw_polyline(bas, Color(0.05, 0.22, 0.42), 2.5, true)
+
 	# l'écume le long de la ligne de chute, sur toute la largeur
 	for z in [0.0, 0.5, 1.0]:
 		_gerbes(_point_chute + D * z)

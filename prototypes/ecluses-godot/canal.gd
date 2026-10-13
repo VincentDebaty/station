@@ -1038,13 +1038,10 @@ func _maj_surfaces() -> void:
 		a.vertex_colors = _degrade_bande(bord.size(), Color(0.17, 0.6, 0.78, 0.78 * mince), Color(0.34, 0.76, 0.88, 0.78 * mince))
 		if cartoon:
 			# le dessus de l'eau en aplat clair, et le trait foncé du dessin au bord
-			f.vertex_colors = _degrade_bande(bord.size(), Color(0.55, 0.86, 0.98, mince), Color(0.55, 0.86, 0.98, mince))
-			a.vertex_colors = _degrade_bande(bord.size(), Color(0.47, 0.82, 0.97, mince), Color(0.55, 0.86, 0.98, mince))
-			var tr: Line2D = _bandes[i][2]
-			tr.visible = true
-			tr.width = 3.0
-			tr.default_color = Color(0.05, 0.22, 0.42, mince)
-			tr.points = bord
+			# (couleurs mesurées sur l'image cible : RVB 90, 225, 250 au fond de la
+			# bande, plus clair au bord ; un liseré clair, pas de trait foncé)
+			f.vertex_colors = _degrade_bande(bord.size(), Color(0.10, 0.76, 0.97, mince), Color(0.22, 0.82, 0.98, mince))
+			a.vertex_colors = _degrade_bande(bord.size(), Color(0.30, 0.86, 0.99, mince), Color(0.10, 0.76, 0.97, mince))
 
 # Le pré au bord de la mare (unités) : un peu au-dessus de son eau et de la
 # crête de sa digue.
