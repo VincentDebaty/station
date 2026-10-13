@@ -333,6 +333,20 @@ Chaque lot a sa condition de fin, mesurable (comme les contrôles de Station).
 L'autorité reste la même : la page web et son banc pour les règles, Godot pour
 le rendu, l'oracle entre les deux.
 
+### 9.1 Le lot 0 — choix faits le 13 octobre 2026
+
+| Sujet | Choix |
+|---|---|
+| **Android** | le téléphone Android que Vincent possède déjà |
+| **Publicité** | **AppLovin MAX**, module Godot officiel d'AppLovin ([dépôt](https://github.com/AppLovin/AppLovin-MAX-Godot)) ; compte AppLovin à créer |
+| **Mesures** | **GameAnalytics**, appelé directement depuis Godot ; compte gratuit à créer |
+| **Achats** | godot-iap (StoreKit 2 et Google Play Billing), à éprouver |
+| **Compte Apple** | un **compte Apple Developer personnel** (99 $/an), pas celui du travail : l'app, ses revenus et ses achats ne doivent pas vivre dans le compte de l'employeur. À créer **avant** d'enregistrer l'identifiant de l'app et les achats dans App Store Connect. |
+| **Compte Google Play** | compte développeur à créer (25 $, une fois). Un compte **personnel** récent doit faire tester l'app en fermé (12 testeurs pendant 14 jours) avant toute publication ; un compte d'**organisation** en est dispensé. À prendre en compte pour le lancement test. |
+
+Ce qui se fait sans attendre les comptes : exporter le jeu sur Android et
+mesurer sa vitesse sur le téléphone de Vincent.
+
 ---
 
 ## 10. Les décisions à prendre par Vincent
