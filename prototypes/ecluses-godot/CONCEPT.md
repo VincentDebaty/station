@@ -286,6 +286,12 @@ sans aide. Cinq points restent à régler :
    portrait voudrait dire empiler les bassins ou zoomer. **Proposition : rester
    en paysage**, en acceptant ce handicap, et le noter comme un risque pour
    l'acquisition.
+   **Décidé** (Vincent, 13 octobre 2026) : **paysage**. La coupe d'un canal ne
+   tient pas en portrait sans changer le concept du jeu. Précédent : *Mini
+   Metro* est sorti sur mobile **en paysage seulement** ; ses auteurs avaient
+   envisagé un portrait à une main et l'ont écarté, le jeu demandant trop de
+   précision ([Dinosaur Polo Club](https://dinopoloclub.com/2016/09/15/were-almost-in-your-pocket/)).
+   Le risque sur l'acquisition est mesuré au lancement test.
 2. **La lisibilité.** Les niveaux vont jusqu'à 6 bassins. Au-delà, sur un
    téléphone de 6 pouces, tout rétrécit. **Plafond proposé : 6 bassins,
    3 bateaux.**
@@ -337,5 +343,5 @@ le rendu, l'oracle entre les deux.
 4. ~~Les mécanismes du village (§4.1) ?~~ 10 chapitres, sans le flotteur ni les champs (13 octobre 2026).
 5. ~~Combien de niveaux au lancement (§4.2) ?~~ 100 pour le lancement test, 200 visés au lancement mondial (13 octobre 2026).
 6. ~~Le public (§7.2) ?~~ Tous publics, sans viser la catégorie Enfants (13 octobre 2026).
-7. **Paysage** maintenu malgré le genre en portrait (§8) ?
+7. ~~Paysage ou portrait (§8) ?~~ Paysage (13 octobre 2026).
 8. **L'ordre des lots** : lever d'abord les risques techniques (lot 0) ?
