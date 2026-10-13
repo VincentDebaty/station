@@ -259,6 +259,13 @@ parental. **Proposition : un jeu tous publics** (classé 4+, rien de choquant),
 pensé pour les adultes du genre casual, **sans** viser la catégorie Enfants.
 À faire vérifier avant le lancement (règles Apple, Google, RGPD).
 
+**Décidé** (Vincent, 13 octobre 2026) : **tous publics, sans viser la
+catégorie Enfants.** Conséquence : la publicité, les visuels du store et les
+textes s'adressent à des adultes ; une communication clairement enfantine
+(ton, personnages mignons mis en avant, publicité dans des applications pour
+enfants) pourrait faire tomber le jeu sous COPPA malgré tout. La vérification
+juridique (Apple, Google, RGPD, ATT) se fait au plus tard au lot 5.
+
 ### 7.3 Les données
 
 Le genre règle sa difficulté **sur les chiffres** : taux d'échec par niveau,
@@ -329,6 +336,6 @@ le rendu, l'oracle entre les deux.
 3. ~~Annuler reste gratuit mais ne rend pas le coup (§2) ?~~ Oui, avec un seul échec : plus de coups.
 4. ~~Les mécanismes du village (§4.1) ?~~ 10 chapitres, sans le flotteur ni les champs (13 octobre 2026).
 5. ~~Combien de niveaux au lancement (§4.2) ?~~ 100 pour le lancement test, 200 visés au lancement mondial (13 octobre 2026).
-6. **Le public** : tous publics sans viser la catégorie Enfants (§7.2) ?
+6. ~~Le public (§7.2) ?~~ Tous publics, sans viser la catégorie Enfants (13 octobre 2026).
 7. **Paysage** maintenu malgré le genre en portrait (§8) ?
 8. **L'ordre des lots** : lever d'abord les risques techniques (lot 0) ?
