@@ -32,6 +32,11 @@ func sauter() -> void:
 	_joie = 0.4
 
 func _process(dt: float) -> void:
+	var _c0 := Time.get_ticks_usec()
+	_process_corps(dt)
+	Chrono.ajouter("bateau._process", _c0)
+
+func _process_corps(dt: float) -> void:
 	if _refus > 0.0 or _joie > 0.0:
 		_refus = maxf(_refus - dt, 0.0)
 		_joie = maxf(_joie - dt, 0.0)
@@ -81,6 +86,11 @@ func allumer() -> void:
 	add_child(fumee)
 
 func _draw() -> void:
+	var _c0 := Time.get_ticks_usec()
+	_draw_corps()
+	Chrono.ajouter("bateau._draw", _c0)
+
+func _draw_corps() -> void:
 	var secousse := Vector2(sin(_refus * 48.0) * 5.0 * (_refus / 0.55), -sin(_joie / 0.4 * PI) * 8.0)
 	draw_set_transform(secousse, sin(_refus * 48.0) * 0.05 * (_refus / 0.55), Vector2(sens, 1.0))
 	var L := longueur * 0.5

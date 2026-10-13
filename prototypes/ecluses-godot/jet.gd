@@ -81,6 +81,11 @@ func chute() -> Vector2:
 	return _point_chute
 
 func _process(dt: float) -> void:
+	var _c0 := Time.get_ticks_usec()
+	_process_corps(dt)
+	Chrono.ajouter("jet._process", _c0)
+
+func _process_corps(dt: float) -> void:
 	_t += dt
 	# la nappe pâlit à mesure que l'eau d'amont s'épuise, jusqu'à rien : sans
 	# cela, sa face vue d'en haut gardait toute la largeur du canal et
@@ -95,6 +100,11 @@ func _process(dt: float) -> void:
 	queue_redraw()
 
 func _draw() -> void:
+	var _c0 := Time.get_ticks_usec()
+	_draw_corps()
+	Chrono.ajouter("jet._draw", _c0)
+
+func _draw_corps() -> void:
 	if force <= 0.03: return
 	_veine()
 	if noye():

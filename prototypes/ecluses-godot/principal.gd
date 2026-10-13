@@ -69,6 +69,9 @@ var _lab_num: Label
 var _tous := []
 var _calcul := 0          # numéro de la dernière recherche d'impasse : une réponse périmée est ignorée
 var _images := 0
+var _ips_n := 0
+var _ips_t := 0.0
+var _ips_pire := 1000.0
 var _secondes := 0.0
 var _ips: Label
 var _panneau: PanelContainer   # les curseurs du rendu de l'eau (reglages.gd)
@@ -82,9 +85,25 @@ var _sure: Control      # la zone sûre : tout ce qu'on touche ou qu'on lit y re
 # nouveau niveau à chaque fois »). À changer à chaque nouveauté.
 const NIVEAU_EN_TEST := "1-4"
 
+# Les réglages de test (ECLUSES_DEMO, ECLUSES_NIVEAU…) : les variables
+# d'environnement sur le Mac ; sur un téléphone, où on ne peut pas en poser,
+# le fichier user://env.cfg, une ligne NOM=valeur chacune (posé par adb sur
+# Android : tools/android-ecluses.sh --demo). Lot 0, 13 octobre 2026.
+var _env_fichier := {}
+func _env(nom: String) -> String:
+	var v := OS.get_environment(nom)
+	if v != "": return v
+	if not _env_fichier.has("_lu"):
+		_env_fichier["_lu"] = "1"
+		if FileAccess.file_exists("user://env.cfg"):
+			for ligne in FileAccess.get_file_as_string("user://env.cfg").split("\n"):
+				var i := ligne.find("=")
+				if i > 0: _env_fichier[ligne.substr(0, i).strip_edges()] = ligne.substr(i + 1).strip_edges()
+	return String(_env_fichier.get(nom, ""))
+
 func _ready() -> void:
 	_tous = JSON.parse_string(FileAccess.get_file_as_string("res://niveaux.json"))["niveaux"]
-	var id := OS.get_environment("ECLUSES_NIVEAU")
+	var id := _env("ECLUSES_NIVEAU")
 	if id == "": id = NIVEAU_EN_TEST
 	for n in _tous:
 		if n["id"] == id: N = n
@@ -92,7 +111,7 @@ func _ready() -> void:
 	_interface()
 	get_viewport().size_changed.connect(_cadrer)
 	_cadrer()
-	if OS.get_environment("ECLUSES_DEMO") != "":
+	if _env("ECLUSES_DEMO") != "":
 		_demo()
 
 func _lancer() -> void:
@@ -133,7 +152,7 @@ func _marges() -> Dictionary:
 	var m := {"g": 16.0, "h": 12.0, "d": 16.0, "b": 12.0}
 	var vis := get_viewport().get_visible_rect().size
 	var fen := Vector2(DisplayServer.window_get_size())
-	var force := OS.get_environment("ECLUSES_SURE")
+	var force := _env("ECLUSES_SURE")
 	var bords := []
 	if force != "":
 		bords = Array(force.split(",")).map(func(x): return float(x))
@@ -1059,7 +1078,15 @@ func _apres_eau() -> void:
 		_chercher_impasse()
 
 func _process(dt: float) -> void:
-	if _continu: _pas_continu(dt)
+	var _c0 := Time.get_ticks_usec()
+	_process_corps(dt)
+	Chrono.ajouter("principal", _c0)
+
+func _process_corps(dt: float) -> void:
+	if _continu:
+		var _c1 := Time.get_ticks_usec()
+		_pas_continu(dt)
+		Chrono.ajouter("pas_continu", _c1)
 	_guider(dt)
 	_indices_de_fond(dt)
 	if canal:
@@ -1096,17 +1123,35 @@ func _process(dt: float) -> void:
 				canal.chaudieres[ic].actif = A2.any(func(x): return x["type"] == "chauffer" and int(x["i"]) == ic)
 	_images += 1
 	_secondes += dt
+	if _env("ECLUSES_DEMO") != "":
+		Chrono.actif = true
+		Chrono.images += 1
+		_ips_n += 1
+		_ips_t += dt
+		if _ips_t >= 1.0:
+			var v := _ips_n / _ips_t
+			_ips_pire = minf(_ips_pire, v)
+			# le temps de calcul (scripts) d'une image, et ce qu'elle dessine :
+			# de quoi savoir si c'est le processeur ou le graphisme qui bloque
+			print("CHRONO ms/image : " + Chrono.releve())
+			print("IPS %.1f  calcul %.1f ms  dessins %d  primitives %d  objets %d" % [v,
+				Performance.get_monitor(Performance.TIME_PROCESS) * 1000.0,
+				Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME),
+				Performance.get_monitor(Performance.RENDER_TOTAL_PRIMITIVES_IN_FRAME),
+				Performance.get_monitor(Performance.RENDER_TOTAL_OBJECTS_IN_FRAME)])
+			_ips_n = 0
+			_ips_t = 0.0
 	if _ips and Engine.get_process_frames() % 15 == 0:
 		_ips.text = "%d images/s" % Engine.get_frames_per_second()
 
 func _photo(nom: String) -> void:
-	var dossier := OS.get_environment("ECLUSES_CAPTURE")
+	var dossier := _env("ECLUSES_CAPTURE")
 	if dossier == "": return
 	await RenderingServer.frame_post_draw
 	get_viewport().get_texture().get_image().save_png(dossier.path_join(nom + ".png"))
 
 func _sonder() -> void:
-	var xy := OS.get_environment("ECLUSES_SONDE").split(",")
+	var xy := _env("ECLUSES_SONDE").split(",")
 	var ecran := Vector2(float(xy[0]), float(xy[1]))
 	var monde := get_viewport().get_canvas_transform().affine_inverse() * ecran
 	print("sonde ", ecran, " → monde ", monde, " niveaux ", canal.vue_niv)
@@ -1138,29 +1183,29 @@ func _demo() -> void:
 			for pas in p["pas"]:
 				if pas["action"] != null: solution.append(pas["action"])
 			break
-	if OS.get_environment("ECLUSES_COUPS") != "":
+	if _env("ECLUSES_COUPS") != "":
 		# « 1 » : la porte 1 ; « v1 » : la vanne de la porte 1
 		# « type:i » pour tous les autres gestes (« chauffer:0 », « attendre »)
-		solution = Array(OS.get_environment("ECLUSES_COUPS").split(",")).map(func(x): return ({"type": "porte", "i": int(x.split(":")[1]), "duree": float(x.split(":")[2])} if x.begins_with("tenir:") else {"type": x.split(":")[0], "i": int(x.split(":")[1])}) if ":" in x else ({"type": x} if x.length() > 3 else ({"type": "vanne", "i": int(x.substr(1))} if x.begins_with("v") else ({"type": "creuser", "i": int(x.substr(1))} if x.begins_with("c") else ({"type": "pomper", "i": int(x.substr(1))} if x.begins_with("P") else {"type": "porte", "i": int(x)})))))
+		solution = Array(_env("ECLUSES_COUPS").split(",")).map(func(x): return ({"type": "porte", "i": int(x.split(":")[1]), "duree": float(x.split(":")[2])} if x.begins_with("tenir:") else {"type": x.split(":")[0], "i": int(x.split(":")[1])}) if ":" in x else ({"type": x} if x.length() > 3 else ({"type": "vanne", "i": int(x.substr(1))} if x.begins_with("v") else ({"type": "creuser", "i": int(x.substr(1))} if x.begins_with("c") else ({"type": "pomper", "i": int(x.substr(1))} if x.begins_with("P") else {"type": "porte", "i": int(x)})))))
 	await get_tree().create_timer(1.2).timeout
 	await _photo("00-repos")
 	# ECLUSES_SONDE="x,y" (pixels de l'écran) : liste les polygones dessinés
 	# sous ce point, pour retrouver d'où vient un défaut (ECLUSES_SONDE_T : au
 	# bout de tant de secondes après le premier coup, plutôt qu'au repos)
-	if OS.get_environment("ECLUSES_SONDE") != "" and OS.get_environment("ECLUSES_SONDE_T") == "": _sonder()
-	if OS.get_environment("ECLUSES_LISTE") != "":
+	if _env("ECLUSES_SONDE") != "" and _env("ECLUSES_SONDE_T") == "": _sonder()
+	if _env("ECLUSES_LISTE") != "":
 		_ouvrir_liste()
 		await get_tree().create_timer(0.3).timeout
 		await _photo("00-liste")
 		_fermer_liste()
 	# ECLUSES_PANNEAU=1 : photographie aussi le panneau des réglages déplié
-	if OS.get_environment("ECLUSES_PANNEAU") != "" and _panneau:
+	if _env("ECLUSES_PANNEAU") != "" and _panneau:
 		_panneau.show()
 		await get_tree().create_timer(0.3).timeout
 		await _photo("00-reglages")
 		_panneau.hide()
-	if OS.get_environment("ECLUSES_SONDE_T") != "":
-		get_tree().create_timer(float(OS.get_environment("ECLUSES_SONDE_T")) + 0.5).timeout.connect(_sonder)
+	if _env("ECLUSES_SONDE_T") != "":
+		get_tree().create_timer(float(_env("ECLUSES_SONDE_T")) + 0.5).timeout.connect(_sonder)
 	var rang := 0
 	for a in solution:
 		rang += 1
@@ -1190,7 +1235,7 @@ func _demo() -> void:
 		else:
 			jouer(a)
 		# ECLUSES_PENDANT : quand prendre la photo « pendant » (1,15 s par défaut)
-		var pendant := float(OS.get_environment("ECLUSES_PENDANT")) if OS.get_environment("ECLUSES_PENDANT") != "" else 1.15
+		var pendant := float(_env("ECLUSES_PENDANT")) if _env("ECLUSES_PENDANT") != "" else 1.15
 		await get_tree().create_timer(pendant).timeout
 		await _photo("%02d-pendant" % rang)
 		while occupe: await get_tree().process_frame
@@ -1198,12 +1243,13 @@ func _demo() -> void:
 		await _photo("%02d-apres" % rang)
 	await get_tree().create_timer(0.8).timeout
 	await _photo("99-fin")
-	if OS.get_environment("ECLUSES_COUPS") != "":
+	if _env("ECLUSES_COUPS") != "":
 		await get_tree().create_timer(0.25).timeout
 		await _photo("99-alerte")
 		await get_tree().create_timer(1.6).timeout
 		await _photo("99-coince")
-	if OS.get_environment("ECLUSES_CAPTURE") != "":
+	print("IPS FIN moyenne %.1f, pire seconde %.1f" % [_images / maxf(_secondes, 0.001), _ips_pire])
+	if _env("ECLUSES_CAPTURE") != "":
 		await get_tree().create_timer(3.2).timeout     # le temps de voir la pancarte s'animer
 		await _photo("99-pancarte")
 		print("images par seconde (moyenne) : %.1f" % (_images / maxf(_secondes, 0.001)))

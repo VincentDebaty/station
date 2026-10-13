@@ -1741,8 +1741,15 @@ func place(i: int, cle: String, _pos: Array = []) -> float:
 
 # --- Le temps qui passe ---------------------------------------------------------------
 func _process(dt: float) -> void:
+	var _c0 := Time.get_ticks_usec()
+	_process_corps(dt)
+	Chrono.ajouter("canal", _c0)
+
+func _process_corps(dt: float) -> void:
 	_t += dt
+	var _c1 := Time.get_ticks_usec()
 	if not _ecou.is_empty(): _avancer_ecoulement(dt)
+	Chrono.ajouter("canal.ecoulement", _c1)
 	if not _depl.is_empty(): _avancer_bateaux(dt)
 	for i in eaux.size():
 		eaux[i].repos = Y(vue_niv[i])
@@ -1764,9 +1771,15 @@ func _process(dt: float) -> void:
 		elif e.lien_d == INF: e.lien_d = float(b[2])
 	bosses.clear()
 	for i in portes: portes[i].bas_ouvert_y = _bas_ouvert(i)
+	var _c2 := Time.get_ticks_usec()
 	_maj_passages()
+	Chrono.ajouter("canal.passages", _c2)
+	_c2 = Time.get_ticks_usec()
 	_maj_surfaces()
+	Chrono.ajouter("canal.surfaces", _c2)
+	_c2 = Time.get_ticks_usec()
 	_maj_voiles()
+	Chrono.ajouter("canal.voiles", _c2)
 	for i in levees_noyees:
 		levees_noyees[i].queue_redraw()
 		coupes_noyees[i].visible_eau = minf(vue_niv[i], vue_niv[i + 1]) > float(N["liaisons"][i]["crete"])

@@ -100,6 +100,11 @@ func couler(force: float, asens: int) -> void:
 	queue_redraw()
 
 func _process(dt: float) -> void:
+	var _c0 := Time.get_ticks_usec()
+	_process_corps(dt)
+	Chrono.ajouter("aqueduc._process", _c0)
+
+func _process_corps(dt: float) -> void:
 	var cible := 1.0 if ouverte else 0.0
 	if not is_equal_approx(vanne, cible):
 		vanne = move_toward(vanne, cible, dt / 0.5)
@@ -143,6 +148,11 @@ func _milieu_x() -> float:
 	return (chemin[1].x + chemin[2].x) * 0.5 if chemin.size() >= 3 else (chemin[0].x + chemin[chemin.size() - 1].x) * 0.5
 
 func _draw() -> void:
+	var _c0 := Time.get_ticks_usec()
+	_draw_corps()
+	Chrono.ajouter("aqueduc._draw", _c0)
+
+func _draw_corps() -> void:
 	if chemin.size() < 2: return
 	# l'ombre du conduit sur la terre, décalée vers le bas à droite, en deux
 	# passes pour l'adoucir ; puis le corps de pierre et l'intérieur sombre

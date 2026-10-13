@@ -130,12 +130,16 @@ func impulsion(x: float, force: float, largeur := 24.0) -> void:
 func _process(dt: float) -> void:
 	_t += dt
 	_suivre_liens(dt)
+	var _c0 := Time.get_ticks_usec()
 	if not passage:
 		_reste += dt
 		while _reste >= 1.0 / 60.0:
 			_reste -= 1.0 / 60.0
 			_pas_ressorts()
+	Chrono.ajouter("eau.ressorts", _c0)
+	_c0 = Time.get_ticks_usec()
 	_construire()
+	Chrono.ajouter("eau.construire", _c0)
 
 func _pas_ressorts() -> void:
 	var amorti := Reglages.v("amortissement")     # plus haut, la surface se calme plus vite

@@ -347,6 +347,31 @@ le rendu, l'oracle entre les deux.
 Ce qui se fait sans attendre les comptes : exporter le jeu sur Android et
 mesurer sa vitesse sur le téléphone de Vincent.
 
+### 9.2 Lot 0 — première mesure sur Android (13 octobre 2026)
+
+Téléphone : **Samsung Galaxy A12** (SM-A127F, Exynos 850, 4 Go, écran 720 ×
+1600 à 60 Hz) — un vrai entrée de gamme. Outil : `tools/android-ecluses.sh
+--demo 1-4` (exporte, installe, joue la démo et imprime les images/s).
+
+| Essai | Images/s (moyenne / pire seconde) |
+|---|---|
+| tel quel (rendu « mobile », MSAA 2D ×4) | **20,9** / 16,4 |
+| sans MSAA | 28,3 / 22,3 |
+| rendu « compatibilité » (OpenGL), avec MSAA | 23,6 / 18,9 |
+
+**Le goulot est le calcul, pas le graphisme** : 40 ms de scripts par image
+(le budget est de 16,7 ms à 60 images/s), environ 650 appels de dessin et
+2 000 objets dessinés par image. Sur le Mac, la même démo prend 2 à 3 ms de
+calcul : le Galaxy A12 est environ 17 fois plus lent. Les chronomètres
+(`chrono.gd`) attribuent la moitié de ce temps, par ordre : le dessin de la
+cascade (`jet._draw`, quand elle coule), la reconstruction du maillage de
+l'eau à chaque image (`eau._construire`), la mise à jour des surfaces
+(`canal._maj_surfaces`), les ressorts de l'eau. L'autre moitié est dans les
+autres dessins refaits à chaque image et dans le moteur lui-même.
+
+**Le lot 0 n'est donc pas fini** : sa condition (60 images/s sur le 1-4)
+demande une passe d'optimisation.
+
 ---
 
 ## 10. Les décisions à prendre par Vincent
