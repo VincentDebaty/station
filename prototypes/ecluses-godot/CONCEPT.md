@@ -397,6 +397,13 @@ réécrire l'eau et la cascade pour le processeur graphique. Proposition :
 viser 30 sur l'entrée de gamme et 60 sur l'iPhone, et réviser la condition
 du lot 0 en ce sens.
 
+**Décidé** (Vincent, 13 octobre 2026) : **30 images/s sur l'entrée de gamme,
+60 sur l'iPhone ; MSAA coupé sur Android seulement** (`msaa_2d.android=0`
+dans project.godot). Mesuré ensuite sur le Galaxy A12, démo du 1-4 : **34,1
+images/s en moyenne, 25,6 au pire**. La partie « performance » du lot 0 est
+close ; l'eau réaliste reste celle du jeu (l'essai cartoon,
+ECLUSES_STYLE=cartoon, attend une image cible de Vincent).
+
 ---
 
 ## 10. Les décisions à prendre par Vincent

@@ -39,3 +39,6 @@ textures/vram_compression/import_etc2_astc=true
 renderer/rendering_method="mobile"
 environment/defaults/default_clear_color=Color(0.07, 0.23, 0.27, 1)
 anti_aliasing/quality/msaa_2d=2
+; pas de MSAA sur Android : sur un Galaxy A12 (entrée de gamme), il coûtait
+; près d'un tiers des images par seconde (lot 0, Vincent, 13 octobre 2026)
+anti_aliasing/quality/msaa_2d.android=0
