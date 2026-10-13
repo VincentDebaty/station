@@ -23,6 +23,85 @@ Le bloc de style à coller en tête de chaque prompt :
 
 ---
 
+## Le style dessin animé — `art/cartoon/` (13 octobre 2026)
+
+Vincent a fait faire par ChatGPT une image cible du 1-2 en dessin animé et
+penche pour ce style. L'essai en jeu (Réglages → « Style dessin animé »)
+règle l'eau et les couleurs dans le code, mais l'essentiel de l'écart avec la
+cible vient des images : contours foncés et épais, pierres arrondies, bateaux
+dessinés au trait. Ces images-ci sont donc refaites dans le style de la
+cible.
+
+**Où les mettre :** dans `art/cartoon/`, avec **le même nom** que l'image
+peinte. En style dessin animé, le jeu prend `art/cartoon/<nom>` s'il existe,
+sinon l'image peinte (`Peint.art`). On peut donc les ajouter une par une.
+
+**Comment :** toutes dans **une seule conversation ChatGPT**. Joindre d'abord
+l'image cible (le 1-2 en dessin animé) avec le message d'ouverture, puis un
+prompt par image. À chaque image reçue : vérifier le fond transparent et que
+l'objet n'est pas coupé.
+
+Message d'ouverture, avec l'image cible jointe :
+
+```text
+This is the art style reference for my mobile puzzle game "Écluses" (canal locks seen in side cross-section). I am going to ask you for separate game assets, one per message. Every asset must match this reference EXACTLY in style: bright saturated colours, flat cel shading with one soft highlight, THICK dark brown outlines around every shape, rounded friendly shapes, clean and simple. Every asset must have a TRANSPARENT background (PNG with alpha) unless I say otherwise, be seen exactly from the side (no perspective), and contain only the requested object, centred and not cut off. No text, no shadow on the ground. Reply "OK" and wait for my first request.
+```
+
+Les prompts, par ordre d'importance (le plus visible d'abord) :
+
+**1. `art/cartoon/pierre.png`** — la pierre de tout le canal (tours, radiers, murs)
+
+```text
+Seamless tileable texture of the beige stone masonry from the reference: rounded rectangular sandstone blocks twice as wide as high, laid in a running bond, warm beige-cream with slight variations from block to block, each block with a thick dark brown outline and a light highlight on its top edge, dark brown joints. Front view, perfectly flat, exactly 4 rows of blocks, square 1024x1024, the left/right and top/bottom edges must tile seamlessly. Fill the whole image (no transparency for this one).
+```
+
+**2. `art/cartoon/bateau_0.png`** — le bateau (le jeu le repeint en jaune, bleu…)
+
+```text
+The small red tugboat from the reference, alone: exact side view facing right, chunky and rounded, bright red hull with three round yellow-rimmed portholes, a thin white band at the waterline, a cream cabin with two blue windows and a red roof edge, a black chimney with a red band, a small mast with a red pennant at the stern. Keep a bright, pure red for the hull and pennant (the game recolours it) and a darker red-brown for the bottom of the hull below the white band. The bottom of the hull (below the waterline) must be visible and about one third of the boat's total height. Transparent background, the boat fills the width of the image.
+```
+
+**3. `art/cartoon/bouee.png`** — la bouée qui marque la destination
+
+```text
+The buoy from the reference, alone: a round float, bright red top half and white bottom half, a short dark mast with a small red triangular pennant, thick dark outline, one soft highlight. Exact side view. Keep a bright pure red (the game recolours it). Square image, the buoy centred, filling about 80% of the height, transparent background.
+```
+
+**4. `art/cartoon/roue.png`** — la roue rouge des portes (le jeu la fait tourner)
+
+```text
+The red valve handwheel from the top of the lock gates in the reference, alone, seen exactly from the front: a thick round red rim, six spokes, a grey central hub with a bolt, thick dark outline, one glossy highlight top-left. Perfectly circular and centred, square image, no stem, no support, transparent background.
+```
+
+**5. `art/cartoon/traverse.png`** — la poutre en haut des portes
+
+```text
+The wooden beam that sits on top of the lock gate towers in the reference, alone, seen exactly from the front: a thick plank of warm brown wood with visible grain, a lighter top edge, thick dark brown outline, no dark slot, no metal box. Long horizontal rectangle, ratio about 6:1, filling the image, transparent background.
+```
+
+**6. `art/cartoon/vantail.png`** — la porte de bois (le jeu étire le milieu)
+
+```text
+The wooden lock gate leaf from the reference, alone, seen exactly from the front: vertical brown wooden planks, dark iron bands with rivets evenly spaced from top to bottom, a dark iron frame on the left and right edges, thick dark outline. Very tall and narrow rectangle, ratio 1:6, filling the image, transparent background.
+```
+
+**7. `art/cartoon/herbe_bord.png`** — l'herbe sur le haut des murs et des berges
+
+```text
+The bushy grass edge that tops the walls in the reference, alone, seen exactly from the side: a lush band of bright yellow-green grass with many small white and yellow flowers, rounded tufts on top, a darker green at the bottom, thick dark green outline. Long horizontal strip, ratio about 8:1, tileable seamlessly from left to right, transparent background.
+```
+
+**8. `art/cartoon/fond.png`** — le panorama (sans transparence)
+
+```text
+The countryside background of the reference, without the canal: bright blue sky with big white fluffy cartoon clouds in the top part; in the middle, rolling bright green hills, a small stone farmhouse with an orange tile roof and a wooden fence, round trees and dark green cypress trees, blue mountains far away. The bottom third must be a plain flat green meadow with nothing on it. Landscape format 3:2, full image, no transparency, no water, no boats, no text.
+```
+
+Pas besoin de refaire `terre.png`, `rochers.png` ni `pousses.png` : sur la
+planche du 13 octobre, la terre est déjà très proche de la cible.
+
+---
+
 ## Branché aujourd'hui
 
 ### `art/fond.png` — le panorama derrière le canal

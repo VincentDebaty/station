@@ -20,39 +20,47 @@ const TERRE := 512.0
 const RANGEE := 36.0
 
 static func terre() -> Texture2D:
-	return _memo("terre", func(): return _tuile("res://art/terre.png", int(TERRE * 1.5), false))
+	return _memo("terre", func(): return _tuile(art("terre.png"), int(TERRE * 1.5), false))
 
 static func pierre() -> Texture2D:
-	return _memo("pierre", func(): return _tuile("res://art/pierre.png", 0, true))
+	return _memo("pierre", func(): return _tuile(art("pierre.png"), 0, true))
 
 # La taille d'une tuile de pierre dans le monde, d'après les rangées trouvées.
 static func tuile_pierre() -> Vector2:
 	var t := pierre()
 	if t == null: return Vector2.ONE
-	var rangees: int = _cache.get("pierre_rangees", 4)
+	var rangees: int = _cache.get(("c:" if Canal.cartoon else "") + "pierre_rangees", 4)
 	var h := RANGEE * rangees
 	return Vector2(h * t.get_width() / t.get_height(), h)
 
 static func vantail() -> Texture2D:
-	return _memo("vantail", func(): return _simple("res://art/vantail.png", 96, true))
+	return _memo("vantail", func(): return _simple(art("vantail.png"), 96, true))
 
 static func traverse() -> Texture2D:
-	return _memo("traverse", func(): return _simple_h("res://art/traverse.png", 40))
+	return _memo("traverse", func(): return _simple_h(art("traverse.png"), 40))
 
 static func roue() -> Texture2D:
-	return _memo("roue", func(): return _simple("res://art/roue.png", 160, false))
+	return _memo("roue", func(): return _simple(art("roue.png"), 160, false))
 
 static func herbe() -> Texture2D:
-	return _memo("herbe", func(): return _simple_h("res://art/herbe_bord.png", 80))
+	return _memo("herbe", func(): return _simple_h(art("herbe_bord.png"), 80))
 
 # Les rochers et les pousses : une planche de trois, découpée en trois images.
 static func rochers() -> Array:
-	return _memo("rochers", func(): return _planche("res://art/rochers.png", 160))
+	return _memo("rochers", func(): return _planche(art("rochers.png"), 160))
 
 static func pousses() -> Array:
-	return _memo("pousses", func(): return _planche("res://art/pousses.png", 80))
+	return _memo("pousses", func(): return _planche(art("pousses.png"), 80))
+
+# Le chemin d'une image : en style dessin animé, art/cartoon/<nom> s'il
+# existe (les images refaites dans le style de l'image cible, 13 octobre
+# 2026), sinon l'image peinte d'avant.
+static func art(nom: String) -> String:
+	if Canal.cartoon and ResourceLoader.exists("res://art/cartoon/" + nom): return "res://art/cartoon/" + nom
+	return "res://art/" + nom
 
 static func _memo(cle: String, f: Callable):
+	cle = ("c:" if Canal.cartoon else "") + cle    # une préparation par style
 	if not _cache.has(cle): _cache[cle] = f.call()
 	return _cache[cle]
 
@@ -93,8 +101,8 @@ static func _tuile(chemin: String, cote: int, rangees: bool) -> Texture2D:
 		var coupe := _rangees(img)
 		if coupe.y > 0:
 			img = img.get_region(Rect2i(0, 0, img.get_width(), coupe.y))
-			_cache["pierre_rangees"] = coupe.x
-		cote = int(RANGEE * _cache.get("pierre_rangees", 4) * 2.0 * img.get_width() / img.get_height())
+			_cache[("c:" if Canal.cartoon else "") + "pierre_rangees"] = coupe.x
+		cote = int(RANGEE * _cache.get(("c:" if Canal.cartoon else "") + "pierre_rangees", 4) * 2.0 * img.get_width() / img.get_height())
 	img.resize(cote, maxi(1, int(float(cote) * img.get_height() / img.get_width())), Image.INTERPOLATE_LANCZOS)
 	img.generate_mipmaps()
 	return ImageTexture.create_from_image(img)

@@ -565,7 +565,7 @@ func construire(niveau: Dictionary, e0: Dictionary) -> void:
 		bt.sens = 1.0 if int(b["vers"]) >= int(b["de"]) else -1.0
 		# un seul modèle, le bateau rouge, repeint pour les autres : ChatGPT
 		# redessine au lieu de recolorier, et la taille changeait à chaque fois
-		var chemin := "res://art/bateau_0.png"
+		var chemin := Peint.art("bateau_0.png")
 		if ResourceLoader.exists(chemin):
 			bt.image = _recadrer(load(chemin))
 			bt.ligne = float(_reglages_bateaux().get("bateau_0", {}).get("ligne", 0.71))
@@ -625,8 +625,9 @@ func _recadrer(tex: Texture2D) -> Texture2D:
 	return at
 
 func _reglages_bateaux() -> Dictionary:
-	if not FileAccess.file_exists("res://art/bateaux.json"): return {}
-	var d = JSON.parse_string(FileAccess.get_file_as_string("res://art/bateaux.json"))
+	var chemin := Peint.art("bateaux.json")
+	if not FileAccess.file_exists(chemin): return {}
+	var d = JSON.parse_string(FileAccess.get_file_as_string(chemin))
 	return d if d is Dictionary else {}
 
 # Le plan où ajouter ce qu'on dessine (le plan du fond, en oblique) ; sinon
@@ -667,7 +668,7 @@ func _decor() -> void:
 		PackedColorArray([Color("#6fb8e8"), Color("#6fb8e8"), Color("#d8eef2"), Color("#d8eef2")]))
 	# le panorama : art/fond.png s'il existe, sinon un bandeau découpé dans la maquette
 	var tex: Texture2D = null
-	if ResourceLoader.exists("res://art/fond.png"):
+	if ResourceLoader.exists(Peint.art("fond.png")):
 		# au-dessus de la berge il n'y a que ~200 px de ciel : on garde la bande
 		# de l'image où sont les collines (34 % à 72 % de sa hauteur, ASSETS.md),
 		# le reste serait du ciel vide en haut et de la prairie cachée en bas
@@ -675,7 +676,7 @@ func _decor() -> void:
 		# du niveau, le haut de l'écran le coupait par le milieu, ce qui
 		# « paraît accidentel » (lot 8). Découpée une fois en image, la bande
 		# a ses UV de 0 à 1, dont la brume du shader « lointain » a besoin.
-		var brut: Image = (load("res://art/fond.png") as Texture2D).get_image()
+		var brut: Image = (load(Peint.art("fond.png")) as Texture2D).get_image()
 		if brut.is_compressed(): brut.decompress()
 		var w := brut.get_width()
 		var h := brut.get_height()
@@ -3104,10 +3105,10 @@ func _bouee(k: int, x: float, sens: float) -> void:
 	if surf < fond - 2.0: _bouees_vues[k] = Vector2(x, surf)
 	else: _bouees_vues.erase(k)
 	var c: Color = COULEURS[k % COULEURS.size()]
-	if _bouees_img.has(k) or ResourceLoader.exists("res://art/bouee.png"):
+	if _bouees_img.has(k) or ResourceLoader.exists(Peint.art("bouee.png")):
 		if not _bouees_img.has(k):
 			var s := Sprite2D.new()
-			s.texture = _recadrer(load("res://art/bouee.png"))
+			s.texture = _recadrer(load(Peint.art("bouee.png")))
 			var h := 60.0
 			s.scale = Vector2.ONE * h / s.texture.get_height()
 			# la boule plonge : la flottaison au bas de la bande blanche
