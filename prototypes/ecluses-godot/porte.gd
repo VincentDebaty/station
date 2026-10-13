@@ -275,9 +275,12 @@ func _construire_oblique(mp: ShaderMaterial, abas: float) -> void:
 	var bout := _rect(g, y0, dr, y1, null)
 	bout.color = Color("#6e4524")
 	add_child(bout)
-	var plaque := _rect(g + 5, y0 + 3, dr - 5, y1 - 3, null)
-	plaque.color = Color("#3a332e")
-	add_child(plaque)
+	# (en dessin animé, pas de plaque noire au bout de la poutre : un bois
+	# plein, comme sur l'image cible)
+	if not Canal.cartoon:
+		var plaque := _rect(g + 5, y0 + 3, dr - 5, y1 - 3, null)
+		plaque.color = Color("#3a332e")
+		add_child(plaque)
 
 func _maj_oblique() -> void:
 	var xc := _xc()
@@ -532,6 +535,7 @@ func _dessiner_roue() -> void:
 		# la roue peinte, qui tourne sur son moyeu ; ses boutons dépassent
 		# du cercle dessiné d'avant, d'où le rayon un peu plus grand
 		var R := r + 7.5
+		if Canal.cartoon: R *= 1.3     # plus grosse, comme sur l'image cible
 		roue.draw_set_transform(c, _angle + tressaille)
 		roue.draw_texture_rect(tr, Rect2(-R, -R, 2.0 * R, 2.0 * R), false)
 		roue.draw_set_transform(Vector2.ZERO)

@@ -1040,8 +1040,20 @@ func _maj_surfaces() -> void:
 			# le dessus de l'eau en aplat clair, et le trait foncé du dessin au bord
 			# (couleurs mesurées sur l'image cible : RVB 90, 225, 250 au fond de la
 			# bande, plus clair au bord ; un liseré clair, pas de trait foncé)
-			f.vertex_colors = _degrade_bande(bord.size(), Color(0.10, 0.76, 0.97, mince), Color(0.22, 0.82, 0.98, mince))
-			a.vertex_colors = _degrade_bande(bord.size(), Color(0.30, 0.86, 0.99, mince), Color(0.10, 0.76, 0.97, mince))
+			# (le dessus de l'eau exactement de la couleur du haut de l'eau : sur
+			# l'image cible, l'eau est un seul volume qui monte jusqu'au mur du
+			# fond ; une bande plus claire la coupait en deux. Le liseré clair
+			# passe au bord du fond, contre le mur.)
+			var bleu := Color(0.02, 0.80, 0.98, mince)
+			f.vertex_colors = _degrade_bande(bord.size(), bleu, bleu)
+			a.vertex_colors = _degrade_bande(bord.size(), bleu, bleu)
+			var lis: Line2D = _bandes[i][2]
+			lis.visible = true
+			lis.width = 3.0
+			lis.default_color = Color(0.72, 0.97, 1.0, mince)
+			var fond_bord := PackedVector2Array()
+			for p in bord: fond_bord.append(p + D)
+			lis.points = fond_bord
 
 # Le pré au bord de la mare (unités) : un peu au-dessus de son eau et de la
 # crête de sa digue.
@@ -1529,6 +1541,9 @@ func _empattement(x: float, y_bas: float, sens: float, pierre: Material) -> void
 #     même d'une partie à l'autre).
 # On les voit à travers l'eau, comme le reste du mur.
 func _vie_du_mur(i: int, x0: float, x1: float, y_haut: float, y_fond: float, niveau: float) -> void:
+	# (en dessin animé, le mur reste net : ni humidité, ni mousse au ras de
+	# l'eau, ni taches, ni fissure — l'image cible n'en a pas, Vincent)
+	if cartoon: return
 	var y_eau := Y(niveau)
 	if y_eau < y_fond - 4.0:
 		var humide := Color(0.16, 0.12, 0.06, 0.16)

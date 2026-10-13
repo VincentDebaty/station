@@ -22,13 +22,19 @@ void vertex() {
 	monde = (MODEL_MATRIX * vec4(VERTEX, 0.0, 1.0)).xy;
 }
 
-// une fine ligne blanche ondulée à « y0 » pixels sous la surface, coupée par
-// endroits, qui glisse doucement
-float vague(float px, float y0, float x, float t, float decale) {
-	float y = y0 + 2.2 * sin(x * 0.045 + t * 1.3 + decale);
-	float ligne = 1.0 - smoothstep(0.5, 1.4, abs(px - y));
-	float coupe = smoothstep(0.25, 0.45, fract(x / 210.0 + t * 0.03 + decale * 0.31));
-	return ligne * coupe;
+// des reflets comme sur l'image cible : de courts traits blancs ondulés,
+// irréguliers, plus nombreux près de la surface ; chaque rang a son pas
+float vague(float px, float y0, float x, float t, float pas, float graine) {
+	float y = y0 + 1.6 * sin(x * 0.06 + t * 1.4 + graine);
+	float ligne = 1.0 - smoothstep(0.6, 1.5, abs(px - y));
+	float u = x / pas + t * 0.025 + graine;
+	float cel = floor(u);
+	float h = fract(sin(cel * 91.7 + graine * 13.1) * 43758.5453);
+	float f = fract(u);
+	// un trait de longueur variable (25 à 55 % du pas), et parfois rien
+	float longueur = mix(0.25, 0.55, h);
+	float morceau = smoothstep(0.0, 0.06, f) * (1.0 - smoothstep(longueur - 0.06, longueur, f)) * step(0.15, h);
+	return ligne * morceau;
 }
 
 void fragment() {
@@ -37,9 +43,9 @@ void fragment() {
 	// sans trait noir, sans bande marquée)
 	vec3 c = mix(clair, profond, clamp(px / 75.0, 0.0, 1.0));
 	// les reflets : des lignes blanches fines et ondulées
-	float v = vague(px, 14.0, monde.x, TIME, 0.0) * 0.85
-		+ vague(px, 30.0, monde.x + 60.0, TIME, 1.7) * 0.6
-		+ vague(px, 50.0, monde.x + 140.0, TIME, 3.1) * 0.35;
+	float v = vague(px, 9.0, monde.x, TIME, 110.0, 0.0) * 0.95
+		+ vague(px, 21.0, monde.x + 40.0, TIME, 130.0, 1.7) * 0.75
+		+ vague(px, 36.0, monde.x + 90.0, TIME, 160.0, 3.1) * 0.45;
 	c = mix(c, vec3(1.0), clamp(v, 0.0, 1.0));
 	// l'eau qui bouillonne : des ronds blancs
 	vec2 g = monde / 16.0 + vec2(0.0, TIME * 1.5);
@@ -47,7 +53,7 @@ void fragment() {
 	float h = fract(sin(dot(cel, vec2(12.9898, 78.233))) * 43758.5453);
 	float rond = step(0.7, h) * (1.0 - smoothstep(0.18, 0.26, length(fract(g) - 0.5)));
 	c = mix(c, vec3(1.0), rond * remous * 0.8 * (1.0 - smoothstep(10.0, 50.0, px)));
-	// la surface : un liseré clair, pas de trait foncé
-	c = mix(c, vec3(0.62, 0.95, 1.0), 1.0 - smoothstep(1.0, 3.0, px));
+	// (pas de liseré à la surface de la coupe : le dessus de l'eau, de la même
+	// couleur, la prolonge jusqu'au mur ; le liseré est au fond, canal.gd)
 	COLOR = vec4(c, 1.0);
 }
