@@ -46,7 +46,11 @@ const COULEURS := [Color("#e5462f"), Color("#f2b705"), Color("#2b7be0"), Color("
 # Vincent : les portes et les murs y gagnent leur volume.
 var D := Vector2(-46.0, -40.0)
 
-const SH_EAU := preload("res://shaders/eau.gdshader")
+const SH_EAU_REALISTE := preload("res://shaders/eau.gdshader")
+# L'essai d'une eau en dessin animé (planche du 13 octobre 2026) :
+# ECLUSES_STYLE=cartoon.
+static var cartoon := OS.get_environment("ECLUSES_STYLE") == "cartoon"
+var SH_EAU: Shader = load("res://shaders/eau_cartoon.gdshader") if cartoon else SH_EAU_REALISTE
 const SH_PIERRE := preload("res://shaders/pierre.gdshader")
 const SH_TERRE := preload("res://shaders/terre.gdshader")
 const SH_BOIS := preload("res://shaders/bois.gdshader")
@@ -1030,6 +1034,15 @@ func _maj_surfaces() -> void:
 		var mince := clampf((w.fond_y - w.repos) / 8.0, 0.0, 1.0)
 		f.vertex_colors = _degrade_bande(bord.size(), Color(0.34, 0.76, 0.88, 0.96 * mince), Color(0.64, 0.88, 0.95, 0.96 * mince))
 		a.vertex_colors = _degrade_bande(bord.size(), Color(0.17, 0.6, 0.78, 0.78 * mince), Color(0.34, 0.76, 0.88, 0.78 * mince))
+		if cartoon:
+			# le dessus de l'eau en aplat clair, et le trait foncé du dessin au bord
+			f.vertex_colors = _degrade_bande(bord.size(), Color(0.55, 0.86, 0.98, mince), Color(0.55, 0.86, 0.98, mince))
+			a.vertex_colors = _degrade_bande(bord.size(), Color(0.47, 0.82, 0.97, mince), Color(0.55, 0.86, 0.98, mince))
+			var tr: Line2D = _bandes[i][2]
+			tr.visible = true
+			tr.width = 3.0
+			tr.default_color = Color(0.05, 0.22, 0.42, mince)
+			tr.points = bord
 
 # Le pré au bord de la mare (unités) : un peu au-dessus de son eau et de la
 # crête de sa digue.
