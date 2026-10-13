@@ -51,7 +51,7 @@ func preparer(points: PackedVector2Array, r: float) -> void:
 	_eau.visible = false
 	add_child(_eau)
 	_dessus = Node2D.new()
-	_dessus.draw.connect(_dessiner_dessus)
+	_dessus.draw.connect(Chrono.envelopper("aqueduc._dessiner_dessus", _dessiner_dessus))
 	add_child(_dessus)
 	var rond := GradientTexture2D.new()
 	rond.width = 16; rond.height = 16

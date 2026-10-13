@@ -58,6 +58,11 @@ func allumer() -> void:
 	feu_cible = 1.0
 
 func _process(dt: float) -> void:
+	var _c0 := Time.get_ticks_usec()
+	_process_corps(dt)
+	Chrono.ajouter("glacon._process", _c0)
+
+func _process_corps(dt: float) -> void:
 	_t += dt
 	if _allume >= 0.0:
 		_allume += dt
@@ -91,6 +96,11 @@ func _hauteur() -> float:
 	return maxf(H * pow(reste, 0.85), 4.0)
 
 func _draw() -> void:
+	var _c0 := Time.get_ticks_usec()
+	_draw_corps()
+	Chrono.ajouter("glacon._draw", _c0)
+
+func _draw_corps() -> void:
 	_dessiner_flaque()
 	_dessiner_filets()
 	if reste > 0.02:

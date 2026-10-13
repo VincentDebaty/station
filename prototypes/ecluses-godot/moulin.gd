@@ -30,11 +30,16 @@ const BOIS_CLAIR := Color("#b07a45")
 func preparer(c: Canal, acentre: Vector2, arayon: float, amaison: Vector2, asacs: int, amoulu: float) -> void:
 	canal = c; centre = acentre; rayon = arayon; maison = amaison; sacs = asacs; moulu = amoulu
 	fond = Node2D.new()
-	fond.draw.connect(_dessiner_fond)
+	fond.draw.connect(Chrono.envelopper("moulin._dessiner_fond", _dessiner_fond))
 	roue = Node2D.new()
-	roue.draw.connect(_dessiner_roue)
+	roue.draw.connect(Chrono.envelopper("moulin._dessiner_roue", _dessiner_roue))
 
 func _process(dt: float) -> void:
+	var _c0 := Time.get_ticks_usec()
+	_process_corps(dt)
+	Chrono.ajouter("moulin._process", _c0)
+
+func _process_corps(dt: float) -> void:
 	_t += dt
 	# la roue tourne avec l'eau, puis ralentit doucement
 	_angle += vitesse * dt

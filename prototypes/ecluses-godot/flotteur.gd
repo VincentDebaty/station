@@ -28,6 +28,11 @@ func preparer(c: Canal, ib: int, ax: float, ay_haut: float, ay_bas: float, ay_ba
 	z_index = 1
 
 func _process(dt: float) -> void:
+	var _c0 := Time.get_ticks_usec()
+	_process_corps(dt)
+	Chrono.ajouter("flotteur._process", _c0)
+
+func _process_corps(dt: float) -> void:
 	_t += dt
 	queue_redraw()
 
@@ -38,6 +43,11 @@ func _y_flotteur() -> float:
 	return clampf(surf, y_bague + R * 0.35, y_bas - R)
 
 func _draw() -> void:
+	var _c0 := Time.get_ticks_usec()
+	_draw_corps()
+	Chrono.ajouter("flotteur._draw", _c0)
+
+func _draw_corps() -> void:
 	var yf := _y_flotteur()
 	# la tige de guidage, en fer
 	draw_line(Vector2(x, y_haut), Vector2(x, y_bas), Color("#2c2622"), 5.0, true)

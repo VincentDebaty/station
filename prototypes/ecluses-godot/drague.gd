@@ -41,7 +41,7 @@ func preparer(c: Canal, abassin: int, ax0: float, ax1: float, apierre: float, af
 	canal = c; ib = abassin; x0 = ax0; x1 = ax1; y_pierre = apierre; fond_vu = afond; godets = agodets; pied = apied
 	_rng.seed = 17
 	couche = Node2D.new()
-	couche.draw.connect(_dessiner_couche)
+	couche.draw.connect(Chrono.envelopper("drague._dessiner_couche", _dessiner_couche))
 
 func sous(p: Vector2) -> bool:
 	return Rect2(pied.x - 70.0, pied.y - 150.0, 150.0, 170.0).has_point(p)
@@ -53,6 +53,11 @@ func draguer() -> void:
 # 0 → 0,7 s elle descend dans l'eau, 0,7 → 1,4 s elle remonte pleine, 1,4 →
 # 1,9 s la grue pivote et la vide sur le tas.
 func _process(dt: float) -> void:
+	var _c0 := Time.get_ticks_usec()
+	_process_corps(dt)
+	Chrono.ajouter("drague._process", _c0)
+
+func _process_corps(dt: float) -> void:
 	_t += dt
 	if _coup >= 0.0:
 		_coup += dt
@@ -94,6 +99,11 @@ func _benne() -> Vector2:
 	return b + Vector2(0, d)
 
 func _draw() -> void:
+	var _c0 := Time.get_ticks_usec()
+	_draw_corps()
+	Chrono.ajouter("drague._draw", _c0)
+
+func _draw_corps() -> void:
 	# toute la grue un peu plus grande que son dessin (ECHELLE), autour de son pied
 	draw_set_transform(pied * (1.0 - ECHELLE), 0.0, Vector2(ECHELLE, ECHELLE))
 	_dessiner_grue()

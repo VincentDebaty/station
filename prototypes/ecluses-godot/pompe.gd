@@ -50,6 +50,11 @@ func pomper() -> void:
 	_coup = 0.0
 
 func _process(dt: float) -> void:
+	var _c0 := Time.get_ticks_usec()
+	_process_corps(dt)
+	Chrono.ajouter("pompe._process", _c0)
+
+func _process_corps(dt: float) -> void:
 	_t += dt
 	if _coup >= 0.0:
 		_coup += dt
@@ -63,6 +68,11 @@ func _process(dt: float) -> void:
 	queue_redraw()
 
 func _draw() -> void:
+	var _c0 := Time.get_ticks_usec()
+	_draw_corps()
+	Chrono.ajouter("pompe._draw", _c0)
+
+func _draw_corps() -> void:
 	var w := _w()
 	# l'ombre au pied
 	draw_set_transform(base + Vector2(4, -2), 0.0, Vector2(1.0, 0.28))

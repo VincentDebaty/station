@@ -20,8 +20,14 @@ const PASSES := 4
 
 var x0 := 0.0
 var x1 := 0.0
-var fond_y := 0.0
-var repos := 0.0          # y monde de la surface au repos
+var fond_y := 0.0:
+	set(v):
+		if v != fond_y: _sale = true
+		fond_y = v
+var repos := 0.0:         # y monde de la surface au repos
+	set(v):
+		if v != repos: _sale = true
+		repos = v
 var remous := 0.0          # 0..1 : l'eau bouillonne (écume, réfraction)
 var passage := false
 var gauche: Eau = null     # pour un passage : les deux bassins qu'il relie
@@ -49,6 +55,20 @@ var _poids_d := 0.0
 
 var _h := PackedFloat32Array()
 var _v := PackedFloat32Array()
+# La surface, colonne par colonne, calculée une fois par image (houle,
+# raccords et tout) : tous ceux qui la lisent dans l'image (le maillage, les
+# bandes de surface, les bateaux, la cascade) interpolent dans ce tableau.
+# Recalculée pour chaque appel, la houle (trois sinus et un réglage lu par
+# colonne) coûtait à elle seule plusieurs ms sur un Galaxy A12 (lot 0).
+var _ycol := PackedFloat32Array()
+var _sale := true
+var _image_ycol := -1
+# Les ressorts au repos ne calculent rien : ils se réveillent à la première
+# poussée (impulsion). Sur un Galaxy A12, ils coûtaient 10 ms par image même
+# sur une eau immobile.
+var _dort := false
+var _g := PackedFloat32Array()
+var _d := PackedFloat32Array()
 var _t := 0.0
 var _reste := 0.0
 var _mat: ShaderMaterial
@@ -58,6 +78,8 @@ func preparer(ax0: float, ax1: float, afond: float, arepos: float, shader: Shade
 	var n := maxi(2, int(ceil((x1 - x0) / PAS)) + 1)
 	_h.resize(n); _v.resize(n)
 	_h.fill(0.0); _v.fill(0.0)
+	_g.resize(n); _d.resize(n); _ycol.resize(n)
+	_sale = true
 	_mat = ShaderMaterial.new()
 	_mat.shader = shader
 	material = _mat
@@ -107,6 +129,9 @@ func hauteur_a(x: float, liens := true) -> float:
 	var f := clampf((x - x0) / maxf(x1 - x0, 1.0), 0.0, 1.0) * float(_h.size() - 1)
 	var i := int(floor(f))
 	var j := mini(i + 1, _h.size() - 1)
+	if liens:
+		if _sale or _image_ycol != Engine.get_process_frames(): _calculer_ycol()
+		return lerpf(_ycol[i], _ycol[j], f - float(i))
 	var h := lerpf(_h[i], _h[j], f - float(i))
 	var y := repos + (h + _houle(x)) * calme()
 	if liens and _poids_g > 0.0 and x - x0 < RACCORD:
@@ -117,25 +142,54 @@ func hauteur_a(x: float, liens := true) -> float:
 		y = lerpf(y, _lien_d, k * k * (3.0 - 2.0 * k) * _poids_d)
 	return minf(y, fond_y)
 
+func _calculer_ycol() -> void:
+	_sale = false
+	_image_ycol = Engine.get_process_frames()
+	var n := _h.size()
+	var c := calme()
+	var a := Reglages.v("houle")
+	var pas := (x1 - x0) / float(maxi(n - 1, 1))
+	for i in n:
+		var x := x0 + pas * i
+		var y := repos + (_h[i] + a * (1.5 * sin(x * 0.043 + _t * 1.55) + 0.9 * sin(x * 0.107 - _t * 2.25) + 0.5 * sin(x * 0.21 + _t * 3.1))) * c
+		if _poids_g > 0.0 and x - x0 < RACCORD:
+			var k := 1.0 - clampf((x - x0) / RACCORD, 0.0, 1.0)
+			y = lerpf(y, _lien_g, k * k * (3.0 - 2.0 * k) * _poids_g)
+		if _poids_d > 0.0 and x1 - x < RACCORD:
+			var k := 1.0 - clampf((x1 - x) / RACCORD, 0.0, 1.0)
+			y = lerpf(y, _lien_d, k * k * (3.0 - 2.0 * k) * _poids_d)
+		_ycol[i] = minf(y, fond_y)
+
 # Une poussée sur la surface, centrée en x, étalée sur « largeur » pixels.
 # Positive : la surface descend ; négative : elle monte.
 func impulsion(x: float, force: float, largeur := 24.0) -> void:
 	if passage:
 		return
+	_dort = false
+	_sale = true
 	for i in _h.size():
 		var d := absf(x_de(i) - x)
 		if d < largeur:
 			_v[i] += force * (1.0 - d / largeur)
 
 func _process(dt: float) -> void:
+	var _c0 := Time.get_ticks_usec()
+	_process_corps(dt)
+	Chrono.ajouter("eau._process", _c0)
+
+func _process_corps(dt: float) -> void:
 	_t += dt
+	_sale = true
 	_suivre_liens(dt)
 	var _c0 := Time.get_ticks_usec()
 	if not passage:
 		_reste += dt
+		# (deux pas au plus par image : un téléphone qui rame en enchaînait
+		# davantage à chaque image, et ramait d'autant plus)
+		_reste = minf(_reste, 2.0 / 60.0)
 		while _reste >= 1.0 / 60.0:
 			_reste -= 1.0 / 60.0
-			_pas_ressorts()
+			if not _dort: _pas_ressorts()
 	Chrono.ajouter("eau.ressorts", _c0)
 	_c0 = Time.get_ticks_usec()
 	_construire()
@@ -144,30 +198,43 @@ func _process(dt: float) -> void:
 func _pas_ressorts() -> void:
 	var amorti := Reglages.v("amortissement")     # plus haut, la surface se calme plus vite
 	var n := _h.size()
+	var agite := 0.0
 	for i in n:
 		_v[i] += -RAIDEUR * _h[i] - amorti * _v[i]
 		_h[i] += _v[i]
+		agite = maxf(agite, absf(_h[i]) + absf(_v[i]))
+	# l'eau s'est calmée : les ressorts s'endorment
+	if agite < 0.02:
+		_h.fill(0.0); _v.fill(0.0)
+		_dort = true
+		return
 	for _p in PASSES:
-		var g := PackedFloat32Array(); g.resize(n)
-		var d := PackedFloat32Array(); d.resize(n)
 		for i in n:
-			if i > 0:
-				g[i] = ETALEMENT * (_h[i] - _h[i - 1]); _v[i - 1] += g[i]
-			if i < n - 1:
-				d[i] = ETALEMENT * (_h[i] - _h[i + 1]); _v[i + 1] += d[i]
+			_g[i] = ETALEMENT * (_h[i] - _h[i - 1]) if i > 0 else 0.0
+			_d[i] = ETALEMENT * (_h[i] - _h[i + 1]) if i < n - 1 else 0.0
 		for i in n:
-			if i > 0: _h[i - 1] += g[i]
-			if i < n - 1: _h[i + 1] += d[i]
+			if i > 0: _v[i - 1] += _g[i]; _h[i - 1] += _g[i]
+			if i < n - 1: _v[i + 1] += _d[i]; _h[i + 1] += _d[i]
 
+var _vide_construit := false
 func _construire() -> void:
 	var am := mesh as ArrayMesh
+	# (vide ou cachée : rien à reconstruire, une fois la surface effacée)
+	if not visible_eau or (not passage and vide()):
+		if not _vide_construit:
+			am.clear_surfaces()
+			_vide_construit = true
+		return
+	_vide_construit = false
 	am.clear_surfaces()
 	var haut_moyen := 0.0
 	var pts := PackedVector2Array()
 	var n := _h.size() if not passage else 2
+	if not passage and (_sale or _image_ycol != Engine.get_process_frames()): _calculer_ycol()
+	var pas := (x1 - x0) / float(maxi(n - 1, 1))
 	for i in n:
-		var x := x_de(i) if not passage else (x0 if i == 0 else x1)
-		var y := hauteur_a(x)
+		var x := x0 + pas * i
+		var y := _ycol[i] if not passage else hauteur_a(x)
 		pts.append(Vector2(x, y))
 		haut_moyen += y
 	haut_moyen /= float(n)

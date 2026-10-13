@@ -157,7 +157,9 @@ func _lame() -> void:
 		p = o + Vector2(vx * t, 0.5 * g * t * t)
 		pts.append(p)
 		if p.y >= surface_bas or t > 1.5: break
-		t += 0.02
+		# (un pas de 0,035 s : à 0,02, la nappe comptait jusqu'à 75 segments
+		# dessinés un à un à chaque image, trop pour un petit téléphone)
+		t += 0.035
 	_point_chute = p
 	if pts.size() < 2: return
 	var D := profondeur
@@ -174,14 +176,21 @@ func _lame() -> void:
 	# et Godot refusait de le trianguler — la nappe disparaissait
 	var avant_c := Color(0.3, 0.68, 0.84, 0.82)
 	var fond_c := Color(0.55, 0.85, 0.95, 0.82)
+	# (en un seul lot de triangles donnés tels quels : dessinés quadrilatère
+	# par quadrilatère, chacun triangulé par Godot, ils coûtaient plusieurs ms
+	# par image sur un Galaxy A12, lot 0)
+	var sommets := PackedVector2Array()
+	var couleurs := PackedColorArray()
+	var indices := PackedInt32Array()
+	for q in pts:
+		sommets.append(q); couleurs.append(avant_c)
+		sommets.append(q + D); couleurs.append(fond_c)
 	for k in pts.size() - 1:
-		var q0 := pts[k]
-		var q1 := pts[k + 1]
-		# un segment parallèle à la profondeur donne un quadrilatère plat
-		if absf((q1 - q0).cross(D)) < 0.5: continue
-		draw_polygon(PackedVector2Array([q0, q1, q1 + D, q0 + D]), PackedColorArray([avant_c, avant_c, fond_c, fond_c]))
+		var a := 2 * k
+		indices.append_array([a, a + 2, a + 3, a, a + 3, a + 1])
+	RenderingServer.canvas_item_add_triangle_array(get_canvas_item(), indices, sommets, couleurs)
 	# des filets clairs, à plusieurs profondeurs, qui glissent avec le courant
-	for z in [0.15, 0.35, 0.55, 0.75, 0.92]:
+	for z in [0.2, 0.5, 0.8]:
 		for k in 3:
 			var f := fmod(_t * 1.5 + k / 3.0 + z * 1.7, 1.0)
 			var i := int(f * (pts.size() - 1))
@@ -205,7 +214,7 @@ func _lame() -> void:
 		draw_polyline(chute, Color(0.22, 0.6, 0.78, 0.85), maxf(ep, 1.5), true)
 	draw_polyline(pts, Color(0.85, 0.97, 1.0, 0.5), 1.2, true)
 	# l'écume le long de la ligne de chute, sur toute la largeur
-	for z in [0.0, 0.25, 0.5, 0.75, 1.0]:
+	for z in [0.0, 0.5, 1.0]:
 		_gerbes(_point_chute + D * z)
 	draw_line(_point_chute, _point_chute + D, Color(0.92, 1, 1, 0.55), 5.0, true)
 

@@ -17,8 +17,15 @@ static func releve() -> String:
 	var noms := t.keys()
 	noms.sort_custom(func(a, b): return t[a] > t[b])
 	var s := ""
-	for n in noms.slice(0, 12):
+	for n in noms.slice(0, 18):
 		s += "%s %.2f  " % [n, float(t[n]) / images / 1000.0]
 	t.clear()
 	images = 0
 	return s
+
+# Un dessin branché par draw.connect, chronométré sous ce nom.
+static func envelopper(nom: String, f: Callable) -> Callable:
+	return func():
+		var c := Time.get_ticks_usec()
+		f.call()
+		ajouter(nom, c)

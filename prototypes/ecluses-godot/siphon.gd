@@ -37,11 +37,16 @@ func preparer(c: Canal, ak: int, chemin: PackedVector2Array, asommet: Vector2, a
 	add_child(tuyau)
 	roue = Node2D.new()
 	roue.z_index = 4
-	roue.draw.connect(_dessiner_roue)
+	roue.draw.connect(Chrono.envelopper("siphon._dessiner_roue", _dessiner_roue))
 
 # Les poteaux de bois sous l'arche, posés sur la berge du fond : sans eux, le
 # tuyau flottait en l'air. Dessinés avant le tuyau (il passe devant eux).
 func _draw() -> void:
+	var _c0 := Time.get_ticks_usec()
+	_draw_corps()
+	Chrono.ajouter("siphon._draw", _c0)
+
+func _draw_corps() -> void:
 	for po in poteaux:
 		var x: float = po[0]
 		var y0: float = po[1]
@@ -61,6 +66,11 @@ func regler(aamorce: bool) -> void:
 	tuyau.ouverte = aamorce
 
 func _process(dt: float) -> void:
+	var _c0 := Time.get_ticks_usec()
+	_process_corps(dt)
+	Chrono.ajouter("siphon._process", _c0)
+
+func _process_corps(dt: float) -> void:
 	_t += dt
 	var pas := minf(absf(_vise - _angle), dt * 9.0)
 	_angle += signf(_vise - _angle) * pas

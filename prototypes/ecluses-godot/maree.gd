@@ -35,7 +35,7 @@ func preparer(c: Canal, ai: int, ax0: float, ax1: float, aechelle: float) -> voi
 	z_index = 0
 	_fleche = Node2D.new()
 	_fleche.z_index = 3
-	_fleche.draw.connect(_dessiner_fleche)
+	_fleche.draw.connect(Chrono.envelopper("maree._dessiner_fleche", _dessiner_fleche))
 	add_child(_fleche)
 
 func regler(phase: int, coups: int) -> void:
@@ -44,6 +44,11 @@ func regler(phase: int, coups: int) -> void:
 	if _affiche == 0.0: _affiche = prochain
 
 func _process(dt: float) -> void:
+	var _c0 := Time.get_ticks_usec()
+	_process_corps(dt)
+	Chrono.ajouter("maree._process", _c0)
+
+func _process_corps(dt: float) -> void:
 	_t += dt
 	_affiche = move_toward(_affiche, prochain, dt * 2.0)
 	queue_redraw()
@@ -53,6 +58,11 @@ func _y(h: float) -> float:
 	return canal.Y(h) + canal.D.y
 
 func _draw() -> void:
+	var _c0 := Time.get_ticks_usec()
+	_draw_corps()
+	Chrono.ajouter("maree._draw", _c0)
+
+func _draw_corps() -> void:
 	# la bande d'algues entre basse et haute mer, au bord irrégulier
 	var haut_alg := PackedVector2Array()
 	var x := x0

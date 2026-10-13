@@ -56,6 +56,11 @@ func _cheminee() -> Vector2:
 	return base + Vector2(L * 0.2, -H_BASE - H_BALLON - 52.0)
 
 func _process(dt: float) -> void:
+	var _c0 := Time.get_ticks_usec()
+	_process_corps(dt)
+	Chrono.ajouter("chaudiere._process", _c0)
+
+func _process_corps(dt: float) -> void:
 	_t += dt
 	if _coup >= 0.0:
 		_coup += dt
@@ -81,6 +86,11 @@ func _process(dt: float) -> void:
 	queue_redraw()
 
 func _draw() -> void:
+	var _c0 := Time.get_ticks_usec()
+	_draw_corps()
+	Chrono.ajouter("chaudiere._draw", _c0)
+
+func _draw_corps() -> void:
 	# une petite secousse pendant que la vapeur part
 	var o := Vector2(sin(_t * 47.0), cos(_t * 39.0)) * 1.2 * force
 	var c := base + o

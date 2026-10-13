@@ -29,10 +29,10 @@ func preparer(c: Canal, ai: int, crete: float, couche: Node2D, arriere: Node2D) 
 	y_min = c.Y(float(l["min"])); y_max = c.Y(float(l["max"]))
 	xc = c.X(c.gl[ai][0] + c.gl[ai][1]) * 0.5
 	_planches = Node2D.new()
-	_planches.draw.connect(_dessiner_planches)
+	_planches.draw.connect(Chrono.envelopper("hausse._dessiner_planches", _dessiner_planches))
 	couche.add_child(_planches)
 	_fond = Node2D.new()
-	_fond.draw.connect(_dessiner_poteau.bind(true))
+	_fond.draw.connect(Chrono.envelopper("hausse._dessiner_poteau", _dessiner_poteau.bind(true)))
 	(arriere if arriere else couche).add_child(_fond)
 
 func regler(crete: float) -> void:
@@ -52,12 +52,22 @@ func geste(p: Vector2) -> String:
 	return "hausser" if p.y < haut else "abaisser"
 
 func _process(dt: float) -> void:
+	var _c0 := Time.get_ticks_usec()
+	_process_corps(dt)
+	Chrono.ajouter("hausse._process", _c0)
+
+func _process_corps(dt: float) -> void:
 	if not is_equal_approx(vue, cible):
 		vue = move_toward(vue, cible, dt * 3.0)
 		_planches.queue_redraw()
 	queue_redraw()
 
 func _draw() -> void:
+	var _c0 := Time.get_ticks_usec()
+	_draw_corps()
+	Chrono.ajouter("hausse._draw", _c0)
+
+func _draw_corps() -> void:
 	_dessiner_poteau_sur(self, false)
 
 func _dessiner_poteau(fond: bool) -> void:

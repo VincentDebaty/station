@@ -35,6 +35,11 @@ func preparer(c: Canal, ai: int, arive: float) -> void:
 	if ResourceLoader.exists("res://art/buisson.png"): _buisson = Images.reduire("res://art/buisson.png", 200)
 
 func _process(dt: float) -> void:
+	var _c0 := Time.get_ticks_usec()
+	_process_corps(dt)
+	Chrono.ajouter("mare._process", _c0)
+
+func _process_corps(dt: float) -> void:
 	_t += dt
 	queue_redraw()
 
@@ -64,6 +69,11 @@ func bord_eau(ecart: float) -> PackedVector2Array:
 	return PackedVector2Array([_ovale(PI - ecart, s), _ovale(PI + ecart, s)])
 
 func _draw() -> void:
+	var _c0 := Time.get_ticks_usec()
+	_draw_corps()
+	Chrono.ajouter("mare._draw", _c0)
+
+func _draw_corps() -> void:
 	var f := plein()
 	# la rive d'herbe, puis la cuvette de boue
 	draw_colored_polygon(_contour(1.08), Color("#7fb04a"))

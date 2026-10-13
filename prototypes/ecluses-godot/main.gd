@@ -39,6 +39,11 @@ func cacher() -> void:
 	montree = false
 
 func _process(dt: float) -> void:
+	var _c0 := Time.get_ticks_usec()
+	_process_corps(dt)
+	Chrono.ajouter("main._process", _c0)
+
+func _process_corps(dt: float) -> void:
 	_t += dt
 	_alpha = move_toward(_alpha, 1.0 if montree else 0.0, dt * 3.0)
 	_pos = _pos.lerp(cible, minf(1.0, dt * 6.0))
@@ -47,6 +52,11 @@ func _process(dt: float) -> void:
 	queue_redraw()
 
 func _draw() -> void:
+	var _c0 := Time.get_ticks_usec()
+	_draw_corps()
+	Chrono.ajouter("main._draw", _c0)
+
+func _draw_corps() -> void:
 	# un tapotement toutes les 1,1 s : la main descend (0 → 0,18 s), appuie,
 	# remonte ; un rond part du bout du doigt au moment où elle appuie
 	var cycle := fmod(_t, 1.1)

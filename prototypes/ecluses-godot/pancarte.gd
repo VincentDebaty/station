@@ -218,6 +218,11 @@ func _descendre() -> void:
 # Le balancement : une oscillation de pendule qui s'amortit, accrochée au milieu
 # du bord haut. Amplitude de départ ~8°, ~2,5 s.
 func _process(dt: float) -> void:
+	var _c0 := Time.get_ticks_usec()
+	_process_corps(dt)
+	Chrono.ajouter("pancarte._process", _c0)
+
+func _process_corps(dt: float) -> void:
 	if _balance_t < 0.0: return
 	_balance_t += dt
 	rotation = 0.14 * exp(-_balance_t * 1.5) * sin(_balance_t * 6.2 + 0.4)

@@ -34,13 +34,18 @@ func preparer(c: Canal, abassin: int, apied: Vector2, ay_cible: float, ax0: floa
 	_rng.seed = 31
 	marque = Node2D.new()
 	marque.z_index = 3
-	marque.draw.connect(_dessiner_marque)
+	marque.draw.connect(Chrono.envelopper("ferme._dessiner_marque", _dessiner_marque))
 
 func eteint() -> bool:
 	var b: Dictionary = canal.N["bassins"][ib]
 	return float(canal.vue_niv[ib]) - float(b["fond"]) >= float(b["cible"]) - 1e-3
 
 func _process(dt: float) -> void:
+	var _c0 := Time.get_ticks_usec()
+	_process_corps(dt)
+	Chrono.ajouter("ferme._process", _c0)
+
+func _process_corps(dt: float) -> void:
 	_t += dt
 	var avant := feu
 	feu = move_toward(feu, 0.0 if eteint() else 1.0, dt * 1.2)
@@ -58,6 +63,11 @@ func _process(dt: float) -> void:
 	marque.queue_redraw()
 
 func _draw() -> void:
+	var _c0 := Time.get_ticks_usec()
+	_draw_corps()
+	Chrono.ajouter("ferme._draw", _c0)
+
+func _draw_corps() -> void:
 	var p := pied
 	var w := 120.0
 	var h := 62.0

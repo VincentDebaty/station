@@ -85,7 +85,7 @@ func preparer(ax0: float, ax1: float, aseuil: float, acrete: float, aportique: f
 		_construire_profil(mp, abas, bois)
 	roue = Node2D.new()
 	roue.z_index = 6
-	roue.draw.connect(_dessiner_roue)
+	roue.draw.connect(Chrono.envelopper("porte._dessiner_roue", _dessiner_roue))
 	add_child(roue)
 	_maj_vantail()
 
@@ -98,7 +98,7 @@ func _construire_profil(mp: ShaderMaterial, abas: float, bois: Shader) -> void:
 	_vantail.material = _mat_bois
 	add_child(_vantail)
 	_chaines = Node2D.new()
-	_chaines.draw.connect(_dessiner_chaines)
+	_chaines.draw.connect(Chrono.envelopper("porte._dessiner_chaines", _dessiner_chaines))
 	add_child(_chaines)
 	# Les ombres de contact (analyse graphique du 6 octobre 2026 : les portes
 	# faisaient « sprite posé par-dessus ») : sur le vantail, l'ombre des
@@ -113,7 +113,10 @@ func _construire_profil(mp: ShaderMaterial, abas: float, bois: Shader) -> void:
 	# encore le vantail — on la refait sur la porte
 	if voile:
 		var copie := BackBufferCopy.new()
-		copie.copy_mode = BackBufferCopy.COPY_MODE_VIEWPORT
+		# (la zone de la porte seulement : l'écran entier, recopié pour chaque
+		# porte à chaque image, pesait sur un téléphone d'entrée de gamme)
+		copie.copy_mode = BackBufferCopy.COPY_MODE_RECT
+		copie.rect = Rect2(gx0 - 80.0, y_portique - 80.0, gx1 - gx0 + 160.0, abas - y_portique + 160.0)
 		add_child(copie)
 		add_child(voile)
 	# le radier, sous le seuil
@@ -225,7 +228,7 @@ func _construire_oblique(mp: ShaderMaterial, abas: float) -> void:
 	_cadre.closed = true
 	(couche_vantail if couche_vantail else self).add_child(_cadre)
 	_chaines = Node2D.new()
-	_chaines.draw.connect(_dessiner_chaines)
+	_chaines.draw.connect(Chrono.envelopper("porte._dessiner_chaines", _dessiner_chaines))
 	add_child(_chaines)
 	# le pilier arrière, dans le plan du fond, derrière l'eau et les bateaux
 	var fond := arriere if arriere else self
@@ -401,6 +404,11 @@ func _cible() -> float:
 	return y_seuil - ENTREBAIL if _entrouvert else y_seuil
 
 func _process(dt: float) -> void:
+	var _c0 := Time.get_ticks_usec()
+	_process_corps(dt)
+	Chrono.ajouter("porte._process", _c0)
+
+func _process_corps(dt: float) -> void:
 	if _rotation_vanne != 0.0:
 		var pv := signf(_rotation_vanne) * minf(absf(_rotation_vanne), dt * TAU * 2.6)
 		_rotation_vanne -= pv

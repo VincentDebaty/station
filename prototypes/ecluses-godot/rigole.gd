@@ -95,6 +95,11 @@ func sous(p: Vector2) -> bool:
 	return p.x > x_bord + minf(D.x, 0.0) - 20.0 and p.x < x_mare + 30.0 and p.y > y_rive + D.y * 1.6 - 60.0 and p.y < y_rive + 30.0
 
 func _process(dt: float) -> void:
+	var _c0 := Time.get_ticks_usec()
+	_process_corps(dt)
+	Chrono.ajouter("rigole._process", _c0)
+
+func _process_corps(dt: float) -> void:
 	_t += dt
 	_coup = maxf(_coup - dt * 2.2, 0.0)
 	_travail = maxf(_travail - dt * 1.4, 0.0)
@@ -121,6 +126,11 @@ func _pt(x_frac: float, cote: float, y: float) -> Vector2:
 	return Vector2(lerpf(x_bord, x_mare, x_frac), y) + D * z
 
 func _draw() -> void:
+	var _c0 := Time.get_ticks_usec()
+	_draw_corps()
+	Chrono.ajouter("rigole._draw", _c0)
+
+func _draw_corps() -> void:
 	var D := canal.D
 	var prof := maxf(canal.Y(vue) - y_rive, 0.0) * ECHELLE
 	var yb := y_rive + prof

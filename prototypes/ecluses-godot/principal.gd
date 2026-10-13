@@ -135,6 +135,7 @@ func _lancer() -> void:
 	add_child(canal)
 	move_child(canal, 0)
 	canal.construire(N, etat)
+	_cuire()
 	_regler_portes()
 	if camera == null:
 		camera = Camera2D.new()
@@ -165,8 +166,23 @@ func _marges() -> Dictionary:
 		m = {"g": bords[0] * k + 24.0, "h": bords[1] * k + 16.0, "d": bords[2] * k + 24.0, "b": bords[3] * k + 16.0}
 	return m
 
+# Le décor fixe cuit en une image (cuisson.gd) ; recuit quand l'écran
+# change, une image plus tard (la caméra n'applique son cadrage qu'alors).
+var _cuits := []
+func _cuire() -> void:
+	_cuits = []
+	if canal.plan_du_fond and _env("ECLUSES_SANS_CUISSON") == "":
+		_cuits.append(Cuisson.cuire(canal.plan_du_fond))
+	_recuire.call_deferred()
+
+func _recuire() -> void:
+	await get_tree().process_frame
+	for v in _cuits:
+		if is_instance_valid(v): Cuisson.recuire(v)
+
 func _cadrer() -> void:
 	if canal == null or camera == null: return
+	_recuire.call_deferred()
 	var ecran := get_viewport().get_visible_rect().size
 	var m := _marges()
 	if _sure:
@@ -444,6 +460,7 @@ func annuler() -> void:
 	add_child(canal)
 	move_child(canal, 0)
 	canal.construire(N, etat)
+	_cuire()
 	_regler_portes()
 	histoire = h
 	fini = false
@@ -983,6 +1000,7 @@ func _au_bout(i: int) -> bool:
 	return _ouv[i] >= 1.0 or _ouv[i] <= 0.0
 
 func _relacher() -> void:
+	if _maintien < 0: return      # déjà relâchée (la démo relâchait deux fois)
 	var i := _maintien
 	_maintien = -1
 	canal.portes[i].tenue = false
@@ -1175,7 +1193,30 @@ func _sonder() -> void:
 					xx += 12.0
 				print("  profil ", " ".join(prof))
 
+# Le relevé des objets dessinés, par genre et par script (lot 0 : 2 000
+# objets et 650 appels de dessin par image sur le 1-4).
+func _inventaire() -> void:
+	var compte := {}
+	var pile: Array = [get_tree().root]
+	while not pile.is_empty():
+		var n: Node = pile.pop_back()
+		for c in n.get_children(): pile.append(c)
+		if n is CanvasItem and n.is_visible_in_tree():
+			var scr: Script = n.get_script()
+			var cle: String = n.get_class() + (" " + scr.resource_path.get_file() if scr else "") + " < " + (n.get_parent().name if n.get_parent() else "")
+			compte[cle] = int(compte.get(cle, 0)) + 1
+	var cles := compte.keys()
+	cles.sort_custom(func(a, b): return compte[a] > compte[b])
+	var total := 0
+	for c in cles: total += compte[c]
+	print("INVENTAIRE %d objets visibles" % total)
+	for c in cles.slice(0, 25): print("INVENTAIRE %4d  %s" % [compte[c], c])
+
 func _demo() -> void:
+	# (mesure : sans attendre l'écran, pour lire le vrai temps d'une image au
+	# lieu des paliers de 60 et 30 imposés par l'affichage)
+	if _env("ECLUSES_SANS_VSYNC") != "": DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_DISABLED)
+	if _env("ECLUSES_INVENTAIRE") != "": get_tree().create_timer(2.0).timeout.connect(_inventaire)
 	var oracle: Array = JSON.parse_string(FileAccess.get_file_as_string("res://oracle.json"))["parties"]
 	var solution := []
 	for p in oracle:

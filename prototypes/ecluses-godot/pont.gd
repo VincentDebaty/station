@@ -32,7 +32,7 @@ const BRUN := Color("#3b2414")
 func preparer(c: Canal, axc: float, ay_dessous: float, ay_pied: float) -> void:
 	canal = c; xc = axc; y_dessous = ay_dessous; y_pied = ay_pied
 	fond = Node2D.new()
-	fond.draw.connect(_dessiner_fond)
+	fond.draw.connect(Chrono.envelopper("pont._dessiner_fond", _dessiner_fond))
 
 func _pierre_rect(n: CanvasItem, r: Rect2, clair: Color, sombre: Color) -> void:
 	n.draw_polygon(PackedVector2Array([r.position, Vector2(r.end.x, r.position.y), r.end, Vector2(r.position.x, r.end.y)]),
@@ -59,6 +59,11 @@ func _dessiner_fond() -> void:
 	fond.draw_rect(Rect2(r.position.x, r.position.y, r.size.x, 12.0), Color(0, 0, 0, 0.25))
 
 func _draw() -> void:
+	var _c0 := Time.get_ticks_usec()
+	_draw_corps()
+	Chrono.ajouter("pont._draw", _c0)
+
+func _draw_corps() -> void:
 	var D := canal.D
 	var g := xc - LARGE
 	var d := xc + LARGE

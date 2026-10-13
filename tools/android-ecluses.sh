@@ -54,7 +54,7 @@ echo "→ installation…"
 
 if [ "${1:-}" = "--demo" ]; then
   NIVEAU="${2:-1-4}"
-  printf 'ECLUSES_DEMO=1\nECLUSES_NIVEAU=%s\n' "$NIVEAU" | "$ADB" shell "run-as $PAQUET sh -c 'mkdir -p files && cat > files/env.cfg'"
+  printf 'ECLUSES_DEMO=1\nECLUSES_NIVEAU=%s\n%s\n' "$NIVEAU" "${ECLUSES_EN_PLUS:-}" | "$ADB" shell "run-as $PAQUET sh -c 'mkdir -p files && cat > files/env.cfg'"
   "$ADB" logcat -c
   "$ADB" shell am start -n "$PAQUET/com.godot.game.GodotAppLauncher" > /dev/null
   echo "→ démo du $NIVEAU…"
@@ -63,7 +63,7 @@ if [ "${1:-}" = "--demo" ]; then
     sleep 1
     if "$ADB" logcat -d -s godot:I | grep -q "IPS FIN"; then break; fi
   done
-  "$ADB" logcat -d -s godot:I | grep "IPS" | sed 's/.*IPS/IPS/'
+  "$ADB" logcat -d -s godot:I | grep -E "IPS|CHRONO" | sed -E "s/.*(IPS|CHRONO)/\1/"
   "$ADB" shell "run-as $PAQUET rm -f files/env.cfg"
   "$ADB" shell am force-stop "$PAQUET"
   exit 0

@@ -369,8 +369,33 @@ l'eau à chaque image (`eau._construire`), la mise à jour des surfaces
 (`canal._maj_surfaces`), les ressorts de l'eau. L'autre moitié est dans les
 autres dessins refaits à chaque image et dans le moteur lui-même.
 
-**Le lot 0 n'est donc pas fini** : sa condition (60 images/s sur le 1-4)
-demande une passe d'optimisation.
+**Correction du même jour** : l'indicateur de Godot lu comme « calcul » est la
+durée **totale** d'une image. Les chronomètres posés directement sur le
+téléphone donnent la vraie part des scripts : environ 30 ms par image avant
+optimisation, dont 10 ms pour les seuls ressorts de l'eau (qui enchaînaient
+plusieurs pas par image quand le téléphone ramait, et calculaient même sur une
+eau immobile).
+
+**Première passe d'optimisation** (rendu inchangé, vérifié image par image) :
+ressorts endormis quand l'eau est calme et deux pas au plus par image ;
+surface calculée une fois par image et par bassin ; cascade dessinée d'un seul
+tenant ; fond mouillé dessiné une fois ; **mur du fond « cuit »** en une seule
+image au chargement (`cuisson.gd`) ; eau sans mipmaps de l'écran ; copie de
+l'écran limitée à la zone de chaque porte.
+
+| Après la passe, démo du 1-4 | Images/s |
+|---|---|
+| avec MSAA ×4 | 25,3 (pire seconde 18,9) |
+| sans MSAA, synchronisé à l'écran | 30 (palier de l'écran à 60 Hz) |
+| sans MSAA ni synchronisation (temps réel d'une image) | environ 33 en jeu |
+
+Scripts : environ 30 → 18 ms par image ; appels de dessin : 650 → 300.
+
+**Conclusion provisoire** : **30 images/s stables** sur un téléphone d'entrée
+de gamme sont à portée (sans MSAA sur Android) ; **60** demanderait de
+réécrire l'eau et la cascade pour le processeur graphique. Proposition :
+viser 30 sur l'entrée de gamme et 60 sur l'iPhone, et réviser la condition
+du lot 0 en ce sens.
 
 ---
 

@@ -44,9 +44,9 @@ func preparer(c: Canal, abassin: int, ax0: float, ax1: float, ay_poutre: float, 
 	canal = c; ib = abassin; x0 = ax0; x1 = ax1; y_poutre = ay_poutre
 	bas = abas; haut = ahaut; fond_vu = afond
 	devant = Node2D.new()
-	devant.draw.connect(_dessiner_devant)
+	devant.draw.connect(Chrono.envelopper("bac._dessiner_devant", _dessiner_devant))
 	tranche = Node2D.new()
-	tranche.draw.connect(_dessiner_tranche)
+	tranche.draw.connect(Chrono.envelopper("bac._dessiner_tranche", _dessiner_tranche))
 
 func centre_roue() -> Vector2:
 	return Vector2((x0 + x1) * 0.5, y_poutre - 34.0)
@@ -60,6 +60,11 @@ func tourner(d: float) -> void:
 	_angle += d
 
 func _process(dt: float) -> void:
+	var _c0 := Time.get_ticks_usec()
+	_process_corps(dt)
+	Chrono.ajouter("bac._process", _c0)
+
+func _process_corps(dt: float) -> void:
 	_t += dt
 	modulate = modulate.lerp(Color(1, 1, 1) if actif else Color(0.85, 0.83, 0.82), minf(1.0, dt * 6.0))
 	devant.modulate = modulate
@@ -75,6 +80,11 @@ func _y_lisse() -> float:
 
 # Derrière l'eau : le fond du bac vu d'en haut, sa paroi du fond, les câbles.
 func _draw() -> void:
+	var _c0 := Time.get_ticks_usec()
+	_draw_corps()
+	Chrono.ajouter("bac._draw", _c0)
+
+func _draw_corps() -> void:
 	var D := canal.D
 	var yf := _y_fond()
 	var yl := _y_lisse()

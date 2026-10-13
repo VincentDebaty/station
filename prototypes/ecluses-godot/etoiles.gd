@@ -70,6 +70,11 @@ func animer() -> void:
 	queue_redraw()
 
 func _process(dt: float) -> void:
+	var _c0 := Time.get_ticks_usec()
+	_process_corps(dt)
+	Chrono.ajouter("etoiles._process", _c0)
+
+func _process_corps(dt: float) -> void:
 	if _anime:
 		_t += dt
 		queue_redraw()
@@ -105,6 +110,11 @@ func _get_minimum_size() -> Vector2:
 	return Vector2(taille * 3.0 + taille * 0.15 * 2.0, taille)
 
 func _draw() -> void:
+	var _c0 := Time.get_ticks_usec()
+	_draw_corps()
+	Chrono.ajouter("etoiles._draw", _c0)
+
+func _draw_corps() -> void:
 	if _anime and en_arc: _paillettes()
 	for i in 3:
 		var c := _centre(i)

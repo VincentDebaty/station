@@ -4,7 +4,9 @@
 // profondeur, porte des reflets mouvants (caustiques) et une ligne d'écume.
 shader_type canvas_item;
 
-uniform sampler2D ecran : hint_screen_texture, filter_linear_mipmap;
+// (sans mipmaps : on ne lit l'écran qu'à sa pleine taille, et les recalculer
+// à chaque image coûtait cher sur un téléphone d'entrée de gamme, lot 0)
+uniform sampler2D ecran : hint_screen_texture, filter_linear;
 uniform vec3 clair : source_color = vec3(0.18, 0.78, 0.90);
 uniform vec3 profond : source_color = vec3(0.02, 0.36, 0.56);
 uniform vec3 ecume : source_color = vec3(0.86, 0.98, 1.0);

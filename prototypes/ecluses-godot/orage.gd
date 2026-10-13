@@ -44,6 +44,11 @@ func _sol(x: float) -> float:
 	return canal.Y(canal.berge)
 
 func _process(dt: float) -> void:
+	var _c0 := Time.get_ticks_usec()
+	_process_corps(dt)
+	Chrono.ajouter("orage._process", _c0)
+
+func _process_corps(dt: float) -> void:
 	_t += dt
 	var r := canal.rect_monde()
 	var marge := 300.0
@@ -93,6 +98,11 @@ func _zigzag(depart: Vector2, longueur: float) -> PackedVector2Array:
 	return p
 
 func _draw() -> void:
+	var _c0 := Time.get_ticks_usec()
+	_draw_corps()
+	Chrono.ajouter("orage._draw", _c0)
+
+func _draw_corps() -> void:
 	var r := canal.rect_monde()
 	# les nuages, tout en haut, dans le ciel au-dessus de la coupe (les roues
 	# des portes montent jusqu'à y = 0 environ) : des boules opaques qui se

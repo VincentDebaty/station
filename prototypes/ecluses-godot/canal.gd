@@ -239,7 +239,7 @@ func construire(niveau: Dictionary, e0: Dictionary) -> void:
 		_surface_dessus = Node2D.new()
 		add_child(_surface_dessus)
 		_contacts = Node2D.new()
-		_contacts.draw.connect(_dessiner_contacts)
+		_contacts.draw.connect(Chrono.envelopper("canal._dessiner_contacts", _dessiner_contacts))
 		add_child(_contacts)
 	for i in n:
 		var w := Eau.new()
@@ -356,7 +356,7 @@ func construire(niveau: Dictionary, e0: Dictionary) -> void:
 			add_child(ep)
 			coupes_noyees[i] = ep
 			var nv := Node2D.new()
-			nv.draw.connect(_dessiner_levee_noyee.bind(i, nv))
+			nv.draw.connect(Chrono.envelopper("canal._dessiner_levee_noyee", _dessiner_levee_noyee.bind(i, nv)))
 			add_child(nv)
 			levees_noyees[i] = nv
 	# les pompes : sur la berge du bassin qu'elles remplissent, leur tuyau
@@ -548,7 +548,7 @@ func construire(niveau: Dictionary, e0: Dictionary) -> void:
 	_reperes = Node2D.new()
 	_reperes.position = D * 0.5        # les bouées voguent avec les bateaux
 	_reperes.z_index = 3
-	_reperes.draw.connect(_dessiner_reperes)
+	_reperes.draw.connect(Chrono.envelopper("canal._dessiner_reperes", _dessiner_reperes))
 	add_child(_reperes)
 	for k in N["bateaux"].size():
 		var bt := Bateau.new()
@@ -626,6 +626,7 @@ func _reglages_bateaux() -> Dictionary:
 # Le plan où ajouter ce qu'on dessine (le plan du fond, en oblique) ; sinon
 # la coupe elle-même.
 var _cible: Node2D = null
+var plan_du_fond: Node2D = null    # le mur du fond, fixe : principal.gd le cuit (cuisson.gd)
 func _ajouter(n: Node) -> void:
 	(_cible if _cible else self).add_child(n)
 
@@ -718,6 +719,7 @@ func _murs_du_fond() -> void:
 		_cible.name = "PlanDuFond"
 		_cible.position = D
 		add_child(_cible)
+		plan_du_fond = _cible
 	var sommets := []
 	for i in B.size():
 		var b: Dictionary = B[i]
@@ -1179,14 +1181,17 @@ var _mouilles := {}
 func _maj_mouille(i: int, sec: bool) -> void:
 	if not _mouilles.has(i):
 		var n := Node2D.new()
-		n.draw.connect(_dessiner_mouille.bind(i))
+		n.draw.connect(Chrono.envelopper("canal._dessiner_mouille", _dessiner_mouille.bind(i)))
 		_surface_fond.add_child(n)
 		_mouilles[i] = n
+		n.visible = false
 	var n: Node2D = _mouilles[i]
 	var etait: bool = n.visible
 	n.visible = sec
 	if sec and not etait: n.set_meta("t", _t)
-	if sec: n.queue_redraw()
+	# (redessiné seulement pendant son fondu d'apparition : ensuite il ne
+	# bouge plus — redessiné à chaque image, il coûtait 2 ms sur un Galaxy A12)
+	if sec and _t - float(n.get_meta("t", _t)) < 0.9: n.queue_redraw()
 
 func _dessiner_mouille(i: int) -> void:
 	var n: Node2D = _mouilles[i]
@@ -1232,15 +1237,24 @@ func _dessiner_contacts() -> void:
 		var p: Vector2 = _bouees_vues[k]
 		_cerne(p + D * 0.5, 17.0, absf(D.y) * 0.22, 0.7)
 
+# (le cercle unité, calculé une fois : recalculé à chaque cerne et à chaque
+# image, il pesait sur les petits téléphones)
+static var _cercle := PackedVector2Array()
 func _cerne(c: Vector2, rx: float, ry: float, force: float) -> void:
-	var pts := PackedVector2Array()
-	for j in 33:
-		var a := TAU * j / 32.0
-		pts.append(c + Vector2(cos(a) * rx, sin(a) * ry))
+	if _cercle.is_empty():
+		for j in 25:
+			var a := TAU * j / 24.0
+			_cercle.append(Vector2(cos(a), sin(a)))
 	var r := 0.85 + 0.15 * sin(_t * 2.4 + c.x * 0.05)
-	_contacts.draw_polyline(pts, Color(0.92, 1.0, 1.0, 0.42 * force * r), 2.0, true)
+	var pts := PackedVector2Array()
 	var pts2 := PackedVector2Array()
-	for p in pts: pts2.append(c + (p - c) * 1.18)
+	pts.resize(_cercle.size())
+	pts2.resize(_cercle.size())
+	for j in _cercle.size():
+		var u := _cercle[j]
+		pts[j] = c + Vector2(u.x * rx, u.y * ry)
+		pts2[j] = c + Vector2(u.x * rx, u.y * ry) * 1.18
+	_contacts.draw_polyline(pts, Color(0.92, 1.0, 1.0, 0.42 * force * r), 2.0, true)
 	_contacts.draw_polyline(pts2, Color(0.92, 1.0, 1.0, 0.16 * force * r), 1.4, true)
 
 func _bande(bord: PackedVector2Array, z0: float, z1: float) -> PackedVector2Array:
