@@ -100,7 +100,7 @@ static func _tuile(chemin: String, cote: int, rangees: bool) -> Texture2D:
 	if rangees:
 		var coupe := _rangees(img)
 		if coupe.y > 0:
-			img = img.get_region(Rect2i(0, 0, img.get_width(), coupe.y))
+			img = img.get_region(Rect2i(0, coupe.z, img.get_width(), coupe.y - coupe.z))
 			_cache[("c:" if Canal.cartoon else "") + "pierre_rangees"] = coupe.x
 		cote = int(RANGEE * _cache.get(("c:" if Canal.cartoon else "") + "pierre_rangees", 4) * 2.0 * img.get_width() / img.get_height())
 	img.resize(cote, maxi(1, int(float(cote) * img.get_height() / img.get_width())), Image.INTERPOLATE_LANCZOS)
@@ -111,7 +111,7 @@ static func _tuile(chemin: String, cote: int, rangees: bool) -> Texture2D:
 # moyenne. Renvoie (nombre de rangées gardées, hauteur de coupe) : la coupe
 # tombe à la fin du joint qui clôt la dernière rangée paire ; (0, 0) si l'on ne
 # trouve pas au moins deux joints.
-static func _rangees(img: Image) -> Vector2i:
+static func _rangees(img: Image) -> Vector3i:
 	var h := img.get_height()
 	var w := img.get_width()
 	var lum := PackedFloat32Array(); lum.resize(h)
@@ -132,11 +132,25 @@ static func _rangees(img: Image) -> Vector2i:
 		var sombre := lum[y] < moy * 0.86
 		if dans and not sombre: joints.append(y)
 		dans = sombre
+	# Les pierres cernées de trait (style dessin animé, 13 octobre 2026) font
+	# deux bandes sombres par joint, séparées par le liseré clair d'un bloc :
+	# des joints à moins d'un vingtième de l'image n'en font qu'un. Et un joint
+	# tout en haut de l'image ouvre la première rangée : on coupe à partir de
+	# lui (comptée comme rangée, il doublait la taille des blocs).
+	var fusion := []
+	for y in joints:
+		if not fusion.is_empty() and y - fusion[-1] < h / 20: fusion[-1] = y
+		else: fusion.append(y)
+	joints = fusion
+	var debut := 0
+	if not joints.is_empty() and joints[0] < h / 20:
+		debut = joints[0]
+		joints.remove_at(0)
 	# un joint qui touche le bas de l'image est coupé : on ne le compte pas
 	var k := joints.size()
 	if k % 2 == 1: k -= 1
-	if k < 2: return Vector2i.ZERO
-	return Vector2i(k, joints[k - 1])
+	if k < 2: return Vector3i.ZERO
+	return Vector3i(k, joints[k - 1], debut)
 
 # Une planche de plusieurs objets côte à côte, séparés par du vide : chacun
 # devient une image, recadrée, à « hauteur » px de haut au plus.

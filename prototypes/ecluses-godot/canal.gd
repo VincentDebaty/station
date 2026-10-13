@@ -1049,6 +1049,8 @@ func _maj_surfaces() -> void:
 			f.vertex_colors = _degrade_bande(bord.size(), bleu, bleu)
 			a.vertex_colors = _degrade_bande(bord.size(), bleu, bleu)
 			var lis: Line2D = _bandes[i][2]
+			# (derrière les bateaux : devant eux, il leur barrait la cabine)
+			if lis.get_parent() != _surface_fond: lis.reparent(_surface_fond)
 			lis.visible = true
 			lis.width = 3.0
 			lis.default_color = Color(0.72, 0.97, 1.0, mince)

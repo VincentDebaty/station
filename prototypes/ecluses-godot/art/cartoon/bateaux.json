@@ -1,0 +1,6 @@
+{
+  "_": "Ligne de flottaison du bateau dessin animé (art/cartoon/bateau_0.png), en fraction de la hauteur de sa partie opaque, depuis le haut : le bas de la bande blanche. Mesuré le 13 octobre 2026 sur la partie à plus de 50 % d’opacité, comme le jeu la recadre (le voile presque transparent autour de l’image faussait une première mesure à 0,75).",
+  "bateau_0": {
+    "ligne": 0.825
+  }
+}
