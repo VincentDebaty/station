@@ -138,33 +138,41 @@ les répartit par monde, pour que chaque monde ait **ses** nouveautés :
 
 | Monde | Mécanismes |
 |---|---|
-| **Village (monde 1)** | porte, porte à vanne, rigole, pompe, orage, moulin, castor, pont bas, porte à flotteur, grange en feu, champs à irriguer, crue du fleuve — **12** |
+| **Village (monde 1)** | dans l'ordre des chapitres : porte, porte à vanne, rigole, pompe, pont bas, orage, moulin, castor, grange en feu, crue du fleuve — **10** |
 | Montagne (neige) | glaçon et brasero, ascenseur à bateaux, gel |
 | Caraïbes | marée, vase et drague, mer |
 | Volcan | chaudière (vapeur), coulée qui bouche |
-| Futuriste | siphon, clapet, bassin d'épargne |
+| Futuriste | siphon, clapet, bassin d'épargne, porte à flotteur |
 
 Les mécanismes déjà écrits pour d'autres mondes restent au moteur et attendent
 leur monde.
+
+**Décidé** (Vincent, 13 octobre 2026) : **10 chapitres** pour le village. Deux
+mécanismes en sortent : la **porte à flotteur** (trop technique pour un
+village, rangée au monde futuriste) et les **champs à irriguer** (sans bateau,
+c'est presque un autre jeu : gardés pour un éventuel mode bonus). Sur les 10,
+les quatre premiers sont validés sur iPhone ; les six autres sont écrits mais
+pas encore essayés par Vincent : ils passent par son essai au lot 3.
 
 ### 4.2 Le compte
 
 Un chapitre par mécanisme. Chaque chapitre : 1 niveau de présentation, puis
 des niveaux qui combinent le nouveau mécanisme avec les précédents.
 
-- **Au lancement : 12 chapitres × 10 niveaux = 120 niveaux.** Un niveau dure
-  1 à 2 minutes (5 à 8 coups, l'eau qui passe) : **3 à 4 heures de jeu**.
-- **Plafond estimé pour le monde 1 : 250 à 300 niveaux**, avant que les
+- **Au lancement : 10 chapitres × 10 niveaux = 100 niveaux** (à trancher,
+  décision 5). Un niveau dure 1 à 2 minutes (5 à 8 coups, l'eau qui passe) :
+  **2 h 30 à 3 h 30 de jeu**.
+- **Plafond estimé pour le monde 1 : 200 à 250 niveaux**, avant que les
   combinaisons ne se répètent. C'est une **estimation**, à mesurer (§4.3).
 
 Pour comparaison, Block Out compte 946 niveaux recensés par son guide de
-fans, et le genre en ajoute chaque semaine. Un monde de 120 niveaux suffit pour un
+fans, et le genre en ajoute chaque semaine. Un monde d'une centaine de niveaux suffit pour un
 lancement test (§9, lot 7), pas pour un lancement mondial.
 
 ### 4.3 Fabriquer les niveaux : un générateur
 
 À la main, un niveau coûte aujourd'hui une à deux heures (règle, solveur,
-banc, rendu). 120 niveaux à la main, c'est trop. On écrit un **générateur**
+banc, rendu). Cent niveaux à la main, c'est trop. On écrit un **générateur**
 (outil Node, comme le banc) qui :
 
 1. tire des canaux au hasard dans les gabarits d'un chapitre (3 à 6 bassins,
@@ -293,10 +301,10 @@ Chaque lot a sa condition de fin, mesurable (comme les contrôles de Station).
 | **0 — Risques** | une version de test iOS + Android avec une publicité, un achat test et l'envoi d'une mesure ; performance sur un Android d'entrée de gamme | les trois marchent sur les deux systèmes, et l'Android tient 60 images/s sur le 1-4 |
 | **1 — La partie** | budget de coups, un seul échec (plus de coups), Annuler qui ne rend pas le coup, reprise, vies, pancartes | le banc vérifie le budget de chaque niveau ; démos filmées |
 | **2 — Difficulté et générateur** | note de difficulté, étiquettes, générateur de niveaux | le banc refuse une étiquette fausse ; le générateur sort 30 niveaux acceptés pour un chapitre |
-| **3 — Les 12 mécanismes du village** | porter au doigt maintenu ceux qui ne le sont pas encore | chacun a son niveau de présentation, validé par Vincent sur iPhone |
+| **3 — Les 10 mécanismes du village** | porter au doigt maintenu ceux qui ne le sont pas encore | chacun a son niveau de présentation, validé par Vincent sur iPhone |
 | **4 — La méta** | carte du village, pièces, étoiles, coffres, collection, série | sauvegarde versionnée qui survit à une mise à jour |
 | **5 — La boutique** | vies, bonus, publicité, achats, sans publicité | achats de test passés sur les deux stores |
-| **6 — Le contenu** | 120 niveaux, équilibrés | banc vert ; Vincent a joué chaque chapitre |
+| **6 — Le contenu** | 100 niveaux (décision 5), équilibrés | banc vert ; Vincent a joué chaque chapitre |
 | **7 — Lancement test** | un ou deux pays, mesures | taux de retour à J1 et J7, taux d'échec par niveau lus et appliqués |
 
 L'autorité reste la même : la page web et son banc pour les règles, Godot pour
@@ -309,8 +317,8 @@ le rendu, l'oracle entre les deux.
 1. ~~Block Out : est-ce bien celui de Grand Games ?~~ Oui (13 octobre 2026).
 2. ~~L'échec par les coups (§2), plutôt que par le temps ?~~ Oui (13 octobre 2026).
 3. ~~Annuler reste gratuit mais ne rend pas le coup (§2) ?~~ Oui, avec un seul échec : plus de coups.
-4. **Les 12 mécanismes du village** (§4.1) : la liste te va ?
-5. **120 niveaux au lancement**, plafond à mesurer avec le générateur ?
+4. ~~Les mécanismes du village (§4.1) ?~~ 10 chapitres, sans le flotteur ni les champs (13 octobre 2026).
+5. **Combien de niveaux au lancement** (§4.2), plafond à mesurer avec le générateur ?
 6. **Le public** : tous publics sans viser la catégorie Enfants (§7.2) ?
 7. **Paysage** maintenu malgré le genre en portrait (§8) ?
 8. **L'ordre des lots** : lever d'abord les risques techniques (lot 0) ?
