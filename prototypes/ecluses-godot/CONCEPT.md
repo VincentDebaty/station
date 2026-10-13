@@ -38,9 +38,15 @@ Ce que les sources publiques en disent ([fiche App Store](https://apps.apple.com
   gagné, environ un tiers des revenus publicitaires) et de la **vidéo
   récompensée** pour recharger ses vies.
 
-**À vérifier par Vincent :** est-ce bien ce Block Out-là ? Plusieurs autres
-portent le même nom (*Color Block Out*, *Block Out! Color Sort Puzzle*,
-*Block Out: Unblock Tile*…). La structure est la même dans tout le genre.
+**Confirmé par Vincent** (13 octobre 2026) : c'est bien celui de Grand Games.
+Le guide de fans [blockout.cc](https://blockout.cc/fr/) ajoute : **946 niveaux**
+recensés, chacun noté Facile, Moyen, Difficile ou Super difficile ; un bloc
+glisse jusqu'à un obstacle et sort par la porte de sa couleur, et **l'ordre
+des coups** fait tout. Surtout, **Annuler y est gratuit et illimité** : ce
+n'est pas Annuler qui crée la tension, c'est le chrono, qui continue de tourner
+quand on annule. Le guide présente le jeu comme « sans publicité », ce que
+contredit l'analyse de Gamigion ; on retient le modèle avec publicité, le plus
+courant dans le genre.
 
 **Ce qu'on prend :** la suite linéaire, les étiquettes de difficulté, les vies,
 les pièces, les bonus, la reprise après échec, le duo publicité + achats.
@@ -59,7 +65,7 @@ illimité, et on peut faire autant de coups qu'on veut. Le solveur connaît la
 meilleure solution (le « par »), mais ne s'en sert que pour les étoiles.
 
 Sans échec, il n'y a ni vie, ni reprise, ni bonus à vendre. C'est le premier
-verrou.
+verrou. Block Out le résout par le chrono ; on le résout par les coups.
 
 **Décision proposée :**
 
@@ -68,7 +74,7 @@ verrou.
 | **Coups** | Chaque niveau a un **nombre de coups maximum** = par + marge. La marge dépend de l'étiquette (§3) : Normal +4, Difficile +2, Très difficile +1. Le HUD affiche les **coups restants**. |
 | **Victoire** | Tous les bateaux à leur bouée (et le feu éteint, le champ abreuvé…), comme aujourd'hui. |
 | **Échec** | Trois cas : **plus de coups**, **bateaux coincés** (déjà détecté), **village inondé** (déjà détecté). |
-| **Annuler** | Devient un **bonus** : 1 gratuit par niveau, les suivants coûtent des pièces ou une vidéo. Il rend le coup. |
+| **Annuler** | Reste **gratuit et illimité**, comme dans Block Out, mais **ne rend pas le coup** : on revient en arrière, le compteur continue. C'est l'équivalent exact du chrono de Block Out, qui tourne même quand on annule. |
 | **Étoiles** | 3 étoiles au par, 2 étoiles à par + 2, 1 étoile sinon. Elles nourrissent la méta (§5). |
 | **Reprise** | À l'échec, une seule offre : **+3 coups** (ou « annuler 3 coups » si coincé) contre des pièces ou une vidéo. Refusée, le niveau est perdu et coûte une vie. |
 
@@ -140,8 +146,8 @@ des niveaux qui combinent le nouveau mécanisme avec les précédents.
 - **Plafond estimé pour le monde 1 : 250 à 300 niveaux**, avant que les
   combinaisons ne se répètent. C'est une **estimation**, à mesurer (§4.3).
 
-Pour comparaison, les jeux du genre lancent avec plusieurs centaines de
-niveaux et en ajoutent chaque semaine. Un monde de 120 niveaux suffit pour un
+Pour comparaison, Block Out compte 946 niveaux recensés par son guide de
+fans, et le genre en ajoute chaque semaine. Un monde de 120 niveaux suffit pour un
 lancement test (§9, lot 7), pas pour un lancement mondial.
 
 ### 4.3 Fabriquer les niveaux : un générateur
@@ -192,7 +198,7 @@ solveur doit pouvoir les vérifier.
 
 | Bonus | Effet | Débloqué |
 |---|---|---|
-| **Annuler** | rend le dernier coup | niveau 1 (1 gratuit par niveau) |
+| **Rendre un coup** | annule le dernier coup **et** le rend au compteur (Annuler, lui, est gratuit mais ne rend pas le coup) | niveau 10 |
 | **Indice** | la main montre le prochain coup de la meilleure solution (main.gd existe) | niveau 5 |
 | **+3 coups** | trois coups de plus | à l'échec |
 | **Seau** | ajoute ou retire un cran d'eau dans un bassin | niveau 20 |
@@ -289,9 +295,9 @@ le rendu, l'oracle entre les deux.
 
 ## 10. Les décisions à prendre par Vincent
 
-1. **Block Out** : est-ce bien celui de Grand Games ?
+1. ~~Block Out : est-ce bien celui de Grand Games ?~~ Oui (13 octobre 2026).
 2. **L'échec par les coups** (§2), plutôt que par le temps ?
-3. **Annuler devient un bonus** (1 gratuit par niveau) ?
+3. **Annuler reste gratuit mais ne rend pas le coup** (§2) ?
 4. **Les 12 mécanismes du village** (§4.1) : la liste te va ?
 5. **120 niveaux au lancement**, plafond à mesurer avec le générateur ?
 6. **Le public** : tous publics sans viser la catégorie Enfants (§7.2) ?
