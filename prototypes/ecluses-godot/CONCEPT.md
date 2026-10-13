@@ -344,4 +344,4 @@ le rendu, l'oracle entre les deux.
 5. ~~Combien de niveaux au lancement (§4.2) ?~~ 100 pour le lancement test, 200 visés au lancement mondial (13 octobre 2026).
 6. ~~Le public (§7.2) ?~~ Tous publics, sans viser la catégorie Enfants (13 octobre 2026).
 7. ~~Paysage ou portrait (§8) ?~~ Paysage (13 octobre 2026).
-8. **L'ordre des lots** : lever d'abord les risques techniques (lot 0) ?
+8. ~~L'ordre des lots ?~~ Lot 0 d'abord : les risques techniques (13 octobre 2026).
