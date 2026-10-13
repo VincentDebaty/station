@@ -67,16 +67,27 @@ meilleure solution (le « par »), mais ne s'en sert que pour les étoiles.
 Sans échec, il n'y a ni vie, ni reprise, ni bonus à vendre. C'est le premier
 verrou. Block Out le résout par le chrono ; on le résout par les coups.
 
-**Décision proposée :**
+**Décidé** (Vincent, 13 octobre 2026). Exemple : le 1-3 « L'escalier »,
+meilleure solution en 7 coups, étiqueté Normal.
 
 | Élément | Règle |
 |---|---|
-| **Coups** | Chaque niveau a un **nombre de coups maximum** = par + marge. La marge dépend de l'étiquette (§3) : Normal +4, Difficile +2, Très difficile +1. Le HUD affiche les **coups restants**. |
-| **Victoire** | Tous les bateaux à leur bouée (et le feu éteint, le champ abreuvé…), comme aujourd'hui. |
-| **Échec** | Trois cas : **plus de coups**, **bateaux coincés** (déjà détecté), **village inondé** (déjà détecté). |
-| **Annuler** | Reste **gratuit et illimité**, comme dans Block Out, mais **ne rend pas le coup** : on revient en arrière, le compteur continue. C'est l'équivalent exact du chrono de Block Out, qui tourne même quand on annule. |
-| **Étoiles** | 3 étoiles au par, 2 étoiles à par + 2, 1 étoile sinon. Elles nourrissent la méta (§5). |
-| **Reprise** | À l'échec, une seule offre : **+3 coups** (ou « annuler 3 coups » si coincé) contre des pièces ou une vidéo. Refusée, le niveau est perdu et coûte une vie. |
+| **Un coup** | Chaque appui sur une roue (ou sur la pelle, la pompe…). Tenir le doigt ne coûte rien de plus : un appui tenu jusqu'au bout reste un coup. Les bateaux qui avancent et l'eau qui coule ne coûtent rien. |
+| **Le doigt qui glisse** | Reprendre aussitôt la même porte dans le même sens, sans avoir rien touché entre les deux, **ne compte pas** un nouveau coup. |
+| **Le budget** | Meilleure solution + une marge selon l'étiquette (§3) : Normal +4, Difficile +2, Très difficile +1. Au 1-3 : **11 coups**. Le HUD affiche « Coups restants : 11 », qui descend à chaque appui. |
+| **Victoire** | Tous les bateaux à leur bouée (et le feu éteint, le champ abreuvé…). Si le dernier coup fait gagner, on laisse l'eau se poser et les bateaux arriver avant de juger. |
+| **Étoiles** | 3 étoiles au par (7 coups au 1-3), 2 étoiles jusqu'à par + 2 (9), 1 étoile au-delà, dans le budget. Elles nourrissent la méta (§5). |
+| **Annuler** | **Gratuit et illimité**, comme dans Block Out, mais **le coup reste dépensé** : l'eau et les bateaux reviennent, le compteur continue. C'est le chrono de Block Out, qui tourne même quand on annule. |
+| **Un seul échec** | **Plus de coups** : le budget arrive à 0 et les bateaux ne sont pas arrivés → pancarte « Plus de coups ! ». |
+| **Coincés, inondé** | Ce ne sont **plus des échecs** : la pancarte dit ce qui s'est passé et propose Annuler. Comme Annuler coûte des coups, une impasse finit par épuiser le budget. |
+| **Reprise** | À l'échec, une seule fois : **+3 coups**, contre des pièces ou une vidéo. |
+| **Vies** | Rejouer après un échec coûte une vie ; **quitter un niveau commencé** aussi (sinon on contourne les vies en partant juste avant de perdre). |
+
+**Le réglage délicat, c'est la marge.** Trop large, on ne perd jamais et la
+monétisation tombe ; trop serrée, on ne fait plus que chercher la solution
+parfaite. +4 / +2 / +1 est un point de départ. Le banc mesure, pour chaque
+niveau, la part des parties au hasard qui tiennent dans le budget ; on règle
+ensuite sur les vrais taux d'échec du lancement test (§7.3).
 
 Ce qui ne change pas : le doigt maintenu, l'eau qui se pose, les bateaux qui
 partent seuls, la bulle d'aide au toucher du bateau.
@@ -198,7 +209,7 @@ solveur doit pouvoir les vérifier.
 
 | Bonus | Effet | Débloqué |
 |---|---|---|
-| **Rendre un coup** | annule le dernier coup **et** le rend au compteur (Annuler, lui, est gratuit mais ne rend pas le coup) | niveau 10 |
+| **Rendre un coup** | annule le dernier coup **et** le rend au compteur (Annuler, lui, est gratuit mais ne rend pas le coup). Il ne sert qu'à celui qui est à court de coups : un levier de vente qui ne gêne pas le joueur normal. | niveau 10 |
 | **Indice** | la main montre le prochain coup de la meilleure solution (main.gd existe) | niveau 5 |
 | **+3 coups** | trois coups de plus | à l'échec |
 | **Seau** | ajoute ou retire un cran d'eau dans un bassin | niveau 20 |
@@ -280,7 +291,7 @@ Chaque lot a sa condition de fin, mesurable (comme les contrôles de Station).
 | Lot | Contenu | Fini quand |
 |---|---|---|
 | **0 — Risques** | une version de test iOS + Android avec une publicité, un achat test et l'envoi d'une mesure ; performance sur un Android d'entrée de gamme | les trois marchent sur les deux systèmes, et l'Android tient 60 images/s sur le 1-4 |
-| **1 — La partie** | coups limités, trois échecs, Annuler en bonus, reprise, pancartes | le banc vérifie le maximum de coups de chaque niveau ; démos filmées |
+| **1 — La partie** | budget de coups, un seul échec (plus de coups), Annuler qui ne rend pas le coup, reprise, vies, pancartes | le banc vérifie le budget de chaque niveau ; démos filmées |
 | **2 — Difficulté et générateur** | note de difficulté, étiquettes, générateur de niveaux | le banc refuse une étiquette fausse ; le générateur sort 30 niveaux acceptés pour un chapitre |
 | **3 — Les 12 mécanismes du village** | porter au doigt maintenu ceux qui ne le sont pas encore | chacun a son niveau de présentation, validé par Vincent sur iPhone |
 | **4 — La méta** | carte du village, pièces, étoiles, coffres, collection, série | sauvegarde versionnée qui survit à une mise à jour |
@@ -296,8 +307,8 @@ le rendu, l'oracle entre les deux.
 ## 10. Les décisions à prendre par Vincent
 
 1. ~~Block Out : est-ce bien celui de Grand Games ?~~ Oui (13 octobre 2026).
-2. **L'échec par les coups** (§2), plutôt que par le temps ?
-3. **Annuler reste gratuit mais ne rend pas le coup** (§2) ?
+2. ~~L'échec par les coups (§2), plutôt que par le temps ?~~ Oui (13 octobre 2026).
+3. ~~Annuler reste gratuit mais ne rend pas le coup (§2) ?~~ Oui, avec un seul échec : plus de coups.
 4. **Les 12 mécanismes du village** (§4.1) : la liste te va ?
 5. **120 niveaux au lancement**, plafond à mesurer avec le générateur ?
 6. **Le public** : tous publics sans viser la catégorie Enfants (§7.2) ?
