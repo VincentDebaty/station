@@ -35,6 +35,15 @@
 //   I3  la même suite de tapes donne le même état
 //   I4  la boule reste dans une case ouverte de la grille
 //   I5  l'eau se pose : chaque tape finit au repos
+//
+// LES MESURES — en information, pas des refus : le point de départ du plan
+// d'essai sur le rendu de l'eau (reports/Animation de fluides pour jeu.md) :
+//   M1  la butte : le plus grand écart de hauteur entre les surfaces libres
+//       d'un même corps d'eau, pendant 10 unités versées en appui long
+//       (après les vidanges de la solution), en cases
+//   M2  le tube en U : images pour que deux colonnes reliées par le fond
+//       se mettent de niveau (écart < 0,05 case), l'une pleine, l'autre vide
+//   M3  le repos : images entre une tape et le repos, sur la solution
 // ------------------------------------------------------------------
 import { readFileSync } from "node:fs";
 import { createContext, runInContext } from "node:vm";
@@ -178,5 +187,68 @@ for (let p = 0; p < PARTIES && viol.length < 4; p++) {
 }
 dire(!viol.length, `I1-I5 invariants à chaque pas de ${PARTIES} parties de ${TAPES} tapes` + (viol.length ? " :\n      " + viol.slice(0, 4).join("\n      ") : ""));
 console.log(`    au hasard : ${Math.round(100 * gagnees / PARTIES)} % des parties sortent la boule`);
+
+// --- les mesures -------------------------------------------------------
+// Le relief d'une nappe : dans chaque corps d'eau (petites cases mouillées
+// reliées par un côté), l'écart entre sa surface libre la plus haute et la
+// plus basse. Une surface libre : de l'eau posée, de l'air au-dessus.
+function relief(M, e) {
+  const g = L.prep(M), W = g.SW, m = e.m, corps = new Int32Array(m.length).fill(-1);
+  let n = 0, pire = 0;
+  for (let i0 = 0; i0 < m.length; i0++) {
+    if (g.fmur[i0] || m[i0] <= 0.01 || corps[i0] >= 0) continue;
+    const pile = [i0]; corps[i0] = n;
+    let haut = -Infinity, bas = Infinity;
+    while (pile.length) {
+      const i = pile.pop(), x = i % W, y = (i - x) / W;
+      const posee = y === 0 || g.fmur[i - W] || m[i - W] >= 0.95;
+      const air = y + 1 < g.SH && !g.fmur[i + W] && m[i + W] <= 0.01;
+      if (posee && air) { const h = (y + Math.min(1, m[i])) / g.S; haut = Math.max(haut, h); bas = Math.min(bas, h); }
+      for (const j of [i - 1, i + 1, i - W, i + W]) {
+        if (j < 0 || j >= m.length || corps[j] >= 0 || g.fmur[j] || m[j] <= 0.01) continue;
+        if ((j === i - 1 && x === 0) || (j === i + 1 && x === W - 1)) continue;
+        corps[j] = n; pile.push(j);
+      }
+    }
+    if (haut > bas) pire = Math.max(pire, haut - bas);
+    n++;
+  }
+  return pire;
+}
+{
+  // M1 : les vidanges de la solution, puis 10 unités en appui long (une de
+  // plus dès que la précédente est passée, comme la vue), puis 60 images
+  let e = L.charger(N);
+  const rob = G.vannes.findIndex(v => v.type === "robinet");
+  for (const k of sol.slice(0, sol.indexOf(rob))) e = L.jouer(N, e, k);
+  let verse = 0, butte = 0, apres = 0;
+  for (let im = 0; im < 4000 && apres < 60; im++) {
+    if (verse < 10 && e.attente[rob] < 0.05) { e = L.taper(N, e, rob); verse++; }
+    L.pas(N, e);
+    butte = Math.max(butte, relief(N, e));
+    if (verse >= 10 && e.attente[rob] === 0) apres++;
+  }
+  console.log(`    M1 butte : relief maximal ${butte.toFixed(2)} case pendant 10 unités versées en continu`);
+}
+{
+  const U = { titre: "tube en U", grille: ["#######", "#.###o#", "#~###.#", "#~###.#", "#~###.#", "#~###.#", "#~~~~~#", "#######"], vannes: [] };
+  const e = L.charger(U), g = L.prep(U);
+  // la hauteur de l'eau dans une colonne du labyrinthe : son sommet mouillé, au milieu de la colonne
+  const colonne = x => {
+    const fx = x * g.S + (g.S >> 1);
+    for (let fy = g.SH - 1; fy >= 0; fy--) { const m = e.m[fy * g.SW + fx]; if (!g.fmur[fy * g.SW + fx] && m > 0.01) return (fy + Math.min(1, m)) / g.S; }
+    return 0;
+  };
+  let im = 0;
+  while (im < 3000 && Math.abs(colonne(1) - colonne(5)) >= 0.05) { L.pas(U, e); im++; }
+  console.log(`    M2 tube en U : ${im < 3000 ? im + " images" : "pas de niveau en 3000 images"} pour se mettre de niveau (écart < 0,05 case)`);
+}
+{
+  let e = L.charger(N);
+  const durees = [];
+  for (const k of sol) { const avant = e.pas; e = L.jouer(N, e, k); durees.push(e.pas - avant); }
+  const moy = durees.reduce((a, b) => a + b, 0) / durees.length;
+  console.log(`    M3 repos : ${moy.toFixed(0)} images en moyenne entre une tape et le repos, ${Math.max(...durees)} au plus`);
+}
 console.log(echecs ? `\n${echecs} échec(s).` : "\nTout est vert.");
 process.exit(echecs ? 1 : 0);

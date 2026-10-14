@@ -1,0 +1,35 @@
+; Engine configuration file.
+; It's best edited using the editor UI and not directly,
+; since the parameters that go here are not all obvious.
+;
+; Format:
+;   [section] ; section goes between []
+;   param=value ; assign values to parameters
+
+config_version=5
+
+[application]
+
+config/name="Labyrinthe d'eau"
+config/description="Le rendu de l'eau du labyrinthe, rejoué depuis un film du moteur web."
+run/main_scene="res://principal.tscn"
+config/features=PackedStringArray("4.7", "Mobile")
+config/icon="res://art/icone.png"
+boot_splash/bg_color=Color(0.2, 0.153, 0.541, 1)
+
+[display]
+
+window/size/viewport_width=600
+window/size/viewport_height=1300
+window/stretch/mode="canvas_items"
+window/stretch/aspect="expand"
+; portrait
+window/handheld/orientation=1
+
+[rendering]
+
+; sans compression de texture mobile, l'export iOS refuse sans message
+; (appris sur Station 7 le 3 septembre 2026)
+textures/vram_compression/import_etc2_astc=true
+renderer/rendering_method="mobile"
+environment/defaults/default_clear_color=Color(0.2, 0.153, 0.541, 1)

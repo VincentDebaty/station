@@ -429,7 +429,7 @@ const Labyrinthe = (function () {
           if (ouvert(G, cx, cy)) continue;
           const px = Math.max(cx, Math.min(cx + 1, b.x)), py = Math.max(cy, Math.min(cy + 1, b.y));
           let nx = b.x - px, ny = b.y - py;
-          const d = Math.hypot(nx, ny);
+          const d = Math.sqrt(nx * nx + ny * ny);
           if (d >= RAYON) continue;
           if (d < 1e-9) {                               // le centre est entré dans le mur : on le ressort par le côté le plus proche
             const cotes = [[b.x - cx, -1, 0], [cx + 1 - b.x, 1, 0], [b.y - cy, 0, -1], [cy + 1 - b.y, 0, 1]].sort((p, q) => p[0] - q[0]);
@@ -445,6 +445,16 @@ const Labyrinthe = (function () {
       }
     }
   }
+  // x à la puissance dt, pour dt = 1, 1/2 ou 1/4, par des racines carrées
+  // seulement : Math.sqrt est arrondi exactement (IEEE-754) partout, alors
+  // que Math.pow peut différer d'un dernier chiffre entre Node (le banc) et
+  // Safari (le jeu) — et la boule doit faire la même chose des deux côtés.
+  function puissance(x, dt) {
+    if (dt === 1) return x;
+    if (dt === 0.5) return Math.sqrt(x);
+    if (dt === 0.25) return Math.sqrt(Math.sqrt(x));
+    throw new Error("finesse non prise en charge : " + 1 / dt + " (1, 2 ou 4)");
+  }
   // La boule, pour une fraction dt d'image : elle flotte, tombe au sec, et
   // l'eau qui l'entoure l'emporte. Vitesses en cases par image.
   function bouger(N, e, dt) {
@@ -455,7 +465,7 @@ const Labyrinthe = (function () {
     if (dansEau) {
       const cible = nv.plafond ? nv.h - RAYON : nv.h + FLOTTE;
       b.vy += (cible - b.y) * RESSORT * dt;
-      b.vy *= Math.pow(AMORTI, dt);
+      b.vy *= puissance(AMORTI, dt);
       // le courant le plus fort parmi les faces à moins d'une case de son centre
       const y0 = b.y - RAYON, y1 = Math.min(b.y + RAYON, nv.h);
       let u = 0;
@@ -464,10 +474,10 @@ const Labyrinthe = (function () {
         const v = vitesse(G, e, fxc, y0, y1);
         if (Math.abs(v) > Math.abs(u)) u = v;
       }
-      b.vx += (u * PORTE - b.vx) * (1 - Math.pow(1 - SUIT, dt));
+      b.vx += (u * PORTE - b.vx) * (1 - puissance(1 - SUIT, dt));
     } else {
       b.vy = Math.max(-CHUTE_MAX, b.vy - PESANTEUR * dt);
-      b.vx *= Math.pow(FROTTE, dt);
+      b.vx *= puissance(FROTTE, dt);
     }
     if (Math.abs(b.vx) > 0.25) b.vx = Math.sign(b.vx) * 0.25;
     b.x += b.vx * dt;
