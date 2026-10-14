@@ -174,18 +174,16 @@ jour qui perd la partie d'un joueur est un bug bloquant, pas un détail.
   `ordres` (« tous » gagnent, ou « certains » seulement) n'est pas tenu.
   `prototype-labyrinthe.html` le remplace dans l'exploration : une boule
   flotte dans un labyrinthe en cases, une tape de robinet = une case d'eau,
-  une tape de vidange en retire une (appui long : en continu, sur les deux). L'eau coule
-  pour de vrai (chute, étalement, pression, sur une grille fine de 4 × 4
-  petites cases par case) et la boule suit son courant. Son banc,
-  `node tools/labyrinthe-banc.mjs` (≈ 1 min 30), rejoue la solution écrite,
-  refuse si une suite plus courte que le `par` gagne (fouille limitée à deux
-  séries de tapes) ou si un `piege` gagne.
-  Sa tranche Godot, `prototypes/labyrinthe-godot/`, rejoue `film.json`, que
-  `node tools/labyrinthe-film.mjs` DÉRIVE de la page web, pour juger le rendu
-  de l'eau sur iPhone (`tools/ios-labyrinthe.sh`). Son `moteur.gd` est le
-  moteur de la page porté, vérifié par `oracle.gd` contre `oracle.json` et
-  `niveau.json`, que `node tools/labyrinthe-vers-godot.mjs` DÉRIVE de la page.
-  Le plan d'essai du rendu est dans `reports/Animation de fluides pour jeu.md`.
+  une tape de vidange en retire une (appui long : en continu, sur les deux).
+  **Depuis le 14 octobre 2026, Godot fait autorité** (décision de Vincent) :
+  la page web est FIGÉE comme trace, avec son ancien banc
+  `node tools/labyrinthe-banc.mjs`. Les règles vivent dans
+  `prototypes/labyrinthe-godot/` : `niveau.json`, `moteur.gd` (l'eau par
+  volumes — une colonne d'eau = un bassin, débit de Torricelli à travers les
+  ouvertures —, une surface à ressorts, la boule), et le banc sans écran
+  `godot --headless --path prototypes/labyrinthe-godot --script res://banc.gd`,
+  qui refuse comme les contrôles. Le pourquoi est dans
+  `reports/Animation de fluides pour jeu.md`.
 - `data/worldmap.js` — généré depuis Natural Earth, jamais édité à la main.
 
 ## Détail connu

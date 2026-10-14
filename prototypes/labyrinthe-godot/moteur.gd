@@ -1,24 +1,62 @@
 class_name Moteur
 extends RefCounted
 # ------------------------------------------------------------------
-# LE MOTEUR DU LABYRINTHE D'EAU — porté de la page web, fonction pour fonction.
+# LE MOTEUR DU LABYRINTHE D'EAU — l'eau par volumes, la surface à ressorts.
 #
-# La page (prototypes/prototype-labyrinthe.html, bloc <script id="moteur">)
-# reste la seule autorité sur les règles. Ce fichier la traduit dans le même
-# ordre d'opérations : le moteur n'utilise que + − × /, la racine carrée et
-# des arrondis vers le bas, tous exacts en double précision, si bien que les
-# nombres doivent sortir IDENTIQUES. oracle.gd le vérifie contre des parties
-# jouées par la page (node tools/labyrinthe-vers-godot.mjs).
+# Godot fait autorité sur les règles depuis le 14 octobre 2026 (décision de
+# Vincent) ; la page web prototypes/prototype-labyrinthe.html reste figée
+# comme trace. banc.gd vérifie ce moteur sans écran.
 #
-# Deux échelles. Le LABYRINTHE (murs, vannes, sortie, boule, unités de
-# jeu) se compte en cases. L'EAU se calcule en petites cases : chaque case
-# du labyrinthe en contient S × S, et un pas de jeu (une image) en enchaîne
-# S de calcul. Les commentaires de la page valent ici ; on ne les répète pas.
+# L'EAU PAR VOLUMES. Le labyrinthe est découpé une fois pour toutes en
+# BASSINS : chaque colonne d'eau d'un seul tenant (une case de large, de son
+# plancher à son plafond). Un bassin a un volume, une capacité, et une CHARGE :
+# la hauteur de sa surface libre, ou, plein sous un plafond, une hauteur de
+# pression (une petite compressibilité : un surplus de volume la fait monter
+# vite, ce qui pousse l'eau à travers les passages noyés en conservant
+# exactement le volume). Deux bassins voisins sont reliés par l'ouverture
+# qu'ils ont en commun. À travers elle, l'eau passe du côté le plus chargé
+# vers l'autre, d'un débit
+#       q = DEBIT_OUVERTURE × hauteur mouillée × √(différence de charge)
+# — Torricelli : fort quand l'écart est grand, il ralentit à l'approche de
+# l'équilibre. Si le bassin d'arrivée est plus bas que l'ouverture, c'est une
+# CASCADE : l'eau tombe, sans que le niveau d'arrivée la freine. Une sortie
+# avale ce qui la passe. Les calculs se font en sous-pas fixes (SOUS_PAS par
+# image), sans dépendre de la cadence d'affichage.
+#
+# LA SURFACE À RESSORTS. Chaque bassin à surface libre porte POINTS points
+# par case : une hauteur et une vitesse autour du niveau, un rappel, une
+# propagation aux voisins (aussi à travers une ouverture vers le bassin voisin,
+# quand la surface y passe), un amortissement. La moyenne des écarts d'un
+# bassin est ramenée à zéro : la surface moyenne est TOUJOURS le niveau du
+# volume réel. Les cascades, les vidanges et la boule y lancent des vagues.
+# Tout est déterministe (+ − × /, racine carrée) : le banc rejoue à l'identique.
+#
+# LA BOULE flotte sur la surface locale (niveau + vague), bute sous un
+# plafond, et prend la vitesse de l'eau qui passe les ouvertures près d'elle.
 # ------------------------------------------------------------------
 
-const DEBIT := 0.1
-const SEC := 0.05
-const UNITE := 1.0
+# ---- l'eau (en cases ; une image = 1/60 s) ----
+const SOUS_PAS := 4
+const DEBIT := 0.1              # ce qu'un robinet verse, ou qu'une vidange retire, par image
+const SEC := 0.05               # sous cette eau, une vidange refuse la tape
+const UNITE := 1.0              # une tape = une case d'eau
+const DEBIT_OUVERTURE := 0.1    # q (cases²/image) = ce coefficient × hauteur mouillée × √écart
+const RAIDEUR := 30.0           # un bassin plein sous un plafond : charge = plafond + RAIDEUR × surplus
+const PRUDENCE := 0.5           # un sous-pas ne fait passer que cette part de ce qui égaliserait
+const DEBIT_MIN := 0.006        # par image : la dernière pellicule au-dessus d'un seuil finit de passer
+
+# ---- la surface ----
+const POINTS := 8               # points de surface par case
+const RAPPEL := 0.025           # rappel de chaque point vers le niveau
+const AMORTI_SURFACE := 0.04
+const PROPAGE := 0.22           # partage avec les voisins, par passe
+const PASSES_PROPAGE := 6
+const VAGUE_MAX := 0.22         # écart maximal d'un point, en cases
+const ELAN_CASCADE := 0.5       # la vitesse donnée à la surface par une case d'eau qui tombe
+const ELAN_VIDANGE := 0.25
+const ELAN_BOULE := 0.12
+
+# ---- la boule (en cases, par image) ----
 const RAYON := 0.34
 const FLOTTE := 0.08
 const RESSORT := 0.08
@@ -27,24 +65,22 @@ const PESANTEUR := 0.02
 const CHUTE_MAX := 0.3
 const PORTE := 2.5
 const SUIT := 0.1
-const ATTIRE := 1.5
+const ATTIRE := 2.2             # la boule sent le courant d'une ouverture jusqu'à cette distance…
+const ATTIRE_PLEIN := 1.0       # … pleinement jusqu'à celle-ci, puis de moins en moins
 const FROTTE := 0.85
+
+# ---- le repos ----
 const CALME := 2e-4
 const CALME_PAS := 30
 const MAXPAS := 6000
-const PLEIN := 0.99
-const VIDE := 0.005
-const ECART := 0.02
-const ETALE := 3
-const NIVELLE_MAX := 0.4
-const NIVELLE_FOIS := 24
-const PLEINE := 0.98
-const SECHE := 0.02
 
 
-# L'état d'une partie : tout ce qui change.
 class Etat:
-	var m: PackedFloat64Array
+	var vol: PackedFloat64Array       # le volume de chaque bassin
+	var flux: PackedFloat64Array      # ce qui a passé chaque ouverture cette image (> 0 : de gauche à droite)
+	var sortie_flux: PackedFloat64Array
+	var vague: PackedFloat64Array     # l'écart de chaque point de surface
+	var vague_v: PackedFloat64Array   # et sa vitesse
 	var bx := 0.0
 	var by := 0.0
 	var bvx := 0.0
@@ -57,46 +93,46 @@ class Etat:
 	var gagne := false
 	var calme := 0
 	var pas := 0
-	var fx: PackedFloat64Array
-	var fy: PackedFloat64Array
 
 	func copie() -> Etat:
 		var e := Etat.new()
-		e.m = m.duplicate(); e.bx = bx; e.by = by; e.bvx = bvx; e.bvy = bvy
+		e.vol = vol.duplicate(); e.flux = flux.duplicate(); e.sortie_flux = sortie_flux.duplicate()
+		e.vague = vague.duplicate(); e.vague_v = vague_v.duplicate()
+		e.bx = bx; e.by = by; e.bvx = bvx; e.bvy = bvy
 		e.attente = attente.duplicate(); e.tapes = tapes; e.verse = verse; e.sorti = sorti; e.vide = vide
-		e.gagne = gagne; e.calme = calme; e.pas = pas; e.fx = fx.duplicate(); e.fy = fy.duplicate()
+		e.gagne = gagne; e.calme = calme; e.pas = pas
 		return e
 
 
-# --- la géométrie d'un niveau (prep de la page) --------------------------------
+# --- la géométrie : les cases, les bassins, les ouvertures ------------------------
 var W: int
 var H: int
-var S: int
-var S2: int
-var SW: int
-var SH: int
 var mur: PackedByteArray
 var sortie: PackedByteArray
-var fmur: PackedByteArray
-var fsortie: PackedByteArray
-var m0: PackedFloat64Array
 var boule0 := Vector2.ZERO
-var vannes: Array = []      # [{type, x, y, i, bec, bloc: PackedInt32Array, fond: PackedInt32Array}]
-
-# des tableaux de travail, pour ne rien allouer à chaque pas
-var _vu: PackedByteArray             # déjà pris dans un corps (pression)
-var _corps_de: PackedInt32Array      # numéro du corps de chaque petite case
-var _vue_de: PackedInt32Array        # surfaces déjà retenues pour ce corps
-var _prec: PackedInt32Array          # le chemin du courant ; -2 : pas encore atteinte
-var _num := 0
+var vannes: Array = []                # [{type, x, y, bassin}]
+var b_x: PackedInt32Array             # bassin : sa colonne
+var b_bas: PackedInt32Array           # son plancher
+var b_haut: PackedInt32Array          # son plafond (première case au-dessus qui n'est pas à lui)
+var b_ferme: PackedByteArray          # 1 : un mur au-dessus (il peut monter en pression)
+var bassin_de: PackedInt32Array       # le bassin de chaque case, -1 : aucun
+var o_a: PackedInt32Array             # ouverture : bassin de gauche
+var o_b: PackedInt32Array             # bassin de droite
+var o_y0: PackedFloat64Array          # le bas de l'ouverture
+var o_y1: PackedFloat64Array          # son haut
+var s_bassin: PackedInt32Array        # sortie : le bassin qui s'y vide
+var s_y0: PackedFloat64Array          # son seuil
+var s_y1: PackedFloat64Array
+var s_x: PackedFloat64Array           # la ligne où elle est franchie (pour le courant), ou -1 par le haut
+var vol0: PackedFloat64Array
+var nb := 0                           # nombre de bassins
 
 
 func _init(N: Dictionary) -> void:
 	var grille: Array = N["grille"]
-	H = grille.size(); W = String(grille[0]).length(); S = int(N.get("finesse", 4))
+	H = grille.size(); W = String(grille[0]).length()
 	mur = PackedByteArray(); mur.resize(W * H)
 	sortie = PackedByteArray(); sortie.resize(W * H)
-	var plein := PackedByteArray(); plein.resize(W * H)
 	var defs: Array = N["vannes"]
 	var vv := []
 	vv.resize(defs.size())
@@ -105,304 +141,336 @@ func _init(N: Dictionary) -> void:
 		for x in W:
 			var ch := ligne[x]
 			var y := H - 1 - r
-			var i := y * W + x
-			if ch == "#": mur[i] = 1
-			elif ch == "S": sortie[i] = 1
+			if ch == "#": mur[y * W + x] = 1
+			elif ch == "S": sortie[y * W + x] = 1
 			elif ch == "o": boule0 = Vector2(x + 0.5, y + 0.5)
-			elif ch == "~": plein[i] = 1
 			elif ch >= "1" and ch <= "9":
 				var k := int(ch) - 1
-				vv[k] = {"type": String(defs[k]["type"]), "x": x, "y": y, "i": i}
-	if N.has("eau"):
-		for y in int(N["eau"]):
-			for x in W:
-				var i := y * W + x
-				if not mur[i] and not sortie[i]: plein[i] = 1
-	SW = W * S; SH = H * S; S2 = S * S
-	fmur = PackedByteArray(); fmur.resize(SW * SH)
-	fsortie = PackedByteArray(); fsortie.resize(SW * SH)
-	m0 = PackedFloat64Array(); m0.resize(SW * SH)
-	for fy in SH:
-		for fx in SW:
-			var i := (fy / S) * W + (fx / S)
-			var j := fy * SW + fx
-			fmur[j] = mur[i]; fsortie[j] = sortie[i]; m0[j] = float(plein[i])
+				vv[k] = {"type": String(defs[k]["type"]), "x": x, "y": y}
+	# les bassins : les colonnes de cases ouvertes (hors sorties)
+	bassin_de = PackedInt32Array(); bassin_de.resize(W * H); bassin_de.fill(-1)
+	b_x = PackedInt32Array(); b_bas = PackedInt32Array(); b_haut = PackedInt32Array(); b_ferme = PackedByteArray()
+	for x in W:
+		var y := 0
+		while y < H:
+			if mur[y * W + x] or sortie[y * W + x]:
+				y += 1
+				continue
+			var bas := y
+			while y < H and not mur[y * W + x] and not sortie[y * W + x]:
+				bassin_de[y * W + x] = b_x.size()
+				y += 1
+			b_x.append(x); b_bas.append(bas); b_haut.append(y)
+			b_ferme.append(1 if y >= H or mur[y * W + x] else 0)
+	nb = b_x.size()
+	# les ouvertures entre colonnes voisines, et les sorties
+	o_a = PackedInt32Array(); o_b = PackedInt32Array(); o_y0 = PackedFloat64Array(); o_y1 = PackedFloat64Array()
+	s_bassin = PackedInt32Array(); s_y0 = PackedFloat64Array(); s_y1 = PackedFloat64Array(); s_x = PackedFloat64Array()
+	for a in nb:
+		for b in nb:
+			if b_x[b] != b_x[a] + 1:
+				continue
+			var y0 := maxi(b_bas[a], b_bas[b])
+			var y1 := mini(b_haut[a], b_haut[b])
+			if y0 < y1:
+				o_a.append(a); o_b.append(b); o_y0.append(y0); o_y1.append(y1)
+	for a in nb:
+		var x := b_x[a]
+		if b_haut[a] < H and sortie[b_haut[a] * W + x]:          # une sortie au-dessus
+			s_bassin.append(a); s_y0.append(b_haut[a]); s_y1.append(b_haut[a] + 1); s_x.append(-1.0)
+		for y in range(b_bas[a], b_haut[a]):                       # une sortie sur le côté
+			for d in [-1, 1]:
+				var nx: int = x + d
+				if nx >= 0 and nx < W and sortie[y * W + nx]:
+					s_bassin.append(a); s_y0.append(y); s_y1.append(y + 1); s_x.append(float(x + (1 if d > 0 else 0)))
 	for v in vv:
-		var vx: int = v["x"]
-		var vy: int = v["y"]
-		var bx := S - 1 if vx == 0 else (0 if vx == W - 1 else S / 2)
-		var by := 0 if vy == H - 1 else S / 2
-		v["bec"] = (vy * S + by) * SW + vx * S + bx
-		var bloc := PackedInt32Array()
-		var fond := PackedInt32Array()
-		for dy in S:
-			for dx in S:
-				var j := (vy * S + dy) * SW + vx * S + dx
-				bloc.append(j)
-				if dy == 0: fond.append(j)
-		v["bloc"] = bloc; v["fond"] = fond
+		v["bassin"] = bassin_de[int(v["y"]) * W + int(v["x"])]
 	vannes = vv
-	_vu = PackedByteArray(); _vu.resize(SW * SH)
-	_corps_de = PackedInt32Array(); _corps_de.resize(SW * SH)
-	_vue_de = PackedInt32Array(); _vue_de.resize(SW * SH)
-	_prec = PackedInt32Array(); _prec.resize(SW * SH); _prec.fill(-2)
+	# l'eau de départ : jusqu'à la rangée « eau »
+	vol0 = PackedFloat64Array(); vol0.resize(nb)
+	var niv := float(N.get("eau", 0))
+	for a in nb:
+		vol0[a] = clampf(niv - b_bas[a], 0.0, float(b_haut[a] - b_bas[a]))
 
 
 func ouvert(x: int, y: int) -> bool:
 	return x >= 0 and y >= 0 and x < W and y < H and not mur[y * W + x]
 
-func fouvert(x: int, y: int) -> bool:
-	return x >= 0 and y >= 0 and x < SW and y < SH and not fmur[y * SW + x]
+func capacite(a: int) -> float:
+	return float(b_haut[a] - b_bas[a])
+
+
+# La charge d'un bassin : sa surface libre, ou sa pression sous un plafond.
+func charge(e: Etat, a: int) -> float:
+	var v := e.vol[a]
+	var cap := capacite(a)
+	if v <= cap:
+		return b_bas[a] + v
+	if b_ferme[a]:
+		return b_haut[a] + (v - cap) * RAIDEUR
+	return b_haut[a] + (v - cap)
+
+# De combien la charge monte pour un peu de volume en plus.
+func souplesse(e: Etat, a: int) -> float:
+	return RAIDEUR if b_ferme[a] and e.vol[a] >= capacite(a) else 1.0
+
+# Le bassin a-t-il une surface libre (de l'eau, de l'air au-dessus) ?
+func libre(e: Etat, a: int) -> bool:
+	return e.vol[a] > 0.02 and not (b_ferme[a] and e.vol[a] >= capacite(a) - 1e-6)
+
+# Le niveau affiché d'un bassin (borné à son plafond).
+func niveau_bassin(e: Etat, a: int) -> float:
+	return minf(b_bas[a] + e.vol[a], float(b_haut[a]))
 
 
 func charger() -> Etat:
 	var e := Etat.new()
-	e.m = m0.duplicate()
+	e.vol = vol0.duplicate()
+	e.flux = PackedFloat64Array(); e.flux.resize(o_a.size())
+	e.sortie_flux = PackedFloat64Array(); e.sortie_flux.resize(s_bassin.size())
+	e.vague = PackedFloat64Array(); e.vague.resize(nb * POINTS)
+	e.vague_v = PackedFloat64Array(); e.vague_v.resize(nb * POINTS)
 	e.bx = boule0.x; e.by = boule0.y
 	e.attente = PackedFloat64Array(); e.attente.resize(vannes.size())
-	e.fx = PackedFloat64Array(); e.fx.resize(SW * SH)
-	e.fy = PackedFloat64Array(); e.fy.resize(SW * SH)
 	for k in 400:
-		bouger(e, 1.0)
+		_bouger(e, 1.0)
 	e.bvx = 0.0; e.bvy = 0.0
 	return e
 
 
-func eau_de(e: Etat, cases: PackedInt32Array) -> float:
+func eau_totale(e: Etat) -> float:
 	var s := 0.0
-	for j in cases:
-		s += e.m[j]
-	return s / S2
+	for a in nb:
+		s += e.vol[a]
+	return s
 
 
-# --- l'eau ------------------------------------------------------------------
-func _eau(e: Etat) -> float:
-	var n := e.m
-	var nn := n.size()
+# --- l'écoulement -------------------------------------------------------------------
+# Ce qui passe en un sous-pas d'un bassin (charge hs) vers l'autre (charge hd,
+# souplesse cd ; cd = 0 pour une sortie ou une cascade) à travers [y0, y1).
+func _debit(hs: float, cs: float, hd: float, cd: float, y0: float, y1: float, dt: float) -> float:
+	if hs <= y0:
+		return 0.0
+	var base := maxf(hd, y0)
+	var ecart := hs - base
+	if ecart <= 0.0:
+		return 0.0
+	var mouille := minf(hs, y1) - y0
+	var q := maxf(DEBIT_OUVERTURE * mouille * sqrt(ecart) * dt, DEBIT_MIN * dt)
+	var c := cs + (cd if hd >= y0 else 0.0)
+	return minf(q, PRUDENCE * ecart / c)
+
+
+func _ecouler(e: Etat, dt: float) -> float:
 	var total := 0.0
-	# 1. la chute, de bas en haut
-	for y in range(1, SH):
-		for x in SW:
-			var i := y * SW + x
-			var j := i - SW
-			if fmur[i] or fsortie[i] or fmur[j] or n[i] <= 0.0:
-				continue
-			var q := minf(n[i], 1.0 - n[j])
-			if q > 1e-9:
-				n[i] -= q; n[j] += q; e.fy[j] -= q; total += q
-	# 2. l'étalement, ETALE passes, chacune sur un instantané
-	for passe in ETALE:
-		var s := n.duplicate()
-		for i in nn:
-			if fmur[i] or fsortie[i] or s[i] <= VIDE:
-				continue
-			if not (i < SW or fmur[i - SW] or s[i - SW] >= PLEIN):
-				continue
-			var x := i % SW
-			# à gauche, puis à droite
-			if x - 1 >= 0 and not fmur[i - 1]:
-				var q := (s[i] - s[i - 1]) / 4.0
-				if q > 1e-9:
-					n[i] -= q; n[i - 1] += q; total += q; e.fx[i - 1] -= q
-			if x + 1 < SW and not fmur[i + 1]:
-				var q := (s[i] - s[i + 1]) / 4.0
-				if q > 1e-9:
-					n[i] -= q; n[i + 1] += q; total += q; e.fx[i] += q
-	# 3. la pression
-	total += _pression(e)
-	for i in nn:
-		if fsortie[i] and n[i] > 0.0:
-			e.sorti += n[i] / S2
-			n[i] = 0.0
+	for o in o_a.size():
+		var a := o_a[o]
+		var b := o_b[o]
+		var ha := charge(e, a)
+		var hb := charge(e, b)
+		if ha == hb:
+			continue
+		var q := 0.0
+		if ha > hb:
+			q = _debit(ha, souplesse(e, a), hb, souplesse(e, b), o_y0[o], o_y1[o], dt)
+			q = minf(q, e.vol[a])
+			e.vol[a] -= q; e.vol[b] += q; e.flux[o] += q
+			if hb < o_y0[o]: _elan(e, b, b_x[b] + 0.15, -ELAN_CASCADE * q)
+		else:
+			q = _debit(hb, souplesse(e, b), ha, souplesse(e, a), o_y0[o], o_y1[o], dt)
+			q = minf(q, e.vol[b])
+			e.vol[b] -= q; e.vol[a] += q; e.flux[o] -= q
+			if ha < o_y0[o]: _elan(e, a, b_x[a] + 0.85, -ELAN_CASCADE * q)
+		total += q
+	for s in s_bassin.size():
+		var a := s_bassin[s]
+		var q := _debit(charge(e, a), souplesse(e, a), s_y0[s], 0.0, s_y0[s], s_y1[s], dt)
+		q = minf(q, e.vol[a])
+		e.vol[a] -= q; e.sorti += q; e.sortie_flux[s] += q
+		total += q
 	return total
 
 
-# Les voisines ouvertes, dans l'ordre de la page : droite, gauche, haut, bas.
-func _voisins(i: int) -> PackedInt32Array:
-	var x := i % SW
-	var y := i / SW
-	var r := PackedInt32Array()
-	if x + 1 < SW and not fmur[i + 1]: r.append(i + 1)
-	if x > 0 and not fmur[i - 1]: r.append(i - 1)
-	if y + 1 < SH and not fmur[i + SW]: r.append(i + SW)
-	if y > 0 and not fmur[i - SW]: r.append(i - SW)
-	return r
-
-
-func _hauteur(n: PackedFloat64Array, recoit: int, est_sortie: bool) -> float:
-	return float(recoit / SW) + (0.0 if est_sortie else n[recoit])
-
-
-func _pression(e: Etat) -> float:
-	var n := e.m
-	var total := 0.0
-	_vu.fill(0)
-	for i0 in n.size():
-		if _vu[i0] or fmur[i0] or fsortie[i0] or n[i0] < PLEIN:
-			continue
-		_num += 1
-		var num := _num
-		var corps := PackedInt32Array([i0])
-		_vu[i0] = 1
-		_corps_de[i0] = num
-		var c := 0
-		while c < corps.size():
-			for j in _voisins(corps[c]):
-				if not _vu[j] and not fsortie[j] and n[j] >= PLEIN:
-					_vu[j] = 1; _corps_de[j] = num; corps.append(j)
-			c += 1
-		# ses surfaces : (k, reçoit, sortie)
-		var s_k := PackedInt32Array()
-		var s_r := PackedInt32Array()
-		var s_s: Array[bool] = []
-		for k in corps:
-			for j in _voisins(k):
-				if _corps_de[j] == num or _vue_de[j] == num:
-					continue
-				var y := j / SW
-				var dessous := j - SW
-				if fsortie[j]:
-					_vue_de[j] = num; s_k.append(k); s_r.append(j); s_s.append(true)
-					continue
-				var posee := y == 0 or fmur[dessous] or _corps_de[dessous] == num or n[dessous] >= PLEIN
-				var dessus := j + SW
-				var air := y + 1 >= SH or fmur[dessus] or n[dessus] <= VIDE
-				if posee and air:
-					_vue_de[j] = num; s_k.append(k); s_r.append(j); s_s.append(false)
-		var ns := s_k.size()
-		if ns == 0:
-			continue
-		# le surplus d'une case trop pleine, vers la surface la plus basse
-		for k in corps:
-			var surplus := n[k] - 1.0
-			if surplus <= 1e-4:
-				continue
-			var b := 0
-			for t in ns:
-				if _hauteur(n, s_r[t], s_s[t]) < _hauteur(n, s_r[b], s_s[b]):
-					b = t
-			if k == s_r[b]:
-				continue
-			var q := minf(surplus, 0.5)
-			n[k] -= q; n[s_r[b]] += q; total += q
-			_courant(e, k, s_r[b], num, q)
-		# le nivellement
-		var deplace := 0.0
-		var fois := 0
-		while fois < NIVELLE_FOIS and deplace < NIVELLE_MAX:
-			var haut := -1
-			var bas := -1
-			var hh := -INF
-			var hb := INF
-			for t in ns:
-				var h := _hauteur(n, s_r[t], s_s[t])
-				var don := s_r[t] if n[s_r[t]] > VIDE else s_k[t]
-				if not s_s[t] and n[don] > VIDE and h > hh:
-					haut = t; hh = h
-				if h < hb:
-					bas = t; hb = h
-			if haut < 0 or haut == bas or hh - hb <= ECART:
-				break
-			var de := s_r[haut] if n[s_r[haut]] > VIDE else s_k[haut]
-			var q := minf(minf(n[de], (hh - hb) / 2.0), NIVELLE_MAX - deplace)
-			if not s_s[bas]:
-				q = minf(q, 1.0 - n[s_r[bas]])
-			if q <= 1e-9:
-				break
-			n[de] -= q; n[s_r[bas]] += q; total += q; deplace += q
-			_courant(e, de, s_r[bas], num, q)
-			fois += 1
-	return total
-
-
-# Le courant d'une poussée : le long du plus court chemin dans le corps.
-func _courant(e: Etat, de: int, vers: int, num: int, q: float) -> void:
-	var file := PackedInt32Array([de])
-	_prec[de] = -1
-	var k := 0
-	while k < file.size() and _prec[vers] == -2:
-		for j in _voisins(file[k]):
-			if _prec[j] != -2 or not (_corps_de[j] == num or j == vers):
-				continue
-			_prec[j] = file[k]
-			file.append(j)
-		k += 1
-	if _prec[vers] != -2:
-		var j := vers
-		while _prec[j] != -1:
-			var a := _prec[j]
-			if j == a + 1: e.fx[a] += q
-			elif j == a - 1: e.fx[j] -= q
-			elif j == a + SW: e.fy[a] += q
-			else: e.fy[j] -= q
-			j = a
-	for c in file:
-		_prec[c] = -2
-
-
-# --- les vannes ---------------------------------------------------------------
-func _vannes(e: Etat) -> bool:
-	var part := 1.0 / S
+func _vannes(e: Etat, dt: float) -> bool:
 	var actif := false
 	for k in vannes.size():
 		var v: Dictionary = vannes[k]
-		var a := e.attente[k]
-		if a <= 0.0:
+		var a: int = v["bassin"]
+		var reste := e.attente[k]
+		if reste <= 0.0:
 			continue
 		if v["type"] == "robinet":
-			var q := minf(a, DEBIT * part)
-			e.m[v["bec"]] += q * S2
-			e.verse += q; e.attente[k] -= q; actif = true
+			var q := minf(reste, DEBIT * dt)
+			e.vol[a] += q; e.verse += q; e.attente[k] -= q; actif = true
 		else:
-			var fond: PackedInt32Array = v["fond"]
-			var dispo := eau_de(e, fond)
-			var q := minf(minf(a, DEBIT * part), dispo)
+			# la vidange prend l'eau qui couvre sa case
+			var dispo := clampf(charge(e, a) - float(v["y"]), 0.0, 1.0)
+			dispo = minf(dispo, e.vol[a])
+			var q := minf(minf(reste, DEBIT * dt), dispo)
 			if q <= 1e-9:
 				e.attente[k] = 0.0
 				continue
-			var r := q / dispo
-			for j in fond:
-				e.m[j] -= e.m[j] * r
-			e.vide += q; e.attente[k] -= q; actif = true
+			e.vol[a] -= q; e.vide += q; e.attente[k] -= q; actif = true
+			_elan(e, a, float(v["x"]) + 0.5, -ELAN_VIDANGE * q)
 		if e.attente[k] < 1e-9:
 			e.attente[k] = 0.0
 	return actif
 
 
-# --- la boule -------------------------------------------------------------------
+# --- la surface à ressorts ------------------------------------------------------------
+# Deux bassins voisins partagent leur surface si elle passe dans leur ouverture.
+func lies(e: Etat, o: int) -> bool:
+	var a := o_a[o]
+	var b := o_b[o]
+	if not libre(e, a) or not libre(e, b):
+		return false
+	var la := niveau_bassin(e, a)
+	var lb := niveau_bassin(e, b)
+	return minf(la, lb) > o_y0[o] and maxf(la, lb) < o_y1[o]
+
+# Un coup sur la surface d'un bassin, près de x.
+func _elan(e: Etat, a: int, x: float, dv: float) -> void:
+	if not libre(e, a):
+		return
+	var p := clampi(floori((x - b_x[a]) * POINTS), 0, POINTS - 1)
+	var i := a * POINTS + p
+	e.vague_v[i] += dv
+	if p > 0: e.vague_v[i - 1] += dv * 0.5
+	if p < POINTS - 1: e.vague_v[i + 1] += dv * 0.5
+
+
+func _surface(e: Etat) -> void:
+	# les voisins de chaque point : dans le bassin, ou à travers une ouverture liée
+	var gauche := PackedInt32Array(); gauche.resize(nb); gauche.fill(-1)
+	var droite := PackedInt32Array(); droite.resize(nb); droite.fill(-1)
+	for o in o_a.size():
+		if lies(e, o):
+			droite[o_a[o]] = o_b[o]; gauche[o_b[o]] = o_a[o]
+	# ressorts : rappel et amortissement
+	for a in nb:
+		var base := a * POINTS
+		if not libre(e, a):
+			for p in POINTS:
+				e.vague[base + p] = 0.0; e.vague_v[base + p] = 0.0
+			continue
+		for p in POINTS:
+			var i := base + p
+			e.vague_v[i] += -RAPPEL * e.vague[i] - AMORTI_SURFACE * e.vague_v[i]
+			e.vague[i] += e.vague_v[i]
+	# propagation, en quelques passes, sur des écarts gelés à chaque passe
+	var delta := PackedFloat64Array(); delta.resize(nb * POINTS)
+	for passe in PASSES_PROPAGE:
+		delta.fill(0.0)
+		for a in nb:
+			if not libre(e, a):
+				continue
+			var base := a * POINTS
+			for p in POINTS:
+				var i := base + p
+				var j := -1
+				if p > 0: j = i - 1
+				elif gauche[a] >= 0: j = gauche[a] * POINTS + POINTS - 1
+				if j >= 0: delta[i] += PROPAGE * (e.vague[j] - e.vague[i])
+				j = -1
+				if p < POINTS - 1: j = i + 1
+				elif droite[a] >= 0: j = droite[a] * POINTS
+				if j >= 0: delta[i] += PROPAGE * (e.vague[j] - e.vague[i])
+		for i in nb * POINTS:
+			e.vague[i] += delta[i] * 0.5
+	# la moyenne d'un bassin reste son niveau ; les écarts restent bornés
+	for a in nb:
+		if not libre(e, a):
+			continue
+		var base := a * POINTS
+		var m := 0.0
+		for p in POINTS:
+			e.vague[base + p] = clampf(e.vague[base + p], -VAGUE_MAX, VAGUE_MAX)
+			m += e.vague[base + p]
+		m /= POINTS
+		for p in POINTS:
+			e.vague[base + p] -= m
+
+
+# Le niveau de repos à l'abscisse x d'un bassin : son niveau au milieu,
+# rejoignant en pente douce celui d'un voisin lié (sinon à plat).
+func repos_surface(e: Etat, a: int, x: float, gauche: int, droite: int) -> float:
+	var la := niveau_bassin(e, a)
+	var t := x - b_x[a]
+	if t < 0.5 and gauche >= 0:
+		var lb := (niveau_bassin(e, gauche) + la) * 0.5
+		return lb + (la - lb) * (t / 0.5)
+	if t > 0.5 and droite >= 0:
+		var lb := (niveau_bassin(e, droite) + la) * 0.5
+		return la + (lb - la) * ((t - 0.5) / 0.5)
+	return la
+
+# La surface vraie à l'abscisse x d'un bassin libre : repos + vague.
+func surface_en(e: Etat, a: int, x: float) -> float:
+	var g := -1
+	var d := -1
+	for o in o_a.size():
+		if o_b[o] == a and lies(e, o): g = o_a[o]
+		if o_a[o] == a and lies(e, o): d = o_b[o]
+	var p := clampf((x - b_x[a]) * POINTS - 0.5, 0.0, POINTS - 1.0)
+	var p0 := floori(p)
+	var p1 := mini(p0 + 1, POINTS - 1)
+	var f := p - p0
+	var v := e.vague[a * POINTS + p0] * (1.0 - f) + e.vague[a * POINTS + p1] * f
+	return repos_surface(e, a, x, g, d) + v
+
+
+# --- la boule ---------------------------------------------------------------------
 var _plafond := false
 
-# La hauteur d'eau sous (ou sur) la boule, en cases ; NAN : pas d'eau.
+# L'eau sous (ou sur) la boule, en cases ; NAN : pas d'eau dans sa colonne.
 func niveau(e: Etat, x: float, y: float) -> float:
 	_plafond = false
-	var cx := floori(x * S)
-	var cy := mini(SH - 1, maxi(0, floori(y * S)))
-	if not fouvert(cx, cy):
+	var cx := floori(x)
+	var cy := floori(y)
+	if cx < 0 or cy < 0 or cx >= W or cy >= H:
 		return NAN
-	if e.m[cy * SW + cx] > SECHE:
-		while e.m[cy * SW + cx] >= PLEINE and fouvert(cx, cy + 1) and e.m[(cy + 1) * SW + cx] > SECHE:
-			cy += 1
-		if e.m[cy * SW + cx] >= PLEINE and not fouvert(cx, cy + 1):
-			_plafond = true
-			return float(cy + 1) / S
-		return (cy + minf(1.0, e.m[cy * SW + cx])) / S
-	while cy > 0 and fouvert(cx, cy - 1) and e.m[(cy - 1) * SW + cx] <= SECHE:
-		cy -= 1
-	if cy == 0 or not fouvert(cx, cy - 1):
+	var a := bassin_de[cy * W + cx]
+	if a < 0 or e.vol[a] <= 0.02:
 		return NAN
-	return (cy - 1 + minf(1.0, e.m[(cy - 1) * SW + cx])) / S
+	if not libre(e, a):
+		_plafond = true
+		return float(b_haut[a])
+	return surface_en(e, a, x)
 
+# La vitesse de l'eau à travers les ouvertures proches de la boule, dans la
+# bande où elle trempe : le débit de l'image sur la hauteur mouillée, pesé
+# par la distance (plein jusqu'à ATTIRE_PLEIN, nul à ATTIRE) — une boule près
+# d'une sortie d'eau y est aspirée. On garde le courant le plus fort.
+func _poids(d: float) -> float:
+	if d <= ATTIRE_PLEIN:
+		return 1.0
+	return clampf((ATTIRE - d) / (ATTIRE - ATTIRE_PLEIN), 0.0, 1.0)
 
-func _vitesse(e: Etat, fxc: int, y0: float, y1: float) -> float:
-	var q := 0.0
-	var mouille := 0.0
-	for fy in range(maxi(0, floori(y0 * S)), mini(SH, ceili(y1 * S))):
-		if not fouvert(fxc, fy) or not fouvert(fxc + 1, fy):
+func _courant(e: Etat, y0: float, y1: float) -> float:
+	var u := 0.0
+	for o in o_a.size():
+		var w := _poids(absf(float(b_x[o_b[o]]) - e.bx))
+		if w <= 0.0 or o_y1[o] <= y0 or o_y0[o] >= y1:
 			continue
-		var i := fy * SW + fxc
-		q += e.fx[i]
-		mouille += minf(1.0, (e.m[i] + e.m[i + 1]) / 2.0)
-	return q / (S * mouille) if mouille > 0.25 else 0.0
+		var hs := maxf(charge(e, o_a[o]), charge(e, o_b[o]))
+		var mouille := minf(hs, o_y1[o]) - o_y0[o]
+		if mouille <= 0.05:
+			continue
+		var v := w * e.flux[o] / mouille
+		if absf(v) > absf(u):
+			u = v
+	for s in s_bassin.size():
+		if s_x[s] < 0.0:
+			continue
+		var w := _poids(absf(s_x[s] - e.bx))
+		if w <= 0.0 or s_y1[s] <= y0 or s_y0[s] >= y1:
+			continue
+		var mouille := minf(charge(e, s_bassin[s]), s_y1[s]) - s_y0[s]
+		if mouille <= 0.05:
+			continue
+		var v := w * e.sortie_flux[s] / mouille
+		u = v if absf(v) > absf(u) else u
+	return u
 
 
 func _contacts(e: Etat) -> void:
@@ -419,7 +487,6 @@ func _contacts(e: Etat) -> void:
 				if d >= RAYON:
 					continue
 				if d < 1e-9:
-					# le plus proche des quatre côtés, le premier à égalité (le tri stable de la page)
 					var cotes := [[e.bx - cx, -1.0, 0.0], [cx + 1 - e.bx, 1.0, 0.0], [e.by - cy, 0.0, -1.0], [cy + 1 - e.by, 0.0, 1.0]]
 					var c: Array = cotes[0]
 					for t in range(1, 4):
@@ -439,30 +506,27 @@ func _puissance(x: float, dt: float) -> float:
 	if dt == 1.0: return x
 	if dt == 0.5: return sqrt(x)
 	if dt == 0.25: return sqrt(sqrt(x))
-	push_error("finesse non prise en charge : %s (1, 2 ou 4)" % (1.0 / dt))
+	push_error("sous-pas non pris en charge : %s (1, 2 ou 4)" % (1.0 / dt))
 	return x
 
 
-func bouger(e: Etat, dt: float) -> void:
+func _bouger(e: Etat, dt: float) -> void:
 	if e.gagne:
 		e.by += 0.05 * dt
 		return
 	var h := niveau(e, e.bx, e.by)
 	var plafond := _plafond
+	var vy_avant := e.bvy
 	if not is_nan(h) and h > e.by - RAYON:
 		var cible := h - RAYON if plafond else h + FLOTTE
 		e.bvy += (cible - e.by) * RESSORT * dt
 		e.bvy *= _puissance(AMORTI, dt)
-		var y0 := e.by - RAYON - 1.0 / S
-		var y1 := minf(e.by + RAYON, h)
-		var u := 0.0
-		for fxc in range(floori((e.bx - ATTIRE) * S), floori((e.bx + ATTIRE) * S) + 1):
-			if fxc < 0 or fxc + 1 >= SW:
-				continue
-			var v := _vitesse(e, fxc, y0, y1)
-			if absf(v) > absf(u):
-				u = v
+		var u := _courant(e, e.by - RAYON - 0.25, minf(e.by + RAYON, h))
 		e.bvx += (u * PORTE - e.bvx) * (1.0 - _puissance(1.0 - SUIT, dt))
+		# la boule pousse l'eau qu'elle fend : une vague à son passage
+		var a := bassin_de[floori(e.by) * W + floori(e.bx)] if ouvert(floori(e.bx), floori(e.by)) else -1
+		if a >= 0 and not plafond:
+			_elan(e, a, e.bx, ELAN_BOULE * (e.bvy - vy_avant) * dt + ELAN_BOULE * 0.2 * absf(e.bvx) * dt)
 	else:
 		e.bvy = maxf(-CHUTE_MAX, e.bvy - PESANTEUR * dt)
 		e.bvx *= _puissance(FROTTE, dt)
@@ -478,16 +542,18 @@ func bouger(e: Etat, dt: float) -> void:
 
 
 # --- le jeu ---------------------------------------------------------------------
+# Un pas de jeu (une image) : SOUS_PAS d'écoulement, la surface, puis la boule.
 func pas(e: Etat) -> float:
-	e.fx.fill(0.0); e.fy.fill(0.0)
+	e.flux.fill(0.0); e.sortie_flux.fill(0.0)
+	var dt := 1.0 / SOUS_PAS
 	var actif := false
 	var flux := 0.0
-	for k in S:
-		if _vannes(e): actif = true
-		flux += _eau(e)
-	flux /= S2
-	for k in S:
-		bouger(e, 1.0 / S)
+	for k in SOUS_PAS:
+		if _vannes(e, dt): actif = true
+		flux += _ecouler(e, dt)
+	_surface(e)
+	for k in SOUS_PAS:
+		_bouger(e, dt)
 	var vite := absf(e.bvx) + absf(e.bvy)
 	if not actif and flux < CALME and vite < 1e-3: e.calme += 1
 	else: e.calme = 0
@@ -504,8 +570,10 @@ func taper(e0: Etat, k: int) -> Etat:
 	var v: Dictionary = vannes[k]
 	if e0.gagne:
 		return null
-	if v["type"] == "vidange" and eau_de(e0, v["bloc"]) < SEC and e0.attente[k] <= 0.0:
-		return null
+	if v["type"] == "vidange":
+		var a: int = v["bassin"]
+		if clampf(charge(e0, a) - float(v["y"]), 0.0, 1.0) < SEC and e0.attente[k] <= 0.0:
+			return null
 	var e := e0.copie()
 	e.attente[k] += UNITE
 	e.tapes += 1

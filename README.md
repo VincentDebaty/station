@@ -98,8 +98,8 @@ prototypes/                   Prototypes de mécanique, une page chacun, hors du
                               (banc d'essai : node tools/caneton-banc.mjs) ;
                               « Labyrinthe d'eau » : une boule flotte dans un
                               labyrinthe, un robinet verse, deux vidanges vident,
-                              l'eau coule et porte la boule (node tools/labyrinthe-banc.mjs),
-                              et sa tranche Godot du rendu, labyrinthe-godot/
+                              l'eau coule et porte la boule — la page web est figée,
+                              le jeu vit dans labyrinthe-godot/ (voir son README)
 ```
 
 ## Ajouter une gare

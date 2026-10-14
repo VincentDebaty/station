@@ -1,63 +1,83 @@
-# Labyrinthe d'eau — la tranche Godot du rendu
+# Labyrinthe d'eau — la tranche Godot
 
-Deux choses. **La scène** (`principal.gd`) rejoue un film de la partie,
-enregistré depuis le moteur de la page web (`prototypes/prototype-labyrinthe.html`),
-pour juger le rendu de l'eau sur l'iPhone. **Le moteur porté** (`moteur.gd`)
-traduit celui de la page fonction pour fonction ; il n'est pas encore branché
-sur la scène. C'est le plan d'essai de `reports/Animation de fluides pour jeu.md`
-(étapes 1, 2 et le portage).
+Le labyrinthe d'eau joué dans Godot 4.7. Une boule flotte dans un labyrinthe
+vu en coupe. Le robinet verse, les vidanges vident, et l'eau coule de bassin
+en bassin jusqu'à porter la boule à la sortie.
+
+**Godot fait autorité sur les règles depuis le 14 octobre 2026** (décision de
+Vincent) : le moteur et le banc vivent ici. La page web
+`prototypes/prototype-labyrinthe.html` reste figée comme trace du prototype,
+avec son ancien banc `tools/labyrinthe-banc.mjs`.
 
 ## Lancer
 
 ```bash
-node tools/labyrinthe-film.mjs          # refait film.json depuis la page web
 godot --path prototypes/labyrinthe-godot
 tools/ios-labyrinthe.sh                 # l'exporte et le pose sur l'iPhone
 ```
 
-Le film dure 7,6 s : deux vidanges, puis le robinet tenu jusqu'à la sortie de
-la boule. Il reprend tout seul. Toucher l'écran le relance. En haut, trois
-compteurs : images par seconde, millisecondes de processeur et de carte graphique.
+On touche un bouton de vanne pour verser ou vider une unité. L'appui long
+verse (ou vide) en continu. En bas de l'écran, un compteur donne les images
+par seconde et le coût du moteur.
 
-`film.json` est **dérivé** : refait par `tools/labyrinthe-film.mjs`, jamais
-édité à la main.
+## Les fichiers
 
-## Le rendu
+| | ce qu'il fait |
+|---|---|
+| `niveau.json` | le niveau : la grille, les vannes, l'eau de départ, la solution, le *par*, les pièges |
+| `moteur.gd` | les règles : l'eau par volumes, la surface à ressorts, la boule ; déterministe |
+| `banc.gd` | le banc d'essai, sans écran ; il refuse au lieu d'avertir |
+| `principal.gd` | la scène : joue le moteur en direct et le dessine |
+| `eau.gdshader` | le rendu de l'eau : dégradé, liseré, reflets |
 
-- **L'eau** est un shader (`eau.gdshader`) posé sur le champ du film. Le champ
-  est la part d'eau de chaque petite case (4 × 4 par case du labyrinthe), en
-  texture. Les étapes :
-  - lecture en **B-spline cubique**, pour une surface lisse sans facettes ;
-  - **fondu entre deux images** du moteur, pour que l'eau glisse même à 120 i/s ;
-  - **bord adouci au pixel** ;
-  - **liseré clair** d'épaisseur constante à l'écran ;
-  - eau qui **fonce en profondeur**.
-- **Les murs** sont dessinés par-dessus l'eau, en une bande de sable autour de
-  chaque creux. L'eau s'enfonce un peu dans les murs, et la bande la coupe net.
-- **La boule** est placée et tournée d'après le film, interpolée entre deux images.
+## Le moteur : l'eau par volumes, la surface à ressorts
 
-## Le moteur porté et son oracle
+**Les bassins.** Le labyrinthe est découpé en bassins : chaque colonne d'eau
+d'un seul tenant. Un bassin a :
+- un volume et une capacité ;
+- une **charge** : la hauteur de sa surface ou, s'il est plein sous un
+  plafond, une hauteur de pression. Une petite compressibilité pousse l'eau à
+  travers les passages noyés en conservant exactement le volume.
+
+**L'écoulement.** Deux bassins voisins sont reliés par leur ouverture commune.
+L'eau y passe à un débit de
+`DEBIT_OUVERTURE × hauteur mouillée × √(écart de charge)`, à la manière de
+Torricelli : fort quand l'écart est grand, il ralentit à l'approche de
+l'équilibre. Quand le bassin d'arrivée est plus bas que l'ouverture, c'est une
+cascade. Le calcul se fait en 4 sous-pas fixes par image, sans dépendre de la
+cadence de l'écran.
+
+**La surface.** Chaque bassin à surface libre porte 8 points par case.
+- Chaque point est rappelé vers le niveau, amorti, et transmet ses vagues à
+  ses voisins, y compris d'un bassin à l'autre quand la surface passe par leur
+  ouverture.
+- Sa moyenne est ramenée au niveau du volume réel.
+- Les cascades, les vidanges et la boule y créent des vagues.
+- Une houle de repos très légère s'ajoute, seulement à l'écran.
+
+**La boule.** Elle flotte sur la surface locale, bute sous un plafond, et prend
+la vitesse de l'eau qui passe les ouvertures proches. Ce courant pèse
+pleinement jusqu'à une case, puis s'affaiblit jusqu'à 2,2 cases.
+
+## Vérifier
 
 ```bash
-node tools/labyrinthe-vers-godot.mjs     # dérive niveau.json et oracle.json de la page
-godot --headless --path prototypes/labyrinthe-godot --script res://oracle.gd
+godot --headless --path prototypes/labyrinthe-godot --script res://banc.gd
+LABY_PARTIES=60 LABY_GRAINE=900 godot --headless --path prototypes/labyrinthe-godot --script res://banc.gd
 ```
 
-`oracle.json` contient des parties jouées par la page. Au repos, ce sont la
-solution, le piège et six parties au hasard tirées comme celles du banc. En
-temps réel, c'est le script du film. `oracle.gd` les rejoue avec `moteur.gd` et
-refuse dans trois cas : une issue diffère, l'eau d'une case s'écarte de plus de
-0,01 case, ou la boule de plus de 0,05 case. Le 14 octobre 2026 : 276 états,
-écart maximal 2e-16 case d'eau et 2e-15 de boule (le dernier chiffre). En
-revanche, le calcul est lent en GDScript : 2,5 ms par image en moyenne sur le
-Mac, et 8 ms quand le robinet verse. `niveau.json` et `oracle.json` sont
-**dérivés**, jamais édités à la main.
+Le banc vérifie trois choses (environ 70 s) :
+- **les données** du niveau ;
+- **la solution** : elle sort la boule, aucune suite plus courte que le *par*
+  ne gagne (en deux séries de tapes au plus), et les pièges ne gagnent pas ;
+- **les invariants à chaque image** : conservation de l'eau à 1e-9 près,
+  surface de moyenne nulle, déterminisme, boule hors des murs, retour au calme.
 
-## Vérifier le rendu sans les doigts
+Il mesure aussi la butte, le tube en U, le retour au calme et le coût par image.
 
 ```bash
 LABY_CAPTURE=/un/dossier godot --path prototypes/labyrinthe-godot --resolution 600x1300
 ```
 
-Cette commande ouvre la fenêtre, photographie huit images du film dans le
-dossier, puis quitte.
+Cette commande joue la solution toute seule, avec le robinet tenu, photographie
+huit images et quitte. Elle a besoin d'une fenêtre : `--headless` ne rend rien.

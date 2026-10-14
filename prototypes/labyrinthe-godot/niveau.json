@@ -1,8 +1,8 @@
 {
   "titre": "Les deux étages",
   "conseil": "Le robinet remplit, les vidanges vident (appui long : en continu). La boule suit le courant.",
-  "par": 21,
-  "solution": "331111111111111111111",
+  "par": 24,
+  "solution": "333111111111111111111111",
   "pieges": ["111111111111111111111111111111"],
   "grille": [
     "#SS#####",
