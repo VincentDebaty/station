@@ -1,9 +1,11 @@
 # Labyrinthe d'eau — la tranche Godot du rendu
 
-Un seul but : **juger sur l'iPhone le rendu de l'eau**, avant de porter quoi que
-ce soit. Ce projet ne calcule rien. Il rejoue un film de la partie, enregistré
-depuis le moteur de la page web (`prototypes/prototype-labyrinthe.html`), et le
-dessine. C'est l'étape 2 du plan d'essai de `reports/Animation de fluides pour jeu.md`.
+Deux choses. **La scène** (`principal.gd`) rejoue un film de la partie,
+enregistré depuis le moteur de la page web (`prototypes/prototype-labyrinthe.html`),
+pour juger le rendu de l'eau sur l'iPhone. **Le moteur porté** (`moteur.gd`)
+traduit celui de la page fonction pour fonction ; il n'est pas encore branché
+sur la scène. C'est le plan d'essai de `reports/Animation de fluides pour jeu.md`
+(étapes 1, 2 et le portage).
 
 ## Lancer
 
@@ -34,7 +36,24 @@ compteurs : images par seconde, millisecondes de processeur et de carte graphiqu
   chaque creux. L'eau s'enfonce un peu dans les murs, et la bande la coupe net.
 - **La boule** est placée et tournée d'après le film, interpolée entre deux images.
 
-## Vérifier sans les doigts
+## Le moteur porté et son oracle
+
+```bash
+node tools/labyrinthe-vers-godot.mjs     # dérive niveau.json et oracle.json de la page
+godot --headless --path prototypes/labyrinthe-godot --script res://oracle.gd
+```
+
+`oracle.json` contient des parties jouées par la page. Au repos, ce sont la
+solution, le piège et six parties au hasard tirées comme celles du banc. En
+temps réel, c'est le script du film. `oracle.gd` les rejoue avec `moteur.gd` et
+refuse dans trois cas : une issue diffère, l'eau d'une case s'écarte de plus de
+0,01 case, ou la boule de plus de 0,05 case. Le 14 octobre 2026 : 276 états,
+écart maximal 2e-16 case d'eau et 2e-15 de boule (le dernier chiffre). En
+revanche, le calcul est lent en GDScript : 2,5 ms par image en moyenne sur le
+Mac, et 8 ms quand le robinet verse. `niveau.json` et `oracle.json` sont
+**dérivés**, jamais édités à la main.
+
+## Vérifier le rendu sans les doigts
 
 ```bash
 LABY_CAPTURE=/un/dossier godot --path prototypes/labyrinthe-godot --resolution 600x1300

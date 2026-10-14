@@ -180,9 +180,11 @@ jour qui perd la partie d'un joueur est un bug bloquant, pas un détail.
   `node tools/labyrinthe-banc.mjs` (≈ 1 min 30), rejoue la solution écrite,
   refuse si une suite plus courte que le `par` gagne (fouille limitée à deux
   séries de tapes) ou si un `piege` gagne.
-  Sa tranche Godot, `prototypes/labyrinthe-godot/`, ne calcule rien : elle
-  rejoue `film.json`, que `node tools/labyrinthe-film.mjs` DÉRIVE de la page
-  web, pour juger le rendu de l'eau sur iPhone (`tools/ios-labyrinthe.sh`).
+  Sa tranche Godot, `prototypes/labyrinthe-godot/`, rejoue `film.json`, que
+  `node tools/labyrinthe-film.mjs` DÉRIVE de la page web, pour juger le rendu
+  de l'eau sur iPhone (`tools/ios-labyrinthe.sh`). Son `moteur.gd` est le
+  moteur de la page porté, vérifié par `oracle.gd` contre `oracle.json` et
+  `niveau.json`, que `node tools/labyrinthe-vers-godot.mjs` DÉRIVE de la page.
   Le plan d'essai du rendu est dans `reports/Animation de fluides pour jeu.md`.
 - `data/worldmap.js` — généré depuis Natural Earth, jamais édité à la main.
 
