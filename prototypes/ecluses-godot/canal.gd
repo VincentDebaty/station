@@ -624,6 +624,14 @@ func _recadrer(tex: Texture2D) -> Texture2D:
 	at.region = Rect2(x0, y0, x1 - x0 + 1, y1 - y0 + 1)
 	return at
 
+# La bande du panorama gardée : (début en largeur, début en hauteur, hauteur),
+# en fractions de l'image.
+func Rect4_fond() -> Vector3:
+	return Vector3(0.0, 0.06, 0.58) if _fond_cartoon() else Vector3(0.17, 0.34, 0.38)
+
+func _fond_cartoon() -> bool:
+	return cartoon and ResourceLoader.exists("res://art/cartoon/fond.png")
+
 func _reglages_bateaux() -> Dictionary:
 	var chemin := Peint.art("bateaux.json")
 	if not FileAccess.file_exists(chemin): return {}
@@ -680,7 +688,10 @@ func _decor() -> void:
 		if brut.is_compressed(): brut.decompress()
 		var w := brut.get_width()
 		var h := brut.get_height()
-		tex = ImageTexture.create_from_image(brut.get_region(Rect2i(int(w * 0.17), int(h * 0.34), int(w * 0.83), int(h * 0.38))))
+		# (le panorama dessin animé n'a pas de moulin, et ses nuages sont plus
+		# bas : on le prend sur toute la largeur, de 22 % à 64 % de sa hauteur)
+		var cadre := Rect4_fond()
+		tex = ImageTexture.create_from_image(brut.get_region(Rect2i(int(w * cadre.x), int(h * cadre.y), int(w * (1.0 - cadre.x)), int(h * cadre.z))))
 	elif ResourceLoader.exists("res://art/maquette.webp"):
 		var at := AtlasTexture.new()
 		at.atlas = load("res://art/maquette.webp")
@@ -691,11 +702,14 @@ func _decor() -> void:
 		_lointain.shader = preload("res://shaders/lointain.gdshader")
 		# l'échelle de l'image entière, même sans le moulin : les copies en
 		# miroir comblent la largeur
-		var echelle := (W + 160.0) / (tex.get_width() / (0.83 if ResourceLoader.exists("res://art/fond.png") else 1.0))
+		var echelle := (W + 160.0) / (tex.get_width() / ((1.0 - Rect4_fond().x) if ResourceLoader.exists("res://art/fond.png") else 1.0))
+		# (le panorama dessin animé, plus petit : la maison et les collines au
+		# loin, comme sur l'image cible, et ses nuages au-dessus)
+		if _fond_cartoon(): echelle *= 0.62
 		var large := tex.get_width() * echelle
 		# au centre, puis une copie en miroir de chaque côté : un écran plus
 		# allongé que la coupe ne voit jamais le bord du panorama
-		for k in [-1, 0, 1]:
+		for k in ([-2, -1, 0, 1, 2] if _fond_cartoon() else [-1, 0, 1]):
 			var s := Sprite2D.new()
 			s.texture = tex
 			s.centered = false
@@ -716,7 +730,9 @@ func _decor() -> void:
 
 func _murs_du_fond() -> void:
 	var B: Array = N["bassins"]
-	var fond_pierre := _mat(SH_PIERRE, {"ombre": 0.74, "teinte": Color("#d6c7a8")})
+	# (en dessin animé, le mur du fond moins assombri : mesuré sur l'image
+	# cible, RVB 177, 142, 108)
+	var fond_pierre := _mat(SH_PIERRE, {"ombre": 0.84 if cartoon else 0.74, "teinte": Color("#d6c7a8")})
 	# derrière une porte, le mur est dans l'ombre du portique : plus sombre
 	var fond_porte := _mat(SH_PIERRE, {"ombre": 0.5, "teinte": Color("#d6c7a8")})
 	var terre_fond := _mat(SH_TERRE, {"sol_y": Y(0.0)})
@@ -1593,6 +1609,17 @@ func _vie_du_mur(i: int, x0: float, x1: float, y_haut: float, y_fond: float, niv
 func _dessus_de_mur(x0: float, x1: float, y: float) -> void:
 	var e := D * 0.45
 	var pts := PackedVector2Array([Vector2(x0, y), Vector2(x1, y), Vector2(x1 + e.x, y + e.y), Vector2(x0 + e.x, y + e.y)])
+	if cartoon:
+		# en dessin animé : un dessus de pierre claire en aplat, cerné de brun
+		# (la texture de pierre, vue de dessus et écrasée, faisait une bande
+		# grise rayée)
+		_poly(pts, null, PackedColorArray([Color("#f0dcb4"), Color("#f0dcb4"), Color("#dcc396"), Color("#dcc396")]))
+		var bord := Line2D.new()
+		bord.points = PackedVector2Array([Vector2(x0, y), Vector2(x1, y)])
+		bord.width = 2.5
+		bord.default_color = Color("#4a2e18")
+		_ajouter(bord)
+		return
 	_face(pts, PackedVector2Array([Vector2(0, e.length()), Vector2(x1 - x0, e.length()), Vector2(x1 - x0, 0), Vector2(0, 0)]),
 		Color(1.1, 1.06, 0.98), _mat(SH_PIERRE, {"teinte": Color("#e3d4b4")}))
 	_poly(pts, null, PackedColorArray([Color(0, 0, 0, 0), Color(0, 0, 0, 0), Color(0.1, 0.05, 0, 0.22), Color(0.1, 0.05, 0, 0.22)]))

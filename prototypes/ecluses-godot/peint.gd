@@ -191,6 +191,9 @@ static func habiller(m: ShaderMaterial, quoi: String) -> void:
 			m.set_shader_parameter("avec_image", true)
 			m.set_shader_parameter("image", t)
 			m.set_shader_parameter("tuile", tuile_pierre())
+			# (l'image dessin animé a déjà ses couleurs : pas de couleurs
+			# avivées par-dessus, qui la rendaient orange)
+			m.set_shader_parameter("image_vive", art("pierre.png").contains("/cartoon/"))
 		"terre":
 			var t := terre()
 			if t == null: return
@@ -202,3 +205,4 @@ static func habiller(m: ShaderMaterial, quoi: String) -> void:
 			if t == null: return
 			m.set_shader_parameter("avec_image", true)
 			m.set_shader_parameter("image", t)
+			m.set_shader_parameter("image_vive", art("vantail.png").contains("/cartoon/"))

@@ -11,6 +11,7 @@ uniform vec3 fer : source_color = vec3(0.17, 0.17, 0.19);
 // le vantail peint (art/vantail.png, voir peint.gd), quand il existe : posé
 // sur le cadre entier, ferrures comprises, il monte avec lui
 uniform bool avec_image = false;
+uniform bool image_vive = false;   // une image déjà en couleurs franches (dessin animé)
 uniform sampler2D image : source_color, filter_linear_mipmap;
 
 varying vec2 monde;
@@ -30,7 +31,7 @@ void fragment() {
 	vec2 l = (monde - cadre.xy) / max(cadre.zw - cadre.xy, vec2(1.0));   // 0..1 dans le vantail
 	if (avec_image) {
 		vec4 t = texture(image, clamp(l, vec2(0.0), vec2(1.0)));
-		COLOR = vec4(vivifier(t.rgb * mix(1.0, 0.55, tranche)), t.a);
+		COLOR = vec4(image_vive ? t.rgb * mix(1.0, 0.55, tranche) : vivifier(t.rgb * mix(1.0, 0.55, tranche)), t.a);
 	} else {
 		float largeur = cadre.z - cadre.x;
 		float planches = max(2.0, floor(largeur / 13.0));

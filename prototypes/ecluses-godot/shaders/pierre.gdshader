@@ -11,6 +11,7 @@ uniform vec2 bloc = vec2(62.0, 31.0);
 // la pierre peinte (art/pierre.png, voir peint.gd), quand elle existe : elle
 // remplace le dessin, teintée et assombrie comme lui
 uniform bool avec_image = false;
+uniform bool image_vive = false;   // une image déjà en couleurs franches (dessin animé)
 uniform sampler2D image : source_color, repeat_enable, filter_linear_mipmap;
 uniform vec2 tuile = vec2(171.0, 144.0);
 
@@ -30,7 +31,7 @@ float bruit(vec2 p) {
 void fragment() {
 	if (avec_image) {
 		vec3 ci = texture(image, monde / tuile).rgb * (teinte / vec3(0.90, 0.84, 0.72));
-		COLOR = vec4(vivifier(ci * ombre), 1.0);
+		COLOR = vec4(image_vive ? ci * ombre : vivifier(ci * ombre), 1.0);
 	} else {
 		vec2 p = monde / bloc;
 		p.x += mod(floor(p.y), 2.0) * 0.5;
