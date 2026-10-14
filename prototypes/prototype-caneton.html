@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#33278a">
+<title>Caneton</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&display=swap">
+<style>
+/* ------------------------------------------------------------------
+   CANETON — prototype jouable d'un puzzle d'eau, hors de Station.
+
+   Un caneton flotte dans un bassin. On ouvre des vannes, l'eau coule,
+   et le caneton suit la surface jusqu'à la rivière où l'attend sa mère.
+   Écran debout, une barre en haut, la coupe des bassins dessous.
+
+   Trois blocs : les niveaux (JSON), le moteur (pur, sans DOM — le banc
+   tools/caneton-banc.mjs l'extrait et le joue sans navigateur), la vue.
+   ------------------------------------------------------------------ */
+:root {
+  color-scheme: light;
+  --fond: #33278a;
+  --fond-haut: #40329e;
+  --texte: #f4f1ff;
+  --doux: #b9b0ec;
+  --carte: #fffaf0;
+  --encre: #2a2350;
+  --vanne: #e8402f;
+  --or: #ffc93c;
+  --vert: #3fae5b;
+  --f-titre: "Fredoka", "Arial Rounded MT Bold", "Trebuchet MS", system-ui, sans-serif;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0; overflow: hidden; background: var(--fond); color: var(--texte);
+  font: 15px/1.4 var(--f-titre);
+  user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+  display: flex; flex-direction: column;
+  padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
+}
+button { font: inherit; color: inherit; cursor: pointer; border: 0; }
+button:focus-visible { outline: 3px solid var(--or); outline-offset: 2px; }
+[hidden] { display: none !important; }
+
+#barre { display: flex; align-items: center; gap: 10px; padding: 12px 16px 4px; }
+.rond {
+  width: 52px; height: 52px; border-radius: 16px; flex: none;
+  background: #7b5cf0; box-shadow: inset 0 -5px 0 #5a3fc9, 0 3px 0 #251c66;
+  display: grid; place-items: center;
+}
+.rond:active { transform: translateY(2px); box-shadow: inset 0 -3px 0 #5a3fc9, 0 1px 0 #251c66; }
+.rond svg { width: 28px; height: 28px; }
+#titre {
+  flex: 1; text-align: center; background: #241b6b; border-radius: 999px; padding: 8px 14px;
+  font-weight: 600; font-size: 18px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#titre b { color: var(--or); font-weight: 700; }
+#infos { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; padding: 6px 20px 0; color: var(--doux); font-size: 14px; }
+#gestes { white-space: nowrap; }
+#gestes b { color: var(--texte); }
+#scene { flex: 1; width: 100%; min-height: 0; display: block; touch-action: none; }
+.cible { cursor: pointer; }
+
+.voile {
+  position: fixed; inset: 0; display: grid; place-items: center; padding: 20px;
+  background: rgba(20, 14, 60, .55);
+}
+.carte {
+  width: min(340px, 100%); background: var(--carte); color: var(--encre); border-radius: 22px;
+  padding: 22px 20px 18px; text-align: center; box-shadow: 0 6px 0 #1c1550;
+}
+.carte h2 { margin: 0 0 6px; font-size: 24px; font-weight: 700; }
+.carte p { margin: 0 0 16px; color: #5b5480; }
+.boutons { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+.bouton {
+  min-height: 48px; padding: 0 20px; border-radius: 14px; font-weight: 600; font-size: 17px;
+  background: #7b5cf0; color: #fff; box-shadow: inset 0 -4px 0 #5a3fc9;
+}
+.bouton.vert { background: var(--vert); box-shadow: inset 0 -4px 0 #2d8545; }
+.liste { display: grid; gap: 10px; margin-bottom: 14px; }
+.liste .bouton { width: 100%; text-align: left; display: flex; justify-content: space-between; align-items: center; }
+</style>
+</head>
+<body>
+<div id="barre">
+  <button class="rond" id="b-niveaux" aria-label="Niveaux">
+    <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round"><path d="M5 7h14M5 12h14M5 17h14"/></svg>
+  </button>
+  <div id="titre"></div>
+  <button class="rond" id="b-recommencer" aria-label="Recommencer">
+    <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12a8 8 0 1 0 2.6-5.9"/><path d="M4 4v5h5"/></svg>
+  </button>
+</div>
+<div id="infos"><span id="conseil"></span><span id="gestes"></span></div>
+<svg id="scene" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Coupe des bassins">
+  <g id="decor"></g><g id="eau"></g><g id="murs"></g><g id="vannes"></g><g id="canards"></g>
+</svg>
+
+<div class="voile" id="v-fin" hidden><div class="carte">
+  <h2 id="fin-titre"></h2><p id="fin-texte"></p>
+  <div class="boutons" id="fin-boutons"></div>
+</div></div>
+<div class="voile" id="v-niveaux" hidden><div class="carte">
+  <h2>Niveaux</h2><div class="liste" id="liste"></div>
+  <div class="boutons"><button class="bouton" id="b-fermer">Fermer</button></div>
+</div></div>
+
+<!-- ------------------------------------------------------------------
+     LES NIVEAUX. Coordonnées en unités, y vers le HAUT, x vers la droite.
+     Un bassin : son intérieur [x0, x1] × [fond, haut], et son eau de départ
+     (« eau » = niveau de la surface). Un passage relie « de » à « vers »
+     (un bassin, ou « riviere ») :
+       porte  — une ouverture dans le mur x (= x0 ou x1 de « de »), de
+                « bas » (le seuil) à « haut » (le linteau) ;
+       trappe — une ouverture dans le fond de « de », de x0 à x1, qui se
+                déverse dans « vers », plus bas.
+     « vanne » : true = fermé au départ, un geste l'ouvre ; false = toujours
+     ouvert. « ordres » : "tous" si chaque ordre des gestes gagne (niveau qui
+     pardonne), "certains" si l'ordre compte — le banc le vérifie.
+     ------------------------------------------------------------------ -->
+<script type="application/json" id="niveaux">
+{
+  "niveaux": [
+    {
+      "id": "1", "titre": "Le premier saut", "par": 3, "ordres": "tous",
+      "conseil": "Touche une vanne rouge pour l'ouvrir.",
+      "bassins": [
+        { "id": "A", "x0": 0, "x1": 4, "fond": 7, "haut": 10, "eau": 9 },
+        { "id": "R", "x0": 5, "x1": 8, "fond": 7, "haut": 12, "eau": 11 },
+        { "id": "B", "x0": 3, "x1": 7, "fond": 0, "haut": 6, "eau": 0 }
+      ],
+      "passages": [
+        { "id": "V1", "type": "porte", "de": "A", "vers": "B", "x": 4, "bas": 7, "haut": 10, "vanne": true },
+        { "id": "V2", "type": "trappe", "de": "R", "vers": "B", "x0": 5.5, "x1": 6.5, "vanne": true },
+        { "id": "V3", "type": "porte", "de": "B", "vers": "riviere", "x": 7, "bas": 4, "haut": 6, "vanne": true }
+      ],
+      "riviere": { "niveau": 1 },
+      "canard": { "bassin": "A", "x": 1.6 }
+    },
+    {
+      "id": "2", "titre": "La porte noyée", "par": 3, "ordres": "certains",
+      "conseil": "Une porte sous l'eau ne laisse pas passer le caneton.",
+      "bassins": [
+        { "id": "A", "x0": 0.4, "x1": 3.4, "fond": 9, "haut": 11.5, "eau": 11 },
+        { "id": "R", "x0": 5, "x1": 9, "fond": 9, "haut": 14, "eau": 13.5 },
+        { "id": "B", "x0": 3, "x1": 6, "fond": 0, "haut": 8.5, "eau": 0 },
+        { "id": "C", "x0": 6, "x1": 9, "fond": 0, "haut": 8.5, "eau": 0 }
+      ],
+      "passages": [
+        { "id": "V1", "type": "porte", "de": "A", "vers": "B", "x": 3.4, "bas": 9, "haut": 11.5, "vanne": true },
+        { "id": "V2", "type": "trappe", "de": "R", "vers": "B", "x0": 5.2, "x1": 5.8, "vanne": true },
+        { "id": "V3", "type": "porte", "de": "B", "vers": "C", "x": 6, "bas": 0, "haut": 2.5, "vanne": true },
+        { "id": "sortie", "type": "porte", "de": "C", "vers": "riviere", "x": 9, "bas": 3.5, "haut": 8.5, "vanne": false }
+      ],
+      "riviere": { "niveau": 1 },
+      "canard": { "bassin": "A", "x": 1.3 }
+    }
+  ]
+}
+</script>
+
+<!-- ------------------------------------------------------------------
+     LE MOTEUR. Pur et déterministe : un état entre, un état sort.
+     Trois règles :
+       1. l'eau descend : un passage ouvert laisse couler l'eau du côté le
+          plus haut, tant qu'elle dépasse le seuil ;
+       2. les vases communicants : deux bassins reliés sous leur surface
+          finissent au même niveau ;
+       3. le caneton flotte : il dérive vers un passage par où l'eau QUITTE
+          son bassin, et ne le franchit que si la surface passe par
+          l'ouverture (niveau ≤ linteau ; pour une trappe, presque à sec).
+     L'eau avance par pas (tick) : chaque passage transfère une part de ce
+     qui le mettrait à l'équilibre. La vue joue ces pas un par image ; le
+     banc les enchaîne jusqu'au repos — c'est le même calcul.
+     ------------------------------------------------------------------ -->
+<script id="moteur">
+"use strict";
+const Caneton = (function () {
+  const PAS = 0.05;         // part de l'écart transférée à chaque pas
+  const MIN = 0.004;        // transfert minimal par pas : l'eau se pose en un temps fini
+  const COURANT = 1e-3;     // en dessous, l'eau ne porte plus le caneton
+  const DERIVE = 0.07;      // chemin du caneton par pas, en unités
+  const BORD = 0.35;        // le caneton reste à cette distance des murs
+  const PRESQUE_SEC = 0.5;  // une trappe avale le caneton sous cette profondeur
+  const FIN = 1e-9;
+  const MAXPAS = 20000;
+  const RIVIERE = -1;
+
+  const caches = new WeakMap();
+  function prep(N) {
+    let c = caches.get(N);
+    if (c) return c;
+    const idx = {};
+    N.bassins.forEach((b, i) => { idx[b.id] = i; });
+    const P = N.passages.map(p => {
+      const de = idx[p.de], vers = p.vers === "riviere" ? RIVIERE : idx[p.vers];
+      const b = N.bassins[de];
+      const trappe = p.type === "trappe";
+      return {
+        id: p.id, type: p.type, vanne: !!p.vanne, de, vers,
+        x: p.x, x0: p.x0, x1: p.x1,
+        seuil: trappe ? b.fond : p.bas,
+        toit: trappe ? b.fond + PRESQUE_SEC : p.haut,
+      };
+    });
+    c = { idx, P };
+    caches.set(N, c);
+    return c;
+  }
+  const largeur = (N, i) => N.bassins[i].x1 - N.bassins[i].x0;
+  function niveau(N, e, i) {
+    if (i === RIVIERE) return N.riviere.niveau;
+    return N.bassins[i].fond + e.vol[i] / largeur(N, i);
+  }
+  function passages(N) { return prep(N).P; }
+  const borne = (v, a, b) => Math.max(a, Math.min(b, v));
+
+  function charger(N) {
+    const { idx, P } = prep(N);
+    return {
+      vol: N.bassins.map(b => (b.eau - b.fond) * (b.x1 - b.x0)),
+      ouvert: P.map(p => !p.vanne),
+      canard: { b: idx[N.canard.bassin], x: N.canard.x },
+      sorti: 0,
+      gestes: [],
+    };
+  }
+  function copie(e) {
+    return { vol: e.vol.slice(), ouvert: e.ouvert.slice(), canard: { b: e.canard.b, x: e.canard.x }, sorti: e.sorti, gestes: e.gestes.slice() };
+  }
+
+  // Le volume qui mettrait src et dst à l'équilibre à travers un seuil s.
+  function transfert(N, src, dst, hs, hd, s) {
+    if (hs <= s + FIN) return 0;
+    const ws = largeur(N, src);
+    if (dst === RIVIERE) return Math.max(0, (hs - Math.max(s, hd)) * ws);
+    const wd = largeur(N, dst);
+    if (hd < s) {
+      const tout = (hs - s) * ws;                 // l'eau au-dessus du seuil, en cascade
+      if (hd + tout / wd <= s) return tout;
+    }
+    const L = (hs * ws + hd * wd) / (ws + wd);    // vases communicants
+    return Math.max(0, (hs - L) * ws);
+  }
+
+  // Où le caneton vise dans le bassin k pour prendre le passage p, et où il arrive.
+  function cibleDans(N, k, p) {
+    const b = N.bassins[k];
+    const x = p.type === "trappe" ? (p.x0 + p.x1) / 2 : p.x;
+    return borne(x, b.x0 + BORD, b.x1 - BORD);
+  }
+
+  function tick(N, e) {
+    const P = passages(N);
+    const s = copie(e);
+    const flux = P.map(() => 0);
+    P.forEach((p, j) => {
+      if (!s.ouvert[j]) return;
+      const ha = niveau(N, s, p.de), hb = niveau(N, s, p.vers);
+      let src = p.de, dst = p.vers, hs = ha, hd = hb;
+      if (hb > ha) { src = p.vers; dst = p.de; hs = hb; hd = ha; }
+      if (src === RIVIERE) return;               // la rivière ne remonte jamais
+      const t = transfert(N, src, dst, hs, hd, p.seuil);
+      if (t <= FIN) return;
+      const dv = Math.min(t, Math.max(PAS * t, MIN));
+      s.vol[src] -= dv;
+      if (dst === RIVIERE) s.sorti += dv; else s.vol[dst] += dv;
+      flux[j] = src === p.de ? dv : -dv;         // > 0 : de → vers
+    });
+    deriver(N, s, flux);
+    return { e: s, flux, calme: flux.every(f => f === 0) };
+  }
+
+  function deriver(N, s, flux) {
+    const k = s.canard.b;
+    if (k === RIVIERE) return;
+    const P = passages(N);
+    const h = niveau(N, s, k);
+    if (h - N.bassins[k].fond < 0.05) return;    // à sec : il ne flotte plus
+    let meilleur = -1, fort = COURANT;
+    P.forEach((p, j) => {
+      const sortant = (p.de === k && flux[j] > 0) || (p.vers === k && flux[j] < 0);
+      if (!sortant) return;
+      if (p.type === "trappe" && p.de !== k) return;   // on ne remonte pas par une trappe
+      if (h > p.toit + 1e-6) return;                   // ouverture noyée : il reste dessus
+      if (Math.abs(flux[j]) > fort) { fort = Math.abs(flux[j]); meilleur = j; }
+    });
+    if (meilleur < 0) return;
+    const p = P[meilleur];
+    const tx = cibleDans(N, k, p);
+    const d = tx - s.canard.x;
+    if (Math.abs(d) > DERIVE) { s.canard.x += Math.sign(d) * DERIVE; return; }
+    const autre = p.de === k ? p.vers : p.de;
+    if (autre === RIVIERE) { s.canard = { b: RIVIERE, x: s.canard.x }; return; }
+    s.canard = { b: autre, x: cibleDans(N, autre, p) };
+  }
+
+  function actions(N, e) { return passages(N).map((p, j) => j).filter(j => !e.ouvert[j]); }
+  function ouvrir(N, e, j) {
+    const s = copie(e);
+    s.ouvert[j] = true;
+    s.gestes.push(j);
+    return s;
+  }
+  function reposer(N, e, chaquePas) {
+    let s = e;
+    for (let n = 0; ; n++) {
+      const r = tick(N, s);
+      if (chaquePas) chaquePas(r, n);
+      s = r.e;
+      if (r.calme) return s;
+      if (n > MAXPAS) throw new Error("l'eau ne se pose pas en " + MAXPAS + " pas");
+    }
+  }
+  function jouer(N, e, j) { return reposer(N, ouvrir(N, e, j)); }
+  function gagne(e) { return e.canard.b === RIVIERE; }
+
+  // La plus courte suite de gestes qui gagne depuis e, ou null : les vannes
+  // ne font que s'ouvrir, la fouille est finie et exhaustive.
+  function resoudre(N, e) {
+    if (gagne(e)) return [];
+    let front = [{ e, suite: [] }];
+    while (front.length) {
+      const suivant = [];
+      for (const f of front) for (const j of actions(N, f.e)) {
+        const e2 = jouer(N, f.e, j), suite = f.suite.concat(j);
+        if (gagne(e2)) return suite;
+        suivant.push({ e: e2, suite });
+      }
+      front = suivant;
+    }
+    return null;
+  }
+
+  return { RIVIERE, charger, tick, reposer, ouvrir, jouer, actions, gagne, resoudre, niveau, passages, largeur };
+})();
+</script>
+
+<!-- ------------------------------------------------------------------
+     LA VUE. Dessine l'état, joue un pas d'eau par image, attend le repos
+     avant d'accepter un nouveau geste.
+     ------------------------------------------------------------------ -->
+<script id="vue">
+"use strict";
+(function () {
+  const NIVEAUX = JSON.parse(document.getElementById("niveaux").textContent).niveaux;
+  const E = Caneton, RIV = E.RIVIERE;
+  const T = 0.4;            // épaisseur des murs
+  const CANAL = 1.2;        // longueur du canal de sortie vers la rivière
+  const C = {
+    eau: "#2c9df0", ecume: "#8fdcff", vague: "#62c4fb",
+    sable: "#efc68b", sableBord: "#b8844c", sableOmbre: "#d9a96a",
+    vanne: "#e8402f", vanneOmbre: "#b42c20", capot: "#2b3266", bouton: "#dfe3ee",
+    canard: "#ffd23f", canardOmbre: "#e2a800", bec: "#ff8a1c", oeil: "#1d1b2e",
+    nuage: "#3b2e97",
+  };
+  const $ = id => document.getElementById(id);
+  const svg = $("scene");
+  let n = 0, N, etat, flux = [], phase = "attente";
+  let vanneAnim = [], vanneEnCours = -1, attente = 0;
+  let vu = { x: 0, y: 0, dir: 1 }, temps = 0;
+  let geo;
+
+  const CLE = "caneton-gagnes";
+  function lireGagnes() { try { return JSON.parse(localStorage.getItem(CLE)) || {}; } catch (e) { return {}; } }
+  function noterGagne(id, g) {
+    try { const m = lireGagnes(); if (!m[id] || g < m[id]) m[id] = g; localStorage.setItem(CLE, JSON.stringify(m)); } catch (e) { /* sans stockage, tant pis */ }
+  }
+
+  const f = v => Math.round(v * 1000) / 1000;
+  const Y = y => -y;
+  function rect(x0, y0, x1, y1, fill, extra) {
+    return `<rect x="${f(Math.min(x0, x1))}" y="${f(Y(Math.max(y0, y1)))}" width="${f(Math.abs(x1 - x0))}" height="${f(Math.abs(y1 - y0))}" fill="${fill}" ${extra || ""}/>`;
+  }
+
+  // --- la géométrie fixe d'un niveau ---------------------------------
+  function geometrie() {
+    const P = E.passages(N);
+    let xmin = Infinity, xmax = -Infinity, ymin = Infinity, ymax = -Infinity;
+    N.bassins.forEach(b => {
+      xmin = Math.min(xmin, b.x0 - T); xmax = Math.max(xmax, b.x1 + T);
+      ymin = Math.min(ymin, b.fond - T); ymax = Math.max(ymax, b.haut);
+    });
+    const sortie = P.findIndex(p => p.vers === RIV);
+    let riv = null;
+    if (sortie >= 0) {
+      const p = P[sortie], b = N.bassins[p.de];
+      const dir = p.x === b.x1 ? 1 : -1;
+      const mur = p.x + dir * T, bout = mur + dir * CANAL;
+      const h = N.riviere.niveau;
+      const rx0 = dir > 0 ? bout - 0.5 : bout - 4.2, rx1 = dir > 0 ? bout + 4.2 : bout + 0.5;
+      riv = { j: sortie, dir, mur, bout, h, rx0, rx1, mere: dir > 0 ? bout + 2.4 : bout - 2.4 };
+      xmin = Math.min(xmin, rx0); xmax = Math.max(xmax, rx1);
+      ymin = Math.min(ymin, h - 2.2);
+    }
+    const m = 0.6;
+    return { P, riv, vb: [xmin - m, Y(ymax + 1.6), xmax - xmin + 2 * m, ymax - ymin + 1.6 + m] };
+  }
+
+  // Ce qu'un passage retire d'un mur : [bas, haut] dans le mur x du bassin i.
+  function trousDuMur(i, x) {
+    const t = [];
+    geo.P.forEach(p => {
+      if (p.type !== "porte" || Math.abs(p.x - x) > 1e-9) return;
+      if (p.de === i || p.vers === i) t.push([p.seuil, p.toit]);
+    });
+    return t;
+  }
+  function trousDuFond(i) {
+    return geo.P.filter(p => p.type === "trappe" && p.de === i).map(p => [p.x0, p.x1]);
+  }
+  function segments(a, b, trous) {
+    let morceaux = [[a, b]];
+    for (const [t0, t1] of trous) {
+      morceaux = morceaux.flatMap(([u, v]) => {
+        if (t1 <= u || t0 >= v) return [[u, v]];
+        const r = [];
+        if (t0 > u) r.push([u, t0]);
+        if (t1 < v) r.push([t1, v]);
+        return r;
+      });
+    }
+    return morceaux.filter(([u, v]) => v - u > 1e-6);
+  }
+  function pierre(x0, y0, x1, y1) {
+    return rect(x0, y0, x1, y1, C.sable, `rx="0.12" stroke="${C.sableBord}" stroke-width="0.07"`);
+  }
+
+  function dessinerDecor() {
+    const [vx, vy, vw, vh] = geo.vb;
+    svg.setAttribute("viewBox", `${f(vx)} ${f(vy)} ${f(vw)} ${f(vh)}`);
+    let d = "";
+    // quelques nuages sourds au fond
+    for (let k = 0; k < 4; k++) {
+      const cx = vx + vw * (0.15 + 0.27 * k), cy = vy + vh * (k % 2 ? 0.82 : 0.12);
+      d += `<ellipse cx="${f(cx)}" cy="${f(cy)}" rx="${f(vw * 0.22)}" ry="${f(vh * 0.06)}" fill="${C.nuage}"/>`;
+    }
+    $("decor").innerHTML = d;
+
+    let m = "";
+    N.bassins.forEach((b, i) => {
+      for (const [u, v] of segments(b.fond - T, b.haut, trousDuMur(i, b.x0))) m += pierre(b.x0 - T, u, b.x0, v);
+      for (const [u, v] of segments(b.fond - T, b.haut, trousDuMur(i, b.x1))) m += pierre(b.x1, u, b.x1 + T, v);
+      for (const [u, v] of segments(b.x0 - T, b.x1 + T, trousDuFond(i))) m += pierre(u, b.fond - T, v, b.fond);
+    });
+    if (geo.riv) {
+      const r = geo.riv, p = geo.P[r.j];
+      m += pierre(Math.min(r.mur, r.bout) - 0.05, p.seuil - T, Math.max(r.mur, r.bout), p.seuil);
+      // la berge sous le canal, jusqu'à la rivière
+      const bx = r.dir > 0 ? r.mur : r.bout - 0.2;
+      m += rect(bx, r.h - 2.2, bx + 0.2 + (r.dir > 0 ? r.bout - r.mur - 0.5 : 0), p.seuil - T, C.sableOmbre, `rx="0.1"`);
+      m += pierre(r.rx0 - 0.1, r.h - 2.2, r.rx1, r.h - 1.6);
+    }
+    $("murs").innerHTML = m;
+  }
+
+  // --- ce qui bouge ---------------------------------------------------
+  function vague(x0, x1, h, phase0) {
+    let d = "";
+    for (let x = x0; x <= x1 + 1e-6; x += 0.25) {
+      const y = h - 0.22 + 0.05 * Math.sin(x * 3.1 + temps * 2.2 + phase0);
+      d += (d ? "L" : "M") + f(x) + " " + f(Y(y));
+    }
+    return `<path d="${d}" fill="none" stroke="${C.vague}" stroke-width="0.06" stroke-linecap="round"/>`;
+  }
+  function nappe(x0, x1, bas, h, k) {
+    if (h - bas < 0.01) return "";
+    let s = rect(x0, bas, x1, h, C.eau);
+    s += rect(x0, Math.max(bas, h - 0.12), x1, h, C.ecume);
+    if (h - bas > 0.5) s += vague(x0 + 0.15, x1 - 0.15, h, k);
+    return s;
+  }
+  function jet(x0, x1, haut, bas) {
+    if (haut - bas < 0.01) return "";
+    let s = rect(x0, bas, x1, haut, C.eau, `opacity="0.92"`);
+    s += rect(x0 + (x1 - x0) * 0.25, bas, x0 + (x1 - x0) * 0.45, haut, C.ecume, `opacity="0.7"`);
+    // l'écume à l'arrivée
+    const cx = (x0 + x1) / 2;
+    for (let k = 0; k < 3; k++) {
+      const a = temps * 7 + k * 2.1;
+      s += `<circle cx="${f(cx + Math.sin(a) * 0.35)}" cy="${f(Y(bas + 0.12 + Math.abs(Math.cos(a)) * 0.25))}" r="${f(0.09 + 0.04 * k)}" fill="${C.ecume}"/>`;
+    }
+    return s;
+  }
+  function dessinerEau() {
+    let s = "";
+    const niv = i => E.niveau(N, etat, i);
+    if (geo.riv) s += nappe(geo.riv.rx0, geo.riv.rx1, geo.riv.h - 1.6, geo.riv.h, 9);
+    N.bassins.forEach((b, i) => { s += nappe(b.x0, b.x1, b.fond, niv(i), i); });
+    // l'eau dans les ouvertures et les cascades
+    geo.P.forEach((p, j) => {
+      if (!etat.ouvert[j]) return;
+      const ha = niv(p.de), hb = niv(p.vers), q = Math.abs(flux[j] || 0);
+      const dir = q && flux[j] < 0 ? -1 : 1;     // > 0 : de → vers
+      const src = dir > 0 ? p.de : p.vers, dst = dir > 0 ? p.vers : p.de;
+      const hs = dir > 0 ? ha : hb, hd = dir > 0 ? hb : ha;
+      const w = Math.min(0.7, Math.max(0.14, Math.sqrt(q) * 1.6));
+      if (p.type === "trappe") {
+        if (q > 0 && dst !== RIV) {
+          const c = (p.x0 + p.x1) / 2, demi = Math.min((p.x1 - p.x0) / 2, w);
+          s += jet(c - demi, c + demi, N.bassins[p.de].fond, hd);
+        }
+        return;
+      }
+      const b = N.bassins[p.de];
+      const sens = p.x === b.x1 ? 1 : -1;
+      const mx0 = sens > 0 ? p.x : p.x - T, mx1 = sens > 0 ? p.x + T : p.x;
+      const partage = p.vers !== RIV && (N.bassins[p.vers].x0 === p.x || N.bassins[p.vers].x1 === p.x);
+      const gx0 = partage ? p.x - T : mx0, gx1 = partage ? p.x + T : mx1;
+      const dessus = Math.min(p.toit, Math.max(ha, hb));
+      if (dessus > p.seuil + 0.01 && (q > 0 || Math.min(ha, hb) > p.seuil)) {
+        const plein = q > 0 && hd < p.seuil ? Math.min(dessus, p.seuil + w * 0.7) : Math.min(p.toit, Math.min(ha, hb) > p.seuil ? Math.min(ha, hb) : dessus);
+        s += nappe(gx0, gx1, p.seuil, Math.max(plein, p.seuil), 20 + j);
+      }
+      if (q > 0 && hd < p.seuil) {
+        if (dst === RIV) {
+          const r = geo.riv, lo = Math.min(r.mur, r.bout), hi = Math.max(r.mur, r.bout);
+          s += rect(lo, p.seuil, hi, p.seuil + w * 0.6, C.eau);
+          const xa = r.dir > 0 ? r.bout : r.bout - w, xb = xa + w;
+          s += jet(xa, xb, p.seuil + w * 0.6, r.h);
+        } else {
+          const xd = src === p.de ? (sens > 0 ? gx1 : gx0 - w) : (sens > 0 ? gx0 - w : gx1);
+          s += jet(xd, xd + w, p.seuil + w * 0.7, hd);
+        }
+      }
+    });
+    $("eau").innerHTML = s;
+  }
+
+  function dessinerVannes() {
+    let s = "";
+    geo.P.forEach((p, j) => {
+      if (!p.vanne) return;
+      const t = vanneAnim[j];
+      const ferme = !etat.ouvert[j] && j !== vanneEnCours;
+      const pulse = ferme && phase === "attente" ? 1 + 0.06 * Math.sin(temps * 5) : 1;
+      if (p.type === "trappe") {
+        const b = N.bassins[p.de];
+        const dx = t * (p.x1 - p.x0 + 0.3), y0 = b.fond - T - 0.1, y1 = b.fond + 0.1;
+        const x0 = p.x0 - 0.15 + dx, x1 = p.x1 + 0.15 + dx;
+        s += `<g class="cible" data-j="${j}" opacity="${t > 0.99 ? 0.55 : 1}">`;
+        s += rect(p.x0 - 0.5, b.fond - 1, p.x1 + 0.5, b.fond + 0.9, "transparent");
+        s += rect(x0, y0, x1, y1, C.vanne, `rx="0.1" stroke="${C.vanneOmbre}" stroke-width="0.06"`);
+        s += rect(x0, y0, x0 + 0.24, y1, C.capot, `rx="0.08"`) + rect(x1 - 0.24, y0, x1, y1, C.capot, `rx="0.08"`);
+        const cx = (x0 + x1) / 2, cy = Y((y0 + y1) / 2);
+        s += `<circle cx="${f(cx)}" cy="${f(cy)}" r="${f(0.17 * pulse)}" fill="${C.bouton}"/>`;
+        s += `<path d="M${f(cx - 0.3)} ${f(cy)}l0.12 -0.1v0.2z M${f(cx + 0.3)} ${f(cy)}l-0.12 -0.1v0.2z" fill="#fff"/>`;
+        s += `</g>`;
+      } else {
+        const b = N.bassins[p.de];
+        const sens = p.x === b.x1 ? 1 : -1;
+        const partage = p.vers !== RIV && (N.bassins[p.vers].x0 === p.x || N.bassins[p.vers].x1 === p.x);
+        const cx = partage ? p.x : p.x + sens * T / 2;
+        const dy = t * (p.toit - p.seuil + 0.3);
+        const y0 = p.seuil - 0.15 + dy, y1 = p.toit + 0.15 + dy;
+        const x0 = cx - 0.3, x1 = cx + 0.3;
+        s += `<g class="cible" data-j="${j}" opacity="${t > 0.99 ? 0.55 : 1}">`;
+        s += rect(cx - 0.9, p.seuil - 0.4, cx + 0.9, p.toit + 0.4, "transparent");
+        s += rect(x0, y0, x1, y1, C.vanne, `rx="0.1" stroke="${C.vanneOmbre}" stroke-width="0.06"`);
+        s += rect(x0 - 0.04, y0, x1 + 0.04, y0 + 0.26, C.capot, `rx="0.08"`) + rect(x0 - 0.04, y1 - 0.26, x1 + 0.04, y1, C.capot, `rx="0.08"`);
+        const cy = Y((y0 + y1) / 2);
+        s += `<circle cx="${f(cx)}" cy="${f(cy)}" r="${f(0.17 * pulse)}" fill="${C.bouton}"/>`;
+        if (y1 - y0 > 1.3) s += `<path d="M${f(cx)} ${f(cy - 0.32)}l-0.11 0.13h0.22z M${f(cx)} ${f(cy + 0.32)}l-0.11 -0.13h0.22z" fill="#fff"/>`;
+        s += `</g>`;
+      }
+    });
+    $("vannes").innerHTML = s;
+  }
+
+  function canard(x, y, dir, taille) {
+    return `<g transform="translate(${f(x)} ${f(Y(y))}) scale(${f(dir * taille)} ${f(taille)})">
+      <path d="M-0.62 -0.28 L-0.86 -0.55 L-0.5 -0.42 Z" fill="${C.canardOmbre}"/>
+      <ellipse cx="0" cy="-0.22" rx="0.6" ry="0.34" fill="${C.canard}" stroke="${C.canardOmbre}" stroke-width="0.05"/>
+      <ellipse cx="-0.1" cy="-0.27" rx="0.28" ry="0.15" fill="${C.canardOmbre}" opacity="0.45"/>
+      <circle cx="0.34" cy="-0.72" r="0.3" fill="${C.canard}" stroke="${C.canardOmbre}" stroke-width="0.05"/>
+      <path d="M0.58 -0.74 L0.92 -0.66 L0.58 -0.58 Z" fill="${C.bec}"/>
+      <circle cx="0.44" cy="-0.8" r="0.06" fill="${C.oeil}"/>
+    </g>`;
+  }
+  function ciblePourCaneton() {
+    const k = etat.canard.b;
+    if (k === RIV) return { x: geo.riv.mere - geo.riv.dir * 1.1, y: geo.riv.h };
+    const b = N.bassins[k];
+    return { x: etat.canard.x, y: Math.max(b.fond, E.niveau(N, etat, k)) };
+  }
+  function dessinerCanards() {
+    let s = "";
+    if (geo.riv) s += canard(geo.riv.mere, geo.riv.h + 0.03 * Math.sin(temps * 2), -geo.riv.dir, 1.35);
+    const c = ciblePourCaneton();
+    const dx = c.x - vu.x;
+    if (Math.abs(dx) > 0.01) vu.dir = Math.sign(dx);
+    vu.x += dx * 0.22;
+    vu.y += (c.y - vu.y) * (c.y < vu.y ? 0.3 : 0.22);
+    s += canard(vu.x, vu.y + 0.04 * Math.sin(temps * 3), vu.dir, 0.9);
+    $("canards").innerHTML = s;
+  }
+
+  // --- le jeu ---------------------------------------------------------
+  function majHud() {
+    $("titre").innerHTML = `Niveau <b>${N.id}</b> · ${N.titre}`;
+    $("conseil").textContent = N.conseil || "";
+    $("gestes").innerHTML = `gestes <b>${etat.gestes.length}</b> · par ${N.par}`;
+  }
+  function charger(i) {
+    n = i; N = NIVEAUX[n];
+    etat = E.charger(N);
+    flux = E.passages(N).map(() => 0);
+    vanneAnim = E.passages(N).map(p => p.vanne ? 0 : 1);
+    vanneEnCours = -1; phase = "attente"; attente = 0;
+    geo = geometrie();
+    const c = ciblePourCaneton();
+    vu = { x: c.x, y: c.y, dir: 1 };
+    $("v-fin").hidden = true; $("v-niveaux").hidden = true;
+    dessinerDecor(); majHud();
+  }
+  function toucher(j) {
+    if (phase !== "attente" || etat.ouvert[j]) return;
+    vanneEnCours = j; phase = "vanne";
+  }
+  function finDeCoup() {
+    phase = "attente";
+    flux = flux.map(() => 0);
+    majHud();
+    if (E.gagne(etat)) { phase = "gagne"; attente = 50; return; }
+    if (E.resoudre(N, etat) === null) montrerFin(false);
+  }
+  function montrerFin(victoire) {
+    const g = etat.gestes.length;
+    $("fin-titre").textContent = victoire ? "Le caneton a retrouvé sa maman !" : "Le caneton est coincé";
+    $("fin-texte").textContent = victoire
+      ? (g <= N.par ? `En ${g} gestes : parfait.` : `En ${g} gestes (par ${N.par}).`)
+      : "Plus aucune vanne ne peut l'emmener jusqu'à la rivière.";
+    const suivant = n + 1 < NIVEAUX.length;
+    $("fin-boutons").innerHTML = victoire
+      ? `<button class="bouton" data-act="rejouer">Rejouer</button>` + (suivant ? `<button class="bouton vert" data-act="suivant">Niveau suivant</button>` : "")
+      : `<button class="bouton vert" data-act="rejouer">Recommencer</button>`;
+    if (victoire) noterGagne(N.id, g);
+    $("v-fin").hidden = false;
+  }
+  let dernier = 0;
+  function etape(ts) {
+    dernier = ts;
+    temps = ts / 1000;
+    if (phase === "vanne") {
+      vanneAnim[vanneEnCours] = Math.min(1, vanneAnim[vanneEnCours] + 0.07);
+      if (vanneAnim[vanneEnCours] >= 1) {
+        etat = E.ouvrir(N, etat, vanneEnCours);
+        vanneEnCours = -1; phase = "eau"; majHud();
+      }
+    } else if (phase === "eau") {
+      const r = E.tick(N, etat);
+      etat = r.e; flux = r.flux;
+      if (r.calme) finDeCoup();
+    } else if (phase === "gagne" && --attente <= 0) {
+      phase = "fini"; montrerFin(true);
+    }
+    dessinerEau(); dessinerVannes(); dessinerCanards();
+  }
+  function image(ts) { etape(ts); requestAnimationFrame(image); }
+  // Pour la vérification headless : avancer de n images sans attendre l'écran.
+  function avancer(n) { for (let k = 0; k < n; k++) etape(dernier + 1000 / 60); }
+
+  svg.addEventListener("pointerdown", ev => {
+    const g = ev.target.closest(".cible");
+    if (g) { ev.preventDefault(); toucher(+g.dataset.j); }
+  });
+  $("b-recommencer").onclick = () => charger(n);
+  $("b-niveaux").onclick = () => {
+    const m = lireGagnes();
+    $("liste").innerHTML = NIVEAUX.map((L, i) =>
+      `<button class="bouton${m[L.id] ? " vert" : ""}" data-i="${i}"><span>${L.id} · ${L.titre}</span><span>${m[L.id] ? m[L.id] + " gestes" : ""}</span></button>`).join("");
+    $("v-niveaux").hidden = false;
+  };
+  $("liste").onclick = ev => { const b = ev.target.closest("[data-i]"); if (b) charger(+b.dataset.i); };
+  $("b-fermer").onclick = () => { $("v-niveaux").hidden = true; };
+  $("fin-boutons").onclick = ev => {
+    const b = ev.target.closest("[data-act]");
+    if (!b) return;
+    charger(b.dataset.act === "suivant" ? n + 1 : n);
+  };
+
+  window.__caneton = { E, etat: () => etat, phase: () => phase, niveau: () => N, charger, toucher, avancer };
+  charger(0);
+  requestAnimationFrame(image);
+})();
+</script>
+</body>
+</html>

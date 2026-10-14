@@ -167,6 +167,11 @@ jour qui perd la partie d'un joueur est un bug bloquant, pas un détail.
   `prototypes/` le tient hors de Station 7) : elle lit `niveaux.json` et
   `oracle.json`, que `node tools/ecluses-vers-godot.mjs` DÉRIVE de la page web
   — ne jamais les éditer à la main.
+  `prototype-caneton.html` est une autre idée sur le même thème : un caneton
+  flotte, monte et descend avec l'eau qu'on lâche en ouvrant des vannes.
+  Son banc, `node tools/caneton-banc.mjs`, joue TOUS les ordres de gestes
+  (les vannes ne font que s'ouvrir) et refuse si le `par` ou l'intention
+  `ordres` (« tous » gagnent, ou « certains » seulement) n'est pas tenu.
 - `data/worldmap.js` — généré depuis Natural Earth, jamais édité à la main.
 
 ## Détail connu

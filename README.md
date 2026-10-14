@@ -92,7 +92,10 @@ prototypes/                   Prototypes de mécanique, une page chacun, hors du
                               « Nuit de fête » (banc d'essai : node tools/fete-banc.mjs) ;
                               « Écluses », une autre idée de jeu, un puzzle d'eau
                               (banc d'essai : node tools/ecluses-banc.mjs), et sa
-                              tranche Godot, ecluses-godot/ (voir son README)
+                              tranche Godot, ecluses-godot/ (voir son README) ;
+                              « Caneton », sa cousine : un caneton flotte et suit
+                              l'eau qu'on lâche en ouvrant des vannes
+                              (banc d'essai : node tools/caneton-banc.mjs)
 ```
 
 ## Ajouter une gare
