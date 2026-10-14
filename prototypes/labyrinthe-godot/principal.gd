@@ -700,6 +700,10 @@ func _arrondir_levres() -> void:
 				continue
 			var t := 1.0 - clampf(d / ARRONDI, 0.0, 1.0)
 			var courbe := amont - (amont - bord) * t * t
+			if d < 0.0:
+				# au-delà du bord (le polygone déborde un peu), la surface suit
+				# déjà le dessus de la nappe, sans palier
+				courbe = maxf(bord + d * pente_levre[o], M.o_y0[o])
 			hs[k] = lerpf(hs[k], courbe, smoothstep(0.0, 0.6, t))
 			ps[k] = 0.0; ls[k] = 1.0
 		_hauts[src] = hs; _profs[src] = ps; _liseres[src] = ls
@@ -946,33 +950,37 @@ func _dessiner_chutes() -> void:
 			continue
 		var portee := pied.x - xb
 		var alpha := clampf(0.55 + I * 8.0, 0.6, 0.95)      # un filet reste clair sur le fond sombre
+		# La nappe a deux bords, chacun une parabole : le dessus part du haut de
+		# la lèvre, dans la pente de la surface arrondie, et devient la face
+		# extérieure ; le dessous part du coin même du seuil et devient la face
+		# contre la paroi. Au bord, la nappe a donc exactement la tranche
+		# verticale de l'eau qui la nourrit — pas de décalage, pas de marche.
+		var bas_y := y_seuil - largeur * 0.5
+		var haut_y := y_seuil + largeur * 0.5
+		var w_pied := largeur * 0.55
+		var x_dessus := pied.x + dir * w_pied * 0.5
+		var x_dessous := pied.x - dir * w_pied * 0.5
+		if (x_dessous - xb) * dir < 0.02:
+			x_dessous = xb + dir * 0.02
+		var chute_h := haut_y - pied.y
+		var chute_b := maxf(bas_y - pied.y, 0.0)
+		var a_h := 0.0 if tuyau else clampf(pente_levre[o] * absf(x_dessus - xb), 0.0, chute_h * 0.6)
 		var g := PackedVector2Array()
 		var d := PackedVector2Array()
 		var long := PackedFloat64Array()
+		# un point d'avance, caché sous l'eau du bassin (ou dans le tuyau)
+		var recul := 0.12 if tuyau else 0.03
+		g.append(ecran(xb - dir * recul, haut_y)); d.append(ecran(xb - dir * recul, bas_y)); long.append(0.0)
 		var l := 0.0
-		# la parabole part dans le prolongement de la surface arrondie :
-		# y = y_seuil − a·s − b·s², de pente initiale celle de la lèvre
-		var a := 0.0 if tuyau else clampf(pente_levre[o] * absf(portee), 0.0, chute * 0.6)
-		var b := chute - a
-		# du tuyau, la nappe naît cachée sous lui ; d'une lèvre, elle part du
-		# bord même, à la couleur de l'eau qu'elle prolonge
-		var avant := Vector2(xb - dir * (0.12 if tuyau else 0.02), y_seuil + (0.0 if tuyau else a * 0.02 / maxf(absf(portee), 0.01)))
-		for i in segments + 2:
-			var p: Vector2
-			var tangente: Vector2
-			if i == 0:
-				p = avant; tangente = Vector2(portee, -a).normalized()
-			else:
-				var s := float(i - 1) / segments
-				p = Vector2(xb + portee * s, y_seuil - a * s - b * s * s)
-				tangente = Vector2(portee, -a - 2.0 * b * s).normalized()
-				if tangente == Vector2.ZERO: tangente = Vector2(dir, 0.0)
-			l += p.distance_to(avant) if i > 0 else 0.0
-			avant = p
-			var s2 := maxf(0.0, float(i - 1) / segments)
-			var demi := largeur * 0.5 * (1.0 - 0.45 * s2)
-			var n := Vector2(-tangente.y, tangente.x) * demi
-			g.append(ecran(p.x + n.x, p.y + n.y)); d.append(ecran(p.x - n.x, p.y - n.y)); long.append(l)
+		var avant := Vector2(xb - dir * recul, y_seuil)
+		for i in segments + 1:
+			var t := float(i) / segments
+			var ph := Vector2(lerpf(xb, x_dessus, t), haut_y - a_h * t - (chute_h - a_h) * t * t)
+			var pb := Vector2(lerpf(xb, x_dessous, t), bas_y - chute_b * t * t)
+			var milieu := (ph + pb) * 0.5
+			l += milieu.distance_to(avant)
+			avant = milieu
+			g.append(ecran(ph.x, ph.y)); d.append(ecran(pb.x, pb.y)); long.append(l)
 		# COLOR.r : 1 pour une nappe qui prolonge l'eau d'un bassin (le shader la
 		# fond dans sa couleur au départ), 0 pour le jet du robinet
 		# COLOR.g : 1 pour un filet presque tari, que le shader égrène en gouttes
@@ -982,7 +990,7 @@ func _dessiner_chutes() -> void:
 		var m := 0.0
 		if not tuyau and _ref_vue.size() == M.nb and _ref_vue[src] != -INF:
 			m = clampf((_ref_vue[src] - y_seuil) / 8.0, 0.0, 1.0)
-		_tracer_ruban(g, d, long, Color(0.0 if tuyau else 1.0, filet, m, alpha), dir)
+		_tracer_ruban(g, d, long, Color(0.0 if tuyau else 1.0, filet, m, alpha), 1.0)   # g : toujours le dessus
 	_jets_noyes()
 
 

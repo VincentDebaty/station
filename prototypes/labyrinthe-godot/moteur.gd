@@ -294,13 +294,13 @@ func _ecouler(e: Etat, dt: float) -> float:
 # La portée d'une cascade de l'ouverture o, de src vers dst, en cases depuis
 # la paroi. Un jet de Torricelli irait à 2·√(charge × chute) ; une nappe qui
 # déborde d'un seuil sort bien plus lentement, et Vincent la voulait plus
-# verticale (14 oct. 2026) : √(charge × chute), bornée à 0,45 case. La vague
+# verticale (14 oct. 2026) : 0,6·√(charge × chute), bornée à 0,3 case. La vague
 # du bassin d'arrivée part de là, et le rendu y fait tomber la nappe.
 func portee(e: Etat, o: int, src: int, dst: int) -> float:
 	var y0 := o_y0[o]
 	var tete := clampf(charge(e, src) - y0, 0.0, o_y1[o] - y0)
 	var chute := maxf(0.0, y0 - maxf(charge(e, dst), float(b_bas[dst])))
-	return clampf(sqrt(tete * chute), 0.05, 0.45)
+	return clampf(0.6 * sqrt(tete * chute), 0.04, 0.3)
 
 
 func _vannes(e: Etat, dt: float) -> bool:
