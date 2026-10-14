@@ -1,9 +1,13 @@
 // L'eau du labyrinthe : chaque bassin est un polygone dont le bord du haut
 // suit la surface à ressorts du moteur. Le polygone porte, dans UV :
 //   UV.x  l'abscisse, en cases (continue d'un bassin à l'autre) ;
-//   UV.y  la profondeur sous la surface locale, en cases (0 à la surface).
+//   UV.y  la profondeur sous la surface locale, en cases (0 à la surface) ;
+// et dans COLOR.r la profondeur sous la surface de toute la MASSE d'eau (les
+// bassins reliés), sur 8 cases : la teinte en dépend, si bien qu'elle reste
+// continue d'un bassin à l'autre — l'eau se lit d'un seul tenant.
 // D'où :
-//   - un dégradé : cyan lumineux en surface, bleu plus profond vers le fond ;
+//   - un dégradé : cyan lumineux en surface, bleu plus profond vers le fond,
+//     compté depuis la surface de la masse ;
 //   - un liseré clair d'épaisseur constante à l'écran, qui scintille par
 //     endroits, là où un bruit lent passe un seuil ;
 //   - des reflets : de fins traits clairs juste sous la surface, tirés d'un
@@ -39,8 +43,9 @@ float bruit(vec2 p) {
 
 void fragment() {
 	float x = UV.x;
-	float p = max(UV.y, 0.0);
-	vec4 c = mix(eau_claire, eau_fonce, smoothstep(0.0, profondeur_fonce, p));
+	float p = max(UV.y, 0.0);                    // sous la surface locale : liseré, reflets
+	float masse = COLOR.r * 8.0;                 // sous la surface de la masse d'eau : la teinte
+	vec4 c = mix(eau_claire, eau_fonce, smoothstep(0.0, profondeur_fonce, masse));
 
 	// les reflets : des traits fins, allongés, qui dérivent sous la surface
 	float n = bruit(vec2(x * 2.4 + TIME * 0.22, p * 16.0 - TIME * 0.12));
@@ -51,7 +56,7 @@ void fragment() {
 
 	// la lumière en profondeur : des voiles très doux qui ondulent
 	float voile = bruit(vec2(x * 1.5 + sin(TIME * 0.31 + p * 1.7) * 0.5, p * 1.2 - TIME * 0.18));
-	c.rgb += (voile - 0.5) * 0.07 * smoothstep(0.5, 1.6, p);
+	c.rgb += (voile - 0.5) * 0.07 * smoothstep(0.5, 1.6, masse);
 
 	// le liseré de surface, d'épaisseur constante, qui scintille par endroits
 	float d_px = p * case_px;

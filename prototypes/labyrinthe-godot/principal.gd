@@ -403,7 +403,54 @@ func _surface_vue(a: int, x: float) -> float:
 	return h + ONDULATION * (sin(x * 2.3 + temps * 1.7) * 0.6 + sin(x * 5.1 - temps * 2.3) * 0.4)
 
 
+# Les masses d'eau : les bassins reliés par de l'eau (les deux côtés d'une
+# ouverture mouillés au-dessus de son seuil) forment une seule masse, et la
+# profondeur se compte depuis SA surface — la plus haute surface libre de la
+# masse. Ainsi la teinte est continue d'un bassin à l'autre, et un bassin
+# plein sous un plafond n'a ni surface ni liseré : il est le fond de la masse.
+var _masse := PackedInt32Array()
+var _reference := PackedFloat64Array()
+
+func _masses() -> void:
+	_masse.resize(M.nb)
+	for a in M.nb:
+		_masse[a] = a
+	for o in M.o_a.size():
+		var a := M.o_a[o]
+		var b := M.o_b[o]
+		if e.vol[a] < 0.004 or e.vol[b] < 0.004:
+			continue
+		if minf(M.niveau_bassin(e, a), M.niveau_bassin(e, b)) <= M.o_y0[o] + 0.02:
+			continue
+		var ra := _racine(a)
+		var rb := _racine(b)
+		if ra != rb:
+			_masse[maxi(ra, rb)] = mini(ra, rb)
+	_reference.resize(M.nb)
+	_reference.fill(-INF)
+	var plafond := PackedFloat64Array(); plafond.resize(M.nb); plafond.fill(-INF)
+	for a in M.nb:
+		if e.vol[a] < 0.004:
+			continue
+		var r := _racine(a)
+		if M.libre(e, a):
+			_reference[r] = maxf(_reference[r], M.niveau_bassin(e, a))
+		plafond[r] = maxf(plafond[r], float(M.b_haut[a]))
+	for a in M.nb:
+		if _reference[a] == -INF:
+			_reference[a] = plafond[a]
+
+func _teinte(ref: float, y: float) -> Color:
+	return Color(clampf((ref - y) / 8.0, 0.0, 1.0), 0.0, 0.0, 1.0)
+
+func _racine(a: int) -> int:
+	while _masse[a] != a:
+		a = _masse[a]
+	return a
+
+
 func _dessiner_eau() -> void:
+	_masses()
 	var blanc := Color.WHITE
 	for a in M.nb:
 		var vol := e.vol[a]
@@ -412,10 +459,12 @@ func _dessiner_eau() -> void:
 		var x0 := float(M.b_x[a]) - 0.04
 		var x1 := float(M.b_x[a]) + 1.04
 		var bas := float(M.b_bas[a]) - 0.04
+		var ref := _reference[_racine(a)]
 		var pts := PackedVector2Array()
 		var uvs := PackedVector2Array()
 		var cols := PackedColorArray()
 		var tops := PackedFloat64Array()
+		var prof := PackedFloat64Array()          # la profondeur de chaque point du haut, sous la surface de la masse
 		var xs := PackedFloat64Array()
 		if M.libre(e, a):
 			for p in Moteur.POINTS + 1:
@@ -423,15 +472,22 @@ func _dessiner_eau() -> void:
 				xs.append(x)
 				# jamais sous le fond : un creux de vague ne retourne pas le polygone
 				tops.append(maxf(_surface_vue(a, clampf(x, float(M.b_x[a]), float(M.b_x[a]) + 1.0)), bas + 0.01))
+				prof.append(0.0)
 		else:
-			# plein sous un plafond : jusqu'au plafond ; presque à sec : une pellicule à plat
-			var h := float(M.b_haut[a]) + 0.04 if vol >= M.capacite(a) - 1e-6 else maxf(M.niveau_bassin(e, a), bas + 0.01)
-			xs.append(x0); tops.append(h); xs.append(x1); tops.append(h)
-		# le fond, de gauche à droite, puis la surface, de droite à gauche
-		pts.append(ecran(x0, bas)); uvs.append(Vector2(x0, tops[0] - bas)); cols.append(blanc)
-		pts.append(ecran(x1, bas)); uvs.append(Vector2(x1, tops[tops.size() - 1] - bas)); cols.append(blanc)
+			# plein sous un plafond : jusqu'au plafond, sans surface ; presque à sec : une pellicule à plat
+			var plein := vol >= M.capacite(a) - 1e-6
+			var h := float(M.b_haut[a]) + 0.04 if plein else maxf(M.niveau_bassin(e, a), bas + 0.01)
+			var p_haut := maxf(ref - h, 0.12) if plein else 0.0
+			xs.append(x0); tops.append(h); prof.append(p_haut)
+			xs.append(x1); tops.append(h); prof.append(p_haut)
+		# le fond, de gauche à droite, puis le haut, de droite à gauche. UV.y :
+		# la profondeur sous la surface locale (liseré, reflets) ; COLOR.r : la
+		# profondeur sous la surface de la masse, sur 8 cases (la teinte, continue
+		# d'un bassin à l'autre)
+		pts.append(ecran(x0, bas)); uvs.append(Vector2(x0, prof[0] + tops[0] - bas)); cols.append(_teinte(ref, bas))
+		pts.append(ecran(x1, bas)); uvs.append(Vector2(x1, prof[prof.size() - 1] + tops[tops.size() - 1] - bas)); cols.append(_teinte(ref, bas))
 		for i in range(xs.size() - 1, -1, -1):
-			pts.append(ecran(xs[i], tops[i])); uvs.append(Vector2(xs[i], 0.0)); cols.append(blanc)
+			pts.append(ecran(xs[i], tops[i])); uvs.append(Vector2(xs[i], prof[i])); cols.append(_teinte(ref, tops[i]))
 		eau.draw_polygon(pts, cols, uvs)
 
 
