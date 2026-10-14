@@ -543,6 +543,48 @@ func _raccorder() -> void:
 				hs[k] = maxf(h, float(M.b_bas[cote]) - 0.03)
 			_hauts[cote] = hs; _profs[cote] = ps
 
+# La lèvre d'une chute : l'épaisseur de la nappe au moment où elle passe le
+# bord — les deux tiers de l'eau au-dessus du seuil (la surface s'abaisse en
+# approchant du bord, comme au-dessus d'un vrai déversoir).
+func _levre(o: int) -> float:
+	var tete := clampf(M.charge(e, chute_src[o]) - M.o_y0[o], 0.0, M.o_y1[o] - M.o_y0[o])
+	return clampf(tete * 0.7, 0.03, 0.5)
+
+# La surface du bassin qui déverse s'arrondit en approchant du bord, jusqu'à
+# l'épaisseur de la nappe : l'eau qui part et l'eau qui tombe ne font qu'un.
+const ARRONDI := 0.45        # en cases, avant le bord
+var pente_levre := PackedFloat64Array()
+
+func _arrondir_levres() -> void:
+	pente_levre.resize(M.o_a.size())
+	pente_levre.fill(0.0)
+	for o in M.o_a.size():
+		if not _chute_active(o):
+			continue
+		var src := chute_src[o]
+		if _xs[src] == null:
+			continue
+		var bord := M.o_y0[o] + _levre(o)
+		# une chute qui s'éteint alors que l'aval est déjà remonté au seuil
+		# n'est plus dessinée : sa lèvre non plus
+		if M.o_y0[o] + _levre(o) * 0.5 - _arrivee(o).y < 0.05:
+			continue
+		var dir := 1.0 if chute_dst[o] == M.o_b[o] else -1.0
+		var xb := float(M.b_x[M.o_b[o]])
+		var xs: PackedFloat64Array = _xs[src]
+		var hs: PackedFloat64Array = _hauts[src]
+		var ps: PackedFloat64Array = _profs[src]
+		# la pente de l'arrondi au bord : la nappe part dans son prolongement
+		pente_levre[o] = maxf(0.0, 2.0 * (_haut_en(src, xb - dir * ARRONDI) - bord) / ARRONDI)
+		for k in xs.size():
+			var d := (xb - xs[k]) * dir          # la distance au bord, côté source
+			if d > ARRONDI or hs[k] <= bord:
+				continue
+			var t := 1.0 - clampf(d / ARRONDI, 0.0, 1.0)
+			hs[k] -= (hs[k] - bord) * t * t
+			ps[k] = 0.0
+		_hauts[src] = hs; _profs[src] = ps
+
 func _haut_en(a: int, x: float) -> float:
 	var xs: PackedFloat64Array = _xs[a]
 	var hs: PackedFloat64Array = _hauts[a]
@@ -555,6 +597,7 @@ func _dessiner_eau() -> void:
 	_masses()
 	_hauts_d_eau()
 	_raccorder()
+	_arrondir_levres()
 	for a in M.nb:
 		if _xs[a] == null:
 			continue
@@ -703,10 +746,12 @@ func _dessiner_chutes() -> void:
 		var dir := 1.0 if dst == M.o_b[o] else -1.0
 		var xb := float(M.b_x[M.o_b[o]])
 		var y0 := M.o_y0[o]
-		var tete := clampf(M.charge(e, src) - y0, 0.0, M.o_y1[o] - y0)
-		var largeur := clampf(0.035 + sqrt(I) * 1.0, 0.035, 0.42)
-		var y_seuil := y0 + clampf(minf(tete, largeur) * 0.5, 0.02, 0.25)
-		if _dans_le_tuyau(src):
+		# la nappe part du seuil avec l'épaisseur de la lèvre : son bord du bas
+		# sur le seuil, son bord du haut sur la surface arrondie
+		var largeur := _levre(o)
+		var y_seuil := y0 + largeur * 0.5
+		var tuyau := _dans_le_tuyau(src)
+		if tuyau:
 			# le jet sort du tuyau, à sa hauteur, pas plus large que lui
 			var v: Dictionary = M.vannes[robinet_de[src]]
 			largeur = minf(largeur, 0.3)
@@ -722,16 +767,22 @@ func _dessiner_chutes() -> void:
 		var d := PackedVector2Array()
 		var long := PackedFloat64Array()
 		var l := 0.0
-		var avant := Vector2(xb - dir * 0.12, y_seuil)
+		# la parabole part dans le prolongement de la surface arrondie :
+		# y = y_seuil − a·s − b·s², de pente initiale celle de la lèvre
+		var a := 0.0 if tuyau else clampf(pente_levre[o] * absf(portee), 0.0, chute * 0.6)
+		var b := chute - a
+		# du tuyau, la nappe naît cachée sous lui ; d'une lèvre, elle part du
+		# bord même, à la couleur de l'eau qu'elle prolonge
+		var avant := Vector2(xb - dir * (0.12 if tuyau else 0.02), y_seuil + (0.0 if tuyau else a * 0.02 / maxf(absf(portee), 0.01)))
 		for i in segments + 2:
 			var p: Vector2
 			var tangente: Vector2
 			if i == 0:
-				p = avant; tangente = Vector2(dir, 0.0)
+				p = avant; tangente = Vector2(portee, -a).normalized()
 			else:
 				var s := float(i - 1) / segments
-				p = Vector2(xb + portee * s, y_seuil - chute * s * s)
-				tangente = Vector2(portee, -2.0 * chute * s).normalized()
+				p = Vector2(xb + portee * s, y_seuil - a * s - b * s * s)
+				tangente = Vector2(portee, -a - 2.0 * b * s).normalized()
 				if tangente == Vector2.ZERO: tangente = Vector2(dir, 0.0)
 			l += p.distance_to(avant) if i > 0 else 0.0
 			avant = p
@@ -739,12 +790,14 @@ func _dessiner_chutes() -> void:
 			var demi := largeur * 0.5 * (1.0 - 0.45 * s2)
 			var n := Vector2(-tangente.y, tangente.x) * demi
 			g.append(ecran(p.x + n.x, p.y + n.y)); d.append(ecran(p.x - n.x, p.y - n.y)); long.append(l)
-		var col := Color(1, 1, 1, alpha)
+		# COLOR.r : 1 pour une nappe qui prolonge l'eau d'un bassin (le shader la
+		# fond dans sa couleur au départ), 0 pour le jet du robinet
+		var col := Color(0.0 if tuyau else 1.0, 1, 1, alpha)
 		var cols := PackedColorArray([col, col, col, col])
 		var cols3 := PackedColorArray([col, col, col])
 		for i in g.size() - 1:
 			var quad := PackedVector2Array([g[i], g[i + 1], d[i + 1], d[i]])
-			var uv := PackedVector2Array([Vector2(long[i], -1.0), Vector2(long[i + 1], -1.0), Vector2(long[i + 1], 1.0), Vector2(long[i], 1.0)])
+			var uv := PackedVector2Array([Vector2(long[i], -dir), Vector2(long[i + 1], -dir), Vector2(long[i + 1], dir), Vector2(long[i], dir)])
 			if not Geometry2D.triangulate_polygon(quad).is_empty():
 				chutes.draw_polygon(quad, cols, uv)
 			else:
@@ -882,20 +935,25 @@ var _script_vu := false
 func _capturer() -> void:
 	if not _script_vu:
 		_script_vu = true
-	if OS.get_environment("LABY_DEMO") == "chute":
-		# une chute haute : la vidange de gauche tenue d'abord (le bassin de
-		# gauche se vide), puis le robinet tenu, qui retombe de haut
+	var demo := OS.get_environment("LABY_DEMO")
+	if demo != "":
+		# « chute », une chute haute : la vidange de gauche tenue d'abord (le
+		# bassin de gauche se vide), puis le robinet tenu, qui retombe de haut.
+		# « deversoir » : le robinet tenu remplit tout, puis la vidange de droite
+		# tenue fait déborder le couloir dans la colonne de droite
+		var premier := 1 if demo == "chute" else 0
+		var second := 0 if demo == "chute" else 2
 		if image == 10:
-			appui = 1; appui_depuis = image; _taper(1)
+			appui = premier; appui_depuis = image; _taper(premier)
 		if image == 200:
 			appui = -1
 		if image == 230:
-			_taper(0); appui = 0; appui_depuis = image
+			_taper(second); appui = second; appui_depuis = image
 		_pas()
 		acc = 0.0
 		if a_capturer.has(image):
 			await RenderingServer.frame_post_draw
-			get_viewport().get_texture().get_image().save_png("%s/chute-%03d.png" % [capture, image])
+			get_viewport().get_texture().get_image().save_png("%s/%s-%03d.png" % [capture, demo, image])
 		if image > a_capturer.max() + 2:
 			get_tree().quit()
 		return

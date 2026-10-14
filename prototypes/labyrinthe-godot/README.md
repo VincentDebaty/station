@@ -125,3 +125,7 @@ Cette commande joue la solution toute seule, avec le robinet tenu, photographie
 huit images et quitte. Elle a besoin d'une fenêtre : `--headless` ne rend rien.
 Avec `LABY_DEMO=chute`, elle vide d'abord le bassin de gauche puis tient le
 robinet : on y voit une chute haute, à fort débit, avec tous ses effets.
+Avec `LABY_DEMO=deversoir`, le robinet tenu remplit tout, puis la vidange de
+droite tenue fait passer le couloir du haut par-dessus son bord : on y juge la
+lèvre d'une chute (la surface qui s'arrondit au bord, la nappe de la même
+épaisseur que l'eau qui part).
