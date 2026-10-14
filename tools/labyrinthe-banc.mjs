@@ -30,7 +30,8 @@
 //
 // LES INVARIANTS — à chaque pas d'eau de parties jouées au hasard, une
 // violation est un bug du moteur, pas un réglage :
-//   I1  l'eau se compte : dans la grille = départ + versé − sorti − vidé
+//   I1  l'eau se compte : dans la grille = départ + versé − sorti − vidé,
+//       à 1e-9 case près
 //   I2  aucune masse négative, aucun NaN
 //   I3  la même suite de tapes donne le même état
 //   I4  la boule reste dans une case ouverte de la grille
@@ -39,11 +40,13 @@
 // LES MESURES — en information, pas des refus : le point de départ du plan
 // d'essai sur le rendu de l'eau (reports/Animation de fluides pour jeu.md) :
 //   M1  la butte : le plus grand écart de hauteur entre les surfaces libres
-//       d'un même corps d'eau, pendant 10 unités versées en appui long
-//       (après les vidanges de la solution), en cases
+//       d'un même corps d'eau posée, pendant 10 unités versées en appui long
+//       (après les vidanges de la solution), en cases — hors de la case du
+//       robinet : c'est sa bouche, l'eau y est plus haute puisqu'elle en sort
 //   M2  le tube en U : images pour que deux colonnes reliées par le fond
 //       se mettent de niveau (écart < 0,05 case), l'une pleine, l'autre vide
-//   M3  le repos : images entre une tape et le repos, sur la solution
+//   M3  le repos : images entre une tape et le repos, sur la solution, et
+//       le relief des nappes une fois au repos (une eau au repos est plate)
 // ------------------------------------------------------------------
 import { readFileSync } from "node:fs";
 import { createContext, runInContext } from "node:vm";
@@ -117,7 +120,7 @@ function invariants(G, e, ou) {
   }
   dedans /= G.S2;                                   // en cases du labyrinthe
   const attendu = G0.eau + e.verse - e.sorti - e.vide;
-  if (Math.abs(dedans - attendu) > 1e-6) v.push(`I1 ${ou} : ${dedans.toFixed(6)} d'eau, attendu ${attendu.toFixed(6)}`);
+  if (Math.abs(dedans - attendu) > 1e-9) v.push(`I1 ${ou} : ${dedans.toFixed(6)} d'eau, attendu ${attendu.toFixed(6)}`);
   if (!L.ouvert(G, Math.floor(e.b.x), Math.floor(e.b.y)) && !e.gagne) v.push(`I4 ${ou} : boule en ${e.b.x.toFixed(2)},${e.b.y.toFixed(2)}`);
   return v;
 }
@@ -189,23 +192,25 @@ dire(!viol.length, `I1-I5 invariants à chaque pas de ${PARTIES} parties de ${TA
 console.log(`    au hasard : ${Math.round(100 * gagnees / PARTIES)} % des parties sortent la boule`);
 
 // --- les mesures -------------------------------------------------------
-// Le relief d'une nappe : dans chaque corps d'eau (petites cases mouillées
-// reliées par un côté), l'écart entre sa surface libre la plus haute et la
-// plus basse. Une surface libre : de l'eau posée, de l'air au-dessus.
+// Le relief d'une nappe : dans chaque corps d'eau POSÉE (petites cases
+// mouillées, sur un mur ou sur de l'eau pleine, reliées par un côté), l'écart
+// entre sa surface libre la plus haute et la plus basse. L'eau qui tombe ne
+// relie rien : une chute d'un rebord à une nappe n'est pas une butte.
 function relief(M, e) {
   const g = L.prep(M), W = g.SW, m = e.m, corps = new Int32Array(m.length).fill(-1);
+  const posee = i => i < W || g.fmur[i - W] || m[i - W] >= 0.95;
+  const bouche = new Set(g.vannes.filter(v => v.type === "robinet").flatMap(v => v.bloc));
   let n = 0, pire = 0;
   for (let i0 = 0; i0 < m.length; i0++) {
-    if (g.fmur[i0] || m[i0] <= 0.01 || corps[i0] >= 0) continue;
+    if (g.fmur[i0] || m[i0] <= 0.01 || corps[i0] >= 0 || !posee(i0)) continue;
     const pile = [i0]; corps[i0] = n;
     let haut = -Infinity, bas = Infinity;
     while (pile.length) {
       const i = pile.pop(), x = i % W, y = (i - x) / W;
-      const posee = y === 0 || g.fmur[i - W] || m[i - W] >= 0.95;
       const air = y + 1 < g.SH && !g.fmur[i + W] && m[i + W] <= 0.01;
-      if (posee && air) { const h = (y + Math.min(1, m[i])) / g.S; haut = Math.max(haut, h); bas = Math.min(bas, h); }
+      if (air && !bouche.has(i)) { const h = (y + Math.min(1, m[i])) / g.S; haut = Math.max(haut, h); bas = Math.min(bas, h); }
       for (const j of [i - 1, i + 1, i - W, i + W]) {
-        if (j < 0 || j >= m.length || corps[j] >= 0 || g.fmur[j] || m[j] <= 0.01) continue;
+        if (j < 0 || j >= m.length || corps[j] >= 0 || g.fmur[j] || m[j] <= 0.01 || !posee(j)) continue;
         if ((j === i - 1 && x === 0) || (j === i + 1 && x === W - 1)) continue;
         corps[j] = n; pile.push(j);
       }
@@ -246,9 +251,10 @@ function relief(M, e) {
 {
   let e = L.charger(N);
   const durees = [];
-  for (const k of sol) { const avant = e.pas; e = L.jouer(N, e, k); durees.push(e.pas - avant); }
+  let plat = 0;
+  for (const k of sol) { const avant = e.pas; e = L.jouer(N, e, k); durees.push(e.pas - avant); if (!e.gagne) plat = Math.max(plat, relief(N, e)); }
   const moy = durees.reduce((a, b) => a + b, 0) / durees.length;
-  console.log(`    M3 repos : ${moy.toFixed(0)} images en moyenne entre une tape et le repos, ${Math.max(...durees)} au plus`);
+  console.log(`    M3 repos : ${moy.toFixed(0)} images en moyenne entre une tape et le repos, ${Math.max(...durees)} au plus ; au repos, relief des nappes ${plat.toFixed(3)} case au plus`);
 }
 console.log(echecs ? `\n${echecs} échec(s).` : "\nTout est vert.");
 process.exit(echecs ? 1 : 0);

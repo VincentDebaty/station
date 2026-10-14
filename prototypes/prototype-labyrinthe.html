@@ -176,6 +176,7 @@ const Labyrinthe = (function () {
   const RESSORT = 0.08, AMORTI = 0.8, PESANTEUR = 0.02, CHUTE_MAX = 0.3;
   const PORTE = 2.5;       // la boule prend cette part de la vitesse de l'eau qui l'entoure
   const SUIT = 0.1;        // et s'y accorde à ce rythme
+  const ATTIRE = 1.5;      // elle sent le courant jusqu'à cette distance, en cases
   const FROTTE = 0.85;     // au sec, elle s'arrête
   // ---- repos ----
   const CALME = 2e-4, CALME_PAS = 30, MAXPAS = 6000;
@@ -252,11 +253,14 @@ const Labyrinthe = (function () {
   //   2. l'étalement : une case posée (sur un mur ou sur de l'eau pleine)
   //      partage avec ses voisines de côté — l'eau qui arrive au bord d'un
   //      vide y passe et tombe ;
-  //   3. la pression : dans un corps d'eau pleine, la surface la plus haute
-  //      pousse vers la plus basse, à travers le corps — les vases
-  //      communicants. Le courant est compté le long du chemin.
+  //   3. la pression : un corps d'eau pleine n'a qu'un niveau. Sa surface
+  //      la plus haute verse dans la plus basse, de moitié d'écart en
+  //      moitié d'écart, jusqu'à être à plat — les vases communicants, sans
+  //      butte sous un robinet. Le courant est compté le long du chemin.
   // fx[i] : ce qui passe de i vers la droite ; fy[i] : de i vers le haut.
-  const PLEIN = 0.99, VIDE = 0.005, PRESSION = 0.2, ECART = 0.02, ETALE = 3;
+  const PLEIN = 0.99, VIDE = 0.005, ECART = 0.02, ETALE = 3;
+  const NIVELLE_MAX = 0.4;     // ce qu'un corps d'eau fait passer en un pas de calcul, en petites cases (½ case du labyrinthe par image)
+  const NIVELLE_FOIS = 24;   // et en combien de versements au plus
   function eau(N, e) {
     const G = prep(N), W = G.SW, H = G.SH, n = e.m;
     let total = 0;
@@ -310,40 +314,53 @@ const Labyrinthe = (function () {
         if (!vu[j] && !G.fsortie[j] && n[j] >= PLEIN) { vu[j] = 1; corps.push(j); }
       }
       const dans = new Set(corps);
-      // ses surfaces : où il peut descendre (donne) ou monter (reçoit)
-      const surf = [];
+      // ses surfaces : les cases où sa surface libre peut monter (reçoit) ;
+      // tant qu'elle est vide, l'eau qui en descend vient de la case pleine
+      // dessous (k). Une sortie est une surface qui avale tout.
+      const surf = [], vues = new Set();
       for (const k of corps) for (const j of voisins(G, k)) {
-        if (dans.has(j)) continue;
+        if (dans.has(j) || vues.has(j)) continue;
         const y = Math.floor(j / W), dessous = j - W;
-        if (G.fsortie[j]) { surf.push({ donne: -1, recoit: j, h: y }); continue; }
+        if (G.fsortie[j]) { vues.add(j); surf.push({ k, recoit: j, sortie: true }); continue; }
         const posee = y === 0 || G.fmur[dessous] || dans.has(dessous) || n[dessous] >= PLEIN;
         const dessus = j + W, airDessus = y + 1 >= G.SH || G.fmur[dessus] || n[dessus] <= VIDE;
-        if (posee && airDessus && n[j] > VIDE) surf.push({ donne: j, recoit: j, h: y + n[j] });
-        else if (posee && airDessus) surf.push({ donne: k, recoit: j, h: y });
+        if (posee && airDessus) { vues.add(j); surf.push({ k, recoit: j, sortie: false }); }
       }
       if (!surf.length) continue;
-      let haut = null, bas = null;
-      for (const t of surf) {
-        if (t.donne >= 0 && n[t.donne] > VIDE && (!haut || t.h > haut.h)) haut = t;
-        if (!bas || t.h < bas.h) bas = t;
-      }
+      const hauteur = s => Math.floor(s.recoit / W) + (s.sortie ? 0 : n[s.recoit]);
+      const donneur = s => n[s.recoit] > VIDE ? s.recoit : s.k;
+      const plusBasse = () => { let b = surf[0]; for (const s of surf) if (hauteur(s) < hauteur(b)) b = s; return b; };
       // une case trop pleine (le robinet dans un corps fermé) pousse son
       // surplus à travers le corps, jusqu'à la surface la plus basse
       for (const k of corps) {
         const surplus = n[k] - 1;
-        if (surplus <= 1e-4 || k === bas.recoit) continue;
+        if (surplus <= 1e-4) continue;
+        const bas = plusBasse();
+        if (k === bas.recoit) continue;
         const q = Math.min(surplus, 0.5);
         n[k] -= q; n[bas.recoit] += q; total += q;
         courant(G, e, k, bas.recoit, dans, q);
       }
-      // puis la surface la plus haute pousse vers la plus basse
-      if (!haut || haut.recoit === bas.recoit) continue;
-      const dh = haut.h - bas.h;
-      if (dh <= ECART) continue;
-      const q = Math.min(n[haut.donne], PRESSION * dh, 0.5);
-      if (q <= 1e-9) continue;
-      n[haut.donne] -= q; n[bas.recoit] += q; total += q;
-      courant(G, e, haut.donne, bas.recoit, dans, q);
+      // LE NIVELLEMENT : le corps n'a qu'un niveau. Tant que sa surface la
+      // plus haute dépasse la plus basse, on verse de l'une dans l'autre la
+      // moitié de l'écart — les deux se rejoignent — jusqu'à être à plat, ou
+      // jusqu'au débit qu'un corps peut faire passer en un pas.
+      let deplace = 0;
+      for (let fois = 0; fois < NIVELLE_FOIS && deplace < NIVELLE_MAX; fois++) {
+        let haut = null, bas = null, hh = -Infinity, hb = Infinity;
+        for (const s of surf) {
+          const h = hauteur(s);
+          if (!s.sortie && n[donneur(s)] > VIDE && h > hh) { haut = s; hh = h; }
+          if (h < hb) { bas = s; hb = h; }
+        }
+        if (!haut || haut === bas || hh - hb <= ECART) break;
+        const de = donneur(haut);
+        let q = Math.min(n[de], (hh - hb) / 2, NIVELLE_MAX - deplace);
+        if (!bas.sortie) q = Math.min(q, 1 - n[bas.recoit]);
+        if (q <= 1e-9) break;
+        n[de] -= q; n[bas.recoit] += q; total += q; deplace += q;
+        courant(G, e, de, bas.recoit, dans, q);
+      }
     }
     return total;
   }
@@ -466,10 +483,13 @@ const Labyrinthe = (function () {
       const cible = nv.plafond ? nv.h - RAYON : nv.h + FLOTTE;
       b.vy += (cible - b.y) * RESSORT * dt;
       b.vy *= puissance(AMORTI, dt);
-      // le courant le plus fort parmi les faces à moins d'une case de son centre
-      const y0 = b.y - RAYON, y1 = Math.min(b.y + RAYON, nv.h);
+      // le courant le plus fort parmi les faces à moins d'une case et demie
+      // de son centre — une boule près d'une sortie d'eau y est aspirée —,
+      // dans la bande où elle trempe et une petite case en dessous (l'eau
+      // qui file sous elle l'entraîne aussi)
+      const y0 = b.y - RAYON - 1 / S, y1 = Math.min(b.y + RAYON, nv.h);
       let u = 0;
-      for (let fxc = Math.floor((b.x - 1) * S); fxc <= Math.floor((b.x + 1) * S); fxc++) {
+      for (let fxc = Math.floor((b.x - ATTIRE) * S); fxc <= Math.floor((b.x + ATTIRE) * S); fxc++) {
         if (fxc < 0 || fxc + 1 >= G.SW) continue;
         const v = vitesse(G, e, fxc, y0, y1);
         if (Math.abs(v) > Math.abs(u)) u = v;

@@ -62,7 +62,7 @@ var boule_n: Node2D
 var compteur: Label
 
 var capture := ""
-var a_capturer := [30, 150, 190, 215, 240, 280, 330, 380]
+var a_capturer := [190, 205, 220, 240, 300, 330, 350, 375]
 var images_rendues := 0
 
 
