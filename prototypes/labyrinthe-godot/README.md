@@ -64,9 +64,15 @@ pleinement jusqu'à une case, puis s'affaiblit jusqu'à 2,2 cases.
 
 Une ouverture forme une cascade quand le bassin d'arrivée est plus bas que
 son seuil.
-- **La portée** est calculée par le moteur (`Moteur.portee`), à la manière de
-  Torricelli : 2·√(charge au-dessus du seuil × hauteur de chute). La vague de
-  la surface d'arrivée part de ce point, et la nappe y tombe en parabole.
+- **La portée** est calculée par le moteur (`Moteur.portee`) :
+  √(charge au-dessus du seuil × hauteur de chute), bornée à 0,45 case — la
+  moitié d'un jet de Torricelli, car une nappe qui déborde sort lentement et
+  Vincent la voulait plus verticale. La vague de la surface d'arrivée part de
+  ce point, et la nappe y tombe en parabole.
+- **Un puits** (deux colonnes voisines reliées par une ouverture haute) se
+  dessine à un niveau commun, celui que donne son volume : le moteur laisse un
+  retard entre les deux colonnes quand on vide par le fond, qui se voyait
+  comme une bosse. La boule suit l'eau dessinée.
 - **Le débit lissé** règle tout l'effet. Il monte vite et retombe doucement :
   une chute qui s'arrête s'amincit puis s'éteint.
 

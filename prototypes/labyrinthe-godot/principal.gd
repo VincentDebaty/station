@@ -407,8 +407,10 @@ func _dessiner_murs() -> void:
 # vagues), raccordée au voisin lié sur leur bord commun, plus une houle de
 # repos très légère, purement visuelle.
 func _surface_vue(a: int, x: float) -> float:
-	var h := M.surface_en(e, a, x)
-	return h + ONDULATION * (sin(x * 2.3 + temps * 1.7) * 0.6 + sin(x * 5.1 - temps * 2.3) * 0.4)
+	return M.surface_en(e, a, x) + _houle(x)
+
+func _houle(x: float) -> float:
+	return ONDULATION * (sin(x * 2.3 + temps * 1.7) * 0.6 + sin(x * 5.1 - temps * 2.3) * 0.4)
 
 
 # Les masses d'eau : les bassins reliés par de l'eau (les deux côtés d'une
@@ -479,7 +481,65 @@ var _profs: Array = []       # la profondeur du point sous la surface locale (0 
                              # sous un plafond, sa profondeur sous la surface de la masse)
 var _liseres: Array = []     # 1 : le point est sur une surface libre et porte le liseré
 
+# Les puits : deux colonnes voisines reliées par une ouverture haute, où l'eau
+# de la plus basse a de l'air au-dessus d'elle dans l'ouverture. Dans un vrai
+# puits, leurs niveaux s'égalisent à l'instant ; le moteur, lui, laisse un
+# retard (une colonne encore pleine sous son plafond quand sa voisine se vide
+# par le fond), qui se voyait comme une bosse. On dessine donc un puits à un
+# niveau commun, celui que donne son volume.
+var _niv_puits := PackedFloat64Array()     # par bassin : ce niveau commun, ou -INF
+
+func _puits() -> void:
+	var par := PackedInt32Array()
+	par.resize(M.nb)
+	for a in M.nb:
+		par[a] = a
+	for o in M.o_a.size():
+		var a := M.o_a[o]
+		var b := M.o_b[o]
+		if M.o_y1[o] - M.o_y0[o] < 1.5 or e.vol[a] < 0.004 or e.vol[b] < 0.004:
+			continue
+		var bas_cote := minf(M.niveau_bassin(e, a), M.niveau_bassin(e, b))
+		if bas_cote < M.o_y0[o] + 0.02 or bas_cote > M.o_y1[o] - 0.02:
+			continue
+		var ra := a
+		while par[ra] != ra: ra = par[ra]
+		var rb := b
+		while par[rb] != rb: rb = par[rb]
+		par[maxi(ra, rb)] = mini(ra, rb)
+	_niv_puits.resize(M.nb)
+	_niv_puits.fill(-INF)
+	for r in M.nb:
+		if par[r] != r:
+			continue
+		var membres: Array[int] = []
+		for a in M.nb:
+			var q := a
+			while par[q] != q: q = par[q]
+			if q == r:
+				membres.append(a)
+		if membres.size() < 2:
+			continue
+		# le volume visible (le trop-plein d'un bassin sous pression n'est que
+		# de la pression), réparti à un niveau commun, par dichotomie
+		var v := 0.0
+		var lo := INF
+		var hi := -INF
+		for a in membres:
+			v += minf(e.vol[a], M.capacite(a))
+			lo = minf(lo, float(M.b_bas[a])); hi = maxf(hi, float(M.b_haut[a]))
+		for i in 30:
+			var mi := 0.5 * (lo + hi)
+			var f := 0.0
+			for a in membres:
+				f += clampf(mi - float(M.b_bas[a]), 0.0, float(M.b_haut[a] - M.b_bas[a]))
+			if f < v: lo = mi
+			else: hi = mi
+		for a in membres:
+			_niv_puits[a] = 0.5 * (lo + hi)
+
 func _hauts_d_eau() -> void:
+	_puits()
 	_xs.resize(M.nb); _hauts.resize(M.nb); _profs.resize(M.nb); _liseres.resize(M.nb)
 	for a in M.nb:
 		var vol := e.vol[a]
@@ -500,13 +560,22 @@ func _hauts_d_eau() -> void:
 		# lit comme un bassin plein : sous le plafond, sans liseré ni reflets,
 		# de la même eau que la colonne pleine d'à côté ; elle s'en détache
 		# progressivement à mesure que l'air s'ouvre
+		var puits := _niv_puits[a]
 		var w := 1.0
-		if libre and M.b_ferme[a] == 1:
-			w = smoothstep(0.03, 0.15, float(M.b_haut[a]) - M.niveau_bassin(e, a))
+		if (libre or puits != -INF) and M.b_ferme[a] == 1:
+			w = smoothstep(0.03, 0.15, float(M.b_haut[a]) - (puits if puits != -INF else M.niveau_bassin(e, a)))
 		for k in ECHANTILLONS:
 			var x := lerpf(x0, x1, float(k) / (ECHANTILLONS - 1))
 			xs.append(x)
-			if libre:
+			if puits != -INF:
+				# au niveau commun du puits, avec les vagues du bassin s'il en a
+				var xc := clampf(x, float(M.b_x[a]), float(M.b_x[a]) + 1.0)
+				var vague := _surface_vue(a, xc) - M.niveau_bassin(e, a) if libre else _houle(xc)
+				var h := minf(maxf(puits + vague, bas + 0.01), float(M.b_haut[a]) + 0.04)
+				h = lerpf(float(M.b_haut[a]) + 0.04, h, w)
+				hs.append(h)
+				ps.append((ref - h) * (1.0 - w)); ls.append(w)
+			elif libre:
 				# jamais sous le fond : un creux de vague ne retourne pas le polygone
 				var h := maxf(_surface_vue(a, clampf(x, float(M.b_x[a]), float(M.b_x[a]) + 1.0)), bas + 0.01)
 				h = lerpf(float(M.b_haut[a]) + 0.04, h, w)
@@ -1020,13 +1089,21 @@ func _dessiner_boule() -> void:
 	var r_c := Moteur.RAYON
 	# la surface sous la boule, telle qu'on la voit ; la boule qui flotte suit
 	# aussi la petite houle de repos de l'affichage
+	# (celle qu'on a dessinée : un puits au niveau commun, une lèvre arrondie)
 	var a := _bassin_boule(x, y)
 	var eau_haut := -INF
 	if a >= 0:
-		if M.libre(e, a):
+		var dessinee := a < _xs.size() and _xs[a] != null
+		var puits := a < _niv_puits.size() and _niv_puits[a] != -INF
+		if dessinee and (M.libre(e, a) or puits):
+			eau_haut = _haut_en(a, x)
+			var moteur := M.surface_en(e, a, x) if M.libre(e, a) else float(M.b_haut[a])
+			if absf(moteur - y) < 0.5:
+				y += eau_haut - moteur
+				if M.b_ferme[a] == 1:
+					y = minf(y, float(M.b_haut[a]) - r_c)
+		elif M.libre(e, a):
 			eau_haut = _surface_vue(a, x)
-			if absf(M.surface_en(e, a, x) - y) < 0.5:
-				y += eau_haut - M.surface_en(e, a, x)
 		else:
 			eau_haut = float(M.b_haut[a]) + 1.0
 	var c := ecran(x, y)
