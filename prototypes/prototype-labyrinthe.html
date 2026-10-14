@@ -94,7 +94,7 @@ button:focus-visible { outline: 3px solid var(--or); outline-offset: 2px; }
 </div>
 <div id="infos"><span id="conseil"></span><span id="tapes"></span></div>
 <svg id="scene" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Le labyrinthe en coupe">
-  <g id="decor"></g><g id="eau"></g><g id="jets"></g><g id="vannes"></g><g id="boule"></g>
+  <g id="decor"></g><g id="eau"></g><g id="jets"></g><g id="murs"></g><g id="vannes"></g><g id="boule"></g>
 </svg>
 
 <div class="voile" id="v-fin" hidden><div class="carte">
@@ -118,8 +118,8 @@ button:focus-visible { outline: 3px solid var(--or); outline-offset: 2px; }
 {
   "titre": "Les deux étages",
   "conseil": "Le robinet remplit, les vidanges vident (appui long : en continu). La boule suit le courant.",
-  "par": 19,
-  "solution": "3111111111111111111",
+  "par": 21,
+  "solution": "331111111111111111111",
   "pieges": ["111111111111111111111111111111"],
   "grille": [
     "#SS#####",
@@ -154,7 +154,9 @@ button:focus-visible { outline: 3px solid var(--or); outline-offset: 2px; }
           pousse vers la plus basse — les vases communicants.
      La boule flotte (elle monte et descend avec la surface, bute sous un
      plafond) et prend la vitesse de l'eau qui l'entoure : un courant réel,
-     né des vannes, la porte.
+     né des vannes, la porte. Elle avance aussi en 4 petits pas par image et
+     touche les murs comme un disque : elle glisse le long d'un mur, roule
+     sur un coin, et ne passe sous un linteau que si l'eau la laisse passer.
      ------------------------------------------------------------------ -->
 <script id="moteur">
 "use strict";
@@ -233,7 +235,7 @@ const Labyrinthe = (function () {
       attente: G.vannes.map(() => 0), tapes: 0, verse: 0, sorti: 0, vide: 0, gagne: false, calme: 0, pas: 0,
       fx: new Float64Array(n), fy: new Float64Array(n),      // le courant d'une image, en petites cases
     };
-    for (let k = 0; k < 400; k++) bouger(N, e);   // la boule se pose avant que la partie commence
+    for (let k = 0; k < 400; k++) bouger(N, e, 1);   // la boule se pose avant que la partie commence
     e.b.vx = e.b.vy = 0;
     return e;
   }
@@ -411,17 +413,44 @@ const Labyrinthe = (function () {
     return mouille > 0.25 ? q / (S * mouille) : 0;
   }
 
-  function solide(G, x, y) { return !ouvert(G, Math.floor(x), Math.floor(y)); }
-  // La boule : elle flotte, tombe au sec, et l'eau qui l'entoure l'emporte.
-  function bouger(N, e) {
+  // Les murs repoussent la boule comme un disque : on cherche, pour chaque
+  // case de mur qu'elle touche, le point du mur le plus proche de son centre,
+  // et on la ressort le long de cette normale. Elle glisse le long des murs
+  // et roule sur les coins au lieu de s'y accrocher.
+  function contacts(G, b) {
+    for (let passe = 0; passe < 2; passe++) {
+      for (let cy = Math.floor(b.y - RAYON); cy <= Math.floor(b.y + RAYON); cy++) {
+        for (let cx = Math.floor(b.x - RAYON); cx <= Math.floor(b.x + RAYON); cx++) {
+          if (ouvert(G, cx, cy)) continue;
+          const px = Math.max(cx, Math.min(cx + 1, b.x)), py = Math.max(cy, Math.min(cy + 1, b.y));
+          let nx = b.x - px, ny = b.y - py;
+          const d = Math.hypot(nx, ny);
+          if (d >= RAYON) continue;
+          if (d < 1e-9) {                               // le centre est entré dans le mur : on le ressort par le côté le plus proche
+            const cotes = [[b.x - cx, -1, 0], [cx + 1 - b.x, 1, 0], [b.y - cy, 0, -1], [cy + 1 - b.y, 0, 1]].sort((p, q) => p[0] - q[0]);
+            nx = cotes[0][1]; ny = cotes[0][2];
+            b.x += nx * (cotes[0][0] + RAYON); b.y += ny * (cotes[0][0] + RAYON);
+          } else {
+            nx /= d; ny /= d;
+            b.x += nx * (RAYON - d); b.y += ny * (RAYON - d);
+          }
+          const vn = b.vx * nx + b.vy * ny;
+          if (vn < 0) { b.vx -= vn * nx; b.vy -= vn * ny; }
+        }
+      }
+    }
+  }
+  // La boule, pour une fraction dt d'image : elle flotte, tombe au sec, et
+  // l'eau qui l'entoure l'emporte. Vitesses en cases par image.
+  function bouger(N, e, dt) {
     const G = prep(N), b = e.b, S = G.S;
-    if (e.gagne) { b.y += 0.05; return; }
+    if (e.gagne) { b.y += 0.05 * dt; return; }
     const nv = niveau(N, e, b.x, b.y);
     const dansEau = nv.h !== null && nv.h > b.y - RAYON;
     if (dansEau) {
       const cible = nv.plafond ? nv.h - RAYON : nv.h + FLOTTE;
-      b.vy += (cible - b.y) * RESSORT;
-      b.vy *= AMORTI;
+      b.vy += (cible - b.y) * RESSORT * dt;
+      b.vy *= Math.pow(AMORTI, dt);
       // le courant le plus fort parmi les faces à moins d'une case de son centre
       const y0 = b.y - RAYON, y1 = Math.min(b.y + RAYON, nv.h);
       let u = 0;
@@ -430,22 +459,19 @@ const Labyrinthe = (function () {
         const v = vitesse(G, e, fxc, y0, y1);
         if (Math.abs(v) > Math.abs(u)) u = v;
       }
-      b.vx += (u * PORTE - b.vx) * SUIT;
+      b.vx += (u * PORTE - b.vx) * (1 - Math.pow(1 - SUIT, dt));
     } else {
-      b.vy = Math.max(-CHUTE_MAX, b.vy - PESANTEUR);
-      b.vx *= FROTTE;
+      b.vy = Math.max(-CHUTE_MAX, b.vy - PESANTEUR * dt);
+      b.vx *= Math.pow(FROTTE, dt);
     }
     if (Math.abs(b.vx) > 0.25) b.vx = Math.sign(b.vx) * 0.25;
-    b.x += b.vx;
-    if (solide(G, b.x + RAYON, b.y)) { b.x = Math.floor(b.x + RAYON) - RAYON - 1e-6; b.vx = 0; }
-    if (solide(G, b.x - RAYON, b.y)) { b.x = Math.floor(b.x - RAYON) + 1 + RAYON + 1e-6; b.vx = 0; }
-    b.y += b.vy;
-    if (solide(G, b.x, b.y + RAYON)) { b.y = Math.floor(b.y + RAYON) - RAYON - 1e-6; b.vy = Math.min(0, b.vy); }
-    if (solide(G, b.x, b.y - RAYON)) { b.y = Math.floor(b.y - RAYON) + 1 + RAYON + 1e-6; b.vy = Math.max(0, b.vy); }
+    b.x += b.vx * dt;
+    b.y += b.vy * dt;
+    contacts(G, b);
     if (G.sortie[idx(G, Math.floor(b.x), Math.floor(b.y))]) e.gagne = true;
   }
 
-  // Un pas de jeu (une image) : FIN pas d'eau, puis la boule.
+  // Un pas de jeu (une image) : FIN pas d'eau, puis FIN petits pas de boule.
   function pas(N, e) {
     const G = prep(N);
     e.fx.fill(0); e.fy.fill(0);
@@ -455,7 +481,7 @@ const Labyrinthe = (function () {
       flux += eau(N, e);
     }
     flux /= G.S2;                                   // en cases du labyrinthe
-    bouger(N, e);
+    for (let k = 0; k < G.S; k++) bouger(N, e, 1 / G.S);   // la boule aussi, en petits pas
     const vite = Math.abs(e.b.vx) + Math.abs(e.b.vy);
     if (!actif && flux < CALME && vite < 1e-3) e.calme++; else e.calme = 0;
     e.pas++;
@@ -495,8 +521,9 @@ const Labyrinthe = (function () {
 </script>
 
 <!-- ------------------------------------------------------------------
-     LA VUE. Joue un pas d'eau par image et dessine chaque case telle
-     qu'elle est : posée à plat, ou en filet qui tombe.
+     LA VUE. Joue un pas de jeu par image. L'eau se dessine en nappe au
+     contour lissé, liserée de clair, avec des éclaboussures là où un jet
+     frappe ; les murs passent par-dessus. La boule tourne en roulant.
      ------------------------------------------------------------------ -->
 <script id="vue">
 "use strict";
@@ -535,75 +562,120 @@ const Labyrinthe = (function () {
     const droite = G.vannes.some(v => v.type === "robinet" && v.x === W - 1) ? 2.0 : 0.7;
     const haut = G.vannes.some(v => v.type === "robinet" && v.y === H - 1 && v.x > 0 && v.x < W - 1) ? 2.1 : 1.0;
     svg.setAttribute("viewBox", `${-gauche} ${Y(H + haut)} ${W + gauche + droite} ${H + haut + 2.2}`);
-    let s = rect(-0.15, -0.15, W + 0.15, H + 0.15, C.sable, `rx="0.45" stroke="${C.sableBord}" stroke-width="0.08"`);
+    const cadre = `x="-0.15" y="${f(Y(H + 0.15))}" width="${f(W + 0.3)}" height="${f(H + 0.3)}" rx="0.45"`;
+    let s = `<rect ${cadre} fill="${C.sable}"/>`;
     for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
       const i = L.idx(G, x, y);
       if (G.mur[i]) continue;
       s += rect(x - 0.02, y - 0.02, x + 1.02, y + 1.02, G.sortie[i] ? "#33278a" : C.creux);
     }
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+      if (!G.sortie[L.idx(G, x, y)]) continue;
+      if (y === H - 1) s += `<path d="M${f(x + 0.5)} ${f(Y(y + 1.75))}l-0.38 0.42h0.24v0.36h0.28v-0.36h0.24z" fill="${C.sortie}"/>`;
+    }
+    $("decor").innerHTML = s;
+    // les murs, au-dessus de l'eau : l'eau qui touche un mur s'y enfonce un
+    // peu et c'est le mur qui la coupe net
+    let m = `<defs><clipPath id="dans-cadre"><rect ${cadre}/></clipPath></defs><g clip-path="url(#dans-cadre)">`;
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (G.mur[L.idx(G, x, y)]) m += rect(x - 0.01, y - 0.01, x + 1.01, y + 1.01, C.sable);
+    m += `</g><rect ${cadre} fill="none" stroke="${C.sableBord}" stroke-width="0.08"/>`;
     const t = `stroke="${C.sableBord}" stroke-width="0.06" stroke-linecap="round"`;
     for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
       if (G.mur[L.idx(G, x, y)]) continue;
       const mur = (dx, dy) => { const nx = x + dx, ny = y + dy; return nx >= 0 && ny >= 0 && nx < W && ny < H && !L.ouvert(G, nx, ny); };
-      if (mur(-1, 0)) s += `<line x1="${x}" y1="${Y(y)}" x2="${x}" y2="${Y(y + 1)}" ${t}/>`;
-      if (mur(1, 0)) s += `<line x1="${x + 1}" y1="${Y(y)}" x2="${x + 1}" y2="${Y(y + 1)}" ${t}/>`;
-      if (mur(0, -1)) s += `<line x1="${x}" y1="${Y(y)}" x2="${x + 1}" y2="${Y(y)}" ${t}/>`;
-      if (mur(0, 1)) s += `<line x1="${x}" y1="${Y(y + 1)}" x2="${x + 1}" y2="${Y(y + 1)}" ${t}/>`;
-    }
-    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
-      if (!G.sortie[L.idx(G, x, y)]) continue;
-      if (y === H - 1) s += `<path d="M${f(x + 0.5)} ${f(Y(y + 1.75))}l-0.38 0.42h0.24v0.36h0.28v-0.36h0.24z" fill="${C.sortie}"/>`;
+      if (mur(-1, 0)) m += `<line x1="${x}" y1="${Y(y)}" x2="${x}" y2="${Y(y + 1)}" ${t}/>`;
+      if (mur(1, 0)) m += `<line x1="${x + 1}" y1="${Y(y)}" x2="${x + 1}" y2="${Y(y + 1)}" ${t}/>`;
+      if (mur(0, -1)) m += `<line x1="${x}" y1="${Y(y)}" x2="${x + 1}" y2="${Y(y)}" ${t}/>`;
+      if (mur(0, 1)) m += `<line x1="${x}" y1="${Y(y + 1)}" x2="${x + 1}" y2="${Y(y + 1)}" ${t}/>`;
     }
     // les tuyaux, du bouton à la vanne
     G.vannes.forEach(v => {
       const b = bouton(v), cx = v.x + 0.5, cy = v.y + 0.5;
       const tu = `stroke="${C.tuyauOmbre}" stroke-width="0.05"`;
       if (v.type === "vidange") {
-        s += rect(cx - 0.17, b.y, cx + 0.17, v.y + 0.05, C.tuyau, tu);
-        for (let k = 0; k < 3; k++) s += rect(v.x + 0.18 + k * 0.24, v.y, v.x + 0.3 + k * 0.24, v.y + 0.09, C.tuyauOmbre, `rx="0.03"`);
-      } else if (b.y === cy) s += rect(Math.min(b.x, cx), cy - 0.17, Math.max(b.x, cx), cy + 0.17, C.tuyau, tu);
-      else s += rect(cx - 0.17, v.y + 0.85, cx + 0.17, b.y, C.tuyau, tu);
+        m += rect(cx - 0.17, b.y, cx + 0.17, v.y + 0.05, C.tuyau, tu);
+        for (let k = 0; k < 3; k++) m += rect(v.x + 0.18 + k * 0.24, v.y, v.x + 0.3 + k * 0.24, v.y + 0.09, C.tuyauOmbre, `rx="0.03"`);
+      } else if (b.y === cy) m += rect(Math.min(b.x, cx), cy - 0.17, Math.max(b.x, cx), cy + 0.17, C.tuyau, tu);
+      else m += rect(cx - 0.17, v.y + 0.85, cx + 0.17, b.y, C.tuyau, tu);
     });
-    $("decor").innerHTML = s;
+    $("murs").innerHTML = m;
   }
 
-  // --- l'eau : chaque petite case montre ce qu'elle contient ----------------
-  // Posée (sur un mur ou sur de l'eau pleine), elle se dessine à plat ;
-  // sinon c'est de l'eau qui tombe, en filet plus ou moins épais. Toute
-  // l'eau tient en trois tracés : le corps, les filets, l'écume des surfaces.
+  // --- l'eau : une nappe au contour lissé ------------------------------
+  // On ne dessine pas les petites cases : on en tire un champ (la part d'eau
+  // de chacune, adouci par un léger flou) et on trace la ligne où il vaut
+  // un demi — la surface — par « marching squares ». L'eau qui tombe est
+  // épaissie pour se lire en jet. Les murs, dessinés par-dessus, coupent net
+  // l'eau qui s'y enfonce. Un liseré clair souligne toute la surface.
+  const SEUIL = 0.5;
+  const BRUT = new Float32Array(G.SW * G.SH), CHAMP = new Float32Array(G.SW * G.SH);
+  function champ() {
+    const m = etat.m, W = G.SW, H = G.SH;
+    for (let i = 0; i < m.length; i++) {
+      if (G.fmur[i]) continue;
+      const a = Math.min(1, m[i]), posee = i < W || G.fmur[i - W] || m[i - W] >= 0.95;
+      BRUT[i] = posee || a < 0.06 ? a : Math.min(1, 0.55 + a);
+    }
+    for (let i = 0; i < m.length; i++) {                // un mur prend l'eau de ses voisines : elle va jusqu'à lui
+      if (!G.fmur[i]) continue;
+      const x = i % W;
+      let v = 0;
+      if (x > 0 && !G.fmur[i - 1]) v = Math.max(v, BRUT[i - 1]);
+      if (x + 1 < W && !G.fmur[i + 1]) v = Math.max(v, BRUT[i + 1]);
+      if (i >= W && !G.fmur[i - W]) v = Math.max(v, BRUT[i - W]);
+      if (i + W < m.length && !G.fmur[i + W]) v = Math.max(v, BRUT[i + W]);
+      BRUT[i] = v;
+    }
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+      let s = 0, p = 0;
+      for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+        const nx = x + dx, ny = y + dy;
+        if (nx < 0 || ny < 0 || nx >= W || ny >= H) continue;
+        const w = (dx ? 1 : 2) * (dy ? 1 : 2);
+        s += BRUT[ny * W + nx] * w; p += w;
+      }
+      const i = y * W + x;
+      CHAMP[i] = s / p;
+      if (!G.fmur[i] && BRUT[i] > m[i] + 0.01) CHAMP[i] = Math.max(CHAMP[i], BRUT[i]);   // un jet garde son épaisseur
+    }
+  }
   function dessinerEau() {
-    const m = etat.m, W = G.SW, S = G.S, p = 1 / S;
-    let corps = "", filets = "", ecume = "";
-    const r = (x0, y0, x1, y1) => `M${f(x0)} ${f(Y(y1))}H${f(x1)}V${f(Y(y0))}H${f(x0)}Z`;
-    for (let fx = 0; fx < W; fx++) {
-      let debut = -1;                                    // une colonne d'eau posée en cours
-      for (let fy = 0; fy <= G.SH; fy++) {
-        const i = fy * W + fx, a = fy < G.SH && !G.fmur[i] ? m[i] : 0;
-        const posee = a >= 0.01 && (fy === 0 || G.fmur[i - W] || m[i - W] >= 0.95);
-        if (posee && a >= 0.995 && fy + 1 < G.SH) { if (debut < 0) debut = fy; continue; }
-        const x0 = fx * p, x1 = x0 + p;
-        if (posee) {
-          if (debut < 0) debut = fy;
-          const haut = (fy + Math.min(1, a)) * p;
-          corps += r(x0 - 0.004, debut * p, x1 + 0.004, haut);
-          const dessus = fy + 1 < G.SH ? i + W : -1;
-          if (dessus >= 0 && !G.fmur[dessus] && m[dessus] < 0.05) ecume += r(x0 - 0.004, haut - 0.08, x1 + 0.004, haut);
-          debut = -1;
-          continue;
+    champ();
+    const W = G.SW, H = G.SH, p = 1 / G.S;
+    const X = i => (i + 0.5) * p, YY = j => Y((j + 0.5) * p);
+    let nappe = "", lisere = "";
+    for (let j = 0; j + 1 < H; j++) {
+      let plein = -1;                                    // une suite de carrés entièrement dans l'eau
+      for (let i = 0; i + 1 < W; i++) {
+        const v = [CHAMP[j * W + i], CHAMP[j * W + i + 1], CHAMP[(j + 1) * W + i + 1], CHAMP[(j + 1) * W + i]];
+        const coin = [[i, j], [i + 1, j], [i + 1, j + 1], [i, j + 1]];
+        const dans = v.map(a => a >= SEUIL);
+        const tous = dans.every(Boolean);
+        if (tous) { if (plein < 0) plein = i; continue; }
+        if (plein >= 0) { nappe += `M${f(X(plein))} ${f(YY(j))}H${f(X(i))}V${f(YY(j + 1))}H${f(X(plein))}Z`; plein = -1; }
+        if (!dans.some(Boolean)) continue;
+        const poly = [], croise = [];
+        for (let k = 0; k < 4; k++) {
+          const q = (k + 1) % 4;
+          if (dans[k]) poly.push(coin[k]);
+          if (dans[k] !== dans[q]) {
+            const t = (SEUIL - v[k]) / (v[q] - v[k]);
+            const pt = [coin[k][0] + (coin[q][0] - coin[k][0]) * t, coin[k][1] + (coin[q][1] - coin[k][1]) * t];
+            poly.push(pt);
+            croise.push({ pt, sort: dans[k] });
+          }
         }
-        if (debut >= 0) {                                // la colonne pleine s'arrête sous un plafond ou sous de l'eau qui tombe
-          corps += r(x0 - 0.004, debut * p, x1 + 0.004, fy * p);
-          debut = -1;
-        }
-        if (a >= 0.1) {                                  // en dessous, une trace : on ne la voit pas tomber
-          const w = Math.max(0.3, Math.min(1, a * 1.6)) * p / 2, cx = x0 + p / 2;
-          filets += r(cx - w, fy * p - 0.004, cx + w, (fy + 1) * p + 0.004);
+        nappe += "M" + poly.map(([a, b]) => `${f(X(a))} ${f(YY(b))}`).join("L") + "Z";
+        for (let c = 0; c < croise.length; c++) {          // le liseré : de chaque sortie de l'eau à l'entrée suivante
+          if (!croise[c].sort) continue;
+          const d = croise[(c + 1) % croise.length], a = croise[c].pt;
+          lisere += `M${f(X(a[0]))} ${f(YY(a[1]))}L${f(X(d.pt[0]))} ${f(YY(d.pt[1]))}`;
         }
       }
+      if (plein >= 0) nappe += `M${f(X(plein))} ${f(YY(j))}H${f(X(W - 1))}V${f(YY(j + 1))}H${f(X(plein))}Z`;
     }
-    let s = `<path d="${corps}" fill="${C.eau}"/>`;
-    if (filets) s += `<path d="${filets}" fill="${C.eau}" opacity="0.9"/>`;
-    if (ecume) s += `<path d="${ecume}" fill="${C.ecume}"/>`;
+    let s = `<path d="${nappe}" fill="${C.eau}" stroke="${C.eau}" stroke-width="0.01"/>`;
+    if (lisere) s += `<path d="${lisere}" fill="none" stroke="${C.ecume}" stroke-width="0.07" stroke-linecap="round"/>`;
     // les vidanges ouvertes tourbillonnent
     G.vannes.forEach((v, k) => {
       if (v.type !== "vidange" || etat.attente[k] <= 0) return;
@@ -614,6 +686,33 @@ const Labyrinthe = (function () {
       }
     });
     $("eau").innerHTML = s;
+  }
+
+  // --- les éclaboussures : là où un jet frappe l'eau ----------------------
+  let gouttes = [], graine = 7;
+  const hasard = () => { graine = (graine * 16807) % 2147483647; return graine / 2147483647; };
+  function dessinerGouttes() {
+    const m = etat.m, W = G.SW, p = 1 / G.S;
+    for (let i = W; i < m.length && gouttes.length < 70; i++) {
+      // un jet qui arrive sur une nappe : de l'eau qui tombe (pas posée),
+      // encore de l'eau qui tombe au-dessus, et une surface juste en dessous
+      const dessous = i - W, dessus = i + W;
+      if (G.fmur[i] || G.fmur[dessous] || dessus >= m.length || G.fmur[dessus]) continue;
+      if (m[i] < 0.1 || m[dessus] < 0.1 || m[dessous] >= 0.95 || m[dessous] < 0.3) continue;
+      if (dessous >= W && !G.fmur[dessous - W] && m[dessous - W] < 0.95) continue;
+      if (hasard() > 0.35) continue;
+      const x = (i % W + 0.5) * p, y = Math.floor(i / W) * p;
+      gouttes.push({ x, y, vx: (hasard() - 0.5) * 0.06, vy: 0.03 + hasard() * 0.05, vie: 18 + Math.floor(hasard() * 10) });
+    }
+    let s = "";
+    gouttes = gouttes.filter(g => {
+      g.x += g.vx; g.y += g.vy; g.vy -= 0.008; g.vie--;
+      const fx = Math.floor(g.x * G.S), fy = Math.floor(g.y * G.S);
+      if (g.vie <= 0 || !L.fouvert(G, fx, fy) || (g.vy < 0 && m[fy * W + fx] > 0.5)) return false;
+      s += `<circle cx="${f(g.x)}" cy="${f(Y(g.y))}" r="${f(0.035 + 0.002 * g.vie)}" fill="${C.ecume}"/>`;
+      return true;
+    });
+    $("jets").innerHTML = s;
   }
 
   // --- les vannes -----------------------------------------------------
@@ -640,12 +739,17 @@ const Labyrinthe = (function () {
     $("vannes").innerHTML = s;
   }
 
+  // La boule roule : elle tourne d'autant que son centre avance.
+  let angle = 0, xAvant = null;
   function dessinerBoule() {
     const x = etat.b.x, y = Y(etat.b.y);
+    if (xAvant !== null && Math.abs(x - xAvant) < 1) angle += (x - xAvant) / R;
+    xAvant = x;
     $("boule").innerHTML =
+      `<g transform="rotate(${f(angle * 180 / Math.PI)} ${f(x)} ${f(y)})">` +
       `<circle cx="${f(x)}" cy="${f(y)}" r="${R}" fill="${C.blanc}" stroke="${C.blancOmbre}" stroke-width="0.04"/>` +
       `<path d="M${f(x - R)} ${f(y)}a${R} ${R} 0 0 1 ${f(2 * R)} 0z" fill="${C.rouge}"/>` +
-      `<rect x="${f(x - R)}" y="${f(y - 0.04)}" width="${f(2 * R)}" height="0.08" fill="${C.rougeOmbre}"/>` +
+      `<rect x="${f(x - R)}" y="${f(y - 0.04)}" width="${f(2 * R)}" height="0.08" fill="${C.rougeOmbre}"/></g>` +
       `<circle cx="${f(x - R * 0.35)}" cy="${f(y - R * 0.5)}" r="${f(R * 0.22)}" fill="#fff" opacity="0.7"/>`;
   }
 
@@ -657,7 +761,7 @@ const Labyrinthe = (function () {
     $("b-annuler").disabled = !histoire.length;
   }
   function charger() {
-    histoire = []; fini = false; attente = 0; appui = null;
+    histoire = []; fini = false; attente = 0; appui = null; gouttes = []; xAvant = null;
     $("v-fin").hidden = true;
     etat = L.charger(N);
     majHud();
@@ -695,7 +799,7 @@ const Labyrinthe = (function () {
     if (appui && !fini && image_n - appui.depuis >= APPUI_LONG && etat.attente[appui.k] < 0.05) taper(appui.k);
     L.pas(N, etat);
     if (etat.gagne && !fini) { fini = true; appui = null; attente = 70; }
-    dessinerEau(); dessinerVannes(); dessinerBoule();
+    dessinerEau(); dessinerGouttes(); dessinerVannes(); dessinerBoule();
     if (attente > 0 && --attente === 0) montrerFin();
   }
   function image(ts) { etape(ts); requestAnimationFrame(image); }
