@@ -14,8 +14,8 @@
    LABYRINTHE D'EAU — prototype jouable d'un puzzle d'eau, hors de Station.
 
    Une boule flotte dans un labyrinthe vu en coupe. Trois vannes : le
-   robinet verse une unité d'eau par tape (un appui long verse en
-   continu), les vidanges en retirent une. L'eau coule pour de vrai, case
+   robinet verse une unité d'eau par tape, les vidanges en retirent une ;
+   un appui long verse ou vide en continu. L'eau coule pour de vrai, case
    à case, et la boule suit son courant. En remplissant et en vidant, on
    mène la boule jusqu'à la sortie.
 
@@ -117,7 +117,7 @@ button:focus-visible { outline: 3px solid var(--or); outline-offset: 2px; }
 <script type="application/json" id="niveau">
 {
   "titre": "Les deux étages",
-  "conseil": "Le robinet remplit (appui long : en continu), les vidanges vident. La boule suit le courant.",
+  "conseil": "Le robinet remplit, les vidanges vident (appui long : en continu). La boule suit le courant.",
   "par": 21,
   "solution": "331111111111111111111",
   "pieges": ["111111111111111111111111111111"],
@@ -160,6 +160,7 @@ button:focus-visible { outline: 3px solid var(--or); outline-offset: 2px; }
 const Labyrinthe = (function () {
   // ---- réglages de l'eau ----
   const DEBIT = 0.1;       // ce qu'un robinet verse, ou qu'une vidange retire, par pas
+  const SEC = 0.05;        // sous cette eau, une vidange n'a plus rien à prendre : la tape est refusée
   const UNITE = 1;         // une tape = une case d'eau
   // ---- réglages de la boule ----
   const RAYON = 0.34;
@@ -434,7 +435,7 @@ const Labyrinthe = (function () {
   function taper(N, e0, k) {
     const G = prep(N), v = G.vannes[k];
     if (e0.gagne) return null;
-    if (v.type === "vidange" && e0.m[v.i] <= 1e-6 && e0.attente[k] <= 0) return null;
+    if (v.type === "vidange" && e0.m[v.i] < SEC && e0.attente[k] <= 0) return null;   // presque à sec : rien à vider
     const e = copie(e0);
     e.attente[k] += UNITE;
     e.tapes++;
@@ -476,8 +477,7 @@ const Labyrinthe = (function () {
     robinet: "#3f8ff0", robinetOmbre: "#2560b8", vidange: "#f08a24", vidangeOmbre: "#c0651a",
     tuyau: "#8a8fae", tuyauOmbre: "#5c6080", sortie: "#ffc93c",
   };
-  const APPUI_LONG = 18;    // images avant que l'appui long verse en continu
-  const CADENCE = 10;       // puis une unité toutes les CADENCE images (le débit du robinet)
+  const APPUI_LONG = 18;    // images avant que l'appui long verse (ou vide) en continu
   const $ = id => document.getElementById(id);
   const svg = $("scene");
   const f = v => Math.round(v * 1000) / 1000;
@@ -641,11 +641,10 @@ const Labyrinthe = (function () {
   let dernier = 0;
   function etape(ts) {
     dernier = ts; temps = ts / 1000; image_n++;
-    // l'appui long sur un robinet verse en continu, au débit du robinet
-    if (appui && !fini) {
-      const d = image_n - appui.depuis;
-      if (d >= APPUI_LONG && (d - APPUI_LONG) % CADENCE === 0) taper(appui.k);
-    }
+    // l'appui long verse ou vide en continu : une unité de plus dès que la
+    // précédente est passée — au débit de la vanne, et une vidange qui peine
+    // (presque à sec) ne compte pas plus de tapes que d'eau sortie
+    if (appui && !fini && image_n - appui.depuis >= APPUI_LONG && etat.attente[appui.k] < 0.05) taper(appui.k);
     L.pas(N, etat);
     if (etat.gagne && !fini) { fini = true; appui = null; attente = 70; }
     dessinerEau(); dessinerVannes(); dessinerBoule();
@@ -661,7 +660,7 @@ const Labyrinthe = (function () {
     ev.preventDefault();
     const k = +g.dataset.k;
     taper(k);
-    if (G.vannes[k].type === "robinet") appui = { k, depuis: image_n };
+    appui = { k, depuis: image_n };
   });
   const lacher = () => { appui = null; };
   window.addEventListener("pointerup", lacher);

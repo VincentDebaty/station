@@ -173,8 +173,8 @@ jour qui perd la partie d'un joueur est un bug bloquant, pas un détail.
   (les vannes ne font que s'ouvrir) et refuse si le `par` ou l'intention
   `ordres` (« tous » gagnent, ou « certains » seulement) n'est pas tenu.
   `prototype-labyrinthe.html` le remplace dans l'exploration : une boule
-  flotte dans un labyrinthe en cases, une tape de robinet = une case d'eau
-  (appui long : en continu), une tape de vidange en retire une. L'eau coule
+  flotte dans un labyrinthe en cases, une tape de robinet = une case d'eau,
+  une tape de vidange en retire une (appui long : en continu, sur les deux). L'eau coule
   pour de vrai (chute, étalement, pression) et la boule suit son courant.
   Son banc, `node tools/labyrinthe-banc.mjs`, rejoue la solution écrite,
   refuse si une suite plus courte que le `par` gagne (fouille limitée à trois
