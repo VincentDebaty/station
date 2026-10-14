@@ -129,3 +129,21 @@ Avec `LABY_DEMO=deversoir`, le robinet tenu remplit tout, puis la vidange de
 droite tenue fait passer le couloir du haut par-dessus son bord : on y juge la
 lèvre d'une chute (la surface qui s'arrondit au bord, la nappe de la même
 épaisseur que l'eau qui part).
+
+Pour traquer les défauts sur toute une manœuvre, `LABY_GESTES` joue une suite
+de gestes écrite à la main et photographie une image toutes les 0,2 s
+(`LABY_TOUTES=12` images du moteur), jusqu'à `LABY_FIN`, sous le nom
+`LABY_NOM`. Un geste `image:k` tape la vanne k (0 le robinet, 1 et 2 les
+vidanges), `image:+k` la tient, `image:-` la relâche :
+
+```bash
+LABY_NOM=A LABY_GESTES="10:+0 250:- 280:+1" LABY_FIN=1000 LABY_CAPTURE=/un/dossier godot --path prototypes/labyrinthe-godot --resolution 600x1300
+```
+
+Les cinq manœuvres du 14 octobre 2026 : tout remplir puis vider à gauche
+(`10:+0 250:- 280:+1`), à droite (`… 280:+2`), en alternant les deux
+vidanges une tape toutes les 40 images, vider à droite puis verser puis
+vider à gauche (`10:+2 200:- 220:+0 400:- 420:+1`), et la solution
+(`30:2 100:2 170:2 240:+0`). On les monte en planches et on les regarde
+image par image. `LABY_DEBUG=<image>` imprime l'état de chaque bassin à
+cette image (niveau, masse, référence de teinte).

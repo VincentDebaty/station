@@ -13,6 +13,8 @@ extends Node2D
 #
 # LABY_CAPTURE=<dossier> joue la solution toute seule, photographie quelques
 # images puis quitte (vérification sans les doigts, en fenêtre).
+# Avec LABY_GESTES, il joue une manœuvre écrite à la main et photographie
+# une image toutes les 0,2 s (voir le README).
 # ------------------------------------------------------------------
 
 const SABLE := Color("#efc68b")
@@ -236,6 +238,7 @@ func _process(delta: float) -> void:
 			n += 1
 		if n == 4:
 			acc = 0.0
+	_dt_rendu = PAS_S if capture != "" else delta
 	_cascades(PAS_S if capture != "" else delta)
 	_incliner(PAS_S if capture != "" else delta)
 	eau.queue_redraw()
@@ -457,8 +460,8 @@ func _masses() -> void:
 		if _reference[a] == -INF:
 			_reference[a] = plafond[a]
 
-func _teinte(ref: float, y: float) -> Color:
-	return Color(clampf((ref - y) / 8.0, 0.0, 1.0), 0.0, 0.0, 1.0)
+func _teinte(ref: float, y: float, lisere: float, reflets: float) -> Color:
+	return Color(0.5 + (ref - y) / 16.0, lisere, reflets, 1.0)
 
 func _racine(a: int) -> int:
 	while _masse[a] != a:
@@ -472,10 +475,12 @@ const ECHANTILLONS := 17
 const RACCORD := 0.35        # en cases, de part et d'autre d'une ouverture
 var _xs: Array = []          # par bassin : PackedFloat64Array
 var _hauts: Array = []
-var _profs: Array = []       # la profondeur du point sous la surface locale (0 : il porte le liseré)
+var _profs: Array = []       # la profondeur du point sous la surface locale (0 sur une surface ;
+                             # sous un plafond, sa profondeur sous la surface de la masse)
+var _liseres: Array = []     # 1 : le point est sur une surface libre et porte le liseré
 
 func _hauts_d_eau() -> void:
-	_xs.resize(M.nb); _hauts.resize(M.nb); _profs.resize(M.nb)
+	_xs.resize(M.nb); _hauts.resize(M.nb); _profs.resize(M.nb); _liseres.resize(M.nb)
 	for a in M.nb:
 		var vol := e.vol[a]
 		if vol < 0.004 or _dans_le_tuyau(a):
@@ -488,22 +493,47 @@ func _hauts_d_eau() -> void:
 		var xs := PackedFloat64Array()
 		var hs := PackedFloat64Array()
 		var ps := PackedFloat64Array()
+		var ls := PackedFloat64Array()
 		var libre := M.libre(e, a)
 		var plein := vol >= M.capacite(a) - 1e-6
+		# une surface libre collée à son plafond (moins de 0,15 case d'air) se
+		# lit comme un bassin plein : sous le plafond, sans liseré ni reflets,
+		# de la même eau que la colonne pleine d'à côté ; elle s'en détache
+		# progressivement à mesure que l'air s'ouvre
+		var w := 1.0
+		if libre and M.b_ferme[a] == 1:
+			w = smoothstep(0.03, 0.15, float(M.b_haut[a]) - M.niveau_bassin(e, a))
 		for k in ECHANTILLONS:
 			var x := lerpf(x0, x1, float(k) / (ECHANTILLONS - 1))
 			xs.append(x)
 			if libre:
 				# jamais sous le fond : un creux de vague ne retourne pas le polygone
-				hs.append(maxf(_surface_vue(a, clampf(x, float(M.b_x[a]), float(M.b_x[a]) + 1.0)), bas + 0.01))
-				ps.append(0.0)
+				var h := maxf(_surface_vue(a, clampf(x, float(M.b_x[a]), float(M.b_x[a]) + 1.0)), bas + 0.01)
+				h = lerpf(float(M.b_haut[a]) + 0.04, h, w)
+				hs.append(h)
+				ps.append((ref - h) * (1.0 - w)); ls.append(w)
 			elif plein:
+				# sous un plafond, la profondeur se compte depuis la surface de la
+				# masse, comme dans le bassin libre voisin : les reflets et les
+				# voiles, qui en dépendent, passent d'un bassin à l'autre sans couture
 				hs.append(float(M.b_haut[a]) + 0.04)
-				ps.append(maxf(ref - float(M.b_haut[a]) - 0.04, 0.12))
+				ps.append(ref - float(M.b_haut[a]) - 0.04); ls.append(0.0)
 			else:
 				hs.append(maxf(M.niveau_bassin(e, a), bas + 0.01))
-				ps.append(0.0)
-		_xs[a] = xs; _hauts[a] = hs; _profs[a] = ps
+				ps.append(0.0); ls.append(1.0)
+		if robinet_de[a] >= 0:
+			# la case d'un robinet ne monte pas plus haut que l'eau où elle
+			# débouche : son trop-plein n'est que l'eau qui arrive du tuyau
+			for o in M.o_a.size():
+				var autre := M.o_b[o] if M.o_a[o] == a else (M.o_a[o] if M.o_b[o] == a else -1)
+				if autre < 0 or e.vol[autre] < 0.004 or not M.libre(e, autre):
+					continue
+				var xo := float(M.b_x[M.o_b[o]])
+				var niv := _surface_vue(autre, clampf(xo, float(M.b_x[autre]), float(M.b_x[autre]) + 1.0))
+				for k in hs.size():
+					if niv < hs[k] - 0.01:
+						hs[k] = maxf(niv, bas + 0.01); ps[k] = 0.0; ls[k] = 1.0
+		_xs[a] = xs; _hauts[a] = hs; _profs[a] = ps; _liseres[a] = ls
 
 
 # Le raccord à une ouverture : quand l'eau d'un côté est plus haute que celle
@@ -526,22 +556,26 @@ func _raccorder() -> void:
 		var bas_cote := minf(ta, tb)
 		if absf(ta - tb) < 0.01 or bas_cote >= M.o_y1[o] - 0.005 or bas_cote <= M.o_y0[o]:
 			continue
-		var gauche := _haut_en(a, xb - RACCORD)
-		var droite := _haut_en(b, xb + RACCORD)
+		# entre deux colonnes d'un même puits (une ouverture haute), l'écart de
+		# niveau est un retard du moteur : il s'étale sur toute la largeur
+		var r := RACCORD if M.o_y1[o] - M.o_y0[o] < 1.5 else 0.5
+		var gauche := _haut_en(a, xb - r)
+		var droite := _haut_en(b, xb + r)
 		for cote in [a, b]:
 			var xs: PackedFloat64Array = _xs[cote]
 			var hs: PackedFloat64Array = _hauts[cote]
 			var ps: PackedFloat64Array = _profs[cote]
+			var ls: PackedFloat64Array = _liseres[cote]
 			for k in xs.size():
 				var d := xs[k] - xb
-				if absf(d) > RACCORD:
+				if absf(d) > r:
 					continue
-				var t := smoothstep(-RACCORD, RACCORD, d)
+				var t := smoothstep(-r, r, d)
 				var h := lerpf(gauche, droite, t)
 				if h < hs[k] - 0.02:
-					ps[k] = 0.0
+					ps[k] = 0.0; ls[k] = 1.0
 				hs[k] = maxf(h, float(M.b_bas[cote]) - 0.03)
-			_hauts[cote] = hs; _profs[cote] = ps
+			_hauts[cote] = hs; _profs[cote] = ps; _liseres[cote] = ls
 
 # La lèvre d'une chute : l'épaisseur de la nappe au moment où elle passe le
 # bord — les deux tiers de l'eau au-dessus du seuil (la surface s'abaisse en
@@ -574,6 +608,7 @@ func _arrondir_levres() -> void:
 		var xs: PackedFloat64Array = _xs[src]
 		var hs: PackedFloat64Array = _hauts[src]
 		var ps: PackedFloat64Array = _profs[src]
+		var ls: PackedFloat64Array = _liseres[src]
 		# la pente de l'arrondi au bord : la nappe part dans son prolongement
 		pente_levre[o] = maxf(0.0, 2.0 * (_haut_en(src, xb - dir * ARRONDI) - bord) / ARRONDI)
 		for k in xs.size():
@@ -582,8 +617,33 @@ func _arrondir_levres() -> void:
 				continue
 			var t := 1.0 - clampf(d / ARRONDI, 0.0, 1.0)
 			hs[k] -= (hs[k] - bord) * t * t
-			ps[k] = 0.0
-		_hauts[src] = hs; _profs[src] = ps
+			ps[k] = 0.0; ls[k] = 1.0
+		_hauts[src] = hs; _profs[src] = ps; _liseres[src] = ls
+
+# Les reflets (COLOR.b) vivent sous une surface libre. Sous un plafond, ils
+# s'éteignent : une eau emprisonnée au-dessus de la surface de sa masse
+# n'est pas striée d'une ligne de reflets. Ils débordent seulement un peu
+# d'un bassin libre dans le bassin plein voisin, pour s'y fondre.
+var _reflets: Array = []
+func _etendre_reflets() -> void:
+	_reflets.resize(M.nb)
+	for a in M.nb:
+		_reflets[a] = null if _xs[a] == null else _liseres[a].duplicate()
+	for o in M.o_a.size():
+		var a := M.o_a[o]
+		var b := M.o_b[o]
+		if _xs[a] == null or _xs[b] == null:
+			continue
+		var xb := float(M.b_x[b])
+		for paire in [[a, b], [b, a]]:
+			var plein: int = paire[0]
+			if not M.libre(e, paire[1]) or M.libre(e, plein):
+				continue
+			var xs: PackedFloat64Array = _xs[plein]
+			var rs: PackedFloat64Array = _reflets[plein]
+			for k in xs.size():
+				rs[k] = maxf(rs[k], 1.0 - smoothstep(0.0, 0.45, absf(xs[k] - xb)))
+			_reflets[plein] = rs
 
 func _haut_en(a: int, x: float) -> float:
 	var xs: PackedFloat64Array = _xs[a]
@@ -593,35 +653,58 @@ func _haut_en(a: int, x: float) -> float:
 	return lerpf(hs[k], hs[k + 1], f - k)
 
 
+# La teinte de chaque bassin se compte depuis une surface de référence qui
+# suit celle de sa masse sans à-coup : quand une masse se sépare ou se
+# rejoint, la couleur glisse au lieu de sauter.
+var _ref_vue := PackedFloat64Array()
+var _dt_rendu := PAS_S
+const SUIT_TEINTE := 2.5             # par seconde
+
 func _dessiner_eau() -> void:
 	_masses()
 	_hauts_d_eau()
 	_raccorder()
 	_arrondir_levres()
+	_etendre_reflets()
+	if _ref_vue.size() != M.nb:
+		_ref_vue.resize(M.nb); _ref_vue.fill(-INF)
+	# une bande verticale par intervalle entre deux échantillons : son haut sur
+	# la surface, son bas sur le fond. Chaque sommet porte, dans UV.y, SA
+	# profondeur sous la surface locale (liseré, reflets) et, dans COLOR.r, sa
+	# profondeur sous la surface de la masse (la teinte), linéaire et non
+	# bornée (0,5 + p/16) : l'interpolation ne dépend plus du découpage en
+	# triangles, deux bassins voisins se raccordent sans couture. COLOR.g : 1
+	# sur une surface libre (le liseré), 0 sous un plafond ; COLOR.b : les reflets
+	var pts := PackedVector2Array()
+	var uvs := PackedVector2Array()
+	var cols := PackedColorArray()
+	var idx := PackedInt32Array()
 	for a in M.nb:
 		if _xs[a] == null:
+			_ref_vue[a] = -INF
 			continue
+		var cible := _reference[_racine(a)]
+		_ref_vue[a] = cible if _ref_vue[a] == -INF else lerpf(_ref_vue[a], cible, minf(1.0, _dt_rendu * SUIT_TEINTE))
+		var ref := _ref_vue[a]
 		var xs: PackedFloat64Array = _xs[a]
 		var tops: PackedFloat64Array = _hauts[a]
 		var prof: PackedFloat64Array = _profs[a]
-		var x0 := xs[0]
-		var x1 := xs[xs.size() - 1]
+		var lis: PackedFloat64Array = _liseres[a]
+		var ref_: PackedFloat64Array = _reflets[a]
 		var bas := float(M.b_bas[a]) - 0.04
-		var ref := _reference[_racine(a)]
-		var pts := PackedVector2Array()
-		var uvs := PackedVector2Array()
-		var cols := PackedColorArray()
-		# le fond, de gauche à droite, puis le haut, de droite à gauche. UV.y :
-		# la profondeur sous la surface locale (liseré, reflets) ; COLOR.r : la
-		# profondeur sous la surface de la masse, sur 8 cases (la teinte, continue
-		# d'un bassin à l'autre)
-		pts.append(ecran(x0, bas)); uvs.append(Vector2(x0, prof[0] + tops[0] - bas)); cols.append(_teinte(ref, bas))
-		pts.append(ecran(x1, bas)); uvs.append(Vector2(x1, prof[prof.size() - 1] + tops[tops.size() - 1] - bas)); cols.append(_teinte(ref, bas))
-		for i in range(xs.size() - 1, -1, -1):
-			pts.append(ecran(xs[i], tops[i])); uvs.append(Vector2(xs[i], prof[i])); cols.append(_teinte(ref, tops[i]))
-		if Geometry2D.triangulate_polygon(pts).is_empty():
-			continue
-		eau.draw_polygon(pts, cols, uvs)
+		for i in xs.size():
+			var base := pts.size()
+			var haut := maxf(tops[i], bas + 0.005)
+			pts.append(ecran(xs[i], haut)); uvs.append(Vector2(xs[i], prof[i])); cols.append(_teinte(ref, haut, lis[i], ref_[i]))
+			pts.append(ecran(xs[i], bas)); uvs.append(Vector2(xs[i], prof[i] + haut - bas)); cols.append(_teinte(ref, bas, lis[i], ref_[i]))
+			if i > 0:
+				idx.append_array([base - 2, base, base - 1, base - 1, base, base + 1])
+	if OS.get_environment("LABY_DEBUG") != "" and image == int(OS.get_environment("LABY_DEBUG")):
+		for a in M.nb:
+			if _xs[a] != null:
+				print("bassin %d x%d libre=%s vol=%.3f cap=%.2f niv=%.3f racine=%d ref=%.3f vue=%.3f prof0=%.3f haut0=%.3f" % [a, M.b_x[a], M.libre(e, a), e.vol[a], M.capacite(a), M.niveau_bassin(e, a), _racine(a), _reference[_racine(a)], _ref_vue[a], _profs[a][0], _hauts[a][0]])
+	if not idx.is_empty():
+		RenderingServer.canvas_item_add_triangle_array(eau.get_canvas_item(), idx, pts, cols, uvs)
 
 
 # --- les cascades et les éclaboussures ---------------------------------------------
@@ -792,7 +875,57 @@ func _dessiner_chutes() -> void:
 			g.append(ecran(p.x + n.x, p.y + n.y)); d.append(ecran(p.x - n.x, p.y - n.y)); long.append(l)
 		# COLOR.r : 1 pour une nappe qui prolonge l'eau d'un bassin (le shader la
 		# fond dans sa couleur au départ), 0 pour le jet du robinet
-		var col := Color(0.0 if tuyau else 1.0, 1, 1, alpha)
+		# COLOR.g : 1 pour un filet presque tari, que le shader égrène en gouttes
+		var filet := 1.0 - smoothstep(FAIBLE * 0.25, FAIBLE * 0.7, I)
+		# COLOR.b : la profondeur de la lèvre sous la surface de sa masse, sur 8
+		# cases — la nappe part de la teinte de l'eau qu'elle prolonge
+		var m := 0.0
+		if not tuyau and _ref_vue.size() == M.nb and _ref_vue[src] != -INF:
+			m = clampf((_ref_vue[src] - y_seuil) / 8.0, 0.0, 1.0)
+		_tracer_ruban(g, d, long, Color(0.0 if tuyau else 1.0, filet, m, alpha), dir)
+	_jets_noyes()
+
+
+# Le jet d'un robinet dont la case a rejoint l'eau de la colonne voisine : la
+# case se dessine au niveau de cette eau (pas en carré plein), et tant que le
+# robinet verse, un jet court tombe du tuyau sur la surface.
+func _jets_noyes() -> void:
+	for k in M.vannes.size():
+		var v: Dictionary = M.vannes[k]
+		var a: int = v["bassin"]
+		if v["type"] != "robinet" or (e.attente[k] <= 0.0 and appui != k) or _xs[a] == null:
+			continue
+		var x0: int = v["x"]
+		if x0 != 0 and x0 != W - 1:
+			continue
+		var dir := 1.0 if x0 == 0 else -1.0
+		var bout := Vector2(float(x0) + 0.5, float(v["y"]) + 0.5)
+		var portee := 0.32 * dir
+		var pied_y := _haut_en(a, bout.x + portee)
+		var chute := bout.y - pied_y
+		if chute < 0.08:
+			continue                     # le tuyau est noyé : l'eau entre sous la surface
+		var g := PackedVector2Array()
+		var d := PackedVector2Array()
+		var long := PackedFloat64Array()
+		var avant := Vector2(bout.x - dir * 0.12, bout.y)
+		var l := 0.0
+		var segments := 8
+		for i in segments + 2:
+			var p := avant
+			var tangente := Vector2(dir, 0.0)
+			if i > 0:
+				var s := float(i - 1) / segments
+				p = Vector2(bout.x + portee * s, bout.y - chute * s * s)
+				tangente = Vector2(portee, -2.0 * chute * s).normalized()
+				l += p.distance_to(avant)
+			avant = p
+			var n := Vector2(-tangente.y, tangente.x) * 0.11 * (1.0 - 0.35 * maxf(0.0, float(i - 1) / segments))
+			g.append(ecran(p.x + n.x, p.y + n.y)); d.append(ecran(p.x - n.x, p.y - n.y)); long.append(l)
+		_tracer_ruban(g, d, long, Color(0.0, 0.0, 0.0, 0.9), dir)
+
+
+func _tracer_ruban(g: PackedVector2Array, d: PackedVector2Array, long: PackedFloat64Array, col: Color, dir: float) -> void:
 		var cols := PackedColorArray([col, col, col, col])
 		var cols3 := PackedColorArray([col, col, col])
 		for i in g.size() - 1:
@@ -932,7 +1065,40 @@ func _dessiner_boule() -> void:
 # Joue la solution écrite comme un joueur : les vidanges une à une, puis le
 # robinet tenu ; avance d'un pas par image et photographie les images voulues.
 var _script_vu := false
+# LABY_GESTES joue une suite de gestes écrite à la main et photographie une
+# image toutes les LABY_TOUTES images du moteur (12 : toutes les 0,2 s),
+# jusqu'à LABY_FIN, sous le nom LABY_NOM. Un geste « image:k » tape la vanne
+# k, « image:+k » la tient, « image:- » la relâche. Pour traquer les défauts
+# de rendu sur toute une manœuvre, pas seulement sur quelques images.
+var _gestes := {}
+func _filmer() -> void:
+	if _gestes.is_empty():
+		for g in OS.get_environment("LABY_GESTES").split(" ", false):
+			var p := g.split(":")
+			_gestes[int(p[0])] = p[1]
+	if _gestes.has(image):
+		var g: String = _gestes[image]
+		if g == "-":
+			appui = -1
+		elif g.begins_with("+"):
+			var k := int(g.substr(1))
+			_taper(k); appui = k; appui_depuis = image
+		else:
+			_taper(int(g))
+	_pas()
+	acc = 0.0
+	var toutes := int(OS.get_environment("LABY_TOUTES")) if OS.get_environment("LABY_TOUTES") != "" else 12
+	var fin := int(OS.get_environment("LABY_FIN")) if OS.get_environment("LABY_FIN") != "" else 900
+	if image % toutes == 0:
+		await RenderingServer.frame_post_draw
+		get_viewport().get_texture().get_image().save_png("%s/%s-%04d.png" % [capture, OS.get_environment("LABY_NOM"), image])
+	if image >= fin:
+		get_tree().quit()
+
 func _capturer() -> void:
+	if OS.get_environment("LABY_GESTES") != "":
+		_filmer()
+		return
 	if not _script_vu:
 		_script_vu = true
 	var demo := OS.get_environment("LABY_DEMO")
