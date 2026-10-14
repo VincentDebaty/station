@@ -475,6 +475,7 @@ func _racine(a: int) -> int:
 # la surface (à ressorts) d'un bassin libre, le plafond d'un bassin plein.
 const ECHANTILLONS := 17
 const RACCORD := 0.35        # en cases, de part et d'autre d'une ouverture
+const SOUS_LINTEAU := 0.3         # en cases : l'eau qui sort sous un plafond bas redescend sur cette distance
 var _xs: Array = []          # par bassin : PackedFloat64Array
 var _hauts: Array = []
 var _profs: Array = []       # la profondeur du point sous la surface locale (0 sur une surface ;
@@ -624,6 +625,29 @@ func _raccorder() -> void:
 		var tb := _haut_en(b, xb)
 		var bas_cote := minf(ta, tb)
 		if absf(ta - tb) < 0.01 or bas_cote >= M.o_y1[o] - 0.005 or bas_cote <= M.o_y0[o]:
+			continue
+		# sous un plafond bas : le côté haut est plein jusqu'à son plafond. Il
+		# reste plein — pas de pente creusée sous ce plafond — et c'est du côté
+		# ouvert que l'eau, sortie à la hauteur du linteau, redescend en courbe
+		# douce jusqu'au niveau d'à côté, sur SOUS_LINTEAU
+		var haut_cote := a if ta > tb else b
+		var bas_id := b if haut_cote == a else a
+		if not M.libre(e, haut_cote):
+			var dir := 1.0 if bas_id == b else -1.0
+			var depart := minf(maxf(ta, tb), M.o_y1[o])
+			var loin := _haut_en(bas_id, xb + dir * SOUS_LINTEAU)
+			var xs: PackedFloat64Array = _xs[bas_id]
+			var hs: PackedFloat64Array = _hauts[bas_id]
+			var ps: PackedFloat64Array = _profs[bas_id]
+			var ls: PackedFloat64Array = _liseres[bas_id]
+			for k in xs.size():
+				var d := (xs[k] - xb) * dir
+				if d > SOUS_LINTEAU:
+					continue
+				var h := lerpf(depart, loin, smoothstep(0.0, SOUS_LINTEAU, maxf(d, 0.0)))
+				if h > hs[k]:
+					hs[k] = h; ps[k] = 0.0; ls[k] = 1.0
+			_hauts[bas_id] = hs; _profs[bas_id] = ps; _liseres[bas_id] = ls
 			continue
 		# entre deux colonnes d'un même puits (une ouverture haute), l'écart de
 		# niveau est un retard du moteur : il s'étale sur toute la largeur
