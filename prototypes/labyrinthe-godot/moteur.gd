@@ -275,12 +275,12 @@ func _ecouler(e: Etat, dt: float) -> float:
 			q = _debit(ha, souplesse(e, a), hb, souplesse(e, b), o_y0[o], o_y1[o], dt)
 			q = minf(q, e.vol[a])
 			e.vol[a] -= q; e.vol[b] += q; e.flux[o] += q
-			if hb < o_y0[o]: _elan(e, b, b_x[b] + 0.15, -ELAN_CASCADE * q)
+			if hb < o_y0[o]: _elan(e, b, b_x[b] + portee(e, o, a, b), -ELAN_CASCADE * q)
 		else:
 			q = _debit(hb, souplesse(e, b), ha, souplesse(e, a), o_y0[o], o_y1[o], dt)
 			q = minf(q, e.vol[b])
 			e.vol[b] -= q; e.vol[a] += q; e.flux[o] -= q
-			if ha < o_y0[o]: _elan(e, a, b_x[a] + 0.85, -ELAN_CASCADE * q)
+			if ha < o_y0[o]: _elan(e, a, b_x[a] + 1.0 - portee(e, o, b, a), -ELAN_CASCADE * q)
 		total += q
 	for s in s_bassin.size():
 		var a := s_bassin[s]
@@ -289,6 +289,18 @@ func _ecouler(e: Etat, dt: float) -> float:
 		e.vol[a] -= q; e.sorti += q; e.sortie_flux[s] += q
 		total += q
 	return total
+
+
+# La portée d'une cascade de l'ouverture o, de src vers dst, en cases depuis
+# la paroi : l'eau sort du seuil à la vitesse de Torricelli (√(2g·charge)) et
+# tombe de la hauteur de chute, d'où 2·√(charge × chute). Bornée à la case
+# d'arrivée. La vague du bassin d'arrivée part de là, et le rendu y fait
+# tomber la nappe.
+func portee(e: Etat, o: int, src: int, dst: int) -> float:
+	var y0 := o_y0[o]
+	var tete := clampf(charge(e, src) - y0, 0.0, o_y1[o] - y0)
+	var chute := maxf(0.0, y0 - maxf(charge(e, dst), float(b_bas[dst])))
+	return clampf(2.0 * sqrt(tete * chute), 0.06, 0.85)
 
 
 func _vannes(e: Etat, dt: float) -> bool:

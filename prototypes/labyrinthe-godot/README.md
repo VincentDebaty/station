@@ -29,6 +29,7 @@ par seconde et le coût du moteur.
 | `banc.gd` | le banc d'essai, sans écran ; il refuse au lieu d'avertir |
 | `principal.gd` | la scène : joue le moteur en direct et le dessine |
 | `eau.gdshader` | le rendu de l'eau : dégradé, liseré, reflets |
+| `chute.gdshader` | la nappe d'une cascade : bords adoucis, stries qui descendent |
 
 ## Le moteur : l'eau par volumes, la surface à ressorts
 
@@ -59,6 +60,26 @@ cadence de l'écran.
 la vitesse de l'eau qui passe les ouvertures proches. Ce courant pèse
 pleinement jusqu'à une case, puis s'affaiblit jusqu'à 2,2 cases.
 
+## Les cascades et les éclaboussures
+
+Une ouverture forme une cascade quand le bassin d'arrivée est plus bas que
+son seuil.
+- **La portée** est calculée par le moteur (`Moteur.portee`), à la manière de
+  Torricelli : 2·√(charge au-dessus du seuil × hauteur de chute). La vague de
+  la surface d'arrivée part de ce point, et la nappe y tombe en parabole.
+- **Le débit lissé** règle tout l'effet. Il monte vite et retombe doucement :
+  une chute qui s'arrête s'amincit puis s'éteint.
+
+| débit (case/image) | nappe | au pied |
+|---|---|---|
+| faible, < 0,015 | un filet étroit | presque pas de gouttes |
+| moyen, < 0,05 | plus large, stries visibles | des bulles qui remontent |
+| fort | une cascade | de l'écume qui s'étale, des éclaboussures |
+
+Les particules (gouttes, bulles, écume) vivent dans un réservoir fixe de
+220 places, sans allocation image par image. Elles sont purement visuelles et
+n'influencent jamais le moteur.
+
 ## Vérifier
 
 ```bash
@@ -81,3 +102,5 @@ LABY_CAPTURE=/un/dossier godot --path prototypes/labyrinthe-godot --resolution 6
 
 Cette commande joue la solution toute seule, avec le robinet tenu, photographie
 huit images et quitte. Elle a besoin d'une fenêtre : `--headless` ne rend rien.
+Avec `LABY_DEMO=chute`, elle vide d'abord le bassin de gauche puis tient le
+robinet : on y voit une chute haute, à fort débit, avec tous ses effets.

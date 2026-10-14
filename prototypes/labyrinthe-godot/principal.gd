@@ -60,6 +60,8 @@ var ms_pire := 0.0
 
 var fond: Node2D
 var eau: Node2D
+var chutes: Node2D
+var gouttes: Node2D
 var murs: Node2D
 var vannes_n: Node2D
 var boule_n: Node2D
@@ -68,6 +70,29 @@ var compteur: Label
 var mesure: Label
 var carte: PanelContainer
 var carte_texte: Label
+
+# Les cascades vues : le débit de chaque ouverture, lissé (il monte vite et
+# retombe doucement : une chute qui s'arrête s'amincit puis s'éteint), et le
+# sens de la dernière chute.
+var debit_vu := PackedFloat64Array()
+var chute_src := PackedInt32Array()
+var chute_dst := PackedInt32Array()
+var budget := PackedFloat64Array()       # les particules à émettre, au fil du temps
+# Les particules : un réservoir fixe, rien n'est alloué image par image.
+const GOUTTE := 0
+const BULLE := 1
+const ECUME_P := 2
+const NB_PARTICULES := 220
+var p_x := PackedFloat64Array()
+var p_y := PackedFloat64Array()
+var p_vx := PackedFloat64Array()
+var p_vy := PackedFloat64Array()
+var p_vie := PackedFloat64Array()
+var p_vie0 := PackedFloat64Array()
+var p_taille := PackedFloat64Array()
+var p_type := PackedInt32Array()
+var p_suivante := 0
+var hasard := RandomNumberGenerator.new()
 
 var capture := ""
 var a_capturer := [60, 240, 300, 330, 400, 520, 700, 800]
@@ -79,12 +104,23 @@ func _ready() -> void:
 	W = String(grille[0]).length(); H = grille.size()
 	M = Moteur.new(N)
 	presse.resize(M.vannes.size()); presse.fill(0)
+	var no := M.o_a.size()
+	debit_vu.resize(no); chute_src.resize(no); chute_dst.resize(no); budget.resize(no * 3)
+	for t in [p_x, p_y, p_vx, p_vy, p_vie, p_vie0, p_taille]:
+		t.resize(NB_PARTICULES)
+	p_type.resize(NB_PARTICULES)
+	hasard.seed = 7
 
 	fond = Node2D.new(); add_child(fond); fond.draw.connect(_dessiner_fond)
 	eau = Node2D.new(); add_child(eau); eau.draw.connect(_dessiner_eau)
 	var mat := ShaderMaterial.new()
 	mat.shader = load("res://eau.gdshader")
 	eau.material = mat
+	chutes = Node2D.new(); add_child(chutes); chutes.draw.connect(_dessiner_chutes)
+	var mat_chute := ShaderMaterial.new()
+	mat_chute.shader = load("res://chute.gdshader")
+	chutes.material = mat_chute
+	gouttes = Node2D.new(); add_child(gouttes); gouttes.draw.connect(_dessiner_gouttes)
 	murs = Node2D.new(); add_child(murs); murs.draw.connect(_dessiner_murs)
 	vannes_n = Node2D.new(); add_child(vannes_n); vannes_n.draw.connect(_dessiner_vannes)
 	boule_n = Node2D.new(); add_child(boule_n); boule_n.draw.connect(_dessiner_boule)
@@ -136,6 +172,7 @@ func recommencer() -> void:
 	image = 0; appui = -1; fini = false; attente_fin = 0; acc = 0.0
 	boule_avant = Vector2(e.bx, e.by)
 	angle = 0.0; angle_avant = 0.0
+	debit_vu.fill(0.0); budget.fill(0.0); p_vie.fill(0.0)
 	carte.visible = false
 	_cadrer()
 	_maj_interface()
@@ -188,7 +225,10 @@ func _process(delta: float) -> void:
 			n += 1
 		if n == 4:
 			acc = 0.0
+	_cascades(PAS_S if capture != "" else delta)
 	eau.queue_redraw()
+	chutes.queue_redraw()
+	gouttes.queue_redraw()
 	vannes_n.queue_redraw()
 	boule_n.queue_redraw()
 	mesure.text = "%d i/s · moteur %.2f ms (au plus %.2f)" % [Engine.get_frames_per_second(), ms_pas, ms_pire]
@@ -374,9 +414,11 @@ func _dessiner_eau() -> void:
 			for p in Moteur.POINTS + 1:
 				var x := lerpf(x0, x1, float(p) / Moteur.POINTS)
 				xs.append(x)
-				tops.append(_surface_vue(a, clampf(x, float(M.b_x[a]), float(M.b_x[a]) + 1.0)))
+				# jamais sous le fond : un creux de vague ne retourne pas le polygone
+				tops.append(maxf(_surface_vue(a, clampf(x, float(M.b_x[a]), float(M.b_x[a]) + 1.0)), bas + 0.01))
 		else:
-			var h := float(M.b_haut[a]) + 0.04
+			# plein sous un plafond : jusqu'au plafond ; presque à sec : une pellicule à plat
+			var h := float(M.b_haut[a]) + 0.04 if vol >= M.capacite(a) - 1e-6 else maxf(M.niveau_bassin(e, a), bas + 0.01)
 			xs.append(x0); tops.append(h); xs.append(x1); tops.append(h)
 		# le fond, de gauche à droite, puis la surface, de droite à gauche
 		pts.append(ecran(x0, bas)); uvs.append(Vector2(x0, tops[0] - bas)); cols.append(blanc)
@@ -384,51 +426,189 @@ func _dessiner_eau() -> void:
 		for i in range(xs.size() - 1, -1, -1):
 			pts.append(ecran(xs[i], tops[i])); uvs.append(Vector2(xs[i], 0.0)); cols.append(blanc)
 		eau.draw_polygon(pts, cols, uvs)
-	_dessiner_cascades()
 
 
-# Les cascades : à travers une ouverture dont le bassin d'arrivée est plus bas
-# que le seuil, l'eau tombe en nappe, d'autant plus large et projetée que le
-# débit est fort, jusqu'à la surface d'arrivée.
-func _dessiner_cascades() -> void:
-	var blanc := Color.WHITE
+# --- les cascades et les éclaboussures ---------------------------------------------
+# Une cascade : à travers une ouverture dont le bassin d'arrivée est plus bas
+# que le seuil, l'eau sort à la vitesse de Torricelli et tombe en parabole
+# jusqu'au point que le moteur calcule (Moteur.portee) — c'est là aussi que
+# sa vague part. Tout ce qui suit est réglé sur le débit lissé :
+#   faible  (< 0,015 case/image) : un filet étroit, presque pas de gouttes ;
+#   moyen   (< 0,05)             : une nappe plus large, des bulles au pied ;
+#   fort                         : une cascade, de l'écume, des éclaboussures.
+const FAIBLE := 0.015
+const FORT := 0.05
+
+func _chute_active(o: int) -> bool:
+	return debit_vu[o] >= 0.0008
+
+# Le point où la chute de l'ouverture o touche l'eau (ou le fond).
+func _arrivee(o: int) -> Vector2:
+	var src := chute_src[o]
+	var dst := chute_dst[o]
+	var dir := 1.0 if dst == M.o_b[o] else -1.0
+	var x := float(M.b_x[M.o_b[o]]) + dir * M.portee(e, o, src, dst)
+	var y := float(M.b_bas[dst])
+	if e.vol[dst] > 0.02:
+		y = M.surface_en(e, dst, x) if M.libre(e, dst) else float(M.b_haut[dst])
+	return Vector2(x, y)
+
+# La surface sous un point (x, y) du labyrinthe ; -INF s'il n'y a pas d'eau.
+func _surface_ici(x: float, y: float) -> float:
+	var cx := floori(x)
+	var cy := floori(y)
+	if cx < 0 or cy < 0 or cx >= W or cy >= H:
+		return -INF
+	var a := M.bassin_de[cy * W + cx]
+	if a < 0 or e.vol[a] <= 0.02:
+		return -INF
+	return M.surface_en(e, a, x) if M.libre(e, a) else float(M.b_haut[a])
+
+func _emettre(type: int, x: float, y: float, vx: float, vy: float, vie: float, taille: float) -> void:
+	var i := p_suivante
+	p_suivante = (p_suivante + 1) % NB_PARTICULES
+	p_type[i] = type; p_x[i] = x; p_y[i] = y; p_vx[i] = vx; p_vy[i] = vy
+	p_vie[i] = vie; p_vie0[i] = vie; p_taille[i] = taille
+
+
+func _cascades(dt: float) -> void:
+	# le débit vu de chaque ouverture : il suit le débit calculé, vite à la
+	# montée, doucement à la descente
 	for o in M.o_a.size():
 		var q := absf(e.flux[o])
-		if q < 0.0008:
+		var cible := 0.0
+		if q > 0.0004:
+			var src := M.o_a[o] if e.flux[o] > 0.0 else M.o_b[o]
+			var dst := M.o_b[o] if e.flux[o] > 0.0 else M.o_a[o]
+			if M.charge(e, dst) < M.o_y0[o]:
+				cible = q
+				chute_src[o] = src; chute_dst[o] = dst
+		var k := 12.0 if cible > debit_vu[o] else 2.5
+		debit_vu[o] += (cible - debit_vu[o]) * minf(1.0, dt * k)
+		if debit_vu[o] < 0.0003:
+			debit_vu[o] = 0.0
+		if not _chute_active(o):
 			continue
-		var src := M.o_a[o] if e.flux[o] > 0.0 else M.o_b[o]
-		var dst := M.o_b[o] if e.flux[o] > 0.0 else M.o_a[o]
-		var y0 := M.o_y0[o]
-		var hd := M.charge(e, dst)
-		if hd >= y0:
+		# l'émission, au pied de la chute
+		var I := debit_vu[o]
+		var pied := _arrivee(o)
+		var dir := 1.0 if chute_dst[o] == M.o_b[o] else -1.0
+		var force := clampf(sqrt(I) * 4.0, 0.35, 1.4)
+		budget[3 * o] += (140.0 * I if I > FAIBLE else 20.0 * I) * dt
+		budget[3 * o + 1] += (90.0 * I if I > FAIBLE * 0.8 else 0.0) * dt
+		budget[3 * o + 2] += (160.0 * I if I > FORT else (40.0 * I if I > FAIBLE else 0.0)) * dt
+		while budget[3 * o] >= 1.0:
+			budget[3 * o] -= 1.0
+			_emettre(GOUTTE, pied.x + hasard.randf_range(-0.08, 0.08), pied.y + 0.02,
+				(-dir * hasard.randf_range(0.2, 1.1) + hasard.randf_range(-0.4, 0.4)) * force,
+				hasard.randf_range(1.0, 2.6) * force, hasard.randf_range(0.5, 0.9), hasard.randf_range(0.035, 0.06))
+		while budget[3 * o + 1] >= 1.0:
+			budget[3 * o + 1] -= 1.0
+			var prof := hasard.randf_range(0.15, 0.6) * minf(1.0, sqrt(I) * 4.0)
+			_emettre(BULLE, pied.x + hasard.randf_range(-0.2, 0.2), pied.y - prof,
+				hasard.randf_range(-0.08, 0.08), hasard.randf_range(0.35, 0.7), 1.6, hasard.randf_range(0.022, 0.048))
+		while budget[3 * o + 2] >= 1.0:
+			budget[3 * o + 2] -= 1.0
+			var cote := -1.0 if hasard.randf() < 0.5 else 1.0
+			_emettre(ECUME_P, pied.x + cote * hasard.randf_range(0.0, 0.22), pied.y,
+				cote * hasard.randf_range(0.2, 0.5), 0.0, hasard.randf_range(0.5, 1.1), hasard.randf_range(0.05, 0.1))
+	# les particules vivent
+	for i in NB_PARTICULES:
+		if p_vie[i] <= 0.0:
 			continue
-		var dir := 1.0 if e.flux[o] > 0.0 else -1.0
+		p_vie[i] -= dt
+		var t := p_type[i]
+		if t == GOUTTE:
+			p_vy[i] -= 9.0 * dt
+			p_x[i] += p_vx[i] * dt; p_y[i] += p_vy[i] * dt
+			if not M.ouvert(floori(p_x[i]), floori(p_y[i])) or (p_vy[i] < 0.0 and p_y[i] < _surface_ici(p_x[i], p_y[i])):
+				p_vie[i] = 0.0
+		elif t == BULLE:
+			p_x[i] += p_vx[i] * dt; p_y[i] += p_vy[i] * dt
+			if p_y[i] >= _surface_ici(p_x[i], p_y[i]) - 0.02 or not M.ouvert(floori(p_x[i]), floori(p_y[i])):
+				p_vie[i] = 0.0
+		else:
+			p_x[i] += p_vx[i] * dt
+			p_vx[i] *= 1.0 - minf(1.0, 2.5 * dt)
+			var h := _surface_ici(p_x[i], p_y[i] + 0.05)
+			if h == -INF or not M.ouvert(floori(p_x[i]), floori(p_y[i])):
+				p_vie[i] = 0.0
+			else:
+				p_y[i] = h + 0.01
+
+
+# La nappe : un ruban le long de la parabole, du seuil au pied de la chute,
+# d'autant plus large que le débit est fort, qui s'amincit en tombant.
+func _dessiner_chutes() -> void:
+	var segments := 14
+	for o in M.o_a.size():
+		if not _chute_active(o):
+			continue
+		var I := debit_vu[o]
+		var src := chute_src[o]
+		var dst := chute_dst[o]
+		var dir := 1.0 if dst == M.o_b[o] else -1.0
 		var xb := float(M.b_x[M.o_b[o]])
-		var hs := minf(M.charge(e, src), M.o_y1[o])
-		var ep := clampf(q * 5.0, 0.05, maxf(0.05, hs - y0))
-		var portee := 0.08 + 0.6 * sqrt(q)
-		var arrivee := maxf(hd, float(M.b_bas[dst]))
+		var y0 := M.o_y0[o]
+		var tete := clampf(M.charge(e, src) - y0, 0.0, M.o_y1[o] - y0)
+		var largeur := clampf(0.035 + sqrt(I) * 1.0, 0.035, 0.42)
+		var y_seuil := y0 + clampf(minf(tete, largeur) * 0.5, 0.02, 0.25)
+		var pied := _arrivee(o)
+		var chute := y_seuil - pied.y
+		if chute < 0.05:
+			continue
+		var portee := pied.x - xb
+		var alpha := clampf(0.55 + I * 8.0, 0.6, 0.95)      # un filet reste clair sur le fond sombre
 		var g := PackedVector2Array()
 		var d := PackedVector2Array()
-		var segments := 10
-		for i in segments + 1:
-			var s := float(i) / segments
-			var cx := xb + dir * portee * s
-			var cy := y0 + ep * 0.5 - (y0 + ep * 0.5 - arrivee) * s * s
-			var demi := ep * 0.5 * (1.0 - 0.35 * s)
-			g.append(ecran(cx - dir * demi * 0.3, cy + demi))
-			d.append(ecran(cx + dir * demi * 0.3, cy - demi))
-		# tronçon par tronçon : chaque quadrilatère est convexe, rien à trianguler de travers
-		var uv := PackedVector2Array([Vector2(xb, 0.12), Vector2(xb, 0.12), Vector2(xb, 0.12), Vector2(xb, 0.12)])
-		var cols := PackedColorArray([blanc, blanc, blanc, blanc])
-		for i in segments:
-			eau.draw_polygon(PackedVector2Array([g[i], g[i + 1], d[i + 1], d[i]]), cols, uv)
-		# l'écume au pied de la chute
-		var pied := ecran(xb + dir * portee, arrivee)
-		for k in 3:
-			var a := temps * 9.0 + k * 2.1
-			var r := (0.04 + 0.03 * k) * case_px * clampf(q * 12.0, 0.4, 1.4)
-			eau.draw_circle(pied + Vector2(sin(a) * 0.18 * case_px, -absf(cos(a)) * 0.12 * case_px), r, ECUME)
+		var long := PackedFloat64Array()
+		var l := 0.0
+		var avant := Vector2(xb - dir * 0.12, y_seuil)
+		for i in segments + 2:
+			var p: Vector2
+			var tangente: Vector2
+			if i == 0:
+				p = avant; tangente = Vector2(dir, 0.0)
+			else:
+				var s := float(i - 1) / segments
+				p = Vector2(xb + portee * s, y_seuil - chute * s * s)
+				tangente = Vector2(portee, -2.0 * chute * s).normalized()
+				if tangente == Vector2.ZERO: tangente = Vector2(dir, 0.0)
+			l += p.distance_to(avant) if i > 0 else 0.0
+			avant = p
+			var s2 := maxf(0.0, float(i - 1) / segments)
+			var demi := largeur * 0.5 * (1.0 - 0.45 * s2)
+			var n := Vector2(-tangente.y, tangente.x) * demi
+			g.append(ecran(p.x + n.x, p.y + n.y)); d.append(ecran(p.x - n.x, p.y - n.y)); long.append(l)
+		var col := Color(1, 1, 1, alpha)
+		var cols := PackedColorArray([col, col, col, col])
+		var cols3 := PackedColorArray([col, col, col])
+		for i in g.size() - 1:
+			var quad := PackedVector2Array([g[i], g[i + 1], d[i + 1], d[i]])
+			var uv := PackedVector2Array([Vector2(long[i], -1.0), Vector2(long[i + 1], -1.0), Vector2(long[i + 1], 1.0), Vector2(long[i], 1.0)])
+			if not Geometry2D.triangulate_polygon(quad).is_empty():
+				chutes.draw_polygon(quad, cols, uv)
+			else:
+				# là où la nappe tourne court (une chute haute et une portée courte),
+				# le quadrilatère se croise : deux triangles le couvrent
+				chutes.draw_polygon(PackedVector2Array([quad[0], quad[1], quad[3]]), cols3, PackedVector2Array([uv[0], uv[1], uv[3]]))
+				chutes.draw_polygon(PackedVector2Array([quad[1], quad[2], quad[3]]), cols3, PackedVector2Array([uv[1], uv[2], uv[3]]))
+
+
+func _dessiner_gouttes() -> void:
+	for i in NB_PARTICULES:
+		if p_vie[i] <= 0.0:
+			continue
+		var f := clampf(p_vie[i] / p_vie0[i], 0.0, 1.0)
+		var c := ecran(p_x[i], p_y[i])
+		var r := p_taille[i] * case_px
+		match p_type[i]:
+			GOUTTE:
+				gouttes.draw_circle(c, r * (0.6 + 0.4 * f), Color(0.86, 0.97, 1.0, 0.9 * minf(1.0, f * 2.0)))
+			BULLE:
+				gouttes.draw_arc(c, r, 0.0, TAU, 12, Color(0.9, 0.98, 1.0, 0.75), maxf(1.0, r * 0.35), true)
+			_:
+				gouttes.draw_circle(c, r * (0.7 + 0.3 * f), Color(0.95, 0.99, 1.0, 0.8 * f))
 
 
 # --- les vannes, la boule -----------------------------------------------------------
@@ -488,6 +668,23 @@ var _script_vu := false
 func _capturer() -> void:
 	if not _script_vu:
 		_script_vu = true
+	if OS.get_environment("LABY_DEMO") == "chute":
+		# une chute haute : la vidange de gauche tenue d'abord (le bassin de
+		# gauche se vide), puis le robinet tenu, qui retombe de haut
+		if image == 10:
+			appui = 1; appui_depuis = image; _taper(1)
+		if image == 200:
+			appui = -1
+		if image == 230:
+			_taper(0); appui = 0; appui_depuis = image
+		_pas()
+		acc = 0.0
+		if a_capturer.has(image):
+			await RenderingServer.frame_post_draw
+			get_viewport().get_texture().get_image().save_png("%s/chute-%03d.png" % [capture, image])
+		if image > a_capturer.max() + 2:
+			get_tree().quit()
+		return
 	var sol := String(N["solution"])
 	var nb_vidanges := 0
 	while nb_vidanges < sol.length() and sol[nb_vidanges] != sol[sol.length() - 1]:
