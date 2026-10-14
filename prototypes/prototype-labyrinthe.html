@@ -118,8 +118,8 @@ button:focus-visible { outline: 3px solid var(--or); outline-offset: 2px; }
 {
   "titre": "Les deux étages",
   "conseil": "Le robinet remplit, les vidanges vident (appui long : en continu). La boule suit le courant.",
-  "par": 21,
-  "solution": "331111111111111111111",
+  "par": 19,
+  "solution": "3111111111111111111",
   "pieges": ["111111111111111111111111111111"],
   "grille": [
     "#SS#####",
@@ -144,8 +144,9 @@ button:focus-visible { outline: 3px solid var(--or); outline-offset: 2px; }
 </script>
 
 <!-- ------------------------------------------------------------------
-     LE MOTEUR. Pur et déterministe. L'eau est une masse par case (0 à 1),
-     qui avance pas à pas :
+     LE MOTEUR. Pur et déterministe. L'eau est une masse par petite case
+     (0 à 1) : chaque case du labyrinthe en contient 4 × 4 (« finesse »),
+     et une image enchaîne 4 pas de calcul. À chaque pas :
        1. la chute : chaque case verse dans celle de dessous ce qui y tient ;
        2. l'étalement : une case posée partage avec ses voisines de côté —
           l'eau qui arrive au bord d'un vide y passe et tombe ;
@@ -158,11 +159,15 @@ button:focus-visible { outline: 3px solid var(--or); outline-offset: 2px; }
 <script id="moteur">
 "use strict";
 const Labyrinthe = (function () {
-  // ---- réglages de l'eau ----
-  const DEBIT = 0.1;       // ce qu'un robinet verse, ou qu'une vidange retire, par pas
+  // Deux échelles. Le LABYRINTHE (murs, vannes, sortie, boule, unités de
+  // jeu) se compte en cases. L'EAU se calcule en petites cases : chaque case
+  // du labyrinthe en contient FIN × FIN, et un pas de jeu (une image) en
+  // enchaîne FIN de calcul, pour que l'eau aille aussi vite qu'à gros grain.
+  // ---- réglages de l'eau (en cases du labyrinthe) ----
+  const DEBIT = 0.1;       // ce qu'un robinet verse, ou qu'une vidange retire, par image
   const SEC = 0.05;        // sous cette eau, une vidange n'a plus rien à prendre : la tape est refusée
   const UNITE = 1;         // une tape = une case d'eau
-  // ---- réglages de la boule ----
+  // ---- réglages de la boule (en cases, par image) ----
   const RAYON = 0.34;
   const FLOTTE = 0.08;     // le centre de la boule flotte un peu au-dessus de la surface
   const RESSORT = 0.08, AMORTI = 0.8, PESANTEUR = 0.02, CHUTE_MAX = 0.3;
@@ -176,8 +181,8 @@ const Labyrinthe = (function () {
   function prep(N) {
     let c = caches.get(N);
     if (c) return c;
-    const H = N.grille.length, W = N.grille[0].length;
-    const mur = new Uint8Array(W * H), sortie = new Uint8Array(W * H), m0 = new Float64Array(W * H);
+    const H = N.grille.length, W = N.grille[0].length, S = N.finesse || 4;
+    const mur = new Uint8Array(W * H), sortie = new Uint8Array(W * H), plein = new Uint8Array(W * H);
     const vannes = [];
     let boule = null;
     for (let r = 0; r < H; r++) for (let x = 0; x < W; x++) {
@@ -185,29 +190,50 @@ const Labyrinthe = (function () {
       if (ch === "#") mur[i] = 1;
       else if (ch === "S") sortie[i] = 1;
       else if (ch === "o") boule = { x: x + 0.5, y: y + 0.5 };
-      else if (ch === "~") m0[i] = 1;
+      else if (ch === "~") plein[i] = 1;
       else if (ch >= "1" && ch <= "9") vannes[+ch - 1] = { ...N.vannes[+ch - 1], x, y, i };
     }
     if (N.eau) for (let y = 0; y < N.eau; y++) for (let x = 0; x < W; x++) {
       const i = y * W + x;
-      if (!mur[i] && !sortie[i]) m0[i] = 1;
+      if (!mur[i] && !sortie[i]) plein[i] = 1;
     }
-    c = { W, H, mur, sortie, vannes, boule, m0 };
+    // la grille fine de l'eau
+    const SW = W * S, SH = H * S;
+    const fmur = new Uint8Array(SW * SH), fsortie = new Uint8Array(SW * SH), m0 = new Float64Array(SW * SH);
+    for (let fy = 0; fy < SH; fy++) for (let fx = 0; fx < SW; fx++) {
+      const i = Math.floor(fy / S) * W + Math.floor(fx / S), j = fy * SW + fx;
+      fmur[j] = mur[i]; fsortie[j] = sortie[i]; m0[j] = plein[i];
+    }
+    for (const v of vannes) {
+      // un robinet verse par un seul point : le milieu de sa case, poussé
+      // vers l'intérieur s'il est dans un mur du bord — l'eau en sort en jet
+      const bx = v.x === 0 ? S - 1 : v.x === W - 1 ? 0 : Math.floor(S / 2);
+      const by = v.y === H - 1 ? 0 : Math.floor(S / 2);
+      v.bec = (v.y * S + by) * SW + v.x * S + bx;
+      v.bloc = []; v.fond = [];
+      for (let dy = 0; dy < S; dy++) for (let dx = 0; dx < S; dx++) {
+        const j = (v.y * S + dy) * SW + v.x * S + dx;
+        v.bloc.push(j);
+        if (dy === 0) v.fond.push(j);
+      }
+    }
+    c = { W, H, S, mur, sortie, vannes, boule, SW, SH, fmur, fsortie, m0, S2: S * S };
     caches.set(N, c);
     return c;
   }
   const ouvert = (G, x, y) => x >= 0 && y >= 0 && x < G.W && y < G.H && !G.mur[y * G.W + x];
+  const fouvert = (G, x, y) => x >= 0 && y >= 0 && x < G.SW && y < G.SH && !G.fmur[y * G.SW + x];
   const idx = (G, x, y) => y * G.W + x;
+  const fidx = (G, x, y) => y * G.SW + x;
 
   function charger(N) {
-    const G = prep(N);
+    const G = prep(N), n = G.SW * G.SH;
     const e = {
       m: Float64Array.from(G.m0), b: { x: G.boule.x, y: G.boule.y, vx: 0, vy: 0 },
       attente: G.vannes.map(() => 0), tapes: 0, verse: 0, sorti: 0, vide: 0, gagne: false, calme: 0, pas: 0,
-      fx: new Float64Array(G.W * G.H), fy: new Float64Array(G.W * G.H),
+      fx: new Float64Array(n), fy: new Float64Array(n),      // le courant d'une image, en petites cases
     };
-    // la boule se pose avant que la partie commence
-    for (let k = 0; k < 400; k++) bouger(N, e);
+    for (let k = 0; k < 400; k++) bouger(N, e);   // la boule se pose avant que la partie commence
     e.b.vx = e.b.vy = 0;
     return e;
   }
@@ -215,8 +241,10 @@ const Labyrinthe = (function () {
     return { m: Float64Array.from(e.m), b: { ...e.b }, attente: e.attente.slice(), tapes: e.tapes, verse: e.verse, sorti: e.sorti,
       vide: e.vide, gagne: e.gagne, calme: e.calme, pas: e.pas, fx: Float64Array.from(e.fx), fy: Float64Array.from(e.fy) };
   }
+  // L'eau d'une case du labyrinthe, en cases (la somme de ses petites cases).
+  function eauDe(G, e, cases) { let s = 0; for (const j of cases) s += e.m[j]; return s / G.S2; }
 
-  // Un pas d'eau. Trois mouvements, dans l'ordre :
+  // Un pas de calcul de l'eau, sur la grille fine. Trois mouvements :
   //   1. la chute : chaque case verse dans la case de dessous ce qui y tient ;
   //   2. l'étalement : une case posée (sur un mur ou sur de l'eau pleine)
   //      partage avec ses voisines de côté — l'eau qui arrive au bord d'un
@@ -227,22 +255,19 @@ const Labyrinthe = (function () {
   // fx[i] : ce qui passe de i vers la droite ; fy[i] : de i vers le haut.
   const PLEIN = 0.99, VIDE = 0.005, PRESSION = 0.2, ECART = 0.02;
   function eau(N, e) {
-    const G = prep(N), W = G.W, H = G.H, n = e.m;
-    e.fx.fill(0); e.fy.fill(0);
+    const G = prep(N), W = G.SW, H = G.SH, n = e.m;
     let total = 0;
-    const libre = i => !G.mur[i];
-    // 1. la chute, de bas en haut : une case ne descend que d'une rangée par pas
+    const libre = i => !G.fmur[i];
     for (let y = 1; y < H; y++) for (let x = 0; x < W; x++) {
       const i = y * W + x, j = i - W;
-      if (!libre(i) || G.sortie[i] || !libre(j) || n[i] <= 0) continue;
+      if (!libre(i) || G.fsortie[i] || !libre(j) || n[i] <= 0) continue;
       const q = Math.min(n[i], 1 - n[j]);
       if (q > 1e-9) { n[i] -= q; n[j] += q; e.fy[j] -= q; total += q; }
     }
-    // 2. l'étalement, sur un instantané
     const s = Float64Array.from(n);
-    const pose = i => { const y = Math.floor(i / W); return y === 0 || G.mur[i - W] || s[i - W] >= PLEIN; };
+    const pose = i => i < W || G.fmur[i - W] || s[i - W] >= PLEIN;
     for (let i = 0; i < n.length; i++) {
-      if (!libre(i) || G.sortie[i] || s[i] <= VIDE || !pose(i)) continue;
+      if (!libre(i) || G.fsortie[i] || s[i] <= VIDE || !pose(i)) continue;
       const x = i % W;
       for (const d of [-1, 1]) {
         const nx = x + d;
@@ -255,31 +280,27 @@ const Labyrinthe = (function () {
         if (d > 0) e.fx[i] += q; else e.fx[j] -= q;
       }
     }
-    // 3. la pression, corps par corps
     total += pression(N, e);
-    // la sortie avale tout ce qui y entre
-    for (let i = 0; i < n.length; i++) if (G.sortie[i] && n[i] > 0) { e.sorti += n[i]; n[i] = 0; }
+    for (let i = 0; i < n.length; i++) if (G.fsortie[i] && n[i] > 0) { e.sorti += n[i] / G.S2; n[i] = 0; }
     return total;
   }
-  const VOIS = [1, -1, 0, 0];
   function voisins(G, i) {
-    const x = i % G.W, y = (i - x) / G.W, r = [];
-    if (x + 1 < G.W && !G.mur[i + 1]) r.push(i + 1);
-    if (x > 0 && !G.mur[i - 1]) r.push(i - 1);
-    if (y + 1 < G.H && !G.mur[i + G.W]) r.push(i + G.W);
-    if (y > 0 && !G.mur[i - G.W]) r.push(i - G.W);
+    const W = G.SW, x = i % W, y = (i - x) / W, r = [];
+    if (x + 1 < W && !G.fmur[i + 1]) r.push(i + 1);
+    if (x > 0 && !G.fmur[i - 1]) r.push(i - 1);
+    if (y + 1 < G.SH && !G.fmur[i + W]) r.push(i + W);
+    if (y > 0 && !G.fmur[i - W]) r.push(i - W);
     return r;
   }
   function pression(N, e) {
-    const G = prep(N), W = G.W, n = e.m, vu = new Uint8Array(n.length);
+    const G = prep(N), W = G.SW, n = e.m, vu = new Uint8Array(n.length);
     let total = 0;
     for (let i0 = 0; i0 < n.length; i0++) {
-      if (vu[i0] || G.mur[i0] || G.sortie[i0] || n[i0] < PLEIN) continue;
-      // le corps d'eau pleine
+      if (vu[i0] || G.fmur[i0] || G.fsortie[i0] || n[i0] < PLEIN) continue;
       const corps = [i0];
       vu[i0] = 1;
       for (let q = 0; q < corps.length; q++) for (const j of voisins(G, corps[q])) {
-        if (!vu[j] && !G.sortie[j] && n[j] >= PLEIN) { vu[j] = 1; corps.push(j); }
+        if (!vu[j] && !G.fsortie[j] && n[j] >= PLEIN) { vu[j] = 1; corps.push(j); }
       }
       const dans = new Set(corps);
       // ses surfaces : où il peut descendre (donne) ou monter (reçoit)
@@ -287,9 +308,9 @@ const Labyrinthe = (function () {
       for (const k of corps) for (const j of voisins(G, k)) {
         if (dans.has(j)) continue;
         const y = Math.floor(j / W), dessous = j - W;
-        if (G.sortie[j]) { surf.push({ donne: -1, recoit: j, h: y }); continue; }
-        const posee = y === 0 || G.mur[dessous] || dans.has(dessous) || n[dessous] >= PLEIN;
-        const dessus = j + W, airDessus = y + 1 >= G.H || G.mur[dessus] || n[dessus] <= VIDE;
+        if (G.fsortie[j]) { surf.push({ donne: -1, recoit: j, h: y }); continue; }
+        const posee = y === 0 || G.fmur[dessous] || dans.has(dessous) || n[dessous] >= PLEIN;
+        const dessus = j + W, airDessus = y + 1 >= G.SH || G.fmur[dessus] || n[dessus] <= VIDE;
         if (posee && airDessus && n[j] > VIDE) surf.push({ donne: j, recoit: j, h: y + n[j] });
         else if (posee && airDessus) surf.push({ donne: k, recoit: j, h: y });
       }
@@ -321,7 +342,7 @@ const Labyrinthe = (function () {
   }
   // Le courant d'une poussée : le long du plus court chemin dans le corps.
   function courant(G, e, de, vers, dans, q) {
-    const W = G.W, prec = new Map([[de, -1]]), file = [de];
+    const W = G.SW, prec = new Map([[de, -1]]), file = [de];
     for (let k = 0; k < file.length && !prec.has(vers); k++) for (const j of voisins(G, file[k])) {
       if (prec.has(j) || !(dans.has(j) || j === vers)) continue;
       prec.set(j, file[k]); file.push(j);
@@ -334,19 +355,25 @@ const Labyrinthe = (function () {
     }
   }
 
+  // Les vannes, pour un pas de calcul : un robinet verse par son bec, une
+  // vidange prend par le fond de sa case.
   function vannes(N, e) {
-    const G = prep(N);
+    const G = prep(N), part = 1 / G.S;
     let actif = false;
     G.vannes.forEach((v, k) => {
       const a = e.attente[k];
       if (a <= 0) return;
       if (v.type === "robinet") {
-        const q = Math.min(a, DEBIT);
-        e.m[v.i] += q; e.verse += q; e.attente[k] -= q; actif = true;
+        const q = Math.min(a, DEBIT * part);
+        e.m[v.bec] += q * G.S2;
+        e.verse += q; e.attente[k] -= q; actif = true;
       } else {
-        const q = Math.min(a, DEBIT, e.m[v.i]);
-        if (q <= 1e-9) { e.attente[k] = 0; return; }   // à sec : la vidange n'a plus rien à prendre
-        e.m[v.i] -= q; e.vide += q; e.attente[k] -= q; actif = true;
+        const dispo = eauDe(G, e, v.fond);
+        const q = Math.min(a, DEBIT * part, dispo);
+        if (q <= 1e-9) { e.attente[k] = 0; return; }       // à sec : la vidange n'a plus rien à prendre
+        const r = q / dispo;
+        for (const j of v.fond) e.m[j] -= e.m[j] * r;
+        e.vide += q; e.attente[k] -= q; actif = true;
       }
       if (e.attente[k] < 1e-9) e.attente[k] = 0;
     });
@@ -354,31 +381,40 @@ const Labyrinthe = (function () {
   }
 
   // La hauteur d'eau sous la boule (ou au-dessus, si elle est sous l'eau),
-  // dans sa colonne. plafond : l'eau monte jusqu'à un mur, la boule y bute.
+  // dans sa petite colonne, en cases. plafond : l'eau monte jusqu'à un mur.
   const PLEINE = 0.98, SECHE = 0.02;
   function niveau(N, e, x, y) {
-    const G = prep(N), cx = Math.floor(x);
-    let cy = Math.min(G.H - 1, Math.max(0, Math.floor(y)));
-    const m = c => e.m[idx(G, cx, c)];
-    if (!ouvert(G, cx, cy)) return { h: null };
+    const G = prep(N), S = G.S, cx = Math.floor(x * S);
+    let cy = Math.min(G.SH - 1, Math.max(0, Math.floor(y * S)));
+    const m = c => e.m[fidx(G, cx, c)];
+    if (!fouvert(G, cx, cy)) return { h: null };
     if (m(cy) > SECHE) {
-      while (m(cy) >= PLEINE && ouvert(G, cx, cy + 1) && m(cy + 1) > SECHE) cy++;
-      if (m(cy) >= PLEINE && !ouvert(G, cx, cy + 1)) return { h: cy + 1, plafond: true };
-      return { h: cy + Math.min(1, m(cy)) };
+      while (m(cy) >= PLEINE && fouvert(G, cx, cy + 1) && m(cy + 1) > SECHE) cy++;
+      if (m(cy) >= PLEINE && !fouvert(G, cx, cy + 1)) return { h: (cy + 1) / S, plafond: true };
+      return { h: (cy + Math.min(1, m(cy))) / S };
     }
-    while (cy > 0 && ouvert(G, cx, cy - 1) && m(cy - 1) <= SECHE) cy--;
-    if (cy === 0 || !ouvert(G, cx, cy - 1)) return { h: null };
-    // de l'eau qui tombe n'est pas une surface : il faut une case posée sur quelque chose
-    return { h: cy - 1 + Math.min(1, m(cy - 1)) };
+    while (cy > 0 && fouvert(G, cx, cy - 1) && m(cy - 1) <= SECHE) cy--;
+    if (cy === 0 || !fouvert(G, cx, cy - 1)) return { h: null };
+    return { h: (cy - 1 + Math.min(1, m(cy - 1))) / S };
+  }
+  // La vitesse de l'eau qui passe une ligne verticale (une face de la grille
+  // fine), dans la bande de hauteur où trempe la boule, en cases par image.
+  function vitesse(G, e, fxc, y0, y1) {
+    const S = G.S;
+    let q = 0, mouille = 0;
+    for (let fy = Math.max(0, Math.floor(y0 * S)); fy < Math.min(G.SH, Math.ceil(y1 * S)); fy++) {
+      if (!fouvert(G, fxc, fy) || !fouvert(G, fxc + 1, fy)) continue;
+      const i = fidx(G, fxc, fy);
+      q += e.fx[i];
+      mouille += Math.min(1, (e.m[i] + e.m[i + 1]) / 2);
+    }
+    return mouille > 0.25 ? q / (S * mouille) : 0;
   }
 
-  function solide(G, x, y) {
-    const cx = Math.floor(x), cy = Math.floor(y);
-    return !ouvert(G, cx, cy);
-  }
+  function solide(G, x, y) { return !ouvert(G, Math.floor(x), Math.floor(y)); }
   // La boule : elle flotte, tombe au sec, et l'eau qui l'entoure l'emporte.
   function bouger(N, e) {
-    const G = prep(N), b = e.b;
+    const G = prep(N), b = e.b, S = G.S;
     if (e.gagne) { b.y += 0.05; return; }
     const nv = niveau(N, e, b.x, b.y);
     const dansEau = nv.h !== null && nv.h > b.y - RAYON;
@@ -386,43 +422,39 @@ const Labyrinthe = (function () {
       const cible = nv.plafond ? nv.h - RAYON : nv.h + FLOTTE;
       b.vy += (cible - b.y) * RESSORT;
       b.vy *= AMORTI;
-      // le courant dans la case où trempe la boule
-      const cx = Math.floor(b.x), cy = Math.floor(Math.min(nv.h - 0.05, b.y));
-      if (ouvert(G, cx, cy)) {
-        // les faces de sa rangée qu'elle touche ou frôle (à moins d'une case
-        // de son centre) : la boule prend le courant le plus fort qui passe
-        let u = 0;
-        for (let fx = cx - 1; fx <= cx + 1; fx++) {
-          if (Math.abs(fx + 1 - b.x) > 1 || fx < 0 || fx + 1 >= G.W) continue;   // la face entre fx et fx+1
-          if (!ouvert(G, fx, cy) || !ouvert(G, fx + 1, cy)) continue;
-          const i = idx(G, fx, cy);
-          const prof = Math.max(0.25, Math.min(1, (e.m[i] + e.m[i + 1]) / 2));
-          const v = e.fx[i] / prof;
-          if (Math.abs(v) > Math.abs(u)) u = v;
-        }
-        b.vx += (u * PORTE - b.vx) * SUIT;
+      // le courant le plus fort parmi les faces à moins d'une case de son centre
+      const y0 = b.y - RAYON, y1 = Math.min(b.y + RAYON, nv.h);
+      let u = 0;
+      for (let fxc = Math.floor((b.x - 1) * S); fxc <= Math.floor((b.x + 1) * S); fxc++) {
+        if (fxc < 0 || fxc + 1 >= G.SW) continue;
+        const v = vitesse(G, e, fxc, y0, y1);
+        if (Math.abs(v) > Math.abs(u)) u = v;
       }
+      b.vx += (u * PORTE - b.vx) * SUIT;
     } else {
       b.vy = Math.max(-CHUTE_MAX, b.vy - PESANTEUR);
       b.vx *= FROTTE;
     }
     if (Math.abs(b.vx) > 0.25) b.vx = Math.sign(b.vx) * 0.25;
-    // on avance, puis on sort des murs, axe par axe
     b.x += b.vx;
     if (solide(G, b.x + RAYON, b.y)) { b.x = Math.floor(b.x + RAYON) - RAYON - 1e-6; b.vx = 0; }
     if (solide(G, b.x - RAYON, b.y)) { b.x = Math.floor(b.x - RAYON) + 1 + RAYON + 1e-6; b.vx = 0; }
     b.y += b.vy;
     if (solide(G, b.x, b.y + RAYON)) { b.y = Math.floor(b.y + RAYON) - RAYON - 1e-6; b.vy = Math.min(0, b.vy); }
     if (solide(G, b.x, b.y - RAYON)) { b.y = Math.floor(b.y - RAYON) + 1 + RAYON + 1e-6; b.vy = Math.max(0, b.vy); }
-    const ci = idx(G, Math.floor(b.x), Math.floor(b.y));
-    if (G.sortie[ci]) e.gagne = true;
+    if (G.sortie[idx(G, Math.floor(b.x), Math.floor(b.y))]) e.gagne = true;
   }
 
-  // Un pas de jeu : les vannes, l'eau, la boule.
+  // Un pas de jeu (une image) : FIN pas d'eau, puis la boule.
   function pas(N, e) {
-    const actif = vannes(N, e);
-    const flux = eau(N, e);
-    const vx = e.b.vx, vy = e.b.vy;
+    const G = prep(N);
+    e.fx.fill(0); e.fy.fill(0);
+    let actif = false, flux = 0;
+    for (let k = 0; k < G.S; k++) {
+      if (vannes(N, e)) actif = true;
+      flux += eau(N, e);
+    }
+    flux /= G.S2;                                   // en cases du labyrinthe
     bouger(N, e);
     const vite = Math.abs(e.b.vx) + Math.abs(e.b.vy);
     if (!actif && flux < CALME && vite < 1e-3) e.calme++; else e.calme = 0;
@@ -435,7 +467,7 @@ const Labyrinthe = (function () {
   function taper(N, e0, k) {
     const G = prep(N), v = G.vannes[k];
     if (e0.gagne) return null;
-    if (v.type === "vidange" && e0.m[v.i] < SEC && e0.attente[k] <= 0) return null;   // presque à sec : rien à vider
+    if (v.type === "vidange" && eauDe(G, e0, v.bloc) < SEC && e0.attente[k] <= 0) return null;   // presque à sec : rien à vider
     const e = copie(e0);
     e.attente[k] += UNITE;
     e.tapes++;
@@ -451,13 +483,14 @@ const Labyrinthe = (function () {
   }
   function jouer(N, e, k) { const t = taper(N, e, k); return t ? reposer(N, t) : null; }
 
-  // La clé d'un état au repos : l'eau au dixième, la boule au dixième.
+  // La clé d'un état : l'eau au dixième, la boule au dixième.
   function cle(e) {
     let s = "";
     for (let i = 0; i < e.m.length; i++) s += Math.round(e.m[i] * 10).toString(36);
     return s + "|" + Math.round(e.b.x * 10) + "," + Math.round(e.b.y * 10) + (e.gagne ? "!" : "");
   }
-  return { prep, charger, copie, taper, pas, repos, reposer, jouer, cle, niveau, ouvert, idx, RAYON };
+
+  return { prep, charger, copie, taper, pas, repos, reposer, jouer, cle, niveau, ouvert, fouvert, idx, fidx, eauDe, RAYON };
 })();
 </script>
 
@@ -534,35 +567,50 @@ const Labyrinthe = (function () {
     $("decor").innerHTML = s;
   }
 
-  // --- l'eau : chaque case montre ce qu'elle contient ---------------------
+  // --- l'eau : chaque petite case montre ce qu'elle contient ----------------
   // Posée (sur un mur ou sur de l'eau pleine), elle se dessine à plat ;
-  // sinon c'est de l'eau qui tombe, en filet plus ou moins épais.
+  // sinon c'est de l'eau qui tombe, en filet plus ou moins épais. Toute
+  // l'eau tient en trois tracés : le corps, les filets, l'écume des surfaces.
   function dessinerEau() {
-    const m = etat.m, W = G.W;
-    let s = "";
-    for (let i = 0; i < m.length; i++) {
-      const a = m[i];
-      if (a < 0.01 || G.mur[i]) continue;
-      const x = i % W, y = (i - x) / W;
-      const posee = y === 0 || G.mur[i - W] || m[i - W] >= 0.95;
-      if (posee) {
-        const h = Math.min(1, a);
-        s += rect(x - 0.01, y - 0.01, x + 1.01, y + h, C.eau);
-        const dessusLibre = y + 1 < G.H && !G.mur[i + W] && m[i + W] < 0.05;
-        if (h < 0.99 || dessusLibre) s += rect(x - 0.01, y + h - 0.09, x + 1.01, y + h, C.ecume);
-      } else {
-        const w = Math.max(0.1, Math.min(1, a * 1.6)) / 2;
-        s += rect(x + 0.5 - w, y - 0.01, x + 0.5 + w, y + 1.01, C.eau, `opacity="0.92"`);
-        s += rect(x + 0.5 - w * 0.4, y - 0.01, x + 0.5, y + 1.01, C.ecume, `opacity="0.6"`);
+    const m = etat.m, W = G.SW, S = G.S, p = 1 / S;
+    let corps = "", filets = "", ecume = "";
+    const r = (x0, y0, x1, y1) => `M${f(x0)} ${f(Y(y1))}H${f(x1)}V${f(Y(y0))}H${f(x0)}Z`;
+    for (let fx = 0; fx < W; fx++) {
+      let debut = -1;                                    // une colonne d'eau posée en cours
+      for (let fy = 0; fy <= G.SH; fy++) {
+        const i = fy * W + fx, a = fy < G.SH && !G.fmur[i] ? m[i] : 0;
+        const posee = a >= 0.01 && (fy === 0 || G.fmur[i - W] || m[i - W] >= 0.95);
+        if (posee && a >= 0.995 && fy + 1 < G.SH) { if (debut < 0) debut = fy; continue; }
+        const x0 = fx * p, x1 = x0 + p;
+        if (posee) {
+          if (debut < 0) debut = fy;
+          const haut = (fy + Math.min(1, a)) * p;
+          corps += r(x0 - 0.004, debut * p, x1 + 0.004, haut);
+          const dessus = fy + 1 < G.SH ? i + W : -1;
+          if (dessus >= 0 && !G.fmur[dessus] && m[dessus] < 0.05) ecume += r(x0 - 0.004, haut - 0.08, x1 + 0.004, haut);
+          debut = -1;
+          continue;
+        }
+        if (debut >= 0) {                                // la colonne pleine s'arrête sous un plafond ou sous de l'eau qui tombe
+          corps += r(x0 - 0.004, debut * p, x1 + 0.004, fy * p);
+          debut = -1;
+        }
+        if (a >= 0.1) {                                  // en dessous, une trace : on ne la voit pas tomber
+          const w = Math.max(0.3, Math.min(1, a * 1.6)) * p / 2, cx = x0 + p / 2;
+          filets += r(cx - w, fy * p - 0.004, cx + w, (fy + 1) * p + 0.004);
+        }
       }
     }
+    let s = `<path d="${corps}" fill="${C.eau}"/>`;
+    if (filets) s += `<path d="${filets}" fill="${C.eau}" opacity="0.9"/>`;
+    if (ecume) s += `<path d="${ecume}" fill="${C.ecume}"/>`;
     // les vidanges ouvertes tourbillonnent
     G.vannes.forEach((v, k) => {
       if (v.type !== "vidange" || etat.attente[k] <= 0) return;
-      const cy = v.y + Math.min(1, m[v.i]) - 0.15;
+      const cy = v.y + Math.min(1, L.eauDe(G, etat, v.bloc)) - 0.15;
       for (let q = 0; q < 3; q++) {
-        const a = -temps * 9 + q * 2.09, r = 0.12 + 0.1 * q;
-        s += `<circle cx="${f(v.x + 0.5 + Math.cos(a) * r)}" cy="${f(Y(cy) + Math.sin(a) * r * 0.35)}" r="0.06" fill="${C.ecume}"/>`;
+        const a = -temps * 9 + q * 2.09, rr = 0.12 + 0.1 * q;
+        s += `<circle cx="${f(v.x + 0.5 + Math.cos(a) * rr)}" cy="${f(Y(cy) + Math.sin(a) * rr * 0.35)}" r="0.06" fill="${C.ecume}"/>`;
       }
     });
     $("eau").innerHTML = s;

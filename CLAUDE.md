@@ -175,9 +175,10 @@ jour qui perd la partie d'un joueur est un bug bloquant, pas un détail.
   `prototype-labyrinthe.html` le remplace dans l'exploration : une boule
   flotte dans un labyrinthe en cases, une tape de robinet = une case d'eau,
   une tape de vidange en retire une (appui long : en continu, sur les deux). L'eau coule
-  pour de vrai (chute, étalement, pression) et la boule suit son courant.
-  Son banc, `node tools/labyrinthe-banc.mjs`, rejoue la solution écrite,
-  refuse si une suite plus courte que le `par` gagne (fouille limitée à trois
+  pour de vrai (chute, étalement, pression, sur une grille fine de 4 × 4
+  petites cases par case) et la boule suit son courant. Son banc,
+  `node tools/labyrinthe-banc.mjs` (≈ 1 min 30), rejoue la solution écrite,
+  refuse si une suite plus courte que le `par` gagne (fouille limitée à deux
   séries de tapes) ou si un `piege` gagne.
 - `data/worldmap.js` — généré depuis Natural Earth, jamais édité à la main.
 

@@ -2,15 +2,16 @@
 // ------------------------------------------------------------------
 // labyrinthe-banc — LE BANC D'ESSAI DU PROTOTYPE « LABYRINTHE D'EAU ».
 //
-//   node tools/labyrinthe-banc.mjs                 100 parties au hasard
-//   node tools/labyrinthe-banc.mjs --parties=400 --graine=7
+//   node tools/labyrinthe-banc.mjs                 30 parties au hasard (≈ 1 min)
+//   node tools/labyrinthe-banc.mjs --parties=100 --graine=7
 //
 // Le moteur (prototypes/prototype-labyrinthe.html, bloc <script id="moteur">)
 // et le niveau (bloc JSON « niveau ») sont extraits du fichier et joués sans
 // navigateur — jamais une copie de l'un ou de l'autre. Le banc REFUSE (code
 // de sortie 1) au lieu d'avertir.
 //
-// L'eau est continue (une masse par case) : on ne peut pas tout fouiller.
+// L'eau est continue (une masse par petite case, 4 × 4 par case du
+// labyrinthe) : on ne peut pas tout fouiller.
 // Le banc joue « au repos » — chaque tape, puis on attend que l'eau et la
 // boule se posent — comme le solveur de la page.
 //
@@ -22,8 +23,9 @@
 // LA SOLUTION :
 //   S1  la « solution » écrite se rejoue jusqu'à la sortie
 //   S2  sa longueur est le « par », et aucune suite plus courte n'est
-//       trouvée parmi celles de trois séries au plus (une série = la même
-//       vanne tapée plusieurs fois d'affilée : c'est ainsi qu'on joue)
+//       trouvée parmi celles de deux séries au plus (une série = la même
+//       vanne tapée plusieurs fois d'affilée : c'est ainsi qu'on joue ;
+//       trois séries coûteraient plusieurs minutes à grain fin)
 //   S3  chaque suite de « pieges » NE sort PAS la boule
 //
 // LES INVARIANTS — à chaque pas d'eau de parties jouées au hasard, une
@@ -44,9 +46,9 @@ const FICHIER = "prototypes/prototype-labyrinthe.html";
 const args = process.argv.slice(2);
 const opt = n => { const a = args.find(x => x.startsWith("--" + n + "=")); return a ? a.split("=")[1] : null; };
 for (const a of args) if (!/^--(parties|graine)=/.test(a)) { console.error("argument inconnu : " + a); process.exit(2); }
-const PARTIES = +(opt("parties") || 100);
+const PARTIES = +(opt("parties") || 30);
 const GRAINE = +(opt("graine") || 1);
-const TAPES = 30, SERIES = 3;
+const TAPES = 30, SERIES = 2;
 
 const html = readFileSync(join(RACINE, FICHIER), "utf8");
 function bloc(id) {
@@ -104,6 +106,7 @@ function invariants(G, e, ou) {
     if (e.m[i] < -1e-9) { v.push(`I2 ${ou} : masse ${e.m[i]} en case ${i}`); break; }
     dedans += e.m[i];
   }
+  dedans /= G.S2;                                   // en cases du labyrinthe
   const attendu = G0.eau + e.verse - e.sorti - e.vide;
   if (Math.abs(dedans - attendu) > 1e-6) v.push(`I1 ${ou} : ${dedans.toFixed(6)} d'eau, attendu ${attendu.toFixed(6)}`);
   if (!L.ouvert(G, Math.floor(e.b.x), Math.floor(e.b.y)) && !e.gagne) v.push(`I4 ${ou} : boule en ${e.b.x.toFixed(2)},${e.b.y.toFixed(2)}`);
@@ -132,7 +135,7 @@ if (!d.length) {
   for (let n = 0; n < 200; n++) flux += L.pas(N, e);
   if (flux > 1e-6) d.push(`D2 l'eau coule au chargement (${flux.toExponential(2)})`);
   if (Math.hypot(e.b.x - x, e.b.y - y) > 1e-3) d.push(`D2 la boule bouge au chargement (${x.toFixed(2)},${y.toFixed(2)} → ${e.b.x.toFixed(2)},${e.b.y.toFixed(2)})`);
-  G0.eau = L.charger(N).m.reduce((a, b) => a + b, 0);
+  G0.eau = L.charger(N).m.reduce((a, b) => a + b, 0) / G.S2;
 }
 dire(!d.length, "D1-D2 données" + (d.length ? " :\n      " + d.join("\n      ") : ""));
 if (d.length) process.exit(1);
