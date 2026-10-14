@@ -73,6 +73,12 @@ son seuil.
   dessine à un niveau commun, celui que donne son volume : le moteur laisse un
   retard entre les deux colonnes quand on vide par le fond, qui se voyait
   comme une bosse. La boule suit l'eau dessinée.
+- **Un couloir** se dessine de la même façon : deux surfaces libres qui se
+  touchent dans une ouverture, ou deux bassins sous un même plafond continu
+  (sans linteau), sont à un niveau commun — l'eau s'y met de niveau à mesure
+  qu'il se remplit. Un bout de couloir poussé par une eau plus haute que son
+  plafond (un tuyau sous pression) reste plein jusqu'à sa sortie, et c'est
+  seulement en sortant, du côté ouvert, que l'eau redescend, sur 0,3 case.
 - **Le débit lissé** règle tout l'effet. Il monte vite et retombe doucement :
   une chute qui s'arrête s'amincit puis s'éteint.
 

@@ -488,9 +488,46 @@ var _liseres: Array = []     # 1 : le point est sur une surface libre et porte l
 # retard (une colonne encore pleine sous son plafond quand sa voisine se vide
 # par le fond), qui se voyait comme une bosse. On dessine donc un puits à un
 # niveau commun, celui que donne son volume.
+# Même chose dans un couloir qui se remplit : le moteur y fait avancer l'eau
+# d'une case à l'autre avec un retard, en pente ; dans un vrai couloir, l'eau
+# s'y met de niveau à mesure. Deux bassins libres dont les surfaces se
+# touchent dans une ouverture (la plus basse au-dessus du seuil) se dessinent
+# donc aussi à leur niveau commun. Ce niveau dessiné glisse (SUIT_NIVEAU)
+# quand un bassin rejoint ou quitte l'ensemble, au lieu de sauter.
 var _niv_puits := PackedFloat64Array()     # par bassin : ce niveau commun, ou -INF
+var _niv_puits_vu := PackedFloat64Array()
+var _force_plein := PackedByteArray()      # par bassin : 1, un tuyau poussé, dessiné plein
+const SUIT_NIVEAU := 10.0                  # par seconde
 
 func _puits() -> void:
+	# la charge qui pousse chaque bassin plein : la plus haute surface libre
+	# qu'il touche à travers d'autres bassins pleins. Un bassin plein poussé
+	# au-dessus de son plafond est vraiment sous pression : il reste plein
+	# Un bout de couloir que l'ouverture couvre sur toute sa hauteur (un
+	# tuyau) se remplit aussi sous cette pression, même si le moteur, en
+	# retard, le croit encore à moitié vide : il se dessine plein
+	var tete := PackedFloat64Array(); tete.resize(M.nb)
+	_force_plein.resize(M.nb)
+	_force_plein.fill(0)
+	for a in M.nb:
+		tete[a] = M.niveau_bassin(e, a) if e.vol[a] >= 0.004 else -INF
+	for passe in M.nb:
+		var change := false
+		for o in M.o_a.size():
+			for paire in [[M.o_a[o], M.o_b[o]], [M.o_b[o], M.o_a[o]]]:
+				var p_: int = paire[0]
+				var n: int = paire[1]
+				if e.vol[p_] < 0.004 or tete[n] <= M.o_y0[o] or tete[n] <= tete[p_] + 1e-6:
+					continue
+				if M.libre(e, p_) or _force_plein[p_] == 1:
+					var tuyau := M.o_y1[o] - M.o_y0[o] < 1.5 and float(M.b_bas[p_]) >= M.o_y0[o] - 0.01 \
+						and float(M.b_haut[p_]) <= M.o_y1[o] + 0.01 and M.b_ferme[p_] == 1
+					if not tuyau or tete[n] <= float(M.b_haut[p_]) + 0.05:
+						continue
+					_force_plein[p_] = 1
+				tete[p_] = tete[n]; change = true
+		if not change:
+			break
 	var par := PackedInt32Array()
 	par.resize(M.nb)
 	for a in M.nb:
@@ -498,10 +535,22 @@ func _puits() -> void:
 	for o in M.o_a.size():
 		var a := M.o_a[o]
 		var b := M.o_b[o]
-		if M.o_y1[o] - M.o_y0[o] < 1.5 or e.vol[a] < 0.004 or e.vol[b] < 0.004:
+		if e.vol[a] < 0.004 or e.vol[b] < 0.004:
 			continue
 		var bas_cote := minf(M.niveau_bassin(e, a), M.niveau_bassin(e, b))
-		if bas_cote < M.o_y0[o] + 0.02 or bas_cote > M.o_y1[o] - 0.02:
+		# un plafond continu : les deux bassins ont leur plafond au haut de
+		# l'ouverture, pas de linteau entre eux. Un bassin plein sous ce
+		# plafond n'est pas sous pression — l'air du voisin arrive jusqu'à lui —
+		# sauf si une eau plus haute le pousse (tete)
+		var continu := M.b_haut[a] <= M.o_y1[o] + 0.01 and M.b_haut[b] <= M.o_y1[o] + 0.01 \
+			and tete[a] <= float(M.b_haut[a]) + 0.05 and tete[b] <= float(M.b_haut[b]) + 0.05
+		if bas_cote < M.o_y0[o] + 0.02:
+			continue
+		if bas_cote > M.o_y1[o] - 0.02 and not continu:
+			continue
+		# sous un linteau, une ouverture basse (un couloir) ne relie que deux
+		# surfaces libres : un couloir plein sous pression reste plein
+		if M.o_y1[o] - M.o_y0[o] < 1.5 and (not _libre_vu(a) or not _libre_vu(b)) and not continu:
 			continue
 		var ra := a
 		while par[ra] != ra: ra = par[ra]
@@ -538,6 +587,21 @@ func _puits() -> void:
 			else: hi = mi
 		for a in membres:
 			_niv_puits[a] = 0.5 * (lo + hi)
+	# le niveau dessiné glisse vers sa cible
+	if _niv_puits_vu.size() != M.nb:
+		_niv_puits_vu.resize(M.nb); _niv_puits_vu.fill(-INF)
+	for a in M.nb:
+		if _niv_puits[a] == -INF:
+			_niv_puits_vu[a] = -INF
+			continue
+		if _niv_puits_vu[a] == -INF:
+			_niv_puits_vu[a] = M.niveau_bassin(e, a)
+		_niv_puits_vu[a] = lerpf(_niv_puits_vu[a], _niv_puits[a], minf(1.0, _dt_rendu * SUIT_NIVEAU))
+		_niv_puits[a] = _niv_puits_vu[a]
+
+# Libre tel qu'on le dessine : pas plein, et pas un tuyau poussé.
+func _libre_vu(a: int) -> bool:
+	return M.libre(e, a) and not (a < _force_plein.size() and _force_plein[a] == 1)
 
 func _hauts_d_eau() -> void:
 	_puits()
@@ -555,8 +619,8 @@ func _hauts_d_eau() -> void:
 		var hs := PackedFloat64Array()
 		var ps := PackedFloat64Array()
 		var ls := PackedFloat64Array()
-		var libre := M.libre(e, a)
-		var plein := vol >= M.capacite(a) - 1e-6
+		var libre := _libre_vu(a)
+		var plein := vol >= M.capacite(a) - 1e-6 or _force_plein[a] == 1
 		# une surface libre collée à son plafond (moins de 0,15 case d'air) se
 		# lit comme un bassin plein : sous le plafond, sans liseré ni reflets,
 		# de la même eau que la colonne pleine d'à côté ; elle s'en détache
@@ -632,7 +696,9 @@ func _raccorder() -> void:
 		# douce jusqu'au niveau d'à côté, sur SOUS_LINTEAU
 		var haut_cote := a if ta > tb else b
 		var bas_id := b if haut_cote == a else a
-		if not M.libre(e, haut_cote):
+		# même chose quand, du côté haut, l'eau couvre toute l'ouverture : elle
+		# s'y déverse comme d'un tuyau plein, sans creuser la surface d'où elle vient
+		if not _libre_vu(haut_cote) or maxf(ta, tb) >= M.o_y1[o] - 0.005:
 			var dir := 1.0 if bas_id == b else -1.0
 			var depart := minf(maxf(ta, tb), M.o_y1[o])
 			var loin := _haut_en(bas_id, xb + dir * SOUS_LINTEAU)
