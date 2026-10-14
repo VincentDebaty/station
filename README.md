@@ -95,7 +95,10 @@ prototypes/                   Prototypes de mécanique, une page chacun, hors du
                               tranche Godot, ecluses-godot/ (voir son README) ;
                               « Caneton », sa cousine : un caneton flotte et suit
                               l'eau qu'on lâche en ouvrant des vannes
-                              (banc d'essai : node tools/caneton-banc.mjs)
+                              (banc d'essai : node tools/caneton-banc.mjs) ;
+                              « Labyrinthe d'eau » : une boule flotte dans un
+                              labyrinthe, un robinet verse, deux vidanges vident
+                              et tirent la boule (node tools/labyrinthe-banc.mjs)
 ```
 
 ## Ajouter une gare
