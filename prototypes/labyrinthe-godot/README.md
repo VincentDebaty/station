@@ -80,6 +80,27 @@ Les particules (gouttes, bulles, écume) vivent dans un réservoir fixe de
 220 places, sans allocation image par image. Elles sont purement visuelles et
 n'influencent jamais le moteur.
 
+## Les reflets et la boule
+
+`eau.gdshader` dessine dans chaque bassin :
+- **le dégradé** : cyan en surface, bleu plus profond vers le fond ;
+- **le liseré** de surface, qui scintille par endroits ;
+- **les reflets** : de fins traits clairs juste sous la surface, tirés d'un
+  bruit étiré qui dérive lentement. Ils épousent les vagues, car on les place
+  en profondeur sous la surface, et ils ne répètent jamais le même motif ;
+- **la lumière en profondeur** : des voiles très doux qui ondulent.
+
+Le bruit est un hachage sans sinus, stable sur les cartes graphiques mobiles.
+
+La boule, à l'affichage seulement :
+- **elle roule** avec son déplacement ;
+- **elle s'incline** avec la pente de la surface sous elle, comme une bouée,
+  grâce à un ressort amorti qui l'empêche de trembler ;
+- **elle suit la petite houle** de repos ;
+- **sa part immergée** est voilée d'eau, sous une ligne de flottaison claire.
+
+Le moteur n'en sait rien : la flottaison et le courant restent les siens.
+
 ## Vérifier
 
 ```bash

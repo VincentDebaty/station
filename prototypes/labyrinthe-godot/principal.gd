@@ -53,6 +53,12 @@ var presse: Array = []
 var boule_avant := Vector2.ZERO
 var angle := 0.0
 var angle_avant := 0.0
+# L'inclinaison de la boule sur les vagues : un ressort amorti vers la pente
+# de la surface sous elle, comme une bouée (purement visuel).
+var incline := 0.0
+var incline_v := 0.0
+const INCLINE_PULS := 7.0             # rad/s
+const INCLINE_AMORTI := 0.8
 var fini := false
 var attente_fin := 0
 var ms_pas := 0.0
@@ -171,7 +177,7 @@ func recommencer() -> void:
 	e = M.charger()
 	image = 0; appui = -1; fini = false; attente_fin = 0; acc = 0.0
 	boule_avant = Vector2(e.bx, e.by)
-	angle = 0.0; angle_avant = 0.0
+	angle = 0.0; angle_avant = 0.0; incline = 0.0; incline_v = 0.0
 	debit_vu.fill(0.0); budget.fill(0.0); p_vie.fill(0.0)
 	carte.visible = false
 	_cadrer()
@@ -226,6 +232,7 @@ func _process(delta: float) -> void:
 		if n == 4:
 			acc = 0.0
 	_cascades(PAS_S if capture != "" else delta)
+	_incliner(PAS_S if capture != "" else delta)
 	eau.queue_redraw()
 	chutes.queue_redraw()
 	gouttes.queue_redraw()
@@ -642,23 +649,78 @@ func _dessiner_vannes() -> void:
 					vannes_n.draw_circle(ecran(float(v["x"]) + 0.5 + cos(t) * r, h + sin(t) * r * 0.35), 0.05 * case_px, ECUME)
 
 
+# Le bassin de la boule s'il a une surface libre sous elle, sinon -1.
+func _bassin_boule(x: float, y: float) -> int:
+	var cx := floori(x)
+	var cy := floori(y)
+	if cx < 0 or cy < 0 or cx >= W or cy >= H:
+		return -1
+	var a := M.bassin_de[cy * W + cx]
+	if a < 0 or e.vol[a] <= 0.02:
+		return -1
+	return a
+
+
+# La boule s'incline avec la pente de la surface sous elle : la normale de
+# l'eau devient son « haut ». Un ressort amorti, pour qu'elle suive les vagues
+# sans trembler ; sous un plafond ou au sec, elle se redresse.
+func _incliner(dt: float) -> void:
+	var cible := 0.0
+	var a := _bassin_boule(e.bx, e.by)
+	if a >= 0 and M.libre(e, a) and absf(M.surface_en(e, a, e.bx) - e.by) < 0.5:
+		var pente := (_surface_vue(a, e.bx + 0.15) - _surface_vue(a, e.bx - 0.15)) / 0.3
+		cible = -atan(pente) * 0.9
+	incline_v += ((cible - incline) * INCLINE_PULS * INCLINE_PULS - 2.0 * INCLINE_AMORTI * INCLINE_PULS * incline_v) * dt
+	incline += incline_v * dt
+
+
 func _dessiner_boule() -> void:
 	var f := clampf(acc / PAS_S, 0.0, 1.0)
 	var x := lerpf(boule_avant.x, e.bx, f)
 	var y := lerpf(boule_avant.y, e.by, f)
-	var ang := lerpf(angle_avant, angle, f)
+	var ang := lerpf(angle_avant, angle, f) + incline
+	var r_c := Moteur.RAYON
+	# la surface sous la boule, telle qu'on la voit ; la boule qui flotte suit
+	# aussi la petite houle de repos de l'affichage
+	var a := _bassin_boule(x, y)
+	var eau_haut := -INF
+	if a >= 0:
+		if M.libre(e, a):
+			eau_haut = _surface_vue(a, x)
+			if absf(M.surface_en(e, a, x) - y) < 0.5:
+				y += eau_haut - M.surface_en(e, a, x)
+		else:
+			eau_haut = float(M.b_haut[a]) + 1.0
 	var c := ecran(x, y)
-	var r := Moteur.RAYON * case_px
+	var r := r_c * case_px
 	boule_n.draw_circle(c, r, BLANC)
 	var demi := PackedVector2Array()
 	for q in 17:
-		var a := ang + PI + PI * q / 16.0
-		demi.append(c + Vector2(cos(a), sin(a)) * r)
+		var t := ang + PI + PI * q / 16.0
+		demi.append(c + Vector2(cos(t), sin(t)) * r)
 	boule_n.draw_colored_polygon(demi, ROUGE)
 	var axe := Vector2(cos(ang), sin(ang)) * r
 	boule_n.draw_line(c - axe, c + axe, ROUGE_OMBRE, 0.08 * case_px)
 	boule_n.draw_arc(c, r, 0, TAU, 40, BLANC_OMBRE, 0.04 * case_px, true)
 	boule_n.draw_circle(c + Vector2(-0.35, -0.5) * r, 0.22 * r, Color(1, 1, 1, 0.7))
+	# la part immergée : voilée d'eau, sous une ligne de flottaison claire
+	if eau_haut > y - r_c:
+		var voile := PackedVector2Array()
+		if eau_haut >= y + r_c:
+			for q in 33:
+				var t := TAU * q / 32.0
+				voile.append(ecran(x + cos(t) * r_c, y + sin(t) * r_c))
+		else:
+			var t0 := asin(clampf((eau_haut - y) / r_c, -1.0, 1.0))
+			for q in 25:
+				var t := lerpf(PI - t0, TAU + t0, q / 24.0)
+				voile.append(ecran(x + cos(t) * r_c, y + sin(t) * r_c))
+			var g := ecran(x - cos(t0) * r_c, eau_haut)
+			var d := ecran(x + cos(t0) * r_c, eau_haut)
+			boule_n.draw_colored_polygon(voile, Color(0.3, 0.72, 1.0, 0.3))
+			boule_n.draw_line(g, d, Color(0.82, 0.96, 1.0, 0.9), maxf(1.5, 0.05 * case_px), true)
+			return
+		boule_n.draw_colored_polygon(voile, Color(0.3, 0.72, 1.0, 0.3))
 
 
 # --- sans les doigts ---------------------------------------------------------------
