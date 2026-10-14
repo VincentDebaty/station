@@ -658,9 +658,13 @@ func _levre(o: int) -> float:
 const ARRONDI := 0.45        # en cases, avant le bord
 var pente_levre := PackedFloat64Array()
 
+var levre_vue := PackedFloat64Array()   # par ouverture : l'épaisseur de la nappe au bord, telle que dessinée
+
 func _arrondir_levres() -> void:
 	pente_levre.resize(M.o_a.size())
 	pente_levre.fill(0.0)
+	levre_vue.resize(M.o_a.size())
+	levre_vue.fill(0.0)
 	for o in M.o_a.size():
 		if not _chute_active(o):
 			continue
@@ -678,14 +682,25 @@ func _arrondir_levres() -> void:
 		var hs: PackedFloat64Array = _hauts[src]
 		var ps: PackedFloat64Array = _profs[src]
 		var ls: PackedFloat64Array = _liseres[src]
+		# la surface en amont de l'arrondi ; si elle est déjà plus basse que la
+		# lèvre (un creux de vague, une eau qui s'écoule), c'est elle qui fait
+		# l'épaisseur de la nappe : la nappe ne repart jamais plus haut que
+		# l'eau qu'elle prolonge
+		var amont := _haut_en(src, xb - dir * ARRONDI)
+		bord = clampf(minf(bord, amont), M.o_y0[o] + 0.03, M.o_y1[o])
+		levre_vue[o] = bord - M.o_y0[o]
 		# la pente de l'arrondi au bord : la nappe part dans son prolongement
-		pente_levre[o] = maxf(0.0, 2.0 * (_haut_en(src, xb - dir * ARRONDI) - bord) / ARRONDI)
+		pente_levre[o] = maxf(0.0, 2.0 * (amont - bord) / ARRONDI)
+		# sur les ARRONDI dernières cases, la surface rejoint une courbe qui
+		# descend sans remonter, de l'amont jusqu'au bord : ni creux ni crête
+		# juste avant la chute
 		for k in xs.size():
 			var d := (xb - xs[k]) * dir          # la distance au bord, côté source
-			if d > ARRONDI or hs[k] <= bord:
+			if d > ARRONDI:
 				continue
 			var t := 1.0 - clampf(d / ARRONDI, 0.0, 1.0)
-			hs[k] -= (hs[k] - bord) * t * t
+			var courbe := amont - (amont - bord) * t * t
+			hs[k] = lerpf(hs[k], courbe, smoothstep(0.0, 0.6, t))
 			ps[k] = 0.0; ls[k] = 1.0
 		_hauts[src] = hs; _profs[src] = ps; _liseres[src] = ls
 
@@ -754,6 +769,22 @@ func _dessiner_eau() -> void:
 			continue
 		var cible := _reference[_racine(a)]
 		_ref_vue[a] = cible if _ref_vue[a] == -INF else lerpf(_ref_vue[a], cible, minf(1.0, _dt_rendu * SUIT_TEINTE))
+	# tous les bassins d'une même masse prennent la même référence (la moyenne
+	# pondérée par leur eau) : des histoires différentes ne doivent pas
+	# laisser deux teintes côte à côte dans une eau qui ne fait qu'un
+	var somme := PackedFloat64Array(); somme.resize(M.nb)
+	var poids := PackedFloat64Array(); poids.resize(M.nb)
+	for a in M.nb:
+		if _xs[a] != null:
+			var r := _racine(a)
+			somme[r] += _ref_vue[a] * e.vol[a]; poids[r] += e.vol[a]
+	for a in M.nb:
+		if _xs[a] != null:
+			var r := _racine(a)
+			_ref_vue[a] = somme[r] / poids[r]
+	for a in M.nb:
+		if _xs[a] == null:
+			continue
 		var ref := _ref_vue[a]
 		var xs: PackedFloat64Array = _xs[a]
 		var tops: PackedFloat64Array = _hauts[a]
@@ -900,7 +931,7 @@ func _dessiner_chutes() -> void:
 		var y0 := M.o_y0[o]
 		# la nappe part du seuil avec l'épaisseur de la lèvre : son bord du bas
 		# sur le seuil, son bord du haut sur la surface arrondie
-		var largeur := _levre(o)
+		var largeur := levre_vue[o] if levre_vue.size() > o and levre_vue[o] > 0.0 else _levre(o)
 		var y_seuil := y0 + largeur * 0.5
 		var tuyau := _dans_le_tuyau(src)
 		if tuyau:
