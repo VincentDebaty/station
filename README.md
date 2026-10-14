@@ -97,8 +97,8 @@ prototypes/                   Prototypes de mécanique, une page chacun, hors du
                               l'eau qu'on lâche en ouvrant des vannes
                               (banc d'essai : node tools/caneton-banc.mjs) ;
                               « Labyrinthe d'eau » : une boule flotte dans un
-                              labyrinthe, un robinet verse, deux vidanges vident
-                              et tirent la boule (node tools/labyrinthe-banc.mjs)
+                              labyrinthe, un robinet verse, deux vidanges vident,
+                              l'eau coule et porte la boule (node tools/labyrinthe-banc.mjs)
 ```
 
 ## Ajouter une gare

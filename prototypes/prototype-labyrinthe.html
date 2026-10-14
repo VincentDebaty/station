@@ -14,9 +14,10 @@
    LABYRINTHE D'EAU — prototype jouable d'un puzzle d'eau, hors de Station.
 
    Une boule flotte dans un labyrinthe vu en coupe. Trois vannes : le
-   robinet verse une unité d'eau par tape, les vidanges en retirent une
-   et leur courant tire la boule vers elles. En remplissant et en vidant,
-   on mène la boule jusqu'à la sortie.
+   robinet verse une unité d'eau par tape (un appui long verse en
+   continu), les vidanges en retirent une. L'eau coule pour de vrai, case
+   à case, et la boule suit son courant. En remplissant et en vidant, on
+   mène la boule jusqu'à la sortie.
 
    Trois blocs : le niveau (JSON), le moteur (pur, sans DOM — le banc
    tools/labyrinthe-banc.mjs l'extrait et le joue sans navigateur), la vue.
@@ -105,30 +106,35 @@ button:focus-visible { outline: 3px solid var(--or); outline-offset: 2px; }
      LE NIVEAU. La grille se lit comme elle se voit, rangée du haut d'abord :
        #  mur          .  vide          S  sortie (au bord)
        o  la boule     ~  eau de départ
-       1…9  une vanne, dont le type est dans « vannes » (dans l'ordre)
+       1…9  une vanne, dont le type est dans « vannes » (dans l'ordre) ;
+            un robinet au bord gauche, droit ou haut a son bouton dehors
      « eau » : niveau de départ — toute case ouverte sous cette rangée
      (comptée depuis le bas, 0 = la rangée du bas) est pleine.
-     « par » : la meilleure solution, en tapes — le banc le vérifie.
-     « requises » : true si chaque vanne est indispensable — le banc aussi.
+     « solution » : une suite de tapes qui gagne (chiffre = vanne) ; « par »
+     sa longueur ; « pieges » : des suites qui NE doivent PAS gagner. Le banc
+     vérifie les trois, et cherche une solution plus courte que le par.
      ------------------------------------------------------------------ -->
 <script type="application/json" id="niveau">
 {
-  "titre": "Le zigzag",
-  "conseil": "Le robinet remplit, les vidanges vident — et leur courant tire la boule.",
-  "par": 13,
-  "requises": true,
+  "titre": "Les deux étages",
+  "conseil": "Le robinet remplit (appui long : en continu), les vidanges vident. La boule suit le courant.",
+  "par": 21,
+  "solution": "331111111111111111111",
+  "pieges": ["111111111111111111111111111111"],
   "grille": [
-    "#S###1#",
-    "#.###.#",
-    "#.....#",
-    "#####.#",
-    "#####.#",
-    "#o....#",
-    "#.###.#",
-    "#2...3#",
-    "#######"
+    "#SS#####",
+    "#..#####",
+    "#......#",
+    "#####..#",
+    "#####..#",
+    "1o.##..#",
+    "#......#",
+    "#..##..#",
+    "#..##..#",
+    "#2.##.3#",
+    "########"
   ],
-  "eau": 4,
+  "eau": 5,
   "vannes": [
     { "type": "robinet" },
     { "type": "vidange" },
@@ -138,291 +144,340 @@ button:focus-visible { outline: 3px solid var(--or); outline-offset: 2px; }
 </script>
 
 <!-- ------------------------------------------------------------------
-     LE MOTEUR. Pur et déterministe. L'eau va par unités, une case chacune.
-     Trois règles :
-       1. l'eau tombe, puis prend la case libre la plus basse au contact de
-          son corps d'eau — c'est la loi des vases communicants, en cases ;
-          à égalité, elle part d'abord par un déversoir (un bord, la sortie) ;
-       2. la vidange retire la case la plus haute du corps qui la touche ;
-       3. la boule flotte : elle monte avec l'eau, tombe quand l'eau s'en va,
-          bute sous un plafond. Le courant l'emporte le long de sa rangée :
-          vers une vidange qu'on ouvre, ou vers un bord où l'eau déborde.
+     LE MOTEUR. Pur et déterministe. L'eau est une masse par case (0 à 1),
+     qui avance pas à pas :
+       1. la chute : chaque case verse dans celle de dessous ce qui y tient ;
+       2. l'étalement : une case posée partage avec ses voisines de côté —
+          l'eau qui arrive au bord d'un vide y passe et tombe ;
+       3. la pression : dans un corps d'eau pleine, la surface la plus haute
+          pousse vers la plus basse — les vases communicants.
+     La boule flotte (elle monte et descend avec la surface, bute sous un
+     plafond) et prend la vitesse de l'eau qui l'entoure : un courant réel,
+     né des vannes, la porte.
      ------------------------------------------------------------------ -->
 <script id="moteur">
 "use strict";
 const Labyrinthe = (function () {
-  // La grille : "#" mur, "." vide, "S" sortie (au bord), "o" la boule, "~" eau de
-  // départ, "1"…"9" une vanne (case vide) dont le type est dans N.vannes[k-1].
-  // y vers le HAUT : la ligne 0 de N.grille est la rangée du haut.
+  // ---- réglages de l'eau ----
+  const DEBIT = 0.1;       // ce qu'un robinet verse, ou qu'une vidange retire, par pas
+  const UNITE = 1;         // une tape = une case d'eau
+  // ---- réglages de la boule ----
+  const RAYON = 0.34;
+  const FLOTTE = 0.08;     // le centre de la boule flotte un peu au-dessus de la surface
+  const RESSORT = 0.08, AMORTI = 0.8, PESANTEUR = 0.02, CHUTE_MAX = 0.3;
+  const PORTE = 2.5;       // la boule prend cette part de la vitesse de l'eau qui l'entoure
+  const SUIT = 0.1;        // et s'y accorde à ce rythme
+  const FROTTE = 0.85;     // au sec, elle s'arrête
+  // ---- repos ----
+  const CALME = 2e-4, CALME_PAS = 30, MAXPAS = 6000;
+
   const caches = new WeakMap();
   function prep(N) {
     let c = caches.get(N);
     if (c) return c;
     const H = N.grille.length, W = N.grille[0].length;
-    const mur = new Uint8Array(W * H), sortie = new Uint8Array(W * H);
+    const mur = new Uint8Array(W * H), sortie = new Uint8Array(W * H), m0 = new Float64Array(W * H);
     const vannes = [];
     let boule = null;
-    const eau0 = new Uint8Array(W * H);
     for (let r = 0; r < H; r++) for (let x = 0; x < W; x++) {
       const ch = N.grille[r][x], y = H - 1 - r, i = y * W + x;
       if (ch === "#") mur[i] = 1;
       else if (ch === "S") sortie[i] = 1;
-      else if (ch === "o") boule = { x, y };
-      else if (ch === "~") eau0[i] = 1;
+      else if (ch === "o") boule = { x: x + 0.5, y: y + 0.5 };
+      else if (ch === "~") m0[i] = 1;
       else if (ch >= "1" && ch <= "9") vannes[+ch - 1] = { ...N.vannes[+ch - 1], x, y, i };
     }
-    // « eau » : le niveau de départ — toute case ouverte sous cette rangée est pleine.
     if (N.eau) for (let y = 0; y < N.eau; y++) for (let x = 0; x < W; x++) {
       const i = y * W + x;
-      if (!mur[i] && !sortie[i]) eau0[i] = 1;
+      if (!mur[i] && !sortie[i]) m0[i] = 1;
     }
-    c = { W, H, mur, sortie, vannes, boule, eau0 };
+    c = { W, H, mur, sortie, vannes, boule, m0 };
     caches.set(N, c);
     return c;
   }
+  const ouvert = (G, x, y) => x >= 0 && y >= 0 && x < G.W && y < G.H && !G.mur[y * G.W + x];
   const idx = (G, x, y) => y * G.W + x;
-  function ouvert(G, x, y) { return x >= 0 && y >= 0 && x < G.W && y < G.H && !G.mur[idx(G, x, y)]; }
 
   function charger(N) {
     const G = prep(N);
-    const e = { eau: Array.from(G.eau0), boule: { ...G.boule }, verse: 0, sorti: 0, vide: 0, tapes: 0, gagne: false };
-    poser(N, e, []);
+    const e = {
+      m: Float64Array.from(G.m0), b: { x: G.boule.x, y: G.boule.y, vx: 0, vy: 0 },
+      attente: G.vannes.map(() => 0), tapes: 0, verse: 0, sorti: 0, vide: 0, gagne: false, calme: 0, pas: 0,
+      fx: new Float64Array(G.W * G.H), fy: new Float64Array(G.W * G.H),
+    };
+    // la boule se pose avant que la partie commence
+    for (let k = 0; k < 400; k++) bouger(N, e);
+    e.b.vx = e.b.vy = 0;
     return e;
   }
-  function copie(e) { return { eau: e.eau.slice(), boule: { ...e.boule }, verse: e.verse, sorti: e.sorti, vide: e.vide, tapes: e.tapes, gagne: e.gagne }; }
-  function cle(e) { return e.eau.join("") + "|" + e.boule.x + "," + e.boule.y + (e.gagne ? "!" : ""); }
+  function copie(e) {
+    return { m: Float64Array.from(e.m), b: { ...e.b }, attente: e.attente.slice(), tapes: e.tapes, verse: e.verse, sorti: e.sorti,
+      vide: e.vide, gagne: e.gagne, calme: e.calme, pas: e.pas, fx: Float64Array.from(e.fx), fy: Float64Array.from(e.fy) };
+  }
 
-  const VOIS = [[1, 0], [-1, 0], [0, 1], [0, -1]];
-  // Le corps d'eau qui contient la case i : les cases d'eau reliées par un côté.
-  function corps(N, e, i) {
-    const G = prep(N), vu = new Set([i]), pile = [i];
-    while (pile.length) {
-      const k = pile.pop(), x = k % G.W, y = (k - x) / G.W;
-      for (const [dx, dy] of VOIS) {
-        const nx = x + dx, ny = y + dy;
-        if (!ouvert(G, nx, ny)) continue;
-        const j = idx(G, nx, ny);
-        if (e.eau[j] && !vu.has(j)) { vu.add(j); pile.push(j); }
+  // Un pas d'eau. Trois mouvements, dans l'ordre :
+  //   1. la chute : chaque case verse dans la case de dessous ce qui y tient ;
+  //   2. l'étalement : une case posée (sur un mur ou sur de l'eau pleine)
+  //      partage avec ses voisines de côté — l'eau qui arrive au bord d'un
+  //      vide y passe et tombe ;
+  //   3. la pression : dans un corps d'eau pleine, la surface la plus haute
+  //      pousse vers la plus basse, à travers le corps — les vases
+  //      communicants. Le courant est compté le long du chemin.
+  // fx[i] : ce qui passe de i vers la droite ; fy[i] : de i vers le haut.
+  const PLEIN = 0.99, VIDE = 0.005, PRESSION = 0.2, ECART = 0.02;
+  function eau(N, e) {
+    const G = prep(N), W = G.W, H = G.H, n = e.m;
+    e.fx.fill(0); e.fy.fill(0);
+    let total = 0;
+    const libre = i => !G.mur[i];
+    // 1. la chute, de bas en haut : une case ne descend que d'une rangée par pas
+    for (let y = 1; y < H; y++) for (let x = 0; x < W; x++) {
+      const i = y * W + x, j = i - W;
+      if (!libre(i) || G.sortie[i] || !libre(j) || n[i] <= 0) continue;
+      const q = Math.min(n[i], 1 - n[j]);
+      if (q > 1e-9) { n[i] -= q; n[j] += q; e.fy[j] -= q; total += q; }
+    }
+    // 2. l'étalement, sur un instantané
+    const s = Float64Array.from(n);
+    const pose = i => { const y = Math.floor(i / W); return y === 0 || G.mur[i - W] || s[i - W] >= PLEIN; };
+    for (let i = 0; i < n.length; i++) {
+      if (!libre(i) || G.sortie[i] || s[i] <= VIDE || !pose(i)) continue;
+      const x = i % W;
+      for (const d of [-1, 1]) {
+        const nx = x + d;
+        if (nx < 0 || nx >= W) continue;
+        const j = i + d;
+        if (!libre(j)) continue;
+        const q = (s[i] - s[j]) / 4;
+        if (q <= 1e-9) continue;
+        n[i] -= q; n[j] += q; total += q;
+        if (d > 0) e.fx[i] += q; else e.fx[j] -= q;
       }
     }
-    return vu;
+    // 3. la pression, corps par corps
+    total += pression(N, e);
+    // la sortie avale tout ce qui y entre
+    for (let i = 0; i < n.length; i++) if (G.sortie[i] && n[i] > 0) { e.sorti += n[i]; n[i] = 0; }
+    return total;
   }
-  // Les cases vides au contact d'un corps : là où son eau peut aller.
-  function frontiere(N, e, B) {
-    const G = prep(N), f = new Set();
-    for (const k of B) {
-      const x = k % G.W, y = (k - x) / G.W;
-      for (const [dx, dy] of VOIS) {
-        const nx = x + dx, ny = y + dy;
-        if (!ouvert(G, nx, ny)) continue;
-        const j = idx(G, nx, ny);
-        if (!e.eau[j]) f.add(j);
+  const VOIS = [1, -1, 0, 0];
+  function voisins(G, i) {
+    const x = i % G.W, y = (i - x) / G.W, r = [];
+    if (x + 1 < G.W && !G.mur[i + 1]) r.push(i + 1);
+    if (x > 0 && !G.mur[i - 1]) r.push(i - 1);
+    if (y + 1 < G.H && !G.mur[i + G.W]) r.push(i + G.W);
+    if (y > 0 && !G.mur[i - G.W]) r.push(i - G.W);
+    return r;
+  }
+  function pression(N, e) {
+    const G = prep(N), W = G.W, n = e.m, vu = new Uint8Array(n.length);
+    let total = 0;
+    for (let i0 = 0; i0 < n.length; i0++) {
+      if (vu[i0] || G.mur[i0] || G.sortie[i0] || n[i0] < PLEIN) continue;
+      // le corps d'eau pleine
+      const corps = [i0];
+      vu[i0] = 1;
+      for (let q = 0; q < corps.length; q++) for (const j of voisins(G, corps[q])) {
+        if (!vu[j] && !G.sortie[j] && n[j] >= PLEIN) { vu[j] = 1; corps.push(j); }
       }
-    }
-    return f;
-  }
-  // Une case d'où l'eau s'en va : la sortie, ou une case au-dessus du vide.
-  function deversoir(N, e, j) {
-    const G = prep(N), x = j % G.W, y = (j - x) / G.W;
-    if (G.sortie[j]) return true;
-    return ouvert(G, x, y - 1) && !e.eau[idx(G, x, y - 1)];
-  }
-  function distances(N, depart, permis) {
-    const G = prep(N), d = new Map([[depart, 0]]), file = [depart];
-    for (let q = 0; q < file.length; q++) {
-      const k = file[q], x = k % G.W, y = (k - x) / G.W;
-      for (const [dx, dy] of VOIS) {
-        const nx = x + dx, ny = y + dy;
-        if (!ouvert(G, nx, ny)) continue;
-        const j = idx(G, nx, ny);
-        if (permis.has(j) && !d.has(j)) { d.set(j, d.get(k) + 1); file.push(j); }
+      const dans = new Set(corps);
+      // ses surfaces : où il peut descendre (donne) ou monter (reçoit)
+      const surf = [];
+      for (const k of corps) for (const j of voisins(G, k)) {
+        if (dans.has(j)) continue;
+        const y = Math.floor(j / W), dessous = j - W;
+        if (G.sortie[j]) { surf.push({ donne: -1, recoit: j, h: y }); continue; }
+        const posee = y === 0 || G.mur[dessous] || dans.has(dessous) || n[dessous] >= PLEIN;
+        const dessus = j + W, airDessus = y + 1 >= G.H || G.mur[dessus] || n[dessus] <= VIDE;
+        if (posee && airDessus && n[j] > VIDE) surf.push({ donne: j, recoit: j, h: y + n[j] });
+        else if (posee && airDessus) surf.push({ donne: k, recoit: j, h: y });
       }
+      if (!surf.length) continue;
+      let haut = null, bas = null;
+      for (const t of surf) {
+        if (t.donne >= 0 && n[t.donne] > VIDE && (!haut || t.h > haut.h)) haut = t;
+        if (!bas || t.h < bas.h) bas = t;
+      }
+      // une case trop pleine (le robinet dans un corps fermé) pousse son
+      // surplus à travers le corps, jusqu'à la surface la plus basse
+      for (const k of corps) {
+        const surplus = n[k] - 1;
+        if (surplus <= 1e-4 || k === bas.recoit) continue;
+        const q = Math.min(surplus, 0.5);
+        n[k] -= q; n[bas.recoit] += q; total += q;
+        courant(G, e, k, bas.recoit, dans, q);
+      }
+      // puis la surface la plus haute pousse vers la plus basse
+      if (!haut || haut.recoit === bas.recoit) continue;
+      const dh = haut.h - bas.h;
+      if (dh <= ECART) continue;
+      const q = Math.min(n[haut.donne], PRESSION * dh, 0.5);
+      if (q <= 1e-9) continue;
+      n[haut.donne] -= q; n[bas.recoit] += q; total += q;
+      courant(G, e, haut.donne, bas.recoit, dans, q);
     }
-    return d;
+    return total;
   }
-  // La surface d'un corps : sa rangée du haut, les cases de cette rangée où
-  // l'eau s'étale (pleines, ou libres sans être un déversoir), et la part
-  // remplie. La vue la dessine à plat ; la boule y flotte, pleine ou pas.
-  function surface(N, e, B) {
+  // Le courant d'une poussée : le long du plus court chemin dans le corps.
+  function courant(G, e, de, vers, dans, q) {
+    const W = G.W, prec = new Map([[de, -1]]), file = [de];
+    for (let k = 0; k < file.length && !prec.has(vers); k++) for (const j of voisins(G, file[k])) {
+      if (prec.has(j) || !(dans.has(j) || j === vers)) continue;
+      prec.set(j, file[k]); file.push(j);
+    }
+    if (!prec.has(vers)) return;
+    for (let j = vers; prec.get(j) !== -1; j = prec.get(j)) {
+      const a = prec.get(j);
+      if (j === a + 1) e.fx[a] += q; else if (j === a - 1) e.fx[j] -= q;
+      else if (j === a + W) e.fy[a] += q; else e.fy[j] -= q;
+    }
+  }
+
+  function vannes(N, e) {
     const G = prep(N);
-    let haut = -1;
-    for (const k of B) haut = Math.max(haut, Math.floor(k / G.W));
-    // la rangée du haut s'étale le long de la rangée, tant qu'un déversoir ou
-    // un mur ne l'arrête pas
-    // (vases communicants : chaque colonne reliée par-dessous en fait partie)
-    const vu = new Set(), pile = [];
-    for (const k of B) if (Math.floor(k / G.W) === haut) { vu.add(k); pile.push(k); }
-    for (const j of frontiere(N, e, B)) if (Math.floor(j / G.W) === haut && !deversoir(N, e, j)) { vu.add(j); pile.push(j); }
-    while (pile.length) {
-      const k = pile.pop(), x = k % G.W;
-      for (const nx of [x - 1, x + 1]) {
-        if (!ouvert(G, nx, haut)) continue;
-        const j = idx(G, nx, haut);
-        if (vu.has(j) || (!e.eau[j] && deversoir(N, e, j))) continue;
-        vu.add(j); pile.push(j);
+    let actif = false;
+    G.vannes.forEach((v, k) => {
+      const a = e.attente[k];
+      if (a <= 0) return;
+      if (v.type === "robinet") {
+        const q = Math.min(a, DEBIT);
+        e.m[v.i] += q; e.verse += q; e.attente[k] -= q; actif = true;
+      } else {
+        const q = Math.min(a, DEBIT, e.m[v.i]);
+        if (q <= 1e-9) { e.attente[k] = 0; return; }   // à sec : la vidange n'a plus rien à prendre
+        e.m[v.i] -= q; e.vide += q; e.attente[k] -= q; actif = true;
       }
-    }
-    const cases = [...vu];
-    let pleines = 0;
-    for (const k of cases) if (e.eau[k]) pleines++;
-    return { haut, cases, pleines, places: cases.length, part: cases.length ? pleines / cases.length : 1 };
+      if (e.attente[k] < 1e-9) e.attente[k] = 0;
+    });
+    return actif;
   }
 
-  // Une unité d'eau arrive en p (case vide, ou d'eau) : elle tombe, puis
-  // prend la case libre la plus basse au contact du corps où elle se pose.
-  // À égalité, un déversoir passe d'abord : l'eau ne monte pas au-dessus
-  // d'un seuil par où elle peut partir. evts reçoit chaque déversement.
-  function deposer(N, e, p, evts) {
-    const G = prep(N);
-    for (let garde = 0; garde < G.W * G.H + 5; garde++) {
-      if (G.sortie[p]) { e.sorti++; return true; }
-      let B;
-      if (e.eau[p]) B = corps(N, e, p);
-      else {
-        const x = p % G.W, y = (p - x) / G.W;
-        if (ouvert(G, x, y - 1) && !e.eau[idx(G, x, y - 1)]) { p = idx(G, x, y - 1); continue; }
-        B = ouvert(G, x, y - 1) ? corps(N, e, idx(G, x, y - 1)) : new Set();
-      }
-      const cands = frontiere(N, e, B);
-      if (!e.eau[p]) cands.add(p);
-      if (!cands.size) return false;                       // tout est plein
-      const d = distances(N, p, new Set([...B, ...cands]));
-      // la plus basse ; à égalité un déversoir, puis la plus proche, puis la plus à gauche
-      const rang = j => [Math.floor(j / G.W), deversoir(N, e, j) ? 0 : 1, d.has(j) ? d.get(j) : 1e9, j % G.W];
-      let best = -1, bk = null;
-      for (const j of cands) {
-        const k = rang(j);
-        let mieux = !bk;
-        for (let q = 0; !mieux && q < 4 && k[q] <= bk[q]; q++) if (k[q] < bk[q]) mieux = true;
-        if (mieux) { best = j; bk = k; }
-      }
-      if (deversoir(N, e, best)) {
-        evts.push({ ancre: B.size ? [...B][0] : -1, cible: best });
-        p = best;
-        continue;
-      }
-      e.eau[best] = 1;
-      return true;
+  // La hauteur d'eau sous la boule (ou au-dessus, si elle est sous l'eau),
+  // dans sa colonne. plafond : l'eau monte jusqu'à un mur, la boule y bute.
+  const PLEINE = 0.98, SECHE = 0.02;
+  function niveau(N, e, x, y) {
+    const G = prep(N), cx = Math.floor(x);
+    let cy = Math.min(G.H - 1, Math.max(0, Math.floor(y)));
+    const m = c => e.m[idx(G, cx, c)];
+    if (!ouvert(G, cx, cy)) return { h: null };
+    if (m(cy) > SECHE) {
+      while (m(cy) >= PLEINE && ouvert(G, cx, cy + 1) && m(cy + 1) > SECHE) cy++;
+      if (m(cy) >= PLEINE && !ouvert(G, cx, cy + 1)) return { h: cy + 1, plafond: true };
+      return { h: cy + Math.min(1, m(cy)) };
     }
-    throw new Error("l'eau ne se pose pas");
+    while (cy > 0 && ouvert(G, cx, cy - 1) && m(cy - 1) <= SECHE) cy--;
+    if (cy === 0 || !ouvert(G, cx, cy - 1)) return { h: null };
+    // de l'eau qui tombe n'est pas une surface : il faut une case posée sur quelque chose
+    return { h: cy - 1 + Math.min(1, m(cy - 1)) };
   }
 
-  function flotteDans(N, e, B) {
-    const G = prep(N), b = e.boule, i = idx(G, b.x, b.y);
-    if (B.has(i)) return true;
-    if (b.y > 0 && B.has(idx(G, b.x, b.y - 1))) return true;
-    return surface(N, e, B).cases.includes(i);
+  function solide(G, x, y) {
+    const cx = Math.floor(x), cy = Math.floor(y);
+    return !ouvert(G, cx, cy);
   }
-  // La boule monte avec l'eau, tombe dans le vide, s'arrête sous un plafond.
-  function poser(N, e, trajet) {
-    const G = prep(N), b = e.boule;
-    for (let garde = 0; garde < 4 * G.H; garde++) {
-      const i = idx(G, b.x, b.y);
-      if (G.sortie[i]) { e.gagne = true; return; }
-      if (e.eau[i]) {
-        const B = corps(N, e, i), s = surface(N, e, B);
-        const monte = b.y < s.haut || s.pleines === s.places;
-        if (monte && ouvert(G, b.x, b.y + 1)) { b.y++; trajet.push({ ...b }); continue; }
-        return;
+  // La boule : elle flotte, tombe au sec, et l'eau qui l'entoure l'emporte.
+  function bouger(N, e) {
+    const G = prep(N), b = e.b;
+    if (e.gagne) { b.y += 0.05; return; }
+    const nv = niveau(N, e, b.x, b.y);
+    const dansEau = nv.h !== null && nv.h > b.y - RAYON;
+    if (dansEau) {
+      const cible = nv.plafond ? nv.h - RAYON : nv.h + FLOTTE;
+      b.vy += (cible - b.y) * RESSORT;
+      b.vy *= AMORTI;
+      // le courant dans la case où trempe la boule
+      const cx = Math.floor(b.x), cy = Math.floor(Math.min(nv.h - 0.05, b.y));
+      if (ouvert(G, cx, cy)) {
+        // les faces de sa rangée qu'elle touche ou frôle (à moins d'une case
+        // de son centre) : la boule prend le courant le plus fort qui passe
+        let u = 0;
+        for (let fx = cx - 1; fx <= cx + 1; fx++) {
+          if (Math.abs(fx + 1 - b.x) > 1 || fx < 0 || fx + 1 >= G.W) continue;   // la face entre fx et fx+1
+          if (!ouvert(G, fx, cy) || !ouvert(G, fx + 1, cy)) continue;
+          const i = idx(G, fx, cy);
+          const prof = Math.max(0.25, Math.min(1, (e.m[i] + e.m[i + 1]) / 2));
+          const v = e.fx[i] / prof;
+          if (Math.abs(v) > Math.abs(u)) u = v;
+        }
+        b.vx += (u * PORTE - b.vx) * SUIT;
       }
-      if (ouvert(G, b.x, b.y - 1) && !e.eau[idx(G, b.x, b.y - 1)]) { b.y--; trajet.push({ ...b }); continue; }
-      return;
-    }
-  }
-  // Le courant emporte la boule le long de sa rangée vers la cible.
-  function deriver(N, e, cible, trajet) {
-    const G = prep(N), b = e.boule, cx = cible % G.W;
-    while (b.x !== cx && !e.gagne) {
-      const nx = b.x + Math.sign(cx - b.x);
-      if (!ouvert(G, nx, b.y)) return;
-      b.x = nx; trajet.push({ ...b });
-      const y0 = b.y;
-      poser(N, e, trajet);
-      if (b.y < y0) return;                     // passée par-dessus bord : elle suit l'eau
-    }
-  }
-  function courants(N, e, evts, trajet) {
-    for (const ev of evts) {
-      if (e.gagne) return;
-      if (ev.ancre < 0 || !e.eau[ev.ancre]) continue;
-      if (!flotteDans(N, e, corps(N, e, ev.ancre))) continue;
-      deriver(N, e, ev.cible, trajet);
-      poser(N, e, trajet);
-    }
-  }
-
-  // Un geste : taper une vanne. Rend null si la tape ne change rien.
-  function taper(N, e0, k) {
-    const G = prep(N), v = G.vannes[k], e = copie(e0), evts = [], trajet = [];
-    if (e.gagne) return null;
-    if (v.type === "robinet") {
-      if (!deposer(N, e, v.i, evts)) return null;
-      e.verse++;
     } else {
-      if (!e.eau[v.i]) return null;
-      const B = corps(N, e, v.i);
-      const s = surface(N, e, B), d = distances(N, v.i, B);
-      let best = -1, bd = -1;
-      for (const j of B) if (Math.floor(j / G.W) === s.haut) {
-        const dj = d.get(j);
-        if (dj > bd || (dj === bd && j % G.W < best % G.W)) { best = j; bd = dj; }
-      }
-      e.eau[best] = 0;
-      e.vide++;
-      evts.push({ ancre: v.i, cible: v.i });
+      b.vy = Math.max(-CHUTE_MAX, b.vy - PESANTEUR);
+      b.vx *= FROTTE;
     }
+    if (Math.abs(b.vx) > 0.25) b.vx = Math.sign(b.vx) * 0.25;
+    // on avance, puis on sort des murs, axe par axe
+    b.x += b.vx;
+    if (solide(G, b.x + RAYON, b.y)) { b.x = Math.floor(b.x + RAYON) - RAYON - 1e-6; b.vx = 0; }
+    if (solide(G, b.x - RAYON, b.y)) { b.x = Math.floor(b.x - RAYON) + 1 + RAYON + 1e-6; b.vx = 0; }
+    b.y += b.vy;
+    if (solide(G, b.x, b.y + RAYON)) { b.y = Math.floor(b.y + RAYON) - RAYON - 1e-6; b.vy = Math.min(0, b.vy); }
+    if (solide(G, b.x, b.y - RAYON)) { b.y = Math.floor(b.y - RAYON) + 1 + RAYON + 1e-6; b.vy = Math.max(0, b.vy); }
+    const ci = idx(G, Math.floor(b.x), Math.floor(b.y));
+    if (G.sortie[ci]) e.gagne = true;
+  }
+
+  // Un pas de jeu : les vannes, l'eau, la boule.
+  function pas(N, e) {
+    const actif = vannes(N, e);
+    const flux = eau(N, e);
+    const vx = e.b.vx, vy = e.b.vy;
+    bouger(N, e);
+    const vite = Math.abs(e.b.vx) + Math.abs(e.b.vy);
+    if (!actif && flux < CALME && vite < 1e-3) e.calme++; else e.calme = 0;
+    e.pas++;
+    return flux;
+  }
+  const repos = e => e.calme >= CALME_PAS || e.gagne;
+
+  // Une tape : une unité de plus à verser ou à vider. null si elle ne peut rien.
+  function taper(N, e0, k) {
+    const G = prep(N), v = G.vannes[k];
+    if (e0.gagne) return null;
+    if (v.type === "vidange" && e0.m[v.i] <= 1e-6 && e0.attente[k] <= 0) return null;
+    const e = copie(e0);
+    e.attente[k] += UNITE;
     e.tapes++;
-    poser(N, e, trajet);
-    courants(N, e, evts, trajet);
-    poser(N, e, trajet);
-    return { e, evts, trajet };
+    e.calme = 0;
+    return e;
   }
-
-  // La plus courte suite de tapes qui sort la boule (fouille en largeur).
-  function resoudre(N, depart, limite) {
-    const e0 = depart || charger(N), G = prep(N);
-    if (e0.gagne) return { suite: [], etats: 1, epuise: true };
-    const vus = new Set([cle(e0)]);
-    let front = [{ e: e0, suite: [] }];
-    while (front.length) {
-      const suivant = [];
-      for (const f of front) for (let k = 0; k < G.vannes.length; k++) {
-        const r = taper(N, f.e, k);
-        if (!r) continue;
-        const c = cle(r.e);
-        if (vus.has(c)) continue;
-        vus.add(c);
-        const suite = f.suite.concat(k);
-        if (r.e.gagne) return { suite, etats: vus.size, epuise: false };
-        if (vus.size > (limite || 200000)) return { suite: null, etats: vus.size, epuise: false };
-        suivant.push({ e: r.e, suite });
-      }
-      front = suivant;
+  function reposer(N, e) {
+    for (let n = 0; !repos(e); n++) {
+      if (n > MAXPAS) throw new Error("l'eau ne se pose pas en " + MAXPAS + " pas");
+      pas(N, e);
     }
-    return { suite: null, etats: vus.size, epuise: true };
+    return e;
   }
+  function jouer(N, e, k) { const t = taper(N, e, k); return t ? reposer(N, t) : null; }
 
-  return { prep, charger, taper, resoudre, corps, surface, flotteDans, cle, ouvert, idx };
+  // La clé d'un état au repos : l'eau au dixième, la boule au dixième.
+  function cle(e) {
+    let s = "";
+    for (let i = 0; i < e.m.length; i++) s += Math.round(e.m[i] * 10).toString(36);
+    return s + "|" + Math.round(e.b.x * 10) + "," + Math.round(e.b.y * 10) + (e.gagne ? "!" : "");
+  }
+  return { prep, charger, copie, taper, pas, repos, reposer, jouer, cle, niveau, ouvert, idx, RAYON };
 })();
 </script>
 
 <!-- ------------------------------------------------------------------
-     LA VUE. Le moteur répond tout de suite ; la vue rattrape en douceur :
-     chaque case montre sa part d'eau, la boule suit le trajet du moteur.
+     LA VUE. Joue un pas d'eau par image et dessine chaque case telle
+     qu'elle est : posée à plat, ou en filet qui tombe.
      ------------------------------------------------------------------ -->
 <script id="vue">
 "use strict";
 (function () {
   const N = JSON.parse(document.getElementById("niveau").textContent);
-  const L = Labyrinthe, G = L.prep(N);
-  const R = 0.34;           // rayon de la boule, en cases
+  const L = Labyrinthe, G = L.prep(N), R = L.RAYON;
   const C = {
-    sable: "#efc68b", sableBord: "#b8844c", creux: "#211862", creuxBord: "#1a1350",
+    sable: "#efc68b", sableBord: "#b8844c", creux: "#211862",
     eau: "#2c9df0", ecume: "#8fdcff",
     rouge: "#e5322d", rougeOmbre: "#b32020", blanc: "#f6f6fb", blancOmbre: "#cfd2e3",
     robinet: "#3f8ff0", robinetOmbre: "#2560b8", vidange: "#f08a24", vidangeOmbre: "#c0651a",
     tuyau: "#8a8fae", tuyauOmbre: "#5c6080", sortie: "#ffc93c",
   };
+  const APPUI_LONG = 18;    // images avant que l'appui long verse en continu
+  const CADENCE = 10;       // puis une unité toutes les CADENCE images (le débit du robinet)
   const $ = id => document.getElementById(id);
   const svg = $("scene");
   const f = v => Math.round(v * 1000) / 1000;
@@ -430,130 +485,101 @@ const Labyrinthe = (function () {
   function rect(x0, y0, x1, y1, fill, extra) {
     return `<rect x="${f(Math.min(x0, x1))}" y="${f(Y(Math.max(y0, y1)))}" width="${f(Math.abs(x1 - x0))}" height="${f(Math.abs(y1 - y0))}" fill="${fill}" ${extra || ""}/>`;
   }
+  // Où se tient le bouton d'une vanne : dehors, du côté de son mur.
+  function bouton(v) {
+    if (v.type === "vidange") return { x: v.x + 0.5, y: -1.15 };
+    if (v.x === 0) return { x: -1.15, y: v.y + 0.5 };
+    if (v.x === G.W - 1) return { x: G.W + 1.15, y: v.y + 0.5 };
+    return { x: v.x + 0.5, y: G.H + 1.15 };
+  }
 
-  let etat, histoire = [], cibleEau = [], vuEau = [], jets = [], tourbillons = [];
-  let bouleVue = { x: 0, y: 0 }, file = [], fini = false, temps = 0, attente = 0;
+  let etat, histoire = [], fini = false, attente = 0, image_n = 0, appui = null, temps = 0;
 
   // --- le décor fixe --------------------------------------------------
   function dessinerDecor() {
     const H = G.H, W = G.W;
-    svg.setAttribute("viewBox", `${-0.7} ${Y(H + 2.1)} ${W + 1.4} ${H + 2.1 + 2.2}`);
+    const gauche = G.vannes.some(v => v.type === "robinet" && v.x === 0) ? 2.0 : 0.7;
+    const droite = G.vannes.some(v => v.type === "robinet" && v.x === W - 1) ? 2.0 : 0.7;
+    const haut = G.vannes.some(v => v.type === "robinet" && v.y === H - 1 && v.x > 0 && v.x < W - 1) ? 2.1 : 1.0;
+    svg.setAttribute("viewBox", `${-gauche} ${Y(H + haut)} ${W + gauche + droite} ${H + haut + 2.2}`);
     let s = rect(-0.15, -0.15, W + 0.15, H + 0.15, C.sable, `rx="0.45" stroke="${C.sableBord}" stroke-width="0.08"`);
     for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
       const i = L.idx(G, x, y);
       if (G.mur[i]) continue;
-      const g = 0.02;
-      s += rect(x - g, y - g, x + 1 + g, y + 1 + g, G.sortie[i] ? "#33278a" : C.creux);
+      s += rect(x - 0.02, y - 0.02, x + 1.02, y + 1.02, G.sortie[i] ? "#33278a" : C.creux);
     }
-    // les vides se touchent : on arrondit seulement le contour avec un trait
+    const t = `stroke="${C.sableBord}" stroke-width="0.06" stroke-linecap="round"`;
     for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
-      const i = L.idx(G, x, y);
-      if (G.mur[i]) continue;
-      const mur = (dx, dy) => !L.ouvert(G, x + dx, y + dy) && !(x + dx < 0 || y + dy < 0 || x + dx >= W || y + dy >= H);
-      const t = `stroke="${C.sableBord}" stroke-width="0.06" stroke-linecap="round"`;
+      if (G.mur[L.idx(G, x, y)]) continue;
+      const mur = (dx, dy) => { const nx = x + dx, ny = y + dy; return nx >= 0 && ny >= 0 && nx < W && ny < H && !L.ouvert(G, nx, ny); };
       if (mur(-1, 0)) s += `<line x1="${x}" y1="${Y(y)}" x2="${x}" y2="${Y(y + 1)}" ${t}/>`;
       if (mur(1, 0)) s += `<line x1="${x + 1}" y1="${Y(y)}" x2="${x + 1}" y2="${Y(y + 1)}" ${t}/>`;
       if (mur(0, -1)) s += `<line x1="${x}" y1="${Y(y)}" x2="${x + 1}" y2="${Y(y)}" ${t}/>`;
       if (mur(0, 1)) s += `<line x1="${x}" y1="${Y(y + 1)}" x2="${x + 1}" y2="${Y(y + 1)}" ${t}/>`;
     }
-    // la sortie : une flèche et un drapeau
     for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
       if (!G.sortie[L.idx(G, x, y)]) continue;
-      const haut = y === H - 1, cx = x + 0.5;
-      if (haut) s += `<path d="M${f(cx)} ${f(Y(y + 1.75))}l-0.38 0.42h0.24v0.36h0.28v-0.36h0.24z" fill="${C.sortie}"/>`;
-      else s += `<circle cx="${f(cx)}" cy="${f(Y(y + 0.5))}" r="0.2" fill="${C.sortie}"/>`;
+      if (y === H - 1) s += `<path d="M${f(x + 0.5)} ${f(Y(y + 1.75))}l-0.38 0.42h0.24v0.36h0.28v-0.36h0.24z" fill="${C.sortie}"/>`;
     }
-    // les tuyaux des vannes
+    // les tuyaux, du bouton à la vanne
     G.vannes.forEach(v => {
-      const cx = v.x + 0.5;
-      if (v.type === "robinet") s += rect(cx - 0.17, v.y + 0.85, cx + 0.17, H + 1.0, C.tuyau, `stroke="${C.tuyauOmbre}" stroke-width="0.05"`);
-      else {
-        s += rect(cx - 0.17, -1.0, cx + 0.17, v.y + 0.05, C.tuyau, `stroke="${C.tuyauOmbre}" stroke-width="0.05"`);
+      const b = bouton(v), cx = v.x + 0.5, cy = v.y + 0.5;
+      const tu = `stroke="${C.tuyauOmbre}" stroke-width="0.05"`;
+      if (v.type === "vidange") {
+        s += rect(cx - 0.17, b.y, cx + 0.17, v.y + 0.05, C.tuyau, tu);
         for (let k = 0; k < 3; k++) s += rect(v.x + 0.18 + k * 0.24, v.y, v.x + 0.3 + k * 0.24, v.y + 0.09, C.tuyauOmbre, `rx="0.03"`);
-      }
+      } else if (b.y === cy) s += rect(Math.min(b.x, cx), cy - 0.17, Math.max(b.x, cx), cy + 0.17, C.tuyau, tu);
+      else s += rect(cx - 0.17, v.y + 0.85, cx + 0.17, b.y, C.tuyau, tu);
     });
     $("decor").innerHTML = s;
   }
 
-  // --- l'eau ----------------------------------------------------------
-  // La part d'eau que chaque case doit montrer : la rangée du haut d'un corps
-  // se dessine à plat sur toute sa largeur, à la hauteur de sa part remplie.
-  function cibles(e) {
-    const t = new Array(G.W * G.H).fill(0), vu = new Set();
-    for (let i = 0; i < e.eau.length; i++) {
-      if (!e.eau[i] || vu.has(i)) continue;
-      const B = L.corps(N, e, i), s = L.surface(N, e, B);
-      for (const k of B) { vu.add(k); t[k] = 1; }
-      for (const k of s.cases) t[k] = s.part;
-    }
-    return t;
-  }
+  // --- l'eau : chaque case montre ce qu'elle contient ---------------------
+  // Posée (sur un mur ou sur de l'eau pleine), elle se dessine à plat ;
+  // sinon c'est de l'eau qui tombe, en filet plus ou moins épais.
   function dessinerEau() {
+    const m = etat.m, W = G.W;
     let s = "";
-    for (let i = 0; i < vuEau.length; i++) {
-      vuEau[i] += (cibleEau[i] - vuEau[i]) * 0.14;
-      if (Math.abs(cibleEau[i] - vuEau[i]) < 0.002) vuEau[i] = cibleEau[i];
-      const a = vuEau[i];
-      if (a < 0.01) continue;
-      const x = i % G.W, y = (i - x) / G.W;
-      s += rect(x - 0.01, y - 0.01, x + 1.01, y + a, C.eau);
-      const dessus = L.ouvert(G, x, y + 1) ? vuEau[L.idx(G, x, y + 1)] : 1;
-      if (a < 0.995 || (dessus < 0.01 && L.ouvert(G, x, y + 1))) s += rect(x - 0.01, y + a - 0.09, x + 1.01, y + a, C.ecume);
+    for (let i = 0; i < m.length; i++) {
+      const a = m[i];
+      if (a < 0.01 || G.mur[i]) continue;
+      const x = i % W, y = (i - x) / W;
+      const posee = y === 0 || G.mur[i - W] || m[i - W] >= 0.95;
+      if (posee) {
+        const h = Math.min(1, a);
+        s += rect(x - 0.01, y - 0.01, x + 1.01, y + h, C.eau);
+        const dessusLibre = y + 1 < G.H && !G.mur[i + W] && m[i + W] < 0.05;
+        if (h < 0.99 || dessusLibre) s += rect(x - 0.01, y + h - 0.09, x + 1.01, y + h, C.ecume);
+      } else {
+        const w = Math.max(0.1, Math.min(1, a * 1.6)) / 2;
+        s += rect(x + 0.5 - w, y - 0.01, x + 0.5 + w, y + 1.01, C.eau, `opacity="0.92"`);
+        s += rect(x + 0.5 - w * 0.4, y - 0.01, x + 0.5, y + 1.01, C.ecume, `opacity="0.6"`);
+      }
     }
+    // les vidanges ouvertes tourbillonnent
+    G.vannes.forEach((v, k) => {
+      if (v.type !== "vidange" || etat.attente[k] <= 0) return;
+      const cy = v.y + Math.min(1, m[v.i]) - 0.15;
+      for (let q = 0; q < 3; q++) {
+        const a = -temps * 9 + q * 2.09, r = 0.12 + 0.1 * q;
+        s += `<circle cx="${f(v.x + 0.5 + Math.cos(a) * r)}" cy="${f(Y(cy) + Math.sin(a) * r * 0.35)}" r="0.06" fill="${C.ecume}"/>`;
+      }
+    });
     $("eau").innerHTML = s;
-  }
-  // La hauteur d'eau montrée sous (ou dans) la case x,y.
-  function surfaceVue(x, y) {
-    let yy = y;
-    while (yy > 0 && L.ouvert(G, x, yy) && vuEau[L.idx(G, x, yy)] < 0.01) yy--;
-    if (!L.ouvert(G, x, yy)) return yy + 1;
-    let top = yy;
-    while (L.ouvert(G, x, top + 1) && vuEau[L.idx(G, x, top)] > 0.99 && vuEau[L.idx(G, x, top + 1)] > 0.01) top++;
-    return top + vuEau[L.idx(G, x, top)];
-  }
-
-  // --- les jets, les tourbillons ------------------------------------------
-  function chute(x, depuis) {
-    let y = depuis;
-    while (y > 0 && L.ouvert(G, x, y - 1) && !etat.eau[L.idx(G, x, y - 1)]) y--;
-    return y;
-  }
-  function dessinerJets() {
-    let s = "";
-    jets = jets.filter(j => --j.vie > 0);
-    for (const j of jets) {
-      const w = 0.22 * Math.min(1, j.vie / 12);
-      const bas = Math.max(j.bas, surfaceVue(j.x, Math.floor(j.bas)));
-      s += rect(j.x + 0.5 - w, bas, j.x + 0.5 + w, j.haut, C.eau, `opacity="0.9"`);
-      s += rect(j.x + 0.5 - w * 0.3, bas, j.x + 0.5 + w * 0.1, j.haut, C.ecume, `opacity="0.7"`);
-      for (let k = 0; k < 3; k++) {
-        const a = temps * 8 + k * 2.1;
-        s += `<circle cx="${f(j.x + 0.5 + Math.sin(a) * 0.3)}" cy="${f(Y(bas + 0.08 + Math.abs(Math.cos(a)) * 0.2))}" r="${f(0.07 + 0.03 * k)}" fill="${C.ecume}"/>`;
-      }
-    }
-    tourbillons = tourbillons.filter(t => --t.vie > 0);
-    for (const t of tourbillons) {
-      const cy = surfaceVue(t.x, t.y) - 0.18;
-      for (let k = 0; k < 3; k++) {
-        const a = -temps * 9 + k * 2.09, r = 0.12 + 0.1 * k;
-        s += `<circle cx="${f(t.x + 0.5 + Math.cos(a) * r)}" cy="${f(Y(cy) + Math.sin(a) * r * 0.35)}" r="0.06" fill="${C.ecume}" opacity="${f(t.vie / 30)}"/>`;
-      }
-    }
-    $("jets").innerHTML = s;
   }
 
   // --- les vannes -----------------------------------------------------
   function dessinerVannes() {
     let s = "";
     G.vannes.forEach((v, k) => {
-      const cx = v.x + 0.5, rob = v.type === "robinet";
-      const cy = rob ? G.H + 1.15 : -1.15;
-      const presse = v.presse > 0 ? (v.presse--, 0.08) : 0;
+      const b = bouton(v), rob = v.type === "robinet";
+      const enfonce = (appui && appui.k === k) || v.presse > 0 ? 0.08 : 0;
+      if (v.presse > 0) v.presse--;
       const coul = rob ? C.robinet : C.vidange, ombre = rob ? C.robinetOmbre : C.vidangeOmbre;
+      const cx = b.x, py = Y(b.y) + enfonce;
       s += `<g class="cible" data-k="${k}" role="button" aria-label="${rob ? "Robinet" : "Vidange"}">`;
-      s += `<circle cx="${f(cx)}" cy="${f(Y(cy) + 0.08)}" r="0.62" fill="${ombre}"/>`;
-      s += `<circle cx="${f(cx)}" cy="${f(Y(cy) + presse)}" r="0.6" fill="${coul}" stroke="#fff" stroke-width="0.06"/>`;
-      const py = Y(cy) + presse;
+      s += `<circle cx="${f(cx)}" cy="${f(Y(b.y) + 0.08)}" r="0.62" fill="${ombre}"/>`;
+      s += `<circle cx="${f(cx)}" cy="${f(py)}" r="0.6" fill="${coul}" stroke="#fff" stroke-width="0.06"/>`;
       if (rob) {
         s += `<path d="M${f(cx)} ${f(py - 0.32)}c0.18 0.22 0.28 0.36 0.28 0.5a0.28 0.28 0 0 1-0.56 0c0-0.14 0.1-0.28 0.28-0.5z" fill="#fff"/>`;
         s += `<text x="${f(cx + 0.36)}" y="${f(py - 0.2)}" font-size="0.36" font-weight="700" fill="#fff" font-family="Fredoka, sans-serif">+</text>`;
@@ -566,28 +592,8 @@ const Labyrinthe = (function () {
     $("vannes").innerHTML = s;
   }
 
-  // --- la boule -------------------------------------------------------
-  function reposBoule() {
-    const b = etat.boule, i = L.idx(G, b.x, b.y);
-    if (etat.gagne) return { x: b.x + 0.5, y: b.y + 1.6 };
-    const dessous = b.y > 0 && L.ouvert(G, b.x, b.y - 1) && etat.eau[L.idx(G, b.x, b.y - 1)];
-    if (etat.eau[i] || dessous || cibleEau[i] > 0) {
-      const s = surfaceVue(b.x, b.y);
-      return { x: b.x + 0.5, y: Math.min(s + R * 0.35, b.y + 1 - R) };
-    }
-    return { x: b.x + 0.5, y: b.y + R };
-  }
   function dessinerBoule() {
-    if (file.length) {
-      const c = file[0], dx = c.x - bouleVue.x, dy = c.y - bouleVue.y, d = Math.hypot(dx, dy);
-      if (d < 0.2) file.shift();
-      else { bouleVue.x += dx / d * 0.2; bouleVue.y += dy / d * 0.2; }
-    } else {
-      const r = reposBoule();
-      bouleVue.x += (r.x - bouleVue.x) * 0.2;
-      bouleVue.y += (r.y - bouleVue.y) * 0.2;
-    }
-    const x = bouleVue.x, y = Y(bouleVue.y);
+    const x = etat.b.x, y = Y(etat.b.y);
     $("boule").innerHTML =
       `<circle cx="${f(x)}" cy="${f(y)}" r="${R}" fill="${C.blanc}" stroke="${C.blancOmbre}" stroke-width="0.04"/>` +
       `<path d="M${f(x - R)} ${f(y)}a${R} ${R} 0 0 1 ${f(2 * R)} 0z" fill="${C.rouge}"/>` +
@@ -602,65 +608,48 @@ const Labyrinthe = (function () {
     $("tapes").innerHTML = `tapes <b>${etat.tapes}</b> · par ${N.par}`;
     $("b-annuler").disabled = !histoire.length;
   }
-  function installer(e, instantane) {
-    etat = e;
-    cibleEau = cibles(etat);
-    if (instantane) vuEau = cibleEau.slice();
+  function charger() {
+    histoire = []; fini = false; attente = 0; appui = null;
+    $("v-fin").hidden = true;
+    etat = L.charger(N);
     majHud();
   }
-  function charger() {
-    histoire = []; jets = []; tourbillons = []; file = []; fini = false; attente = 0;
-    $("v-fin").hidden = true;
-    installer(L.charger(N), true);
-    const r = reposBoule();
-    bouleVue = { x: r.x, y: r.y };
-  }
   function taper(k) {
-    if (fini) return;
-    const v = G.vannes[k];
-    v.presse = 6;
+    if (fini) return false;
     const r = L.taper(N, etat, k);
-    if (!r) return;                                   // rien à verser ou à vider
+    G.vannes[k].presse = 6;
+    if (!r) return false;                             // rien à vider
     histoire.push(etat);
-    if (v.type === "robinet") jets.push({ x: v.x, haut: v.y + 1, bas: chute(v.x, v.y), vie: 26 });
-    else tourbillons.push({ x: v.x, y: v.y, vie: 30 });
-    installer(r.e);
-    for (const ev of r.evts) {
-      if (v.type === "robinet" && ev.cible !== v.i) {
-        const x = ev.cible % G.W, y = Math.floor(ev.cible / G.W);
-        if (!G.sortie[ev.cible]) jets.push({ x, haut: y + 0.35, bas: chute(x, y), vie: 26 });
-      }
-    }
-    for (const p of r.trajet) file.push({ x: p.x + 0.5, y: p.y + 0.5 });
-    if (etat.gagne) { fini = true; file.push(reposBoule()); attente = 70; }
-    else verifierImpasse();
+    etat = r;
+    majHud();
+    return true;
   }
-  function verifierImpasse() {
-    const r = L.resoudre(N, etat, 20000);
-    if (!r.suite && r.epuise) setTimeout(() => montrerFin(false), 900);
-  }
-  function montrerFin(victoire) {
+  function montrerFin() {
     const t = etat.tapes;
-    $("fin-titre").textContent = victoire ? "La boule est libre !" : "La boule est coincée";
-    $("fin-texte").textContent = victoire
-      ? (t <= N.par ? `En ${t} tapes : parfait.` : `En ${t} tapes (par ${N.par}).`)
-      : "Plus aucune vanne ne peut la mener à la sortie.";
-    $("fin-boutons").innerHTML = victoire
-      ? `<button class="bouton vert" data-act="rejouer">Rejouer</button>`
-      : `<button class="bouton" data-act="annuler">Annuler</button><button class="bouton vert" data-act="rejouer">Recommencer</button>`;
+    $("fin-titre").textContent = "La boule est libre !";
+    $("fin-texte").textContent = t <= N.par ? `En ${t} tapes : parfait.` : `En ${t} tapes (par ${N.par}).`;
+    $("fin-boutons").innerHTML = `<button class="bouton vert" data-act="rejouer">Rejouer</button>`;
     $("v-fin").hidden = false;
   }
   function annuler() {
     if (!histoire.length) return;
-    fini = false; file = []; $("v-fin").hidden = true;
-    installer(histoire.pop());
+    fini = false; attente = 0; appui = null; $("v-fin").hidden = true;
+    etat = histoire.pop();
+    majHud();
   }
 
   let dernier = 0;
   function etape(ts) {
-    dernier = ts; temps = ts / 1000;
-    dessinerEau(); dessinerJets(); dessinerVannes(); dessinerBoule();
-    if (attente > 0 && !file.length && --attente === 0) montrerFin(true);
+    dernier = ts; temps = ts / 1000; image_n++;
+    // l'appui long sur un robinet verse en continu, au débit du robinet
+    if (appui && !fini) {
+      const d = image_n - appui.depuis;
+      if (d >= APPUI_LONG && (d - APPUI_LONG) % CADENCE === 0) taper(appui.k);
+    }
+    L.pas(N, etat);
+    if (etat.gagne && !fini) { fini = true; appui = null; attente = 70; }
+    dessinerEau(); dessinerVannes(); dessinerBoule();
+    if (attente > 0 && --attente === 0) montrerFin();
   }
   function image(ts) { etape(ts); requestAnimationFrame(image); }
   // Pour la vérification headless : avancer de n images sans attendre l'écran.
@@ -668,16 +657,24 @@ const Labyrinthe = (function () {
 
   svg.addEventListener("pointerdown", ev => {
     const g = ev.target.closest(".cible");
-    if (g) { ev.preventDefault(); taper(+g.dataset.k); }
+    if (!g) return;
+    ev.preventDefault();
+    const k = +g.dataset.k;
+    taper(k);
+    if (G.vannes[k].type === "robinet") appui = { k, depuis: image_n };
   });
+  const lacher = () => { appui = null; };
+  window.addEventListener("pointerup", lacher);
+  window.addEventListener("pointercancel", lacher);
+  window.addEventListener("blur", lacher);
   $("b-recommencer").onclick = charger;
   $("b-annuler").onclick = annuler;
-  $("fin-boutons").onclick = ev => {
-    const b = ev.target.closest("[data-act]");
-    if (b) (b.dataset.act === "annuler" ? annuler : charger)();
-  };
+  $("fin-boutons").onclick = ev => { if (ev.target.closest("[data-act]")) charger(); };
 
-  window.__laby = { L, N, etat: () => etat, taper, avancer, charger };
+  window.__laby = {
+    L, N, etat: () => etat, taper, avancer, charger,
+    appuyer: k => { taper(k); appui = { k, depuis: image_n }; }, lacher,
+  };
   dessinerDecor();
   charger();
   requestAnimationFrame(image);
