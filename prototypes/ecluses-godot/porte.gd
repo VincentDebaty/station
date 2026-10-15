@@ -59,6 +59,7 @@ var a_vanne := false
 var _angle_vanne := 0.0
 var _rotation_vanne := 0.0
 var _secousse := 0.0         # la grande roue refuse : la porte est tenue par l'eau
+var _t_force := 0.0          # l'horloge des à-coups de la roue qui force
 var y_bas_tige := 0.0        # le bas de la tige du volant : le logement de la vanne (canal)
 # La projection oblique : le décalage du plan du fond (zéro : la vue de profil)
 # et la couche, avant l'eau, où poser le vantail.
@@ -424,8 +425,11 @@ func _process_corps(dt: float) -> void:
 		_secousse = maxf(_secousse - dt, 0.0)
 		roue.queue_redraw()
 	if tenue and force:
-		# la porte est bloquée par l'eau : la roue force, par à-coups
-		_angle += sin(Time.get_ticks_msec() * 0.045) * 0.025
+		# la porte est bloquée par l'eau : la roue force, par à-coups (sur
+		# l'horloge du jeu, ramenés à la durée de l'image : l'heure réelle
+		# rendait chaque partie différente)
+		_t_force += dt
+		_angle += sin(_t_force * 45.0) * 0.025 * dt * Canal.CADENCE_DE_REFERENCE
 		roue.queue_redraw()
 	if roue:
 		var cible := Color(1, 1, 1) if actif else Color(0.68, 0.64, 0.64, 0.85)

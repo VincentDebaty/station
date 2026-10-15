@@ -166,7 +166,10 @@ jour qui perd la partie d'un joueur est un bug bloquant, pas un détail.
   `prototypes/ecluses-godot/`, est un projet Godot séparé (le `.gdignore` de
   `prototypes/` le tient hors de Station 7) : elle lit `niveaux.json` et
   `oracle.json`, que `node tools/ecluses-vers-godot.mjs` DÉRIVE de la page web
-  — ne jamais les éditer à la main.
+  — ne jamais les éditer à la main. Son **banc visuel**,
+  `godot --headless --path prototypes/ecluses-godot --fixed-fps 120 --script res://banc-visuel.gd`,
+  mesure l'eau DESSINÉE (creux, cascade, cadences) et refuse comme les
+  contrôles ; il remplace le film pour tout défaut de forme (README de la tranche).
   `prototype-caneton.html` est une autre idée sur le même thème : un caneton
   flotte, monte et descend avec l'eau qu'on lâche en ouvrant des vannes.
   Son banc, `node tools/caneton-banc.mjs`, joue TOUS les ordres de gestes

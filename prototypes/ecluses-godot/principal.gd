@@ -128,6 +128,9 @@ func _lancer() -> void:
 		_ouv.append(1.0 if o else 0.0)
 		_sens.append(-1 if o else 1)
 	Engine.time_scale = 1.0
+	# le hasard du rendu (bouillons, remous) part d'une graine fixe par
+	# niveau : une partie rejouée donne les mêmes images (banc-visuel.gd)
+	seed(hash(N["id"]))
 	_solution = _solution_de(N["id"])
 	fini = false
 	occupe = false
@@ -1270,11 +1273,14 @@ func _demo() -> void:
 			var ip := int(a["i"])
 			_tenir(ip)
 			var duree := float(a.get("duree", 12.0))
-			var t0 := Time.get_ticks_msec()
-			while Time.get_ticks_msec() - t0 < duree * 1000.0:
+			# (le temps du jeu, pas l'heure réelle : filmée en --fixed-fps, la
+			# démo tenait la roue plus ou moins longtemps selon la machine)
+			var tenu := 0.0
+			while tenu < duree:
 				await get_tree().process_frame
+				tenu += get_process_delta_time()
 				if (_sens[ip] > 0 and _ouv[ip] >= 1.0) or (_sens[ip] < 0 and _ouv[ip] <= 0.0): break
-				if rang <= 9 and Time.get_ticks_msec() - t0 > 700 and not has_meta("photo_%d" % rang):
+				if rang <= 9 and tenu > 0.7 and not has_meta("photo_%d" % rang):
 					set_meta("photo_%d" % rang, true)
 					await _photo("%02d-tenu" % rang)
 			_relacher()

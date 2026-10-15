@@ -124,6 +124,17 @@ var _reperes: Node2D
 var alertes := {}     # bateau coincé -> l'instant où son « ! » est apparu
 var _t := 0.0
 
+# Un tirage qui réussit « p fois par image à 120 images/s », ramené à la
+# durée de l'image : tiré une fois par image, un bouillon battait deux fois
+# plus fort sur l'iPhone à 120 images/s que dans un film à 60. La référence
+# est l'iPhone, où Vincent a réglé et validé l'eau : son rendu ne change pas,
+# les autres cadences s'alignent sur lui. Le hasard, lui, part d'une graine
+# fixe par niveau (principal.gd) : le banc visuel rejoue une partie à
+# l'identique (banc-visuel.gd, 15 octobre 2026).
+const CADENCE_DE_REFERENCE := 120.0
+func _tirage(p: float, dt: float) -> bool:
+	return randf() < 1.0 - pow(1.0 - p, dt * CADENCE_DE_REFERENCE)
+
 func X(x: float) -> float: return x * U
 func Y(h: float) -> float: return (haut - h) * UY
 func rect_monde() -> Rect2: return Rect2(0, 0, X(largeur), Y(BAS))
@@ -2034,7 +2045,7 @@ func _avancer_ecoulement(dt: float) -> void:
 			var o: Dictionary = N["objets"][k]
 			var recoit := int(o["b"]) if fs > 0 else int(o["a"])
 			var bout: Vector2 = sp.tuyau.chemin[sp.tuyau.chemin.size() - 1] if fs > 0 else sp.tuyau.chemin[0]
-			if force > 0.2 and randf() < 0.3 and not mares.has(recoit):
+			if force > 0.2 and _tirage(0.3, dt) and not mares.has(recoit):
 				eaux[recoit].impulsion(bout.x - D.x * 0.5, randf_range(-0.5, 0.4) * force, 22.0)
 		else:
 			sp.tuyau.couler(0.0, 1)
@@ -2065,7 +2076,7 @@ func _avancer_ecoulement(dt: float) -> void:
 		aq.bulles.global_position = aq.chemin[0]
 		if force > 0.1:
 			eaux[vers].remous = maxf(eaux[vers].remous, force * 0.5)
-			if randf() < 0.4: eaux[vers].impulsion(jt.chute().x, randf_range(-0.3, 1.0) * force, 18.0)
+			if _tirage(0.4, dt): eaux[vers].impulsion(jt.chute().x, randf_range(-0.3, 1.0) * force, 18.0)
 	if _chauffe >= 0:
 		# la chaudière boit : l'eau court dans son tuyau, la surface se creuse
 		# un peu au-dessus de la crépine, la vapeur part par le sifflet
@@ -2076,7 +2087,7 @@ func _avancer_ecoulement(dt: float) -> void:
 		chf.force = fc
 		tch.ouverte = fc > 0.05
 		tch.couler(fc * 0.8, 1)
-		if fc > 0.1 and randf() < 0.3:
+		if fc > 0.1 and _tirage(0.3, dt):
 			eaux[ibc].impulsion(tch.chemin[0].x - D.x * 0.5, 0.25 * fc, 40.0)
 	for g in moulins:
 		# la roue tourne avec l'eau qui passe, les sacs se remplissent
@@ -2098,7 +2109,7 @@ func _avancer_ecoulement(dt: float) -> void:
 		var gl_: Glacon = glacons[k]
 		gl_.reste = lerpf(_fontes[k][0], _fontes[k][1], clampf(p * 1.15, 0.0, 1.0))
 		gl_.coule = clampf(minf(p * 6.0, (1.0 - p) * 3.0), 0.0, 1.0)
-		if gl_.coule > 0.2 and randf() < 0.25:
+		if gl_.coule > 0.2 and _tirage(0.25, dt):
 			eaux[int(N["objets"][k]["bassin"])].impulsion(gl_.base.x - D.x * 0.5, randf_range(-0.4, 0.6) * gl_.coule, 20.0)
 	if p >= 1.0:
 		for k in _vases: fonds_vus[dragues[k].ib] = _vases[k][1]
@@ -2160,7 +2171,7 @@ func _aqueduc(i: int, flux: float, dt: float) -> void:
 	var sortie := aq.sortie()
 	var entree := aq.entree()
 	# au-dessus du débouché, la surface se soulève par bouffées
-	if randf() < 0.5:
+	if _tirage(0.5, dt):
 		recoit.impulsion(sortie.x + randf_range(-0.5, 0.5) * U, randf_range(-1.1, 0.4) * force * bouillon, 26.0)
 	# au-dessus de l'entrée, elle se creuse un peu
 	donne.impulsion(entree.x, 0.25 * force * dt * 60.0 * 0.1, 40.0)
@@ -2312,7 +2323,7 @@ func _jet(i: int, flux: float, dt: float) -> void:
 	var recoit: Eau = eaux[l]
 	var bouillon := Reglages.v("bouillon")
 	recoit.remous = maxf(recoit.remous, jt.force * 0.6 * minf(bouillon * 2.0, 1.0))
-	if randf() < 0.5:
+	if _tirage(0.5, dt):
 		# Au doigt maintenu, la chute ne pousse la surface d'en bas qu'en
 		# proportion de l'eau qui tombe encore, et autant vers le haut que vers
 		# le bas : à la fin du remplissage, les poussées (surtout vers le bas)
@@ -2364,7 +2375,7 @@ func _jet_rigole(i: int, flux: float, dt: float) -> void:
 	jt.surface_bas = eaux[l].hauteur_a(bord_x + sens * 60.0)
 	if jt.force <= 0.03: return
 	eaux[l].remous = maxf(eaux[l].remous, jt.force * 0.5)
-	if randf() < 0.5:
+	if _tirage(0.5, dt):
 		eaux[l].impulsion(jt.chute().x, randf_range(-0.5, 1.0) * jt.force * Reglages.v("bouillon") * 2.0, 20.0)
 
 # Une porte fermée : ni levée, ni entrouverte, ni vanne ouverte.
@@ -2702,7 +2713,10 @@ func _avancer_bateaux(dt: float) -> void:
 		# le sillage : la poupe pousse l'eau
 		var poupe: float = bat_x[k] - signf(vitesse) * bateaux[k].longueur * 0.45
 		var i := bassin_sous(poupe)
-		var sillage := Reglages.v("sillage")
+		# (poussé à chaque image, le sillage est ramené à la durée de l'image,
+		# sur la cadence de l'iPhone : il doublait à 120 images/s par rapport
+		# à un film à 60)
+		var sillage := Reglages.v("sillage") * dt * CADENCE_DE_REFERENCE
 		eaux[i].impulsion(poupe, absf(vitesse) * 0.0045 * sillage, 34.0)
 		eaux[i].impulsion(bat_x[k] + signf(vitesse) * bateaux[k].longueur * 0.55, -absf(vitesse) * 0.002 * sillage, 28.0)
 		if p >= 0.5: positions[k] = m["vers"]

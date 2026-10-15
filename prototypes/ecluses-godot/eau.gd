@@ -106,7 +106,9 @@ func vide() -> bool:
 	return fond_y - repos < 1.5
 
 func _suivre_liens(dt: float) -> void:
-	var v := minf(1.0, dt * 10.0)
+	# (la même douceur à toutes les cadences : minf(1, dt × 10) suivait plus
+	# vite à 30 images/s qu'à 120)
+	var v := 1.0 - exp(-dt * 10.0)
 	if lien_g != INF:
 		_lien_g = lien_g if _poids_g <= 0.0 else lerpf(_lien_g, lien_g, v)
 		_poids_g = move_toward(_poids_g, 1.0, dt * 5.0)
