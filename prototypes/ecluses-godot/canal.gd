@@ -2318,6 +2318,7 @@ func _jet(i: int, flux: float, dt: float) -> void:
 		jt.haut_veine = maxf(jt.haut_veine, po.y_seuil - jt.fente)
 		if jt.fente < 1.0: jt.force = 0.0
 	jt.surface_bas = eaux[l].hauteur_a(x + sens * 60.0)
+	jt.eau_bas = eaux[l]
 	jt.fond_bas = eaux[l].fond_y
 	if jt.force <= 0.03: return
 	var recoit: Eau = eaux[l]
@@ -2722,7 +2723,12 @@ func _avancer_bateaux(dt: float) -> void:
 		if p >= 0.5: positions[k] = m["vers"]
 	if p >= 1.0:
 		positions = _depl["apres"].duplicate()
+		# le temps de l'image qui dépasse la fin du tour revient au tour
+		# suivant : remis à zéro, chaque bateau qui part après un autre perdait
+		# jusqu'à une image, 1/30 s sur un petit téléphone (banc visuel, 1-4)
+		var reste: float = _depl["t"] - _depl["D"]
 		_tour_suivant()
+		if not _depl.is_empty() and _depl["rang"] > 0: _depl["t"] = maxf(reste, 0.0)
 
 # Le bateau de la voie de derrière se dessine avant celui de devant ; à voie
 # égale, celui qui change de bassin passe derrière (cf. _tour_suivant).

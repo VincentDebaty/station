@@ -27,6 +27,11 @@ var plein := false
 # courte et que la surface d'en bas se relève à sa place (canal.gd, bosses).
 var pale := 1.0
 var surface_bas := 0.0          # y de la surface d'en bas, sous le jet
+# L'eau d'en bas, quand c'est un bassin (sous une porte) : la lame s'arrête
+# sur sa surface À L'ENDROIT où elle tombe. Arrêtée sur surface_bas, mesurée
+# 60 px plus loin, elle restait suspendue quelques pixels au-dessus d'une
+# surface plus basse (banc visuel, 1-4).
+var eau_bas: Node2D = null
 var fond_bas := 0.0             # y du fond d'en bas
 var depart_x := 0.0             # sous la porte : l'eau glisse de là jusqu'au bord du bloc
 var profondeur := Vector2.ZERO
@@ -129,20 +134,19 @@ func _veine() -> void:
 		var p := Vector2(vantail_x, y) + D * f
 		draw_line(p, p + D * 0.18, Color(0.9, 1, 1, 0.5), 1.4, true)
 
-# La lame d'eau, de la fente à la surface d'en bas. En vue oblique, la fente
-# sous la porte traverse tout le canal, de la coupe au mur du fond : l'eau en
-# sort en NAPPE sur toute cette largeur (Vincent : « on dirait un jet d'eau,
-# alors que ce devrait être un flux qui prend toute la largeur de l'ouverture
-# de porte »). La nappe est la parabole balayée sur la profondeur : son dessus,
-# vu d'en haut, avec des filets qui courent dans le sens du courant, et sa
-# tranche de devant, plus sombre, de l'épaisseur de la fente. Elle tombe sur
-# toute la largeur, et l'écume court le long de la ligne de chute.
-func _lame() -> void:
+# L'épaisseur de la lame.
+func _epaisseur() -> float:
+	return fente * (0.7 + 0.3 * force) if not plein else fente
+
+# Le tracé de la lame, de la fente à la surface d'en bas, pour l'image en
+# cours (le banc visuel le lit sans attendre le dessin : chute() date du
+# dernier _draw, une image plus tôt).
+func trajectoire() -> PackedVector2Array:
 	# presque verticale : l'eau tombe le long de la porte, sans arroser le
 	# bateau qui attend dans le sas (Vincent : « la cascade noie le bateau »)
 	var vx := (14.0 + 34.0 * force) * sens
 	var g := 900.0
-	var ep := fente * (0.7 + 0.3 * force) if not plein else fente
+	var ep := _epaisseur()
 	# Pleine, sans tranche, la nappe se dessine par son DESSUS, au haut de
 	# l'ouverture, contre le bas du vantail : tracée par son milieu, elle
 	# laissait entre le vantail et la cascade un coin de mur, un creux.
@@ -156,11 +160,26 @@ func _lame() -> void:
 	while true:
 		p = o + Vector2(vx * t, 0.5 * g * t * t)
 		pts.append(p)
-		if p.y >= surface_bas or t > 1.5: break
+		var sous := surface_bas
+		if eau_bas and p.x >= eau_bas.x0 and p.x <= eau_bas.x1: sous = maxf(surface_bas, eau_bas.hauteur_a(p.x))
+		if p.y >= sous or t > 1.5: break
 		# (un pas de 0,035 s : à 0,02, la nappe comptait jusqu'à 75 segments
 		# dessinés un à un à chaque image, trop pour un petit téléphone)
 		t += 0.035
-	_point_chute = p
+	return pts
+
+# La lame d'eau, de la fente à la surface d'en bas. En vue oblique, la fente
+# sous la porte traverse tout le canal, de la coupe au mur du fond : l'eau en
+# sort en NAPPE sur toute cette largeur (Vincent : « on dirait un jet d'eau,
+# alors que ce devrait être un flux qui prend toute la largeur de l'ouverture
+# de porte »). La nappe est la parabole balayée sur la profondeur : son dessus,
+# vu d'en haut, avec des filets qui courent dans le sens du courant, et sa
+# tranche de devant, plus sombre, de l'épaisseur de la fente. Elle tombe sur
+# toute la largeur, et l'écume court le long de la ligne de chute.
+func _lame() -> void:
+	var ep := _epaisseur()
+	var pts := trajectoire()
+	_point_chute = pts[pts.size() - 1]
 	if pts.size() < 2: return
 	var D := profondeur
 	if D == Vector2.ZERO:

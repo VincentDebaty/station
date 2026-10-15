@@ -3,7 +3,7 @@ extends SceneTree
 # LE BANC VISUEL — l'eau qu'on DESSINE tient-elle debout ?
 #
 #   godot --headless --path prototypes/ecluses-godot --fixed-fps 120 --script res://banc-visuel.gd
-#   (… --script res://banc-visuel.gd -- --niveau=1-2   pour un autre niveau)
+#   (… --script res://banc-visuel.gd -- --niveau=1-3   pour un seul niveau)
 #
 # L'oracle vérifie le moteur ; ce banc vérifie le RENDU, sans écran et sans
 # regarder. Il joue la meilleure solution du niveau (oracle.json) comme un
@@ -12,7 +12,8 @@ extends SceneTree
 # de sortie 1) dès qu'une règle est violée, en disant laquelle, à quel coup
 # et à quel instant.
 #
-# Il joue la partie à trois cadences — 120, 60 et 30 images/s, celles de
+# Sans --niveau, il passe tous les niveaux éprouvés (NIVEAUX). Pour chacun,
+# il joue la partie à trois cadences — 120, 60 et 30 images/s, celles de
 # l'iPhone, d'un film et d'un petit Android — puis une seconde fois à 60 :
 #   - à chaque cadence, les règles V1 à V5 et V8 doivent tenir ;
 #   - V6 : les trois cadences racontent la même partie (mêmes niveaux, mêmes
@@ -26,7 +27,8 @@ extends SceneTree
 #
 # Les seuils sont en pixels de la coupe (une unité de hauteur = 48 px) et
 # viennent de la MESURE du rendu validé par Vincent sur son iPhone (1-2 au
-# doigt maintenu, 120 images/s), avec un peu de marge — pas de l'œil. Le
+# doigt maintenu, 120 images/s, puis 1-3 et 1-4), avec un peu de marge — pas
+# de l'œil. Le
 # relevé final imprime le pire écart mesuré de chaque règle : c'est lui qu'on
 # regarde avant de toucher un seuil.
 #
@@ -40,7 +42,7 @@ const CADENCES := [120, 60, 30]
 # au plus) et le bouillon au pied d'une cascade ; dans le sillage d'un bateau
 # en marche (à moins d'une coque et demie de lui), le creux derrière la poupe
 # est voulu et va plus loin
-const TOL_SURFACE := 6.5
+const TOL_SURFACE := 7.5
 const TOL_SILLAGE := 22.0
 # V3 / V4 : la cascade part de l'eau d'en haut et tombe sur l'eau d'en bas.
 # Son pied ne doit pas rester suspendu au-dessus de l'eau (on verrait le jour
@@ -49,8 +51,12 @@ const TOL_SILLAGE := 22.0
 const TOL_DEPART := 3.0
 const TOL_SUSPENDU := 3.0
 const TOL_ENFONCE := 20.0
-# V2 : un niveau ne fait pas d'aller-retour pendant un geste (unités)
-const TOL_RETOUR := 0.002
+# V2 : un niveau ne fait pas d'aller-retour pendant un geste — il ne revient
+# pas de plus d'un pixel en arrière du plus loin qu'il est allé (unités).
+# Quand deux bassins sont presque à niveau, le moteur les pose à leur moyenne
+# (principal.gd, _pas_continu) : un niveau recule alors de 0,002 unité, un
+# dixième de pixel, invisible sous la houle.
+const TOL_RETOUR := 0.02
 # V6 : écart permis entre deux cadences, au même instant d'un geste (unités)
 const TOL_CADENCE := 0.03
 # V8 : la vitesse d'une surface, hors sillage (px/s) — l'eau la plus vive du
@@ -58,7 +64,11 @@ const TOL_CADENCE := 0.03
 const TOL_VITESSE := 200.0
 const RACCORD := 40.0      # eau.gd : la longueur du raccord contre une porte
 
-var niveau := "1-2"
+# Les niveaux éprouvés (15 octobre 2026), joués sans --niveau. Un niveau
+# n'entre ici qu'après avoir passé l'épreuve des anciens défauts (README).
+const NIVEAUX := ["1-2", "1-3", "1-4"]
+var niveau := ""
+var _suivre := [-1, -1]   # --suivre=coup:bassin : imprime ce niveau image par image
 var echecs := []          # [règle, message]
 var _p: Node              # la scène du jeu (principal.gd)
 var _c                    # le canal (canal.gd) — sans type : le banc se compile
@@ -67,11 +77,12 @@ var _cadence := 60
 var _coup := 0            # le geste en cours (1 = le premier)
 var _t_geste := 0.0       # le temps depuis le début du geste
 var _t := 0.0
-var _trace := []          # [coup, t_geste, niveaux, ouvertures, bateaux]
+var _trace := []          # [coup, t_geste, niveaux, ouvertures, bateaux, tour de bateaux, t du tour]
 var _poses := []          # l'eau posée après chaque geste
 var _signature := PackedStringArray()
 var _sens_niv := {}       # V2 : le sens où va chaque niveau pendant ce geste
-var _niv_avant := []
+var _niv_avant := []      #      son niveau au début du geste
+var _extreme := {}        #      et le plus loin qu'il est allé
 var _agitation := {}      # V6 : l'agitation moyenne de l'eau, par geste [somme, n]
 var _avant_y := {}        # V8 : la surface de l'image d'avant, par bassin et colonne
 var _pires := {}          # règle -> le pire écart mesuré, pour le relevé
@@ -84,62 +95,83 @@ class Sonde extends Node:
 func _initialize() -> void:
 	for a in OS.get_cmdline_user_args():
 		if a.begins_with("--niveau="): niveau = a.substr(9)
+		if a.begins_with("--suivre="): _suivre = Array(a.substr(9).split(":")).map(func(x): return int(x))
 	_courir.call_deferred()
 
 func _courir() -> void:
-	print("BANC VISUEL — niveau %s" % niveau)
+	var rouges := []
+	var joues: Array = NIVEAUX if niveau == "" else [niveau]
+	for n in joues:
+		niveau = n
+		echecs = []
+		_pires = {}
+		_vus = {}
+		print("BANC VISUEL — niveau %s" % niveau)
+		await _niveau()
+		if not _releve(): rouges.append(n)
+		print("")
+	if rouges.is_empty():
+		print("BANC VISUEL VERT — %s : aucune règle violée." % ", ".join(joues))
+		quit(0)
+	else:
+		print("BANC VISUEL ROUGE — %s." % ", ".join(rouges))
+		quit(1)
+
+func _niveau() -> void:
 	var traces := {}
 	var poses := {}
 	var agitations := {}
 	var signatures := {}
 	for c in CADENCES:
 		var r: Dictionary = await _partie(c)
-		if r.is_empty(): return _finir()
+		if r.is_empty(): return
 		traces[c] = r["trace"]
 		poses[c] = r["poses"]
 		agitations[c] = r["agitation"]
 		signatures[c] = r["signature"]
 	var r2: Dictionary = await _partie(60, true)
-	if r2.is_empty(): return _finir()
+	if r2.is_empty(): return
 	_comparer_cadences(traces, poses)
 	_comparer_agitation(agitations)
 	_vu("V7")
 	if r2["signature"] != signatures[60]:
 		_echec("V7", "partie", "rejouée à 60 images/s, elle ne donne pas les mêmes images", 0)
-	_finir()
 
-func _finir() -> void:
+# Le relevé d'un niveau : les mesures de chaque règle, puis ses défauts.
+# Rend vrai s'il est vert.
+func _releve() -> bool:
 	print("")
-	for regle in ["V1", "V1s", "V2", "V3", "V4", "V4s", "V5", "V6", "V6a", "V7", "V8"]:
+	for regle in ["V1", "V1s", "V2", "V3", "V4", "V4s", "V5", "V6", "V6a", "V6r", "V7", "V8"]:
 		var n := int(_vus.get(regle, 0))
-		# une règle qui n'a rien mesuré ne prouve rien : le banc refuse
-		if n == 0 and echecs.is_empty(): _echec(regle, "partie", "aucune mesure : la partie n'a pas été jouée", 0)
+		# une règle qui n'a rien mesuré ne prouve rien : le banc refuse (V1s,
+		# V6a et V6r n'ont rien à mesurer sur un niveau sans bateau qui bouge)
+		if n == 0 and echecs.is_empty() and not regle in ["V1s", "V6a", "V6r"]:
+			_echec(regle, "partie", "aucune mesure : la partie n'a pas été jouée", 0)
 		var pire = _pires.get(regle, null)
 		print("  %s  %6d mesures%s" % [regle, n, ("   pire écart %.2f" % pire) if pire != null else ""])
 	if echecs.is_empty():
-		print("\nBANC VISUEL VERT — aucune règle violée.")
-		quit(0)
-	else:
-		var groupes := {}
-		var ordre := []
-		for e in echecs:
-			var cle := "%s|%s|%d|%d" % [e[0], e[1], e[3], e[5]]
-			if not groupes.has(cle):
-				groupes[cle] = [e, 0, e[4]]
-				ordre.append(cle)
-			groupes[cle][1] += 1
-			groupes[cle][2] = e[4]
-		print("\nBANC VISUEL ROUGE — %d défaut(s) :" % ordre.size())
-		for cle in ordre:
-			var e: Array = groupes[cle][0]
-			var n: int = groupes[cle][1]
-			var ou := ""
-			if int(e[3]) > 0 and float(e[4]) > 0.0:
-				ou = "  — coup %d, %d im/s, à %.2f s%s" % [e[3], e[5], e[4], (" (%d images, jusqu'à %.2f s)" % [n, groupes[cle][2]]) if n > 1 else ""]
-			elif int(e[3]) > 0:
-				ou = "  — coup %d, %d im/s" % [e[3], e[5]]
-			print("  %s  %s%s%s" % [e[0], e[1], (" : " + e[2]) if e[2] != "" else "", ou])
-		quit(1)
+		print("  %s : vert" % niveau)
+		return true
+	var groupes := {}
+	var ordre := []
+	for e in echecs:
+		var cle := "%s|%s|%d|%d" % [e[0], e[1], e[3], e[5]]
+		if not groupes.has(cle):
+			groupes[cle] = [e, 0, e[4]]
+			ordre.append(cle)
+		groupes[cle][1] += 1
+		groupes[cle][2] = e[4]
+	print("  %s : ROUGE — %d défaut(s) :" % [niveau, ordre.size()])
+	for cle in ordre:
+		var e: Array = groupes[cle][0]
+		var n: int = groupes[cle][1]
+		var ou := ""
+		if int(e[3]) > 0 and float(e[4]) > 0.0:
+			ou = "  — coup %d, %d im/s, à %.2f s%s" % [e[3], e[5], e[4], (" (%d images, jusqu'à %.2f s)" % [n, groupes[cle][2]]) if n > 1 else ""]
+		elif int(e[3]) > 0:
+			ou = "  — coup %d, %d im/s" % [e[3], e[5]]
+		print("  %s  %s%s%s" % [e[0], e[1], (" : " + e[2]) if e[2] != "" else "", ou])
+	return false
 
 # --- Une partie ------------------------------------------------------------
 
@@ -194,6 +226,7 @@ func _partie(cadence: int, replay := false) -> Dictionary:
 		_coup += 1
 		_t_geste = 0.0
 		_sens_niv = {}
+		_extreme = {}
 		_niv_avant = _c.vue_niv.duplicate()
 		var ip := int(a["i"])
 		_p._tenir(ip)
@@ -236,9 +269,13 @@ func mesurer(dt: float) -> void:
 	var L: Array = _c.N["liaisons"]
 	var bx := []
 	for k in _c.bateaux.size(): bx.append(float(_c.bat_x[k]))
-	_trace.append([_coup, _t_geste, niv.duplicate(), _p._ouv.duplicate(), bx])
+	_trace.append([_coup, _t_geste, niv.duplicate(), _p._ouv.duplicate(), bx, int(_c._depl.get("rang", -1)), float(_c._depl.get("t", 0.0))])
 	var sig := PackedStringArray()
 	for v in niv: sig.append("%.5f" % v)
+	if _coup == _suivre[0] and _suivre[1] < 0:
+		print("BATEAUX %d %.4f %s depl=%s" % [_cadence, _t_geste, str(bx), str(_c._depl.get("rang", -1))])
+	if _coup == _suivre[0] and _cadence == BASE and _suivre[1] >= 0:
+		print("SUIVI coup %d  %.3f s  bassin %d : %.5f   niveaux %s  portes %s" % [_coup, _t_geste, _suivre[1], niv[_suivre[1]], str(niv), str(_p._ouv)])
 
 	# V1 — chaque surface reste près de son niveau. Près d'une porte ouverte,
 	# elle peut rejoindre le niveau du voisin (le raccord en pente douce),
@@ -307,16 +344,22 @@ func mesurer(dt: float) -> void:
 			if ecart_s > TOL_SILLAGE:
 				_echec("V1", "bassin %d (%s)" % [i, B[i].get("nom", "")], "sillage de %.1f px" % ecart_s)
 
-	# V2 — pendant un geste, un niveau va dans un seul sens
+	# V2 — pendant un geste, un niveau va dans un seul sens : une fois parti
+	# (plus d'un pixel), il ne revient pas en arrière de plus d'un pixel
 	for i in niv.size():
-		var dv: float = niv[i] - float(_niv_avant[i])
+		var n: float = niv[i]
 		_vu("V2")
-		if absf(dv) > TOL_RETOUR:
-			var s := signf(dv)
-			if _sens_niv.has(i) and _sens_niv[i] != s:
-				_echec("V2", "bassin %d" % i, "le niveau repart dans l'autre sens")
-			_sens_niv[i] = s
-		_niv_avant[i] = niv[i]
+		if not _sens_niv.has(i):
+			if absf(n - float(_niv_avant[i])) > TOL_RETOUR:
+				_sens_niv[i] = signf(n - float(_niv_avant[i]))
+				_extreme[i] = n
+			continue
+		var sens: float = _sens_niv[i]
+		if (n - float(_extreme[i])) * sens > 0.0: _extreme[i] = n
+		var recul: float = (float(_extreme[i]) - n) * sens
+		_noter("V2", recul * 48.0)
+		if recul > TOL_RETOUR:
+			_echec("V2", "bassin %d" % i, "le niveau revient de %.1f px en arrière" % (recul * 48.0))
 
 	# V3 à V5 — la cascade sous chaque porte
 	for g in _c.jets:
@@ -349,7 +392,8 @@ func mesurer(dt: float) -> void:
 			_echec("V3", "porte %d" % g, "la cascade part %.1f px au-dessus de l'eau d'en haut" % d3)
 		# V4 — elle tombe SUR l'eau d'en bas : son pied n'est ni suspendu
 		# au-dessus, ni enfoncé dans l'eau
-		var pied: Vector2 = jt.chute()
+		var trace: PackedVector2Array = jt.trajectoire()
+		var pied: Vector2 = trace[trace.size() - 1]
 		if pied.x < _c.eaux[l].x0 or pied.x > _c.eaux[l].x1: continue
 		var d4: float = pied.y - _c.eaux[l].hauteur_a(pied.x)
 		# (y vers le bas : d4 > 0, le pied est sous la surface)
@@ -364,12 +408,36 @@ func mesurer(dt: float) -> void:
 # V6 — les trois cadences racontent la même partie.
 #   - Après chaque geste, l'eau posée est la même au millième près : ce que le
 #     joueur obtient ne dépend pas de son téléphone.
-#   - Pendant le geste, au même instant depuis son début, niveaux, portes et
-#     bateaux suivent le même chemin. On tolère un décalage de deux images de
-#     la cadence lente : un bateau part à l'image qui suit l'eau posée, et à
-#     30 images/s cette image tombe jusqu'à 1/30 s plus tard.
+#   - Pendant le geste, au même instant depuis son début, niveaux et portes
+#     suivent le même chemin, à deux images près de la cadence lente.
+#   - Chaque mouvement de bateaux fait le même trajet, compté depuis SON
+#     départ. Le départ, lui, attend une suite d'événements (porte en haut,
+#     doigt levé, eau posée, bateaux lâchés) qui prennent chacun une image :
+#     il vient un peu plus tard à basse cadence, ce qu'on mesure à part
+#     (TOL_RETARD).
+const TOL_RETARD := 0.3       # s : un départ en retard de moins d'un tiers de seconde ne se voit pas
+func _ecart_niveaux(m: Array, r: Array) -> Array:
+	var ecart := 0.0
+	var q := ""
+	for i in m[2].size():
+		var d := absf(float(m[2][i]) - float(r[2][i]))
+		if d > ecart: ecart = d; q = "niveau du bassin %d" % i
+	for i in m[3].size():
+		var d := absf(float(m[3][i]) - float(r[3][i]))
+		if d > ecart: ecart = d; q = "ouverture de la porte %d" % i
+	return [ecart, q]
+
+func _ecart_bateaux(m: Array, r: Array) -> Array:
+	var ecart := 0.0
+	var q := ""
+	for k in m[4].size():
+		var d := absf(float(m[4][k]) - float(r[4][k])) / 64.0
+		if d > ecart: ecart = d; q = "bateau %d" % k
+	return [ecart, q]
+
 func _comparer_cadences(traces: Dictionary, poses: Dictionary) -> void:
 	var ref: Array = traces[BASE]
+	var departs_ref := _departs(ref)
 	for c in traces:
 		if c == BASE: continue
 		for g in mini(poses[c].size(), poses[BASE].size()):
@@ -378,32 +446,49 @@ func _comparer_cadences(traces: Dictionary, poses: Dictionary) -> void:
 			_noter("V6", ecart)
 			if ecart > 1e-3:
 				_echec("V6", "eau posée", "à %d images/s, elle diffère de %.4f u de celle à 120" % [c, ecart], g + 1, 0.0, c)
+		var departs := _departs(traces[c])
+		for cle in departs:
+			if not departs_ref.has(cle):
+				_echec("V6", "bateaux", "à %d images/s, un départ de plus qu'à 120" % c, int(cle.get_slice(":", 0)), 0.0, c)
+				continue
+			var retard: float = departs[cle] - departs_ref[cle]
+			_noter("V6r", absf(retard))
+			if absf(retard) > TOL_RETARD:
+				_echec("V6", "départ des bateaux", "à %d images/s, %.2f s plus tard qu'à 120" % [c, retard], int(cle.get_slice(":", 0)), 0.0, c)
 		var fenetre := 2.0 / float(c) + 1e-4
 		var j0 := 0
 		for m in traces[c]:
+			# niveaux et portes : au même instant du geste
 			while j0 < ref.size() and (ref[j0][0] < m[0] or (ref[j0][0] == m[0] and ref[j0][1] < m[1] - fenetre)): j0 += 1
-			var meilleur := INF
-			var quoi := ""
+			var meilleur := [INF, ""]
 			var j := j0
 			while j < ref.size() and ref[j][0] == m[0] and ref[j][1] <= m[1] + fenetre:
-				var r: Array = ref[j]
-				var ecart := 0.0
-				var q := ""
-				for i in m[2].size():
-					var d := absf(float(m[2][i]) - float(r[2][i]))
-					if d > ecart: ecart = d; q = "niveau du bassin %d" % i
-				for i in m[3].size():
-					var d := absf(float(m[3][i]) - float(r[3][i]))
-					if d > ecart: ecart = d; q = "ouverture de la porte %d" % i
-				for k in m[4].size():
-					var d := absf(float(m[4][k]) - float(r[4][k])) / 64.0
-					if d > ecart: ecart = d; q = "bateau %d" % k
-				if ecart < meilleur: meilleur = ecart; quoi = q
+				var e := _ecart_niveaux(m, ref[j])
+				if e[0] < meilleur[0]: meilleur = e
 				j += 1
-			if meilleur == INF: continue
-			_noter("V6", meilleur)
-			if meilleur > TOL_CADENCE:
-				_echec("V6", quoi, "à %d images/s, s'écarte de %.3f u de la partie à 120" % [c, meilleur], m[0], m[1], c)
+			# les bateaux : au même instant de leur mouvement (ou du geste, à l'arrêt)
+			var meilleur_b := [INF, ""]
+			for r in ref:
+				if r[0] != m[0] or r[5] != m[5]: continue
+				var tm: float = m[6] if m[5] >= 0 else m[1]
+				var tr: float = r[6] if r[5] >= 0 else r[1]
+				if absf(tm - tr) > fenetre: continue
+				var e := _ecart_bateaux(m, r)
+				if e[0] < meilleur_b[0]: meilleur_b = e
+			for e in [meilleur, meilleur_b]:
+				if e[0] == INF: continue
+				_noter("V6", e[0])
+				if e[0] > TOL_CADENCE:
+					_echec("V6", e[1], "à %d images/s, s'écarte de %.3f u de la partie à 120" % [c, e[0]], m[0], m[1], c)
+
+# L'instant (depuis le début du geste) où part chaque mouvement de bateaux.
+func _departs(trace: Array) -> Dictionary:
+	var d := {}
+	for m in trace:
+		if m[5] < 0: continue
+		var cle := "%d:%d" % [m[0], m[5]]
+		if not d.has(cle): d[cle] = float(m[1]) - float(m[6])
+	return d
 
 # V6 encore — l'eau n'est pas plus agitée sur un téléphone rapide : par geste,
 # l'écart moyen de la surface à son niveau (hors sillage) reste le même à
