@@ -83,7 +83,7 @@ var _sure: Control      # la zone sûre : tout ce qu'on touche ou qu'on lit y re
 # Le niveau sur lequel le jeu s'ouvre : celui qu'on est en train d'essayer
 # (Vincent, 7 octobre 2026 : « quand tu déploies sur l'iPhone, tu proposes le
 # nouveau niveau à chaque fois »). À changer à chaque nouveauté.
-const NIVEAU_EN_TEST := "1-2"
+const NIVEAU_EN_TEST := "1-4"
 
 # Les réglages de test (ECLUSES_DEMO, ECLUSES_NIVEAU…) : les variables
 # d'environnement sur le Mac ; sur un téléphone, où on ne peut pas en poser,

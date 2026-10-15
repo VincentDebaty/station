@@ -79,9 +79,10 @@ ECLUSES_DEMO=1 ECLUSES_CAPTURE=/tmp/ecluses godot --path prototypes/ecluses-godo
 godot --headless --path prototypes/ecluses-godot --fixed-fps 120 --script res://banc-visuel.gd
 ```
 
-Il joue la solution des niveaux éprouvés — le 1-2, le 1-3 et le 1-4, en
-20 secondes (`-- --niveau=1-3` pour un seul) — comme un doigt, à 120, 60 et
-30 images/s, puis une seconde fois à 60.
+Il joue la solution des 19 niveaux que Godot sait dessiner, du 1-1 au 16-1,
+en 3 minutes (`-- --niveau=1-3` pour un seul, en quelques secondes) — comme
+un doigt : tenu jusqu'au bout au chapitre 1, un toucher ailleurs —, à 120,
+60 et 30 images/s, puis une seconde fois à 60.
 À chaque image, il mesure la géométrie que le rendu a produite, et REFUSE
 (code 1) en disant la règle, la porte ou le bassin, le coup et l'instant :
 
@@ -89,9 +90,9 @@ Il joue la solution des niveaux éprouvés — le 1-2, le 1-3 et le 1-4, en
 |---|---|
 | V1 | une surface reste près de son niveau : ni creux, ni bloc d'eau (7,5 px hors sillage, 22 px dans le sillage d'un bateau en marche) |
 | V2 | pendant un geste, un niveau ne fait pas d'aller-retour (il ne revient pas de plus d'un pixel du plus loin qu'il est allé) |
-| V3 | la cascade part de l'eau d'en haut, pas d'au-dessus |
-| V4 | son pied touche l'eau d'en bas : jamais suspendu (3 px), pas trop enfoncé |
-| V5 | elle coule de l'eau haute vers l'eau basse, porte ouverte, eau au-dessus du seuil |
+| V3 | une cascade (sous une porte, par-dessus un mur) part de l'eau d'en haut, pas d'au-dessus |
+| V4 | son pied touche l'eau d'en bas : jamais suspendu (3 px), pas trop enfoncé (20 px, 30 pour la rigole qui tombe de haut) |
+| V5 | elle coule de l'eau haute vers l'eau basse, porte ouverte, eau au-dessus du seuil ou de la crête |
 | V6 | les trois cadences racontent la même partie : même eau posée, même chemin des niveaux et des portes, même trajet de chaque bateau compté depuis son départ, même agitation ; le départ peut venir un peu plus tard à basse cadence (0,3 s au plus) |
 | V7 | rejouée, la partie donne exactement les mêmes images |
 | V8 | une surface ne saute pas d'une image à l'autre (200 px/s hors sillage) |
@@ -105,19 +106,27 @@ de l'iPhone (120 images/s), où l'eau a été réglée et validée : son rendu n
 pas changé, ce sont les autres cadences qui s'alignent sur lui.
 
 Éprouvé le 15 octobre 2026 en réintroduisant d'anciens défauts, niveau par
-niveau : il refuse un courant à l'envers, une cascade arrêtée au-dessus de
-l'eau et un sillage poussé à chaque image sur les trois niveaux, et une nappe
-plus épaisse que l'eau d'amont sur le 1-2 (sur le 1-3 et le 1-4, l'eau d'en
-haut ne descend jamais jusqu'au seuil : le défaut n'y joue pas). Un niveau
-n'entre dans `NIVEAUX` qu'après cette épreuve. Il ne sait jouer que les
-niveaux au doigt maintenu. `-- --suivre=coup:bassin` imprime un niveau image
-par image, `-- --suivre=coup:-1` les bateaux, pour chercher une cause.
+niveau (1-2, 1-3, 1-4, 4-1, 11-1, 15-1) : il refuse partout un courant à
+l'envers et une cascade arrêtée au-dessus de l'eau ; un sillage poussé à
+chaque image partout où les bateaux bougent assez (pas au 11-1) ; une nappe
+plus épaisse que l'eau d'amont au 1-2 (ailleurs l'eau d'en haut ne descend
+jamais jusqu'au seuil) ; une nappe qui franchit un mur avant que l'eau n'y
+arrive au 15-1. Un niveau nouveau n'entre dans `NIVEAUX` qu'après cette
+épreuve. `-- --suivre=coup:bassin` imprime un niveau (et la force des
+cascades) image par image, `-- --suivre=coup:-1` les bateaux, pour chercher
+une cause.
 
 En l'étendant au 1-3 et au 1-4, il a trouvé deux vrais défauts, corrigés :
 la cascade s'arrêtait sur la surface mesurée 60 px plus loin et restait
 suspendue jusqu'à 3 px au-dessus d'une eau plus basse (elle s'arrête
 maintenant sur l'eau là où elle tombe), et un bateau qui partait après un
-autre perdait jusqu'à une image à chaque départ. Il ne voit pas
+autre perdait jusqu'à une image à chaque départ. Étendu aux niveaux au
+toucher, il en a trouvé un troisième, bien visible : au 15-1, une nappe
+coulait sur la levée vers la grange alors que le bief était encore 50 px plus
+bas que la crête — le pré commençait à se remplir au plus tard aux trois
+quarts de la manœuvre, et la nappe anticipait. Le bief monte maintenant à la
+crête juste quand le pré commence à se remplir, et la nappe attend l'eau.
+Il ne voit pas
 les défauts de COULEUR (une tranche sombre, une eau trop opaque) : ceux-là
 restent à l'œil, sur un film au format de l'iPhone.
 

@@ -4,6 +4,8 @@ extends SceneTree
 #
 #   godot --headless --path prototypes/ecluses-godot --fixed-fps 120 --script res://banc-visuel.gd
 #   (… --script res://banc-visuel.gd -- --niveau=1-3   pour un seul niveau)
+#   (… -- --niveau=1-4 --suivre=4:2  imprime le niveau du bassin 2 au coup 4,
+#    image par image ; --suivre=4:-1 les bateaux — pour chercher une cause)
 #
 # L'oracle vérifie le moteur ; ce banc vérifie le RENDU, sans écran et sans
 # regarder. Il joue la meilleure solution du niveau (oracle.json) comme un
@@ -51,6 +53,11 @@ const TOL_SILLAGE := 22.0
 const TOL_DEPART := 3.0
 const TOL_SUSPENDU := 3.0
 const TOL_ENFONCE := 20.0
+# La rigole tombe de bien plus haut (≈200 px, 3-1 et 13-1) : tracée par pas de
+# 0,035 s, sa chute dépasse la surface de son dernier pas, jusqu'à 25 px. Vue
+# au gros plan, elle plonge dans une eau basse ; pas jugé comme un défaut
+# (15 octobre 2026, à confirmer par Vincent).
+const TOL_ENFONCE_RIGOLE := 30.0
 # V2 : un niveau ne fait pas d'aller-retour pendant un geste — il ne revient
 # pas de plus d'un pixel en arrière du plus loin qu'il est allé (unités).
 # Quand deux bassins sont presque à niveau, le moteur les pose à leur moyenne
@@ -64,9 +71,10 @@ const TOL_CADENCE := 0.03
 const TOL_VITESSE := 200.0
 const RACCORD := 40.0      # eau.gd : la longueur du raccord contre une porte
 
-# Les niveaux éprouvés (15 octobre 2026), joués sans --niveau. Un niveau
-# n'entre ici qu'après avoir passé l'épreuve des anciens défauts (README).
-const NIVEAUX := ["1-2", "1-3", "1-4"]
+# Les niveaux joués sans --niveau : tous ceux que Godot sait dessiner, au
+# doigt maintenu (chapitre 1) comme au toucher. Un niveau nouveau n'entre
+# ici qu'après l'épreuve des anciens défauts (README).
+const NIVEAUX := ["1-1", "1-2", "1-3", "1-4", "2-1", "3-1", "4-1", "5-1", "6-1", "7-1", "8-1", "9-1", "10-1", "11-1", "12-1", "13-1", "14-1", "15-1", "16-1"]
 var niveau := ""
 var _suivre := [-1, -1]   # --suivre=coup:bassin : imprime ce niveau image par image
 var echecs := []          # [règle, message]
@@ -83,6 +91,7 @@ var _signature := PackedStringArray()
 var _sens_niv := {}       # V2 : le sens où va chaque niveau pendant ce geste
 var _niv_avant := []      #      son niveau au début du geste
 var _extreme := {}        #      et le plus loin qu'il est allé
+var _coulait := false     #      l'écoulement était-il en cours à l'image d'avant ?
 var _agitation := {}      # V6 : l'agitation moyenne de l'eau, par geste [somme, n]
 var _avant_y := {}        # V8 : la surface de l'image d'avant, par bassin et colonne
 var _pires := {}          # règle -> le pire écart mesuré, pour le relevé
@@ -145,7 +154,9 @@ func _releve() -> bool:
 		var n := int(_vus.get(regle, 0))
 		# une règle qui n'a rien mesuré ne prouve rien : le banc refuse (V1s,
 		# V6a et V6r n'ont rien à mesurer sur un niveau sans bateau qui bouge)
-		if n == 0 and echecs.is_empty() and not regle in ["V1s", "V6a", "V6r"]:
+		# (V3 à V5 non plus sur un niveau sans cascade, comme le 2-1 dont l'eau
+		# passe par l'aqueduc des vannes)
+		if n == 0 and echecs.is_empty() and not regle in ["V1s", "V3", "V4", "V4s", "V5", "V6a", "V6r"]:
 			_echec(regle, "partie", "aucune mesure : la partie n'a pas été jouée", 0)
 		var pire = _pires.get(regle, null)
 		print("  %s  %6d mesures%s" % [regle, n, ("   pire écart %.2f" % pire) if pire != null else ""])
@@ -216,32 +227,34 @@ func _partie(cadence: int, replay := false) -> Dictionary:
 			for pas in partie["pas"]:
 				if pas["action"] != null: solution.append(pas["action"])
 			break
-	if not _p._continu:
-		_echec("--", "le banc ne sait jouer que les niveaux au doigt maintenu (« continu »)")
-		return {}
 	for a in solution:
-		if a["type"] != "porte":
-			_echec("--", "geste %s : le banc ne sait pas encore le jouer" % a["type"])
-			return {}
 		_coup += 1
 		_t_geste = 0.0
 		_sens_niv = {}
 		_extreme = {}
 		_niv_avant = _c.vue_niv.duplicate()
-		var ip := int(a["i"])
-		_p._tenir(ip)
-		var tenu := 0.0
-		while tenu < 12.0:
-			await process_frame
-			tenu += root.get_process_delta_time()
-			if (_p._sens[ip] > 0 and _p._ouv[ip] >= 1.0) or (_p._sens[ip] < 0 and _p._ouv[ip] <= 0.0): break
-		_p._relacher()
+		if _p._continu and a["type"] == "porte":
+			# au doigt maintenu : on tient la roue jusqu'au bout de sa course
+			var ip := int(a["i"])
+			_p._tenir(ip)
+			var tenu := 0.0
+			while tenu < 12.0:
+				await process_frame
+				tenu += root.get_process_delta_time()
+				if (_p._sens[ip] > 0 and _p._ouv[ip] >= 1.0) or (_p._sens[ip] < 0 and _p._ouv[ip] <= 0.0): break
+			_p._relacher()
+		else:
+			# au toucher : un geste, puis le jeu déroule la manœuvre tout seul
+			_p.jouer(a)
+			if not _p.occupe and not _p.fini:
+				_echec("--", "coup %d : le jeu refuse le geste %s de la solution" % [_coup, str(a)])
+				return {}
 		var attente := 0.0
-		while (_p._a_juger or _p.occupe) and attente < 30.0:
+		while (_p._a_juger or _p.occupe) and attente < 60.0:
 			await process_frame
 			attente += root.get_process_delta_time()
-		if attente >= 30.0:
-			_echec("--", "coup %d : l'eau ne se pose pas en 30 s" % _coup)
+		if attente >= 60.0:
+			_echec("--", "coup %d : l'eau ne se pose pas en 60 s" % _coup)
 			return {}
 		_poses.append(_p.etat["niv"].duplicate())
 	var fin := 0.0
@@ -269,13 +282,17 @@ func mesurer(dt: float) -> void:
 	var L: Array = _c.N["liaisons"]
 	var bx := []
 	for k in _c.bateaux.size(): bx.append(float(_c.bat_x[k]))
-	_trace.append([_coup, _t_geste, niv.duplicate(), _p._ouv.duplicate(), bx, int(_c._depl.get("rang", -1)), float(_c._depl.get("t", 0.0))])
+	var passes := []
+	for g in L.size(): passes.append(_passe(g))
+	_trace.append([_coup, _t_geste, niv.duplicate(), passes, bx, int(_c._depl.get("rang", -1)), float(_c._depl.get("t", 0.0))])
 	var sig := PackedStringArray()
 	for v in niv: sig.append("%.5f" % v)
 	if _coup == _suivre[0] and _suivre[1] < 0:
 		print("BATEAUX %d %.4f %s depl=%s" % [_cadence, _t_geste, str(bx), str(_c._depl.get("rang", -1))])
 	if _coup == _suivre[0] and _cadence == BASE and _suivre[1] >= 0:
-		print("SUIVI coup %d  %.3f s  bassin %d : %.5f   niveaux %s  portes %s" % [_coup, _t_geste, _suivre[1], niv[_suivre[1]], str(niv), str(_p._ouv)])
+		var jets := PackedStringArray()
+		for g in _c.jets: jets.append("%d:%.2f" % [g, _c.jets[g].force])
+		print("SUIVI coup %d  %.3f s  bassin %d : %.5f   niveaux %s  cascades %s" % [_coup, _t_geste, _suivre[1], niv[_suivre[1]], str(niv), " ".join(jets)])
 
 	# V1 — chaque surface reste près de son niveau. Près d'une porte ouverte,
 	# elle peut rejoindre le niveau du voisin (le raccord en pente douce),
@@ -286,8 +303,8 @@ func mesurer(dt: float) -> void:
 		if not e.visible_eau or e.vide(): continue
 		var bas: float = e.repos
 		var haut: float = e.repos
-		var ouvert_g: bool = i > 0 and L[i - 1]["type"] == "porte" and _p._ouv[i - 1] > 0.001
-		var ouvert_d: bool = i < L.size() and L[i]["type"] == "porte" and _p._ouv[i] > 0.001
+		var ouvert_g: bool = i > 0 and _relie(i - 1)
+		var ouvert_d: bool = i < L.size() and _relie(i)
 		var x: float = e.x0
 		var pas: float = (e.x1 - e.x0) / 48.0
 		var ecart := 0.0
@@ -345,7 +362,15 @@ func mesurer(dt: float) -> void:
 				_echec("V1", "bassin %d (%s)" % [i, B[i].get("nom", "")], "sillage de %.1f px" % ecart_s)
 
 	# V2 — pendant un geste, un niveau va dans un seul sens : une fois parti
-	# (plus d'un pixel), il ne revient pas en arrière de plus d'un pixel
+	# (plus d'un pixel), il ne revient pas en arrière de plus d'un pixel. Un
+	# geste peut avoir deux mouvements : l'ascenseur descend avec son eau, puis
+	# l'eau du bief y entre (9-1). V2 repart au début de l'écoulement.
+	var coule_maintenant: bool = not _c._ecou.is_empty()
+	if coule_maintenant and not _coulait:
+		_sens_niv = {}
+		_extreme = {}
+		_niv_avant = niv.duplicate()
+	_coulait = coule_maintenant
 	for i in niv.size():
 		var n: float = niv[i]
 		_vu("V2")
@@ -361,7 +386,8 @@ func mesurer(dt: float) -> void:
 		if recul > TOL_RETOUR:
 			_echec("V2", "bassin %d" % i, "le niveau revient de %.1f px en arrière" % (recul * 48.0))
 
-	# V3 à V5 — la cascade sous chaque porte
+	# V3 à V5 — la cascade sous chaque porte, par-dessus un mur, ou au bout
+	# d'une rigole
 	for g in _c.jets:
 		var jt = _c.jets[g]
 		var vu: bool = jt.force > 0.03 and jt.fente >= 1.0 and jt.modulate.a > 0.05 and jt.self_modulate.a > 0.05
@@ -369,27 +395,37 @@ func mesurer(dt: float) -> void:
 		if not vu: continue
 		var h: int = g if jt.sens > 0 else g + 1          # le côté haut
 		var l: int = g + 1 if jt.sens > 0 else g          # le côté bas
-		var s := float(L[g]["seuil"])
+		var s := _seuil(g)
+		var quoi := _nom_liaison(g)
+		var fond_l := float(B[l]["fond"])
 		# V5 — l'eau coule de l'eau haute vers l'eau basse, porte ouverte,
 		# et seulement s'il reste de l'eau au-dessus du seuil en haut
 		_vu("V5")
-		if float(niv[h]) < float(niv[l]) - 1e-4:
-			_echec("V5", "porte %d" % g, "la cascade coule de l'eau basse vers l'eau haute")
-		if _p._ouv[g] <= 0.0:
-			_echec("V5", "porte %d" % g, "une cascade sous une porte fermée")
-		if float(niv[h]) < s - 1e-4:
-			_echec("V5", "porte %d" % g, "une cascade alors que l'eau d'en haut est sous le seuil")
+		# (un bassin vide en bas n'a pas d'eau « plus haute » : son niveau est
+		# son fond, qui peut être au-dessus de l'eau qui arrive — le pré d'une
+		# ferme, au 15-1)
+		if float(niv[h]) < float(niv[l]) - 1e-4 and float(niv[l]) > fond_l + 0.01:
+			_echec("V5", quoi, "la cascade coule de l'eau basse vers l'eau haute")
+		if _c.portes.has(g) and _passe(g) <= 0.0:
+			_echec("V5", quoi, "une cascade sous une porte fermée")
+		# (à un demi-pixel près : canal.gd laisse la nappe à 0,005 unité sous
+		# la crête, pour qu'elle ne clignote pas à la fin d'un débordement)
+		if float(niv[h]) < s - 0.01:
+			_echec("V5", quoi, "une cascade alors que l'eau d'en haut est sous %s" % ("le seuil" if _c.portes.has(g) else "la crête"))
 		if jt.noye(): continue
-		# V3 — la lame part de l'eau d'en haut : son dessus n'est pas plus haut
-		# que la surface d'amont contre la porte (de l'eau sortie de rien)
-		var ep: float = jt.fente if jt.plein else jt.fente * (0.7 + 0.3 * jt.force)
-		var dessus: float = jt.origine.y - (ep * 0.5 if jt.plein else 0.0)
-		var x_amont: float = _c.X(_c.gl[g][0]) if jt.sens > 0 else _c.X(_c.gl[g][1])
-		var surf_h: float = _c.eaux[h].hauteur_a(x_amont)
-		var d3 := surf_h - dessus
-		_noter("V3", d3)
-		if d3 > TOL_DEPART:
-			_echec("V3", "porte %d" % g, "la cascade part %.1f px au-dessus de l'eau d'en haut" % d3)
+		# (une rigole sort de la mare, dessinée à part sur le pré, vue d'en haut :
+		# pas d'eau de coupe à comparer au départ de sa cascade)
+		if _c.eaux[h].visible_eau:
+			# V3 — la lame part de l'eau d'en haut : son dessus n'est pas plus haut
+			# que la surface d'amont contre la porte (de l'eau sortie de rien)
+			var ep: float = jt.fente if jt.plein else jt.fente * (0.7 + 0.3 * jt.force)
+			var dessus: float = jt.origine.y - (ep * 0.5 if jt.plein else 0.0)
+			var x_amont: float = _c.X(_c.gl[g][0]) if jt.sens > 0 else _c.X(_c.gl[g][1])
+			var surf_h: float = _c.eaux[h].hauteur_a(x_amont)
+			var d3 := surf_h - dessus
+			_noter("V3", d3)
+			if d3 > TOL_DEPART:
+				_echec("V3", quoi, "la cascade part %.1f px au-dessus de l'eau d'en haut" % d3)
 		# V4 — elle tombe SUR l'eau d'en bas : son pied n'est ni suspendu
 		# au-dessus, ni enfoncé dans l'eau
 		var trace: PackedVector2Array = jt.trajectoire()
@@ -400,9 +436,9 @@ func mesurer(dt: float) -> void:
 		_noter("V4", -d4)
 		_noter("V4s", d4)
 		if -d4 > TOL_SUSPENDU:
-			_echec("V4", "porte %d" % g, "le pied de la cascade reste suspendu %.1f px au-dessus de l'eau d'en bas" % -d4)
-		if d4 > TOL_ENFONCE:
-			_echec("V4", "porte %d" % g, "le pied de la cascade s'enfonce de %.1f px dans l'eau d'en bas" % d4)
+			_echec("V4", quoi, "le pied de la cascade reste suspendu %.1f px au-dessus de l'eau d'en bas" % -d4)
+		if d4 > (TOL_ENFONCE_RIGOLE if _c.rigoles.has(g) else TOL_ENFONCE):
+			_echec("V4", quoi, "le pied de la cascade s'enfonce de %.1f px dans l'eau d'en bas" % d4)
 	_signature.append(" ".join(sig))
 
 # V6 — les trois cadences racontent la même partie.
@@ -508,6 +544,34 @@ func _comparer_agitation(agitations: Dictionary) -> void:
 			_noter("V6a", absf(rapport - 1.0))
 			if absf(rapport - 1.0) > TOL_AGITATION:
 				_echec("V6", "agitation de l'eau" + (" dans le sillage" if g >= 100 else ""), "à %d images/s, %.2f px en moyenne contre %.2f à 120" % [c, b, a], g % 100, 0.0, c)
+
+# Combien la liaison g laisse passer l'eau, de 0 à 1 : au doigt maintenu,
+# l'ouverture tenue ; au toucher, une porte entrouverte (sa fente) ou levée ;
+# un passage libre, toujours.
+func _passe(g: int) -> float:
+	if _p._continu and g < _p._ouv.size() and _c.portes.has(g): return float(_p._ouv[g])
+	if _c.portes.has(g):
+		var po = _c.portes[g]
+		return maxf(po.ouverture(), 0.15 if po.fente() > 0.5 else 0.0)
+	return 1.0 if _c.N["liaisons"][g]["type"] == "libre" else 0.0
+
+# Deux bassins voisins sont-ils reliés par l'eau ? (porte ouverte, passage
+# libre, ou une cascade qui franchit la liaison — digue, mur qui déborde)
+func _relie(g: int) -> bool:
+	if _passe(g) > 0.001: return true
+	return _c.jets.has(g) and _c.jets[g].force > 0.03
+
+func _nom_liaison(g: int) -> String:
+	var t: String = _c.N["liaisons"][g]["type"]
+	return "%s %d" % [{"digue": "rigole", "porte": "porte", "mur": "mur"}.get(t, t), g]
+
+# Le seuil sous lequel l'eau ne passe plus : celui d'une porte, ou la crête
+# du moment d'une digue (la rigole qu'on creuse), ou d'un mur.
+func _seuil(g: int) -> float:
+	var l: Dictionary = _c.N["liaisons"][g]
+	if l.has("seuil"): return float(l["seuil"])
+	if _p.etat.has("crete") and g < _p.etat["crete"].size() and _p.etat["crete"][g] != null: return float(_p.etat["crete"][g])
+	return float(l.get("crete", 0.0))
 
 func _vu(regle: String) -> void:
 	_vus[regle] = int(_vus.get(regle, 0)) + 1

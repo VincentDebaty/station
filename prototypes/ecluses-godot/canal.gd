@@ -2007,10 +2007,21 @@ func _avancer_ecoulement(dt: float) -> void:
 			if ap_l - av_l < 1e-4 or av_h >= crete - 1e-6 or ap_h < crete - 1e-6: continue
 			# l'instant où le niveau affiché de h passe la crête, ramené à 0,75
 			# au plus pour que l'inondation ait le temps de se voir
-			var p0 := 1.0 - sqrt(clampf((crete - ap_h) / (av_h - ap_h), 0.0, 1.0))
-			p0 = minf(p0, 0.75)
+			var p_vrai := 1.0 - sqrt(clampf((crete - ap_h) / (av_h - ap_h), 0.0, 1.0))
+			var p0 := minf(p_vrai, 0.75)
 			var q := clampf((p - p0) / maxf(1.0 - p0, 0.01), 0.0, 1.0)
 			vue_niv[l] = ap_l + (av_l - ap_l) * (1.0 - q) * (1.0 - q)
+			# Ramené à 0,75, l'instant venait AVANT que h n'atteigne la crête :
+			# le pré se remplissait, nappe comprise, sous un bief encore 50 px
+			# plus bas que la levée (banc visuel, 15-1). h monte donc plus vite,
+			# pour arriver à la crête juste quand l'eau passe, puis finit de
+			# monter avec ce qui reste.
+			if p0 < p_vrai:
+				if p < p0:
+					var a := 1.0 - p / maxf(p0, 0.01)
+					vue_niv[h] = crete + (av_h - crete) * a * a
+				else:
+					vue_niv[h] = ap_h + (crete - ap_h) * (1.0 - q) * (1.0 - q)
 	# Un bassin TRAVERSÉ : l'eau y entre d'un côté et en ressort de l'autre
 	# sans s'y arrêter (sur le 3-1, la mare se vide dans le bief amont vide, qui
 	# se vide aussitôt dans le sas par sa porte ouverte). Son niveau ne bouge
@@ -2461,7 +2472,9 @@ func _jet_mur(i: int, flux: float, dt: float) -> void:
 	# crête) tant que le village n'a pas fini de monter.
 	var dessus := maxf(float(_ecou["apres"][h]) - crete, maxf(vue_niv[h] - crete, 0.0))
 	var reste: float = float(_ecou["apres"][l]) - vue_niv[l]
-	if dessus < 0.005 or reste < 0.003:
+	# (pas de nappe tant que l'eau affichée n'est pas à la crête : elle sortait
+	# de nulle part, sur la levée, au-dessus d'un bief encore bas — 15-1)
+	if dessus < 0.005 or reste < 0.003 or vue_niv[h] < crete - 0.005:
 		jt.force = 0.0
 		return
 	# il en faut peu pour inonder un village : la nappe reste bien visible
