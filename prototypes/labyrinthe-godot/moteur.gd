@@ -40,7 +40,7 @@ const SOUS_PAS := 4
 const DEBIT := 0.1              # ce qu'un robinet verse, ou qu'une vidange retire, par image
 const SEC := 0.05               # sous cette eau, une vidange refuse la tape
 const UNITE := 1.0              # une tape = une case d'eau
-const DEBIT_OUVERTURE := 0.1    # q (cases²/image) = ce coefficient × hauteur mouillée × √écart
+const DEBIT_OUVERTURE := 0.3    # q (cases²/image) = ce coefficient × hauteur mouillée × √écart
 const RAIDEUR := 30.0           # un bassin plein sous un plafond : charge = plafond + RAIDEUR × surplus
 const PRUDENCE := 0.5           # un sous-pas ne fait passer que cette part de ce qui égaliserait
 const DEBIT_MIN := 0.006        # par image : la dernière pellicule au-dessus d'un seuil finit de passer
