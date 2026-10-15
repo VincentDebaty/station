@@ -37,7 +37,8 @@ extends RefCounted
 
 # ---- l'eau (en cases ; une image = 1/60 s) ----
 const SOUS_PAS := 4
-const DEBIT := 0.1              # ce qu'un robinet verse, ou qu'une vidange retire, par image
+const DEBIT := 0.1              # ce qu'une vidange retire, par image
+const DEBIT_ROBINET := 0.25     # ce qu'un robinet verse, par image (une tape : une case en 4 images)
 const SEC := 0.05               # sous cette eau, une vidange refuse la tape
 const UNITE := 1.0              # une tape = une case d'eau
 const DEBIT_OUVERTURE := 0.3    # q (cases²/image) = ce coefficient × hauteur mouillée × √écart
@@ -312,7 +313,7 @@ func _vannes(e: Etat, dt: float) -> bool:
 		if reste <= 0.0:
 			continue
 		if v["type"] == "robinet":
-			var q := minf(reste, DEBIT * dt)
+			var q := minf(reste, DEBIT_ROBINET * dt)
 			e.vol[a] += q; e.verse += q; e.attente[k] -= q; actif = true
 		else:
 			# la vidange prend l'eau qui couvre sa case
