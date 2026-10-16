@@ -209,6 +209,8 @@ jour qui perd la partie d'un joueur est un bug bloquant, pas un détail.
   de l'éditeur) et refuse si elle échoue, s'il n'y a rien à poser, ou si
   une pièce à poser ne sert à rien. Le style suit la charte de
   `tools/PROMPT-billes-mockups.md` (« La charte retenue »).
+  **Idée arrêtée le 16 octobre 2026** (« toujours pas convaincu », décision
+  de Vincent) : les deux pages et leurs bancs restent comme trace.
 - `data/worldmap.js` — généré depuis Natural Earth, jamais édité à la main.
 
 ## Détail connu
