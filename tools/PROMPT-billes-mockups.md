@@ -215,6 +215,63 @@ R2 — La salle du trésor. Le plateau est une machine d'orfèvre dans la salle 
 La lisibilité reste la règle : on voit de quel côté penche la bascule, quel côté du trieur reçoit le rouge, et que le levier est relié à l'aiguille. Avant chaque image, écris son nom.
 ```
 
+## La simplicité de Royal Match et de Block out
+
+Septième retour, sur R1 (fête foraine surchargée : chapiteau, ampoules,
+dorures, foule) et avec deux captures de référence, Royal Match et un jeu
+« Block out » : « ça ne va pas. Je veux rester simple graphiquement. On ne
+doit pas forcément avoir cet effet tableau à compléter. Juste l'espace de
+l'écran avec les différents modules. La simplicité comme Royal Match ou
+Block out ! »
+
+Ce que les deux captures ont en commun :
+- un fond d'UNE couleur dominante (le bleu roi, le violet profond), sans
+  décor ni texture ;
+- peu d'objets, gros, chacun d'une seule couleur et d'une silhouette
+  reconnaissable (gemme, couronne, bouclier ; briques à picots) ;
+- un modelé simple : un aplat, un biseau, un reflet, et c'est tout ;
+- une interface réduite à quelques cartes et boutons ronds épais, avec un
+  texte blanc très gras ;
+- toute la couleur vive est sur les objets du jeu, pas sur le décor.
+
+Et surtout : **plus de grille d'emplacements visible**. Les modules flottent
+dans l'espace de l'écran. Pour le moteur, rien ne change : les pièces se
+calent toujours sur une grille, mais elle reste invisible et n'apparaît, en
+points discrets, que pendant qu'on glisse une pièce.
+
+Joindre les deux captures de référence à la demande.
+
+```text
+Ça ne va pas : c'est beaucoup trop chargé. Je veux un jeu SIMPLE graphiquement, comme Royal Match ou ce jeu de briques (je joins deux captures). Regarde ce qu'elles ont en commun :
+- un fond d'UNE seule couleur dominante, sans décor ni texture ;
+- peu d'objets, gros, chacun d'une seule couleur et d'une silhouette reconnaissable ;
+- un modelé simple : un aplat, un biseau, un reflet, et c'est tout ;
+- une interface réduite à quelques cartes et boutons ronds épais, avec un texte blanc très gras ;
+- toute la couleur vive est sur les objets du jeu, jamais sur le décor.
+
+Le plus important : il n'y a PLUS de plateau ni de grille de trous. L'écran lui-même est l'espace de jeu. Les modules sont posés directement dans cet espace, à leur place, et rien ne marque les emplacements libres.
+
+Dessine l'écran de jeu ainsi, au format portrait iPhone (rapport 9:19,5) :
+- en haut, une barre simple : « Niveau 13 » dans une pastille, une carte « Objectifs » qui montre 2 billes rouges et 2 bleues à ranger, et un bouton pause rond ;
+- sous la barre, au centre, un entonnoir simple d'où sortent les billes, et au-dessus de lui la file des billes qui attendent (rouge, bleu, rouge, bleu), en rangée ou dans un tube court ;
+- au milieu, l'espace de jeu, vide, sur le fond uni. Cinq modules y sont posés, chacun avec une silhouette simple et franche, en plastique blanc ou gris clair avec une seule pièce de couleur :
+  • une bascule (un balancier sur un pivot), juste sous l'entonnoir, qui vient de pencher vers la droite ;
+  • une aiguille fixe (une rampe inclinée vers la gauche, avec un petit cadenas), en haut à gauche ;
+  • un levier relié (une palette avec une tige fine qui rejoint l'aiguille fixe), plus bas à gauche ;
+  • un trieur rouge (un portillon avec un fanion rouge : les rouges partent du côté du fanion, les autres de l'autre côté), au centre droit ;
+  • une cloche dorée, à droite ;
+- une bille bleue en train de tomber de la bascule vers le trieur, avec une traînée légère, et un pointillé fin qui montre la suite de son trajet ;
+- en bas de l'espace de jeu, une rangée de 5 godets simples : rouge, vide, bleu, vide, rouge. Les colonnes vides n'ont pas de godet : juste une ouverture sombre. Une bille rouge vient d'arriver dans le premier godet, avec un petit éclat ;
+- en bas de l'écran, une rangée de 3 boutons carrés aux coins arrondis, comme les bonus du jeu de briques : l'aiguille (badge « 1 »), la bascule et le trieur (grisés, badge « 0 ») ; et à côté, ou dessous, un gros bouton « Lâcher ».
+
+Les billes sont des billes brillantes simples, d'une seule couleur franche, avec leur motif blanc pour les daltoniens (rouge spirale, bleu uni, jaune points, vert rayures).
+
+Fais 3 images, une par réponse, IDENTIQUES sauf la couleur du fond :
+S1 — fond bleu roi profond ;
+S2 — fond violet profond ;
+S3 — fond clair (gris bleuté très pâle), avec des modules un peu plus foncés pour garder le contraste.
+```
+
 ## La consigne complète
 
 ```text
