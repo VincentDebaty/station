@@ -272,6 +272,49 @@ S2 — fond violet profond ;
 S3 — fond clair (gris bleuté très pâle), avec des modules un peu plus foncés pour garder le contraste.
 ```
 
+## Le style trouvé : S1, à resserrer
+
+Huitième retour, sur S1 (fond bleu roi, modules en plastique blanc, sans
+grille) : « c'est déjà plus dans le style que je recherche ». **C'est la
+direction.**
+
+Ce qui marche : le fond uni, les modules blancs aux silhouettes franches,
+les godets simples et les trous ovales, le tube et l'entonnoir, les
+pointillés de couleur qui partent du trieur, la barre de pièces avec ses
+badges, le gros bouton vert.
+
+Ce qui reste à corriger :
+- sur fond bleu, la bille bleue et le godet bleu perdent du contraste :
+  c'est la couleur d'une bille, elle ne peut pas être celle du fond ;
+- les modules n'ont pas la même taille (l'aiguille fixe est énorme), et le
+  levier relié flotte loin de tout trajet : ils doivent tenir dans des
+  colonnes invisibles, à une échelle commune ;
+- dans la barre de pièces, l'aiguille porte un cadenas : le cadenas est
+  réservé aux pièces fixes du niveau ;
+- la carte « Objectifs » répète les billes au lieu de les compter.
+
+Ensuite : la planche des 11 mécanismes dans ce style, pour fixer leurs
+silhouettes, puis les niveaux. Et côté jeu, le plaisir viendra des
+mécanismes, pas du visuel : les suivants à coder dans le prototype (levier
+relié, tourniquet, balance ou écluse) se décideront sur cette planche.
+
+```text
+C'est exactement la direction que je cherche : garde ce style (fond uni, modules en plastique blanc aux silhouettes franches, aucune grille, godets simples, gros boutons). Quatre corrections, sur le MÊME écran :
+
+1. Le contraste : sur fond bleu, la bille bleue et le godet bleu se perdent. Fais deux images : S2 sur fond violet profond, S4 sur fond bleu nuit presque noir. Je choisirai.
+2. Une échelle commune : tous les modules ont la même taille et se calent sur 5 colonnes invisibles, comme si l'écran était une grille qu'on ne voit pas. L'aiguille fixe est moins grande, et le levier relié est placé SUR le trajet d'une bille, près de l'aiguille qu'il commande.
+3. Le cadenas n'apparaît que sur les pièces fixes du niveau, jamais dans la barre de pièces : l'aiguille de la barre n'a pas de cadenas.
+4. La carte « Objectifs » compte au lieu de répéter : une bille rouge « ×2 » et une bille bleue « ×2 ».
+
+Une image par réponse : S2, puis S4.
+```
+
+Puis, une fois le fond choisi :
+
+```text
+Avec ce style et ce fond, fais la planche des mécanismes : les 11 modules (aiguille, bascule, trieur, poche, levier relié, écluse à billes, balance, ascenseur, tourniquet, tremplin, carillon), tous à la même échelle, sur une grille de 4 × 3, chacun avec son nom dessous et une flèche fine qui montre par où la bille entre et ressort. Pour la bascule et le tourniquet, montre deux états côte à côte. Mêmes matières : plastique blanc, une seule pièce de couleur par module, biseau et reflet simples.
+```
+
 ## La consigne complète
 
 ```text
