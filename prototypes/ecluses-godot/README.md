@@ -91,7 +91,7 @@ un doigt : tenu jusqu'au bout au chapitre 1, un toucher ailleurs —, à 120,
 | V1 | une surface reste près de son niveau : ni creux, ni bloc d'eau (7,5 px hors sillage, 22 px dans le sillage d'un bateau en marche) |
 | V2 | pendant un geste, un niveau ne fait pas d'aller-retour (il ne revient pas de plus d'un pixel du plus loin qu'il est allé) |
 | V3 | une cascade (sous une porte, par-dessus un mur) part de l'eau d'en haut, pas d'au-dessus |
-| V4 | son pied touche l'eau d'en bas : jamais suspendu (3 px), pas trop enfoncé (20 px, 30 pour la rigole qui tombe de haut) |
+| V4 | son pied touche l'eau d'en bas : jamais suspendu (3 px), pas trop enfoncé (20 px, 30 pour la rigole qui tombe de haut et plonge dans une eau basse, validée ainsi par Vincent) |
 | V5 | elle coule de l'eau haute vers l'eau basse, porte ouverte, eau au-dessus du seuil ou de la crête |
 | V6 | les trois cadences racontent la même partie : même eau posée, même chemin des niveaux et des portes, même trajet de chaque bateau compté depuis son départ, même agitation ; le départ peut venir un peu plus tard à basse cadence (0,3 s au plus) |
 | V7 | rejouée, la partie donne exactement les mêmes images |

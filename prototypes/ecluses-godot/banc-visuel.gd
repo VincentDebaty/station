@@ -55,8 +55,8 @@ const TOL_SUSPENDU := 3.0
 const TOL_ENFONCE := 20.0
 # La rigole tombe de bien plus haut (≈200 px, 3-1 et 13-1) : tracée par pas de
 # 0,035 s, sa chute dépasse la surface de son dernier pas, jusqu'à 25 px. Vue
-# au gros plan, elle plonge dans une eau basse ; pas jugé comme un défaut
-# (15 octobre 2026, à confirmer par Vincent).
+# au gros plan, elle plonge dans une eau basse : validée telle quelle par
+# Vincent sur l'iPhone le 16 octobre 2026.
 const TOL_ENFONCE_RIGOLE := 30.0
 # V2 : un niveau ne fait pas d'aller-retour pendant un geste — il ne revient
 # pas de plus d'un pixel en arrière du plus loin qu'il est allé (unités).
