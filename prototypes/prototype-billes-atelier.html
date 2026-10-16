@@ -16,7 +16,8 @@
    C'est le moyen de juger, au doigt, si c'est amusant.
 
    Le moteur change de nature par rapport à prototype-billes.html (gardé
-   comme trace) : la bille a de l'ÉLAN, un entier, et les modules sont ceux
+   comme trace) : la bille a de l'ÉLAN, un entier (descendre en donne,
+   monter en coûte, rouler à plat ne coûte rien), et les modules sont ceux
    de la liste de Vincent (rampes, rampe plate, accélérateur, courbes,
    poche, tremplin, ascenseur, bascule). Les règles sont dans le bloc
    « moteur », joué aussi par tools/billes-atelier-banc.mjs.
@@ -159,7 +160,7 @@ button, select, input { font: inherit; color: inherit; }
     {"nom":"Le saut","largeur":6,"hauteur":6,"entree":0,"godets":"----B-","file":"B","modules":[{"x":0,"y":3,"t":"courbe90","d":1,"fixe":true},{"x":1,"y":3,"t":"tremplin","d":1},{"x":2,"y":3,"t":"poche","fixe":true},{"x":3,"y":3,"t":"plat"}]},
     {"nom":"Le lest","largeur":6,"hauteur":6,"entree":1,"godets":"----R-","file":"GRR","modules":[{"x":1,"y":2,"t":"rampe","d":1,"fixe":true},{"x":2,"y":3,"t":"poche"},{"x":3,"y":3,"t":"plat"}]},
     {"nom":"L'ascenseur","largeur":6,"hauteur":7,"entree":0,"godets":"---J--","file":"J","modules":[{"x":0,"y":5,"t":"courbe90","d":1,"fixe":true},{"x":1,"y":5,"t":"ascenseur","d":1},{"x":1,"y":4,"t":"ascenseur","d":1},{"x":2,"y":3,"t":"plat","fixe":true}]},
-    {"nom":"Le long couloir","largeur":8,"hauteur":6,"entree":0,"godets":"------V-","file":"V","modules":[{"x":0,"y":3,"t":"courbe90","d":1,"fixe":true},{"x":1,"y":3,"t":"plat","fixe":true},{"x":2,"y":3,"t":"plat","fixe":true},{"x":3,"y":3,"t":"accel","d":1},{"x":4,"y":3,"t":"plat","fixe":true},{"x":5,"y":3,"t":"plat","fixe":true}]},
+    {"nom":"La montée","largeur":6,"hauteur":7,"entree":0,"godets":"----V-","file":"V","modules":[{"x":0,"y":5,"t":"courbe90","d":1,"fixe":true},{"x":1,"y":5,"t":"ascenseur","d":1,"fixe":true},{"x":1,"y":4,"t":"ascenseur","d":1,"fixe":true},{"x":1,"y":3,"t":"ascenseur","d":1,"fixe":true},{"x":1,"y":2,"t":"ascenseur","d":1,"fixe":true},{"x":2,"y":1,"t":"accel","d":1},{"x":3,"y":1,"t":"plat","fixe":true}]},
     {"nom":"Deux couleurs","largeur":7,"hauteur":7,"entree":3,"godets":"R-----B","file":"RBRB","modules":[{"x":3,"y":1,"t":"bascule"},{"x":2,"y":2,"t":"courbe45"},{"x":1,"y":2,"t":"plat","fixe":true},{"x":4,"y":2,"t":"courbe45","d":1},{"x":5,"y":2,"t":"plat","fixe":true}]}
   ]
 }
@@ -177,17 +178,21 @@ button, select, input { font: inherit; color: inherit; }
 //
 // L'ÉLAN — un entier de 0 à ELAN_MAX, la seule « physique » du jeu :
 //   descendre d'une case (tout droit ou en biais) donne 1 d'élan ;
-//   rouler d'une case à plat en coûte 1 ; sans élan, la bille S'ARRÊTE ;
-//   l'accélérateur en donne ELAN_ACCEL ; le saut du tremplin en coûte
-//   ELAN_SAUT ; l'ascenseur porte la bille sans en dépenser et la pose
-//   avec 1 d'élan.
+//   MONTER d'une case en coûte 1 : c'est la seule perte (règle de Vincent,
+//   16 octobre 2026 : « pas de perte d'inertie, sauf quand on monte d'un
+//   cran ») ; rouler à plat et sauter ne coûtent rien ;
+//   sans élan, une bille qui doit rouler à plat S'ARRÊTE ;
+//   l'accélérateur en donne ELAN_ACCEL ; le tremplin ne fait sauter qu'à
+//   partir de ELAN_SAUT ; l'ascenseur monte la bille même sans élan (il est
+//   motorisé), mais chaque rangée gravie lui en retire 1.
 // La bille garde aussi son SENS (gauche, droite, ou aucun s'il n'a jamais
 // été dévié) : c'est lui qui la fait rouler sur une rampe plate.
 //
 // LES MODULES — un par case ; d = 0 : vers la gauche, 1 : vers la droite :
 //   rampe      rampe à 45° : la bille repart en biais vers le bas, côté d ;
-//   plat       rampe horizontale : la bille la traverse dans son sens, si
-//              elle a de l'élan ; sinon (ou sans sens) elle s'arrête ;
+//   plat       rampe horizontale : la bille la traverse dans son sens, sans
+//              rien perdre, si elle a de l'élan ; sinon (ou sans sens) elle
+//              s'arrête ;
 //   accel      accélérateur : +ELAN_ACCEL, et la bille part à plat côté d ;
 //   courbe45   courbe de 45° : une bille qui TOMBE repart en biais côté d,
 //              une bille qui arrive en biais ou à plat repart à plat ;
@@ -198,7 +203,8 @@ button, select, input { font: inherit; color: inherit; }
 //              saute la case voisine et retombe deux cases plus loin ;
 //   ascenseur  monte la bille jusqu'au sommet de la pile d'ascenseurs, puis
 //              la pose sur la case voisine (côté d du module du sommet), une
-//              rangée au-dessus : une unité = un niveau de plus ;
+//              rangée au-dessus : une unité = un niveau de plus, et 1 d'élan
+//              de moins ;
 //   bascule    la bille repart en biais vers le bas, du côté où penche la
 //              bascule, puis la bascule penche de l'autre côté.
 // Case vide : la bille tombe tout droit. Sous la dernière rangée : le godet
@@ -255,9 +261,9 @@ function Machine(niv, modules) {
     };
     for (let n = 0; n < PAS_MAX; n++) {
       // le déplacement, et ce qu'il coûte ou rapporte
-      if (mv.saut) v -= ELAN_SAUT;
-      else if (mv.dy > 0) v = Math.min(ELAN_MAX, v + 1);
-      else if (mv.dy === 0) { if (v <= 0) return fin("arret"); v -= 1; }
+      if (mv.dy > 0) v = Math.min(ELAN_MAX, v + 1);
+      else if (mv.dy < 0) v = Math.max(0, v - 1);
+      else if (v <= 0) return fin("arret");
       if (mv.dx) sens = Math.sign(mv.dx);
       const nx = x + mv.dx, ny = y + mv.dy;
       if (nx < 0 || nx >= L || ny < 0) { pts.push({ x: nx, y: Math.max(ny, y), v, ev: mv.saut ? "saut" : undefined }); return fin("hors"); }
@@ -286,13 +292,12 @@ function Machine(niv, modules) {
           mv = { dx: sens, dy: 0 }; break;
         case "ascenseur": {
           let haut = y;
-          while (s.get(cle(x, haut - 1))?.t === "ascenseur") { haut--; pts.push({ x, y: haut, v, ev: "monte" }); }
+          while (s.get(cle(x, haut - 1))?.t === "ascenseur") { haut--; v = Math.max(0, v - 1); pts.push({ x, y: haut, v, ev: "monte" }); }
           y = haut;
-          // posée sur la case voisine, une rangée au-dessus, avec 1 d'élan
-          // (un pas vers le haut ne coûte ni ne rapporte rien)
+          // posée sur la case voisine, une rangée au-dessus : ce dernier pas
+          // vers le haut coûte encore 1 d'élan (en tête de boucle)
           const sommet = s.get(cle(x, haut));
           mv = { dx: sommet.d ? 1 : -1, dy: -1 };
-          v = 1;
           break;
         }
       }

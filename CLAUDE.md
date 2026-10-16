@@ -200,7 +200,8 @@ jour qui perd la partie d'un joueur est un bug bloquant, pas un détail.
   `prototype-billes-atelier.html` la remplace (même jour), avec un éditeur
   (Jouer / Éditer, grille jusqu'à 12 × 24, on construit la solution puis on
   marque les pièces « à poser ») et un autre moteur, à ÉLAN entier
-  (descendre donne de l'élan, rouler à plat en coûte), sur les modules de
+  (descendre en donne, MONTER en coûte — la seule perte —, rouler à plat
+  ne coûte rien), sur les modules de
   Vincent : rampes, rampe plate, accélérateur, courbes 45° et 90°, poche,
   tremplin, ascenseur, bascule, et des billes grises de lest pour les
   poches. Son banc, `node tools/billes-atelier-banc.mjs [niveaux.json]`,
