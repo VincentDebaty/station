@@ -171,6 +171,50 @@ Refais LE MÊME écran (même disposition, mêmes pièces aux mêmes cases, mêm
 La lisibilité reste la règle : on voit de quel côté penche la bascule, quel côté du trieur reçoit le rubis, et que le levier est relié à l'aiguille. Avant chaque image, écris son nom.
 ```
 
+## Dans l'esprit de Royal Match
+
+Sixième retour : « dans un style que le jeu Royal Match pourrait être
+bien ». Ce n'est pas une contradiction avec « trop jeu d'enfant » : Royal
+Match vise un public adulte. Ce qui le sépare de nos images enfantines,
+c'est la FINITION. Un rendu 3D soigné, des matières riches (or, émail,
+velours, pierres), une lumière travaillée, des cadres dorés ouvragés, des
+effets généreux mais maîtrisés, une interface très construite (objectifs en
+haut, barre de bonus en bas). On reprend ce niveau de production, pas son
+univers : ni son roi, ni son château, ni son logo.
+
+Deux thèmes à comparer : la fête foraine retenue jusqu'ici, et la salle du
+trésor d'un palais, où les billes deviennent des joyaux à ranger dans des
+coffres.
+
+Le prix à garder en tête : une telle finition demande des images rendues en
+3D, donc un graphiste ou des sprites précalculés le jour du portage. Pour
+l'instant, ce ne sont que des mockups.
+
+```text
+Nouvelle direction : je voudrais la finition d'un grand jeu mobile comme Royal Match. Je parle de son niveau de production, pas de son univers : pas de roi, pas de château copié, pas de logo, aucun de ses personnages.
+
+Ce que j'attends de cette finition :
+- un rendu 3D soigné et brillant, avec une lumière douce et chaude, des reflets francs sur le métal et le verre, de la profondeur ;
+- des matières riches : or ouvragé, émail laqué, velours, verre, pierres précieuses ;
+- des couleurs vives et saturées, mais harmonieuses, et un contraste fort entre le plateau et le décor ;
+- un cadre doré ouvragé autour du plateau, et des panneaux d'interface aux bords dorés ;
+- une typographie de titre très grasse, blanche ou dorée, avec un contour sombre et une ombre, comme dans les grands jeux mobiles ;
+- des boutons épais et brillants : « Lâcher » est un grand bouton vert, contouré, très appétissant ;
+- en haut, un panneau « Objectifs » qui montre combien de billes de chaque couleur il reste à ranger (par exemple : 2 rouges, 2 bleues) ;
+- en bas, le bac de pièces présenté comme une barre de bonus : des médaillons ronds aux bords dorés, chacun avec sa pièce et un badge rond indiquant le nombre ;
+- des retours généreux : une gerbe de lumière dorée et des éclats quand une bille tombe dans le bon godet.
+
+Les billes sont de grosses billes de verre brillantes, toujours avec leur motif pour les daltoniens (rouge spirale, bleu uni, jaune points, vert rayures).
+
+Refais LE MÊME écran que les fois précédentes (même disposition, mêmes pièces aux mêmes cases, même instant de jeu) en 2 variantes, une image par réponse :
+
+R1 — La fête foraine. Le cadre est un fronton de manège doré et laqué, avec des ampoules et un chapiteau rayé bleu nuit et crème. Derrière, une fête foraine le soir, colorée mais floue.
+
+R2 — La salle du trésor. Le plateau est une machine d'orfèvre dans la salle du trésor d'un palais : velours bleu roi, or ouvragé, colonnes de marbre floues à l'arrière-plan. Les billes sont des joyaux taillés en sphère (rubis, saphir, topaze, émeraude), toujours avec leur motif, et les godets sont de petits coffres au trésor ouverts, de la couleur du joyau attendu.
+
+La lisibilité reste la règle : on voit de quel côté penche la bascule, quel côté du trieur reçoit le rouge, et que le levier est relié à l'aiguille. Avant chaque image, écris son nom.
+```
+
 ## La consigne complète
 
 ```text
