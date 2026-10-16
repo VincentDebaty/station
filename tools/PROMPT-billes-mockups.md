@@ -129,6 +129,48 @@ C'est la 4, la fête foraine rétro, que je préfère. Elle est proche de ce que
 Lisibilité d'abord, comme avant : on voit de quel côté penche la bascule, quel côté du trieur reçoit le rouge, et que le levier est relié à l'aiguille. Les billes gardent leurs motifs. Une image par réponse : 4A, puis 4B.
 ```
 
+## Une fête foraine pour adultes
+
+Cinquième retour : « cela fait trop jeu d'enfant quand même ». Ce qui tire
+vers l'enfance, et qui venait en partie de la correction « jeu mobile » :
+les formes gonflées et arrondies, les couleurs primaires saturées, les
+billes en bonbon, la typographie ronde et grasse, les étincelles et les
+étoiles de dessin animé, les boutons bombés comme des bonbons, et les objets
+forains trop littéraux (balançoire, tickets). On garde la fête foraine et la
+machine, mais avec la tenue d'un jeu de puzzle pour adultes (le niveau de
+Monument Valley, The Room ou Alto).
+
+```text
+L'ensemble fait encore trop « jeu d'enfant ». Je veux garder l'idée de la fête foraine et de la machine, mais avec la tenue d'un jeu de puzzle mobile pour ADULTES, au niveau de Monument Valley, The Room ou Alto (comme niveau d'exigence, pas comme modèles à copier).
+
+Ce qui fait enfantin, et que je ne veux plus :
+- les formes gonflées et arrondies comme des jouets ;
+- les couleurs primaires saturées ;
+- les billes en bonbon ;
+- la typographie ronde et grasse ;
+- les étincelles, les étoiles et les éclats de dessin animé ;
+- les boutons bombés comme des bonbons ;
+- les objets forains trop littéraux (balançoire, tickets).
+
+Ce que je veux à la place, dans les trois images :
+- des proportions fines et précises, des arêtes nettes, une vraie profondeur (ombres et lumières crédibles), mais toujours stylisées : pas de photoréalisme ;
+- des billes en verre, avec un reflet et un fin ruban intérieur, en couleurs de pierres précieuses, sombres mais bien distinctes : rubis, saphir, ambre, émeraude. Elles gardent leur motif pour les daltoniens (spirale, uni, points, rayures), discret mais lisible ;
+- une typographie élégante : des capitales fines, Art déco ou à empattements, pour les titres, et une sans-serif sobre pour l'interface ;
+- des retours sobres : une lueur, un reflet qui passe, une ampoule qui s'allume. Plus d'étoiles qui jaillissent ;
+- des boutons plats ou légèrement gravés, cerclés d'un filet doré, sans effet de bonbon ;
+- des mécanismes qui ressemblent à de vraies pièces de machine (laiton poli, émail ivoire, acier bleui), lisibles par leur forme et non par des déguisements.
+
+Refais LE MÊME écran (même disposition, mêmes pièces aux mêmes cases, même instant de jeu) en 3 variantes, une image par réponse :
+
+4C — Art déco nocturne. Une machine de foire de 1925 : laque noire et bleu nuit, filets d'or géométriques, éventails et chevrons Art déco autour du plateau, une rangée d'ampoules tamisées. L'ambiance d'un salon de jeux chic, la nuit.
+
+4D — Automate de foire. L'intérieur d'une machine de foire ancienne, comme une diseuse de bonne aventure mécanique : derrière le plateau, sous une vitre, on devine des engrenages et des cames en mouvement. Cuivre, vert bouteille et ivoire, avec une lumière chaude et contrastée. Un objet de collection.
+
+4E — Fête foraine épurée. Une version moderne et minimale : une palette sourde (anthracite, ivoire, or mat), peu d'ornements. La fête foraine n'est que suggérée, par une rangée d'ampoules et une fine rayure de chapiteau. Des aplats précis, beaucoup d'air, comme Alto ou Monument Valley.
+
+La lisibilité reste la règle : on voit de quel côté penche la bascule, quel côté du trieur reçoit le rubis, et que le levier est relié à l'aiguille. Avant chaque image, écris son nom.
+```
+
 ## La consigne complète
 
 ```text
