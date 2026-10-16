@@ -48,6 +48,42 @@ Refais la même planche dans ce style :
 Ensuite seulement, on passera aux écrans de niveau, dans ce nouveau style.
 ```
 
+## Choisir un style : six variantes du même écran
+
+Troisième retour, sur la planche refaite en 2D arrondie (mécanismes bleu-gris,
+pivots dorés, billes bonbons) : « c'est bien, mais je voudrais avoir d'autres
+styles pour choisir ». Cette planche devient le style **0**, la référence.
+
+Pour comparer, chaque variante dessine le MÊME écran de jeu, avec la même
+disposition : seul le style change. Coller dans la conversation ouverte :
+
+```text
+Cette planche est réussie : garde-la comme référence (on l'appellera « style 0 »). Avant de choisir, je veux comparer d'autres directions artistiques.
+
+Produis 6 images, UNE PAR RÉPONSE. Chaque image montre le MÊME écran de jeu, avec exactement la même disposition. Seul le style change, pour que je puisse comparer.
+
+L'ÉCRAN À DESSINER (identique dans les 6 images)
+Format portrait iPhone (rapport 9:19,5). De haut en bas :
+- en haut, « 1-3 · L'atelier », trois étoiles dont une pleine, un bouton pause ;
+- un réservoir en tube transparent, centré, avec 4 billes dans l'ordre (de bas en haut) : rouge, bleu, rouge, bleu ;
+- le plateau : 5 colonnes × 4 rangées d'emplacements. On y voit une aiguille fixe (avec son cadenas) en colonne 2, rangée 2 ; une bascule en colonne 3, rangée 1, qui vient de basculer vers la droite ; un trieur rouge en colonne 4, rangée 3 ; un levier relié en colonne 1, rangée 3, dont la tringle rejoint l'aiguille fixe ; une cloche en colonne 5, rangée 2. Les autres emplacements sont vides ;
+- une bille bleue en pleine chute, avec une traînée, entre la bascule et le trieur ; une bille rouge déjà arrivée dans son godet, avec des étincelles ;
+- en bas du plateau, 5 godets : rouge, trou, bleu, trou, rouge ;
+- le bac de pièces : 3 cartes (Aiguille 1, Bascule 0 grisée, Trieur 0 grisée) ;
+- tout en bas, un gros bouton « Lâcher » et deux petits boutons ronds.
+Les billes gardent toujours leurs motifs (rouge spirale, bleu uni, jaune points, vert rayures).
+
+LES 6 STYLES
+1. Papier découpé : tout est fait de couches de papier coloré découpé, superposées, avec de vraies petites ombres entre les couches et des bords légèrement irréguliers. Couleurs douces et mates.
+2. 3D douce : des pièces en plastique mat, aux formes gonflées et arrondies, rendues en 3D avec une lumière studio douce, comme un jeu Nintendo. Très tactile, fond pastel uni.
+3. Ligne claire : un dessin de bande dessinée franco-belge, avec un contour noir régulier, des aplats de couleur franche, sans dégradé, et un décor d'atelier dessiné au trait derrière le plateau.
+4. Fête foraine rétro : une machine de flipper des années 60 en émail et en chrome, avec des ampoules autour du plateau, des couleurs crème, rouge cerise et bleu canard, et des lettrages de fête foraine.
+5. Plan d'ingénieur : un plan technique bleu (cyanotype), aux traits blancs fins et aux cotes discrètes. Seules les billes et les godets sont en couleur, comme si la machine dessinée prenait vie.
+6. Livre illustré : de la gouache ou de l'aquarelle, aux couleurs chaudes, avec des textures de pinceau visibles, comme une page d'album jeunesse, mais avec une interface de jeu nette par-dessus.
+
+Pour chaque image, la lisibilité reste la règle : on doit voir de quel côté penche la bascule, quel côté du trieur reçoit le rouge, et que le levier est relié à l'aiguille. Avant chaque image, écris son numéro et le nom du style.
+```
+
 ## La consigne complète
 
 ```text
