@@ -60,7 +60,11 @@ button, select, input { font: inherit; color: inherit; }
 #message.succes { color: var(--vert-msg); } #message.danger { color: var(--rouge-msg); }
 #plateau { width: 100%; height: auto; display: block; touch-action: none; }
 #jeu-bas { display: flex; gap: 8px; align-items: stretch; }
-#bac { flex: 1; display: flex; gap: 8px; overflow-x: auto; min-width: 0; padding: 4px 2px; }
+#bac { flex: 1; display: flex; flex-wrap: wrap; gap: 8px; min-width: 0; padding: 4px 2px; }
+/* Les 9 modules de l'éditeur, tous visibles sans défiler : 5 par ligne au téléphone. */
+#palette { display: grid; grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); gap: 8px 6px; padding-top: 6px; }
+#palette .piece { width: auto; height: 64px; font-size: 10px; hyphens: manual; }
+#palette .piece svg { width: 32px; height: 32px; }
 .piece { position: relative; flex: 0 0 68px; height: 76px; border-radius: 14px; background: var(--ivoire); color: #3a2a86; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; touch-action: none; border: 0; padding: 4px 2px; text-align: center; line-height: 1.1; }
 .piece.vide { background: #9b93bf; color: #5c5490; }
 .piece .badge { position: absolute; top: -6px; right: -6px; min-width: 22px; height: 22px; border-radius: 11px; background: var(--or); color: #3a2a86; font-size: 12px; display: flex; align-items: center; justify-content: center; border: 2px solid var(--fond); }
@@ -89,7 +93,7 @@ button, select, input { font: inherit; color: inherit; }
   </div>
   <div class="carte"><b>File</b><div id="file"></div><span id="compte" style="margin-left:auto;font-size:13px"></span></div>
   <div id="edition-haut" hidden>
-    <div id="palette" class="barre" style="flex-wrap:nowrap;overflow-x:auto;padding:4px 2px"></div>
+    <div id="palette"></div>
     <div class="barre">
       <button class="rond" id="sens" aria-label="Sens">→</button>
       <button class="bouton" id="t-gomme">Gomme</button>
@@ -212,7 +216,7 @@ const LARGEUR_MAX = 12, HAUTEUR_MAX = 24;
 const MODULES = {
   rampe:     { nom: "Rampe",        oriente: true },
   plat:      { nom: "Rampe plate",  oriente: false },
-  accel:     { nom: "Accélérateur", oriente: true },
+  accel:     { nom: "Accélé\u00adrateur", oriente: true },   // trait d'union conditionnel : la carte est étroite
   courbe45:  { nom: "Courbe 45°",   oriente: true },
   courbe90:  { nom: "Courbe 90°",   oriente: true },
   poche:     { nom: "Poche",        oriente: false },
