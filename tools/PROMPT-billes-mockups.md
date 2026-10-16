@@ -84,6 +84,51 @@ LES 6 STYLES
 Pour chaque image, la lisibilité reste la règle : on doit voir de quel côté penche la bascule, quel côté du trieur reçoit le rouge, et que le levier est relié à l'aiguille. Avant chaque image, écris son numéro et le nom du style.
 ```
 
+## Le style retenu : la fête foraine, à améliorer
+
+Quatrième retour, sur les six variantes : 1 « sympa et mignon », 2 « plus jeu
+vidéo mais trop réaliste », 3 « trop dessin », 4 « proche de ce que je
+souhaite mais à améliorer », 5 « original mais pas adapté », 6 « mélange des
+autres ». **Vincent s'oriente vers la 4, la fête foraine rétro.**
+
+Constat sur les six : ChatGPT a gardé le même plateau et les mêmes pièces,
+et n'a changé que le cadre et le fond. Dans la 4, la fête foraine s'arrête au
+cadre. Ce qui est à corriger :
+- le cadre rouge cerise concurrence les billes et les godets rouges : le
+  rouge doit rester réservé aux billes ;
+- la patine usée (rouille, éclats, rayures) fait sale et daté sur un écran ;
+- trop d'ampoules et d'étoiles partout, qui se battent avec le plateau ;
+- l'intérieur du plateau est resté un panneau beige à trous, sans thème ;
+- les mécanismes sont les mêmes pièces grises que dans les autres styles ;
+- le bouton « Lâcher » vert sort de la palette.
+
+Ce qu'on garde : le cadre de manège qui fait « machine », les ampoules, l'or,
+les rayures du chapiteau, et la parenté avec le flipper et le pachinko, qui
+sont déjà des machines à billes.
+
+Idée qui en découle : chaque mécanisme devient une attraction (le tourniquet
+un carrousel, la noria une grande roue, le tremplin un grand huit, la balance
+un « test de force »), et les ampoules du cadre comptent les billes bien
+rangées.
+
+```text
+C'est la 4, la fête foraine rétro, que je préfère. Elle est proche de ce que je veux, mais il faut l'améliorer. Refais CE MÊME écran (même disposition, mêmes pièces aux mêmes cases, même instant de jeu) avec ces corrections :
+
+1. Plus de rouge dans le décor. Le rouge est réservé aux billes et aux godets rouges : le cadre rouge cerise les noie. Fais DEUX variantes de palette, une image chacune :
+   - 4A : prune profond (aubergine), crème et or ;
+   - 4B : bleu nuit, crème et or.
+   Dans les deux, les rayures du chapiteau reprennent la couleur du cadre avec le crème.
+2. Tout est NEUF : émail laqué et brillant, dorures propres. Aucune rouille, aucune rayure, aucun éclat, aucune patine.
+3. Moins de décor : une seule rangée d'ampoules autour du plateau, bien espacées, et presque plus d'étoiles semées. Les ampoules du bas sont allumées, celles du haut éteintes : elles montrent combien de billes sont déjà bien rangées.
+4. Le thème entre DANS le plateau : un fond crème avec un léger soleil rayonnant qui part de l'entrée, comme un plateau de flipper, et des emplacements cerclés d'un fin anneau doré, moins grands qu'aujourd'hui.
+5. Les mécanismes deviennent des objets de fête foraine, sans perdre leur forme ni leur lisibilité : la bascule est une planche de balançoire aux bouts rayés ; le trieur est un fanion de couleur sur un mât ; la cloche est la cloche du « test de force » ; le levier relié a une poignée de manège. Ils sont laqués crème et or, avec un détail de la couleur du cadre.
+6. Le bouton « Lâcher » prend la forme d'un grand ticket de manège doré, bombé, avec un lettrage de fête foraine. Les cartes du bac de pièces sont aussi des tickets, avec un bord dentelé. Recommencer et l'indice restent deux jetons ronds.
+7. En haut, le titre « 1-3 · Le manège » est écrit sur un fronton de manège, avec les trois étoiles dessous.
+8. Le fond derrière la machine : une fête foraine la nuit, très floue, avec des lumières en bokeh et le haut d'un chapiteau. Elle doit rester sombre et calme.
+
+Lisibilité d'abord, comme avant : on voit de quel côté penche la bascule, quel côté du trieur reçoit le rouge, et que le levier est relié à l'aiguille. Les billes gardent leurs motifs. Une image par réponse : 4A, puis 4B.
+```
+
 ## La consigne complète
 
 ```text
