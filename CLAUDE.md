@@ -196,7 +196,18 @@ jour qui perd la partie d'un joueur est un bug bloquant, pas un détail.
   choix, ou si la `difficulte` écrite (poses ÷ solutions) n'est pas celle
   mesurée ou redescend sans pièce nouvelle. L'artefact privé pour l'iPhone
   est une copie dérivée de la page (sans squelette ni metas), à republier
-  après chaque changement.
+  après chaque changement. Cette première page est FIGÉE comme trace :
+  `prototype-billes-atelier.html` la remplace (même jour), avec un éditeur
+  (Jouer / Éditer, grille jusqu'à 12 × 24, on construit la solution puis on
+  marque les pièces « à poser ») et un autre moteur, à ÉLAN entier
+  (descendre donne de l'élan, rouler à plat en coûte), sur les modules de
+  Vincent : rampes, rampe plate, accélérateur, courbes 45° et 90°, poche,
+  tremplin, ascenseur, bascule, et des billes grises de lest pour les
+  poches. Son banc, `node tools/billes-atelier-banc.mjs [niveaux.json]`,
+  rejoue la solution de chaque niveau (ceux de la page, ou ceux exportés
+  de l'éditeur) et refuse si elle échoue, s'il n'y a rien à poser, ou si
+  une pièce à poser ne sert à rien. Le style suit la charte de
+  `tools/PROMPT-billes-mockups.md` (« La charte retenue »).
 - `data/worldmap.js` — généré depuis Natural Earth, jamais édité à la main.
 
 ## Détail connu
