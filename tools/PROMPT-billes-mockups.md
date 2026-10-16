@@ -315,6 +315,64 @@ Puis, une fois le fond choisi :
 Avec ce style et ce fond, fais la planche des mécanismes : les 11 modules (aiguille, bascule, trieur, poche, levier relié, écluse à billes, balance, ascenseur, tourniquet, tremplin, carillon), tous à la même échelle, sur une grille de 4 × 3, chacun avec son nom dessous et une flèche fine qui montre par où la bille entre et ressort. Pour la bascule et le tourniquet, montre deux états côte à côte. Mêmes matières : plastique blanc, une seule pièce de couleur par module, biseau et reflet simples.
 ```
 
+## La charte retenue (écran S2, fond violet)
+
+Neuvième étape : l'écran S2 (fond violet) et une première planche des
+mécanismes dans ce style. Le violet règle le contraste : la bille bleue et
+le godet bleu se lisent. La charte qui en sort, à tenir dans toutes les
+images suivantes ET dans le prototype :
+
+- **Fond** : un violet profond uni, sans décor ni texture.
+- **Modules** : ivoire, à silhouette franche, biseau et reflet simples ;
+  pivots, axes et tringles **dorés**. L'or est le SEUL accent des modules.
+- **Couleurs des billes** (rouge, bleu, jaune, vert) : réservées aux billes,
+  à leurs godets et au trieur de leur couleur. Jamais sur un autre module.
+- **Cadenas** : seulement sur les pièces fixes du niveau.
+- **Godets** : ivoire, bord de la couleur attendue, motif sur la face. Une
+  colonne sans godet est une ouverture sombre aux coins arrondis.
+- **Interface** : pastille du niveau et bouton pause cerclés d'or, carte
+  « Objectifs » ivoire qui compte (« ×2 »), barre de pièces en cartes à
+  badge, gros bouton carré vert « Lâcher » à droite, sous le pouce.
+- **Retours** : traînée lumineuse derrière la bille, flèche pointillée de la
+  suite du trajet, petite gerbe d'étoiles au bon godet.
+
+Ce que la planche a dessiné de travers, par rapport aux règles du jeu :
+- l'**aiguille** porte un cadenas (elle n'en a que fixe) ;
+- la **poche** est un godet rouge à spirale : on la confond avec un godet ;
+- l'**écluse** ne montre ni ses 3 places ni le lâcher groupé ;
+- la **balance** est devenue une balance à deux plateaux bleu et rouge, qui
+  répartit les billes : c'est un trieur, pas « s'ouvre sous deux billes » ;
+- le **tourniquet** a 4 bras au lieu de 3 sorties, et ses deux états
+  sortent du même côté ;
+- le **tremplin** est devenu une catapulte à ressort (idée à garder, mais
+  c'est un autre mécanisme) ;
+- le rouge sert d'accent à la bascule, à l'écluse, au tourniquet, à
+  l'ascenseur et au tremplin, contre la charte ;
+- toutes les billes d'exemple sont bleues : le trieur ne montre pas ce
+  qu'il trie.
+
+```text
+L'écran violet est parfait : c'est le style du jeu. La planche est dans le bon style, mais plusieurs mécanismes ne font pas ce qu'ils doivent faire. Refais-la avec ces règles :
+
+Charte : fond violet uni ; modules ivoire, pivots et tringles dorés ; l'or est le SEUL accent des modules. Le rouge, le bleu, le jaune et le vert sont réservés aux billes, aux godets et au trieur : aucun autre module n'a de pièce rouge. Le cadenas n'existe que sur une pièce fixe. Dans chaque case, utilise une bille rouge ET une bille bleue quand le mécanisme les traite différemment.
+
+Les mécanismes, un par case, avec deux états côte à côte quand c'est indiqué :
+1. Aiguille : une rampe inclinée, sans cadenas. La bille ressort toujours du même côté.
+2. Bascule (deux états) : la 1re bille part à droite, la bascule penche, la 2e part à gauche.
+3. Trieur rouge : la bille rouge part du côté du fanion, la bille bleue de l'autre.
+4. Poche (deux états) : une petite nacelle ivoire et or, ouverte sur le côté, qui ne ressemble PAS à un godet ; vide, puis avec une bille gardée dedans, et une petite horloge pour dire « rendue à la fin ».
+5. Levier relié : la bille passe sur une palette ; une tringle dorée fait basculer une aiguille plus loin. Montre la flèche de mouvement sur l'aiguille commandée.
+6. Écluse à billes (deux états) : un sas avec 3 places marquées ; 2 billes attendent, puis la 3e arrive et la porte s'ouvre : les 3 sortent ensemble.
+7. Balance (deux états) : un plateau unique sur un ressort, devant une trappe ; avec 1 bille, rien ne bouge ; avec 2 billes, le plateau descend et ouvre le passage.
+8. Ascenseur : une petite chaîne à godets ivoire qui monte, avec une bille qui entre en bas et ressort en haut.
+9. Tourniquet (deux états) : une roue à 3 logements et 3 sorties (gauche, milieu, droite) ; la 1re bille sort à gauche, la roue tourne d'un tiers, la 2e sort au milieu.
+10. Catapulte (nouveau, remplace le tremplin) : une palette sur ressort ; la bille qui tombe dessus est renvoyée en arc par-dessus la case voisine.
+11. Carillon : la cloche dorée, sur le trajet, qui sonne au passage.
+12. Dans la dernière case : les quatre billes (rouge spirale, bleu uni, jaune points, vert rayures) et leurs quatre godets.
+
+Grille 4 × 3, même échelle pour tous, nom sous chaque mécanisme.
+```
+
 ## La consigne complète
 
 ```text
