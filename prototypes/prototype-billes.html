@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Billes d'aiguillage</title>
+<style>
+/* ------------------------------------------------------------------
+   BILLES — prototype d'une autre idée de jeu, cousine de Station.
+
+   Des billes de couleur tombent une à une d'un réservoir. Avant de les
+   lâcher, on pose des pièces sur une grille d'emplacements ; chaque bille
+   doit finir dans le godet de sa couleur. C'est un PUZZLE : on prépare,
+   puis on regarde. Idée creusée en croquis le 16 octobre 2026 (mémoire
+   « idee-jeu-billes ») ; cette page est le premier prototype jouable au
+   doigt, pour le test sur iPhone.
+
+   Trois blocs, comme les autres prototypes : les niveaux (JSON), le moteur
+   (sans DOM, joué aussi par tools/billes-banc.mjs), la vue.
+   Mise en page en portrait : niveaux, message, plateau, bac, commandes.
+   ------------------------------------------------------------------ */
+:root {
+  color-scheme: light;
+  --fond: #f6f4ee;
+  --carte: #ffffff;
+  --encre: #22211d;
+  --encre-douce: #5f5e5a;
+  --encre-pale: #8b8a83;
+  --trait: rgba(0, 0, 0, .13);
+  --trait-fort: rgba(0, 0, 0, .38);
+  --goulotte: rgba(0, 0, 0, .08);
+  --accent: #185fa5;
+  --accent-fond: #e3eefa;
+  --succes: #3b6d11;
+  --danger: #a32d2d;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --fond: #1b1a18;
+    --carte: #262522;
+    --encre: #f1efe8;
+    --encre-douce: #c3c1b8;
+    --encre-pale: #8b8a83;
+    --trait: rgba(255, 255, 255, .14);
+    --trait-fort: rgba(255, 255, 255, .42);
+    --goulotte: rgba(255, 255, 255, .09);
+    --accent: #85b7eb;
+    --accent-fond: #12324f;
+    --succes: #97c459;
+    --danger: #f09595;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --fond: #1b1a18;
+  --carte: #262522;
+  --encre: #f1efe8;
+  --encre-douce: #c3c1b8;
+  --encre-pale: #8b8a83;
+  --trait: rgba(255, 255, 255, .14);
+  --trait-fort: rgba(255, 255, 255, .42);
+  --goulotte: rgba(255, 255, 255, .09);
+  --accent: #85b7eb;
+  --accent-fond: #12324f;
+  --succes: #97c459;
+  --danger: #f09595;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; background: var(--fond); color: var(--encre); }
+body { font: 15px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; -webkit-user-select: none; user-select: none; }
+#app {
+  max-width: 520px; margin: 0 auto; min-height: 100dvh;
+  padding: max(10px, env(safe-area-inset-top)) 16px max(12px, env(safe-area-inset-bottom));
+  display: flex; flex-direction: column; gap: 8px;
+}
+#niveaux { display: flex; gap: 4px; overflow-x: auto; padding-bottom: 2px; scrollbar-width: none; }
+#niveaux button {
+  flex: 1 1 0; min-width: 34px; height: 44px; border-radius: 10px;
+  border: 1px solid var(--trait); background: var(--carte); color: var(--encre);
+  font: inherit; font-size: 14px; line-height: 1.05; padding: 0 2px;
+}
+#niveaux button .et { display: block; font-size: 8px; color: #ba7517; letter-spacing: -1px; }
+#niveaux button.courant { border: 2px solid var(--accent); }
+#message { min-height: 2.9em; font-size: 15px; }
+#message.succes { color: var(--succes); }
+#message.danger { color: var(--danger); }
+#message.doux { color: var(--encre-douce); }
+#plateau { width: 100%; height: auto; display: block; touch-action: none; }
+#bac { display: flex; gap: 8px; }
+.piece-bac {
+  flex: 1 1 0; min-width: 0; display: flex; align-items: center; gap: 8px;
+  padding: 8px; border-radius: 12px; border: 1px solid var(--trait); background: var(--carte);
+  touch-action: none; cursor: grab;
+}
+.piece-bac.vide { opacity: .35; cursor: default; }
+.piece-bac svg { flex: 0 0 auto; }
+.piece-bac b { display: block; font-weight: 600; font-size: 14px; }
+.piece-bac small { display: block; color: var(--encre-douce); font-size: 12px; line-height: 1.25; }
+#commandes { display: flex; gap: 8px; margin-top: auto; }
+#commandes button {
+  height: 48px; border-radius: 12px; border: 1px solid var(--trait-fort);
+  background: var(--carte); color: var(--encre); font: inherit; font-size: 15px; padding: 0 12px;
+}
+#commandes #lacher { flex: 1; background: var(--accent); border-color: var(--accent); color: var(--fond); font-weight: 600; }
+#commandes button[aria-pressed="true"] { background: var(--accent-fond); border-color: var(--accent); }
+#fantome { position: fixed; left: 0; top: 0; pointer-events: none; display: none; z-index: 10; }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="niveaux"></div>
+  <div id="message"></div>
+  <svg id="plateau" viewBox="0 0 460 440" aria-label="Plateau"></svg>
+  <div id="bac"></div>
+  <div id="commandes">
+    <button id="lacher">Lâcher les billes</button>
+    <button id="recommencer" aria-label="Recommencer">↺</button>
+    <button id="pap" aria-pressed="false">Pas à pas</button>
+    <button id="son" aria-pressed="true">Son</button>
+  </div>
+</div>
+<svg id="fantome" width="84" height="84" viewBox="-42 -42 84 84"></svg>
+
+<script type="application/json" id="niveaux-json">
+{
+  "_": "Un niveau : godets (5 colonnes, '-' = trou), file (de la 1re à la dernière bille), inventaire, pièces fixes ('r,c' : t f|b, d 0 gauche|1 droite), cloche bonus, aide, difficulté (écrite, vérifiée par tools/billes-banc.mjs) et la pièce introduite s'il y en a une.",
+  "niveaux": [
+    { "godets": "---B-", "file": "BB",    "inventaire": { "f": 1 },          "fixes": {}, "cloche": "1,3", "introduit": "f", "difficulte": 10,
+      "aide": "Glisse l’aiguille sur un emplacement. Le pointillé montre où ira la bille. Bonus : fais sonner la cloche." },
+    { "godets": "-R-B-", "file": "RBBR",  "inventaire": { "tR": 1 },         "fixes": {}, "cloche": "1,1", "introduit": "tR", "difficulte": 10,
+      "aide": "Le trieur rouge envoie les rouges du côté plein, et les autres du côté pointillé." },
+    { "godets": "-R-B-", "file": "RBRB",  "inventaire": { "b": 1 },          "fixes": {}, "cloche": "1,3", "introduit": "b", "difficulte": 10,
+      "aide": "La bascule change de côté après chaque bille. Touche-la pour choisir son côté de départ." },
+    { "godets": "-R--B", "file": "BBBR",  "inventaire": { "tR": 1, "f": 1 }, "fixes": {}, "cloche": "2,4", "difficulte": 228,
+      "aide": "Le trieur et l’aiguille ensemble." },
+    { "godets": "R---B", "file": "RBRB",  "inventaire": { "f": 1, "b": 1 },  "fixes": { "1,1": { "t": "f", "d": 0 } }, "cloche": "2,4", "difficulte": 408,
+      "aide": "La pièce grise est fournie : elle ne bouge pas." },
+    { "godets": "-R-B-", "file": "BRBR",  "inventaire": { "p": 1 },          "fixes": { "2,2": { "t": "b", "d": 0 } }, "introduit": "p", "difficulte": 10,
+      "aide": "La poche garde la première bille qui y tombe, et la relâche quand toutes les autres sont passées." },
+    { "godets": "R-B--", "file": "BRBR",  "inventaire": { "p": 1, "f": 1 },  "fixes": { "2,1": { "t": "b", "d": 0 } }, "difficulte": 342,
+      "aide": "Quelle bille doit attendre son tour ?" },
+    { "godets": "R-B-J", "file": "BRJR",  "inventaire": { "f": 1, "b": 1 },  "fixes": { "2,3": { "t": "f", "d": 1 }, "1,3": { "t": "b", "d": 0 } }, "cloche": "2,0", "difficulte": 363,
+      "aide": "Trois couleurs. La bascule grise est fournie, et elle bascule aussi." },
+    { "godets": "R-B-J", "file": "BRJR",  "inventaire": { "f": 1, "b": 2 },  "fixes": { "2,3": { "t": "f", "d": 1 } }, "cloche": "2,0", "difficulte": 4896,
+      "aide": "Le défi : les mêmes couleurs, mais c’est à toi de poser les deux bascules." }
+  ]
+}
+</script>
+
+<script id="moteur">
+"use strict";
+// ------------------------------------------------------------------
+// LE MOTEUR — sans DOM, joué tel quel par tools/billes-banc.mjs.
+//
+// La grille a 4 rangées (r, du haut) et 5 colonnes (c). Les billes entrent
+// par la case (0,2). Sur une case :
+//   vide      la bille tombe tout droit, en (r+1, c) ;
+//   aiguille  (f) elle part du côté d : 0 → (r+1, c-1), 1 → (r+1, c+1) ;
+//   bascule   (b) pareil, puis la bascule change de côté ;
+//   trieur    (t, couleur col) les billes de sa couleur partent du côté d,
+//             les autres du côté opposé ;
+//   poche     (p) elle garde la PREMIÈRE bille qui y tombe ; une fois
+//             servie, elle laisse passer tout droit. Quand toute la file est
+//             passée, les poches rendent leur bille (de haut en bas), qui
+//             repart tout droit à travers le plateau.
+// Sous la rangée 3, la bille tombe dans le godet de sa colonne. Hors du
+// plateau, ou dans un godet d'une autre couleur (ou un trou), c'est raté.
+//
+// La première règle de poche essayée (la suivante chasse celle qui attend)
+// ne réordonnait jamais rien sur ce petit plateau : le solveur ne lui a
+// trouvé aucun niveau où elle soit nécessaire. Celle-ci, si.
+// ------------------------------------------------------------------
+const RANGEES = 4, COLONNES = 5, ENTREE = "0,2";
+const PIECES = { f: { t: "f" }, b: { t: "b" }, p: { t: "p" }, tR: { t: "t", col: "R" }, tB: { t: "t", col: "B" }, tJ: { t: "t", col: "J" } };
+function piece(tok, d) { return { ...PIECES[tok], d: PIECES[tok].t === "p" ? 0 : d, tok }; }
+// Le plateau d'un niveau : les pièces fixes, puis celles du joueur ({ case: { tok, d } }).
+function plateau(niv, poses) {
+  const m = new Map();
+  for (const k in niv.fixes) m.set(k, { ...niv.fixes[k], fx: 1 });
+  for (const [k, v] of poses) m.set(k, piece(v.tok, v.d));
+  return m;
+}
+// Une partie. lacher(couleur) et vider() rendent les trajets à animer :
+// { c, start: top|vide, pts: [{ k, flip?, cl? }], end: cup|hold|hors, col?, side? }.
+function Machine(niv, pieces) {
+  const s = new Map();
+  for (const [k, v] of pieces) s.set(k, { h: null, ...v });
+  let ok = true, cloche = false, livrees = 0;
+  function route(out, col, start, r, c, vidage) {
+    const pts = [];
+    let passe = start !== "top";              // une bille rendue ne rejoue pas sa poche
+    for (;;) {
+      const k = r + "," + c, p = s.get(k), pt = { k };
+      pts.push(pt);
+      if (k === niv.cloche) { cloche = true; pt.cl = 1; }
+      let nc = c;
+      if (p && !passe) {
+        if (p.t === "p") {
+          if (!vidage && p.h === null && !p.vu) { p.h = col; p.vu = 1; out.push({ c: col, start, pts, end: "hold" }); return; }
+        } else if (p.t === "f") nc += p.d ? 1 : -1;
+        else if (p.t === "b") { nc += p.d ? 1 : -1; p.d ^= 1; pt.flip = 1; }
+        else if (p.t === "t") nc += (col === p.col ? p.d : 1 - p.d) ? 1 : -1;
+      }
+      passe = false;
+      if (nc < 0 || nc >= COLONNES) { out.push({ c: col, start, pts, end: "hors", side: nc < 0 ? -1 : 1 }); ok = false; return; }
+      if (r === RANGEES - 1) {
+        out.push({ c: col, start, pts, end: "cup", col: nc });
+        if (niv.godets[nc] !== col) ok = false; else livrees++;
+        return;
+      }
+      r++; c = nc;
+    }
+  }
+  return {
+    s,
+    get ok() { return ok; }, get cloche() { return cloche; }, get livrees() { return livrees; },
+    lacher(col) { const out = []; route(out, col, "top", 0, 2, false); return out; },
+    vider() {
+      const out = [];
+      const ks = [...s.keys()].filter(k => s.get(k).t === "p")
+        .sort((a, b) => a.split(",")[0] - b.split(",")[0] || a.split(",")[1] - b.split(",")[1]);
+      for (const k of ks) {
+        const p = s.get(k);
+        if (p.h !== null && ok) { const col = p.h, [r, c] = k.split(",").map(Number); p.h = null; route(out, col, "vide", r, c, true); }
+      }
+      return out;
+    },
+  };
+}
+// Une partie entière, d'un coup : réussie ? cloche ?
+function jouer(niv, pieces) {
+  const m = Machine(niv, pieces);
+  for (const col of niv.file) { m.lacher(col); if (!m.ok) return { ok: false }; }
+  m.vider();
+  return { ok: m.ok && m.livrees === niv.file.length, cloche: m.cloche };
+}
+</script>
+
+<script id="vue">
+"use strict";
+const NIVEAUX = JSON.parse(document.getElementById("niveaux-json").textContent).niveaux;
+const COUL = { R: "#E24B4A", B: "#378ADD", J: "#EF9F27" }, NOM = { R: "rouge", B: "bleue", J: "jaune" };
+const DESC = {
+  f: ["Aiguille", "reste comme posée, touche-la pour la tourner"],
+  b: ["Bascule", "change de côté après chaque bille"],
+  p: ["Poche", "garde la 1re bille, la rend à la fin"],
+  tR: ["Trieur rouge", "rouges : côté plein, autres : pointillé"],
+  tB: ["Trieur bleu", "bleues : côté plein, autres : pointillé"],
+  tJ: ["Trieur jaune", "jaunes : côté plein, autres : pointillé"],
+};
+const X = c => 50 + c * 90, Y = r => 150 + r * 62, HX = X(2), HB = 104, CT = Y(3) + 40;
+const PENTA = [523.25, 587.33, 659.25, 783.99, 880];
+const DECALAGE_DOIGT = 56;   // au doigt, la pièce flotte au-dessus : on la voit
+const NS = "http://www.w3.org/2000/svg", $ = id => document.getElementById(id);
+const sv = $("plateau"), fantome = $("fantome");
+
+let L = 0, niv, poses, phase, essais, idx, m, aff, anim = [], cur = null, attente = 0, glisse = null;
+let aidee = false, gagnee = false, vide = false, cupN, sonnee = false, pasAPas = false, sonOn = true;
+let etoiles = []; try { etoiles = JSON.parse(localStorage.getItem("billes-etoiles") || "[]"); } catch (e) {}
+function garder() { try { localStorage.setItem("billes-etoiles", JSON.stringify(etoiles)); } catch (e) {} }
+
+function el(t, a, p) { const e = document.createElementNS(NS, t); for (const k in a) e.setAttribute(k, a[k]); (p || sv).appendChild(e); return e; }
+const gFond = el("g", {}), gTraces = el("g", {}), gApercu = el("g", {}), gPieces = el("g", {}), gFile = el("g", {}), gBilles = el("g", {});
+
+// --- le son : une boîte à musique pentatonique ---------------------------
+let ac = null;
+function reveilSon() { if (!ac) { try { ac = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {} } if (ac && ac.state !== "running" && ac.resume) ac.resume(); }
+function ton(f, duree, type, vol, retard) {
+  if (!ac || !sonOn) return;
+  const t = ac.currentTime + (retard || 0), o = ac.createOscillator(), g = ac.createGain();
+  o.type = type || "sine"; o.frequency.value = f;
+  g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol || .15, t + .01); g.gain.exponentialRampToValueAtTime(.001, t + duree);
+  o.connect(g); g.connect(ac.destination); o.start(t); o.stop(t + duree + .05);
+}
+function noteCase(k) { const [r, c] = k.split(",").map(Number), i = c + 2 * (3 - r); ton(PENTA[i % 5] * Math.pow(2, Math.floor(i / 5) - 1), .35, "triangle", .18); }
+const clic = () => ton(1400, .03, "square", .05);
+
+// --- le dessin --------------------------------------------------------------
+function dessinPiece(g, x, y, p, s) {
+  s = s || 1;
+  const vx = (p.d ? 90 : -90) * s, vy = 62 * s;
+  const encre = p.fx ? "var(--encre-pale)" : p.t === "b" ? "var(--accent)" : "var(--encre)";
+  if (p.t === "p") {
+    el("path", { d: `M${x - 15 * s} ${y - 13 * s} L${x - 15 * s} ${y + 8 * s} Q${x - 15 * s} ${y + 15 * s} ${x - 8 * s} ${y + 15 * s} L${x + 8 * s} ${y + 15 * s} Q${x + 15 * s} ${y + 15 * s} ${x + 15 * s} ${y + 8 * s} L${x + 15 * s} ${y - 13 * s}`,
+      fill: "none", "stroke-width": 4.5 * s, "stroke-linecap": "round", style: "stroke:" + encre }, g);
+    if (p.h) el("circle", { cx: x, cy: y + 3 * s, r: 9 * s, fill: COUL[p.h], stroke: "#fff", "stroke-width": 1.5 }, g);
+    return;
+  }
+  if (p.t === "b" || p.t === "t")
+    el("line", { x1: x + .2 * vx, y1: y - .2 * vy, x2: x - .7 * vx, y2: y + .7 * vy, "stroke-width": 3 * s, "stroke-dasharray": `${3 * s} ${5 * s}`, "stroke-linecap": "round",
+      style: "stroke:" + (p.t === "t" ? "var(--encre-pale)" : encre) }, g);
+  el("line", { x1: x - .2 * vx, y1: y - .2 * vy, x2: x + .7 * vx, y2: y + .7 * vy, "stroke-width": 9 * s, "stroke-linecap": "round",
+    style: "stroke:" + (p.t === "t" && !p.fx ? COUL[p.col] : encre) }, g);
+  if (p.t === "b") el("circle", { cx: x, cy: y, r: 7 * s, "stroke-width": 2.5 * s, style: "fill:var(--accent-fond);stroke:" + encre }, g);
+  else if (p.t === "t") el("circle", { cx: x, cy: y, r: 7 * s, "stroke-width": 2 * s, style: `fill:${COUL[p.col]};stroke:var(--carte)` }, g);
+  else el("rect", { x: x - 5 * s, y: y - 5 * s, width: 10 * s, height: 10 * s, style: "fill:" + encre }, g);
+}
+function dessinCloche(g, x, y, on) {
+  el("path", { d: `M${x - 12} ${y + 8} Q${x - 12} ${y - 12} ${x} ${y - 12} Q${x + 12} ${y - 12} ${x + 12} ${y + 8} Z`, fill: on ? "#EF9F27" : "none", stroke: "#BA7517", "stroke-width": 2.5, "stroke-linejoin": "round" }, g);
+  el("circle", { cx: x, cy: y + 11, r: 3.5, fill: "#BA7517" }, g);
+}
+function dessinFond() {
+  gFond.innerHTML = "";
+  el("rect", { x: HX - 16, y: -8, width: 32, height: HB + 16, rx: 16, "stroke-width": 1.5, style: "fill:none;stroke:var(--trait-fort)" }, gFond);
+  el("line", { x1: HX, y1: HB + 10, x2: HX, y2: Y(0), "stroke-width": 18, "stroke-linecap": "round", style: "stroke:var(--goulotte)" }, gFond);
+  for (let c = 0; c < COLONNES; c++) {
+    el("line", { x1: X(c), y1: Y(0), x2: X(c), y2: CT, "stroke-width": 18, "stroke-linecap": "round", style: "stroke:var(--goulotte)" }, gFond);
+    const k = niv.godets[c], x = X(c), d = `M${x - 36} ${CT} L${x - 30} ${CT + 50} L${x + 30} ${CT + 50} L${x + 36} ${CT}`;
+    if (k === "-") {
+      el("path", { d, fill: "none", "stroke-dasharray": "4 5", "stroke-width": 1.5, style: "stroke:var(--encre-pale)" }, gFond);
+      el("text", { x, y: CT + 32, "text-anchor": "middle", style: "fill:var(--encre-pale);font-size:13px" }, gFond).textContent = "trou";
+    } else el("path", { d, fill: COUL[k], "fill-opacity": .2, stroke: COUL[k], "stroke-width": 2.5 }, gFond);
+  }
+  for (let r = 0; r < RANGEES; r++) for (let c = 0; c < COLONNES; c++) {
+    const k = r + "," + c;
+    if (k === niv.cloche) continue;
+    el("rect", { x: X(c) - 20, y: Y(r) - 20, width: 40, height: 40, rx: 8, "stroke-dasharray": "4 4", "stroke-width": 1.5, "data-k": k, style: "fill:var(--carte);stroke:var(--trait-fort)" }, gFond);
+  }
+}
+function points(t) {
+  const a = [];
+  if (t.start === "top") a.push([HX, HB]);
+  for (const p of t.pts) { const [r, c] = p.k.split(",").map(Number); a.push([X(c), Y(r)]); }
+  if (t.end === "cup") a.push([X(t.col), CT + 30]);
+  else if (t.end === "hors") { const [r, c] = t.pts[t.pts.length - 1].k.split(",").map(Number); a.push([X(c) + t.side * 80, Y(r) + 56]); }
+  return a;
+}
+function reste(tok) { let n = niv.inventaire[tok] || 0; for (const v of poses.values()) if (v.tok === tok) n--; return n; }
+function dessin() {
+  gPieces.innerHTML = ""; gFile.innerHTML = ""; gApercu.innerHTML = "";
+  const etat = phase === "prep" ? plateau(niv, poses) : aff;
+  if (niv.cloche) { const [r, c] = niv.cloche.split(",").map(Number); dessinCloche(gPieces, X(c), Y(r), sonnee); }
+  for (const [k, p] of etat) {
+    if (glisse && glisse.de === k && glisse.bouge) continue;
+    const [r, c] = k.split(",").map(Number);
+    dessinPiece(gPieces, X(c), Y(r), p);
+    if (!p.fx && (phase === "prep" || phase === "pause")) {
+      const h = el("circle", { cx: X(c), cy: Y(r), r: 36, fill: "transparent" }, gPieces);
+      h.addEventListener("pointerdown", e => debutGlisse(e, p.tok, p.d, k));
+    }
+  }
+  [...niv.file].map((_, i) => i).filter(i => phase === "prep" || i > idx)
+    .forEach((i, j) => el("circle", { cx: HX, cy: HB - 8 - j * 20, r: 9, fill: COUL[niv.file[i]], stroke: "#fff", "stroke-width": 1.5 }, gFile));
+  let apercu = null;
+  if (phase === "prep") apercu = Machine(niv, plateau(niv, poses)).lacher(niv.file[0]);
+  else if (phase === "pause") apercu = Machine(niv, m.s).lacher(niv.file[idx + 1]);
+  if (apercu) for (const t of apercu)
+    el("polyline", { points: points(t).map(p => p.join(",")).join(" "), fill: "none", stroke: COUL[t.c], "stroke-width": 3.5, "stroke-dasharray": "2 8", "stroke-linecap": "round" }, gApercu);
+  dessinBac(); dessinNiveaux();
+}
+function dessinBac() {
+  const bac = $("bac"); bac.innerHTML = "";
+  for (const tok in niv.inventaire) {
+    const n = reste(tok), d = document.createElement("div");
+    d.className = "piece-bac" + (n > 0 && phase === "prep" ? "" : " vide");
+    const ic = document.createElementNS(NS, "svg");
+    ic.setAttribute("width", 40); ic.setAttribute("height", 40); ic.setAttribute("viewBox", "-30 -24 60 60");
+    dessinPiece(ic, -8, 0, piece(tok, 1), .5);
+    const tx = document.createElement("div");
+    tx.innerHTML = `<b>${DESC[tok][0]} ×${n}</b><small>${DESC[tok][1]}</small>`;
+    d.append(ic, tx);
+    if (n > 0 && phase === "prep") d.addEventListener("pointerdown", e => debutGlisse(e, tok, 1, null));
+    bac.appendChild(d);
+  }
+}
+function dessinNiveaux() {
+  const z = $("niveaux"); z.innerHTML = "";
+  NIVEAUX.forEach((_, i) => {
+    const b = document.createElement("button"), e = etoiles[i] || 0;
+    b.innerHTML = (i + 1) + (e ? `<span class="et">${"★".repeat(e)}${"☆".repeat(3 - e)}</span>` : "");
+    if (i === L) b.className = "courant";
+    b.onclick = () => charger(i);
+    z.appendChild(b);
+  });
+}
+function dire(t, cl) { const g = $("message"); g.textContent = t; g.className = cl || ""; }
+
+// --- poser les pièces : glisser depuis le bac, toucher pour tourner ------
+function versPlateau(x, y) { const p = sv.createSVGPoint(); p.x = x; p.y = y; return p.matrixTransform(sv.getScreenCTM().inverse()); }
+function caseSous(p) {
+  let mieux = null, md = 46;
+  for (let r = 0; r < RANGEES; r++) for (let c = 0; c < COLONNES; c++) {
+    const k = r + "," + c, d = Math.hypot(p.x - X(c), p.y - Y(r));
+    if (d < md && k !== niv.cloche && !niv.fixes[k]) { md = d; mieux = k; }
+  }
+  return mieux;
+}
+function libre(k) { return k && (!poses.has(k) || k === glisse.de); }
+function debutGlisse(e, tok, d, de) {
+  e.preventDefault(); reveilSon();
+  glisse = { tok, d, de, bouge: false, x0: e.clientX, y0: e.clientY, doigt: e.pointerType === "touch" };
+  window.addEventListener("pointermove", bougeGlisse);
+  window.addEventListener("pointerup", finGlisse);
+  window.addEventListener("pointercancel", finGlisse);
+}
+function pointeur(e) { return { x: e.clientX, y: e.clientY - (glisse.doigt ? DECALAGE_DOIGT : 0) }; }
+function bougeGlisse(e) {
+  if (!glisse || phase !== "prep") return;
+  if (!glisse.bouge && Math.hypot(e.clientX - glisse.x0, e.clientY - glisse.y0) < 8) return;
+  if (!glisse.bouge) { glisse.bouge = true; dessin(); fantome.innerHTML = ""; dessinPiece(fantome, 0, 0, piece(glisse.tok, glisse.d)); fantome.style.display = "block"; }
+  const p = pointeur(e);
+  fantome.style.transform = `translate(${p.x - 42}px, ${p.y - 42}px)`;
+  sv.querySelectorAll("[data-k]").forEach(r => r.style.stroke = "");
+  const k = caseSous(versPlateau(p.x, p.y));
+  if (libre(k)) sv.querySelector(`[data-k="${k}"]`).style.stroke = "var(--accent)";
+}
+function finGlisse(e) {
+  window.removeEventListener("pointermove", bougeGlisse);
+  window.removeEventListener("pointerup", finGlisse);
+  window.removeEventListener("pointercancel", finGlisse);
+  fantome.style.display = "none";
+  sv.querySelectorAll("[data-k]").forEach(r => r.style.stroke = "");
+  const g = glisse; if (!g) return;
+  if (!g.bouge) {
+    if (g.de && PIECES[g.tok].t !== "p") {
+      if (phase === "prep") { poses.get(g.de).d ^= 1; clic(); }
+      else if (phase === "pause") { m.s.get(g.de).d ^= 1; aff.get(g.de).d ^= 1; clic(); }
+    }
+  } else if (phase === "prep" && e.type === "pointerup") {
+    const p = pointeur(e), k = caseSous(versPlateau(p.x, p.y));
+    if (libre(k)) { if (g.de) poses.delete(g.de); poses.set(k, { tok: g.tok, d: g.d }); ton(880, .06, "triangle", .1); }
+    else if (g.de) poses.delete(g.de);
+  }
+  glisse = null; dessin();
+}
+
+// --- jouer --------------------------------------------------------------------
+function charger(i) {
+  L = i; niv = NIVEAUX[i]; poses = new Map(); essais = 0;
+  try { localStorage.setItem("billes-niveau", i); } catch (e) {}
+  dessinFond(); preparer();
+}
+function preparer() {
+  cur = null; anim = []; gBilles.innerHTML = ""; gTraces.innerHTML = "";
+  phase = "prep"; idx = -1; sonnee = false; gagnee = false;
+  $("lacher").textContent = "Lâcher les billes";
+  dire(niv.aide); dessin();
+}
+function lancer() {
+  reveilSon();
+  if (phase === "prep") {
+    essais++; m = Machine(niv, plateau(niv, poses));
+    aff = new Map([...m.s].map(([k, v]) => [k, { ...v }]));
+    aidee = pasAPas; vide = false; cupN = [0, 0, 0, 0, 0]; sonnee = false;
+    gBilles.innerHTML = ""; gTraces.innerHTML = "";
+    phase = "run"; attente = 0; $("lacher").textContent = "…"; dire("Les billes roulent…", "doux"); dessin();
+  } else if (phase === "pause") {
+    phase = "run"; $("lacher").textContent = "…"; dire("Les billes roulent…", "doux"); suite(); dessin();
+  } else if (phase === "fin") { if (gagnee && L < NIVEAUX.length - 1) charger(L + 1); else preparer(); }
+}
+function suite() {
+  if (idx < niv.file.length - 1) { idx++; anim = m.lacher(niv.file[idx]); dessin(); }
+  else if (!vide) { vide = true; anim = m.vider(); if (anim.length) dire("Les poches se vident…", "doux"); else gagne(); }
+  else gagne();
+}
+function partir(t) {
+  const P = points(t);
+  if (t.start === "vide") { aff.get(t.pts[0].k).h = null; dessin(); }
+  cur = { t, P, j: 0, u: 0, v: 170, dec: t.start === "top" ? 1 : 0,
+    e: el("circle", { cx: P[0][0], cy: P[0][1], r: 10, fill: COUL[t.c], stroke: "#fff", "stroke-width": 1.5 }, gBilles) };
+}
+function arrive(j) {
+  const t = cur.t, pi = j - cur.dec;
+  if (pi >= 0 && pi < t.pts.length && !(pi === 0 && t.start !== "top")) {
+    const pt = t.pts[pi];
+    if (aff.get(pt.k)) noteCase(pt.k);
+    if (pt.flip) { aff.get(pt.k).d ^= 1; clic(); dessin(); }
+    if (pt.cl && !sonnee) { sonnee = true; ton(1318.5, 1.4, "sine", .2); ton(1975.5, .9, "sine", .07); dessin(); }
+  }
+  if (j < cur.P.length - 1) return;
+  const e = cur.e; cur = null; attente = .15;
+  if (t.end === "hold") { e.remove(); aff.get(t.pts[t.pts.length - 1].k).h = t.c; ton(330, .18, "sine", .2); ton(220, .2, "sine", .1, .05); dessin(); return; }
+  el("polyline", { points: points(t).map(p => p.join(",")).join(" "), fill: "none", stroke: COUL[t.c], "stroke-opacity": .25, "stroke-width": 4 }, gTraces);
+  if (t.end === "hors") { e.remove(); rate(`la bille ${NOM[t.c]} est sortie du plateau.`); return; }
+  const n = cupN[t.col]++;
+  e.setAttribute("cx", X(t.col) - 16 + (n % 3) * 16); e.setAttribute("cy", CT + 38 - Math.floor(n / 3) * 16);
+  if (niv.godets[t.col] !== t.c) { rate(`la bille ${NOM[t.c]} ` + (niv.godets[t.col] === "-" ? "est tombée dans un trou." : "est tombée dans le mauvais godet.")); return; }
+  const f = { R: 523.25, B: 659.25, J: 783.99 }[t.c];
+  ton(f, .3, "triangle", .18); ton(f * 1.5, .4, "triangle", .12, .08);
+}
+function rate(t) {
+  phase = "fin"; anim = []; ton(110, .5, "sawtooth", .1);
+  dire("Raté : " + t + " Touche « Réessayer ».", "danger");
+  $("lacher").textContent = "Réessayer";
+}
+function gagne() {
+  phase = "fin";
+  const s = 1 + (aidee ? 0 : 1) + (!niv.cloche || m.cloche ? 1 : 0);
+  etoiles[L] = Math.max(etoiles[L] || 0, s); garder();
+  [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => ton(f, .5, "triangle", .15, i * .1));
+  let t = `Réussi en ${essais} essai${essais > 1 ? "s" : ""} ! ` + "★".repeat(s) + "☆".repeat(3 - s);
+  if (aidee) t += " Sans le pas à pas : une étoile de plus.";
+  if (niv.cloche && !m.cloche) t += " Fais sonner la cloche pour une étoile.";
+  dire(t, "succes");
+  gagnee = true; $("lacher").textContent = L < NIVEAUX.length - 1 ? "Niveau suivant" : "Rejouer";
+  dessin();
+}
+function tic(dt) {
+  if (phase === "run" && !cur && (attente -= dt) <= 0) {
+    if (anim.length) partir(anim.shift());
+    else if (pasAPas && idx >= 0 && idx < niv.file.length - 1) {
+      phase = "pause"; aidee = true; $("lacher").textContent = "Bille suivante";
+      dire("Pas à pas : tu peux tourner les pièces avant la bille suivante.", "doux"); dessin();
+    } else suite();
+  }
+  if (cur && phase === "run") {
+    const a = cur.P[cur.j], b = cur.P[cur.j + 1], l = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1;
+    cur.v += dt * 150; cur.u += cur.v * dt / l;
+    if (cur.u >= 1) { cur.j++; cur.u = 0; cur.e.setAttribute("cx", cur.P[cur.j][0]); cur.e.setAttribute("cy", cur.P[cur.j][1]); arrive(cur.j); }
+    else { cur.e.setAttribute("cx", a[0] + (b[0] - a[0]) * cur.u); cur.e.setAttribute("cy", a[1] + (b[1] - a[1]) * cur.u); }
+  }
+}
+let avant = 0;
+function boucle(ts) { const dt = Math.min(.05, (ts - avant) / 1000 || 0); avant = ts; tic(dt); requestAnimationFrame(boucle); }
+
+$("lacher").onclick = lancer;
+$("recommencer").onclick = () => { reveilSon(); preparer(); };
+$("pap").onclick = () => { pasAPas = !pasAPas; $("pap").setAttribute("aria-pressed", pasAPas); };
+$("son").onclick = () => { sonOn = !sonOn; $("son").setAttribute("aria-pressed", sonOn); reveilSon(); };
+document.addEventListener("pointerdown", reveilSon, { once: true });
+
+// Poignée de test : piloter la page sans écran (le temps s'avance à la main).
+window.BILLES = {
+  charger, lancer,
+  poser(k, tok, d) { poses.set(k, { tok, d }); dessin(); },
+  pasAPas(v) { pasAPas = !!v; $("pap").setAttribute("aria-pressed", pasAPas); },
+  avancer(sec) { for (let t = 0; t < sec; t += 1 / 30) tic(1 / 30); },
+  etat() { return { niveau: L + 1, phase, message: $("message").textContent, etoiles: etoiles[L] || 0 }; },
+};
+let depart = 0; try { depart = Math.min(NIVEAUX.length - 1, +localStorage.getItem("billes-niveau") || 0); } catch (e) {}
+charger(depart);
+requestAnimationFrame(boucle);
+</script>
+</body>
+</html>

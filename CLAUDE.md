@@ -187,6 +187,16 @@ jour qui perd la partie d'un joueur est un bug bloquant, pas un détail.
   `godot --headless --path prototypes/labyrinthe-godot --script res://banc.gd`,
   qui refuse comme les contrôles. Le pourquoi est dans
   `reports/Animation de fluides pour jeu.md`.
+  `prototype-billes.html` (16 octobre 2026) est une autre idée, sans eau :
+  des billes de couleur tombent d'un réservoir, on pose avant de les lâcher
+  aiguilles, bascules, trieurs et poches sur une grille 4×5 pour que chacune
+  finisse dans le godet de sa couleur. Son banc, `node tools/billes-banc.mjs`,
+  essaie TOUTES les poses de l'inventaire et refuse si un niveau n'a pas de
+  solution, se résout avec moins de pièces, si la cloche ne demande aucun
+  choix, ou si la `difficulte` écrite (poses ÷ solutions) n'est pas celle
+  mesurée ou redescend sans pièce nouvelle. L'artefact privé pour l'iPhone
+  est une copie dérivée de la page (sans squelette ni metas), à republier
+  après chaque changement.
 - `data/worldmap.js` — généré depuis Natural Earth, jamais édité à la main.
 
 ## Détail connu
