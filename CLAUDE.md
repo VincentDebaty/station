@@ -211,6 +211,14 @@ jour qui perd la partie d'un joueur est un bug bloquant, pas un détail.
   `tools/PROMPT-billes-mockups.md` (« La charte retenue »).
   **Idée arrêtée le 16 octobre 2026** (« toujours pas convaincu », décision
   de Vincent) : les deux pages et leurs bancs restent comme trace.
+  `prototype-eclusier.html` (16 octobre 2026) mélange Station et Écluses :
+  le 1-2 d'Écluses, mais six bateaux arrivent à l'horaire comme des trains,
+  les portes sont enclenchées, et le bief de partage n'a qu'une rigole —
+  remplir le sas coûte de l'eau, le vider rien. Son banc,
+  `node tools/eclusier-banc.mjs`, refuse si la fouille ne retrouve pas le
+  `par` (l'attente totale), si l'éclusier PRESSÉ (sert tout de suite) ne
+  tombe pas à sec, si le GROUPEUR (ne remplit qu'à deux) ne perd pas un
+  marinier par la patience, ou si l'eau ne coûte pas d'attente.
 - `data/worldmap.js` — généré depuis Natural Earth, jamais édité à la main.
 
 ## Détail connu

@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#123a44">
+<title>L'éclusier</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&display=swap">
+<style>
+/* ------------------------------------------------------------------
+   L'ÉCLUSIER — prototype d'un mélange de Station et d'Écluses (16 octobre
+   2026). Le 1-2 d'Écluses (« Croisement »), mais le temps passe : six
+   bateaux arrivent à l'horaire, comme les trains de Station, et le bief de
+   partage n'a qu'une rigole pour se refaire. Remplir le sas coûte de l'eau,
+   le vider ne coûte rien : servir vite, ou faire attendre pour grouper.
+
+   Même charte qu'Écluses : décor sourd, et seul ce qu'on touche ou qu'on
+   surveille est saturé — l'eau, les roues rouges, les bateaux, la jauge.
+   Le banc : node tools/eclusier-banc.mjs.
+   ------------------------------------------------------------------ */
+:root {
+  color-scheme: light;
+  --canal: #123a44;
+  --canal-haut: #1b4f5c;
+  --ecume: #e9f6f7;
+  --brume: #9fc3c9;
+  --eau: #17a5c8;
+  --vanne: #d9412d;
+  --ok: #2f9e58;
+  --alerte: #d8402c;
+  --or: #f4bf2a;
+  --papier: #f7f4ec;
+  --encre: #1f2d33;
+  --muet: #5d6f74;
+  --f-titre: "Fredoka", "Arial Rounded MT Bold", "Trebuchet MS", system-ui, sans-serif;
+  --f-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0; overflow: hidden;
+  background: var(--canal); color: var(--ecume);
+  font: 14px/1.45 var(--f-ui);
+  user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+button { font: inherit; color: inherit; cursor: pointer; }
+button:focus-visible { outline: 3px solid var(--or); outline-offset: 2px; }
+[hidden] { display: none !important; }
+
+#jeu { height: 100%; display: flex; flex-direction: column; padding-top: env(safe-area-inset-top, 0px); }
+.barre {
+  display: flex; align-items: center; gap: 8px; min-height: 46px;
+  padding-inline: max(12px, env(safe-area-inset-left, 0px)) max(12px, env(safe-area-inset-right, 0px));
+  padding-block: 4px; background: var(--canal);
+}
+.barre .titre { display: flex; flex-direction: column; min-width: 0; flex: 1; line-height: 1.15; }
+.barre .titre b { font: 600 17px/1.15 var(--f-titre); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.barre .titre small { color: var(--brume); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; }
+.compteur { display: flex; flex-direction: column; align-items: center; line-height: 1.1; padding-inline: 6px; font-variant-numeric: tabular-nums; }
+.compteur b { font: 600 18px/1 var(--f-titre); }
+.compteur small { color: var(--brume); font-size: 11px; white-space: nowrap; }
+.outil {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  min-width: 44px; height: 38px; padding: 0 10px;
+  border: 1px solid rgba(255,255,255,.18); border-radius: 10px; background: rgba(255,255,255,.08);
+  font-weight: 600; font-size: 13px; white-space: nowrap; font-variant-numeric: tabular-nums;
+}
+.outil svg { width: 18px; height: 18px; flex: none; }
+@media (max-width: 720px) { .outil .lib { display: none; } .barre .titre small { display: none; } }
+
+/* l'horaire : la feuille de l'éclusier, un bateau par case */
+#horaire {
+  display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none;
+  padding: 0 max(12px, env(safe-area-inset-right, 0px)) 6px max(12px, env(safe-area-inset-left, 0px));
+  background: var(--canal);
+}
+#horaire::-webkit-scrollbar { display: none; }
+.case {
+  flex: 1 0 96px; display: grid; grid-template-columns: 18px 1fr; align-items: center; gap: 2px 7px;
+  padding: 5px 8px; border-radius: 9px; background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.1);
+  font-variant-numeric: tabular-nums; line-height: 1.15;
+}
+.case i { grid-row: span 2; width: 16px; height: 16px; border-radius: 4px; }
+.case b { font: 600 13px/1.1 var(--f-titre); white-space: nowrap; }
+.case small { color: var(--brume); font-size: 11px; white-space: nowrap; }
+.case.venir { opacity: .55; }
+.case.attend { background: rgba(255,255,255,.14); }
+.case.attend.tard { border-color: var(--or); }
+.case.attend.limite { border-color: var(--alerte); background: rgba(216,64,44,.22); }
+.case.passe { opacity: .4; }
+.case .barrette { grid-column: 2; height: 4px; border-radius: 2px; background: rgba(255,255,255,.15); overflow: hidden; }
+.case .barrette span { display: block; height: 100%; background: var(--ok); }
+
+#zone { position: relative; flex: 1; min-height: 0; overflow: hidden; background: #cfe6ea; }
+#scene { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: manipulation; }
+.touche { cursor: pointer; }
+
+#conseil {
+  display: flex; align-items: center; gap: 12px;
+  padding-inline: max(14px, env(safe-area-inset-left, 0px)) max(12px, env(safe-area-inset-right, 0px));
+  padding-block: 7px; background: var(--papier); color: var(--encre); font-size: 14px; line-height: 1.35;
+}
+#conseil p { margin: 0; flex: 1; min-width: 0; }
+#conseil button { flex: none; height: 36px; padding: 0 14px; border: 0; border-radius: 8px; background: var(--canal); color: var(--ecume); font: 600 15px/1 var(--f-titre); }
+
+.bandeau {
+  position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%);
+  max-width: calc(100% - 32px); padding: 8px 14px; border-radius: 10px;
+  background: var(--encre); color: #fff; font-size: 13px; font-weight: 600; text-align: center;
+}
+.voile { position: absolute; inset: 0; display: grid; place-items: center; padding: 16px; background: rgba(10, 30, 36, .55); }
+.carte {
+  display: flex; flex-direction: column; align-items: center; gap: 10px;
+  width: min(440px, 100%); max-height: 100%; overflow-y: auto; padding: 20px 20px 16px; border-radius: 16px;
+  background: var(--papier); color: var(--encre); text-align: center; box-shadow: 0 12px 40px rgba(0,0,0,.3);
+}
+.carte h3 { margin: 0; font: 700 26px/1.1 var(--f-titre); text-wrap: balance; }
+.carte p { margin: 0; color: var(--muet); max-width: 38ch; }
+.carte .grandes { font-size: 38px; letter-spacing: 4px; color: var(--or); line-height: 1; }
+.carte .grandes .eteinte { color: #ddd5c3; }
+.carte ul { margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(3, auto); gap: 4px 14px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.carte li { display: flex; align-items: center; gap: 6px; }
+.carte li i { width: 12px; height: 12px; border-radius: 3px; }
+.actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 6px; }
+@media (max-height: 460px) {
+  .voile { padding: 8px; }
+  .carte { gap: 5px; padding: 12px 16px 10px; }
+  .carte h3 { font-size: 21px; }
+  .carte .grandes { font-size: 26px; }
+  .carte p { font-size: 13px; line-height: 1.3; }
+  .actions { margin-top: 2px; }
+}
+.bouton { min-height: 44px; padding: 0 18px; border-radius: 10px; border: 2px solid var(--canal); background: var(--canal); color: var(--ecume); font: 600 16px/1 var(--f-titre); }
+
+.lab { font: 600 17px var(--f-titre); fill: rgba(255,255,255,.9); letter-spacing: .03em; text-anchor: middle; }
+.lab-sombre { font: 600 17px var(--f-titre); fill: #3f5f68; letter-spacing: .03em; }
+.jauge-lab { font: 700 14px var(--f-ui); letter-spacing: .03em; }
+.secoue { animation: secouer .35s ease-in-out; transform-box: fill-box; transform-origin: center; }
+@keyframes secouer { 0%, 100% { transform: rotate(0); } 25% { transform: rotate(-14deg); } 75% { transform: rotate(14deg); } }
+.coule { animation: couler .45s linear infinite; }
+@keyframes couler { to { stroke-dashoffset: -24; } }
+@media (prefers-reduced-motion: reduce) { .coule, .secoue { animation: none; } }
+</style>
+</head>
+<body>
+
+<div id="jeu">
+  <div class="barre">
+    <div class="titre"><small>L'éclusier · prototype</small><b id="t-niveau"></b></div>
+    <div class="compteur"><b id="t-heure">0:00</b><small>heure</small></div>
+    <div class="compteur"><b id="t-attente">0 s</b><small id="t-par">d'attente</small></div>
+    <button class="outil" id="b-vitesse" aria-label="Vitesse">×1</button>
+    <button class="outil" id="b-pause" aria-label="Pause">
+      <svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>
+    </button>
+    <button class="outil" id="b-recommencer" aria-label="Recommencer">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg><span class="lib">Recommencer</span>
+    </button>
+  </div>
+  <div id="horaire"></div>
+  <div id="conseil"><p id="conseil-texte"></p><button id="b-partir">Commencer</button></div>
+  <div id="zone">
+    <svg id="scene" viewBox="0 0 1000 560" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Coupe de l'écluse">
+      <g id="g-fond"></g>
+      <g id="g-dyn"></g>
+      <g id="g-touches"></g>
+    </svg>
+    <div class="bandeau" id="bandeau" hidden></div>
+    <div class="voile" id="fin" hidden><div class="carte" id="fin-carte"></div></div>
+  </div>
+</div>
+
+<!-- ==================================================================
+     LES NIVEAUX — du JSON pur. Les hauteurs et les largeurs sont en unités
+     de la coupe, les heures et les durées en secondes.
+       bassins   type (riviere, sas, bief), fond, largeur (dessinée), niveau
+                 de départ ; « fixe » pour la rivière (son niveau ne bouge
+                 pas : elle emporte l'eau qu'on lui donne) ; pour le bief de
+                 partage : « surface » (la largeur de calcul : un long bief,
+                 dessiné raccourci), « rigole » (le volume qui arrive chaque
+                 seconde), « max » (la crête du déversoir : au-dessus, l'eau
+                 s'en va)
+       liaisons  deux portes (seuil quand elle est ouverte, crête fermée)
+       tirant    l'eau qu'il faut sous un bateau ; un bief dont l'eau tombe
+                 sous fond + tirant est À SEC, et la partie est perdue
+       debit     le coefficient de Torricelli d'une porte ouverte : le volume
+                 passé chaque seconde vaut debit × √(chute)
+       passage   le temps qu'un bateau met à passer d'un bassin au suivant
+       patience  l'attente qu'un marinier supporte, de son arrivée à sa
+                 sortie du sas, éclusée comprise ; au-delà, la partie est
+                 perdue
+       horaire   les bateaux, dans l'ordre : heure d'arrivée, de, vers
+                 (indices de bassins), couleur
+       par       l'attente totale de la meilleure partie trouvée par la
+                 fouille — le banc (node tools/eclusier-banc.mjs) refuse
+                 s'il ne la retrouve pas
+     ================================================================== -->
+<script type="application/json" id="niveaux">
+{
+  "niveaux": [
+    {
+      "id": "1-2",
+      "titre": "Croisement à l'horaire",
+      "conseil": "Six bateaux, un seul sas, et l'eau du bief de partage ne revient que goutte à goutte. Remplir le sas coûte de l'eau, le vider ne coûte rien.",
+      "tirant": 1,
+      "debit": 1.2,
+      "passage": 2.5,
+      "patience": 80,
+      "bassins": [
+        {"type": "riviere", "fond": 0, "largeur": 7, "niveau": 1, "fixe": true, "nom": "la rivière"},
+        {"type": "sas", "fond": 0, "largeur": 2, "niveau": 1, "nom": "le sas"},
+        {"type": "bief", "fond": 3, "largeur": 7, "surface": 16, "niveau": 5, "max": 5, "rigole": 0.07, "nom": "le bief de partage"}
+      ],
+      "liaisons": [
+        {"type": "porte", "seuil": 0, "crete": 6},
+        {"type": "porte", "seuil": 3, "crete": 6}
+      ],
+      "horaire": [
+        {"heure": 2, "de": 2, "vers": 0, "couleur": "rouge"},
+        {"heure": 31, "de": 2, "vers": 0, "couleur": "jaune"},
+        {"heure": 34, "de": 2, "vers": 0, "couleur": "vert"},
+        {"heure": 47, "de": 0, "vers": 2, "couleur": "bleu"},
+        {"heure": 97, "de": 0, "vers": 2, "couleur": "violet"},
+        {"heure": 100, "de": 0, "vers": 2, "couleur": "orange"}
+      ],
+      "par": 109.65
+    }
+  ]
+}
+</script>
+
+<script id="moteur">
+"use strict";
+const Eclusier = (function () {
+
+  // --- Le modèle -------------------------------------------------------------
+  // Le 1-2 d'Écluses (rivière, sas, bief de partage), mais le temps passe :
+  // les bateaux arrivent à l'horaire, comme les trains de Station par leurs
+  // portails, et l'eau coule pendant qu'on regarde.
+  //
+  //   les portes   un geste ouvre ou ferme une porte. Elles sont ENCLENCHÉES,
+  //                comme les itinéraires d'un poste d'aiguillage : jamais les
+  //                deux ouvertes à la fois (le bief se viderait dans la
+  //                rivière) ; et on ne ferme pas une porte sur un bateau qui
+  //                la franchit.
+  //   l'eau        par une porte ouverte, l'eau du haut passe au-dessus du
+  //                seuil, à debit × √chute par seconde (Torricelli), jusqu'à
+  //                égaliser. La rivière est fixe : elle prend l'eau du sas
+  //                qui se vide. Le bief de partage ne reçoit que sa rigole,
+  //                et déborde à son « max ».
+  //   la dépense   REMPLIR le sas prend un sas d'eau au bief de partage ; le
+  //                vider ne coûte rien. Un bateau qui monte seul coûte un sas,
+  //                deux bateaux qui montent ensemble aussi ; un bateau qui
+  //                descend reprend gratis le sas laissé plein par celui qui
+  //                est monté. Tout le jeu est là : servir vite, ou attendre
+  //                pour grouper.
+  //   les bateaux  ils avancent tout seuls vers leur destination, un bassin à
+  //                la fois, quand la porte est ouverte, les deux eaux au même
+  //                niveau et assez profondes. Le sas en prend deux, côte à
+  //                côte. Sur une rive, la file d'attente part dans l'ordre
+  //                d'arrivée, sans dépassement (l'invariant de file de
+  //                Station).
+  //   la fin       gagné quand tous sont passés ; perdu si un bief tombe à
+  //                sec (sous fond + tirant) ou si un marinier attend plus que
+  //                sa « patience » avant de sortir du sas.
+  //
+  // Le temps n'avance que par pas entiers de PAS secondes : la page et le banc
+  // jouent exactement la même partie pour les mêmes gestes aux mêmes pas.
+
+  const PAS = 0.05;
+  const EPS = 1e-6;
+  const POSE = 0.004;        // sous cet écart, deux eaux reliées sont posées au même niveau
+
+  const S = b => b.surface || b.largeur;
+  const capacite = (N, i) => N.bassins[i].type === "sas" ? 2 : Infinity;
+
+  function charger(N) {
+    return {
+      k: 0,
+      niv: N.bassins.map(b => b.niveau),
+      ouvert: N.liaisons.map(() => false),
+      // ou : le bassin (-1 avant l'heure) ; va : le bassin visé pendant un
+      // passage (-1 sinon) ; arrive, entre (dans le sas), sort (du sas), fini :
+      // en pas (-1 pas encore)
+      bat: N.horaire.map(() => ({ ou: -1, va: -1, reste: 0, arrive: -1, entre: -1, sort: -1, fini: -1 })),
+      fin: null,
+      remplis: 0,            // les éclusées qui ont pris de l'eau au bief de partage
+      entree: 0, sortie: 0
+    };
+  }
+  function copie(e) {
+    return { k: e.k, niv: e.niv.slice(), ouvert: e.ouvert.slice(), bat: e.bat.map(b => ({ ...b })),
+      fin: e.fin, remplis: e.remplis, entree: e.entree, sortie: e.sortie };
+  }
+  const heure = e => e.k * PAS;
+  const pasDe = s => Math.round(s / PAS);
+  function eauTotale(N, e) {
+    let v = 0;
+    N.bassins.forEach((b, i) => { if (!b.fixe) v += S(b) * e.niv[i]; });
+    return v;
+  }
+
+  // --- Les gestes --------------------------------------------------------------
+  const passant = (e, g) => e.bat.some(b => b.va >= 0 && Math.min(b.ou, b.va) === g);
+  function refus(N, e, g) {
+    if (e.fin) return "fini";
+    if (passant(e, g)) return "passage";
+    if (!e.ouvert[g] && e.ouvert.some((o, j) => o && j !== g)) return "enclenchement";
+    return null;
+  }
+  function geste(N, e, g) {
+    const r = refus(N, e, g);
+    if (r) return r;
+    if (!e.ouvert[g] && g > 0 && N.bassins[g + 1].type === "bief" && e.niv[g] < e.niv[g + 1] - POSE) e.remplis++;
+    e.ouvert[g] = !e.ouvert[g];
+    return null;
+  }
+
+  // --- L'eau ---------------------------------------------------------------------
+  function verser(N, e, i, vol) {         // vol > 0 : de i vers i+1
+    const A = N.bassins[i], C = N.bassins[i + 1];
+    if (A.fixe) { if (vol > 0) e.entree += vol; else e.sortie -= vol; } else e.niv[i] -= vol / S(A);
+    if (C.fixe) { if (vol > 0) e.sortie += vol; else e.entree -= vol; } else e.niv[i + 1] += vol / S(C);
+  }
+  function couler(N, e, g, dt) {
+    const s = N.liaisons[g].seuil, i = g, j = g + 1;
+    const a = e.niv[i], c = e.niv[j];
+    if (Math.abs(a - c) < 1e-12) return 0;
+    const h = a > c ? i : j, l = a > c ? j : i, H = N.bassins[h], L = N.bassins[l];
+    const nh = e.niv[h], nl = e.niv[l];
+    if (nh <= s + 1e-12) return 0;
+    let max, m = null;
+    if (L.fixe) max = (nh - Math.max(nl, s)) * S(H);
+    else if (H.fixe) max = (nh - nl) * S(L);
+    else { m = (S(H) * nh + S(L) * nl) / (S(H) + S(L)); max = (nh - Math.max(m, s)) * S(H); }
+    const vol = N.debit * Math.sqrt(nh - Math.max(nl, s)) * dt;
+    if (vol >= max - 1e-9) {
+      verser(N, e, i, h === i ? max : -max);
+      if (m != null && m >= s) e.niv[i] = e.niv[j] = m;           // posé exactement
+      else if (L.fixe) e.niv[h] = Math.max(nl, s);
+      else if (H.fixe) e.niv[l] = nh;
+      return max;
+    }
+    verser(N, e, i, h === i ? vol : -vol);
+    return vol;
+  }
+  // Deux eaux reliées presque au même niveau prennent leur niveau commun (celui
+  // de la rivière si elle en est) : sans ça, la rigole qui monte d'un cheveu
+  // empêcherait les bateaux de passer.
+  function poser(N, e, g) {
+    const i = g, j = g + 1, s = N.liaisons[g].seuil;
+    if (Math.abs(e.niv[i] - e.niv[j]) >= POSE || Math.min(e.niv[i], e.niv[j]) <= s) return;
+    const A = N.bassins[i], C = N.bassins[j];
+    if (A.fixe || C.fixe) {
+      const f = A.fixe ? i : j, o = A.fixe ? j : i, d = (e.niv[f] - e.niv[o]) * S(N.bassins[o]);
+      if (d > 0) e.entree += d; else e.sortie -= d;
+      e.niv[o] = e.niv[f];
+    } else {
+      e.niv[i] = e.niv[j] = (S(A) * e.niv[i] + S(C) * e.niv[j]) / (S(A) + S(C));
+    }
+  }
+
+  // --- Les bateaux -----------------------------------------------------------------
+  function occupe(e, q) { return e.bat.filter(b => b.fini < 0 && ((b.va === -1 && b.ou === q) || b.va === q)).length; }
+  function peutPartir(N, e, k) {
+    const b = e.bat[k], h = N.horaire[k];
+    if (b.ou < 0 || b.va >= 0 || b.fini >= 0) return false;
+    const p = b.ou, q = p + Math.sign(h.vers - p), g = Math.min(p, q), sens = q - p;
+    if (!e.ouvert[g]) return false;
+    if (Math.abs(e.niv[p] - e.niv[q]) > EPS) return false;
+    if (e.niv[q] - N.liaisons[g].seuil < N.tirant - EPS) return false;
+    if (e.niv[q] - N.bassins[q].fond < N.tirant - EPS) return false;
+    if (occupe(e, q) >= capacite(N, q)) return false;
+    // un seul bateau à la fois par porte et par sens
+    if (e.bat.some(o => o.va >= 0 && Math.min(o.ou, o.va) === g && o.va - o.ou === sens)) return false;
+    // la file : sur une rive, personne ne double
+    if (N.bassins[p].type !== "sas")
+      for (let j = 0; j < k; j++) {
+        const o = e.bat[j];
+        if (o.ou === p && o.va < 0 && o.fini < 0 && N.horaire[j].vers !== p) return false;
+      }
+    return true;
+  }
+
+  // --- Le temps --------------------------------------------------------------------
+  function pas(N, e) {
+    if (e.fin) return;
+    e.k++;
+    // les arrivées
+    N.horaire.forEach((h, k) => { const b = e.bat[k]; if (b.ou < 0 && e.k >= pasDe(h.heure)) { b.ou = h.de; b.arrive = e.k; } });
+    // la rigole, puis le déversoir
+    N.bassins.forEach((B, i) => {
+      if (!B.rigole) return;
+      const v = B.rigole * PAS;
+      e.entree += v; e.niv[i] += v / S(B);
+      if (B.max != null && e.niv[i] > B.max) { e.sortie += (e.niv[i] - B.max) * S(B); e.niv[i] = B.max; }
+    });
+    // l'eau par les portes ouvertes
+    e.ouvert.forEach((o, g) => { if (o) { couler(N, e, g, PAS); poser(N, e, g); } });
+    // les passages en cours, puis les départs
+    e.bat.forEach((b, k) => {
+      if (b.va < 0) return;
+      b.reste -= PAS;
+      if (b.reste <= EPS) { b.ou = b.va; b.va = -1; b.reste = 0; if (b.ou === N.horaire[k].vers) b.fini = e.k; }
+    });
+    e.bat.forEach((b, k) => {
+      if (!peutPartir(N, e, k)) return;
+      b.va = b.ou + Math.sign(N.horaire[k].vers - b.ou); b.reste = N.passage;
+      if (b.ou === N.horaire[k].de) b.entre = e.k;
+      if (N.bassins[b.ou].type === "sas") b.sort = e.k;
+    });
+    // la fin
+    const sec = N.bassins.findIndex((B, i) => B.type === "bief" && e.niv[i] < B.fond + N.tirant - EPS);
+    if (sec >= 0) { e.fin = { fin: "sec", bassin: sec }; return; }
+    const las = e.bat.findIndex(b => b.arrive >= 0 && b.sort < 0 && (e.k - b.arrive) * PAS > N.patience + EPS);
+    if (las >= 0) { e.fin = { fin: "patience", bateau: las }; return; }
+    if (e.bat.every(b => b.fini >= 0)) e.fin = { fin: "gagne", attente: attente(N, e) };
+  }
+  function avancer(N, e, n) { for (let i = 0; i < n && !e.fin; i++) pas(N, e); }
+  // L'attente, en secondes : de l'arrivée à la sortie du sas (jusqu'à
+  // maintenant pour ceux qui n'en sont pas sortis). Un bateau qui patiente
+  // DANS le sas attend aussi : sinon, garder le sas plein en attendant le
+  // suivant serait gratuit. L'éclusée elle-même (remplir, entrer) compte :
+  // elle coûte pareil à toutes les parties, et le par la contient.
+  function attente(N, e) {
+    let t = 0;
+    e.bat.forEach(b => { if (b.arrive >= 0) t += ((b.sort >= 0 ? b.sort : e.k) - b.arrive) * PAS; });
+    return Math.round(t * 100) / 100;
+  }
+  // Au repos : personne ne passe une porte, et l'eau ne coule plus par une porte ouverte.
+  function repos(N, e) {
+    if (e.bat.some(b => b.va >= 0)) return false;
+    return e.ouvert.every((o, g) => !o || Math.abs(e.niv[g] - e.niv[g + 1]) < EPS || Math.max(e.niv[g], e.niv[g + 1]) <= N.liaisons[g].seuil + EPS);
+  }
+  // Le prochain pas où un bateau arrive (-1 s'il n'en vient plus).
+  function prochaine(N, e) {
+    let p = -1;
+    N.horaire.forEach((h, k) => { if (e.bat[k].ou < 0) { const q = pasDe(h.heure); if (p < 0 || q < p) p = q; } });
+    return p;
+  }
+  // Ce que coûterait une éclusée montante tout de suite : le niveau commun du
+  // bief de partage et du sas une fois le sas rempli depuis son niveau
+  // actuel (sans la rigole qui coule pendant ce temps). La jauge le montre
+  // avant qu'on ouvre : le coût de remplir se voit avant d'être payé.
+  function apresEclusee(N, e) {
+    const g = N.liaisons.length - 1, A = N.bassins[g], B = N.bassins[g + 1];
+    if (e.niv[g] >= e.niv[g + 1] - POSE) return e.niv[g + 1];
+    return Math.max((S(A) * e.niv[g] + S(B) * e.niv[g + 1]) / (S(A) + S(B)), N.liaisons[g].seuil);
+  }
+  const aSec = (N, i) => N.bassins[i].fond + N.tirant;
+  // Les étoiles, contre le « par » : 3 jusqu'à par + 10 %, 2 jusqu'à + 40 %, 1 sinon.
+  function etoiles(N, att) {
+    const p = Math.max(N.par, 1);
+    return att <= p * 1.1 + 0.5 ? 3 : att <= p * 1.4 + 0.5 ? 2 : 1;
+  }
+
+  return { PAS, EPS, POSE, S, apresEclusee, aSec, capacite, charger, copie, heure, pasDe, eauTotale, refus, geste, pas, avancer, attente, repos, prochaine, peutPartir, etoiles };
+})();
+</script>
+
+<script id="vue">
+"use strict";
+(function () {
+  // --- La vue : elle dessine l'état du moteur et lui passe les gestes, rien
+  // de plus. Aucune règle ici : l'eau, les bateaux et la fin sont au moteur.
+  const DONNEES = JSON.parse(document.getElementById("niveaux").textContent);
+  const N = DONNEES.niveaux[0], E = Eclusier;
+  const $ = id => document.getElementById(id);
+  const COULEURS = { rouge: "#d9412d", jaune: "#f2b705", vert: "#2f9e58", bleu: "#2f6fd6", violet: "#8a4fc8", orange: "#ef8a1c" };
+  const NOMS = { rouge: "rouge", jaune: "jaune", vert: "vert", bleu: "bleu", violet: "violet", orange: "orange" };
+  const SVGNS = "http://www.w3.org/2000/svg";
+
+  // --- La coupe : x par bassin, y par hauteur --------------------------------
+  const U = 58;
+  const Y = h => 500 - h * U;
+  const XB = [[-1200, 380], [380, 480], [480, 2200]];      // la rivière et le bief filent hors du cadre
+  const XP = [380, 480];                     // les portes
+  const HAUT_PORTIQUE = 6.6;
+  const SLOT = 74;
+  const amont = N.bassins.length - 1;
+  const SEC = E.aSec(N, amont), MAXI = N.bassins[amont].max;
+
+  let e, acc = 0, vitesse = 1, enMarche = false, avant = null, finVue = null;
+  const lever = [0, 0];                      // le vantail de chaque porte, 0 baissé → 1 levé (animation)
+  const sorties = [];                        // les bateaux arrivés, qui s'en vont (dessin seul)
+
+  function nouvelle() {
+    e = E.charger(N); acc = 0; enMarche = false; finVue = null; sorties.length = 0;
+    lever[0] = lever[1] = 0;
+    $("fin").hidden = true;
+    $("conseil").hidden = false;
+    $("b-partir").textContent = "Commencer";
+    dessinerFond();
+    dessiner();
+  }
+
+  // --- Le décor fixe ----------------------------------------------------------
+  function dessinerFond() {
+    const f = [];
+    f.push(`<defs>
+      <linearGradient id="ciel" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#bfe2ea"/><stop offset="1" stop-color="#e8f3ef"/></linearGradient>
+      <linearGradient id="eau" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3cc0de"/><stop offset="1" stop-color="#0f6f8c"/></linearGradient>
+      <linearGradient id="terre" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8a6a4a"/><stop offset="1" stop-color="#5e4632"/></linearGradient>
+      ${XP.map((x, g) => `<clipPath id="cp${g}"><rect x="${x - 20}" y="${Y(HAUT_PORTIQUE) + 6}" width="40" height="${Y(0) - Y(HAUT_PORTIQUE)}"/></clipPath>`).join("")}
+    </defs>`);
+    f.push(`<rect x="-1200" y="-1200" width="3400" height="1760" fill="url(#ciel)"/>`);
+    f.push(`<path d="M-1200 340 C -700 300 -300 340 0 330 C 120 300 220 320 330 296 S 560 250 700 236 S 900 210 1000 220 S 1500 200 2200 230 V 560 H -1200 Z" fill="#b9d6c4" opacity=".7"/>`);
+    // la terre : le fond de la rivière et du sas, la marche du bief de partage
+    f.push(`<path d="M-1200 560 V ${Y(0)} H ${XP[1]} V ${Y(3)} H 2200 V 560 Z" fill="url(#terre)"/>`);
+    f.push(`<path d="M-1200 ${Y(0)} H ${XP[1]} V ${Y(3)} H 2200" fill="none" stroke="#4a3626" stroke-width="3"/>`);
+    // le trait d'à-sec dans le bief de partage
+
+    f.push(`<text class="lab-sombre" x="40" y="${Y(1) - 14}">${N.bassins[0].nom}</text>`);
+    f.push(`<text class="lab-sombre" x="${XB[2][0] + 36}" y="${Y(6.3)}">${N.bassins[amont].nom} →</text>`);
+    // la rigole qui arrive à droite
+    f.push(`<path d="M1040 ${Y(6.6)} H 984 V ${Y(5.8)}" fill="none" stroke="#7a6a58" stroke-width="12" stroke-linejoin="round"/>`);
+    f.push(`<text class="lab-sombre" x="994" y="${Y(5.6)}">rigole</text>`);
+    // les portiques des deux portes
+    XP.forEach((x, g) => {
+      const bas = g === 0 ? Y(0) : Y(3);
+      f.push(`<rect x="${x - 15}" y="${Y(HAUT_PORTIQUE)}" width="8" height="${bas - Y(HAUT_PORTIQUE)}" fill="#8d8a80"/>`);
+      f.push(`<rect x="${x + 7}" y="${Y(HAUT_PORTIQUE)}" width="8" height="${bas - Y(HAUT_PORTIQUE)}" fill="#8d8a80"/>`);
+      f.push(`<rect x="${x - 19}" y="${Y(HAUT_PORTIQUE) - 4}" width="38" height="12" rx="3" fill="#6f6b62"/>`);
+    });
+    // la jauge du bief de partage, en haut à droite
+    const J = jauge();
+    f.push(`<rect x="${J.x - 112}" y="${J.haut - 30}" width="214" height="${J.bas - J.haut + 46}" rx="12" fill="rgba(255,255,255,.85)"/>`);
+    f.push(`<text class="jauge-lab" x="${J.x + 15}" y="${J.haut - 11}" text-anchor="middle" fill="#3f5f68">L'EAU DU BIEF</text>`);
+    f.push(`<rect x="${J.x}" y="${J.haut}" width="30" height="${J.bas - J.haut}" rx="6" fill="#dfe9ea" stroke="#3f5f68" stroke-width="2"/>`);
+    f.push(`<text class="jauge-lab" x="${J.x + 36}" y="${J.haut + 8}" fill="#3f5f68">plein</text>`);
+    f.push(`<text class="jauge-lab" x="${J.x + 36}" y="${J.bas}" fill="#a3281a">à sec</text>`);
+    $("g-fond").innerHTML = f.join("");
+
+    // les roues : les seules choses à toucher
+    const t = [];
+    XP.forEach((x, g) => {
+      t.push(`<g class="touche" data-porte="${g}" role="button" tabindex="0" aria-label="Porte ${g ? "amont" : "aval"}">
+        <rect x="${x - 40}" y="${Y(HAUT_PORTIQUE) - 70}" width="80" height="${Y(g ? 3 : 0) - Y(HAUT_PORTIQUE) + 70}" fill="transparent"/>
+        <g id="roue${g}"><circle cx="${x}" cy="${Y(HAUT_PORTIQUE) - 26}" r="20" fill="none" stroke="var(--vanne)" stroke-width="6"/>
+        ${[0, 60, 120].map(a => `<line x1="${x}" y1="${Y(HAUT_PORTIQUE) - 26}" x2="${x}" y2="${Y(HAUT_PORTIQUE) - 46}" stroke="var(--vanne)" stroke-width="4" transform="rotate(${a} ${x} ${Y(HAUT_PORTIQUE) - 26})"/>
+           <line x1="${x}" y1="${Y(HAUT_PORTIQUE) - 26}" x2="${x}" y2="${Y(HAUT_PORTIQUE) - 6}" stroke="var(--vanne)" stroke-width="4" transform="rotate(${a} ${x} ${Y(HAUT_PORTIQUE) - 26})"/>`).join("")}
+        <circle cx="${x}" cy="${Y(HAUT_PORTIQUE) - 26}" r="6" fill="var(--vanne)"/></g>
+      </g>`);
+    });
+    $("g-touches").innerHTML = t.join("");
+    $("g-touches").querySelectorAll("[data-porte]").forEach(n => {
+      const g = +n.dataset.porte;
+      n.addEventListener("pointerdown", ev => { ev.preventDefault(); toucher(g); });
+      n.addEventListener("keydown", ev => { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); toucher(g); } });
+    });
+  }
+  function jauge() { return { x: 852, haut: 98, bas: 186 }; }
+  const yJauge = h => { const J = jauge(), r = (h - SEC) / (MAXI - SEC); return J.bas - Math.max(-0.08, Math.min(1, r)) * (J.bas - J.haut); };
+
+  // --- Les gestes -----------------------------------------------------------------
+  // Une roue : ouvre sa porte (en fermant l'autre d'abord : elles sont
+  // enclenchées), ou la ferme si elle est ouverte.
+  function toucher(g) {
+    if (e.fin) return;
+    if (!enMarche) partir();
+    let r = null;
+    if (e.ouvert[g]) r = E.geste(N, e, g);
+    else {
+      const o = e.ouvert.findIndex(x => x);
+      if (o >= 0) r = E.geste(N, e, o);
+      if (!r) r = E.geste(N, e, g);
+    }
+    if (r) {
+      const roue = $("roue" + (r === "passage" && !e.ouvert[g] ? 1 - g : g));
+      roue.classList.remove("secoue"); void roue.getBBox(); roue.classList.add("secoue");
+      dire(r === "passage" ? "Un bateau passe la porte : attends qu'il soit sorti." : "Les deux portes ne s'ouvrent jamais ensemble.");
+    }
+  }
+  let minuterie = null;
+  function dire(t) {
+    const b = $("bandeau"); b.textContent = t; b.hidden = false;
+    clearTimeout(minuterie); minuterie = setTimeout(() => { b.hidden = true; }, 2600);
+  }
+  function partir() { enMarche = true; $("conseil").hidden = true; avant = null; }
+
+  // --- Les bateaux : où les dessiner -------------------------------------------
+  function file(i) {     // les bateaux qui attendent dans le bief i, dans l'ordre
+    return e.bat.map((b, k) => k).filter(k => { const b = e.bat[k]; return b.ou === i && b.va < 0 && b.fini < 0; });
+  }
+  function place(i, rang) {      // le centre d'un bateau à son rang dans un bassin
+    if (i === 0) return { x: XP[0] - 46 - rang * SLOT, d: 0 };
+    if (i === amont) return { x: XP[1] + 46 + rang * SLOT, d: 0 };
+    return { x: (XP[0] + XP[1]) / 2 + (rang ? 6 : -4), d: rang };
+  }
+  function bateau(x, y, couleur, d, opts = {}) {
+    const s = d ? 0.86 : 1, dy = d ? -9 : 0;
+    const c = COULEURS[couleur] || "#888";
+    const sens = opts.sens || 1;
+    return `<g transform="translate(${x.toFixed(1)} ${(y + dy).toFixed(1)}) scale(${s * sens} ${s})" opacity="${opts.opacite ?? (d ? .9 : 1)}">
+      <path d="M-33 -9 H33 L25 9 H-25 Z" fill="${c}" stroke="rgba(0,0,0,.35)" stroke-width="1.5"/>
+      <rect x="-33" y="-12" width="66" height="4" rx="2" fill="#f7f4ec"/>
+      <rect x="-18" y="-27" width="24" height="15" rx="3" fill="#f7f4ec" stroke="rgba(0,0,0,.3)"/>
+      <rect x="-14" y="-24" width="6" height="6" rx="1" fill="#6fb5c8"/><rect x="-5" y="-24" width="6" height="6" rx="1" fill="#6fb5c8"/>
+      <rect x="12" y="-30" width="7" height="18" fill="#2b2b2b"/><rect x="12" y="-26" width="7" height="4" fill="${c}"/>
+    </g>`;
+  }
+  function anneau(x, y, frac) {          // la patience qui s'use, au-dessus d'un bateau
+    const r = 11, a = Math.min(1, frac) * 2 * Math.PI;
+    const coul = frac < 0.55 ? "#2f9e58" : frac < 0.8 ? "#f2a705" : "#d8402c";
+    const x1 = x + r * Math.sin(a), y1 = y - r * Math.cos(a);
+    const arc = frac >= 0.999 ? `<circle cx="${x}" cy="${y}" r="${r}" fill="${coul}"/>` :
+      `<path d="M${x} ${y} L${x} ${y - r} A${r} ${r} 0 ${a > Math.PI ? 1 : 0} 1 ${x1.toFixed(1)} ${y1.toFixed(1)} Z" fill="${coul}"/>`;
+    return `<circle cx="${x}" cy="${y}" r="${r + 3}" fill="#fff" stroke="rgba(0,0,0,.25)"/>${arc}`;
+  }
+
+  // --- Le dessin de chaque image ---------------------------------------------
+  function dessiner() {
+    const d = [], t = E.heure(e);
+    // l'eau
+    N.bassins.forEach((b, i) => {
+      const [x0, x1] = XB[i], y = Y(e.niv[i]), yf = Y(b.fond);
+      if (e.niv[i] > b.fond + 1e-6) d.push(`<rect x="${x0}" y="${y.toFixed(1)}" width="${x1 - x0}" height="${(yf - y).toFixed(1)}" fill="url(#eau)" opacity=".92"/>`);
+      d.push(`<line x1="${x0}" y1="${y.toFixed(1)}" x2="${x1}" y2="${y.toFixed(1)}" stroke="#d6f6fb" stroke-width="2.5" opacity=".9"/>`);
+    });
+    // l'eau qui passe par une porte ouverte
+    e.ouvert.forEach((o, g) => {
+      if (!o) return;
+      const a = e.niv[g], c = e.niv[g + 1], s = N.liaisons[g].seuil;
+      if (Math.abs(a - c) < E.POSE || Math.max(a, c) <= s) return;
+      const x = XP[g], haut = a > c ? g : g + 1, dir = haut === g ? 1 : -1;
+      const yH = Y(Math.max(a, c)), yS = Y(s), yL = Y(Math.min(a, c));
+      if (Math.min(a, c) < s) {
+        // une chute : la nappe tombe du seuil dans l'eau du bas
+        d.push(`<path d="M${x - dir * 4} ${yH} Q ${x + dir * 20} ${yS} ${x + dir * 26} ${yL}" fill="none" stroke="#bfefff" stroke-width="${Math.max(4, (yS - yH) * 0.7).toFixed(1)}" opacity=".8"/>`);
+        d.push(`<path d="M${x - dir * 4} ${yH} Q ${x + dir * 20} ${yS} ${x + dir * 26} ${yL}" class="coule" fill="none" stroke="#fff" stroke-width="2" stroke-dasharray="8 16"/>`);
+      } else {
+        // sous l'eau : un courant le long du radier
+        for (let k = 0; k < 3; k++) d.push(`<line class="coule" x1="${x - dir * 30}" y1="${yS - 10 - k * 14}" x2="${x + dir * 40}" y2="${yS - 10 - k * 14}" stroke="#e8fbff" stroke-width="2" stroke-dasharray="10 14" opacity=".75"/>`);
+      }
+      d.push(`<circle cx="${x + dir * 30}" cy="${yL}" r="7" fill="#fff" opacity=".55"/>`);
+    });
+    // la rigole qui coule, et le déversoir quand le bief est plein
+    d.push(`<line class="coule" x1="984" y1="${Y(5.8)}" x2="984" y2="${Y(e.niv[amont])}" stroke="#bfefff" stroke-width="5" stroke-dasharray="6 6"/>`);
+    if (e.niv[amont] >= MAXI - 1e-4) d.push(`<text class="lab" x="960" y="${Y(MAXI) + 24}" style="text-anchor:end">plein : le déversoir déborde</text>`);
+    // les vantaux, levés dans leur portique quand la porte est ouverte
+    XP.forEach((x, g) => {
+      const l = N.liaisons[g], h = l.crete - l.seuil;
+      const dy = lever[g] * (h + 0.4) * U;
+      d.push(`<g clip-path="url(#cp${g})"><rect x="${x - 7}" y="${(Y(l.crete) - dy).toFixed(1)}" width="14" height="${h * U}" fill="#7a5034" stroke="#3f2a1b" stroke-width="2"/>
+        <line x1="${x}" y1="${Y(HAUT_PORTIQUE)}" x2="${x}" y2="${(Y(l.crete) - dy).toFixed(1)}" stroke="#555" stroke-width="2"/></g>`);
+    });
+    // les bateaux
+    const rangs = {};
+    const sas = file(1).sort((a, b) => e.bat[a].entre - e.bat[b].entre);
+    sas.forEach((k, r) => { rangs[k] = r; });
+    [0, amont].forEach(i => file(i).forEach((k, r) => { rangs[k] = r; }));
+    const dessins = [];
+    e.bat.forEach((b, k) => {
+      const h = N.horaire[k], sens = h.vers > h.de ? 1 : -1;
+      if (b.ou < 0 || b.fini >= 0) return;
+      let p, y = Y(e.niv[b.ou]);
+      if (b.va >= 0) {
+        const f = 1 - b.reste / N.passage;
+        const de = b.ou === 1 ? place(1, rangs[k] ?? 0) : place(b.ou, 0);
+        const vers = b.va === 1 ? place(1, sas.length) : place(b.va, 0);
+        p = { x: de.x + (vers.x - de.x) * f, d: b.va === 1 ? vers.d : 0 };
+      } else p = place(b.ou, rangs[k] ?? 0);
+      dessins.push({ d: p.d, svg: bateau(p.x, y, h.couleur, p.d, { sens }) +
+        (b.arrive >= 0 && b.sort < 0 ? anneau(p.x, y - 52 + (p.d ? -8 : 0), (e.k - b.arrive) * E.PAS / N.patience) : "") });
+    });
+    sorties.forEach(s => {
+      const h = N.horaire[s.k], age = t - s.t;
+      const x0 = place(h.vers, 0).x, x = x0 + (h.vers === 0 ? -1 : 1) * age * 70;
+      dessins.push({ d: 0, svg: bateau(x, Y(e.niv[h.vers]), h.couleur, 0, { sens: h.vers > h.de ? 1 : -1, opacite: Math.max(0, 1 - age / 5) }) });
+    });
+    dessins.sort((a, b) => b.d - a.d).forEach(x => d.push(x.svg));
+    // l'eau devant les coques : elles s'y enfoncent
+    N.bassins.forEach((b, i) => {
+      const [x0, x1] = XB[i], y = Y(e.niv[i]);
+      if (e.niv[i] > b.fond + 1e-6) d.push(`<rect x="${x0}" y="${y.toFixed(1)}" width="${x1 - x0}" height="${Math.min(12, Y(b.fond) - y).toFixed(1)}" fill="#2bb3d4" opacity=".5"/>`);
+    });
+    // le trait d'à-sec, par-dessus l'eau du bief de partage
+    d.push(`<line x1="${XB[2][0] + 14}" y1="${Y(SEC)}" x2="2200" y2="${Y(SEC)}" stroke="#ff5a43" stroke-width="3" stroke-dasharray="10 7"/>`);
+    d.push(`<text class="lab" x="${XB[2][0] + 160}" y="${Y(SEC) + 22}" style="text-anchor:start;fill:#ffd9d2">sous ce trait, à sec</text>`);
+    // les bateaux annoncés : une flèche au bord, quelques secondes avant
+    N.horaire.forEach((h, k) => {
+      if (e.bat[k].ou >= 0) return;
+      const dans = h.heure - t;
+      if (dans > 10 || dans < 0) return;
+      const x = h.de === 0 ? 40 : 630, y = Y(e.niv[h.de]) - 44;
+      d.push(`<g transform="translate(${x} ${y})"><rect x="-22" y="-17" width="68" height="30" rx="15" fill="${COULEURS[h.couleur]}"/>
+        <text x="12" y="4" text-anchor="middle" style="font:700 16px var(--f-ui);fill:#fff">${Math.ceil(dans)} s</text></g>`);
+    });
+    // la jauge : le niveau, et ce que coûterait de remplir le sas maintenant
+    const J = jauge(), yN = yJauge(e.niv[amont]);
+    const coulJ = e.niv[amont] - SEC < 0.25 ? "#d8402c" : e.niv[amont] - SEC < 0.5 ? "#f2a705" : "#17a5c8";
+    d.push(`<rect x="${J.x + 3}" y="${yN.toFixed(1)}" width="24" height="${Math.max(0, J.bas - 3 - yN).toFixed(1)}" rx="4" fill="${coulJ}"/>`);
+    const apres = E.apresEclusee(N, e);
+    if (apres < e.niv[amont] - 0.01) {
+      const yA = Math.min(J.bas + 4, yJauge(apres)), mauvais = apres < SEC;
+      d.push(`<line x1="${J.x - 4}" y1="${yA.toFixed(1)}" x2="${J.x + 34}" y2="${yA.toFixed(1)}" stroke="${mauvais ? "#d8402c" : "#1f2d33"}" stroke-width="3" stroke-dasharray="5 3"/>`);
+      const yT = Math.min(yA, J.bas - 12);
+      d.push(`<text class="jauge-lab" x="${J.x - 8}" y="${(yT - 3).toFixed(1)}" text-anchor="end" fill="${mauvais ? "#a3281a" : "#1f2d33"}">${mauvais ? "remplir le sas :" : "après avoir"}</text>`);
+      d.push(`<text class="jauge-lab" x="${J.x - 8}" y="${(yT + 13).toFixed(1)}" text-anchor="end" fill="${mauvais ? "#a3281a" : "#1f2d33"}">${mauvais ? "à sec !" : "rempli le sas"}</text>`);
+    }
+    $("g-dyn").innerHTML = d.join("");
+    // la barre
+    $("t-heure").textContent = Math.floor(t / 60) + ":" + String(Math.floor(t % 60)).padStart(2, "0");
+    $("t-attente").textContent = Math.round(E.attente(N, e)) + " s";
+    horaire();
+  }
+
+  function horaire() {
+    const t = E.heure(e), h = [];
+    N.horaire.forEach((x, k) => {
+      const b = e.bat[k], monte = x.vers > x.de;
+      let cl = "", etat;
+      if (b.ou < 0) { cl = "venir"; etat = "dans " + Math.ceil(x.heure - t) + " s"; }
+      else if (b.fini >= 0 || b.sort >= 0) { cl = "passe"; etat = "passé · " + Math.round((b.sort - b.arrive) * E.PAS) + " s"; }
+      else {
+        const f = (e.k - b.arrive) * E.PAS / N.patience;
+        cl = "attend" + (f > 0.8 ? " limite" : f > 0.55 ? " tard" : "");
+        etat = "attend " + Math.floor((e.k - b.arrive) * E.PAS) + " s";
+      }
+      const bar = cl.startsWith("attend") ? `<div class="barrette"><span style="width:${Math.max(0, 100 - 100 * (e.k - b.arrive) * E.PAS / N.patience).toFixed(0)}%;background:${(e.k - b.arrive) * E.PAS / N.patience > 0.8 ? "#d8402c" : "#2f9e58"}"></span></div>` : "";
+      h.push(`<div class="case ${cl}"><i style="background:${COULEURS[x.couleur]}"></i><b>${monte ? "↑ monte" : "↓ descend"} · ${Math.floor(x.heure / 60)}:${String(x.heure % 60).padStart(2, "0")}</b><small>${etat}</small>${bar}</div>`);
+    });
+    const html = h.join("");
+    if ($("horaire").innerHTML !== html) $("horaire").innerHTML = html;
+  }
+
+  // --- La fin -------------------------------------------------------------------
+  function finir() {
+    const f = e.fin, c = [];
+    if (f.fin === "gagne") {
+      const n = E.etoiles(N, f.attente);
+      c.push(`<h3>Tous passés !</h3>`);
+      c.push(`<div class="grandes">${[1, 2, 3].map(i => `<span class="${i <= n ? "" : "eteinte"}">★</span>`).join("")}</div>`);
+      c.push(`<p>${Math.round(f.attente)} s d'attente en tout. La meilleure partie trouvée par le banc : ${Math.round(N.par)} s.</p>`);
+    } else if (f.fin === "sec") {
+      c.push(`<h3>Le bief est à sec</h3>`);
+      c.push(`<p>L'eau du bief de partage est tombée sous le trait rouge : les bateaux touchent le fond. Remplir le sas lui prend de l'eau, le vider ne coûte rien. Un bateau qui descend peut reprendre le sas que laisse plein un bateau qui monte.</p>`);
+    } else {
+      const h = N.horaire[f.bateau];
+      c.push(`<h3>Le bateau ${NOMS[h.couleur]} a perdu patience</h3>`);
+      c.push(`<p>Il attendait depuis plus de ${N.patience} s. Faire attendre pour grouper économise l'eau, mais pas trop longtemps.</p>`);
+    }
+    c.push(`<ul>${N.horaire.map((h, k) => { const b = e.bat[k]; const a = b.arrive < 0 ? "—" : Math.round(((b.sort >= 0 ? b.sort : e.k) - b.arrive) * E.PAS) + " s"; return `<li><i style="background:${COULEURS[h.couleur]}"></i>${h.vers > h.de ? "↑" : "↓"} ${a}</li>`; }).join("")}</ul>`);
+    c.push(`<p>${e.remplis} éclusée${e.remplis > 1 ? "s" : ""} montante${e.remplis > 1 ? "s" : ""} — chacune a pris un sas d'eau au bief.</p>`);
+    c.push(`<div class="actions"><button class="bouton" id="b-rejouer">Rejouer</button></div>`);
+    $("fin-carte").innerHTML = c.join("");
+    $("fin").hidden = false;
+    $("b-rejouer").addEventListener("click", nouvelle);
+  }
+
+  // --- La boucle -------------------------------------------------------------------
+  function unPas() {
+    const finis = e.bat.map(b => b.fini);
+    E.pas(N, e);
+    e.bat.forEach((b, k) => { if (finis[k] < 0 && b.fini >= 0) sorties.push({ k, t: E.heure(e) }); });
+  }
+  function image(ts) {
+    if (avant == null) avant = ts;
+    const dt = Math.min(0.1, (ts - avant) / 1000);
+    avant = ts;
+    if (enMarche && !e.fin) {
+      acc += dt * vitesse;
+      while (acc >= E.PAS && !e.fin) { unPas(); acc -= E.PAS; }
+    }
+    for (let i = sorties.length - 1; i >= 0; i--) if (E.heure(e) - sorties[i].t > 5) sorties.splice(i, 1);
+    e.ouvert.forEach((o, g) => { lever[g] += ((o ? 1 : 0) - lever[g]) * Math.min(1, dt * 7); });
+    dessiner();
+    if (e.fin && !finVue) { finVue = e.fin; setTimeout(finir, 900); }
+    requestAnimationFrame(image);
+  }
+
+  // Le cadre suit la forme de l'écran : la coupe (0…1000) reste au milieu, la
+  // rivière, le bief et le ciel s'étendent sur les côtés (ou au-dessus).
+  function cadrer() {
+    const z = $("zone"), r = z.clientWidth / Math.max(1, z.clientHeight);
+    const H0 = 60, H = 480;      // du ciel juste au-dessus des roues jusqu'au pied de la terre
+    const vb = r >= 1000 / H ? `${((1000 - H * r) / 2).toFixed(1)} ${H0} ${(H * r).toFixed(1)} ${H}` : `0 ${(H0 + H - 1000 / r).toFixed(1)} 1000 ${(1000 / r).toFixed(1)}`;
+    $("scene").setAttribute("viewBox", vb);
+  }
+  addEventListener("resize", cadrer);
+  new ResizeObserver(cadrer).observe($("zone"));
+
+  $("t-niveau").textContent = N.id + " · " + N.titre;
+  $("t-par").textContent = "d'attente · par " + Math.round(N.par) + " s";
+  $("conseil-texte").textContent = N.conseil;
+  $("b-partir").addEventListener("click", () => { if (enMarche) return; partir(); });
+  $("b-recommencer").addEventListener("click", nouvelle);
+  $("b-vitesse").addEventListener("click", () => { vitesse = vitesse === 1 ? 2 : vitesse === 2 ? 4 : 1; $("b-vitesse").textContent = "×" + vitesse; });
+  $("b-pause").addEventListener("click", () => {
+    if (e.fin) return;
+    if (enMarche) { enMarche = false; $("conseil").hidden = false; $("b-partir").textContent = "Reprendre"; }
+    else partir();
+  });
+  // pour les vérifications sans les doigts : lire l'état, toucher une roue
+  // (avancer : le temps du jeu, n pas, sans attendre l'écran — un onglet caché
+  // ne reçoit plus d'images)
+  window.eclusier = { etat: () => e, toucher, avancer(n) {
+    if (!enMarche) partir();
+    for (let i = 0; i < n && !e.fin; i++) unPas();
+    e.ouvert.forEach((o, g) => { lever[g] = o ? 1 : 0; });
+    dessiner();
+    if (e.fin && !finVue) { finVue = e.fin; finir(); }
+  } };
+  nouvelle();
+  requestAnimationFrame(image);
+})();
+</script>
+</body>
+</html>
