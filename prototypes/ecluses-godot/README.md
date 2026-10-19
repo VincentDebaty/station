@@ -87,8 +87,10 @@ godot --headless --path prototypes/ecluses-godot --fixed-fps 120 --script res://
 
 Il joue la solution des 19 niveaux que Godot sait dessiner, du 1-1 au 16-1,
 en 3 minutes (`-- --niveau=1-3` pour un seul, en quelques secondes) — comme
-un doigt : tenu jusqu'au bout au chapitre 1, un toucher ailleurs —, à 120,
-60 et 30 images/s, puis une seconde fois à 60.
+un doigt, d'un toucher par geste —, à 120, 60 et 30 images/s, puis une
+seconde fois à 60. (Le doigt maintenu des niveaux « continu » a été abandonné
+le 19 octobre 2026, Vincent : « une seule tape suffit » ; la tranche et le
+banc savent encore le jouer, mais plus aucun niveau ne le porte.)
 À chaque image, il mesure la géométrie que le rendu a produite, et REFUSE
 (code 1) en disant la règle, la porte ou le bassin, le coup et l'instant :
 

@@ -25,7 +25,6 @@
       "chapitre": 1,
       "titre": "Premier passage",
       "mode": "pas",
-      "continu": true,
       "tuto": true,
       "par": 3,
       "conseil": "Garde le doigt sur la roue d'une porte pour l'ouvrir : l'eau s'égalise des deux côtés, et le bateau passe tout seul. Touche le bateau s'il ne sait pas quoi faire : il te le dira.",
@@ -47,7 +46,6 @@
       "chapitre": 1,
       "titre": "Croisement",
       "mode": "pas",
-      "continu": true,
       "par": 5,
       "conseil": "Deux bateaux, un seul sas : ils s'y croisent côte à côte.",
       "bassins": [
@@ -69,7 +67,6 @@
       "chapitre": 1,
       "titre": "L'escalier",
       "mode": "pas",
-      "continu": true,
       "par": 7,
       "conseil": "Le bief amont n'a pas d'eau à perdre. Ce qui coule vers l'aval ne remonte jamais.",
       "bassins": [
@@ -92,7 +89,6 @@
       "chapitre": 1,
       "titre": "Le passage étroit",
       "mode": "pas",
-      "continu": true,
       "par": 6,
       "conseil": "Deux bateaux se croisent dans l'escalier, et un seul bief amont remplit tout.",
       "bassins": [

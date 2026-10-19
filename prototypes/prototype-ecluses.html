@@ -288,7 +288,6 @@ button:focus-visible, [role="button"]:focus-visible { outline: 3px solid var(--o
       "chapitre": 1,
       "titre": "Premier passage",
       "mode": "pas",
-      "continu": true,
       "tuto": true,
       "par": 3,
       "conseil": "Garde le doigt sur la roue d'une porte pour l'ouvrir : l'eau s'égalise des deux côtés, et le bateau passe tout seul. Touche le bateau s'il ne sait pas quoi faire : il te le dira.",
@@ -310,7 +309,6 @@ button:focus-visible, [role="button"]:focus-visible { outline: 3px solid var(--o
       "chapitre": 1,
       "titre": "Croisement",
       "mode": "pas",
-      "continu": true,
       "par": 5,
       "conseil": "Deux bateaux, un seul sas : ils s'y croisent côte à côte.",
       "bassins": [
@@ -332,7 +330,6 @@ button:focus-visible, [role="button"]:focus-visible { outline: 3px solid var(--o
       "chapitre": 1,
       "titre": "L'escalier",
       "mode": "pas",
-      "continu": true,
       "par": 7,
       "conseil": "Le bief amont n'a pas d'eau à perdre. Ce qui coule vers l'aval ne remonte jamais.",
       "bassins": [
@@ -355,7 +352,6 @@ button:focus-visible, [role="button"]:focus-visible { outline: 3px solid var(--o
       "chapitre": 1,
       "titre": "Le passage étroit",
       "mode": "pas",
-      "continu": true,
       "par": 6,
       "conseil": "Deux bateaux se croisent dans l'escalier, et un seul bief amont remplit tout.",
       "bassins": [
@@ -998,7 +994,9 @@ const Ecluses = (function () {
   //              portes se manœuvrent au doigt maintenu et l'eau passe en
   //              continu. Le moteur, lui, n'en sait rien : une porte tenue
   //              jusqu'au bout est un coup « porte », et c'est sur ces coups
-  //              que se comptent le par et les étoiles.
+  //              que se comptent le par et les étoiles. ABANDONNÉ le
+  //              19 octobre 2026 (Vincent : « une seule tape suffit ») :
+  //              plus aucun niveau ne le porte ; la tranche sait encore le lire.
   //   pont       sur une liaison : la hauteur du DESSOUS du tablier d'un
   //              pont. Un bateau ne passe dessous que si l'eau, plus sa
   //              « hauteur » (cheminée comprise, 0,6 par défaut), n'y touche pas.
