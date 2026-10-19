@@ -40,6 +40,17 @@ var haut_veine := 0.0           # le haut de l'eau qui y passe,
 var y_seuil := 0.0              # et le seuil  # la largeur du canal en vue oblique (le D du canal)
 var _t := 0.0
 var _point_chute := Vector2.ZERO
+# La chute en aplat (plus bas) : posée par le canal sur l'eau qui passe sous
+# une porte. Les autres chutes (rigole, levée, trop-plein, pompe) gardent
+# leur dessin en attendant de passer à l'aplat à leur tour.
+var aplat := false
+# L'écume de l'aplat se dessine sur ce calque, que le canal range juste
+# APRÈS l'eau des bassins : dessinée avec la nappe, sous l'eau translucide,
+# elle disparaissait dès que le bassin d'en bas avait de l'eau, et le raccord
+# redevenait visible (1-4).
+var calque_ecume: Node2D = null
+var _ecume_c := Vector2.ZERO
+var _ecume_f := 0.0
 var bulles: CPUParticles2D
 
 func _ready() -> void:
@@ -95,8 +106,14 @@ func _process_corps(dt: float) -> void:
 	# la nappe pâlit à mesure que l'eau d'amont s'épuise, jusqu'à rien : sans
 	# cela, sa face vue d'en haut gardait toute la largeur du canal et
 	# disparaissait d'un coup (Vincent)
-	modulate.a = clampf(fente / 10.0, 0.0, 1.0)
+	# (en aplat, sur 4 px : sur 10, la nappe opaque restait un voile pâle
+	# pendant tout le début de l'ouverture)
+	modulate.a = clampf(fente / (4.0 if aplat else 10.0), 0.0, 1.0)
 	self_modulate.a = pale
+	if calque_ecume:
+		_placer_ecume()
+		calque_ecume.modulate.a = modulate.a * pale
+		calque_ecume.queue_redraw()
 	bulles.emitting = force > 0.05 and noye()
 	if bulles.emitting:
 		bulles.global_position = to_global(origine + profondeur * 0.5 + Vector2(sens * (26.0 + 30.0 * force), 0))
@@ -111,6 +128,9 @@ func _draw() -> void:
 
 func _draw_corps() -> void:
 	if force <= 0.03: return
+	if aplat:
+		_aplat()
+		return
 	_veine()
 	if noye():
 		_panache()
@@ -263,3 +283,100 @@ func _panache() -> void:
 			var r := (minf(fente, 24.0) * 0.5 + 4.0) * (1.0 + 1.6 * f)
 			draw_circle(c, r, Color(0.75, 0.95, 1.0, 0.24 * (1.0 - f) * force))
 	_point_chute = origine + Vector2(sens * long * 0.5, 0)
+
+# ------------------------------------------------------------------
+# LA CHUTE EN APLAT (style A de la planche du 19 octobre 2026, retenu par
+# Vincent). Une nappe d'un seul bleu, opaque, sans tranche sombre ; un
+# liseré clair sur le bord de devant, des stries qui descendent ; un
+# bourrelet d'écume posé à cheval sur l'eau d'en bas. Les raccords sont
+# recouverts au lieu d'être visés : quelques pixels d'écart entre la nappe
+# et une surface qui bouge ne font plus de creux. Noyée, il ne reste que
+# l'écume, qui s'éteint avec la force : plus de bloc translucide dressé
+# contre la porte à la fin d'un remplissage.
+# ------------------------------------------------------------------
+const C_NAPPE := Color(0.38, 0.76, 0.91)
+const C_ECUME := Color(0.95, 1.0, 1.0)
+
+func _aplat() -> void:
+	var D := profondeur
+	# l'eau sous le vantail, d'un seul ton — seulement au-dessus de l'eau
+	# d'en bas : noyée, elle faisait une plaque claire sur le sas
+	if D != Vector2.ZERO:
+		var bas := minf(y_seuil, _surface_sous(vantail_x))
+		if bas - haut_veine >= 1.0:
+			var a := Vector2(vantail_x, haut_veine)
+			var b := Vector2(vantail_x, bas)
+			draw_colored_polygon(PackedVector2Array([a, a + D, b + D, b]), C_NAPPE)
+	if noye():
+		var x := origine.x + sens * (8.0 + 10.0 * force)
+		_point_chute = Vector2(x, _surface_sous(x))
+		return
+	var pts := trajectoire()
+	_point_chute = pts[pts.size() - 1]
+	if pts.size() < 2: return
+	if D == Vector2.ZERO: D = Vector2(0, -1)
+	# la nappe : la trajectoire balayée sur toute la largeur du canal (en un
+	# lot de triangles donnés tels quels, lot 0)
+	var sommets := PackedVector2Array()
+	var couleurs := PackedColorArray()
+	var indices := PackedInt32Array()
+	for q in pts:
+		sommets.append(q); couleurs.append(C_NAPPE)
+		sommets.append(q + D); couleurs.append(C_NAPPE)
+	for k in pts.size() - 1:
+		var a := 2 * k
+		indices.append_array([a, a + 2, a + 3, a, a + 3, a + 1])
+	RenderingServer.canvas_item_add_triangle_array(get_canvas_item(), indices, sommets, couleurs)
+	# l'épaisseur de devant, du même bleu, et son liseré : seulement dans la
+	# chute (sur le dessus du seuil, le liseré faisait un crochet sous la porte)
+	var chute := PackedVector2Array()
+	for q in pts:
+		if q.y > origine.y + 4.0: chute.append(q)
+	if chute.size() >= 2:
+		if not plein: draw_polyline(chute, C_NAPPE, maxf(_epaisseur(), 2.0), true)
+		draw_polyline(chute, Color(C_ECUME, 0.85), 2.5, true)
+	# les stries qui descendent, à trois profondeurs
+	var n := pts.size() - 1
+	var vit := 1.0 + 1.2 * force
+	for z in [0.25, 0.55, 0.85]:
+		for k in 2:
+			var f := fmod(_t * vit + k * 0.5 + z * 1.3, 1.0)
+			var i := int(f * n)
+			var j := mini(i + maxi(2, n / 5), n)
+			if j > i:
+				var seg := pts.slice(i, j + 1)
+				for m in seg.size(): seg[m] += D * z
+				draw_polyline(seg, Color(C_ECUME, 0.7), 3.0, true)
+
+# La surface d'en bas à l'abscisse x (celle du bassin quand elle y passe).
+func _surface_sous(x: float) -> float:
+	if eau_bas and x >= eau_bas.x0 and x <= eau_bas.x1: return eau_bas.hauteur_a(x)
+	return surface_bas
+
+# Le bourrelet d'écume, à cheval sur la surface d'en bas, sur toute la
+# largeur de la chute : là où la nappe tombe, ou, noyée, contre la porte.
+# (calculé à chaque image, pas au dessin : l'ordre des deux dessins n'est
+# pas garanti)
+func _placer_ecume() -> void:
+	_ecume_f = 0.0
+	if force <= 0.03: return
+	if noye():
+		var x := origine.x + sens * (8.0 + 10.0 * force)
+		_ecume_c = Vector2(x, _surface_sous(x))
+		_ecume_f = 0.6 * force
+	else:
+		var pts := trajectoire()
+		_ecume_c = pts[pts.size() - 1]
+		_ecume_f = force
+
+func dessiner_ecume() -> void:
+	if _ecume_f <= 0.02: return
+	# des bouillons de tailles inégales qui se chevauchent : réguliers et
+	# fins, ils faisaient un collier de perles posé sur l'eau
+	var r := 6.0 + 8.0 * _ecume_f
+	for k in 11:
+		var z := float(k) / 10.0
+		var taille := 0.75 + 0.45 * fmod(k * 0.618, 1.0)
+		var bat := absf(sin(_t * 6.0 + k * 2.3))
+		var c := _ecume_c + profondeur * z + Vector2(sens * 2.0 * (k % 2), -1.0 - 3.0 * bat * _ecume_f)
+		calque_ecume.draw_circle(c, r * taille * (0.8 + 0.25 * bat), Color(C_ECUME, 0.92))

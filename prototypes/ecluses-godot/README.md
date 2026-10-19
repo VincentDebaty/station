@@ -46,7 +46,13 @@ elle va où le moteur l'a décidé :
   exigeait déjà deux eaux au même niveau pour qu'un bateau passe, et c'est
   exactement quand le vantail se lève ;
 - **l'eau** réfracte ce qui est derrière elle, s'assombrit avec la profondeur,
-  porte des reflets mouvants et une ligne d'écume (`shaders/eau.gdshader`).
+  porte des reflets mouvants et une ligne d'écume (`shaders/eau.gdshader`) ;
+- **la chute sous une porte** est un aplat (style A de la planche du
+  19 octobre 2026, choisi par Vincent) : une nappe d'un seul bleu, des stries
+  qui descendent, et un bourrelet d'écume à cheval sur l'eau d'en bas, dessiné
+  après elle. Elle recouvre ses raccords au lieu de les viser ; noyée, il ne
+  reste que l'écume (`jet.gd`, `_aplat`). La rigole, la levée, le trop-plein
+  et la pompe gardent l'ancien dessin en attendant de passer à l'aplat.
 
 ## Régler l'eau au doigt
 

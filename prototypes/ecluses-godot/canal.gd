@@ -549,10 +549,22 @@ func construire(niveau: Dictionary, e0: Dictionary) -> void:
 		if not N["liaisons"][i].get("vanne", false):
 			var jt := Jet.new()
 			jt.profondeur = D            # la nappe traverse tout le canal
+			jt.aplat = true              # planche du 19 octobre 2026, style A
 			add_child(jt)
 			# derrière les bateaux : la lame tombe dans le bassin, pas sur eux
 			move_child(jt, _flotte.get_index())
 			jets[i] = jt
+			# son écume, juste après la dernière eau : par-dessus la surface
+			# d'en bas, sous les portes
+			var ec := Node2D.new()
+			ec.name = "Ecume%d" % i
+			ec.draw.connect(jt.dessiner_ecume)
+			add_child(ec)
+			var apres_eau := 0
+			for c in get_children():
+				if c is Eau: apres_eau = c.get_index()
+			move_child(ec, apres_eau + 1)
+			jt.calque_ecume = ec
 			continue
 		var aq := Aqueduc.new()
 		aq.preparer(_trace_aqueduc(i), 0.2 * UY)
