@@ -294,7 +294,9 @@ func _panache() -> void:
 # l'écume, qui s'éteint avec la force : plus de bloc translucide dressé
 # contre la porte à la fin d'un remplissage.
 # ------------------------------------------------------------------
-const C_NAPPE := Color(0.38, 0.76, 0.91)
+# entre la surface d'un bassin (#60bfd7) et son eau juste dessous (#2d93a3) :
+# le bleu ciel d'abord essayé (#61c2e8) dénotait (Vincent, planche des bleus)
+const C_NAPPE := Color("#4aa5bb")
 const C_ECUME := Color(0.95, 1.0, 1.0)
 
 func _aplat() -> void:
