@@ -112,7 +112,9 @@ func _process_corps(dt: float) -> void:
 	self_modulate.a = pale
 	if calque_ecume:
 		_placer_ecume()
-		calque_ecume.modulate.a = modulate.a * pale
+		# (la transparence se pose sur le CanvasGroup qui porte le calque : sur
+		# chaque rond, les chevauchements se voyaient en cercles plus opaques)
+		(calque_ecume.get_parent() as CanvasItem).modulate.a = modulate.a * pale * A_ECUME
 		calque_ecume.queue_redraw()
 	bulles.emitting = force > 0.05 and noye()
 	if bulles.emitting:
@@ -297,7 +299,12 @@ func _panache() -> void:
 # entre la surface d'un bassin (#60bfd7) et son eau juste dessous (#2d93a3) :
 # le bleu ciel d'abord essayé (#61c2e8) dénotait (Vincent, planche des bleus)
 const C_NAPPE := Color("#4aa5bb")
-const C_ECUME := Color(0.95, 1.0, 1.0)
+# Un blanc pâle et fondu dans l'eau : le blanc pur (écume opaque, stries et
+# liseré marqués) faisait trop de très blanc (Vincent, planche des blancs)
+const C_ECUME := Color("#e2f6fa")
+const A_LISERE := 0.35
+const A_STRIE := 0.32
+const A_ECUME := 0.62
 
 func _aplat() -> void:
 	var D := profondeur
@@ -336,7 +343,7 @@ func _aplat() -> void:
 		if q.y > origine.y + 4.0: chute.append(q)
 	if chute.size() >= 2:
 		if not plein: draw_polyline(chute, C_NAPPE, maxf(_epaisseur(), 2.0), true)
-		draw_polyline(chute, Color(C_ECUME, 0.85), 2.5, true)
+		draw_polyline(chute, Color(C_ECUME, A_LISERE), 2.5, true)
 	# les stries qui descendent, à trois profondeurs
 	var n := pts.size() - 1
 	var vit := 1.0 + 1.2 * force
@@ -348,7 +355,7 @@ func _aplat() -> void:
 			if j > i:
 				var seg := pts.slice(i, j + 1)
 				for m in seg.size(): seg[m] += D * z
-				draw_polyline(seg, Color(C_ECUME, 0.7), 3.0, true)
+				draw_polyline(seg, Color(C_ECUME, A_STRIE), 3.0, true)
 
 # La surface d'en bas à l'abscisse x (celle du bassin quand elle y passe).
 func _surface_sous(x: float) -> float:
@@ -381,4 +388,4 @@ func dessiner_ecume() -> void:
 		var taille := 0.75 + 0.45 * fmod(k * 0.618, 1.0)
 		var bat := absf(sin(_t * 6.0 + k * 2.3))
 		var c := _ecume_c + profondeur * z + Vector2(sens * 2.0 * (k % 2), -1.0 - 3.0 * bat * _ecume_f)
-		calque_ecume.draw_circle(c, r * taille * (0.8 + 0.25 * bat), Color(C_ECUME, 0.92))
+		calque_ecume.draw_circle(c, r * taille * (0.8 + 0.25 * bat), C_ECUME)

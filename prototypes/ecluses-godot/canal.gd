@@ -556,15 +556,19 @@ func construire(niveau: Dictionary, e0: Dictionary) -> void:
 			jets[i] = jt
 			# son écume, juste après la dernière eau : par-dessus la surface
 			# d'en bas, sous les portes
-			var ec := Node2D.new()
+			# (dans un CanvasGroup : rendue d'un bloc, l'écume devient
+			# transparente sans que ses ronds se voient là où ils se chevauchent)
+			var ec := CanvasGroup.new()
 			ec.name = "Ecume%d" % i
-			ec.draw.connect(jt.dessiner_ecume)
+			var trace := Node2D.new()
+			trace.draw.connect(jt.dessiner_ecume)
+			ec.add_child(trace)
 			add_child(ec)
 			var apres_eau := 0
 			for c in get_children():
 				if c is Eau: apres_eau = c.get_index()
 			move_child(ec, apres_eau + 1)
-			jt.calque_ecume = ec
+			jt.calque_ecume = trace
 			continue
 		var aq := Aqueduc.new()
 		aq.preparer(_trace_aqueduc(i), 0.2 * UY)
