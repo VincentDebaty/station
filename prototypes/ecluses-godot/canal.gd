@@ -549,26 +549,10 @@ func construire(niveau: Dictionary, e0: Dictionary) -> void:
 		if not N["liaisons"][i].get("vanne", false):
 			var jt := Jet.new()
 			jt.profondeur = D            # la nappe traverse tout le canal
-			jt.aplat = true              # planche du 19 octobre 2026, style A
 			add_child(jt)
 			# derrière les bateaux : la lame tombe dans le bassin, pas sur eux
 			move_child(jt, _flotte.get_index())
 			jets[i] = jt
-			# son écume, juste après la dernière eau : par-dessus la surface
-			# d'en bas, sous les portes
-			# (dans un CanvasGroup : rendue d'un bloc, l'écume devient
-			# transparente sans que ses ronds se voient là où ils se chevauchent)
-			var ec := CanvasGroup.new()
-			ec.name = "Ecume%d" % i
-			var trace := Node2D.new()
-			trace.draw.connect(jt.dessiner_ecume)
-			ec.add_child(trace)
-			add_child(ec)
-			var apres_eau := 0
-			for c in get_children():
-				if c is Eau: apres_eau = c.get_index()
-			move_child(ec, apres_eau + 1)
-			jt.calque_ecume = trace
 			continue
 		var aq := Aqueduc.new()
 		aq.preparer(_trace_aqueduc(i), 0.2 * UY)
@@ -577,6 +561,7 @@ func construire(niveau: Dictionary, e0: Dictionary) -> void:
 		add_child(aq)
 		aqueducs[i] = aq
 		portes[i].y_bas_tige = aq.haut_logement()
+	_ecumes()
 	for i in fermes: add_child(fermes[i].marque)
 	_reperes = Node2D.new()
 	_reperes.position = D * 0.5        # les bouées voguent avec les bateaux
@@ -1219,20 +1204,32 @@ func _maisons(i: int, plan: Node2D) -> void:
 	plan.add_child(n)
 
 # La hauteur commune de deux eaux au milieu d'une porte levée.
+# L'écume de chaque chute, sur un calque rangé juste APRÈS la dernière eau :
+# dessinée avec la nappe, sous l'eau translucide, elle disparaissait dès que
+# le bassin d'en bas avait de l'eau (1-4). Dans un CanvasGroup : rendue d'un
+# bloc, elle devient transparente sans que ses ronds se voient là où ils se
+# chevauchent. (Appelé une fois toutes les eaux créées.)
+func _ecumes() -> void:
+	var apres_eau := 0
+	for c in get_children():
+		if c is Eau: apres_eau = c.get_index()
+	var toutes: Array = jets.values() + trop_pleins.values() + jets_pompe.values()
+	for k in toutes.size():
+		var jt: Jet = toutes[k]
+		var ec := CanvasGroup.new()
+		ec.name = "Ecume%d" % k
+		ec.position = jt.position
+		ec.z_index = jt.z_index
+		var trace := Node2D.new()
+		trace.draw.connect(jt.dessiner_ecume)
+		ec.add_child(trace)
+		add_child(ec)
+		move_child(ec, apres_eau + 1)
+		jt.calque_ecume = trace
+
 func _jonction(g: int) -> float:
 	var xc := X(gl[g][0] + gl[g][1]) * 0.5
 	return (minf(eaux[g].hauteur_a(xc), eaux[g].fond_y) + minf(eaux[g + 1].hauteur_a(xc), eaux[g + 1].fond_y)) * 0.5
-
-# Au doigt maintenu, la fin d'un écoulement sous une porte ouverte : les deux
-# eaux sont presque à niveau (moins de 0,35 unité), il ne tombe plus qu'un
-# filet. Plutôt qu'une lame minuscule et une marche entre les deux surfaces
-# (« un creux qui se forme sur la fin », Vincent), les deux surfaces se
-# rejoignent en pente douce sous la porte.
-func _fin_d_ecoulement(g: int) -> bool:
-	if CASCADE_COMME_AU_TOUCHER: return false
-	if not debit_vu.has(g) or not portes.has(g): return false
-	var e := absf(vue_niv[g] - vue_niv[g + 1])
-	return e < 0.35 and portes[g].fente() > 2.0 and minf(vue_niv[g], vue_niv[g + 1]) > float(N["liaisons"][g]["seuil"]) + 0.05
 
 func _raccorder(bord: PackedVector2Array, y: float, debut: bool, large := 36.0) -> void:
 	var n := bord.size()
@@ -1851,23 +1848,6 @@ func _process_corps(dt: float) -> void:
 	if not _depl.is_empty(): _avancer_bateaux(dt)
 	for i in eaux.size():
 		eaux[i].repos = Y(vue_niv[i])
-	# le raccord des deux eaux sous une porte où l'eau finit de passer, à
-	# mi-hauteur de leurs niveaux
-	for i in eaux.size():
-		eaux[i].lien_g = INF
-		eaux[i].lien_d = INF
-	for g in portes:
-		if _fin_d_ecoulement(g) or pentes.has(g):
-			var m := (Y(vue_niv[g]) + Y(vue_niv[g + 1])) * 0.5
-			eaux[g].lien_d = m
-			eaux[g + 1].lien_g = m
-	for g in bosses:
-		var b: Array = bosses[g]
-		var e: Eau = eaux[int(b[0])]
-		if float(b[1]) > 0.0:
-			if e.lien_g == INF: e.lien_g = float(b[2])
-		elif e.lien_d == INF: e.lien_d = float(b[2])
-	bosses.clear()
 	for i in portes: portes[i].bas_ouvert_y = _bas_ouvert(i)
 	var _c2 := Time.get_ticks_usec()
 	_maj_passages()
@@ -2210,7 +2190,6 @@ func _aqueduc(i: int, flux: float, dt: float) -> void:
 func _jet(i: int, flux: float, dt: float) -> void:
 	var jt: Jet = jets[i]
 	var po: Porte = portes[i]
-	jt.pale = 1.0
 	if absf(flux) <= 0.01:
 		jt.force = 0.0
 		return
@@ -2265,85 +2244,6 @@ func _jet(i: int, flux: float, dt: float) -> void:
 		jt.fente = maxf(po.y_seuil - surf_h, 0.0)
 		jt.origine = Vector2(bord_x, surf_h)
 		if jt.fente < 1.0: jt.force = 0.0
-	pentes.erase(i)
-	var maintenu := debit_vu.has(i) and not CASCADE_COMME_AU_TOUCHER
-	if maintenu:
-		# Au doigt maintenu, l'épaisseur de la chute est celle de l'eau qui
-		# passe : l'ouverture sous la porte (bornée par l'eau d'amont au-dessus
-		# du seuil), qui grandit quand la porte monte, et qui s'amincit avec
-		# l'écart qui reste entre les deux eaux (sur la dernière 0,8 unité).
-		# La lame est centrée dans cette ouverture, du seuil à son haut : son
-		# départ était calculé sur l'ouverture avant ces réductions, et la chute
-		# restait une lame fine partie de haut, quelle que soit l'ouverture
-		# (Vincent : « elle reste fine alors qu'elle devrait grossir puis
-		# redevenir fine sur la fin »).
-		var dv: float = debit_vu[i]
-		# (sous 0,35 unité d'écart, plus de lame : les surfaces se rejoignent en
-		# pente douce, _fin_d_ecoulement)
-		var reste := clampf((tete - 0.35) / 0.45, 0.0, 1.0)
-		jt.fente = jt.fente * lerpf(0.5, 1.0, dv) * reste
-		jt.force *= lerpf(0.4, 1.0, dv) * lerpf(0.4, 1.0, reste)
-		jt.origine = Vector2(bord_x, po.y_seuil - jt.fente * 0.5)
-		jt.plein = true
-		# Seule la part de la lame AU-DESSUS de l'eau d'en bas se dessine : sa
-		# moitié noyée, vue à travers l'eau du sas, faisait une tache sombre
-		# sous la surface — « un creux qui se forme sur la fin » (Vincent). S'il
-		# n'en reste presque rien, l'eau d'en bas remonte en pente douce
-		# jusqu'à celle d'en haut (pentes).
-		var surf_b := minf(eaux[l].hauteur_a(bord_x + sens * 20.0, false), eaux[l].fond_y)
-		var haut_l := po.y_seuil - jt.fente
-		var bas_l := minf(po.y_seuil, surf_b)
-		# (seulement quand l'eau d'en bas recouvre déjà le seuil : au début,
-		# porte à peine décollée au-dessus d'un sas bas, la lame est mince mais
-		# bien là — la couper supprimait la cascade, Vincent)
-		var noyee := surf_b < po.y_seuil - 2.0
-		if noyee and bas_l - haut_l < 8.0:
-			if tete < 0.35:
-				# presque à niveau : les deux eaux se raccordent
-				jt.force = 0.0
-				pentes[i] = true
-			else:
-				# L'eau du sas recouvre déjà le bas de la porte, mais celle d'en
-				# haut est encore bien plus haute : l'eau sort sous la surface et
-				# la fait bouillonner contre la porte (panache de jet.gd). Raccorder
-				# les deux surfaces à mi-hauteur relevait celle du sas en un bloc
-				# clair contre la porte — le « creux » de la capture de Vincent.
-				jt.origine = Vector2(bord_x, maxf(haut_l, surf_b + 4.0))
-				jt.fente = minf(maxf(po.y_seuil - haut_l, 4.0), 24.0)
-				jt.plein = false
-				# (seulement ses bulles : ses bouffées claires faisaient elles
-				# aussi un bloc contre la porte ; la surface s'y relève, bosses)
-				jt.pale = 0.0
-		elif noyee:
-			jt.fente = bas_l - haut_l
-			jt.origine = Vector2(bord_x, (haut_l + bas_l) * 0.5)
-		if degagee:
-			# La porte levée au-dessus de l'eau d'amont : l'eau passe par-dessus le
-			# seuil comme sur un déversoir. La lame part de la surface d'amont et
-			# descend jusqu'à celle d'en bas ; son épaisseur ne dépasse pas la
-			# marche entre les deux. (Centrée dans toute l'ouverture, elle se
-			# noyait dès que l'eau d'en bas montait, et il restait entre les deux
-			# surfaces une marche sans eau qui coule : « un creux qui se forme sur
-			# la fin », Vincent.)
-			var marche := maxf(minf(eaux[l].hauteur_a(x + sens * 60.0), eaux[l].fond_y) - surf_h, 0.0)
-			jt.fente = minf(jt.fente, maxf(marche * 0.8, 2.0))
-			jt.origine = Vector2(bord_x, surf_h + jt.fente * 0.5)
-			if marche < 1.5: jt.force = 0.0
-			if marche < 16.0:
-				pentes[i] = true
-				jt.force = 0.0
-		# (le haut de l'eau qui passe : la surface d'amont, ou le bas de la porte
-		# s'il est plus bas — pas celui de la nappe, qui s'amincit vers le seuil
-		# sur la fin et faisait monter puis retomber la bosse)
-		var dessus := maxf(minf(eaux[h].hauteur_a(x - sens * 6.0, false), eaux[h].fond_y), po.bas_y)
-		var chute := surf_b - dessus
-		if noyee and not pentes.has(i) and jt.force > 0.0 and chute > 0.0:
-			var k := 1.0 - smoothstep(14.0, 44.0, chute)
-			if k > 0.0:
-				bosses[i] = [l, sens, lerpf(surf_b, dessus, k)]
-				jt.pale = minf(jt.pale, 1.0 - k)
-		jt.haut_veine = maxf(jt.haut_veine, po.y_seuil - jt.fente)
-		if jt.fente < 1.0: jt.force = 0.0
 	jt.surface_bas = eaux[l].hauteur_a(x + sens * 60.0)
 	jt.eau_bas = eaux[l]
 	jt.fond_bas = eaux[l].fond_y
@@ -2352,24 +2252,9 @@ func _jet(i: int, flux: float, dt: float) -> void:
 	var bouillon := Reglages.v("bouillon")
 	recoit.remous = maxf(recoit.remous, jt.force * 0.6 * minf(bouillon * 2.0, 1.0))
 	if _tirage(0.5, dt):
-		# Au doigt maintenu, la chute ne pousse la surface d'en bas qu'en
-		# proportion de l'eau qui tombe encore, et autant vers le haut que vers
-		# le bas : à la fin du remplissage, les poussées (surtout vers le bas)
-		# creusaient la surface du sas là où la lame touche, « un creux qui se
-		# forme sur la fin » (Vincent).
-		if maintenu:
-			# (aucune poussée au doigt maintenu : même symétriques, elles
-			# creusaient la surface au pied de la chute — l'iPhone affiche 120
-			# images par seconde, deux fois plus de poussées qu'un film à 60 ;
-			# le bouillon du shader suffit à montrer l'eau qui tombe)
-			pass
-		else:
-			recoit.impulsion(jt.chute().x + randf_range(-0.4, 0.4) * U, randf_range(-0.6, 1.2) * jt.force * bouillon * 2.0, 22.0)
-	# la surface d'amont se creuse un peu contre la porte — pas au doigt
-	# maintenu : l'eau y passe longtemps sous une porte à peine ouverte, les
-	# poussées s'accumulaient et la surface faisait « un creux » contre le
-	# vantail (Vincent)
-	if not degagee and not maintenu: eaux[h].impulsion(x - sens * 20.0, 0.25 * jt.force * dt * 6.0, 40.0)
+		recoit.impulsion(jt.chute().x + randf_range(-0.4, 0.4) * U, randf_range(-0.6, 1.2) * jt.force * bouillon * 2.0, 22.0)
+	# la surface d'amont se creuse un peu contre la porte
+	if not degagee: eaux[h].impulsion(x - sens * 20.0, 0.25 * jt.force * dt * 6.0, 40.0)
 
 # L'eau qui file par la rigole : une lame qui sort de l'entaille, du côté
 # haut, et retombe dans le bassin d'en bas ; son épaisseur suit l'eau qui
@@ -2969,30 +2854,6 @@ func _exclamation(c: Vector2, age: float) -> void:
 # elle reste DUREE_BULLE secondes, puis s'efface.
 const DUREE_BULLE := 3.5
 var _bulles := {}       # bateau -> [quoi, instant d'apparition]
-# Au doigt maintenu : la part du débit d'une porte, de 0,05 (elle se décolle)
-# à 1 (levée) ; la cascade s'épaissit et forcit avec elle.
-var debit_vu := {}
-# Au doigt maintenu, la cascade se dessine comme dans les niveaux au toucher
-# (Vincent, 9 octobre 2026, après une journée de retouches du « creux » :
-# « hier ça fonctionnait mieux » ; il a choisi de repartir de la cascade
-# d'avant le doigt maintenu). Le doigt maintenu, la porte qui monte lentement
-# et le débit qui suit l'ouverture restent (principal.gd) ; seuls la lame
-# pleine, ses raccords et ses bosses propres au doigt maintenu sont coupés.
-# false les rétablit tels quels.
-const CASCADE_COMME_AU_TOUCHER := true
-# Au doigt maintenu : les portes où il ne tombe presque plus rien. Plutôt
-# qu'une chute minuscule (une lèvre claire bordée de sombre, que Vincent
-# voyait comme « un creux qui se forme sur la fin »), les deux surfaces se
-# raccordent à mi-hauteur sous la porte.
-var pentes := {}
-# Au doigt maintenu, quand l'eau du sas a passé le seuil et que la chute
-# devient courte : la surface du sas se relève en pente douce jusqu'au haut
-# de l'eau qui passe sous la porte, et la nappe s'efface à mesure. Une nappe
-# pleine qui ne tombe plus que de quelques pixels faisait un bloc d'eau
-# translucide dressé contre la porte, avec un « V » d'écume à son pied —
-# « le creux à la fin » de Vincent. Posées par _jet, appliquées puis vidées à
-# chaque image par _process : [bassin qui reçoit, sens, y de la bosse].
-var bosses := {}
 func montrer_bulle(k: int, quoi: String) -> void:
 	_bulles[k] = [quoi, _t]
 

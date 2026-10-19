@@ -1066,7 +1066,6 @@ func _pas_continu(dt: float) -> void:
 			# l'eau se voie couler)
 			var o := clampf(_ouv[i], 0.0, 1.0)
 			var part := 0.25 + 0.75 * minf(o / 0.4, 1.0)
-			canal.debit_vu[i] = minf(part, 1.0)
 			var q := DEBIT * part * minf(1.0, sqrt(tete / 0.6)) * dt
 			var vide := []
 			vide.resize(N["liaisons"].size()); vide.fill(0.0)

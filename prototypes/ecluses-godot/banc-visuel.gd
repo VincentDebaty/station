@@ -390,7 +390,7 @@ func mesurer(dt: float) -> void:
 	# d'une rigole
 	for g in _c.jets:
 		var jt = _c.jets[g]
-		var vu: bool = jt.force > 0.03 and jt.fente >= 1.0 and jt.modulate.a > 0.05 and jt.self_modulate.a > 0.05
+		var vu: bool = jt.force > 0.03 and jt.fente >= 1.0 and jt.modulate.a > 0.05
 		sig.append("%.2f,%.2f,%.2f" % [jt.force, jt.origine.y, jt.fente])
 		if not vu: continue
 		var h: int = g if jt.sens > 0 else g + 1          # le côté haut
@@ -418,8 +418,7 @@ func mesurer(dt: float) -> void:
 		if _c.eaux[h].visible_eau:
 			# V3 — la lame part de l'eau d'en haut : son dessus n'est pas plus haut
 			# que la surface d'amont contre la porte (de l'eau sortie de rien)
-			var ep: float = jt.fente if jt.plein else jt.fente * (0.7 + 0.3 * jt.force)
-			var dessus: float = jt.origine.y - (ep * 0.5 if jt.plein else 0.0)
+			var dessus: float = jt.origine.y
 			var x_amont: float = _c.X(_c.gl[g][0]) if jt.sens > 0 else _c.X(_c.gl[g][1])
 			var surf_h: float = _c.eaux[h].hauteur_a(x_amont)
 			var d3 := surf_h - dessus
