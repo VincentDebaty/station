@@ -14,10 +14,13 @@
    LE CARREFOUR — prototype (20 octobre 2026), suite du Pontier. Vincent :
    « un carrefour qui s'embouteille, gérer des feux tricolores ; j'aime
    devoir manipuler différentes choses pour fluidifier le trafic ; il faut
-   un objectif de réussite ». Un carrefour vu de dessus, trois commandes
-   (le feu de l'avenue, le feu de la rue, le bouton des piétons), quatre
-   flux (voitures, tram à l'horaire, piétons, ambulances), et un QUOTA de
-   personnes à faire passer avant 18 h.
+   un objectif de réussite ». Un carrefour vu de dessus, trois phases de
+   feux (l'avenue, la rue, les piétons) qui tournent TOUTES SEULES : le
+   joueur règle la durée de chaque vert (− / +) et la réajuste quand les
+   heures de pointe changent (« automatiser un feu et jauger », même jour,
+   plus facile quand il y aura plusieurs carrefours). Trois flux (voitures,
+   tram à l'horaire, piétons ; l'ambulance a été retirée : elle n'apportait
+   rien), et un QUOTA de personnes à faire passer avant 18 h.
 
    Même charte que Le pontier : plateau vu de dessus, bois et crème,
    Lilita One. Un seul aspect, voulu (pas de thème sombre).
@@ -89,7 +92,6 @@ button:focus-visible { outline: 3px solid var(--or); outline-offset: 2px; }
   background: rgba(255, 243, 220, .14); font: 400 .9rem/1 var(--chiffres); white-space: nowrap; font-variant-numeric: tabular-nums;
 }
 .puce.tram { background: rgba(47, 158, 88, .55); }
-.puce.urgence { background: rgba(224, 83, 61, .75); }
 .puce.vague { background: rgba(255, 201, 60, .3); }
 .puce.vide { background: none; color: rgba(255, 243, 220, .6); font-family: var(--texte); font-size: .85rem; }
 
@@ -162,18 +164,20 @@ canvas { display: block; width: 100%; height: 100%; touch-action: none; }
                   « debit » secondes : le démarrage au vert)
        feux       orange (s) ; degagement (le rouge intégral minimal, après
                   quoi le nouveau vert attend encore que la zone soit vide)
+       cycle      le réglage de départ du feu automatique : la durée du vert
+                  de l'avenue, de la rue, des piétons (s) ; le joueur la
+                  règle en jeu, d'une seconde par geste, entre « min » et
+                  « max » (0 pour les piétons : on saute leur phase)
        patience   l'attente qu'on supporte, arrêté. Au-delà, une voiture fait
                   demi-tour et un piéton s'en va : ils ne comptent plus, et
                   l'humeur perd « colere » d'un coup. Le tram, lui, reste et
-                  retire « colere » par seconde ; l'ambulance retire
-                  « urgence » d'un coup
+                  retire « colere » par seconde
        pietons    traversee (s)
        vagues     de, a, et l'intervalle (s) entre deux arrivées sur chaque
                   voie (N, S, O, E) et pour les piétons (P) ; 0 : personne
        trams      l'horaire du tram de la rue : heure, sens (0 : vers l'est,
                   depuis l'ouest ; 1 : vers l'ouest) ; il compte « tram »
                   personnes
-       urgences   les ambulances : heure, voie
        duree      de 17 h à 18 h, en secondes de jeu
        quota      les personnes à faire passer avant 18 h : c'est réussi
        etoiles    comptées en POINTS : les personnes passées plus l'humeur
@@ -195,26 +199,26 @@ canvas { display: block; width: 100%; height: 100%; touch-action: none; }
         {"id": "O", "nom": "la rue, de l'ouest", "axe": 1, "approche": 144, "traversee": 112, "sortie": 174},
         {"id": "E", "nom": "la rue, de l'est", "axe": 1, "approche": 144, "traversee": 112, "sortie": 174}
       ],
-      "vehicule": {"vitesse": 60, "ecart": 30, "longueur": 22, "tram": 80, "debit": 1.0},
-      "feux": {"orange": 2, "degagement": 1},
-      "patience": {"voiture": 30, "pieton": 30, "tram": 10, "ambulance": 5},
-      "colere": {"voiture": 1.2, "pieton": 2, "tram": 1, "urgence": 15},
-      "pietons": {"traversee": 5},
+      "vehicule": {"vitesse": 100, "ecart": 28, "longueur": 22, "tram": 80, "debit": 0.5},
+      "feux": {"orange": 1.5, "degagement": 0.5},
+      "cycle": {"depart": [5, 3, 1], "min": [1, 1, 0], "max": [30, 30, 15]},
+      "patience": {"voiture": 25, "pieton": 30, "tram": 10},
+      "colere": {"voiture": 1.2, "pieton": 2, "tram": 1},
+      "pietons": {"traversee": 4},
       "compte": {"voiture": 1, "pieton": 1, "tram": 6},
       "vagues": [
-        {"de": 0, "a": 50, "N": 2.0, "S": 2.2, "O": 4, "E": 5, "P": 3},
-        {"de": 50, "a": 95, "N": 1.1, "S": 1.2, "O": 12, "E": 12, "P": 3, "nom": "la sortie des bureaux"},
-        {"de": 95, "a": 130, "N": 7, "S": 7, "O": 1.1, "E": 1.2, "P": 2.2, "nom": "la sortie de l'école"},
-        {"de": 130, "a": 180, "N": 1.7, "S": 1.9, "O": 3, "E": 3.5, "P": 3}
+        {"de": 0, "a": 50, "N": 1.0, "S": 1.1, "O": 2, "E": 2.5, "P": 3},
+        {"de": 50, "a": 95, "N": 0.55, "S": 0.6, "O": 6, "E": 6, "P": 3, "nom": "la sortie des bureaux"},
+        {"de": 95, "a": 130, "N": 3.5, "S": 3.5, "O": 0.55, "E": 0.6, "P": 2.2, "nom": "la sortie de l'école"},
+        {"de": 130, "a": 180, "N": 0.85, "S": 0.95, "O": 1.5, "E": 1.75, "P": 3}
       ],
       "trams": [
         {"heure": 20, "sens": 0}, {"heure": 48, "sens": 1}, {"heure": 76, "sens": 0},
         {"heure": 104, "sens": 1}, {"heure": 132, "sens": 0}, {"heure": 160, "sens": 1}
       ],
-      "urgences": [{"heure": 62, "voie": 2}, {"heure": 141, "voie": 1}],
-      "quota": 260,
-      "etoiles": {"deux": 333, "trois": 345},
-      "par": 353
+      "quota": 480,
+      "etoiles": {"deux": 590, "trois": 610},
+      "par": 622
     }
   ]
 }
@@ -228,13 +232,18 @@ const Carrefour = (function () {
   // Un carrefour, trois PHASES : 0 l'avenue au vert, 1 la rue au vert, 2 les
   // piétons. Une seule est verte à la fois (l'enclenchement de Station).
   //
-  //   les feux      un geste demande une phase. La verte passe à l'orange
-  //                 (« orange » s), puis au rouge ; la demandée ne passe au
+  //   les feux      ils sont AUTOMATIQUES : un cycle avenue → rue → piétons,
+  //                 chaque vert dure ce que le joueur a réglé (une phase
+  //                 réglée à 0 est sautée). Le joueur JAUGE : il allonge ou
+  //                 raccourcit un vert d'une seconde par geste, et peut forcer
+  //                 une phase tout de suite. Quitter une phase : l'orange
+  //                 (« orange » s), puis le rouge ; la suivante ne passe au
   //                 vert qu'après « degagement » s ET quand la zone de conflit
   //                 est vide (les derniers véhicules, ou les derniers piétons,
   //                 ont fini de traverser). Changer de phase coûte donc du
-  //                 temps : c'est tout le jeu. Retaper la phase qu'on quitte
-  //                 pendant l'orange l'annule.
+  //                 temps : un cycle trop court gaspille, un cycle trop long
+  //                 fait attendre. Forcer la phase qu'on quitte pendant
+  //                 l'orange l'annule.
   //   les voitures  elles arrivent en file sur chacune des quatre voies, à la
   //                 vitesse « vitesse », sans se doubler, et vont tout droit.
   //                 Une voiture ne franchit la ligne d'arrêt qu'au vert de son
@@ -245,9 +254,6 @@ const Carrefour = (function () {
   //   le tram       sur ses rails au milieu de la rue, à l'horaire ; il passe
   //                 au vert de la rue et compte « tram » personnes, mais il
   //                 s'énerve vite.
-  //   l'ambulance   les voitures s'écartent : elle remonte la file jusqu'à la
-  //                 ligne d'arrêt, et passe au vert de son axe. Si elle attend
-  //                 plus que sa patience, l'humeur prend un coup sec.
   //   les piétons   ils attendent aux quatre coins et traversent tous ensemble
   //                 pendant la phase des piétons ; trop attendre, ils s'en vont.
   //   la fin        à 18 h (« duree »), gagné si le quota est atteint, raté
@@ -271,7 +277,7 @@ const Carrefour = (function () {
     c = {
       V: Math.round(V.vitesse * PAS), GAP: V.ecart, LEN: V.longueur, LTRAM: V.tram, DEBIT: pasDe(V.debit),
       ORANGE: pasDe(N.feux.orange), DEG: pasDe(N.feux.degagement),
-      PV: pasDe(N.patience.voiture), PP: pasDe(N.patience.pieton), PT: pasDe(N.patience.tram), PA: pasDe(N.patience.ambulance),
+      PV: pasDe(N.patience.voiture), PP: pasDe(N.patience.pieton), PT: pasDe(N.patience.tram),
       PIET: pasDe(N.pietons.traversee), FIN: pasDe(N.duree)
     };
     const ids = N.voies.map(v => v.id);
@@ -294,13 +300,12 @@ const Carrefour = (function () {
     C(N);
     return {
       k: 0, humeur: 100, passes: 0, fin: null,
-      phase: 0, etat: "vert", t: 0, demande: null, changements: 0,
+      phase: 0, etat: "vert", t: 0, demande: null, changements: 0, cycle: N.cycle.depart.slice(),
       voies: N.voies.map(() => []), nes: N.voies.map(() => 0), franchi: N.voies.map(() => -1e9),
-      // les trams et les ambulances, un par entrée d'horaire : etat avant, route, fini
+      // les trams, un par entrée d'horaire : etat avant, route, fini
       trams: N.trams.map(() => ({ etat: "avant", q: 0, arret: 0 })),
-      ambus: N.urgences.map(() => ({ etat: "avant", q: 0, arret: 0, puni: false })),
       attente: [[], [], [], []], traversent: [], nesP: 0, finisP: 0,
-      perte: { voitures: 0, pietons: 0, tram: 0, urgences: 0 }, renonces: N.voies.map(() => 0), renoncesP: 0,
+      perte: { voitures: 0, pietons: 0, tram: 0 }, renonces: N.voies.map(() => 0), renoncesP: 0,
       partis: [],                                              // les renoncements de ce pas (pour la vue)
       detail: { voitures: 0, pietons: 0, tram: 0 }
     };
@@ -315,7 +320,6 @@ const Carrefour = (function () {
       const v = N.voies[a];
       if (v.axe !== axe) continue;
       if (e.voies[a].some(x => dans(x.q, v.approche, v.traversee, c.LEN))) return true;
-      if (e.ambus.some((b, i) => b.etat === "route" && N.urgences[i].voie === a && dans(b.q, v.approche, v.traversee, c.LEN))) return true;
     }
     if (axe === 1) for (let i = 0; i < N.trams.length; i++) {
       const tr = e.trams[i], v = N.voies[voieTram(N, N.trams[i].sens)];
@@ -326,22 +330,36 @@ const Carrefour = (function () {
   const degage = (N, e, p) => p === 2 ? e.traversent.length === 0 : !zoneOccupee(N, e, p);
   const vert = (e, p) => e.phase === p && e.etat === "vert";
 
-  // --- Les gestes : "feu0" (l'avenue), "feu1" (la rue), "feu2" (les piétons) -------
+  // La phase qui suit p dans le cycle (on saute celles réglées à 0) ; null si aucune autre.
+  function suivante(e, p) {
+    for (let i = 1; i < 3; i++) { const q = (p + i) % 3; if (e.cycle[q] > 0) return q; }
+    return null;
+  }
+  function demander(e, p) {
+    if (e.etat === "vert") { e.etat = "orange"; e.t = 0; e.demande = p; }
+    else if (e.etat === "orange" && p === e.phase) { e.etat = "vert"; e.demande = null; }
+    else e.demande = p;
+  }
+
+  // --- Les gestes : "plusP" et "moinsP" règlent le vert de la phase P (0 l'avenue,
+  // 1 la rue, 2 les piétons) d'une seconde ; "feuP" la force tout de suite ------
   function refus(N, e, g) {
     if (e.fin) return "fini";
-    const m = /^feu([012])$/.exec(g);
+    const m = /^(feu|plus|moins)([012])$/.exec(g);
     if (!m) return "inconnu";
-    const p = +m[1];
+    const p = +m[2];
+    if (m[1] === "plus") return e.cycle[p] < N.cycle.max[p] ? null : "max";
+    if (m[1] === "moins") return e.cycle[p] > N.cycle.min[p] ? null : "min";
     if (vert(e, p) || e.demande === p) return "deja";
     return null;
   }
   function geste(N, e, g) {
     const r = refus(N, e, g);
     if (r) return r;
-    const p = +g[3];
-    if (e.etat === "vert") { e.etat = "orange"; e.t = 0; e.demande = p; }
-    else if (e.etat === "orange" && p === e.phase) { e.etat = "vert"; e.demande = null; }
-    else e.demande = p;
+    const p = +g[g.length - 1];
+    if (g.startsWith("plus")) e.cycle[p]++;
+    else if (g.startsWith("moins")) e.cycle[p]--;
+    else demander(e, p);
     return null;
   }
 
@@ -363,14 +381,17 @@ const Carrefour = (function () {
       }
     }
     N.trams.forEach((h, i) => { const tr = e.trams[i]; if (tr.etat === "avant" && e.k >= pasDe(h.heure)) { tr.etat = "route"; tr.q = 0; } });
-    N.urgences.forEach((h, i) => { const b = e.ambus[i]; if (b.etat === "avant" && e.k >= pasDe(h.heure)) { b.etat = "route"; b.q = 0; } });
     while (e.nesP < c.arrP.length && c.arrP[e.nesP] <= e.k) {
       const id = e.nesP++;
       e.attente[(id * 3 + 1) % 4].push({ id, arret: 0 });
     }
 
-    // les feux
+    // les feux : le cycle automatique, puis l'orange et le dégagement
     e.t++;
+    if (e.etat === "vert" && e.demande == null && e.t >= pasDe(e.cycle[e.phase])) {
+      const q = suivante(e, e.phase);
+      if (q != null) demander(e, q);
+    }
     if (e.etat === "orange" && e.t >= c.ORANGE) { e.etat = "rouge"; e.t = 0; }
     if (e.etat === "rouge" && e.t >= c.DEG && degage(N, e, e.phase)) { e.phase = e.demande; e.demande = null; e.etat = "vert"; e.t = 0; e.changements++; }
 
@@ -401,15 +422,6 @@ const Carrefour = (function () {
       if (partie) e.voies[a] = f.filter(x => !x.parti);
       const g = e.voies[a];
       while (g.length && g[0].q >= fin + c.LEN) g.shift();
-    });
-    // les ambulances : elles remontent la file, sans écart
-    N.urgences.forEach((h, i) => {
-      const b = e.ambus[i];
-      if (b.etat !== "route") return;
-      const voie = N.voies[h.voie];
-      avancer(b, voie.approche, voie.axe, null);
-      if (b.arret > c.PA && !b.puni) { b.puni = true; e.humeur -= K.urgence; e.perte.urgences += K.urgence; }
-      if (b.q >= voie.approche + voie.traversee + voie.sortie + c.LEN) b.etat = "fini";
     });
     // les trams
     N.trams.forEach((h, i) => {
@@ -442,7 +454,7 @@ const Carrefour = (function () {
     return n >= N.etoiles.trois ? 3 : n >= N.etoiles.deux ? 2 : 1;
   }
 
-  return { PAS, pasDe, heure, C, voieTram, charger, copie, zoneOccupee, degage, vert, refus, geste, pas, points, etoiles };
+  return { PAS, pasDe, heure, C, voieTram, charger, copie, zoneOccupee, degage, vert, suivante, refus, geste, pas, points, etoiles };
 })();
 </script>
 
@@ -468,7 +480,9 @@ const Carrefour = (function () {
     return { x: W - q, y: rail ? YTO : YE, ang: Math.PI };
   }
   const COINS = [{ x: 148, y: 314 }, { x: 252, y: 314 }, { x: 252, y: 446 }, { x: 148, y: 446 }];   // NO, NE, SE, SO
-  const FEUX = [{ x: 292, y: 262, nom: "AVENUE" }, { x: 108, y: 500, nom: "RUE" }, { x: 292, y: 500, nom: "PIÉTONS" }];
+  // les trois feux : la boîte (on la touche pour forcer), son nom, et dessous son réglage − 6 s +
+  const FEUX = [{ x: 300, y: 196, nom: "AVENUE" }, { x: 108, y: 500, nom: "RUE" }, { x: 292, y: 500, nom: "PIÉTONS" }];
+  const REGLE = 82;                                  // la rangée − / + sous la boîte
 
   // --- La partie ------------------------------------------------------------------
   let e, acc = 0, vitesse = 1, enMarche = false, avant = null, t = 0, finVue = false, secousse = {}, pffs = [];
@@ -501,8 +515,10 @@ const Carrefour = (function () {
   const MAISONS = [[6, 6, 70, 56], [84, 6, 70, 50], [6, 70, 60, 70], [74, 64, 80, 60], [6, 150, 72, 64], [86, 134, 70, 70], [6, 224, 66, 52], [82, 214, 62, 60],
     [6, 470, 64, 60], [6, 540, 70, 70], [84, 590, 68, 54], [6, 620, 72, 58], [84, 652, 70, 60], [6, 686, 70, 34]];
   const TOUTES = MAISONS.concat(MAISONS.map(([x, y, w, h]) => [W - x - w, y, w, h]))
-    .filter(([x, y, w, h]) => !(x < 160 && x + w > 60 && y > 460 && y < 560) && !(x > 240 && y > 200 && y < 300));
+    .filter(([x, y, w, h]) => !FEUX.some(F => x < F.x + 66 && x + w > F.x - 66 && y < F.y + REGLE + 22 && y + h > F.y - 50));
 
+  const ARBRES = [[20, 296, 12], [130, 292, 10], [372, 452, 12], [20, 452, 11], [130, 630, 12], [272, 640, 12]]
+    .filter(([x, y, r]) => !FEUX.some(F => Math.abs(x - F.x) < 66 + r && y + r > F.y - 50 && y - r < F.y + REGLE + 22));
   function decor(xMin, xMax, yMin, yMax) {
     ctx.fillStyle = COUL.pave; ctx.fillRect(xMin - 10, yMin - 10, xMax - xMin + 20, yMax - yMin + 20);
     // les trottoirs puis les chaussées
@@ -542,7 +558,7 @@ const Carrefour = (function () {
       ctx.strokeStyle = "rgba(90,35,15,.35)"; ctx.lineWidth = 2;
       ctx.beginPath(); if (w > h) { ctx.moveTo(x + 6, y + h / 2); ctx.lineTo(x + w - 6, y + h / 2); } else { ctx.moveTo(x + w / 2, y + 6); ctx.lineTo(x + w / 2, y + h - 6); } ctx.stroke();
     });
-    for (const [x, y, r] of [[20, 296, 12], [130, 292, 10], [372, 452, 12], [20, 452, 11], [130, 600, 12], [272, 640, 12]]) {
+    for (const [x, y, r] of ARBRES) {
       rond(x + 3, y + 4, r, COUL.ombre); rond(x, y, r, COUL.feuille); rond(x - r * 0.25, y - r * 0.25, r * 0.6, COUL.feuilleC);
     }
   }
@@ -563,14 +579,6 @@ const Carrefour = (function () {
     ctx.fillStyle = "#2f9e58"; for (let k = 1; k < 4; k++) ctx.fillRect(-c.LTRAM + k * c.LTRAM / 4, -9, 3, 18);
     ctx.restore();
     if (fache && (t % 1.6) < 0.8) bulle(x - Math.cos(ang) * 40, y - 22, "Ding ding !", "#2f9e58");
-  }
-  function ambulance(x, y, ang) {
-    ctx.save(); ctx.translate(x, y); ctx.rotate(ang);
-    ctx.fillStyle = "rgba(30,20,10,.25)"; rrect(-24, -7, 26, 16, 4); ctx.fill();
-    ctx.fillStyle = "#fff"; rrect(-26, -8.5, 26, 17, 4); ctx.fill();
-    ctx.fillStyle = "#e0533d"; ctx.fillRect(-16, -2, 8, 4); ctx.fillRect(-14, -4.5, 4, 9);
-    rond(-4, 0, 3.5, (t * 4) % 1 < 0.5 ? "#2f7bff" : "#e0533d");
-    ctx.restore();
   }
   function pieton(x, y, id, fache) {
     const coul = ["#3f7fd0", "#e0533d", "#8a4fc8", "#2bb3a0", "#ef8a1c"][id % 5];
@@ -623,9 +631,26 @@ const Carrefour = (function () {
       rond(0, -27, 3.5, "#fff"); ctx.fillRect(-2.5, -24, 5, 11); ctx.fillRect(-7, -13, 4, 8); ctx.fillRect(3, -13, 4, 8);
       rond(0, 11, 3.5, "#fff"); ctx.fillRect(-2.5, 14, 5, 13); ctx.fillRect(-6, 16, 3, 9); ctx.fillRect(3, 16, 3, 9);
     }
+    // le décompte du vert : une barre qui se vide sous la boîte
+    if (k === "vert" && e.cycle[p] > 0) {
+      const reste = Math.max(0, 1 - e.t * E.PAS / e.cycle[p]);
+      ctx.fillStyle = "rgba(42,36,32,.35)"; rrect(-24, 44, 48, 6, 3); ctx.fill();
+      ctx.fillStyle = COUL.vert; rrect(-24, 44, Math.max(6, 48 * reste), 6, 3); ctx.fill();
+    }
     ctx.restore();
     ctx.font = "13px 'Lilita One', sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
-    ctx.fillStyle = COUL.encre; ctx.fillText(F.nom, F.x, F.y + 54);
+    ctx.fillStyle = COUL.encre; ctx.fillText(F.nom, F.x, F.y + 60);
+    // le réglage : − 6 s +
+    const y = F.y + REGLE;
+    ctx.fillStyle = COUL.creme; rrect(F.x - 50, y - 16, 100, 32, 16); ctx.fill();
+    ctx.strokeStyle = "#c9b48c"; ctx.lineWidth = 2.5; ctx.stroke();
+    for (const [dx, signe, g] of [[-34, "−", "moins"], [34, "+", "plus"]]) {
+      const actif = !E.refus(N, e, g + p) || e.fin;
+      rond(F.x + dx, y, 14, actif ? COUL.encre : "rgba(59,36,20,.25)");
+      ctx.fillStyle = "#fff"; ctx.font = "20px 'Lilita One', sans-serif"; ctx.fillText(signe, F.x + dx, y + 1);
+    }
+    ctx.fillStyle = COUL.encre; ctx.font = "17px 'Lilita One', sans-serif";
+    ctx.fillText(e.cycle[p] ? e.cycle[p] + " s" : "sauté", F.x, y + 1);
     // les piétons qui attendent : leur nombre au-dessus du bouton
     if (p === 2) { const n = e.attente.reduce((s, x) => s + x.length, 0); if (n) badge(F.x + 30, F.y - 46, String(n), e.attente.some(x => x.some(q => q.arret > c.PP * 0.6))); }
   }
@@ -657,13 +682,6 @@ const Carrefour = (function () {
       if (tr.etat !== "route") return;
       const p = surVoie(E.voieTram(N, h.sens), tr.q, true);
       tram(p.x, p.y, p.ang, tr.arret > c.PT);
-    });
-    N.urgences.forEach((h, i) => {
-      const b = e.ambus[i];
-      if (b.etat !== "route") return;
-      const p = surVoie(h.voie, b.q), dx = -Math.sin(p.ang) * 9, dy = Math.cos(p.ang) * 9;
-      ambulance(p.x + dx, p.y + dy, p.ang);
-      if ((t % 1) < 0.6) bulles.push([p.x + dx, p.y + dy - 18, "Pin-pon !", "#e0533d"]);
     });
     // les piétons : aux coins, puis sur les passages
     e.attente.forEach((coin, k) => coin.forEach((p, r) => {
@@ -703,7 +721,6 @@ const Carrefour = (function () {
     $("v-heure").textContent = (min >= 60 ? "18:00" : "17:" + String(min).padStart(2, "0"));
     const puces = [];
     N.trams.forEach((x, i) => { if (e.trams[i].etat === "avant" && x.heure - tt <= 30) puces.push({ t: x.heure, html: `<span class="puce tram">tram ${x.sens ? "←" : "→"} · ${Math.max(0, Math.ceil(x.heure - tt))} s</span>` }); });
-    N.urgences.forEach((x, i) => { if (e.ambus[i].etat === "avant" && x.heure - tt <= 20) puces.push({ t: x.heure, html: `<span class="puce urgence">ambulance · ${Math.max(0, Math.ceil(x.heure - tt))} s</span>` }); });
     N.vagues.forEach(v => {
       if (!v.nom) return;
       if (v.de > tt && v.de - tt <= 20) puces.push({ t: v.de, html: `<span class="puce vague">${v.nom.replace(/^la /, "")} · ${Math.ceil(v.de - tt)} s</span>` });
@@ -715,11 +732,11 @@ const Carrefour = (function () {
   }
 
   // --- Les gestes ------------------------------------------------------------------
-  function agir(p) {
+  function agir(g) {
     if (e.fin) return;
     if (!enMarche) partir();
-    const r = E.geste(N, e, "feu" + p);
-    if (r) secousse[p] = t;
+    const r = E.geste(N, e, g);
+    if (r) secousse[+g[g.length - 1]] = t;
   }
   let minuterie = null;
   function dire(texte, duree = 2600) {
@@ -731,7 +748,12 @@ const Carrefour = (function () {
     if (e.fin) return;
     const r = toile.getBoundingClientRect(), k = toile.width / r.width;
     const x = ((ev.clientX - r.left) * k - ox) / ech, y = ((ev.clientY - r.top) * k - oy) / ech;
-    FEUX.forEach((F, p) => { if (Math.abs(x - F.x) <= 40 && y >= F.y - 56 && y <= F.y + 64) agir(p); });
+    FEUX.forEach((F, p) => {
+      const yr = F.y + REGLE;
+      if (Math.abs(y - yr) <= 22 && x >= F.x - 58 && x < F.x - 8) agir("moins" + p);
+      else if (Math.abs(y - yr) <= 22 && x > F.x + 8 && x <= F.x + 58) agir("plus" + p);
+      else if (Math.abs(x - F.x) <= 40 && y >= F.y - 56 && y <= F.y + 62) agir("feu" + p);
+    });
   });
 
   // --- L'accueil et la fin -----------------------------------------------------------
@@ -739,10 +761,10 @@ const Carrefour = (function () {
     $("carte").innerHTML = `<h2>${N.titre}</h2>
       <p><b>Fais passer ${N.quota} personnes avant 18 h.</b></p>
       <ul class="regle">
-        <li>Touche un <b>feu</b> pour le passer au vert : l'avenue, la rue, ou les piétons. Un seul est vert à la fois.</li>
-        <li>Changer de feu coûte du temps : l'orange, puis le carrefour doit se vider.</li>
-        <li>Une voiture compte 1, un piéton 1, le <b>tram</b> ${N.compte.tram}. Le tram passe à l'horaire et déteste attendre.</li>
-        <li>Qui attend trop <b>fait demi-tour</b> : il ne compte plus, et l'humeur du quartier baisse. Une <b>ambulance</b> passe avant tout.</li>
+        <li>Les feux tournent <b>tout seuls</b> : l'avenue, puis la rue, puis les piétons. Règle la durée de chaque vert avec <b>−</b> et <b>+</b>.</li>
+        <li>Chaque changement coûte du temps (l'orange, puis le carrefour doit se vider). Un cycle trop court gaspille, un cycle trop long fait attendre. Quand une heure de pointe arrive, réajuste.</li>
+        <li>Touche un feu pour le forcer au vert tout de suite.</li>
+        <li>Une voiture compte 1, un piéton 1, le <b>tram</b> ${N.compte.tram}. Qui attend trop <b>fait demi-tour</b> : il ne compte plus, et l'humeur du quartier baisse.</li>
         <li>Les étoiles : l'humeur qui reste à 18 h s'ajoute aux passés.</li>
       </ul>
       <button id="b-partir">C'est parti</button>`;
@@ -758,17 +780,16 @@ const Carrefour = (function () {
       l.push(`<h2>Objectif atteint !</h2>`, `<div class="etoiles">${"★".repeat(n)}<span class="eteinte">${"★".repeat(3 - n)}</span></div>`);
       l.push(`<p><b>${f.passes}</b> passés + <b>${Math.round(e.humeur)}</b> d'humeur = <b>${E.points(e)} points</b>. Deux étoiles à ${N.etoiles.deux}, trois à ${N.etoiles.trois} ; le meilleur régulateur du banc fait ${N.par}.</p>`);
     } else if (f.fin === "rate") {
-      l.push(`<h2>Quota manqué</h2>`, `<p><b>${f.passes}</b> personnes passées sur ${N.quota}. Changer de feu trop souvent fait perdre du temps à chaque orange.</p>`);
+      l.push(`<h2>Quota manqué</h2>`, `<p><b>${f.passes}</b> personnes passées sur ${N.quota}. Des verts trop courts font perdre du temps à chaque orange.</p>`);
     } else {
       const pire = Object.entries(P).sort((a, b) => b[1] - a[1])[0][0];
       l.push(`<h2>Le quartier est en colère !</h2>`);
       l.push(`<p>${{ voitures: "Trop de voitures ont fait demi-tour. Un vert trop long d'un côté fait enrager l'autre ; changer trop souvent aussi.",
-        pietons: "Les piétons ont trop attendu aux coins. Pense à leur bouton.",
-        tram: "Le tram a trop attendu : il compte beaucoup, donne-lui la rue à temps.",
-        urgences: "Une ambulance est restée bloquée. Elle passe avant tout." }[pire]}</p>`);
+        pietons: "Les piétons ont trop attendu aux coins. Ne saute pas leur phase trop longtemps.",
+        tram: "Le tram a trop attendu : il compte beaucoup, donne-lui la rue à temps." }[pire]}</p>`);
     }
     const demi = e.renonces.reduce((a, b) => a + b, 0);
-    l.push(`<ul><li>Passés : voitures ${D.voitures} · piétons ${D.pietons} · tram ${D.tram}</li><li>Partis : ${demi} voiture${demi > 1 ? "s" : ""} · ${e.renoncesP} piéton${e.renoncesP > 1 ? "s" : ""}</li><li>Humeur : voitures ${moins(P.voitures)}, piétons ${moins(P.pietons)}, tram ${moins(P.tram)}, urgences ${moins(P.urgences)}</li></ul>`);
+    l.push(`<ul><li>Passés : voitures ${D.voitures} · piétons ${D.pietons} · tram ${D.tram}</li><li>Partis : ${demi} voiture${demi > 1 ? "s" : ""} · ${e.renoncesP} piéton${e.renoncesP > 1 ? "s" : ""}</li><li>Humeur : voitures ${moins(P.voitures)}, piétons ${moins(P.pietons)}, tram ${moins(P.tram)}</li></ul>`);
     l.push(`<button id="b-rejouer">Rejouer</button>`);
     $("carte").innerHTML = l.join("");
     $("carte").hidden = false;
