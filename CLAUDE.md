@@ -229,6 +229,17 @@ jour qui perd la partie d'un joueur est un bug bloquant, pas un détail.
   meilleur d'entre eux, si le PRESSÉ ou le GROUPEUR gagnent mieux qu'une
   étoile, si la rue vide ne rend pas tout facile, ou si le ponton (et le
   bras où on le pose) ne vaut pas au moins une étoile.
+  `prototype-carrefour.html` (20 octobre 2026) en est la suite, à la demande
+  de Vincent (« un objectif de réussite », « manipuler différentes choses »).
+  C'est un carrefour à feux : le feu de l'avenue, le feu de la rue et le
+  bouton des piétons, un seul vert à la fois. Quatre flux s'y croisent
+  (voitures, tram à l'horaire, piétons, ambulances), avec un QUOTA de
+  passages avant 18 h. Qui attend trop renonce et ne compte plus. Les
+  étoiles se comptent en points : les passés plus l'humeur qui reste. Son
+  banc, `node tools/carrefour-banc.mjs`, fait jouer une famille de
+  régulateurs automates et refuse si le `par` n'est pas leur meilleur score,
+  si le NERVEUX, le TÊTU ou le meilleur FEU AUTOMATIQUE à cycle fixe ont deux
+  étoiles, ou si l'on gagne sans jamais le bouton des piétons.
 - `data/worldmap.js` — généré depuis Natural Earth, jamais édité à la main.
 
 ## Détail connu
