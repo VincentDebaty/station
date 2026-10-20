@@ -219,6 +219,16 @@ jour qui perd la partie d'un joueur est un bug bloquant, pas un détail.
   `par` (l'attente totale), si l'éclusier PRESSÉ (sert tout de suite) ne
   tombe pas à sec, si le GROUPEUR (ne remplit qu'à deux) ne perd pas un
   marinier par la patience, ou si l'eau ne coûte pas d'attente.
+  `prototype-pontier.html` (20 octobre 2026) est le premier essai du
+  « jeu rêvé » que Vincent a cerné par QCM : Station sous un autre habit.
+  Une ville de canaux vue de dessus ; des péniches à l'horaire, un
+  aiguillage, une grand-rue qui coupe les deux bras par deux ponts levants,
+  un seul ponton d'attente à poser pour de bon, une humeur du quartier qui
+  ne fait que baisser. Son banc, `node tools/pontier-banc.mjs`, fait jouer
+  une famille de pontiers automates et refuse si le `par` n'est pas le
+  meilleur d'entre eux, si le PRESSÉ ou le GROUPEUR gagnent mieux qu'une
+  étoile, si la rue vide ne rend pas tout facile, ou si le ponton (et le
+  bras où on le pose) ne vaut pas au moins une étoile.
 - `data/worldmap.js` — généré depuis Natural Earth, jamais édité à la main.
 
 ## Détail connu

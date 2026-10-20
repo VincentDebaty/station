@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#7a4a26">
+<title>Le pontier</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&display=swap">
+<style>
+/* ------------------------------------------------------------------
+   LE PONTIER — prototype (20 octobre 2026). Le portrait du jeu rêvé de
+   Vincent, tiré d'un QCM : Station sous un autre habit. Une ville de
+   canaux vue de dessus ; des péniches arrivent à l'horaire et vont au
+   quai de leur couleur ; une grand-rue coupe les deux bras par deux ponts
+   levants. Lever un pont fait passer les bateaux, mais arrête la rue. Un
+   seul ponton d'attente à poser, pour de bon.
+
+   Le style de La rivière et d'Écluses en étoile : plateau vu de dessus,
+   bois et crème, Lilita One. Un seul aspect, voulu (pas de thème sombre).
+   Le banc : node tools/pontier-banc.mjs.
+   ------------------------------------------------------------------ */
+:root {
+  color-scheme: light;
+  --pave: #efe0c2;
+  --bois: #7a4a26;
+  --bois-fonce: #5a3418;
+  --creme: #fff3dc;
+  --encre: #3b2414;
+  --or: #ffc93c;
+  --eau: #4d8fb0;
+  --ok: #4caf3e;
+  --alerte: #e0533d;
+  --chiffres: "Lilita One", "Arial Rounded MT Bold", "Trebuchet MS", sans-serif;
+  --texte: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0; overflow: hidden;
+  background: var(--bois); color: var(--creme);
+  font-family: var(--texte);
+  -webkit-user-select: none; user-select: none; -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+button { font: inherit; color: inherit; cursor: pointer; }
+button:focus-visible { outline: 3px solid var(--or); outline-offset: 2px; }
+[hidden] { display: none !important; }
+
+#jeu { height: 100%; display: flex; flex-direction: column; padding-top: env(safe-area-inset-top, 0px); }
+.bandeau {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px max(16px, env(safe-area-inset-right, 0px)) 6px max(16px, env(safe-area-inset-left, 0px));
+}
+.humeur { flex: 1; display: flex; align-items: center; gap: 8px; min-width: 0; }
+.humeur svg { width: 32px; height: 32px; flex: none; }
+.jauge { flex: 1; min-width: 40px; height: 18px; border-radius: 999px; background: rgba(0, 0, 0, .3); border: 3px solid var(--bois-fonce); overflow: hidden; }
+.jauge span { display: block; height: 100%; border-radius: 999px; background: var(--ok); }
+.pastille {
+  font: 400 1.05rem/1 var(--chiffres); background: var(--bois-fonce); border-radius: 999px;
+  padding: 8px 12px; font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+.rond {
+  width: 40px; height: 40px; flex: none; padding: 0; border-radius: 999px;
+  border: 3px solid #c9b48c; background: var(--creme); color: var(--encre);
+  font: 400 1rem/1 var(--chiffres); box-shadow: 0 3px 0 #b39a6c;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.rond:active { transform: translateY(2px); box-shadow: 0 1px 0 #b39a6c; }
+.rond svg { width: 18px; height: 18px; }
+#horaire {
+  display: flex; gap: 6px; overflow: hidden; min-height: 32px;
+  padding: 0 max(16px, env(safe-area-inset-right, 0px)) 8px max(16px, env(safe-area-inset-left, 0px));
+}
+.puce {
+  flex: none; display: flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 999px;
+  background: rgba(255, 243, 220, .14); font: 400 .9rem/1 var(--chiffres); white-space: nowrap; font-variant-numeric: tabular-nums;
+}
+.puce i { width: 12px; height: 12px; border-radius: 4px; display: inline-block; }
+.puce.vague { background: rgba(224, 83, 61, .45); }
+.puce.vide { background: none; color: rgba(255, 243, 220, .6); font-family: var(--texte); font-size: .85rem; }
+
+.scene { position: relative; flex: 1 1 auto; min-height: 0; background: var(--pave); }
+canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+.message {
+  position: absolute; left: 50%; bottom: max(14px, env(safe-area-inset-bottom, 0px)); transform: translateX(-50%);
+  max-width: calc(100% - 32px); padding: 8px 14px; border-radius: 999px;
+  background: var(--encre); color: var(--creme); font: 400 1rem/1.2 var(--chiffres); text-align: center;
+  box-shadow: 0 4px 0 rgba(0, 0, 0, .25);
+}
+.carte {
+  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  width: min(23rem, calc(100% - 32px)); max-height: calc(100% - 24px); overflow-y: auto;
+  background: var(--bois); color: var(--creme); border: 4px solid var(--bois-fonce); border-radius: 18px;
+  padding: 18px 20px 20px; text-align: center;
+  box-shadow: 0 8px 0 #4a2a12, 0 14px 30px rgba(30, 15, 5, .35);
+}
+.carte h2 { margin: 0 0 8px; font: 400 1.8rem/1.1 var(--chiffres); text-wrap: balance; }
+.carte p { margin: 0 0 12px; line-height: 1.4; }
+.carte .etoiles { font: 400 2.4rem/1 var(--chiffres); color: var(--or); text-shadow: 0 3px 0 #8a5a12; letter-spacing: 4px; margin-bottom: 8px; }
+.carte .etoiles .eteinte { color: rgba(255, 243, 220, .3); text-shadow: none; }
+.carte ul { list-style: none; margin: 0 0 14px; padding: 0; display: grid; gap: 4px; font: 400 1rem/1.2 var(--chiffres); }
+.carte .regle { text-align: left; margin: 0 0 14px; padding-left: 18px; display: block; font: 15px/1.4 var(--texte); }
+.carte .regle li { list-style: disc; margin-bottom: 4px; }
+.carte button {
+  font: 400 1.15rem/1 var(--chiffres); color: #fff; background: var(--ok);
+  border: 3px solid #2f7d25; border-radius: 999px; padding: 12px 26px; box-shadow: 0 3px 0 #2f7d25;
+}
+@media (max-width: 380px) { .pastille { padding: 7px 9px; font-size: .95rem; } .rond { width: 36px; height: 36px; } }
+@media (prefers-reduced-motion: reduce) { .rond:active { transform: none; } }
+</style>
+</head>
+<body>
+
+<div id="jeu">
+  <header class="bandeau">
+    <div class="humeur" title="L'humeur du quartier">
+      <svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="14" id="v-visage" fill="#ffc93c" stroke="#5a3418" stroke-width="2.5"/><circle cx="11" cy="13" r="2" fill="#3b2414"/><circle cx="21" cy="13" r="2" fill="#3b2414"/><path id="v-bouche" d="M10 20 Q16 25 22 20" fill="none" stroke="#3b2414" stroke-width="2.5" stroke-linecap="round"/></svg>
+      <div class="jauge" role="meter" aria-label="Humeur du quartier" aria-valuemin="0" aria-valuemax="100" id="v-jauge-r"><span id="v-jauge"></span></div>
+    </div>
+    <span class="pastille" id="v-heure">0:00</span>
+    <button class="rond" id="b-vitesse" aria-label="Vitesse">×1</button>
+    <button class="rond" id="b-pause" aria-label="Pause"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg></button>
+    <button class="rond" id="b-recommencer" aria-label="Recommencer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg></button>
+  </header>
+  <div id="horaire" aria-label="Ce qui arrive"></div>
+  <main class="scene" id="scene">
+    <canvas id="toile" aria-label="Le quartier : touche un pont pour le lever ou le baisser, l'aiguillage pour changer de bras"></canvas>
+    <div class="message" id="message" hidden></div>
+    <div class="carte" id="carte"></div>
+  </main>
+</div>
+
+<!-- ==================================================================
+     LE NIVEAU — du JSON pur. Les durées sont en secondes ; les longueurs
+     aussi (le temps qu'il faut pour les parcourir sans être arrêté).
+       bras       les deux bras après l'aiguillage : 0 l'ouest, 1 l'est ;
+                  chacun finit à un quai et passe sous un pont de la rue
+       bateau     chenal (de l'entrée au carrefour), bras (du carrefour au
+                  pont), ecart (entre deux bateaux qui se suivent),
+                  carrefour (le temps de dégager l'aiguillage), dessous (le
+                  passage sous un pont levé), suite (l'écart entre deux
+                  bateaux sous le même pont), patience (arrêté plus longtemps
+                  que ça, un marinier s'énerve), colere (ce qu'un marinier
+                  énervé et arrêté retire à l'humeur, par seconde)
+       pont       levage (le temps de lever ou de baisser un pont)
+       rue        approche (du bord au premier pont), tablier (traverser un
+                  pont), entre (d'un pont à l'autre), sortie, ecart, patience,
+                  colere (comme pour les bateaux) ; les vagues : de, a, une
+                  charrette toutes les « intervalle » secondes dans chaque
+                  sens, et un nom pour les heures de pointe
+       pontons    combien on peut en poser : un ponton d'attente donne à son
+                  bras une place de plus avant le pont
+       mauvais    ce que coûte un bateau livré au mauvais quai
+       horaire    les péniches : heure d'arrivée, bras visé
+       par        l'humeur finale du meilleur pontier du banc ; les étoiles
+                  se comptent en dessous (trois : à « trois » près, deux : à
+                  « deux » près) — node tools/pontier-banc.mjs refuse si le
+                  par écrit n'est pas celui qu'il retrouve
+     ================================================================== -->
+<script type="application/json" id="niveaux">
+{
+  "niveaux": [
+    {
+      "id": "1",
+      "titre": "Le quartier des deux ponts",
+      "jauge": 100,
+      "pontons": 1,
+      "bras": [
+        {"nom": "le marché", "court": "marché", "couleur": "#e0533d"},
+        {"nom": "la brasserie", "court": "brasserie", "couleur": "#3f7fd0"}
+      ],
+      "bateau": {"chenal": 6, "bras": 4, "ecart": 2.5, "carrefour": 1.5, "dessous": 3, "suite": 1.5, "patience": 20, "colere": 2},
+      "pont": {"levage": 2.5},
+      "rue": {
+        "approche": 3, "tablier": 1, "entre": 2.6, "sortie": 2, "ecart": 0.8, "patience": 8, "colere": 1,
+        "vagues": [
+          {"de": 0, "a": 50, "intervalle": 4},
+          {"de": 50, "a": 80, "intervalle": 1.6, "nom": "la sortie de l'école"},
+          {"de": 80, "a": 135, "intervalle": 3.5},
+          {"de": 135, "a": 165, "intervalle": 1.3, "nom": "la fermeture du marché"},
+          {"de": 165, "a": 400, "intervalle": 4}
+        ]
+      },
+      "mauvais": 15,
+      "horaire": [
+        {"heure": 5, "vers": 0},
+        {"heure": 18, "vers": 1},
+        {"heure": 22, "vers": 0},
+        {"heure": 36, "vers": 1},
+        {"heure": 40, "vers": 1},
+        {"heure": 58, "vers": 0},
+        {"heure": 68, "vers": 1},
+        {"heure": 88, "vers": 0},
+        {"heure": 92, "vers": 0},
+        {"heure": 108, "vers": 1},
+        {"heure": 124, "vers": 1},
+        {"heure": 127, "vers": 1},
+        {"heure": 131, "vers": 0},
+        {"heure": 146, "vers": 0},
+        {"heure": 154, "vers": 1},
+        {"heure": 162, "vers": 1}
+      ],
+      "par": 71.5,
+      "etoiles": {"trois": 10, "deux": 30}
+    }
+  ]
+}
+</script>
+
+<script id="moteur">
+"use strict";
+const Pontier = (function () {
+
+  // --- Le modèle ---------------------------------------------------------------
+  // Deux flux qui se croisent, et un seul geste pour les départager.
+  //
+  //   les bateaux   ils arrivent à l'horaire au bas du chenal et le remontent
+  //                 en file, sans se doubler (la file de Station). Au
+  //                 carrefour, la tête prend le bras où POINTE l'aiguillage —
+  //                 pas celui qu'elle vise : c'est le joueur qui aiguille. Un
+  //                 bras n'a qu'UNE place avant son pont (deux avec un
+  //                 ponton) : s'il est plein, le bateau attend au carrefour,
+  //                 et toute la file derrière lui. Sous un pont LEVÉ, ils
+  //                 passent l'un après l'autre, puis vont à quai ; au mauvais
+  //                 quai, l'humeur prend un coup sec.
+  //   les ponts     un geste lève ou baisse un pont. Lever : la barrière se
+  //                 ferme, on attend que le tablier soit vide, puis il monte.
+  //                 On ne baisse pas un pont sur un bateau qui passe dessous
+  //                 (l'enclenchement de Station).
+  //   la rue        une seule grand-rue, dans les deux sens, coupe les deux
+  //                 bras. Une charrette ne s'engage sur un pont que baissé ;
+  //                 sur le premier, seulement s'il reste de la place entre
+  //                 les deux ponts pour s'y arrêter (on ne bloque pas un pont).
+  //                 Lever un pont arrête donc la rue des deux côtés, et vite
+  //                 aussi l'autre pont.
+  //   l'humeur      elle ne fait que baisser : chaque marinier ou charretier
+  //                 arrêté plus longtemps que sa patience lui retire « colere »
+  //                 par seconde, tant qu'il reste arrêté. À zéro, perdu ;
+  //                 quand tous les bateaux sont à quai, gagné, et l'humeur
+  //                 qui reste fait les étoiles.
+  //
+  // Le temps avance par pas entiers de PAS secondes, et les positions sont
+  // en pas (une charrette ou un bateau libre avance d'un pas par pas) : la
+  // page et le banc jouent exactement la même partie pour les mêmes gestes.
+
+  const PAS = 0.05;
+  const pasDe = s => Math.round(s / PAS);
+  const heure = e => e.k * PAS;
+  const arrondi = x => Math.round(x * 10) / 10;
+
+  // Les constantes d'un niveau, en pas, et l'heure d'arrivée de chaque charrette.
+  const CACHE = new WeakMap();
+  function C(N) {
+    let c = CACHE.get(N);
+    if (c) return c;
+    const B = N.bateau, R = N.rue;
+    c = {
+      LCH: pasDe(B.chenal), LBR: pasDe(B.bras), GB: pasDe(B.ecart), LOCK: pasDe(B.carrefour),
+      DES: pasDe(B.dessous), SUITE: pasDe(B.suite), PB: pasDe(B.patience), NLEV: pasDe(N.pont.levage),
+      APP: pasDe(R.approche), TAB: pasDe(R.tablier), MID: pasDe(R.entre), OUT: pasDe(R.sortie),
+      GC: pasDe(R.ecart), PC: pasDe(R.patience)
+    };
+    // le chemin d'une charrette : l'arrêt du premier pont, son tablier, l'arrêt du second, son tablier, la sortie
+    c.S1 = c.APP; c.S2 = c.APP + c.TAB + c.MID; c.FIN = c.S2 + c.TAB + c.OUT;
+    c.PLACES = Math.floor(c.MID / c.GC) + 1;          // les charrettes qui tiennent entre les deux ponts
+    c.arr = [0, 1].map(d => {
+      const t = [];
+      for (const v of R.vagues) for (let x = v.de + (d ? v.intervalle / 2 : 0); x < v.a - 1e-9; x += v.intervalle) t.push(pasDe(x));
+      return t.sort((a, b) => a - b);
+    });
+    CACHE.set(N, c);
+    return c;
+  }
+  // Le sens 0 va d'ouest en est (pont 0 puis pont 1), le sens 1 l'inverse.
+  const pontDe = (d, j) => d === 0 ? j : 1 - j;
+
+  function charger(N) {
+    C(N);
+    return {
+      k: 0, jauge: N.jauge, fin: null, aig: 0,
+      ponts: N.bras.map(() => ({ n: 0, cible: 0, dernier: -1e9 })),     // n : de 0 (baissé) à NLEV (levé)
+      pontons: N.bras.map(() => false), reste: N.pontons,
+      // etat : avant, chenal, bras, dessous, livre ; q : la position dans le
+      // chenal ou le bras ; d : le passage sous le pont qui reste ; arret : le
+      // temps passé arrêté
+      bat: N.horaire.map(() => ({ etat: "avant", q: 0, bras: -1, d: 0, arret: 0, arrive: -1, livre: -1, juste: null })),
+      chenal: [], files: N.bras.map(() => []),
+      chars: [[], []], nes: [0, 0], sortis: [0, 0],
+      perte: { rue: 0, bateaux: 0, quais: 0 }
+    };
+  }
+  const copie = e => JSON.parse(JSON.stringify(e));
+
+  // Un bateau dégage-t-il l'aiguillage ? (tant qu'il n'a pas fait « carrefour » dans son bras)
+  const carrefourOccupe = (N, e) => e.files.some(f => f.some(i => e.bat[i].q < C(N).LOCK));
+  function tablierOccupe(N, e, b) {
+    const c = C(N);
+    for (let d = 0; d < 2; d++) {
+      const s = pontDe(d, 0) === b ? c.S1 : c.S2;
+      if (e.chars[d].some(ch => ch.q > s && ch.q < s + c.TAB)) return true;
+    }
+    return false;
+  }
+  const dessous = (e, b) => e.bat.some(x => x.etat === "dessous" && x.bras === b);
+
+  // --- Les gestes : "aiguille", "pont0", "pont1", "ponton0", "ponton1" ----------
+  function refus(N, e, g) {
+    if (e.fin) return "fini";
+    if (g === "aiguille") return carrefourOccupe(N, e) ? "carrefour" : null;
+    const m = /^(pont|ponton)([01])$/.exec(g);
+    if (!m) return "inconnu";
+    const i = +m[2];
+    if (m[1] === "pont") return e.ponts[i].cible === 1 && dessous(e, i) ? "dessous" : null;
+    if (e.pontons[i]) return "deja";
+    return e.reste > 0 ? null : "epuise";
+  }
+  function geste(N, e, g) {
+    const r = refus(N, e, g);
+    if (r) return r;
+    if (g === "aiguille") e.aig = 1 - e.aig;
+    else if (g.startsWith("ponton")) { e.pontons[+g[6]] = true; e.reste--; }
+    else { const p = e.ponts[+g[4]]; p.cible = 1 - p.cible; }
+    return null;
+  }
+
+  // --- Le temps -------------------------------------------------------------------
+  function pas(N, e) {
+    if (e.fin) return;
+    const c = C(N), B = N.bateau, R = N.rue;
+    e.k++;
+    let perteRue = 0, perteBat = 0;
+
+    // les arrivées : au bout de la file (au large, si le chenal est plein)
+    N.horaire.forEach((h, i) => {
+      const b = e.bat[i];
+      if (b.etat !== "avant" || e.k < pasDe(h.heure)) return;
+      const der = e.chenal.length ? e.bat[e.chenal[e.chenal.length - 1]] : null;
+      b.etat = "chenal"; b.arrive = e.k; b.q = der ? Math.min(0, der.q - c.GB) : 0;
+      e.chenal.push(i);
+    });
+    for (let d = 0; d < 2; d++) {
+      const arr = c.arr[d], f = e.chars[d];
+      while (e.nes[d] < arr.length && arr[e.nes[d]] <= e.k) {
+        const der = f.length ? f[f.length - 1] : null;
+        f.push({ id: e.nes[d], q: der ? Math.min(0, der.q - c.GC) : 0, arret: 0 });
+        e.nes[d]++;
+      }
+    }
+
+    // les ponts : on ne commence à lever que sur un tablier vide
+    e.ponts.forEach((p, b) => {
+      if (p.cible === 1) { if (p.n < c.NLEV && (p.n > 0 || !tablierOccupe(N, e, b))) p.n++; }
+      else if (p.n > 0) p.n--;
+    });
+
+    // les bateaux sous les ponts, puis à quai
+    e.bat.forEach((b, i) => {
+      if (b.etat !== "dessous" || --b.d > 0) return;
+      b.etat = "livre"; b.livre = e.k; b.juste = b.bras === N.horaire[i].vers;
+      if (!b.juste) { e.jauge -= N.mauvais; e.perte.quais += N.mauvais; }
+    });
+    const arrete = b => { b.arret++; if (b.arret > c.PB) perteBat += B.colere * PAS; };
+    // les bras : la tête passe sous le pont s'il est levé, les autres serrent derrière
+    e.files.forEach((f, a) => {
+      const p = e.ponts[a];
+      if (f.length) {
+        const t = e.bat[f[0]];
+        if (t.q >= c.LBR && p.cible === 1 && p.n === c.NLEV && e.k - p.dernier >= c.SUITE) {
+          t.etat = "dessous"; t.d = c.DES; p.dernier = e.k; f.shift();
+        }
+      }
+      let lead = null;
+      for (const i of f) {
+        const b = e.bat[i], v = Math.min(b.q + 1, lead ? lead.q - c.GB : c.LBR);
+        if (v > b.q) b.q = v; else arrete(b);
+        lead = b;
+      }
+    });
+    // le carrefour : la tête du chenal prend le bras de l'aiguillage, s'il y a la place
+    if (e.chenal.length) {
+      const i = e.chenal[0], b = e.bat[i];
+      if (b.q >= c.LCH && !carrefourOccupe(N, e)) {
+        const a = e.aig, f = e.files[a], der = f.length ? e.bat[f[f.length - 1]] : null;
+        if (f.length < 1 + (e.pontons[a] ? 1 : 0) && (!der || der.q >= c.GB)) {
+          e.chenal.shift(); b.etat = "bras"; b.bras = a; b.q = 0; f.push(i);
+        }
+      }
+    }
+    let lead = null;
+    for (const i of e.chenal) {
+      const b = e.bat[i], v = Math.min(b.q + 1, lead ? lead.q - c.GB : c.LCH);
+      if (v > b.q) b.q = v; else arrete(b);
+      lead = b;
+    }
+
+    // la rue, sens par sens, de la tête à la queue
+    for (let d = 0; d < 2; d++) {
+      const f = e.chars[d];
+      let lead = null, entre = 0;                 // entre : les charrettes devant, passées le premier pont
+      for (const ch of f) {
+        let v = ch.q + 1;
+        if (ch.q <= c.S1 && v > c.S1) {
+          const p = e.ponts[pontDe(d, 0)];
+          if (p.cible !== 0 || p.n !== 0 || entre >= c.PLACES) v = c.S1;
+        }
+        if (ch.q <= c.S2 && v > c.S2) {
+          const p = e.ponts[pontDe(d, 1)];
+          if (p.cible !== 0 || p.n !== 0) v = c.S2;
+        }
+        if (lead) v = Math.min(v, lead.q - c.GC);
+        if (v > ch.q) ch.q = v;
+        else { ch.arret++; if (ch.arret > c.PC) perteRue += R.colere * PAS; }
+        if (ch.q > c.S1 && ch.q <= c.S2) entre++;
+        lead = ch;
+      }
+      while (f.length && f[0].q >= c.FIN) { f.shift(); e.sortis[d]++; }
+    }
+
+    // l'humeur, et la fin
+    e.jauge -= perteRue + perteBat;
+    e.perte.rue += perteRue; e.perte.bateaux += perteBat;
+    if (e.jauge <= 1e-9) { e.jauge = 0; e.fin = { fin: "colere" }; return; }
+    if (e.bat.every(b => b.etat === "livre")) e.fin = { fin: "gagne", jauge: arrondi(e.jauge) };
+  }
+  function avancer(N, e, n) { for (let i = 0; i < n && !e.fin; i++) pas(N, e); }
+  function etoiles(N, j) { return j >= N.par - N.etoiles.trois ? 3 : j >= N.par - N.etoiles.deux ? 2 : 1; }
+
+  return { PAS, pasDe, heure, arrondi, C, pontDe, charger, copie, carrefourOccupe, tablierOccupe, dessous, refus, geste, pas, avancer, etoiles };
+})();
+</script>
+
+<script id="vue">
+"use strict";
+(function () {
+  // --- La vue : elle dessine l'état du moteur et lui passe les gestes. Aucune
+  // règle ici : la file, les ponts, la rue et l'humeur sont au moteur.
+  const N = JSON.parse(document.getElementById("niveaux").textContent).niveaux[0];
+  const E = Pontier, c = E.C(N);
+  const $ = id => document.getElementById(id);
+
+  // --- La géométrie du plateau (400 × 720, vu de dessus) ----------------------
+  const W = 400, H = 720;
+  const LARG = 56;                                  // la largeur d'un canal
+  const J = { x: 200, y: 470 };                     // le carrefour
+  const Y_TETE = 520;                               // la tête du chenal, qui attend le carrefour
+  const PX_CH = 1.6;                                // pixels par pas dans le chenal
+  const Y_RUE = 260, RUE = 44;                      // la grand-rue
+  const VOIE = [Y_RUE + 11, Y_RUE - 11];            // la voie de chaque sens
+  const BRAS = [0, 1].map(a => {
+    const s = a ? 1 : -1, x = 200 + s * 90;
+    return { x, coude: { x, y: 400 }, arret: { x, y: 312 }, pont: { x, y: Y_RUE }, quai: { x, y: 98 }, s };
+  });
+  // le chemin d'un bras, du carrefour à l'arrêt devant le pont
+  const L1 = Math.hypot(90, 70), L2 = 88;
+  function surBras(a, q) {
+    const B = BRAS[a], u = q / c.LBR * (L1 + L2);
+    if (u <= L1) { const f = u / L1; return { x: J.x + (B.coude.x - J.x) * f, y: J.y + (B.coude.y - J.y) * f, ang: Math.atan2(B.coude.y - J.y, B.coude.x - J.x) }; }
+    return { x: B.x, y: B.coude.y - (u - L1), ang: -Math.PI / 2 };
+  }
+  // la place du ponton : au droit du second bateau, sur la berge extérieure
+  const PONTON = [0, 1].map(a => {
+    const p = surBras(a, c.LBR - c.GB), s = BRAS[a].s;
+    const nx = s * 0.61, ny = 0.79;                  // la normale vers l'extérieur du coude
+    return { x: p.x + nx * 36, y: p.y + ny * 36, bx: p.x + nx * 12, by: p.y + ny * 12, ang: p.ang };
+  });
+  // la rue : position d'une charrette (en pas) → x, par morceaux
+  const XR = [[0, -6], [c.S1, 66], [c.S1 + c.TAB, 154], [c.S2, 246], [c.S2 + c.TAB, 334], [c.FIN, 410]];
+  function xRue(d, q) {
+    let x;
+    if (q <= 0) x = -6 + q * 1.2;
+    else {
+      x = XR[XR.length - 1][1];
+      for (let i = 1; i < XR.length; i++) if (q <= XR[i][0]) { const [q0, x0] = XR[i - 1], [q1, x1] = XR[i]; x = x0 + (q - q0) / (q1 - q0) * (x1 - x0); break; }
+    }
+    return d === 0 ? x : W - x;
+  }
+
+  // --- La partie ------------------------------------------------------------------
+  let e, acc = 0, vitesse = 1, enMarche = false, avant = null, t = 0, finVue = false;
+  let aigVue = 0;                                   // l'angle de la barre d'aiguillage (animation)
+  const leve = [0, 0];                              // le tablier, 0 baissé → 1 levé (animation)
+  let aQuai = [], bulles = [], secousse = {};
+  function nouvelle() {
+    e = E.charger(N); acc = 0; enMarche = false; finVue = false; aQuai = []; bulles = []; secousse = {};
+    aigVue = e.aig; leve[0] = leve[1] = 0;
+    accueil();
+    majBandeau();
+  }
+
+  // --- Le dessin --------------------------------------------------------------------
+  const toile = $("toile"), ctx = toile.getContext("2d");
+  let ech = 1, ox = 0, oy = 0;
+  function cadrer() {
+    const r = toile.getBoundingClientRect(), dpr = Math.min(window.devicePixelRatio || 1, 3);
+    toile.width = Math.max(1, Math.round(r.width * dpr)); toile.height = Math.max(1, Math.round(r.height * dpr));
+    ech = Math.min(toile.width / W, toile.height / H);
+    ox = (toile.width - W * ech) / 2; oy = (toile.height - H * ech) / 2;
+  }
+  function rrect(x, y, w, h, r) {
+    ctx.beginPath(); ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+  }
+  function rond(x, y, r, coul) { ctx.fillStyle = coul; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill(); }
+  const COUL = {
+    pave: "#efe0c2", rue: "#d8c095", rueBord: "#c2a676", trottoir: "#e8d4ac",
+    pierre: "#c9b48c", pierreF: "#a8926a", eau: "#4d8fb0", eauC: "#62a6c6",
+    bois: "#b07a46", boisF: "#7a4a26", creme: "#fff3dc", encre: "#3b2414",
+    toits: ["#d9774b", "#c8643c", "#e08b5a", "#b85a3a", "#d06a44"], ombre: "rgba(70,40,15,.18)",
+    feuille: "#5fa33c", feuilleC: "#7cbf4f"
+  };
+
+  // les maisons : des toits vus d'en haut, hors des canaux et de la rue
+  const MAISONS_G = [[4, 150, 60, 36], [4, 192, 60, 40], [4, 292, 62, 44], [4, 342, 62, 48], [4, 396, 58, 44],
+    [6, 500, 70, 52], [82, 504, 78, 40], [6, 560, 60, 58], [72, 552, 88, 46], [6, 626, 74, 46], [86, 606, 74, 58], [6, 680, 70, 40], [86, 672, 74, 48],
+    [4, 4, 52, 50]];
+  const MAISONS = MAISONS_G.concat(MAISONS_G.map(([x, y, w, h]) => [W - x - w, y, w, h]));
+  const ARBRES = [[38, 455, 15], [160, 590, 12], [240, 650, 13], [362, 460, 15], [36, 245 - 120, 0]].filter(a => a[2]);
+
+  function decor() {
+    ctx.fillStyle = COUL.pave; ctx.fillRect(-2000, -2000, 4400, 6000);
+    // les canaux : la pierre des quais, puis l'eau
+    const traits = [[[J.x, 4000], [J.x, J.y]], ...BRAS.map(B => [[J.x, J.y], [B.coude.x, B.coude.y], [B.x, 96]])];
+    ctx.lineJoin = "round"; ctx.lineCap = "butt";
+    for (const [w, coul] of [[LARG + 14, COUL.pierreF], [LARG + 8, COUL.pierre], [LARG, COUL.eau]]) {
+      ctx.strokeStyle = coul; ctx.lineWidth = w;
+      for (const tr of traits) { ctx.beginPath(); ctx.moveTo(tr[0][0], tr[0][1]); for (const p of tr.slice(1)) ctx.lineTo(p[0], p[1]); ctx.stroke(); }
+      // les bassins des quais
+      ctx.fillStyle = coul;
+      for (const B of BRAS) { rrect(B.x - 44 - (w - LARG) / 2, 54 - (w - LARG) / 2, 88 + (w - LARG), 70 + (w - LARG), 14); ctx.fill(); }
+      rond(J.x, J.y, w / 2 + 6, coul);
+    }
+    // des reflets qui filent dans l'eau
+    ctx.strokeStyle = "rgba(255,255,255,.28)"; ctx.lineWidth = 2.5; ctx.lineCap = "round";
+    for (let j = 0; j < 9; j++) {
+      const y = 720 - ((j * 83 + t * 14) % 260), x = J.x - 16 + (j % 3) * 14;
+      ctx.beginPath(); ctx.moveTo(x, y); ctx.quadraticCurveTo(x + 4, y - 7, x, y - 14); ctx.stroke();
+    }
+    // la rue, ses trottoirs et ses pavés
+    ctx.fillStyle = COUL.trottoir; ctx.fillRect(-2000, Y_RUE - RUE / 2 - 7, 4400, RUE + 14);
+    ctx.fillStyle = COUL.rue; ctx.fillRect(-2000, Y_RUE - RUE / 2, 4400, RUE);
+    ctx.strokeStyle = COUL.rueBord; ctx.lineWidth = 1.5; ctx.setLineDash([10, 9]);
+    ctx.beginPath(); ctx.moveTo(-2000, Y_RUE); ctx.lineTo(2400, Y_RUE); ctx.stroke(); ctx.setLineDash([]);
+    // les maisons
+    MAISONS.forEach(([x, y, w, h], i) => {
+      ctx.fillStyle = COUL.ombre; rrect(x + 3, y + 4, w, h, 6); ctx.fill();
+      ctx.fillStyle = COUL.toits[i % COUL.toits.length]; rrect(x, y, w, h, 6); ctx.fill();
+      ctx.strokeStyle = "rgba(90,35,15,.35)"; ctx.lineWidth = 2;
+      ctx.beginPath(); if (w > h) { ctx.moveTo(x + 6, y + h / 2); ctx.lineTo(x + w - 6, y + h / 2); } else { ctx.moveTo(x + w / 2, y + 6); ctx.lineTo(x + w / 2, y + h - 6); } ctx.stroke();
+      ctx.fillStyle = "#8a4a32"; ctx.fillRect(x + w * 0.7, y + 5, 7, 7);
+    });
+    // la placette entre les deux bras : une fontaine et deux arbres
+    rond(200, 362, 26, "#e3d0a8"); rond(200, 362, 16, COUL.pierre); rond(200, 362, 11, COUL.eauC);
+    rond(200, 362 + Math.sin(t * 3) * 0.6, 3, "#dff2fa");
+    for (const [x, y, r] of [[164, 318, 13], [236, 318, 13]].concat(ARBRES)) {
+      rond(x + 3, y + 4, r, COUL.ombre); rond(x, y, r, COUL.feuille); rond(x - r * 0.25, y - r * 0.25, r * 0.6, COUL.feuilleC);
+    }
+    // les quais : le marché (ouest) et la brasserie (est), avec leur auvent
+    BRAS.forEach((B, a) => {
+      const coul = N.bras[a].couleur, x0 = B.x - 76, w = 152;
+      ctx.fillStyle = COUL.ombre; rrect(x0 + 3, 8, w, 40, 8); ctx.fill();
+      ctx.fillStyle = "#f4e6c8"; rrect(x0, 4, w, 40, 8); ctx.fill();
+      for (let k = 0; k < 8; k++) { ctx.fillStyle = k % 2 ? COUL.creme : coul; ctx.fillRect(x0 + 6 + k * (w - 12) / 8, 30, (w - 12) / 8, 12); }
+      ctx.fillStyle = COUL.encre; ctx.font = "15px 'Lilita One', sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.fillText(N.bras[a].nom.replace(/^l[ae] /, "").toUpperCase(), B.x, 18);
+      // les bollards du quai
+      for (const dx of [-34, 34]) rond(B.x + dx, 58, 3.5, "#5a4a3a");
+    });
+  }
+
+  function dessinerPont(b) {
+    const B = BRAS[b], x = B.x, y = Y_RUE, h = leve[b], th = h * 1.35;
+    const L = 38, prof = RUE + 4;
+    // les culées
+    ctx.fillStyle = COUL.pierreF;
+    for (const s of [-1, 1]) for (const dy of [-1, 1]) rrect(x + s * (LARG / 2 + 2) - 5, y + dy * prof / 2 - 5, 10, 10, 3), ctx.fill();
+    // les deux volées : elles se lèvent vers leur culée, raccourcies, avec leur ombre
+    for (const s of [-1, 1]) {
+      const long = L * Math.cos(th), xa = x + s * L, xb = xa - s * long;
+      const [x0, x1] = s < 0 ? [xa, xb] : [xb, xa];
+      if (h > 0.02) { ctx.fillStyle = "rgba(20,40,60,.25)"; ctx.fillRect(Math.min(x0, x1) + 6 * h, y - prof / 2 + 10 * h, Math.abs(x1 - x0) + 4, prof); }
+      ctx.fillStyle = h > 0.02 ? "#c99460" : COUL.bois; ctx.fillRect(Math.min(x0, x1), y - prof / 2, Math.abs(x1 - x0), prof);
+      ctx.strokeStyle = "rgba(90,50,20,.45)"; ctx.lineWidth = 1.5;
+      for (let k = 1; k < 5; k++) { const xx = Math.min(x0, x1) + k * Math.abs(x1 - x0) / 5; ctx.beginPath(); ctx.moveTo(xx, y - prof / 2); ctx.lineTo(xx, y + prof / 2); ctx.stroke(); }
+      ctx.fillStyle = COUL.boisF; ctx.fillRect(Math.min(x0, x1), y - prof / 2 - 3, Math.abs(x1 - x0), 4); ctx.fillRect(Math.min(x0, x1), y + prof / 2 - 1, Math.abs(x1 - x0), 4);
+    }
+    // les barrières, du côté d'où vient chaque sens, quand le pont est demandé levé ou pas encore baissé
+    const p = e.ponts[b];
+    if (p.cible === 1 || p.n > 0) {
+      for (const d of [0, 1]) {
+        const xb = d === 0 ? x - 52 : x + 52, yv = VOIE[d];
+        for (let k = 0; k < 4; k++) { ctx.fillStyle = k % 2 ? "#fff" : "#e0533d"; ctx.fillRect(xb - 2.5, yv - 11 + k * 5.5, 5, 5.5); }
+        rond(xb, yv - 13, 3, "#e0533d");
+      }
+    }
+    // la manette : une pastille ronde au bord, flèche vers le haut ou le bas
+    const m = manette(b), sec = secousse["pont" + b] && t - secousse["pont" + b] < 0.35 ? Math.sin((t - secousse["pont" + b]) * 60) * 4 : 0;
+    ctx.save(); ctx.translate(m.x + sec, m.y);
+    rond(2, 3, 21, "rgba(60,30,10,.3)"); rond(0, 0, 21, p.cible ? COUL.creme : "#e0533d");
+    ctx.strokeStyle = p.cible ? "#e0533d" : "#fff"; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(0, 0, 21, 0, Math.PI * 2); ctx.stroke();
+    ctx.fillStyle = p.cible ? "#e0533d" : "#fff"; ctx.beginPath();
+    if (p.cible) { ctx.moveTo(-8, -3); ctx.lineTo(8, -3); ctx.lineTo(0, 8); } else { ctx.moveTo(-8, 4); ctx.lineTo(8, 4); ctx.lineTo(0, -8); }
+    ctx.fill(); ctx.restore();
+  }
+  const manette = b => ({ x: BRAS[b].x + BRAS[b].s * 62, y: Y_RUE - 46 });
+  const MANETTE_AIG = { x: 268, y: 540 };
+
+  function dessinerAiguillage() {
+    // la barre flottante pivote au carrefour et ferme le bras qu'on ne prend pas
+    const vers = a => Math.atan2(BRAS[a].coude.y - J.y, BRAS[a].coude.x - J.x);
+    const ang = vers(1) + (vers(0) - vers(1)) * aigVue;      // aiguillage à l'ouest : la barre ferme l'est
+    ctx.save(); ctx.translate(J.x, J.y - 6); ctx.rotate(ang);
+    ctx.fillStyle = "rgba(20,40,60,.25)"; rrect(2, -3, 44, 10, 5); ctx.fill();
+    ctx.fillStyle = "#9a6a3c"; rrect(0, -6, 44, 10, 5); ctx.fill();
+    ctx.fillStyle = "#e0533d"; ctx.fillRect(14, -6, 6, 10); ctx.fillRect(30, -6, 6, 10);
+    ctx.restore();
+    rond(J.x, J.y - 6, 7, "#5a4a3a");
+    // la manette : la flèche vers le bras ouvert, à sa couleur
+    const m = MANETTE_AIG, sec = secousse.aiguille && t - secousse.aiguille < 0.35 ? Math.sin((t - secousse.aiguille) * 60) * 4 : 0;
+    const coul = N.bras[e.aig].couleur;
+    ctx.save(); ctx.translate(m.x + sec, m.y);
+    rond(2, 3, 25, "rgba(60,30,10,.3)"); rond(0, 0, 25, coul);
+    ctx.strokeStyle = "#fff"; ctx.lineWidth = 3.5; ctx.beginPath(); ctx.arc(0, 0, 25, 0, Math.PI * 2); ctx.stroke();
+    ctx.rotate(e.aig ? -Math.PI / 4 : -3 * Math.PI / 4);
+    ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.moveTo(13, 0); ctx.lineTo(1, -10); ctx.lineTo(1, -4); ctx.lineTo(-11, -4); ctx.lineTo(-11, 4); ctx.lineTo(1, 4); ctx.lineTo(1, 10); ctx.closePath(); ctx.fill();
+    ctx.restore();
+  }
+
+  function dessinerPontons() {
+    PONTON.forEach((P, a) => {
+      if (e.pontons[a]) {
+        ctx.save(); ctx.translate(P.bx + (P.x - P.bx) * 0.75, P.by + (P.y - P.by) * 0.75); ctx.rotate(P.ang);
+        ctx.fillStyle = COUL.ombre; ctx.fillRect(-24, -6, 52, 16);
+        ctx.fillStyle = COUL.bois; ctx.fillRect(-26, -9, 52, 16);
+        ctx.strokeStyle = "rgba(90,50,20,.5)"; ctx.lineWidth = 1.5;
+        for (let k = -16; k < 26; k += 10) { ctx.beginPath(); ctx.moveTo(k, -9); ctx.lineTo(k, 7); ctx.stroke(); }
+        for (const dx of [-24, 22]) rond(dx, -1, 3.5, COUL.boisF);
+        ctx.restore();
+      } else if (e.reste > 0 && !e.fin) {
+        const pulse = 1 + Math.sin(t * 4) * 0.06;
+        ctx.save(); ctx.translate(P.x, P.y); ctx.scale(pulse, pulse);
+        ctx.setLineDash([5, 4]); ctx.strokeStyle = COUL.boisF; ctx.lineWidth = 2.5; ctx.fillStyle = "rgba(255,243,220,.75)";
+        ctx.beginPath(); ctx.arc(0, 0, 17, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); ctx.setLineDash([]);
+        ctx.fillStyle = COUL.boisF; ctx.fillRect(-8, -2.5, 16, 5); ctx.fillRect(-2.5, -8, 5, 16);
+        ctx.restore();
+      }
+    });
+  }
+
+  // une péniche vue de dessus, la proue vers +x
+  function peniche(x, y, ang, coul, fache, id, alpha = 1) {
+    ctx.save(); ctx.globalAlpha = alpha; ctx.translate(x, y); ctx.rotate(ang);
+    ctx.fillStyle = "rgba(20,40,60,.28)"; ctx.beginPath(); ctx.ellipse(3, 4, 26, 11, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = "#3d3029";
+    ctx.beginPath(); ctx.moveTo(-23, -9); ctx.lineTo(13, -9); ctx.quadraticCurveTo(25, -8, 26, 0); ctx.quadraticCurveTo(25, 8, 13, 9); ctx.lineTo(-23, 9); ctx.quadraticCurveTo(-27, 0, -23, -9); ctx.fill();
+    ctx.fillStyle = coul; rrect(-11, -6.5, 25, 13, 3); ctx.fill();
+    ctx.fillStyle = "rgba(255,255,255,.28)"; for (let k = 0; k < 3; k++) ctx.fillRect(-8 + k * 8, -6.5, 3, 13);
+    ctx.fillStyle = COUL.creme; rrect(-22, -7, 10, 14, 3); ctx.fill();
+    rond(-17, 0, 4.5, fache ? "#e86a4a" : "#f2c79b");
+    ctx.restore();
+    ctx.globalAlpha = 1;
+    if (fache && ((t + id * 0.37) % 2.2) < 0.9) bulle(x + 14, y - 22, "Tuuut !", "#e0533d");
+  }
+  const CARRIOLES = ["#f2b705", "#4caf3e", "#8a4fc8", "#ef8a1c", "#fff3dc", "#2bb3a0"];
+  function charrette(x, y, d, id, fache) {
+    const dir = d === 0 ? 1 : -1, coul = CARRIOLES[(id * 7 + d * 3) % CARRIOLES.length];
+    ctx.fillStyle = "rgba(60,30,10,.22)"; rrect(x - 8, y - 4, 18, 11, 3); ctx.fill();
+    ctx.fillStyle = coul; rrect(x - 9, y - 5.5, 18, 11, 3); ctx.fill();
+    ctx.fillStyle = "rgba(0,0,0,.18)"; ctx.fillRect(x - 9 + (dir > 0 ? 0 : 12), y - 5.5, 6, 11);
+    rond(x + dir * 6, y, 3.2, fache ? "#e86a4a" : "#f2c79b");
+    if (fache && id % 3 === 0 && ((t + id * 0.53 + d) % 2.6) < 0.8) aDire.push([x, y - 16, "Pouet !", "#3b2414"]);
+  }
+  let aDire = [];                                   // les bulles des charrettes, dessinées par-dessus la rue
+  function bulle(x, y, texte, coul) {
+    ctx.font = "12px 'Lilita One', sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    const w = ctx.measureText(texte).width + 12;
+    ctx.fillStyle = "#fff"; rrect(x - w / 2, y - 9, w, 18, 9); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(x - 4, y + 8); ctx.lineTo(x, y + 14); ctx.lineTo(x + 3, y + 8); ctx.fill();
+    ctx.fillStyle = coul; ctx.fillText(texte, x, y + 0.5);
+  }
+  function badge(x, y, texte, fache) {
+    ctx.font = "14px 'Lilita One', sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    const w = ctx.measureText(texte).width + 16;
+    ctx.fillStyle = fache ? "#e0533d" : COUL.encre; rrect(x - w / 2, y - 12, w, 24, 12); ctx.fill();
+    ctx.fillStyle = "#fff"; ctx.fillText(texte, x, y + 1);
+  }
+
+  function dessiner() {
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.fillStyle = COUL.pave; ctx.fillRect(0, 0, toile.width, toile.height);
+    ctx.setTransform(ech, 0, 0, ech, ox, oy);
+    decor();
+    dessinerPontons();
+    // le bord visible du plateau (pour les files hors champ)
+    const xMin = -ox / ech, xMax = (toile.width - ox) / ech, yMax = (toile.height - oy) / ech;
+    // les bateaux dans le chenal
+    let large = 0, largeFache = false;
+    for (const i of e.chenal) {
+      const b = e.bat[i], y = Y_TETE + (c.LCH - b.q) * PX_CH, fache = b.arret > c.PB;
+      if (y > yMax + 30) { large++; largeFache = largeFache || fache; continue; }
+      peniche(J.x, y, -Math.PI / 2, N.bras[N.horaire[i].vers].couleur, fache, i);
+    }
+    if (large) badge(J.x, yMax - 22, "+" + large + " au large", largeFache);
+    // dans les bras
+    e.files.forEach((f, a) => f.forEach((i, r) => {
+      const b = e.bat[i], p = surBras(a, b.q), dec = e.pontons[a] && r > 0 ? 1 : 0;
+      peniche(p.x + (PONTON[a].bx - surBras(a, c.LBR - c.GB).x) * dec, p.y + (PONTON[a].by - surBras(a, c.LBR - c.GB).y) * dec,
+        p.ang, N.bras[N.horaire[i].vers].couleur, b.arret > c.PB, i);
+    }));
+    // sous les ponts
+    e.bat.forEach((b, i) => {
+      if (b.etat !== "dessous") return;
+      const u = 1 - b.d / c.DES, B = BRAS[b.bras];
+      peniche(B.x, B.arret.y - u * 112, -Math.PI / 2, N.bras[N.horaire[i].vers].couleur, false, i);
+    });
+    // les ponts par-dessus les bateaux, les charrettes par-dessus les ponts
+    dessinerPont(0); dessinerPont(1);
+    aDire = [];
+    for (let d = 0; d < 2; d++) {
+      let hors = 0, horsFache = false;
+      for (const ch of e.chars[d]) {
+        const x = xRue(d, ch.q), fache = ch.arret > c.PC;
+        if (x < xMin - 10 || x > xMax + 10) { hors++; horsFache = horsFache || fache; continue; }
+        charrette(x, VOIE[d], d, ch.id, fache);
+      }
+      if (hors) badge(d === 0 ? xMin + 20 : xMax - 20, VOIE[d], "+" + hors, horsFache);
+    }
+    for (const b of aDire) bulle(...b);
+    // ceux qui vont à quai
+    for (const s of aQuai) {
+      const B = BRAS[s.bras], u = Math.min(1, (t - s.t) / 1.4), y = 200 + (B.quai.y - 200) * (1 - (1 - u) * (1 - u));
+      const fin = Math.max(0, Math.min(1, (t - s.t - 2.6) / 0.6));
+      peniche(B.x, y, -Math.PI / 2, N.bras[N.horaire[s.i].vers].couleur, false, s.i, 1 - fin);
+      if (t - s.t > 1.2 && t - s.t < 3) bulle(B.x + 30, B.quai.y - 18, s.juste ? "Merci !" : "Pas mon quai !", s.juste ? "#2f7d25" : "#e0533d");
+    }
+    dessinerAiguillage();
+    // les bateaux annoncés : une pastille au bas du chenal, quelques secondes avant
+    const tt = E.heure(e);
+    const proche = N.horaire.map((h, i) => ({ h, i })).filter(({ h, i }) => e.bat[i].etat === "avant" && h.heure - tt <= 6);
+    if (proche.length && !large) {
+      const { h } = proche[0];
+      ctx.fillStyle = N.bras[h.vers].couleur; rrect(J.x - 34, Math.min(yMax, H) - 36, 68, 26, 13); ctx.fill();
+      ctx.fillStyle = "#fff"; ctx.font = "15px 'Lilita One', sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.fillText(Math.max(0, Math.ceil(h.heure - tt)) + " s", J.x, Math.min(yMax, H) - 22);
+    }
+  }
+
+  // --- Le bandeau : l'humeur, l'heure, ce qui arrive ----------------------------
+  function majBandeau() {
+    const j = Math.max(0, e.jauge), f = j / N.jauge;
+    $("v-jauge").style.width = (100 * f).toFixed(1) + "%";
+    $("v-jauge").style.background = f > 0.6 ? "#4caf3e" : f > 0.3 ? "#ffc93c" : "#e0533d";
+    $("v-jauge-r").setAttribute("aria-valuenow", Math.round(j));
+    $("v-visage").setAttribute("fill", f > 0.6 ? "#ffc93c" : f > 0.3 ? "#f2a13a" : "#e86a4a");
+    $("v-bouche").setAttribute("d", f > 0.6 ? "M10 20 Q16 25 22 20" : f > 0.3 ? "M10 21 L22 21" : "M10 23 Q16 17 22 23");
+    const tt = E.heure(e);
+    $("v-heure").textContent = Math.floor(tt / 60) + ":" + String(Math.floor(tt % 60)).padStart(2, "0");
+    const puces = [];
+    N.horaire.forEach((h, i) => { if (e.bat[i].etat === "avant") puces.push({ t: h.heure, html: `<span class="puce"><i style="background:${N.bras[h.vers].couleur}"></i>${N.bras[h.vers].court} · ${Math.max(0, Math.ceil(h.heure - tt))} s</span>` }); });
+    N.rue.vagues.forEach(v => {
+      if (!v.nom) return;
+      if (v.de > tt && v.de - tt <= 25) puces.push({ t: v.de - 0.01, html: `<span class="puce vague">${v.nom.replace(/^la /, "")} · ${Math.ceil(v.de - tt)} s</span>` });
+      else if (v.de <= tt && tt < v.a) puces.push({ t: -1, html: `<span class="puce vague">${v.nom.replace(/^la /, "")} !</span>` });
+    });
+    puces.sort((a, b) => a.t - b.t);
+    const html = puces.slice(0, 5).map(p => p.html).join("") || `<span class="puce vide">Plus aucune péniche annoncée</span>`;
+    if ($("horaire").innerHTML !== html) $("horaire").innerHTML = html;
+  }
+
+  // --- Les gestes ------------------------------------------------------------------
+  const DIRE = {
+    dessous: "Une péniche passe dessous : attends qu'elle soit sortie.",
+    carrefour: "Une péniche franchit l'aiguillage.",
+    epuise: "Tu n'as plus de ponton à poser."
+  };
+  function agir(g) {
+    if (e.fin) return;
+    if (!enMarche) partir();
+    const r = E.geste(N, e, g);
+    if (r) { secousse[g] = t; if (DIRE[r]) dire(DIRE[r]); }
+  }
+  let minuterie = null;
+  function dire(texte, duree = 2400) {
+    const m = $("message"); m.textContent = texte; m.hidden = false;
+    clearTimeout(minuterie); minuterie = setTimeout(() => { m.hidden = true; }, duree);
+  }
+  function versPlateau(ev) {
+    const r = toile.getBoundingClientRect(), k = toile.width / r.width;
+    return { x: ((ev.clientX - r.left) * k - ox) / ech, y: ((ev.clientY - r.top) * k - oy) / ech };
+  }
+  toile.addEventListener("pointerdown", ev => {
+    ev.preventDefault();
+    if (e.fin) return;
+    const p = versPlateau(ev), pres = (q, r) => Math.hypot(p.x - q.x, p.y - q.y) <= r;
+    for (let a = 0; a < 2; a++) if (!e.pontons[a] && e.reste > 0 && pres(PONTON[a], 30)) return agir("ponton" + a);
+    for (let b = 0; b < 2; b++) {
+      const B = BRAS[b];
+      if (pres(manette(b), 32) || (Math.abs(p.x - B.x) <= 50 && Math.abs(p.y - Y_RUE) <= 36)) return agir("pont" + b);
+    }
+    if (pres(MANETTE_AIG, 36) || pres(J, 44)) return agir("aiguille");
+  });
+
+  // --- L'accueil et la fin -----------------------------------------------------------
+  function accueil() {
+    $("carte").innerHTML = `<h2>${N.titre}</h2>
+      <ul class="regle">
+        <li>Chaque péniche va au quai de sa couleur. Touche l'<b>aiguillage</b> pour l'envoyer à gauche ou à droite.</li>
+        <li>Touche un <b>pont</b> pour le lever : les bateaux passent, mais la rue s'arrête. Retouche-le pour le baisser.</li>
+        <li>Avant chaque pont, la place pour <b>une seule</b> péniche. Tu as <b>un ponton</b> pour en ajouter une, sur le bras de ton choix, pour de bon.</li>
+        <li>Charrettes et mariniers s'énervent s'ils attendent trop : l'<b>humeur du quartier</b> baisse.</li>
+      </ul>
+      <button id="b-partir">C'est parti</button>`;
+    $("carte").hidden = false;
+    $("b-partir").addEventListener("click", partir);
+  }
+  function partir() { enMarche = true; avant = null; $("carte").hidden = true; }
+  function finir() {
+    const f = e.fin, P = e.perte, l = [];
+    const moins = x => Math.round(x) ? "−" + Math.round(x) : "0";
+    const perte = `<ul><li>La rue : ${moins(P.rue)}</li><li>Les mariniers : ${moins(P.bateaux)}</li><li>Les mauvais quais : ${moins(P.quais)}</li></ul>`;
+    if (f.fin === "gagne") {
+      const n = E.etoiles(N, f.jauge);
+      l.push(`<h2>Tout le monde est à quai !</h2>`);
+      l.push(`<div class="etoiles">${"★".repeat(n)}<span class="eteinte">${"★".repeat(3 - n)}</span></div>`);
+      l.push(`<p>Humeur du quartier : <b>${Math.round(f.jauge)}</b>. Le meilleur pontier du banc garde ${Math.round(N.par)}.</p>`);
+    } else {
+      const pire = P.rue >= P.bateaux && P.rue >= P.quais ? "rue" : P.bateaux >= P.quais ? "bateaux" : "quais";
+      l.push(`<h2>Le quartier est en colère !</h2>`);
+      l.push(`<p>${{ rue: "La rue a trop attendu. Pendant l'heure de pointe, grouper les bateaux coûte moins cher que lever pour chacun.",
+        bateaux: "Les mariniers ont trop attendu. Une péniche coincée au carrefour bloque toute la file derrière elle.",
+        quais: "Trop de péniches au mauvais quai. Regarde la couleur de celle qui arrive à l'aiguillage." }[pire]}</p>`);
+    }
+    l.push(perte, `<button id="b-rejouer">Rejouer</button>`);
+    $("carte").innerHTML = l.join("");
+    $("carte").hidden = false;
+    $("message").hidden = true;
+    $("b-rejouer").addEventListener("click", nouvelle);
+  }
+
+  // --- La boucle -----------------------------------------------------------------------
+  let vaguePrec = null;
+  function unPas() {
+    const livres = e.bat.map(b => b.etat === "livre");
+    E.pas(N, e);
+    e.bat.forEach((b, i) => { if (!livres[i] && b.etat === "livre") aQuai.push({ i, bras: b.bras, juste: b.juste, t }); });
+    const tt = E.heure(e), v = N.rue.vagues.find(v => v.nom && v.de <= tt && tt < v.a);
+    if (v && v !== vaguePrec) dire(v.nom[0].toUpperCase() + v.nom.slice(1) + " : la rue se remplit !", 3000);
+    vaguePrec = v || null;
+  }
+  function image(ms) {
+    if (avant == null) avant = ms;
+    const dt = Math.min(0.1, (ms - avant) / 1000);
+    avant = ms;
+    if (enMarche && !e.fin) {
+      acc += dt * vitesse; t += dt * vitesse;
+      while (acc >= E.PAS && !e.fin) { unPas(); acc -= E.PAS; }
+    } else t += dt * 0.25;
+    aQuai = aQuai.filter(s => t - s.t < 3.4);
+    e.ponts.forEach((p, b) => { leve[b] = p.n / c.NLEV; });
+    aigVue += (e.aig - aigVue) * Math.min(1, dt * 10);
+    dessiner();
+    majBandeau();
+    if (e.fin && !finVue) { finVue = true; setTimeout(finir, 900); }
+    requestAnimationFrame(image);
+  }
+
+  $("b-recommencer").addEventListener("click", nouvelle);
+  $("b-vitesse").addEventListener("click", () => { vitesse = vitesse === 1 ? 2 : vitesse === 2 ? 3 : 1; $("b-vitesse").textContent = "×" + vitesse; });
+  $("b-pause").addEventListener("click", () => {
+    if (e.fin) return;
+    if (enMarche) { enMarche = false; dire("Pause", 100000); }
+    else { partir(); $("message").hidden = true; }
+  });
+  addEventListener("resize", cadrer);
+  new ResizeObserver(cadrer).observe($("scene"));
+  // pour les vérifications sans les doigts : lire l'état, faire un geste, avancer
+  // le temps du jeu de n pas sans attendre l'écran
+  window.pontier = { etat: () => e, agir, avancer(n) { if (!enMarche) partir(); for (let i = 0; i < n && !e.fin; i++) { unPas(); t += E.PAS; } } };
+  nouvelle();
+  cadrer();
+  (document.fonts && document.fonts.load ? document.fonts.load("16px 'Lilita One'") : Promise.resolve()).finally(() => requestAnimationFrame(image));
+})();
+</script>
+</body>
+</html>
