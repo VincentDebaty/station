@@ -251,6 +251,21 @@ jour qui perd la partie d'un joueur est un bug bloquant, pas un détail.
   banc, `node tools/carrefours-banc.mjs`, cherche le meilleur réglage par
   vague et par carrefour, et refuse comme celui du Carrefour (posé une
   fois, réglage de départ, cycles extrêmes, piétons sautés).
+  **Le pontier et les carrefours ont été ARRÊTÉS le 20 octobre 2026 au
+  soir** (« on ne s'y retrouve pas », Vincent) : les trois pages et leurs
+  bancs restent comme trace. Leur charte graphique, elle, est gardée.
+  `prototype-remontee.html` (même soir) est l'idée suivante de Vincent, sur
+  cette charte. Des balles de couleur flottent dans un réseau de tuyaux
+  vu en coupe. Des vannes versent l'eau (une rangée de plus par goutte,
+  seulement là où l'air peut s'échapper), et des PURGES la vident. Chaque
+  balle doit entrer dans le trou de sa couleur, qui se ferme derrière
+  elle ; dans un autre trou, c'est perdu. Son banc,
+  `node tools/remontee-banc.mjs`, résout chaque niveau exhaustivement
+  (toutes les suites de gouttes). Il refuse si le `par` (en ouvertures de
+  vanne) n'est pas le minimum, si remplir à fond dans n'importe quel ordre
+  gagne toujours, ou si, dans un niveau à purges, on gagne sans purger.
+  Mesuré : sans purge, une seule vanne bien choisie gagne toujours. La
+  profondeur vient des purges et des niveaux qui commencent avec de l'eau.
 - `data/worldmap.js` — généré depuis Natural Earth, jamais édité à la main.
 
 ## Détail connu

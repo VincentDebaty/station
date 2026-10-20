@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#7a4a26">
+<title>La remontée</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&display=swap">
+<style>
+/* ------------------------------------------------------------------
+   LA REMONTÉE — prototype (20 octobre 2026), idée de Vincent : un réseau
+   de tuyaux en portrait, des balles de couleur en bas, un trou de chaque
+   couleur. On ouvre des vannes : l'eau monte, les balles flottent et
+   montent. Une balle dans son trou le ferme, et les suivantes passent
+   dessus ; une balle dans un trou d'une autre couleur, c'est perdu. Des
+   PURGES vident l'eau : les balles redescendent, et l'on peut changer
+   l'ordre de passage.
+
+   La charte des prototypes précédents : bois et crème, Lilita One, aplats.
+   Un seul aspect, voulu (pas de thème sombre).
+   Le banc : node tools/remontee-banc.mjs.
+   ------------------------------------------------------------------ */
+:root {
+  color-scheme: light;
+  --mur: #efe0c2;
+  --bois: #7a4a26;
+  --bois-fonce: #5a3418;
+  --creme: #fff3dc;
+  --encre: #3b2414;
+  --or: #ffc93c;
+  --ok: #4caf3e;
+  --chiffres: "Lilita One", "Arial Rounded MT Bold", "Trebuchet MS", sans-serif;
+  --texte: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0; overflow: hidden;
+  background: var(--bois); color: var(--creme);
+  font-family: var(--texte);
+  -webkit-user-select: none; user-select: none; -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+button { font: inherit; color: inherit; cursor: pointer; }
+button:focus-visible { outline: 3px solid var(--or); outline-offset: 2px; }
+[hidden] { display: none !important; }
+
+#jeu { height: 100%; display: flex; flex-direction: column; padding-top: env(safe-area-inset-top, 0px); }
+.bandeau {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px max(16px, env(safe-area-inset-right, 0px)) 6px max(16px, env(safe-area-inset-left, 0px));
+}
+.titre { flex: 1; min-width: 0; display: flex; flex-direction: column; line-height: 1.1; }
+.titre small { font: 600 11px/1.2 var(--texte); letter-spacing: .08em; text-transform: uppercase; color: rgba(255, 243, 220, .7); }
+.titre b { font: 400 1.25rem/1.1 var(--chiffres); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pastille {
+  font: 400 1rem/1 var(--chiffres); background: var(--bois-fonce); border-radius: 999px;
+  padding: 8px 11px; font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+.rond {
+  width: 40px; height: 40px; flex: none; padding: 0; border-radius: 999px;
+  border: 3px solid #c9b48c; background: var(--creme); color: var(--encre);
+  font: 400 .95rem/1 var(--chiffres); box-shadow: 0 3px 0 #b39a6c;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.rond:active { transform: translateY(2px); box-shadow: 0 1px 0 #b39a6c; }
+.rond:disabled { opacity: .45; }
+.rond svg { width: 18px; height: 18px; }
+#niveaux-choix {
+  display: flex; gap: 6px; padding: 0 max(16px, env(safe-area-inset-right, 0px)) 8px max(16px, env(safe-area-inset-left, 0px));
+}
+#niveaux-choix button {
+  min-width: 40px; height: 32px; padding: 0 12px; border-radius: 999px; border: 0;
+  background: rgba(255, 243, 220, .14); color: var(--creme); font: 400 1rem/1 var(--chiffres);
+}
+#niveaux-choix button[aria-current="true"] { background: var(--creme); color: var(--encre); }
+#niveaux-choix button .fait { color: var(--or); margin-left: 4px; }
+
+.scene { position: relative; flex: 1 1 auto; min-height: 0; background: var(--mur); }
+canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+.message {
+  position: absolute; left: 50%; top: 10px; transform: translateX(-50%);
+  max-width: calc(100% - 32px); padding: 8px 14px; border-radius: 999px;
+  background: var(--encre); color: var(--creme); font: 400 1rem/1.2 var(--chiffres); text-align: center;
+  box-shadow: 0 4px 0 rgba(0, 0, 0, .25);
+}
+.carte {
+  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  width: min(22rem, calc(100% - 32px)); max-height: calc(100% - 24px); overflow-y: auto;
+  background: var(--bois); color: var(--creme); border: 4px solid var(--bois-fonce); border-radius: 18px;
+  padding: 18px 20px 20px; text-align: center;
+  box-shadow: 0 8px 0 #4a2a12, 0 14px 30px rgba(30, 15, 5, .35);
+}
+.carte h2 { margin: 0 0 8px; font: 400 1.8rem/1.1 var(--chiffres); text-wrap: balance; }
+.carte p { margin: 0 0 14px; line-height: 1.4; }
+.carte .etoiles { font: 400 2.4rem/1 var(--chiffres); color: var(--or); text-shadow: 0 3px 0 #8a5a12; letter-spacing: 4px; margin-bottom: 8px; }
+.carte .etoiles .eteinte { color: rgba(255, 243, 220, .3); text-shadow: none; }
+.carte .actions { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+.carte button {
+  font: 400 1.1rem/1 var(--chiffres); color: #fff; background: var(--ok);
+  border: 3px solid #2f7d25; border-radius: 999px; padding: 11px 22px; box-shadow: 0 3px 0 #2f7d25;
+}
+.carte button.second { background: var(--creme); color: var(--encre); border-color: #c9b48c; box-shadow: 0 3px 0 #b39a6c; }
+@media (prefers-reduced-motion: reduce) { .rond:active { transform: none; } }
+</style>
+</head>
+<body>
+
+<div id="jeu">
+  <header class="bandeau">
+    <div class="titre"><small>La remontée · prototype</small><b id="v-titre"></b></div>
+    <span class="pastille" id="v-gestes">0 geste</span>
+    <button class="rond" id="b-annuler" aria-label="Annuler le dernier geste"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg></button>
+    <button class="rond" id="b-recommencer" aria-label="Recommencer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg></button>
+  </header>
+  <nav id="niveaux-choix" aria-label="Les niveaux"></nav>
+  <main class="scene" id="scene">
+    <canvas id="toile" aria-label="Le réseau de tuyaux : touche une vanne pour l'ouvrir ou la fermer"></canvas>
+    <div class="message" id="message" hidden></div>
+    <div class="carte" id="carte" hidden></div>
+  </main>
+</div>
+
+<!-- ==================================================================
+     LES NIVEAUX — du JSON pur.
+       grille    le réseau, une ligne par rangée, un caractère par case :
+                 │ ─ ┌ ┐ └ ┘ ├ ┤ ┬ ┴ ┼ (tuyaux), ╵ ╷ ╴ ╶ (bouts fermés) ;
+                 deux cases ne communiquent que si leurs deux bouts se
+                 font face
+       trous     couleur, case (r, c) : le trou est au PLAFOND de la case
+       balles    couleur, case de départ
+       eau       les cases déjà pleines au départ (facultatif)
+       vannes    case où elle verse (ou d'où elle vide), côté où on la
+                 dessine (« de » : N, S, E, W) ; « purge » : elle vide
+       events    des trous d'air sans couleur (facultatif)
+       par       le moins de gestes (d'ouvertures de vanne) qui gagne —
+                 node tools/remontee-banc.mjs le retrouve, et refuse s'il
+                 diffère
+     ================================================================== -->
+<script type="application/json" id="niveaux">
+{
+  "niveaux": [
+    {
+     "id": "1",
+     "titre": "Le bon ordre",
+     "grille": [
+      "       ",
+      "  ╶┬─╴ ",
+      "   │   ",
+      "   │   ",
+      "   │   ",
+      "   │   ",
+      "   │   ",
+      "   │   ",
+      "   │   ",
+      " ┌─┴─┐ ",
+      " │   │ ",
+      " ╵   ╵ "
+     ],
+     "trous": [{"couleur": "rouge", "r": 1, "c": 2}, {"couleur": "bleu", "r": 1, "c": 5}],
+     "balles": [{"couleur": "bleu", "r": 11, "c": 1}, {"couleur": "rouge", "r": 11, "c": 5}],
+     "vannes": [{"r": 11, "c": 1, "de": "W"}, {"r": 11, "c": 5, "de": "E"}],
+     "par": 1,
+     "conseil": "Ouvre une vanne : l'eau monte, les balles flottent. Chaque balle doit finir dans le trou de sa couleur."
+    },
+    {
+     "id": "2",
+     "titre": "La purge",
+     "grille": [
+      "       ",
+      "  ╶┬─╴ ",
+      "   │   ",
+      "   │   ",
+      "   │   ",
+      "   │   ",
+      "   │   ",
+      "   │   ",
+      "   │   ",
+      " ┌─┴─┐ ",
+      " │   │ ",
+      " ╵   ╵ "
+     ],
+     "trous": [{"couleur": "rouge", "r": 1, "c": 2}, {"couleur": "bleu", "r": 1, "c": 5}],
+     "balles": [{"couleur": "bleu", "r": 9, "c": 1}, {"couleur": "rouge", "r": 11, "c": 5}],
+     "eau": [[11, 1], [10, 1], [9, 1]],
+     "vannes": [{"r": 11, "c": 1, "de": "W"}, {"r": 11, "c": 5, "de": "E"}, {"r": 11, "c": 1, "de": "S", "purge": true}],
+     "par": 2,
+     "conseil": "La balle bleue attend déjà au croisement. La purge vide l'eau : la balle redescend."
+    },
+    {
+     "id": "3",
+     "titre": "Trois couleurs",
+     "grille": [
+      "       ",
+      "╶──┬─╴ ",
+      "   │   ",
+      "   │   ",
+      "   │   ",
+      "   │   ",
+      "   │   ",
+      "   │   ",
+      "   │   ",
+      "┌──┼──┐",
+      "│  │  │",
+      "╵  ╵  ╵"
+     ],
+     "trous": [{"couleur": "bleu", "r": 1, "c": 0}, {"couleur": "jaune", "r": 1, "c": 2}, {"couleur": "rouge", "r": 1, "c": 5}],
+     "balles": [{"couleur": "rouge", "r": 11, "c": 0}, {"couleur": "jaune", "r": 11, "c": 3}, {"couleur": "bleu", "r": 9, "c": 6}],
+     "eau": [[11, 6], [10, 6], [9, 6]],
+     "vannes": [{"r": 11, "c": 0, "de": "W"}, {"r": 11, "c": 3, "de": "S"}, {"r": 11, "c": 6, "de": "E"}, {"r": 11, "c": 0, "de": "S", "purge": true}, {"r": 11, "c": 6, "de": "S", "purge": true}],
+     "par": 2,
+     "conseil": "Trois balles, deux purges. Laquelle doit passer la première ?"
+    }
+  ]
+}
+</script>
+
+<script id="moteur">
+"use strict";
+const Flotte = (function () {
+
+  // --- Le modèle ---------------------------------------------------------------
+  // Un réseau de tuyaux vu en coupe, en cases. Rien ne bouge tant qu'aucune
+  // vanne n'est ouverte : une vanne ouverte verse une case d'eau à la fois.
+  //
+  //   l'eau      elle TOMBE depuis sa vanne (vers le bas et sur les côtés, jamais
+  //              vers le haut à travers l'air), rejoint l'eau déjà là, et remplit
+  //              la rangée la plus BASSE qu'elle peut atteindre : une goutte, une
+  //              rangée de plus dans tous les tuyaux reliés (des vases
+  //              communicants), jamais deux rangées à la fois. Elle n'entre
+  //              dans une case que si l'AIR de cette case peut s'échapper — par
+  //              un trou ouvert ou un évent, à travers des cases sans eau. Un
+  //              tuyau fermé en haut garde son air : l'eau n'y entre pas.
+  //   les balles elles FLOTTENT : une balle dans l'eau monte si la case du dessus
+  //              est en eau et libre ; sinon elle glisse sous le plafond, dans
+  //              l'eau, vers la montée la plus proche. Jamais vers le bas.
+  //              Deux balles ne partagent pas une case : la plus haute passe
+  //              d'abord, puis celle qui est arrivée la première à sa hauteur.
+  //   les trous  une cloche au plafond d'une case. Une balle dans l'eau sous un
+  //              trou ouvert y entre : de sa couleur, le trou se ferme (à ras :
+  //              les suivantes passent dessous, et il ne laisse plus passer
+  //              l'air) ; d'une autre couleur, c'est perdu.
+  //   les évents un trou d'air sans couleur. Une balle qui y arrive le bouche
+  //              et reste coincée : le niveau est perdu.
+  //   la fin     gagné quand chaque balle est dans son trou ; bloqué quand plus
+  //              aucune vanne ne peut verser.
+
+  const GLYPHES = { "│": "NS", "─": "EW", "┌": "ES", "┐": "SW", "└": "NE", "┘": "NW", "├": "NSE", "┤": "NSW", "┬": "ESW", "┴": "NEW", "┼": "NESW", "╵": "N", "╷": "S", "╴": "W", "╶": "E" };
+  const D = { N: [-1, 0], S: [1, 0], E: [0, 1], W: [0, -1] };
+  const OPP = { N: "S", S: "N", E: "W", W: "E" };
+
+  const CACHE = new WeakMap();
+  function G(N) {
+    let g = CACHE.get(N);
+    if (g) return g;
+    const R = N.grille.length, C = Math.max(...N.grille.map(l => [...l].length));
+    const ouv = [];
+    for (let r = 0; r < R; r++) { const l = [...N.grille[r]]; for (let c = 0; c < C; c++) ouv.push(GLYPHES[l[c]] || ""); }
+    const at = (r, c) => r * C + c;
+    const relie = (i, d) => {
+      if (!ouv[i].includes(d)) return -1;
+      const r = Math.floor(i / C) + D[d][0], c = i % C + D[d][1];
+      if (r < 0 || r >= R || c < 0 || c >= C) return -1;
+      const j = at(r, c);
+      return ouv[j].includes(OPP[d]) ? j : -1;
+    };
+    const trou = {}, event = {};
+    N.trous.forEach((t, k) => { trou[at(t.r, t.c)] = k; });
+    (N.events || []).forEach((t, k) => { event[at(t.r, t.c)] = k; });
+    g = { R, C, ouv, at, relie, trou, event, ligne: i => Math.floor(i / C), col: i => i % C };
+    CACHE.set(N, g);
+    return g;
+  }
+
+  // L'état de départ : un niveau peut commencer avec de l'eau (« eau » : des
+  // cases [r, c]) ; ses balles y flottent déjà, posées comme après une goutte.
+  function charger(N) {
+    const g = G(N);
+    const e = {
+      eau: new Array(g.R * g.C).fill(0),
+      balles: N.balles.map(b => ({ i: g.at(b.r, b.c), etat: "tuyau", depuis: 0 })),
+      trous: N.trous.map(() => 0), events: (N.events || []).map(() => 0),
+      fin: null, doses: 0, gestes: 0
+    };
+    for (const [r, c] of N.eau || []) e.eau[g.at(r, c)] = 1;
+    poser(N, e);
+    return e;
+  }
+  const copie = e => ({ eau: e.eau.slice(), balles: e.balles.map(b => ({ ...b })), trous: e.trous.slice(), events: e.events.slice(), fin: e.fin, doses: e.doses, gestes: e.gestes });
+
+  // une ouverture d'air au plafond de la case i : un trou ouvert, un évent libre
+  function aerien(N, e, i) {
+    const g = G(N), t = g.trou[i], v = g.event[i];
+    return (t != null && !e.trous[t]) || (v != null && !e.events[v]);
+  }
+  // l'air de la case vide i peut-il s'échapper, à travers des cases sans eau ?
+  function aere(N, e, i) {
+    const g = G(N), vu = new Set([i]), file = [i];
+    while (file.length) {
+      const x = file.shift();
+      if (aerien(N, e, x)) return true;
+      for (const d of "NESW") { const y = g.relie(x, d); if (y >= 0 && !e.eau[y] && !vu.has(y)) { vu.add(y); file.push(y); } }
+    }
+    return false;
+  }
+  // les cases que remplit la prochaine goutte de la vanne v (aucune : plus rien ne passe)
+  function cible(N, e, v) {
+    const g = G(N), V = N.vannes[v], depart = g.at(V.r, V.c);
+    const dist = new Map([[depart, 0]]), file = [depart], cand = [];
+    if (!e.eau[depart]) cand.push(depart);
+    while (file.length) {
+      const x = file.shift();
+      for (const d of "NESW") {
+        const y = g.relie(x, d);
+        if (y < 0 || dist.has(y)) continue;
+        if (e.eau[y]) { if (d === "N" && !e.eau[x]) continue; dist.set(y, dist.get(x) + 1); file.push(y); continue; }
+        if (d === "N") { if (e.eau[x]) { dist.set(y, dist.get(x) + 1); cand.push(y); } continue; }
+        dist.set(y, dist.get(x) + 1); cand.push(y); file.push(y);
+      }
+    }
+    // l'air de chaque case se juge AVANT de remplir : une rangée monte d'un bloc
+    const ok = cand.filter(y => aere(N, e, y));
+    if (!ok.length) return [];
+    const bas = Math.max(...ok.map(y => g.ligne(y)));
+    return ok.filter(y => g.ligne(y) === bas).sort((a, b) => a - b);
+  }
+
+  // --- Les balles -------------------------------------------------------------------
+  function occupees(e, sauf) {
+    const s = new Set();
+    e.balles.forEach((b, k) => { if (k !== sauf && (b.etat === "tuyau" || b.etat === "coincee")) s.add(b.i); });
+    return s;
+  }
+  // le prochain pas d'une balle vers le haut (-1 : elle reste)
+  function versLeHaut(N, e, k) {
+    const g = G(N), b = e.balles[k], occ = occupees(e, k);
+    const monte = z => { const y = g.relie(z, "N"); return y >= 0 && e.eau[y] && !occ.has(y) ? y : -1; };
+    const up = monte(b.i);
+    if (up >= 0) return up;
+    const premier = new Map([[b.i, -1]]), file = [b.i];
+    while (file.length) {
+      const x = file.shift();
+      for (const d of "EWN") {
+        const y = g.relie(x, d);
+        if (y < 0 || premier.has(y) || !e.eau[y] || occ.has(y)) continue;
+        premier.set(y, premier.get(x) < 0 ? y : premier.get(x));
+        if (aerien(N, e, y) || monte(y) >= 0) return premier.get(y);
+        file.push(y);
+      }
+    }
+    return -1;
+  }
+  function poser(N, e, journal) {
+    const g = G(N);
+    for (let garde = 0; garde < 1000; garde++) {
+      let bouge = false;
+      const ordre = e.balles.map((b, k) => k).filter(k => e.balles[k].etat === "tuyau")
+        .sort((a, c) => g.ligne(e.balles[a].i) - g.ligne(e.balles[c].i) || e.balles[a].depuis - e.balles[c].depuis || a - c);
+      for (const k of ordre) {
+        const b = e.balles[k];
+        if (b.etat !== "tuyau" || !e.eau[b.i]) continue;
+        const t = g.trou[b.i], v = g.event[b.i];
+        if (t != null && !e.trous[t]) {
+          if (journal) journal.push({ balle: k, i: b.i, vers: "trou" });
+          if (N.trous[t].couleur === N.balles[k].couleur) { e.trous[t] = 1; b.etat = "trou"; b.trou = t; bouge = true; continue; }
+          b.etat = "perdue"; b.trou = t; e.fin = { fin: "perdu", balle: k, trou: t };
+          return;
+        }
+        if (v != null && !e.events[v]) {
+          e.events[v] = 1; b.etat = "coincee"; e.fin = { fin: "coincee", balle: k };
+          if (journal) journal.push({ balle: k, i: b.i, vers: "event" });
+          return;
+        }
+        const pas = versLeHaut(N, e, k);
+        // le rang d'arrivée ne change que quand la balle MONTE : glisser sous un
+        // plafond ne fait pas perdre sa place à celle qui attendait la première
+        if (pas >= 0) { if (journal) journal.push({ balle: k, de: b.i, i: pas }); if (g.ligne(pas) < g.ligne(b.i)) b.depuis = e.doses; b.i = pas; bouge = true; }
+      }
+      if (!bouge) return;
+    }
+  }
+
+  // --- La purge : elle vide la rangée du HAUT de l'eau qui la touche --------------------
+  // (l'air rentre par un trou ouvert ou un évent : une case ne se vide que si une
+  // case voisine, sans eau, est aérée). Les balles de la rangée vidée redescendent
+  // d'une case avec la surface, si elles le peuvent.
+  function vider(N, e, v, journal) {
+    const g = G(N), V = N.vannes[v], depart = g.at(V.r, V.c);
+    if (!e.eau[depart]) return "vide";
+    const corps = new Set([depart]), file = [depart];
+    while (file.length) { const x = file.shift(); for (const d of "NESW") { const y = g.relie(x, d); if (y >= 0 && e.eau[y] && !corps.has(y)) { corps.add(y); file.push(y); } } }
+    const haut = Math.min(...[...corps].map(y => g.ligne(y)));
+    const air = y => aerien(N, e, y) || [..."NESW"].some(d => { const z = g.relie(y, d); return z >= 0 && !e.eau[z] && aere(N, e, z); });
+    const t = [...corps].filter(y => g.ligne(y) === haut && air(y));
+    if (!t.length) return "vide";
+    for (const y of t) e.eau[y] = 0;
+    e.doses++;
+    if (journal) journal.push({ vide: t });
+    const occ = new Set(e.balles.filter(b => b.etat === "tuyau").map(b => b.i));
+    e.balles.forEach((b, k) => {
+      if (b.etat !== "tuyau" || e.eau[b.i]) return;
+      const y = g.relie(b.i, "S");
+      if (y >= 0 && e.eau[y] && !occ.has(y)) { if (journal) journal.push({ balle: k, de: b.i, i: y }); occ.delete(b.i); occ.add(y); b.i = y; }
+    });
+    poser(N, e, journal);
+    return null;
+  }
+
+  // --- Le geste : une goutte de la vanne v ----------------------------------------------
+  function dose(N, e, v, journal) {
+    if (e.fin) return "fini";
+    if (N.vannes[v].purge) { const r = vider(N, e, v, journal); if (r) return r; return null; }
+    const t = cible(N, e, v);
+    if (!t.length) return "plein";
+    for (const y of t) e.eau[y] = 1;
+    e.doses++;
+    if (journal) journal.push({ eau: t });
+    poser(N, e, journal);
+    if (!e.fin && e.balles.every(b => b.etat === "trou")) e.fin = { fin: "gagne", gestes: e.gestes };
+    if (!e.fin && N.vannes.every((x, w) => x.purge || !cible(N, e, w).length)) e.fin = { fin: "bloque" };
+    return null;
+  }
+  // Un geste, c'est ouvrir une vanne : on compte les ouvertures, pas les gouttes.
+  function ouvrir(e) { e.gestes++; }
+  function etoiles(N, e) { return !e.fin || e.fin.fin !== "gagne" ? 0 : e.gestes <= N.par ? 3 : e.gestes <= N.par + 1 ? 2 : 1; }
+
+  return { G, charger, copie, aere, cible, versLeHaut, dose, ouvrir, etoiles };
+})();
+
+</script>
+
+<script id="vue">
+"use strict";
+(function () {
+  // --- La vue : elle dessine l'état du moteur et lui passe les gestes. Aucune
+  // règle ici : l'eau, les balles et la fin sont au moteur.
+  const NIVEAUX = JSON.parse(document.getElementById("niveaux").textContent).niveaux;
+  const F = Flotte, $ = id => document.getElementById(id);
+  const COULEURS = { rouge: "#e0533d", bleu: "#3f7fd0", jaune: "#f2b705", vert: "#4caf3e", violet: "#8a4fc8" };
+  const S = 52, MARGE = 56;
+  const CADENCE = 0.2;                      // une goutte toutes les 0,2 s par vanne ouverte
+
+  let N, g, e, ouvertes, historique, affiche, t = 0, avant = null, acc = 0, finVue = false, niveau = 0;
+  const reussis = new Set();
+  let W = 400, H = 700;
+
+  function lancer(n) {
+    niveau = n; N = NIVEAUX[n]; g = F.G(N);
+    e = F.charger(N); ouvertes = []; historique = []; acc = 0; finVue = false;
+    W = g.C * S + 2 * MARGE; H = g.R * S + 2 * MARGE;
+    affiche = e.balles.map(b => ({ ...centre(b.i) }));
+    $("v-titre").textContent = N.id + " · " + N.titre;
+    $("carte").hidden = true;
+    choix(); majBandeau(); cadrer();
+    dire(N.conseil, 4200);
+  }
+  const centre = i => ({ x: MARGE + g.col(i) * S + S / 2, y: MARGE + g.ligne(i) * S + S / 2 });
+
+  // --- Le dessin -------------------------------------------------------------------
+  const toile = $("toile"), ctx = toile.getContext("2d");
+  let ech = 1, ox = 0, oy = 0;
+  function cadrer() {
+    const r = toile.getBoundingClientRect(), dpr = Math.min(window.devicePixelRatio || 1, 3);
+    toile.width = Math.max(1, Math.round(r.width * dpr)); toile.height = Math.max(1, Math.round(r.height * dpr));
+    ech = Math.min(toile.width / W, toile.height / H);
+    ox = (toile.width - W * ech) / 2; oy = (toile.height - H * ech) / 2;
+  }
+  function rrect(x, y, w, h, r) {
+    ctx.beginPath(); ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+  }
+  function rond(x, y, r, coul) { ctx.fillStyle = coul; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill(); }
+  const DIR = { N: [0, -1], S: [0, 1], E: [1, 0], W: [-1, 0] };
+
+  // un tuyau : de son centre vers chaque bout ouvert, d'une épaisseur et d'une couleur
+  function tuyau(i, largeur, coul) {
+    const c = centre(i);
+    ctx.strokeStyle = coul; ctx.lineWidth = largeur; ctx.lineCap = "butt";
+    for (const d of g.ouv[i]) {
+      const [dx, dy] = DIR[d], lien = g.relie(i, d) >= 0;
+      const l = lien ? S / 2 + 1 : S / 2 - 10;          // un pixel de recouvrement : pas de couture entre deux cases
+      ctx.beginPath(); ctx.moveTo(c.x, c.y); ctx.lineTo(c.x + dx * l, c.y + dy * l); ctx.stroke();
+    }
+    rond(c.x, c.y, largeur / 2, coul);
+  }
+  function vanne(v) {
+    const V = N.vannes[v], c = centre(g.at(V.r, V.c)), [dx, dy] = DIR[V.de];
+    const x = c.x + dx * (S / 2 + 18), y = c.y + dy * (S / 2 + 18), ouverte = ouvertes.includes(v);
+    // le petit tuyau qui relie la vanne à sa case
+    ctx.strokeStyle = "#5a4a3a"; ctx.lineWidth = 16; ctx.lineCap = "round";
+    ctx.beginPath(); ctx.moveTo(c.x + dx * (S / 2 - 12), c.y + dy * (S / 2 - 12)); ctx.lineTo(x, y); ctx.stroke();
+    if (ouverte) {
+      ctx.strokeStyle = "#7fc7e4"; ctx.lineWidth = 7; ctx.setLineDash([6, 6]); ctx.lineDashOffset = (V.purge ? 1 : -1) * t * 40;
+      ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(c.x + dx * (S / 2 - 12), c.y + dy * (S / 2 - 12)); ctx.stroke(); ctx.setLineDash([]);
+    }
+    // la roue : rouge pour verser, bleu sombre pour la purge
+    const coul = V.purge ? "#2f5f8a" : "#d9412d";
+    ctx.save(); ctx.translate(x, y);
+    rond(2, 3, 22, "rgba(60,30,10,.25)");
+    ctx.rotate(ouverte ? t * 4 : 0);
+    ctx.strokeStyle = coul; ctx.lineWidth = 5;
+    ctx.beginPath(); ctx.arc(0, 0, 17, 0, Math.PI * 2); ctx.stroke();
+    for (let k = 0; k < 3; k++) { ctx.rotate(Math.PI / 3); ctx.beginPath(); ctx.moveTo(-17, 0); ctx.lineTo(17, 0); ctx.stroke(); }
+    rond(0, 0, 6, coul);
+    ctx.restore();
+    // le signe : une goutte (verser) ou une flèche vers le bas (vider)
+    ctx.fillStyle = coul; ctx.font = "13px 'Lilita One', sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    const ly = y + (V.de === "N" ? -32 : 32), lx = V.de === "W" ? x - 2 : V.de === "E" ? x + 2 : x;
+    ctx.fillText(V.purge ? "vider" : "eau", lx, V.de === "S" || V.de === "N" ? ly : y + 32);
+  }
+  function trou(k) {
+    const T = N.trous[k], c = centre(g.at(T.r, T.c)), x = c.x, y = c.y - S / 2 + 2, coul = COULEURS[T.couleur];
+    rond(x + 1, y + 2, 18, "rgba(60,30,10,.2)");
+    rond(x, y, 18, coul);
+    rond(x, y, 11, e.trous[k] ? coul : "#2a2420");
+    if (!e.trous[k]) { ctx.strokeStyle = "rgba(255,255,255,.5)"; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x, y, 14.5, 0, Math.PI * 2); ctx.stroke(); }
+  }
+  function balle(x, y, coul, ombre = true) {
+    if (ombre) rond(x + 2, y + 3, 15, "rgba(20,30,40,.25)");
+    rond(x, y, 15, coul);
+    rond(x - 5, y - 5, 5, "rgba(255,255,255,.55)");
+  }
+
+  function dessiner() {
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.fillStyle = "#efe0c2"; ctx.fillRect(0, 0, toile.width, toile.height);
+    ctx.setTransform(ech, 0, 0, ech, ox, oy);
+    // le panneau de bois derrière le réseau
+    ctx.fillStyle = "rgba(122,74,38,.10)"; rrect(MARGE - 14, MARGE - 30, g.C * S + 28, g.R * S + 44, 18); ctx.fill();
+    // les tuyaux : le contour, l'intérieur vide, puis l'eau
+    for (let i = 0; i < g.R * g.C; i++) if (g.ouv[i]) tuyau(i, 34, "#8a7a68");
+    for (let i = 0; i < g.R * g.C; i++) if (g.ouv[i]) tuyau(i, 26, "#fffaf0");
+    for (let i = 0; i < g.R * g.C; i++) if (g.ouv[i] && e.eau[i]) tuyau(i, 26, "#5aa7cf");
+    // la surface : une ligne claire au haut de chaque case d'eau sous de l'air
+    for (let i = 0; i < g.R * g.C; i++) {
+      if (!g.ouv[i] || !e.eau[i]) continue;
+      const y = g.relie(i, "N");
+      if (y >= 0 && !e.eau[y]) { const c = centre(i); ctx.fillStyle = "#cdeaf6"; ctx.fillRect(c.x - 13, c.y - S / 2, 26, 4); }
+    }
+    (N.events || []).forEach((v, k) => {
+      const c = centre(g.at(v.r, v.c));
+      ctx.fillStyle = e.events[k] ? "#5a4a3a" : "#8a7a68"; rrect(c.x - 13, c.y - S / 2 - 8, 26, 10, 3); ctx.fill();
+    });
+    N.trous.forEach((T, k) => trou(k));
+    N.vannes.forEach((V, v) => vanne(v));
+    // les balles, glissées vers leur case (ou leur trou)
+    e.balles.forEach((b, k) => {
+      const coul = COULEURS[N.balles[k].couleur];
+      let cible = centre(b.i);
+      if (b.etat === "trou" || b.etat === "perdue") { const T = N.trous[b.trou], c = centre(g.at(T.r, T.c)); cible = { x: c.x, y: c.y - S / 2 + 2 }; }
+      const a = affiche[k];
+      a.x += (cible.x - a.x) * 0.25; a.y += (cible.y - a.y) * 0.25;
+      if (b.etat === "trou") { if (Math.hypot(cible.x - a.x, cible.y - a.y) > 1) balle(a.x, a.y, coul); return; }
+      balle(a.x, a.y, coul);
+      if (b.etat === "perdue" && (t * 3) % 1 < 0.6) {
+        ctx.strokeStyle = "#fff"; ctx.lineWidth = 4; ctx.beginPath();
+        ctx.moveTo(a.x - 8, a.y - 8); ctx.lineTo(a.x + 8, a.y + 8); ctx.moveTo(a.x + 8, a.y - 8); ctx.lineTo(a.x - 8, a.y + 8); ctx.stroke();
+      }
+    });
+  }
+
+  // --- Le bandeau, les niveaux ---------------------------------------------------------
+  function majBandeau() {
+    $("v-gestes").textContent = e.gestes + (e.gestes > 1 ? " gestes" : " geste") + " · par " + N.par;
+    $("b-annuler").disabled = !historique.length;
+  }
+  function choix() {
+    $("niveaux-choix").innerHTML = NIVEAUX.map((x, n) => `<button data-n="${n}" aria-current="${n === niveau}">${x.id}${reussis.has(n) ? '<span class="fait">★</span>' : ""}</button>`).join("");
+    $("niveaux-choix").querySelectorAll("button").forEach(b => b.addEventListener("click", () => lancer(+b.dataset.n)));
+  }
+
+  // --- Les gestes -------------------------------------------------------------------
+  let minuterie = null;
+  function dire(texte, duree = 2400) {
+    const m = $("message"); m.textContent = texte; m.hidden = false;
+    clearTimeout(minuterie); minuterie = setTimeout(() => { m.hidden = true; }, duree);
+  }
+  function basculer(v) {
+    if (e.fin) return;
+    const i = ouvertes.indexOf(v);
+    if (i >= 0) { ouvertes.splice(i, 1); return; }
+    historique.push(F.copie(e));
+    F.ouvrir(e);
+    ouvertes.push(v); acc = CADENCE;           // la première goutte tout de suite
+    majBandeau();
+  }
+  toile.addEventListener("pointerdown", ev => {
+    ev.preventDefault();
+    const r = toile.getBoundingClientRect(), k = toile.width / r.width;
+    const x = ((ev.clientX - r.left) * k - ox) / ech, y = ((ev.clientY - r.top) * k - oy) / ech;
+    N.vannes.forEach((V, v) => {
+      const c = centre(g.at(V.r, V.c)), [dx, dy] = DIR[V.de];
+      if (Math.hypot(x - (c.x + dx * (S / 2 + 18)), y - (c.y + dy * (S / 2 + 18))) <= 32) basculer(v);
+    });
+  });
+  $("b-annuler").addEventListener("click", () => {
+    if (!historique.length) return;
+    e = historique.pop(); ouvertes = []; finVue = false; $("carte").hidden = true;
+    majBandeau();
+  });
+  $("b-recommencer").addEventListener("click", () => lancer(niveau));
+
+  // --- La fin --------------------------------------------------------------------------
+  function finir() {
+    const f = e.fin, l = [];
+    if (f.fin === "gagne") {
+      reussis.add(niveau); choix();
+      const n = F.etoiles(N, e);
+      l.push(`<h2>Toutes à leur place !</h2>`, `<div class="etoiles">${"★".repeat(n)}<span class="eteinte">${"★".repeat(3 - n)}</span></div>`);
+      l.push(`<p>${e.gestes} geste${e.gestes > 1 ? "s" : ""}, le par est de ${N.par}.</p>`);
+      l.push(`<div class="actions"><button class="second" id="b-rejouer">Rejouer</button>${niveau + 1 < NIVEAUX.length ? '<button id="b-suivant">Niveau suivant</button>' : ""}</div>`);
+    } else {
+      const titre = { perdu: "Mauvais trou !", coincee: "Une balle est coincée", bloque: "Plus rien ne bouge" }[f.fin];
+      const texte = f.fin === "perdu" ? `La balle ${N.balles[f.balle].couleur} est entrée dans le trou ${N.trous[f.trou].couleur}.`
+        : f.fin === "coincee" ? "Elle bouche un trou d'air : le niveau ne peut plus se finir."
+        : "Aucune vanne ne peut plus rien changer.";
+      l.push(`<h2>${titre}</h2>`, `<p>${texte}</p>`);
+      l.push(`<div class="actions">${historique.length ? '<button class="second" id="b-arriere">Annuler le geste</button>' : ""}<button id="b-rejouer">Recommencer</button></div>`);
+    }
+    $("carte").innerHTML = l.join(""); $("carte").hidden = false;
+    $("b-rejouer").addEventListener("click", () => lancer(niveau));
+    if ($("b-suivant")) $("b-suivant").addEventListener("click", () => lancer(niveau + 1));
+    if ($("b-arriere")) $("b-arriere").addEventListener("click", () => $("b-annuler").click());
+  }
+
+  // --- La boucle ------------------------------------------------------------------------
+  function goutte() {
+    for (const v of ouvertes.slice()) {
+      if (e.fin) break;
+      const r = F.dose(N, e, v);
+      if (r === "plein" || r === "vide") {
+        ouvertes.splice(ouvertes.indexOf(v), 1);
+        dire(r === "plein" ? "L'eau ne passe plus par là : la vanne se ferme." : "Plus rien à vider : la purge se ferme.", 2200);
+      }
+    }
+    if (e.fin) ouvertes = [];
+  }
+  function image(ms) {
+    if (avant == null) avant = ms;
+    const dt = Math.min(0.1, (ms - avant) / 1000);
+    avant = ms; t += dt;
+    if (ouvertes.length && !e.fin) { acc += dt; while (acc >= CADENCE && ouvertes.length && !e.fin) { goutte(); acc -= CADENCE; } }
+    dessiner();
+    if (e.fin && !finVue) { finVue = true; setTimeout(finir, 900); }
+    requestAnimationFrame(image);
+  }
+
+  addEventListener("resize", cadrer);
+  new ResizeObserver(cadrer).observe($("scene"));
+  // pour les vérifications sans les doigts
+  window.remontee = { etat: () => e, basculer, lancer, goutte };
+  lancer(0);
+  (document.fonts && document.fonts.load ? document.fonts.load("16px 'Lilita One'") : Promise.resolve()).finally(() => requestAnimationFrame(image));
+})();
+</script>
+</body>
+</html>
