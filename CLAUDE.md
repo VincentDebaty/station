@@ -242,6 +242,15 @@ jour qui perd la partie d'un joueur est un bug bloquant, pas un détail.
   réglage POSÉ UNE FOIS a deux étoiles, si le cycle de départ gagne sans
   qu'on y touche, si un cycle trop court ou trop long a deux étoiles, ou si
   l'on gagne en sautant toujours les piétons.
+  `prototype-carrefours.html` (même jour) passe à PLUSIEURS carrefours
+  (« moins dense, car vite en colère ») : deux carrefours sur une avenue,
+  chacun ses feux automatiques réglés dans un panneau sous le plateau. Les
+  voitures de l'avenue traversent les deux, et ne s'engagent pas sans
+  place pour dégager (six voitures par sens entre eux). La patience est de
+  40 s à chaque feu. La page d'un seul carrefour reste comme trace. Son
+  banc, `node tools/carrefours-banc.mjs`, cherche le meilleur réglage par
+  vague et par carrefour, et refuse comme celui du Carrefour (posé une
+  fois, réglage de départ, cycles extrêmes, piétons sautés).
 - `data/worldmap.js` — généré depuis Natural Earth, jamais édité à la main.
 
 ## Détail connu
