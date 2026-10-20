@@ -17,7 +17,9 @@
    montent. Une balle dans son trou le ferme, et les suivantes passent
    dessus ; une balle dans un trou d'une autre couleur, c'est perdu. Des
    PURGES vident l'eau : les balles redescendent, et l'on peut changer
-   l'ordre de passage.
+   l'ordre de passage. Aux fourches, des AIGUILLAGES fléchés : une balle
+   va toujours du côté de la flèche (Vincent, même soir : « on se demande
+   comment la balle va aller à droite ou à gauche, ce n'est pas clair »).
 
    La charte des prototypes précédents : bois et crème, Lilita One, aplats.
    Un seul aspect, voulu (pas de thème sombre).
@@ -118,7 +120,7 @@ canvas { display: block; width: 100%; height: 100%; touch-action: none; }
   </header>
   <nav id="niveaux-choix" aria-label="Les niveaux"></nav>
   <main class="scene" id="scene">
-    <canvas id="toile" aria-label="Le réseau de tuyaux : touche une vanne pour l'ouvrir ou la fermer"></canvas>
+    <canvas id="toile" aria-label="Le réseau de tuyaux : touche une vanne pour l'ouvrir ou la fermer, un aiguillage pour le basculer"></canvas>
     <div class="message" id="message" hidden></div>
     <div class="carte" id="carte" hidden></div>
   </main>
@@ -135,8 +137,11 @@ canvas { display: block; width: 100%; height: 100%; touch-action: none; }
        eau       les cases déjà pleines au départ (facultatif)
        vannes    case où elle verse (ou d'où elle vide), côté où on la
                  dessine (« de » : N, S, E, W) ; « purge » : elle vide
+       aiguillages  case d'une fourche, ses deux sorties (« sorties »), et
+                 celle où pointe la flèche au départ (« depart » : 0 ou 1)
        events    des trous d'air sans couleur (facultatif)
-       par       le moins de gestes (d'ouvertures de vanne) qui gagne —
+       par       le moins de gestes (ouvrir une vanne, basculer un
+                 aiguillage) qui gagne —
                  node tools/remontee-banc.mjs le retrouve, et refuse s'il
                  diffère
      ================================================================== -->
@@ -145,7 +150,7 @@ canvas { display: block; width: 100%; height: 100%; touch-action: none; }
   "niveaux": [
     {
      "id": "1",
-     "titre": "Le bon ordre",
+     "titre": "L'aiguillage",
      "grille": [
       "       ",
       "  ╶┬─╴ ",
@@ -156,42 +161,19 @@ canvas { display: block; width: 100%; height: 100%; touch-action: none; }
       "   │   ",
       "   │   ",
       "   │   ",
-      " ┌─┴─┐ ",
-      " │   │ ",
-      " ╵   ╵ "
+      "   │   ",
+      "   │   ",
+      "   ╵   "
      ],
      "trous": [{"couleur": "rouge", "r": 1, "c": 2}, {"couleur": "bleu", "r": 1, "c": 5}],
-     "balles": [{"couleur": "bleu", "r": 11, "c": 1}, {"couleur": "rouge", "r": 11, "c": 5}],
-     "vannes": [{"r": 11, "c": 1, "de": "W"}, {"r": 11, "c": 5, "de": "E"}],
-     "par": 1,
-     "conseil": "Ouvre une vanne : l'eau monte, les balles flottent. Chaque balle doit finir dans le trou de sa couleur."
+     "balles": [{"couleur": "bleu", "r": 11, "c": 3}, {"couleur": "rouge", "r": 10, "c": 3}],
+     "aiguillages": [{"r": 1, "c": 3, "sorties": ["W", "E"], "depart": 1}],
+     "vannes": [{"r": 11, "c": 3, "de": "S"}],
+     "par": 3,
+     "conseil": "Ouvre la vanne : les balles montent. En haut, chaque balle part du côté de la flèche. Touche l'aiguillage pour la changer."
     },
     {
      "id": "2",
-     "titre": "La purge",
-     "grille": [
-      "       ",
-      "  ╶┬─╴ ",
-      "   │   ",
-      "   │   ",
-      "   │   ",
-      "   │   ",
-      "   │   ",
-      "   │   ",
-      "   │   ",
-      " ┌─┴─┐ ",
-      " │   │ ",
-      " ╵   ╵ "
-     ],
-     "trous": [{"couleur": "rouge", "r": 1, "c": 2}, {"couleur": "bleu", "r": 1, "c": 5}],
-     "balles": [{"couleur": "bleu", "r": 9, "c": 1}, {"couleur": "rouge", "r": 11, "c": 5}],
-     "eau": [[11, 1], [10, 1], [9, 1]],
-     "vannes": [{"r": 11, "c": 1, "de": "W"}, {"r": 11, "c": 5, "de": "E"}, {"r": 11, "c": 1, "de": "S", "purge": true}],
-     "par": 2,
-     "conseil": "La balle bleue attend déjà au croisement. La purge vide l'eau : la balle redescend."
-    },
-    {
-     "id": "3",
      "titre": "Trois couleurs",
      "grille": [
       "       ",
@@ -207,12 +189,61 @@ canvas { display: block; width: 100%; height: 100%; touch-action: none; }
       "│  │  │",
       "╵  ╵  ╵"
      ],
-     "trous": [{"couleur": "bleu", "r": 1, "c": 0}, {"couleur": "jaune", "r": 1, "c": 2}, {"couleur": "rouge", "r": 1, "c": 5}],
-     "balles": [{"couleur": "rouge", "r": 11, "c": 0}, {"couleur": "jaune", "r": 11, "c": 3}, {"couleur": "bleu", "r": 9, "c": 6}],
-     "eau": [[11, 6], [10, 6], [9, 6]],
-     "vannes": [{"r": 11, "c": 0, "de": "W"}, {"r": 11, "c": 3, "de": "S"}, {"r": 11, "c": 6, "de": "E"}, {"r": 11, "c": 0, "de": "S", "purge": true}, {"r": 11, "c": 6, "de": "S", "purge": true}],
-     "par": 2,
-     "conseil": "Trois balles, deux purges. Laquelle doit passer la première ?"
+     "trous": [{"couleur": "jaune", "r": 1, "c": 0}, {"couleur": "rouge", "r": 1, "c": 2}, {"couleur": "bleu", "r": 1, "c": 5}],
+     "balles": [{"couleur": "jaune", "r": 11, "c": 0}, {"couleur": "bleu", "r": 11, "c": 3}, {"couleur": "rouge", "r": 11, "c": 6}],
+     "aiguillages": [{"r": 1, "c": 3, "sorties": ["W", "E"], "depart": 0}],
+     "vannes": [{"r": 11, "c": 0, "de": "W"}, {"r": 11, "c": 3, "de": "S"}, {"r": 11, "c": 6, "de": "E"}],
+     "par": 3,
+     "conseil": "Une balle file du côté de la flèche et entre dans le premier trou ouvert qu'elle croise."
+    },
+    {
+     "id": "3",
+     "titre": "La purge",
+     "grille": [
+      "       ",
+      "╶──┬─╴ ",
+      "   │   ",
+      "   │   ",
+      "   │   ",
+      "   │   ",
+      "   │   ",
+      "   │   ",
+      "   │   ",
+      "┌──┼──┐",
+      "│  │  │",
+      "╵  ╵  ╵"
+     ],
+     "trous": [{"couleur": "jaune", "r": 1, "c": 0}, {"couleur": "rouge", "r": 1, "c": 2}, {"couleur": "bleu", "r": 1, "c": 5}],
+     "balles": [{"couleur": "jaune", "r": 9, "c": 0}, {"couleur": "bleu", "r": 11, "c": 3}, {"couleur": "rouge", "r": 11, "c": 6}],
+     "eau": [[11, 0], [10, 0], [9, 0]],
+     "aiguillages": [{"r": 1, "c": 3, "sorties": ["W", "E"], "depart": 0}],
+     "vannes": [{"r": 11, "c": 0, "de": "W"}, {"r": 11, "c": 3, "de": "S"}, {"r": 11, "c": 6, "de": "E"}, {"r": 11, "c": 0, "de": "S", "purge": true}],
+     "par": 4,
+     "conseil": "La jaune attend déjà au croisement. La purge vide l'eau : la balle redescend."
+    },
+    {
+     "id": "4",
+     "titre": "Deux aiguillages",
+     "grille": [
+      "       ",
+      "╶┬╴ ╶┬╴",
+      " │   │ ",
+      " │   │ ",
+      " │   │ ",
+      " └─┬─┘ ",
+      "   │   ",
+      "   │   ",
+      "   │   ",
+      "┌──┼──┐",
+      "│  │  │",
+      "╵  ╵  ╵"
+     ],
+     "trous": [{"couleur": "jaune", "r": 1, "c": 0}, {"couleur": "rouge", "r": 1, "c": 2}, {"couleur": "bleu", "r": 1, "c": 6}],
+     "balles": [{"couleur": "rouge", "r": 11, "c": 0}, {"couleur": "jaune", "r": 11, "c": 3}, {"couleur": "bleu", "r": 11, "c": 6}],
+     "aiguillages": [{"r": 5, "c": 3, "sorties": ["W", "E"], "depart": 1}, {"r": 1, "c": 1, "sorties": ["W", "E"], "depart": 1}],
+     "vannes": [{"r": 11, "c": 0, "de": "W"}, {"r": 11, "c": 3, "de": "S"}, {"r": 11, "c": 6, "de": "E"}],
+     "par": 5,
+     "conseil": "Deux aiguillages : bascule-les au bon moment."
     }
   ]
 }
@@ -243,6 +274,10 @@ const Flotte = (function () {
   //              trou ouvert y entre : de sa couleur, le trou se ferme (à ras :
   //              les suivantes passent dessous, et il ne laisse plus passer
   //              l'air) ; d'une autre couleur, c'est perdu.
+  //   les aiguillages  une palette fléchée à une fourche : une balle qui passe
+  //              par cette case n'en sort QUE par le côté où pointe la flèche.
+  //              Le joueur la bascule quand il veut. L'eau, elle, passe des
+  //              deux côtés : l'aiguillage ne guide que les balles.
   //   les évents un trou d'air sans couleur. Une balle qui y arrive le bouche
   //              et reste coincée : le niveau est perdu.
   //   la fin     gagné quand chaque balle est dans son trou ; bloqué quand plus
@@ -267,10 +302,11 @@ const Flotte = (function () {
       const j = at(r, c);
       return ouv[j].includes(OPP[d]) ? j : -1;
     };
-    const trou = {}, event = {};
+    const trou = {}, event = {}, aiguille = {};
     N.trous.forEach((t, k) => { trou[at(t.r, t.c)] = k; });
+    (N.aiguillages || []).forEach((a, k) => { aiguille[at(a.r, a.c)] = k; });
     (N.events || []).forEach((t, k) => { event[at(t.r, t.c)] = k; });
-    g = { R, C, ouv, at, relie, trou, event, ligne: i => Math.floor(i / C), col: i => i % C };
+    g = { R, C, ouv, at, relie, trou, event, aiguille, ligne: i => Math.floor(i / C), col: i => i % C };
     CACHE.set(N, g);
     return g;
   }
@@ -283,13 +319,14 @@ const Flotte = (function () {
       eau: new Array(g.R * g.C).fill(0),
       balles: N.balles.map(b => ({ i: g.at(b.r, b.c), etat: "tuyau", depuis: 0 })),
       trous: N.trous.map(() => 0), events: (N.events || []).map(() => 0),
+      aig: (N.aiguillages || []).map(a => a.depart || 0),
       fin: null, doses: 0, gestes: 0
     };
     for (const [r, c] of N.eau || []) e.eau[g.at(r, c)] = 1;
     poser(N, e);
     return e;
   }
-  const copie = e => ({ eau: e.eau.slice(), balles: e.balles.map(b => ({ ...b })), trous: e.trous.slice(), events: e.events.slice(), fin: e.fin, doses: e.doses, gestes: e.gestes });
+  const copie = e => ({ eau: e.eau.slice(), balles: e.balles.map(b => ({ ...b })), trous: e.trous.slice(), events: e.events.slice(), aig: e.aig.slice(), fin: e.fin, doses: e.doses, gestes: e.gestes });
 
   // une ouverture d'air au plafond de la case i : un trou ouvert, un évent libre
   function aerien(N, e, i) {
@@ -334,16 +371,24 @@ const Flotte = (function () {
     e.balles.forEach((b, k) => { if (k !== sauf && (b.etat === "tuyau" || b.etat === "coincee")) s.add(b.i); });
     return s;
   }
+  // les côtés par où une balle peut quitter la case i : tous, sauf à un
+  // aiguillage, où seul le côté de la flèche est ouvert
+  function sorties(N, e, i, dirs) {
+    const k = G(N).aiguille[i];
+    if (k == null) return dirs;
+    const d = N.aiguillages[k].sorties[e.aig[k]];
+    return dirs.includes(d) ? d : "";
+  }
   // le prochain pas d'une balle vers le haut (-1 : elle reste)
   function versLeHaut(N, e, k) {
     const g = G(N), b = e.balles[k], occ = occupees(e, k);
-    const monte = z => { const y = g.relie(z, "N"); return y >= 0 && e.eau[y] && !occ.has(y) ? y : -1; };
+    const monte = z => { if (!sorties(N, e, z, "N")) return -1; const y = g.relie(z, "N"); return y >= 0 && e.eau[y] && !occ.has(y) ? y : -1; };
     const up = monte(b.i);
     if (up >= 0) return up;
     const premier = new Map([[b.i, -1]]), file = [b.i];
     while (file.length) {
       const x = file.shift();
-      for (const d of "EWN") {
+      for (const d of sorties(N, e, x, "EWN")) {
         const y = g.relie(x, d);
         if (y < 0 || premier.has(y) || !e.eau[y] || occ.has(y)) continue;
         premier.set(y, premier.get(x) < 0 ? y : premier.get(x));
@@ -420,14 +465,34 @@ const Flotte = (function () {
     if (journal) journal.push({ eau: t });
     poser(N, e, journal);
     if (!e.fin && e.balles.every(b => b.etat === "trou")) e.fin = { fin: "gagne", gestes: e.gestes };
-    if (!e.fin && N.vannes.every((x, w) => x.purge || !cible(N, e, w).length)) e.fin = { fin: "bloque" };
+    if (!e.fin && bloque(N, e)) e.fin = { fin: "bloque" };
     return null;
   }
-  // Un geste, c'est ouvrir une vanne : on compte les ouvertures, pas les gouttes.
+  // Plus rien ne peut changer : aucune vanne ne verse, et basculer un aiguillage
+  // ne ferait bouger aucune balle. (Une purge peut encore vider : mais vider
+  // pour remplir de nouveau ramènerait au même point.)
+  function bloque(N, e) {
+    if (N.vannes.some((x, w) => !x.purge && cible(N, e, w).length)) return false;
+    return (N.aiguillages || []).every((a, k) => {
+      const f = copie(e);
+      f.aig[k] = 1 - f.aig[k];
+      poser(N, f);
+      return f.balles.every((b, j) => b.i === e.balles[j].i && b.etat === e.balles[j].etat);
+    });
+  }
+  // Un geste, c'est ouvrir une vanne (on compte les ouvertures, pas les
+  // gouttes) ou basculer un aiguillage.
   function ouvrir(e) { e.gestes++; }
+  function basculer(N, e, k, journal) {
+    if (e.fin) return "fini";
+    e.aig[k] = 1 - e.aig[k]; e.gestes++;
+    poser(N, e, journal);
+    if (!e.fin && e.balles.every(b => b.etat === "trou")) e.fin = { fin: "gagne", gestes: e.gestes };
+    return null;
+  }
   function etoiles(N, e) { return !e.fin || e.fin.fin !== "gagne" ? 0 : e.gestes <= N.par ? 3 : e.gestes <= N.par + 1 ? 2 : 1; }
 
-  return { G, charger, copie, aere, cible, versLeHaut, dose, ouvrir, etoiles };
+  return { G, charger, copie, aere, cible, versLeHaut, dose, ouvrir, basculer, etoiles };
 })();
 
 </script>
@@ -443,7 +508,7 @@ const Flotte = (function () {
   const S = 52, MARGE = 56;
   const CADENCE = 0.2;                      // une goutte toutes les 0,2 s par vanne ouverte
 
-  let N, g, e, ouvertes, historique, affiche, t = 0, avant = null, acc = 0, finVue = false, niveau = 0;
+  let N, g, e, ouvertes, historique, affiche, t = 0, avant = null, acc = 0, finVue = false, niveau = 0, secousse = {};
   const reussis = new Set();
   let W = 400, H = 700;
 
@@ -482,7 +547,7 @@ const Flotte = (function () {
     ctx.strokeStyle = coul; ctx.lineWidth = largeur; ctx.lineCap = "butt";
     for (const d of g.ouv[i]) {
       const [dx, dy] = DIR[d], lien = g.relie(i, d) >= 0;
-      const l = lien ? S / 2 + 1 : S / 2 - 10;          // un pixel de recouvrement : pas de couture entre deux cases
+      const l = lien ? S / 2 : S / 2 - 10;
       ctx.beginPath(); ctx.moveTo(c.x, c.y); ctx.lineTo(c.x + dx * l, c.y + dy * l); ctx.stroke();
     }
     rond(c.x, c.y, largeur / 2, coul);
@@ -511,6 +576,26 @@ const Flotte = (function () {
     ctx.fillStyle = coul; ctx.font = "13px 'Lilita One', sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
     const ly = y + (V.de === "N" ? -32 : 32), lx = V.de === "W" ? x - 2 : V.de === "E" ? x + 2 : x;
     ctx.fillText(V.purge ? "vider" : "eau", lx, V.de === "S" || V.de === "N" ? ly : y + 32);
+  }
+  // un aiguillage : un clapet sombre ferme le côté où la balle ne va pas, et
+  // une palette fléchée, au-dessus de la fourche, se touche pour basculer
+  const palette = k => { const A = N.aiguillages[k], c = centre(g.at(A.r, A.c)); return { x: c.x, y: c.y - S * 0.92 }; };
+  function aiguillage(k) {
+    const A = N.aiguillages[k], c = centre(g.at(A.r, A.c)), va = A.sorties[e.aig[k]], ferme = A.sorties[1 - e.aig[k]];
+    const [fx, fy] = DIR[ferme];
+    ctx.strokeStyle = "#5a3418"; ctx.lineWidth = 6; ctx.lineCap = "round";
+    ctx.beginPath();
+    if (fx) { ctx.moveTo(c.x + fx * 15, c.y - 12); ctx.lineTo(c.x + fx * 15, c.y + 12); } else { ctx.moveTo(c.x - 12, c.y + fy * 15); ctx.lineTo(c.x + 12, c.y + fy * 15); }
+    ctx.stroke();
+    const p = palette(k), sec = secousse[k] && t - secousse[k] < 0.3 ? Math.sin((t - secousse[k]) * 50) * 3 : 0;
+    ctx.strokeStyle = "#8a7a68"; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(c.x, c.y - 14); ctx.lineTo(p.x, p.y + 14); ctx.stroke();
+    ctx.save(); ctx.translate(p.x + sec, p.y);
+    rond(2, 3, 19, "rgba(60,30,10,.25)"); rond(0, 0, 19, "#fff3dc");
+    ctx.strokeStyle = "#5a3418"; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(0, 0, 19, 0, Math.PI * 2); ctx.stroke();
+    const [dx, dy] = DIR[va];
+    ctx.rotate(Math.atan2(dy, dx));
+    ctx.fillStyle = "#3b2414"; ctx.beginPath(); ctx.moveTo(12, 0); ctx.lineTo(0, -10); ctx.lineTo(0, -4); ctx.lineTo(-11, -4); ctx.lineTo(-11, 4); ctx.lineTo(0, 4); ctx.lineTo(0, 10); ctx.closePath(); ctx.fill();
+    ctx.restore();
   }
   function trou(k) {
     const T = N.trous[k], c = centre(g.at(T.r, T.c)), x = c.x, y = c.y - S / 2 + 2, coul = COULEURS[T.couleur];
@@ -547,6 +632,7 @@ const Flotte = (function () {
     });
     N.trous.forEach((T, k) => trou(k));
     N.vannes.forEach((V, v) => vanne(v));
+    (N.aiguillages || []).forEach((A, k) => aiguillage(k));
     // les balles, glissées vers leur case (ou leur trou)
     e.balles.forEach((b, k) => {
       const coul = COULEURS[N.balles[k].couleur];
@@ -579,7 +665,14 @@ const Flotte = (function () {
     const m = $("message"); m.textContent = texte; m.hidden = false;
     clearTimeout(minuterie); minuterie = setTimeout(() => { m.hidden = true; }, duree);
   }
-  function basculer(v) {
+  function aiguiller(k) {
+    if (e.fin) return;
+    historique.push(F.copie(e));
+    F.basculer(N, e, k);
+    secousse[k] = t;
+    majBandeau();
+  }
+  function tourner(v) {
     if (e.fin) return;
     const i = ouvertes.indexOf(v);
     if (i >= 0) { ouvertes.splice(i, 1); return; }
@@ -592,9 +685,10 @@ const Flotte = (function () {
     ev.preventDefault();
     const r = toile.getBoundingClientRect(), k = toile.width / r.width;
     const x = ((ev.clientX - r.left) * k - ox) / ech, y = ((ev.clientY - r.top) * k - oy) / ech;
+    for (let k = 0; k < (N.aiguillages || []).length; k++) { const p = palette(k); if (Math.hypot(x - p.x, y - p.y) <= 30) return aiguiller(k); }
     N.vannes.forEach((V, v) => {
       const c = centre(g.at(V.r, V.c)), [dx, dy] = DIR[V.de];
-      if (Math.hypot(x - (c.x + dx * (S / 2 + 18)), y - (c.y + dy * (S / 2 + 18))) <= 32) basculer(v);
+      if (Math.hypot(x - (c.x + dx * (S / 2 + 18)), y - (c.y + dy * (S / 2 + 18))) <= 32) tourner(v);
     });
   });
   $("b-annuler").addEventListener("click", () => {
@@ -615,6 +709,7 @@ const Flotte = (function () {
       l.push(`<div class="actions"><button class="second" id="b-rejouer">Rejouer</button>${niveau + 1 < NIVEAUX.length ? '<button id="b-suivant">Niveau suivant</button>' : ""}</div>`);
     } else {
       const titre = { perdu: "Mauvais trou !", coincee: "Une balle est coincée", bloque: "Plus rien ne bouge" }[f.fin];
+      // la balle perdue : on voit dans quel trou elle est entrée
       const texte = f.fin === "perdu" ? `La balle ${N.balles[f.balle].couleur} est entrée dans le trou ${N.trous[f.trou].couleur}.`
         : f.fin === "coincee" ? "Elle bouche un trou d'air : le niveau ne peut plus se finir."
         : "Aucune vanne ne peut plus rien changer.";
@@ -652,7 +747,7 @@ const Flotte = (function () {
   addEventListener("resize", cadrer);
   new ResizeObserver(cadrer).observe($("scene"));
   // pour les vérifications sans les doigts
-  window.remontee = { etat: () => e, basculer, lancer, goutte };
+  window.remontee = { etat: () => e, tourner, aiguiller, lancer, goutte };
   lancer(0);
   (document.fonts && document.fonts.load ? document.fonts.load("16px 'Lilita One'") : Promise.resolve()).finally(() => requestAnimationFrame(image));
 })();

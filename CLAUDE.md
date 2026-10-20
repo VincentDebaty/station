@@ -266,6 +266,12 @@ jour qui perd la partie d'un joueur est un bug bloquant, pas un détail.
   gagne toujours, ou si, dans un niveau à purges, on gagne sans purger.
   Mesuré : sans purge, une seule vanne bien choisie gagne toujours. La
   profondeur vient des purges et des niveaux qui commencent avec de l'eau.
+  Même soir, Vincent : « on se demande comment la balle va aller à droite
+  ou à gauche, ce n'est pas clair ». D'où les AIGUILLAGES : une palette
+  fléchée à chaque fourche, qu'on bascule. Une balle ne quitte la fourche
+  que du côté de la flèche, puis entre dans le premier trou ouvert qu'elle
+  croise. Le banc compte les basculements comme des gestes et vérifie
+  qu'un niveau à purge n'a aucune solution sans elle.
 - `data/worldmap.js` — généré depuis Natural Earth, jamais édité à la main.
 
 ## Détail connu

@@ -8,15 +8,18 @@
 //
 // L'idée de Vincent (20 octobre 2026) : des balles de couleur flottent dans
 // un réseau de tuyaux ; des vannes font monter l'eau, des purges la
-// vident ; chaque balle doit entrer dans le trou de sa couleur, qui se
+// vident ; des aiguillages fléchés disent de quel côté part une balle aux
+// fourches ; chaque balle doit entrer dans le trou de sa couleur, qui se
 // ferme derrière elle. Le moteur (bloc <script id="moteur"> de
 // prototypes/prototype-remontee.html) et les niveaux (bloc JSON
 // « niveaux ») sont extraits du fichier et joués sans navigateur — jamais
 // une copie. Le banc REFUSE (code de sortie 1) au lieu d'avertir.
 //
 // Le banc RÉSOUT chaque niveau exhaustivement : toutes les suites de
-// gouttes, une goutte à la fois, de n'importe quelle vanne. Un geste, c'est
-// ouvrir une vanne : verser encore de la même vanne ne coûte rien.
+// gouttes (une goutte à la fois, de n'importe quelle vanne) et de
+// basculements d'aiguillage. Un geste, c'est ouvrir une vanne ou basculer
+// un aiguillage : verser encore de la vanne déjà ouverte ne coûte rien,
+// même après avoir basculé un aiguillage.
 //
 // LES DONNÉES
 //   D1  la grille est rectangulaire ; deux cases voisines ne se touchent que
@@ -28,20 +31,20 @@
 // L'IDÉE
 //   E1  le niveau a une solution, et le « par » écrit est le moins de gestes
 //   E2  la solution se rejoue goutte à goutte jusqu'au gain
-//   E3  remplir « à fond », vanne après vanne, dans un ordre quelconque, ne
-//       gagne pas à tous les coups : l'ordre compte
-//   E4  dans un niveau à purges, aucun remplissage « à fond » sans purge ne
-//       gagne : la purge sert
+//   E3  remplir « à fond », vanne après vanne, dans un ordre quelconque et
+//       sans toucher aux aiguillages, ne gagne pas à tous les coups
+//   E4  dans un niveau à purges, le même niveau SANS ses purges n'a aucune
+//       solution : la purge sert
 //
 // LES INVARIANTS — sur des parties aux gouttes au hasard ; une violation
 // est un bug du moteur :
 //   I1  deux balles ne partagent jamais une case ; une balle « dans son
 //       trou » est sous un trou fermé de sa couleur
 //   I2  une goutte de vanne ne fait jamais descendre une balle ; une goutte
-//       de purge ne la fait jamais monter
-//   I3  une goutte de vanne ajoute de l'eau, une de purge en retire, sans
-//       jamais toucher aux autres cases
-//   I4  les mêmes gouttes donnent la même partie
+//       de purge ne la fait jamais monter ; basculer un aiguillage non plus
+//   I3  une goutte de vanne ajoute de l'eau, une de purge en retire, un
+//       aiguillage n'y touche pas
+//   I4  les mêmes gestes donnent la même partie
 // ------------------------------------------------------------------
 import { readFileSync } from "node:fs";
 import { createContext, runInContext } from "node:vm";
@@ -102,7 +105,7 @@ function donnees(N) {
 }
 
 const cle = e => e.eau.join("") + "|" + e.balles.map(b => b.i + b.etat).join(",") + "|" +
-  e.balles.map((b, k) => k).filter(k => e.balles[k].etat === "tuyau").sort((a, c) => e.balles[a].depuis - e.balles[c].depuis || a - c).join("") + "|" + e.trous.join("") + e.events.join("");
+  e.balles.map((b, k) => k).filter(k => e.balles[k].etat === "tuyau").sort((a, c) => e.balles[a].depuis - e.balles[c].depuis || a - c).join("") + "|" + e.trous.join("") + e.events.join("") + "|" + e.aig.join("");
 // 0-1 : une goutte de la même vanne ne coûte rien, une autre vanne coûte un geste
 function resoudre(N) {
   const dq = [[F.charger(N), -1, 0, []]], vu = new Map();
@@ -114,13 +117,13 @@ function resoudre(N) {
     vu.set(k, cout);
     if (++n > 2000000) return { best, n, coupe: true };
     if (best && cout >= best.cout) continue;
-    for (let v = 0; v < N.vannes.length; v++) {
-      const f = F.copie(e);
-      if (F.dose(N, f, v)) continue;
-      const c = cout + (v === der ? 0 : 1), ch = chemin.concat(v);
+    for (let v = 0; v < N.vannes.length + (N.aiguillages || []).length; v++) {
+      const f = F.copie(e), aig = v >= N.vannes.length;
+      if (aig ? F.basculer(N, f, v - N.vannes.length) : F.dose(N, f, v)) continue;
+      const c = cout + (!aig && v === der ? 0 : 1), ch = chemin.concat(v), nder = aig ? der : v;
       if (f.fin && f.fin.fin === "gagne") { if (!best || c < best.cout) best = { cout: c, chemin: ch }; continue; }
       if (f.fin) continue;
-      if (v === der) dq.unshift([f, v, c, ch]); else dq.push([f, v, c, ch]);
+      if (c === cout) dq.unshift([f, nder, c, ch]); else dq.push([f, nder, c, ch]);
     }
   }
   return { best, n };
@@ -133,27 +136,29 @@ function aFond(N, ordre) {
 }
 const suite = ch => ch.reduce((a, v, i) => (i && ch[i - 1] === v ? a[a.length - 1][1]++ : a.push([v, 1]), a), []);
 
+const jouer = (N, e, w) => w >= N.vannes.length ? F.basculer(N, e, w - N.vannes.length) : F.dose(N, e, w);
 function partie(N, hasard) {
-  const g = F.G(N), v = [], e = F.charger(N), journal = [];
+  const g = F.G(N), v = [], e = F.charger(N), journal = [], nA = (N.aiguillages || []).length;
   for (let pas = 0; pas < 400 && !e.fin && !v.length; pas++) {
-    const w = Math.floor(hasard() * N.vannes.length), avant = F.copie(e);
-    if (F.dose(N, e, w)) continue;
+    const w = Math.floor(hasard() * (N.vannes.length + nA)), avant = F.copie(e);
+    if (jouer(N, e, w)) continue;
     journal.push(w);
-    const t = `goutte ${pas} (vanne ${w + 1})`;
+    const aig = w >= N.vannes.length;
+    const t = `geste ${pas} (${aig ? "aiguillage " + (w - N.vannes.length + 1) : "vanne " + (w + 1)})`;
     const cases = e.balles.filter(b => b.etat === "tuyau" || b.etat === "coincee").map(b => b.i);
     if (new Set(cases).size !== cases.length) v.push(`I1 ${t} : deux balles dans la même case`);
     e.balles.forEach((b, k) => { if (b.etat === "trou" && (!e.trous[b.trou] || N.trous[b.trou].couleur !== N.balles[k].couleur)) v.push(`I1 ${t} : la balle ${k} dans un trou qui n'est pas le sien`); });
     e.balles.forEach((b, k) => {
       const a = avant.balles[k];
       if (b.etat !== "tuyau" || a.etat !== "tuyau") return;
-      if (!N.vannes[w].purge && g.ligne(b.i) > g.ligne(a.i)) v.push(`I2 ${t} : la balle ${k} descend`);
-      if (N.vannes[w].purge && g.ligne(b.i) < g.ligne(a.i)) v.push(`I2 ${t} : la balle ${k} monte pendant une purge`);
+      if ((aig || !N.vannes[w].purge) && g.ligne(b.i) > g.ligne(a.i)) v.push(`I2 ${t} : la balle ${k} descend`);
+      if (!aig && N.vannes[w].purge && g.ligne(b.i) < g.ligne(a.i)) v.push(`I2 ${t} : la balle ${k} monte pendant une purge`);
     });
     const plus = e.eau.filter((x, i) => x && !avant.eau[i]).length, moins = e.eau.filter((x, i) => !x && avant.eau[i]).length;
-    if (N.vannes[w].purge ? plus || !moins : moins || !plus) v.push(`I3 ${t} : ${plus} cases remplies, ${moins} vidées`);
+    if (aig ? plus || moins : N.vannes[w].purge ? plus || !moins : moins || !plus) v.push(`I3 ${t} : ${plus} cases remplies, ${moins} vidées`);
   }
   const bis = F.charger(N);
-  for (const w of journal) F.dose(N, bis, w);
+  for (const w of journal) jouer(N, bis, w);
   if (!v.length && JSON.stringify(bis) !== JSON.stringify(e)) v.push("I4 la partie rejouée diffère");
   return { v, e };
 }
@@ -163,22 +168,26 @@ if (!niveaux.length) { console.error("niveau inconnu : " + SEUL); process.exit(2
 console.log(`La remontée — ${niveaux.length} niveau(x), ${PARTIES} parties au hasard chacun, graines ${GRAINE}…${GRAINE + PARTIES - 1}`);
 for (const N of niveaux) {
   const purges = N.vannes.some(x => x.purge);
-  console.log(`\n${N.id} ${N.titre} (${N.balles.length} balles, ${N.vannes.filter(x => !x.purge).length} vannes, ${N.vannes.filter(x => x.purge).length} purges, par ${N.par})`);
+  console.log(`\n${N.id} ${N.titre} (${N.balles.length} balles, ${N.vannes.filter(x => !x.purge).length} vannes, ${N.vannes.filter(x => x.purge).length} purges, ${(N.aiguillages || []).length} aiguillages, par ${N.par})`);
   const d = donnees(N);
   dire(!d.length, "D1 données" + (d.length ? " :\n      " + d.join("\n      ") : ""));
   if (d.length) continue;
   const t0 = Date.now(), r = resoudre(N);
-  dire(r.best && !r.coupe && r.best.cout === N.par, `E1 ${r.best ? "meilleure solution en " + r.best.cout + " geste(s) : " + suite(r.best.chemin).map(([v, n]) => (N.vannes[v].purge ? "purge " : "vanne ") + (v + 1) + " ×" + n).join(", ") : "AUCUNE SOLUTION"} (${r.n} états, ${Date.now() - t0} ms${r.coupe ? ", COUPÉ" : ""})`);
+  const nom = v => v >= N.vannes.length ? "aiguillage " + (v - N.vannes.length + 1) : (N.vannes[v].purge ? "purge " : "vanne ") + (v + 1);
+  dire(r.best && !r.coupe && r.best.cout === N.par, `E1 ${r.best ? "meilleure solution en " + r.best.cout + " geste(s) : " + suite(r.best.chemin).map(([v, n]) => nom(v) + (v < N.vannes.length ? " ×" + n : "")).join(", ") : "AUCUNE SOLUTION"} (${r.n} états, ${Date.now() - t0} ms${r.coupe ? ", COUPÉ" : ""})`);
   if (r.best) {
     const e = F.charger(N);
-    for (const v of r.best.chemin) F.dose(N, e, v);
+    for (const v of r.best.chemin) jouer(N, e, v);
     dire(e.fin && e.fin.fin === "gagne", `E2 la solution rejouée : ${e.fin ? e.fin.fin : "pas finie"}`);
   }
   const ordres = perms(N.vannes.map((_, i) => i).filter(i => !N.vannes[i].purge)), fins = ordres.map(o => aFond(N, o));
   const gagnes = fins.filter(f => f === "gagne").length;
   const detail = ordres.map((o, k) => o.map(v => v + 1).join("") + " " + fins[k]).join(", ");
-  dire(gagnes < ordres.length, `E3 « à fond » sans purge : ${gagnes}/${ordres.length} gagnent (${detail})`);
-  if (purges) dire(gagnes === 0, `E4 la purge sert : aucun remplissage sans purge ne gagne`);
+  dire(gagnes < ordres.length, `E3 « à fond », sans purge ni aiguillage : ${gagnes}/${ordres.length} gagnent (${detail})`);
+  if (purges) {
+    const sans = { ...N, vannes: N.vannes.filter(x => !x.purge) }, rs = resoudre(sans);
+    dire(!rs.best && !rs.coupe, `E4 la purge sert : sans elle, ${rs.best ? "une solution en " + rs.best.cout + " geste(s)" : "aucune solution"} (${rs.n} états)`);
+  }
   const viol = [], stats = {};
   for (let k = 0; k < PARTIES && viol.length < 4; k++) {
     const p = partie(N, Hasard(GRAINE + k));
