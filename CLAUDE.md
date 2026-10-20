@@ -272,6 +272,8 @@ jour qui perd la partie d'un joueur est un bug bloquant, pas un détail.
   que du côté de la flèche, puis entre dans le premier trou ouvert qu'elle
   croise. Le banc compte les basculements comme des gestes et vérifie
   qu'un niveau à purge n'a aucune solution sans elle.
+  **Idée arrêtée le 20 octobre 2026 au soir** (« ce jeu ne me convainc
+  pas », Vincent) : la page et son banc restent comme trace.
 - `data/worldmap.js` — généré depuis Natural Earth, jamais édité à la main.
 
 ## Détail connu
