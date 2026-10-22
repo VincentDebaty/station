@@ -344,7 +344,7 @@ func _etape_train(dt: float) -> float:
 			var besoin := carburant_boucle()
 			if depot_plein_inutile():
 				train["etat"] = "attend"
-				train["message"] = "Dépôt plein : le train attend que le stock descende."
+				train["message"] = "Dépôt plein : le charbon n'est plus urgent, un autre train le fera descendre."
 				return 0.0
 			if charbon >= besoin:
 				charbon -= besoin
