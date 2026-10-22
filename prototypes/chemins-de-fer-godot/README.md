@@ -18,7 +18,8 @@ Sur la carte : **Construire** (toucher une case voisine du cercle bleu),
 arrêts, puis *Valider*), **Lancer le train**. Toucher le dépôt (D) ouvre sa
 vue : la voie, le quai de 5 emplacements, les stocks, l'achat de la
 locomotive et des wagons. Le bouton ×60 / ×600 ne sert qu'à tester : le
-jeu est en temps réel (production en heures réelles).
+jeu est en temps réel (production en heures réelles). La locomotive roule à
+40 km/h sur des cases d'1 km : 90 s par case.
 
 ## Les fichiers
 

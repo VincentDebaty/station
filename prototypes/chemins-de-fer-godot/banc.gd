@@ -6,6 +6,7 @@ extends SceneTree
 #   godot --headless --path prototypes/chemins-de-fer-godot --script res://banc.gd
 #
 # LES DONNÉES :
+#   D2  la locomotive fait 40 km/h : 90 s par case d'1 km
 #   D1  niveau.json se lit, la ville est au bord et inconnue au départ,
 #       chaque ressource de l'anneau a une source et un wagon connus
 # LES VOIES :
@@ -24,6 +25,7 @@ extends SceneTree
 #       départ + produit, à 1e-6
 #   T5  le dépôt plein (100) n'accepte rien de plus, le train attend
 #   T6  la livraison d'eau à la ville paie 5 or par unité
+#   T7  la première boucle dure 400 s (4 cases à 90 s, 40 s de chargement)
 # LES SCÉNARIOS :
 #   S1  la première heure du papier : charbon, puis eau, tient dans la mise
 # ------------------------------------------------------------------
@@ -69,6 +71,7 @@ func _init() -> void:
 		elif not N["wagons"].has(N["sources"][N["ressources"][k]]["wagon"]):
 			tout_connu = false
 	verifie(tout_connu, "D1", "chaque ressource a une source et un wagon connus")
+	verifie(absf(float(N["locomotive"]["secondes_par_case"]) - 3600.0 / 40.0) < 1e-9, "D2", "40 km/h sur des cases d'1 km : 90 s par case")
 
 	print("VOIES")
 	m = neuf()
@@ -118,6 +121,21 @@ func _init() -> void:
 	m.avancer(0.5)
 	verifie(m.train["etat"] == "roule", "T2", "avec 4 de charbon il part")
 	verifie(m.charbon == 0 and m.brule_total == 4, "T2", "il emporte exactement le charbon de sa boucle")
+
+	m = neuf()
+	m.acheter_loco()
+	m.acheter_wagon("tombereau")
+	m.acheter_wagon("tombereau")
+	ligne(m, [c, Vector2i(7, 5), mine])
+	m.definir_itineraire([mine])
+	m.lancer()
+	var t_retour := -1.0
+	for i in 4000:
+		m.avancer(0.5)
+		if m.depose_total > 0:
+			t_retour = m.temps
+			break
+	verifie(t_retour >= 399.9 and t_retour <= 401.0, "T7", "première boucle : 4 cases à 90 s + 40 s de chargement = 400 s (%.1f s)" % t_retour)
 
 	print("DEMI-TOUR")
 	m = neuf()

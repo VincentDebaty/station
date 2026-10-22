@@ -78,7 +78,7 @@
   "virage_max_deg": 45,
   "locomotive": {
     "traction": 5,
-    "secondes_par_case": 10,
+    "secondes_par_case": 90,
     "charbon_par_case": 1
   },
   "wagon": {
