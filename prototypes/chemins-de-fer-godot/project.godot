@@ -1,0 +1,30 @@
+; Engine configuration file.
+; It's best edited using the editor UI and not directly,
+; since the parameters that go here are not all obvious.
+;
+; Format:
+;   [section] ; section goes between []
+;   param=value ; assign values to parameters
+
+config_version=5
+
+[application]
+
+config/name="Chemins de fer"
+config/description="Gestion ferroviaire sur grille octogonale : un dépôt, des ressources, une ville."
+run/main_scene="res://principal.tscn"
+config/features=PackedStringArray("4.7", "Mobile")
+
+[display]
+
+window/size/viewport_width=600
+window/size/viewport_height=1300
+window/stretch/mode="canvas_items"
+window/stretch/aspect="expand"
+; portrait
+window/handheld/orientation=1
+
+[rendering]
+
+textures/vram_compression/import_etc2_astc=true
+renderer/rendering_method="mobile"

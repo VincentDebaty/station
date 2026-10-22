@@ -1,0 +1,115 @@
+{
+  "_note": "Toutes les valeurs sont des valeurs d'illustration, à équilibrer par le test. Source : l'Artefact « Chemins de fer — idée de jeu », onglet Conception.",
+  "grille": {
+    "largeur": 17,
+    "hauteur": 13,
+    "centre": [
+      8,
+      6
+    ],
+    "ville": [
+      16,
+      6
+    ],
+    "rayon_connu": 2
+  },
+  "ressources": {
+    "-2,-1": "charbon",
+    "0,-2": "foret",
+    "2,-1": "fer",
+    "2,1": "lac",
+    "0,2": "ferme",
+    "-2,1": "carriere"
+  },
+  "sources": {
+    "charbon": {
+      "produit": "charbon",
+      "par_heure": 100,
+      "stock_max": 500,
+      "wagon": "tombereau"
+    },
+    "foret": {
+      "produit": "bois",
+      "par_heure": 100,
+      "stock_max": 500,
+      "wagon": "plat"
+    },
+    "fer": {
+      "produit": "fer",
+      "par_heure": 100,
+      "stock_max": 500,
+      "wagon": "tombereau"
+    },
+    "lac": {
+      "produit": "eau",
+      "par_heure": 100,
+      "stock_max": 500,
+      "wagon": "citerne"
+    },
+    "ferme": {
+      "produit": "cereales",
+      "par_heure": 100,
+      "stock_max": 500,
+      "wagon": "couvert"
+    },
+    "carriere": {
+      "produit": "pierre",
+      "par_heure": 100,
+      "stock_max": 500,
+      "wagon": "plat"
+    }
+  },
+  "chargement_par_seconde": 1,
+  "depart": {
+    "or": 1000,
+    "bois": 60,
+    "fer": 30,
+    "charbon": 20
+  },
+  "prix": {
+    "locomotive": 400,
+    "wagon": 100,
+    "exploration": 50,
+    "voie": {
+      "bois": 2,
+      "fer": 1
+    }
+  },
+  "virage_max_deg": 45,
+  "locomotive": {
+    "traction": 5,
+    "secondes_par_case": 10,
+    "charbon_par_case": 1
+  },
+  "wagon": {
+    "capacite": 20
+  },
+  "depot": {
+    "quai": 5,
+    "charbon_max": 100
+  },
+  "ville": {
+    "demande": {
+      "eau": {
+        "par_heure": 30,
+        "prix": 5
+      }
+    }
+  },
+  "wagons": {
+    "tombereau": [
+      "charbon",
+      "fer"
+    ],
+    "citerne": [
+      "eau"
+    ],
+    "couvert": [
+      "cereales"
+    ],
+    "plat": [
+      "bois",
+      "pierre"
+    ]
+  }
+}
